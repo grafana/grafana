@@ -1,5 +1,12 @@
-import { VariableRefresh, PanelData, LoadingState, toDataFrame, FieldType, getDefaultTimeRange } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import {
+  VariableRefresh,
+  type PanelData,
+  LoadingState,
+  toDataFrame,
+  FieldType,
+  getDefaultTimeRange,
+} from '@grafana/data';
+import { config, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
@@ -17,7 +24,7 @@ import {
   SceneVariableSet,
   TextBoxVariable,
   VizPanel,
-  SceneDataQuery,
+  type SceneDataQuery,
   SceneQueryRunner,
   SceneDataTransformer,
   SceneDataNode,
@@ -30,11 +37,12 @@ import {
   VariableSort as VariableSortV1,
 } from '@grafana/schema';
 import {
-  GridLayoutSpec,
-  AutoGridLayoutSpec,
-  RowsLayoutSpec,
-  TabsLayoutSpec,
+  type GridLayoutSpec,
+  type AutoGridLayoutSpec,
+  type RowsLayoutSpec,
+  type TabsLayoutSpec,
   defaultDataQueryKind,
+  type PanelSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -43,7 +51,7 @@ import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
@@ -54,12 +62,14 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { djb2Hash } from '../utils/djb2Hash';
 
 import {
   getPersistedDSFor,
   getElementDatasource,
+  normalizeDataSourceRef,
   transformSceneToSaveModelSchemaV2,
   validateDashboardSchemaV2,
   getDataQueryKind,
@@ -1558,6 +1568,70 @@ describe('vizPanelToSchemaV2 snapshot repeat clones', () => {
   });
 });
 
+describe('vizPanelToSchemaV2 time range fields', () => {
+  function buildPanel(timeRange?: SceneTimeRange | PanelTimeRange) {
+    return new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Test',
+      ...(timeRange && { $timeRange: timeRange }),
+    });
+  }
+
+  function getQueryOptions(timeRange?: SceneTimeRange | PanelTimeRange) {
+    const result = vizPanelToSchemaV2(buildPanel(timeRange), undefined, false);
+    expect(result.kind).toEqual('Panel');
+    return (result.spec as PanelSpec).data.spec.queryOptions;
+  }
+
+  function expectNoTimeRangeFields(queryOptions: ReturnType<typeof getQueryOptions>, except?: string) {
+    const fields = ['timeFrom', 'timeShift', 'hideTimeOverride', 'timeCompare'] as const;
+    for (const f of fields) {
+      if (f !== except) {
+        expect(queryOptions[f]).toBeUndefined();
+      }
+    }
+  }
+
+  it('should omit time range fields when the panel has no $timeRange', () => {
+    expectNoTimeRangeFields(getQueryOptions());
+  });
+
+  it('should omit time range fields when $timeRange is a SceneTimeRange (not PanelTimeRange)', () => {
+    expectNoTimeRangeFields(getQueryOptions(new SceneTimeRange({})));
+  });
+
+  it('should serialize all four time range fields when set on PanelTimeRange', () => {
+    const queryOptions = getQueryOptions(
+      new PanelTimeRange({
+        timeFrom: '2h',
+        timeShift: '1h',
+        hideTimeOverride: true,
+        compareWith: '1d',
+      })
+    );
+
+    expect(queryOptions).toMatchObject({
+      timeFrom: '2h',
+      timeShift: '1h',
+      hideTimeOverride: true,
+      timeCompare: '1d',
+    });
+  });
+
+  it.each([
+    ['timeFrom only', { timeFrom: '2h' }, 'timeFrom', '2h'],
+    ['timeShift only', { timeShift: '1h' }, 'timeShift', '1h'],
+    ['hideTimeOverride only', { hideTimeOverride: true }, 'hideTimeOverride', true],
+    ['compareWith only maps to timeCompare', { compareWith: '1d' }, 'timeCompare', '1d'],
+  ] as const)('should serialize %s', (_, state, field, value) => {
+    const queryOptions = getQueryOptions(new PanelTimeRange(state));
+
+    expect(queryOptions[field]).toBe(value);
+    expectNoTimeRangeFields(queryOptions, field);
+  });
+});
+
 // Instead of reusing annotation layer objects, create a factory function to generate new ones each time
 function createAnnotationLayers() {
   return [
@@ -1770,5 +1844,47 @@ describe('validateDashboardSchemaV2', () => {
     expect(validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'RowsLayout', spec: { rows: [] } } })).toBe(
       true
     );
+  });
+});
+
+describe('normalizeDataSourceRef', () => {
+  let originalSrv: DataSourceSrv | undefined;
+  const getInstanceSettings = jest.fn(() => ({ uid: 'prom-uid', type: 'prometheus', apiVersion: 'v1' }));
+
+  beforeAll(() => {
+    try {
+      originalSrv = jest.requireActual('@grafana/runtime').getDataSourceSrv();
+    } catch {
+      originalSrv = undefined;
+    }
+    setDataSourceSrv({ getInstanceSettings } as unknown as DataSourceSrv);
+  });
+
+  afterAll(() => {
+    setDataSourceSrv(originalSrv as DataSourceSrv);
+  });
+
+  it('passes through existing DataSourceRef and nullish inputs unchanged', () => {
+    const ref = { uid: 'abc', type: 'prometheus' };
+    expect(normalizeDataSourceRef(ref)).toBe(ref);
+
+    expect(normalizeDataSourceRef(undefined)).toBeUndefined();
+    expect(normalizeDataSourceRef(null)).toBeUndefined();
+  });
+
+  it('resolves a string datasource into a DataSourceRef', () => {
+    expect(normalizeDataSourceRef('prometheus')).toEqual({
+      uid: 'prom-uid',
+      type: 'prometheus',
+      apiVersion: 'v1',
+    });
+
+    // Falls back to a UID-only ref when the datasource is unknown.
+    getInstanceSettings.mockReturnValueOnce(undefined as never);
+    expect(normalizeDataSourceRef('nonexistent-ds')).toEqual({ uid: 'nonexistent-ds' });
+
+    // Template variables short-circuit and never call getInstanceSettings.
+    expect(normalizeDataSourceRef('$datasource')).toEqual({ uid: '$datasource' });
+    expect(normalizeDataSourceRef('${datasource}')).toEqual({ uid: '${datasource}' });
   });
 });

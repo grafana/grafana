@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
 import { useQueryRunner } from '@grafana/scenes-react';
 import { Box, ErrorBoundaryAlert, Icon, Text, useStyles2 } from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -11,7 +11,7 @@ import { FIELD_NAMES } from '../constants';
 
 import { normalizeFrame } from './dataTransform';
 import { summaryRuleCountQuery } from './queries';
-import { useQueryFilter } from './utils';
+import { cleanAlertStateFilter, useQueryFilter } from './utils';
 
 type AlertState = PromAlertingRuleState.Firing | PromAlertingRuleState.Pending;
 
@@ -88,11 +88,8 @@ function SummaryStatsContent() {
   const styles = useStyles2(getCompactStatStyles);
   const filter = useQueryFilter();
 
-  // Strip alertstate from filter since the dedup queries add their own alertstate matchers
-  const cleanFilter = filter
-    .replace(/alertstate\s*=~?\s*"(firing|pending)"[,\s]*/, '')
-    .replace(/,\s*$/, '')
-    .replace(/^\s*,/, '');
+  // Strip alertstate from filter since the dedup queries add their own alertstate matchers.
+  const cleanFilter = cleanAlertStateFilter(filter);
 
   const ruleDataProvider = useQueryRunner({
     queries: [summaryRuleCountQuery(cleanFilter)],

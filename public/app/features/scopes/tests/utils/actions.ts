@@ -1,12 +1,12 @@
 import { act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DateTime, makeTimeRange, dateMath } from '@grafana/data';
-import { MultiValueVariable, sceneGraph, VariableValue } from '@grafana/scenes';
-import { defaultTimeZone, TimeZone } from '@grafana/schema';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DateTime, makeTimeRange, dateMath } from '@grafana/data';
+import { type MultiValueVariable, sceneGraph, type VariableValue } from '@grafana/scenes';
+import { defaultTimeZone, type TimeZone } from '@grafana/schema';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { ScopesService } from '../../ScopesService';
+import { type ScopesService } from '../../ScopesService';
 
 import {
   getDashboardFolderExpand,

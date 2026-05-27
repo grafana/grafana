@@ -1,5 +1,5 @@
-import { Field, DataFrame, FieldType } from '../../types/dataFrame';
-import { FieldMatcherInfo, MatcherConfig, FrameMatcherInfo } from '../../types/transformations';
+import { type Field, type DataFrame, FieldType } from '../../types/dataFrame';
+import { type FieldMatcherInfo, type MatcherConfig, type FrameMatcherInfo } from '../../types/transformations';
 import { getFieldMatcher, fieldMatchers, getFrameMatchers, frameMatchers } from '../matchers';
 
 import { MatcherID } from './ids';

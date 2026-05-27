@@ -149,6 +149,16 @@ func (root *NavTreeRoot) RemoveEmptyAdminSections() {
 	}
 }
 
+// RemoveEmptyConnectionsSection removes the Connections section if it has no children.
+// The section is always added to the nav tree so that plugin pages can be attached via
+// addAppLinks; this method prunes it when no children were ultimately registered.
+// Must be called AFTER all hooks have had a chance to add their nav items.
+func (root *NavTreeRoot) RemoveEmptyConnectionsSection() {
+	if sec := root.FindById("connections"); sec != nil && len(sec.Children) == 0 {
+		root.RemoveSectionByID("connections")
+	}
+}
+
 func (root *NavTreeRoot) MarshalJSON() ([]byte, error) {
 	return json.Marshal(root.Children)
 }

@@ -1,9 +1,12 @@
 import { useCallback, useMemo } from 'react';
 
-import { GrafanaManagedContactPoint, GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
+import {
+  type GrafanaManagedContactPoint,
+  type GrafanaManagedReceiverConfig,
+} from 'app/plugins/datasource/alertmanager/types';
 
-import { CreateReceiverTestOverrideArg, useCreateReceiverTestMutation } from '../api/testReceiversApi';
-import { GrafanaChannelValues } from '../types/receiver-form';
+import { type CreateReceiverTestOverrideArg, useCreateReceiverTestMutation } from '../api/testReceiversApi';
+import { type GrafanaChannelValues } from '../types/receiver-form';
 import { canTestEntity } from '../utils/k8s/utils';
 import { formChannelValuesToGrafanaChannelConfig } from '../utils/receiver-form';
 

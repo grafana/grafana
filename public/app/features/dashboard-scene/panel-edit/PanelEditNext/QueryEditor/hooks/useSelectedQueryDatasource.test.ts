@@ -1,8 +1,8 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
+import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 
 import { useSelectedQueryDatasource } from './useSelectedQueryDatasource';
 

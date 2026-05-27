@@ -2,8 +2,8 @@ import { useState } from 'react';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Column, EmptyState, InteractiveTable, Stack } from '@grafana/ui';
-import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { Button, type Column, EmptyState, InteractiveTable, Stack } from '@grafana/ui';
+import { type GrafanaRuleDefinition, type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { trackDeletedRuleRestoreFail, trackDeletedRuleRestoreSuccess } from '../../../Analytics';
 import { shouldAllowPermanentlyDeletingRules } from '../../../featureToggles';

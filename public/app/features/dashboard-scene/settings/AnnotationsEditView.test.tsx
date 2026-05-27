@@ -2,17 +2,17 @@ import { map, of } from 'rxjs';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
-  AnnotationQuery,
-  DataQueryRequest,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  DataSourcePluginMeta,
+  type AnnotationQuery,
+  type DataQueryRequest,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
   getDataSourceUID,
   LoadingState,
-  PanelData,
+  type PanelData,
 } from '@grafana/data';
-import { SceneTimeRange, dataLayers } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { SceneTimeRange, type dataLayers } from '@grafana/scenes';
+import { type DataSourceRef } from '@grafana/schema';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet, NEW_ANNOTATION_NAME } from '../scene/DashboardDataLayerSet';

@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react';
 
-import { Job, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 
-import { OrphanedResourceAction } from '../components/Shared/OrphanedResourceActionConfirmModal';
+import { type OrphanedResourceAction } from '../components/Shared/OrphanedResourceActionConfirmModal';
 
 export interface UseOrphanedResourceActionsOptions {
   repositoryName: string;

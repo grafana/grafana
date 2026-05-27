@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { CombinedRule } from 'app/types/unified-alerting';
+import { type CombinedRule } from 'app/types/unified-alerting';
 
 import { getPendingPeriod } from '../../utils/rules';
 

@@ -1,4 +1,4 @@
-import { FieldConfigSource as FieldConfigSourceV1, SpecialValueMatch as SpecialValueMatchV1 } from '@grafana/data';
+import { type FieldConfigSource as FieldConfigSourceV1, SpecialValueMatch as SpecialValueMatchV1 } from '@grafana/data';
 import {
   VariableHide as VariableHideV1,
   VariableRefresh as VariableRefreshV1,
@@ -8,13 +8,13 @@ import {
   ThresholdsMode as ThresholdsModeV1,
 } from '@grafana/schema';
 import {
-  DashboardCursorSync,
-  VariableHide,
-  VariableRefresh,
-  VariableSort,
-  FieldConfigSource,
-  SpecialValueMatch,
-  ThresholdsMode,
+  type DashboardCursorSync,
+  type VariableHide,
+  type VariableRefresh,
+  type VariableSort,
+  type FieldConfigSource,
+  type SpecialValueMatch,
+  type ThresholdsMode,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 export function transformVariableRefreshToEnumV1(refresh?: VariableRefresh): VariableRefreshV1 {
@@ -83,7 +83,7 @@ export function transformCursorSyncV2ToV1(cursorSync: DashboardCursorSync): Dash
   }
 }
 
-function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueMatchV1 {
+function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueMatchV1 | undefined {
   switch (match) {
     case 'true':
       return SpecialValueMatchV1.True;
@@ -98,7 +98,8 @@ function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueM
     case 'empty':
       return SpecialValueMatchV1.Empty;
     default:
-      throw new Error(`Unknown match type: ${match}`);
+      console.warn(`Skipping special value mapping with unknown match type: "${match}"`);
+      return undefined;
   }
 }
 
@@ -119,7 +120,7 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
   };
 
   if (fieldConfig.defaults.mappings) {
-    transformedDefaults.mappings = fieldConfig.defaults.mappings.map((mapping) => {
+    transformedDefaults.mappings = fieldConfig.defaults.mappings.flatMap((mapping) => {
       switch (mapping.type) {
         case 'value':
           return {
@@ -136,15 +137,22 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
             ...mapping,
             type: MappingTypeV1.RegexToText,
           };
-        case 'special':
+        case 'special': {
+          const v1Match = transformSpecialValueMatchToV1(mapping.options.match);
+
+          if (v1Match === undefined) {
+            return [];
+          }
+
           return {
             ...mapping,
             options: {
               ...mapping.options,
-              match: transformSpecialValueMatchToV1(mapping.options.match),
+              match: v1Match,
             },
             type: MappingTypeV1.SpecialValue,
           };
+        }
         default:
           return mapping;
       }

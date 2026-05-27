@@ -1,13 +1,13 @@
 import saveAs from 'file-saver';
 
-import { dateTimeFormat, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
+import { dateTimeFormat, formattedValueToString, getValueFormat, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
+import { sceneGraph, type SceneObject, type VizPanel } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 
-import { Randomize } from './randomizer';
+import { type Randomize } from './randomizer';
 import { getDebugDashboard, getGithubMarkdown } from './utils';
 
 interface SupportSnapshotState {

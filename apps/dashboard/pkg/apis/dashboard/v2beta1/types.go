@@ -38,8 +38,7 @@ func (DashboardAccess) OpenAPIModelName() string {
 
 // +k8s:deepcopy-gen=true
 type AnnotationPermission struct {
-	Dashboard    AnnotationActions `json:"dashboard"`
-	Organization AnnotationActions `json:"organization"`
+	Dashboard AnnotationActions `json:"dashboard"`
 }
 
 func (AnnotationPermission) OpenAPIModelName() string {

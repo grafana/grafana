@@ -1,44 +1,44 @@
 import { produce } from 'immer';
 
 import {
-  DataSourceInstanceSettings,
-  IntervalValues,
-  RelativeTimeRange,
-  ScopedVars,
-  TimeRange,
+  type DataSourceInstanceSettings,
+  type IntervalValues,
+  type RelativeTimeRange,
+  type ScopedVars,
+  type TimeRange,
   getDefaultRelativeTimeRange,
   getNextRefId,
   rangeUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { PromQuery } from '@grafana/prometheus';
+import { type PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { VizPanel, sceneGraph } from '@grafana/scenes';
-import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type VizPanel, sceneGraph } from '@grafana/scenes';
+import { type DataQuery, type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
   getDashboardSceneFor,
   getPanelIdForVizPanel,
   getQueryRunnerFor,
 } from 'app/features/dashboard-scene/utils/utils';
-import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
-import { LokiQuery } from 'app/plugins/datasource/loki/types';
-import { RuleWithLocation } from 'app/types/unified-alerting';
+import { type LokiQuery } from 'app/plugins/datasource/loki/types';
+import { type RuleWithLocation } from 'app/types/unified-alerting';
 import {
-  AlertDataQuery,
-  AlertQuery,
-  Annotations,
-  GrafanaNotificationSettings,
-  GrafanaRuleDefinition,
-  Labels,
-  PostableRuleGrafanaRuleDTO,
-  RulerAlertingRuleDTO,
-  RulerGrafanaRuleDTO,
-  RulerRecordingRuleDTO,
-  RulerRuleDTO,
+  type AlertDataQuery,
+  type AlertQuery,
+  type Annotations,
+  type GrafanaNotificationSettings,
+  type GrafanaRuleDefinition,
+  type Labels,
+  type PostableRuleGrafanaRuleDTO,
+  type RulerAlertingRuleDTO,
+  type RulerGrafanaRuleDTO,
+  type RulerRecordingRuleDTO,
+  type RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
@@ -46,13 +46,13 @@ import { NAMED_ROOT_LABEL_NAME } from '../components/notification-policies/useNo
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { normalizeDefaultAnnotations } from '../rule-editor/formProcessing';
 import {
-  AlertManagerManualRouting,
-  ContactPoint,
-  Folder,
-  KVObject,
+  type AlertManagerManualRouting,
+  type ContactPoint,
+  type Folder,
+  type KVObject,
   RuleFormType,
-  RuleFormValues,
-  SimplifiedEditor,
+  type RuleFormValues,
+  type SimplifiedEditor,
 } from '../types/rule-form';
 
 import { Annotation } from './constants';
@@ -64,7 +64,12 @@ import {
   isSupportedExternalRulesSourceType,
 } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
-import { isGrafanaAlertingRuleByType, isGrafanaRecordingRuleByType, rulerRuleType } from './rules';
+import {
+  isGrafanaAlertingRuleByType,
+  isGrafanaRecordingRuleByType,
+  isUngroupedRuleGroup,
+  rulerRuleType,
+} from './rules';
 import { parseInterval } from './time';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
@@ -354,6 +359,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         name: ga.title,
         type: RuleFormType.grafanaRecording,
         group: group.name,
+        isUngroupedRuleGroup: isUngroupedRuleGroup(group.name),
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
         queries: ga.data,
         condition: ga.condition,
@@ -379,6 +385,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           name: ga.title,
           type: RuleFormType.grafana,
           group: group.name,
+          isUngroupedRuleGroup: isUngroupedRuleGroup(group.name),
           evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
           evaluateFor: normalizedRule.for || '0',
           keepFiringFor: normalizedRule.keep_firing_for || '0',

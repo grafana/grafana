@@ -2,20 +2,18 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
-import { GrafanaTheme2, store } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, CollapsableSection, Grid, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
-import { contextSrv } from 'app/core/services/context_srv';
+import impressionSrv from 'app/core/services/impression_srv';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 
 import { getRecentlyViewedDashboards } from '../api/recentlyViewed';
 
 const MAX_RECENT = 5;
-
-const recentDashboardsKey = `dashboard_impressions-${contextSrv.user.orgId}`;
 
 export function RecentlyViewedDashboards() {
   const styles = useStyles2(getStyles);
@@ -34,15 +32,15 @@ export function RecentlyViewedDashboards() {
 
   const handleClearHistory = () => {
     reportInteraction('grafana_recently_viewed_dashboards_clear_history');
-    store.set(recentDashboardsKey, JSON.stringify([]));
+    impressionSrv.clearImpressions();
     retry();
   };
 
-  const handleSectionToggle = () => {
+  const handleSectionToggle = (open: boolean) => {
     reportInteraction('grafana_recently_viewed_dashboards_toggle_section', {
-      expanded: !isOpen,
+      expanded: open,
     });
-    setIsOpen(!isOpen);
+    setIsOpen(open);
   };
 
   useEffect(() => {
@@ -59,18 +57,25 @@ export function RecentlyViewedDashboards() {
       headerDataTestId="browseDashboardsRecentlyViewedTitle"
       label={
         <Stack direction="row" justifyContent="space-between" alignItems="baseline" width="100%">
-          <Text variant="h5" element="h3" onClick={handleSectionToggle}>
+          <Text variant="h5" element="h3">
             <Trans i18nKey="browse-dashboards.recently-viewed.title">Recently viewed</Trans>
           </Text>
-          <Button icon="times" size="xs" variant="secondary" fill="text" onClick={handleClearHistory}>
+          <Button
+            icon="times"
+            size="xs"
+            variant="secondary"
+            fill="text"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClearHistory();
+            }}
+          >
             {t('browse-dashboards.recently-viewed.clear', 'Clear history')}
           </Button>
         </Stack>
       }
       isOpen={isOpen}
-      // passing empty function to disable controlled mode, we only want to control isOpen when click on title
-      // this avoid entire header section being clickable which can be confusing with the Clear history button
-      onToggle={() => {}}
+      onToggle={handleSectionToggle}
       className={styles.title}
       contentClassName={styles.content}
     >

@@ -145,18 +145,6 @@ func GetTeamHTTPHeaders(jsonData *simplejson.Json) (*TeamHTTPHeaders, error) {
 	return teamHTTPHeaders, nil
 }
 
-// AllowedCookies parses the jsondata.keepCookies and returns a list of
-// allowed cookies, otherwise an empty list.
-func (ds DataSource) AllowedCookies() []string {
-	if ds.JsonData != nil {
-		if keepCookies := ds.JsonData.Get("keepCookies"); keepCookies != nil {
-			return keepCookies.MustStringArray()
-		}
-	}
-
-	return []string{}
-}
-
 // ----------------------
 // COMMANDS
 
@@ -274,6 +262,10 @@ type GetDataSourceQuery struct {
 
 	// Required
 	OrgID int64
+
+	// Type is the datasource plugin type (e.g. "prometheus", "loki").
+	// When set alongside UID, it scopes the lookup to that specific type.
+	Type string
 }
 
 type DatasourcesPermissionFilterQuery struct {

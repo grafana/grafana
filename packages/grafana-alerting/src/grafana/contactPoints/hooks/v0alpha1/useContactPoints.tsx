@@ -1,17 +1,11 @@
-import {
-  type TypedUseMutationResult,
-  type TypedUseQueryHookResult,
-  fetchBaseQuery,
-} from '@reduxjs/toolkit/query/react';
-import { OverrideProperties } from 'type-fest';
+import { type TypedUseQueryHookResult, type fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 import {
-  CreateReceiverApiArg,
-  ListReceiverApiArg,
+  type ListReceiverApiArg,
   generatedAPI as notificationsAPIv0alpha1,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
-import type { ContactPoint, EnhancedListReceiverApiResponse } from '../../../api/notifications/v0alpha1/types';
+import type { EnhancedListReceiverApiResponse } from '../../../api/notifications/v0alpha1/types';
 
 // this is a workaround for the fact that the generated types are not narrow enough
 type ListContactPointsHookResult = TypedUseQueryHookResult<
@@ -46,46 +40,4 @@ export function useListContactPoints(
   queryOptions: ListContactPointsQueryOptions = {}
 ): ListContactPointsHookResult {
   return notificationsAPIv0alpha1.useListReceiverQuery<ListContactPointsHookResult>(queryArgs, queryOptions);
-}
-
-// type narrowing mutations requires us to define a few helper types
-type CreateContactPointArgs = OverrideProperties<
-  CreateReceiverApiArg,
-  { receiver: Omit<ContactPoint, 'status' | 'metadata'> }
->;
-
-type CreateContactPointMutation = TypedUseMutationResult<
-  ContactPoint,
-  CreateContactPointArgs,
-  ReturnType<typeof fetchBaseQuery>
->;
-
-type UseCreateContactPointOptions = Parameters<
-  typeof notificationsAPIv0alpha1.endpoints.createReceiver.useMutation<CreateContactPointMutation>
->[0];
-
-/**
- * useCreateContactPoint is a hook that creates a new contact point with one or more integrations
- *
- * This function wraps the notificationsAPI.useCreateReceiverMutation with proper typing
- * to ensure that the payload supports type narrowing.
- */
-export function useCreateContactPoint(
-  options?: UseCreateContactPointOptions
-): readonly [
-  (
-    args: CreateContactPointArgs
-  ) => ReturnType<ReturnType<typeof notificationsAPIv0alpha1.endpoints.createReceiver.useMutation>[0]>,
-  ReturnType<typeof notificationsAPIv0alpha1.endpoints.createReceiver.useMutation<CreateContactPointMutation>>[1],
-] {
-  const [updateFn, result] =
-    notificationsAPIv0alpha1.endpoints.createReceiver.useMutation<CreateContactPointMutation>(options);
-
-  const typedUpdateFn = (args: CreateContactPointArgs) => {
-    // @ts-expect-error this one is just impossible for me to figure out
-    const response = updateFn(args);
-    return response;
-  };
-
-  return [typedUpdateFn, result] as const;
 }

@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import { buildRawQuery, changeGroupByPart, changeSelectPart, normalizeQuery } from './queryUtils';
-import { DEFAULT_POLICY, InfluxQuery } from './types';
+import { DEFAULT_POLICY, type InfluxQuery } from './types';
 
 describe('InfluxDB query utils', () => {
   describe('buildRawQuery', () => {

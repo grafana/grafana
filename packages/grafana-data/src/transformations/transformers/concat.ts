@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
-import { DataFrame, Field, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
-import { DataTransformerInfo } from '../../types/transformations';
+import { type DataFrame, type Field, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
+import { type DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 

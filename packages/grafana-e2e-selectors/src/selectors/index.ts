@@ -1,8 +1,8 @@
 import { resolveSelectors } from '../resolver';
-import { E2ESelectors } from '../types';
+import { type E2ESelectors } from '../types';
 
-import { versionedComponents, VersionedComponents } from './components';
-import { versionedPages, VersionedPages } from './pages';
+import { versionedComponents, type VersionedComponents } from './components';
+import { versionedPages, type VersionedPages } from './pages';
 
 const Pages = resolveSelectors(versionedPages);
 const Components = resolveSelectors(versionedComponents);

@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
@@ -74,4 +75,20 @@ func (s *Server) read(ctx context.Context, req *authzextv1.ReadRequest) (*authze
 		Tuples:            tuples,
 		ContinuationToken: res.GetContinuationToken(),
 	}, nil
+}
+
+// ReadTuples reads tuples from the provided store, skipping the public-API
+// authorization check that Server.Read performs. Intended for internal callers
+// (such as the mt-reconciler) that already have a resolved StoreInfo and run
+// under a background context without end-user claims.
+func (s *Server) ReadTuples(ctx context.Context, store *zanzana.StoreInfo, req *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "server.ReadTuples")
+	defer span.End()
+
+	defer func(t time.Time) {
+		s.metrics.requestDurationSeconds.WithLabelValues("ReadTuples").Observe(time.Since(t).Seconds())
+	}(time.Now())
+
+	req.StoreId = store.ID
+	return s.openFGAClient.Read(ctx, req)
 }

@@ -1,7 +1,7 @@
-import { Folder } from 'app/api/clients/folder/v1beta1';
+import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { DashboardTreeSelection } from 'app/features/browse-dashboards/types';
-import { WorkflowOption } from 'app/features/provisioning/types';
+import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
+import { type WorkflowOption } from 'app/features/provisioning/types';
 
 import { joinPath } from '../utils/path';
 
@@ -93,4 +93,16 @@ export function getResourceTargetPath(currentPath: string, targetFolderPath: str
   const isFolder = currentPath.endsWith('/');
   const basePath = joinPath(targetFolderPath, filename);
   return isFolder ? `${basePath}/` : basePath;
+}
+
+function normalizeRepoPath(path: string): string {
+  return path.replace(/^\/+/, '').replace(/\/+$/, '');
+}
+
+export function isResourceAlreadyInTarget(currentPath: string, targetFolderPath: string): boolean {
+  return normalizeRepoPath(currentPath) === normalizeRepoPath(getResourceTargetPath(currentPath, targetFolderPath));
+}
+
+export function isSameFolderPath(currentFolderPath: string | undefined, targetFolderPath: string): boolean {
+  return normalizeRepoPath(currentFolderPath || '') === normalizeRepoPath(targetFolderPath);
 }

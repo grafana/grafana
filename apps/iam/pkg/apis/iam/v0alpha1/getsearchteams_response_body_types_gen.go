@@ -9,6 +9,7 @@ type GetSearchTeamsTeamHit struct {
 	Email         string          `json:"email"`
 	Provisioned   bool            `json:"provisioned"`
 	ExternalUID   string          `json:"externalUID"`
+	MemberCount   *int64          `json:"memberCount,omitempty"`
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }
 

@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DataLinkButton, Icon, Toggletip, useStyles2 } from '@grafana/ui';
 
-import { FieldDef } from '../logParser';
+import { type FieldDef } from '../logParser';
 
 import { useLogDetailsContext } from './LogDetailsContext';
 import { filterFields, MultipleValue, SingleValue } from './LogLineDetailsFields';
-import { LogListFontSize } from './LogList';
+import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 
 interface LogLineDetailsLinksProps {
   fields: FieldDef[];

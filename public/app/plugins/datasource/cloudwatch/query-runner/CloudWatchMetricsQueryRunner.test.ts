@@ -1,9 +1,9 @@
 import { of } from 'rxjs';
 
-import { dateTime, CustomVariableModel, getFrameDisplayName, VariableHide } from '@grafana/data';
+import { dateTime, type CustomVariableModel, getFrameDisplayName, VariableHide } from '@grafana/data';
 import { toDataQueryResponse } from '@grafana/runtime';
 
-import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery } from '../dataquery.gen';
+import { MetricQueryType, MetricEditorMode, type CloudWatchMetricsQuery } from '../dataquery.gen';
 import {
   namespaceVariable,
   metricVariable,

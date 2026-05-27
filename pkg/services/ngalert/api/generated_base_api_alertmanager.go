@@ -151,7 +151,7 @@ func (f *AlertmanagerApiHandler) RoutePostAlertingConfig(ctx *contextmodel.ReqCo
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	// Parse Request Body
-	conf := apimodels.PostableUserConfig{}
+	conf := apimodels.ExternalAlertmanagerConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -163,12 +163,7 @@ func (f *AlertmanagerApiHandler) RoutePostGrafanaAlertingConfigHistoryActivate(c
 	return f.handleRoutePostGrafanaAlertingConfigHistoryActivate(ctx, idParam)
 }
 func (f *AlertmanagerApiHandler) RoutePostTestGrafanaReceivers(ctx *contextmodel.ReqContext) response.Response {
-	// Parse Request Body
-	conf := apimodels.TestReceiversConfigBodyParams{}
-	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	return f.handleRoutePostTestGrafanaReceivers(ctx, conf)
+	return f.handleRoutePostTestGrafanaReceivers(ctx)
 }
 func (f *AlertmanagerApiHandler) RoutePostTestGrafanaTemplates(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Request Body

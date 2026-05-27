@@ -9,24 +9,24 @@ import (
 	"io"
 	"time"
 
-	"github.com/dustin/go-humanize"
 	"github.com/google/uuid"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 type objectForStorage struct {
@@ -81,6 +81,29 @@ func (v *objectForStorage) finish(ctx context.Context, err error, secrets secret
 	return nil
 }
 
+// verifyFolder enforces the folder-annotation contract on write. When folder
+// support is disabled, any folder annotation is a validation error (422): the
+// resource does not live in the folder tree at all. When folder support is
+// enabled, the annotation is accepted as-is.
+func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
+	if s.opts.EnableFolderSupport {
+		return nil
+	}
+	if obj.GetFolder() == "" {
+		return nil
+	}
+	return apierrors.NewInvalid(
+		obj.GetGroupVersionKind().GroupKind(),
+		obj.GetName(),
+		field.ErrorList{
+			field.Forbidden(
+				field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
+				fmt.Sprintf("folders are not supported for %s", s.gr.String()),
+			),
+		},
+	)
+}
+
 // Called on create
 func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime.Object) (objectForStorage, error) {
 	v := objectForStorage{}
@@ -105,8 +128,8 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if obj.GetUID() == "" {
 		obj.SetUID(types.UID(uuid.NewString()))
 	}
-	if obj.GetFolder() != "" && !s.opts.EnableFolderSupport {
-		return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
+	if err = s.verifyFolder(obj); err != nil {
+		return v, err
 	}
 	if s.opts.MaximumNameLength > 0 && len(obj.GetName()) > s.opts.MaximumNameLength {
 		return v, apierrors.NewBadRequest(fmt.Sprintf("name exceeds maximum length (%d)", s.opts.MaximumNameLength))
@@ -153,9 +176,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return v, err
 	}
 
-	if err = s.encode(newObject, &v.raw); err == nil {
-		err = s.handleLargeResources(ctx, obj, &v.raw)
-	}
+	err = s.encode(newObject, &v.raw)
 	return v, err
 }
 
@@ -217,10 +238,9 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 	// Check if we should bump the generation
 	if obj.GetFolder() != previous.GetFolder() {
-		if !s.opts.EnableFolderSupport {
-			return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
+		if err = s.verifyFolder(obj); err != nil {
+			return v, err
 		}
-		// TODO: check that we can move the folder?
 		if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
 			return v, err
 		}
@@ -269,14 +289,12 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetAnnotation(utils.AnnoKeyUpdatedTimestamp, previous.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 	}
 
-	if err = s.encode(updateObject, &v.raw); err == nil {
-		err = s.handleLargeResources(ctx, obj, &v.raw)
-	}
+	err = s.encode(updateObject, &v.raw)
 	return v, err
 }
 
 func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
-	if !s.opts.EnableFolderSupport || obj.GetFolder() == "" {
+	if !s.opts.EnableFolderSupport || folder.IsRootFolderUID(obj.GetFolder()) {
 		return nil
 	}
 	folder, err := s.getParentFolder(ctx, obj)
@@ -310,39 +328,6 @@ func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAcce
 	}
 
 	return utils.MetaAccessor(raw)
-}
-
-// The bytes buffer will be reset with the proper value
-func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMetaAccessor, buf *bytes.Buffer) error {
-	support := s.opts.LargeObjectSupport
-	size := buf.Len()
-	if support != nil && size > support.Threshold() {
-		if support.MaxSize() > 0 && size > support.MaxSize() {
-			return fmt.Errorf("request object is too big (%s > %s)", humanize.Bytes(uint64(size)), humanize.Bytes(uint64(support.MaxSize())))
-		}
-
-		key := &resourcepb.ResourceKey{
-			Group:     s.gr.Group,
-			Resource:  s.gr.Resource,
-			Namespace: obj.GetNamespace(),
-			Name:      obj.GetName(),
-		}
-
-		err := support.Deconstruct(ctx, key, s.store, obj, buf.Bytes())
-		if err != nil {
-			return err
-		}
-
-		buf.Reset()
-		orig, ok := obj.GetRuntimeObject()
-		if !ok {
-			return fmt.Errorf("error using object as runtime object")
-		}
-
-		// Now encode the smaller version
-		return s.encode(orig, buf)
-	}
-	return nil
 }
 
 func (s *Storage) checkGVK(obj runtime.Object) error {

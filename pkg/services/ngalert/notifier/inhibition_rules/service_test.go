@@ -6,7 +6,6 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
 
@@ -17,12 +16,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 )
 
 var (
-	testGrafanaRule = definitions.InhibitionRule{
+	testGrafanaRule = v1.InhibitionRule{
 		Name:       "managed-rule-1",
-		Provenance: definitions.Provenance(models.ProvenanceNone),
+		Provenance: v1.Provenance(models.ProvenanceNone),
 		InhibitRule: definitions.InhibitRule{
 			SourceMatchers: []*labels.Matcher{
 				{
@@ -42,9 +43,9 @@ var (
 		},
 	}
 
-	testImportedRule = definitions.InhibitionRule{
+	testImportedRule = v1.InhibitionRule{
 		Name:       "test-mimir-imported-inhibition-rule-00000",
-		Provenance: definitions.Provenance(models.ProvenanceConvertedPrometheus),
+		Provenance: v1.Provenance(models.ProvenanceConvertedPrometheus),
 		InhibitRule: definitions.InhibitRule{
 			SourceMatchers: []*labels.Matcher{
 				{
@@ -83,10 +84,10 @@ func TestService_GetInhibitionRules(t *testing.T) {
 	tt := []struct {
 		name           string
 		enableImported bool
-		grafanaRules   []definitions.InhibitionRule
-		importedRules  []definitions.InhibitionRule
+		grafanaRules   []v1.InhibitionRule
+		importedRules  []v1.InhibitionRule
 		expErr         error
-		expRules       []definitions.InhibitionRule
+		expRules       []v1.InhibitionRule
 	}{
 		{
 			name:           "returns both Grafana and imported inhibition rules",
@@ -142,11 +143,11 @@ func TestService_GetInhibitionRule(t *testing.T) {
 
 	tt := []struct {
 		name          string
-		grafanaRules  []definitions.InhibitionRule
-		importedRules []definitions.InhibitionRule
+		grafanaRules  []v1.InhibitionRule
+		importedRules []v1.InhibitionRule
 		ruleName      string
 		expErr        error
-		expRule       definitions.InhibitionRule
+		expRule       v1.InhibitionRule
 	}{
 		{
 			name:         "can fetch grafana rule by name",
@@ -188,28 +189,28 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 
 	tt := []struct {
 		name          string
-		grafanaRules  []definitions.InhibitionRule
-		importedRules []definitions.InhibitionRule
+		grafanaRules  []v1.InhibitionRule
+		importedRules []v1.InhibitionRule
 		ruleName      string
 		version       string
-		updatedRule   definitions.InhibitionRule
+		updatedRule   v1.InhibitionRule
 		expErr        error
-		expRule       definitions.InhibitionRule
+		expRule       v1.InhibitionRule
 	}{
 		{
 			name:         "can update grafana rule",
 			grafanaRules: grafanaRules,
 			ruleName:     testGrafanaRule.Name,
 			version:      testGrafanaRule.Fingerprint(),
-			updatedRule: func() definitions.InhibitionRule {
+			updatedRule: func() v1.InhibitionRule {
 				r := testGrafanaRule
 				r.Equal = []string{"instance", "job"}
 				return r
 			}(),
-			expRule: func() definitions.InhibitionRule {
+			expRule: func() v1.InhibitionRule {
 				r := testGrafanaRule
 				r.Equal = []string{"instance", "job"}
-				updated, err := legacy_storage.InhibitRuleToInhibitionRule(r.Name, r.InhibitRule, r.Provenance)
+				updated, err := v1.InhibitRuleToInhibitionRule(r.Name, r.InhibitRule, r.Provenance)
 				require.Nil(t, err)
 				return *updated
 			}(),
@@ -219,15 +220,15 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 			grafanaRules: grafanaRules,
 			ruleName:     testGrafanaRule.Name,
 			version:      testGrafanaRule.Fingerprint(),
-			updatedRule: func() definitions.InhibitionRule {
+			updatedRule: func() v1.InhibitionRule {
 				r := testGrafanaRule
 				r.Name = "managed-rule-1-renamed"
 				return r
 			}(),
-			expRule: func() definitions.InhibitionRule {
+			expRule: func() v1.InhibitionRule {
 				r := testGrafanaRule
 				r.Name = "managed-rule-1-renamed"
-				updated, err := legacy_storage.InhibitRuleToInhibitionRule(r.Name, r.InhibitRule, r.Provenance)
+				updated, err := v1.InhibitRuleToInhibitionRule(r.Name, r.InhibitRule, r.Provenance)
 				require.Nil(t, err)
 				return *updated
 			}(),
@@ -258,7 +259,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 				listRes, err := sut.GetInhibitionRules(ctx, orgID)
 				require.Nil(t, err)
 
-				require.Equal(t, []definitions.InhibitionRule{tc.expRule}, listRes)
+				require.Equal(t, []v1.InhibitionRule{tc.expRule}, listRes)
 			}
 		})
 	}
@@ -271,11 +272,11 @@ func TestService_DeleteInhibitionRule(t *testing.T) {
 
 	tt := []struct {
 		name          string
-		grafanaRules  []definitions.InhibitionRule
-		importedRules []definitions.InhibitionRule
+		grafanaRules  []v1.InhibitionRule
+		importedRules []v1.InhibitionRule
 		ruleName      string
 		expErr        error
-		expRule       definitions.InhibitionRule
+		expRule       v1.InhibitionRule
 	}{
 		{
 			name:          "can delete grafana rule",
@@ -307,7 +308,7 @@ func TestService_DeleteInhibitionRule(t *testing.T) {
 				listRes, err := sut.GetInhibitionRules(ctx, orgID)
 				require.Nil(t, err)
 
-				listMap := make(map[string]definitions.InhibitionRule, len(listRes))
+				listMap := make(map[string]v1.InhibitionRule, len(listRes))
 				for _, r := range listRes {
 					listMap[r.Name] = r
 				}
@@ -330,36 +331,35 @@ func createInhibitionRuleSvcSut(enableImported bool) (*Service, *legacy_storage.
 			featuremgmt.FlagAlertingImportAlertmanagerAPI,
 		)
 	}
-	return NewService(store, logger, ff), store
+	return NewService(store, logger, ff, validation.ValidateProvenanceRelaxed), store
 }
 
-func createTestConfig(t *testing.T, grafanaRules, importedRules []definitions.InhibitionRule) *legacy_storage.ConfigRevision {
+func createTestConfig(t *testing.T, grafanaRules, importedRules []v1.InhibitionRule) *legacy_storage.ConfigRevision {
 	t.Helper()
 
-	managedIRs := make(definitions.ManagedInhibitionRules, len(grafanaRules))
+	managedIRs := make(v1.ManagedInhibitionRules, len(grafanaRules))
 	for _, r := range grafanaRules {
 		managedIRs[r.Name] = &r
 	}
 
-	cfg := &definitions.PostableUserConfig{
+	cfg := &v1.AMConfigV1{
 		ManagedInhibitionRules: managedIRs,
-		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-			Config: definitions.Config{
-				Route: &definitions.Route{
+		AlertmanagerConfig: v1.PostableApiAlertingConfig{
+			Config: v1.Config{
+				Route: &v1.Route{
 					Receiver: "default",
 				},
 			},
 		},
-		ManagedRoutes: map[string]*definitions.Route{
+		ManagedRoutes: map[string]*v1.Route{
 			"default-route": {Receiver: "default"},
 		},
 	}
 
 	mimirConfig := buildMimirAMConfigWithInhibitRules(t, importedRules)
-	cfg.ExtraConfigs = []definitions.ExtraConfiguration{
+	cfg.ExtraConfigs = []v1.ExtraConfiguration{
 		{
 			Identifier:         "test-mimir",
-			MergeMatchers:      config.Matchers{&labels.Matcher{Type: labels.MatchEqual, Name: "__imported", Value: "test"}},
 			AlertmanagerConfig: mimirConfig,
 		},
 	}
@@ -367,7 +367,7 @@ func createTestConfig(t *testing.T, grafanaRules, importedRules []definitions.In
 	return &legacy_storage.ConfigRevision{Config: cfg}
 }
 
-func buildMimirAMConfigWithInhibitRules(t *testing.T, rules []definitions.InhibitionRule) string {
+func buildMimirAMConfigWithInhibitRules(t *testing.T, rules []v1.InhibitionRule) string {
 	t.Helper()
 
 	c := definition.PostableApiAlertingConfig{
@@ -413,6 +413,6 @@ func buildMimirAMConfigWithInhibitRules(t *testing.T, rules []definitions.Inhibi
 	return string(d)
 }
 
-func getTestRules() (grafanaRules, importedRules []definitions.InhibitionRule) {
-	return []definitions.InhibitionRule{testGrafanaRule}, []definitions.InhibitionRule{testImportedRule}
+func getTestRules() (grafanaRules, importedRules []v1.InhibitionRule) {
+	return []v1.InhibitionRule{testGrafanaRule}, []v1.InhibitionRule{testImportedRule}
 }

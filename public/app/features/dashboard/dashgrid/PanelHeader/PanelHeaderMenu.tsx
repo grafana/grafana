@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { PanelMenuItem } from '@grafana/data';
+import { type PanelMenuItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Menu } from '@grafana/ui';
 

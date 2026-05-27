@@ -1,13 +1,13 @@
 import { PureComponent } from 'react';
-import { PartialObserver, Unsubscribable } from 'rxjs';
+import { type PartialObserver, type Unsubscribable } from 'rxjs';
 
 import {
-  BusEvent,
+  type BusEvent,
   CircularVector,
   DataHoverEvent,
   DataHoverClearEvent,
   DataSelectEvent,
-  EventBus,
+  type EventBus,
 } from '@grafana/data';
 import { CustomScrollbar } from '@grafana/ui';
 

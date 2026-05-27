@@ -1,12 +1,12 @@
 import { useState } from 'react';
 
-import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
+import { type SelectableValue, type UrlQueryMap, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Checkbox, ClipboardButton, Field, FieldSet, Input, Modal, RadioButtonGroup } from '@grafana/ui';
 import { buildBaseUrl } from 'app/features/dashboard/components/ShareModal/utils';
 
-import { PlaylistMode } from './types';
+import { type PlaylistMode } from './types';
 
 interface Props {
   playlistUid: string;

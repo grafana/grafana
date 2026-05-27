@@ -27,7 +27,7 @@ func TestIsFolderMetadataFile(t *testing.T) {
 func TestReadFolderMetadata(t *testing.T) {
 	const stableUID = "stable-uid-from-folder-json"
 
-	manifest := NewFolderManifest(stableUID, "my-folder")
+	manifest := NewFolderManifest(stableUID, "my-folder", FolderKind)
 	validData, err := json.Marshal(manifest)
 	require.NoError(t, err)
 
@@ -79,7 +79,7 @@ func TestReadFolderMetadata(t *testing.T) {
 
 func TestParseFolderWithMetadata_MetadataHash(t *testing.T) {
 	const stableUID = "stable-uid"
-	manifest := NewFolderManifest(stableUID, "My Folder")
+	manifest := NewFolderManifest(stableUID, "My Folder", FolderKind)
 	validData, err := json.Marshal(manifest)
 	require.NoError(t, err)
 
@@ -127,7 +127,7 @@ func TestWriteFolderMetadata(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 
 		const uid = "my-stable-uid"
-		manifest := NewFolderManifest(uid, "myfolder")
+		manifest := NewFolderManifest(uid, "myfolder", FolderKind)
 
 		rw.On("Create", mock.Anything, "myfolder/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
 			var f folders.Folder
@@ -148,7 +148,7 @@ func TestWriteFolderMetadata(t *testing.T) {
 
 	t.Run("returns error when repo.Create fails", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
-		manifest := NewFolderManifest("some-uid", "myfolder")
+		manifest := NewFolderManifest("some-uid", "myfolder", FolderKind)
 		rw.On("Create", mock.Anything, "myfolder/_folder.json", "", mock.Anything, "").
 			Return(assert.AnError)
 
@@ -281,7 +281,7 @@ func TestFolderMetadataConflict_Error(t *testing.T) {
 }
 
 func TestNewFolderManifest(t *testing.T) {
-	f := NewFolderManifest("my-uid", "My Folder")
+	f := NewFolderManifest("my-uid", "My Folder", FolderKind)
 	require.NotNil(t, f)
 	assert.Equal(t, "my-uid", f.Name)
 	assert.Equal(t, "My Folder", f.Spec.Title)
@@ -365,7 +365,7 @@ func TestParseFolderResource(t *testing.T) {
 	testRepoConfig := newTestRepoConfig("test-repo")
 
 	// Create test folder metadata
-	testFolder := NewFolderManifest("stable-uid-123", "project-x")
+	testFolder := NewFolderManifest("stable-uid-123", "project-x", FolderKind)
 	metadataBytes, err := json.Marshal(testFolder)
 	require.NoError(t, err)
 
@@ -393,7 +393,7 @@ func TestParseFolderResource(t *testing.T) {
 						Path: "team-a/project-x/_folder.json",
 					}, nil)
 				// Parent folder metadata read
-				parentFolder := NewFolderManifest("parent-uid-456", "team-a")
+				parentFolder := NewFolderManifest("parent-uid-456", "team-a", FolderKind)
 				parentBytes, _ := json.Marshal(parentFolder)
 				reader.On("Read", mock.Anything, "team-a/_folder.json", testRef).
 					Return(&repository.FileInfo{Data: parentBytes}, nil)
@@ -522,7 +522,7 @@ func TestParseFolderResource(t *testing.T) {
 			folderMetadataEnabled: true,
 			setupMock: func(reader *repository.MockReader) {
 				reader.On("Config").Return(testRepoConfig)
-				rootFolder := NewFolderManifest("root-uid-789", "root-folder")
+				rootFolder := NewFolderManifest("root-uid-789", "root-folder", FolderKind)
 				rootBytes, _ := json.Marshal(rootFolder)
 				reader.On("Read", mock.Anything, "root-folder/_folder.json", testRef).
 					Return(&repository.FileInfo{Data: rootBytes}, nil)
@@ -540,14 +540,14 @@ func TestParseFolderResource(t *testing.T) {
 			folderMetadataEnabled: true,
 			setupMock: func(reader *repository.MockReader) {
 				reader.On("Config").Return(testRepoConfig)
-				customFolder := NewFolderManifest("stable-uid-123", "My Custom Project Title")
+				customFolder := NewFolderManifest("stable-uid-123", "My Custom Project Title", FolderKind)
 				customBytes, _ := json.Marshal(customFolder)
 				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", testRef).
 					Return(&repository.FileInfo{
 						Data: customBytes,
 						Path: "team-a/project-x/_folder.json",
 					}, nil)
-				parentFolder := NewFolderManifest("parent-uid-456", "team-a")
+				parentFolder := NewFolderManifest("parent-uid-456", "team-a", FolderKind)
 				parentBytes, _ := json.Marshal(parentFolder)
 				reader.On("Read", mock.Anything, "team-a/_folder.json", testRef).
 					Return(&repository.FileInfo{Data: parentBytes}, nil)
@@ -565,14 +565,14 @@ func TestParseFolderResource(t *testing.T) {
 			folderMetadataEnabled: true,
 			setupMock: func(reader *repository.MockReader) {
 				reader.On("Config").Return(testRepoConfig)
-				emptyTitleFolder := NewFolderManifest("stable-uid-123", "")
+				emptyTitleFolder := NewFolderManifest("stable-uid-123", "", FolderKind)
 				emptyBytes, _ := json.Marshal(emptyTitleFolder)
 				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", testRef).
 					Return(&repository.FileInfo{
 						Data: emptyBytes,
 						Path: "team-a/project-x/_folder.json",
 					}, nil)
-				parentFolder := NewFolderManifest("parent-uid-456", "team-a")
+				parentFolder := NewFolderManifest("parent-uid-456", "team-a", FolderKind)
 				parentBytes, _ := json.Marshal(parentFolder)
 				reader.On("Read", mock.Anything, "team-a/_folder.json", testRef).
 					Return(&repository.FileInfo{Data: parentBytes}, nil)
@@ -606,7 +606,7 @@ func TestParseFolderResource(t *testing.T) {
 			reader := repository.NewMockReader(t)
 			tt.setupMock(reader)
 
-			result, err := ParseFolderResource(ctx, reader, tt.path, testRef, tt.folderMetadataEnabled)
+			result, err := ParseFolderResource(ctx, reader, tt.path, testRef, tt.folderMetadataEnabled, FolderKind)
 
 			if tt.expectedErr {
 				assert.Error(t, err, tt.description)
@@ -636,6 +636,237 @@ func TestParseFolderResource(t *testing.T) {
 	}
 }
 
+func TestWriteFolderMetadataUpdate(t *testing.T) {
+	ctx := context.Background()
+
+	const existingUID = "existing-uid-123"
+	existingManifest := NewFolderManifest(existingUID, "Original Title", FolderKind)
+	existingData, err := json.Marshal(existingManifest)
+	require.NoError(t, err)
+
+	t.Run("updates title when ID matches", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
+		rw.On("Update", mock.Anything, "myfolder/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
+			var f folders.Folder
+			if err := json.Unmarshal(b, &f); err != nil {
+				return false
+			}
+			return f.Name == existingUID && f.Spec.Title == "New Title"
+		}), "").Return(nil)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: []byte("{}"), Hash: "new-hash"}, nil).Once()
+
+		submitted := NewFolderManifest(existingUID, "New Title", FolderKind)
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
+
+		require.NoError(t, err)
+		assert.Equal(t, "new-hash", hash)
+	})
+
+	t.Run("updates title when submitted ID is empty", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
+		rw.On("Update", mock.Anything, "myfolder/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
+			var f folders.Folder
+			if err := json.Unmarshal(b, &f); err != nil {
+				return false
+			}
+			return f.Name == existingUID && f.Spec.Title == "Title With No ID"
+		}), "").Return(nil)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: []byte("{}"), Hash: "new-hash"}, nil).Once()
+
+		submitted := &folders.Folder{}
+		submitted.Spec.Title = "Title With No ID"
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
+
+		require.NoError(t, err)
+		assert.Equal(t, "new-hash", hash)
+	})
+
+	t.Run("rejects ID change", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil)
+
+		submitted := NewFolderManifest("different-uid", "Some Title", FolderKind)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "folder ID change is not allowed")
+	})
+
+	t.Run("rejects empty title", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil)
+
+		submitted := NewFolderManifest(existingUID, "", FolderKind)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "title must not be empty")
+	})
+
+	t.Run("returns error when existing _folder.json not found", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(nil, repository.ErrFileNotFound)
+
+		submitted := NewFolderManifest("any-uid", "Title", FolderKind)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
+
+		require.Error(t, err)
+	})
+
+	t.Run("returns error when repo Update fails", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
+		rw.On("Update", mock.Anything, "myfolder/_folder.json", "", mock.Anything, "").
+			Return(assert.AnError)
+
+		submitted := NewFolderManifest(existingUID, "New Title", FolderKind)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
+
+		require.Error(t, err)
+	})
+
+	t.Run("updates description when provided", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
+		rw.On("Update", mock.Anything, "myfolder/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
+			var f folders.Folder
+			if err := json.Unmarshal(b, &f); err != nil {
+				return false
+			}
+			return f.Name == existingUID &&
+				f.Spec.Title == "New Title" &&
+				f.Spec.Description != nil &&
+				*f.Spec.Description == "New Description"
+		}), "").Return(nil)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: []byte("{}"), Hash: "desc-hash"}, nil).Once()
+
+		submitted := NewFolderManifest(existingUID, "New Title", FolderKind)
+		desc := "New Description"
+		submitted.Spec.Description = &desc
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
+
+		require.NoError(t, err)
+		assert.Equal(t, "desc-hash", hash)
+	})
+
+	t.Run("preserves existing description when not provided in submission", func(t *testing.T) {
+		existingWithDesc := NewFolderManifest(existingUID, "Original Title", FolderKind)
+		origDesc := "Existing Description"
+		existingWithDesc.Spec.Description = &origDesc
+		existingWithDescData, err := json.Marshal(existingWithDesc)
+		require.NoError(t, err)
+
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingWithDescData, Hash: "old-hash"}, nil).Once()
+		rw.On("Update", mock.Anything, "myfolder/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
+			var f folders.Folder
+			if err := json.Unmarshal(b, &f); err != nil {
+				return false
+			}
+			return f.Spec.Title == "New Title" &&
+				f.Spec.Description != nil &&
+				*f.Spec.Description == "Existing Description"
+		}), "").Return(nil)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: []byte("{}"), Hash: "new-hash"}, nil).Once()
+
+		submitted := &folders.Folder{}
+		submitted.Spec.Title = "New Title"
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
+
+		require.NoError(t, err)
+		assert.Equal(t, "new-hash", hash)
+	})
+
+	t.Run("returns error when re-read after update fails", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
+		rw.On("Update", mock.Anything, "myfolder/_folder.json", "", mock.Anything, "").Return(nil)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(nil, fmt.Errorf("storage error")).Once()
+
+		submitted := NewFolderManifest(existingUID, "New Title", FolderKind)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "re-read updated folder metadata")
+	})
+
+	t.Run("passes ref and message to repo operations", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "feature-branch").
+			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
+		rw.On("Update", mock.Anything, "myfolder/_folder.json", "feature-branch", mock.Anything, "my commit message").Return(nil)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "feature-branch").
+			Return(&repository.FileInfo{Data: []byte("{}"), Hash: "branch-hash"}, nil).Once()
+
+		submitted := NewFolderManifest(existingUID, "New Title", FolderKind)
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "feature-branch", "my commit message", submitted)
+
+		require.NoError(t, err)
+		assert.Equal(t, "branch-hash", hash)
+		rw.AssertExpectations(t)
+	})
+
+	t.Run("falls back to configured branch when ref not found", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		// First read with new-branch ref returns ErrRefNotFound
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "new-branch").
+			Return(nil, repository.ErrRefNotFound).Once()
+		// Fallback read with empty ref (configured branch) returns existing data
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
+		// Update writes to the new branch (ensureBranchExists creates it)
+		rw.On("Update", mock.Anything, "myfolder/_folder.json", "new-branch", mock.MatchedBy(func(b []byte) bool {
+			var f folders.Folder
+			if err := json.Unmarshal(b, &f); err != nil {
+				return false
+			}
+			return f.Name == existingUID && f.Spec.Title == "New Title"
+		}), "rename folder").Return(nil)
+		// Re-read after update to get new hash
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "new-branch").
+			Return(&repository.FileInfo{Data: []byte("{}"), Hash: "new-branch-hash"}, nil).Once()
+
+		submitted := NewFolderManifest(existingUID, "New Title", FolderKind)
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "new-branch", "rename folder", submitted)
+
+		require.NoError(t, err)
+		assert.Equal(t, "new-branch-hash", hash)
+		rw.AssertExpectations(t)
+	})
+
+	t.Run("returns error when both ref and configured branch fail", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		// First read with new-branch ref returns ErrRefNotFound
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "new-branch").
+			Return(nil, repository.ErrRefNotFound).Once()
+		// Fallback read with empty ref also fails
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(nil, repository.ErrFileNotFound).Once()
+
+		submitted := NewFolderManifest("any-uid", "Title", FolderKind)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "new-branch", "", submitted)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "read existing folder metadata")
+	})
+}
+
 func TestGetFolderID(t *testing.T) {
 	ctx := context.Background()
 	testPath := "team-a/project-x/"
@@ -645,7 +876,7 @@ func TestGetFolderID(t *testing.T) {
 	testRepoConfig := newTestRepoConfig("test-repo")
 
 	// Create test folder metadata
-	testFolder := NewFolderManifest("stable-uid-123", "Test Folder")
+	testFolder := NewFolderManifest("stable-uid-123", "Test Folder", FolderKind)
 	metadataBytes, err := json.Marshal(testFolder)
 	require.NoError(t, err)
 
@@ -701,7 +932,7 @@ func TestGetFolderID(t *testing.T) {
 			folderMetadataEnabled: true,
 			setupMock: func(reader *repository.MockReader) {
 				reader.On("Config").Return(testRepoConfig)
-				emptyFolder := NewFolderManifest("", "Empty UID Folder")
+				emptyFolder := NewFolderManifest("", "Empty UID Folder", FolderKind)
 				emptyBytes, _ := json.Marshal(emptyFolder)
 				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", "").
 					Return(&repository.FileInfo{

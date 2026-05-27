@@ -1,11 +1,11 @@
 import { LoadingState } from '@grafana/data';
-import { DashboardQueryResult } from 'app/features/search/service/types';
+import { type DashboardQueryResult } from 'app/features/search/service/types';
 
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
 
 import {
   deleteLibraryPanelModalReducer,
-  DeleteLibraryPanelModalState,
+  type DeleteLibraryPanelModalState,
   initialDeleteLibraryPanelModalState,
   searchCompleted,
 } from './reducer';

@@ -1,10 +1,11 @@
 import { OFREPWebProvider } from '@openfeature/ofrep-web-provider';
-import { OpenFeature, ProviderEvents, NOOP_PROVIDER, EventDetails } from '@openfeature/react-sdk';
-
-import { FeatureToggles } from '@grafana/data';
+import { OpenFeature, ProviderEvents, NOOP_PROVIDER, type EventDetails } from '@openfeature/react-sdk';
 
 import { config } from '../../config';
 import { logError } from '../../utils/logging';
+
+// Ensure the module augmentation is pulled in
+import './openfeature-types.gen.d.ts';
 
 function checkDefaultProvider(event?: EventDetails) {
   if (event?.domain) {
@@ -23,8 +24,6 @@ function checkDefaultProvider(event?: EventDetails) {
   }
 }
 
-export type FeatureFlagName = keyof FeatureToggles;
-
 // The domain creates the unique instance of the OpenFeature client for Grafana core,
 // with its own evaluation context and provider.
 // Plugins should not use this client or domain, and instead create their own client
@@ -32,7 +31,7 @@ export type FeatureFlagName = keyof FeatureToggles;
 //
 // If changing this, you MUST also update the same constant in packages/grafana-test-utils/src/utilities/featureFlags.ts
 // to ensure tests work correctly.
-export const GRAFANA_CORE_OPEN_FEATURE_DOMAIN = 'internal-grafana-core';
+const GRAFANA_CORE_OPEN_FEATURE_DOMAIN = 'internal-grafana-core';
 
 export async function initOpenFeature() {
   OpenFeature.addHandler(ProviderEvents.Ready, checkDefaultProvider);

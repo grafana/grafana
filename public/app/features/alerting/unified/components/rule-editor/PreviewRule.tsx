@@ -5,15 +5,15 @@ import { useFormContext } from 'react-hook-form';
 import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
 
-import { GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
+import { type GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { previewAlertRule } from '../../api/preview';
 import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
-import { PreviewRuleRequest, PreviewRuleResponse } from '../../types/preview';
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { type PreviewRuleRequest, type PreviewRuleResponse } from '../../types/preview';
+import { RuleFormType, type RuleFormValues } from '../../types/rule-form';
 import { isDataSourceManagedRuleByType } from '../../utils/rules';
 
 import { PreviewRuleResult } from './PreviewRuleResult';

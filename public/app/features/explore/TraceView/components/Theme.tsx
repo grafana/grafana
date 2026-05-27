@@ -14,7 +14,7 @@
 
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 /**
  * Tries to get a dark variant color. Either by simply inverting the luminosity and darkening or lightening the color

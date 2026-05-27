@@ -2,19 +2,19 @@ import { css } from '@emotion/css';
 import { useCallback, useRef, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type PanelData, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Field, FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
-import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
+import { type VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { VizTypePicker } from '../../../panel/components/VizTypePicker/VizTypePicker';
 import { changePanelPlugin } from '../../../panel/state/actions';
-import { PanelModel } from '../../state/PanelModel';
+import { type PanelModel } from '../../state/PanelModel';
 import { getPanelPluginWithFallback } from '../../state/selectors';
 
 import { toggleVizPicker } from './state/reducers';
@@ -89,11 +89,11 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
             placeholder={t('dashboard.visualization-select-pane.placeholder-search-for', 'Search for...')}
           />
           <Button
-            title={t('dashboard.visualization-select-pane.title-close', 'Close')}
+            aria-label={t('dashboard.visualization-select-pane.title-close', 'Close')}
             variant="secondary"
             icon="angle-up"
             className={styles.closeButton}
-            aria-label={selectors.components.PanelEditor.toggleVizPicker}
+            data-testid={selectors.components.PanelEditor.toggleVizPicker}
             onClick={onCloseVizPicker}
           />
         </div>

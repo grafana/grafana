@@ -1,7 +1,7 @@
 import { createAction, createReducer } from '@reduxjs/toolkit';
 import { remove } from 'lodash';
 
-import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerCortexConfig, type Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 import { renameReceiverInRoute } from '../../utils/notification-policies';
 

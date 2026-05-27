@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
 )
 
 // TestIntegrationProvisioning_IncrementalGitSync_MultiFileUIDTakeover verifies
@@ -24,11 +23,11 @@ func TestIntegrationProvisioning_IncrementalGitSync_MultiFileUIDTakeover(t *test
 	const repoName = "git-incr-uid-takeover"
 
 	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dashboard_a.json": gitcommon.DashboardJSON("takeover-uid-a", "Dashboard A", 1),
-		"dashboard_b.json": gitcommon.DashboardJSON("takeover-uid-b", "Dashboard B", 1),
+		"dashboard_a.json": common.DashboardJSON("takeover-uid-a", "Dashboard A", 1),
+		"dashboard_b.json": common.DashboardJSON("takeover-uid-b", "Dashboard B", 1),
 	}, "write", "branch")
 
-	common.SyncAndWaitWithSuccess(t, helper, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"takeover-uid-a": {Title: "Dashboard A", SourcePath: "dashboard_a.json"},
 		"takeover-uid-b": {Title: "Dashboard B", SourcePath: "dashboard_b.json"},
@@ -40,8 +39,8 @@ func TestIntegrationProvisioning_IncrementalGitSync_MultiFileUIDTakeover(t *test
 	// then deletes its own old UID (takeover-uid-a). When B runs next it
 	// writes the new UID and tries to delete takeover-uid-b, but the
 	// sourcePath guard skips the delete since dashboard_a.json ≠ dashboard_b.json.
-	require.NoError(t, local.UpdateFile("dashboard_a.json", string(gitcommon.DashboardJSON("takeover-uid-b", "Dashboard A Took B", 2))))
-	require.NoError(t, local.UpdateFile("dashboard_b.json", string(gitcommon.DashboardJSON("takeover-uid-new", "Dashboard B New UID", 2))))
+	require.NoError(t, local.UpdateFile("dashboard_a.json", string(common.DashboardJSON("takeover-uid-b", "Dashboard A Took B", 2))))
+	require.NoError(t, local.UpdateFile("dashboard_b.json", string(common.DashboardJSON("takeover-uid-new", "Dashboard B New UID", 2))))
 	_, err := local.Git("add", ".")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "file A takes B's UID, B gets new UID")
@@ -78,19 +77,19 @@ func TestIntegrationProvisioning_IncrementalGitSync_MultiFileUIDSwap(t *testing.
 	const repoName = "git-incr-uid-swap"
 
 	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dashboard_a.json": gitcommon.DashboardJSON("swap-uid-a", "Dashboard A", 1),
-		"dashboard_b.json": gitcommon.DashboardJSON("swap-uid-b", "Dashboard B", 1),
+		"dashboard_a.json": common.DashboardJSON("swap-uid-a", "Dashboard A", 1),
+		"dashboard_b.json": common.DashboardJSON("swap-uid-b", "Dashboard B", 1),
 	}, "write", "branch")
 
-	common.SyncAndWaitWithSuccess(t, helper, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"swap-uid-a": {Title: "Dashboard A", SourcePath: "dashboard_a.json"},
 		"swap-uid-b": {Title: "Dashboard B", SourcePath: "dashboard_b.json"},
 	})
 
 	// Symmetric swap: A gets B's UID, B gets A's UID.
-	require.NoError(t, local.UpdateFile("dashboard_a.json", string(gitcommon.DashboardJSON("swap-uid-b", "Dashboard A Swapped", 2))))
-	require.NoError(t, local.UpdateFile("dashboard_b.json", string(gitcommon.DashboardJSON("swap-uid-a", "Dashboard B Swapped", 2))))
+	require.NoError(t, local.UpdateFile("dashboard_a.json", string(common.DashboardJSON("swap-uid-b", "Dashboard A Swapped", 2))))
+	require.NoError(t, local.UpdateFile("dashboard_b.json", string(common.DashboardJSON("swap-uid-a", "Dashboard B Swapped", 2))))
 	_, err := local.Git("add", ".")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "swap UIDs between A and B")
@@ -129,19 +128,19 @@ func TestIntegrationProvisioning_FullSync_MultiFileUIDTakeover_Recovery(t *testi
 	const repoName = "git-full-uid-takeover-recovery"
 
 	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dashboard_a.json": gitcommon.DashboardJSON("full-uid-a", "Dashboard A", 1),
-		"dashboard_b.json": gitcommon.DashboardJSON("full-uid-b", "Dashboard B", 1),
+		"dashboard_a.json": common.DashboardJSON("full-uid-a", "Dashboard A", 1),
+		"dashboard_b.json": common.DashboardJSON("full-uid-b", "Dashboard B", 1),
 	}, "write", "branch")
 
-	common.SyncAndWaitWithSuccess(t, helper, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"full-uid-a": {Title: "Dashboard A", SourcePath: "dashboard_a.json"},
 		"full-uid-b": {Title: "Dashboard B", SourcePath: "dashboard_b.json"},
 	})
 
 	// File A takes B's UID; file B gets a brand-new UID.
-	require.NoError(t, local.UpdateFile("dashboard_a.json", string(gitcommon.DashboardJSON("full-uid-b", "Dashboard A Took B", 2))))
-	require.NoError(t, local.UpdateFile("dashboard_b.json", string(gitcommon.DashboardJSON("full-uid-new", "Dashboard B New UID", 2))))
+	require.NoError(t, local.UpdateFile("dashboard_a.json", string(common.DashboardJSON("full-uid-b", "Dashboard A Took B", 2))))
+	require.NoError(t, local.UpdateFile("dashboard_b.json", string(common.DashboardJSON("full-uid-new", "Dashboard B New UID", 2))))
 	_, err := local.Git("add", ".")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "file A takes B's UID, B gets new UID")
@@ -158,7 +157,7 @@ func TestIntegrationProvisioning_FullSync_MultiFileUIDTakeover_Recovery(t *testi
 	// A second full sync compares the git tree against the current Grafana
 	// state and re-creates any resources that went missing in the first sync.
 	// After this, the state must converge to the correct result.
-	common.SyncAndWaitWithSuccess(t, helper, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"full-uid-b":   {Title: "Dashboard A Took B", SourcePath: "dashboard_a.json"},
@@ -186,19 +185,19 @@ func TestIntegrationProvisioning_FullSync_MultiFileUIDSwap_Recovery(t *testing.T
 	const repoName = "git-full-uid-swap-recovery"
 
 	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dashboard_a.json": gitcommon.DashboardJSON("fswap-uid-a", "Dashboard A", 1),
-		"dashboard_b.json": gitcommon.DashboardJSON("fswap-uid-b", "Dashboard B", 1),
+		"dashboard_a.json": common.DashboardJSON("fswap-uid-a", "Dashboard A", 1),
+		"dashboard_b.json": common.DashboardJSON("fswap-uid-b", "Dashboard B", 1),
 	}, "write", "branch")
 
-	common.SyncAndWaitWithSuccess(t, helper, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"fswap-uid-a": {Title: "Dashboard A", SourcePath: "dashboard_a.json"},
 		"fswap-uid-b": {Title: "Dashboard B", SourcePath: "dashboard_b.json"},
 	})
 
 	// Symmetric swap: A gets B's UID, B gets A's UID.
-	require.NoError(t, local.UpdateFile("dashboard_a.json", string(gitcommon.DashboardJSON("fswap-uid-b", "Dashboard A Swapped", 2))))
-	require.NoError(t, local.UpdateFile("dashboard_b.json", string(gitcommon.DashboardJSON("fswap-uid-a", "Dashboard B Swapped", 2))))
+	require.NoError(t, local.UpdateFile("dashboard_a.json", string(common.DashboardJSON("fswap-uid-b", "Dashboard A Swapped", 2))))
+	require.NoError(t, local.UpdateFile("dashboard_b.json", string(common.DashboardJSON("fswap-uid-a", "Dashboard B Swapped", 2))))
 	_, err := local.Git("add", ".")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "swap UIDs between A and B")
@@ -213,7 +212,7 @@ func TestIntegrationProvisioning_FullSync_MultiFileUIDSwap_Recovery(t *testing.T
 
 	// A second full sync re-compares the git tree and recovers any missing
 	// resources, converging to the correct state.
-	common.SyncAndWaitWithSuccess(t, helper, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"fswap-uid-a": {Title: "Dashboard B Swapped", SourcePath: "dashboard_b.json"},

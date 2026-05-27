@@ -1,16 +1,16 @@
-import { ReactElement, useEffect, useMemo, useState } from 'react';
+import { type ReactElement, useEffect, useMemo, useState } from 'react';
 
 import {
-  LoadingState,
-  PanelMenuItem,
-  PluginExtensionPanelContext,
+  type LoadingState,
+  type PanelMenuItem,
+  type PluginExtensionPanelContext,
   PluginExtensionPoints,
   getTimeZone,
 } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
 
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { type DashboardModel } from '../../state/DashboardModel';
+import { type PanelModel } from '../../state/PanelModel';
 import { getPanelMenu } from '../../utils/getPanelMenu';
 
 interface PanelHeaderMenuProviderApi {

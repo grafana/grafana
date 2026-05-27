@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Controller, FieldErrors, FieldPath, UseFormReturn } from 'react-hook-form';
+import { Controller, type FieldErrors, type FieldPath, type UseFormReturn } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input, Alert } from '@grafana/ui';
+import { Button, Field, type FormFieldErrors, type FormsOnSubmit, Stack, Input, Alert } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { DashboardInput, DashboardInputs, DatasourceSelection, DataSourceInput, ImportFormDataV2 } from '../../types';
+import {
+  type DashboardInput,
+  type DashboardInputs,
+  type DatasourceSelection,
+  type DataSourceInput,
+  type ImportFormDataV2,
+} from '../../types';
 import { getUidFieldDescription, getUidFieldLabel } from '../utils/uidFieldText';
 import { validateTitle, validateUid } from '../utils/validation';
 

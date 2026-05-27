@@ -39,6 +39,7 @@ func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, g
 	}
 
 	options := getCookieOptions()
+	// #nosec G124 -- HttpOnly/Secure/SameSite are configurable via options
 	cookie := http.Cookie{
 		Name:     name,
 		MaxAge:   maxAge,

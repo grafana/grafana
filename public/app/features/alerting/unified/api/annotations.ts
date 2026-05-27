@@ -1,5 +1,5 @@
 import { annotationServer } from 'app/features/annotations/api';
-import { StateHistoryItem } from 'app/types/unified-alerting';
+import { type StateHistoryItem } from 'app/types/unified-alerting';
 
 export function fetchAnnotations(alertUID: string): Promise<StateHistoryItem[]> {
   return annotationServer()

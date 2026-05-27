@@ -1,8 +1,13 @@
 import { debounce, sortBy } from 'lodash';
-import { Editor, Plugin as SlatePlugin } from 'slate-react';
+import { type Editor, type Plugin as SlatePlugin } from 'slate-react';
 
 import { Typeahead } from '../components/Typeahead/Typeahead';
-import { CompletionItem, SuggestionsState, TypeaheadInput, TypeaheadOutput } from '../types/completion';
+import {
+  type CompletionItem,
+  type SuggestionsState,
+  type TypeaheadInput,
+  type TypeaheadOutput,
+} from '../types/completion';
 import { SearchFunctionType, SearchFunctionMap } from '../utils/searchFunctions';
 import { makeFragment } from '../utils/slate';
 

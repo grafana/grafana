@@ -1,6 +1,6 @@
-import { QueryResultMetaNotice } from '@grafana/data';
+import { type QueryResultMetaNotice } from '@grafana/data';
 
-import { MetricTankSeriesMeta } from './types';
+import { type MetricTankSeriesMeta } from './types';
 
 // https://github.com/grafana/metrictank/blob/master/scripts/config/storage-schemas.conf#L15-L46
 

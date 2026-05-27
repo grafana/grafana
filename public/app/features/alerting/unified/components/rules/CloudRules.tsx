@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { type GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Badge, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
@@ -67,8 +67,10 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
             {dataSourcesLoading.length ? (
               <LoadingPlaceholder
                 className={styles.loader}
-                text={t('alerting.list-view.section.loading-rules', 'Loading rules from {{count}} sources', {
+                text={t('alerting.list-view.section.loading-rules', '', {
                   count: dataSourcesLoading.length,
+                  defaultValue_one: 'Loading rules from {{count}} sources',
+                  defaultValue_other: 'Loading rules from {{count}} sources',
                 })}
               />
             ) : (

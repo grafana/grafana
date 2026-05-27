@@ -1,6 +1,6 @@
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { type DataSourcePluginOptionsEditorProps } from '@grafana/data';
 
-import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
+import { type InfluxOptions, type InfluxSecureJsonData } from '../../../types';
 
 // As we're not using the auth component in `@grafana/plugin-ui`, we're defining the missing properties here
 // to ensure the types are compatible with the existing code.

@@ -10,16 +10,13 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/nanogit/gittest"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationGitTestEndpoint_EmptyRepository(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 
 	t.Run("test endpoint returns error for empty repository with no branch specified", func(t *testing.T) {
 		remote, user := createEmptyGitRepo(t, helper, "test-empty-repo-no-branch")
@@ -148,7 +145,7 @@ func TestIntegrationGitTestEndpoint_EmptyRepository(t *testing.T) {
 // callTestEndpoint calls the /test subresource using raw HTTP and parses the TestResults.
 // This is needed because the test endpoint returns TestResults with non-2xx status codes
 // for failures, and the k8s REST client treats non-2xx as errors, losing the response body.
-func callTestEndpoint(t *testing.T, h *gitcommon.GitTestHelper, repoName string, repoConfig map[string]interface{}, expectedStatus int) *provisioning.TestResults {
+func callTestEndpoint(t *testing.T, h *common.GitTestHelper, repoName string, repoConfig map[string]interface{}, expectedStatus int) *provisioning.TestResults {
 	t.Helper()
 
 	configBytes, err := json.Marshal(repoConfig)
@@ -184,7 +181,7 @@ func callTestEndpoint(t *testing.T, h *gitcommon.GitTestHelper, repoName string,
 }
 
 // createEmptyGitRepo creates a git repository on the gittest server without any commits or branches.
-func createEmptyGitRepo(t *testing.T, h *gitcommon.GitTestHelper, repoName string) (*gittest.RemoteRepository, *gittest.User) {
+func createEmptyGitRepo(t *testing.T, h *common.GitTestHelper, repoName string) (*gittest.RemoteRepository, *gittest.User) {
 	t.Helper()
 
 	ctx := context.Background()

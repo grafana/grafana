@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useMemo, type JSX } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -10,7 +10,7 @@ import { Icon } from '../Icon/Icon';
 import { useLimit } from '../List/hooks';
 
 import { LegendTableItem } from './VizLegendTableItem';
-import { VizLegendItem, VizLegendTableProps } from './types';
+import { type VizLegendItem, type VizLegendTableProps } from './types';
 
 const nameSortKey = 'Name';
 const naturalCompare = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare;
@@ -77,6 +77,11 @@ export const VizLegendTable = <T extends unknown>({
 
   const limitedItems = useMemo(() => (curLimit > 0 ? items.slice(0, curLimit) : items), [items, curLimit]);
 
+  const hasMixedAxes = useMemo(() => {
+    const firstYAxis = items[0]?.yAxis ?? 1;
+    return items.some((item) => item.yAxis !== firstYAxis);
+  }, [items]);
+
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
     itemRenderer = (item, index) => (
@@ -87,6 +92,7 @@ export const VizLegendTable = <T extends unknown>({
         onLabelMouseOver={onLabelMouseOver}
         onLabelMouseOut={onLabelMouseOut}
         readonly={readonly}
+        hasMixedAxes={hasMixedAxes}
       />
     );
   }
@@ -148,6 +154,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   header: css({
+    position: 'sticky',
+    top: 0,
+    backgroundColor: theme.colors.background.primary,
+    zIndex: 1,
     color: theme.colors.primary.text,
     fontWeight: theme.typography.fontWeightMedium,
     borderBottom: `1px solid ${theme.colors.border.weak}`,

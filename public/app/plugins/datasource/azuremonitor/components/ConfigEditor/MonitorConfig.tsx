@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { AzureCredentials } from '@grafana/azure-sdk';
-import { SelectableValue } from '@grafana/data';
+import { type AzureCredentials } from '@grafana/azure-sdk';
+import { type SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { getCredentials, updateCredentials } from '../../credentials';
-import { AzureMonitorDataSourceSettings } from '../../types/types';
+import { type AzureMonitorDataSourceSettings } from '../../types/types';
 
 import { AzureCredentialsForm, getAzureCloudOptions } from './AzureCredentialsForm';
 import { BasicLogsToggle } from './BasicLogsToggle';

@@ -1,9 +1,9 @@
 import { memo } from 'react';
 
 import {
-  AppPluginConfig,
-  PluginContextType,
-  PluginExtensionAddedLinkConfig,
+  type AppPluginConfig,
+  type PluginContextType,
+  type PluginExtensionAddedLinkConfig,
   PluginExtensionPoints,
   PluginType,
 } from '@grafana/data';

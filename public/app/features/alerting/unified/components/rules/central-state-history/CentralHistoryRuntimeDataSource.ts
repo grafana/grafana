@@ -1,15 +1,15 @@
 import { useEffect, useMemo } from 'react';
 
-import { DataQueryRequest, DataQueryResponse, TestDataSourceResponse } from '@grafana/data';
+import { type DataQueryRequest, type DataQueryResponse, type TestDataSourceResponse } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RuntimeDataSource, sceneUtils } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { dispatch } from 'app/store/store';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
-import { DataSourceInformation } from '../../../home/Insights';
+import { type DataSourceInformation } from '../../../home/Insights';
 
 import { LIMIT_EVENTS } from './EventListSceneObject';
 import { historyResultToDataFrame, toMatchersParam } from './utils';

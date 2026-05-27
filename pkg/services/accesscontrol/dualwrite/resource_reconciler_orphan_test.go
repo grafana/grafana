@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	authlib "github.com/grafana/authlib/types"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/require"
@@ -27,6 +28,10 @@ func (f *fakeZanzanaClient) Read(ctx context.Context, req *authzextv1.ReadReques
 func (f *fakeZanzanaClient) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
 	f.writeReqs = append(f.writeReqs, req)
 	return nil
+}
+
+func (f *fakeZanzanaClient) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	return &authzv1.ListResponse{}, nil
 }
 
 func (f *fakeZanzanaClient) Mutate(ctx context.Context, req *authzextv1.MutateRequest) error {

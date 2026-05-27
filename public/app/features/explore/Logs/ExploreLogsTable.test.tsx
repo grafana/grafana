@@ -1,16 +1,17 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   EventBusSrv,
-  FieldConfigSource,
+  type FieldConfigSource,
   LoadingState,
   LogsSortOrder,
-  PanelData,
+  type PanelData,
   toUtc,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
-import { Options } from 'app/plugins/panel/logstable/options/types';
+import { type Options } from 'app/plugins/panel/logstable/options/types';
 
 import { FIELD_SELECTOR_MIN_WIDTH } from '../../logs/components/fieldSelector/FieldSelector';
 import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';
@@ -36,6 +37,10 @@ jest.mock('@grafana/runtime', () => ({
   getAppEvents: jest.fn(() => ({
     publish: publishMockFn,
   })),
+  usePluginLinks: jest.fn(() => ({ isLoading: false, links: [] })),
+  getDataSourceSrv: jest.fn(() => ({
+    get: jest.fn().mockResolvedValue(null),
+  })),
 }));
 
 const mockGetUrlSearchParams = jest.fn(() => {
@@ -46,6 +51,13 @@ jest.mock('@grafana/data', () => ({
   urlUtil: {
     getUrlSearchParams: () => mockGetUrlSearchParams(),
   },
+}));
+
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
 }));
 
 describe('ExploreLogsTable', () => {
@@ -124,9 +136,20 @@ describe('ExploreLogsTable', () => {
     const { container } = render(setUp());
     await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
     const headers = container.querySelectorAll('[role="columnheader"]');
-    expect(headers).toHaveLength(2);
+    expect(headers).toHaveLength(3);
     expect(headers[0].textContent).toBe('Time');
-    expect(headers[1].textContent).toBe('Line');
+    expect(headers[1].textContent).toBe('detected_level');
+    expect(headers[2].textContent).toBe('Line');
+  });
+
+  it('opens log details when Show details is clicked', async () => {
+    const user = userEvent.setup();
+    render(setUp());
+    await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+    await user.click(screen.getAllByLabelText('Show details')[0]);
+
+    expect(screen.getByLabelText('Close log details sidebar')).toBeVisible();
   });
 
   describe('options', () => {
@@ -234,9 +257,10 @@ describe('ExploreLogsTable', () => {
 
       await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
       const headers = container.querySelectorAll('[role="columnheader"]');
-      expect(headers).toHaveLength(2);
+      expect(headers).toHaveLength(3);
       expect(headers[0].textContent).toBe('timestamp');
-      expect(headers[1].textContent).toBe('body');
+      expect(headers[1].textContent).toBe('severity');
+      expect(headers[2].textContent).toBe('body');
     });
 
     it.each([0, 200])('Should respect options.fieldSelectorWidth', async (fieldSelectorWidth: number) => {

@@ -1,4 +1,4 @@
-import { LokiVariableQuery, LokiVariableQueryType } from '../types';
+import { type LokiVariableQuery, LokiVariableQueryType } from '../types';
 
 export const labelNamesRegex = /^label_names\(\)\s*$/;
 export const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_$][a-zA-Z0-9_]*)\)\s*$/;

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import traceGenerator from '../demo/trace-generators';
-import { TraceResponse } from '../types/trace';
+import { type TraceResponse } from '../types/trace';
 
 import * as spanSelectors from './span';
 

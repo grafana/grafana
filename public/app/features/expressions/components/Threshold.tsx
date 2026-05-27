@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import { AnyAction } from '@reduxjs/toolkit';
+import { type AnyAction } from '@reduxjs/toolkit';
 import { uniqueId } from 'lodash';
 import * as React from 'react';
-import { FormEvent, useEffect, useReducer } from 'react';
+import { type FormEvent, useEffect, useReducer } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Stack, useStyles2 } from '@grafana/ui';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
-import { ClassicCondition, ExpressionQuery, thresholdFunctions } from '../types';
+import { type ClassicCondition, type ExpressionQuery, thresholdFunctions } from '../types';
 
 import { ThresholdSelect } from './ThresholdSelect';
 import { ToLabel } from './ToLabel';

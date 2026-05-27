@@ -17,7 +17,7 @@ import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import SpanBar, { Props } from './SpanBar';
+import SpanBar, { type Props } from './SpanBar';
 
 describe('<SpanBar>', () => {
   const shortLabel = 'omg-so-awesome';

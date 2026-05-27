@@ -3,9 +3,9 @@ import { Provider } from 'react-redux';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
 import { configureStore } from 'app/store/configureStore';
-import { Invitee, OrgUser } from 'app/types/user';
+import { type Invitee, type OrgUser } from 'app/types/user';
 
-import { Props, UsersListPageUnconnected } from './UsersListPage';
+import { type Props, UsersListPageUnconnected } from './UsersListPage';
 import { pageChanged, sortChanged } from './state/reducers';
 
 jest.mock('../../core/app_events', () => ({

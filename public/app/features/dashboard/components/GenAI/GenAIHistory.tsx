@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState, useCallback, useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Icon, Input, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
@@ -9,8 +9,8 @@ import { STOP_GENERATION_TEXT } from './GenAIButton';
 import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
 import { QuickFeedback } from './QuickFeedback';
 import { StreamStatus, useLLMStream } from './hooks';
-import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
-import { getFeedbackMessage, Message, DEFAULT_LLM_MODEL, QuickFeedbackType, sanitizeReply } from './utils';
+import { AutoGenerateItem, type EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
+import { getFeedbackMessage, type Message, DEFAULT_LLM_MODEL, QuickFeedbackType, sanitizeReply } from './utils';
 
 export interface GenAIHistoryProps {
   history: string[];

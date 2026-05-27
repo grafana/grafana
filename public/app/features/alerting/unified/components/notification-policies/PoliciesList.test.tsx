@@ -301,7 +301,7 @@ describe('PoliciesList', () => {
       // The measureText utility in @grafana/ui caches the canvas context at module level.
       // jest.resetAllMocks() between tests resets the cached context's measureText mock, causing
       // crashes when uncached text is measured. We patch the context directly to fix this.
-      const { getCanvasContext } = require('@grafana/ui') as typeof import('@grafana/ui');
+      const { getCanvasContext } = require('@grafana/ui');
       const ctx = getCanvasContext();
       ctx.measureText = jest.fn().mockReturnValue({ width: 100 } as TextMetrics);
     });

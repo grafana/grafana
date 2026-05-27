@@ -24,7 +24,7 @@ type store interface {
 	Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error)
 	GetByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error)
 	GetByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error)
-	GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error)
+	GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, []string, error)
 	RemoveUsersMemberships(ctx context.Context, userID int64) error
 	IsMember(orgId int64, teamId int64, userId int64) (bool, error)
 	GetMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error)
@@ -207,7 +207,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		}
 
 		if query.Name != "" {
-			sql.WriteString(` and team.name = ?`)
+			sql.WriteString(` and LOWER(team.name) = LOWER(?)`)
 			params = append(params, query.Name)
 		}
 
@@ -263,7 +263,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		}
 
 		if query.Name != "" {
-			countSess.Where("name=?", query.Name)
+			countSess.Where("LOWER(name) = LOWER(?)", query.Name)
 		}
 
 		// Only count teams user can see
@@ -356,19 +356,38 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 }
 
 // GetIDsByUser returns a list of team IDs for the given user
-func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
-	queryResult := make([]int64, 0)
+func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, []string, error) {
+	ids := make([]int64, 0)
+	uids := make([]string, 0)
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.SQL(`SELECT tm.team_id
-FROM team_member as tm
-WHERE tm.user_id=? AND tm.org_id=?;`, query.UserID, query.OrgID).Find(&queryResult)
+		rows, err := sess.QueryRows(`SELECT tm.team_id, team.uid
+			FROM team_member as tm
+			JOIN team ON team.id = tm.team_id
+			WHERE tm.user_id=? AND tm.org_id=?
+			ORDER BY tm.team_id asc`, query.UserID, query.OrgID)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			_ = rows.Close()
+		}()
+		var id int64
+		var uid string
+		for rows.Next() {
+			err = rows.Scan(&id, &uid)
+			if err != nil {
+				return err
+			}
+			ids = append(ids, id)
+			uids = append(uids, uid)
+		}
+		return rows.Err()
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get team IDs by user: %w", err)
+		return nil, nil, fmt.Errorf("failed to get team IDs by user: %w", err)
 	}
-
-	return queryResult, nil
+	return ids, uids, nil
 }
 
 func getTeamMember(sess *db.Session, orgId int64, teamId int64, userId int64) (team.TeamMember, error) {

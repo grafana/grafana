@@ -1,4 +1,4 @@
-import { Token } from 'prismjs';
+import { type Token } from 'prismjs';
 import { memo } from 'react';
 
 export const HighlightedLogRenderer = memo(({ tokens }: { tokens: Array<string | Token> }) => {

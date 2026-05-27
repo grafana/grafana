@@ -1,6 +1,6 @@
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Field, MultiSelect, Stack } from '@grafana/ui';
@@ -23,8 +23,11 @@ export function DefaultGroupByValueEditor({
       data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection}
     >
       <Field
-        label={t('dashboard-scene.default-value-editor.label', 'Default value')}
-        description={t('dashboard-scene.default-value-editor.description', 'Values that are pre-selected by default.')}
+        label={t('dashboard-scene.default-value-editor.label', 'Default group by')}
+        description={t(
+          'dashboard-scene.default-value-editor.description',
+          'Group by dimensions that are pre-selected by default.'
+        )}
         noMargin
       >
         <MultiSelect<string>

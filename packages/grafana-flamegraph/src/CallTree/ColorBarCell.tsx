@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
-import { ColorScheme, ColorSchemeDiff } from '../types';
+import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
+import { type ColorScheme, type ColorSchemeDiff } from '../types';
 
-import { CallTreeNode, getRowBarColor } from './utils';
+import { type CallTreeNode, getRowBarColor } from './utils';
 
 export function ColorBarCell({
   node,

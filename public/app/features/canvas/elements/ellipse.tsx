@@ -1,28 +1,28 @@
 import { css } from '@emotion/css';
-import { v4 as uuidv4 } from 'uuid';
+import { useId } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { DimensionContext } from 'app/features/dimensions/context';
+import { type DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
 import {
-  CanvasElementItem,
-  CanvasElementOptions,
-  CanvasElementProps,
+  type CanvasElementItem,
+  type CanvasElementOptions,
+  type CanvasElementProps,
   defaultBgColor,
   defaultTextColor,
 } from '../element';
-import { Align, CanvasElementConfig, CanvasElementData, VAlign } from '../types';
+import { Align, type CanvasElementConfig, type CanvasElementData, VAlign } from '../types';
 
 const Ellipse = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>) => {
   const { data } = props;
   const styles = getStyles(config.theme2, data);
 
   // uuid needed to avoid id conflicts when multiple elements are rendered
-  const uniqueId = uuidv4();
+  const uniqueId = useId();
 
   return (
     <div className={styles.container}>

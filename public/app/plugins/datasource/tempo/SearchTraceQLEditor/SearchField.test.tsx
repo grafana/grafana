@@ -1,11 +1,11 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { LanguageProvider } from '@grafana/data';
+import { type LanguageProvider } from '@grafana/data';
 
-import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
-import { TempoDatasource } from '../datasource';
-import TempoLanguageProvider from '../language_provider';
+import { type TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
+import { type TempoDatasource } from '../datasource';
+import type TempoLanguageProvider from '../language_provider';
 import { initTemplateSrv } from '../test/test_utils';
 import { keywordOperators, numberOperators, operators, stringOperators } from '../traceql/traceql';
 

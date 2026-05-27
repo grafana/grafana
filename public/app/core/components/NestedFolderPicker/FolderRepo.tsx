@@ -9,8 +9,8 @@ import {
 } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { getManagedByRepositoryTooltip, getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
-import { DashboardViewItem } from 'app/features/search/types';
-import { FolderDTO } from 'app/types/folders';
+import { type DashboardViewItem } from 'app/features/search/types';
+import { type FolderDTO } from 'app/types/folders';
 
 export interface Props {
   folder?: FolderDTO | DashboardViewItem;

@@ -48,9 +48,9 @@ func TestSearchFallback(t *testing.T) {
 					"users.iam.grafana.app": {DualWriterMode: tt.mode},
 				},
 			}
-			dual := dualwrite.ProvideStaticServiceForTests(cfg)
+			dual := dualwrite.ProvideServiceForTests(cfg)
 
-			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), mockClient, mockLegacyClient, featuremgmt.WithFeatures())
+			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), mockClient, mockLegacyClient)
 			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, featuremgmt.WithFeatures(), cfg, nil)
 
 			rr := httptest.NewRecorder()

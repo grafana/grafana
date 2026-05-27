@@ -2,12 +2,12 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { select } from 'react-select-event';
 
-import { LogRowModel, dateTime } from '@grafana/data';
+import { type LogRowModel, dateTime } from '@grafana/data';
 
-import { LogContextProvider, SHOULD_INCLUDE_PIPELINE_OPERATIONS } from '../LogContextProvider';
-import { ContextFilter, LokiQuery } from '../types';
+import { type LogContextProvider, SHOULD_INCLUDE_PIPELINE_OPERATIONS } from '../LogContextProvider';
+import { type ContextFilter, type LokiQuery } from '../types';
 
-import { IS_LOKI_LOG_CONTEXT_UI_OPEN, LokiContextUi, LokiContextUiProps } from './LokiContextUi';
+import { IS_LOKI_LOG_CONTEXT_UI_OPEN, LokiContextUi, type LokiContextUiProps } from './LokiContextUi';
 
 // we have to mock out reportInteraction, otherwise it crashes the test.
 jest.mock('@grafana/runtime', () => ({

@@ -95,6 +95,25 @@
       },
       "fieldConfig": {
         "defaults": {
+          "links": [
+            {
+              "title": "Heatmap docs data link",
+              "url": "https://grafana.com/docs/grafana/latest/visualizations/panels-visualizations/visualizations/heatmap/"
+            }
+          ],
+          "actions": [
+            {
+              "fetch": {
+                "body": "{}",
+                "headers": [["Content-Type", "application/json"]],
+                "method": "GET",
+                "queryParams": [],
+                "url": "https://grafana.com"
+              },
+              "title": "Heatmap unsupported action",
+              "type": "fetch"
+            }
+          ],
           "custom": {
             "hideFrom": {
               "legend": false,
@@ -159,7 +178,7 @@
           "refId": "A"
         }
       ],
-      "title": "Row heatmap",
+      "title": "Row heatmap (data links)",
       "type": "heatmap"
     },
     {
@@ -375,6 +394,6 @@
   "timezone": "",
   "title": "Heatmap X axis",
   "uid": "5Y0jv6pVz",
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }

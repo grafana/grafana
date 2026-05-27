@@ -1,6 +1,6 @@
-import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
-import { RepositoryFormData } from '../types';
+import { type RepositoryFormData } from '../types';
 
 import { dataToSpec, generateRepositoryTitle, specToData } from './data';
 
@@ -199,6 +199,47 @@ describe('provisioning data mapping', () => {
       };
       const data = specToData(spec);
       expect(data.webhook?.baseUrl).toBe('https://grafana.example.com');
+    });
+  });
+
+  describe('commit message template', () => {
+    it('writes singleResourceMessageTemplate to spec when provided', () => {
+      const formData = makeFormData('github');
+      formData.commit = { singleResourceMessageTemplate: 'feat(dashboards): {{action}} {{title}}' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.singleResourceMessageTemplate).toBe('feat(dashboards): {{action}} {{title}}');
+    });
+
+    it('trims surrounding whitespace before writing to spec', () => {
+      const formData = makeFormData('github');
+      formData.commit = { singleResourceMessageTemplate: '  feat: {{title}}  ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.singleResourceMessageTemplate).toBe('feat: {{title}}');
+    });
+
+    it('omits commit from spec when template is whitespace-only', () => {
+      const formData = makeFormData('github');
+      formData.commit = { singleResourceMessageTemplate: '   ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).toBeUndefined();
+    });
+
+    it('omits commit from spec when not set', () => {
+      const spec = dataToSpec(makeFormData('github'));
+      expect(spec.commit).toBeUndefined();
+    });
+
+    it('reads commit from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        commit: { singleResourceMessageTemplate: 'feat: {{title}}' },
+      };
+      const data = specToData(spec);
+      expect(data.commit?.singleResourceMessageTemplate).toBe('feat: {{title}}');
     });
   });
 

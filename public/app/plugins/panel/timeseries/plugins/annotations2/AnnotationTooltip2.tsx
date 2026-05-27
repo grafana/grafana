@@ -1,7 +1,14 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2, dateTimeFormat, systemDateFormats, textUtil, LinkModel, ActionModel } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  dateTimeFormat,
+  systemDateFormats,
+  textUtil,
+  type LinkModel,
+  type ActionModel,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Stack, IconButton, Tag, usePanelContext, useStyles2 } from '@grafana/ui';
 import { VizTooltipFooter } from '@grafana/ui/internal';

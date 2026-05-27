@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { InfluxVersion } from '../../../types';
 
-import ConfigEditor, { Props } from './ConfigEditor';
+import ConfigEditor, { type Props } from './ConfigEditor';
 
 jest.mock('lodash', () => {
   const uniqueId = (prefix: string) => `${prefix}42`;

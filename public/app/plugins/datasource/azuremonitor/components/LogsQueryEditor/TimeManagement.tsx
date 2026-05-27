@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { InlineField, RadioButtonGroup, Select } from '@grafana/ui';
 
-import { AzureQueryEditorFieldProps } from '../../types/types';
+import { type AzureQueryEditorFieldProps } from '../../types/types';
 
 import { setDashboardTime, setTimeColumn } from './setQueryValue';
 
@@ -12,6 +12,7 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
   const [defaultTimeColumns, setDefaultTimeColumns] = useState<SelectableValue[] | undefined>();
   const [timeColumns, setTimeColumns] = useState<SelectableValue[] | undefined>();
   const [disabledTimePicker, setDisabledTimePicker] = useState<boolean>(false);
+  const timeColumnId = useId();
 
   const setDefaultColumn = useCallback((column: string) => onChange(setTimeColumn(query, column)), [query, onChange]);
 
@@ -126,6 +127,7 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
           }
         >
           <Select
+            inputId={timeColumnId}
             options={[
               {
                 label: 'Default time columns',

@@ -1,7 +1,7 @@
-import { OrgRole } from '@grafana/data';
-import { OrgUser } from 'app/types/user';
+import { type OrgRole } from '@grafana/data';
+import { type OrgUser } from 'app/types/user';
 
-import { UsersFetchResult, initialState } from '../state/reducers';
+import { type UsersFetchResult, initialState } from '../state/reducers';
 
 export const getFetchUsersMock = (amount: number): UsersFetchResult => {
   const users = getMockUsers(amount);

@@ -25,15 +25,19 @@ type streamDecoder struct {
 	codec       runtime.Codec
 	cancelWatch context.CancelFunc
 	done        sync.WaitGroup
+
+	sendInitialEvents   bool
+	initialBookmarkSent bool
 }
 
-func newStreamDecoder(client resourcepb.ResourceStore_WatchClient, newFunc func() runtime.Object, predicate storage.SelectionPredicate, codec runtime.Codec, cancelWatch context.CancelFunc) *streamDecoder {
+func newStreamDecoder(client resourcepb.ResourceStore_WatchClient, newFunc func() runtime.Object, predicate storage.SelectionPredicate, codec runtime.Codec, cancelWatch context.CancelFunc, sendInitialEvents bool) *streamDecoder {
 	return &streamDecoder{
-		client:      client,
-		newFunc:     newFunc,
-		predicate:   predicate,
-		codec:       codec,
-		cancelWatch: cancelWatch,
+		client:            client,
+		newFunc:           newFunc,
+		predicate:         predicate,
+		codec:             codec,
+		cancelWatch:       cancelWatch,
+		sendInitialEvents: sendInitialEvents,
 	}
 }
 func (d *streamDecoder) toObject(w *resourcepb.WatchEvent_Resource) (runtime.Object, error) {
@@ -93,7 +97,6 @@ decode:
 		if evt.Type == resourcepb.WatchEvent_BOOKMARK {
 			obj := d.newFunc()
 
-			// here k8s expects an empty object with just resource version and k8s.io/initial-events-end annotation
 			accessor, err := utils.MetaAccessor(obj)
 			if err != nil {
 				klog.Errorf("error getting object accessor: %s", err)
@@ -101,7 +104,10 @@ decode:
 			}
 
 			accessor.SetResourceVersionInt64(evt.Resource.Version)
-			accessor.SetAnnotations(map[string]string{"k8s.io/initial-events-end": "true"})
+			if d.sendInitialEvents && !d.initialBookmarkSent {
+				accessor.SetAnnotations(map[string]string{"k8s.io/initial-events-end": "true"})
+				d.initialBookmarkSent = true
+			}
 			return watch.Bookmark, obj, nil
 		}
 

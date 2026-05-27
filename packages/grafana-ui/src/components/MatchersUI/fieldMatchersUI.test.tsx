@@ -1,8 +1,8 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, renderHook } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
-import { toDataFrame, FieldType, ReducerID, FieldValueMatcherConfig } from '@grafana/data';
+import { toDataFrame, FieldType, ReducerID, type FieldValueMatcherConfig } from '@grafana/data';
 import { ComparisonOperation } from '@grafana/schema';
 
 import { FieldNameByRegexMatcherEditor, getFieldNameByRegexMatcherItem } from './FieldNameByRegexMatcherEditor';
@@ -11,6 +11,7 @@ import { FieldNamesMatcherEditor, getFieldNamesMatcherItem } from './FieldNamesM
 import { FieldTypeMatcherEditor, getFieldTypeMatcherItem } from './FieldTypeMatcherEditor';
 import { FieldValueMatcherEditor, getFieldValueMatcherItem } from './FieldValueMatcher';
 import { MatcherScopeSelector } from './MatcherScopeSelector';
+import { fieldMatchersUI, useFieldMatchersOptions } from './fieldMatchersUI';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -94,6 +95,23 @@ describe('MatcherScopeSelector', () => {
   });
 });
 
+const frameWithSeriesAndNestedScopes = (() => {
+  const nestedFrame = toDataFrame({
+    fields: [{ name: 'NestedField', type: FieldType.string, values: ['n'] }],
+  });
+  return toDataFrame({
+    fields: [
+      { name: 'SeriesField', type: FieldType.string, values: ['s'] },
+      {
+        name: 'nested',
+        type: FieldType.nestedFrames,
+        values: [[nestedFrame]],
+        config: {},
+      },
+    ],
+  });
+})();
+
 describe('FieldNameMatcherEditor', () => {
   const mockOnChange = jest.fn();
   const matcher = getFieldNameMatcherItem().matcher;
@@ -135,6 +153,37 @@ describe('FieldNameMatcherEditor', () => {
     // Selecting the same value again might not fire onChange with a different path; ensure we only
     // accept options that are in the names set (covered by frameHasName in the component).
     expect(screen.getByRole('combobox')).toBeInTheDocument();
+  });
+
+  it('only shows series-scoped fields and calls onChange with "series" when nested field scope is present ("series" is the default)', async () => {
+    // Regression test: getFieldOverrideElements passes scope={override.matcher.scope ?? 'series'}.
+    // Before the fix, a new override (scope=undefined) was passed through as-is, causing the
+    // by-name matcher to show options in grouped mode (grouped by "Dataframe" / "Nested") even
+    // though the scope selector defaulted to "series". The fix ensures 'series' is always the
+    // fallback, so options are filtered to series-scoped fields and onChange receives 'series'.
+    const user = userEvent.setup();
+    render(
+      <FieldNameMatcherEditor
+        data={[frameWithSeriesAndNestedScopes]}
+        options=""
+        onChange={mockOnChange}
+        matcher={matcher}
+      />
+    );
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+
+    // SeriesField is the first (and only) series-scoped field; selecting it should yield scope 'series'
+    await user.keyboard('{ArrowDown}{Enter}');
+    expect(mockOnChange).toHaveBeenCalledWith('SeriesField', 'series');
+
+    // NestedField must not be present in the filtered options: type its name to narrow the list,
+    // then press Enter — frameHasName will reject it and onChange must not fire again.
+    mockOnChange.mockClear();
+    await user.clear(combobox);
+    await user.type(combobox, 'NestedField');
+    await user.keyboard('{Enter}');
+    expect(mockOnChange).not.toHaveBeenCalled();
   });
 });
 
@@ -291,5 +340,56 @@ describe('FieldNamesMatcherEditor', () => {
     const input = screen.getByRole('textbox');
     expect(input).toHaveAttribute('readonly');
     expect(input).toHaveValue('Time, Value');
+  });
+});
+
+describe('useFieldMatchersOptions', () => {
+  const registeredCount = fieldMatchersUI.selectOptions().options.length;
+
+  it('returns ComboboxOptions when called with true', () => {
+    const { result } = renderHook(() => useFieldMatchersOptions(true));
+    expect(result.current).toHaveLength(registeredCount);
+    for (const option of result.current) {
+      expect(option).toHaveProperty('value');
+      expect(typeof option.value).toBe('string');
+    }
+  });
+
+  it('returns SelectableValues when called with false', () => {
+    const { result } = renderHook(() => useFieldMatchersOptions(false));
+    expect(result.current).toHaveLength(registeredCount);
+    for (const option of result.current) {
+      expect(option).toHaveProperty('value');
+    }
+  });
+
+  it('returns SelectableValues when called with no argument', () => {
+    const { result } = renderHook(() => useFieldMatchersOptions());
+    expect(result.current).toHaveLength(registeredCount);
+    for (const option of result.current) {
+      expect(option).toHaveProperty('value');
+    }
+  });
+
+  it('combobox options have the same values as selectable options', () => {
+    const { result: combobox } = renderHook(() => useFieldMatchersOptions(true));
+    const { result: selectable } = renderHook(() => useFieldMatchersOptions(false));
+    const comboboxValues = combobox.current.map((o) => o.value).sort();
+    const selectableValues = selectable.current.map((o) => o.value).sort();
+    expect(comboboxValues).toEqual(selectableValues);
+  });
+
+  it('returns the new array when asComboboxOptions changes from true to false, with equal values', () => {
+    const { result, rerender } = renderHook(
+      ({ asComboboxOptions }: { asComboboxOptions: boolean }) => useFieldMatchersOptions(asComboboxOptions),
+      { initialProps: { asComboboxOptions: true } }
+    );
+    const comboboxResult = result.current;
+
+    rerender({ asComboboxOptions: false });
+    const selectableResult = result.current;
+
+    expect(selectableResult).not.toBe(comboboxResult);
+    expect(selectableResult.map((o) => o.value).sort()).toEqual(comboboxResult.map((o) => o.value).sort());
   });
 });

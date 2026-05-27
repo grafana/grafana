@@ -5,12 +5,12 @@ import { removeVariable, variableStateNotStarted } from './sharedReducer';
 import {
   initialTransactionState,
   transactionReducer,
-  TransactionState,
+  type TransactionState,
   variablesClearTransaction,
   variablesCompleteTransaction,
   variablesInitTransaction,
 } from './transactionReducer';
-import { VariablePayload } from './types';
+import { type VariablePayload } from './types';
 
 describe('transactionReducer', () => {
   describe('when variablesInitTransaction is dispatched', () => {

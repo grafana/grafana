@@ -1,4 +1,4 @@
-import { FetchError } from '@grafana/runtime';
+import { type FetchError } from '@grafana/runtime';
 import {
   createExploreLink,
   makeDashboardLink,
@@ -12,10 +12,10 @@ import {
   stringifyErrorLike,
 } from 'app/features/alerting/unified/utils/misc';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
-import { Alert } from 'app/types/unified-alerting';
+import { type Alert } from 'app/types/unified-alerting';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
-import { ApiMachineryError, ERROR_NEWER_CONFIGURATION, getErrorMessageFromCode } from './k8s/errors';
+import { type ApiMachineryError, ERROR_NEWER_CONFIGURATION, getErrorMessageFromCode } from './k8s/errors';
 
 function withState(state: GrafanaAlertState, labels?: {}): Alert {
   return { activeAt: '', annotations: {}, labels: labels || {}, state: state, value: '' };
@@ -108,7 +108,13 @@ describe('create links', () => {
   });
 
   it('should make folder alerts link', () => {
-    expect(makeFolderAlertsLink('abc123', 'my-title')).toBe('/dashboards/f/abc123/my-title/alerting');
+    expect(makeFolderAlertsLink('abc123', 'My Title')).toBe('/dashboards/f/abc123/my-title/alerting');
+  });
+
+  it('should slugify nested folder paths for folder alerts link', () => {
+    expect(makeFolderAlertsLink('abc123', 'MainFolder/Subfolder1')).toBe(
+      '/dashboards/f/abc123/mainfoldersubfolder1/alerting'
+    );
   });
 
   it('should make folder settings link', () => {

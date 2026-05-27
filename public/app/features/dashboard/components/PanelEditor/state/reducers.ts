@@ -1,6 +1,6 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import { getDefaultTimeRange, LoadingState, PanelData, store } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, type PanelData, store } from '@grafana/data';
 
 import { PanelModel } from '../../../state/PanelModel';
 import { DisplayMode } from '../types';

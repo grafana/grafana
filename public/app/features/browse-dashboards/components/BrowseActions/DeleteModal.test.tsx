@@ -2,11 +2,21 @@ import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { DeleteModal, Props } from './DeleteModal';
+import { setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
+
+import { DeleteModal, type Props } from './DeleteModal';
 
 function render(...[ui, options]: Parameters<typeof rtlRender>) {
   rtlRender(<TestProvider>{ui}</TestProvider>, options);
 }
+
+const [_, { folderA }] = getFolderFixtures();
+
+setBackendSrv(backendSrv);
+setupMockServer();
 
 describe('browse-dashboards DeleteModal', () => {
   const mockOnDismiss = jest.fn();
@@ -73,5 +83,25 @@ describe('browse-dashboards DeleteModal', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Close' }));
     expect(mockOnDismiss).toHaveBeenCalled();
+  });
+
+  it('shows a numeric affected item count for a single folder selection', async () => {
+    render(
+      <DeleteModal
+        {...defaultProps}
+        selectedItems={{
+          $all: false,
+          folder: {
+            [folderA.item.uid]: true,
+          },
+          dashboard: {},
+          panel: {},
+        }}
+      />
+    );
+
+    expect(await screen.findByText(/This action will delete the folder/i)).toBeInTheDocument();
+    expect(await screen.findByText(/5 item/)).toBeInTheDocument();
+    expect(screen.queryByText(/NaN item/)).not.toBeInTheDocument();
   });
 });

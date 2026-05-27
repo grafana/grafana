@@ -6,13 +6,13 @@ import * as React from 'react';
 
 import {
   CoreApp,
-  DataFrame,
-  Field,
-  GrafanaTheme2,
-  IconName,
-  LinkModel,
-  LogLabelStatsModel,
-  LogRowModel,
+  type DataFrame,
+  type Field,
+  type GrafanaTheme2,
+  type IconName,
+  type LinkModel,
+  type LogLabelStatsModel,
+  type LogRowModel,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -20,8 +20,8 @@ import {
   ClipboardButton,
   DataLinkButton,
   IconButton,
-  PopoverContent,
-  Themeable2,
+  type PopoverContent,
+  type Themeable2,
   Tooltip,
   withTheme2,
 } from '@grafana/ui';

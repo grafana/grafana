@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { ResourceDimensionMode } from '@grafana/schema';
 import { Portal, useTheme2 } from '@grafana/ui';
-import { Scene } from 'app/features/canvas/runtime/scene';
+import { type Scene } from 'app/features/canvas/runtime/scene';
 import { ResourcePickerPopover } from 'app/features/dimensions/editors/ResourcePickerPopover';
 import { MediaType, ResourceFolderName } from 'app/features/dimensions/types';
 
-import { AnchorPoint } from '../types';
+import { type AnchorPoint } from '../types';
 
 type Props = {
   onClose: () => void;

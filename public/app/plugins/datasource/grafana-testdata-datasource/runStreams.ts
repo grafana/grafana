@@ -1,27 +1,27 @@
 import { defaults } from 'lodash';
 import { Observable, throwError } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
-  DataQueryRequest,
-  DataQueryResponse,
+  type DataQueryRequest,
+  type DataQueryResponse,
   FieldType,
   CircularDataFrame,
   CSVReader,
-  Field,
+  type Field,
   LoadingState,
-  DataFrameSchema,
-  DataFrameData,
+  type DataFrameSchema,
+  type DataFrameData,
   StreamingDataFrame,
   createDataFrame,
   addRow,
   getDisplayProcessor,
   createTheme,
+  generateUUID,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 
 import { getRandomLine } from './LogIpsum';
-import { TestDataDataQuery, StreamingQuery } from './dataquery';
+import { type TestDataDataQuery, type StreamingQuery } from './dataquery';
 
 export const defaultStreamQuery: StreamingQuery = {
   type: 'signal',
@@ -352,8 +352,8 @@ export function runTracesStream(
 
     const pushNextEvent = () => {
       const subframe = createTraceSubFrame();
-      addRow(subframe, [uuidv4(), Date.now(), 'Grafana', 1500]);
-      addRow(data, [uuidv4(), Date.now(), 'Grafana', 'HTTP GET /explore', 1500, [subframe]]);
+      addRow(subframe, [generateUUID(), Date.now(), 'Grafana', 1500]);
+      addRow(data, [generateUUID(), Date.now(), 'Grafana', 'HTTP GET /explore', 1500, [subframe]]);
 
       subscriber.next({
         data: [data],

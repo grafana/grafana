@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { lazy, Suspense } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 

@@ -3,11 +3,8 @@ package db
 import (
 	"bytes"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -61,25 +58,4 @@ func (sb *SQLBuilder) GetParams() []any {
 
 func (sb *SQLBuilder) AddParams(params ...any) {
 	sb.params = append(sb.params, params...)
-}
-
-func (sb *SQLBuilder) WriteDashboardPermissionFilter(user identity.Requester, permission dashboardaccess.PermissionType, queryType string) {
-	var (
-		sql          string
-		params       []any
-		recQry       string
-		recQryParams []any
-		leftJoin     string
-	)
-
-	filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, queryType, sb.features, sb.recursiveQueriesAreSupported, sb.dialect, sb.cfg.MaxNestedFolderDepth)
-	leftJoin = filterRBAC.LeftJoin()
-	sql, params = filterRBAC.Where()
-	recQry, recQryParams = filterRBAC.With()
-
-	sb.sql.WriteString(" AND " + sql)
-	sb.params = append(sb.params, params...)
-	sb.recQry = recQry
-	sb.recQryParams = recQryParams
-	sb.leftJoin = leftJoin
 }

@@ -1,8 +1,8 @@
-import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
-import { DataFrame, DataSourceRef } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type AwsAuthDataSourceJsonData, type AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
+import { type DataFrame, type DataSourceRef } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
 
-import * as raw from './dataquery.gen';
+import type * as raw from './dataquery.gen';
 
 export type CloudWatchQuery =
   | raw.CloudWatchMetricsQuery

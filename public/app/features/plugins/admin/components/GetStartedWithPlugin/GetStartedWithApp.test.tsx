@@ -4,7 +4,7 @@ import { PluginSignatureStatus } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { usePluginConfig } from '../../hooks/usePluginConfig';
-import { CatalogPlugin } from '../../types';
+import { type CatalogPlugin } from '../../types';
 
 import { GetStartedWithApp } from './GetStartedWithApp';
 
@@ -12,10 +12,6 @@ jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: jest.fn(),
   },
-}));
-
-jest.mock('../../api', () => ({
-  updatePluginSettings: jest.fn(),
 }));
 
 jest.mock('../../hooks/usePluginConfig', () => ({

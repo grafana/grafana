@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
-import { LabelItem, LabelKeyAndValues } from 'app/features/alerting/unified/api/labelsApi';
+import { type LabelItem, type LabelKeyAndValues } from 'app/features/alerting/unified/api/labelsApi';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 const BASE_URL = `/api/plugins/${SupportedPlugin.Labels}/resources`;

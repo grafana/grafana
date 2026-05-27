@@ -2,7 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 
 import { LoadingState } from '@grafana/data';
 
-import { CloudWatchLogsQuery } from '../../../dataquery.gen';
+import { type CloudWatchLogsQuery } from '../../../dataquery.gen';
 import { setupMockedDataSource } from '../../../mocks/CloudWatchDataSource';
 import { RequestMock } from '../../../mocks/Request';
 import { validLogsQuery } from '../../../mocks/queries';

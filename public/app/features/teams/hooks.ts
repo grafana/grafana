@@ -5,15 +5,15 @@ import { config } from '@grafana/runtime';
 import {
   API_GROUP,
   API_VERSION,
-  GetTeamApiArg,
-  Team,
+  type GetTeamApiArg,
+  type Team,
   useLazyGetSearchTeamsQuery as useLazyGetSearchTeamsQueryIam,
   useLazyGetTeamQuery as useLazyGetTeamQueryIam,
   useGetTeamQuery as useGetTeamQueryIam,
 } from 'app/api/clients/iam/v0alpha1';
 import {
-  TeamDto,
-  UpdateTeamCommand,
+  type TeamDto,
+  type UpdateTeamCommand,
   useDeleteTeamByIdMutation,
   useGetTeamByIdQuery,
   useLazyGetTeamByIdQuery as useLazyGetTeamByIdQueryLegacy,
@@ -147,6 +147,8 @@ export function teamDtoToTeam(dto: TeamDto): Team {
       email: dto.email ?? '',
       externalUID: dto.externalUID ?? '',
       provisioned: dto.isProvisioned,
+      // FIXME: Legacy API does not return team members, so this will always be an empty array. We should either update the legacy API to include members or make a separate call to fetch them.
+      members: [],
     },
   };
 }

@@ -1,12 +1,12 @@
-import { FormEvent, memo, useEffect } from 'react';
+import { type FormEvent, memo, useEffect } from 'react';
 
-import { DataSourceVariableModel, SelectableValue, VariableWithMultiSupport } from '@grafana/data';
+import { type DataSourceVariableModel, type SelectableValue, type VariableWithMultiSupport } from '@grafana/data';
 import { DataSourceVariableForm } from 'app/features/dashboard-scene/settings/variables/components/DataSourceVariableForm';
-import { StoreState, useDispatch, useSelector } from 'app/types/store';
+import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { initialVariableEditorState } from '../editor/reducer';
 import { getDatasourceVariableEditorState } from '../editor/selectors';
-import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
+import { type OnPropChangeArguments, type VariableEditorProps } from '../editor/types';
 import { changeVariableMultiValue } from '../state/actions';
 import { getVariablesState } from '../state/selectors';
 import { toKeyedVariableIdentifier } from '../utils';

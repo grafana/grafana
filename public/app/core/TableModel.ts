@@ -1,6 +1,6 @@
 import { findIndex } from 'lodash';
 
-import { Column, TableData, QueryResultMeta } from '@grafana/data';
+import { type Column, type TableData, type QueryResultMeta } from '@grafana/data';
 
 /**
  * Extends the standard Column class with variables that get

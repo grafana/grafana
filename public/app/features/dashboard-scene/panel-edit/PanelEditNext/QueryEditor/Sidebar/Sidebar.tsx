@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
-import { SegmentedToggle, SegmentedToggleProps } from '../../SegmentedToggle';
-import { QueryEditorType, SidebarSize } from '../../constants';
+import { SegmentedToggle, type SegmentedToggleProps } from '../../SegmentedToggle';
+import { QueryEditorType, type SidebarSize } from '../../constants';
 import { trackSidebarViewChange } from '../../tracking';
 import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
 import { EMPTY_ALERT } from '../types';
@@ -35,7 +35,11 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
 
   const alertsLabel = loading
     ? t('query-editor-next.sidebar.alerts-loading', 'Alerts')
-    : t('query-editor-next.sidebar.alerts', 'Alerts ({{count}})', { count: alertRules.length });
+    : t('query-editor-next.sidebar.alerts', '', {
+        count: alertRules.length,
+        defaultValue_one: 'Alerts ({{count}})',
+        defaultValue_other: 'Alerts ({{count}})',
+      });
 
   const viewOptions: SegmentedToggleProps<QueryEditorType>['options'] = [
     { value: QueryEditorType.Query, label: t('query-editor-next.sidebar.data', 'Data'), icon: 'database' },

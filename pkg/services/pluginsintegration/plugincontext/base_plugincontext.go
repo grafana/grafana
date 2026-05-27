@@ -4,9 +4,11 @@ import (
 	"context"
 	"runtime"
 
+	"k8s.io/apiserver/pkg/endpoints/request"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/useragent"
-
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
@@ -40,17 +42,22 @@ type BaseProvider struct {
 }
 
 func (p *BaseProvider) GetBasePluginContext(ctx context.Context, plugin pluginstore.Plugin, user identity.Requester) backend.PluginContext {
+	ns, _ := request.NamespaceFrom(ctx)
 	pCtx := backend.PluginContext{
 		PluginID:      plugin.ID,
 		PluginVersion: plugin.Info.Version,
+		Namespace:     ns,
 	}
 	if user != nil && !user.IsNil() {
-		pCtx.OrgID = user.GetOrgID()
+		pCtx.OrgID = user.GetOrgID() // nolint:staticcheck
 		pCtx.User = adapters.BackendUserFromSignedInUser(user)
+		if ns == "" {
+			pCtx.Namespace = user.GetNamespace()
+		}
 	}
 
 	settings := p.pluginRequestConfigProvider.PluginRequestConfig(ctx, plugin.ID, plugin.ExternalService)
-	pCtx.GrafanaConfig = backend.NewGrafanaCfg(settings)
+	pCtx.GrafanaConfig = config.NewGrafanaCfg(settings)
 
 	ua, err := useragent.New(p.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 	if err != nil {

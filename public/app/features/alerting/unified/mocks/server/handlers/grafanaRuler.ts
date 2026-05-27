@@ -4,17 +4,17 @@ import { HttpResponse, delay, http } from 'msw';
 export const MOCK_GRAFANA_ALERT_RULE_TITLE = 'Test alert';
 
 import {
-  GrafanaAlertState,
-  GrafanaRuleDefinition,
-  PromRulesResponse,
-  RulerGrafanaRuleDTO,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
+  type GrafanaAlertState,
+  type GrafanaRuleDefinition,
+  type PromRulesResponse,
+  type RulerGrafanaRuleDTO,
+  type RulerRuleGroupDTO,
+  type RulerRulesConfigDTO,
   isGrafanaAlertState,
 } from '../../../../../../types/unified-alerting-dto';
-import { GrafanaGroupUpdatedResponse } from '../../../api/alertRuleModel';
+import { type GrafanaGroupUpdatedResponse } from '../../../api/alertRuleModel';
 import { getHistoryResponse, grafanaRulerRule, rulerTestDb, time_0, time_plus_30 } from '../../grafanaRulerApi';
-import { HandlerOptions } from '../configure';
+import { type HandlerOptions } from '../configure';
 
 export const rulerRulesHandler = () => {
   return http.get(`/api/ruler/grafana/api/v1/rules`, () =>

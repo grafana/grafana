@@ -3,7 +3,7 @@ import { useAsyncFn } from 'react-use';
 import { DataFrameView } from '@grafana/data';
 
 import { loadFeed } from './feed';
-import { NewsItem } from './types';
+import { type NewsItem } from './types';
 import { feedToDataFrame } from './utils';
 
 export function useNewsFeed(url: string) {

@@ -1,14 +1,18 @@
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
+import {
+  type FieldNamePickerConfigSettings,
+  type StandardEditorProps,
+  type StandardEditorsRegistryItem,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
+import { type ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 
 import { getPublicOrAbsoluteUrl } from '../resource';
-import { MediaType, ResourceDimensionOptions, ResourceFolderName, ResourcePickerSize } from '../types';
+import { MediaType, type ResourceDimensionOptions, ResourceFolderName, ResourcePickerSize } from '../types';
 
 import { ResourcePicker } from './ResourcePicker';
 
@@ -19,7 +23,7 @@ const dummyFieldSettings = {
 export const ResourceDimensionEditor = (
   props: StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, unknown>
 ) => {
-  const { value, context, onChange, item } = props;
+  const { value, context, onChange, item, id } = props;
   const labelWidth = 9;
   const resourceOptions = [
     {
@@ -115,6 +119,7 @@ export const ResourceDimensionEditor = (
       )}
       {mode === ResourceDimensionMode.Fixed && (
         <ResourcePicker
+          id={id}
           onChange={onFixedChange}
           onClear={onClear}
           value={value?.fixed}

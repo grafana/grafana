@@ -1,12 +1,16 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
+import {
+  useFlagAnalyticsFramework,
+  useFlagAssistantFrontendToolsDashboardTemplates,
+  useFlagDashboardTemplatesAssistantButton,
+} from '@grafana/runtime/internal';
 import { Box, Grid, Modal, Text, useStyles2 } from '@grafana/ui';
 
 import { DashboardCard } from './DashboardCard';
@@ -15,11 +19,11 @@ import {
   CONTENT_KINDS,
   DISCOVERY_METHODS,
   EVENT_LOCATIONS,
-  SourceEntryPoint,
+  type SourceEntryPoint,
   TemplateDashboardSourceEntryPoint,
 } from './constants';
 import { TemplateDashboardInteractions } from './interactions';
-import { GnetDashboard, GnetDashboardsResponse, Link } from './types';
+import { type GnetDashboard, type GnetDashboardsResponse, type Link } from './types';
 import { getTemplateDashboardUrl } from './utils/templateDashboardHelpers';
 
 const SourceEntryPointMap: Record<string, SourceEntryPoint> = {
@@ -32,12 +36,10 @@ export const TemplateDashboardModal = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const isOpen = searchParams.get('templateDashboards') === 'true';
   const entryPoint = searchParams.get('source') || '';
-  const isDashboardTemplatesAssistantButtonEnabled = useBooleanFlagValue('dashboardTemplatesAssistantButton', false);
-  const isDashboardTemplatesAssistantToolEnabled = useBooleanFlagValue(
-    'assistant.frontend.tools.dashboardTemplates',
-    false
-  );
-  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+
+  const isDashboardTemplatesAssistantButtonEnabled = useFlagDashboardTemplatesAssistantButton();
+  const isDashboardTemplatesAssistantToolEnabled = useFlagAssistantFrontendToolsDashboardTemplates();
+  const isAnalyticsFrameworkEnabled = useFlagAnalyticsFramework();
 
   const testDataSource = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' })[0];
 

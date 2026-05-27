@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 import { config } from '@grafana/runtime';
 
 import { loadPlugin } from '../../utils';
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 export const usePluginConfig = (plugin?: CatalogPlugin) => {
   return useAsync(async () => {

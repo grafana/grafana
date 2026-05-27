@@ -1,19 +1,19 @@
 import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
 
 import {
-  ConfigOverrideRule,
-  DynamicConfigValue,
+  type ConfigOverrideRule,
+  type DynamicConfigValue,
   FieldColorModeId,
-  FieldConfig,
+  type FieldConfig,
   FieldConfigProperty,
-  FieldConfigSource,
+  type FieldConfigSource,
   FieldMatcherID,
   fieldReducers,
   FieldType,
   NullValueMode,
-  PanelTypeChangedHandler,
+  type PanelTypeChangedHandler,
   ReducerID,
-  Threshold,
+  type Threshold,
   ThresholdsMode,
 } from '@grafana/data';
 import {
@@ -21,29 +21,29 @@ import {
   TooltipDisplayMode,
   AxisPlacement,
   GraphDrawStyle,
-  GraphFieldConfig,
+  type GraphFieldConfig,
   GraphGradientMode,
   GraphThresholdsStyleMode,
   LineInterpolation,
-  LineStyle,
+  type LineStyle,
   VisibilityMode,
   ScaleDistribution,
   StackingMode,
   SortOrder,
   GraphTransform,
-  AnnotationQuery,
+  type AnnotationQuery,
   ComparisonOperation,
 } from '@grafana/schema';
-import { TimeRegionConfig } from 'app/core/utils/timeRegions';
+import { type TimeRegionConfig } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardAnnotationsDataLayer } from 'app/features/dashboard-scene/scene/DashboardAnnotationsDataLayer';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
-import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { type GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { defaultGraphConfig } from './config';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 let dashboardRefreshDebouncer: ReturnType<typeof setTimeout> | null = null;
 

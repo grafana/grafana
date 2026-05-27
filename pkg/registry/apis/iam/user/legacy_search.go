@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
@@ -24,7 +25,7 @@ import (
 
 const (
 	UserResource      = "users"
-	UserResourceGroup = "iam.grafana.com"
+	UserResourceGroup = "iam.grafana.app"
 )
 
 var (
@@ -42,6 +43,11 @@ var (
 		fieldEmail:                  "email",
 	}
 )
+
+// UserSortFieldMapping returns a mapping of unified search field names to legacy SQL sort key names.
+func UserSortFieldMapping() map[string]string {
+	return userSortFieldMapping
+}
 
 // UserLegacySearchClient is a client for searching for users in the legacy search engine.
 type UserLegacySearchClient struct {
@@ -75,11 +81,11 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 		return nil, err
 	}
 
-	if req.Limit > maxLimit {
-		req.Limit = maxLimit
+	if req.Limit > common.MaxListLimit {
+		return nil, fmt.Errorf("limit cannot be greater than %d", common.MaxListLimit)
 	}
-	if req.Limit <= 0 {
-		req.Limit = 30
+	if req.Limit < 1 {
+		req.Limit = common.DefaultListLimit
 	}
 
 	if req.Page > math.MaxInt32 || req.Page < 0 {

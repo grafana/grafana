@@ -1,10 +1,10 @@
-import { PluginMeta, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
+import { type PluginMeta, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getPluginSettings } from '@grafana/runtime/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getPluginDetails } from '../admin/api';
-import { CatalogPluginDetails } from '../admin/types';
-import { getPluginSettings } from '../pluginSettings';
+import { type CatalogPluginDetails } from '../admin/types';
 
 import {
   shouldLoadPluginInFrontendSandbox,
@@ -20,7 +20,8 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-jest.mock('../pluginSettings', () => ({
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
   getPluginSettings: jest.fn(),
 }));
 

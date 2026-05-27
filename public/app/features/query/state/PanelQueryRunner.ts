@@ -1,5 +1,5 @@
 import { cloneDeep, isEqual } from 'lodash';
-import { forkJoin, Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
+import { forkJoin, type Observable, of, ReplaySubject, type Unsubscribable } from 'rxjs';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 
 import {
@@ -7,27 +7,27 @@ import {
   compareArrayValues,
   compareDataFrameStructures,
   CoreApp,
-  DataConfigSource,
-  DataFrame,
-  DataQuery,
-  DataQueryRequest,
-  DataSourceApi,
-  DataSourceJsonData,
-  DataSourceRef,
-  DataTransformContext,
-  DataTransformerConfig,
+  type DataConfigSource,
+  type DataFrame,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataSourceApi,
+  type DataSourceJsonData,
+  type DataSourceRef,
+  type DataTransformContext,
+  type DataTransformerConfig,
   getDefaultTimeRange,
   LoadingState,
-  PanelData,
+  type PanelData,
   rangeUtil,
-  ScopedVars,
-  TimeRange,
-  TimeZone,
+  type ScopedVars,
+  type TimeRange,
+  type TimeZone,
   toDataFrame,
   transformDataFrame,
   preProcessPanelData,
-  ApplyFieldOverrideOptions,
-  StreamingDataFrame,
+  type ApplyFieldOverrideOptions,
+  type StreamingDataFrame,
   DataTopic,
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
@@ -37,7 +37,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard/runSharedRequest';
-import { PanelModel } from '../../dashboard/state/PanelModel';
+import { type PanelModel } from '../../dashboard/state/PanelModel';
 
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
 import { mergePanelAndDashData } from './mergePanelAndDashData';

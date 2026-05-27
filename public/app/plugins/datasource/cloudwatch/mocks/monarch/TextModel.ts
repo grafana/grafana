@@ -1,4 +1,4 @@
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 
 // Stub for monacoTypes.editor.ITextModel
 function TextModel(value: string) {

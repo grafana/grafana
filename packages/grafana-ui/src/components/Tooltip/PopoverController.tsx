@@ -1,7 +1,7 @@
-import { Placement } from '@popperjs/core';
+import { type Placement } from '@popperjs/core';
 import { useState, useRef, useCallback, type JSX } from 'react';
 
-import { PopoverContent } from './types';
+import { type PopoverContent } from './types';
 
 type PopperControllerRenderProp = (
   showPopper: () => void,

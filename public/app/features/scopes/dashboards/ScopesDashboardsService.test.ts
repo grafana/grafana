@@ -1,9 +1,9 @@
-import { Location } from 'history';
+import { type Location } from 'history';
 import { Subject } from 'rxjs';
 
 import { config, locationService } from '@grafana/runtime';
 
-import { ScopesApiClient } from '../ScopesApiClient';
+import { type ScopesApiClient } from '../ScopesApiClient';
 // Import mock data for subScope tests
 import {
   navigationWithSubScope,
@@ -12,7 +12,7 @@ import {
 } from '../tests/utils/mockData';
 
 import { ScopesDashboardsService, filterItemsWithSubScopesInPath } from './ScopesDashboardsService';
-import { ScopeNavigation } from './types';
+import { type ScopeNavigation } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

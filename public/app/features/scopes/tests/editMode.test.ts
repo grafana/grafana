@@ -3,13 +3,13 @@ import { act, cleanup } from '@testing-library/react';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { ScopesService } from '../ScopesService';
-import { ScopesSelectorService } from '../selector/ScopesSelectorService';
+import { type ScopesService } from '../ScopesService';
+import { type ScopesSelectorService } from '../selector/ScopesSelectorService';
 
 import { enterEditMode, openSelector, toggleDashboards } from './utils/actions';
-import { expectDashboardsOpen } from './utils/assertions';
+import { expectDashboardsClosed, expectDashboardsOpen } from './utils/assertions';
 import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 import { getDashboardsExpand, getSelectorInput, querySelectorApply } from './utils/selectors';
@@ -55,9 +55,19 @@ describe('Scope selector in edit mode', () => {
     expect(querySelectorApply()).toBeInTheDocument();
   });
 
-  it('Does not close dashboards list when entering edit mode', async () => {
+  it('Closes dashboards list when entering edit mode', async () => {
     await toggleDashboards();
     await enterEditMode(dashboardScene);
+    expectDashboardsClosed();
+  });
+
+  it('Restores dashboards list when exiting edit mode', async () => {
+    await toggleDashboards();
+    await enterEditMode(dashboardScene);
+    expectDashboardsClosed();
+    act(() => {
+      dashboardScene.exitEditMode({ skipConfirm: true });
+    });
     expectDashboardsOpen();
   });
 

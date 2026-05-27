@@ -5,10 +5,10 @@ import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 
 import {
-  ProvisionedFolderFormDataResult,
+  type ProvisionedFolderFormDataResult,
   useProvisionedFolderFormData,
 } from '../../hooks/useProvisionedFolderFormData';
 import { setupProvisioningMswServer } from '../../mocks/server';
@@ -324,6 +324,41 @@ describe('NewProvisionedFolderForm', () => {
     expect(request.url.searchParams.get('ref')).toBe('feature/new-folder');
     expect(request.url.searchParams.get('message')).toBe('Create folder: Branch Folder');
     expect(request.body).toEqual({ title: 'Branch Folder', type: 'folder' });
+  });
+
+  it('renders the message from the repo commit template when comment is empty', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-folder' } } },
+        });
+      })
+    );
+    const { user } = setup(
+      {},
+      {
+        ...mockHookData,
+        repository: {
+          ...mockHookData.repository!,
+          commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
+        },
+      }
+    );
+
+    const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
+    await user.clear(folderNameInput);
+    await user.type(folderNameInput, 'Templated Folder');
+
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+
+    const request = requireCapturedRequest(capturedRequest);
+    expect(request.url.searchParams.get('message')).toBe('chore(folders): create Templated Folder');
   });
 
   // Error response handling (alertError publish, onDismiss) is tested in useProvisionedRequestHandler.test.ts.

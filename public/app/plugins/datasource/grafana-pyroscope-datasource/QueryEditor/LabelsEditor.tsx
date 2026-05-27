@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 import { useAsync, useLatest } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { CodeEditor, Monaco, useStyles2, monacoTypes } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { CodeEditor, type Monaco, useStyles2, type monacoTypes } from '@grafana/ui';
 
 import { languageDefinition } from '../pyroscopeql';
 

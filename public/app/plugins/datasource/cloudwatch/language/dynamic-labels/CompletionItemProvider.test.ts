@@ -1,5 +1,5 @@
 import { CompletionItemPriority } from '@grafana/plugin-ui';
-import { Monaco, monacoTypes } from '@grafana/ui';
+import { type Monaco, type monacoTypes } from '@grafana/ui';
 
 import { dynamicLabelTestDataAfterLabelValue } from '../../mocks/dynamic-label-test-data/afterLabelValue';
 import { dynamicLabelTestDataInsideLabelValue } from '../../mocks/dynamic-label-test-data/insideLabelValue';

@@ -1,5 +1,6 @@
-import { type DefaultBodyType, HttpResponse, HttpResponseResolver, PathParams, http } from 'msw';
+import { type DefaultBodyType, HttpResponse, type HttpResponseResolver, type PathParams, http } from 'msw';
 
+import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 import server from '@grafana/test-utils/server';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
@@ -15,16 +16,23 @@ import {
   getK8sResponse,
   paginatedHandlerFor,
 } from 'app/features/alerting/unified/mocks/server/utils';
-import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
-import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
-import { AlertmanagerAlert, AlertmanagerChoice, Silence } from 'app/plugins/datasource/alertmanager/types';
-import { FolderDTO } from 'app/types/folders';
-import { RulerDataSourceConfig } from 'app/types/unified-alerting';
-import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import {
+  type AlertmanagerAlert,
+  type AlertmanagerChoice,
+  type Silence,
+} from 'app/plugins/datasource/alertmanager/types';
+import { type FolderDTO } from 'app/types/folders';
+import { type RulerDataSourceConfig } from 'app/types/unified-alerting';
+import {
+  type GrafanaPromRuleGroupDTO,
+  type PromRuleGroupDTO,
+  type RulerRuleGroupDTO,
+} from 'app/types/unified-alerting-dto';
 
 import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
-import { ApiMachineryError } from '../../utils/k8s/errors';
+import { type ApiMachineryError } from '../../utils/k8s/errors';
 
 import { MIMIR_DATASOURCE_UID } from './constants';
 import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from './handlers/grafanaRuler';
@@ -72,6 +80,29 @@ export const setUpdateGrafanaRulerRuleNamespaceResolver = (
   );
 };
 
+export const setCreateGrafanaRuleResolver = (
+  resolver: HttpResponseResolver<{ namespace: string }, DefaultBodyType, undefined>,
+  endpoint: 'alertrules' | 'recordingrules' = 'alertrules'
+) => {
+  server.use(
+    http.post<{ namespace: string }, DefaultBodyType, undefined>(
+      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/${endpoint}`,
+      resolver
+    )
+  );
+};
+
+export const setReplaceGrafanaRuleResolver = (
+  resolver: HttpResponseResolver<{ namespace: string; name: string }, DefaultBodyType, undefined>,
+  endpoint: 'alertrules' | 'recordingrules' = 'alertrules'
+) => {
+  server.use(
+    http.put<{ namespace: string; name: string }, DefaultBodyType, undefined>(
+      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/${endpoint}/:name`,
+      resolver
+    )
+  );
+};
 export const setUpdateRulerRuleNamespaceResolver = (
   resolver: HttpResponseResolver<{ dataSourceUid: string; namespace: string }, RulerRuleGroupDTO, undefined>
 ) => {
@@ -115,6 +146,36 @@ export const setGrafanaRulerRuleGroupResolver = (
   );
 };
 
+/**
+ * Override the GET /rule/:uid endpoint with a custom resolver. Useful when a test
+ * needs to surface a specific rule shape that's not in the default ruler test DB
+ * (e.g. an ungrouped rule, a recording rule).
+ */
+export const setGrafanaRulerRuleResolver = (
+  resolver: HttpResponseResolver<{ uid: string }, DefaultBodyType, undefined>
+) => {
+  server.use(http.get<{ uid: string }, DefaultBodyType, undefined>(`/api/ruler/grafana/api/v1/rule/:uid`, resolver));
+};
+
+/**
+ * Resolver that echoes the request body back to the caller, fabricating a `metadata.name`
+ * for create requests where the server would normally generate one. Common shape for
+ * app-platform create/replace responses in unit tests. Reads `params.name` when present
+ * (replace path), falls back to a sentinel for create.
+ */
+export const echoBodyResolver = async ({
+  request,
+  params,
+}: {
+  request: Request;
+  params: Record<string, string | readonly string[]>;
+}) => {
+  // Clone before reading: captureRequests reads the body too, and a Request body can only be consumed once.
+  const body = (await request.clone().json()) as Record<string, unknown>;
+  const rawName = params.name;
+  const name = typeof rawName === 'string' ? rawName : 'new-uid';
+  return HttpResponse.json({ ...body, metadata: { name } });
+};
 export const setRulerRuleGroupResolver = (
   resolver: HttpResponseResolver<
     { dataSourceUid: string; namespace: string; groupName: string },
@@ -271,7 +332,7 @@ export const setAlertmanagerAlertsHandler = (alerts: AlertmanagerAlert[]) => {
 
 /** Make a plugin respond with `enabled: false`, as if its installed but disabled */
 export const disablePlugin = (pluginId: SupportedPlugin) => {
-  clearPluginSettingsCache(pluginId);
+  invalidatePluginSettingsCache(pluginId);
   server.use(getDisabledPluginHandler(pluginId));
 };
 

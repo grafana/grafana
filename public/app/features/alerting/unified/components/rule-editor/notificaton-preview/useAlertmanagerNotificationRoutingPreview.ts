@@ -6,7 +6,7 @@ import {
   useNotificationPolicyRoute,
 } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
 
-import { Labels } from '../../../../../../types/unified-alerting-dto';
+import { type Labels } from '../../../../../../types/unified-alerting-dto';
 import { useRouteGroupsMatcher } from '../../../useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
@@ -40,8 +40,16 @@ export const useAlertmanagerNotificationRoutingPreview = (
     if (!defaultPolicy) {
       return;
     }
-    return normalizeRoute(addUniqueIdentifierToRoute(defaultPolicy));
-  }, [defaultPolicy]);
+    const normalized = normalizeRoute(addUniqueIdentifierToRoute(defaultPolicy));
+    // k8sRouteToRoute adds a synthetic root matcher (__grafana_managed_route__ = <name>)
+    // to tell apart different routing trees. But once we know which tree we want
+    // (policyName is set), that matcher just gets in the way — real Alertmanager
+    // doesn't know about it. Strip it so instances can actually flow into the sub-routes.
+    if (policyName) {
+      return { ...normalized, object_matchers: [] };
+    }
+    return normalized;
+  }, [defaultPolicy, policyName]);
 
   // match labels in the tree => map of notification policies and the alert instances (list of labels) in each one
   const {

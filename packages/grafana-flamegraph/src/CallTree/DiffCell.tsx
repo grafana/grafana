@@ -1,4 +1,4 @@
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export function DiffCell({ value, theme }: { value: number | undefined; theme: GrafanaTheme2 }) {
   if (value === undefined) {

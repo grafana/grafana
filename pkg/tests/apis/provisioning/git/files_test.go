@@ -2,13 +2,14 @@ package git
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -17,9 +18,7 @@ import (
 )
 
 func TestIntegrationGitFiles_CreateFile(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	repoName := "test-create-file"
@@ -74,13 +73,13 @@ func TestIntegrationGitFiles_CreateFile(t *testing.T) {
 				}
 			}
 			assert.True(collect, found, "dashboard should be synced to Grafana")
-		}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault, "dashboard should appear after sync")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should appear after sync")
 	})
 
 	t.Run("create file on new branch", func(t *testing.T) {
 		branchName := "feature-branch"
 
-		dashboardContent := gitcommon.DashboardJSON("test-dashboard-2", "Test Dashboard 2", 1)
+		dashboardContent := common.DashboardJSON("test-dashboard-2", "Test Dashboard 2", 1)
 
 		result := helper.AdminREST.Post().
 			Namespace("default").
@@ -109,9 +108,7 @@ func TestIntegrationGitFiles_CreateFile(t *testing.T) {
 }
 
 func TestIntegrationGitFiles_UpdateFile(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	repoName := "test-update-file"
@@ -171,7 +168,7 @@ func TestIntegrationGitFiles_UpdateFile(t *testing.T) {
 			}
 
 			assert.Equal(collect, "Updated Title", title, "dashboard title should be updated")
-		}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault, "dashboard should be updated after sync")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be updated after sync")
 	})
 
 	t.Run("update file on branch", func(t *testing.T) {
@@ -211,9 +208,7 @@ func TestIntegrationGitFiles_UpdateFile(t *testing.T) {
 }
 
 func TestIntegrationGitFiles_DeleteFile(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	repoName := "test-delete-file"
@@ -261,7 +256,7 @@ func TestIntegrationGitFiles_DeleteFile(t *testing.T) {
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			_, err := helper.DashboardsV1.Resource.Get(ctx, "dash-1", metav1.GetOptions{})
 			assert.True(collect, apierrors.IsNotFound(err), "dashboard should be deleted from Grafana")
-		}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault, "dashboard should be deleted after sync")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be deleted after sync")
 	})
 
 	t.Run("delete file on branch", func(t *testing.T) {
@@ -300,9 +295,7 @@ func TestIntegrationGitFiles_DeleteFile(t *testing.T) {
 }
 
 func TestIntegrationGitFiles_MoveFile(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	repoName := "test-move-file"
@@ -350,17 +343,65 @@ func TestIntegrationGitFiles_MoveFile(t *testing.T) {
 	})
 }
 
-func TestIntegrationGitFiles_ListFiles(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+func TestIntegrationGitFiles_MoveDirectoryOnBranch(t *testing.T) {
+	helper := sharedGitHelper(t)
+	ctx := context.Background()
 
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	repoName := "test-move-dir"
+	initialContent := map[string][]byte{
+		"mydir/dashboard.json": common.DashboardJSON("dir-dash", "Dir Dashboard", 1),
+	}
+
+	_, _ = helper.CreateGitRepo(t, repoName, initialContent, "write", "branch")
+	helper.SyncAndWait(t, repoName)
+
+	t.Run("move directory on branch succeeds with correct response", func(t *testing.T) {
+		branchName := "move-dir-branch"
+
+		resp := helper.PostFilesRequest(t, repoName, common.FilesPostOptions{
+			TargetPath:   "renamed/",
+			OriginalPath: "mydir/",
+			Message:      "rename directory",
+			Ref:          branchName,
+		})
+		defer func() { _ = resp.Body.Close() }()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "directory move on branch should succeed")
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		var wrapper map[string]interface{}
+		require.NoError(t, json.Unmarshal(body, &wrapper))
+
+		assert.Equal(t, "renamed/", wrapper["path"], "response path should be the target directory")
+		assert.Equal(t, branchName, wrapper["ref"], "response ref should match the requested branch")
+
+		resource, ok := wrapper["resource"].(map[string]interface{})
+		require.True(t, ok, "response should contain resource object")
+		assert.Equal(t, "move", resource["action"], "resource action should be 'move'")
+
+		// Verify the directory was actually moved on the branch
+		result := helper.AdminREST.Get().
+			Namespace("default").
+			Resource("repositories").
+			Name(repoName).
+			SubResource("files", "renamed", "dashboard.json").
+			Param("ref", branchName).
+			Do(ctx)
+		require.NoError(t, result.Error(), "dashboard should exist at new location on branch")
+	})
+}
+
+func TestIntegrationGitFiles_ListFiles(t *testing.T) {
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	repoName := "test-list-files"
 	initialContent := map[string][]byte{
-		"dashboard1.json":        gitcommon.DashboardJSON("dash-1", "Dashboard 1", 1),
-		"dashboard2.json":        gitcommon.DashboardJSON("dash-2", "Dashboard 2", 1),
-		"folder/dashboard3.json": gitcommon.DashboardJSON("dash-3", "Dashboard 3", 1),
+		"dashboard1.json":        common.DashboardJSON("dash-1", "Dashboard 1", 1),
+		"dashboard2.json":        common.DashboardJSON("dash-2", "Dashboard 2", 1),
+		"folder/dashboard3.json": common.DashboardJSON("dash-3", "Dashboard 3", 1),
 	}
 
 	_, _ = helper.CreateGitRepo(t, repoName, initialContent)
@@ -420,14 +461,12 @@ func TestIntegrationGitFiles_ListFiles(t *testing.T) {
 }
 
 func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	repoName := "test-branch-ops"
 	initialContent := map[string][]byte{
-		"main-file.json": gitcommon.DashboardJSON("main-dash", "Main Dashboard", 1),
+		"main-file.json": common.DashboardJSON("main-dash", "Main Dashboard", 1),
 	}
 
 	// Enable both write and branch workflows for branch operations
@@ -437,7 +476,7 @@ func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 		branchName := "multi-file-branch"
 
 		// Create first file
-		file1Content := gitcommon.DashboardJSON("branch-dash-1", "Branch Dashboard 1", 1)
+		file1Content := common.DashboardJSON("branch-dash-1", "Branch Dashboard 1", 1)
 		result := helper.AdminREST.Post().
 			Namespace("default").
 			Resource("repositories").
@@ -452,7 +491,7 @@ func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 		require.NoError(t, result.Error(), "should create first file on branch")
 
 		// Create second file on same branch
-		file2Content := gitcommon.DashboardJSON("branch-dash-2", "Branch Dashboard 2", 1)
+		file2Content := common.DashboardJSON("branch-dash-2", "Branch Dashboard 2", 1)
 		result = helper.AdminREST.Post().
 			Namespace("default").
 			Resource("repositories").
@@ -508,7 +547,7 @@ func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 		branch2 := "update-branch-2"
 
 		// Create initial file
-		initialContent := gitcommon.DashboardJSON("multi-branch-dash", "Original", 1)
+		initialContent := common.DashboardJSON("multi-branch-dash", "Original", 1)
 		result := helper.AdminREST.Post().
 			Namespace("default").
 			Resource("repositories").
@@ -522,7 +561,7 @@ func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 		require.NoError(t, result.Error(), "should create initial file")
 
 		// Update on branch 1
-		branch1Content := gitcommon.DashboardJSON("multi-branch-dash", "Branch 1 Update", 2)
+		branch1Content := common.DashboardJSON("multi-branch-dash", "Branch 1 Update", 2)
 		result = helper.AdminREST.Put().
 			Namespace("default").
 			Resource("repositories").
@@ -537,7 +576,7 @@ func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
 		require.NoError(t, result.Error(), "should update file on branch 1")
 
 		// Update on branch 2
-		branch2Content := gitcommon.DashboardJSON("multi-branch-dash", "Branch 2 Update", 3)
+		branch2Content := common.DashboardJSON("multi-branch-dash", "Branch 2 Update", 3)
 		result = helper.AdminREST.Put().
 			Namespace("default").
 			Resource("repositories").

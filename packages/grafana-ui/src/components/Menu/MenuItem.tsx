@@ -1,13 +1,21 @@
 import { css, cx } from '@emotion/css';
-import { ReactElement, useCallback, useState, useRef, useImperativeHandle, CSSProperties, AriaRole } from 'react';
+import {
+  type ReactElement,
+  useCallback,
+  useState,
+  useRef,
+  useImperativeHandle,
+  type CSSProperties,
+  type AriaRole,
+} from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, LinkTarget } from '@grafana/data';
+import { type GrafanaTheme2, type LinkTarget } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getInternalRadius } from '../../themes/mixins';
-import { IconName } from '../../types/icon';
+import { type IconName } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 
@@ -136,6 +144,13 @@ export const MenuItem = React.memo(
             event.preventDefault();
             localRef.current?.click();
           }
+          if (hasSubMenu && !isSubMenuOpen) {
+            event.preventDefault();
+            event.stopPropagation();
+            setIsSubMenuOpen(true);
+            setIsActive(true);
+            return;
+          }
           break;
         case 'ArrowRight':
           event.preventDefault();
@@ -143,6 +158,15 @@ export const MenuItem = React.memo(
           if (hasSubMenu) {
             setIsSubMenuOpen(true);
             setIsActive(true);
+          }
+          break;
+        case 'Enter':
+          if (hasSubMenu && !isSubMenuOpen) {
+            event.preventDefault();
+            event.stopPropagation();
+            setIsSubMenuOpen(true);
+            setIsActive(true);
+            return;
           }
           break;
         default:
@@ -264,6 +288,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     active: css({
       background: theme.colors.action.hover,
+      // needed to show active items in forced colors mode
+      '@media (forced-colors: active)': {
+        outline: '1px solid transparent',
+      },
     }),
     destructive: css({
       color: theme.colors.error.text,

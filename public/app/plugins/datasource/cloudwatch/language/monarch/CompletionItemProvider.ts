@@ -1,13 +1,13 @@
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { ResourcesAPI } from '../../resources/ResourcesAPI';
+import { type ResourcesAPI } from '../../resources/ResourcesAPI';
 import { CLOUDWATCH_PPL_LANGUAGE_DEFINITION_ID } from '../cloudwatch-ppl/language';
 
-import { LinkedToken } from './LinkedToken';
+import { type LinkedToken } from './LinkedToken';
 import { linkedTokenBuilder } from './linkedTokenBuilder';
-import { LanguageDefinition } from './register';
-import { Completeable, StatementPosition, SuggestionKind, TokenTypes } from './types';
+import { type LanguageDefinition } from './register';
+import { type Completeable, StatementPosition, type SuggestionKind, type TokenTypes } from './types';
 
 type CompletionItem = monacoTypes.languages.CompletionItem;
 

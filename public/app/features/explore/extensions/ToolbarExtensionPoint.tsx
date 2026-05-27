@@ -1,17 +1,17 @@
-import { ReactElement, useMemo, useState } from 'react';
+import { type ReactElement, useMemo, useState } from 'react';
 
 import {
   type ExplorePanelsState,
   type PluginExtensionLink,
   PluginExtensionPoints,
-  RawTimeRange,
+  type RawTimeRange,
   getTimeZone,
 } from '@grafana/data';
 import { reportInteraction, usePluginLinks } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
+import { type DataQuery, type TimeZone } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { ExplorePanelData } from 'app/types/explore';
+import { type ExplorePanelData } from 'app/types/explore';
 import { useSelector } from 'app/types/store';
 
 import { getExploreItemSelector, isLeftPaneSelector, selectCorrelationDetails } from '../state/selectors';

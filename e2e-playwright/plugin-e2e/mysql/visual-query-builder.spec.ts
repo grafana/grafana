@@ -62,7 +62,7 @@ test.describe(
       await select.locator(page.getByText('createdAt')).click();
 
       // Toggle where row
-      await page.getByLabel('Filter').last().click();
+      await page.getByRole('switch', { name: 'Filter' }).last().click({ force: true });
 
       // Click add filter button
       await page.getByRole('button', { name: 'Add filter' }).click();

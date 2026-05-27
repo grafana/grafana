@@ -1,6 +1,6 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
-import { ResultFormat } from '../../types';
+import { type ResultFormat } from '../../types';
 
 export const RESULT_FORMATS: Array<SelectableValue<ResultFormat>> = [
   { label: 'Time series', value: 'time_series' },

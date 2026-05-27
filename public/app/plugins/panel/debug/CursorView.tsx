@@ -2,12 +2,12 @@ import { Component } from 'react';
 import { Subscription } from 'rxjs';
 
 import {
-  EventBus,
+  type EventBus,
   LegacyGraphHoverEvent,
   LegacyGraphHoverClearEvent,
   DataHoverEvent,
   DataHoverClearEvent,
-  BusEventBase,
+  type BusEventBase,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { CustomScrollbar } from '@grafana/ui';

@@ -2,10 +2,10 @@ import { zip } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
-  CloudRuleIdentifier,
+  type CloudRuleIdentifier,
   GrafanaRulesSourceSymbol,
-  RuleGroupIdentifierV2,
-  RuleIdentifier,
+  type RuleGroupIdentifierV2,
+  type RuleIdentifier,
 } from 'app/types/unified-alerting';
 
 import { logError, logMeasurement } from '../Analytics';

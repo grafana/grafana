@@ -1,9 +1,9 @@
-import { Props } from 'react-virtualized-auto-sizer';
+import { type Props } from 'react-virtualized-auto-sizer';
 
-import { DataQueryRequest, EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
+import { type DataQueryRequest, EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
-import { LokiQuery } from '../../../plugins/datasource/loki/types';
+import { type LokiQuery } from '../../../plugins/datasource/loki/types';
 
 import { makeLogsQueryResponse } from './helper/query';
 import { setupExplore, tearDown, waitForExplore } from './helper/setup';

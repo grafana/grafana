@@ -1,9 +1,9 @@
 import { reduce } from 'lodash';
 
-import { escapeRegex, ScopedVars } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { escapeRegex, type ScopedVars } from '@grafana/data';
+import { type TemplateSrv } from '@grafana/runtime';
 
-import { DEFAULT_POLICY, InfluxQueryTag, MetadataQueryType } from './types';
+import { DEFAULT_POLICY, type InfluxQueryTag, type MetadataQueryType } from './types';
 
 export const buildMetadataQuery = (params: {
   type: MetadataQueryType;

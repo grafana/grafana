@@ -101,15 +101,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/elasticsearch/**/*",
-      "pkg/tsdb/elasticsearch/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Elasticsearch"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/graphite/**/*",
       "pkg/tsdb/graphite/**/*"
     ],
@@ -212,14 +203,6 @@
     ],
     "action": "updateLabel",
     "addLabel": "datasource/Tempo"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/zipkin/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Zipkin"
   },
   {
     "type": "changedfiles",
@@ -431,17 +414,6 @@
     "matches": [
       "public/app/plugins/datasource/influxdb/**/*",
       "pkg/tsdb/influx/**/*"
-    ],
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/elasticsearch/**/*",
-      "pkg/tsdb/elasticsearch/**/*"
     ],
     "action": "addToProject",
     "addToProject": {

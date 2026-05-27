@@ -1,7 +1,8 @@
 import { isEqual } from 'lodash';
-import { memo, SyntheticEvent, useCallback, useEffect, useId, useState } from 'react';
+import { memo, type SyntheticEvent, useCallback, useEffect, useId, useState } from 'react';
 import { usePrevious } from 'react-use';
 
+import { QueryWithAssistantButton } from '@grafana/assistant';
 import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
@@ -12,7 +13,7 @@ import {
   QueryHeaderSwitch,
   QueryEditorMode,
 } from '@grafana/plugin-ui';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Space, Stack } from '@grafana/ui';
 
 import { LabelBrowserModal } from '../querybuilder/components/LabelBrowserModal';
@@ -22,10 +23,10 @@ import { LokiQueryCodeEditor } from '../querybuilder/components/LokiQueryCodeEdi
 import { QueryPatternsModal } from '../querybuilder/components/QueryPatternsModal';
 import { buildVisualQueryFromString } from '../querybuilder/parsing';
 import { changeEditorMode, getQueryWithDefaults } from '../querybuilder/state';
-import { LokiQuery, QueryStats } from '../types';
+import { type LokiQuery, type QueryStats } from '../types';
 
 import { shouldUpdateStats } from './stats';
-import { LokiQueryEditorProps } from './types';
+import { type LokiQueryEditorProps } from './types';
 
 export const testIds = {
   editor: 'loki-editor',
@@ -51,6 +52,10 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
 
   // This should be filled in from the defaults by now.
   const editorMode = query.editorMode!;
+
+  const showAssistant =
+    config.featureToggles.queryWithAssistant &&
+    (app === CoreApp.Explore || app === CoreApp.Dashboard || app === CoreApp.PanelEditor);
 
   const onExplainChange = (event: SyntheticEvent<HTMLInputElement>) => {
     window.localStorage.setItem(lokiQueryEditorExplainKey, event.currentTarget.checked ? 'true' : 'false');
@@ -151,6 +156,15 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
       />
       <EditorHeader>
         <Stack gap={1}>
+          {showAssistant && (
+            <QueryWithAssistantButton
+              currentQuery={query}
+              queries={queries ?? [query]}
+              dataSourceInstanceSettings={datasource.instanceSettings}
+              datasourceApi={null}
+              app={app}
+            />
+          )}
           <Button
             data-testid={selectors.components.QueryBuilder.queryPatterns}
             variant="secondary"

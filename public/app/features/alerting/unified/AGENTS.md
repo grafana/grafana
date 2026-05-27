@@ -563,6 +563,15 @@ Skip proposing an update if the correction is:
 - Already documented in this file
 - A personal preference rather than a project convention
 
+## Dependency Security
+
+- **No new dependencies without explicit approval**: Do NOT run `yarn add` or otherwise introduce new packages. If a task would benefit from a new dependency, stop and ask the user for approval first — explain what package you want, why, and its publish date.
+- **7-day quarantine**: Even with approval, never add a dependency whose latest version was published less than 7 days ago. Check publish date with `npm view <package> time --json` before proposing.
+- **Prefer established packages**: Favor well-known, actively maintained packages. Avoid packages with very few downloads or no recent maintenance.
+- **No postinstall script overrides**: The repo has `enableScripts: false`. Do not add per-package script overrides without approval from @grafana/frontend-ops.
+- **Lock file integrity**: Always use `yarn install --immutable`. Never manually edit `yarn.lock`.
+- **Report suspicious packages**: If a dependency shows signs of compromise (unexpected scripts, obfuscated code, ownership transfer), flag it in the PR and tag @grafana/frontend-ops.
+
 ## Getting Help
 
 - Check patterns in existing `components/` code
@@ -575,5 +584,5 @@ Skip proposing an update if the correction is:
 
 ---
 
-**Last Updated**: 2026-02-23
+**Last Updated**: 2026-03-31
 **Maintained By**: Alerting Squad

@@ -1,70 +1,59 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 
-import { AlertLabel, RouteMatchResult, RouteWithID } from '@grafana/alerting';
+import { AlertLabel, type RouteMatchResult, type RouteWithID } from '@grafana/alerting';
 import { Trans } from '@grafana/i18n';
-import { Button, Drawer, Text, TextLink } from '@grafana/ui';
+import { Button, Divider, Drawer, Text, TextLink } from '@grafana/ui';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
+import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { createRelativeUrl } from '../../../utils/url';
 
 import { ConnectionLine } from './ConnectionLine';
 import { JourneyPolicyCard } from './JourneyPolicyCard';
 import { MatchDetails } from './MatchDetails';
 
-type NotificationPolicyDrawerProps = {
-  policyName?: string;
-  matchedRootRoute: boolean;
+export type JourneyEntry = {
   journey: RouteMatchResult<RouteWithID>['matchingJourney'];
+  policyName?: string;
+};
+
+type NotificationPolicyContentProps = {
+  journeys: JourneyEntry[];
   labels: Array<[string, string]>;
 };
 
-export function NotificationPolicyDrawer({
-  policyName,
-  matchedRootRoute,
-  journey,
-  labels,
-}: NotificationPolicyDrawerProps) {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+/** Renders the journeys list without any Drawer wrapper — embed in any container. */
+export function NotificationPolicyContent({ journeys, labels }: NotificationPolicyContentProps) {
+  // The default tree's metadata.name is ROOT_ROUTE_NAME ("user-defined"); treat that as no name
+  // so downstream rendering shows "Default policy" rather than the internal identifier.
+  const normalizedJourneys = useMemo(
+    () =>
+      journeys.map(({ journey, policyName }) => ({
+        journey,
+        policyName: policyName !== ROOT_ROUTE_NAME ? policyName : undefined,
+      })),
+    [journeys]
+  );
 
-  const handleOpenDrawer = () => {
-    setIsDrawerOpen(true);
-  };
-
-  const handleCloseDrawer = () => {
-    setIsDrawerOpen(false);
-  };
-
-  // Process the journey data to extract the information we need
-  const finalRouteMatchInfo = journey.at(-1);
-  const nonMatchingLabels = finalRouteMatchInfo?.matchDetails.filter((detail) => !detail.match) ?? [];
+  if (normalizedJourneys.length === 0) {
+    return null;
+  }
 
   return (
-    <>
-      <Button fill="outline" variant="secondary" size="sm" onClick={handleOpenDrawer}>
-        <Trans i18nKey="alerting.instance-match.notification-policy">View route</Trans>
-      </Button>
+    <Stack direction="column" gap={2}>
+      {normalizedJourneys.map(({ journey, policyName }, journeyIndex) => {
+        const finalRouteMatchInfo = journey.at(-1);
+        // Labels the final policy evaluated but did not match on.
+        const nonMatchingLabels = finalRouteMatchInfo?.matchDetails.filter((detail) => !detail.match) ?? [];
 
-      {isDrawerOpen && (
-        <Drawer
-          size="md"
-          title={
-            <>
-              <Trans i18nKey="alerting.notification-route.notification-policy">Notification policy</Trans>
-              {policyName && (
-                <Text color="secondary" variant="bodySmall">
-                  {' '}
-                  ⋅ {policyName}
-                </Text>
-              )}
-            </>
-          }
-          onClose={handleCloseDrawer}
-        >
-          <Stack direction="column" gap={2}>
+        return (
+          <Fragment key={journeyIndex}>
+            {journeyIndex > 0 && <Divider />}
             <Stack direction="column" gap={2} alignItems="center">
               <Stack direction="column" gap={0}>
                 {journey.map((routeInfo, index) => (
                   <Fragment key={index}>
+                    {/* MatchDetails explains why the parent routed to this child — skipped for the root node. */}
                     {index > 0 && (
                       <>
                         <ConnectionLine />
@@ -76,6 +65,7 @@ export function NotificationPolicyDrawer({
                       route={routeInfo.route}
                       isRoot={index === 0}
                       isFinalRoute={index === journey.length - 1}
+                      policyName={index === 0 ? policyName : undefined}
                     />
                   </Fragment>
                 ))}
@@ -96,17 +86,54 @@ export function NotificationPolicyDrawer({
                 </Stack>
               )}
             </Stack>
+          </Fragment>
+        );
+      })}
 
-            <TextLink
-              href={createRelativeUrl(`/alerting/routes/policy/${encodeURIComponent(policyName ?? '')}/edit`)}
-              external
-              inline={false}
-            >
-              <Trans i18nKey="alerting.notification-policy-drawer.view-notification-policy-tree">
-                View notification policy tree
-              </Trans>
-            </TextLink>
-          </Stack>
+      <TextLink href={createRelativeUrl('/alerting/routes')} external inline={false}>
+        <Trans i18nKey="alerting.notification-policy-drawer.view-notification-policy-tree">
+          View notification policy tree
+        </Trans>
+      </TextLink>
+    </Stack>
+  );
+}
+
+type NotificationPolicyDrawerProps = {
+  policyName?: string;
+  journey: RouteMatchResult<RouteWithID>['matchingJourney'];
+  labels: Array<[string, string]>;
+};
+
+export function NotificationPolicyDrawer({ policyName, journey, labels }: NotificationPolicyDrawerProps) {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  // ROOT_ROUTE_NAME is the internal name of the default tree — don't surface it in the title.
+  const normalizedPolicyName = policyName !== ROOT_ROUTE_NAME ? policyName : undefined;
+
+  return (
+    <>
+      <Button fill="outline" variant="secondary" size="sm" onClick={() => setIsDrawerOpen(true)}>
+        <Trans i18nKey="alerting.instance-match.notification-policy">View route</Trans>
+      </Button>
+
+      {isDrawerOpen && (
+        <Drawer
+          size="md"
+          title={
+            <>
+              <Trans i18nKey="alerting.notification-route.notification-policy">Notification policy</Trans>
+              {normalizedPolicyName && (
+                <Text color="secondary" variant="bodySmall">
+                  {' '}
+                  ⋅ {normalizedPolicyName}
+                </Text>
+              )}
+            </>
+          }
+          onClose={() => setIsDrawerOpen(false)}
+        >
+          <NotificationPolicyContent journeys={[{ journey, policyName }]} labels={labels} />
         </Drawer>
       )}
     </>

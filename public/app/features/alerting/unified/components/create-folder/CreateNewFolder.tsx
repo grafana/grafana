@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, type ComponentSize, Field, Input, Label, Modal, Stack, useStyles2 } from '@grafana/ui';
@@ -10,7 +10,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { Folder } from '../../types/rule-form';
+import { type Folder } from '../../types/rule-form';
 
 export type ButtonFill = 'solid' | 'outline' | 'text';
 

@@ -1,6 +1,6 @@
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
-import { Combobox } from '@grafana/ui';
+import { type Combobox } from '@grafana/ui';
 
 interface ClearableProps<T> {
   isClearable: true;

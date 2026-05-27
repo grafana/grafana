@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { Dimensions, TimeZone } from '@grafana/data';
-import { TooltipDisplayMode } from '@grafana/schema';
+import { type Dimensions, type TimeZone } from '@grafana/data';
+import { type TooltipDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Portal } from '../Portal/Portal';

@@ -1,17 +1,16 @@
 import { render, screen } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { DashboardLink } from '@grafana/schema';
+import { type DashboardLinkType, type DashboardLink } from '@grafana/schema';
 
 import { DashboardLinkRenderer } from './DashboardLinkRenderer';
+import { DashboardScene } from './DashboardScene';
 
 const mockGetAnchorInfo = jest.fn();
-const mockGetLinkUrl = jest.fn();
 
 jest.mock('app/features/panel/panellinks/link_srv', () => ({
   getLinkSrv: jest.fn(() => ({
     getAnchorInfo: mockGetAnchorInfo,
-    getLinkUrl: mockGetLinkUrl,
   })),
 }));
 
@@ -31,68 +30,87 @@ jest.mock('app/features/dashboard/components/SubMenu/DashboardLinksDashboard', (
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
-  Tooltip: jest.fn(({ children }) => <div data-testid="tooltip-wrapper">{children}</div>),
+  Tooltip: jest.fn(({ children, content }) => (
+    <div data-testid="tooltip-wrapper" data-tooltip-content={content}>
+      {children}
+    </div>
+  )),
 }));
 
-describe('DashboardLinkRenderer', () => {
-  const dashboardUID = 'test-dashboard-uid';
+function buildLink({
+  type,
+  title,
+  url,
+  targetBlank,
+  icon,
+  tooltip,
+}: {
+  type: DashboardLinkType;
+  title: string;
+  url: string;
+  icon?: string;
+  tooltip?: string;
+  targetBlank?: boolean;
+}): DashboardLink {
+  const link: DashboardLink = {
+    type,
+    title,
+    url: url || '',
+    icon: icon || '',
+    tooltip: tooltip || '',
+    targetBlank: Boolean(targetBlank),
+    asDropdown: false,
+    keepTime: false,
+    includeVars: false,
+    tags: ['tag1'],
+  };
 
+  mockGetAnchorInfo.mockReturnValue({
+    title: link.title,
+    tooltip: link.tooltip,
+    href: link.url,
+  });
+
+  return link;
+}
+
+function buildDashboard(): DashboardScene {
+  return new DashboardScene({ uid: 'test-dashboard-uid', title: 'Test Dashboard' });
+}
+
+describe('DashboardLinkRenderer', () => {
   beforeEach(() => {
-    mockGetAnchorInfo.mockClear();
-    mockGetLinkUrl.mockClear();
+    jest.clearAllMocks();
   });
 
   it('renders a dashboard type link using the <DashboardLinksDashboard> component', () => {
-    const link: DashboardLink = {
-      type: 'dashboards', // dashboard type link
+    const dashboard = buildDashboard();
+    const link = buildLink({
+      type: 'dashboards',
       title: 'Dashboard Link',
-      url: '',
-      icon: 'dashboard',
-      tooltip: '',
-      tags: ['tag1'],
-      asDropdown: false,
-      targetBlank: false,
-      keepTime: false,
-      includeVars: false,
-    };
+      url: '/d/test-uid/dashboard-link',
+    });
 
-    const linkInfo = {
-      title: 'Dashboard Link',
-      href: '/d/test-uid/dashboard-link',
-      tooltip: null,
-    };
-
-    mockGetAnchorInfo.mockReturnValue(linkInfo);
-
-    render(<DashboardLinkRenderer link={link} dashboardUID={dashboardUID} />);
+    render(
+      <DashboardLinkRenderer link={link} dashboardUID={dashboard.state.uid!} linkIndex={0} dashboard={dashboard} />
+    );
 
     expect(screen.getByTestId('dashboard-links-dashboard')).toBeInTheDocument();
     expect(screen.getByText('Dashboard Link: Dashboard Link (UID: test-dashboard-uid)')).toBeInTheDocument();
   });
 
   it('renders a regular link with proper attributes', () => {
-    const link: DashboardLink = {
-      type: 'link', // regular link
+    const dashboard = buildDashboard();
+    const link = buildLink({
+      type: 'link',
       title: 'External Link',
       url: 'https://example.com',
-      icon: 'external link',
-      tooltip: '',
-      tags: [],
-      asDropdown: false,
       targetBlank: true,
-      keepTime: false,
-      includeVars: false,
-    };
+    });
 
-    const linkInfo = {
-      title: 'External Link',
-      href: 'https://example.com',
-      tooltip: null,
-    };
-
-    mockGetAnchorInfo.mockReturnValue(linkInfo);
-
-    render(<DashboardLinkRenderer link={link} dashboardUID={dashboardUID} />);
+    render(
+      <DashboardLinkRenderer link={link} dashboardUID={dashboard.state.uid!} linkIndex={0} dashboard={dashboard} />
+    );
 
     const container = screen.getByTestId(selectors.components.DashboardLinks.container);
     expect(container).toBeInTheDocument();
@@ -106,28 +124,17 @@ describe('DashboardLinkRenderer', () => {
   });
 
   it('renders link without target="_blank" when `targetBlank` is false', () => {
-    const link: DashboardLink = {
+    const dashboard = buildDashboard();
+    const link = buildLink({
       type: 'link',
       title: 'Internal Link',
       url: '/dashboard/internal',
-      icon: 'dashboard',
-      tooltip: '',
-      tags: [],
-      asDropdown: false,
       targetBlank: false,
-      keepTime: false,
-      includeVars: false,
-    };
+    });
 
-    const linkInfo = {
-      title: 'Internal Link',
-      href: '/dashboard/internal',
-      tooltip: null,
-    };
-
-    mockGetAnchorInfo.mockReturnValue(linkInfo);
-
-    render(<DashboardLinkRenderer link={link} dashboardUID={dashboardUID} />);
+    render(
+      <DashboardLinkRenderer link={link} dashboardUID={dashboard.state.uid!} linkIndex={0} dashboard={dashboard} />
+    );
 
     const linkElement = screen.getByTestId(selectors.components.DashboardLinks.link);
     expect(linkElement).not.toHaveAttribute('target');
@@ -135,28 +142,17 @@ describe('DashboardLinkRenderer', () => {
   });
 
   it('renders link with correct icon from LINK_ICON_MAP', () => {
-    const link: DashboardLink = {
+    const dashboard = buildDashboard();
+    const link = buildLink({
       type: 'link',
       title: 'Question Link',
       url: '/help',
       icon: 'question',
-      tooltip: '',
-      tags: [],
-      asDropdown: false,
-      targetBlank: false,
-      keepTime: false,
-      includeVars: false,
-    };
+    });
 
-    const linkInfo = {
-      title: 'Question Link',
-      href: '/help',
-      tooltip: null,
-    };
-
-    mockGetAnchorInfo.mockReturnValue(linkInfo);
-
-    render(<DashboardLinkRenderer link={link} dashboardUID={dashboardUID} />);
+    render(
+      <DashboardLinkRenderer link={link} dashboardUID={dashboard.state.uid!} linkIndex={0} dashboard={dashboard} />
+    );
 
     const iconElement = screen.getByTestId('link-icon');
     expect(iconElement).toBeInTheDocument();
@@ -164,91 +160,53 @@ describe('DashboardLinkRenderer', () => {
   });
 
   it('renders link with tooltip when tooltip is provided', () => {
-    const link: DashboardLink = {
+    const dashboard = buildDashboard();
+    const link = buildLink({
       type: 'link',
       title: 'Link with Tooltip',
       url: '/dashboard/test',
-      icon: 'info',
       tooltip: 'This is a helpful tooltip',
-      tags: [],
-      asDropdown: false,
-      targetBlank: false,
-      keepTime: false,
-      includeVars: false,
-    };
+    });
 
-    const linkInfo = {
-      title: 'Link with Tooltip',
-      href: '/dashboard/test',
-      tooltip: 'This is a helpful tooltip',
-    };
+    render(
+      <DashboardLinkRenderer link={link} dashboardUID={dashboard.state.uid!} linkIndex={0} dashboard={dashboard} />
+    );
 
-    mockGetAnchorInfo.mockReturnValue(linkInfo);
-
-    render(<DashboardLinkRenderer link={link} dashboardUID={dashboardUID} />);
-
-    // The tooltip component should be rendered around the link
-    const container = screen.getByTestId(selectors.components.DashboardLinks.container);
-    expect(container).toBeInTheDocument();
-
+    expect(screen.getByTestId('tooltip-wrapper')).toHaveAttribute('data-tooltip-content', 'This is a helpful tooltip');
     const linkElement = screen.getByTestId(selectors.components.DashboardLinks.link);
     expect(linkElement).toHaveTextContent('Link with Tooltip');
   });
 
   it('renders link without tooltip wrapper when tooltip is empty', () => {
-    const link: DashboardLink = {
+    const dashboard = buildDashboard();
+    const link = buildLink({
       type: 'link',
       title: 'Link without Tooltip',
       url: '/dashboard/test',
-      icon: 'bolt',
       tooltip: '',
-      tags: [],
-      asDropdown: false,
-      targetBlank: false,
-      keepTime: false,
-      includeVars: false,
-    };
+    });
 
-    const linkInfo = {
-      title: 'Link without Tooltip',
-      href: '/dashboard/test',
-      tooltip: null,
-    };
+    render(
+      <DashboardLinkRenderer link={link} dashboardUID={dashboard.state.uid!} linkIndex={0} dashboard={dashboard} />
+    );
 
-    mockGetAnchorInfo.mockReturnValue(linkInfo);
-
-    render(<DashboardLinkRenderer link={link} dashboardUID={dashboardUID} />);
-
-    const container = screen.getByTestId(selectors.components.DashboardLinks.container);
-    expect(container).toBeInTheDocument();
-
+    expect(screen.queryByTestId('tooltip-wrapper')).not.toBeInTheDocument();
     const linkElement = screen.getByTestId(selectors.components.DashboardLinks.link);
     expect(linkElement).toHaveTextContent('Link without Tooltip');
   });
 
-  it('handles undefined icon gracefully', () => {
-    const link: DashboardLink = {
+  it('handles unknown icon gracefully', () => {
+    const dashboard = buildDashboard();
+    const link = buildLink({
       type: 'link',
       title: 'Link with Unknown Icon',
       url: '/dashboard/test',
       icon: 'unknown-icon',
-      tooltip: '',
-      tags: [],
-      asDropdown: false,
-      targetBlank: false,
-      keepTime: false,
-      includeVars: false,
-    };
+    });
 
-    const linkInfo = {
-      title: 'Link with Unknown Icon',
-      href: '/dashboard/test',
-      tooltip: null,
-    };
-
-    mockGetAnchorInfo.mockReturnValue(linkInfo);
-
-    render(<DashboardLinkRenderer link={link} dashboardUID={dashboardUID} />);
+    render(
+      <DashboardLinkRenderer link={link} dashboardUID={dashboard.state.uid!} linkIndex={0} dashboard={dashboard} />
+    );
 
     const linkElement = screen.getByTestId(selectors.components.DashboardLinks.link);
     expect(linkElement).toHaveTextContent('Link with Unknown Icon');
@@ -258,28 +216,16 @@ describe('DashboardLinkRenderer', () => {
   });
 
   it('sanitizes the URL from linkInfo', () => {
-    const link: DashboardLink = {
+    const dashboard = buildDashboard();
+    const link = buildLink({
       type: 'link',
       title: 'Potentially Unsafe Link',
       url: 'javascript:alert("xss")',
-      icon: 'external link',
-      tooltip: '',
-      tags: [],
-      asDropdown: false,
-      targetBlank: false,
-      keepTime: false,
-      includeVars: false,
-    };
+    });
 
-    const linkInfo = {
-      title: 'Potentially Unsafe Link',
-      href: 'javascript:alert("xss")',
-      tooltip: null,
-    };
-
-    mockGetAnchorInfo.mockReturnValue(linkInfo);
-
-    render(<DashboardLinkRenderer link={link} dashboardUID={dashboardUID} />);
+    render(
+      <DashboardLinkRenderer link={link} dashboardUID={dashboard.state.uid!} linkIndex={0} dashboard={dashboard} />
+    );
 
     const linkElement = screen.getByTestId(selectors.components.DashboardLinks.link);
     // The sanitizeUrl function should clean the href
@@ -288,30 +234,18 @@ describe('DashboardLinkRenderer', () => {
   });
 
   it('calls getLinkSrv().getAnchorInfo with the provided link', () => {
-    const link: DashboardLink = {
+    const dashboard = buildDashboard();
+    const link = buildLink({
       type: 'link',
       title: 'Test Link',
       url: '/test',
-      icon: 'bolt',
-      tooltip: '',
-      tags: [],
-      asDropdown: false,
-      targetBlank: false,
-      keepTime: false,
-      includeVars: false,
-    };
+    });
 
-    const linkInfo = {
-      title: 'Test Link',
-      href: '/test',
-      tooltip: null,
-    };
+    render(
+      <DashboardLinkRenderer link={link} dashboardUID={dashboard.state.uid!} linkIndex={0} dashboard={dashboard} />
+    );
 
-    mockGetAnchorInfo.mockReturnValue(linkInfo);
-
-    render(<DashboardLinkRenderer link={link} dashboardUID={dashboardUID} />);
-
-    expect(mockGetAnchorInfo).toHaveBeenCalledWith(link);
     expect(mockGetAnchorInfo).toHaveBeenCalledTimes(1);
+    expect(mockGetAnchorInfo).toHaveBeenCalledWith(link);
   });
 });

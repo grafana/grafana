@@ -1,8 +1,8 @@
-import { DataSourceRef } from '@grafana/schema';
-import { ControlSourceRef } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type DataSourceRef } from '@grafana/schema';
+import { type ControlSourceRef } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { LoadingState } from './data';
-import { MetricFindValue } from './datasource';
+import { type LoadingState } from './data';
+import { type MetricFindValue } from './datasource';
 
 export type VariableType = TypedVariableModel['type'];
 

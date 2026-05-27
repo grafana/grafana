@@ -1,20 +1,20 @@
 import saveAs from 'file-saver';
 import { countBy, chain } from 'lodash';
-import { MouseEvent } from 'react';
-import { lastValueFrom, map, Observable } from 'rxjs';
+import { type MouseEvent } from 'react';
+import { lastValueFrom, map, type Observable } from 'rxjs';
 
 import {
   LogLevel,
-  LogRowModel,
-  LogLabelStatsModel,
-  LogsModel,
+  type LogRowModel,
+  type LogLabelStatsModel,
+  type LogsModel,
   LogsSortOrder,
-  DataFrame,
-  FieldConfig,
+  type DataFrame,
+  type FieldConfig,
   FieldCache,
   FieldType,
   MutableDataFrame,
-  QueryResultMeta,
+  type QueryResultMeta,
   LogsVolumeType,
   NumericLogLevel,
   getFieldDisplayName,
@@ -23,15 +23,16 @@ import {
   urlUtil,
   dateTime,
   dateTimeFormat,
-  DataTransformerConfig,
-  CustomTransformOperator,
+  type DataTransformerConfig,
+  type CustomTransformOperator,
   transformDataFrame,
   getTimeField,
-  Field,
-  LogsMetaItem,
+  type Field,
+  type LogsMetaItem,
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getConfig } from 'app/core/config';
 
 import { getLogsExtractFields } from '../explore/Logs/LogsTable';
@@ -39,7 +40,7 @@ import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/uti
 
 import { LOG_LINE_BODY_FIELD_NAME } from './components/fieldSelector/logFields';
 import { getDataframeFields } from './components/logParser';
-import { GetRowContextQueryFn } from './components/panel/LogLineMenu';
+import { type GetRowContextQueryFn } from './components/panel/LogLineMenu';
 import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME, parseLogsFrame } from './logsFrame';
 
 /**
@@ -47,8 +48,13 @@ import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME, parseLogsFrame } fro
  * Parse the line for level words. If no level is found, it returns `LogLevel.unknown`.
  *
  * Example: `getLogLevel('WARN 1999-12-31 this is great') // LogLevel.warn`
+ * @deprecated
  */
 export function getLogLevel(line: string): LogLevel {
+  const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaLogLevelInference, false);
+  if (!enabled) {
+    return LogLevel.unknown;
+  }
   if (!line) {
     return LogLevel.unknown;
   }
@@ -432,11 +438,23 @@ function getDataSourceLabelType(labelType: string, datasourceType: string | unde
     case 'loki':
       switch (labelType) {
         case 'I':
-          return t('logs.fields.type.loki.indexed-label', 'Indexed labels', { count: plural ? 2 : 1 });
+          return t('logs.fields.type.loki.indexed-label', '', {
+            count: plural ? 2 : 1,
+            defaultValue_one: 'Indexed labels',
+            defaultValue_other: 'Indexed labels',
+          });
         case 'S':
-          return t('logs.fields.type.loki.structured-metadata', 'Structured metadata', { count: plural ? 2 : 1 });
+          return t('logs.fields.type.loki.structured-metadata', '', {
+            count: plural ? 2 : 1,
+            defaultValue_one: 'Structured metadata',
+            defaultValue_other: 'Structured metadata',
+          });
         case 'P':
-          return t('logs.fields.type.loki.parsedl-label', 'Parsed fields', { count: plural ? 2 : 1 });
+          return t('logs.fields.type.loki.parsedl-label', '', {
+            count: plural ? 2 : 1,
+            defaultValue_one: 'Parsed fields',
+            defaultValue_other: 'Parsed fields',
+          });
         default:
           return null;
       }

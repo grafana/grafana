@@ -1,7 +1,7 @@
 import { useAsync } from 'react-use';
 
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { LocationInfo } from 'app/features/search/service/types';
+import { type LocationInfo } from 'app/features/search/service/types';
 
 /**
  *

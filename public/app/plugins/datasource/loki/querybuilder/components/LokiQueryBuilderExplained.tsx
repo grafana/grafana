@@ -6,7 +6,7 @@ import { Stack } from '@grafana/ui';
 import { lokiGrammar } from '../../syntax';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
-import { LokiVisualQuery } from '../types';
+import { type LokiVisualQuery } from '../types';
 
 export const EXPLAIN_LABEL_FILTER_CONTENT = 'Fetch all log lines matching label filters.';
 

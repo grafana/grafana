@@ -2,10 +2,10 @@ import { uniq } from 'lodash';
 
 import { v2Tags } from './SearchTraceQLEditor/mocks';
 import { TraceqlSearchScope } from './dataquery.gen';
-import { TempoDatasource } from './datasource';
+import { type TempoDatasource } from './datasource';
 import TempoLanguageProvider from './language_provider';
 import { intrinsics } from './traceql/traceql';
-import { Scope } from './types';
+import { type Scope } from './types';
 
 describe('Language_provider', () => {
   describe('should get correct tags', () => {

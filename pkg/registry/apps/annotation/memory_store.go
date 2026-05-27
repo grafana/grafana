@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 )
@@ -23,6 +24,8 @@ func NewMemoryStore() Store {
 	}
 }
 
+func (m *memoryStore) Close() error { return nil }
+
 func (m *memoryStore) Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -30,7 +33,7 @@ func (m *memoryStore) Get(ctx context.Context, namespace, name string) (*annotat
 	key := namespace + "/" + name
 	anno, ok := m.data[key]
 	if !ok {
-		return nil, fmt.Errorf("annotation not found")
+		return nil, ErrNotFound
 	}
 
 	return anno.DeepCopy(), nil
@@ -155,10 +158,13 @@ func (m *memoryStore) Create(ctx context.Context, anno *annotationV0.Annotation)
 	key := anno.Namespace + "/" + anno.Name
 
 	if _, exists := m.data[key]; exists {
-		return nil, fmt.Errorf("annotation already exists")
+		return nil, fmt.Errorf("%w: %s", ErrAlreadyExists, key)
 	}
 
 	created := anno.DeepCopy()
+	if created.UID == "" {
+		created.UID = types.UID(created.Name)
+	}
 	if created.CreationTimestamp.IsZero() {
 		created.CreationTimestamp = metav1.Now()
 	}
@@ -175,7 +181,7 @@ func (m *memoryStore) Update(ctx context.Context, anno *annotationV0.Annotation)
 	key := anno.Namespace + "/" + anno.Name
 
 	if _, exists := m.data[key]; !exists {
-		return nil, fmt.Errorf("annotation not found")
+		return nil, ErrNotFound
 	}
 
 	updated := anno.DeepCopy()
@@ -191,7 +197,7 @@ func (m *memoryStore) Delete(ctx context.Context, namespace, name string) error 
 	key := namespace + "/" + name
 
 	if _, exists := m.data[key]; !exists {
-		return fmt.Errorf("annotation not found")
+		return ErrNotFound
 	}
 
 	delete(m.data, key)

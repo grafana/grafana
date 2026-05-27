@@ -1,12 +1,12 @@
 import {
   AppPlugin,
-  AppPluginMeta,
+  type AppPluginMeta,
   DataSourcePlugin,
-  DataSourcePluginMeta,
+  type DataSourcePluginMeta,
   PanelPlugin,
-  PanelPluginMeta,
+  type PanelPluginMeta,
   PluginLoadingStrategy,
-  PluginMeta,
+  type PluginMeta,
   PluginType,
 } from '@grafana/data';
 
@@ -14,7 +14,6 @@ import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsR
 import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from '../extensions/registry/ExposedComponentsRegistry';
-import { pluginsLogger } from '../utils';
 
 import * as importPluginModule from './importPluginModule';
 import { pluginImporter, clearCaches } from './pluginImporter';
@@ -69,6 +68,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -88,6 +88,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -108,6 +109,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'script',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -126,6 +128,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -153,6 +156,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -172,6 +176,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -206,6 +211,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'script',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -216,15 +222,16 @@ describe('pluginImporter', () => {
     it('should throw error if module is missing exported plugin', async () => {
       const spy = jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({});
 
-      expect(async () => {
-        await pluginImporter.importDataSource({ ...dataSourcePlugin });
-      }).rejects.toThrow(new Error('Plugin module is missing DataSourcePlugin or Datasource constructor export'));
+      await expect(pluginImporter.importDataSource({ ...dataSourcePlugin })).rejects.toThrow(
+        new Error('Plugin module is missing DataSourcePlugin or Datasource constructor export')
+      );
 
       expect(spy).toHaveBeenCalledWith({
         path: 'public/plugins/test-plugin/module.js',
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -256,6 +263,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -316,6 +324,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'script',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -361,6 +370,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -389,7 +399,6 @@ describe('pluginImporter', () => {
 
   describe('caches', () => {
     it('should return a cached plugin if it exsits', async () => {
-      const logSpy = jest.spyOn(pluginsLogger, 'logDebug').mockImplementation(() => {});
       const spy = jest
         .spyOn(importPluginModule, 'importPluginModule')
         .mockResolvedValue({ plugin: { ...panelPlugin } });
@@ -403,22 +412,14 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
-      });
-      expect(logSpy).toHaveBeenCalledWith(`Retrieving plugin from cache`, {
-        expectedHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
-        loadingStrategy: 'fetch',
-        path: 'public/plugins/test-plugin/module.js',
-        pluginId: 'test-plugin',
-        pluginVersion: '1.0.0',
-        sriChecksEnabled: 'false',
       });
       expect(cached).toBe(original);
     });
 
     it('should return an inflight plugin load if it exsits', async () => {
-      const logSpy = jest.spyOn(pluginsLogger, 'logDebug').mockImplementation(() => {});
       const spy = jest
         .spyOn(importPluginModule, 'importPluginModule')
         .mockResolvedValue({ plugin: { ...panelPlugin } });
@@ -433,16 +434,9 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
-      });
-      expect(logSpy).toHaveBeenCalledWith(`Retrieving plugin from inflight plugin load request`, {
-        expectedHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
-        loadingStrategy: 'fetch',
-        path: 'public/plugins/test-plugin/module.js',
-        pluginId: 'test-plugin',
-        pluginVersion: '1.0.0',
-        sriChecksEnabled: 'false',
       });
       expect(cached).toBe(original);
     });

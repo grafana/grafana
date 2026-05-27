@@ -1,6 +1,7 @@
 import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
+import { getLegacySlugForRowOrTab } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
@@ -9,7 +10,7 @@ import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 
 import { TabItem } from './TabItem';
-import { TabsLayoutManager } from './TabsLayoutManager';
+import { getTabsLayoutUrlKeysToTry, TabsLayoutManager } from './TabsLayoutManager';
 
 let lastUndo: (() => void) | undefined;
 
@@ -49,7 +50,7 @@ describe('TabsLayoutManager', () => {
       tabsLayoutManager.setState({ currentTabSlug: tabsLayoutManager.getCurrentTab()?.getSlug() });
 
       const urlState = tabsLayoutManager.getUrlState();
-      expect(urlState).toEqual({ dtab: 'performance' });
+      expect(urlState).toEqual({ dtab: 'Performance' });
     });
 
     it('when nested under row and parent tab', () => {
@@ -73,7 +74,68 @@ describe('TabsLayoutManager', () => {
 
       const urlState = innerMostTabsLayoutManager.getUrlState();
       expect(urlState).toEqual({
-        ['overview-frontend-dtab']: 'performance',
+        ['Overview-Frontend-dtab']: 'Performance',
+      });
+    });
+  });
+
+  describe('getSlug', () => {
+    it('generates slugs based on tab titles', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const tab1 = tabsLayoutManager.addNewTab(new TabItem({ title: 'My Tab Title' }));
+      const tab2 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Another Tab!' }));
+
+      expect(tab1.getSlug()).toBe('My-Tab-Title');
+      expect(tab2.getSlug()).toBe('Another-Tab!');
+    });
+
+    it('disambiguates slugs when multiple titles are encoded to the same value', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const firstTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'New tab 1' }));
+      const secondTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'New tab-1' }));
+
+      expect(firstTab.getSlug()).toBe('New-tab-1');
+      expect(secondTab.getSlug()).toBe('New-tab-1__2');
+    });
+
+    it('keeps clean slugs when there is no slug duplication', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const firstTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab One' }));
+      const secondTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab Two' }));
+
+      expect(firstTab.getSlug()).toBe('Tab-One');
+      expect(secondTab.getSlug()).toBe('Tab-Two');
+    });
+
+    it('keeps slug values stable across different tab layout instances', () => {
+      const titles = ['New tab 1', 'New tab-1', 'Other tab'];
+
+      const getSlugsFromFreshLayout = () => {
+        const tabs = titles.map((title) => new TabItem({ title }));
+        buildTabsLayoutManager(tabs);
+        return tabs.map((tab) => tab.getSlug());
+      };
+
+      const firstRunSlugs = getSlugsFromFreshLayout();
+      const secondRunSlugs = getSlugsFromFreshLayout();
+
+      expect(firstRunSlugs).toEqual(['New-tab-1', 'New-tab-1__2', 'Other-tab']);
+      expect(secondRunSlugs).toEqual(firstRunSlugs);
+    });
+
+    it('skips empty primary query value and falls back to legacy slugified key', () => {
+      const tab1 = new TabItem({ title: 'question?' });
+      const tab2 = new TabItem({ title: 'Performance' });
+      const [tabManager, urlKeys] = setupRowWithTabs([tab1, tab2]);
+
+      const updateFromUrlArgs = {
+        [urlKeys[0]]: '',
+        [urlKeys[1]]: getLegacySlugForRowOrTab(tab2),
+      };
+
+      assertSelectedTab(tabManager, updateFromUrlArgs, {
+        slug: getLegacySlugForRowOrTab(tab2),
+        title: tab2.state.title!,
       });
     });
   });
@@ -139,6 +201,40 @@ describe('TabsLayoutManager', () => {
       lastUndo!();
 
       expect(tabsLayoutManager.state.tabs).toHaveLength(0);
+    });
+
+    it('should sync edit mode to a new tab inner layout when the dashboard is already editing', () => {
+      // New tabs use getDefaultLayout() (clone of preferences.defaultLayoutTemplate). Without a template,
+      // TabItem falls back to AutoGridLayoutManager.createEmpty(), which already has isDraggable true, so a
+      // missing edit-mode sync would not fail the test. A template with interaction disabled forces the sync.
+      const defaultLayoutTemplate = new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [],
+          isDraggable: false,
+          isResizable: false,
+        }),
+      });
+
+      const tabsLayoutManager = new TabsLayoutManager({
+        key: 'test-TabsLayoutManager',
+        tabs: [new TabItem({ title: 'First' })],
+      });
+      new DashboardScene({
+        body: tabsLayoutManager,
+        isEditing: true,
+        editable: true,
+        preferences: { defaultLayoutTemplate },
+      });
+
+      tabsLayoutManager.editModeChanged(true);
+
+      const newTab = tabsLayoutManager.addNewTab();
+      const layout = newTab.getLayout();
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+
+      const grid = (layout as DefaultGridLayoutManager).state.grid;
+      expect(grid.state.isDraggable).toBe(true);
+      expect(grid.state.isResizable).toBe(true);
     });
   });
 
@@ -492,3 +588,34 @@ describe('TabsLayoutManager', () => {
     });
   });
 });
+
+function setupRowWithTabs(tabs: TabItem[]): [TabsLayoutManager, string[]] {
+  const tabManager = new TabsLayoutManager({
+    tabs: [...tabs],
+  });
+  new RowsLayoutManager({
+    rows: [
+      new RowItem({
+        title: 'UPPER row!',
+        layout: tabManager,
+      }),
+    ],
+  });
+
+  const possibleKeys = getTabsLayoutUrlKeysToTry(tabManager);
+  expect(possibleKeys).toEqual(['UPPER-row!-dtab', 'upper-row-dtab']);
+
+  return [tabManager, possibleKeys];
+}
+
+function assertSelectedTab(
+  manager: TabsLayoutManager,
+  updateFromUrlValues: Record<string, string>,
+  { slug, title }: { slug: string; title: string }
+) {
+  manager.setState({ currentTabSlug: undefined });
+  manager.updateFromUrl(updateFromUrlValues);
+
+  expect(manager.state.currentTabSlug).toBe(slug);
+  expect(manager.getCurrentTab()?.state.title).toBe(title);
+}

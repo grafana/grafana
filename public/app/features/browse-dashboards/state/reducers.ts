@@ -1,12 +1,12 @@
-import { PayloadAction } from '@reduxjs/toolkit';
+import { type PayloadAction } from '@reduxjs/toolkit';
 
-import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
+import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 
-import { GENERAL_FOLDER_UID } from '../../search/constants';
-import { BrowseDashboardsState } from '../types';
+import { isRootFolderUID } from '../../search/constants';
+import { type BrowseDashboardsState } from '../types';
 import { isSharedWithMe, isVirtualTeamFolder } from '../utils/dashboards';
 
-import { fetchNextChildrenPage, refetchChildren } from './actions';
+import { type fetchNextChildrenPage, type refetchChildren } from './actions';
 import { findItem } from './utils';
 
 type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;
@@ -24,7 +24,7 @@ export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: R
     isFullyLoaded: kind === 'dashboard' && lastPageOfKind,
   };
 
-  if (parentUID && parentUID !== GENERAL_FOLDER_UID) {
+  if (parentUID && !isRootFolderUID(parentUID)) {
     state.childrenByParentUID[parentUID] = newCollection;
   } else {
     state.rootItems = newCollection;

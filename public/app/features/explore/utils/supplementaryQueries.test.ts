@@ -1,23 +1,23 @@
 import { flatten } from 'lodash';
-import { Observable, from } from 'rxjs';
+import { type Observable, from } from 'rxjs';
 
 import {
-  DataFrame,
-  DataQueryRequest,
-  DataSourceApi,
-  DataSourceWithSupplementaryQueriesSupport,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataSourceApi,
+  type DataSourceWithSupplementaryQueriesSupport,
   FieldType,
   LoadingState,
   LogLevel,
   LogsVolumeType,
   MutableDataFrame,
   SupplementaryQueryType,
-  SupplementaryQueryOptions,
+  type SupplementaryQueryOptions,
   toDataFrame,
-  DataQueryResponse,
+  type DataQueryResponse,
 } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
-import { ExplorePanelData } from 'app/types/explore';
+import { type DataQuery } from '@grafana/schema';
+import { type ExplorePanelData } from 'app/types/explore';
 
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
 import { MockDataQueryRequest, MockQuery } from '../../../../test/mocks/query';

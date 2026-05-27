@@ -351,7 +351,15 @@ role_attribute_path = "'Viewer'"
 skip_org_role_sync = false
 ```
 
-#### Org roles mapping example
+#### Org roles mapping
+
+The field `org_mapping` accepts a space or comma separated list of `"<ExternalName>:<OrgIdOrName>:<Role>"` mappings.
+
+It is possible to replace `ExternalName` or `OrgIdOrName` with a `*` as a match any.
+
+Partial matches treat the `*` as part of the name (e.g. `*-org` does not match `my-org`)
+
+##### Org roles mapping example
 
 In this example, the user has been granted the role of a `Viewer` in the `org_foo` org, and the role of an `Editor` in the `org_bar` and `org_baz` orgs.
 

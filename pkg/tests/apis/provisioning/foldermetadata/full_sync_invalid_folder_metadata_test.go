@@ -10,26 +10,22 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	t.Run("invalid folder metadata created on existing folder keeps unstable uid and preserves children", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		ctx := context.Background()
 		const repo = "full-sync-invalid-meta-existing"
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-		writeToProvisioningPath(t, helper, "myfolder/dashboard.json", gitcommon.DashboardJSON("existing-parent-dash", "Parent Dashboard", 1))
-		writeToProvisioningPath(t, helper, "myfolder/child/child-dashboard.json", gitcommon.DashboardJSON("existing-child-dash", "Child Dashboard", 1))
+		writeToProvisioningPath(t, helper, "myfolder/dashboard.json", common.DashboardJSON("existing-parent-dash", "Parent Dashboard", 1))
+		writeToProvisioningPath(t, helper, "myfolder/child/child-dashboard.json", common.DashboardJSON("existing-child-dash", "Child Dashboard", 1))
 
 		helper.SyncAndWait(t, repo, nil)
 
@@ -41,7 +37,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 			"myfolder/child/child-dashboard.json": childUID,
 		})
 
-		writeToProvisioningPath(t, helper, "myfolder/child/child-dashboard.json", gitcommon.DashboardJSON("existing-child-dash", "Child Dashboard Updated", 2))
+		writeToProvisioningPath(t, helper, "myfolder/child/child-dashboard.json", common.DashboardJSON("existing-child-dash", "Child Dashboard Updated", 2))
 		writeToProvisioningPath(t, helper, "myfolder/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
@@ -61,19 +57,19 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 	})
 
 	t.Run("invalid folder metadata on new folder falls back to unstable uid and reconciles children", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		ctx := context.Background()
 		const repo = "full-sync-invalid-meta-new"
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
 		writeToProvisioningPath(t, helper, "myfolder/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
-		writeToProvisioningPath(t, helper, "myfolder/dashboard.json", gitcommon.DashboardJSON("new-parent-dash", "Parent Dashboard", 1))
-		writeToProvisioningPath(t, helper, "myfolder/child/child-dashboard.json", gitcommon.DashboardJSON("new-child-dash", "Child Dashboard", 1))
+		writeToProvisioningPath(t, helper, "myfolder/dashboard.json", common.DashboardJSON("new-parent-dash", "Parent Dashboard", 1))
+		writeToProvisioningPath(t, helper, "myfolder/child/child-dashboard.json", common.DashboardJSON("new-child-dash", "Child Dashboard", 1))
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
@@ -95,17 +91,17 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 	})
 
 	t.Run("resource move into existing folder with invalid metadata keeps using that folder uid", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "fs-inv-move-existing"
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-		writeToProvisioningPath(t, helper, "dashboard.json", gitcommon.DashboardJSON("move-into-existing-invalid", "Move Into Existing Invalid", 1))
-		writeToProvisioningPath(t, helper, "broken/existing.json", gitcommon.DashboardJSON("existing-invalid-target", "Existing Invalid Target", 1))
+		writeToProvisioningPath(t, helper, "dashboard.json", common.DashboardJSON("move-into-existing-invalid", "Move Into Existing Invalid", 1))
+		writeToProvisioningPath(t, helper, "broken/existing.json", common.DashboardJSON("existing-invalid-target", "Existing Invalid Target", 1))
 
 		helper.SyncAndWait(t, repo, nil)
 
@@ -139,16 +135,16 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 	})
 
 	t.Run("resource move into new folder with invalid metadata falls back to unstable uid", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "fs-inv-move-new"
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-		writeToProvisioningPath(t, helper, "dashboard.json", gitcommon.DashboardJSON("move-into-new-invalid", "Move Into New Invalid", 1))
+		writeToProvisioningPath(t, helper, "dashboard.json", common.DashboardJSON("move-into-new-invalid", "Move Into New Invalid", 1))
 
 		helper.SyncAndWait(t, repo, nil)
 
@@ -170,17 +166,17 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 	})
 
 	t.Run("moving folder with invalid metadata deletes old path and recreates at new path", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "fs-inv-folder-move"
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
 		writeToProvisioningPath(t, helper, "broken/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
-		writeToProvisioningPath(t, helper, "broken/dashboard.json", gitcommon.DashboardJSON("move-invalid-folder", "Move Invalid Folder", 1))
+		writeToProvisioningPath(t, helper, "broken/dashboard.json", common.DashboardJSON("move-invalid-folder", "Move Invalid Folder", 1))
 
 		initialJob := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
@@ -214,7 +210,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 func invalidFolderMetadataMissingNameJSON(title string) []byte {
 	return []byte(`{
-		"apiVersion": "folder.grafana.app/v1beta1",
+		"apiVersion": "folder.grafana.app/v1",
 		"kind": "Folder",
 		"metadata": {
 			"name": ""

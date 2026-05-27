@@ -1,6 +1,6 @@
 @top AlertRuleSearch { expression+ }
 
-@dialects { dataSourceFilter, nameSpaceFilter, labelFilter, groupFilter, ruleFilter, stateFilter, typeFilter, healthFilter, dashboardFilter, pluginsFilter, contactPointFilter, sourceFilter }
+@dialects { dataSourceFilter, nameSpaceFilter, labelFilter, groupFilter, ruleFilter, stateFilter, typeFilter, healthFilter, dashboardFilter, pluginsFilter, contactPointFilter, sourceFilter, policyFilter }
 
 expression { (FilterExpression | FreeFormExpression) expression }
 
@@ -18,7 +18,8 @@ FilterExpression {
  filter<DashboardToken> |
  filter<PluginsToken> |
  filter<ContactPointToken> |
- filter<RuleSourceToken>
+ filter<RuleSourceToken> |
+ filter<PolicyToken>
 }
 
 filter<token> { token FilterValue }
@@ -49,6 +50,7 @@ filter<token> { token FilterValue }
   PluginsToken[@dialect=pluginsFilter] { filterToken<"plugins"> }
   ContactPointToken[@dialect=contactPointFilter] { filterToken<"contactPoint"> }
   RuleSourceToken[@dialect=sourceFilter] { filterToken<"source"> }
+  PolicyToken[@dialect=policyFilter] { filterToken<"policy"> }
 
   @precedence { DataSourceToken, word }
   @precedence { NameSpaceToken, word }
@@ -62,5 +64,6 @@ filter<token> { token FilterValue }
   @precedence { PluginsToken, word }
   @precedence { ContactPointToken, word }
   @precedence { RuleSourceToken, word }
+  @precedence { PolicyToken, word }
 }
 

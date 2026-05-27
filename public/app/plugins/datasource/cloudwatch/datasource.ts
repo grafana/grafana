@@ -1,25 +1,25 @@
 import { cloneDeep, find, isEmpty } from 'lodash';
-import { merge, Observable, of } from 'rxjs';
+import { merge, type Observable, of } from 'rxjs';
 
 import {
-  CoreApp,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  DataSourceWithLogsContextSupport,
+  type CoreApp,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type DataSourceWithLogsContextSupport,
   LoadingState,
-  LogRowContextOptions,
-  LogRowModel,
-  ScopedVars,
+  type LogRowContextOptions,
+  type LogRowModel,
+  type ScopedVars,
 } from '@grafana/data';
-import { DataSourceWithBackend, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, type TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';
 import {
-  CloudWatchAnnotationQuery,
-  CloudWatchLogsAnomaliesQuery,
-  CloudWatchLogsQuery,
-  CloudWatchMetricsQuery,
+  type CloudWatchAnnotationQuery,
+  type CloudWatchLogsAnomaliesQuery,
+  type CloudWatchLogsQuery,
+  type CloudWatchMetricsQuery,
 } from './dataquery.gen';
 import { DEFAULT_METRICS_QUERY, getDefaultLogsQuery } from './defaultQueries';
 import {
@@ -30,25 +30,25 @@ import {
 } from './guards';
 import { CloudWatchLogsLanguageProvider } from './language/cloudwatch-logs/CloudWatchLogsLanguageProvider';
 import {
-  LogsSQLCompletionItemProvider,
+  type LogsSQLCompletionItemProvider,
   LogsSQLCompletionItemProviderFunc,
 } from './language/cloudwatch-logs-sql/completion/CompletionItemProvider';
 import {
-  PPLCompletionItemProvider,
+  type PPLCompletionItemProvider,
   PPLCompletionItemProviderFunc,
 } from './language/cloudwatch-ppl/completion/PPLCompletionItemProvider';
 import { SQLCompletionItemProvider } from './language/cloudwatch-sql/completion/CompletionItemProvider';
 import {
-  LogsCompletionItemProvider,
+  type LogsCompletionItemProvider,
   LogsCompletionItemProviderFunc,
-  queryContext,
+  type queryContext,
 } from './language/logs/completion/CompletionItemProvider';
 import { MetricMathCompletionItemProvider } from './language/metric-math/completion/CompletionItemProvider';
 import { CloudWatchAnnotationQueryRunner } from './query-runner/CloudWatchAnnotationQueryRunner';
 import { CloudWatchLogsQueryRunner } from './query-runner/CloudWatchLogsQueryRunner';
 import { CloudWatchMetricsQueryRunner } from './query-runner/CloudWatchMetricsQueryRunner';
 import { ResourcesAPI } from './resources/ResourcesAPI';
-import { CloudWatchQuery, CloudWatchJsonData } from './types';
+import { type CloudWatchQuery, type CloudWatchJsonData } from './types';
 import { CloudWatchVariableSupport } from './variables';
 
 export class CloudWatchDatasource

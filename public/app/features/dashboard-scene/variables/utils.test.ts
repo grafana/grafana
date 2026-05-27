@@ -1,5 +1,5 @@
 import { TestVariable } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createCustomVariableAdapter } from 'app/features/variables/custom/adapter';
 import { createDataSourceVariableAdapter } from 'app/features/variables/datasource/adapter';

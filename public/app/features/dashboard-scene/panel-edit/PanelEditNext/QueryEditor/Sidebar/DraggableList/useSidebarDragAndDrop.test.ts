@@ -1,9 +1,9 @@
-import { DropResult } from '@hello-pangea/dnd';
+import { type DropResult } from '@hello-pangea/dnd';
 import { renderHook } from '@testing-library/react';
 
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
-import { Transformation } from '../../types';
+import { type Transformation } from '../../types';
 
 import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 

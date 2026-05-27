@@ -2,7 +2,11 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 import * as React from 'react';
 
-import { DataSourceJsonData, DataSourceInstanceSettings, DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import {
+  type DataSourceJsonData,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginOptionsEditorProps,
+} from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSection } from '@grafana/plugin-ui';
 import { DataSourcePicker } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';

@@ -3,15 +3,15 @@ import { of } from 'rxjs';
 import {
   dataFrameToJSON,
   getDefaultTimeRange,
-  DataSourceInstanceSettings,
+  type DataSourceInstanceSettings,
   FieldType,
   createDataFrame,
 } from '@grafana/data';
-import { FetchResponse } from '@grafana/runtime';
-import { SQLQuery, makeVariable } from '@grafana/sql';
+import { type FetchResponse } from '@grafana/runtime';
+import { type SQLQuery, makeVariable } from '@grafana/sql';
 
 import { MySqlDatasource } from '../MySqlDatasource';
-import { MySQLOptions } from '../types';
+import { type MySQLOptions } from '../types';
 
 const fetchMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -22,9 +22,9 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 const uid = '0000';
-// mock uuidv4 to give back the same value every time
-jest.mock('uuid', () => ({
-  v4: () => uid,
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  generateUUID: () => uid,
 }));
 
 describe('MySQLDatasource', () => {

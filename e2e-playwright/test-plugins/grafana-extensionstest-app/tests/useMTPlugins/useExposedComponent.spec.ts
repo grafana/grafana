@@ -3,12 +3,12 @@ import { testIds } from '../../testIds';
 import pluginJson from '../../plugin.json';
 import { ensureExtensionRegistryIsPopulated } from '../utils';
 
-test.use({ openFeature: { flags: { useMTPlugins: true } } });
+test.use({ openFeature: { flags: { 'plugins.useMTPlugins': true } } });
 
 test.describe(
   'grafana-extensionstest-app',
   {
-    tag: ['@plugins', '@useMTPlugins'],
+    tag: ['@plugins', '@plugins.useMTPlugins'],
   },
   () => {
     test('should display component exposed by another app', async ({ page }) => {

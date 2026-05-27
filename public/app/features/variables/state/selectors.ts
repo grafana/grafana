@@ -1,15 +1,15 @@
 import memoizeOne from 'memoize-one';
 
-import { TypedVariableModel } from '@grafana/data';
-import { StoreState } from 'app/types/store';
+import { type TypedVariableModel } from '@grafana/data';
+import { type StoreState } from 'app/types/store';
 
 import { getState } from '../../../store/store';
 import { toStateKey } from '../toStateKey';
 
 import { defaultVariablesFilter } from './defaultVariablesFilter';
 import { getNextVariableIndex } from './getNextVariableIndex';
-import { getInitialTemplatingState, TemplatingState } from './reducers';
-import { KeyedVariableIdentifier } from './types';
+import { getInitialTemplatingState, type TemplatingState } from './reducers';
+import { type KeyedVariableIdentifier } from './types';
 
 export function getVariable(
   identifier: KeyedVariableIdentifier,

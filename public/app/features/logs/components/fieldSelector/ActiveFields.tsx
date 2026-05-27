@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Draggable, DraggableProvided, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Draggable, type DraggableProvided, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { Field } from './Field';
-import { FieldWithStats } from './FieldSelector';
+import { type FieldWithStats } from './FieldSelector';
 import { LogLevelField } from './LogLevelField';
 
 interface Props {
@@ -81,7 +81,7 @@ export const ActiveFields = ({
           <LogLevelField active={Boolean(logLevelActive)} toggle={toggleLevel} />
         </div>
       )}
-      {(active.length || suggested.length) && (
+      {(active.length > 0 || suggested.length > 0) && (
         <>
           <div className={styles.columnHeader}>
             <Trans i18nKey="explore.logs-table-multi-select.selected-fields">Selected fields</Trans>

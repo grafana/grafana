@@ -1,6 +1,10 @@
 import { textUtil } from '@grafana/data';
 import { useUrlParams } from 'app/core/navigation/hooks';
 
+import { isValidRepoType } from '../guards';
+
+const K8S_NAME_RE = /^[a-z0-9][a-z0-9-]{0,252}$/;
+
 export const usePullRequestParam = () => {
   const [params] = useUrlParams();
   const prParam = params.get('pull_request_url');
@@ -9,14 +13,16 @@ export const usePullRequestParam = () => {
   const repoType = params.get('repo_type');
   const resourcePushedTo = params.get('resource_pushed_to');
   const actionParam = params.get('action');
+  const decodedRepoType = repoType ? decodeURIComponent(repoType) : undefined;
+  const decodedResourcePushedTo = resourcePushedTo ? decodeURIComponent(resourcePushedTo) : undefined;
 
   return {
     prURL: prParam ? textUtil.sanitizeUrl(decodeURIComponent(prParam)) : undefined,
     newPrURL: newPrParam ? textUtil.sanitizeUrl(decodeURIComponent(newPrParam)) : undefined,
     repoURL: repoUrl ? textUtil.sanitizeUrl(decodeURIComponent(repoUrl)) : undefined,
-    repoType: repoType ? textUtil.sanitizeUrl(decodeURIComponent(repoType)) : undefined,
-    // Repository name the resource was pushed to, used to link to its status overview page
-    resourcePushedTo: resourcePushedTo ? textUtil.sanitizeUrl(decodeURIComponent(resourcePushedTo)) : undefined,
-    action: actionParam === 'create' || actionParam === 'delete' ? actionParam : undefined,
+    repoType: isValidRepoType(decodedRepoType) ? decodedRepoType : undefined,
+    resourcePushedTo:
+      decodedResourcePushedTo && K8S_NAME_RE.test(decodedResourcePushedTo) ? decodedResourcePushedTo : undefined,
+    action: actionParam === 'create' || actionParam === 'delete' || actionParam === 'update' ? actionParam : undefined,
   };
 };

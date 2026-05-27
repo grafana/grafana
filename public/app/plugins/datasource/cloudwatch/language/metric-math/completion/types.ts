@@ -1,4 +1,4 @@
-import { TokenTypes } from '../../monarch/types';
+import { type TokenTypes } from '../../monarch/types';
 
 export const MetricMathTokenTypes: TokenTypes = {
   Parenthesis: 'delimiter.parenthesis.cloudwatch-MetricMath',

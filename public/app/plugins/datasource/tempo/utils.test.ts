@@ -1,4 +1,4 @@
-import { TempoQuery } from './types';
+import { type TempoQuery } from './types';
 import { migrateFromSearchToTraceQLSearch } from './utils';
 
 describe('utils', () => {

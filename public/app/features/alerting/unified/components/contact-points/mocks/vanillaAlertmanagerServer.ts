@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
-import { SetupServer } from 'msw/node';
+import { type SetupServer } from 'msw/node';
 
-import { AlertmanagerStatus } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerStatus } from 'app/plugins/datasource/alertmanager/types';
 
 import vanillaAlertManagerConfig from './alertmanager.vanilla.mock.json';
 

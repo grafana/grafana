@@ -9,7 +9,7 @@ import { SaveBeforeShareModal } from '../../../sharing/SaveBeforeShareModal';
 import ShareMenu from '../../../sharing/ShareButton/ShareMenu';
 import { buildShareUrl } from '../../../sharing/ShareButton/utils';
 import { DashboardInteractions } from '../../../utils/interactions';
-import { ToolbarActionProps } from '../types';
+import { type ToolbarActionProps } from '../types';
 
 import { ShareExportDashboardButton } from './ShareExportDashboardButton';
 
@@ -41,14 +41,12 @@ export const ShareDashboardButton = ({ dashboard }: ToolbarActionProps) => {
         }
       }}
       groupTestId={newShareButtonSelector.shareLink}
-      buttonLabel={t('dashboard.toolbar.new.share.title', 'Share')}
       buttonTooltip={t('dashboard.toolbar.new.share.tooltip', 'Copy link')}
       buttonTestId={newShareButtonSelector.container}
       onButtonClick={onPrimaryShareClick}
       arrowLabel={t('dashboard.toolbar.new.share.arrow', 'Share')}
       arrowTestId={newShareButtonSelector.arrowMenu}
       dashboard={dashboard}
-      variant={!dashboard.state.isEditing ? 'primary' : 'canvas'}
       loading={loading}
     />
   );

@@ -1,16 +1,18 @@
 import { pickBy } from 'lodash';
 
-import { config, createMonitoringLogger, reportInteraction } from '@grafana/runtime';
+import { type LogContext } from '@grafana/faro-web-sdk';
+import { config, reportInteraction } from '@grafana/runtime';
+import { getLogger } from '@grafana/runtime/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { RuleNamespace } from '../../../types/unified-alerting';
-import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
+import { type RuleNamespace } from '../../../types/unified-alerting';
+import { type RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
-import { Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
-import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
-import { AdvancedFilters } from './rule-list/filter/types';
-import { RulesFilter } from './search/rulesSearchParser';
-import { RuleFormType } from './types/rule-form';
+import { type Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
+import { type FilterType } from './components/rules/central-state-history/EventListSceneObject';
+import { type AdvancedFilters } from './rule-list/filter/types';
+import { type RulesFilter } from './search/rulesSearchParser';
+import { type RuleFormType } from './types/rule-form';
 
 export const LogMessages = {
   filterByLabel: 'filtering alert instances by label',
@@ -29,11 +31,20 @@ export const LogMessages = {
   noAlertRuleVersionsFound: 'no alert rule versions found',
 };
 
-const { logInfo, logError, logMeasurement, logWarning } = createMonitoringLogger('features.alerting', {
-  module: 'Alerting',
-});
+export const logDebug = (message: string, contexts?: LogContext) =>
+  getLogger('features.alerting').logDebug(message, contexts);
 
-export { logError, logInfo, logMeasurement, logWarning };
+export const logInfo = (message: string, contexts?: LogContext) =>
+  getLogger('features.alerting').logInfo(message, contexts);
+
+export const logWarning = (message: string, contexts?: LogContext) =>
+  getLogger('features.alerting').logWarning(message, contexts);
+
+export const logError = (error: Error, contexts?: LogContext) =>
+  getLogger('features.alerting').logError(error, contexts);
+
+export const logMeasurement = (type: string, measurement: Record<string, number>, contexts?: LogContext) =>
+  getLogger('features.alerting').logMeasurement(type, measurement, contexts);
 
 /**
  * Utility function to measure performance of async operations

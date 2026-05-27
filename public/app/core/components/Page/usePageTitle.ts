@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { NavModel, NavModelItem } from '@grafana/data';
+import { type NavModel, type NavModelItem } from '@grafana/data';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { useSelector } from 'app/types/store';
 

@@ -1,4 +1,4 @@
-INSERT INTO {{ .Ident .PermissionTable }} (role_id, action, scope, created, updated, kind, attribute, identifier)
+INSERT INTO {{ .Ident .PermissionTable }} (role_id, action, scope, created, updated, kind, attribute, identifier, datasource_type)
 VALUES (
     {{ .Arg .RoleID }},
     {{ .Arg .Permission.Action }},
@@ -7,5 +7,6 @@ VALUES (
     {{ .Arg .Now }},
     {{ .Arg .Permission.Kind }},
     {{ .Arg .Permission.Attribute }},
-    {{ .Arg .Permission.Identifier }}
+    {{ .Arg .Permission.Identifier }},
+    {{ .Arg .Permission.DatasourceType }}
 )

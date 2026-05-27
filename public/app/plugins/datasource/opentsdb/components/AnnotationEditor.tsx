@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
-import { QueryEditorProps } from '@grafana/data';
+import { type QueryEditorProps } from '@grafana/data';
 import { InlineFormLabel, Input, InlineSwitch, Stack } from '@grafana/ui';
 
-import OpenTsDatasource from '../datasource';
-import { OpenTsdbQuery, OpenTsdbOptions } from '../types';
+import type OpenTsDatasource from '../datasource';
+import { type OpenTsdbQuery, type OpenTsdbOptions } from '../types';
 
 export const AnnotationEditor = (props: QueryEditorProps<OpenTsDatasource, OpenTsdbQuery, OpenTsdbOptions>) => {
   const { query, onChange } = props;

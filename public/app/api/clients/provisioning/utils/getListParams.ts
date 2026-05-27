@@ -1,6 +1,6 @@
-import { ListRepositoryApiArg } from 'app/api/clients/provisioning/v0alpha1';
+import { type ListRepositoryApiArg } from 'app/api/clients/provisioning/v0alpha1';
 import { parseListOptionsSelector } from 'app/features/apiserver/client';
-import { ListOptions } from 'app/features/apiserver/types';
+import { type ListOptions } from 'app/features/apiserver/types';
 
 type ListParams = Omit<ListRepositoryApiArg, 'fieldSelector' | 'labelSelector'> &
   Pick<ListOptions, 'labelSelector' | 'fieldSelector'>;

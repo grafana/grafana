@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
 /**
  * Used to initiate a remote call via the {@link BackendSrv}

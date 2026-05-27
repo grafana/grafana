@@ -9,7 +9,7 @@ import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { TimezonesEditor } from './TimezonesEditor';
 import { defaultGraphConfig, getGraphFieldConfig } from './config';
 import { graphPanelChangedHandler } from './migrations';
-import { FieldConfig, Options } from './panelcfg.gen';
+import { type FieldConfig, type Options } from './panelcfg.gen';
 import { timeseriesPresetsSupplier } from './presets';
 import { timeseriesSuggestionsSupplier } from './suggestions';
 
@@ -25,10 +25,13 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
     if (config.featureToggles.vizLegendFacetedFilter) {
       builder.addBooleanSwitch({
         path: 'legend.enableFacetedFilter',
-        name: t('timeseries.legend.name-faceted-filter', 'Faceted filter'),
+        name: t('timeseries.legend.name-faceted-filter', 'Series visibility'),
         category: legendCategory,
-        description: t('timeseries.legend.description-faceted-filter', 'Show series visibility filter based on labels'),
-        defaultValue: true,
+        description: t(
+          'timeseries.legend.description-faceted-filter',
+          'Enable filter to display series based on labels or names'
+        ),
+        defaultValue: false,
         showIf: (c) => c.legend.showLegend,
       });
     }

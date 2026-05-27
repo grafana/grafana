@@ -11,7 +11,7 @@ import ExportMenu from './ExportMenu';
 describe('ExportMenu', () => {
   it('should render menu items', async () => {
     setup();
-    expect(await screen.findByRole('menuitem', { name: /export as json/i })).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: /export as code/i })).toBeInTheDocument();
   });
 
   describe('sharingDashboardImage feature toggle', () => {

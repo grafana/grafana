@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"time"
+
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 )
 
 var (
@@ -18,5 +20,5 @@ type RuntimeConfig struct {
 	BaseEvaluationInterval time.Duration
 	// set of strings which are illegal for label keys on rules
 	ReservedLabelKeys             map[string]struct{}
-	NotificationSettingsValidator func(ctx context.Context, receiver string) (bool, error)
+	NotificationSettingsValidator func(ctx context.Context, notificationSettings v0alpha1.AlertRuleNotificationSettings) error
 }

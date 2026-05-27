@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode, useCallback, useEffect, useState, useRef } from 'react';
+import { type ReactNode, useCallback, useEffect, useState, useRef } from 'react';
 import * as React from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Counter, Icon, Tooltip, useStyles2 } from '@grafana/ui';
@@ -115,9 +115,9 @@ export const OptionsPaneCategory = React.memo(
         >
           <Tooltip interactive={!(typeof disabledText === 'string')} content={disabledText}>
             <div className={headerStyles}>
-              <h6 id={`button-${id}`} className={cx(styles.title, styles.titleDisabled)}>
+              <h3 id={`button-${id}`} className={cx(styles.title, styles.titleDisabled)}>
                 {renderTitle(isExpanded)}
-              </h6>
+              </h3>
               <Icon size="sm" name="ban" className={styles.disabledIcon} />
             </div>
           </Tooltip>
@@ -136,9 +136,9 @@ export const OptionsPaneCategory = React.memo(
         {/* this just provides a better experience for mouse users */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div className={headerStyles} onClick={onToggle}>
-          <h6 id={`button-${id}`} className={cx(styles.title, isExpanded && styles.titleExpanded)}>
+          <h3 id={`button-${id}`} className={cx(styles.title, isExpanded && styles.titleExpanded)}>
             {renderTitle(isExpanded)}
-          </h6>
+          </h3>
           <Button
             aria-label={
               isExpanded

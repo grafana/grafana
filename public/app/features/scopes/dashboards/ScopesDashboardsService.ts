@@ -1,19 +1,19 @@
 import { isEqual } from 'lodash';
-import { Subscription } from 'rxjs';
+import { type Subscription } from 'rxjs';
 
-import { ScopeDashboardBinding } from '@grafana/data';
+import { type ScopeDashboardBinding } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 
-import { ScopesApiClient } from '../ScopesApiClient';
+import { type ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 
 import { buildSubScopePath, isCurrentPath } from './scopeNavgiationUtils';
 import {
-  ScopeNavigation,
-  ScopeNavigationSpec,
-  SuggestedNavigationsFolder,
-  SuggestedNavigationsFoldersMap,
-  SuggestedNavigationsMap,
+  type ScopeNavigation,
+  type ScopeNavigationSpec,
+  type SuggestedNavigationsFolder,
+  type SuggestedNavigationsFoldersMap,
+  type SuggestedNavigationsMap,
 } from './types';
 
 interface ScopesDashboardsServiceState {

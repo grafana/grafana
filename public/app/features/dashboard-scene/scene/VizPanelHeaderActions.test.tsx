@@ -1,15 +1,16 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceApi, LoadingState } from '@grafana/data';
+import { type DataQueryRequest, type DataSourceApi, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {
+  AdHocFiltersVariable,
   GroupByVariable,
   SceneDataTransformer,
   SceneQueryRunner,
   SceneVariableSet,
   VizPanel,
-  VizPanelState,
+  type VizPanelState,
 } from '@grafana/scenes';
 
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -48,56 +49,6 @@ setPluginImportUtils({
 });
 
 describe('VizPanelHeaderActions', () => {
-  describe('supportsApplicability', () => {
-    it('is true when applicability is enabled and DS matches', async () => {
-      const { headerActions } = await buildScene();
-
-      expect(headerActions.state.supportsApplicability).toBe(true);
-    });
-
-    it('is false when applicability is disabled', async () => {
-      const { headerActions } = await buildScene({ applicabilityEnabled: false });
-
-      expect(headerActions.state.supportsApplicability).toBe(false);
-    });
-
-    it('is false when the variable DS does not match', async () => {
-      const { headerActions } = await buildScene({ variableDatasourceUid: 'other-ds' });
-
-      expect(headerActions.state.supportsApplicability).toBe(false);
-    });
-
-    it('becomes false when variable DS changes to a different one', async () => {
-      const { headerActions, groupByVariable } = await buildScene();
-
-      expect(headerActions.state.supportsApplicability).toBe(true);
-
-      groupByVariable.setState({ datasource: { uid: 'ds-2' } });
-
-      expect(headerActions.state.supportsApplicability).toBe(false);
-    });
-
-    it('becomes false when variable applicability becomes disabled', async () => {
-      const { headerActions, groupByVariable } = await buildScene();
-
-      expect(headerActions.state.supportsApplicability).toBe(true);
-
-      groupByVariable.setState({ applicabilityEnabled: false });
-
-      expect(headerActions.state.supportsApplicability).toBe(false);
-    });
-
-    it('becomes false when queryRunner changes DS to a different one', async () => {
-      const { headerActions, queryRunner } = await buildScene();
-
-      expect(headerActions.state.supportsApplicability).toBe(true);
-
-      queryRunner.setState({ datasource: { uid: 'ds-2' } });
-
-      expect(headerActions.state.supportsApplicability).toBe(false);
-    });
-  });
-
   describe('isGroupByActionSupported', () => {
     it('is true when group by variable DS matches query DS', async () => {
       const { headerActions } = await buildScene();
@@ -154,12 +105,46 @@ describe('VizPanelHeaderActions', () => {
       expect(headerActions.state.isGroupByActionSupported).toBe(false);
     });
   });
+
+  describe('isGroupByActionSupported with unified AdHocFiltersVariable', () => {
+    it('is true when adhoc variable with enableGroupBy has matching DS', async () => {
+      const { headerActions } = await buildScene({ useUnifiedGroupBy: true });
+
+      expect(headerActions.state.isGroupByActionSupported).toBe(true);
+    });
+
+    it('is false when adhoc variable DS does not match query DS', async () => {
+      const { headerActions } = await buildScene({ useUnifiedGroupBy: true, variableDatasourceUid: 'other-ds' });
+
+      expect(headerActions.state.isGroupByActionSupported).toBe(false);
+    });
+
+    it('becomes false when adhoc variable DS changes', async () => {
+      const { headerActions, adhocVariable } = await buildScene({ useUnifiedGroupBy: true });
+
+      expect(headerActions.state.isGroupByActionSupported).toBe(true);
+
+      adhocVariable!.setState({ datasource: { uid: 'ds-2' } });
+
+      expect(headerActions.state.isGroupByActionSupported).toBe(false);
+    });
+
+    it('becomes false when enableGroupBy is toggled off', async () => {
+      const { headerActions, adhocVariable } = await buildScene({ useUnifiedGroupBy: true });
+
+      expect(headerActions.state.isGroupByActionSupported).toBe(true);
+
+      adhocVariable!.setState({ enableGroupBy: false });
+
+      expect(headerActions.state.isGroupByActionSupported).toBe(false);
+    });
+  });
 });
 
 interface BuildSceneOptions {
-  applicabilityEnabled?: boolean;
   variableDatasourceUid?: string;
   withoutGroupBy?: boolean;
+  useUnifiedGroupBy?: boolean;
 }
 
 async function buildScene(options?: BuildSceneOptions) {
@@ -176,9 +161,17 @@ async function buildScene(options?: BuildSceneOptions) {
     value: [],
     text: [],
     options: [],
-    applicabilityEnabled: options?.applicabilityEnabled ?? true,
     datasource: { uid: options?.variableDatasourceUid ?? 'ds-1' },
   });
+
+  const adhocVariable = options?.useUnifiedGroupBy
+    ? new AdHocFiltersVariable({
+        name: 'adhoc',
+        datasource: { uid: options?.variableDatasourceUid ?? 'ds-1' },
+        filters: [],
+        enableGroupBy: true,
+      })
+    : undefined;
 
   const dataProvider = new SceneDataTransformer({
     $data: queryRunner,
@@ -197,9 +190,16 @@ async function buildScene(options?: BuildSceneOptions) {
 
   const panel = new VizPanel(panelState);
 
-  const variableSet = new SceneVariableSet({
-    variables: options?.withoutGroupBy ? [] : [groupByVariable],
-  });
+  let variables: Array<GroupByVariable | AdHocFiltersVariable>;
+  if (options?.withoutGroupBy) {
+    variables = [];
+  } else if (options?.useUnifiedGroupBy && adhocVariable) {
+    variables = [adhocVariable];
+  } else {
+    variables = [groupByVariable];
+  }
+
+  const variableSet = new SceneVariableSet({ variables });
 
   const scene = new DashboardScene({
     $variables: variableSet,
@@ -210,5 +210,5 @@ async function buildScene(options?: BuildSceneOptions) {
 
   await new Promise((r) => setTimeout(r, 1));
 
-  return { headerActions, panel, groupByVariable, queryRunner, variableSet };
+  return { headerActions, panel, groupByVariable, adhocVariable, queryRunner, variableSet };
 }

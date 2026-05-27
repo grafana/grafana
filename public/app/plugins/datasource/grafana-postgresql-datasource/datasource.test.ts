@@ -1,30 +1,30 @@
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
 import {
   getDefaultTimeRange,
   dataFrameToJSON,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
   dateTime,
   FieldType,
   LoadingState,
   createDataFrame,
 } from '@grafana/data';
 import {
-  BackendSrv,
-  DataSourceSrv,
-  FetchResponse,
+  type BackendSrv,
+  type DataSourceSrv,
+  type FetchResponse,
   getBackendSrv,
   setBackendSrv,
   getDataSourceSrv,
   setDataSourceSrv,
 } from '@grafana/runtime';
-import { QueryFormat, SQLQuery, makeVariable } from '@grafana/sql';
+import { QueryFormat, type SQLQuery, makeVariable } from '@grafana/sql';
 
 import { PostgresDatasource } from './datasource';
-import { PostgresOptions } from './types';
+import { type PostgresOptions } from './types';
 
 const backendSrv: BackendSrv = {
   // this will get mocked below, it only needs to exist
@@ -37,9 +37,9 @@ const fakeDataSourceSrv: DataSourceSrv = {
 } as unknown as DataSourceSrv;
 
 const uid = '0000';
-// mock uuidv4 to give back the same value every time
-jest.mock('uuid', () => ({
-  v4: () => uid,
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  generateUUID: () => uid,
 }));
 
 let origBackendSrv: BackendSrv;

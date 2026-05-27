@@ -1,4 +1,4 @@
-import { JobStatus } from 'app/api/clients/provisioning/v0alpha1';
+import { type JobStatus } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 

@@ -1,19 +1,16 @@
-import WKT from 'ol/format/WKT';
-import { Geometry } from 'ol/geom';
 import type { JSX } from 'react';
 
-import { TableCellProps } from '../types';
+import { isGeometry, useOpenLayersContext } from '../geo';
+import { type TableCellProps } from '../types';
 
 export function GeoCell(props: TableCellProps): JSX.Element {
   const { cell, tableStyles, cellProps } = props;
+  const { formatGeometry } = useOpenLayersContext();
 
   let disp = '';
 
-  if (cell.value instanceof Geometry) {
-    disp = new WKT().writeGeometry(cell.value, {
-      featureProjection: 'EPSG:3857',
-      dataProjection: 'EPSG:4326',
-    });
+  if (formatGeometry && isGeometry(cell.value)) {
+    disp = formatGeometry(cell.value);
   } else if (cell.value != null) {
     disp = `${cell.value}`;
   }

@@ -1,6 +1,6 @@
-import { KeyboardEvent, useCallback, useMemo, useState } from 'react';
+import { type KeyboardEvent, useCallback, useMemo, useState } from 'react';
 
-import { standardTransformersRegistry, TransformerRegistryItem } from '@grafana/data';
+import { standardTransformersRegistry, type TransformerRegistryItem } from '@grafana/data';
 
 import { getTransformerCategories, type TransformerCategoryOption } from '../utils';
 
@@ -25,7 +25,10 @@ export function useTransformationSearchAndFilter(
 
   const allTransformations = useMemo(() => {
     const collator = new Intl.Collator();
-    return standardTransformersRegistry.list().sort((a, b) => collator.compare(a.name, b.name));
+    return standardTransformersRegistry
+      .list()
+      .filter(({ excludeFromPicker }) => !excludeFromPicker)
+      .sort((a, b) => collator.compare(a.name, b.name));
   }, []);
 
   const filteredTransformations = useMemo(() => {

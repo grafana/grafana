@@ -1,33 +1,33 @@
 import { useEffect, useMemo } from 'react';
 
 import {
-  CreateNotificationqueryMatcher,
-  CreateNotificationqueryNotificationCount,
-  CreateNotificationqueryNotificationOutcome,
-  CreateNotificationqueryNotificationStatus,
-  CreateNotificationqueryResponse,
+  type CreateNotificationqueryMatcher,
+  type CreateNotificationqueryNotificationCount,
+  type CreateNotificationqueryNotificationOutcome,
+  type CreateNotificationqueryNotificationStatus,
+  type CreateNotificationqueryResponse,
   generatedAPI as notificationsApi,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import {
-  DataFrame,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceGetTagKeysOptions,
-  DataSourceGetTagValuesOptions,
-  Field,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceGetTagKeysOptions,
+  type DataSourceGetTagValuesOptions,
+  type Field,
   FieldType,
-  MetricFindValue,
-  TestDataSourceResponse,
+  type MetricFindValue,
+  type TestDataSourceResponse,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RuntimeDataSource, sceneUtils } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { dispatch } from 'app/store/store';
 
-import { DataSourceInformation } from '../home/Insights';
+import { type DataSourceInformation } from '../home/Insights';
 import { matcherToOperator } from '../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 

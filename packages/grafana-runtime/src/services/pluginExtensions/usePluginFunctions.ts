@@ -1,4 +1,4 @@
-import { PluginExtensionFunction } from '@grafana/data';
+import { type PluginExtensionFunction } from '@grafana/data';
 
 export type UsePluginFunctionsOptions = {
   extensionPointId: string;
@@ -10,7 +10,7 @@ export type UsePluginFunctionsResult<Signature> = {
   functions: Array<PluginExtensionFunction<Signature>>;
 };
 
-export type UsePluginFunctions<T> = (options: UsePluginFunctionsOptions) => UsePluginFunctionsResult<T>;
+type UsePluginFunctions<T> = (options: UsePluginFunctionsOptions) => UsePluginFunctionsResult<T>;
 
 let singleton: UsePluginFunctions<unknown> | undefined;
 

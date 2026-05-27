@@ -1,6 +1,6 @@
-import { SceneVariable, SceneVariableDependencyConfigLike } from '@grafana/scenes';
+import { type SceneVariable, type SceneVariableDependencyConfigLike } from '@grafana/scenes';
 
-import { DashboardGridItem } from './DashboardGridItem';
+import { type DashboardGridItem } from './DashboardGridItem';
 
 export class DashboardGridItemVariableDependencyHandler implements SceneVariableDependencyConfigLike {
   constructor(private _gridItem: DashboardGridItem) {}

@@ -1,12 +1,12 @@
 import { difference } from 'lodash';
 import { memo, useEffect } from 'react';
 
-import { fieldReducers, FieldReducerInfo } from '@grafana/data';
+import { fieldReducers, type FieldReducerInfo } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { Combobox, ComboboxProps } from '../Combobox/Combobox';
-import { MultiCombobox, MultiComboboxProps } from '../Combobox/MultiCombobox';
-import { ComboboxOption } from '../Combobox/types';
+import { Combobox, type ComboboxProps } from '../Combobox/Combobox';
+import { MultiCombobox, type MultiComboboxProps } from '../Combobox/MultiCombobox';
+import { type ComboboxOption } from '../Combobox/types';
 import { selectableValueToComboboxOption } from '../Combobox/utils';
 
 import { pickComboboxLayout } from './pickComboboxLayout';

@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 
 import { grafanaAlertNotifiersMock } from 'app/features/alerting/unified/mockGrafanaNotifiers';
-import { NotifierDTO } from 'app/features/alerting/unified/types/alerting';
+import { type NotifierDTO } from 'app/features/alerting/unified/types/alerting';
 
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from '../../utils';
 

@@ -4,7 +4,7 @@
  * Remove a template variable from the dashboard by name.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';

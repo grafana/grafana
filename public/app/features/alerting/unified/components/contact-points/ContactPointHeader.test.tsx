@@ -8,7 +8,7 @@ import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { KnownProvenance } from '../../types/knownProvenance';
 
 import { ContactPointHeader } from './ContactPointHeader';
-import { ContactPointWithMetadata } from './utils';
+import { type ContactPointWithMetadata } from './utils';
 
 setupMswServer();
 

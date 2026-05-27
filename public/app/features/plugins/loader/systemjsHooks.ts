@@ -9,7 +9,7 @@ import { getPluginInfoFromCache, resolvePluginUrlWithCache } from './pluginInfoC
 import { SystemJS } from './systemjs';
 // eslint-disable-next-line import/order
 import { sharedDependenciesMap } from './sharedDependencies';
-import { SystemJSWithLoaderHooks } from './types';
+import { type SystemJSWithLoaderHooks } from './types';
 import { buildImportMap, isHostedOnCDN } from './utils';
 
 export function initSystemJSHooks() {

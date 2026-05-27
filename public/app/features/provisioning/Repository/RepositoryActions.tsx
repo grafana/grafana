@@ -1,7 +1,8 @@
+import { textUtil } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Badge, Button, LinkButton, Stack } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StatusBadge } from '../Shared/StatusBadge';
 import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
@@ -17,7 +18,8 @@ interface RepositoryActionsProps {
 
 export function RepositoryActions({ repository }: RepositoryActionsProps) {
   const name = repository.metadata?.name ?? '';
-  const repoHref = getRepoHrefForProvider(repository.spec);
+  const rawRepoHref = getRepoHrefForProvider(repository.spec);
+  const repoHref = rawRepoHref ? textUtil.sanitizeUrl(rawRepoHref) : undefined;
   const connectionName = repository.spec?.connection?.name;
 
   const repoType = repository.spec?.type;

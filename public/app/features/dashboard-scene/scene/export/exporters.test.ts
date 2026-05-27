@@ -1,15 +1,20 @@
 import { find } from 'lodash';
 
-import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta, TypedVariableModel } from '@grafana/data';
-import { setPanelPluginMetas } from '@grafana/runtime/internal';
-import { Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
 import {
-  DatasourceVariableKind,
-  LibraryPanelKind,
-  PanelKind,
-  QueryVariableKind,
-  GroupByVariableKind,
-  AdhocVariableKind,
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+  type PanelPluginMeta,
+  type TypedVariableModel,
+} from '@grafana/data';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
+import { type Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
+import {
+  type DatasourceVariableKind,
+  type LibraryPanelKind,
+  type PanelKind,
+  type QueryVariableKind,
+  type GroupByVariableKind,
+  type AdhocVariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import config from 'app/core/config';
@@ -17,13 +22,13 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { createAdHocVariableAdapter } from 'app/features/variables/adhoc/adapter';
 
 import { LibraryElementKind } from '../../../library-panels/types';
-import { DashboardJson } from '../../../manage-dashboards/types';
+import { type DashboardJson } from '../../../manage-dashboards/types';
 import { variableAdapters } from '../../../variables/adapters';
 import { createConstantVariableAdapter } from '../../../variables/constant/adapter';
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 
-import { makeExportableV1, makeExportableV2, LibraryElementExport, ExportLabel } from './exporters';
+import { makeExportableV1, makeExportableV2, type LibraryElementExport, ExportLabel } from './exporters';
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),

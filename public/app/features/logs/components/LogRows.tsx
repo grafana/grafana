@@ -1,20 +1,20 @@
 import { cx } from '@emotion/css';
-import { MouseEvent, ReactNode, useState, useMemo, useCallback, useRef, useEffect, memo } from 'react';
+import { type MouseEvent, type ReactNode, useState, useMemo, useCallback, useRef, useEffect, memo } from 'react';
 
 import {
-  TimeZone,
+  type TimeZone,
   LogsDedupStrategy,
-  LogRowModel,
-  LogsSortOrder,
-  CoreApp,
-  DataFrame,
-  LogRowContextOptions,
-  TimeRange,
+  type LogRowModel,
+  type LogsSortOrder,
+  type CoreApp,
+  type DataFrame,
+  type LogRowContextOptions,
+  type TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
-import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { type DataQuery } from '@grafana/schema';
+import { ConfirmModal, Icon, type PopoverContent, useTheme2 } from '@grafana/ui';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
@@ -281,7 +281,6 @@ export const LogRows = memo(
               </>
             }
             confirmText={t('logs.log-rows.disable-popover.confirm', 'Confirm')}
-            icon="exclamation-triangle"
             onConfirm={onDisableConfirm}
             onDismiss={onDisableCancel}
           />

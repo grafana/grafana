@@ -1,7 +1,14 @@
-import { DashboardViewItem } from 'app/features/search/types';
+import { type DashboardViewItem } from 'app/features/search/types';
 
-import { BrowseDashboardsState } from '../types';
+import { type BrowseDashboardsState } from '../types';
 
+/**
+ * Finds item with the specific uid either in the root items or childrenByUID. This is just a convenience as browse
+ * dashboards store all the items in two separate structures.
+ * @param rootItems
+ * @param childrenByUID
+ * @param uid
+ */
 export function findItem(
   rootItems: DashboardViewItem[],
   childrenByUID: BrowseDashboardsState['childrenByParentUID'],

@@ -1,5 +1,5 @@
 import { matcherHint, printExpected, printReceived } from 'jest-matcher-utils';
-import { asapScheduler, Subscription, timer, isObservable } from 'rxjs';
+import { asapScheduler, type Subscription, timer, isObservable } from 'rxjs';
 
 import { OBSERVABLE_TEST_TIMEOUT_IN_MS } from './types';
 
@@ -25,7 +25,7 @@ export function forceObservableCompletion(
   );
 }
 
-export function expectObservableToBeDefined(received: unknown): jest.CustomMatcherResult | null {
+function expectObservableToBeDefined(received: unknown): jest.CustomMatcherResult | null {
   if (received) {
     return null;
   }
@@ -38,7 +38,7 @@ Expected ${printReceived(received)} to be ${printExpected('defined')}.`,
   };
 }
 
-export function expectObservableToBeObservable(received: unknown): jest.CustomMatcherResult | null {
+function expectObservableToBeObservable(received: unknown): jest.CustomMatcherResult | null {
   if (isObservable(received)) {
     return null;
   }

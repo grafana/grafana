@@ -1,4 +1,11 @@
-import { BusEventBase, BusEventWithPayload, EventBus, GrafanaTheme2, PanelModel, TimeRange } from '@grafana/data';
+import {
+  BusEventBase,
+  BusEventWithPayload,
+  type EventBus,
+  type GrafanaTheme2,
+  type PanelModel,
+  type TimeRange,
+} from '@grafana/data';
 
 /**
  * Called when a dashboard is refreshed

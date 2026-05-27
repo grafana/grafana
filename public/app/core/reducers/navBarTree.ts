@@ -1,6 +1,6 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
@@ -76,7 +76,7 @@ const navTreeSlice = createSlice({
       const { id, title, url } = action.payload;
       const starredItems = state.find((navItem) => navItem.id === 'starred');
       if (starredItems) {
-        const navItem = starredItems.children?.find((navItem) => navItem.id === id);
+        const navItem = starredItems.children?.find((navItem) => navItem.id === ID_PREFIX + id);
         if (navItem) {
           navItem.text = title;
           navItem.url = url;

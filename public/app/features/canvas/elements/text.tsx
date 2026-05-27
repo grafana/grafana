@@ -4,16 +4,21 @@ import * as React from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Input, usePanelContext, useStyles2 } from '@grafana/ui';
-import { DimensionContext } from 'app/features/dimensions/context';
+import { type DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
-import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultThemeTextColor } from '../element';
-import { ElementState } from '../runtime/element';
-import { Align, TextConfig, TextData, VAlign } from '../types';
+import {
+  type CanvasElementItem,
+  type CanvasElementOptions,
+  type CanvasElementProps,
+  defaultThemeTextColor,
+} from '../element';
+import { type ElementState } from '../runtime/element';
+import { Align, type TextConfig, type TextData, VAlign } from '../types';
 
 const TextDisplay = (props: CanvasElementProps<TextConfig, TextData>) => {
   const { data, isSelected } = props;

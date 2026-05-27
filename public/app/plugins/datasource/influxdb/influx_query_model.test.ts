@@ -1,4 +1,4 @@
-import { TemplateSrv } from '@grafana/runtime';
+import { type TemplateSrv } from '@grafana/runtime';
 
 import InfluxQueryModel from './influx_query_model';
 

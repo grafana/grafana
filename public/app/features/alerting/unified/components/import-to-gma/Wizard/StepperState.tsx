@@ -1,6 +1,6 @@
 import { type PropsWithChildren, createContext, memo, useCallback, useContext, useState } from 'react';
 
-import { StepKey, StepState, VisitedSteps } from './types';
+import { StepKey, StepState, type VisitedSteps } from './types';
 
 interface StepperStateContextValue {
   /** Mark a step as visited */

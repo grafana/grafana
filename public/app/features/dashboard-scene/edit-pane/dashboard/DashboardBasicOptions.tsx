@@ -2,7 +2,7 @@ import { useRef } from 'react';
 
 import { Input, TextArea } from '@grafana/ui';
 
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { dashboardEditActions } from '../shared';
 
 export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardScene; id?: string }) {

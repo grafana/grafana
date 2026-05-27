@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
-import { FieldErrors, FormProvider, SubmitErrorHandler, useForm } from 'react-hook-form';
+import { type FieldErrors, FormProvider, type SubmitErrorHandler, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Button, Field, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
@@ -11,17 +11,20 @@ import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useValidateContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { ManagePermissions } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 
-import { getMessageFromError } from '../../../../../../core/utils/errors';
-import { logError } from '../../../Analytics';
+import { logError, logWarning } from '../../../Analytics';
 import { isOnCallFetchError } from '../../../api/onCallApi';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
-import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
-import { makeAMLink } from '../../../utils/misc';
+import {
+  type ChannelValues,
+  type CommonSettingsComponentType,
+  type ReceiverFormValues,
+} from '../../../types/receiver-form';
+import { makeAMLink, stringifyErrorLike } from '../../../utils/misc';
 import { initialAsyncRequestState } from '../../../utils/redux';
 
 import { ChannelSubForm } from './ChannelSubForm';
 import { DeletedSubForm } from './fields/DeletedSubform';
-import { Notifier } from './notifiers';
+import { type Notifier } from './notifiers';
 import { normalizeFormValues } from './util';
 
 interface Props<R extends ChannelValues> {
@@ -103,13 +106,20 @@ export function ReceiverForm<R extends ChannelValues>({
       });
     } catch (e) {
       if (e instanceof Error || isFetchError(e)) {
-        notifyApp.error('Failed to save the contact point', getErrorMessage(e));
+        const message = getErrorMessage(e);
+        notifyApp.error('Failed to save the contact point', message);
 
-        const error = new Error('Failed to save the contact point');
-        error.cause = e;
-        logError(error);
+        if (isFetchError(e) && e.status >= 400 && e.status < 500) {
+          logWarning('Failed to save the contact point', {
+            status: String(e.status),
+            message,
+          });
+        } else {
+          const error = new Error('Failed to save the contact point');
+          error.cause = e;
+          logError(error);
+        }
       }
-      throw e;
     }
   };
 
@@ -259,10 +269,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-function getErrorMessage(error: unknown) {
+export function getErrorMessage(error: unknown) {
   if (isOnCallFetchError(error)) {
     return error.data.detail;
   }
 
-  return getMessageFromError(error);
+  return stringifyErrorLike(error);
 }

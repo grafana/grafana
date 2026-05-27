@@ -1,5 +1,5 @@
 import {
-  DataFrame,
+  type DataFrame,
   FieldColorModeId,
   FieldConfigProperty,
   FieldType,
@@ -17,7 +17,7 @@ import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 import { BarChartPanel } from './BarChartPanel';
 import { TickSpacingEditor } from './TickSpacingEditor';
 import { changeToBarChartPanelMigrationHandler } from './migrations';
-import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
+import { type FieldConfig, type Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { barchartPresetsSupplier } from './presets';
 import { barchartSuggestionsSupplier } from './suggestions';
 

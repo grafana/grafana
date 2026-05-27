@@ -54,9 +54,6 @@ var PathRewriters = []filters.PathRewriter{
 		Pattern: regexp.MustCompile(`/apis/datasource.grafana.app/v0alpha1(.*$)`),
 		ReplaceFunc: func(matches []string) string {
 			result := "/apis/query.grafana.app/v0alpha1" + matches[1]
-			if strings.HasSuffix(matches[1], "/query") {
-				result += "/name" // same as the rewrite pattern below
-			}
 			if strings.HasSuffix(matches[1], "/sqlschemas") && !strings.Contains(matches[1], "/query/") {
 				result = strings.Replace(result, "/sqlschemas", "/query/sqlschemas", 1)
 			}
@@ -64,9 +61,9 @@ var PathRewriters = []filters.PathRewriter{
 		},
 	},
 	{
-		Pattern: regexp.MustCompile(`(/apis/query.grafana.app/v0alpha1/namespaces/.*/query$)`),
+		Pattern: regexp.MustCompile(`(/apis/query.grafana.app/v0alpha1/namespaces/.*/)query/name$`),
 		ReplaceFunc: func(matches []string) string {
-			return matches[1] + "/name" // connector requires a name
+			return matches[1] + "query" // redirect from with-name to without-name
 		},
 	},
 	{
@@ -82,6 +79,14 @@ var PathRewriters = []filters.PathRewriter{
 		Pattern: regexp.MustCompile(`(/apis/.*/v0alpha1/namespaces/.*/queryconvert$)`),
 		ReplaceFunc: func(matches []string) string {
 			return matches[1] + "/name" // connector requires a name
+		},
+	},
+	{
+		// Rewrite the deprecated query path
+		// NOTE, this should be removed after the enterprise changes are running in hosted grafana
+		Pattern: regexp.MustCompile(`(/apis/.*.datasource.grafana.app/v0alpha1/namespaces/.*/connections/.*/query$)`),
+		ReplaceFunc: func(matches []string) string {
+			return strings.Replace(matches[0], "connections", "datasources", 1)
 		},
 	},
 }
@@ -289,7 +294,7 @@ func InstallAPIs(
 		dualWrite = func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
 			key := gr.String()
 			if resourceConfig, ok := storageOpts.UnifiedStorageConfig[key]; ok {
-				builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
+				builderMetrics.RecordDualWriterTargetMode(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
 			}
 			return dualWriteService.NewStorage(gr, legacy, storage)
 		}

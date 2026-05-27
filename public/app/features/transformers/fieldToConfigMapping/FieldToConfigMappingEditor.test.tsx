@@ -1,14 +1,14 @@
 import { fireEvent, render, screen, getByLabelText, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { ReducerID, toDataFrame, FieldType } from '@grafana/data';
+import { mockComboboxRect } from '@grafana/test-utils';
 
-import { Props, FieldToConfigMappingEditor } from './FieldToConfigMappingEditor';
+import { type Props, FieldToConfigMappingEditor } from './FieldToConfigMappingEditor';
 
 beforeAll(() => {
-  comboboxTestSetup();
+  mockComboboxRect();
 });
 
 beforeEach(() => {

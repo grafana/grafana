@@ -9,7 +9,7 @@ import config from 'app/core/config';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { StoreState, useSelector } from 'app/types/store';
+import { type StoreState, useSelector } from 'app/types/store';
 
 import { TeamFolders } from './TeamFolders';
 import TeamGroupSync, { TeamSyncUpgradeContent } from './TeamGroupSync';

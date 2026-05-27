@@ -3,7 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { t } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
 
-import { RelativeUrl } from '../../../utils/url';
+import { type RelativeUrl } from '../../../utils/url';
 
 import { useCancelWizardModal } from './useCancelWizardModal';
 

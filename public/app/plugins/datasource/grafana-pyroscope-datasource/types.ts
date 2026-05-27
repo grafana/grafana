@@ -1,6 +1,6 @@
-import { DataSourceJsonData } from '@grafana/data';
+import { type DataSourceJsonData } from '@grafana/data';
 
-import { GrafanaPyroscopeDataQuery, PyroscopeQueryType } from './dataquery.gen';
+import { type GrafanaPyroscopeDataQuery, type PyroscopeQueryType } from './dataquery.gen';
 
 export interface Query extends GrafanaPyroscopeDataQuery {
   queryType: PyroscopeQueryType;

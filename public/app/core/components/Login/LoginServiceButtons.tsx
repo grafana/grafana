@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { pickBy } from 'lodash';
 
-import { GrafanaTheme2, DEFAULT_SAML_NAME } from '@grafana/data';
+import { type GrafanaTheme2, DEFAULT_SAML_NAME } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Icon, IconName, LinkButton, Stack, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, type IconName, LinkButton, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 
 export interface LoginService {

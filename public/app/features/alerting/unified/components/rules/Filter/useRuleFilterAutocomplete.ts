@@ -1,11 +1,11 @@
 import { chain } from 'lodash';
 import { useCallback } from 'react';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { ComboboxOption } from '@grafana/ui';
-import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type ComboboxOption } from '@grafana/ui';
+import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { prometheusApi } from '../../../api/prometheusApi';
 import { getRulesDataSources } from '../../../utils/datasource';

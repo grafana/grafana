@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
-import { AIAlertRuleButtonComponent, GenAIAlertRuleButtonProps, addAIAlertRuleButton } from './addAIAlertRuleButton';
+import {
+  AIAlertRuleButtonComponent,
+  type GenAIAlertRuleButtonProps,
+  addAIAlertRuleButton,
+} from './addAIAlertRuleButton';
 
 // Component that throws an error for testing
 const ThrowingComponent: ComponentType<GenAIAlertRuleButtonProps> = () => {

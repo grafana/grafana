@@ -1,12 +1,12 @@
 import { getTimeField, sortDataFrame } from '../../dataframe/processDataFrame';
-import { DataFrame, Field, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
-import { FieldMatcher } from '../../types/transformations';
+import { type DataFrame, type Field, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
+import { type FieldMatcher } from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
-import { JoinMode } from './joinByField';
+import { JoinMode } from './joinShared';
 
-export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
+function pickBestJoinField(data: DataFrame[]): FieldMatcher {
   const { timeField } = getTimeField(data[0]);
   if (timeField) {
     return fieldMatchers.get(FieldMatcherID.firstTimeField).get({});
@@ -244,6 +244,13 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
 
   let joined: Array<Array<number | string | null | undefined>> = [];
 
+  if (allData.length === 0) {
+    return {
+      length: 0,
+      fields: originalFields,
+    };
+  }
+
   if (options.mode === JoinMode.outerTabular) {
     joined = joinTabular(allData, true);
   } else if (options.mode === JoinMode.inner) {
@@ -466,7 +473,7 @@ function joinTabular(tables: AlignedData[], outer = false) {
 //--------------------------------------------------------------------------------
 
 // Copied from uplot
-export type TypedArray =
+type TypedArray =
   | Int8Array
   | Uint8Array
   | Int16Array

@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { createMockInstanceSetttings } from '../../mocks/instanceSettings';
 
-import { BasicLogsToggle, Props } from './BasicLogsToggle';
+import { BasicLogsToggle, type Props } from './BasicLogsToggle';
 
 const mockInstanceSettings = createMockInstanceSetttings();
 

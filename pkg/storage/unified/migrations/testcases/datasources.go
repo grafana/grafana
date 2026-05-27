@@ -30,7 +30,7 @@ func (tc *datasourcesTestCase) Name() string {
 
 func (tc *datasourcesTestCase) FeatureToggles() []string {
 	return []string{
-		featuremgmt.FlagQueryServiceWithConnections, // required for CRUD
+		featuremgmt.FlagDatasourceUseNewCRUDAPIs, // required for CRUD
 	}
 }
 
@@ -46,7 +46,7 @@ func (tc *datasourcesTestCase) Resources() []schema.GroupVersionResource {
 			Resource: "datasources",
 		},
 		{
-			Group:    "*.datasource.grafana.app",
+			Group:    "datasource.grafana.app",
 			Version:  "v0alpha1",
 			Resource: "datasources",
 		},

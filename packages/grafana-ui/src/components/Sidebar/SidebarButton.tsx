@@ -1,15 +1,15 @@
 import { css, cx } from '@emotion/css';
-import React, { ButtonHTMLAttributes, useContext } from 'react';
+import React, { type ButtonHTMLAttributes } from 'react';
 
-import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, isIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { ButtonVariant } from '../Button/Button';
+import { type ButtonVariant } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
-import { SidebarContext } from './useSidebar';
+import { useSidebarContext } from './useSidebar';
 
 export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon: IconName;
@@ -22,20 +22,20 @@ export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
   ({ icon, active, onClick, title, tooltip, variant, ...restProps }, ref) => {
     const styles = useStyles2(getStyles);
-    const context = useContext(SidebarContext);
+    const sidebarContext = useSidebarContext();
 
-    if (!context) {
+    if (!sidebarContext) {
       throw new Error('Sidebar.Button must be used within a Sidebar component');
     }
 
     const buttonClass = cx(
       styles.button,
-      context.compact && styles.compact,
-      context.position === 'left' && styles.leftButton
+      sidebarContext.compact && styles.compact,
+      sidebarContext.position === 'left' && styles.leftButton
     );
 
     return (
-      <Tooltip ref={ref} content={tooltip ?? title} placement={context.position === 'left' ? 'right' : 'left'}>
+      <Tooltip ref={ref} content={tooltip ?? title} placement={sidebarContext.position === 'left' ? 'right' : 'left'}>
         <button
           className={buttonClass}
           aria-label={title}
@@ -45,7 +45,7 @@ export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
           {...restProps}
         >
           <div className={cx(styles.iconWrapper, variant, active && styles.iconActive)}>{renderIcon(icon)}</div>
-          {!context.compact && <div className={cx(styles.title, active && styles.titleActive)}>{title}</div>}
+          {!sidebarContext.compact && <div className={cx(styles.title, active && styles.titleActive)}>{title}</div>}
         </button>
       </Tooltip>
     );

@@ -1,4 +1,4 @@
-import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerCortexConfig, type MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 export const muteTimeInterval: MuteTimeInterval = {
   name: 'default-mute',

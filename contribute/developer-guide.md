@@ -105,7 +105,6 @@ If you want to contribute to any of the plugins listed below (that are found wit
 - mysql
 - parca
 - tempo
-- zipkin
 - loki
 
 To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
@@ -341,7 +340,7 @@ The number of files needed may be different on your environment. To determine th
 find ./conf ./pkg ./public/views | wc -l
 ```
 
-Another alternative is to limit the files being watched. The directories that are watched for changes are listed in the `.bra.toml` file in the root directory.
+Another alternative is to limit the files being watched. The directories that are watched for changes are listed in the `.air.toml` file in the root directory.
 
 You can retain your `ulimit` configuration, that is, save it so it will be remembered for future sessions. To do this, commit it to your command line shell initialization file. Which file this is depends on the shell you are using. For example:
 

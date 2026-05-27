@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import React from 'react';
+import type React from 'react';
 
 import { buildVizAndDataPaneGrid, getDefaultSidebarRatio, useRatioResize } from './hooks';
 
@@ -64,12 +64,12 @@ describe('buildVizAndDataPaneGrid', () => {
     expect(buildVizAndDataPaneGrid({ ...base, vizRatio: 0.75 }).gridTemplateRows).toBe('3fr auto 1fr');
   });
 
-  it('converts sidebarRatio 0.5 to equal columns (minmax(220px, 1fr) 1fr)', () => {
-    expect(buildVizAndDataPaneGrid({ ...base, sidebarRatio: 0.5 }).gridTemplateColumns).toBe('minmax(220px, 1fr) 1fr');
+  it('converts sidebarRatio 0.5 to equal columns (minmax(250px, 1fr) 1fr)', () => {
+    expect(buildVizAndDataPaneGrid({ ...base, sidebarRatio: 0.5 }).gridTemplateColumns).toBe('minmax(250px, 1fr) 1fr');
   });
 
   it('converts sidebarRatio 0.25 to approximately one-third of the available width', () => {
-    // 0.25 / (1 - 0.25) = 0.333...fr — wrapped in minmax(200px, Xfr)
+    // 0.25 / (1 - 0.25) = 0.333...fr — wrapped in minmax(250px, Xfr)
     const columns = buildVizAndDataPaneGrid({ ...base, sidebarRatio: 0.25 }).gridTemplateColumns;
     const match = columns.match(/minmax\(\d+px,\s*([\d.]+)fr\)/);
     expect(match).not.toBeNull();

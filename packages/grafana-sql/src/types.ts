@@ -1,31 +1,22 @@
 import type { JsonTree } from '@react-awesome-query-builder/ui';
 
 import {
-  DataFrame,
-  DataQuery,
-  DataSourceJsonData,
-  MetricFindValue,
-  SelectableValue,
-  TimeRange,
+  type DataFrame,
+  type DataQuery,
+  type DataSourceJsonData,
+  type MetricFindValue,
+  type SelectableValue,
+  type TimeRange,
   toOption as toOptionFromData,
 } from '@grafana/data';
-import { CompletionItemKind, EditorMode, LanguageDefinition } from '@grafana/plugin-ui';
+import { type EditorMode, type LanguageDefinition } from '@grafana/plugin-ui';
 
-import { QueryWithDefaults } from './defaults';
+import { type QueryWithDefaults } from './defaults';
 import {
-  QueryEditorFunctionExpression,
-  QueryEditorGroupByExpression,
-  QueryEditorPropertyExpression,
+  type QueryEditorFunctionExpression,
+  type QueryEditorGroupByExpression,
+  type QueryEditorPropertyExpression,
 } from './expressions';
-
-export interface SqlQueryForInterpolation {
-  dataset?: string;
-  alias?: string;
-  format?: QueryFormat;
-  rawSql?: string;
-  refId: string;
-  hide?: boolean;
-}
 
 export interface SQLConnectionLimits {
   maxOpenConns: number;
@@ -66,12 +57,12 @@ export interface SQLQuery extends DataQuery {
 
 export type SQLVariableQuery = { query: string } & SQLQuery;
 
-export interface NameValue {
+interface NameValue {
   name: string;
   value: string;
 }
 
-export type SQLFilters = NameValue[];
+type SQLFilters = NameValue[];
 
 export interface SQLExpression {
   columns?: QueryEditorFunctionExpression[];
@@ -83,19 +74,6 @@ export interface SQLExpression {
   orderByDirection?: 'ASC' | 'DESC';
   limit?: number;
   offset?: number;
-}
-
-export interface TableSchema {
-  name?: string;
-  schema?: TableFieldSchema[];
-}
-
-export interface TableFieldSchema {
-  name: string;
-  description?: string;
-  type: string;
-  repeated: boolean;
-  schema: TableFieldSchema[];
 }
 
 export interface QueryRowFilter {
@@ -176,12 +154,6 @@ export interface SqlQueryModel {
 
 export interface ResponseParser {
   transformMetricFindResponse: (frame: DataFrame) => MetricFindValue[];
-}
-
-export interface MetaDefinition {
-  name: string;
-  completion?: string;
-  kind: CompletionItemKind;
 }
 
 export type SQLDialect = 'postgres' | 'influx' | 'other';

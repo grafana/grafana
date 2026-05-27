@@ -1,16 +1,9 @@
-import { PublicDashboardScenePage } from '../../dashboard-scene/pages/PublicDashboardScenePage';
-import { isPublicDashboardsSceneEnabled } from '../../dashboard-scene/utils/utils';
-
-import PublicDashboardPage, { type Props } from './PublicDashboardPage';
+import { PublicDashboardScenePage, type Props } from '../../dashboard-scene/pages/PublicDashboardScenePage';
 
 export type PublicDashboardPageProxyProps = Props;
 
 function PublicDashboardPageProxy(props: PublicDashboardPageProxyProps) {
-  if (isPublicDashboardsSceneEnabled()) {
-    return <PublicDashboardScenePage {...props} />;
-  }
-
-  return <PublicDashboardPage {...props} />;
+  return <PublicDashboardScenePage {...props} />;
 }
 
 export default PublicDashboardPageProxy;

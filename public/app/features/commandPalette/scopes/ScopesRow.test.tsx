@@ -1,7 +1,7 @@
 import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
-import { NodesMap, ScopesMap, SelectedScope } from '../../scopes/selector/types';
+import { type NodesMap, type ScopesMap, type SelectedScope } from '../../scopes/selector/types';
 
 import { ScopesRow } from './ScopesRow';
 

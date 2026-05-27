@@ -11,7 +11,7 @@ import {
   removeVariableEditorError,
   variableEditorMounted,
   variableEditorReducer,
-  VariableEditorState,
+  type VariableEditorState,
   variableEditorUnMounted,
 } from './reducer';
 

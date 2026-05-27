@@ -1,0 +1,215 @@
+{
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "grafana-testdata-datasource" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "candleStyle": "candles",
+        "colorStrategy": "open-close",
+        "colors": { "down": "red", "up": "green" },
+        "fields": {},
+        "includeAllFields": true,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
+        "mode": "candles+volume",
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "csvFileName": "ohlc_dogecoin.csv",
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "Candles and Volume",
+      "type": "candlestick"
+    },
+    {
+      "datasource": { "type": "grafana-testdata-datasource" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "options": {
+        "candleStyle": "ohlcbars",
+        "colorStrategy": "open-close",
+        "colors": { "down": "red", "up": "blue" },
+        "fields": {},
+        "includeAllFields": false,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
+        "mode": "candles",
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "csvFileName": "ohlc_dogecoin.csv",
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "OHLC Bars",
+      "type": "candlestick"
+    },
+    {
+      "datasource": { "type": "grafana-testdata-datasource" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 10 },
+      "id": 3,
+      "options": {
+        "candleStyle": "candles",
+        "colorStrategy": "close-close",
+        "colors": { "down": "red", "up": "green" },
+        "fields": {},
+        "includeAllFields": false,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
+        "mode": "candles",
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "csvFileName": "ohlc_dogecoin.csv",
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "Close-Close Color Strategy",
+      "type": "candlestick"
+    },
+    {
+      "datasource": { "type": "grafana-testdata-datasource" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 10 },
+      "id": 4,
+      "options": {
+        "candleStyle": "candles",
+        "colorStrategy": "open-close",
+        "colors": { "down": "red", "up": "yellow" },
+        "fields": {},
+        "includeAllFields": false,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
+        "mode": "volume",
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "csvFileName": "ohlc_dogecoin.csv",
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "Volume Only",
+      "type": "candlestick"
+    },
+    {
+      "datasource": { "type": "grafana-testdata-datasource" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "links": [
+            {
+              "title": "Example Data Link",
+              "url": "https://grafana.com/docs"
+            }
+          ],
+          "actions": [
+            {
+              "fetch": {
+                "body": "{}",
+                "headers": [["Content-Type", "application/json"]],
+                "method": "GET",
+                "queryParams": [],
+                "url": "https://grafana.com"
+              },
+              "title": "Example Action",
+              "type": "fetch"
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 20 },
+      "id": 5,
+      "options": {
+        "candleStyle": "candles",
+        "colorStrategy": "open-close",
+        "colors": { "down": "red", "up": "green" },
+        "fields": {},
+        "includeAllFields": true,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
+        "mode": "candles+volume",
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "csvFileName": "ohlc_dogecoin.csv",
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "With Data Link",
+      "type": "candlestick"
+    },
+    {
+      "datasource": { "type": "grafana-testdata-datasource" },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 20 },
+      "id": 6,
+      "options": {
+        "candleStyle": "candles",
+        "colorStrategy": "open-close",
+        "colors": { "down": "red", "up": "green" },
+        "fields": {},
+        "includeAllFields": false,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
+        "mode": "candles+volume",
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "no_data_points"
+        }
+      ],
+      "title": "No Data",
+      "type": "candlestick"
+    }
+  ],
+  "schemaVersion": 36,
+  "tags": ["gdev", "panel-tests", "candlestick"],
+  "time": {
+    "from": "2021-07-13T22:13:30.740Z",
+    "to": "2021-07-13T22:46:18.921Z"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Candlestick Tests",
+  "uid": "panel-tests-candlestick",
+  "version": 1
+}

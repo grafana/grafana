@@ -82,3 +82,67 @@ func TestGetOrCreateStore_FullFlow(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, store.ModelID, info2.ModelID)
 }
+
+func TestDeleteStore_ViaListAllStores(t *testing.T) {
+	srv := setupOpenFGAServer(t)
+	ctx := context.Background()
+	testNamespace := "test-delete-via-list"
+
+	store, err := srv.GetOrCreateStore(ctx, testNamespace)
+	require.NoError(t, err)
+	require.NotNil(t, store)
+
+	// Clear cache to simulate the reconciler path where ListAllStores is the
+	// first thing that runs (it queries OpenFGA, not the cache).
+	srv.storesMU.Lock()
+	delete(srv.stores, testNamespace)
+	srv.storesMU.Unlock()
+
+	stores, err := srv.ListAllStores(ctx)
+	require.NoError(t, err)
+	found := false
+	for _, s := range stores {
+		if s.Name == testNamespace {
+			found = true
+			break
+		}
+	}
+	require.True(t, found, "ListAllStores should return the created store")
+
+	srv.storesMU.Lock()
+	_, ok := srv.stores[testNamespace]
+	srv.storesMU.Unlock()
+	require.True(t, ok, "ListAllStores should populate the cache")
+
+	err = srv.DeleteStore(ctx, testNamespace)
+	require.NoError(t, err)
+
+	_, err = srv.GetStore(ctx, testNamespace)
+	require.ErrorIs(t, err, zanzana.ErrStoreNotFound)
+}
+
+func TestListAllStores_DoesNotOverwriteCachedModelID(t *testing.T) {
+	srv := setupOpenFGAServer(t)
+	ctx := context.Background()
+	testNamespace := "test-list-preserves-model"
+
+	store, err := srv.GetOrCreateStore(ctx, testNamespace)
+	require.NoError(t, err)
+	require.NotEmpty(t, store.ModelID)
+
+	_, err = srv.ListAllStores(ctx)
+	require.NoError(t, err)
+
+	srv.storesMU.Lock()
+	info := srv.stores[testNamespace]
+	srv.storesMU.Unlock()
+	require.Equal(t, store.ModelID, info.ModelID, "ListAllStores should not overwrite cached ModelID")
+}
+
+func TestDeleteStore_AlreadyDeleted(t *testing.T) {
+	srv := setupOpenFGAServer(t)
+	ctx := context.Background()
+
+	err := srv.DeleteStore(ctx, "non-existent-namespace")
+	require.NoError(t, err)
+}

@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import { isArray, isFinite, sumBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import * as React from 'react';
-import { FC, Fragment, type JSX, ReactNode, useCallback, useState } from 'react';
+import { type FC, Fragment, type JSX, type ReactNode, useCallback, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { AlertLabel, getInheritedProperties } from '@grafana/alerting';
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Button,
@@ -25,23 +25,23 @@ import ConditionalWrap from 'app/features/alerting/unified/components/Conditiona
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { ContactPointReceiverSummary } from 'app/features/alerting/unified/components/contact-points/ContactPoint';
-import { ReceiversState } from 'app/features/alerting/unified/types/alerting';
+import { type ReceiversState } from 'app/features/alerting/unified/types/alerting';
 import {
-  AlertmanagerGroup,
+  type AlertmanagerGroup,
   MatcherOperator,
-  ObjectMatcher,
-  Receiver,
-  RouteWithID,
+  type ObjectMatcher,
+  type Receiver,
+  type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { getAmMatcherFormatter } from '../../utils/alertmanager';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { isProvisionedResource } from '../../utils/k8s/utils';
-import { MatcherFormatter, normalizeMatchers } from '../../utils/matchers';
+import { type MatcherFormatter, normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createContactPointSearchLink, createMuteTimingLink } from '../../utils/misc';
 import { routeAdapter } from '../../utils/routeAdapter';
-import { InsertPosition } from '../../utils/routeTree';
+import { type InsertPosition } from '../../utils/routeTree';
 import { Authorize } from '../Authorize';
 import { PopupCard } from '../HoverCard';
 import { MetaText } from '../MetaText';
@@ -52,7 +52,7 @@ import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 import { Matchers } from './Matchers';
 import { useRoutesMatchingFilters } from './RoutesMatchingFiltersContext';
 import { trackNotificationPolicyExported } from './notificationPolicyAnalytics';
-import { TimingOptions } from './timingOptions';
+import { type TimingOptions } from './timingOptions';
 
 const POLICIES_PER_PAGE = 20;
 
@@ -431,7 +431,14 @@ const Policy = (props: PolicyComponentProps) => {
                 className={styles.moreButtons}
                 onClick={() => setVisibleChildPolicies(visibleChildPolicies + POLICIES_PER_PAGE)}
               >
-                <Trans i18nKey="alerting.policies.n-more-policies" count={moreCount}>
+                <Trans
+                  i18nKey="alerting.policies.n-more-policies"
+                  count={moreCount}
+                  tOptions={{
+                    defaultValue_one: '{{count}} additional policies',
+                    defaultValue_other: '{{count}} additional policies',
+                  }}
+                >
                   {{ count: moreCount }} additional policies
                 </Trans>
               </Button>
@@ -511,7 +518,14 @@ export function MetadataRow({
           >
             <Text color="primary">{numberOfAlertInstances ?? '-'}</Text>
             <span>
-              <Trans i18nKey="alerting.policies.metadata.n-instances" count={numberOfAlertInstances ?? 0}>
+              <Trans
+                i18nKey="alerting.policies.metadata.n-instances"
+                count={numberOfAlertInstances ?? 0}
+                tOptions={{
+                  defaultValue_one: 'instance',
+                  defaultValue_other: 'instance',
+                }}
+              >
                 instance
               </Trans>
             </span>
@@ -798,7 +812,14 @@ export const DefaultPolicyIndicator: FC<DefaultPolicyIndicatorProps> = ({ route 
       {isFinite(routeCount) && (
         <Text variant="bodySmall" color="secondary">
           ・{' '}
-          <Trans i18nKey="alerting.policies.default-policy.route-count" count={routeCount}>
+          <Trans
+            i18nKey="alerting.policies.default-policy.route-count"
+            count={routeCount}
+            tOptions={{
+              defaultValue_one: '{{count}} routes',
+              defaultValue_other: '{{count}} routes',
+            }}
+          >
             {{ count: routeCount }} routes
           </Trans>
         </Text>

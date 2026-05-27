@@ -1,9 +1,8 @@
 import { act, fireEvent, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 import { onCreateNewPanel, onImportDashboard, onAddLibraryPanel } from '../../utils/dashboard';
@@ -47,16 +46,6 @@ jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => 
     isLoading: false,
   })),
 }));
-
-jest.mock('../DashboardLibrary/api/dashboardLibraryApi', () => ({
-  fetchProvisionedDashboards: jest.fn(() => Promise.resolve([])),
-  fetchCommunityDashboards: jest.fn(() => Promise.resolve({ page: 1, pages: 1, dashboards: [] })),
-  fetchCommunityDashboard: jest.fn(() => Promise.resolve({ json: {} })),
-}));
-
-const mockFetchProvisionedDashboards = jest.mocked(
-  require('../DashboardLibrary/api/dashboardLibraryApi').fetchProvisionedDashboards
-);
 
 const mockUseGetResourceRepositoryView = jest.mocked(
   require('app/features/provisioning/hooks/useGetResourceRepositoryView').useGetResourceRepositoryView
@@ -174,114 +163,4 @@ it('renders with buttons disabled when repository is read-only', () => {
   expect(screen.getByRole('button', { name: 'Add visualization' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Import dashboard' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Add library panel' })).toBeDisabled();
-});
-
-describe('ProvisionedDashboardsEmptyPage feature toggle', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockUseGetResourceRepositoryView.mockReturnValue({
-      isReadOnlyRepo: false,
-      isInstanceManaged: false,
-      isLoading: false,
-    });
-  });
-
-  it('renders ProvisionedDashboardsEmptyPage when feature toggle is enabled and dashboardLibraryDatasourceUid param exists', async () => {
-    config.featureToggles.dashboardLibrary = true;
-    setTestFlags({ analyticsFramework: false });
-    mockSearchParams.set('dashboardLibraryDatasourceUid', 'test-uid');
-
-    // Mock provisioned dashboards to return at least one dashboard so component renders
-    mockFetchProvisionedDashboards.mockResolvedValueOnce([
-      {
-        uid: 'test-dashboard-1',
-        title: 'Test Dashboard',
-        pluginId: 'prometheus',
-        path: '/test/path',
-      },
-    ]);
-
-    setup();
-
-    expect(await screen.findByTestId('provisioned-dashboards-empty-page')).toBeInTheDocument();
-  });
-
-  it('does not render ProvisionedDashboardsEmptyPage when feature toggle is disabled', () => {
-    config.featureToggles.dashboardLibrary = false;
-    mockSearchParams.delete('dashboardLibraryDatasourceUid');
-
-    setup();
-
-    expect(screen.queryByTestId('provisioned-dashboards-empty-page')).not.toBeInTheDocument();
-  });
-
-  it('does not render ProvisionedDashboardsEmptyPage when feature toggle is enabled but no dashboardLibraryDatasourceUid param', () => {
-    config.featureToggles.dashboardLibrary = true;
-    mockSearchParams.delete('dashboardLibraryDatasourceUid');
-
-    setup();
-
-    expect(screen.queryByTestId('provisioned-dashboards-empty-page')).not.toBeInTheDocument();
-  });
-});
-
-describe('wrapperMaxWidth CSS class', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('applies wrapperMaxWidth class when dashboardLibrary feature is disabled', () => {
-    config.featureToggles.dashboardLibrary = false;
-
-    mockSearchParams.delete('dashboardLibraryDatasourceUid');
-
-    const { container } = render(
-      <DashboardEmpty dashboard={createDashboardModelFixture(defaultDashboard)} canCreate={true} />
-    );
-
-    const wrapperElement = container.querySelector('[class*="dashboard-empty-wrapper"]');
-    expect(wrapperElement).toBeInTheDocument();
-    expect(wrapperElement).toHaveStyle('max-width: 890px');
-  });
-
-  it('applies wrapperMaxWidth class when dashboardLibrary feature is enabled but no dashboardLibraryDatasourceUid param', () => {
-    config.featureToggles.dashboardLibrary = true;
-    setTestFlags({ analyticsFramework: false });
-    mockSearchParams.delete('dashboardLibraryDatasourceUid');
-
-    const { container } = render(
-      <DashboardEmpty dashboard={createDashboardModelFixture(defaultDashboard)} canCreate={true} />
-    );
-
-    const wrapperElement = container.querySelector('[class*="dashboard-empty-wrapper"]');
-    expect(wrapperElement).toBeInTheDocument();
-    expect(wrapperElement).toHaveStyle('max-width: 890px');
-  });
-
-  it('does not apply wrapperMaxWidth class when dashboardLibrary feature is enabled and dashboardLibraryDatasourceUid param exists', async () => {
-    config.featureToggles.dashboardLibrary = true;
-
-    mockSearchParams.set('dashboardLibraryDatasourceUid', 'test-uid');
-
-    // Mock provisioned dashboards to return at least one dashboard so component renders
-    mockFetchProvisionedDashboards.mockResolvedValueOnce([
-      {
-        uid: 'test-dashboard-1',
-        title: 'Test Dashboard',
-        pluginId: 'prometheus',
-        path: '/test/path',
-      },
-    ]);
-
-    const { container } = render(
-      <DashboardEmpty dashboard={createDashboardModelFixture(defaultDashboard)} canCreate={true} />
-    );
-
-    // Wait for ProvisionedDashboardsEmptyPage to render and complete async operations
-    await screen.findByTestId('provisioned-dashboards-empty-page');
-
-    const wrapperElement = container.querySelector('[class*="dashboard-empty-wrapper"]');
-    expect(wrapperElement).toBeInTheDocument();
-    expect(wrapperElement).not.toHaveStyle('max-width: 890px');
-  });
 });

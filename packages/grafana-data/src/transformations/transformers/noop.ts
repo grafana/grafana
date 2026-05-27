@@ -1,5 +1,5 @@
-import { DataFrame } from '../../types/dataFrame';
-import { SynchronousDataTransformerInfo } from '../../types/transformations';
+import { type DataFrame } from '../../types/dataFrame';
+import { type SynchronousDataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 

@@ -3,43 +3,9 @@ package model
 import (
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
-
-// FilterWhere limits the set of dashboard IDs to the dashboards for
-// which the filter is applicable. Results where the first value is
-// an empty string are discarded.
-type FilterWhere interface {
-	Where() (string, []any)
-}
-
-// FilterWith returns any recursive CTE queries (if supported)
-// and their parameters
-type FilterWith interface {
-	With() (string, []any)
-}
-
-// FilterGroupBy should be used after performing an outer join on the
-// search result to ensure there is only one of each ID in the results.
-// The id column must be present in the result.
-type FilterGroupBy interface {
-	GroupBy() (string, []any)
-}
-
-// FilterOrderBy provides an ordering for the search result.
-type FilterOrderBy interface {
-	OrderBy() string
-}
-
-// FilterLeftJoin adds the returned string as a "LEFT OUTER JOIN" to
-// allow for fetching extra columns from a table outside of the
-// dashboard column.
-type FilterLeftJoin interface {
-	LeftJoin() string
-}
-
-type FilterSelect interface {
-	Select() string
-}
 
 type SortOption struct {
 	Name        string
@@ -52,6 +18,11 @@ type SortOption struct {
 
 type SortOptionFilter interface {
 	FilterOrderBy
+}
+
+// FilterOrderBy provides an ordering for the search result.
+type FilterOrderBy interface {
+	OrderBy() string
 }
 
 type HitType string
@@ -98,4 +69,46 @@ func (s HitList) Less(i, j int) bool {
 	}
 
 	return strings.ToLower(s[i].Title) < strings.ToLower(s[j].Title)
+}
+
+const (
+	TypeFolder      = "dash-folder"
+	TypeDashboard   = "dash-db"
+	TypeAlertFolder = "dash-folder-alerting"
+	TypeAnnotation  = "dash-annotation"
+)
+
+type TypeFilter struct {
+	Dialect migrator.Dialect
+	Type    string
+}
+
+type OrgFilter struct {
+	OrgId int64
+}
+
+type TitleFilter struct {
+	Dialect         migrator.Dialect
+	Title           string
+	TitleExactMatch bool
+}
+
+type FolderFilter struct {
+	IDs []int64
+}
+
+type DashboardFilter struct {
+	UIDs []string
+}
+
+type TitleSorter struct {
+	Descending bool
+}
+
+func (s TitleSorter) OrderBy() string {
+	if s.Descending {
+		return "dashboard.title DESC"
+	}
+
+	return "dashboard.title ASC"
 }

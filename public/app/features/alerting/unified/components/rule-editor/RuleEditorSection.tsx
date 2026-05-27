@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { FieldSet, InlineSwitch, Stack, Text, useStyles2 } from '@grafana/ui';

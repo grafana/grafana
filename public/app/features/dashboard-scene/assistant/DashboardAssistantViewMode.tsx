@@ -2,9 +2,9 @@ import { css, keyframes } from '@emotion/css';
 import { useEffect } from 'react';
 
 import { useAssistant } from '@grafana/assistant';
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneObject } from '@grafana/scenes';
+import { type SceneObject } from '@grafana/scenes';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
 import { useAssistantPanelHints } from './PanelAssistantHint';

@@ -1,5 +1,5 @@
 import { t } from '@grafana/i18n';
-import { useCreateRepositoryJobsMutation, RepositoryView, Job } from 'app/api/clients/provisioning/v0alpha1';
+import { useCreateRepositoryJobsMutation, type RepositoryView, type Job } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
 export interface ResourceRef {

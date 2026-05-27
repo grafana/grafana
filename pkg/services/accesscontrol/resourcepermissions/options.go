@@ -2,9 +2,13 @@ package resourcepermissions
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"strings"
 
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -23,6 +27,11 @@ type Options struct {
 	// APIGroup is the Kubernetes API group for the resource (e.g. "folder.grafana.app")
 	// If not set, defaults to "{Resource}.grafana.app"
 	APIGroup string
+	// K8sActionFormat enables Kubernetes-native action and scope format.
+	// When enabled, actions use "{APIGroup}/{Resource}:get_permissions" format
+	// instead of "{Resource}.permissions:read" format.
+	// Requires APIGroup to be non-empty.
+	K8sActionFormat bool
 	// OnlyManaged will tell the service to return all permissions if set to false and only managed permissions if set to true
 	OnlyManaged bool
 	// ResourceTranslator is a translator function that will be called before each action, it can be used to translate a resource id to a different format.
@@ -57,4 +66,56 @@ type Options struct {
 	LicenseMW web.Handler
 	// RestConfigProvider if configured enables K8s API redirect for resource permissions
 	RestConfigProvider apiserver.DirectRestConfigProvider
+	// RequestValidator if configured is called before each handler. Return an error to abort the request.
+	// The returned context, if non-nil, replaces the request context for subsequent processing.
+	// This allows validators to cache resource metadata in the context so that downstream Set* methods
+	// can read it without an additional DB lookup. Return (nil, nil) on success if no enrichment needed.
+	RequestValidator func(r *http.Request, orgID int64, resourceID string) (context.Context, error)
+	// DatasourceTypeResolver if configured resolves the datasource plugin type for a given resource UID.
+	// Only set for datasource permission services. Used to populate datasource_type on new permission rows.
+	DatasourceTypeResolver func(ctx context.Context, orgID int64, resourceID string) (string, error)
+}
+
+// GetAction returns the permission action string for a given verb.
+// K8s:    "{APIGroup}/{Resource}:get_permissions" (read) or "{APIGroup}/{Resource}:set_permissions" (write)
+// Legacy: "{Resource}.permissions:read" or "{Resource}.permissions:write"
+func (o *Options) GetAction(verb string) string {
+	if o.K8sActionFormat {
+		k8sVerb := map[string]string{"read": utils.VerbGetPermissions, "write": utils.VerbSetPermissions}[verb]
+		return fmt.Sprintf("%s/%s:%s", o.APIGroup, o.Resource, k8sVerb)
+	}
+	return fmt.Sprintf("%s.permissions:%s", o.Resource, verb)
+}
+
+// GetScope returns a scope string using the appropriate resource prefix.
+// K8s:    "{APIGroup}/{Resource}:{parts[0]}:{parts[1]}:..."
+// Legacy: "{Resource}:{parts[0]}:{parts[1]}:..."
+func (o *Options) GetScope(parts ...string) string {
+	if o.K8sActionFormat {
+		prefix := fmt.Sprintf("%s/%s", o.APIGroup, o.Resource)
+		return accesscontrol.Scope(append([]string{prefix}, parts...)...)
+	}
+	return accesscontrol.Scope(append([]string{o.Resource}, parts...)...)
+}
+
+// GetActionSetName returns the action set name for a given permission.
+// K8s:    "{APIGroup}/{Resource}:{permission}" (lowercased)
+// Legacy: "{Resource}:{permission}" (lowercased)
+func (o *Options) GetActionSetName(permission string) string {
+	resource := strings.ToLower(o.Resource)
+	permission = strings.ToLower(permission)
+	if o.K8sActionFormat {
+		return fmt.Sprintf("%s/%s:%s", strings.ToLower(o.APIGroup), resource, permission)
+	}
+	return fmt.Sprintf("%s:%s", resource, permission)
+}
+
+// GetRoleName returns a fixed role name with the given suffix.
+// K8s:    "fixed:{APIGroup}:{Resource}.permissions:{suffix}"
+// Legacy: "fixed:{Resource}.permissions:{suffix}"
+func (o *Options) GetRoleName(suffix string) string {
+	if o.K8sActionFormat {
+		return fmt.Sprintf("fixed:%s:%s.permissions:%s", o.APIGroup, o.Resource, suffix)
+	}
+	return fmt.Sprintf("fixed:%s.permissions:%s", o.Resource, suffix)
 }

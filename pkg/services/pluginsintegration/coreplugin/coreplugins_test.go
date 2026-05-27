@@ -20,7 +20,6 @@ func TestNewPlugin(t *testing.T) {
 		{ID: AzureMonitor},
 		{ID: CloudMonitoring},
 		{ID: CloudWatch},
-		{ID: Elasticsearch},
 		{ID: Grafana, ExpectedNotFoundErr: true},
 		{ID: Graphite},
 		{ID: InfluxDB},
@@ -35,7 +34,6 @@ func TestNewPlugin(t *testing.T) {
 		{ID: Tempo},
 		{ID: TestData, ExpectedAlias: TestDataAlias},
 		{ID: TestDataAlias, ExpectedID: TestData, ExpectedAlias: TestDataAlias},
-		{ID: Zipkin},
 		{ID: Jaeger},
 	}
 

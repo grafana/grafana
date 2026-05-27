@@ -1,17 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
-import { RouteDescriptor } from 'app/core/navigation/types';
-import { DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
+import { type RouteDescriptor } from 'app/core/navigation/types';
+import { type DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
 
 import { getRouteComponentProps } from '../../../core/navigation/mocks/routeProps';
-import { Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
-import { DashboardModel } from '../state/DashboardModel';
+import { type Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
+import { type DashboardModel } from '../state/DashboardModel';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
-import { Props, SoloPanelPage } from './SoloPanelPage';
+import { type Props, SoloPanelPage } from './SoloPanelPage';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
 jest.mock('app/features/dashboard/dashgrid/DashboardPanel', () => {
@@ -124,12 +125,7 @@ describe('SoloPanelPage', () => {
   soloPanelPageScenario('Dashboard init completed ', (ctx) => {
     ctx.setup(() => {
       // Needed for AutoSizer to work in test
-      Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-        value: jest.fn(() => ({
-          width: 500,
-          height: 500,
-        })),
-      });
+      mockBoundingClientRect({ width: 500, height: 500 });
 
       ctx.mount();
       ctx.setDashboard();

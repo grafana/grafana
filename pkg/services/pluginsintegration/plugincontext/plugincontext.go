@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -122,6 +123,25 @@ func (p *Provider) PluginContextForDataSource(ctx context.Context, datasourceSet
 	pCtx.DataSourceInstanceSettings = datasourceSettings
 
 	return pCtx, nil
+}
+
+// PluginContextForApp will retrieve plugin context by the provided pluginID and app instance settings.
+// This is intended to be used for app API server plugin requests.
+func (p *Provider) PluginContextForApp(ctx context.Context, pluginID string, appSettings *backend.AppInstanceSettings) (context.Context, backend.PluginContext, error) {
+	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
+	if !exists {
+		return ctx, backend.PluginContext{}, plugins.ErrPluginNotRegistered
+	}
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return ctx, backend.PluginContext{}, err
+	}
+	pCtx := p.GetBasePluginContext(ctx, plugin, user)
+	pCtx.AppInstanceSettings = appSettings
+
+	ctx = config.WithGrafanaConfig(ctx, pCtx.GrafanaConfig)
+	return ctx, pCtx, nil
 }
 
 func (p *Provider) appInstanceSettings(ctx context.Context, pluginID string, orgID int64) (*backend.AppInstanceSettings, error) {

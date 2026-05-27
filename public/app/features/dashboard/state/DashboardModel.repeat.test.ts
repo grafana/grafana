@@ -3,7 +3,7 @@ import { compact, flattenDeep, map, uniq } from 'lodash';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
 
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
-import { DashboardModel } from '../state/DashboardModel';
+import { type DashboardModel } from '../state/DashboardModel';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 

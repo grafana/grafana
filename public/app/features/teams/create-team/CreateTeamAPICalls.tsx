@@ -3,8 +3,8 @@ import { useState } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 
 import {
-  CreateTeamApiArg,
-  SetTeamRolesApiArg,
+  type CreateTeamApiArg,
+  type SetTeamRolesApiArg,
   useCreateTeamMutation,
   useSetTeamRolesMutation,
 } from '@grafana/api-clients/internal/rtkq/legacy';
@@ -15,11 +15,11 @@ import { config, getAppEvents } from '@grafana/runtime';
 import { useCreateFolder } from '../../../api/clients/folder/v1beta1/hooks';
 import { extractErrorMessage } from '../../../api/utils';
 import { contextSrv } from '../../../core/services/context_srv';
-import { Role } from '../../../types/accessControl';
-import { TeamDTO } from '../../../types/teams';
+import { type Role } from '../../../types/accessControl';
+import { type TeamDTO } from '../../../types/teams';
 import { canUpdateRoles } from '../hooks';
 
-import { StepResultAlertProps } from './StepResultAlert';
+import { type StepResultAlertProps } from './StepResultAlert';
 
 /**
  * Each step is in one of these states.
@@ -145,7 +145,10 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
     };
     const { data: teamData, error: teamError } = await createTeamTrigger(mutationArg);
 
-    // It shouldn't happen that we have success and no data, but the types are set up that way, so we check it here
+    // TODO: team.uid should be the source of truth for team identity, but teamId is
+    // still required for the team-roles endpoint (PUT /api/access-control/teams/{teamId}/roles),
+    // which only accepts a numeric ID. Drop the teamData.teamId check once that
+    // endpoint resolves UIDs (e.g. via a UID resolver like MiddlewareTeamUIDResolver).
     if (teamError || !teamData?.uid || !teamData?.teamId) {
       localUpdateState({ state: 'error', error: teamError }, 'createTeam');
       return { teamCreationStatus, folderCreationStatus, rolesCreationStatus };

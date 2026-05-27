@@ -1,10 +1,10 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { PROVISIONING_URL } from '../../constants';
-import { Step } from '../Stepper';
-import { WizardFormData, WizardStep } from '../types';
+import { type Step } from '../Stepper';
+import { type WizardFormData, type WizardStep } from '../types';
 
-import { useWizardNavigation, UseWizardNavigationParams } from './useWizardNavigation';
+import { useWizardNavigation, type UseWizardNavigationParams } from './useWizardNavigation';
 
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom-v5-compat', () => ({

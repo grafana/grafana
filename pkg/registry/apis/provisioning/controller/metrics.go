@@ -1,8 +1,11 @@
 package controller
 
 import (
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
+	"sync"
+
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
 type finalizerMetrics struct {
@@ -56,31 +59,39 @@ type healthMetrics struct {
 	healthCheckedDuration *prometheus.HistogramVec
 }
 
+var (
+	once    sync.Once
+	metrics HealthMetricsRecorder
+)
+
 func NewHealthMetricsRecorder(registry prometheus.Registerer) HealthMetricsRecorder {
-	healthCheckedTotal := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "grafana_provisioning_health_checked_total",
-			Help: "Total number of health checks performed",
-		},
-		[]string{"resource", "outcome"},
-	)
-	registry.MustRegister(healthCheckedTotal)
+	once.Do(func() {
+		healthCheckedTotal := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_health_checked_total",
+				Help: "Total number of health checks performed",
+			},
+			[]string{"resource", "outcome"},
+		)
+		registry.MustRegister(healthCheckedTotal)
 
-	healthCheckedDuration := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "grafana_provisioning_health_checked_duration_seconds",
-			Help:    "Duration of health checks",
-			Buckets: []float64{0.1, 0.2, 0.5, 1.0, 2.0, 5.0},
-		},
-		[]string{"resource"},
-	)
-	registry.MustRegister(healthCheckedDuration)
+		healthCheckedDuration := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_health_checked_duration_seconds",
+				Help:    "Duration of health checks",
+				Buckets: []float64{0.1, 0.2, 0.5, 1.0, 2.0, 5.0},
+			},
+			[]string{"resource"},
+		)
+		registry.MustRegister(healthCheckedDuration)
 
-	return &healthMetrics{
-		registry:              registry,
-		healthCheckedTotal:    healthCheckedTotal,
-		healthCheckedDuration: healthCheckedDuration,
-	}
+		metrics = &healthMetrics{
+			registry:              registry,
+			healthCheckedTotal:    healthCheckedTotal,
+			healthCheckedDuration: healthCheckedDuration,
+		}
+	})
+	return metrics
 }
 
 func (m *healthMetrics) RecordHealthCheck(resource, outcome string, duration float64) {

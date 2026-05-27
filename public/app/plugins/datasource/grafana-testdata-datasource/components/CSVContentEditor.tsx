@@ -1,6 +1,6 @@
 import { CodeEditor } from '@grafana/ui';
 
-import { EditorProps } from '../QueryEditor';
+import { type EditorProps } from '../QueryEditor';
 
 export const CSVContentEditor = ({ onChange, query }: EditorProps) => {
   const onSaveCSV = (csvContent: string) => {

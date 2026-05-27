@@ -1,28 +1,28 @@
 import { map } from 'rxjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataTransformerID,
   FieldType,
   incrRoundUp,
   incrRoundDn,
-  SynchronousDataTransformerInfo,
+  type SynchronousDataTransformerInfo,
   DataFrameType,
   getFieldDisplayName,
-  Field,
+  type Field,
   getValueFormat,
   formattedValueToString,
   TransformationApplicabilityLevels,
-  TimeRange,
+  type TimeRange,
 } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import {
   ScaleDistribution,
-  ScaleDistributionConfig,
+  type ScaleDistributionConfig,
   HeatmapCellLayout,
   HeatmapCalculationMode,
-  HeatmapCalculationOptions,
+  type HeatmapCalculationOptions,
 } from '@grafana/schema';
 
 import { convertDurationToMilliseconds, niceLinearIncrs, niceTimeIncrs } from './utils';
@@ -212,8 +212,10 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     // Generate upper bounds: shift values + calculate last bucket
     bucketBoundsMax = bucketBounds.slice();
     bucketBoundsMax.shift();
+    const lastBound = bucketBounds[bucketBounds.length - 1];
     const factor = calculateBucketFactor(bucketBounds);
-    bucketBoundsMax.push(bucketBounds[bucketBounds.length - 1] * factor);
+    // When the last bucket starts at 0, multiplicative expansion gives 0; use the factor directly instead.
+    bucketBoundsMax.push(lastBound === 0 ? factor : lastBound * factor);
 
     custom.yMatchWithLabel = undefined;
   } else {

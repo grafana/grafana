@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { Select, Stack, Input, useStyles2 } from '@grafana/ui';
 
-import { TraceqlFilter } from '../dataquery.gen';
+import { type TraceqlFilter } from '../dataquery.gen';
 
 import { operatorSelectableValue } from './utils';
 

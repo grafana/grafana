@@ -4,7 +4,7 @@ import * as React from 'react';
 import { t } from '@grafana/i18n';
 import { Modal, useStyles2 } from '@grafana/ui';
 
-import { OnRowOptionsUpdate, RowOptionsForm } from './RowOptionsForm';
+import { type OnRowOptionsUpdate, RowOptionsForm } from './RowOptionsForm';
 
 export interface RowOptionsModalProps {
   title: string;
@@ -21,7 +21,6 @@ export const RowOptionsModal = ({ repeat, title, onDismiss, onUpdate, warning }:
     <Modal
       isOpen={true}
       title={t('dashboard.row-options-modal.title-row-options', 'Row options')}
-      icon="copy"
       onDismiss={onDismiss}
       className={styles.modal}
     >

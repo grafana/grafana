@@ -11,7 +11,7 @@
  *  - includeStatus: include runtime status and data frame schema per panel
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { type DataFrame, LoadingState } from '@grafana/data';
 import { sceneGraph, SceneDataTransformer, type SceneObject, type VizPanel } from '@grafana/scenes';

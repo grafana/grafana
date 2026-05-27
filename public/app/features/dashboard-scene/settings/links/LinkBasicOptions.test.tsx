@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, userEvent } from 'test/test-utils';
 
 import { SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
-import { DashboardLink } from '@grafana/schema';
+import { type DashboardLink } from '@grafana/schema';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';

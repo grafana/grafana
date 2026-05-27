@@ -1,20 +1,20 @@
 import { escapeRegex } from '@grafana/data';
-import { BaseTransport, defaultInternalLoggerLevel, type Faro } from '@grafana/faro-core';
+import { type BaseTransport, defaultInternalLoggerLevel, type Faro } from '@grafana/faro-core';
 import { ReplayInstrumentation } from '@grafana/faro-instrumentation-replay';
 import {
   initializeFaro,
-  BrowserConfig,
+  type BrowserConfig,
   FetchTransport,
   getWebInstrumentations,
   type Instrumentation,
 } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
-import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { type EchoBackend, type EchoEvent, EchoEventType } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { beforeSendHandler } from './beforeSendHandler';
-import { GrafanaJavascriptAgentBackendOptions, GrafanaJavascriptAgentEchoEvent } from './types';
+import { type GrafanaJavascriptAgentBackendOptions, type GrafanaJavascriptAgentEchoEvent } from './types';
 
 function isCrossOriginIframe() {
   try {
@@ -98,7 +98,7 @@ export class GrafanaJavascriptAgentBackend
 
     const faro = initializeFaro(grafanaJavaScriptAgentOptions);
 
-    if (faro && getFeatureFlagClient().getBooleanValue('faroSessionReplay', false)) {
+    if (faro && getFeatureFlagClient().getBooleanValue(FlagKeys.FaroSessionReplay, false)) {
       this.initReplayAfterDomRendered(faro);
     }
   }

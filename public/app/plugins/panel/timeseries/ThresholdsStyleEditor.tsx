@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
-import { StandardEditorProps, SelectableValue } from '@grafana/data';
-import { GraphThresholdsStyleMode } from '@grafana/schema';
+import { type StandardEditorProps, type SelectableValue } from '@grafana/data';
+import { type GraphThresholdsStyleMode } from '@grafana/schema';
 import { Select } from '@grafana/ui';
 
 type Props = StandardEditorProps<

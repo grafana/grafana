@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
@@ -9,11 +10,11 @@ import {
   useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 
-import { MoveProvisionedDashboardForm, Props } from './MoveProvisionedDashboardForm';
+import { MoveProvisionedDashboardForm, type Props } from './MoveProvisionedDashboardForm';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -61,6 +62,9 @@ function setup(props: Partial<Props> = {}) {
     }),
     state: {
       title: 'Test Dashboard',
+      meta: {
+        uid: 'dashboard-uid',
+      },
     },
   } as unknown as DashboardScene;
 
@@ -239,5 +243,67 @@ describe('MoveProvisionedDashboardForm', () => {
     await user.click(cancelButton);
 
     expect(props.onDismiss).toHaveBeenCalled();
+  });
+
+  it('does not submit a move job when the dashboard is already at the target path', async () => {
+    const createJob = jest.fn();
+    (useCreateRepositoryJobsMutation as jest.Mock).mockReturnValue([createJob, mockCreateRequest]);
+    (useGetFolderQuery as jest.Mock).mockReturnValue({
+      data: {
+        metadata: {
+          annotations: {
+            [AnnoKeySourcePath]: 'folder1',
+          },
+        },
+      },
+      isLoading: false,
+    });
+
+    const { user } = setup();
+
+    await user.click(screen.getByRole('button', { name: /move dashboard/i }));
+
+    expect(createJob).not.toHaveBeenCalled();
+    expect(getAppEvents().publish).toHaveBeenCalledWith({
+      type: AppEvents.alertError.name,
+      payload: ['Failed to move dashboard', 'Dashboard is already in the selected folder.'],
+    });
+  });
+
+  it('renders the message from the repo commit template when comment is empty', async () => {
+    const moveFile = jest.fn().mockReturnValue({ unwrap: jest.fn().mockResolvedValue({}) });
+    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([moveFile, mockCreateRequest]);
+    // upstream isResourceAlreadyInTarget guard requires currentSourcePath !== targetFolderPath
+    (useGetFolderQuery as jest.Mock).mockReturnValue({
+      data: { metadata: { annotations: { [AnnoKeySourcePath]: 'target-folder' } } },
+      isLoading: false,
+    });
+
+    const { user } = setup({
+      defaultValues: {
+        repo: 'test-repo',
+        path: 'folder1/dashboard.json',
+        ref: 'feature/move',
+        workflow: 'branch',
+        comment: '',
+        title: 'Test Dashboard',
+        description: '',
+        folder: { uid: '', title: '' },
+      },
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['branch', 'write'],
+        target: 'folder',
+        commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
+      },
+    });
+
+    await user.click(screen.getByRole('button', { name: /move dashboard/i }));
+
+    expect(moveFile).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'chore(dashboards): move Test Dashboard' })
+    );
   });
 });

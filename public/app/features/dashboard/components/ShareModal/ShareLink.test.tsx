@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { BootData, getDefaultTimeRange } from '@grafana/data';
+import { type BootData, getDefaultTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setEchoSrv, setTemplateSrv } from '@grafana/runtime';
 import config from 'app/core/config';
@@ -14,7 +14,7 @@ import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { PanelModel } from '../../state/PanelModel';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
-import { Props, ShareLink } from './ShareLink';
+import { type Props, ShareLink } from './ShareLink';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: () => ({

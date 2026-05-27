@@ -14,15 +14,15 @@
 
 import { css, cx } from '@emotion/css';
 import { get, maxBy, values } from 'lodash';
-import { memo, Dispatch, SetStateAction, useEffect, useCallback } from 'react';
+import { memo, type Dispatch, type SetStateAction, useEffect, useCallback } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
+import { Button, Icon, type PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
 
-import { Trace } from '../../types/trace';
+import { type Trace } from '../../types/trace';
 import { getServiceDisplayName } from '../../utils/service-name';
 
 export type NextPrevResultProps = {

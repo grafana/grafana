@@ -1,18 +1,18 @@
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { ResourceList } from 'app/features/apiserver/types';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+import { type ResourceList } from 'app/features/apiserver/types';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
-import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { UnifiedDashboardAPI } from './UnifiedDashboardAPI';
-import { DashboardVersionError, DashboardWithAccessInfo } from './types';
+import { DashboardVersionError, type DashboardWithAccessInfo } from './types';
 import { isV2DashboardCommand } from './utils';
-import { K8sDashboardAPI } from './v1';
-import { K8sDashboardV2API } from './v2';
+import { type K8sDashboardAPI } from './v1';
+import { type K8sDashboardV2API } from './v2';
 
 jest.mock('./v1');
 jest.mock('./v2');

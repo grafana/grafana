@@ -1,6 +1,6 @@
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
-import { ErrorBoundaryAlertProps, withErrorBoundary } from '@grafana/ui';
+import { type ErrorBoundaryAlertProps, withErrorBoundary } from '@grafana/ui';
 
 import { logError } from './Analytics';
 

@@ -341,8 +341,9 @@ const (
 	SEARCH_FIELD_NAMESPACE          = "namespace"
 	SEARCH_FIELD_NAME               = "name"
 	SEARCH_FIELD_RV                 = "rv"
-	SEARCH_FIELD_TITLE              = "title"
-	SEARCH_FIELD_TITLE_PHRASE       = "title_phrase" // filtering/sorting on title by full phrase
+	SEARCH_FIELD_TITLE              = "title"        // standard-analyzed title for full-token search; indexed terms are lowercased by the analyzer
+	SEARCH_FIELD_TITLE_PHRASE       = "title_phrase" // keyword-analyzed title for exact matching/sorting; value is lowercased in UpdateCopyFields
+	SEARCH_FIELD_TITLE_NGRAM        = "title_ngram"  // ngram-analyzed title for partial matching; indexed terms are lowercased by the analyzer
 	SEARCH_FIELD_DESCRIPTION        = "description"
 	SEARCH_FIELD_TAGS               = "tags"
 	SEARCH_FIELD_LABELS             = "labels" // All labels, not a specific one
@@ -360,6 +361,7 @@ const (
 	SEARCH_FIELD_SOURCE_TIME        = "source.timestampMillis"
 	SEARCH_FIELD_SCORE              = "_score"            // the match score
 	SEARCH_FIELD_EXPLAIN            = "_explain"          // score explanation as JSON object
+	SEARCH_FIELD_ALL_FIELDS         = "_all_columns"      // sentinel: return all known columns in search results (deliberately distinct from bleve's "_all" composite field)
 	SEARCH_SELECTABLE_FIELDS_PREFIX = "selectableFields." // Prefix for searching selectable fields.
 )
 

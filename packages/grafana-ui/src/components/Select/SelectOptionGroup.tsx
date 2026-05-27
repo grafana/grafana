@@ -1,4 +1,4 @@
-import { GroupProps } from 'react-select';
+import { type GroupProps } from 'react-select';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 

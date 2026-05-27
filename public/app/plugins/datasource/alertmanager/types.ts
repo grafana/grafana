@@ -1,6 +1,6 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
-import { ObjectMeta } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
+import { type ObjectMeta } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type DataSourceJsonData, type WithAccessControlMetadata } from '@grafana/data';
 
 export const ROUTES_META_SYMBOL = Symbol('routes_metadata');
 

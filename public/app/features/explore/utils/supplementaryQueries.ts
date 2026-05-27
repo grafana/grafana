@@ -3,20 +3,20 @@ import { distinct, Observable, merge } from 'rxjs';
 import { scan } from 'rxjs/operators';
 
 import {
-  DataFrame,
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceApi,
+  type DataFrame,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceApi,
   hasSupplementaryQuerySupport,
   isTruthy,
   LoadingState,
-  LogsVolumeCustomMetaData,
+  type LogsVolumeCustomMetaData,
   LogsVolumeType,
   store,
   SupplementaryQueryType,
 } from '@grafana/data';
-import { ExplorePanelData, SupplementaryQueries } from 'app/types/explore';
+import { type ExplorePanelData, type SupplementaryQueries } from 'app/types/explore';
 
 import { makeDataFramesForLogs, queryLogsSample, queryLogsVolume } from '../../logs/logsModel';
 

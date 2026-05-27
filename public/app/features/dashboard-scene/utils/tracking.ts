@@ -1,10 +1,13 @@
 import { store } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneGridItemLike } from '@grafana/scenes';
-import { isTemplateDashboardAssistantEnabled } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
+import { type SceneGridItemLike } from '@grafana/scenes';
+import {
+  isTemplateDashboardAssistantEnabled,
+  isSuggestedDashboardAssistantEnabled,
+} from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
 import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/dashboardLibraryHelpers';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 
@@ -120,10 +123,12 @@ async function getDashboardLibraryTrackingProperties(dashboard: DashboardScene) 
   const datasourceTypes = getDatasourceTypes(dashboard);
 
   const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
+  const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
 
   return {
     isDashboardTemplatesEnabled: config.featureToggles.dashboardTemplates ?? false,
     isDashboardTemplatesAssistantEnabled,
+    isSuggestedDashboardAssistantButtonEnabled,
     datasourceTypes,
     sourceEntryPoint,
     libraryItemId,

@@ -23,17 +23,26 @@ type testService struct {
 	started    chan struct{}
 	runErr     error
 	isDisabled bool
+	dependsOn  *boomService
 }
 
-func newTestService(runErr error, disabled bool) *testService {
+func newTestService(runErr error, disabled bool, dependsOn *boomService) *testService {
 	return &testService{
 		started:    make(chan struct{}),
 		runErr:     runErr,
 		isDisabled: disabled,
+		dependsOn:  dependsOn,
 	}
 }
 
 func (s *testService) Run(ctx context.Context) error {
+	if s.dependsOn != nil {
+		select {
+		case <-s.dependsOn.started:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 	if s.isDisabled {
 		return fmt.Errorf("Shouldn't run disabled service")
 	}
@@ -48,6 +57,45 @@ func (s *testService) Run(ctx context.Context) error {
 
 func (s *testService) IsDisabled() bool {
 	return s.isDisabled
+}
+
+type boomService struct {
+	started chan struct{}
+	runErr  error
+}
+
+func newBoomService(runErr error) *boomService {
+	return &boomService{
+		started: make(chan struct{}),
+		runErr:  runErr,
+	}
+}
+
+func (s *boomService) Run(ctx context.Context) error {
+	if s.runErr != nil {
+		// Unblock testService (and any other waiters on started) before failing; otherwise
+		// testService.Run would wait forever on <-dependsOn.started.
+		close(s.started)
+		return s.runErr
+	}
+	close(s.started)
+	<-ctx.Done()
+	return ctx.Err()
+}
+
+func (s *boomService) IsDisabled() bool {
+	return false
+}
+
+// shutdownDisabledBGTestService is skipped by the adapter (Shutdown test only; distinct dskit module name).
+type shutdownDisabledBGTestService struct{}
+
+func (shutdownDisabledBGTestService) Run(ctx context.Context) error {
+	return fmt.Errorf("Shouldn't run disabled service")
+}
+
+func (shutdownDisabledBGTestService) IsDisabled() bool {
+	return true
 }
 
 func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
@@ -65,8 +113,14 @@ func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
 }
 
 func TestServer_Run_Error(t *testing.T) {
+	// Two services use different concrete types (*testService vs *boomService) so dskit gets two
+	// module names; two *testService values would share one name and overwrite each other.
+	//
+	// testService waits on boom.started before running so boom is ordered before the stable
+	// sibling in practice, avoiding flaky lifecycle errors when a peer fails during its startup.
 	testErr := errors.New("boom")
-	s := testServer(t, newTestService(nil, false), newTestService(testErr, false))
+	boom := newBoomService(testErr)
+	s := testServer(t, newTestService(nil, false, boom), boom)
 	err := s.Run()
 	require.Error(t, err)
 	require.Contains(t, err.Error(), testErr.Error())
@@ -75,7 +129,8 @@ func TestServer_Run_Error(t *testing.T) {
 func TestServer_Shutdown(t *testing.T) {
 	t.Run("successful shutdown", func(t *testing.T) {
 		ctx := context.Background()
-		s := testServer(t, newTestService(nil, false), newTestService(nil, true))
+		// Dedicated types so dskit module names differ (*testService vs shutdownDisabledBGTestService).
+		s := testServer(t, newTestService(nil, false, nil), shutdownDisabledBGTestService{})
 		ch := make(chan error)
 		go func() {
 			defer close(ch)

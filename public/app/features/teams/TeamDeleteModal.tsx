@@ -43,7 +43,10 @@ export const TeamDeleteModal = ({ isOpen, onConfirm, onDismiss, teamName, ownedF
         </>
       }
       onDismiss={onDismiss}
-      onConfirm={onConfirm}
+      onConfirm={async () => {
+        await onConfirm();
+        onDismiss();
+      }}
       confirmText={t('teams.team-list.columns.delete-modal.confirm-button', 'Delete')}
       disabled={ownedFolder}
     />

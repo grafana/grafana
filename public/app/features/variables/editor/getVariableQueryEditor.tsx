@@ -1,6 +1,12 @@
 import { useCallback } from 'react';
 
-import { DataQuery, DataSourceApi, DataSourceJsonData, QueryEditorProps, StandardVariableQuery } from '@grafana/data';
+import {
+  type DataQuery,
+  type DataSourceApi,
+  type DataSourceJsonData,
+  type QueryEditorProps,
+  type StandardVariableQuery,
+} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { pluginImporter } from '../../plugins/importer/pluginImporter';
@@ -10,7 +16,7 @@ import {
   hasLegacyVariableSupport,
   hasStandardVariableSupport,
 } from '../guard';
-import { VariableQueryEditorType } from '../types';
+import { type VariableQueryEditorType } from '../types';
 
 import { LegacyVariableQueryEditor } from './LegacyVariableQueryEditor';
 

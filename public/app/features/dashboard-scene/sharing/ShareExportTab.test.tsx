@@ -1,13 +1,13 @@
 import { config } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultQueryGroupKind,
   defaultVizConfigSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import * as dashboardApiModule from 'app/features/dashboard/api/dashboard_api';
-import { ExportFormat, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { ExportFormat, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import * as exporters from '../scene/export/exporters';
@@ -148,7 +148,6 @@ describe('ShareExportTab', () => {
   let makeExportableV2Spy: jest.SpyInstance;
 
   beforeEach(() => {
-    config.featureToggles.kubernetesDashboards = true;
     config.featureToggles.dashboardNewLayouts = false;
 
     makeExportableV1Spy = jest.spyOn(exporters, 'makeExportableV1').mockImplementation(async (dashboard) => dashboard);
@@ -347,25 +346,7 @@ describe('ShareExportTab', () => {
     });
   });
 
-  describe('Legacy mode (kubernetesDashboards off)', () => {
-    beforeEach(() => {
-      config.featureToggles.kubernetesDashboards = false;
-      (dashboardApiModule.getDashboardAPI as jest.Mock).mockClear();
-    });
-
-    it('should use scene serialization instead of API', async () => {
-      const tab = buildV1DashboardScenario();
-
-      const result = await tab.getExportableDashboardJson();
-
-      expect(dashboardApiModule.getDashboardAPI).not.toHaveBeenCalled();
-      expect(result.json).toMatchObject({ title: 'Test Dashboard V1', uid: 'test-uid-v1' });
-      expect(result.initialSaveModelVersion).toBe('v1');
-    });
-  });
-
   function createDashboardScenario(version: 'v1' | 'v2'): ShareExportTab {
-    const currentDashboard = version === 'v1' ? mockV1Spec : mockV2Spec;
     const initialSaveModel = version === 'v1' ? mockV1Spec : mockV2Spec;
 
     const tab = new ShareExportTab({});
@@ -378,10 +359,6 @@ describe('ShareExportTab', () => {
       overlay: tab,
     });
 
-    scene.serializer.getSaveModel = jest.fn(() => currentDashboard);
-    scene.serializer.makeExportableExternally = jest.fn(() =>
-      Promise.resolve(currentDashboard)
-    ) as DashboardScene['serializer']['makeExportableExternally'];
     scene.getInitialSaveModel = jest.fn(() => initialSaveModel);
 
     return tab;

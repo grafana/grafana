@@ -1,4 +1,4 @@
-import { ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
+import { type ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
 
 export const createMockSubscriptions = (): ResourceRowGroup => [
   {

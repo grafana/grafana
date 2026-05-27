@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { ServiceAccountCreatePage, Props } from './ServiceAccountCreatePage';
+import { ServiceAccountCreatePage, type Props } from './ServiceAccountCreatePage';
 
 const postMock = jest.fn().mockResolvedValue({});
 const patchMock = jest.fn().mockResolvedValue({});

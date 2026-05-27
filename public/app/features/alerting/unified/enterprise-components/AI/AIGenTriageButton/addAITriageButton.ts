@@ -1,11 +1,11 @@
-import { ComponentType, createElement } from 'react';
+import { type ComponentType, createElement } from 'react';
 
-import { TimeRange } from '@grafana/data';
+import { type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { withErrorBoundary } from '@grafana/ui';
 
 import { logError } from '../../../Analytics';
-import { LogRecord } from '../../../components/rules/state-history/common';
+import { type LogRecord } from '../../../components/rules/state-history/common';
 
 export interface GenAITriageButtonProps {
   logRecords: LogRecord[];

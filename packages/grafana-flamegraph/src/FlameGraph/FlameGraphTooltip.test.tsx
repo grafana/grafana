@@ -1,4 +1,4 @@
-import { Field, FieldType, createDataFrame } from '@grafana/data';
+import { type Field, FieldType, createDataFrame } from '@grafana/data';
 
 import { getDiffTooltipData, getTooltipData } from './FlameGraphTooltip';
 import { FlameGraphDataContainer } from './dataTransform';

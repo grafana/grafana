@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { QueryEditorHelpProps } from '@grafana/data';
+import { type QueryEditorHelpProps } from '@grafana/data';
 
-import { CloudMonitoringQuery } from '../types/query';
+import { type CloudMonitoringQuery } from '../types/query';
 
 const CloudMonitoringCheatSheet = memo(
   ({ query, datasource, onClickExample }: QueryEditorHelpProps<CloudMonitoringQuery>) => {

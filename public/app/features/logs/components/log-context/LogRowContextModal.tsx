@@ -5,22 +5,22 @@ import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {
-  DataQueryResponse,
-  DataSourceWithLogsContextSupport,
-  GrafanaTheme2,
-  LogRowContextOptions,
+  type DataQueryResponse,
+  type DataSourceWithLogsContextSupport,
+  type GrafanaTheme2,
+  type LogRowContextOptions,
   LogRowContextQueryDirection,
-  LogRowModel,
+  type LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
   dateTime,
-  TimeRange,
+  type TimeRange,
   LoadingState,
   store,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
+import { type DataQuery, type TimeZone } from '@grafana/schema';
 import { Button, Modal, useTheme2 } from '@grafana/ui';
 import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
 import { splitOpen } from 'app/features/explore/state/main';

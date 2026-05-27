@@ -1,9 +1,9 @@
 import { Fragment } from 'react';
 
-import { CanvasFrameOptions } from '../frame';
+import { type CanvasFrameOptions } from '../frame';
 
 import { FrameState } from './frame';
-import { Scene } from './scene';
+import { type Scene } from './scene';
 
 export class RootElement extends FrameState {
   constructor(
