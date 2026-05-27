@@ -120,7 +120,7 @@ func (c *renderConnector) Connect(
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
-	return provisioningapis.WithTimeout(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	return provisioningapis.WithTimeout(ctx, func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		namespace := request.NamespaceValue(ctx)
 		prefix := fmt.Sprintf("/%s/render", name)
 		idx := strings.Index(r.URL.Path, prefix)

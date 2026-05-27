@@ -50,7 +50,7 @@ func (*refsConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (c *refsConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return WithTimeout(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	return WithTimeout(ctx, func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		logger := logging.FromContext(ctx).With("logger", "refs-connector", "repository_name", name)
 		ctx = logging.Context(ctx, logger)
 

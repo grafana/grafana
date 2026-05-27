@@ -118,7 +118,7 @@ func (s *webhookConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 }
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return provisioningapis.WithTimeout(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	return provisioningapis.WithTimeout(ctx, func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		ctx, span := tracing.Start(ctx, "provisioning.webhook.handle")
 		defer span.End()
 

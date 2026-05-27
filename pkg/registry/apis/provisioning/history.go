@@ -62,7 +62,7 @@ func (h *historySubresource) NewConnectOptions() (runtime.Object, bool, string) 
 }
 
 func (h *historySubresource) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return WithTimeout(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	return WithTimeout(ctx, func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		logger := logging.FromContext(ctx).With("logger", "history-subresource")
 		ctx = logging.Context(ctx, logger)
 

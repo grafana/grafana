@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"time"
+
+	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 // CtxHandlerFunc is a request handler that receives the timeout-bounded
@@ -12,15 +14,20 @@ import (
 // instead of an outer-scope one captured by closure.
 type CtxHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request)
 
-func WithTimeout(f CtxHandlerFunc, timeout time.Duration) http.Handler {
+func WithTimeout(ctx context.Context, f CtxHandlerFunc, timeout time.Duration) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), timeout)
+		reqCtx := r.Context()
+		if ns, ok := request.NamespaceFrom(ctx); ok {
+			reqCtx = request.WithNamespace(reqCtx, ns)
+		}
+
+		ctxWithTimeout, cancel := context.WithTimeout(reqCtx, timeout)
 		defer cancel()
-		f(ctx, w, r.WithContext(ctx))
+		f(ctxWithTimeout, w, r.WithContext(ctxWithTimeout))
 	})
 }
 
 // WithTimeoutFunc adds a timeout context to the request
 func WithTimeoutFunc(f CtxHandlerFunc, timeout time.Duration) http.HandlerFunc {
-	return WithTimeout(f, timeout).ServeHTTP
+	return WithTimeout(context.Background(), f, timeout).ServeHTTP
 }

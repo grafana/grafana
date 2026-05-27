@@ -2,10 +2,10 @@ package provisioning
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -52,12 +52,12 @@ func (*listConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	ns, ok := request.NamespaceFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing namespace")
-	}
-
-	return WithTimeout(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	return WithTimeout(ctx, func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		ns, ok := request.NamespaceFrom(ctx)
+		if !ok {
+			responder.Error(k8serrors.NewBadRequest("missing namespace"))
+			return
+		}
 		// TODO: Add pagination to resource lister
 		rsp, err := s.lister.List(ctx, ns, name)
 		if err != nil {

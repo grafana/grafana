@@ -49,7 +49,7 @@ func TestWithTimeout(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/", nil)
-			WithTimeout(handler, tt.timeout).ServeHTTP(w, r)
+			WithTimeout(context.Background(), handler, tt.timeout).ServeHTTP(w, r)
 			require.Equal(t, tt.wantStatus, w.Code)
 		})
 	}

@@ -94,7 +94,7 @@ func (c *jobsConnector) Connect(
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
-	return WithTimeout(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	return WithTimeout(ctx, func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		prefix := fmt.Sprintf("/%s/jobs/", name)
 		idx := strings.Index(r.URL.Path, prefix)
 

@@ -103,16 +103,13 @@ func (*testConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
-	if _, ok := request.NamespaceFrom(ctx); !ok {
-		return nil, fmt.Errorf("missing namespace")
-	}
-
-	return WithTimeout(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	return WithTimeout(ctx, func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		ns, ok := request.NamespaceFrom(ctx)
 		if !ok {
 			responder.Error(k8serrors.NewBadRequest("missing namespace"))
 			return
 		}
+
 		logger := logging.FromContext(ctx).With("logger", "test-connector", "repository_name", name, "namespace", ns)
 		ctx = logging.Context(ctx, logger)
 		body, err := readBody(r, defaultMaxBodySize)
