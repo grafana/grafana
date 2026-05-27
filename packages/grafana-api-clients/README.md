@@ -98,7 +98,7 @@ Use this flow when an existing API changes and you need to regenerate the API ty
 
 1. Update the source API schema or types.
    - If the API is generated from `kinds/`, run `make gen-cue` after changing the CUE definitions.
-   - If the API uses Go types directly, update the owning Go package and run any generator required by that package.
+   - If the API is defined as Go types in an app platform API package (e.g. `pkg/apis/<group>/<version>/`), update the types and then run `./hack/update-codegen.sh` to regenerate `zz_generated.deepcopy.go` and `zz_generated.openapi.go`. This is also included in `make gen-apps`.
 2. Check that [openapi_test.go](../../pkg/tests/apis/openapi_test.go) includes the target `Group` and `Version`.
    - Add a new entry to the `groups` list if the API group/version is not present.
    - Add any required feature toggle to `EnableFeatureToggles` so the API is registered during the test.
@@ -113,7 +113,7 @@ Use this flow when an existing API changes and you need to regenerate the API ty
 4. Regenerate the processed OpenAPI specs and RTK Query endpoints:
 
    ```bash
-   yarn workspace @grafana/api-clients generate-apis
+   yarn generate-apis
    ```
 
    This processes snapshots into `packages/grafana-openapi/src/apis/*.json` and regenerates `endpoints.gen.ts` files under `packages/grafana-api-clients/src/clients/rtkq/`.
@@ -124,7 +124,7 @@ Use this flow when an existing API changes and you need to regenerate the API ty
    - `packages/grafana-openapi/src/apis/<group>.grafana.app-<version>.json`.
    - `packages/grafana-api-clients/src/clients/rtkq/<group>/<version>/endpoints.gen.ts`.
 
-You can also run `yarn workspace @grafana/api-clients generate:api-client` and select an existing API group/version.
+You can also run `yarn generate:api-client` and select an existing API group/version.
 The generator will offer to update the existing client by running the endpoint generation step without modifying the client config or Redux wiring.
 
 ### Troubleshooting generated client updates
