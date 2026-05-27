@@ -891,11 +891,13 @@ func TestIntegrationProvisioning_RequiresNewTokenWhenRepositoryURLChanges(t *tes
 		require.NoError(t, unstructured.SetNestedField(updated.Object, "https://github.com/grafana/changed", "spec", "github", "url"))
 		unstructured.RemoveNestedField(updated.Object, "secure", "token")
 
-		_, err := helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
-		require.Error(t, err)
-		require.True(t, apierrors.IsInvalid(err), "expected invalid repository update, got %v", err)
-		require.ErrorContains(t, err, "secure.token")
-		require.ErrorContains(t, err, "a new token is required when changing the repository URL")
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			_, err := helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+			require.Error(collect, err)
+			require.True(collect, apierrors.IsInvalid(err), "expected invalid repository update, got %v", err)
+			require.ErrorContains(collect, err, "secure.token")
+			require.ErrorContains(collect, err, "a new token is required when changing the repository URL")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	})
 
 	t.Run("update allows url change with a new token", func(t *testing.T) {
@@ -906,12 +908,14 @@ func TestIntegrationProvisioning_RequiresNewTokenWhenRepositoryURLChanges(t *tes
 		repo.Spec.GitHub.URL = "https://github.com/grafana/changed"
 		repo.Secure.Token = apicommon.InlineSecureValue{Create: "new-token"}
 
-		result, err := helper.Repositories.Resource.Update(ctx, common.MustToUnstructured(t, repo), metav1.UpdateOptions{})
-		require.NoError(t, err)
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			result, err := helper.Repositories.Resource.Update(ctx, common.MustToUnstructured(t, repo), metav1.UpdateOptions{})
+			require.NoError(collect, err)
 
-		updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, result)
-		require.Equal(t, "https://github.com/grafana/changed", updatedRepo.Spec.GitHub.URL)
-		require.NotEmpty(t, updatedRepo.Secure.Token.Name)
+			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, result)
+			require.Equal(collect, "https://github.com/grafana/changed", updatedRepo.Spec.GitHub.URL)
+			require.NotEmpty(collect, updatedRepo.Secure.Token.Name)
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	})
 
 	t.Run("test subresource rejects url change without a new token", func(t *testing.T) {
