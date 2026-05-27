@@ -1,22 +1,12 @@
 import { css } from '@emotion/css';
 
-import {
-  FieldMatcherID,
-  type GrafanaTheme2,
-  PluginState,
-  type SelectableValue,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
+import { FieldMatcherID, type GrafanaTheme2, type SelectableValue, type TransformerUIProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useFieldMatchersOptions, useStyles2 } from '@grafana/ui';
 
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
-import darkImage from '../images/dark/configFromData.svg';
-import lightImage from '../images/light/configFromData.svg';
 
-import { getConfigFromDataTransformer, type ConfigFromQueryTransformOptions } from './configFromQuery';
+import { type ConfigFromQueryTransformOptions } from './configFromQuery';
 
 export interface Props extends TransformerUIProps<ConfigFromQueryTransformOptions> {}
 
@@ -97,22 +87,6 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     </>
   );
 }
-
-export const getConfigFromQueryTransformRegistryItem: () => TransformerRegistryItem<ConfigFromQueryTransformOptions> =
-  () => {
-    const configFromDataTransformer = getConfigFromDataTransformer();
-    return {
-      id: configFromDataTransformer.id,
-      editor: ConfigFromQueryTransformerEditor,
-      transformation: configFromDataTransformer,
-      name: configFromDataTransformer.name,
-      description: configFromDataTransformer.description,
-      state: PluginState.beta,
-      categories: new Set([TransformerCategory.CalculateNewFields]),
-      imageDark: darkImage,
-      imageLight: lightImage,
-    };
-  };
 
 const getStyles = (theme: GrafanaTheme2) => ({
   matcherOptions: css({

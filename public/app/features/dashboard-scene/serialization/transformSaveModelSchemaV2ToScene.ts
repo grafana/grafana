@@ -20,6 +20,7 @@ import {
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
+import { VariableRefresh } from '@grafana/schema';
 import {
   type AdhocVariableKind,
   type ConstantVariableKind,
@@ -51,6 +52,7 @@ import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
+  AnnoKeyFolderTitle,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
   AnnoKeyDashboardIsSnapshot,
@@ -76,6 +78,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
+import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
@@ -160,6 +163,7 @@ export function transformSaveModelSchemaV2ToScene(
     updated: metadata.annotations?.[AnnoKeyUpdatedTimestamp],
     updatedBy: metadata.annotations?.[AnnoKeyUpdatedBy],
     folderUid: metadata.annotations?.[AnnoKeyFolder],
+    folderTitle: metadata.annotations?.[AnnoKeyFolderTitle],
     isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
     isEmbedded: Boolean(metadata.annotations?.[AnnoKeyEmbedded]),
     publicDashboardEnabled: dto.access.isPublic,
@@ -375,6 +379,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
       drilldownRecommendationsEnabled:
         config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
+      $behaviors: [new ReportInteractionBehavior({})],
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
       ),
@@ -405,6 +410,9 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       valuesFormat: variable.spec.valuesFormat || 'csv',
     });
   } else if (variable.kind === defaultQueryVariableKind().kind) {
+    const refresh = config.publicDashboardAccessToken
+      ? VariableRefresh.never
+      : transformVariableRefreshToEnumV1(variable.spec.refresh);
     return new QueryVariable({
       ...commonProperties,
       value: variable.spec.current?.value ?? '',
@@ -412,7 +420,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       query: getDataQueryForVariable(variable),
       datasource: getRuntimeVariableDataSource(variable),
       sort: transformSortVariableToEnumV1(variable.spec.sort),
-      refresh: transformVariableRefreshToEnumV1(variable.spec.refresh),
+      refresh,
       regex: variable.spec.regex,
       regexApplyTo: variable.spec.regexApplyTo,
       allValue: variable.spec.allValue || undefined,
@@ -561,8 +569,8 @@ export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKin
     return intervals[0];
   }
 
-  // If the interval is the old auto format, return the new auto interval from scenes.
-  if (selectedInterval.startsWith('$__auto_interval_')) {
+  // If auto is eanbled and value is $__auto or older format $__auto_interval_
+  if (variable.spec.auto && selectedInterval.startsWith('$__auto')) {
     return '$__auto';
   }
 
@@ -609,6 +617,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
               ? (v.spec.enableGroupBy ?? false)
               : false,
+            $behaviors: [new ReportInteractionBehavior({})],
           });
         }
         // for other variable types we are using the SnapshotVariable

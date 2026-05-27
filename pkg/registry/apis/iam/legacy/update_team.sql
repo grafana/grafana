@@ -5,3 +5,6 @@ SET name = {{ .Arg .Command.Name }},
     is_provisioned = {{ .Arg .Command.IsProvisioned }},
     external_uid = {{ .Arg .Command.ExternalUID }}
 WHERE uid = {{ .Arg .Command.UID }}
+{{ if .Command.HasPreviousUpdated }}
+  AND updated = {{ .Arg .Command.PreviousUpdated }}
+{{ end }}

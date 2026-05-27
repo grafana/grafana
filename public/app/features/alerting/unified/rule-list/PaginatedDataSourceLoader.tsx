@@ -13,6 +13,7 @@ import { type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useHasRulerV2 } from '../hooks/useHasRuler';
 import { groups } from '../utils/navigation';
+import { getPromGroupReadOnlyStatus } from '../utils/rules';
 
 import { DataSourceGroupLoader } from './DataSourceGroupLoader';
 import { DataSourceSection, type DataSourceSectionProps } from './components/DataSourceSection';
@@ -190,6 +191,7 @@ function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: Rule
           dsUid={rulesSourceIdentifier.uid}
           namespaceName={namespaceName}
           groupName={group.name}
+          readOnly={getPromGroupReadOnlyStatus(group).readOnly}
         />
       }
     >
@@ -202,12 +204,13 @@ interface DataSourceGroupActionsProps {
   dsUid: string;
   namespaceName: string;
   groupName: string;
+  readOnly: boolean;
 }
 
-function DataSourceGroupActions({ dsUid, namespaceName, groupName }: DataSourceGroupActionsProps) {
+function DataSourceGroupActions({ dsUid, namespaceName, groupName, readOnly }: DataSourceGroupActionsProps) {
   const { hasRuler } = useHasRulerV2(dsUid);
   const [editRuleSupported, editRuleAllowed] = useAlertingAbility(AlertingAction.UpdateExternalAlertRule);
-  const canEdit = editRuleSupported && editRuleAllowed;
+  const canEdit = editRuleSupported && editRuleAllowed && !readOnly;
 
   if (!hasRuler || !canEdit) {
     return null;

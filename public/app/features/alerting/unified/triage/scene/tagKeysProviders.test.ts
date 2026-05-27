@@ -83,7 +83,7 @@ describe('tagKeysProviders', () => {
   });
 
   describe('getAdHocTagKeysProvider', () => {
-    it('should return all labels sorted under All', async () => {
+    it('should show promoted labels first under Common, then remaining sorted under All', async () => {
       mockGetDataSourceSrv({
         getTagKeys: jest.fn().mockResolvedValue([
           { text: 'alertstate', value: 'alertstate' },
@@ -105,24 +105,14 @@ describe('tagKeysProviders', () => {
       const result = await getAdHocTagKeysProvider(variable, null);
 
       expect(result.replace).toBe(true);
-      expect(result.values).toEqual(
-        expect.arrayContaining([
-          { text: 'alertstate', value: 'alertstate', group: 'All' },
-          { text: 'alertname', value: 'alertname', group: 'All' },
-          { text: 'grafana_folder', value: 'grafana_folder', group: 'All' },
-          { text: 'environment', value: 'environment', group: 'All' },
-          { text: 'severity', value: 'severity', group: 'All' },
-          { text: 'team', value: 'team', group: 'All' },
-        ])
-      );
-      expect(result.values).not.toEqual(expect.arrayContaining([expect.objectContaining({ group: 'Common' })]));
-      expect(result.values).not.toEqual(
-        expect.arrayContaining([
-          { value: 'service', text: 'Service', group: 'Common' },
-          { text: 'Team', value: 'team', group: 'Common' },
-          { text: 'Namespace', value: 'namespace', group: 'Common' },
-        ])
-      );
+      expect(result.values).toEqual([
+        { value: 'alertname', text: 'Rule name', group: 'Common' },
+        { value: 'alertstate', text: 'State', group: 'Common' },
+        { value: 'grafana_folder', text: 'Folder', group: 'Common' },
+        { text: 'environment', value: 'environment', group: 'All' },
+        { text: 'severity', value: 'severity', group: 'All' },
+        { text: 'team', value: 'team', group: 'All' },
+      ]);
       expect(result.values).not.toEqual(expect.arrayContaining([{ text: 'service', value: 'service', group: 'All' }]));
       expect(result.values).not.toEqual(
         expect.arrayContaining([{ text: 'service_name', value: 'service_name', group: 'All' }])

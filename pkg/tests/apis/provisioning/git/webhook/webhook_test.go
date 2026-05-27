@@ -53,8 +53,8 @@ func webhookCreationMocks(hookID int64) []ghmock.MockBackendOption {
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(&github.Hook{
-					ID:     github.Ptr(hookID),
-					URL:    github.Ptr("https://grafana.example.com/hook"),
+					ID:     new(hookID),
+					URL:    new("https://grafana.example.com/hook"),
 					Events: []string{"pull_request", "push"},
 				})
 			}),
@@ -131,10 +131,16 @@ func TestIntegrationProvisioning_GithubRepoWebhookRecreatedWhenMissing(t *testin
 
 	waitForWebhook(t, helper, repoName, 789)
 
-	// Clear Status.Webhook to simulate restart / state loss.
+	// Clear Status.Webhook to simulate restart / state loss. Retry to absorb a
+	// concurrent reconcile that rotates secure.webhookSecret between the
+	// apistore's optimistic read and the resource server's re-read — the stale
+	// secure name makes the server reject this status patch with
+	// "secure value not found" even though the patch itself doesn't touch secure.
 	patch := []byte(`{"status":{"webhook":null}}`)
-	_, err := helper.Repositories.Resource.Patch(ctx, repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
-	require.NoError(t, err, "failed to clear webhook status")
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		_, err := helper.Repositories.Resource.Patch(ctx, repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
+		assert.NoError(collect, err)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "clear webhook status")
 
 	// Trigger reconciliation by updating the spec.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -190,8 +196,8 @@ func TestIntegrationProvisioning_WebhookSecretRotatedWhenExpired(t *testing.T) {
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(&github.Hook{
-					ID:     github.Ptr(int64(200)),
-					URL:    github.Ptr("https://grafana.example.com/hook"),
+					ID:     new(int64(200)),
+					URL:    new("https://grafana.example.com/hook"),
 					Events: []string{"pull_request", "push"},
 				})
 			}),
@@ -201,8 +207,8 @@ func TestIntegrationProvisioning_WebhookSecretRotatedWhenExpired(t *testing.T) {
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(&github.Hook{
-					ID:     github.Ptr(int64(200)),
-					URL:    github.Ptr("https://grafana.example.com/hook"),
+					ID:     new(int64(200)),
+					URL:    new("https://grafana.example.com/hook"),
 					Events: []string{"pull_request", "push"},
 				})
 			}),
@@ -217,11 +223,17 @@ func TestIntegrationProvisioning_WebhookSecretRotatedWhenExpired(t *testing.T) {
 
 	waitForWebhook(t, helper, repoName, 200)
 
-	// Patch LastRotated to a past value to simulate expired rotation.
+	// Patch LastRotated to a past value to simulate expired rotation. Retry to
+	// absorb a concurrent reconcile that rotates secure.webhookSecret between
+	// the apistore's optimistic read and the resource server's re-read — the
+	// stale secure name makes the server reject this status patch with
+	// "secure value not found" even though the patch itself doesn't touch secure.
 	expiredTimestamp := int64(1)
 	patch := []byte(fmt.Sprintf(`{"status":{"webhook":{"id":200,"url":"https://grafana.example.com/hook","subscribedEvents":["pull_request","push"],"lastRotated":%d}}}`, expiredTimestamp))
-	_, err := helper.Repositories.Resource.Patch(ctx, repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
-	require.NoError(t, err)
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		_, err := helper.Repositories.Resource.Patch(ctx, repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
+		assert.NoError(collect, err)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "expire LastRotated")
 
 	// Trigger reconciliation.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {

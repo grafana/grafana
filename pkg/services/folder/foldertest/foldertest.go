@@ -66,11 +66,46 @@ func (s *FakeService) Create(ctx context.Context, cmd *folder.CreateFolderComman
 }
 
 func (s *FakeService) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
-	if q.UID != nil && s.foldersByUID != nil {
+	if q.UID != nil && *q.UID != "" && s.foldersByUID != nil {
 		if f, exists := s.foldersByUID[*q.UID]; exists {
 			return f, nil
 		}
 	}
+
+	if q.Title != nil && *q.Title != "" {
+		wantParent := ""
+		if q.ParentUID != nil {
+			wantParent = *q.ParentUID
+		}
+		if f := s.findFolderByTitleAndParent(q.OrgID, *q.Title, wantParent); f != nil {
+			return f, nil
+		}
+	}
+
+	return s.ExpectedFolder, s.ExpectedError
+}
+
+// findFolderByTitleAndParent returns a folder matching org, title, and parent UID (empty string means root).
+func (s *FakeService) findFolderByTitleAndParent(orgID int64, title, parentUID string) *folder.Folder {
+	byUID := make(map[string]*folder.Folder)
+	for _, f := range s.ExpectedFolders {
+		if f != nil {
+			byUID[f.UID] = f
+		}
+	}
+	for _, f := range s.foldersByUID {
+		if f != nil {
+			byUID[f.UID] = f
+		}
+	}
+	for _, f := range byUID {
+		if f.OrgID == orgID && f.Title == title && f.ParentUID == parentUID {
+			return f
+		}
+	}
+	return nil
+}
+func (s *FakeService) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
 

@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -23,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
@@ -77,7 +77,10 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 		},
 	}}
 
-	integration := models.IntegrationGen(models.IntegrationMuts.WithUID(""))()
+	// Pin to a non-email type so the default integration doesn't randomly land on EmailType,
+	// which would route through emailValidator and fail with 'email address is not allowed'
+	// because the generator's random Name won't match validEmailIntegration.
+	integration := models.IntegrationGen(models.IntegrationMuts.WithUID(""), models.IntegrationMuts.WithValidConfig(schema.SlackType))()
 	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithUID(""), models.IntegrationMuts.WithValidConfig("slack"))()
 	validEmailIntegration := models.IntegrationGen(
 		models.IntegrationMuts.WithUID(""),
@@ -94,7 +97,7 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 	expectedAlert, err := convertToAlertParam(alert)
 	require.NoError(t, err)
 
-	emailValidator.ValidateIntegrationFunc = func(ctx context.Context, requester identity.Requester, integration models.Integration) error {
+	emailValidator.ValidateIntegrationFunc = func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
 		if integration.Name == validEmailIntegration.Name {
 			return nil
 		}
@@ -110,7 +113,7 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 	}{
 		{
 			name:        "error if integration UID is not empty",
-			integration: utils.Pointer(models.IntegrationGen()()),
+			integration: new(models.IntegrationGen()()),
 			user:        userAuthorizedToCreate,
 			expectedErr: models.ErrReceiverTestingInvalidIntegrationBase,
 		},
@@ -120,8 +123,9 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 			expectedErr: ac.ErrAuthorizationBase,
 		},
 		{
-			name: "integration is tested successfully (receiverUID empty)",
-			user: userAuthorizedToCreate,
+			name:        "integration is tested successfully (receiverUID empty)",
+			integration: &slackIntegration,
+			user:        userAuthorizedToCreate,
 		},
 		{
 			name:                "integration type in allowlist is permitted",
@@ -267,13 +271,13 @@ func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
 		{
 			name:        "error if integration does not exist in receiver",
 			receiverUID: receiverUID,
-			integration: utils.Pointer(models.IntegrationGen(models.IntegrationMuts.WithUID("other-integration"))()),
+			integration: new(models.IntegrationGen(models.IntegrationMuts.WithUID("other-integration"))()),
 			expectedErr: models.ErrReceiverTestingIntegrationNotFound,
 		},
 		{
 			name:        "error if user changes protected field (url) without permission",
 			receiverUID: receiverUID,
-			integration: utils.Pointer(models.IntegrationGen(
+			integration: new(models.IntegrationGen(
 				models.IntegrationMuts.WithUID(integrationUID),
 				models.IntegrationMuts.WithValidConfig("webhook"),
 				models.IntegrationMuts.AddSetting("url", "http://different-url.com"),

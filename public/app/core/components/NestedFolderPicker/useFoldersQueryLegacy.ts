@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getMessageFromError } from 'app/core/utils/errors';
 import { type ListFolderQueryArgs, browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/constants';
 import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { type FolderListItemDTO } from 'app/types/folders';

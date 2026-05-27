@@ -13,13 +13,13 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import { PureComponent, type RefObject } from 'react';
+import { memo, useCallback, useEffect, useState, type RefObject } from 'react';
 
 import { type CoreApp, type GrafanaTheme2, type LinkModel, type TimeRange, type TraceLog } from '@grafana/data';
 import { type SpanBarOptions, type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
-import { stylesFactory, withTheme2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
@@ -33,38 +33,40 @@ import TimelineHeaderRow from './TimelineHeaderRow/TimelineHeaderRow';
 import VirtualizedTraceView from './VirtualizedTraceView';
 import { type TUpdateViewRangeTimeFunction, type ViewRange, type ViewRangeTimeUpdate } from './types';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
-  TraceTimelineViewer: css({
-    label: 'TraceTimelineViewer',
-    borderBottom: `1px solid ${autoColor(theme, '#bbb')}`,
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    TraceTimelineViewer: css({
+      label: 'TraceTimelineViewer',
+      borderBottom: `1px solid ${autoColor(theme, '#bbb')}`,
 
-    '& .json-markup': {
-      lineHeight: '17px',
-      fontFamily: 'monospace',
-      whiteSpace: 'pre-wrap',
-    },
+      '& .json-markup': {
+        lineHeight: '17px',
+        fontFamily: 'monospace',
+        whiteSpace: 'pre-wrap',
+      },
 
-    '& .json-markup-key': {
-      fontWeight: 'bold',
-    },
+      '& .json-markup-key': {
+        fontWeight: 'bold',
+      },
 
-    '& .json-markup-bool': {
-      color: autoColor(theme, 'firebrick'),
-    },
+      '& .json-markup-bool': {
+        color: autoColor(theme, 'firebrick'),
+      },
 
-    '& .json-markup-string': {
-      color: autoColor(theme, 'teal'),
-    },
+      '& .json-markup-string': {
+        color: autoColor(theme, 'teal'),
+      },
 
-    '& .json-markup-null': {
-      color: autoColor(theme, 'teal'),
-    },
+      '& .json-markup-null': {
+        color: autoColor(theme, 'teal'),
+      },
 
-    '& .json-markup-number': {
-      color: autoColor(theme, 'blue', 'black'),
-    },
-  }),
-}));
+      '& .json-markup-number': {
+        color: autoColor(theme, 'blue', 'black'),
+      },
+    }),
+  };
+}
 
 export type TProps = {
   findMatchesIDs: Set<string> | TNil;
@@ -97,7 +99,6 @@ export type TProps = {
   detailToggle: (spanID: string) => void;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
-  theme: GrafanaTheme2;
   createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
   focusedSpanId?: string;
@@ -115,11 +116,6 @@ export type TProps = {
   app: CoreApp;
 };
 
-type State = {
-  // Will be set to real height of the component so it can be passed down to size some other elements.
-  height: number;
-};
-
 const NUM_TICKS = 5;
 
 /**
@@ -128,108 +124,103 @@ const NUM_TICKS = 5;
  * re-render the ListView every time the cursor is moved on the trace minimap
  * or `TimelineHeaderRow`.
  */
-export class UnthemedTraceTimelineViewer extends PureComponent<TProps, State> {
-  constructor(props: TProps) {
-    super(props);
-    this.state = { height: 0 };
-  }
+export const UnthemedTraceTimelineViewer = memo(function UnthemedTraceTimelineViewer(props: TProps) {
+  const {
+    setSpanNameColumnWidth,
+    updateNextViewRangeTime,
+    updateViewRangeTime,
+    viewRange,
+    traceTimeline,
+    topOfViewRef,
+    focusedSpanIdForSearch,
+    ...rest
+  } = props;
 
-  componentDidMount() {
-    mergeShortcuts({
-      collapseAll: this.collapseAll,
-      expandAll: this.expandAll,
-      collapseOne: this.collapseOne,
-      expandOne: this.expandOne,
-    });
-  }
+  const { trace, collapseAll, collapseOne, expandAll, expandOne, datasourceType, datasourceUid } = rest;
 
-  collapseAll = () => {
-    this.props.collapseAll(this.props.trace.spans);
+  const styles = useStyles2(getStyles);
+  const [height, setHeight] = useState(0);
+
+  const handleCollapseAll = useCallback(() => {
+    collapseAll(trace.spans);
     reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
-      datasourceType: this.props.datasourceType,
+      datasourceType,
       grafana_version: config.buildInfo.version,
       type: 'collapseAll',
     });
-  };
+  }, [collapseAll, datasourceType, trace.spans]);
 
-  collapseOne = () => {
-    this.props.collapseOne(this.props.trace.spans);
+  const handleCollapseOne = useCallback(() => {
+    collapseOne(trace.spans);
     reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
-      datasourceType: this.props.datasourceType,
+      datasourceType,
       grafana_version: config.buildInfo.version,
       type: 'collapseOne',
     });
-  };
+  }, [collapseOne, datasourceType, trace.spans]);
 
-  expandAll = () => {
-    this.props.expandAll();
+  const handleExpandAll = useCallback(() => {
+    expandAll();
     reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
-      datasourceType: this.props.datasourceType,
+      datasourceType,
       grafana_version: config.buildInfo.version,
       type: 'expandAll',
     });
-  };
+  }, [expandAll, datasourceType]);
 
-  expandOne = () => {
-    this.props.expandOne(this.props.trace.spans);
+  const handleExpandOne = useCallback(() => {
+    expandOne(trace.spans);
     reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
-      datasourceType: this.props.datasourceType,
+      datasourceType,
       grafana_version: config.buildInfo.version,
       type: 'expandOne',
     });
-  };
+  }, [expandOne, datasourceType, trace.spans]);
 
-  render() {
-    const {
-      setSpanNameColumnWidth,
-      updateNextViewRangeTime,
-      updateViewRangeTime,
-      viewRange,
-      traceTimeline,
-      theme,
-      topOfViewRef,
-      focusedSpanIdForSearch,
-      ...rest
-    } = this.props;
-    const { trace } = rest;
-    const styles = getStyles(theme);
+  useEffect(() => {
+    mergeShortcuts({
+      collapseAll: handleCollapseAll,
+      expandAll: handleExpandAll,
+      collapseOne: handleCollapseOne,
+      expandOne: handleExpandOne,
+    });
+  }, [handleCollapseAll, handleCollapseOne, handleExpandAll, handleExpandOne]);
 
-    return (
-      <div
-        className={styles.TraceTimelineViewer}
-        ref={(ref) => {
-          if (ref) {
-            this.setState({ height: ref.getBoundingClientRect().height });
-          }
-        }}
-      >
-        <TimelineHeaderRow
-          duration={trace.duration}
-          nameColumnWidth={traceTimeline.spanNameColumnWidth}
-          numTicks={NUM_TICKS}
-          onCollapseAll={this.collapseAll}
-          onCollapseOne={this.collapseOne}
-          onColummWidthChange={setSpanNameColumnWidth}
-          onExpandAll={this.expandAll}
-          onExpandOne={this.expandOne}
-          viewRangeTime={viewRange.time}
-          updateNextViewRangeTime={updateNextViewRangeTime}
-          updateViewRangeTime={updateViewRangeTime}
-          columnResizeHandleHeight={this.state.height}
-        />
-        <VirtualizedTraceView
-          {...rest}
-          {...traceTimeline}
-          setSpanNameColumnWidth={setSpanNameColumnWidth}
-          currentViewRangeTime={viewRange.time.current}
-          topOfViewRef={topOfViewRef}
-          focusedSpanIdForSearch={focusedSpanIdForSearch}
-          datasourceType={this.props.datasourceType}
-          datasourceUid={this.props.datasourceUid}
-        />
-      </div>
-    );
-  }
-}
+  return (
+    <div
+      className={styles.TraceTimelineViewer}
+      ref={(ref) => {
+        if (ref) {
+          setHeight(ref.getBoundingClientRect().height);
+        }
+      }}
+    >
+      <TimelineHeaderRow
+        duration={trace.duration}
+        nameColumnWidth={traceTimeline.spanNameColumnWidth}
+        numTicks={NUM_TICKS}
+        onCollapseAll={handleCollapseAll}
+        onCollapseOne={handleCollapseOne}
+        onColummWidthChange={setSpanNameColumnWidth}
+        onExpandAll={handleExpandAll}
+        onExpandOne={handleExpandOne}
+        viewRangeTime={viewRange.time}
+        updateNextViewRangeTime={updateNextViewRangeTime}
+        updateViewRangeTime={updateViewRangeTime}
+        columnResizeHandleHeight={height}
+      />
+      <VirtualizedTraceView
+        {...rest}
+        {...traceTimeline}
+        setSpanNameColumnWidth={setSpanNameColumnWidth}
+        currentViewRangeTime={viewRange.time.current}
+        topOfViewRef={topOfViewRef}
+        focusedSpanIdForSearch={focusedSpanIdForSearch}
+        datasourceType={datasourceType}
+        datasourceUid={datasourceUid}
+      />
+    </div>
+  );
+});
 
-export default withTheme2(UnthemedTraceTimelineViewer);
+export default UnthemedTraceTimelineViewer;

@@ -8,7 +8,8 @@ export interface LogDetailsContextData {
   detailsDisplayed: (rowIndex: number) => boolean;
   enableLogDetails: boolean;
   logs: LogListModel[];
-  setCurrentLog(log: LogListModel): void;
+  replaceDetails: (log: LogListModel) => void;
+  setCurrentLog: (log: LogListModel) => void;
   showDetails: LogListModel[];
   toggleDetails: (log: number | LogListModel) => void;
 }
@@ -19,6 +20,7 @@ export const emptyContextData: LogDetailsContextData = {
   detailsDisplayed: () => false,
   enableLogDetails: false,
   logs: [],
+  replaceDetails: () => {},
   setCurrentLog: () => {},
   showDetails: [],
   toggleDetails: () => {},
@@ -98,6 +100,22 @@ export const LogDetailsContextProvider = ({ children, enableLogDetails, logs }: 
     [currentLog, enableLogDetails, logs, showDetails]
   );
 
+  const replaceDetails = useCallback(
+    (log: LogListModel) => {
+      if (!enableLogDetails || !currentLog) {
+        return;
+      }
+      if (showDetails.find((stateLog) => stateLog.uid === log.uid)) {
+        setCurrentLog(log);
+        return;
+      }
+      const newShowDetails = showDetails.filter((stateLog) => stateLog.uid !== currentLog.uid);
+      setShowDetails([...newShowDetails, log]);
+      setCurrentLog(log);
+    },
+    [currentLog, enableLogDetails, showDetails]
+  );
+
   return (
     <LogDetailsContext.Provider
       value={{
@@ -106,6 +124,7 @@ export const LogDetailsContextProvider = ({ children, enableLogDetails, logs }: 
         detailsDisplayed,
         enableLogDetails,
         logs,
+        replaceDetails,
         setCurrentLog,
         showDetails,
         toggleDetails,

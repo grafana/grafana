@@ -1,5 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { Controls, Sidebar, Toolbar } from './page-objects';
+
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
@@ -8,8 +10,6 @@ test.use({
   },
 });
 
-const PAGE_UNDER_TEST = 'ed155665/annotation-filtering';
-
 test.describe(
   'Dashboard',
   {
@@ -17,29 +17,33 @@ test.describe(
   },
   () => {
     test('can change dashboard description and title', async ({ gotoDashboardPage, selectors, page }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      const dashboardPage = await gotoDashboardPage({ uid: 'ed155665/annotation-filtering' });
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
+      const controls = new Controls(page, dashboardPage, selectors);
+      const toolbar = new Toolbar(page, dashboardPage, selectors);
+      const sidebar = new Sidebar(page, dashboardPage, selectors);
 
-      const titleInput = dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('dashboard-options Title'))
-        .locator('input');
+      await controls.enterEditMode();
+      await toolbar.openDashboardOptions();
+
+      const titleInput = sidebar.dashboardOptions.getTitleInput();
       await expect(titleInput).toHaveValue('Annotation filtering');
-      await titleInput.fill('New dashboard title');
-      await expect(titleInput).toHaveValue('New dashboard title');
 
-      // Check that new dashboard title is reflected in breadcrumb
+      const newTitle = 'New dashboard title';
+      await titleInput.fill(newTitle);
+      await expect(titleInput).toHaveValue(newTitle);
+
+      // check that new dashboard title is updated in the breadcrumbs
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Breadcrumbs.breadcrumb('New dashboard title'))
+        dashboardPage.getByGrafanaSelector(selectors.components.Breadcrumbs.breadcrumb(newTitle))
       ).toBeVisible();
 
-      // Check that we can successfully change the dashboard description
-      const descriptionTextArea = dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('dashboard-options Description'))
-        .locator('textarea');
-      await descriptionTextArea.fill('Dashboard description');
-      await expect(descriptionTextArea).toHaveValue('Dashboard description');
+      const descriptionTextarea = sidebar.dashboardOptions.getDescriptionTextarea();
+      await expect(descriptionTextarea).toHaveValue('');
+
+      const newDescription = 'Dashboard description';
+      await descriptionTextarea.fill(newDescription);
+      await expect(descriptionTextarea).toHaveValue(newDescription);
     });
   }
 );

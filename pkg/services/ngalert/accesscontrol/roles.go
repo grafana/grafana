@@ -3,7 +3,6 @@ package accesscontrol
 import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -493,8 +492,25 @@ var (
 	}
 )
 
-func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.FeatureToggles) error {
-	fixedRoles := []accesscontrol.RoleRegistration{
+var alertmanagerImportsAdminRole = accesscontrol.RoleRegistration{
+	Role: accesscontrol.RoleDTO{
+		Name:        accesscontrol.FixedRolePrefix + "alerting.alertmanager-imports:writer",
+		DisplayName: "Alerting alertmanager imports writer",
+		Description: "Read, write, and delete Prometheus/Mimir-compatible alertmanager configurations imported via the convert API.",
+		Group:       models.AlertRolesGroup,
+		Permissions: []accesscontrol.Permission{
+			{Action: accesscontrol.ActionAlertingAlertmanagerImportsCreate, Scope: models.ScopeAlertmanagerImportsAll},
+			{Action: accesscontrol.ActionAlertingAlertmanagerImportsRead, Scope: models.ScopeAlertmanagerImportsAll},
+			{Action: accesscontrol.ActionAlertingAlertmanagerImportsWrite, Scope: models.ScopeAlertmanagerImportsAll},
+			{Action: accesscontrol.ActionAlertingAlertmanagerImportsDelete, Scope: models.ScopeAlertmanagerImportsAll},
+		},
+	},
+	Grants: []string{string(org.RoleAdmin)},
+}
+
+// FixedRoleRegistrations returns all alerting role registrations declared by this package.
+func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
+	return []accesscontrol.RoleRegistration{
 		rulesReaderRole, rulesWriterRole,
 		instancesReaderRole, instancesWriterRole,
 		notificationsReaderRole, notificationsWriterRole,
@@ -506,7 +522,10 @@ func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.Featu
 		timeIntervalsReaderRole, timeIntervalsWriterRole,
 		routesCreatorRole, routesReaderRole, routesWriterRole,
 		inhibitionRulesReaderRole, inhibitionRulesWriterRole,
+		alertmanagerImportsAdminRole,
 	}
+}
 
-	return service.DeclareFixedRoles(fixedRoles...)
+func DeclareFixedRoles(service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
 }

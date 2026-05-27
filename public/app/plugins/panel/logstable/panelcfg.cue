@@ -36,6 +36,7 @@ composableKinds: PanelCfg: {
 					displayedFields?: [...string]
 					buildLinkToLogLine?: _
 					wrapText?:           bool
+					allowDownload?:      bool
 				} @cuetsy(kind="interface")
 			}
 		}]

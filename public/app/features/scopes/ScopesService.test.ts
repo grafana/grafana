@@ -418,7 +418,9 @@ describe('ScopesService', () => {
       selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1' }],
-          scopes: {},
+          scopes: {
+            scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+          },
         },
         {
           appliedScopes: [],
@@ -444,7 +446,9 @@ describe('ScopesService', () => {
       selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1', parentNodeId: 'parent1' }],
-          scopes: {},
+          scopes: {
+            scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+          },
         },
         {
           appliedScopes: [],
@@ -468,7 +472,9 @@ describe('ScopesService', () => {
       selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node2' }],
-          scopes: {},
+          scopes: {
+            scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+          },
         },
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1' }],
@@ -494,7 +500,9 @@ describe('ScopesService', () => {
       selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1' }],
-          scopes: {},
+          scopes: {
+            scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+          },
         },
         {
           appliedScopes: [],
@@ -636,6 +644,48 @@ describe('ScopesService', () => {
           {
             scopes: ['scope1'],
             scope_node: 'fallback-node',
+            scope_parent: null,
+          },
+          true
+        );
+      });
+
+      it('should clear stale scope_node when scope metadata loads with defaultPath', () => {
+        if (!selectorStateSubscription) {
+          throw new Error('selectorStateSubscription not set');
+        }
+
+        jest.clearAllMocks();
+
+        // Simulates the second emit in applyScopes: the first emit ran while
+        // scope metadata was still loading (so the subscription fell through
+        // to firstScope.scopeNodeId and a stale value may have been written
+        // to the URL). Once metadata loads and defaultPath becomes visible,
+        // the subscription must fire with scope_node: null to clear it.
+        selectorStateSubscription(
+          {
+            appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'stale-node' }],
+            scopes: {
+              scope1: {
+                metadata: { name: 'scope1' },
+                spec: {
+                  title: 'Scope 1',
+                  defaultPath: ['', 'parent', 'derived-node'],
+                  filters: [],
+                },
+              },
+            },
+          },
+          {
+            appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'stale-node' }],
+            scopes: {},
+          }
+        );
+
+        expect(locationService.partial).toHaveBeenCalledWith(
+          {
+            scopes: ['scope1'],
+            scope_node: null,
             scope_parent: null,
           },
           true
@@ -904,6 +954,9 @@ describe('ScopesService', () => {
 
     it('should sync scopeNodeId when enabling scopes', () => {
       selectorService.state.appliedScopes = [{ scopeId: 'scope1', scopeNodeId: 'node1' }];
+      selectorService.state.scopes = {
+        scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+      };
 
       service.setEnabled(true);
 
@@ -917,6 +970,9 @@ describe('ScopesService', () => {
 
     it('should reset scope_parent when enabling scopes', () => {
       selectorService.state.appliedScopes = [{ scopeId: 'scope1', scopeNodeId: 'node1' }];
+      selectorService.state.scopes = {
+        scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+      };
 
       service.setEnabled(true);
 
@@ -926,6 +982,20 @@ describe('ScopesService', () => {
         }),
         true
       );
+    });
+
+    it('should defer URL write when scope metadata has not loaded', () => {
+      // setEnabled is called from `@grafana/scenes` during dashboard mount,
+      // which can race with applyScopes. If metadata is not loaded yet, the
+      // helper would fall through to firstScope.scopeNodeId — a value that
+      // the URL-sync subscription is about to settle to a different state.
+      // Defer to avoid the race-write.
+      selectorService.state.appliedScopes = [{ scopeId: 'scope1', scopeNodeId: 'node1' }];
+      selectorService.state.scopes = {};
+
+      service.setEnabled(true);
+
+      expect(locationService.partial).not.toHaveBeenCalled();
     });
 
     it('should clear scope_node when enabling scopes for a scope with defaultPath', () => {
@@ -951,6 +1021,109 @@ describe('ScopesService', () => {
         }),
         true
       );
+    });
+
+    it('should overwrite stale scope_node in URL when enabling scopes with unchanged scopes', () => {
+      // When navigating to a dashboard with the same scopes already applied, the
+      // location subscription exits early (enabled=false at navigation time), so
+      // applyScopes never fires. setEnabled is the only write path that clears a
+      // stale scope_node left in the URL.
+      selectorService.state.appliedScopes = [{ scopeId: 'scope1', scopeNodeId: 'correct-node' }];
+      selectorService.state.scopes = {
+        scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+      };
+
+      service.setEnabled(true);
+
+      expect(locationService.partial).toHaveBeenCalledWith(
+        expect.objectContaining({ scope_node: 'correct-node' }),
+        true
+      );
+    });
+
+    it('should clear scopes URL params when enabling with no applied scopes', () => {
+      // Covers the firstScope-falsy short-circuit in the defer guard:
+      // when appliedScopes is empty, the guard does not fire and the URL
+      // write proceeds with empty scopes and scope_node: null.
+      selectorService.state.appliedScopes = [];
+      selectorService.state.scopes = {};
+
+      service.setEnabled(true);
+
+      expect(locationService.partial).toHaveBeenCalledWith(
+        {
+          scopes: [],
+          scope_node: null,
+          scope_parent: null,
+        },
+        true
+      );
+    });
+
+    it('should not write URL when setEnabled is called with the current enabled state', () => {
+      selectorService.state.appliedScopes = [{ scopeId: 'scope1', scopeNodeId: 'node1' }];
+      selectorService.state.scopes = {
+        scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+      };
+
+      service.setEnabled(true);
+      jest.clearAllMocks();
+
+      // Calling setEnabled(true) again should be a no-op since state is unchanged.
+      service.setEnabled(true);
+
+      expect(locationService.partial).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('setReadOnly', () => {
+    beforeEach(() => {
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '',
+      });
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+    });
+
+    it('should update readOnly state when changed', () => {
+      service.setReadOnly(true);
+
+      expect(service.state.readOnly).toBe(true);
+    });
+
+    it('should not call closeAndReset when setting readOnly to false', () => {
+      selectorService.state.opened = true;
+      selectorService.closeAndReset = jest.fn();
+
+      service.setReadOnly(false);
+
+      expect(selectorService.closeAndReset).not.toHaveBeenCalled();
+    });
+
+    it('should close the selector when setting readOnly to true with selector opened', () => {
+      selectorService.state.opened = true;
+      selectorService.closeAndReset = jest.fn();
+
+      service.setReadOnly(true);
+
+      expect(selectorService.closeAndReset).toHaveBeenCalled();
+    });
+
+    it('should not close the selector when setting readOnly to true with selector already closed', () => {
+      selectorService.state.opened = false;
+      selectorService.closeAndReset = jest.fn();
+
+      service.setReadOnly(true);
+
+      expect(selectorService.closeAndReset).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('cleanUp', () => {
+    it('should unsubscribe all subscriptions without throwing', () => {
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      expect(() => service.cleanUp()).not.toThrow();
     });
   });
 

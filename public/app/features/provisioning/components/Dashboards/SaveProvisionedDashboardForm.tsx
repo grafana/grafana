@@ -24,6 +24,7 @@ import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { type ProvisionedDashboardFormData } from '../../types/form';
+import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
@@ -57,8 +58,6 @@ export function SaveProvisionedDashboardForm({
   const { isDirty } = dashboard.useState();
   const [error, setError] = useState<string | undefined>(undefined);
 
-  const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
-
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const {
     handleSubmit,
@@ -70,11 +69,26 @@ export function SaveProvisionedDashboardForm({
     getValues,
     formState: { dirtyFields },
   } = methods;
+
+  const path = watch('path');
+  const originalPath = isNew ? undefined : defaultValues.path;
+  const isRename = Boolean(originalPath && path !== originalPath);
+
+  const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isRename ? undefined : originalPath);
+
   // button enabled if form comment is dirty or dashboard state is dirty or raw JSON was provided from editor
   const rawDashboardJSON = dashboard.getRawJsonFromEditor();
-  const isDirtyState = Boolean(dirtyFields.comment) || isDirty || Boolean(rawDashboardJSON);
-  const [workflow, ref, path] = watch(['workflow', 'ref', 'path']);
+  const isDirtyState =
+    Boolean(dirtyFields.comment) || Boolean(dirtyFields.path) || isDirty || Boolean(rawDashboardJSON);
+  const [workflow, ref] = watch(['workflow', 'ref']);
   const title = watch('title');
+
+  // Clear indefinite save-event suppression on unmount (covers cancel, error, navigation away).
+  useEffect(() => {
+    return () => {
+      dashboardWatcher.clearIgnoreSave();
+    };
+  }, []);
 
   // Update the form if default values change
   useEffect(() => {
@@ -140,9 +154,8 @@ export function SaveProvisionedDashboardForm({
     const resourceData = request?.data?.resource.upsert || request?.data?.resource.dryRun;
     const saveResponse = createSaveResponseFromResource(resourceData);
     dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
-
-    drawer.onClose();
-  }, [dashboard, defaultValues.folder?.uid, drawer, request?.data?.resource]);
+    dashboardWatcher.clearIgnoreSave();
+  }, [dashboard, defaultValues.folder?.uid, request?.data?.resource]);
 
   const onWriteSuccess = useCallback(
     (upsert: Resource<Dashboard>) => {
@@ -187,7 +200,12 @@ export function SaveProvisionedDashboardForm({
     handlers: {
       onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
       onWriteSuccess,
-      onError: showError,
+      onError: (err) => {
+        // Release suppression so later live save/conflict events from other sessions
+        // aren't hidden while the user retries or abandons the save.
+        dashboardWatcher.clearIgnoreSave();
+        showError(err);
+      },
     },
   });
 
@@ -216,7 +234,14 @@ export function SaveProvisionedDashboardForm({
     //   ref = loadedFromRef;
     // }
 
-    const message = comment || `Save dashboard: ${dashboard.state.title}`;
+    const message = getSingleResourceCommitMessage({
+      comment,
+      repository,
+      action: isNew ? 'create' : 'update',
+      resourceKind: 'dashboard',
+      resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
+      title: dashboard.state.title ?? '',
+    });
 
     const body = rawDashboardJSON
       ? dashboard.getSaveResourceFromSpec(rawDashboardJSON)
@@ -234,8 +259,9 @@ export function SaveProvisionedDashboardForm({
       repositoryType: repository?.type ?? 'unknown',
     });
 
-    // ignore incoming save events
-    dashboardWatcher.ignoreNextSave();
+    // Suppress live save events for the duration of the provisioned save.
+    // Git operations can exceed the default 5s ignoreNextSave window.
+    dashboardWatcher.ignoreSaveIndefinitely();
 
     createOrUpdateFile({
       // Skip adding ref to the default branch request
@@ -244,6 +270,7 @@ export function SaveProvisionedDashboardForm({
       path,
       message,
       body,
+      originalPath: isRename ? originalPath : undefined,
     });
   };
 
@@ -327,6 +354,7 @@ export function SaveProvisionedDashboardForm({
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
             isNew={isNew}
+            allowPathEdit={!isNew && !readOnly}
           />
 
           {saveAsCopy && (

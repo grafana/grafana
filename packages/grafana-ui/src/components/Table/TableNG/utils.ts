@@ -1,7 +1,6 @@
 import { type Property } from 'csstype';
 import memoize from 'micro-memoize';
 import { type CSSProperties } from 'react';
-import { type SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 import { type Count, varPreLine } from 'uwrap';
 
@@ -19,6 +18,7 @@ import {
   type FieldSparkline,
   type DecimalCount,
 } from '@grafana/data';
+import { type ColumnWidth, type ColumnWidths, type SortColumn } from '@grafana/react-data-grid';
 import {
   BarGaugeDisplayMode,
   type FieldTextAlignment,
@@ -786,12 +786,13 @@ export function applyFilter(
  */
 export function compileFrameToRecords(frame: DataFrame, nestedFramesFieldName?: string): FrameToRowsConverter {
   const fnBody = `
-    const rows = Array(frame.length);
     const values = frame.fields.map(f => f.values);
     const hasNestedFrames = '${nestedFramesFieldName ?? ''}'.length > 0;
+    const frameLength = frame.length ?? values[0]?.length ?? 0;
+    const rows = Array(frameLength);
 
     let rowCount = 0;
-    for (let i = 0; i < frame.length; i++) {
+    for (let i = 0; i < frameLength; i++) {
       rows[rowCount] = {
         __depth: 0,
         __index: i,
@@ -1022,6 +1023,12 @@ export function computeColWidths(fields: Field[], availWidth: number) {
   );
 }
 
+export function buildNestedColumnWidthsMap(fields: Field[], widths: number[]): ColumnWidths {
+  return new Map<string, ColumnWidth>(
+    fields.map((field, idx) => [getDisplayName(field), { type: 'resized', width: widths[idx] }])
+  );
+}
+
 /**
  * @internal
  * if applyToRow is true in any field, return a function that gets the row background color
@@ -1206,3 +1213,8 @@ export const IS_SAFARI_26 = (() => {
   const minorVersion = +safariVersionMatch[2];
   return majorVersion === 26 && minorVersion <= 1;
 })();
+
+export const getStableRowKey = (rowIndex: number, frame?: DataFrame): string => {
+  const key = frame?.meta?.custom?.stableRowKey;
+  return key != null ? String(key) : String(rowIndex);
+};
