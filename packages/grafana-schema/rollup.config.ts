@@ -4,8 +4,6 @@ import { fileURLToPath } from 'node:url';
 import path from 'path';
 import copy from 'rollup-plugin-copy';
 
-// bust
-
 import { cjsOutput, entryPoint, esmOutput, plugins } from '../rollup.config.parts';
 
 const rq = createRequire(import.meta.url);
