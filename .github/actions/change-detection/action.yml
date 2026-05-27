@@ -125,6 +125,7 @@ runs:
           frontend_dependencies:
             - 'yarn.lock'
             - 'package.json'
+            - '**/package.json'
           frontend_packages:
             - '.github/actions/checkout/**'
             - '.github/actions/change-detection/**'
