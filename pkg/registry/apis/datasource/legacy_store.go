@@ -14,7 +14,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	authlib "github.com/grafana/authlib/types"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -39,6 +41,8 @@ type legacyStorage struct {
 	datasources                     PluginDatasourceProvider
 	resourceInfo                    *utils.ResourceInfo
 	dsConfigHandlerRequestsDuration *prometheus.HistogramVec
+	accessClient                    authlib.AccessClient
+	group                           string
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -70,7 +74,41 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("legacyStorage.List"), time.Since(start).Seconds())
 		}()
 	}
-	return s.datasources.ListDataSources(ctx)
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get requester identity from context: %w", err)
+	}
+	results, err := s.datasources.ListDataSources(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter results using authlib
+	req := authlib.BatchCheckRequest{
+		Namespace: user.GetNamespace(),
+		Checks:    make([]authlib.BatchCheckItem, len(results.Items)),
+	}
+	for i, ds := range results.Items {
+		req.Checks[i] = authlib.BatchCheckItem{
+			Verb:     "get",
+			Group:    s.group,
+			Resource: "datasources",
+			Name:     ds.Name,
+		}
+	}
+	batch, err := s.accessClient.BatchCheck(ctx, user, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to perform batch access check: %w", err)
+	}
+	all := results.Items
+	results.Items = make([]v0alpha1.DataSource, 0, len(all))
+	for _, ds := range all {
+		if batch.Results[ds.Name].Allowed {
+			results.Items = append(results.Items, ds)
+		}
+	}
+	return results, nil
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
