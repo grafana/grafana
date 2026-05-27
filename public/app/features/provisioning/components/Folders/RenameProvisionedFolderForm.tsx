@@ -135,7 +135,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
         resourceKind: 'folder',
         resourceID: folder.uid,
         title,
-        user: getCurrentCommitUser(),
+        ...getCurrentCommitUser(),
       }),
       body: {
         spec: { title },

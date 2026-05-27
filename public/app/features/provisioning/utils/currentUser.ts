@@ -1,21 +1,24 @@
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { type CommitUser } from './commitMessage';
+import { type CommitTemplateVars } from './commitMessage';
 
 /**
- * Snapshot of the currently signed-in Grafana user, shaped for use as
- * commit-message template vars and the `Grafana-saved-by:` trailer.
- * Returns undefined when nobody is signed in (which shouldn't happen in
- * the UI flows that call this, but keeps the helper safe to use anywhere).
+ * Snapshot of the currently signed-in Grafana user, shaped to spread into
+ * `CommitTemplateVars` so it both populates `{{userName}}` / `{{userLogin}}` /
+ * `{{userEmail}}` template placeholders and feeds the `Grafana-saved-by:`
+ * trailer. Returns undefined when nobody is signed in, in which case spreading
+ * is a no-op.
  */
-export function getCurrentCommitUser(): CommitUser | undefined {
+export function getCurrentCommitUser():
+  | Pick<CommitTemplateVars, 'userName' | 'userLogin' | 'userEmail'>
+  | undefined {
   const u = contextSrv.user;
   if (!u?.isSignedIn) {
     return undefined;
   }
   return {
-    name: u.name,
-    login: u.login,
-    email: u.email,
+    userName: u.name,
+    userLogin: u.login,
+    userEmail: u.email,
   };
 }

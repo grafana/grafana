@@ -105,7 +105,7 @@ export function DeleteProvisionedDashboardForm({
         resourceKind: 'dashboard',
         resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
         title: dashboard.state.title ?? '',
-        user: getCurrentCommitUser(),
+        ...getCurrentCommitUser(),
       });
 
       try {

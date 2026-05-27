@@ -5,20 +5,17 @@ export type CommitAction = 'create' | 'update' | 'delete' | 'move' | 'rename';
 export type CommitResourceKind = 'dashboard' | 'folder';
 export type CommitResourceID = string;
 
-export interface CommitUser {
-  name?: string;
-  login?: string;
-  email?: string;
-}
-
 export interface CommitTemplateVars {
   action: CommitAction;
   resourceKind: CommitResourceKind;
   resourceID: CommitResourceID;
   title: string;
-  user?: CommitUser;
+  userName?: string;
+  userLogin?: string;
+  userEmail?: string;
 }
 
+type TemplateKey = keyof CommitTemplateVars;
 const TEMPLATE_VAR = /\{\{(action|resourceKind|resourceID|title|userName|userLogin|userEmail)\}\}/g;
 
 const TRAILER_KEY = 'Grafana-saved-by';
@@ -54,36 +51,15 @@ function defaultMessage({ action, resourceKind, title }: CommitTemplateVars): st
   return defaults[`${resourceKind}:${action}`];
 }
 
-function interpolate(template: string, vars: CommitTemplateVars): string {
-  return template.replace(TEMPLATE_VAR, (_, key: string) => {
-    switch (key) {
-      case 'action':
-        return vars.action;
-      case 'resourceKind':
-        return vars.resourceKind;
-      case 'resourceID':
-        return vars.resourceID;
-      case 'title':
-        return vars.title;
-      case 'userName':
-        return vars.user?.name ?? '';
-      case 'userLogin':
-        return vars.user?.login ?? '';
-      case 'userEmail':
-        return vars.user?.email ?? '';
-      default:
-        return `{{${key}}}`;
-    }
-  });
-}
-
 export function renderCommitMessage(template: string | undefined | null, vars: CommitTemplateVars): string {
   const trimmed = template?.trim();
   if (!trimmed) {
     return defaultMessage(vars);
   }
-  return interpolate(trimmed, vars);
+  return trimmed.replace(TEMPLATE_VAR, (_, key: TemplateKey) => vars[key] ?? '');
 }
+
+type SavedByVars = Pick<CommitTemplateVars, 'userName' | 'userLogin'>;
 
 /**
  * Builds the `Grafana-saved-by: ...` git trailer for the supplied user, or
@@ -91,9 +67,9 @@ export function renderCommitMessage(template: string | undefined | null, vars: C
  * full name when available and append the login in parentheses so the trailer
  * remains greppable even if the display name is empty or duplicated.
  */
-function buildSavedByTrailer(user: CommitUser | undefined): string | undefined {
-  const name = user?.name?.trim();
-  const login = user?.login?.trim();
+function buildSavedByTrailer({ userName, userLogin }: SavedByVars): string | undefined {
+  const name = userName?.trim();
+  const login = userLogin?.trim();
   if (!name && !login) {
     return undefined;
   }
@@ -108,8 +84,8 @@ function buildSavedByTrailer(user: CommitUser | undefined): string | undefined {
  * the message already contains a trailer (so templates / user comments that
  * spell it out themselves don't end up with a duplicate).
  */
-export function appendSavedByTrailer(message: string, user: CommitUser | undefined): string {
-  const trailer = buildSavedByTrailer(user);
+export function appendSavedByTrailer(message: string, vars: SavedByVars): string {
+  const trailer = buildSavedByTrailer(vars);
   if (!trailer) {
     return message;
   }
@@ -143,5 +119,5 @@ export function getSingleResourceCommitMessage({
 }: SingleResourceCommitMessageArgs): string {
   const trimmed = comment?.trim();
   const base = trimmed ? trimmed : renderCommitMessage(repository?.commit?.singleResourceMessageTemplate, vars);
-  return appendSavedByTrailer(base, vars.user);
+  return appendSavedByTrailer(base, vars);
 }

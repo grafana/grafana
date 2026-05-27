@@ -1,11 +1,6 @@
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import {
-  appendSavedByTrailer,
-  getSingleResourceCommitMessage,
-  renderCommitMessage,
-  type CommitUser,
-} from './commitMessage';
+import { appendSavedByTrailer, getSingleResourceCommitMessage, renderCommitMessage } from './commitMessage';
 
 const repoWithTemplate = (template: string | undefined): RepositoryView => ({
   name: 'r',
@@ -16,7 +11,7 @@ const repoWithTemplate = (template: string | undefined): RepositoryView => ({
   commit: template === undefined ? undefined : { singleResourceMessageTemplate: template },
 });
 
-const user: CommitUser = { name: 'Ada Lovelace', login: 'ada', email: 'ada@example.com' };
+const userVars = { userName: 'Ada Lovelace', userLogin: 'ada', userEmail: 'ada@example.com' };
 
 describe('renderCommitMessage', () => {
   it('falls back to the legacy hardcoded default when template is empty', () => {
@@ -67,7 +62,7 @@ describe('renderCommitMessage', () => {
         resourceKind: 'dashboard',
         resourceID: 'abc',
         title: 'Latency',
-        user,
+        ...userVars,
       })
     ).toBe('update Latency by Ada Lovelace <ada@example.com> (ada)');
   });
@@ -108,35 +103,35 @@ describe('renderCommitMessage', () => {
 
 describe('appendSavedByTrailer', () => {
   it('appends a trailer with name and login', () => {
-    expect(appendSavedByTrailer('Save dashboard: Latency', user)).toBe(
+    expect(appendSavedByTrailer('Save dashboard: Latency', userVars)).toBe(
       'Save dashboard: Latency\n\nGrafana-saved-by: Ada Lovelace (ada)'
     );
   });
 
   it('uses login alone when name is missing', () => {
-    expect(appendSavedByTrailer('msg', { login: 'ada' })).toBe('msg\n\nGrafana-saved-by: ada');
+    expect(appendSavedByTrailer('msg', { userLogin: 'ada' })).toBe('msg\n\nGrafana-saved-by: ada');
   });
 
   it('uses name alone when login is missing', () => {
-    expect(appendSavedByTrailer('msg', { name: 'Ada Lovelace' })).toBe('msg\n\nGrafana-saved-by: Ada Lovelace');
+    expect(appendSavedByTrailer('msg', { userName: 'Ada Lovelace' })).toBe('msg\n\nGrafana-saved-by: Ada Lovelace');
   });
 
   it('avoids duplicating the parens when name equals login', () => {
-    expect(appendSavedByTrailer('msg', { name: 'ada', login: 'ada' })).toBe('msg\n\nGrafana-saved-by: ada');
+    expect(appendSavedByTrailer('msg', { userName: 'ada', userLogin: 'ada' })).toBe('msg\n\nGrafana-saved-by: ada');
   });
 
-  it('returns the message unchanged when user is undefined or empty', () => {
-    expect(appendSavedByTrailer('msg', undefined)).toBe('msg');
-    expect(appendSavedByTrailer('msg', { name: '   ', login: '' })).toBe('msg');
+  it('returns the message unchanged when there is no user info', () => {
+    expect(appendSavedByTrailer('msg', {})).toBe('msg');
+    expect(appendSavedByTrailer('msg', { userName: '   ', userLogin: '' })).toBe('msg');
   });
 
   it('does not append a duplicate trailer if one is already present', () => {
     const existing = 'Save dashboard: X\n\nGrafana-saved-by: someone';
-    expect(appendSavedByTrailer(existing, user)).toBe(existing);
+    expect(appendSavedByTrailer(existing, userVars)).toBe(existing);
   });
 
   it('trims trailing whitespace before appending', () => {
-    expect(appendSavedByTrailer('msg\n\n\n', user)).toBe('msg\n\nGrafana-saved-by: Ada Lovelace (ada)');
+    expect(appendSavedByTrailer('msg\n\n\n', userVars)).toBe('msg\n\nGrafana-saved-by: Ada Lovelace (ada)');
   });
 });
 
@@ -154,7 +149,7 @@ describe('getSingleResourceCommitMessage', () => {
         comment: 'My commit message',
         repository: repoWithTemplate('feat: {{title}}'),
         ...baseVars,
-        user,
+        ...userVars,
       })
     ).toBe('My commit message\n\nGrafana-saved-by: Ada Lovelace (ada)');
   });
@@ -206,7 +201,7 @@ describe('getSingleResourceCommitMessage', () => {
         comment: undefined,
         repository: undefined,
         ...baseVars,
-        user,
+        ...userVars,
       })
     ).toBe('Save dashboard: Latency\n\nGrafana-saved-by: Ada Lovelace (ada)');
   });
@@ -217,7 +212,7 @@ describe('getSingleResourceCommitMessage', () => {
         comment: '',
         repository: repoWithTemplate('feat: {{title}}'),
         ...baseVars,
-        user,
+        ...userVars,
       })
     ).toBe('feat: Latency\n\nGrafana-saved-by: Ada Lovelace (ada)');
   });
@@ -228,7 +223,7 @@ describe('getSingleResourceCommitMessage', () => {
         comment: '',
         repository: repoWithTemplate('feat: {{title}}\n\nGrafana-saved-by: {{userName}}'),
         ...baseVars,
-        user,
+        ...userVars,
       })
     ).toBe('feat: Latency\n\nGrafana-saved-by: Ada Lovelace');
   });

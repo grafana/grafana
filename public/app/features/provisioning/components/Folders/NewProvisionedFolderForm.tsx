@@ -154,7 +154,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
         resourceKind: 'folder',
         resourceID: '',
         title,
-        user: getCurrentCommitUser(),
+        ...getCurrentCommitUser(),
       }),
       body: folderModel,
     });

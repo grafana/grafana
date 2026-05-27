@@ -87,7 +87,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
         resourceKind: 'folder',
         resourceID: parentFolder?.uid ?? '',
         title: parentFolder?.title ?? '',
-        user: getCurrentCommitUser(),
+        ...getCurrentCommitUser(),
       });
 
       try {
