@@ -37,8 +37,14 @@ export const FlagKeys = {
   FaroSessionReplay: "faroSessionReplay",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
+  /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
+  GlobalDashboardVariables: "globalDashboardVariables",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
+  /** Enables usage of the new annotations API client */
+  GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
+  /** Enables log level inference from log line contents when level is not defined as a field or a label */
+  GrafanaLogLevelInference: "grafana.logLevelInference",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables org-defined dashboard templates for enterprise */
@@ -61,6 +67,8 @@ export const FlagKeys = {
   NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
   OtelLogsFormatting: "otelLogsFormatting",
+  /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
+  PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
   /** Enables plugins setting from new apis */
   PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
@@ -220,6 +228,17 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
 };
 
 /**
+ * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
+ *
+ * **Details:**
+ * - flag key: `globalDashboardVariables`
+ * - default value: `false`
+ */
+export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("globalDashboardVariables", false, options).value;
+};
+
+/**
  * Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)
  *
  * **Details:**
@@ -228,6 +247,28 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
  */
 export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.enableScopesFirstMode", false, options).value;
+};
+
+/**
+ * Enables usage of the new annotations API client
+ *
+ * **Details:**
+ * - flag key: `grafana.kubernetesAnnotationsClient`
+ * - default value: `false`
+ */
+export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.kubernetesAnnotationsClient", false, options).value;
+};
+
+/**
+ * Enables log level inference from log line contents when level is not defined as a field or a label
+ *
+ * **Details:**
+ * - flag key: `grafana.logLevelInference`
+ * - default value: `false`
+ */
+export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.logLevelInference", false, options).value;
 };
 
 /**
@@ -257,10 +298,10 @@ export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluatio
  *
  * **Details:**
  * - flag key: `grafana.scenesFlickeringFix`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.scenesFlickeringFix", false, options).value;
+  return useFlag("grafana.scenesFlickeringFix", true, options).value;
 };
 
 /**
@@ -349,6 +390,17 @@ export const useFlagNewSavedQueriesExperience = (options?: ReactFlagEvaluationOp
  */
 export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("otelLogsFormatting", false, options).value;
+};
+
+/**
+ * Initializes data source instance settings asynchronously from the API instead of synchronously from boot data
+ *
+ * **Details:**
+ * - flag key: `plugins.initDataSourcesAsync`
+ * - default value: `false`
+ */
+export const useFlagPluginsInitDataSourcesAsync = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("plugins.initDataSourcesAsync", false, options).value;
 };
 
 /**

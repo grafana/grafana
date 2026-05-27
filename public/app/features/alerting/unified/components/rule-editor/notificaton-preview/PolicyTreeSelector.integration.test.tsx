@@ -10,7 +10,12 @@ import { setPluginLinksHook } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { grantUserPermissions, mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
+import {
+  grantUserPermissions,
+  mockAlertmanagerAlert,
+  mockDataSource,
+  mockFolder,
+} from 'app/features/alerting/unified/mocks';
 import {
   grafanaRulerGroup,
   grafanaRulerNamespace,
@@ -34,6 +39,8 @@ import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificati
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: ReactNode }) => <div>{actions}</div>,
 }));
+
+jest.mock('app/features/alerting/unified/useRouteGroupsMatcher');
 
 jest.setTimeout(90 * 1000);
 
@@ -376,6 +383,73 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
       });
       expect(policyTreeUi.policySelector.query()).not.toBeInTheDocument();
       expect(policyTreeUi.resetButton.query()).not.toBeInTheDocument();
+    });
+  });
+
+  // Regression test for bug #1 from PR #124697:
+  // AutomaticRooting passed policyName={undefined} to NotificationPreview when only
+  // alertingMultiplePolicies was enabled (alertingPolicyRoutingSettings OFF).
+  // The selected tree (stored as __grafana_managed_route__ label) was never forwarded,
+  // so routing was always evaluated against the default tree.
+  describe('notification preview routing (alertingPolicyRoutingSettings OFF)', () => {
+    const CUSTOM_POLICY_NAME = 'Managed Policy - Empty Provisioned';
+
+    beforeEach(() => {
+      setFolderResponse(
+        mockFolder({
+          uid: grafanaRulerNamespace.uid,
+          title: grafanaRulerNamespace.name,
+          accessControl: {
+            [AccessControlAction.AlertingRuleUpdate]: true,
+          },
+        })
+      );
+
+      // Rule uses legacy label-based routing (no notification_settings.policy)
+      const ruleWithLabel: RulerGrafanaRuleDTO = {
+        ...grafanaRulerRule,
+        labels: { [NAMED_ROOT_LABEL_NAME]: CUSTOM_POLICY_NAME },
+        grafana_alert: {
+          ...grafanaRulerRule.grafana_alert,
+          notification_settings: undefined,
+        },
+      };
+      const group: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
+        ...grafanaRulerGroup,
+        rules: [ruleWithLabel],
+      };
+      server.use(
+        http.get(`/api/ruler/grafana/api/v1/rules/${grafanaRulerNamespace.uid}/${grafanaRulerGroup.name}`, () =>
+          HttpResponse.json(group)
+        )
+      );
+    });
+
+    it('forwards the policy name from the __grafana_managed_route__ label to the routing preview', async () => {
+      // Simulate the preview API returning an instance so the routing tree fetch is triggered
+      mockPreviewApiResponse(server, [mockAlertmanagerAlert({ labels: { severity: 'critical' } })]);
+
+      // Capture all GET requests to the k8s routing tree API so we can verify
+      // the preview fetched the named policy tree, not the default root.
+      const capture = captureRequests((r) => r.method === 'GET' && r.url.includes('/routingtrees/'));
+
+      renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+
+      // Wait for the form to load with the custom policy pre-selected
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeEnabled();
+      });
+
+      const requests = await capture;
+
+      // Before the fix, AutomaticRooting passed policyName={undefined} so the preview
+      // hook always fetched the default root tree (ROOT_ROUTE_NAME), never the named one.
+      // After the fix, it derives the name from the __grafana_managed_route__ label and
+      // the k8s API is called with the encoded policy name in the URL.
+      await waitFor(() => {
+        const routingTreeUrls = requests.map((r) => r.url);
+        expect(routingTreeUrls.some((url) => url.includes(encodeURIComponent(CUSTOM_POLICY_NAME)))).toBe(true);
+      });
     });
   });
 
