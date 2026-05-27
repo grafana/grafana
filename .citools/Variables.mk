@@ -15,9 +15,6 @@ endef
 # Tool: "air"
 air = "$(call compile_tool,air,github.com/air-verse/air)"
 
-# Tool: "cog"
-cog = "$(call compile_tool,cog,github.com/grafana/cog/cmd/cli)"
-
 # Tool: "cue"
 cue = "$(call compile_tool,cue,cuelang.org/go/cmd/cue)"
 

@@ -19,7 +19,6 @@ updates:
       - "/scripts/go-workspace"
       - "/scripts/modowners"
       - "/.citools/src/air"
-      - "/.citools/src/cog"
       - "/.citools/src/cue"
       - "/.citools/src/golangci-lint"
       - "/.citools/src/govulncheck"
