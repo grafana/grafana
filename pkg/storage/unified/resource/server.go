@@ -984,7 +984,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	defer s.inflight.Done()
 
 	if r := verifyRequestKey(req.Key); r != nil {
-		return nil, fmt.Errorf("invalid request key: %s", r.Message)
+		return nil, status.Error(codes.InvalidArgument, r.Message)
 	}
 
 	rsp := &resourcepb.CreateResponse{}
@@ -1108,6 +1108,10 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 	}
 	defer s.inflight.Done()
 
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
+
 	rsp := &resourcepb.UpdateResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
@@ -1200,6 +1204,10 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		return nil, errStopping
 	}
 	defer s.inflight.Done()
+
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
 
 	rsp := &resourcepb.DeleteResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
@@ -1317,8 +1325,8 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 			}}, nil
 	}
 
-	if req.Key.Resource == "" {
-		return &resourcepb.ReadResponse{Error: NewBadRequestError("missing resource")}, nil
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
 	}
 
 	var (
@@ -1374,8 +1382,15 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
-	span.SetAttributes(attribute.String("group", req.Options.Key.Group), attribute.String("resource", req.Options.Key.Resource))
 	defer span.End()
+
+	if req.Options == nil {
+		return nil, status.Error(codes.InvalidArgument, "missing list options")
+	}
+	if r := verifyRequestKeyCollection(req.Options.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
+	span.SetAttributes(attribute.String("group", req.Options.Key.Group), attribute.String("resource", req.Options.Key.Resource))
 
 	// The history + trash queries do not yet support additional filters
 	if req.Source != resourcepb.ListRequest_STORE {
@@ -1687,6 +1702,13 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return apierrors.NewUnauthorized("no user found in context")
+	}
+
+	if req.Options == nil {
+		return status.Error(codes.InvalidArgument, "missing watch options")
+	}
+	if r := verifyRequestKeyCollection(req.Options.Key); r != nil {
+		return status.Error(codes.InvalidArgument, r.Message)
 	}
 
 	key := req.Options.Key

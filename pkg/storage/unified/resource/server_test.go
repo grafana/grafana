@@ -21,7 +21,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	authlib "github.com/grafana/authlib/types"
@@ -280,6 +282,7 @@ func TestSimpleServer(t *testing.T) {
 		})
 		require.Error(t, err)
 		require.Nil(t, created)
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
 
 		// invalid resource
 		key = &resourcepb.ResourceKey{
@@ -295,6 +298,7 @@ func TestSimpleServer(t *testing.T) {
 		})
 		require.Error(t, err)
 		require.Nil(t, created)
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
 
 		// invalid namespace
 		key = &resourcepb.ResourceKey{
@@ -310,6 +314,7 @@ func TestSimpleServer(t *testing.T) {
 		})
 		require.Error(t, err)
 		require.Nil(t, created)
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
 
 		// invalid name
 		key = &resourcepb.ResourceKey{
@@ -325,6 +330,7 @@ func TestSimpleServer(t *testing.T) {
 		})
 		require.Error(t, err)
 		require.Nil(t, created)
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
 
 		// legacy name - valid
 		key = &resourcepb.ResourceKey{
@@ -397,6 +403,7 @@ func TestSimpleServer(t *testing.T) {
 
 			require.Error(t, err)
 			require.Nil(t, created)
+			require.Equal(t, codes.InvalidArgument, status.Code(err))
 		}
 
 		// resource
@@ -415,6 +422,7 @@ func TestSimpleServer(t *testing.T) {
 
 			require.Error(t, err)
 			require.Nil(t, created)
+			require.Equal(t, codes.InvalidArgument, status.Code(err))
 		}
 
 		// namespace
@@ -438,6 +446,7 @@ func TestSimpleServer(t *testing.T) {
 
 			require.Error(t, err)
 			require.Nil(t, created)
+			require.Equal(t, codes.InvalidArgument, status.Code(err))
 		}
 	})
 
