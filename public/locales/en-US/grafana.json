@@ -9062,7 +9062,6 @@
       "copy-button": "Copy to clipboard",
       "download-button": "Download file",
       "download-successful_toast_message": "Your JSON has been downloaded",
-      "export-externally-label": "Export the dashboard to use in another instance",
       "export-format": "Format",
       "export-mode": "Model",
       "info-text": "Copy or download a file containing the definition of your dashboard",
@@ -14713,7 +14712,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Export as image",
-      "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
