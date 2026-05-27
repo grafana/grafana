@@ -202,7 +202,6 @@
     "fishery": "^2.2.2",
     "fork-ts-checker-webpack-plugin": "9.1.0",
     "github-codeowners": "^0.2.1",
-    "glob": "11.1.0",
     "html-tags": "^5.1.0",
     "http-server": "14.1.1",
     "i18next-cli": "^1.48.0",
