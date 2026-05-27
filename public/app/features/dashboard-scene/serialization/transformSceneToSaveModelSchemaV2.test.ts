@@ -52,6 +52,7 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
+import { PanelIntentChips } from '../scene/PanelIntentChips';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
@@ -1565,6 +1566,26 @@ describe('vizPanelToSchemaV2 snapshot repeat clones', () => {
     expect(snapshotElement.kind).toBe('Panel');
     expect(snapshotElement.spec.id).toBe(djb2Hash(cloneKey));
     expect(snapshotElement.spec.id).not.toBe(normalElement.spec.id);
+  });
+});
+
+describe('vizPanelToSchemaV2 panel intent', () => {
+  it('round-trips intent from PanelIntentChips title item', () => {
+    const intent = {
+      schemaVersion: 1,
+      purpose: 'Track checkout p99 latency.',
+      expectedBehavior: { normalRange: 'p99 < 250ms' },
+    };
+    const panel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Test',
+      titleItems: [new PanelIntentChips({ intent })],
+    });
+
+    const result = vizPanelToSchemaV2(panel, undefined, false);
+    expect(result.kind).toEqual('Panel');
+    expect((result.spec as PanelSpec).intent).toEqual(intent);
   });
 });
 

@@ -229,6 +229,7 @@ export function transformSaveModelSchemaV2ToScene(
       meta,
       tags: dashboard.tags,
       title: dashboard.title,
+      intent: dashboard.intent,
       uid: metadata.name,
       version: metadata.generation,
       body: layoutManager,

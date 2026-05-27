@@ -33,6 +33,7 @@ import { type DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
+import { PanelIntentChips } from '../../scene/PanelIntentChips';
 import { PanelNotices } from '../../scene/PanelNotices';
 import { VizPanelHeaderActions } from '../../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../../scene/VizPanelSubHeader';
@@ -59,6 +60,10 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   );
 
   titleItems.push(new PanelNotices());
+
+  if (panel.spec.intent) {
+    titleItems.push(new PanelIntentChips({ intent: panel.spec.intent }));
+  }
 
   const queryOptions = panel.spec.data.spec.queryOptions;
   const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;

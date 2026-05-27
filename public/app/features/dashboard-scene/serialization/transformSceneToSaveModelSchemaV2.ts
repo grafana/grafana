@@ -56,6 +56,7 @@ import {
   type Preferences,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { PanelIntentChips } from '../scene/PanelIntentChips';
 import { type DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { isLinkEditable } from '../settings/links/utils';
@@ -129,6 +130,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
         ...(link.placement !== undefined && { placement: link.placement }),
       })),
     tags: sceneDash.tags ?? defaultDashboardV2Spec().tags,
+    intent: sceneDash.intent,
     // EOF dashboard settings
 
     // time settings
@@ -316,9 +318,20 @@ export function vizPanelToSchemaV2(
           fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
         },
       },
+      intent: panelIntentFromVizPanel(vizPanel),
     },
   };
   return elementSpec;
+}
+
+function panelIntentFromVizPanel(vizPanel: VizPanel): PanelKind['spec']['intent'] | undefined {
+  const titleItems = vizPanel.state.titleItems;
+  if (!Array.isArray(titleItems)) {
+    return undefined;
+  }
+
+  const intentChips = titleItems.find((item): item is PanelIntentChips => item instanceof PanelIntentChips);
+  return intentChips?.state.intent;
 }
 
 function handleFieldConfigDefaultsConversion(vizPanel: VizPanel) {
