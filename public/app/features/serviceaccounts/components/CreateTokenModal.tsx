@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, generateUUID } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -58,7 +57,7 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
   useEffect(() => {
     // Generate new token name every time we open modal
     if (isOpen) {
-      setDefaultTokenName(`${serviceAccountLogin}-${uuidv4()}`);
+      setDefaultTokenName(`${serviceAccountLogin}-${generateUUID()}`);
     }
   }, [serviceAccountLogin, isOpen]);
 

@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { type SceneComponentProps, SceneObjectBase, type SceneObject } from '@grafana/scenes';
+import { type SceneComponentProps, SceneObjectBase, type SceneObject, type SceneObjectState } from '@grafana/scenes';
 import { Box, Icon, ScrollContainer, Sidebar, Text, Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardLinksSet } from '../settings/links/DashboardLinksSet';
@@ -19,10 +19,40 @@ import { type DashboardEditPane } from './DashboardEditPane';
 import { getEditableElementFor } from './shared';
 import { useOutlineRename } from './useOutlineRename';
 
-export class DashboardOutline extends SceneObjectBase {
+interface DashboardOutlineState extends SceneObjectState {
+  collapsedState: Map<string, boolean>;
+}
+
+export class DashboardOutline extends SceneObjectBase<DashboardOutlineState> {
   public static Component = DashboardOutlineRenderer;
+
+  constructor(state?: Partial<DashboardOutlineState>) {
+    super({
+      ...state,
+      collapsedState: state?.collapsedState ?? new Map<string, boolean>(),
+    });
+  }
+
   public getId() {
     return 'outline' as const;
+  }
+
+  public isNodeCollapsed(key: string | undefined, defaultCollapsed: boolean): boolean {
+    if (key === undefined) {
+      return defaultCollapsed;
+    }
+    return this.state.collapsedState.get(key) ?? defaultCollapsed;
+  }
+
+  public setNodeCollapsed(key: string | undefined, collapsed: boolean): void {
+    if (key !== undefined) {
+      this.state.collapsedState.set(key, collapsed);
+    }
+  }
+
+  public clone(withState?: Partial<DashboardOutlineState>): this {
+    const cloned = super.clone({ ...withState, collapsedState: this.state.collapsedState });
+    return cloned;
   }
 }
 
@@ -39,6 +69,7 @@ export function DashboardOutlineRenderer({ model }: SceneComponentProps<Dashboar
             sceneObject={dashboard}
             isEditing={isEditing}
             editPane={dashboard.state.editPane}
+            outline={model}
             depth={0}
             index={0}
           />
@@ -51,15 +82,16 @@ export function DashboardOutlineRenderer({ model }: SceneComponentProps<Dashboar
 interface DashboardOutlineNodeProps {
   sceneObject: SceneObject;
   editPane: DashboardEditPane;
+  outline: DashboardOutline;
   isEditing: boolean | undefined;
   depth: number;
   index: number;
 }
 
-function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }: DashboardOutlineNodeProps) {
+function DashboardOutlineNode({ sceneObject, editPane, outline, isEditing, depth, index }: DashboardOutlineNodeProps) {
   const styles = useStyles2(getStyles);
   const key = sceneObject.state.key;
-  const [isCollapsed, setIsCollapsed] = useState(depth > 0);
+  const [isCollapsed, setIsCollapsed] = useState(() => outline.isNodeCollapsed(key, depth > 0));
   const { isSelected, onSelect } = useElementSelection(key);
   const isCloned = useMemo(() => isRepeatCloneOrChildOf(sceneObject), [sceneObject]);
   const editableElement = useMemo(() => getEditableElementFor(sceneObject)!, [sceneObject]);
@@ -99,7 +131,9 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
 
   const onToggleCollapse = (evt: React.MouseEvent) => {
     evt.stopPropagation();
-    setIsCollapsed(!isCollapsed);
+    const newCollapsed = !isCollapsed;
+    setIsCollapsed(newCollapsed);
+    outline.setNodeCollapsed(key, newCollapsed);
   };
 
   if (elementInfo.isHidden && !isEditing) {
@@ -180,6 +214,7 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
                 key={child.state.key}
                 sceneObject={child}
                 editPane={editPane}
+                outline={outline}
                 depth={depth + 1}
                 isEditing={isEditing}
                 index={i}
