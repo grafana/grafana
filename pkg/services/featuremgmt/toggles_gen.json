@@ -1178,6 +1178,20 @@
     },
     {
       "metadata": {
+        "name": "assistantOnboarding",
+        "resourceVersion": "1779830129823",
+        "creationTimestamp": "2026-05-26T21:15:29Z"
+      },
+      "spec": {
+        "description": "Enables a custom onboarding experience for the Grafana Assistant plugin on the plugin details page",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "auditLoggingAppPlatform",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-12-29T15:28:29Z"
