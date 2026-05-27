@@ -70,7 +70,12 @@
 
     { "method": "GET", "path": "/loki/api/v1/rules", "reqRole": "Viewer", "reqAction": "alert.rules.external:read" },
     { "method": "POST", "path": "/loki/api/v1/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
-    { "method": "DELETE", "path": "/loki/api/v1/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
+    {
+      "method": "DELETE",
+      "path": "/loki/api/v1/rules",
+      "reqRole": "Editor",
+      "reqAction": "alert.rules.external:write"
+    },
 
     { "method": "GET", "path": "/rules", "reqRole": "Viewer", "reqAction": "alert.rules.external:read" },
     { "method": "POST", "path": "/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
