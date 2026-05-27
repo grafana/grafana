@@ -1,16 +1,16 @@
 import type { AddActionConfig, ModifyActionConfig } from 'plop';
 
-export interface FormatFilesActionConfig {
+interface FormatFilesActionConfig {
   type: 'formatFiles';
   files: string[];
 }
 
-export interface RunGenerateApisActionConfig {
+interface RunGenerateApisActionConfig {
   type: 'runGenerateApis';
   isEnterprise: boolean;
 }
 
-export interface UpdatePackageJsonExportsActionConfig {
+interface UpdatePackageJsonExportsActionConfig {
   type: 'updatePackageJsonExports';
 }
 

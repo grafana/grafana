@@ -23,7 +23,7 @@ import {
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
-import { RefreshEvent } from '@grafana/runtime';
+import { RefreshEvent, ScopesContext, type ScopesContextValue } from '@grafana/runtime';
 import { type VizLegendOptions } from '@grafana/schema';
 import {
   ErrorBoundary,
@@ -84,6 +84,11 @@ export interface State {
 }
 
 export class PanelStateWrapper extends PureComponent<Props, State> {
+  // Allows reading the current scopes (when scope filters are enabled) from React context
+  // so they can be persisted with manually created/updated annotations.
+  static contextType = ScopesContext;
+  declare context: ScopesContextValue | undefined;
+
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
   private eventFilter: EventFilterOptions = { onlyLocal: true };
@@ -413,6 +418,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.setState({ errorMessage: undefined });
   };
 
+  private getCurrentScopeNames(): string[] {
+    return this.context?.state.value?.map((scope) => scope.metadata.name) ?? [];
+  }
+
   onAnnotationCreate = async (event: AnnotationEventUIModel) => {
     const isRegion = event.from !== event.to;
     const anno = {
@@ -424,7 +433,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       tags: event.tags,
       text: event.description,
     };
-    await annotationServer().save(anno);
+    await annotationServer().save(anno, this.getCurrentScopeNames());
     getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
     this.state.context.eventBus.publish(new AnnotationChangeEvent(anno));
   };
@@ -447,7 +456,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       tags: event.tags,
       text: event.description,
     };
-    await annotationServer().update(anno);
+    await annotationServer().update(anno, this.getCurrentScopeNames());
 
     getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
     this.state.context.eventBus.publish(new AnnotationChangeEvent(anno));

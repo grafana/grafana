@@ -440,7 +440,10 @@
       "label-value": "Valore"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "Azioni"
+      "n-contact-points_one": "",
+      "n-contact-points_other": "",
+      "view-route_one": "",
+      "view-route_other": ""
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Aggiungi i dati di avviso al carico utile",
@@ -456,6 +459,7 @@
     },
     "alert-instances-table": {
       "created": "Creato",
+      "destination": "",
       "labels": "Etichette",
       "state": "Stato"
     },
@@ -2341,6 +2345,7 @@
     },
     "notification-route": {
       "no-labels": "Nessuna etichetta",
+      "notification-policies": "",
       "notification-policy": "Criterio di notifica"
     },
     "notification-route-header": {
@@ -4380,7 +4385,6 @@
       "button-cancel": "Annulla",
       "button-delete": "Elimina",
       "button-deleting": "Eliminazione in corso...",
-      "commit": "Elimina cartella",
       "delete-warning": "Questa operazione eliminerà questa cartella e tutti i suoi discendenti. In totale, questo influenzerà:",
       "missing-info": "Campi obbligatori mancanti",
       "success-message": "Cartella eliminata correttamente"
@@ -4494,7 +4498,6 @@
       "button-cancel": "Annulla",
       "button-rename": "Rinomina",
       "button-renaming": "Ridenominazione in corso...",
-      "commit": "Rinomina cartella",
       "error-saving": "Impossibile rinominare la cartella",
       "label-folder-name": "Nome cartella",
       "missing-info": "Campi obbligatori mancanti",
@@ -6383,6 +6386,8 @@
         "ungroup-tabs": "Annulla raggruppamento schede"
       },
       "name": "Schede",
+      "scroll-tabs-left": "",
+      "scroll-tabs-right": "",
       "tab": {
         "new": "Nuova scheda",
         "repeat": {
@@ -6480,6 +6485,10 @@
         },
         "save-dashboard-short": "Salva",
         "save-library-panel": "Salva pannello della libreria",
+        "save-template": {
+          "label": "",
+          "tooltip": ""
+        },
         "share": {
           "arrow": "Condividi",
           "tooltip": "Copia link"
@@ -6493,6 +6502,9 @@
       "read-only": "Solo lettura",
       "refresh": "Aggiorna dashboard",
       "save": "Salva dashboard",
+      "save-as-template": {
+        "label": ""
+      },
       "save-dashboard": {
         "label": "Salva dashboard",
         "tooltip": "Salva modifiche"
@@ -7525,7 +7537,9 @@
         "label-details": "Dettagli",
         "title": "Salva dashboard",
         "title-copy": "Salva copia dalla dashboard",
-        "title-provisioned": "Dashboard configurata"
+        "title-provisioned": "Dashboard configurata",
+        "title-template": "",
+        "title-update-template": ""
       }
     },
     "save-dashboard-form": {
@@ -7602,6 +7616,10 @@
     },
     "section-filters-list": {
       "add-filter": ""
+    },
+    "section-placement": {
+      "top-row": "",
+      "top-tab": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Consente di selezionare più valori contemporaneamente",
@@ -7742,9 +7760,6 @@
     "variable-display-select": {
       "label": "Visualizza",
       "options": {
-        "above-dashboard": {
-          "label": "Sopra la dashboard"
-        },
         "controls-menu": {
           "description": "Visibile quando il menu dei comandi è aperto",
           "label": "Menu comandi"
@@ -7753,9 +7768,9 @@
           "description": "Visibile solo in modalità di modifica",
           "label": "Nascosto"
         },
-        "hidden-label": {
-          "description": "Sopra la dashboard, ma senza mostrare il nome della variabile",
-          "label": "Sopra la dashboard, etichetta nascosta"
+        "top-placement-hidden-label": {
+          "description": "",
+          "label": ""
         }
       }
     },
@@ -7838,12 +7853,15 @@
           "reorder-variables-list": "Riordina l'elenco delle variabili"
         }
       },
-      "title-above-dashboard_one": "Sopra la dashboard ({{count}})",
-      "title-above-dashboard_other": "Sopra la dashboard ({{count}})",
+      "top-placement": {
+        "default": ""
+      },
       "title-controls-menu_one": "Menu comandi ({{count}})",
       "title-controls-menu_other": "Menu comandi ({{count}})",
       "title-hidden_one": "Nascosto ({{count}})",
-      "title-hidden_other": "Nascosti ({{count}})"
+      "title-hidden_other": "Nascosti ({{count}})",
+      "title-top-placement_one": "",
+      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10747,7 +10765,7 @@
     "name-unit": "Unità",
     "name-value-name": "Nome del valore",
     "name-y-axis-scale": "Scala asse Y",
-    "name-y-bucket-scale": "Scala bucket Y",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Automatico",
     "placeholder-axis-width": "Automatico",
     "placeholder-decimals": "Automatico",
@@ -10862,6 +10880,12 @@
     "name-stacking": "Impilabile"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10874,6 +10898,23 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
   },
   "inspector": {
@@ -11970,6 +12011,9 @@
       "subtitle": "Gestisci le impostazioni a livello di server e l'accesso a risorse come organizzazioni, utenti e licenze",
       "title": "Amministratore del server"
     },
+    "agentic-testing": {
+      "title": ""
+    },
     "alert-list-legacy": {
       "title": "Regole di avviso"
     },
@@ -12565,6 +12609,9 @@
       "required": "",
       "save-tooltip": ""
     }
+  },
+  "page-loader": {
+    "default": ""
   },
   "panel": {
     "dashlist": {
@@ -13233,11 +13280,24 @@
     "code-block": {
       "aria-label-copy": "Copia codice negli appunti"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "Impostazioni del repository salvate",
       "alert-repository-settings-updated": "Impostazioni del repository aggiornate",
       "button-save": "Salva",
       "button-saving": "Salvataggio in corso...",
+      "description-commit-message-template": "",
       "description-connection": "Seleziona la connessione all'app GitHub da utilizzare",
       "description-enabled": "Una volta abilitato il pull automatico, la destinazione non può essere modificata.",
       "description-read-only": "Le risorse non possono essere modificate tramite Grafana.",
@@ -13248,6 +13308,7 @@
       "error-save-failed": "Impossibile salvare le impostazioni del repository",
       "error-save-repository": "Impossibile salvare le impostazioni del repository",
       "label-automatic-pulling": "Pull automatico",
+      "label-commit-message-template": "",
       "label-connection": "Connessione all'app GitHub",
       "label-enabled": "Abilitato",
       "label-interval-seconds": "Intervallo (secondi)",
@@ -13256,6 +13317,7 @@
       "label-title": "Titolo",
       "option-entire-instance": "Intera istanza",
       "option-managed-folder": "Cartella gestita",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "La mia configurazione"
     },
@@ -14148,6 +14210,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Aggiungi filtro",
+      "cancel-delete": "",
+      "confirm-delete": "",
+      "confirm-delete-confirm": "",
+      "delete-confirmation-group": "",
       "disable": "Disabilita {{type}}",
       "duplicate": "Duplica {{type}}",
       "enable": "Abilita {{type}}",
@@ -14189,10 +14255,7 @@
       "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
-      "body-query": "Vuoi davvero eliminare questa query?",
-      "body-transformation": "La rimozione di una trasformazione può interromperne altre.",
-      "confirm": "Elimina",
-      "title": "Eliminare {{name}}?"
+      "body-transformation": "La rimozione di una trasformazione può interromperne altre."
     },
     "details-sidebar": {
       "cache-timeout": "Timeout cache",
