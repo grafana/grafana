@@ -41,6 +41,9 @@ func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			if rsp.Allowed {
 				return authorizer.DecisionAllow, "", nil
 			}
+			if req.Subresource != "" {
+				return authorizer.DecisionDeny, "missing `query` subresource permission", nil
+			}
 			return authorizer.DecisionDeny, "access denied", nil
 		})
 }
