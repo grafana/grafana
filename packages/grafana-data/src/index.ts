@@ -946,6 +946,3 @@ export {
 } from './rbac/rbac';
 
 export { type UserStorage } from './types/userStorage';
-
-// TEMPORARY: Levitate workflow verification, revert before merging
-export const LEVITATE_TEST_FLAG = 'workflow-verification';
