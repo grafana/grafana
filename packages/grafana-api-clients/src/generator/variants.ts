@@ -24,7 +24,7 @@ const OSS: Variant = {
   clientBase: `${PACKAGE_ROOT}/src/clients/rtkq`,
   codegenScript: `${PACKAGE_ROOT}/src/scripts/generate-rtk-apis.ts`,
   openapiSnapshots: 'pkg/tests/apis/openapi_snapshots',
-  generateCommand: 'yarn workspace @grafana/api-clients generate-apis',
+  generateCommand: 'yarn generate-apis',
   baseAPIImports: `import { getAPIBaseURL } from '../../../../utils/utils';
 import { createBaseQuery } from '../../createBaseQuery';`,
 };
