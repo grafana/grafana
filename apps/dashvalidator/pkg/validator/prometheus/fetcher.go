@@ -11,6 +11,8 @@ import (
 	"path"
 	"strings"
 
+	"github.com/grafana/grafana-app-sdk/logging"
+
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
 )
 
@@ -82,40 +84,44 @@ func (f *Fetcher) FetchMetrics(ctx context.Context, datasourceURL string, client
 		// Success - continue to parse response
 	case http.StatusUnauthorized, http.StatusForbidden:
 		// Authentication or authorization failure
+		logging.FromContext(ctx).Debug("upstream response body", "url", baseURL.String(), "statusCode", resp.StatusCode, "body", string(body))
 		return nil, validator.NewDatasourceAuthError("", resp.StatusCode).
-			WithDetail("url", baseURL.String()).
-			WithDetail("responseBody", string(body))
+			WithDetail("url", baseURL.String())
 	case http.StatusNotFound:
 		// Endpoint not found - might not be a valid Prometheus instance
+		logging.FromContext(ctx).Debug("upstream response body", "url", baseURL.String(), "statusCode", resp.StatusCode, "body", string(body))
 		return nil, validator.NewAPIUnavailableError(
 			resp.StatusCode,
-			string(body),
 			fmt.Errorf("endpoint not found - this may not be a valid Prometheus datasource"),
 		).WithDetail("url", baseURL.String())
 	case http.StatusTooManyRequests:
 		// Rate limiting
+		logging.FromContext(ctx).Debug("upstream response body", "url", baseURL.String(), "statusCode", resp.StatusCode, "body", string(body))
 		return nil, validator.NewValidationError(
 			validator.ErrCodeAPIRateLimit,
 			"Prometheus API rate limit exceeded",
 			http.StatusTooManyRequests,
-		).WithDetail("url", baseURL.String()).WithDetail("responseBody", string(body))
+		).WithDetail("url", baseURL.String())
 	case http.StatusServiceUnavailable, http.StatusBadGateway, http.StatusGatewayTimeout:
 		// Upstream service is down or unavailable
-		return nil, validator.NewAPIUnavailableError(resp.StatusCode, string(body), nil).
+		logging.FromContext(ctx).Debug("upstream response body", "url", baseURL.String(), "statusCode", resp.StatusCode, "body", string(body))
+		return nil, validator.NewAPIUnavailableError(resp.StatusCode, nil).
 			WithDetail("url", baseURL.String())
 	default:
 		// Other error status codes
-		return nil, validator.NewAPIUnavailableError(resp.StatusCode, string(body), nil).
+		logging.FromContext(ctx).Debug("upstream response body", "url", baseURL.String(), "statusCode", resp.StatusCode, "body", string(body))
+		return nil, validator.NewAPIUnavailableError(resp.StatusCode, nil).
 			WithDetail("url", baseURL.String())
 	}
 
 	// Parse the response JSON
 	var promResp prometheusResponse
 	if err := json.Unmarshal(body, &promResp); err != nil {
+		logging.FromContext(ctx).Debug("upstream response body", "url", baseURL.String(), "statusCode", resp.StatusCode, "body", string(body))
 		return nil, validator.NewAPIInvalidResponseError(
 			"response is not valid JSON",
 			err,
-		).WithDetail("url", baseURL.String()).WithDetail("responseBody", string(body))
+		).WithDetail("url", baseURL.String())
 	}
 
 	// Check Prometheus API status field
@@ -132,10 +138,11 @@ func (f *Fetcher) FetchMetrics(ctx context.Context, datasourceURL string, client
 
 	// Validate that we got data
 	if promResp.Data == nil {
+		logging.FromContext(ctx).Debug("upstream response body", "url", baseURL.String(), "statusCode", resp.StatusCode, "body", string(body))
 		return nil, validator.NewAPIInvalidResponseError(
 			"response missing 'data' field",
 			nil,
-		).WithDetail("url", baseURL.String()).WithDetail("responseBody", string(body))
+		).WithDetail("url", baseURL.String())
 	}
 
 	return promResp.Data, nil

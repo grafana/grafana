@@ -110,13 +110,12 @@ func NewDatasourceUnreachableError(uid string, url string, cause error) *Validat
 }
 
 // NewAPIUnavailableError creates an error for unavailable API
-func NewAPIUnavailableError(statusCode int, responseBody string, cause error) *ValidationError {
+func NewAPIUnavailableError(statusCode int, cause error) *ValidationError {
 	return NewValidationError(
 		ErrCodeAPIUnavailable,
 		fmt.Sprintf("Prometheus API returned status %d", statusCode),
 		http.StatusBadGateway,
 	).WithDetail("upstreamStatus", statusCode).
-		WithDetail("responseBody", responseBody).
 		WithCause(cause)
 }
 

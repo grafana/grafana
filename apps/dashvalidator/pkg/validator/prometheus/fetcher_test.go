@@ -321,6 +321,58 @@ func TestFetchMetrics_HTTPStatusCodes_ReturnsExpectedError(t *testing.T) {
 	}
 }
 
+func TestFetchMetrics_AuthFailure_ErrorOmitsRawBody(t *testing.T) {
+	rawBody := "prom-diag-info"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(rawBody))
+	}))
+	defer server.Close()
+
+	fetcher := NewFetcher()
+	metrics, err := fetcher.FetchMetrics(context.Background(), server.URL, server.Client())
+
+	require.Error(t, err)
+	require.Nil(t, metrics)
+	require.True(t, validator.IsValidationError(err))
+
+	validationErr := validator.GetValidationError(err)
+	require.NotContains(t, err.Error(), rawBody)
+	require.NotContains(t, validationErr.Message, rawBody)
+	_, hasBodyDetail := validationErr.Details["responseBody"]
+	require.False(t, hasBodyDetail, "unexpected detail key present")
+
+	serialized, jsonErr := json.Marshal(validationErr.Details)
+	require.NoError(t, jsonErr)
+	require.NotContains(t, string(serialized), rawBody)
+}
+
+func TestFetchMetrics_ServerError_ErrorOmitsRawBody(t *testing.T) {
+	rawBody := "internal stack trace at /opt/prom-internal/handler.go:42"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(rawBody))
+	}))
+	defer server.Close()
+
+	fetcher := NewFetcher()
+	metrics, err := fetcher.FetchMetrics(context.Background(), server.URL, server.Client())
+
+	require.Error(t, err)
+	require.Nil(t, metrics)
+	require.True(t, validator.IsValidationError(err))
+
+	validationErr := validator.GetValidationError(err)
+	require.NotContains(t, err.Error(), rawBody)
+	require.NotContains(t, validationErr.Message, rawBody)
+	_, hasBodyDetail := validationErr.Details["responseBody"]
+	require.False(t, hasBodyDetail, "unexpected detail key present")
+
+	serialized, jsonErr := json.Marshal(validationErr.Details)
+	require.NoError(t, jsonErr)
+	require.NotContains(t, string(serialized), rawBody)
+}
+
 // ============================================================================
 // Category 6: JSON Response Validation
 // ============================================================================
