@@ -717,6 +717,7 @@ export {
   DataSourceApi,
 } from './types/datasource';
 export { CoreApp, type AppRootProps, type AppPluginMeta, AppPlugin, FeatureState } from './types/app';
+export { patchArrayVectorProrotypeMethods } from './types/vector';
 export {
   type DynamicConfigValue,
   type ConfigOverrideRule,
