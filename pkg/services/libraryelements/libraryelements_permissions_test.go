@@ -167,12 +167,17 @@ func TestIntegrationLibraryElementGranularPermissions(t *testing.T) {
 	folder1UID := createTestFolder(t, grafanaListedAddr)
 	folder2UID := createTestFolder(t, grafanaListedAddr)
 	folder3UID := createTestFolder(t, grafanaListedAddr)
+	folder4UID := createTestFolder(t, grafanaListedAddr)
 
 	// viewer only has access to folder 1 & 3
 	grantFolderPermissions(t, grafanaListedAddr, "granular-viewer", "granular-viewer", folder1UID, userID)
 	grantFolderPermissions(t, grafanaListedAddr, "granular-viewer", "granular-viewer", folder3UID, userID)
 	// revoke view access to folder2
 	revokeFolderPermissions(t, grafanaListedAddr, folder2UID, userID)
+	// read-only access to folder4: the viewer can see it but cannot create
+	// library panels in it — exercises the destination-folder permission
+	// check in PatchLibraryElement.
+	grantFolderReadPermissions(t, grafanaListedAddr, folder4UID, userID)
 
 	uid := ""
 	t.Run("granular createpermissions", func(t *testing.T) {
@@ -202,6 +207,15 @@ func TestIntegrationLibraryElementGranularPermissions(t *testing.T) {
 
 		t.Run("When viewer doesn't have read access to folder2, they cannot move library element to folder2", func(t *testing.T) {
 			patchLibraryElement(t, grafanaListedAddr, "granular-viewer", "granular-viewer", uid, folder2UID, http.StatusForbidden)
+		})
+
+		t.Run("When viewer has read-only access to folder4, they cannot move library element to folder4", func(t *testing.T) {
+			// Exercises the destination-folder permission check added to
+			// PatchLibraryElement: folder4 is visible to the caller (so
+			// folderService.Get succeeds), but library.panels:create is denied
+			// on it. Without this check, an editor with library.panels:write
+			// on the element could relocate it into any folder they can see.
+			patchLibraryElement(t, grafanaListedAddr, "granular-viewer", "granular-viewer", uid, folder4UID, http.StatusForbidden)
 		})
 	})
 
@@ -325,6 +339,18 @@ func grantFolderPermissions(t *testing.T, grafanaListedAddr, user, password, fol
 			{
 				"userId":     userID,
 				"permission": 2, // edit permission
+			},
+		},
+	}
+	makeHTTPRequest(t, "POST", fmt.Sprintf("http://admin2:admin@%s/api/folders/%s/permissions", grafanaListedAddr, folderUID), permissionRequest, http.StatusOK)
+}
+
+func grantFolderReadPermissions(t *testing.T, grafanaListedAddr, folderUID string, userID int64) {
+	permissionRequest := map[string]interface{}{
+		"items": []map[string]interface{}{
+			{
+				"userId":     userID,
+				"permission": 1, // view permission
 			},
 		},
 	}
