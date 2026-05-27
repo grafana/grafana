@@ -52,8 +52,10 @@ describe('PanelIntentChips', () => {
     });
 
     // Only the primary failure mode is shown by name; the rest collapse
-    // into a "+N" counter so the title row stays compact.
-    expect(screen.getByText(/db-slow/)).toBeInTheDocument();
+    // into a "+N" counter so the title row stays compact. The chip is
+    // prefixed with `#` (Phase E.4) so it reads as a tag, not as a
+    // runtime alert.
+    expect(screen.getByText(/#db-slow/)).toBeInTheDocument();
     expect(screen.getByText(/\+2/)).toBeInTheDocument();
     expect(screen.queryByText(/pod-oom/)).not.toBeInTheDocument();
   });
@@ -63,7 +65,28 @@ describe('PanelIntentChips', () => {
       failureModes: [{ tag: 'db-slow' }],
     });
 
-    expect(screen.getByText(/db-slow/)).toBeInTheDocument();
+    expect(screen.getByText(/#db-slow/)).toBeInTheDocument();
     expect(screen.queryByText(/\+/)).not.toBeInTheDocument();
+  });
+
+  it('Phase E.4: declared failure-mode chip uses no warning icon (reserved for active-match in Phase F)', () => {
+    const { container } = renderChips({
+      failureModes: [{ tag: 'db-slow' }],
+    });
+
+    // The chip text is the only signal a declared failure mode
+    // provides; rendering an exclamation-triangle here would visually
+    // collide with the runtime panel-error chip (red destructive
+    // button with the same icon). The red + warning treatment is
+    // reserved for the live active-match state landed in Phase F.
+    expect(container.querySelector('svg[name="exclamation-triangle"]')).toBeNull();
+    expect(container.querySelector('[data-icon="exclamation-triangle"]')).toBeNull();
+  });
+
+  it('Phase E.4: failure-mode chip is prefixed with `#` to read as a tag rather than an alert', () => {
+    renderChips({ failureModes: [{ tag: 'bot-traffic' }] });
+    // The literal `#` prefix is what disambiguates "this is a label
+    // the team watches for" from "the panel is failing right now".
+    expect(screen.getByText('#bot-traffic')).toBeInTheDocument();
   });
 });

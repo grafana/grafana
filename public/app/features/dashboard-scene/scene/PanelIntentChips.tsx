@@ -82,8 +82,18 @@ export function PanelIntentChipsRenderer({ model }: SceneComponentProps<PanelInt
           content={failureModeTooltip(primaryFailureMode, extraFailureModes, failureModesProvenance)}
           placement="top"
         >
-          <span className={chipClass(styles, failureModesProvenance)}>
-            <Icon name="exclamation-triangle" size="xs" aria-hidden /> {primaryFailureMode.tag}
+          {/*
+           * Phase E.4: a declared failure mode is a pattern the
+           * author wants the team to watch for — not an active
+           * incident. Render it as a quiet tag (no warning icon, `#`
+           * prefix to read as a label) so it does not visually
+           * collide with the runtime panel-error chip (which uses
+           * `exclamation-triangle` + destructive red). The red +
+           * warning treatment is reserved for the active-match state
+           * tracked by Phase F.
+           */}
+          <span className={failureModeChipClass(styles, failureModesProvenance)}>
+            #{primaryFailureMode.tag}
             {extraFailureModes > 0 ? ` +${extraFailureModes}` : ''}
           </span>
         </Tooltip>
@@ -93,6 +103,21 @@ export function PanelIntentChipsRenderer({ model }: SceneComponentProps<PanelInt
 }
 
 function chipClass(styles: ReturnType<typeof getStyles>, provenance: string | undefined): string {
+  return provenance === 'assistant-unconfirmed' ? styles.chipDraft : styles.chip;
+}
+
+/**
+ * Failure-mode chips share the same provenance-based style switch as
+ * the other chips but route through their own class so the visual
+ * disambiguation from the runtime panel-error chip (Phase E.4) stays
+ * declarative and easy to tweak in one place. Today they reuse the
+ * generic chip styles; reserved as a hook for future per-state
+ * styling (active-match red, Phase F).
+ */
+function failureModeChipClass(
+  styles: ReturnType<typeof getStyles>,
+  provenance: string | undefined
+): string {
   return provenance === 'assistant-unconfirmed' ? styles.chipDraft : styles.chip;
 }
 
@@ -129,12 +154,21 @@ function getStyles(theme: GrafanaTheme2) {
   // Note: panel header chips share the look-and-feel of the summary bar
   // chips but use a slightly smaller padding so they fit the panel
   // header height without bumping it.
+  //
+  // Phase E.4: intent chips render as `titleItems` on the VizPanel,
+  // which already places them to the right of the title text — but
+  // the row container also flexes with `marginLeft: auto` so any
+  // sibling title items don't squeeze the chips into the title's
+  // visual zone. This keeps the left edge of the header reserved for
+  // the runtime panel-error chip (red `exclamation-triangle`) and
+  // pushes declared-failure-mode chips firmly to the right.
   return {
     row: css({
       display: 'inline-flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
       paddingLeft: theme.spacing(0.5),
+      marginLeft: 'auto',
     }),
     chip: css({
       display: 'inline-flex',
