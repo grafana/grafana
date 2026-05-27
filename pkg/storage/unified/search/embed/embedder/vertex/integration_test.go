@@ -42,7 +42,7 @@ func TestIntegration_Vertex_EmbedRealTexts(t *testing.T) {
 	client, err := NewClient(ctx, projectID, location)
 	require.NoError(t, err)
 
-	e := NewDenseEmbedder(client, model, dim)
+	e := NewDenseEmbedder(client, model, dim, 50)
 	out, err := e.EmbedText(ctx, embedder.EmbedTextInput{
 		Texts: []string{
 			"Production API latency dashboard with p99 metrics",

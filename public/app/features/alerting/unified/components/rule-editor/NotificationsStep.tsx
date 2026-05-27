@@ -13,6 +13,7 @@ import { type KBObjectArray, RuleFormType, type RuleFormValues } from '../../typ
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_NOTIFICATIONS, DOCS_URL_NOTIFICATION_POLICIES } from '../../utils/docs';
 import { isGrafanaManagedRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
+import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
 
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -244,6 +245,13 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
   const multiplePoliciesEnabled = config.featureToggles.alertingMultiplePolicies ?? false;
   const policyRoutingSettingsEnabled = config.featureToggles.alertingPolicyRoutingSettings ?? false;
 
+  // When using the new routing settings FF, the policy is stored in selectedPolicy.
+  // In legacy mode (label-based routing), extract it from the __grafana_managed_route__ label so
+  // the notification preview fetches the correct routing tree instead of always defaulting to root.
+  const policyNameForPreview = policyRoutingSettingsEnabled
+    ? selectedPolicy
+    : labels.find((l) => l.key === NAMED_ROOT_LABEL_NAME)?.value;
+
   return (
     <Stack direction="column" gap={2}>
       {multiplePoliciesEnabled && <PolicyTreeSelector />}
@@ -254,7 +262,7 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
         folder={folder}
         alertName={alertName}
         alertUid={alertUid}
-        policyName={policyRoutingSettingsEnabled ? selectedPolicy : undefined}
+        policyName={policyNameForPreview}
       />
     </Stack>
   );

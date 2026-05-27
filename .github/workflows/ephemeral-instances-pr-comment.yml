@@ -16,7 +16,7 @@ jobs:
         (github.event.issue.pull_request && startsWith(github.event.comment.body, '/deploy-to-hg') && (github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER')) ||
         github.event.action == 'closed'
       )
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     continue-on-error: true
     permissions:
       id-token: write # required for token broker
@@ -26,7 +26,7 @@ jobs:
         id: generate_token
         uses: grafana/shared-workflows/actions/create-github-app-token@ae92934a14a48b94494dbc06d74a81d47fe08a40 # create-github-app-token/v0.2.2
         with:
-          github_app: grafana-delivery-bot
+          github_app: ephemeral-instances-bot
 
       - name: Dispatch (comment)
         if: github.event_name == 'issue_comment'

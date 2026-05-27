@@ -1,3 +1,4 @@
+import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { render, testWithFeatureToggles, userEvent, waitFor } from 'test/test-utils';
 
 import { type AdHocVariableFilter, type DataFrame, type DataQueryRequest, type ScopedVars } from '@grafana/data';
@@ -26,7 +27,19 @@ jest.mock('@grafana/plugin-ui', () => ({
   QueryFormat: {
     Table: 'table',
   },
-  SQLEditor: () => <div data-testid="sql-editor">SQL Editor Mock</div>,
+  SQLEditor: ({ query, onChange }: { query: string; onChange: (query: string) => void }) => (
+    <div>
+      <div data-testid="sql-editor">{query}</div>
+      <button onClick={() => onChange('')}>Clear SQL</button>
+    </div>
+  ),
+}));
+
+jest.mock('react-virtualized-auto-sizer', () => ({
+  __esModule: true,
+  default: ({ children }: AutoSizerProps) => (
+    <div>{children({ width: 800, scaledWidth: 800, height: 600, scaledHeight: 600 })}</div>
+  ),
 }));
 
 const mockBackendSrv = {
@@ -77,6 +90,26 @@ describe('SqlExpr', () => {
     await waitFor(() => {
       expect(query.expression).toBe(existingExpression);
     });
+  });
+
+  it('allows clearing an existing expression without restoring the default query', async () => {
+    const onChange = jest.fn();
+    const refIds = [{ value: 'A' }];
+    const existingExpression = 'SELECT 1 AS foo';
+    const query = { refId: 'expr1', type: 'sql', expression: existingExpression } as ExpressionQuery;
+    const { findByTestId, getByRole, rerender } = render(
+      <SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />
+    );
+
+    expect(await findByTestId('sql-editor')).toHaveTextContent(existingExpression);
+
+    await userEvent.click(getByRole('button', { name: 'Clear SQL' }));
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ expression: '' }));
+
+    rerender(<SqlExpr onChange={onChange} refIds={refIds} query={{ ...query, expression: '' }} queries={[]} />);
+
+    expect(await findByTestId('sql-editor')).toBeEmptyDOMElement();
   });
 
   it('adds alerting format when alerting prop is true', async () => {
