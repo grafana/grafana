@@ -3,6 +3,7 @@ package correlations
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -58,6 +59,10 @@ func ToResource(orig Correlation) (*correlationsV0.Correlation, error) {
 		correlationsApp.SourceRefLabelKey: fmt.Sprintf("%s.%s",
 			obj.Spec.Source.Group,
 			obj.Spec.Source.Name),
+		correlationsApp.SourceRefProvLabelKey: fmt.Sprintf("%s.%s.%s",
+			obj.Spec.Source.Group,
+			obj.Spec.Source.Name,
+			strconv.FormatBool(orig.Provisioned)),
 	}
 
 	return obj, nil

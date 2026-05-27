@@ -3,6 +3,7 @@ package correlations
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -343,9 +344,14 @@ func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCor
 	}, nil
 }
 
-// use field selector for delete by datasource UID because we will only ever delete one at a time
+// if provisioned, use label selector (we cannot use metadata annotations in field selectors), otherwise use field selector
 func (s *CorrelationsK8sService) DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
-	return s.k8sClient.DeleteCollection(ctx, cmd.OrgId, v1.ListOptions{FieldSelector: fmt.Sprintf("spec.source.name=%s,spec.source.group=%s", cmd.SourceUID, cmd.SourceType)})
+	if cmd.OnlyProvisioned {
+		dsLabel := fmt.Sprintf("correlations.grafana.app/sourceDSProv-ref in (%s.%s.%s)", cmd.SourceType, cmd.SourceUID, strconv.FormatBool(cmd.OnlyProvisioned))
+		return s.k8sClient.DeleteCollection(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: dsLabel})
+	} else {
+		return s.k8sClient.DeleteCollection(ctx, cmd.OrgId, v1.ListOptions{FieldSelector: fmt.Sprintf("spec.source.name=%s,spec.source.group=%s", cmd.SourceUID, cmd.SourceType)})
+	}
 }
 
 func (s *CorrelationsK8sService) DeleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
