@@ -598,8 +598,10 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		folderParent, _, _ := unstructured.NestedString(folderAfter.Object, "metadata", "annotations", "grafana.app/folder")
 		// The unified storage layer now stamps root-parented resources with
 		// the canonical "general" sentinel; legacy entries may still carry
-		// the empty string. Either denotes "no parent".
-		require.True(t, foldermodel.IsRootFolderUID(folderParent),
+		// the empty string. Either denotes "no parent" — assert exactly that
+		// set so a future regression to any other value (e.g. stray UID) is
+		// caught even if IsRootFolderUID semantics widen.
+		require.Contains(t, []string{"", foldermodel.GeneralFolderUID}, folderParent,
 			"root-level folder should have no parent, got %q", folderParent)
 
 		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"new-team"})
@@ -764,8 +766,9 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		require.Equal(t, "my-folder", sp)
 		folderParent, _, _ := unstructured.NestedString(folderAfter.Object, "metadata", "annotations", "grafana.app/folder")
 		// Root parents may be empty (legacy) or "general" (canonical) after the
-		// apistore mutation; both mean "no parent".
-		require.True(t, foldermodel.IsRootFolderUID(folderParent),
+		// apistore mutation; both mean "no parent". Assert the exact set so any
+		// drift to a non-root value is caught.
+		require.Contains(t, []string{"", foldermodel.GeneralFolderUID}, folderParent,
 			"folder moved to root should have no parent, got %q", folderParent)
 
 		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"parent", "my-folder"})
@@ -833,8 +836,9 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		require.Equal(t, "new-parent", sp)
 		parentAnnotation, _, _ := unstructured.NestedString(parentAfter.Object, "metadata", "annotations", "grafana.app/folder")
 		// Root parents are written as "general" by the apistore now; empty is
-		// the legacy form. Both are valid "no parent" sentinels.
-		require.True(t, foldermodel.IsRootFolderUID(parentAnnotation),
+		// the legacy form. Both are valid "no parent" sentinels — pin the set
+		// explicitly so a regression to any other value is caught.
+		require.Contains(t, []string{"", foldermodel.GeneralFolderUID}, parentAnnotation,
 			"root-level parent should have no parent annotation, got %q", parentAnnotation)
 
 		// Verify child folder updated in place and still parented under the renamed parent.

@@ -239,6 +239,9 @@ func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.
 	_, span := tracer.Start(ctx, "apistore.Storage.convertToObject")
 	defer span.End()
 	obj, _, err := s.codec.Decode(data, nil, obj)
+	if err != nil {
+		return obj, err
+	}
 
 	// Replace empty folder with "general" on read
 	if s.opts.EnableFolderSupport {
@@ -248,7 +251,7 @@ func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.
 		}
 	}
 
-	return obj, err
+	return obj, nil
 }
 
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live

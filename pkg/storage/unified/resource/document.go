@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -241,7 +242,7 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 	// TODO: this should eventually come from the manifest, but to simplify migration we
 	// will start with a hardcoded list
 	if doc.Folder == "" && isFolderResource(key) {
-		doc.Folder = "general"
+		doc.Folder = folder.GeneralFolderUID
 	}
 
 	return doc.UpdateCopyFields()

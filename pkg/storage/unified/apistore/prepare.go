@@ -272,6 +272,8 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	// If staying in the same folder but manager properties changed, re-validate
 	// consistency with the parent folder. Without this, removing or changing
 	// manager annotations would leave unmanaged resources in a repo-managed folder.
+	// The previous obj.GetFolder() != "" guard is now in ensureRepoManagedByParentFolder,
+	// which short-circuits on IsRootFolderUID (covers both "" and "general").
 	if !folderChanged {
 		newMgr, newOk := obj.GetManagerProperties()
 		oldMgr, oldOk := previous.GetManagerProperties()

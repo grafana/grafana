@@ -1085,6 +1085,11 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	return res, nil
 }
 
+// buildFolderList intentionally omits the buildItemList skipRootSentinel guard:
+// for folders:read / folders.permissions:read the synthetic root is the folder
+// itself, so a Viewer with fixed:folders.general:reader must keep seeing it in
+// the list. The inheritance hole closed by buildItemList only applies when the
+// scope grants access to root-parented non-folder resources.
 func buildFolderList(scopes map[string]bool, tree folderTree) *authzv1.ListResponse {
 	itemSet := make(map[string]struct{}, len(scopes))
 
