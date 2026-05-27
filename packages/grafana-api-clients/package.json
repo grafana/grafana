@@ -163,12 +163,6 @@
       "import": "./dist/esm/clients/rtkq/dashboard/v2/index.mjs",
       "require": "./dist/cjs/clients/rtkq/dashboard/v2/index.cjs"
     },
-    "./rtkq/dashboard/v2alpha1": {
-      "@grafana-app/source": "./src/clients/rtkq/dashboard/v2alpha1/index.ts",
-      "types": "./dist/types/clients/rtkq/dashboard/v2alpha1/index.d.ts",
-      "import": "./dist/esm/clients/rtkq/dashboard/v2alpha1/index.mjs",
-      "require": "./dist/cjs/clients/rtkq/dashboard/v2alpha1/index.cjs"
-    },
     "./rtkq/dashboard/v2beta1": {
       "@grafana-app/source": "./src/clients/rtkq/dashboard/v2beta1/index.ts",
       "types": "./dist/types/clients/rtkq/dashboard/v2beta1/index.d.ts",
