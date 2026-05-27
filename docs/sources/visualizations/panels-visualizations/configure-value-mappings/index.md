@@ -187,9 +187,9 @@ The following image shows a table visualization with value mappings. If you want
 
 If your data source returns multiline strings—such as Windows event log entries that contain `\r\n` line breaks—a regular expression pattern using `.` won't match across those line breaks. Use `[\s\S]` to match any character including newlines.
 
-| Pattern | Matches |
-| --- | --- |
-| `.*` | Single-line text only |
+| Pattern   | Matches                        |
+| --------- | ------------------------------ |
+| `.*`      | Single-line text only          |
 | `[\s\S]*` | Single-line and multiline text |
 
 For example, to map any multiline log entry that starts with `ERROR` to the display text **Error**, use the pattern:
