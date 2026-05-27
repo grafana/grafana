@@ -17,7 +17,7 @@ interface Props {
   interactive?: boolean;
 }
 
-export const FormLabel = ({
+const FormLabel = ({
   children,
   isFocused,
   isInvalid,

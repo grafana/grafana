@@ -10,6 +10,9 @@ const packageIgnoreDeps = [
 const packageEntries = ['i18next.config.ts'];
 
 const config: KnipConfig = {
+  compilers: {
+    mdx: true,
+  },
   exclude: [
     // we don't often use enums, but when we do we usually include members we'll utilise in the future
     'enumMembers',
