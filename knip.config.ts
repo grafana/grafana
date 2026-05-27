@@ -1,5 +1,7 @@
 import type { KnipConfig } from 'knip';
 
+const packageEntries = ['i18next.config.ts'];
+
 const config: KnipConfig = {
   exclude: [
     // we don't often use enums, but when we do we usually include members we'll utilise in the future
@@ -24,6 +26,9 @@ const config: KnipConfig = {
         'rollup-plugin-esbuild',
         'rollup-plugin-node-externals',
       ],
+    },
+    'packages/grafana-api-clients': {
+      entry: [...packageEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/plopfile.ts'],
     },
   },
 };
