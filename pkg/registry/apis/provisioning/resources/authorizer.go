@@ -151,22 +151,28 @@ func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, acce
 // verb on the given resource.
 //
 // Authorization Model:
-//   - For new resources: Uses the folder from the file metadata
-//   - For existing resources: Uses the folder where the resource currently exists
+//   - For new resources: checks the destination folder (derived from the file path).
+//   - For existing resources where the folder is unchanged: checks that single folder.
+//   - For existing resources where the folder changes (cross-folder move): checks both
+//     the current DB location AND the destination. The user must have the required verb
+//     on both to prevent moving resources into folders they cannot access.
 //
-// This distinction is important because the file content is user-controlled, while the
-// existing resource location comes from the database. Checking against the actual location
-// prevents users from bypassing folder permissions by declaring a different folder in their file.
+// The destination folder is always derived from the file path (parser.go), never from
+// user-supplied JSON body content, so it cannot be spoofed.
 //
 // Example - Creating a new dashboard:
-//   - File declares: folder="team-a"
-//   - Checks: create permission on "team-a" (user must be Editor or Admin)
+//   - File path resolves to: folder="team-a"
+//   - Checks: create permission on "team-a"
 //
-// Example - Updating existing dashboard:
-//   - File declares: folder="public" (user is Editor)
-//   - Actual location: folder="team-a" (user is Reader - no edit access)
-//   - Checks: update permission on "team-a" (actual location)
-//   - Result: DENIED (prevents permission bypass)
+// Example - Updating a dashboard without changing its folder:
+//   - File path resolves to: folder="team-a" (same as DB)
+//   - Checks: update permission on "team-a"
+//
+// Example - Moving a dashboard to a restricted folder:
+//   - File path resolves to: folder="team-b" (user has no access)
+//   - Actual DB location: folder="team-a" (user has Editor access)
+//   - Checks: update on "team-a" (passes) AND update on "team-b" (fails)
+//   - Result: DENIED
 func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *ParsedResource, verb string) error {
 	// Determine the resource name for the authorization check
 	var name string
@@ -176,23 +182,36 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 		name = parsed.Obj.GetName()
 	}
 
-	// Determine the folder for the authorization check.
-	// For new resources, use the folder from the file metadata.
-	// For existing resources, use the folder where the resource actually exists.
-	folder := parsed.Meta.GetFolder()
+	// metaFolder is the destination folder derived from the file path (not from
+	// user-controlled JSON content — see parser.go:222-236). It is always checked.
+	metaFolder := parsed.Meta.GetFolder()
+
+	// For existing resources, also check the current DB location when it differs
+	// from the destination. This prevents a user from moving a resource out of a
+	// folder they can write to and into one they cannot, by simply writing the file
+	// to a different path. Both source and destination must be authorised.
 	if parsed.Existing != nil {
 		if meta, err := utils.MetaAccessor(parsed.Existing); err == nil && meta != nil {
-			folder = meta.GetFolder()
+			existingFolder := meta.GetFolder()
+			if existingFolder != metaFolder {
+				if err := a.access.Check(ctx, authlib.CheckRequest{
+					Group:    parsed.GVR.Group,
+					Resource: parsed.GVR.Resource,
+					Name:     name,
+					Verb:     verb,
+				}, existingFolder); err != nil {
+					return err
+				}
+			}
 		}
 	}
 
-	// Perform the authorization check
 	return a.access.Check(ctx, authlib.CheckRequest{
 		Group:    parsed.GVR.Group,
 		Resource: parsed.GVR.Resource,
 		Name:     name,
 		Verb:     verb,
-	}, folder)
+	}, metaFolder)
 }
 
 // getFolderID resolves the folder ID for the given path, always reading
