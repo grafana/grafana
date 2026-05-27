@@ -356,15 +356,15 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	// Trailing validation below this point for routes that were not matched
-	if proxy.ds.Type == datasources.DS_PROMETHEUS || proxy.ds.Type == datasources.DS_AMAZON_PROMETHEUS || proxy.ds.Type == datasources.DS_AZURE_PROMETHEUS {
+	if proxy.ds.Type == datasources.DS_PROMETHEUS || proxy.ds.Type == datasources.DS_AMAZON_PROMETHEUS || proxy.ds.Type == datasources.DS_AZURE_PROMETHEUS || proxy.ds.Type == datasources.DS_LOKI {
 		if proxy.ctx.Req.Method == "DELETE" {
-			return errors.New("non allow-listed DELETEs not allowed on proxied Prometheus datasource")
+			return errors.New("non allow-listed DELETEs not allowed on proxied Prometheus or Loki datasource")
 		}
 		if proxy.ctx.Req.Method == "PUT" {
-			return errors.New("non allow-listed PUTs not allowed on proxied Prometheus datasource")
+			return errors.New("non allow-listed PUTs not allowed on proxied Prometheus or Loki datasource")
 		}
 		if proxy.ctx.Req.Method == "POST" {
-			return errors.New("non allow-listed POSTs not allowed on proxied Prometheus datasource")
+			return errors.New("non allow-listed POSTs not allowed on proxied Prometheus or Loki datasource")
 		}
 	}
 
