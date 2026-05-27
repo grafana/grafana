@@ -12,13 +12,14 @@ on:
         default: false
         required: false
 
-permissions:
-  id-token: write
-  contents: read
+permissions: {}
 
 jobs:
   bump-version:
     runs-on: ubuntu-arm64-small
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Get GitHub App token
         id: get-github-app-token
