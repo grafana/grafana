@@ -200,7 +200,6 @@ Instead, you should use the pattern:
 ERROR[\s\S]*
 ```
 
-
 ## Add a value mapping
 
 1. Navigate to the panel you want to update.
