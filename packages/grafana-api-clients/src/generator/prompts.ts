@@ -21,6 +21,17 @@ export function validateVersion(version: string): true | string {
   return version && /^v\d+[a-z]*\d+$/.test(version) ? true : 'Version should be in format: v0alpha1, v1beta2, etc.';
 }
 
+export async function confirmUpdateExistingClient(groupName: string, version: string): Promise<boolean> {
+  const { shouldUpdate } = await Enquirer.prompt<{ shouldUpdate: boolean }>({
+    type: 'confirm',
+    name: 'shouldUpdate',
+    message: `API client ${groupName}/${version} already exists. Regenerate endpoints from the existing config instead?`,
+    initial: true,
+  });
+
+  return shouldUpdate;
+}
+
 function validateReducerPath(input: string): true | string {
   return input?.endsWith('API') || input?.match(/API[a-z]\d+[a-z]*\d*$/)
     ? true

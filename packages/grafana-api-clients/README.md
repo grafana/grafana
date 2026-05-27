@@ -95,3 +95,5 @@ Run `yarn generate:api-client` and follow the prompts. See [API Client Generator
 ## Updating generated clients
 
 To update the existing clients, for example, when the OpenAPI spec has changed, run `go test ./pkg/tests/apis -run TestIntegrationOpenAPIs`, followed by `yarn generate-apis`. This will regenerate all the clients based on the current OpenAPI snapshots.
+
+You can also run `yarn generate:api-client` and select an existing API group/version. The generator will offer to update the existing client by running the endpoint generation step without modifying the client config or Redux wiring.

@@ -13,6 +13,26 @@ export function writeNewFile(filePath: string, content: string) {
   fs.writeFileSync(filePath, content, 'utf8');
 }
 
+export function hasAPIConfigEntry(basePath: string, variant: Variant, groupName: string, version: string): boolean {
+  const configPath = path.join(basePath, variant.codegenScript);
+  const content = fs.readFileSync(configPath, 'utf8');
+  const configEntryStart = `createAPIConfig('${groupName}', '${version}'`;
+
+  return content.includes(configEntryStart);
+}
+
+export function getExistingClientFiles(
+  basePath: string,
+  variant: Variant,
+  groupName: string,
+  version: string
+): string[] {
+  const subpath = `${variant.clientBase}/${groupName}/${version}`;
+  return [`${subpath}/baseAPI.ts`, `${subpath}/index.ts`, `${subpath}/endpoints.gen.ts`].filter((filePath) =>
+    fs.existsSync(path.join(basePath, filePath))
+  );
+}
+
 /** Insert text at a marker line, preserving the marker. */
 function injectAtMarker(filePath: string, marker: string, text: string, position: 'before' | 'after') {
   const content = fs.readFileSync(filePath, 'utf8');
