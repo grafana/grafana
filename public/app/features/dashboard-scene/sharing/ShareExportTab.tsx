@@ -242,8 +242,13 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 
     const time = new Date().getTime();
     let title = 'dashboard';
-    if ('title' in dashboard.json && dashboard.json.title) {
-      title = dashboard.json.title;
+    const json = dashboard.json;
+    if ('title' in json && json.title) {
+      // v1 classic export — title is at the top level
+      title = json.title;
+    } else if ('spec' in json && json.spec && 'title' in json.spec && json.spec.title) {
+      // v2 resource export — title is inside spec
+      title = json.spec.title;
     }
     const extension = isViewingYAML ? 'yaml' : 'json';
     saveAs(blob, `${title}-${time}.${extension}`);
