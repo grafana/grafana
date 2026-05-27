@@ -27,7 +27,6 @@
     "jest-environment-jsdom": "29.7.0",
     "replace-in-file-webpack-plugin": "1.0.6",
     "swc-loader": "0.2.6",
-    "tinyglobby": "^0.2.16",
     "typescript": "6.0.2",
     "webpack": "^5.105.0",
     "webpack-bundle-analyzer": "^4.10.2",
