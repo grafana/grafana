@@ -2,21 +2,23 @@
  * ADD_VARIABLE -- the full story for this mutation in one file.
  *
  * Two exports:
- *   - AddVariableCommand: the UserActionCommand class. Carries the mutation
- *     logic (perform / undo) and is the shared primitive used by both the UI
- *     (constructs directly) and the agent (constructed via toUserAction).
- *   - addVariableClientCommand: the agent-facing data record. Declares the
- *     Zod schema and how to turn a validated payload into the class.
+ *   - AddVariableCommand: the UserActionCommand class. Takes a SceneVariable
+ *     and operates on Scene objects only. The shared mutation primitive used
+ *     by both the UI (constructed directly) and the agent (constructed via
+ *     toUserAction after translation).
+ *   - addVariableClientCommand: the agent-facing data record. The agent layer
+ *     owns translation: Zod validates the VariableKind payload, then turns it
+ *     into a SceneVariable before constructing the command. The class itself
+ *     never sees a VariableKind.
  */
 
 import { type z } from 'zod';
 
-import { sceneGraph } from '@grafana/scenes';
-import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { sceneGraph, type SceneVariable } from '@grafana/scenes';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
-import { type WriteClientCommand } from '../ClientCommand';
+import { type ClientCommand } from '../ClientCommand';
 import type { UserActionCommand } from '../UserActionCommand';
 
 import { addVariablePayloadSchema } from './schemas';
@@ -29,37 +31,36 @@ export class AddVariableCommand implements UserActionCommand {
   lockTarget = 'variables';
 
   private scene: DashboardScene;
-  private variableKind: VariableKind;
+  private variable: SceneVariable;
   private position: number | undefined;
 
-  constructor(scene: DashboardScene, variableKind: VariableKind, position?: number) {
+  constructor(scene: DashboardScene, variable: SceneVariable, position?: number) {
     this.scene = scene;
-    this.variableKind = variableKind;
+    this.variable = variable;
     this.position = position;
-    this.title = `Add variable '${variableKind.spec.name}'`;
+    this.title = `Add variable '${variable.state.name}'`;
   }
 
   perform(): void {
-    const name = this.variableKind.spec.name;
+    const name = this.variable.state.name;
     const varSet = sceneGraph.getVariables(this.scene);
     if (varSet.state.variables.find((v) => v.state.name === name)) {
       throw new Error(`Variable '${name}' already exists`);
     }
-
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- structurally compatible
-    const sceneVariable = createSceneVariableFromVariableModel(this.variableKind as VariableKind);
+    // Clone so each perform produces a fresh instance, safe across the
+    // SceneVariableSet swaps that replaceVariableSet performs.
+    const fresh = this.variable.clone({});
     const current = [...varSet.state.variables];
     if (this.position !== undefined && this.position >= 0 && this.position < current.length) {
-      current.splice(this.position, 0, sceneVariable);
+      current.splice(this.position, 0, fresh);
     } else {
-      current.push(sceneVariable);
+      current.push(fresh);
     }
     replaceVariableSet(this.scene, current);
   }
 
   undo(): void {
-    // Declarative inverse: remove by name. No Scene reference held.
-    const name = this.variableKind.spec.name;
+    const name = this.variable.state.name;
     const varSet = sceneGraph.getVariables(this.scene);
     replaceVariableSet(
       this.scene,
@@ -68,12 +69,14 @@ export class AddVariableCommand implements UserActionCommand {
   }
 }
 
-export const addVariableClientCommand: WriteClientCommand<AddVariablePayload> = {
+export const addVariableClientCommand: ClientCommand<AddVariablePayload> = {
   type: 'ADD_VARIABLE',
   description: addVariablePayloadSchema.description ?? '',
-  schema: addVariablePayloadSchema,
   kind: 'write',
+  schema: addVariablePayloadSchema,
   toUserAction(payload, ctx) {
-    return new AddVariableCommand(ctx.scene, payload.variable, payload.position);
+    // Translation lives here, alongside validation. The class never sees VariableKind.
+    const sceneVariable = createSceneVariableFromVariableModel(payload.variable);
+    return new AddVariableCommand(ctx.scene, sceneVariable, payload.position);
   },
 };

@@ -14,11 +14,8 @@ import {
 } from '@grafana/scenes';
 import { type ElementSelectionContextItem } from '@grafana/ui';
 
-import { type ClientCommandResult } from '../mutation-api/ClientCommand';
-import { type UserActionCommand } from '../mutation-api/UserActionCommand';
 import { AddVariableCommand } from '../mutation-api/commands/addVariable';
 import { RemoveVariableCommand } from '../mutation-api/commands/removeVariable';
-import { createVariableKindFromSceneVariable } from '../mutation-api/commands/variableUtils';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
@@ -223,61 +220,14 @@ export interface MoveElementActionHelperProps {
 
 export const dashboardEditActions = {
   /**
-   * Registers and performs an edit action.
+   * Registers and performs an edit action. The single seam every dashboard
+   * mutation funnels through -- legacy callers (panels, layouts, annotations,
+   * links) AND the new UserActionCommand-based ones (variables) both end up
+   * here. DashboardEditPane subscribes and runs perform() + pushes to its
+   * undoStack.
    */
   edit(props: DashboardEditActionEventPayload) {
     props.source.publishEvent(new DashboardEditActionEvent(props), true);
-  },
-
-  /**
-   * Execute a UserActionCommand against the dashboard.
-   *
-   * This is the chokepoint both the UI and the agent (via MutationApiClient)
-   * use to dispatch a UserActionCommand: it checks permission + lock, then
-   * routes through the existing DashboardEditActionEvent stack so undo/redo
-   * works for free, no parallel undo system needed.
-   *
-   * The UserActionCommand's `perform` / `undo` methods carry the mutation
-   * logic; this helper just adapts them into the legacy event shape.
-   */
-  executeUserAction(scene: DashboardScene, cmd: UserActionCommand): ClientCommandResult {
-    if (!scene.canEditDashboard()) {
-      return {
-        success: false,
-        error: 'Cannot edit dashboard: insufficient permissions or dashboard is a snapshot',
-      };
-    }
-    if (cmd.lockTarget && scene.isWriteLocked(cmd.lockTarget)) {
-      return { success: false, locked: true, error: `Target '${cmd.lockTarget}' is locked` };
-    }
-    if (!scene.state.isEditing) {
-      scene.onEnterEditMode();
-    }
-
-    // Run the mutation here so the caller (UI / agent) sees the effect
-    // immediately and can surface errors synchronously. The legacy
-    // DashboardEditPane subscriber will call perform() again on first publish;
-    // we skip that one so we do not double-apply.
-    try {
-      cmd.perform();
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
-    }
-
-    let firstPerform = true;
-    dashboardEditActions.edit({
-      source: scene,
-      description: cmd.title,
-      perform: () => {
-        if (firstPerform) {
-          firstPerform = false;
-          return;
-        }
-        cmd.perform();
-      },
-      undo: () => cmd.undo(),
-    });
-    return { success: true };
   },
   /**
    * Helper for makeEdit that adds elements
@@ -331,13 +281,23 @@ export const dashboardEditActions = {
 
   addVariable({ source, addedObject }: AddVariableActionHelperProps) {
     const dashboard = getDashboardSceneFor(source);
-    const variableKind = createVariableKindFromSceneVariable(addedObject);
-    const position = source.state.variables.length;
-    dashboardEditActions.executeUserAction(dashboard, new AddVariableCommand(dashboard, variableKind, position));
+    const cmd = new AddVariableCommand(dashboard, addedObject, source.state.variables.length);
+    dashboardEditActions.edit({
+      source: dashboard,
+      description: cmd.title,
+      perform: () => cmd.perform(),
+      undo: () => cmd.undo(),
+    });
   },
   removeVariable({ source, removedObject }: RemoveVariableActionHelperProps) {
     const dashboard = getDashboardSceneFor(source);
-    dashboardEditActions.executeUserAction(dashboard, new RemoveVariableCommand(dashboard, removedObject.state.name));
+    const cmd = new RemoveVariableCommand(dashboard, removedObject);
+    dashboardEditActions.edit({
+      source: dashboard,
+      description: cmd.title,
+      perform: () => cmd.perform(),
+      undo: () => cmd.undo(),
+    });
   },
   changeVariableType({ source, oldVariable, newVariable }: ChangeVariableTypeActionHelperProps) {
     const varsBeforeChange = [...source.state.variables];

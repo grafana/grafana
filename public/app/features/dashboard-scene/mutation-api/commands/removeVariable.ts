@@ -1,24 +1,24 @@
 /**
  * REMOVE_VARIABLE -- the full story for this mutation in one file.
  *
- * Constructor takes just `(scene, name)`. The class does the SceneVariable
- * lookup and VariableKind serialization itself inside perform(), so both
- * the UI and the agent use the same one-arg construction signature -- no
- * pre-computation at the call site.
+ * Constructor takes a SceneVariable directly (Scene-pure). Stores the
+ * removed index during perform() so undo can re-insert at the same place.
+ *
+ * Agent path: toUserAction does the name -> SceneVariable lookup, alongside
+ * Zod validation, before constructing the command. The class itself never
+ * sees a name string -- it has the object.
  */
 
 import { type z } from 'zod';
 
-import { sceneGraph } from '@grafana/scenes';
-import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { sceneGraph, type SceneVariable } from '@grafana/scenes';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
-import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
-import { type WriteClientCommand } from '../ClientCommand';
+import { type ClientCommand } from '../ClientCommand';
 import type { UserActionCommand } from '../UserActionCommand';
 
 import { removeVariablePayloadSchema } from './schemas';
-import { createVariableKindFromSceneVariable, replaceVariableSet } from './variableUtils';
+import { replaceVariableSet } from './variableUtils';
 
 export type RemoveVariablePayload = z.infer<typeof removeVariablePayloadSchema>;
 
@@ -27,58 +27,59 @@ export class RemoveVariableCommand implements UserActionCommand {
   lockTarget = 'variables';
 
   private scene: DashboardScene;
-  private name: string;
-  // Snapshotted during perform() so undo can recreate the variable without
-  // holding a SceneVariable reference. Declarative: only primitives stored.
-  private snapshot?: { variableKind: VariableKind; index: number };
+  private variable: SceneVariable;
+  private removedIndex?: number;
 
-  constructor(scene: DashboardScene, name: string) {
+  constructor(scene: DashboardScene, variable: SceneVariable) {
     this.scene = scene;
-    this.name = name;
-    this.title = `Remove variable '${name}'`;
+    this.variable = variable;
+    this.title = `Remove variable '${variable.state.name}'`;
   }
 
   perform(): void {
+    const name = this.variable.state.name;
     const varSet = sceneGraph.getVariables(this.scene);
-    const index = varSet.state.variables.findIndex((v) => v.state.name === this.name);
+    const index = varSet.state.variables.findIndex((v) => v.state.name === name);
     if (index < 0) {
-      throw new Error(`Variable '${this.name}' not found`);
+      throw new Error(`Variable '${name}' not found`);
     }
-    const variable = varSet.state.variables[index];
-    this.snapshot = {
-      variableKind: createVariableKindFromSceneVariable(variable, this.scene),
-      index,
-    };
+    this.removedIndex = index;
     replaceVariableSet(
       this.scene,
-      varSet.state.variables.filter((v) => v.state.name !== this.name)
+      varSet.state.variables.filter((v) => v.state.name !== name)
     );
   }
 
   undo(): void {
-    if (!this.snapshot) {
+    if (this.removedIndex === undefined) {
       // perform() was never called, nothing to undo.
       return;
     }
     const varSet = sceneGraph.getVariables(this.scene);
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- structurally compatible
-    const sceneVariable = createSceneVariableFromVariableModel(this.snapshot.variableKind as VariableKind);
+    // Clone so re-insertion produces a fresh instance, safe across SceneVariableSet swaps.
+    const fresh = this.variable.clone({});
     const current = [...varSet.state.variables];
-    if (this.snapshot.index >= 0 && this.snapshot.index < current.length) {
-      current.splice(this.snapshot.index, 0, sceneVariable);
+    if (this.removedIndex >= 0 && this.removedIndex < current.length) {
+      current.splice(this.removedIndex, 0, fresh);
     } else {
-      current.push(sceneVariable);
+      current.push(fresh);
     }
     replaceVariableSet(this.scene, current);
   }
 }
 
-export const removeVariableClientCommand: WriteClientCommand<RemoveVariablePayload> = {
+export const removeVariableClientCommand: ClientCommand<RemoveVariablePayload> = {
   type: 'REMOVE_VARIABLE',
   description: removeVariablePayloadSchema.description ?? '',
-  schema: removeVariablePayloadSchema,
   kind: 'write',
+  schema: removeVariablePayloadSchema,
   toUserAction(payload, ctx) {
-    return new RemoveVariableCommand(ctx.scene, payload.name);
+    // Lookup lives here, alongside validation. The class never sees a name string.
+    const varSet = sceneGraph.getVariables(ctx.scene);
+    const variable = varSet.state.variables.find((v) => v.state.name === payload.name);
+    if (!variable) {
+      throw new Error(`Variable '${payload.name}' not found`);
+    }
+    return new RemoveVariableCommand(ctx.scene, variable);
   },
 };

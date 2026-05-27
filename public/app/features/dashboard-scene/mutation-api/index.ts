@@ -28,10 +28,4 @@ export type { MutationCommand } from './commands/types';
 
 export { MutationApiClient, CLIENT_COMMANDS } from './Client';
 export type { MutationApiRequest, ClientCommandSummary } from './Client';
-export type {
-  ClientCommand,
-  ClientCommandContext,
-  ClientCommandResult,
-  WriteClientCommand,
-  ReadClientCommand,
-} from './ClientCommand';
+export type { ClientCommand, ClientCommandContext, ClientCommandResult } from './ClientCommand';

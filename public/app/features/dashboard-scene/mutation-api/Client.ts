@@ -6,12 +6,8 @@ import { addVariableClientCommand } from './commands/addVariable';
 import { listVariablesClientCommand } from './commands/listVariables';
 import { removeVariableClientCommand } from './commands/removeVariable';
 
-/**
- * Registry of agent-facing dashboard commands. Each entry is a data record
- * (not a class) declaring its type, description, Zod schema, and either a
- * `toUserAction` mapper (writes) or a `read` function.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- heterogeneous registry; each entry is typed internally
+/** All agent-facing commands. Each entry is a data record describing one command. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- heterogeneous registry
 export const CLIENT_COMMANDS: Array<ClientCommand<any>> = [
   addVariableClientCommand,
   removeVariableClientCommand,
@@ -32,17 +28,18 @@ export interface ClientCommandSummary {
 /**
  * Agent-facing entry point for the dashboard Mutation API.
  *
- * Three responsibilities:
+ *   - `list()`     -- the Assistant introspects the tool surface.
+ *   - `execute()`  -- validates JSON against the command's Zod schema, then:
+ *                       * read:  call cmd.read, return { success, data }.
+ *                       * write: call cmd.toUserAction (which converts the
+ *                                JSON payload into Scene objects + builds the
+ *                                UserActionCommand class), then run it through
+ *                                the existing dashboardEditActions.edit pipe so
+ *                                it lands on the DashboardEditPane undo stack.
  *
- *   1. Discover  -- `list()` returns the available commands so the Assistant
- *                   can introspect the tool surface.
- *   2. Validate  -- `execute()` runs the request payload through the
- *                   command's Zod schema.
- *   3. Dispatch  -- read commands return data; write commands construct a
- *                   UserActionCommand and hand it to dashboardEditActions.
- *                   executeUserAction, which is the same entry point the UI
- *                   uses, so the existing DashboardEditActionEvent stack
- *                   handles undo/redo for both.
+ * The UI does not use this class. The UI constructs UserActionCommands
+ * directly and dispatches via dashboardEditActions.edit -- the same pipe
+ * MutationApiClient ends at. Convergence on the existing seam.
  */
 export class MutationApiClient {
   private registry = new Map<string, ClientCommand>();
@@ -79,19 +76,58 @@ export class MutationApiClient {
 
     if (cmd.kind === 'read') {
       try {
-        const data = await cmd.read(validation.data, ctx);
+        const data = await cmd.read!(validation.data, ctx);
         return { success: true, data };
       } catch (error) {
         return { success: false, error: error instanceof Error ? error.message : String(error) };
       }
     }
 
+    // Write path. Permission, lock, edit-mode entry, and sync error reporting
+    // are agent-only concerns (the UI is already in edit mode and has no
+    // notion of locks); they live here inline.
+    if (!this.scene.canEditDashboard()) {
+      return { success: false, error: 'Cannot edit dashboard: insufficient permissions or dashboard is a snapshot' };
+    }
+
     let userAction;
     try {
-      userAction = cmd.toUserAction(validation.data, ctx);
+      userAction = cmd.toUserAction!(validation.data, ctx);
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
-    return dashboardEditActions.executeUserAction(this.scene, userAction);
+
+    if (userAction.lockTarget && this.scene.isWriteLocked(userAction.lockTarget)) {
+      return { success: false, locked: true, error: `Target '${userAction.lockTarget}' is locked` };
+    }
+
+    if (!this.scene.state.isEditing) {
+      this.scene.onEnterEditMode();
+    }
+
+    // Pre-perform so the agent gets a synchronous error if perform throws.
+    // DashboardEditPane will call perform again on first publish; skip that
+    // one so we do not double-apply.
+    try {
+      userAction.perform();
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+
+    let firstPerform = true;
+    dashboardEditActions.edit({
+      source: this.scene,
+      description: userAction.title,
+      perform: () => {
+        if (firstPerform) {
+          firstPerform = false;
+          return;
+        }
+        userAction.perform();
+      },
+      undo: () => userAction.undo(),
+    });
+
+    return { success: true };
   }
 }
