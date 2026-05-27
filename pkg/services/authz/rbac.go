@@ -107,6 +107,7 @@ func ProvideAuthZClient(
 			reg,
 			cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 10 * time.Minute}),
 			rbacSettings,
+			restConfig.GetRestConfig,
 		)
 
 		channel := &inprocgrpc.Channel{}
@@ -321,6 +322,10 @@ func RegisterRBACAuthZService(
 		reg,
 		cache,
 		rbac.Settings{CacheTTL: cfg.CacheTTL, LocalFolderCacheTTL: cfg.LocalFolderCacheTTL}, // anonymous org role can only be set in-proc
+		// Standalone authz server has no in-proc apiserver loopback; the
+		// kubernetesUsersRedirect path is unavailable here and GetUserIdentifiers
+		// falls back to the legacy SQL store.
+		nil,
 	)
 
 	srv := handler.GetServer()

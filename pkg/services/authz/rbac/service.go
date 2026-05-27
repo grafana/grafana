@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	sdkk8s "github.com/grafana/grafana-app-sdk/k8s"
+	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -14,11 +17,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/client-go/rest"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
 	"github.com/grafana/authlib/types"
 
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -27,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
@@ -49,6 +55,12 @@ type Service struct {
 	logger  log.Logger
 	tracer  tracing.Tracer
 	metrics *metrics
+
+	// k8s loopback config used to resolve user identifiers via the
+	// iam.grafana.app users API when the kubernetesUsersRedirect flag is on.
+	// nil disables the redirect path; GetUserIdentifiers falls back to SQL.
+	restConfigClient  func(ctx context.Context) (*rest.Config, error)
+	openFeatureClient *openfeature.Client
 
 	// Deduplication of concurrent requests
 	sf *singleflight.Group
@@ -83,28 +95,31 @@ func NewService(
 	reg prometheus.Registerer,
 	cache cache.Cache,
 	settings Settings,
+	restConfigClient func(ctx context.Context) (*rest.Config, error),
 ) *Service {
 	if settings.AnonOrgRole == "" {
 		settings.AnonOrgRole = "Viewer"
 	}
 	return &Service{
-		store:           store.NewStore(sql, tracer),
-		folderStore:     folderStore,
-		permissionStore: permissionStore,
-		identityStore:   identityStore,
-		settings:        settings,
-		logger:          logger,
-		tracer:          tracer,
-		metrics:         newMetrics(reg),
-		mapper:          NewMapperRegistry(),
-		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
-		permCache:       newCacheWrap[map[string]bool](cache, logger, tracer, settings.CacheTTL),
-		permDenialCache: newCacheWrap[bool](cache, logger, tracer, settings.CacheTTL),
-		userTeamCache:   newCacheWrap[[]int64](cache, logger, tracer, settings.CacheTTL),
-		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, tracer, settings.CacheTTL),
-		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, settings.CacheTTL, settings.LocalFolderCacheTTL),
-		teamIDCache:     newCacheWrap[map[int64]string](cache, logger, tracer, longCacheTTL),
-		sf:              new(singleflight.Group),
+		store:             store.NewStore(sql, tracer),
+		folderStore:       folderStore,
+		permissionStore:   permissionStore,
+		identityStore:     identityStore,
+		settings:          settings,
+		logger:            logger,
+		tracer:            tracer,
+		metrics:           newMetrics(reg),
+		mapper:            NewMapperRegistry(),
+		restConfigClient:  restConfigClient,
+		openFeatureClient: openfeature.NewDefaultClient(),
+		idCache:           newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
+		permCache:         newCacheWrap[map[string]bool](cache, logger, tracer, settings.CacheTTL),
+		permDenialCache:   newCacheWrap[bool](cache, logger, tracer, settings.CacheTTL),
+		userTeamCache:     newCacheWrap[[]int64](cache, logger, tracer, settings.CacheTTL),
+		basicRoleCache:    newCacheWrap[store.BasicRole](cache, logger, tracer, settings.CacheTTL),
+		folderCache:       newCacheWrap[folderTree](cache, logger, tracer, settings.CacheTTL, settings.LocalFolderCacheTTL),
+		teamIDCache:       newCacheWrap[map[int64]string](cache, logger, tracer, longCacheTTL),
+		sf:                new(singleflight.Group),
 	}
 }
 
@@ -763,14 +778,22 @@ func (s *Service) GetUserIdentifiers(ctx context.Context, ns types.NamespaceInfo
 		return &cached, nil
 	}
 
-	var userIDQuery store.UserIdentifierQuery
-	// Assume that numeric UID is user ID
-	if userID, err := strconv.Atoi(userUID); err == nil {
-		userIDQuery = store.UserIdentifierQuery{UserID: int64(userID)}
+	var (
+		userIdentifiers *store.UserIdentifiers
+		err             error
+	)
+	if s.isKubernetesUsersRedirectEnabled(ctx) && s.restConfigClient != nil {
+		userIdentifiers, err = s.getUserIdentifiersFromK8s(ctx, ns, userUID)
 	} else {
-		userIDQuery = store.UserIdentifierQuery{UserUID: userUID}
+		var userIDQuery store.UserIdentifierQuery
+		// Assume that numeric UID is user ID
+		if userID, parseErr := strconv.Atoi(userUID); parseErr == nil {
+			userIDQuery = store.UserIdentifierQuery{UserID: int64(userID)}
+		} else {
+			userIDQuery = store.UserIdentifierQuery{UserUID: userUID}
+		}
+		userIdentifiers, err = s.store.GetUserIdentifiers(ctx, userIDQuery)
 	}
-	userIdentifiers, err := s.store.GetUserIdentifiers(ctx, userIDQuery)
 	if err != nil {
 		return nil, fmt.Errorf("could not get user internal id: %w", err)
 	}
@@ -779,6 +802,95 @@ func (s *Service) GetUserIdentifiers(ctx context.Context, ns types.NamespaceInfo
 	s.idCache.Set(ctx, idCacheKey, *userIdentifiers)
 
 	return userIdentifiers, nil
+}
+
+func (s *Service) isKubernetesUsersRedirectEnabled(ctx context.Context) bool {
+	if s.openFeatureClient == nil {
+		return false
+	}
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx))
+}
+
+// getUserClient builds an iam.grafana.app users client from the loopback
+// rest.Config. Callers should guard with s.restConfigClient != nil.
+func (s *Service) getUserClient(ctx context.Context) (*iamv0alpha1.UserClient, error) {
+	cfg, err := s.restConfigClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rest config: %w", err)
+	}
+	cfg.APIPath = "apis"
+	registry := sdkk8s.NewClientRegistry(*cfg, sdkk8s.DefaultClientConfig())
+	client, err := iamv0alpha1.NewUserClientFromGenerator(registry)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build iam user client: %w", err)
+	}
+	return client, nil
+}
+
+// getUserIdentifiersFromK8s resolves the legacy numeric id + UID by calling the
+// iam.grafana.app users API via the loopback rest.Config. The k8s apiserver is
+// the source of truth for User identity in multi-replica setups where per-
+// instance legacy user.uid values diverge from the canonical UID.
+func (s *Service) getUserIdentifiersFromK8s(ctx context.Context, ns types.NamespaceInfo, userUID string) (*store.UserIdentifiers, error) {
+	client, err := s.getUserClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Numeric input → treat as the legacy internal user ID; look up via the
+	// deprecated-internal-id label selector (mirrors userk8s.getByInternalID).
+	if userID, parseErr := strconv.Atoi(userUID); parseErr == nil {
+		labelSelector := utils.LabelKeyDeprecatedInternalID + "=" + strconv.FormatInt(int64(userID), 10)
+		list, err := client.List(ctx, ns.Value, resource.ListOptions{LabelFilters: []string{labelSelector}})
+		if err != nil {
+			return nil, err
+		}
+		if len(list.Items) == 0 {
+			return nil, fmt.Errorf("user could not be found")
+		}
+		return userIdentifiersFromK8sUser(&list.Items[0])
+	}
+
+	// Non-numeric input → treat as the canonical UID (metadata.name).
+	u, err := client.Get(ctx, resource.Identifier{Namespace: ns.Value, Name: userUID})
+	if err != nil {
+		return nil, err
+	}
+	return userIdentifiersFromK8sUser(u)
+}
+
+func userIdentifiersFromK8sUser(u *iamv0alpha1.User) (*store.UserIdentifiers, error) {
+	meta, err := utils.MetaAccessor(u)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get meta accessor: %w", err)
+	}
+	return &store.UserIdentifiers{
+		ID:  meta.GetDeprecatedInternalID(), //nolint:staticcheck
+		UID: u.Name,
+	}, nil
+}
+
+// getBasicRolesFromK8s reads the org-specific basic role from the iam.grafana.app
+// User resource in the requested namespace. The k8s User spec carries Role
+// (Viewer/Editor/Admin/None) and GrafanaAdmin, so we avoid the legacy
+// user + org_user SQL join entirely.
+func (s *Service) getBasicRolesFromK8s(ctx context.Context, ns types.NamespaceInfo, userUID string) (*store.BasicRole, error) {
+	client, err := s.getUserClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	u, err := client.Get(ctx, resource.Identifier{Namespace: ns.Value, Name: userUID})
+	if err != nil {
+		return nil, err
+	}
+	role := u.Spec.Role
+	if role == "" {
+		role = "None"
+	}
+	return &store.BasicRole{
+		Role:    role,
+		IsAdmin: u.Spec.GrafanaAdmin,
+	}, nil
 }
 
 func (s *Service) getUserTeams(ctx context.Context, ns types.NamespaceInfo, userIdentifiers *store.UserIdentifiers) ([]int64, error) {
@@ -824,7 +936,15 @@ func (s *Service) getUserBasicRole(ctx context.Context, ns types.NamespaceInfo, 
 		return cached, nil
 	}
 
-	basicRole, err := s.store.GetBasicRoles(ctx, ns, store.BasicRoleQuery{UserID: userIdentifiers.ID})
+	var (
+		basicRole *store.BasicRole
+		err       error
+	)
+	if s.isKubernetesUsersRedirectEnabled(ctx) && s.restConfigClient != nil {
+		basicRole, err = s.getBasicRolesFromK8s(ctx, ns, userIdentifiers.UID)
+	} else {
+		basicRole, err = s.store.GetBasicRoles(ctx, ns, store.BasicRoleQuery{UserID: userIdentifiers.ID})
+	}
 	if err != nil {
 		return store.BasicRole{}, fmt.Errorf("could not get basic roles: %w", err)
 	}
