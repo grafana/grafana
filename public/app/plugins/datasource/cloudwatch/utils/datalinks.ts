@@ -72,6 +72,10 @@ async function createInternalXrayLink(datasourceUid: string, region: string): Pr
     return undefined;
   }
 
+  if (!ds) {
+    return undefined;
+  }
+
   return {
     title: ds.name,
     url: '',
