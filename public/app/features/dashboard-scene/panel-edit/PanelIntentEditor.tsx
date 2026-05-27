@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { type Panel } from '@grafana/schema';
-import { Button, Field, IconButton, Input, Stack, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, ControlledCollapse, Field, IconButton, Input, Stack, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { dashboardEditActions } from '../edit-pane/shared';
 import { PanelIntentChips } from '../scene/PanelIntentChips';
@@ -35,6 +35,13 @@ interface Props {
  * Provides a "Draft with AI" shortcut that opens the Grafana Assistant
  * with a prompt routing to the `suggest_dashboard_intent` tool, so the
  * user can pre-fill the section from the assistant's draft.
+ *
+ * Rendered as a self-collapsible block so it can be inlined as an item
+ * directly under the Description field in the Panel options pane
+ * (E.1). The OptionsPane category renderer puts all items before any
+ * nested categories, so an inlined item is the only way to sit between
+ * Description and Transparent background without restructuring the
+ * panel-frame options.
  */
 export function PanelIntentEditor({ panel }: Props) {
   // Subscribe to panel.titleItems so we re-render when the
@@ -103,136 +110,145 @@ function PanelIntentEditorBody({ panel, intent }: BodyProps) {
     });
   };
 
+  // ControlledCollapse self-manages open/close. Default closed so the
+  // pane stays compact for the common case (no authored intent); open
+  // automatically when intent already exists so a returning author
+  // sees their content without an extra click.
   return (
-    <Stack direction="column" gap={1}>
-      <DraftWithAIButton panel={panel} hasIntent={hasAnyIntent(intent)} />
+    <ControlledCollapse
+      label={t('panel-intent-editor.collapse-label', 'Panel context')}
+      isOpen={hasAnyIntent(intent)}
+    >
+      <Stack direction="column" gap={1}>
+        <DraftWithAIButton panel={panel} hasIntent={hasAnyIntent(intent)} />
 
-      <Field
-        label={t('panel-intent-editor.purpose', 'Purpose')}
-        description={t(
-          'panel-intent-editor.purpose-desc',
-          'One sentence: what does this panel measure and why does it matter?'
-        )}
-      >
-        <TextArea
-          value={intent.purpose ?? ''}
-          rows={2}
-          onChange={(e) =>
-            writeIntent(
-              { ...currentIntent(), purpose: e.currentTarget.value || undefined },
-              t('panel-intent-editor.edit.purpose', 'Edit panel purpose')
-            )
-          }
-        />
-      </Field>
-
-      <Field label={t('panel-intent-editor.owner', 'Owner')}>
-        <Input
-          value={intent.owner ?? ''}
-          placeholder="@team-handle"
-          onChange={(e) =>
-            writeIntent(
-              { ...currentIntent(), owner: e.currentTarget.value || undefined },
-              t('panel-intent-editor.edit.owner', 'Edit panel owner')
-            )
-          }
-        />
-      </Field>
-
-      <fieldset className={styles.group}>
-        <legend className={styles.legend}>{t('panel-intent-editor.expected', 'Expected behavior')}</legend>
-
-        <Field label={t('panel-intent-editor.normal-range', 'Normal range')}>
-          <Input
-            value={intent.expectedBehavior?.normalRange ?? ''}
-            placeholder="p99 < 250ms"
-            onChange={(e) => {
-              const cur = currentIntent();
-              writeIntent(
-                {
-                  ...cur,
-                  expectedBehavior: {
-                    ...cur.expectedBehavior,
-                    normalRange: e.currentTarget.value || undefined,
-                  },
-                },
-                t('panel-intent-editor.edit.normal-range', 'Edit normal range')
-              );
-            }}
-          />
-        </Field>
-
-        <Field label={t('panel-intent-editor.alert-threshold', 'Alert threshold')}>
-          <Input
-            value={intent.expectedBehavior?.alertThreshold ?? ''}
-            placeholder="p99 > 500ms for 5m"
-            onChange={(e) => {
-              const cur = currentIntent();
-              writeIntent(
-                {
-                  ...cur,
-                  expectedBehavior: {
-                    ...cur.expectedBehavior,
-                    alertThreshold: e.currentTarget.value || undefined,
-                  },
-                },
-                t('panel-intent-editor.edit.alert-threshold', 'Edit alert threshold')
-              );
-            }}
-          />
-        </Field>
-
-        <Field label={t('panel-intent-editor.notes', 'Notes')}>
+        <Field
+          label={t('panel-intent-editor.purpose', 'Purpose')}
+          description={t(
+            'panel-intent-editor.purpose-desc',
+            'One sentence: what does this panel measure and why does it matter?'
+          )}
+        >
           <TextArea
-            value={intent.expectedBehavior?.notes ?? ''}
+            value={intent.purpose ?? ''}
             rows={2}
-            onChange={(e) => {
-              const cur = currentIntent();
+            onChange={(e) =>
               writeIntent(
-                {
-                  ...cur,
-                  expectedBehavior: {
-                    ...cur.expectedBehavior,
-                    notes: e.currentTarget.value || undefined,
-                  },
-                },
-                t('panel-intent-editor.edit.notes', 'Edit notes')
-              );
-            }}
+                { ...currentIntent(), purpose: e.currentTarget.value || undefined },
+                t('panel-intent-editor.edit.purpose', 'Edit panel purpose')
+              )
+            }
           />
         </Field>
-      </fieldset>
 
-      <FailureModesEditor
-        failureModes={intent.failureModes ?? []}
-        onChange={(failureModes) =>
-          writeIntent(
-            { ...currentIntent(), failureModes: failureModes.length ? failureModes : undefined },
-            t('panel-intent-editor.edit.failure-modes', 'Edit failure modes')
-          )
-        }
-      />
+        <Field label={t('panel-intent-editor.owner', 'Owner')}>
+          <Input
+            value={intent.owner ?? ''}
+            placeholder="@team-handle"
+            onChange={(e) =>
+              writeIntent(
+                { ...currentIntent(), owner: e.currentTarget.value || undefined },
+                t('panel-intent-editor.edit.owner', 'Edit panel owner')
+              )
+            }
+          />
+        </Field>
 
-      <RelatedSlosEditor
-        slos={intent.relatedSlos ?? []}
-        onChange={(relatedSlos) =>
-          writeIntent(
-            { ...currentIntent(), relatedSlos: relatedSlos.length ? relatedSlos : undefined },
-            t('panel-intent-editor.edit.related-slos', 'Edit related SLOs')
-          )
-        }
-      />
+        <fieldset className={styles.group}>
+          <legend className={styles.legend}>{t('panel-intent-editor.expected', 'Expected behavior')}</legend>
 
-      <RunbooksEditor
-        runbooks={intent.runbooks ?? []}
-        onChange={(runbooks) =>
-          writeIntent(
-            { ...currentIntent(), runbooks: runbooks.length ? runbooks : undefined },
-            t('panel-intent-editor.edit.runbooks', 'Edit runbooks')
-          )
-        }
-      />
-    </Stack>
+          <Field label={t('panel-intent-editor.normal-range', 'Normal range')}>
+            <Input
+              value={intent.expectedBehavior?.normalRange ?? ''}
+              placeholder="p99 < 250ms"
+              onChange={(e) => {
+                const cur = currentIntent();
+                writeIntent(
+                  {
+                    ...cur,
+                    expectedBehavior: {
+                      ...cur.expectedBehavior,
+                      normalRange: e.currentTarget.value || undefined,
+                    },
+                  },
+                  t('panel-intent-editor.edit.normal-range', 'Edit normal range')
+                );
+              }}
+            />
+          </Field>
+
+          <Field label={t('panel-intent-editor.alert-threshold', 'Alert threshold')}>
+            <Input
+              value={intent.expectedBehavior?.alertThreshold ?? ''}
+              placeholder="p99 > 500ms for 5m"
+              onChange={(e) => {
+                const cur = currentIntent();
+                writeIntent(
+                  {
+                    ...cur,
+                    expectedBehavior: {
+                      ...cur.expectedBehavior,
+                      alertThreshold: e.currentTarget.value || undefined,
+                    },
+                  },
+                  t('panel-intent-editor.edit.alert-threshold', 'Edit alert threshold')
+                );
+              }}
+            />
+          </Field>
+
+          <Field label={t('panel-intent-editor.notes', 'Notes')}>
+            <TextArea
+              value={intent.expectedBehavior?.notes ?? ''}
+              rows={2}
+              onChange={(e) => {
+                const cur = currentIntent();
+                writeIntent(
+                  {
+                    ...cur,
+                    expectedBehavior: {
+                      ...cur.expectedBehavior,
+                      notes: e.currentTarget.value || undefined,
+                    },
+                  },
+                  t('panel-intent-editor.edit.notes', 'Edit notes')
+                );
+              }}
+            />
+          </Field>
+        </fieldset>
+
+        <FailureModesEditor
+          failureModes={intent.failureModes ?? []}
+          onChange={(failureModes) =>
+            writeIntent(
+              { ...currentIntent(), failureModes: failureModes.length ? failureModes : undefined },
+              t('panel-intent-editor.edit.failure-modes', 'Edit failure modes')
+            )
+          }
+        />
+
+        <RelatedSlosEditor
+          slos={intent.relatedSlos ?? []}
+          onChange={(relatedSlos) =>
+            writeIntent(
+              { ...currentIntent(), relatedSlos: relatedSlos.length ? relatedSlos : undefined },
+              t('panel-intent-editor.edit.related-slos', 'Edit related SLOs')
+            )
+          }
+        />
+
+        <RunbooksEditor
+          runbooks={intent.runbooks ?? []}
+          onChange={(runbooks) =>
+            writeIntent(
+              { ...currentIntent(), runbooks: runbooks.length ? runbooks : undefined },
+              t('panel-intent-editor.edit.runbooks', 'Edit runbooks')
+            )
+          }
+        />
+      </Stack>
+    </ControlledCollapse>
   );
 }
 

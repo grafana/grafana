@@ -108,6 +108,13 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         ),
       })
     )
+    // Panel context (Dashboard Intent / Phase E.1) sits directly under
+    // Description so operational metadata is authored next to the human
+    // description it complements. The editor renders its own collapse
+    // affordance because OptionsPane categories render all items before
+    // any nested sub-categories — an inlined item is the only way to
+    // appear between two existing items.
+    .addItem(getPanelIntentEditorItem(panel))
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard-scene.get-panel-frame-options.title.transparent-background', 'Transparent background'),
@@ -155,25 +162,19 @@ export function getPanelStylesOptions(panel: VizPanel): OptionsPaneCategoryDescr
 }
 
 /**
- * Edit-mode "Panel context" category — surfaces the panel `intent`
- * block (Dashboard Intent / Phase C) for authoring. Collapsed by
- * default so it doesn't push the more frequently used Title/Description
- * fields off-screen, but mounted unconditionally so every panel can
- * pick up authored intent.
+ * Edit-mode "Panel context" entry — surfaces the panel `intent` block
+ * (Dashboard Intent / Phase E.1) for authoring as an item inside the
+ * Panel options category so it sits directly below Description rather
+ * than as a separate top-level category. The editor self-renders a
+ * collapsible header so the section stays compact by default.
  */
-export function getPanelIntentOptions(panel: VizPanel): OptionsPaneCategoryDescriptor {
-  return new OptionsPaneCategoryDescriptor({
-    title: t('dashboard-scene.get-panel-intent-options.title', 'Panel context'),
-    id: 'panel-context',
-    isOpenDefault: false,
-  }).addItem(
-    new OptionsPaneItemDescriptor({
-      title: t('dashboard-scene.get-panel-intent-options.editor-title', 'Panel context'),
-      id: 'panel-intent-editor',
-      skipField: true,
-      render: () => <PanelIntentEditor panel={panel} />,
-    })
-  );
+export function getPanelIntentEditorItem(panel: VizPanel): OptionsPaneItemDescriptor {
+  return new OptionsPaneItemDescriptor({
+    title: t('dashboard-scene.get-panel-intent-options.editor-title', 'Panel context'),
+    id: 'panel-intent-editor',
+    skipField: true,
+    render: () => <PanelIntentEditor panel={panel} />,
+  });
 }
 
 interface ScenePanelLinksEditorProps {

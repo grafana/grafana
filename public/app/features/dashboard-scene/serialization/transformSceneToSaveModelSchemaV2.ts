@@ -288,6 +288,16 @@ export function vizPanelToSchemaV2(
     overrides: vizPanel.state.fieldConfig?.overrides ?? [],
   };
 
+  // Phase E.2: lift intent before building the spec so the
+  // description can mirror `intent.purpose` when no description has
+  // been authored. The v2 spec stores description as a required
+  // string (defaulting to ''), so the empty-check is "description is
+  // empty string", not "description is undefined". We never overwrite
+  // a non-empty author-provided description.
+  const intent = panelIntentFromVizPanel(vizPanel);
+  const authoredDescription = vizPanel.state.description ?? '';
+  const description = authoredDescription === '' && intent?.purpose ? intent.purpose : authoredDescription;
+
   const elementSpec: PanelKind = {
     kind: 'Panel',
     spec: {
@@ -298,7 +308,7 @@ export function vizPanelToSchemaV2(
           ? djb2Hash(vizPanel.state.key)
           : getPanelIdForVizPanel(vizPanel),
       title: vizPanel.state.title,
-      description: vizPanel.state.description ?? '',
+      description,
       links: getPanelLinks(vizPanel),
       transparent: vizPanel.state.displayMode === 'transparent' ? true : undefined,
       data: {
@@ -318,7 +328,7 @@ export function vizPanelToSchemaV2(
           fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
         },
       },
-      intent: panelIntentFromVizPanel(vizPanel),
+      intent,
     },
   };
   return elementSpec;

@@ -13,7 +13,7 @@ import {
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
-import { getPanelFrameOptions, getPanelIntentOptions, getPanelStylesOptions } from './getPanelFrameOptions';
+import { getPanelFrameOptions, getPanelStylesOptions } from './getPanelFrameOptions';
 
 interface Props {
   panel: VizPanel;
@@ -27,7 +27,6 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
 
   const panelFrameOptions = useMemo(() => getPanelFrameOptions(panel), [panel]);
   const panelStylesOptions = useMemo(() => getPanelStylesOptions(panel), [panel]);
-  const panelIntentOptions = useMemo(() => getPanelIntentOptions(panel), [panel]);
 
   const visualizationOptions = useMemo(() => {
     const plugin = panel.getPlugin();
@@ -82,7 +81,6 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
         [
           panelFrameOptions,
           ...(panelStylesOptions ? [panelStylesOptions] : []),
-          panelIntentOptions,
           ...(libraryPanelOptions ? [libraryPanelOptions] : []),
           ...(visualizationOptions ?? []),
         ],
@@ -101,7 +99,6 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
         if (panelStylesOptions) {
           mainBoxElements.push(panelStylesOptions.renderElement());
         }
-        mainBoxElements.push(panelIntentOptions.renderElement());
 
         for (const item of visualizationOptions ?? []) {
           mainBoxElements.push(item.renderElement());

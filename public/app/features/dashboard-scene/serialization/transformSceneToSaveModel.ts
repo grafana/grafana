@@ -306,6 +306,17 @@ export function vizPanelToPanel(
     );
     if (intentChips) {
       panel.intent = intentChips.state.intent;
+      // Phase E.2: mirror the intent purpose into the panel
+      // description when no description has been authored. This gives
+      // viewers free access to the panel's authored purpose via the
+      // existing description info-icon hover without us building a
+      // separate viewer surface. We never overwrite a non-empty
+      // description because authors may want the two strings to
+      // diverge (description = concise label for the chart, purpose =
+      // operational context).
+      if (!panel.description && panel.intent?.purpose) {
+        panel.description = panel.intent.purpose;
+      }
     }
   }
 

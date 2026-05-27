@@ -488,6 +488,10 @@ describe('transformSceneToSaveModel', () => {
         },
       };
       const gridItem = buildGridItemFromPanelSchema({
+        // Seed a non-empty description so the E.2 mirror does NOT
+        // touch it — round-trip must preserve the exact intent block
+        // and the author's description independently.
+        description: 'Author-written description.',
         title: 'p99 latency',
         type: 'timeseries',
         gridPos: { x: 0, y: 0, w: 12, h: 8 },
@@ -496,6 +500,68 @@ describe('transformSceneToSaveModel', () => {
 
       const saveModel = gridItemToPanel(gridItem);
       expect(saveModel.intent).toEqual(intent);
+      expect(saveModel.description).toBe('Author-written description.');
+    });
+
+    it('Phase E.2: mirrors intent.purpose into the panel description when description is empty', () => {
+      // No description authored; intent.purpose should populate
+      // description on save so viewers see the purpose via the info
+      // icon hover without us building a separate viewer surface.
+      const intent = {
+        schemaVersion: 1,
+        purpose: 'Track checkout p99 latency.',
+        provenance: { purpose: 'author-written' as const },
+      };
+      const gridItem = buildGridItemFromPanelSchema({
+        title: 'p99 latency',
+        type: 'timeseries',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        intent,
+      });
+
+      const saveModel = gridItemToPanel(gridItem);
+      expect(saveModel.description).toBe('Track checkout p99 latency.');
+      expect(saveModel.intent?.purpose).toBe('Track checkout p99 latency.');
+    });
+
+    it('Phase E.2: preserves a non-empty author-provided description when intent.purpose is also set', () => {
+      // Both description and intent.purpose authored — the mirror
+      // must leave description alone so authors can keep the two
+      // strings divergent (e.g. description = short label, purpose =
+      // operational context).
+      const intent = {
+        schemaVersion: 1,
+        purpose: 'Detailed operational context for the on-caller.',
+        provenance: { purpose: 'author-written' as const },
+      };
+      const gridItem = buildGridItemFromPanelSchema({
+        description: 'Short author-written description.',
+        title: 'p99 latency',
+        type: 'timeseries',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        intent,
+      });
+
+      const saveModel = gridItemToPanel(gridItem);
+      expect(saveModel.description).toBe('Short author-written description.');
+      expect(saveModel.intent?.purpose).toBe('Detailed operational context for the on-caller.');
+    });
+
+    it('Phase E.2: leaves description undefined when neither description nor intent.purpose is set', () => {
+      const intent = {
+        schemaVersion: 1,
+        owner: '@checkout-team',
+      };
+      const gridItem = buildGridItemFromPanelSchema({
+        title: 'p99 latency',
+        type: 'timeseries',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        intent,
+      });
+
+      const saveModel = gridItemToPanel(gridItem);
+      expect(saveModel.description).toBeUndefined();
+      expect(saveModel.intent?.owner).toBe('@checkout-team');
     });
   });
 
