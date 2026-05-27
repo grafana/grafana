@@ -34,7 +34,7 @@ jobs:
           # The crypto/x509 package has additional fields in Go 1.24.1 that affect the generated specs
           # This ensures the GHAs environment matches what we use in the Drone pipeline
           go-version: 1.24.1
-          cache: true
+          cache: false
 
       - name: Verify code generation
         run: |
@@ -46,9 +46,17 @@ jobs:
 
       # Enterprise setup is needed for complete OpenAPI spec generation
       # We only do this for internal PRs
+      - name: Get GitHub App token
+        if: github.event.pull_request.head.repo.fork == false
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token (github-script/v9)
+        with:
+          github_app: grafana-ci-bot
       - name: Setup Grafana Enterprise
         if: github.event.pull_request.head.repo.fork == false
         uses: ./.github/actions/setup-enterprise
+        with:
+          token: ${{ steps.get-github-app-token.outputs.token }}
         
       - name: Generate and Validate OpenAPI Specs
         run: |

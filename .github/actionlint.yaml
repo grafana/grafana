@@ -6,3 +6,4 @@ self-hosted-runner:
     - github-hosted-ubuntu-x64-small
     - github-hosted-ubuntu-x64-large
     - github-hosted-windows-x64-large
+    - ubuntu-x64-small

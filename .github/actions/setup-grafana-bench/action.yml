@@ -2,10 +2,6 @@ name: 'Setup Grafana Bench'
 description: 'Sets up and installs Grafana Bench'
 
 inputs:
-  github-app-name:
-    description: 'Name of the GitHub App in Vault'
-    required: false
-    default: 'grafana-ci-bot'
   branch:
     description: 'The branch to install from'
     required: false
@@ -14,28 +10,16 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Retrieve GitHub App secrets
-      id: get-secrets
-      uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1 # zizmor: ignore[unpinned-uses]
+    - name: Get GitHub App token
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token (github-script/v9)
       with:
-        repo_secrets: |
-          APP_ID=${{ inputs.github-app-name }}:app-id
-          APP_INSTALLATION_ID=${{ inputs.github-app-name }}:app-installation-id
-          PRIVATE_KEY=${{ inputs.github-app-name }}:private-key
-
-    - name: Generate GitHub App token
-      id: generate_token
-      uses: actions/create-github-app-token@v1
-      with:
-        app-id: ${{ env.APP_ID }}
-        private-key: ${{ env.PRIVATE_KEY }}
-        repositories: "grafana-bench"
-        owner: "grafana"
+        github_app: grafana-ci-bot
 
     - name: Setup Bench
       shell: bash
       env:
-        GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
         BRANCH: ${{ inputs.branch }}
       run: |
         git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-bench.git ../grafana-bench
