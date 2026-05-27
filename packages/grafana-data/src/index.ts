@@ -717,7 +717,6 @@ export {
   DataSourceApi,
 } from './types/datasource';
 export { CoreApp, type AppRootProps, type AppPluginMeta, AppPlugin, FeatureState } from './types/app';
-export { patchArrayVectorProrotypeMethods } from './types/vector';
 export {
   type DynamicConfigValue,
   type ConfigOverrideRule,
@@ -946,3 +945,6 @@ export {
 } from './rbac/rbac';
 
 export { type UserStorage } from './types/userStorage';
+
+// TEMPORARY: Levitate workflow verification, revert before merging
+export const LEVITATE_TEST_FLAG = 'workflow-verification';
