@@ -1987,3 +1987,20 @@ func TestValidateContactPointAllowedIntegrations(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateContactPoint_DuplicateSecrets(t *testing.T) {
+	decryptFn := func(_ context.Context, _ map[string][]byte, _, fallback string) string {
+		return fallback
+	}
+	settings, err := simplejson.NewJson([]byte(`{"token":"value_token","TOKEN":"value_token_2"}`))
+	require.NoError(t, err)
+	contactPoint := &definitions.EmbeddedContactPoint{
+		Name:     "test-cp",
+		Type:     "slack",
+		Settings: settings,
+	}
+
+	err = ValidateContactPoint(context.Background(), contactPoint, decryptFn, nil)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "duplicate keys found for secret field")
+}
