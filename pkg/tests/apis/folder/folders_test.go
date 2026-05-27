@@ -326,10 +326,14 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
 	})
 
-	t.Run("Do CRUD (just CR+List for now) via k8s (and check that legacy api still works)", func(t *testing.T) {
+	t.Run("Do CRUD via k8s (and check that legacy api still works)", func(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			// #TODO: figure out permissions topic
 			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+
+		clientViewer := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Viewer,
 			GVR:  gvr,
 		})
 
@@ -350,6 +354,16 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 			)
 			require.NoError(t, err)
 			uids = append(uids, out.GetName())
+
+			// Update with same body will keep the same RV
+			again, err := client.Resource.Update(context.Background(), out, metav1.UpdateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, out.GetResourceVersion(), again.GetResourceVersion())
+
+			// Viewer should not be able to edit the same folder
+			_, err = clientViewer.Resource.Update(context.Background(), out, metav1.UpdateOptions{})
+			require.Error(t, err)
+			require.True(t, apierrors.IsForbidden(err))
 		}
 		slices.Sort(uids) // make list compare stable
 
