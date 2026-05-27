@@ -8,7 +8,7 @@ import {
   getExistingClientFiles,
   getClientGenerationState,
 } from './clientState';
-import { variantFor, MARKERS, PACKAGE_ROOT } from './variants';
+import { variantFor, PACKAGE_ROOT } from './variants';
 
 describe('getRTKClientEntries', () => {
   it('returns import, reducer, and middleware entries', () => {
