@@ -46,7 +46,7 @@ permissions:
 
 jobs:
   capture-date:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     outputs:
       release_date: ${{ steps.set_release_date.outputs.release_date }}
     steps:
@@ -95,7 +95,7 @@ jobs:
       id-token: write
       pull-requests: write
     name: Create Release PR
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     if: github.repository == 'grafana/grafana'
     env:
       VERSION: ${{ inputs.version }}

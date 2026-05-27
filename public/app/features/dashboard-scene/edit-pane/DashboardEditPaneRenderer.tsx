@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect } from 'react';
-import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
-import { Sidebar, useStyles2, useSidebarContext, useTheme2 } from '@grafana/ui';
+import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -34,7 +33,7 @@ export interface Props {
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
 export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
-  const { openPane, selectionContext } = useSceneObjectState(editPane, {
+  const { openPane, selectionContext, outlinePane } = useSceneObjectState(editPane, {
     shouldActivateOrKeepAlive: true,
   });
   const { isEditing, meta, uid } = dashboard.useState();
@@ -42,15 +41,14 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
   const selectedObject = editPane.getSelectedObject();
-  const theme = useTheme2();
-  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   const sidebarContext = useSidebarContext();
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
-      sidebarContext?.onToggleIsHidden();
+      editPane.closePane();
+      sidebarContext?.setIsHidden(true);
       e.currentTarget.blur();
     },
-    [sidebarContext]
+    [editPane, sidebarContext]
   );
 
   /**
@@ -133,7 +131,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             icon="list-ui-alt"
             onClick={() => {
               DashboardInteractions.dashboardOutlineClicked();
-              editPane.openPane(new DashboardOutline({}));
+              editPane.openPane(outlinePane!);
             }}
             title={t('dashboard.sidebar.outline.title', 'Outline')}
             tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
@@ -156,17 +154,13 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               onClick={() => onOpenSnapshotOriginalDashboard(dashboard.getSnapshotUrl())}
             />
           )}
-          {isMobile && !isEditing && (
-            <>
-              <Sidebar.Divider />
-              <Sidebar.Button
-                icon={'arrow-to-right'}
-                onClick={onClickHideSidebar}
-                title={t('grafana-ui.sidebar.hide', 'Hide')}
-                data-testid={selectors.components.Sidebar.showHideToggle}
-              />
-            </>
-          )}
+          <Sidebar.Divider />
+          <Sidebar.Button
+            icon={'arrow-to-right'}
+            onClick={onClickHideSidebar}
+            title={t('grafana-ui.sidebar.hide', 'Hide')}
+            data-testid={selectors.components.Sidebar.showHideToggle}
+          />
         </div>
       </Sidebar.Toolbar>
     </>
