@@ -1,7 +1,7 @@
 import fs from 'fs';
+import { glob } from 'fs/promises';
 import path from 'path';
 import process from 'process';
-import { glob } from 'tinyglobby';
 
 // Support for node 22 and 24. Due to the many changes in importing json files
 // across recent node versions we load the json files using fs for simplicity.
@@ -19,29 +19,21 @@ export function getPluginJson() {
 }
 
 export async function getEntries(): Promise<Record<string, string>> {
-  const pluginsJson = await glob(path.resolve(process.cwd(), '**/plugin.json'), {
-    ignore: ['**/dist/**'],
-    absolute: true,
-  });
+  const cwd = process.cwd();
+  const result: Record<string, string> = {};
 
-  const plugins = await Promise.all(
-    pluginsJson.map((pluginJson) => {
-      const folder = path.dirname(pluginJson);
-      return glob(`${folder}/module.{ts,tsx,js,jsx}`, { absolute: true });
-    })
-  );
+  for await (const pluginJson of glob('**/plugin.json', { cwd, exclude: ['**/dist/**'] })) {
+    const folder = path.dirname(path.resolve(cwd, pluginJson));
 
-  let result: Record<string, string> = {};
-  return plugins.reduce((result, modules) => {
-    return modules.reduce((result, module) => {
-      const pluginPath = path.dirname(module);
-      const pluginName = path.relative(process.cwd(), pluginPath).replace(/src\/?/i, '');
+    for await (const module of glob('module.{ts,tsx,js,jsx}', { cwd: folder })) {
+      const modulePath = path.resolve(folder, module);
+      const pluginName = path.relative(cwd, folder).replace(/src\/?/i, '');
       const entryName = pluginName === '' ? 'module' : `${pluginName}/module`;
+      result[entryName] = modulePath;
+    }
+  }
 
-      result[entryName] = module;
-      return result;
-    }, result);
-  }, result);
+  return result;
 }
 
 export function hasLicense() {
