@@ -616,6 +616,30 @@ func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInU
 		if f.ManagedBy == utils.ManagerKindRepo {
 			return model.LibraryElementDTO{}, model.ErrLibraryElementProvisionedFolder
 		}
+
+		// Mirror the create path: the destination folder must allow the caller
+		// to create library panels there. The route-level authorize guard only
+		// checks library.panels:write on the element itself, so without this
+		// check a caller with edit rights on the element could relocate it
+		// into any folder, including ones they cannot see or write to.
+		//
+		// Normalize an empty UID to the "general" sentinel the way the create
+		// handler does, so the scope check resolves against the same general
+		// folder permissions both paths share.
+		destFolderUID := *cmd.FolderUID
+		if destFolderUID == "" {
+			destFolderUID = ac.GeneralFolderUID
+		}
+		allowed, err := l.AccessControl.Evaluate(c, signedInUser,
+			ac.EvalPermission(ActionLibraryPanelsCreate,
+				folder.ScopeFoldersProvider.GetResourceScopeUID(destFolderUID)))
+		if err != nil {
+			return model.LibraryElementDTO{}, err
+		}
+		if !allowed {
+			return model.LibraryElementDTO{}, fmt.Errorf("%w: folder UID '%s'",
+				model.ErrLibraryElementInsufficientPermissions, destFolderUID)
+		}
 	}
 
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
