@@ -51,10 +51,6 @@ refs:
 
 Time series visualizations are the default way to show the variations of a set of data values over time. Each data point is matched to a timestamp and this _time series_ is displayed as a graph. The visualization can render series as lines, points, or bars and it's versatile enough to display almost any type of [time-series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
 
-{{< admonition type="note" >}}
-Time series data is expected to contain unique timestamps for each data point within a series. If multiple points in the same series share the same timestamp, the visualization might not render or behave as expected.
-{{< /admonition >}}
-
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-time-series-v12.0.png" max-width="750px" alt="Time series visualization" >}}
 
 {{< admonition type="note" >}}
@@ -82,6 +78,8 @@ The following video guides you through the creation steps and common customizati
 Time series visualizations require time-series data—a sequence of measurements, ordered in time, and formatted as a table—where every row in the table represents one individual measurement at a specific time. Learn more about [time-series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
 
 The dataset must contain at least one numeric field, and in the case of multiple numeric fields, each one is plotted as a new line, point, or bar labeled with the field name in the tooltip.
+
+Time series data is expected to contain unique timestamps for each data point within a series. If multiple points in the same series share the same timestamp, the visualization might not render or behave as expected.
 
 ### Example 1
 
