@@ -21,12 +21,17 @@ export function validateVersion(version: string): true | string {
   return version && /^v\d+[a-z]*\d+$/.test(version) ? true : 'Version should be in format: v0alpha1, v1beta2, etc.';
 }
 
+function formatConfirmValue(value: boolean | string): string {
+  return value === true || value === 'true' ? 'yes' : 'no';
+}
+
 export async function confirmUpdateExistingClient(groupName: string, version: string): Promise<boolean> {
   const { shouldUpdate } = await Enquirer.prompt<{ shouldUpdate: boolean }>({
     type: 'confirm',
     name: 'shouldUpdate',
     message: `API client ${groupName}/${version} already exists. Regenerate endpoints from the existing config instead?`,
     initial: true,
+    format: formatConfirmValue,
   });
 
   return shouldUpdate;
@@ -58,6 +63,7 @@ export async function runPrompts(basePath: string): Promise<GeneratorAnswers> {
     name: 'isEnterprise',
     message: 'Is this a Grafana Enterprise API?',
     initial: false,
+    format: formatConfirmValue,
   });
 
   // 2. Pick OpenAPI spec
