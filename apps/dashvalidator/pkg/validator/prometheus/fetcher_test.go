@@ -36,7 +36,7 @@ func TestFetchMetrics_Success_ReturnsMetrics(t *testing.T) {
 
 	// Execute
 	fetcher := NewFetcher()
-	metrics, err := fetcher.FetchMetrics(context.Background(), server.URL, server.Client())
+	metrics, err := fetcher.FetchMetrics(context.Background(), "test-ds-uid", server.URL, server.Client())
 
 	// Verify
 	require.NoError(t, err)
@@ -62,7 +62,7 @@ func TestFetchMetrics_Success_URLWithPath(t *testing.T) {
 
 	// Execute with path suffix
 	fetcher := NewFetcher()
-	metrics, err := fetcher.FetchMetrics(context.Background(), server.URL+"/api/prom", server.Client())
+	metrics, err := fetcher.FetchMetrics(context.Background(), "test-ds-uid", server.URL+"/api/prom", server.Client())
 
 	// Verify
 	require.NoError(t, err)
@@ -95,7 +95,7 @@ func TestFetchMetrics_InvalidURL_ReturnsConfigError(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fetcher := NewFetcher()
-			metrics, err := fetcher.FetchMetrics(context.Background(), tt.url, &http.Client{})
+			metrics, err := fetcher.FetchMetrics(context.Background(), "test-ds-uid", tt.url, &http.Client{})
 
 			// Verify error
 			require.Error(t, err)
@@ -114,7 +114,7 @@ func TestFetchMetrics_EmptyURL_ReturnsNetworkError(t *testing.T) {
 	// Note: An empty URL is technically parseable by Go's url.Parse
 	// but results in a network error when trying to make the request
 	fetcher := NewFetcher()
-	metrics, err := fetcher.FetchMetrics(context.Background(), "", &http.Client{})
+	metrics, err := fetcher.FetchMetrics(context.Background(), "test-ds-uid", "", &http.Client{})
 
 	// Verify error - empty URL fails at network level, not URL parsing
 	require.Error(t, err)
@@ -134,7 +134,7 @@ func TestFetchMetrics_ConnectionRefused_ReturnsUnreachableError(t *testing.T) {
 	fetcher := NewFetcher()
 	client := &http.Client{Timeout: 100 * time.Millisecond}
 
-	metrics, err := fetcher.FetchMetrics(context.Background(), "http://127.0.0.1:1", client)
+	metrics, err := fetcher.FetchMetrics(context.Background(), "test-ds-uid", "http://127.0.0.1:1", client)
 
 	// Verify error
 	require.Error(t, err)
@@ -160,7 +160,7 @@ func TestFetchMetrics_ContextCancelled_ReturnsError(t *testing.T) {
 	cancel()
 
 	fetcher := NewFetcher()
-	metrics, err := fetcher.FetchMetrics(ctx, server.URL, server.Client())
+	metrics, err := fetcher.FetchMetrics(ctx, "test-ds-uid", server.URL, server.Client())
 
 	// Verify error - context cancellation returns unreachable error
 	require.Error(t, err)
@@ -187,7 +187,7 @@ func TestFetchMetrics_HTTPClientTimeout_ReturnsTimeoutError(t *testing.T) {
 	}
 
 	fetcher := NewFetcher()
-	metrics, err := fetcher.FetchMetrics(context.Background(), server.URL, client)
+	metrics, err := fetcher.FetchMetrics(context.Background(), "test-ds-uid", server.URL, client)
 
 	// Verify timeout error is returned
 	require.Error(t, err)
@@ -214,7 +214,7 @@ func TestFetchMetrics_DeadlineExceeded_ReturnsTimeoutError(t *testing.T) {
 	defer cancel()
 
 	fetcher := NewFetcher()
-	metrics, err := fetcher.FetchMetrics(ctx, server.URL, server.Client())
+	metrics, err := fetcher.FetchMetrics(ctx, "test-ds-uid", server.URL, server.Client())
 
 	// Verify error
 	require.Error(t, err)
@@ -306,7 +306,7 @@ func TestFetchMetrics_HTTPStatusCodes_ReturnsExpectedError(t *testing.T) {
 			defer server.Close()
 
 			fetcher := NewFetcher()
-			metrics, err := fetcher.FetchMetrics(context.Background(), server.URL, server.Client())
+			metrics, err := fetcher.FetchMetrics(context.Background(), "test-ds-uid", server.URL, server.Client())
 
 			// Verify error
 			require.Error(t, err)
@@ -330,7 +330,7 @@ func TestFetchMetrics_AuthFailure_ErrorOmitsRawBody(t *testing.T) {
 	defer server.Close()
 
 	fetcher := NewFetcher()
-	metrics, err := fetcher.FetchMetrics(context.Background(), server.URL, server.Client())
+	metrics, err := fetcher.FetchMetrics(context.Background(), "test-ds-uid", server.URL, server.Client())
 
 	require.Error(t, err)
 	require.Nil(t, metrics)
@@ -341,10 +341,14 @@ func TestFetchMetrics_AuthFailure_ErrorOmitsRawBody(t *testing.T) {
 	require.NotContains(t, validationErr.Message, rawBody)
 	_, hasBodyDetail := validationErr.Details["responseBody"]
 	require.False(t, hasBodyDetail, "unexpected detail key present")
+	_, hasURLDetail := validationErr.Details["url"]
+	require.False(t, hasURLDetail, "unexpected detail key present")
 
 	serialized, jsonErr := json.Marshal(validationErr.Details)
 	require.NoError(t, jsonErr)
 	require.NotContains(t, string(serialized), rawBody)
+	require.NotContains(t, string(serialized), server.URL)
+	require.NotContains(t, validationErr.Message, server.URL)
 }
 
 func TestFetchMetrics_ServerError_ErrorOmitsRawBody(t *testing.T) {
@@ -356,7 +360,7 @@ func TestFetchMetrics_ServerError_ErrorOmitsRawBody(t *testing.T) {
 	defer server.Close()
 
 	fetcher := NewFetcher()
-	metrics, err := fetcher.FetchMetrics(context.Background(), server.URL, server.Client())
+	metrics, err := fetcher.FetchMetrics(context.Background(), "test-ds-uid", server.URL, server.Client())
 
 	require.Error(t, err)
 	require.Nil(t, metrics)
@@ -367,10 +371,14 @@ func TestFetchMetrics_ServerError_ErrorOmitsRawBody(t *testing.T) {
 	require.NotContains(t, validationErr.Message, rawBody)
 	_, hasBodyDetail := validationErr.Details["responseBody"]
 	require.False(t, hasBodyDetail, "unexpected detail key present")
+	_, hasURLDetail := validationErr.Details["url"]
+	require.False(t, hasURLDetail, "unexpected detail key present")
 
 	serialized, jsonErr := json.Marshal(validationErr.Details)
 	require.NoError(t, jsonErr)
 	require.NotContains(t, string(serialized), rawBody)
+	require.NotContains(t, string(serialized), server.URL)
+	require.NotContains(t, validationErr.Message, server.URL)
 }
 
 // ============================================================================
@@ -385,7 +393,7 @@ func TestFetchMetrics_InvalidJSON_ReturnsParsingError(t *testing.T) {
 	defer server.Close()
 
 	fetcher := NewFetcher()
-	metrics, err := fetcher.FetchMetrics(context.Background(), server.URL, server.Client())
+	metrics, err := fetcher.FetchMetrics(context.Background(), "test-ds-uid", server.URL, server.Client())
 
 	// Verify error
 	require.Error(t, err)
@@ -411,7 +419,7 @@ func TestFetchMetrics_StatusError_ReturnsInvalidResponseError(t *testing.T) {
 	defer server.Close()
 
 	fetcher := NewFetcher()
-	metrics, err := fetcher.FetchMetrics(context.Background(), server.URL, server.Client())
+	metrics, err := fetcher.FetchMetrics(context.Background(), "test-ds-uid", server.URL, server.Client())
 
 	// Verify error
 	require.Error(t, err)
@@ -435,7 +443,7 @@ func TestFetchMetrics_MissingDataField_ReturnsInvalidResponseError(t *testing.T)
 	defer server.Close()
 
 	fetcher := NewFetcher()
-	metrics, err := fetcher.FetchMetrics(context.Background(), server.URL, server.Client())
+	metrics, err := fetcher.FetchMetrics(context.Background(), "test-ds-uid", server.URL, server.Client())
 
 	// Verify error
 	require.Error(t, err)
@@ -464,7 +472,7 @@ func TestFetchMetrics_ExtraFields_Succeeds(t *testing.T) {
 	defer server.Close()
 
 	fetcher := NewFetcher()
-	metrics, err := fetcher.FetchMetrics(context.Background(), server.URL, server.Client())
+	metrics, err := fetcher.FetchMetrics(context.Background(), "test-ds-uid", server.URL, server.Client())
 
 	// Verify success despite extra fields
 	require.NoError(t, err)
@@ -485,7 +493,7 @@ func TestFetchMetrics_EmptyDataArray_Succeeds(t *testing.T) {
 	defer server.Close()
 
 	fetcher := NewFetcher()
-	metrics, err := fetcher.FetchMetrics(context.Background(), server.URL, server.Client())
+	metrics, err := fetcher.FetchMetrics(context.Background(), "test-ds-uid", server.URL, server.Client())
 
 	// Verify success with empty data
 	require.NoError(t, err)
