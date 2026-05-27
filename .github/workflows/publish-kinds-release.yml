@@ -55,24 +55,15 @@ jobs:
           release_tag_regexp: "^v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
           release_branch_regexp: "^v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.x$"
 
-      - name: "Get vault secrets"
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
         with:
-          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: "Generate token"
-        id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        with:
-          # App needs Actions: Read/Write for the grafana/security-patch-actions repo
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          github_app: grafana-releases-oss
 
       - name: "Clone website-sync Action"
         if: "steps.has-matching-release-tag.outputs.bool == 'true'"
-        run: "git clone --single-branch --no-tags --depth 1 -b master https://grafana-delivery-bot:${{ steps.generate_token.outputs.token }}@github.com/grafana/website-sync ./.github/actions/website-sync"
+        run: "git clone --single-branch --no-tags --depth 1 -b master https://x-access-token:${{ steps.get-github-app-token.outputs.token }}@github.com/grafana/website-sync ./.github/actions/website-sync"
 
       - name: "Publish to kind registry (release)"
         if: "steps.has-matching-release-tag.outputs.bool == 'true'"
@@ -82,6 +73,6 @@ jobs:
           repository: "grafana/kind-registry"
           branch: "main"
           host: "github.com"
-          github_pat: "grafana-delivery-bot:${{ steps.generate_token.outputs.token }}"
+          github_pat: "x-access-token:${{ steps.get-github-app-token.outputs.token }}"
           source_folder: ".github/workflows/scripts/kinds/next"
           target_folder: "grafana/${{ github.ref_name }}"
