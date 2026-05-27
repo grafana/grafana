@@ -2,10 +2,10 @@ import path from 'path';
 
 import {
   formatFiles,
-  getExistingClientFiles,
+  getClientGenerationState,
   getFilesToFormat,
-  hasAPIConfigEntry,
-  injectBeforeMarker,
+  getRTKClientEntries,
+  injectBeforeMarkerIfMissing,
   runGenerateApis,
   updatePackageJsonExports,
   writeNewFileIfMissing,
@@ -20,12 +20,11 @@ const basePath = path.resolve(import.meta.dirname, '../../../..');
 const answers = await runPrompts(basePath);
 const variant = variantFor(answers.isEnterprise);
 const clientDir = path.join(basePath, variant.clientBase, answers.groupName, answers.version);
+const clientState = getClientGenerationState(basePath, variant, answers);
 
-const isExistingClient = hasAPIConfigEntry(basePath, variant, answers.groupName, answers.version);
-
-if (isExistingClient) {
+if (clientState.isComplete) {
   console.log(
-    `API client ${answers.groupName}/${answers.version} is already configured. Update mode regenerates endpoints from the existing config and does not modify config, middleware, reducers, or package exports.`
+    `API client ${answers.groupName}/${answers.version} is already configured and wired. Update mode regenerates endpoints from the existing config and does not modify config, middleware, reducers, or package exports.`
   );
 
   if (await confirmUpdateExistingClient(answers.groupName, answers.version)) {
@@ -34,10 +33,17 @@ if (isExistingClient) {
     console.log('No changes made.');
   }
 } else {
-  const existingClientFiles = getExistingClientFiles(basePath, variant, answers.groupName, answers.version);
-  if (existingClientFiles.length > 0) {
+  const hasExistingClientState =
+    clientState.hasConfigEntry ||
+    clientState.existingClientFiles.length > 0 ||
+    clientState.hasRTKImport ||
+    clientState.hasRTKReducer ||
+    clientState.hasRTKMiddleware ||
+    clientState.hasPackageExport;
+
+  if (hasExistingClientState) {
     console.warn(
-      `⚠️ Client files already exist for ${answers.groupName}/${answers.version}, but no config entry was found in ${variant.codegenScript}. The generator will preserve existing files and continue creating missing files. Existing files:\n${existingClientFiles.map((filePath) => `- ${filePath}`).join('\n')}`
+      `⚠️ API client ${answers.groupName}/${answers.version} is partially configured. The generator will preserve existing files, add missing config/wiring/export entries, and regenerate endpoints. Missing:\n${clientState.missingParts.map((part) => `- ${part}`).join('\n')}`
     );
   }
 
@@ -46,20 +52,23 @@ if (isExistingClient) {
   writeNewFileIfMissing(path.join(clientDir, 'index.ts'), renderIndexTs());
 
   // Add config entry to the generate script (inject before the marker so marker stays last)
-  injectBeforeMarker(path.join(basePath, variant.codegenScript), MARKERS.CONFIG, renderConfigEntry(answers));
+  if (clientState.hasConfigEntry) {
+    console.log(
+      `✅ Config entry for ${answers.groupName}/${answers.version} already exists in ${variant.codegenScript}`
+    );
+  } else {
+    injectBeforeMarkerIfMissing(path.join(basePath, variant.codegenScript), MARKERS.CONFIG, renderConfigEntry(answers));
+  }
 
   // OSS-only: wire up Redux imports, reducers, middleware, and package.json exports
   if (!answers.isEnterprise) {
     const rtkqIndex = path.join(basePath, variant.clientBase, 'index.ts');
     const { reducerPath, groupName, version } = answers;
+    const entries = getRTKClientEntries({ groupName, reducerPath, version });
 
-    injectBeforeMarker(
-      rtkqIndex,
-      MARKERS.IMPORT,
-      `import { generatedAPI as ${reducerPath} } from './${groupName}/${version}';`
-    );
-    injectBeforeMarker(rtkqIndex, MARKERS.REDUCER, `  [${reducerPath}.reducerPath]: ${reducerPath}.reducer,`);
-    injectBeforeMarker(rtkqIndex, MARKERS.MIDDLEWARE, `  ${reducerPath}.middleware,`);
+    injectBeforeMarkerIfMissing(rtkqIndex, MARKERS.IMPORT, entries.importEntry);
+    injectBeforeMarkerIfMissing(rtkqIndex, MARKERS.REDUCER, entries.reducerEntry);
+    injectBeforeMarkerIfMissing(rtkqIndex, MARKERS.MIDDLEWARE, entries.middlewareEntry);
 
     updatePackageJsonExports(basePath, groupName, version);
   }

@@ -18,9 +18,10 @@ The CLI will prompt for:
 6. **Reducer path** - The Redux reducer path (defaults to `<group-name>API<version>`). This will also be used as the API's named export.
 7. **Endpoints** - Optional comma-separated list of endpoints to include (e.g., `createDashboard,updateDashboard`). If not provided, all endpoints will be included.
 
-If the selected API group/version is already present in the codegen config, the CLI will prompt to update the
-existing client instead. Update mode regenerates endpoints from the existing config and does not modify config entries,
-Redux middleware/reducers/imports, package exports, or scaffold files.
+If the selected API group/version already has a complete scaffold, the CLI will prompt to update the existing client
+instead. Update mode regenerates endpoints from the existing config and does not modify config entries, Redux
+middleware/reducers/imports, package exports, or scaffold files. If only part of the scaffold exists, the CLI preserves
+existing files, fills in missing config/wiring/export entries, and regenerates endpoints.
 
 For the full end-to-end update flow from API types to OpenAPI snapshots to RTK Query endpoints, see
 [Updating generated clients](../../README.md#updating-generated-clients).
@@ -40,7 +41,8 @@ The generator automates the following:
 5. Formats all generated files using Prettier and ESLint
 6. Automatically runs the appropriate command to generate endpoints from the OpenAPI schema
 
-For existing clients, the generator skips the create steps and only runs the appropriate endpoint generation command.
+For complete existing clients, the generator skips the create steps and only runs the appropriate endpoint generation
+command. For partial clients, it fills in the missing create steps first.
 
 ## Limitations
 
