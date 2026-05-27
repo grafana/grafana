@@ -11700,6 +11700,7 @@
       "updated-on": "Updated on"
     },
     "import-overview": {
+      "invalid-schema-action": "Try another dashboard",
       "invalid-schema-body": "The dashboard could not be imported because its schema is not a recognized version.",
       "invalid-schema-title": "Invalid or unknown dashboard schema"
     },

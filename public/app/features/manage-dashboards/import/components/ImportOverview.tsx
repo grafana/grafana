@@ -52,6 +52,10 @@ export function ImportOverview({ dashboard, dashboardUid, inputs, meta, source, 
     <Alert
       severity="error"
       title={t('manage-dashboards.import-overview.invalid-schema-title', 'Invalid or unknown dashboard schema')}
+      onRemove={onCancel}
+      buttonContent={
+        <Trans i18nKey="manage-dashboards.import-overview.invalid-schema-action">Try another dashboard</Trans>
+      }
     >
       <Trans i18nKey="manage-dashboards.import-overview.invalid-schema-body">
         The dashboard could not be imported because its schema is not a recognized version.
