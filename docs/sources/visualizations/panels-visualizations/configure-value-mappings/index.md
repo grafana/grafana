@@ -145,7 +145,9 @@ A **Regex** mapping maps regular expressions to text and a color. For example, i
 ![A regular expression used to truncate full URLs to the text wwww](/media/docs/grafana/panels-visualizations/screenshot-map-regex-v10.4.png)
 
 {{< admonition type="note" >}}
-The `.` metacharacter does not match newline characters `\n` and `\r` by default. If your data contains multiline strings, use `[\s\S]` in place of `.` to match any character including newlines.
+The `.` metacharacter doesn't match newline characters `\n` and `\r` by default.
+If your data contains multiline strings, use `[\s\S]` in place of `.` to match any character including newlines.
+For more detailed information, refer to the [Multiline regular expression example](#multiline-regular-expression-example).
 {{< /admonition >}}
 
 ### Special
@@ -183,16 +185,16 @@ The following image shows a table visualization with value mappings. If you want
 
 ### Multiline regular expression example
 
-If your data source returns multiline strings—such as Windows event log entries that contain `\r\n` line breaks—a regex pattern using `.` will not match across those line breaks. Use `[\s\S]` to match any character including newlines.
+If your data source returns multiline strings—such as Windows event log entries that contain `\r\n` line breaks—a regular expression pattern using `.` won't match across those line breaks. Use `[\s\S]` to match any character including newlines.
 
 | Pattern | Matches |
-|---|---|
+| --- | --- |
 | `.*` | Single-line text only |
 | `[\s\S]*` | Single-line and multiline text |
 
-For example, to map any multiline log entry that starts with `ERROR` to the display text **Error** with a red color, use the pattern:
+For example, to map any multiline log entry that starts with `ERROR` to the display text **Error**, use the pattern:
 
-```
+```text
 ERROR[\s\S]*
 ```
 
