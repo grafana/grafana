@@ -326,7 +326,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
 	})
 
-	t.Run("Do CRUD (just CR+List for now) via k8s (and check that legacy api still works)", func(t *testing.T) {
+	t.Run("Do CRUD via k8s (and check that legacy api still works)", func(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,
 			GVR:  gvr,

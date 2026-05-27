@@ -1162,7 +1162,10 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 			Namespace: key.Namespace,
 			Name:      key.Name,
 		}, latest.Folder)
-		if err != nil || !a.Allowed {
+		if err != nil {
+			return &resourcepb.UpdateResponse{Error: AsErrorResult(err)}, nil
+		}
+		if !a.Allowed {
 			return &resourcepb.UpdateResponse{
 				Error: &resourcepb.ErrorResult{
 					Message: "not allowed to update resource",
