@@ -309,8 +309,10 @@ function NotificationStatusGroup({
   const receiverLabel =
     uniqueReceivers.length === 1
       ? uniqueReceivers[0]
-      : t('alerting.instance-details.timeline-n-uniqueReceivers', '{{count}} uniqueReceivers', {
+      : t('alerting.instance-details.timeline-n-uniqueReceivers', '', {
           count: uniqueReceivers.length,
+          defaultValue_one: '{{count}} uniqueReceivers',
+          defaultValue_other: '{{count}} uniqueReceivers',
         });
 
   let deliveryLabel: string | undefined;

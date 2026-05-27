@@ -32,7 +32,7 @@
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFiles64Folder">
         <Directory Id="INSTALLDIR" Name="GrafanaLabs">
-          <Directory Id="GrafanaX64Dir" />
+          <Directory Id="GrafanaX64Dir" Name="grafana" />
           <Directory Id="GrafanaServiceX64Dir" Name="svc-${GRAFANA_VERSION}" />
         </Directory>
       </Directory>
