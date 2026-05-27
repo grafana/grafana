@@ -33,6 +33,7 @@ func TestTestConnector_RequiresNewTokenWhenURLChanges(t *testing.T) {
 	connector := NewTestConnector(
 		&testConnectorDeps{repo: oldRepo, repoFactory: repoFactory},
 		repository.NewTester(),
+		nil,
 	)
 
 	responder := &testResponder{}
@@ -69,6 +70,7 @@ func TestTestConnector_AllowsURLChangeWithNewToken(t *testing.T) {
 	connector := NewTestConnector(
 		&testConnectorDeps{repo: oldRepo, repoFactory: repoFactory},
 		repository.NewTester(),
+		nil,
 	)
 	handler, err := connector.Connect(request.WithNamespace(context.Background(), "default"), "test", nil, responder)
 	require.NoError(t, err)
@@ -102,6 +104,7 @@ func TestTestConnector_AllowsUnchangedURLWithoutNewToken(t *testing.T) {
 	connector := NewTestConnector(
 		&testConnectorDeps{repo: oldRepo, repoFactory: repoFactory},
 		repository.NewTester(),
+		nil,
 	)
 	handler, err := connector.Connect(request.WithNamespace(context.Background(), "default"), "test", nil, responder)
 	require.NoError(t, err)
