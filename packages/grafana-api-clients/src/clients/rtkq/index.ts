@@ -20,7 +20,7 @@ import { generatedAPI as provisioningAPIv0alpha1 } from './provisioning/v0alpha1
 import { generatedAPI as quotasAPIv0alpha1 } from './quotas/v0alpha1';
 import { generatedAPI as rulesAlertingAPIv0alpha1 } from './rules.alerting/v0alpha1';
 import { generatedAPI as shortURLAPIv1beta1 } from './shorturl/v1beta1';
-// GENERATED:IMPORT
+// GENERATED:IMPORT — used by the API client generator, do not remove
 
 /** RTK Query middleware for all API clients  */
 export const allMiddleware = [
@@ -43,7 +43,7 @@ export const allMiddleware = [
   orgPreferencesAPI.middleware,
   teamPreferencesAPI.middleware,
   notificationsAlertingAPIv1beta1.middleware,
-  // GENERATED:MIDDLEWARE
+  // GENERATED:MIDDLEWARE — used by the API client generator, do not remove
 ] as const;
 
 /** RTK Query reducers for all API clients  */
@@ -67,7 +67,7 @@ export const allReducers = {
   [orgPreferencesAPI.reducerPath]: orgPreferencesAPI.reducer,
   [teamPreferencesAPI.reducerPath]: teamPreferencesAPI.reducer,
   [notificationsAlertingAPIv1beta1.reducerPath]: notificationsAlertingAPIv1beta1.reducer,
-  // GENERATED:REDUCER
+  // GENERATED:REDUCER — used by the API client generator, do not remove
 };
 
 export * from './createBaseQuery';
