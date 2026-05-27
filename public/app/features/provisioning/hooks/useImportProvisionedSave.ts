@@ -52,24 +52,26 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
   const navigate = useNavigate();
   const [error, setError] = useState<string | undefined>();
 
-  // Track per-save form values for the request handler effect.
-  // Updated synchronously in save() before the mutation fires.
-  const [workflow, setWorkflow] = useState<string>();
-  const [folderUid, setFolderUid] = useState<string>();
-  const [selectedBranch, setSelectedBranch] = useState<string>();
-  const titleRef = useRef('');
-  const activeRepoRef = useRef<RepositoryView | undefined>();
+  // Per-save context for the request handler effect.
+  // State values are useProvisionedRequestHandler effect deps; ref values are
+  // only read inside handler callbacks at invocation time.
+  const [saveState, setSaveState] = useState<{
+    workflow?: string;
+    folderUID?: string;
+    selectedBranch?: string;
+  }>({});
+  const saveRef = useRef<{ title: string; activeRepo: RepositoryView | undefined }>({
+    title: '',
+    activeRepo: undefined,
+  });
 
-  // Always create (never update) — import is always a new file.
   const [createFile, request] = useCreateOrUpdateRepositoryFile(undefined);
 
-  useProvisionedRequestHandler<unknown>({
-    folderUID: folderUid,
+  useProvisionedRequestHandler({
+    ...saveState,
     request,
-    workflow,
     resourceType: 'dashboard',
     repository,
-    selectedBranch,
     handlers: {
       onWriteSuccess: (upsert) => {
         // Sync-disabled repositories can return success without creating a
@@ -77,20 +79,22 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
         // have a dashboard uid to navigate to.
         const uid = upsert?.metadata?.name;
         if (!uid) {
-          navigate(locationUtil.assureBaseUrl(folderUid ? `/dashboards/f/${folderUid}/` : '/dashboards'));
+          navigate(
+            locationUtil.assureBaseUrl(saveState.folderUID ? `/dashboards/f/${saveState.folderUID}/` : '/dashboards')
+          );
           return;
         }
         const url = locationUtil.assureBaseUrl(
           getDashboardUrl({
             uid,
-            slug: kbn.slugifyForUrl(titleRef.current),
+            slug: kbn.slugifyForUrl(saveRef.current.title),
             currentQueryParams: window.location.search,
           })
         );
         navigate(url);
       },
       onBranchSuccess: ({ ref, path }, info) => {
-        const repo = activeRepoRef.current;
+        const repo = saveRef.current.activeRepo;
         if (!repo) {
           return;
         }
@@ -119,12 +123,9 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
       if (!repository) {
         return;
       }
-      activeRepoRef.current = repository;
+      saveRef.current = { title, activeRepo: repository };
       setError(undefined);
-      setWorkflow(form.workflow);
-      setFolderUid(targetFolderUid);
-      setSelectedBranch(form.ref);
-      titleRef.current = title;
+      setSaveState({ workflow: form.workflow, folderUID: targetFolderUid, selectedBranch: form.ref });
 
       // Ensure version negotiation has run; getV1/getV2 fall back to beta otherwise.
       const versions = await dashboardAPIVersionResolver.resolve();
