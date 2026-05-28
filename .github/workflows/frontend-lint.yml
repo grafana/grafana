@@ -381,8 +381,6 @@ jobs:
       run: |
         yarn run knip --workspace '@grafana/*'
         yarn run knip --workspace '@test-plugins/*'
-        yarn run knip --workspace '@grafana-plugins/grafana-testdata-datasource'
-        yarn run knip --workspace '@grafana-plugins/stackdriver'
 
   yarn-install-validation:
     needs:
