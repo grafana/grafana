@@ -20,7 +20,6 @@
     "@types/react-dom": "18.3.5",
     "@types/semver": "7.5.8",
     "@types/uuid": "9.0.8",
-    "glob": "10.5.0",
     "i18next-cli": "^1.48.0",
     "ts-node": "10.9.2",
     "typescript": "6.0.2",

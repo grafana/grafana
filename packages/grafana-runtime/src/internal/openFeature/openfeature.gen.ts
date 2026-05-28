@@ -67,6 +67,8 @@ export const FlagKeys = {
   NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
   OtelLogsFormatting: "otelLogsFormatting",
+  /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
+  PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
   /** Enables plugins setting from new apis */
   PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
@@ -388,6 +390,17 @@ export const useFlagNewSavedQueriesExperience = (options?: ReactFlagEvaluationOp
  */
 export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("otelLogsFormatting", false, options).value;
+};
+
+/**
+ * Initializes data source instance settings asynchronously from the API instead of synchronously from boot data
+ *
+ * **Details:**
+ * - flag key: `plugins.initDataSourcesAsync`
+ * - default value: `false`
+ */
+export const useFlagPluginsInitDataSourcesAsync = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("plugins.initDataSourcesAsync", false, options).value;
 };
 
 /**

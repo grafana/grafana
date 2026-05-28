@@ -14,6 +14,7 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -353,7 +354,7 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil)
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector())
 	require.NoError(b, err)
 
 	// Generate test data
@@ -453,7 +454,7 @@ func setupSubresourceDepthBenchmarkServer(b *testing.B, childrenPerLevel, depth 
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil)
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector())
 	require.NoError(b, err)
 
 	// Build only the hierarchy needed to force TTU walks.

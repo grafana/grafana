@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,7 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
@@ -1151,6 +1152,32 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 
+	// Skip write events when there is no change to the payload, but still enforce RBAC.
+	if bytes.Equal(req.Value, latest.Value) {
+		key := req.Key
+		a, err := s.access.Check(ctx, user, claims.CheckRequest{
+			Verb:      utils.VerbUpdate,
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Namespace: key.Namespace,
+			Name:      key.Name,
+		}, latest.Folder)
+		if err != nil {
+			return &resourcepb.UpdateResponse{Error: AsErrorResult(err)}, nil
+		}
+		if !a.Allowed {
+			return &resourcepb.UpdateResponse{
+				Error: &resourcepb.ErrorResult{
+					Message: "not allowed to update resource",
+					Code:    http.StatusForbidden,
+				},
+			}, nil
+		}
+
+		rsp.ResourceVersion = latest.ResourceVersion // No change, return the current RV
+		return rsp, nil
+	}
+
 	event, e := s.newEvent(ctx, user, req.Key, req.ResourceVersion, req.Value, latest.Value)
 	if e != nil {
 		rsp.Error = e
@@ -1752,6 +1779,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			for iter.Next() {
 				if err := iter.Error(); err != nil {
 					return err
+				}
+				if !checker(iter.Name(), iter.Folder()) {
+					continue
 				}
 				if err := srv.Send(&resourcepb.WatchEvent{
 					Type: resourcepb.WatchEvent_ADDED,

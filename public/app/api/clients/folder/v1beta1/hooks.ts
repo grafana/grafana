@@ -83,23 +83,32 @@ export type CombinedFolder = FolderDTO & {
   ownerReferences?: OwnerReference[];
 };
 
+function resolveDisplayName(userKey: string | undefined, userDisplay?: DisplayList): string {
+  const anonymous = t('folders.api.anonymous-user', 'Anonymous');
+  if (!userKey) {
+    return anonymous;
+  }
+  const idx = userDisplay?.keys?.indexOf(userKey) ?? -1;
+  if (idx < 0) {
+    return anonymous;
+  }
+  return userDisplay?.display?.[idx]?.displayName || anonymous;
+}
+
 const combineFolderResponses = (
   folder: Folder,
   legacyFolder: FolderDTO,
   parents: FolderInfo[],
   userDisplay?: DisplayList
 ) => {
-  const updatedBy = folder.metadata.annotations?.[AnnoKeyUpdatedBy];
-  const createdBy = folder.metadata.annotations?.[AnnoKeyCreatedBy];
-
   const newData: CombinedFolder = {
     canAdmin: legacyFolder.canAdmin,
     canDelete: legacyFolder.canDelete,
     canEdit: legacyFolder.canEdit,
     canSave: legacyFolder.canSave,
     accessControl: legacyFolder.accessControl,
-    createdBy: (createdBy && userDisplay?.display[userDisplay?.keys.indexOf(createdBy)]?.displayName) || 'Anonymous',
-    updatedBy: (updatedBy && userDisplay?.display[userDisplay?.keys.indexOf(updatedBy)]?.displayName) || 'Anonymous',
+    createdBy: resolveDisplayName(folder.metadata.annotations?.[AnnoKeyCreatedBy], userDisplay),
+    updatedBy: resolveDisplayName(folder.metadata.annotations?.[AnnoKeyUpdatedBy], userDisplay),
     ...appPlatformFolderToLegacyFolder(folder),
     ownerReferences: folder.metadata.ownerReferences || [],
   };

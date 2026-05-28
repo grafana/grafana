@@ -3,6 +3,7 @@ package annotation
 import (
 	"context"
 	"errors"
+	"time"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 )
@@ -46,7 +47,7 @@ type AnnotationList struct {
 }
 
 type LifecycleManager interface {
-	Cleanup(ctx context.Context) (int64, error)
+	Cleanup(ctx context.Context, before time.Time) (int64, error)
 }
 
 type TagProvider interface {
