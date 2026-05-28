@@ -50,7 +50,7 @@ const excludedPackages = [
   'react-router-dom',
   'react-select-event',
   'rimraf',
-  'rxjs',
+  // 'rxjs',
   'semver',
   'tinycolor2',
   'type-fest',
@@ -70,19 +70,24 @@ module.exports = defineConfig({
         continue;
       }
 
-      // If the dependency is a workspace package, expect the depended on version to match it
+      // Workspace package dependencies (such grafana depending on @grafana/ui) should use the
+      // exact version specified for that package
       const workspacePackage = Yarn.workspace({ ident: dep.ident });
       if (workspacePackage) {
         dep.update(workspacePackage.manifest.version);
         continue;
       }
 
-      let resolved = resolvedRanges.get(dep.ident);
-      if (resolved === undefined) {
+      // resolvedRanges maintains a cache of expected version for each dependency.
+      // Populate it, and then get it next.
+      if (!resolvedRanges.get(dep.ident)) {
         const siblings = Yarn.dependencies({ ident: dep.ident }).filter((d) => d.type !== 'peerDependencies');
-        resolved = pickHighestRange(siblings.map((d) => d.range));
+        const resolved = pickHighestRange(siblings.map((d) => d.range));
         resolvedRanges.set(dep.ident, resolved);
-      } else if (resolved.error) {
+      }
+
+      let resolved = resolvedRanges.get(dep.ident);
+      if (resolved.error) {
         // Reporting an error (instead of calling .update) means the conflict is not
         // auto-fixable — there's no safe range we can confidently rewrite to.
         dep.error(resolved.error);
@@ -93,16 +98,15 @@ module.exports = defineConfig({
   },
 });
 
-// Determines the range that all workspaces should share for a given ident.
-// When every range is semver-parseable, returns { range } with the one that has the
-// highest min version. Otherwise returns { error } so the constraint surfaces as an
-// unfixable error rather than risking an incorrect auto-fix suggestion.
 /**
  * @param {Array<string>} ranges
+ *
+ * Determines the range that all workspaces should share for a given ident.
+ * Returns { range } with the one that has the min version.
+ * If any of the versions aren't semver parsable, returns { error }.
  */
 function pickHighestRange(ranges) {
-  // If every workspace already agrees there's nothing to resolve, even when the
-  // shared range isn't semver-parseable (e.g. workspace:*, link:, patch:, npm:alias).
+  // If every workspace already agrees there's nothing to resolve, return early
   const uniqueRanges = [...new Set(ranges)];
   if (uniqueRanges.length === 1) {
     return { range: uniqueRanges[0] };
@@ -112,17 +116,14 @@ function pickHighestRange(ranges) {
   let bestVersion = null;
 
   for (const range of uniqueRanges) {
-    let min;
-    try {
-      min = semver.minVersion(range);
-    } catch {
-      min = null;
-    }
+    const min = trySemverMin(range);
+
     if (!min) {
       return {
         error: `Cannot determine highest version: range "${range}" is not semver-parseable, but other workspaces use different ranges (${uniqueRanges.map((r) => `"${r}"`).join(', ')}). Fix this manually.`,
       };
     }
+
     if (!bestVersion || semver.gt(min, bestVersion)) {
       bestVersion = min;
       bestRange = range;
@@ -130,4 +131,16 @@ function pickHighestRange(ranges) {
   }
 
   return { range: bestRange };
+}
+
+/**
+ * @param {string} range
+ * @returns {semver.SemVer | null}
+ */
+function trySemverMin(range) {
+  try {
+    return semver.minVersion(range);
+  } catch {
+    return null;
+  }
 }
