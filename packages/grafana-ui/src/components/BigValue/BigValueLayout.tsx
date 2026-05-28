@@ -293,7 +293,7 @@ export abstract class BigValueLayout {
   }
 }
 
-export class WideNoChartLayout extends BigValueLayout {
+class WideNoChartLayout extends BigValueLayout {
   constructor(props: Props) {
     super(props);
 
@@ -549,7 +549,7 @@ export function buildLayout(props: Props): BigValueLayout {
   }
 }
 
-export function shouldJustifyCenter(justifyMode?: BigValueJustifyMode, title?: string) {
+function shouldJustifyCenter(justifyMode?: BigValueJustifyMode, title?: string) {
   if (justifyMode === BigValueJustifyMode.Center) {
     return true;
   }
