@@ -409,6 +409,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 			settingsJSON  string
 			expectedValue string
 			name          string
+			expectedError string
 		}{
 			{
 				settingsJSON:  `{"recipient":"value_recipient","TOKEN":"some-other-token"}`,
@@ -416,12 +417,12 @@ func TestIntegrationContactPointService(t *testing.T) {
 				name:          "token key is uppercased",
 			},
 
-			// This test checks that if multiple token keys are present in the settings,
-			// the key with the exact matching name is used.
+			// This test checks that we reject a payload with multiple token keys in the settings
 			{
 				settingsJSON:  `{"recipient":"value_recipient","TOKEN":"some-other-token", "token": "second-token"}`,
 				expectedValue: "second-token",
 				name:          "multiple token keys",
+				expectedError: "duplicate keys found for secret field token",
 			},
 		}
 
@@ -434,7 +435,13 @@ func TestIntegrationContactPointService(t *testing.T) {
 				newCp.Settings = settings
 
 				_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
-				require.NoError(t, err)
+				if tc.expectedError == "" {
+					require.NoError(t, err)
+				} else {
+					require.Error(t, err)
+					require.Contains(t, err.Error(), tc.expectedError)
+					return
+				}
 
 				q := cpsQueryWithName(1, newCp.Name)
 				q.Decrypt = true
