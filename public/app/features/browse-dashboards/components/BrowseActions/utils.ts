@@ -63,7 +63,7 @@ export function buildBreakdownString(
  * (folders/dashboards) are subtracted from the affected-items totals. Returns undefined while counts haven't loaded
  * yet so callers can render a loading state.
  *
- * We do this mainly beacuse the way the API works, ie returning affected items does not currently match the UI, which
+ * We do this mainly because the way the API works, ie returning affected items does not currently match the UI, which
  * only needs whether folders have children items.
  */
 export function getFolderIsEmpty(
