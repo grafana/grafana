@@ -144,6 +144,8 @@ describe('Silences', () => {
       expect(within(allSilences[0]).getByLabelText('Tags')).toHaveTextContent('foo=bar');
       expect(within(allSilences[1]).getByLabelText('Tags')).toHaveTextContent('foo!=bar');
       expect(allSilences[2]).toHaveTextContent(MOCK_GRAFANA_ALERT_RULE_TITLE);
+      const alertRuleLink = within(allSilences[2]).getByRole('link', { name: MOCK_GRAFANA_ALERT_RULE_TITLE });
+      expect(alertRuleLink).toHaveAttribute('href', expect.stringContaining(MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID));
 
       await user.click(ui.expiredCaret.get());
 
@@ -240,6 +242,18 @@ describe('Silences', () => {
 
     expect(ui.addSilenceButton.query()).not.toBeInTheDocument();
   });
+
+  it(
+    'shows a warning when the targeted alert rule is unavailable',
+    async () => {
+      renderSilences();
+
+      const notExpiredTable = await ui.notExpiredTable.find();
+      expect(within(notExpiredTable).getByText(/alert rule unavailable/i)).toBeInTheDocument();
+      expect(within(notExpiredTable).getByLabelText('Alert rule unavailable')).toBeVisible();
+    },
+    TEST_TIMEOUT
+  );
 
   it('handles error case when broken alertmanager is used', async () => {
     renderSilences(`/alerting/silences?alertmanager=${encodeURIComponent(MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER)}`);
