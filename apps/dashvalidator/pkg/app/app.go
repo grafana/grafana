@@ -136,6 +136,7 @@ func handleCheckRoute(
 		defer cancel()
 
 		logger := log.WithContext(ctx)
+		ctx = logging.Context(ctx, logger)
 		logger.Info("Received compatibility check request")
 
 		// Step 1: Parse request body
@@ -215,6 +216,7 @@ func handleCheckRoute(
 			)
 		}
 		logger = logger.With("orgID", orgID, "namespace", namespace)
+		ctx = logging.Context(ctx, logger)
 
 		// Extract the requester once for per-datasource scoped permission checks
 		user, err := identity.GetRequester(ctx)

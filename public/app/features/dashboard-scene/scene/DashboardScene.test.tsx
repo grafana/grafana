@@ -3,6 +3,7 @@ import {
   type GrafanaConfig,
   LiveChannelEventType,
   LoadingState,
+  type NavIndex,
   getDefaultTimeRange,
   locationUtil,
   store,
@@ -2693,6 +2694,48 @@ describe('DashboardScene', () => {
 
       expect(sceneGraph.getVariables(scene).state.variables.length).toBe(existingVarCount + 1);
       expect(scene.state.links.length).toBe(existingLinkCount + 1);
+    });
+  });
+
+  describe('getPageNav', () => {
+    describe('provisioning preview', () => {
+      // Regression test: when previewing a provisioned dashboard, meta.url and meta.slug are unset,
+      // which makes getDashboardUrl treat the dashboard as the home dashboard and return "/".
+      // buildBreadcrumbs then suppresses both the title and the "Dashboards" section crumb
+      // (only "View panel" was rendered). The parent crumb must point back to the preview path instead.
+      it('uses the preview pathname as the parent crumb url when viewing a panel, preserving the ref query param', () => {
+        const scene = buildTestScene({ meta: {}, viewPanel: '2' });
+        const location = {
+          pathname: '/dashboard/provisioning/my-repo/preview/path/to/dash.json',
+          search: '?ref=feature&viewPanel=2',
+          hash: '',
+          state: null,
+          key: '',
+        };
+
+        const pageNav = scene.getPageNav(location, {} as NavIndex);
+
+        expect(pageNav.text).toBe('View panel');
+        expect(pageNav.parentItem?.text).toBe('hello');
+        expect(pageNav.parentItem?.url).toBe(
+          '/subUrl/dashboard/provisioning/my-repo/preview/path/to/dash.json?ref=feature'
+        );
+      });
+
+      it('does not fabricate a ref query param when none is present', () => {
+        const scene = buildTestScene({ meta: {}, viewPanel: '2' });
+        const location = {
+          pathname: '/dashboard/provisioning/my-repo/preview/path/to/dash.json',
+          search: '?viewPanel=2',
+          hash: '',
+          state: null,
+          key: '',
+        };
+
+        const pageNav = scene.getPageNav(location, {} as NavIndex);
+
+        expect(pageNav.parentItem?.url).toBe('/subUrl/dashboard/provisioning/my-repo/preview/path/to/dash.json');
+      });
     });
   });
 });

@@ -119,9 +119,9 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 
 // objectMeta holds the minimal ObjectMeta fields needed for the migration.
 type objectMeta struct {
-	Name              string      `json:"name"`
-	Namespace         string      `json:"namespace"`
-	CreationTimestamp metav1.Time `json:"creationTimestamp"`
+	Name              string      `json:"name,omitempty"`
+	Namespace         string      `json:"namespace,omitempty"`
+	CreationTimestamp metav1.Time `json:"creationTimestamp,omitempty"`
 }
 
 // queryCacheConfigSpec mirrors querycaching/v1beta1.QueryCacheConfigSpec.
@@ -136,10 +136,13 @@ type queryCacheConfigSpec struct {
 }
 
 // queryCacheConfigObject is the full K8s-style object sent to unified storage.
+// Status is emitted as an empty object to match the canonical serialization of
+// querycaching/v1beta1.QueryCacheConfig, whose Status field has no omitempty.
 type queryCacheConfigObject struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      objectMeta           `json:"metadata"`
 	Spec            queryCacheConfigSpec `json:"spec"`
+	Status          struct{}             `json:"status"`
 }
 
 type cacheConfigRow struct {

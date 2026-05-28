@@ -267,7 +267,7 @@ func (s *ExternalAMSyncer) fetchMimirConfig(ctx context.Context, ds *datasources
 	// (datasourceproxy.go), so the sync worker honours whatever policy is
 	// configured for the underlying datasource.
 	if s.requestValidator != nil {
-		if err := s.requestValidator.Validate(ds.URL, ds.JsonData, req); err != nil {
+		if err := s.requestValidator.Validate(ds.URL, ds.JsonDataMap(), req); err != nil {
 			return nil, 0, fmt.Errorf("datasource request validation failed: %w", err)
 		}
 	}
