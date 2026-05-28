@@ -5760,8 +5760,7 @@
         }
       },
       "operator": {
-        "aria-label": "运算符",
-        "placeholder": "选择运算符"
+        "aria-label": "运算符"
       },
       "restore": "恢复默认值",
       "search": {
@@ -9012,7 +9011,6 @@
       "copy-button": "复制到剪贴板",
       "download-button": "下载文件",
       "download-successful_toast_message": "您的 JSON 已下载",
-      "export-externally-label": "导出数据面板以便在其他实例中使用",
       "export-format": "格式",
       "export-mode": "模型",
       "info-text": "复制或下载包含数据面板定义的文件",
@@ -9105,6 +9103,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "文件夹已删除",
       "folder-move-error-provisioned": "无法移动已预置的文件夹。要移动它，请在存储库中移动它，然后同步以应用更改。",
@@ -11632,11 +11631,10 @@
       "published-by": "发布者",
       "updated-on": "更新日期"
     },
-    "import-resource-format-error": {
-      "cancel": "取消",
-      "title": "不支持的格式",
-      "v1-message": "此数据面板采用 Kubernetes v1 资源格式，在 Kubernetes 数据面板功能已禁用时无法导入。请启用 kubernetesDashboards 功能切换，以便导入此数据面板。",
-      "v2-message": "此数据面板采用 v2 资源格式，在 Kubernetes 数据面板功能已禁用时无法导入。请启用 kubernetesDashboards 功能切换，以便导入此数据面板。"
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "您确定要删除“{{snapshotToRemove}}”吗？",
@@ -13130,6 +13128,7 @@
       "label-filename": "文件名",
       "label-folder": "文件夹",
       "label-path": "路径",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "选择或输入文件夹路径",
       "suffix-configured-branch": "已同步分支",
@@ -13450,7 +13449,7 @@
       "modal-title-set-up-public-access": "设置公共访问",
       "modal-title-set-up-required-features": "设置所需功能",
       "step-description-copy-url": "从 ngrok 输出中，复制 https:// 转发 URL，如下所示：",
-      "step-description-enable-feature-toggles": "将配置功能切换按钮添加到您的 custom.ini 文件。注意：kubernetesDashboards 默认启用，但如果您已明确禁用，则需要在 Grafana 设置中启用或从配置中删除覆盖。",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "运行此命令以创建指向本地 Grafana 的安全隧道：",
       "step-description-update-grafana-config": "将此添加到您的 custom.ini 文件，并将 URL 替换为您的实际 ngrok URL：",
       "step-title-copy-url": "复制您的公共 URL",
@@ -14625,7 +14624,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "导出为图像",
-      "export-json-title": "导出为 JSON",
       "share-externally-title": "在外部共享",
       "share-internally-title": "在内部共享",
       "share-snapshot-title": "共享快照"
