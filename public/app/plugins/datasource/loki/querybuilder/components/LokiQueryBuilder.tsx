@@ -27,7 +27,7 @@ import { Stack } from '@grafana/ui';
 import { testIds } from '../../components/LokiQueryEditor';
 import { type LokiDatasource } from '../../datasource';
 import { escapeLabelValueInSelector } from '../../languageUtils';
-import logqlGrammar from '../../syntax';
+import { lokiGrammar as logqlGrammar } from '../../syntax';
 import { type LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { isConflictingFilter } from '../operationUtils';

@@ -50,7 +50,7 @@ export const AGGREGATION_OPERATORS: CompletionItem[] = [
   },
 ];
 
-export const PIPE_PARSERS: CompletionItem[] = [
+const PIPE_PARSERS: CompletionItem[] = [
   {
     label: 'json',
     insertText: 'json',
@@ -81,7 +81,7 @@ export const PIPE_PARSERS: CompletionItem[] = [
   },
 ];
 
-export const PIPE_OPERATORS: CompletionItem[] = [
+const PIPE_OPERATORS: CompletionItem[] = [
   {
     label: 'unwrap',
     insertText: 'unwrap',
@@ -277,5 +277,3 @@ export const lokiGrammar: Grammar = {
   operator: /\s?(\|[=~]?|!=?|<(?:=>?|<|>)?|>[>=]?)\s?/i,
   punctuation: /[{}(),.]/,
 };
-
-export default lokiGrammar;
