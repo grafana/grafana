@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
+import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { useGetAffectedItems } from 'app/api/clients/folder/v1beta1/hooks';
 
@@ -28,21 +29,33 @@ interface Props {
  */
 export function AffectedFolderContents({ selectedItems, defaultMessage, emptyMessage, nonEmptyMessage }: Props) {
   const selectedFolders = Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]);
-  const { data, isLoading } = useGetAffectedItems(selectedItems);
-  const folderIsEmpty = getFolderIsEmpty(data, selectedItems);
+  const { data, isLoading, isFetching, error } = useGetAffectedItems(selectedItems);
+
+  let contents: ReactNode = undefined;
+
+  if (selectedFolders.length > 0) {
+    if (isLoading || isFetching) {
+      contents = <Skeleton width={200} />;
+    } else if (error) {
+      contents = t(
+        'browse-dashboards.affected-folder-contents-error',
+        "We couldn't get information about folder contents."
+      );
+    } else if (data) {
+      const folderIsEmpty = getFolderIsEmpty(data, selectedItems);
+      contents = (
+        <>
+          {folderIsEmpty && emptyMessage && <Alert severity="success" title={emptyMessage} />}
+          {!folderIsEmpty && nonEmptyMessage && <Alert severity="warning" title={nonEmptyMessage} />}
+        </>
+      );
+    }
+  }
 
   return (
     <>
       {defaultMessage}
-      {selectedFolders.length > 0 &&
-        (isLoading ? (
-          <Skeleton width={200} />
-        ) : (
-          <>
-            {folderIsEmpty && emptyMessage && <Alert severity="success" title={emptyMessage} />}
-            {!folderIsEmpty && nonEmptyMessage && <Alert severity="warning" title={nonEmptyMessage} />}
-          </>
-        ))}
+      {contents}
     </>
   );
 }

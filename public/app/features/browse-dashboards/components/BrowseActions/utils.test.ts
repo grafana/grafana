@@ -24,10 +24,6 @@ describe('browse-dashboards utils', () => {
   describe('getFolderIsEmpty', () => {
     const selection = { folder: { 'folder-a': true }, dashboard: {} };
 
-    it('returns undefined when affected items have not loaded yet', () => {
-      expect(getFolderIsEmpty(undefined, selection)).toBeUndefined();
-    });
-
     it('returns true when the only affected item is the selected folder itself', () => {
       const affected = { folders: 1, dashboards: 0, library_elements: 0, alertrules: 0 };
       expect(getFolderIsEmpty(affected, selection)).toBe(true);

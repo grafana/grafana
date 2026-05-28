@@ -67,13 +67,9 @@ export function buildBreakdownString(
  * only needs whether folders have children items.
  */
 export function getFolderIsEmpty(
-  affectedItems: DescendantCount | undefined,
+  affectedItems: DescendantCount,
   selectedItems: Pick<DashboardTreeSelection, 'folder' | 'dashboard'>
-): boolean | undefined {
-  if (!affectedItems) {
-    return undefined;
-  }
-
+): boolean {
   const selectedFolderCount = Object.values(selectedItems.folder).filter(Boolean).length;
   const selectedDashboardCount = Object.values(selectedItems.dashboard).filter(Boolean).length;
 
