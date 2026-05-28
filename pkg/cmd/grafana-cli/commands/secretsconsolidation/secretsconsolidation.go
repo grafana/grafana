@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 )
 
-func ConsolidateSecrets(cmd utils.CommandLine, runner server.Runner) error {
+func ConsolidateSecrets(cmd utils.CommandLine, runner server.Runner) (retErr error) {
 	ctx := context.Background()
 
 	cpuProfilePath := cmd.String("cpuprofile")
@@ -32,8 +32,12 @@ func ConsolidateSecrets(cmd utils.CommandLine, runner server.Runner) error {
 		if err != nil {
 			return fmt.Errorf("create CPU profile file: %w", err)
 		}
+		// Close errors on write files can indicate a failed final flush;
+		// surface them via the named return when no earlier error has occurred.
 		defer func() {
-			_ = f.Close()
+			if cerr := f.Close(); cerr != nil && retErr == nil {
+				retErr = fmt.Errorf("close CPU profile file: %w", cerr)
+			}
 		}()
 		if err := pprof.StartCPUProfile(f); err != nil {
 			return fmt.Errorf("start CPU profile: %w", err)
@@ -73,7 +77,9 @@ func ConsolidateSecrets(cmd utils.CommandLine, runner server.Runner) error {
 			return fmt.Errorf("create memory profile file: %w", err)
 		}
 		defer func() {
-			_ = f.Close()
+			if cerr := f.Close(); cerr != nil && retErr == nil {
+				retErr = fmt.Errorf("close memory profile file: %w", cerr)
+			}
 		}()
 		runtime.GC()
 		if err := pprof.WriteHeapProfile(f); err != nil {

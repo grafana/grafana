@@ -12,8 +12,8 @@ type SysLogHandler struct {
 	logger log.Logger
 }
 
-func NewSyslog(sec *ini.Section, format Formatedlogger) *SysLogHandler {
-	return &SysLogHandler{}
+func NewSyslog(sec *ini.Section, format Formatedlogger) (*SysLogHandler, error) {
+	return &SysLogHandler{}, nil
 }
 
 func (sw *SysLogHandler) Log(keyvals ...any) error {

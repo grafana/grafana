@@ -828,8 +828,7 @@ func (cfg *Cfg) parseAppUrlAndSubUrl(section *ini.Section) (string, string, erro
 	// Check if has app suburl.
 	url, err := url.Parse(appUrl)
 	if err != nil {
-		cfg.Logger.Error("Invalid root_url.", "url", appUrl, "error", err)
-		os.Exit(1)
+		return "", "", fmt.Errorf("invalid root_url %q: %w", appUrl, err)
 	}
 
 	appSubUrl := strings.TrimSuffix(url.Path, "/")
@@ -1199,7 +1198,7 @@ func (cfg *Cfg) applyCommandLineProperties(file *ini.File) {
 	}
 }
 
-func (cfg *Cfg) getCommandLineProperties(args []string) map[string]string {
+func (cfg *Cfg) getCommandLineProperties(args []string) (map[string]string, error) {
 	props := make(map[string]string)
 
 	for _, arg := range args {
@@ -1210,13 +1209,12 @@ func (cfg *Cfg) getCommandLineProperties(args []string) map[string]string {
 		trimmed := strings.TrimPrefix(arg, "cfg:")
 		parts := strings.Split(trimmed, "=")
 		if len(parts) != 2 {
-			cfg.Logger.Error("Invalid command line argument.", "argument", arg)
-			os.Exit(1)
+			return nil, fmt.Errorf("invalid command line argument %q: expected cfg:key=value", arg)
 		}
 
 		props[parts[0]] = parts[1]
 	}
-	return props
+	return props, nil
 }
 
 func makeAbsolute(path string, root string) string {
@@ -1274,20 +1272,20 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 
 	// check if config file exists
 	if _, err := os.Stat(defaultConfigFile); os.IsNotExist(err) {
-		fmt.Println("Grafana-server Init Failed: Could not find config defaults, make sure homepath command line parameter is set or working directory is homepath")
-		os.Exit(1)
+		return nil, fmt.Errorf("could not find config defaults at %q, make sure homepath command line parameter is set or working directory is homepath", defaultConfigFile)
 	}
 
 	// load defaults
 	parsedFile, err := ini.Load(defaultConfigFile)
 	if err != nil {
-		fmt.Printf("Failed to parse defaults.ini, %v\n", err)
-		os.Exit(1)
-		return nil, err
+		return nil, fmt.Errorf("failed to parse defaults.ini: %w", err)
 	}
 
 	// command line props
-	cfg.commandLineProps = cfg.getCommandLineProperties(args.Args)
+	cfg.commandLineProps, err = cfg.getCommandLineProperties(args.Args)
+	if err != nil {
+		return nil, err
+	}
 	// load default overrides
 	cfg.applyCommandLineDefaultProperties(parsedFile)
 
@@ -1298,8 +1296,7 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 		if err2 != nil {
 			return nil, err2
 		}
-		cfg.Logger.Error(err.Error())
-		os.Exit(1)
+		return nil, err
 	}
 
 	// apply environment overrides

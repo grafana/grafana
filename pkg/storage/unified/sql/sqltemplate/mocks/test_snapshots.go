@@ -153,7 +153,7 @@ func CheckQuerySnapshots(t *testing.T, setup TemplateTestSetup) {
 									}
 								}
 								if update {
-									_ = os.WriteFile(fpath, []byte(clean), 0777)
+									_ = os.WriteFile(fpath, []byte(clean), 0644)
 								}
 							})
 						}

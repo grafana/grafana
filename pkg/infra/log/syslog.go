@@ -6,7 +6,6 @@ package log
 import (
 	"fmt"
 	"log/syslog"
-	"os"
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
@@ -46,7 +45,7 @@ var selector = func(keyvals ...any) syslog.Priority {
 	return syslog.LOG_INFO
 }
 
-func NewSyslog(sec *ini.Section, format Formatedlogger) *SysLogHandler {
+func NewSyslog(sec *ini.Section, format Formatedlogger) (*SysLogHandler, error) {
 	handler := &SysLogHandler{}
 
 	handler.Format = format
@@ -56,19 +55,16 @@ func NewSyslog(sec *ini.Section, format Formatedlogger) *SysLogHandler {
 	handler.Tag = sec.Key("tag").MustString("")
 
 	if err := handler.Init(); err != nil {
-		fmt.Printf("Failed to init syslog handler. Error: %v\n", err)
-		root.Error("Failed to init syslog log handler", "error", err)
-		os.Exit(1)
+		return nil, fmt.Errorf("init syslog handler: %w", err)
 	}
 	handler.logger = gokitsyslog.NewSyslogLogger(handler.syslog, format, gokitsyslog.PrioritySelectorOption(selector))
 
 	if err := handler.Log("msg", "syslog logger initialized"); err != nil {
-		fmt.Printf("Failed to log to syslog handler. Error: %v\n", err)
-		root.Error("Failed to log to syslog log handler", "error", err)
-		os.Exit(1)
+		_ = handler.Close()
+		return nil, fmt.Errorf("log to syslog handler: %w", err)
 	}
 
-	return handler
+	return handler, nil
 }
 
 func (sw *SysLogHandler) Init() error {

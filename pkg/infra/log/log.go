@@ -494,7 +494,11 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 			loggersToReload = append(loggersToReload, fileHandler)
 			handler.val = fileHandler
 		case "syslog":
-			sysLogHandler := NewSyslog(sec, format)
+			sysLogHandler, err := NewSyslog(sec, format)
+			if err != nil {
+				_ = level.Error(root).Log("Failed to initialize syslog handler", "err", err)
+				continue
+			}
 			loggersToClose = append(loggersToClose, sysLogHandler)
 			handler.val = sysLogHandler.logger
 		}

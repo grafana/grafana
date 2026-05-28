@@ -190,7 +190,8 @@ func TestLoadingSettings(t *testing.T) {
 
 	t.Run("Should get property map from command line args array", func(t *testing.T) {
 		cfg := NewCfg()
-		props := cfg.getCommandLineProperties([]string{"cfg:test=value", "cfg:map.test=1"})
+		props, err := cfg.getCommandLineProperties([]string{"cfg:test=value", "cfg:map.test=1"})
+		require.NoError(t, err)
 
 		require.Equal(t, 2, len(props))
 		require.Equal(t, "value", props["test"])
