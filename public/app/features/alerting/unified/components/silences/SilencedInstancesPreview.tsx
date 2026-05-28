@@ -57,7 +57,8 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
   useDebouncedDeepCompare(
     () => {
       if (hasValidMatchers) {
-        getAlertmanagerAlerts({ amSourceName, filter: { matchers } });
+        // the inline "Preview not available" Alert below already surfaces the failure to the user.
+        getAlertmanagerAlerts({ amSourceName, filter: { matchers }, showErrorAlert: false });
       }
     },
     500,
