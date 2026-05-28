@@ -9,7 +9,7 @@ import { Alert, Button, Field, Input, Stack, useStyles2 } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { getUidFieldDescription, getUidFieldLabel } from 'app/features/manage-dashboards/import/utils/uidFieldText';
-import { validateTitle, validateUid } from 'app/features/manage-dashboards/import/utils/validation';
+import { validateUid } from 'app/features/manage-dashboards/import/utils/validation';
 import { type DashboardInput, type DashboardInputs, type DataSourceInput } from 'app/features/manage-dashboards/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
@@ -47,7 +47,6 @@ export function ProvisionedImportForm({
   const {
     register,
     control,
-    getValues,
     handleSubmit,
     trigger,
     formState: { errors, isValidating },
@@ -116,8 +115,6 @@ export function ProvisionedImportForm({
           <Input
             {...register('title', {
               required: t('provisioning.import.name-required', 'Name is required'),
-              validate: (v) => validateTitle(v, getValues('folderUid')),
-              deps: ['folderUid'],
             })}
             type="text"
             data-testid={selectors.components.ImportDashboardForm.name}

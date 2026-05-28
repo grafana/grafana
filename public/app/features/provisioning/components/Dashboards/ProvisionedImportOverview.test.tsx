@@ -12,7 +12,7 @@ import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
-import { validateTitle, validateUid } from 'app/features/manage-dashboards/import/utils/validation';
+import { validateUid } from 'app/features/manage-dashboards/import/utils/validation';
 import { type DashboardInputs, DashboardSource, LibraryPanelInputState } from 'app/features/manage-dashboards/types';
 
 import { setupProvisioningMswServer } from '../../mocks/server';
@@ -31,11 +31,9 @@ jest.mock('../../hooks/useImportProvisionedSave', () => ({
 }));
 
 jest.mock('app/features/manage-dashboards/import/utils/validation', () => ({
-  validateTitle: jest.fn().mockResolvedValue(true),
   validateUid: jest.fn().mockResolvedValue(true),
 }));
 
-const mockValidateTitle = jest.mocked(validateTitle);
 const mockValidateUid = jest.mocked(validateUid);
 
 const repository: RepositoryView = {
@@ -110,7 +108,6 @@ async function setup(overrides: Partial<Parameters<typeof ProvisionedImportOverv
 describe('ProvisionedImportOverview', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockValidateTitle.mockResolvedValue(true);
     mockValidateUid.mockResolvedValue(true);
     dashboardAPIVersionResolver.set({ v1: 'v1', v2: 'v2' });
     server.use(
@@ -283,14 +280,15 @@ describe('ProvisionedImportOverview', () => {
   });
 
   describe('validation', () => {
-    it('disables submit when title already exists in target folder', async () => {
-      mockValidateTitle.mockResolvedValue('A dashboard with the same name already exists in the target folder');
+    it('allows duplicate titles for provisioned import', async () => {
       await setup();
 
-      expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
-      expect(
-        screen.getByText('A dashboard with the same name already exists in the target folder')
-      ).toBeInTheDocument();
+      // Title field is pre-filled with a value; submit should be enabled
+      // regardless of whether another dashboard with the same title exists,
+      // because provisioned imports use repository file path as the uniqueness constraint.
+      await waitFor(() =>
+        expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).not.toBeDisabled()
+      );
     });
 
     it('disables submit when uid already exists', async () => {
@@ -304,14 +302,12 @@ describe('ProvisionedImportOverview', () => {
     it('does not call uid validator when uid is empty', async () => {
       await setup({ dashboardUid: undefined });
 
-      expect(mockValidateTitle).toHaveBeenCalledWith('V1 Dashboard', 'folder-1');
       expect(mockValidateUid).not.toHaveBeenCalled();
     });
 
-    it('triggers validation on mount for title and uid', async () => {
+    it('triggers validation on mount for uid', async () => {
       await setup();
 
-      expect(mockValidateTitle).toHaveBeenCalledWith('V1 Dashboard', 'folder-1');
       expect(mockValidateUid).toHaveBeenCalledWith('test-uid');
     });
 
@@ -338,11 +334,11 @@ describe('ProvisionedImportOverview', () => {
     });
 
     it('keeps submit disabled until initial async validation completes', async () => {
-      let resolveTitle!: (value: true | string) => void;
-      mockValidateTitle.mockImplementation(
+      let resolveUid!: (value: true | string) => void;
+      mockValidateUid.mockImplementation(
         () =>
           new Promise<true | string>((resolve) => {
-            resolveTitle = resolve;
+            resolveUid = resolve;
           })
       );
 
@@ -352,7 +348,7 @@ describe('ProvisionedImportOverview', () => {
       expect(submitBtn).toBeDisabled();
 
       await act(async () => {
-        resolveTitle(true);
+        resolveUid(true);
       });
 
       await waitFor(() => expect(submitBtn).not.toBeDisabled());
