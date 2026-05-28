@@ -381,6 +381,7 @@ jobs:
       run: |
         yarn run knip --workspace '@grafana/*'
         yarn run knip --workspace '@test-plugins/*'
+        yarn run knip --workspace '@grafana-plugins/mssql'
 
   yarn-install-validation:
     needs:
