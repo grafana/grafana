@@ -228,20 +228,22 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		require.Equal(t, http.StatusAccepted, rsp.Code)
 	})
 
-	t.Run("duplicate delivery id is rejected", func(t *testing.T) {
+	t.Run("duplicate delivery id is silently accepted", func(t *testing.T) {
 		gh := newRepo(newDeliveryIDCache(time.Hour))
 
-		// First delivery succeeds.
-		_, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-dup"))
+		// First delivery succeeds with the normal accepted-job response.
+		first, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-dup"))
 		require.NoError(t, err)
+		require.Equal(t, http.StatusAccepted, first.Code)
 
-		// Replaying the same delivery id is rejected with Unauthorized.
-		_, err = gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-dup"))
-		require.Error(t, err)
-		var statusErr *apierrors.StatusError
-		require.True(t, errors.As(err, &statusErr))
-		require.Equal(t, int32(http.StatusUnauthorized), statusErr.Status().Code)
-		require.Equal(t, "duplicate delivery id", statusErr.Status().Message)
+		// Replaying the same delivery id returns a generic 200 OK — same
+		// shape as other no-op paths so an attacker can't tell from the
+		// response whether the payload was previously processed.
+		dup, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-dup"))
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, dup.Code)
+		require.Equal(t, "ok", dup.Message)
+		require.Nil(t, dup.Job, "duplicate must not enqueue a job")
 	})
 
 	t.Run("different delivery ids are independent", func(t *testing.T) {
@@ -255,7 +257,7 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		require.Equal(t, http.StatusAccepted, rsp.Code)
 	})
 
-	t.Run("repositories sharing a cache reject cross-instance replays", func(t *testing.T) {
+	t.Run("repositories sharing a cache silently drop cross-instance replays", func(t *testing.T) {
 		// Mirrors production: extras.Build rebuilds a repository per request
 		// but threads the factory's single cache through each instance.
 		cache := newDeliveryIDCache(time.Hour)
@@ -265,11 +267,11 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		_, err := first.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-shared"))
 		require.NoError(t, err)
 
-		_, err = second.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-shared"))
-		require.Error(t, err)
-		var statusErr *apierrors.StatusError
-		require.True(t, errors.As(err, &statusErr))
-		require.Equal(t, int32(http.StatusUnauthorized), statusErr.Status().Code)
+		dup, err := second.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-shared"))
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, dup.Code)
+		require.Equal(t, "ok", dup.Message)
+		require.Nil(t, dup.Job)
 	})
 
 	t.Run("expired delivery id is accepted again", func(t *testing.T) {

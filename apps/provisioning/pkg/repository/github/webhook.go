@@ -80,14 +80,17 @@ func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request
 	}
 
 	// Replay protection: GitHub assigns a unique UUID to each delivery in the
-	// X-GitHub-Delivery header. Reject any request whose delivery ID we have
-	// already processed within the cache TTL.
+	// X-GitHub-Delivery header. Silently drop a request whose delivery ID we
+	// have already processed within the cache TTL — returning a generic 200
+	// avoids confirming to a replay attacker that the captured payload was a
+	// real previously-processed delivery.
 	deliveryID := github.DeliveryID(req)
 	if deliveryID == "" {
 		return nil, apierrors.NewBadRequest("missing delivery id")
 	}
 	if r.deliveryCache.seenOrAdd(deliveryID) {
-		return nil, apierrors.NewUnauthorized("duplicate delivery id")
+		logging.FromContext(ctx).Info("dropping duplicate webhook delivery", "delivery_id", deliveryID)
+		return &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ok"}, nil
 	}
 
 	return r.parseWebhook(ctx, github.WebHookType(req), payload)
