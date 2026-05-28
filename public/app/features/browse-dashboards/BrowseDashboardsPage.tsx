@@ -20,6 +20,7 @@ import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folde
 import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
 import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
 import { RepoViewStatus, useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
+import { useFolderPulseUnreadCount } from '../pulse/hooks/useFolderPulseUnreadCount';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
@@ -101,11 +102,17 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const [saveFolder] = useUpdateFolder();
+  // Pull the rollup unread count from the Pulse API so the Pulse tab
+  // shows a badge even on this (the Dashboards) tab — users discover
+  // ongoing conversations without first navigating into the Pulse
+  // surface. The hook short-circuits when the feature toggle is off
+  // or the folder UID is empty, so it's safe to call unconditionally.
+  const pulseUnreadCount = useFolderPulseUnreadCount(folderDTO?.uid);
   const navModel = useMemo(() => {
     if (!folderDTO) {
       return undefined;
     }
-    const model = buildNavModel(folderDTO);
+    const model = buildNavModel(folderDTO, undefined, { pulseUnreadCount });
 
     // Set the "Dashboards" tab to active
     const dashboardsTabID = getDashboardsTabID(folderDTO.uid);
@@ -114,7 +121,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       dashboardsTab.active = true;
     }
     return model;
-  }, [folderDTO]);
+  }, [folderDTO, pulseUnreadCount]);
 
   const hasSelection = useHasSelection();
 

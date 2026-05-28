@@ -211,6 +211,33 @@ export interface ParticipantsResponse {
   participants: ParticipantSummary[];
 }
 
+/**
+ * ResourceUnreadCountResponse is the wire shape returned by
+ * `GET /api/pulse/resources/:kind/:uid/unread`. The frontend renders
+ * a numeric badge over the dashboard sidebar's Pulse icon when
+ * `unreadCount > 0`. The envelope echoes the resource identifier so
+ * the cache key on the RTK Query side stays self-describing in
+ * Redux DevTools, but the only field that actually drives the UI is
+ * the count.
+ */
+export interface ResourceUnreadCountResponse {
+  resourceKind: ResourceKind;
+  resourceUID: string;
+  unreadCount: number;
+}
+
+/**
+ * FolderUnreadCountResponse is the wire shape returned by
+ * `GET /api/pulse/folders/:folderUID/unread`. The folder isn't a
+ * Pulse resource; the count rolls up across every dashboard the
+ * caller can read under the folder hierarchy. Powers the
+ * `tabCounter` on the folder navmodel's Pulse tab.
+ */
+export interface FolderUnreadCountResponse {
+  folderUID: string;
+  unreadCount: number;
+}
+
 /** Discriminated union of events the live channel emits. */
 export type PulseEventAction =
   | 'thread_created'

@@ -28,6 +28,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { buildNavModel, getPulseTabID } from 'app/features/folders/state/navModel';
 import { type ThreadStatusFilter, useListFolderRollupThreadsQuery } from 'app/features/pulse/api/pulseApi';
 import { PulseRenderer } from 'app/features/pulse/components/PulseRenderer';
+import { useFolderPulseUnreadCount } from 'app/features/pulse/hooks/useFolderPulseUnreadCount';
 import { type PulseThread } from 'app/features/pulse/types';
 import { bodyToText } from 'app/features/pulse/utils/body';
 
@@ -83,18 +84,25 @@ export function BrowseFolderPulsePage() {
   const { data: folderDTO, isLoading: isFolderLoading } = useGetFolderQueryFacade(folderUID);
   const [saveFolder] = useUpdateFolder();
 
+  // Pulse-tab unread count: refetched on every Pulse activity via
+  // RTK Query invalidations so the badge stays current while the
+  // user is on this very tab. Same hook (and shared cache) every
+  // other folder tab page calls, so users see the same number
+  // whichever tab they're on.
+  const pulseUnreadCount = useFolderPulseUnreadCount(folderDTO?.uid);
+
   const navModel = useMemo(() => {
     if (!folderDTO) {
       return undefined;
     }
-    const model = buildNavModel(folderDTO);
+    const model = buildNavModel(folderDTO, undefined, { pulseUnreadCount });
     const pulseTabID = getPulseTabID(folderDTO.uid);
     const pulseTab = model.children?.find((child) => child.id === pulseTabID);
     if (pulseTab) {
       pulseTab.active = true;
     }
     return model;
-  }, [folderDTO]);
+  }, [folderDTO, pulseUnreadCount]);
 
   const onEditTitle = folderUID
     ? async (newValue: string) => {

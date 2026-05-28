@@ -16,7 +16,27 @@ export const getPulseTabID = (folderUID: string) => `folder-pulse-${folderUID}`;
 export const getPermissionsTabID = (folderUID: string) => `folder-permissions-${folderUID}`;
 export const getSettingsTabID = (folderUID: string) => `folder-settings-${folderUID}`;
 
-export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: FolderParent[]): NavModelItem {
+/**
+ * Optional decorations the caller can pass to buildNavModel without
+ * forcing every call site to thread the same arguments. Keeping
+ * these in one struct (rather than positional args) lets future
+ * decorations (e.g. an unread count on the Alerting tab) be added
+ * without touching every page that builds a folder nav model.
+ */
+export interface BuildNavModelOptions {
+  /**
+   * Numeric badge to render on the Pulse tab via `tabCounter`. When
+   * zero or undefined the Pulse tab renders no badge so the default
+   * "no activity" look is preserved.
+   */
+  pulseUnreadCount?: number;
+}
+
+export function buildNavModel(
+  folder: FolderDTO | FolderParent,
+  parentsArg?: FolderParent[],
+  options: BuildNavModelOptions = {}
+): NavModelItem {
   const parents = parentsArg ?? ('parents' in folder ? folder.parents : undefined);
   const isProvisioned = 'managedBy' in folder ? folder.managedBy === ManagerKind.Repo : false;
 
@@ -80,6 +100,11 @@ export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: Fol
       id: getPulseTabID(folder.uid),
       text: t('browse-dashboards.manage-folder-nav.pulse', 'Pulse'),
       url: `${folder.url}/pulse`,
+      // `tabCounter` renders a small pill next to the tab label.
+      // Suppressed when zero so a quiet folder doesn't grow a "0"
+      // pill — the page tab renderer respects `undefined` here.
+      tabCounter:
+        options.pulseUnreadCount !== undefined && options.pulseUnreadCount > 0 ? options.pulseUnreadCount : undefined,
     });
   }
 

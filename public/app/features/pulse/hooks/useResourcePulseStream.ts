@@ -69,6 +69,14 @@ export function useResourcePulseStream({ resourceKind, resourceUID, enabled }: A
               { type: 'Participants', id: `${evt.resourceKind}:${evt.resourceUID}` },
               { type: 'Thread', id: evt.threadUID },
               { type: 'Pulse', id: evt.threadUID },
+              // Unread count badge on this resource — every pulse
+              // event changes it (new pulse adds, mark-read on this
+              // user, etc). The folder-tab badge lives on a separate
+              // surface that's usually not mounted alongside the
+              // dashboard, so we use the shared LIST sentinel to
+              // fan out across whichever folder tabs are visible.
+              { type: 'ResourceUnread', id: `${evt.resourceKind}:${evt.resourceUID}` },
+              { type: 'FolderUnread', id: 'LIST' },
             ])
           );
         },

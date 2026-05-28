@@ -14301,6 +14301,13 @@
       "subtitle": "Browse every Pulse thread across your dashboards. Open a thread to jump straight into the conversation.",
       "untitled": "Untitled thread"
     },
+    "sidebar": {
+      "unread-badge": {
+        "aria_one": "{{count}} unread Pulse threads on this dashboard",
+        "aria_other": "{{count}} unread Pulse threads on this dashboard",
+        "overflow": "{{max}}+"
+      }
+    },
     "thread": {
       "author-bot": "Automation #{{id}}",
       "author-bot-named": "{{name}} (automation)",

@@ -12,6 +12,7 @@ import { alertRuleApi } from '../alerting/unified/api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../alerting/unified/api/featureDiscoveryApi';
 import { stringifyErrorLike } from '../alerting/unified/utils/misc';
 import { rulerRuleType } from '../alerting/unified/utils/rules';
+import { useFolderPulseUnreadCount } from '../pulse/hooks/useFolderPulseUnreadCount';
 
 import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDetailsActions';
 
@@ -31,12 +32,17 @@ export function BrowseFolderAlertingPage() {
   });
 
   const [saveFolder] = useUpdateFolder();
+  // See BrowseDashboardsPage: every folder tab renders the same
+  // breadcrumb nav, so each page fetches the rollup unread count to
+  // keep the Pulse-tab badge consistent regardless of where the
+  // user is.
+  const pulseUnreadCount = useFolderPulseUnreadCount(folderDTO?.uid);
 
   const navModel = useMemo(() => {
     if (!folderDTO) {
       return undefined;
     }
-    const model = buildNavModel(folderDTO);
+    const model = buildNavModel(folderDTO, undefined, { pulseUnreadCount });
 
     // Set the "Alerting" tab to active
     const alertingTabID = getAlertingTabID(folderDTO.uid);
@@ -45,7 +51,7 @@ export function BrowseFolderAlertingPage() {
       alertingTab.active = true;
     }
     return model;
-  }, [folderDTO]);
+  }, [folderDTO, pulseUnreadCount]);
 
   const onEditTitle = folderUID
     ? async (newValue: string) => {

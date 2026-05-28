@@ -7,6 +7,7 @@ import {
   type CreateThreadRequest,
   type CreateThreadResult,
   type EditPulseRequest,
+  type FolderUnreadCountResponse,
   type MarkReadRequest,
   type PageResult,
   type PanelMentionsResponse,
@@ -14,6 +15,7 @@ import {
   type Pulse,
   type PulseThread,
   type ResourceKind,
+  type ResourceUnreadCountResponse,
   type ResourceVersion,
 } from '../types';
 
@@ -112,6 +114,14 @@ export const pulseApi = createApi({
     'FolderRollupThreads',
     'PanelMentions',
     'Participants',
+    // ResourceUnread / FolderUnread back the per-surface unread-count
+    // badges. They live on their own tags (not folded into
+    // ResourceThreads / FolderRollupThreads) so a count query can
+    // refetch without paying for the full thread list, and the
+    // markRead mutation can bust just the badge without forcing every
+    // visible thread list to remount.
+    'ResourceUnread',
+    'FolderUnread',
   ],
   endpoints: (builder) => ({
     listThreads: builder.query<PageResult<PulseThread>, ListThreadsArgs>({
@@ -291,6 +301,12 @@ export const pulseApi = createApi({
         // bust every folder rollup via the shared LIST sentinel
         // rather than trying to figure out the parent folder here.
         { type: 'FolderRollupThreads', id: 'LIST' },
+        // The author's read marker is advanced inside the same
+        // transaction the thread is created in, so the per-resource
+        // badge for the author drops to zero; everyone else's badge
+        // should tick up. Bust both surfaces.
+        { type: 'ResourceUnread', id: `${args.resourceKind}:${args.resourceUID}` },
+        { type: 'FolderUnread', id: 'LIST' },
       ],
     }),
 
@@ -308,6 +324,8 @@ export const pulseApi = createApi({
         { type: 'Thread', id: args.threadUID },
         { type: 'AllThreads', id: 'LIST' },
         { type: 'FolderRollupThreads', id: 'LIST' },
+        { type: 'ResourceUnread', id: `${args.resourceKind}:${args.resourceUID}` },
+        { type: 'FolderUnread', id: 'LIST' },
       ],
     }),
 
@@ -325,6 +343,13 @@ export const pulseApi = createApi({
         { type: 'Thread', id: args.threadUID },
         { type: 'AllThreads', id: 'LIST' },
         { type: 'FolderRollupThreads', id: 'LIST' },
+        // Closing a thread does not by itself change unread state
+        // (the closure event is an admin/author action), but the
+        // close action bumps last_pulse_at on the thread via the
+        // version trigger — refresh the counts so the badge tracks
+        // the user's most recent view of the thread accurately.
+        { type: 'ResourceUnread', id: `${args.resourceKind}:${args.resourceUID}` },
+        { type: 'FolderUnread', id: 'LIST' },
       ],
     }),
 
@@ -343,6 +368,8 @@ export const pulseApi = createApi({
           { type: 'Thread', id: args.threadUID },
           { type: 'AllThreads', id: 'LIST' },
           { type: 'FolderRollupThreads', id: 'LIST' },
+          { type: 'ResourceUnread', id: `${args.resourceKind}:${args.resourceUID}` },
+          { type: 'FolderUnread', id: 'LIST' },
         ],
       }
     ),
@@ -365,6 +392,12 @@ export const pulseApi = createApi({
         { type: 'Thread', id: args.threadUID },
         { type: 'AllThreads', id: 'LIST' },
         { type: 'FolderRollupThreads', id: 'LIST' },
+        // We don't know the resource here either — but the live
+        // channel fires `pulse_added` to subscribers on the right
+        // resource, and useResourcePulseStream invalidates
+        // ResourceUnread there. For other surfaces (folder tab) the
+        // LIST sentinel below covers them.
+        { type: 'FolderUnread', id: 'LIST' },
       ],
     }),
 
@@ -416,7 +449,15 @@ export const pulseApi = createApi({
         showSuccessAlert: false,
         showErrorAlert: false,
       }),
-      invalidatesTags: (_r, _e, args) => [{ type: 'Thread', id: args.threadUID }],
+      invalidatesTags: (_r, _e, args) => [
+        { type: 'Thread', id: args.threadUID },
+        // Reading a thread is the canonical way to drive the unread
+        // count down; we don't know the resource here so bust the
+        // LIST sentinels on both surfaces and let RTK refetch the
+        // affected entries.
+        { type: 'ResourceUnread', id: 'LIST' },
+        { type: 'FolderUnread', id: 'LIST' },
+      ],
     }),
 
     getResourceVersion: builder.query<ResourceVersion, ResourceVersionArgs>({
@@ -455,6 +496,52 @@ export const pulseApi = createApi({
       }),
       providesTags: (_r, _e, args) => [{ type: 'Participants', id: `${args.resourceKind}:${args.resourceUID}` }],
     }),
+
+    /**
+     * getResourceUnreadCount drives the numeric badge over the
+     * dashboard sidebar's Pulse icon. The endpoint is intentionally
+     * cheap (one int over the wire); pair it with the live channel
+     * invalidations in `useResourcePulseStream` so the badge keeps
+     * up with cross-tab activity without a poll. Cached by the
+     * `${resourceKind}:${resourceUID}` key so two icons referencing
+     * the same dashboard dedupe to a single request.
+     */
+    getResourceUnreadCount: builder.query<ResourceUnreadCountResponse, ResourceVersionArgs>({
+      query: ({ resourceKind, resourceUID }) => ({
+        url: `/resources/${encodeURIComponent(resourceKind)}/${encodeURIComponent(resourceUID)}/unread`,
+      }),
+      providesTags: (_r, _e, args) => [
+        { type: 'ResourceUnread', id: `${args.resourceKind}:${args.resourceUID}` },
+        // markRead doesn't carry the resource identifier on the wire,
+        // so it invalidates the shared LIST sentinel; every
+        // per-resource unread cache also provides LIST so RTK can
+        // refetch them in one shot. Mirrors AllThreads / FolderUnread.
+        { type: 'ResourceUnread', id: 'LIST' },
+      ],
+    }),
+
+    /**
+     * getFolderUnreadCount drives the tabCounter on the folder
+     * navmodel's Pulse tab. The folder is not a Pulse resource —
+     * the backend re-uses the rollup listing's dashboard resolution
+     * (folder traversal + dashboards:read filter) so the count and
+     * the listing always agree on which dashboards belong to this
+     * folder. Cached by folder UID so two folder tabs referencing
+     * the same folder dedupe to a single request.
+     */
+    getFolderUnreadCount: builder.query<FolderUnreadCountResponse, { folderUID: string }>({
+      query: ({ folderUID }) => ({
+        url: `/folders/${encodeURIComponent(folderUID)}/unread`,
+      }),
+      providesTags: (_r, _e, args) => [
+        { type: 'FolderUnread', id: args.folderUID },
+        // A shared LIST sentinel so a write-side mutation that knows
+        // a dashboard but not its folder (createThread, addPulse,
+        // deleteThread) can bust every folder unread cache at once,
+        // mirroring the FolderRollupThreads strategy.
+        { type: 'FolderUnread', id: 'LIST' },
+      ],
+    }),
   }),
 });
 
@@ -477,4 +564,6 @@ export const {
   useGetResourceVersionQuery,
   useListPanelMentionsQuery,
   useListParticipantsQuery,
+  useGetResourceUnreadCountQuery,
+  useGetFolderUnreadCountQuery,
 } = pulseApi;

@@ -8,6 +8,7 @@ import { config } from '@grafana/runtime';
 import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { PulseSidebarButton } from 'app/features/pulse/components/PulseSidebarButton';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
@@ -139,13 +140,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             active={openPane instanceof DashboardOutline}
           />
           {hasUid && !isEmbedded && !meta.isSnapshot && config.featureToggles.dashboardPulse && (
-            <Sidebar.Button
-              icon="comment-alt"
-              onClick={() => dashboard.onShowPulseDrawer()}
-              title={t('dashboard.sidebar.pulse.title', 'Pulse')}
-              tooltip={t('dashboard.sidebar.pulse.tooltip', 'Open Pulse')}
-              data-testid="pulse-sidebar-button"
-            />
+            <PulseSidebarButton resourceUID={uid} onClick={() => dashboard.onShowPulseDrawer()} />
           )}
           {config.featureToggles.dashboardNewLayouts &&
             (config.featureToggles.dashboardFiltersOverview ||

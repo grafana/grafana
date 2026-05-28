@@ -4,12 +4,15 @@ import { ManagerKind } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type FolderDTO } from 'app/types/folders';
 
-import { buildNavModel, getAlertingTabID } from './navModel';
+import { buildNavModel, getAlertingTabID, getPulseTabID } from './navModel';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     unifiedAlertingEnabled: true,
+    featureToggles: {
+      dashboardPulse: true,
+    },
   },
 }));
 
@@ -90,6 +93,30 @@ describe('buildNavModel', () => {
       expect(alertingTab).toBeDefined();
       expect(alertingTab?.icon).toBe('bell');
       expect(alertingTab?.url).toBe(`${mockFolder.url}/alerting`);
+    });
+  });
+
+  describe('Pulse tab counter', () => {
+    it('renders the Pulse tab with no counter when pulseUnreadCount is omitted', () => {
+      const navModel = buildNavModel(mockFolder);
+      const pulseTab = navModel.children?.find((child) => child.id === getPulseTabID(mockFolder.uid));
+
+      expect(pulseTab).toBeDefined();
+      expect(pulseTab?.tabCounter).toBeUndefined();
+    });
+
+    it('suppresses the counter when pulseUnreadCount is zero so the tab stays clean on a quiet folder', () => {
+      const navModel = buildNavModel(mockFolder, undefined, { pulseUnreadCount: 0 });
+      const pulseTab = navModel.children?.find((child) => child.id === getPulseTabID(mockFolder.uid));
+
+      expect(pulseTab?.tabCounter).toBeUndefined();
+    });
+
+    it('sets tabCounter to the provided positive count', () => {
+      const navModel = buildNavModel(mockFolder, undefined, { pulseUnreadCount: 7 });
+      const pulseTab = navModel.children?.find((child) => child.id === getPulseTabID(mockFolder.uid));
+
+      expect(pulseTab?.tabCounter).toBe(7);
     });
   });
 });
