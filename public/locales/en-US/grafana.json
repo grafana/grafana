@@ -6135,24 +6135,6 @@
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "Raw data"
-    },
-    "panel-editor-unconnected": {
-      "editor-actions": {
-        "apply": "Apply",
-        "discard": "Discard",
-        "save": "Save",
-        "save-library-panel": "Save library panel",
-        "title-apply-changes-and-save-dashboard": "Apply changes and save dashboard",
-        "title-apply-changes-and-save-library-panel": "Apply changes and save library panel",
-        "title-apply-changes-dashboard": "Apply changes and go back to dashboard",
-        "title-undo-all-changes": "Undo all changes"
-      },
-      "table-view-label-table-view": "Table view",
-      "title-unlink": "Disconnects this panel from the library panel so that you can edit it regularly.",
-      "unlink": "Unlink"
-    },
     "panel-links": {
       "aria-label-panel-links": "Panel links"
     },
@@ -6643,28 +6625,6 @@
     },
     "view-panel": {
       "not-found": "Panel not found"
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Change visualization",
-      "aria-label-close": "Close options pane",
-      "aria-label-show": "Show options pane",
-      "tooltip-click-to-change-visualization": "Click to change visualization",
-      "tooltip-close": "Close options pane",
-      "tooltip-show": "Show options pane"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Search for...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Reusable panels you can share between multiple dashboards."
-        },
-        "label": {
-          "library-panels": "Library panels",
-          "suggestions": "Suggestions",
-          "visualizations": "Visualizations"
-        }
-      },
-      "title-close": "Close"
     },
     "viz-panel": {
       "delete-panel-text": "Deleting this panel will also remove all queries. Are you sure you want to continue?",
