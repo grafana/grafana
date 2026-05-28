@@ -549,10 +549,6 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/test`, method: 'POST', body: queryArg.body }),
         invalidatesTags: ['Repository'],
       }),
-      getRepositoryWebhook: build.query<GetRepositoryWebhookApiResponse, GetRepositoryWebhookApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/webhook` }),
-        providesTags: ['Repository'],
-      }),
       createRepositoryWebhook: build.mutation<CreateRepositoryWebhookApiResponse, CreateRepositoryWebhookApiArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/webhook`, method: 'POST' }),
         invalidatesTags: ['Repository'],
@@ -1436,11 +1432,6 @@ export type CreateRepositoryTestApiArg = {
     spec?: any;
     status?: any;
   };
-};
-export type GetRepositoryWebhookApiResponse = /** status 200 OK */ WebhookResponse;
-export type GetRepositoryWebhookApiArg = {
-  /** name of the WebhookResponse */
-  name: string;
 };
 export type CreateRepositoryWebhookApiResponse = /** status 200 OK */ WebhookResponse;
 export type CreateRepositoryWebhookApiArg = {
@@ -2404,8 +2395,6 @@ export const {
   useReplaceRepositoryStatusMutation,
   useUpdateRepositoryStatusMutation,
   useCreateRepositoryTestMutation,
-  useGetRepositoryWebhookQuery,
-  useLazyGetRepositoryWebhookQuery,
   useCreateRepositoryWebhookMutation,
   useGetFrontendSettingsQuery,
   useLazyGetFrontendSettingsQuery,

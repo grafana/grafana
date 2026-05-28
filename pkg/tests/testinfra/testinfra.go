@@ -309,8 +309,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	err = os.MkdirAll(publicDir, 0o750)
 	require.NoError(t, err)
 
+	// Symlink read-only static assets from the source tree instead of copying.
+	// The plugin loader / template renderer only read from these paths, and
+	// CopyRecursive on public/app/plugins (~74 MB, ~66 plugins) is a measurable
+	// chunk of per-test startup time.
 	viewsDir := filepath.Join(publicDir, "views")
-	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "views"), viewsDir)
+	err = os.Symlink(filepath.Join(rootDir, "public", "views"), viewsDir)
 	require.NoError(t, err)
 
 	// add a stub manifest to the build directory
@@ -349,7 +353,7 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	require.NoError(t, err)
 
 	emailsDir := filepath.Join(publicDir, "emails")
-	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "emails"), emailsDir)
+	err = os.Symlink(filepath.Join(rootDir, "public", "emails"), emailsDir)
 	require.NoError(t, err)
 	provDir := filepath.Join(cfgDir, "provisioning")
 	provDSDir := filepath.Join(provDir, "datasources")
@@ -364,8 +368,10 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	provDashboardsDir := filepath.Join(provDir, "dashboards")
 	err = os.MkdirAll(provDashboardsDir, 0o750)
 	require.NoError(t, err)
+	err = os.MkdirAll(filepath.Join(publicDir, "app"), 0o750)
+	require.NoError(t, err)
 	corePluginsDir := filepath.Join(publicDir, "app/plugins")
-	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "app/plugins"), corePluginsDir)
+	err = os.Symlink(filepath.Join(rootDir, "public", "app/plugins"), corePluginsDir)
 	require.NoError(t, err)
 
 	cfg := ini.Empty()
@@ -498,6 +504,15 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	analyticsSect, err := cfg.NewSection("analytics")
 	require.NoError(t, err)
 	_, err = analyticsSect.NewKey("intercom_secret", "intercom_secret_at_config")
+	require.NoError(t, err)
+	// Disable phone-home services in tests. Each of these makes outbound
+	// HTTP requests to grafana.com / stats.grafana.org on startup, which is
+	// a source of flakiness on CI runners and adds nothing to the tests.
+	_, err = analyticsSect.NewKey("reporting_enabled", "false")
+	require.NoError(t, err)
+	_, err = analyticsSect.NewKey("check_for_updates", "false")
+	require.NoError(t, err)
+	_, err = analyticsSect.NewKey("check_for_plugin_updates", "false")
 	require.NoError(t, err)
 
 	grpcServerAuth, err := cfg.NewSection("grpc_server_authentication")
