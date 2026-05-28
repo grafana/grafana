@@ -89,7 +89,7 @@ const indexOfField = (fieldName: string, indexByName: Record<string, number>) =>
 const compare = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true }).compare;
 
 /** @internal */
-export const createFieldsOrdererAuto = (orderBy: OrderByItem[]) => (fields: Field[]) => {
+const createFieldsOrdererAuto = (orderBy: OrderByItem[]) => (fields: Field[]) => {
   const firstTimeField = fields.find((f) => f.type === FieldType.time);
   return fields.slice().sort((fieldA, fieldB) => {
     if (fieldA === firstTimeField) {
