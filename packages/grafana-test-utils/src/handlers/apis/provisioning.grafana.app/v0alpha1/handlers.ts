@@ -81,6 +81,9 @@ const getRepositoryRefsHandler = (response = defaultRefs) =>
 const getRepositoryFilesHandler = (response = defaultRepositoryFiles) =>
   http.get(`${BASE}/repositories/:name/files/`, () => HttpResponse.json(response));
 
+const getRepositoryFileWithPathHandler = () =>
+  http.get(`${BASE}/repositories/:name/files/*`, () => new HttpResponse(null, { status: 404 }));
+
 const createRepositoryHandler = (response = defaultRepository) =>
   http.post(`${BASE}/repositories`, () => HttpResponse.json(response));
 
@@ -126,6 +129,7 @@ const handlers = [
   listRepositoriesHandler(),
   getRepositoryRefsHandler(),
   getRepositoryFilesHandler(),
+  getRepositoryFileWithPathHandler(),
   createRepositoryHandler(),
   replaceRepositoryHandler(),
   testRepositoryHandler(),
