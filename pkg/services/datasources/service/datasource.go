@@ -222,10 +222,9 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 		return nil, err
 	}
 
-	// System/background callers (usage stats, prom-type migration, alerting,
-	// startup) have no requester in context — return all, unfiltered.
+	// System/background callers have no requester in context — return all values.
 	user, err := identity.GetRequester(ctx)
-	if err != nil {
+	if err != nil || user == nil {
 		return all, nil
 	}
 
