@@ -5760,8 +5760,7 @@
         }
       },
       "operator": {
-        "aria-label": "작업 수행자",
-        "placeholder": "연산자 선택"
+        "aria-label": "작업 수행자"
       },
       "restore": "기본값 복원",
       "search": {
@@ -9012,7 +9011,6 @@
       "copy-button": "클립보드로 복사",
       "download-button": "파일 다운로드",
       "download-successful_toast_message": "JSON 다운로드 완료",
-      "export-externally-label": "다른 인스턴스에서 사용할 대시보드 내보내기",
       "export-format": "형식",
       "export-mode": "모델",
       "info-text": "대시보드의 정의가 포함된 파일을 복사하거나 다운로드",
@@ -9105,6 +9103,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "폴더 삭제됨",
       "folder-move-error-provisioned": "프로비저닝된 폴더를 이동할 수 없습니다. 이동하려면 리포지토리에서 이동하고 동기화해 변경 사항을 적용하세요.",
@@ -11632,11 +11631,10 @@
       "published-by": "게시자",
       "updated-on": "업데이트 날짜"
     },
-    "import-resource-format-error": {
-      "cancel": "취소",
-      "title": "지원되지 않는 형식",
-      "v1-message": "이 대시보드는 Kubernetes v1 리소스 형식으로 되어 있으며, Kubernetes 대시보드 기능이 비활성화되어 있을 때는 가져올 수 없습니다. 이 대시보드를 가져오려면 kubernetesDashboards 기능 토글을 활성화하세요.",
-      "v2-message": "이 대시보드는 v2 리소스 형식이며 Kubernetes 대시보드 기능이 비활성화되어 있을 때 가져올 수 없습니다. 이 대시보드를 가져오려면 kubernetesDashboards 기능 토글을 활성화하세요."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "정말 '{{snapshotToRemove}}'을(를) 삭제하시겠어요?",
@@ -13130,6 +13128,7 @@
       "label-filename": "파일 이름",
       "label-folder": "폴더",
       "label-path": "경로",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "폴더 경로 선택 또는 입력",
       "suffix-configured-branch": "동기화된 브랜치",
@@ -13450,7 +13449,7 @@
       "modal-title-set-up-public-access": "공개 액세스 설정",
       "modal-title-set-up-required-features": "필수 기능 설정",
       "step-description-copy-url": "ngrok 출력에서 다음과 같은 https:// 전달 URL을 복사합니다.",
-      "step-description-enable-feature-toggles": "프로비저닝 기능 토글을 custom.ini 파일에 추가합니다. 참고: kubernetesDashboards는 기본적으로 활성화되어 있지만, 명시적으로 비활성화한 경우, Grafana 설정에서 활성화하거나 구성에서 재정의 설정을 삭제해야 합니다.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "이 명령을 실행하여 로컬 Grafana에 대한 보안 터널을 생성합니다.",
       "step-description-update-grafana-config": "이것을 custom.ini 파일에 추가하여, URL을 다음과 같은 실제 ngrok URL로 교체합니다.",
       "step-title-copy-url": "공개 URL 복사",
@@ -14625,7 +14624,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "이미지로 내보내기",
-      "export-json-title": "JSON으로 내보내기",
       "share-externally-title": "외부 공유",
       "share-internally-title": "내부 공유",
       "share-snapshot-title": "스냅샷 공유"

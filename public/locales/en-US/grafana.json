@@ -11699,6 +11699,11 @@
       "published-by": "Published by",
       "updated-on": "Updated on"
     },
+    "import-overview": {
+      "invalid-schema-action": "Try another dashboard",
+      "invalid-schema-body": "The dashboard could not be imported because its schema is not a recognized version.",
+      "invalid-schema-title": "Invalid or unknown dashboard schema"
+    },
     "snapshot-list-table": {
       "body-delete": "Are you sure you want to delete '{{snapshotToRemove}}'?",
       "confirmText-delete": "Delete",
@@ -13595,6 +13600,9 @@
       "authentication-failed": "Authentication failed. Please check your access token.",
       "request-failed": "Request failed",
       "resource-not-found": "Resource not found. Please check the URL or repository."
+    },
+    "import": {
+      "error": "An error occurred while importing the dashboard."
     },
     "instance-sync-deprecation": {
       "message": "Instance sync is currently not fully supported and breaks library panels and alerts. To use library panels and alerts, disconnect your repository and reconnect it using folder sync instead.",
