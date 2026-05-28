@@ -4,6 +4,7 @@ export enum TabId {
   Queries = 'queries',
   Transformations = 'transformations',
   Alert = 'alert',
+  Context = 'context',
 }
 
 export interface PanelDataTabHeaderProps {

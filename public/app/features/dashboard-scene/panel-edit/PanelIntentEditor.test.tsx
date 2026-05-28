@@ -49,19 +49,6 @@ function intentOf(vizPanel: VizPanel): PanelIntent | undefined {
   return chips?.state.intent;
 }
 
-/**
- * The editor is wrapped in a ControlledCollapse that defaults closed
- * for panels with no authored intent (Phase E.1) and open for panels
- * that already have intent. Tests that exercise the body for empty
- * intent must expand the collapse first.
- */
-async function expandPanelContext() {
-  const header = screen.queryByRole('button', { name: /Panel context/i });
-  if (header && header.getAttribute('aria-expanded') === 'false') {
-    await userEvent.click(header);
-  }
-}
-
 describe('PanelIntentEditor', () => {
   beforeEach(() => {
     (useAssistant as jest.Mock).mockReturnValue({
@@ -70,10 +57,9 @@ describe('PanelIntentEditor', () => {
     });
   });
 
-  it('renders empty fields when the panel has no intent', async () => {
+  it('renders empty fields when the panel has no intent', () => {
     const { vizPanel } = buildPanel();
     render(<PanelIntentEditor panel={vizPanel} />);
-    await expandPanelContext();
 
     // Grafana's <Field> nests the description inside the <label>, so
     // getByLabelText's exact match fails on multi-line labels. Use
@@ -84,27 +70,14 @@ describe('PanelIntentEditor', () => {
     expect(screen.getByPlaceholderText('p99 > 500ms for 5m')).toHaveValue('');
   });
 
-  it('starts collapsed when the panel has no intent and expands on click', async () => {
+  it('renders the body unconditionally — the tab is the container', () => {
     const { vizPanel } = buildPanel();
     render(<PanelIntentEditor panel={vizPanel} />);
 
-    // Default-closed: form body is not in the DOM yet.
-    expect(screen.queryByPlaceholderText('@team-handle')).not.toBeInTheDocument();
-
-    const header = screen.getByRole('button', { name: /Panel context/i });
-    expect(header).toHaveAttribute('aria-expanded', 'false');
-
-    await userEvent.click(header);
+    // No collapse: the body is visible as soon as the tab is mounted,
+    // regardless of whether the panel has existing intent.
     expect(screen.getByPlaceholderText('@team-handle')).toBeInTheDocument();
-  });
-
-  it('starts expanded when the panel already has intent so returning authors see their content', () => {
-    const { vizPanel } = buildPanel({ intent: { purpose: 'Track checkout p99.' } });
-    render(<PanelIntentEditor panel={vizPanel} />);
-
-    // Default-open when intent exists: body is immediately visible.
-    expect(screen.getByDisplayValue('Track checkout p99.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Panel context/i })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.queryByRole('button', { name: /Panel context/i })).not.toBeInTheDocument();
   });
 
   it('prefills inputs from existing intent', () => {
@@ -128,16 +101,12 @@ describe('PanelIntentEditor', () => {
     expect(intentOf(vizPanel)).toBeUndefined();
 
     render(<PanelIntentEditor panel={vizPanel} />);
-    await expandPanelContext();
     await userEvent.type(screen.getByPlaceholderText('@team-handle'), 'me');
 
     expect(intentOf(vizPanel)?.owner).toBe('me');
   });
 
   it('adds and removes failure modes round-trip', async () => {
-    // Seeding purpose opens the collapse automatically (the editor
-    // defaults to open when intent already exists), so the body is
-    // visible without needing an extra click.
     const { vizPanel } = buildPanel({ intent: { purpose: 'seed' } });
     render(<PanelIntentEditor panel={vizPanel} />);
 
@@ -154,14 +123,9 @@ describe('PanelIntentEditor', () => {
     expect(intentOf(vizPanel)?.failureModes).toBeUndefined();
   });
 
-  it('does not render the "Draft with AI" button when the assistant is unavailable', async () => {
+  it('does not render the "Draft with AI" button when the assistant is unavailable', () => {
     const { vizPanel } = buildPanel();
     render(<PanelIntentEditor panel={vizPanel} />);
-    // Expand so the absence is meaningful — without expanding, the
-    // body (including the button) is collapsed away regardless of
-    // assistant availability and the assertion would pass for the
-    // wrong reason.
-    await expandPanelContext();
     expect(screen.queryByRole('button', { name: /Draft with AI|Refine with AI/i })).not.toBeInTheDocument();
   });
 
@@ -174,7 +138,6 @@ describe('PanelIntentEditor', () => {
 
     const { vizPanel } = buildPanel();
     render(<PanelIntentEditor panel={vizPanel} />);
-    await expandPanelContext();
 
     const button = screen.getByRole('button', { name: /Draft with AI/i });
     await userEvent.click(button);
@@ -201,24 +164,22 @@ describe('PanelIntentEditor', () => {
   });
 
   describe('per-field Suggest buttons (E.3)', () => {
-    it('does not render per-field suggest buttons when the assistant is unavailable', async () => {
+    it('does not render per-field suggest buttons when the assistant is unavailable', () => {
       const { vizPanel } = buildPanel();
       render(<PanelIntentEditor panel={vizPanel} />);
-      await expandPanelContext();
       expect(screen.queryByLabelText(/Suggest a purpose statement with AI/i)).not.toBeInTheDocument();
       expect(screen.queryByLabelText(/Suggest an owner with AI/i)).not.toBeInTheDocument();
       expect(screen.queryByLabelText(/Suggest expected behavior with AI/i)).not.toBeInTheDocument();
       expect(screen.queryByLabelText(/Suggest failure modes with AI/i)).not.toBeInTheDocument();
     });
 
-    it('renders per-field suggest buttons when the assistant is available', async () => {
+    it('renders per-field suggest buttons when the assistant is available', () => {
       (useAssistant as jest.Mock).mockReturnValue({
         isAvailable: true,
         openAssistant: jest.fn(),
       });
       const { vizPanel } = buildPanel();
       render(<PanelIntentEditor panel={vizPanel} />);
-      await expandPanelContext();
       expect(screen.getByLabelText(/Suggest a purpose statement with AI/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Suggest an owner with AI/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Suggest expected behavior with AI/i)).toBeInTheDocument();
@@ -231,7 +192,6 @@ describe('PanelIntentEditor', () => {
 
       const { vizPanel } = buildPanel();
       render(<PanelIntentEditor panel={vizPanel} />);
-      await expandPanelContext();
 
       await userEvent.click(screen.getByLabelText(/Suggest a purpose statement with AI/i));
 

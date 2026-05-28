@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { type Panel } from '@grafana/schema';
-import { Button, ControlledCollapse, Field, IconButton, Input, Stack, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Field, IconButton, Input, Stack, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { dashboardEditActions } from '../edit-pane/shared';
 import { PanelIntentChips } from '../scene/PanelIntentChips';
@@ -36,12 +36,10 @@ interface Props {
  * with a prompt routing to the `suggest_dashboard_intent` tool, so the
  * user can pre-fill the section from the assistant's draft.
  *
- * Rendered as a self-collapsible block so it can be inlined as an item
- * directly under the Description field in the Panel options pane
- * (E.1). The OptionsPane category renderer puts all items before any
- * nested categories, so an inlined item is the only way to sit between
- * Description and Transparent background without restructuring the
- * panel-frame options.
+ * Mounted inside the `Context` tab of the bottom data pane (alongside
+ * Queries / Transformations / Alert), so the tab itself is the
+ * container — this component renders the fields directly without an
+ * additional collapse affordance.
  */
 export function PanelIntentEditor({ panel }: Props) {
   // Subscribe to panel.titleItems so we re-render when the
@@ -110,150 +108,140 @@ function PanelIntentEditorBody({ panel, intent }: BodyProps) {
     });
   };
 
-  // ControlledCollapse self-manages open/close. Default closed so the
-  // pane stays compact for the common case (no authored intent); open
-  // automatically when intent already exists so a returning author
-  // sees their content without an extra click.
   return (
-    <ControlledCollapse
-      label={t('panel-intent-editor.collapse-label', 'Panel context')}
-      isOpen={hasAnyIntent(intent)}
-    >
-      <Stack direction="column" gap={1}>
-        <DraftWithAIButton panel={panel} hasIntent={hasAnyIntent(intent)} />
+    <Stack direction="column" gap={1}>
+      <DraftWithAIButton panel={panel} hasIntent={hasAnyIntent(intent)} />
 
-        <Field
-          label={t('panel-intent-editor.purpose', 'Purpose')}
-          description={t(
-            'panel-intent-editor.purpose-desc',
-            'One sentence: what does this panel measure and why does it matter?'
-          )}
-        >
-          <Stack direction="row" gap={0.5} alignItems="flex-start">
-            <TextArea
-              value={intent.purpose ?? ''}
-              rows={2}
-              onChange={(e) =>
-                writeIntent(
-                  { ...currentIntent(), purpose: e.currentTarget.value || undefined },
-                  t('panel-intent-editor.edit.purpose', 'Edit panel purpose')
-                )
-              }
-            />
-            <SuggestFieldButton
-              panel={panel}
-              focus="purpose"
-              tooltip={t('panel-intent-editor.suggest.purpose', 'Suggest a purpose statement with AI')}
-            />
-          </Stack>
-        </Field>
+      <Field
+        label={t('panel-intent-editor.purpose', 'Purpose')}
+        description={t(
+          'panel-intent-editor.purpose-desc',
+          'One sentence: what does this panel measure and why does it matter?'
+        )}
+      >
+        <Stack direction="row" gap={0.5} alignItems="flex-start">
+          <TextArea
+            value={intent.purpose ?? ''}
+            rows={2}
+            onChange={(e) =>
+              writeIntent(
+                { ...currentIntent(), purpose: e.currentTarget.value || undefined },
+                t('panel-intent-editor.edit.purpose', 'Edit panel purpose')
+              )
+            }
+          />
+          <SuggestFieldButton
+            panel={panel}
+            focus="purpose"
+            tooltip={t('panel-intent-editor.suggest.purpose', 'Suggest a purpose statement with AI')}
+          />
+        </Stack>
+      </Field>
 
-        <Field label={t('panel-intent-editor.owner', 'Owner')}>
+      <Field label={t('panel-intent-editor.owner', 'Owner')}>
+        <Stack direction="row" gap={0.5} alignItems="center">
+          <Input
+            value={intent.owner ?? ''}
+            placeholder="@team-handle"
+            onChange={(e) =>
+              writeIntent(
+                { ...currentIntent(), owner: e.currentTarget.value || undefined },
+                t('panel-intent-editor.edit.owner', 'Edit panel owner')
+              )
+            }
+          />
+          <SuggestFieldButton
+            panel={panel}
+            focus="owner"
+            tooltip={t('panel-intent-editor.suggest.owner', 'Suggest an owner with AI')}
+          />
+        </Stack>
+      </Field>
+
+      <fieldset className={styles.group}>
+        <legend className={styles.legend}>
           <Stack direction="row" gap={0.5} alignItems="center">
-            <Input
-              value={intent.owner ?? ''}
-              placeholder="@team-handle"
-              onChange={(e) =>
-                writeIntent(
-                  { ...currentIntent(), owner: e.currentTarget.value || undefined },
-                  t('panel-intent-editor.edit.owner', 'Edit panel owner')
-                )
-              }
-            />
+            {t('panel-intent-editor.expected', 'Expected behavior')}
             <SuggestFieldButton
               panel={panel}
-              focus="owner"
-              tooltip={t('panel-intent-editor.suggest.owner', 'Suggest an owner with AI')}
+              focus="expected behavior, alert threshold, normal range"
+              tooltip={t('panel-intent-editor.suggest.expected', 'Suggest expected behavior with AI')}
             />
           </Stack>
+        </legend>
+
+        <Field label={t('panel-intent-editor.normal-range', 'Normal range')}>
+          <Input
+            value={intent.expectedBehavior?.normalRange ?? ''}
+            placeholder="p99 < 250ms"
+            onChange={(e) => {
+              const cur = currentIntent();
+              writeIntent(
+                {
+                  ...cur,
+                  expectedBehavior: {
+                    ...cur.expectedBehavior,
+                    normalRange: e.currentTarget.value || undefined,
+                  },
+                },
+                t('panel-intent-editor.edit.normal-range', 'Edit normal range')
+              );
+            }}
+          />
         </Field>
 
-        <fieldset className={styles.group}>
-          <legend className={styles.legend}>
-            <Stack direction="row" gap={0.5} alignItems="center">
-              {t('panel-intent-editor.expected', 'Expected behavior')}
-              <SuggestFieldButton
-                panel={panel}
-                focus="expected behavior, alert threshold, normal range"
-                tooltip={t('panel-intent-editor.suggest.expected', 'Suggest expected behavior with AI')}
-              />
-            </Stack>
-          </legend>
-
-          <Field label={t('panel-intent-editor.normal-range', 'Normal range')}>
-            <Input
-              value={intent.expectedBehavior?.normalRange ?? ''}
-              placeholder="p99 < 250ms"
-              onChange={(e) => {
-                const cur = currentIntent();
-                writeIntent(
-                  {
-                    ...cur,
-                    expectedBehavior: {
-                      ...cur.expectedBehavior,
-                      normalRange: e.currentTarget.value || undefined,
-                    },
+        <Field label={t('panel-intent-editor.alert-threshold', 'Alert threshold')}>
+          <Input
+            value={intent.expectedBehavior?.alertThreshold ?? ''}
+            placeholder="p99 > 500ms for 5m"
+            onChange={(e) => {
+              const cur = currentIntent();
+              writeIntent(
+                {
+                  ...cur,
+                  expectedBehavior: {
+                    ...cur.expectedBehavior,
+                    alertThreshold: e.currentTarget.value || undefined,
                   },
-                  t('panel-intent-editor.edit.normal-range', 'Edit normal range')
-                );
-              }}
-            />
-          </Field>
+                },
+                t('panel-intent-editor.edit.alert-threshold', 'Edit alert threshold')
+              );
+            }}
+          />
+        </Field>
+      </fieldset>
 
-          <Field label={t('panel-intent-editor.alert-threshold', 'Alert threshold')}>
-            <Input
-              value={intent.expectedBehavior?.alertThreshold ?? ''}
-              placeholder="p99 > 500ms for 5m"
-              onChange={(e) => {
-                const cur = currentIntent();
-                writeIntent(
-                  {
-                    ...cur,
-                    expectedBehavior: {
-                      ...cur.expectedBehavior,
-                      alertThreshold: e.currentTarget.value || undefined,
-                    },
-                  },
-                  t('panel-intent-editor.edit.alert-threshold', 'Edit alert threshold')
-                );
-              }}
-            />
-          </Field>
+      <FailureModesEditor
+        failureModes={intent.failureModes ?? []}
+        panel={panel}
+        onChange={(failureModes) =>
+          writeIntent(
+            { ...currentIntent(), failureModes: failureModes.length ? failureModes : undefined },
+            t('panel-intent-editor.edit.failure-modes', 'Edit failure modes')
+          )
+        }
+      />
 
-        </fieldset>
+      <RelatedSlosEditor
+        slos={intent.relatedSlos ?? []}
+        onChange={(relatedSlos) =>
+          writeIntent(
+            { ...currentIntent(), relatedSlos: relatedSlos.length ? relatedSlos : undefined },
+            t('panel-intent-editor.edit.related-slos', 'Edit related SLOs')
+          )
+        }
+      />
 
-        <FailureModesEditor
-          failureModes={intent.failureModes ?? []}
-          panel={panel}
-          onChange={(failureModes) =>
-            writeIntent(
-              { ...currentIntent(), failureModes: failureModes.length ? failureModes : undefined },
-              t('panel-intent-editor.edit.failure-modes', 'Edit failure modes')
-            )
-          }
-        />
-
-        <RelatedSlosEditor
-          slos={intent.relatedSlos ?? []}
-          onChange={(relatedSlos) =>
-            writeIntent(
-              { ...currentIntent(), relatedSlos: relatedSlos.length ? relatedSlos : undefined },
-              t('panel-intent-editor.edit.related-slos', 'Edit related SLOs')
-            )
-          }
-        />
-
-        <RunbooksEditor
-          runbooks={intent.runbooks ?? []}
-          onChange={(runbooks) =>
-            writeIntent(
-              { ...currentIntent(), runbooks: runbooks.length ? runbooks : undefined },
-              t('panel-intent-editor.edit.runbooks', 'Edit runbooks')
-            )
-          }
-        />
-      </Stack>
-    </ControlledCollapse>
+      <RunbooksEditor
+        runbooks={intent.runbooks ?? []}
+        onChange={(runbooks) =>
+          writeIntent(
+            { ...currentIntent(), runbooks: runbooks.length ? runbooks : undefined },
+            t('panel-intent-editor.edit.runbooks', 'Edit runbooks')
+          )
+        }
+      />
+    </Stack>
   );
 }
 
