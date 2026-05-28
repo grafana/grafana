@@ -26,11 +26,6 @@ const excludedPackages = [
   '@grafana/eslint-plugin',
   '@grafana/test-utils',
   '@openfeature/ofrep-web-provider',
-  '@storybook/addon-webpack5-compiler-swc',
-  '@swc/helpers',
-  '@testing-library/jest-dom',
-  '@testing-library/react',
-  '@testing-library/user-event',
   'immutable',
   'lodash',
   'lru-cache',
@@ -40,7 +35,6 @@ const excludedPackages = [
   'rxjs',
   'semver',
   'tinycolor2',
-  'webpack-merge',
 ];
 
 module.exports = defineConfig({

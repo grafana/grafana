@@ -19,7 +19,7 @@
     "i18next-cli": "^1.48.0",
     "typescript": "6.0.2",
     "webpack": "^5.105.0",
-    "webpack-merge": "5.10.0"
+    "webpack-merge": "6.0.1"
   },
   "engines": {
     "node": ">= 22 <25"
