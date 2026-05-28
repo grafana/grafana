@@ -4310,6 +4310,7 @@
     "actions": {
       "button-to-recently-deleted": "Recently deleted"
     },
+    "affected-folder-contents-error": "We couldn't get information about folder contents.",
     "browse-folder-alerting-page": {
       "title-folder-not-found": "Folder not found",
       "title-ruler-namespace-error": "Cannot load rules"
