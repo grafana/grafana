@@ -333,6 +333,7 @@ func handleCheckRoute(
 				Name:       name,
 				URL:        ds.URL,
 				HTTPClient: httpClient, // Pass authenticated client
+				OrgID:      orgID,
 			})
 
 			dsLogger.Debug("Datasource configured successfully for validation")

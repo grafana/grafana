@@ -447,3 +447,25 @@ func IsFolderValidationAPIError(err error) bool {
 
 	return false
 }
+
+// ErrResourceNotFound is the sentinel for a resource that does not exist in
+// Grafana. Use errors.Is(err, ErrResourceNotFound) to detect it.
+var ErrResourceNotFound = errors.New("resource not found")
+
+// ResourceNotFoundError is returned by FindResourcePath when the Kubernetes API
+// returns a 404 for the requested resource. It carries the API group, resource
+// type, and name so callers can surface a human-readable message, while still
+// supporting errors.Is(err, ErrResourceNotFound) via Unwrap.
+type ResourceNotFoundError struct {
+	Group    string
+	Resource string
+	Name     string
+}
+
+func (e *ResourceNotFoundError) Error() string {
+	return fmt.Sprintf("resource not found: %s/%s/%s", e.Group, e.Resource, e.Name)
+}
+
+func (e *ResourceNotFoundError) Unwrap() error {
+	return ErrResourceNotFound
+}

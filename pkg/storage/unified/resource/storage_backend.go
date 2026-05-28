@@ -246,7 +246,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			cancel()
 			return nil, errors.New("holder is required when enable_kv_leases is true")
 		}
-		leaseManager = lease.NewManager(kv, opts.Holder)
+		leaseManager = lease.NewManager(kv, opts.Holder, opts.Reg)
 	}
 
 	backend := &kvStorageBackend{
@@ -330,6 +330,9 @@ func (k *kvStorageBackend) Stop(_ context.Context) error {
 	}
 	if k.tenantDeleter != nil {
 		k.tenantDeleter.Stop()
+	}
+	if k.leaseManager != nil {
+		k.leaseManager.Stop()
 	}
 	// Cancel the background context to stop runCleanups, GC, and other goroutines.
 	k.cancel()

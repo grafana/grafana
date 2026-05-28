@@ -604,7 +604,12 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 				if err := s.AwaitRunning(req.Context()); err != nil {
 					return nil, err
 				}
-				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
+				ctx := req.Context()
+				// Preserve a Requester already on ctx (e.g. service identity
+				// injected by an internal lookup); fall back to c.SignedInUser.
+				if _, err := identity.GetRequester(ctx); err != nil {
+					ctx = identity.WithRequester(ctx, c.SignedInUser)
+				}
 				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
 				return wrapped(req.WithContext(ctx))
 			},
