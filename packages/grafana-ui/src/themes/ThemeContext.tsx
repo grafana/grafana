@@ -18,7 +18,7 @@ type Subtract<T, K> = Omit<T, keyof K>;
 let ThemeContextMock: React.Context<GrafanaTheme2> | null = null;
 
 // Used by useStyles()
-export const memoizedStyleCreators = new WeakMap();
+const memoizedStyleCreators = new WeakMap();
 
 /** @deprecated use withTheme2 */
 /** @public */
