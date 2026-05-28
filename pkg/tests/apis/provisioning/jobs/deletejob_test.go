@@ -356,7 +356,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
 			state := common.MustNestedString(job.Object, "status", "state")
-			assert.Equal(t, "error", state, "delete job should have failed due to non-existent file")
+			assert.Equal(t, string(provisioning.JobStateWarning), state, "delete job should have warned due to non-existent file")
 		})
 	})
 

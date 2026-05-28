@@ -46,7 +46,7 @@ permissions:
 
 jobs:
   capture-date:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     outputs:
       release_date: ${{ steps.set_release_date.outputs.release_date }}
     steps:
@@ -95,7 +95,7 @@ jobs:
       id-token: write
       pull-requests: write
     name: Create Release PR
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     if: github.repository == 'grafana/grafana'
     env:
       VERSION: ${{ inputs.version }}
@@ -104,7 +104,7 @@ jobs:
     steps:
       - name: Get GitHub App token
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
           github_app: grafana-delivery-bot
       - run: echo "RELEASE_BRANCH=release-${VERSION}" >> "$GITHUB_ENV"

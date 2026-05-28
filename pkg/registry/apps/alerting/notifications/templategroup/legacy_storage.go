@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/alerting/definition"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,8 +15,8 @@ import (
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 var (
@@ -25,11 +24,11 @@ var (
 )
 
 type TemplateService interface {
-	GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (definitions.NotificationTemplate, error)
-	GetTemplates(ctx context.Context, orgID int64) ([]definitions.NotificationTemplate, error)
-	CreateTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
-	UpdateTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
-	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance definitions.Provenance, version string) error
+	GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (v1.TemplateGroup, error)
+	GetTemplates(ctx context.Context, orgID int64) ([]v1.TemplateGroup, error)
+	CreateTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error)
+	UpdateTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error)
+	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance ngmodels.Provenance, version string) error
 }
 
 type legacyStorage struct {
@@ -80,7 +79,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	return convertToK8sResources(orgId, append([]definitions.NotificationTemplate{defaultTemplate}, res...), s.namespacer, opts.FieldSelector)
+	return convertToK8sResources(orgId, append([]v1.TemplateGroup{defaultTemplate}, res...), s.namespacer, opts.FieldSelector)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -211,23 +210,25 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if err != nil {
 		return nil, false, errors.NewBadRequest(err.Error())
 	}
-	err = s.service.DeleteTemplate(ctx, info.OrgID, name, definitions.Provenance(prov), version) // TODO add support for dry-run option
-	return old, false, err                                                                       // false - will be deleted async
+	err = s.service.DeleteTemplate(ctx, info.OrgID, name, prov, version) // TODO add support for dry-run option
+	return old, false, err                                               // false - will be deleted async
 }
 
-func (s *legacyStorage) defaultTemplate() (definitions.NotificationTemplate, error) {
+func (s *legacyStorage) defaultTemplate() (v1.TemplateGroup, error) {
 	// Omit some templates that we do not want to use to see.
 	defaultTemplate, err := templates.DefaultTemplate(templates.DefaultTemplatesToOmit)
 	if err != nil {
-		return definitions.NotificationTemplate{}, err
+		return v1.TemplateGroup{}, err
 	}
 
-	dto := definitions.NotificationTemplate{
-		Name:       model.DefaultTemplateTitle, // User friendly name.
-		UID:        defaultTemplate.Name,
-		Provenance: definitions.Provenance("system"),
-		Template:   defaultTemplate.Template,
-		Kind:       definition.GrafanaTemplateKind,
+	dto := v1.TemplateGroup{
+		Title: model.DefaultTemplateTitle, // User friendly name.
+		ResourceMetadata: v1.ResourceMetadata{
+			UID:        v1.ResourceUID(defaultTemplate.Name),
+			Provenance: ngmodels.Provenance("system"),
+		},
+		Content: defaultTemplate.Template,
+		Kind:    v1.TemplateKindGrafana,
 	}
 
 	return dto, nil

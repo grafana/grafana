@@ -1,18 +1,20 @@
-import { render, renderHook, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { render, renderHook, screen, waitFor } from 'test/test-utils';
 
-import type { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
+import { useGetRepositoryFolders } from '../../hooks/useGetRepositoryFolders';
+import { setupProvisioningMswServer } from '../../mocks/server';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
-// Mock RTK Query hook used inside ResourceEditFormSharedFields to avoid requiring a Redux Provider
-jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
-  useGetRepositoryRefsQuery: jest.fn().mockReturnValue({ data: { items: [] }, isLoading: false, error: null }),
-}));
+
+setupProvisioningMswServer();
 
 // Mock the new hooks that depend on router context
 jest.mock('../../hooks/usePRBranch', () => ({
@@ -47,12 +49,6 @@ const mockRepo: { github: RepositoryView; local: RepositoryView } = {
   },
 };
 
-// Mock the i18n hook since it's used in the component
-jest.mock('@grafana/i18n', () => ({
-  t: (_: string, defaultValue: string) => defaultValue,
-  Trans: ({ children }: { children: ReactNode }) => children,
-}));
-
 interface SetupOptions {
   formDefaultValues?: Partial<ProvisionedDashboardFormData>;
   isNew?: boolean;
@@ -73,8 +69,6 @@ function setup(options: SetupOptions = {}) {
     repository,
     allowPathEdit,
   } = options;
-
-  const user = userEvent.setup();
 
   const defaultFormValues: Partial<ProvisionedDashboardFormData> = {
     path: '',
@@ -101,14 +95,11 @@ function setup(options: SetupOptions = {}) {
     allowPathEdit,
   };
 
-  return {
-    user,
-    ...render(
-      <FormWrapper>
-        <ResourceEditFormSharedFields {...componentProps} resourceType="dashboard" />
-      </FormWrapper>
-    ),
-  };
+  return render(
+    <FormWrapper>
+      <ResourceEditFormSharedFields {...componentProps} resourceType="dashboard" />
+    </FormWrapper>
+  );
 }
 
 describe('ResourceEditFormSharedFields', () => {
@@ -349,8 +340,7 @@ describe('ResourceEditFormSharedFields', () => {
         );
       };
 
-      const user = userEvent.setup();
-      render(<TestComponent />);
+      const { user } = render(<TestComponent />);
 
       const filenameInput = screen.getByRole('textbox', { name: /filename/i });
       const commentTextarea = screen.getByRole('textbox', { name: /comment/i });
@@ -379,8 +369,7 @@ describe('ResourceEditFormSharedFields', () => {
         );
       };
 
-      const user = userEvent.setup();
-      render(<TestComponent />);
+      const { user } = render(<TestComponent />);
 
       // Verify initial split
       expect(screen.getByRole('combobox', { name: /folder/i })).toHaveValue('dashboards');
@@ -413,6 +402,153 @@ describe('ResourceEditFormSharedFields', () => {
 
       // Check if validation error appears
       expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+  });
+
+  describe('Path validation for new dashboards', () => {
+    let validationRequested: boolean;
+
+    beforeEach(() => {
+      validationRequested = false;
+      // Default: file does not exist (404) — prevents MSW "unhandled request" warnings
+      // for tests that render with isNew but don't care about the validation outcome.
+      server.use(
+        http.get(`${BASE}/repositories/:name/files/*`, () => {
+          validationRequested = true;
+          return new HttpResponse(null, { status: 404 });
+        })
+      );
+    });
+
+    it('should show error when file already exists at path', async () => {
+      server.use(
+        http.get(`${BASE}/repositories/:name/files/*`, () => {
+          validationRequested = true;
+          return HttpResponse.json({ path: 'existing.json' });
+        })
+      );
+
+      const { user } = setup({
+        isNew: true,
+        repository: mockRepo.github,
+        formDefaultValues: { path: 'dashboards/existing.json' },
+      });
+
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+      await user.clear(filenameInput);
+      await user.type(filenameInput, 'test.json');
+
+      await waitFor(() => {
+        expect(screen.getByText('A file with this name already exists at this path')).toBeInTheDocument();
+      });
+    });
+
+    it('should not show error when file does not exist (404)', async () => {
+      const { user } = setup({
+        isNew: true,
+        repository: mockRepo.github,
+        formDefaultValues: { path: 'dashboards/new-file.json' },
+      });
+
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+      await user.clear(filenameInput);
+      await user.type(filenameInput, 'test.json');
+
+      await waitFor(() => {
+        expect(validationRequested).toBe(true);
+      });
+
+      expect(screen.queryByText('A file with this name already exists at this path')).not.toBeInTheDocument();
+    });
+
+    it('should not validate path when not a new dashboard', () => {
+      setup({
+        isNew: false,
+        repository: mockRepo.github,
+        formDefaultValues: { path: 'dashboards/existing.json' },
+      });
+
+      expect(validationRequested).toBe(false);
+    });
+
+    it('should not validate path when isNew is not set', () => {
+      setup({
+        repository: mockRepo.github,
+        formDefaultValues: { path: 'dashboards/existing.json' },
+      });
+
+      expect(validationRequested).toBe(false);
+    });
+
+    it('should trigger path validation when folder changes', async () => {
+      // File exists at the new path → validation should fire and show error
+      server.use(
+        http.get(`${BASE}/repositories/:name/files/*`, () => {
+          validationRequested = true;
+          return HttpResponse.json({ path: 'existing.json' });
+        })
+      );
+
+      // Provide folder options so the combobox has selectable items
+      jest.mocked(useGetRepositoryFolders).mockReturnValue({
+        hint: null,
+        options: [{ label: 'other-folder', value: 'other-folder' }],
+        loading: false,
+        error: null,
+      });
+
+      const { user } = setup({
+        isNew: true,
+        repository: mockRepo.github,
+        formDefaultValues: { path: 'dashboards/test.json' },
+      });
+
+      validationRequested = false;
+
+      // Change folder via combobox
+      const folderCombobox = screen.getByRole('combobox', { name: /folder/i });
+      await user.clear(folderCombobox);
+      await user.type(folderCombobox, 'other-folder');
+      await user.keyboard('{Enter}');
+
+      // shouldValidate: true means the path validator reruns after folder change
+      await waitFor(() => {
+        expect(validationRequested).toBe(true);
+      });
+    });
+
+    it('should re-trigger path validation when the branch changes', async () => {
+      const refsInRequest: string[] = [];
+      server.use(
+        http.get(`${BASE}/repositories/:name/files/*`, ({ request }) => {
+          const url = new URL(request.url);
+          refsInRequest.push(url.searchParams.get('ref') ?? '');
+          return new HttpResponse(null, { status: 404 });
+        })
+      );
+
+      const { user } = setup({
+        isNew: true,
+        repository: mockRepo.github,
+        formDefaultValues: { path: 'dashboards/test.json', ref: 'main', workflow: 'write' },
+      });
+
+      // Seed the validator by editing the filename so the path field is touched.
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+      await user.clear(filenameInput);
+      await user.type(filenameInput, 'check.json');
+      await waitFor(() => expect(refsInRequest).toContain('main'));
+
+      refsInRequest.length = 0;
+
+      // Change branch → deps on the ref field should re-run validatePath.
+      const branchCombobox = screen.getByRole('combobox', { name: /branch/i });
+      await user.click(branchCombobox);
+      await user.clear(branchCombobox);
+      await user.paste('feature-branch');
+      await user.keyboard('{Enter}');
+
+      await waitFor(() => expect(refsInRequest).toContain('feature-branch'));
     });
   });
 });
