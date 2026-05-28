@@ -25,7 +25,7 @@
     "node": ">= 22 <25"
   },
   "dependencies": {
-    "@emotion/css": "11.11.2",
+    "@emotion/css": "11.13.5",
     "@grafana/data": "workspace:*",
     "@grafana/i18n": "workspace:*",
     "@grafana/runtime": "workspace:*",

@@ -915,7 +915,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/babel-plugin@npm:^11.10.5, @emotion/babel-plugin@npm:^11.11.0, @emotion/babel-plugin@npm:^11.13.5":
+"@emotion/babel-plugin@npm:^11.10.5, @emotion/babel-plugin@npm:^11.13.5":
   version: 11.13.5
   resolution: "@emotion/babel-plugin@npm:11.13.5"
   dependencies:
@@ -934,7 +934,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/cache@npm:^11.10.5, @emotion/cache@npm:^11.11.0, @emotion/cache@npm:^11.13.5, @emotion/cache@npm:^11.14.0, @emotion/cache@npm:^11.4.0":
+"@emotion/cache@npm:^11.10.5, @emotion/cache@npm:^11.13.5, @emotion/cache@npm:^11.14.0, @emotion/cache@npm:^11.4.0":
   version: 11.14.0
   resolution: "@emotion/cache@npm:11.14.0"
   dependencies:
@@ -962,19 +962,6 @@ __metadata:
     "@babel/core":
       optional: true
   checksum: 10/8e9ff97ac9d867e97bb0830526489784903a3677fbca7ca617aa8edd7187775a3deda8ea394043d4d834b59d39b16d1d44f9e5fc123990d5d6b78230bfc81ef3
-  languageName: node
-  linkType: hard
-
-"@emotion/css@npm:11.11.2":
-  version: 11.11.2
-  resolution: "@emotion/css@npm:11.11.2"
-  dependencies:
-    "@emotion/babel-plugin": "npm:^11.11.0"
-    "@emotion/cache": "npm:^11.11.0"
-    "@emotion/serialize": "npm:^1.1.2"
-    "@emotion/sheet": "npm:^1.2.2"
-    "@emotion/utils": "npm:^1.2.1"
-  checksum: 10/718f758575f05e3610cdef9bdcfcdf17eae1992616c7cc85e29a24ff3b4d3da9968cc1c253a510874c056c22dc73b6b12bd759be9943e20141e0603a3cb35630
   languageName: node
   linkType: hard
 
@@ -1061,7 +1048,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/serialize@npm:1.3.3, @emotion/serialize@npm:^1.1.1, @emotion/serialize@npm:^1.1.2, @emotion/serialize@npm:^1.3.3":
+"@emotion/serialize@npm:1.3.3, @emotion/serialize@npm:^1.1.1, @emotion/serialize@npm:^1.3.3":
   version: 1.3.3
   resolution: "@emotion/serialize@npm:1.3.3"
   dependencies:
@@ -1074,7 +1061,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/sheet@npm:^1.2.1, @emotion/sheet@npm:^1.2.2, @emotion/sheet@npm:^1.4.0":
+"@emotion/sheet@npm:^1.2.1, @emotion/sheet@npm:^1.4.0":
   version: 1.4.0
   resolution: "@emotion/sheet@npm:1.4.0"
   checksum: 10/8ac6e9bf6b373a648f26ae7f1c24041038524f4c72f436f4f8c4761c665e58880c3229d8d89b1f7a4815dd8e5b49634d03e60187cb6f93097d7f7c1859e869d5
@@ -1097,7 +1084,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/utils@npm:^1.2.0, @emotion/utils@npm:^1.2.1, @emotion/utils@npm:^1.4.2":
+"@emotion/utils@npm:^1.2.0, @emotion/utils@npm:^1.4.2":
   version: 1.4.2
   resolution: "@emotion/utils@npm:1.4.2"
   checksum: 10/e5f3b8bca066b3361a7ad9064baeb9d01ed1bf51d98416a67359b62cb3affec6bb0249802c4ed11f4f8030f93cc4b67506909420bdb110adec6983d712897208
@@ -9397,7 +9384,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@test-plugins/grafana-e2etest-panel@workspace:e2e-playwright/test-plugins/grafana-test-panel"
   dependencies:
-    "@emotion/css": "npm:11.11.2"
+    "@emotion/css": "npm:11.13.5"
     "@grafana/data": "workspace:*"
     "@grafana/i18n": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
