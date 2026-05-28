@@ -10,6 +10,11 @@ import (
 // that a replayed request is still considered a duplicate.
 const defaultDeliveryIDCacheTTL = time.Hour
 
+// sharedDeliveryCache is the process-wide replay cache. The webhook handler
+// is invoked on a freshly-built repository per request, so the cache cannot
+// live on the repository instance and still detect replays across requests.
+var sharedDeliveryCache = newDeliveryIDCache(defaultDeliveryIDCacheTTL)
+
 // deliveryIDCache tracks recently-seen GitHub webhook delivery IDs so the
 // webhook handler can reject replayed requests. GitHub sets a unique UUID in
 // the X-GitHub-Delivery header for every delivery attempt of an event.

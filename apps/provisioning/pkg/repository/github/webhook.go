@@ -41,7 +41,6 @@ type githubWebhookRepository struct {
 	gh                Client
 	webhookURL        string
 	incrementalPolicy repository.IncrementalSyncPolicy
-	deliveryCache     *deliveryIDCache
 }
 
 func NewGithubWebhookRepository(
@@ -49,7 +48,6 @@ func NewGithubWebhookRepository(
 	webhookURL string,
 	secret common.RawSecureValue,
 	incrementalPolicy repository.IncrementalSyncPolicy,
-	deliveryCache *deliveryIDCache,
 ) GithubWebhookRepository {
 	return &githubWebhookRepository{
 		GithubRepository:  basic,
@@ -60,7 +58,6 @@ func NewGithubWebhookRepository(
 		webhookURL:        webhookURL,
 		secret:            secret,
 		incrementalPolicy: incrementalPolicy,
-		deliveryCache:     deliveryCache,
 	}
 }
 
@@ -82,14 +79,12 @@ func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request
 	// Replay protection: GitHub assigns a unique UUID to each delivery in the
 	// X-GitHub-Delivery header. Reject any request whose delivery ID we have
 	// already processed within the cache TTL.
-	if r.deliveryCache != nil {
-		deliveryID := github.DeliveryID(req)
-		if deliveryID == "" {
-			return nil, apierrors.NewBadRequest("missing delivery id")
-		}
-		if r.deliveryCache.seenOrAdd(deliveryID) {
-			return nil, apierrors.NewUnauthorized("duplicate delivery id")
-		}
+	deliveryID := github.DeliveryID(req)
+	if deliveryID == "" {
+		return nil, apierrors.NewBadRequest("missing delivery id")
+	}
+	if sharedDeliveryCache.seenOrAdd(deliveryID) {
+		return nil, apierrors.NewUnauthorized("duplicate delivery id")
 	}
 
 	return r.parseWebhook(ctx, github.WebHookType(req), payload)

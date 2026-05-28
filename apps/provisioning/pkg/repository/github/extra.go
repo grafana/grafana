@@ -24,7 +24,6 @@ type extra struct {
 	decrypter         repository.Decrypter
 	webhookBuilder    WebhookURLBuilder
 	incrementalPolicy repository.IncrementalSyncPolicy
-	deliveryCache     *deliveryIDCache
 }
 
 func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder WebhookURLBuilder, incrementalPolicy repository.IncrementalSyncPolicy) repository.Extra {
@@ -33,7 +32,6 @@ func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder Webh
 		factory:           factory,
 		webhookBuilder:    webhookBuilder,
 		incrementalPolicy: incrementalPolicy,
-		deliveryCache:     newDeliveryIDCache(defaultDeliveryIDCacheTTL),
 	}
 }
 
@@ -84,7 +82,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("decrypt webhookSecret: %w", err)
 	}
 
-	return NewGithubWebhookRepository(ghRepo, webhookURL, webhookSecret, e.incrementalPolicy, e.deliveryCache), nil
+	return NewGithubWebhookRepository(ghRepo, webhookURL, webhookSecret, e.incrementalPolicy), nil
 }
 
 func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
