@@ -29,12 +29,8 @@ const config: KnipConfig = {
       entry: [...packageEntries, 'module.{ts,tsx,js}'],
     },
     'e2e-playwright/test-plugins/*': {
-      project: ['!plugins'],
       webpack: false,
-      entry: [...packageEntries, 'module.{ts,tsx,js}'],
-    },
-    'e2e-playwright/test-plugins/grafana-extensiontest-app/plugins/*': {
-      entry: ['module.tsx'],
+      entry: [...packageEntries, 'module.{ts,tsx,js}', 'plugins/*/module.{ts,tsx,js}'],
     },
     'packages/**': {
       entry: packageEntries,
