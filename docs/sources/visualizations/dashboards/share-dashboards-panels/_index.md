@@ -202,6 +202,10 @@ To export a JSON file, follow these steps:
 1. Paste the JSON in another location.
 1. Click the **X** at the top-right corner to close the share drawer.
 
+{{< admonition type="note" >}}
+To upload a dashboard to the [Grafana community catalog](https://grafana.com/dashboards), you must export it using the **Classic** model.
+{{< /admonition >}}
+
 ### Export a dashboard as an image
 
 {{< admonition type="note">}}
