@@ -1,5 +1,4 @@
 import { cloneDeep, defaultsDeep, isArray, isEqual } from 'lodash';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   type DataConfigSource,
@@ -19,6 +18,7 @@ import {
   isStandardFieldProp,
   restoreCustomOverrideRules,
   getNextRefId,
+  generateUUID,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { type LibraryPanel, type LibraryPanelRef } from '@grafana/schema';
@@ -206,7 +206,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
-    this.key = uuidv4();
+    this.key = generateUUID();
   }
 
   /** Given a persistened PanelModel restores property values */
@@ -251,7 +251,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   generateNewKey() {
-    this.key = uuidv4();
+    this.key = generateUUID();
   }
 
   ensureQueryIds() {

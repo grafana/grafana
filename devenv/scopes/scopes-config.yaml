@@ -6,6 +6,41 @@ scopes:
         operator: equals
         value: shoe
 
+  # Cluster 1 needs a scope definition; the tree references it but the API
+  # returns 404 without one. defaultPath drives tree expansion to the leaf node.
+  cluster1:
+    title: Cluster 1 (defaultPath)
+    defaultPath:
+      - gdev-scopes
+      - gdev-scopes-clusters
+      - gdev-scopes-clusters-cluster1-node
+    filters:
+      - key: cluster
+        operator: equals
+        value: cluster1
+
+  app1:
+    title: Application 1 (defaultPath)
+    defaultPath:
+      - gdev-scopes
+      - gdev-scopes-production
+      - gdev-scopes-production-app1-prod
+    filters:
+      - key: app
+        operator: equals
+        value: app1
+
+  app2:
+    title: Application 2 (defaultPath)
+    defaultPath:
+      - gdev-scopes
+      - gdev-scopes-production
+      - gdev-scopes-production-app2-prod
+    filters:
+      - key: app
+        operator: equals
+        value: app2
+
   shoes:
     title: Shoes
     filters:
@@ -52,7 +87,7 @@ scopes:
   # The defaultPath determines which path is shown when this scope is selected
   # (e.g., from a URL or programmatically), even if another path also links to it.
   shared-service:
-    title: Shared Service
+    title: Shared Service (defaultPath)
     # Path from the root node down to the direct scopeNode.
     # Node names are hierarchical (parent-child), so use the full names.
     # This points to: gdev-scopes > production > shared-service-prod

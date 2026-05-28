@@ -841,7 +841,7 @@ describe('cached promises', () => {
 
     test('should invalidate cache for cacheKey', async () => {
       const actual1 = await getCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
-      invalidateCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
+      invalidateCachedPromise('the-key');
       const actual2 = await getCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
 
       expect(actual1).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
@@ -873,22 +873,41 @@ describe('cached promises', () => {
       );
     });
 
-    test('should not throw when called with an anonymous function and a cacheKey', () => {
-      expect(() => invalidateCachedPromise(async () => 2, { cacheKey: 'a-cache-key' })).not.toThrow();
+    test('should not throw when called with a cacheKey', () => {
+      expect(() => invalidateCachedPromise('a-cache-key')).not.toThrow();
     });
 
-    test('should prefer cacheKey over the key derived from the function', async () => {
-      const actual1 = await getCachedPromise(simulateOkRequest);
-      const actual2 = await getCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });
+    test('should throw when called with an empty cacheKey', () => {
+      expect(() => invalidateCachedPromise('')).toThrow(
+        'invalidateCachedPromise function must be invoked with a named function or cacheKey'
+      );
+    });
 
-      invalidateCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });
+    test('cacheKey overload only affects entries under that key', async () => {
+      const a1 = await getCachedPromise(simulateOkRequest);
+      const b1 = await getCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });
 
-      const actual3 = await getCachedPromise(simulateOkRequest);
-      const actual4 = await getCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });
+      invalidateCachedPromise('explicit-key');
 
-      expect(actual1).toBe(actual3);
-      expect(actual1).not.toBe(actual2);
-      expect(actual2).not.toBe(actual4);
+      const a2 = await getCachedPromise(simulateOkRequest);
+      const b2 = await getCachedPromise(simulateOkRequest, { cacheKey: 'explicit-key' });
+
+      expect(a2).toBe(a1);
+      expect(b2).not.toBe(b1);
+    });
+
+    test('should be a no-op when there is no cached entry for the cacheKey', () => {
+      expect(() => invalidateCachedPromise('non-existent-key')).not.toThrow();
+    });
+
+    test('should accept a cacheKey returned by getCacheKeyFromPromise', async () => {
+      const a1 = await getCachedPromise(simulateOkRequest);
+      const derivedKey = getCacheKeyFromPromise(simulateOkRequest)!;
+
+      invalidateCachedPromise(derivedKey);
+      const a2 = await getCachedPromise(simulateOkRequest);
+
+      expect(a2).not.toBe(a1);
     });
   });
 

@@ -480,21 +480,72 @@ func TestSimpleServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		// Update should return a conflict error the second time
-
+		// First update with different bytes advances the resource version.
+		rawV2 := []byte(strings.Replace(string(raw), `"title": "hello"`, `"title": "world"`, 1))
 		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
-			Value:           raw,
+			Value:           rawV2,
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
+
+		// Second update with stale RV and different bytes should return a conflict.
+		rawV3 := []byte(strings.Replace(string(raw), `"title": "hello"`, `"title": "again"`, 1))
+		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             key,
+			Value:           rawV3,
+			ResourceVersion: created.ResourceVersion})
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusConflict), rsp.Error.Code)
+		require.Contains(t, rsp.Error.Message, "requested RV does not match current RV")
+	})
+
+	t.Run("playlist update with identical bytes does not increment RV", func(t *testing.T) {
+		raw := []byte(`{
+    	"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {
+				"name": "noop-rv-check",
+				"namespace": "default",
+				"uid": "noop-uid"
+			},
+			"spec": {
+				"title": "hello",
+				"interval": "5m",
+				"items": [
+					{
+						"type": "dashboard_by_uid",
+						"value": "vmie2cmWz"
+					}
+				]
+			}
+		}`)
+
+		key := &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "rrrr",
+			Namespace: "default",
+			Name:      "noop-rv-check",
+		}
+
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Value: raw,
+			Key:   key,
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
 
 		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusConflict), rsp.Error.Code)
-		require.Contains(t, rsp.Error.Message, "requested RV does not match current RV")
+		require.Nil(t, rsp.Error)
+		require.Equal(t, created.ResourceVersion, rsp.ResourceVersion, "RV should not change when bytes are identical")
+
+		// The stored resource version should also be unchanged.
+		read := server.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: key})
+		require.Nil(t, read.Error)
+		require.Equal(t, created.ResourceVersion, read.ResourceVersion)
 	})
 }
 
@@ -1104,6 +1155,7 @@ func newWatchTestUser() *identity.StaticRequester {
 type watchTestServerOpts struct {
 	BookmarkFrequency time.Duration
 	StorageMetrics    *StorageMetrics
+	AccessClient      authlib.AccessClient
 }
 
 func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
@@ -1124,6 +1176,7 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 		Backend:           store,
 		BookmarkFrequency: opts.BookmarkFrequency,
 		StorageMetrics:    opts.StorageMetrics,
+		AccessClient:      opts.AccessClient,
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -1332,7 +1385,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 
 	// Wait until the broadcaster has received both events, so the cache is
 	// populated by the time we subscribe.
-	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal, 2)
+	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 2)
 
 	// Start a watch with a tiny Since RV.
 	mock := newMockWatchServer(ctx)
@@ -1347,7 +1400,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	})
 
 	// Wait for the subscription to register before producing the third event.
-	requireMetricEventually(t, metrics.Broadcaster.Subscribers, 1)
+	requireMetricEventually(t, metrics.Broadcaster.Subscribers.WithLabelValues(watchTestResource), 1)
 
 	// Create a third resource after the watch has subscribed. This is the only
 	// event for which WatchEventLatency should record an observation.
@@ -1383,7 +1436,94 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 		"WatchEventLatency should only observe events that arrived after the subscription started")
 }
 
+// TestWatchInitialEventsRespectsItemChecker tests that checker is used for
+// initial-events when SendInitialEvents=true.
+func TestWatchInitialEventsRespectsItemChecker(t *testing.T) {
+	const (
+		allowedFolder = "folder-a"
+		deniedFolder  = "folder-b"
+		allowedName   = "allowed-playlist"
+		deniedName    = "denied-playlist"
+	)
+
+	ac := &callbackAccessClient{
+		fn: func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			// Only fail reads, allow other verbs to seed test resources
+			if req.Verb == utils.VerbGet && folder != allowedFolder {
+				return deny()
+			}
+			return allow()
+		},
+	}
+	srv := newWatchTestServer(t, watchTestServerOpts{AccessClient: ac})
+
+	user := newWatchTestUser()
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), user))
+	defer cancel()
+
+	for _, item := range []struct {
+		name, folder string
+	}{
+		{allowedName, allowedFolder},
+		{deniedName, deniedFolder},
+	} {
+		value := []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"` + item.name + `","uid":"uid-` + item.name + `","namespace":"` + watchTestNamespace + `","annotations":{"grafana.app/folder":"` + item.folder + `"}},"spec":{"title":"t","interval":"5m","items":[]}}`)
+		created, err := srv.Create(ctx, &resourcepb.CreateRequest{
+			Key: &resourcepb.ResourceKey{
+				Group:     watchTestGroup,
+				Resource:  watchTestResource,
+				Namespace: watchTestNamespace,
+				Name:      item.name,
+			},
+			Value: value,
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error, "creating seed resource %q", item.name)
+	}
+
+	mock := newMockWatchServer(ctx)
+	var eg errgroup.Group
+	eg.Go(func() error {
+		return srv.Watch(&resourcepb.WatchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Group:     watchTestGroup,
+					Resource:  watchTestResource,
+					Namespace: watchTestNamespace,
+				},
+			},
+			SendInitialEvents: true,
+		}, mock)
+	})
+
+	// Drain events
+	var added []*resourcepb.WatchEvent
+	deadline := time.After(2 * time.Second)
+drain:
+	for {
+		select {
+		case evt := <-mock.events:
+			if evt.Type == resourcepb.WatchEvent_ADDED {
+				added = append(added, evt)
+			}
+		case <-deadline:
+			break drain
+		}
+	}
+
+	cancel()
+	require.NoError(t, eg.Wait())
+
+	for _, evt := range added {
+		require.NotContains(t, string(evt.Resource.Value), `"name":"`+deniedName+`"`)
+	}
+	require.Len(t, added, 1)
+	require.Contains(t, string(added[0].Resource.Value), `"name":"`+allowedName+`"`)
+}
+
 // callbackAccessClient is a test helper whose Check behavior can be swapped between calls.
+// Compile returns an ItemChecker that delegates to the same fn (with Verb=get),
+// so a single callback drives both Check and per-item authorization.
 type callbackAccessClient struct {
 	fn func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error)
 }
@@ -1392,8 +1532,20 @@ func (c *callbackAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req 
 	return c.fn(req, folder)
 }
 
-func (c *callbackAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
-	return func(_, _ string) bool { return true }, authlib.NoopZookie{}, nil
+func (c *callbackAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(name, folder string) bool {
+		resp, err := c.fn(authlib.CheckRequest{
+			Verb:      utils.VerbGet,
+			Group:     req.Group,
+			Resource:  req.Resource,
+			Namespace: req.Namespace,
+			Name:      name,
+		}, folder)
+		if err != nil {
+			return false
+		}
+		return resp.Allowed
+	}, authlib.NoopZookie{}, nil
 }
 
 func (c *callbackAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {

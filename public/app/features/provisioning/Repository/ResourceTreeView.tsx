@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { textUtil, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   type CellProps,
@@ -161,13 +161,14 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
             const spec = repo.spec;
             const config = spec.github || spec.gitlab || spec.bitbucket;
             if (config) {
-              sourceLink = getRepoFileUrl({
+              const rawSourceLink = getRepoFileUrl({
                 repoType: spec.type,
                 url: config.url,
                 branch: config.branch,
                 filePath: item.path,
                 pathPrefix: config.path,
               });
+              sourceLink = rawSourceLink ? textUtil.sanitizeUrl(rawSourceLink) : undefined;
             }
           }
 

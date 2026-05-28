@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1139,6 +1138,154 @@ func TestUserK8sService_Update(t *testing.T) {
 	}
 }
 
+func TestUserK8sService_Delete(t *testing.T) {
+	tests := []struct {
+		name           string
+		cmd            *user.DeleteUserCommand
+		requesterOrgID int64
+		serverResponse func(w http.ResponseWriter, r *http.Request)
+		nilProvider    bool
+		noReqContext   bool
+		noRequester    bool
+		expectErr      bool
+	}{
+		{
+			name:           "successfully deletes a user",
+			requesterOrgID: 1,
+			cmd:            &user.DeleteUserCommand{UserID: 42},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if r.Method == http.MethodGet {
+					resp := map[string]any{
+						"apiVersion": "v1",
+						"kind":       "List",
+						"items":      []any{newTestK8sUser("some-uid", "org-1", "jdoe", "jdoe@example.com")},
+					}
+					_ = json.NewEncoder(w).Encode(resp)
+					return
+				}
+				assert.Equal(t, http.MethodDelete, r.Method)
+				assert.Contains(t, r.URL.Path, "some-uid")
+				w.WriteHeader(http.StatusOK)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusSuccess,
+					Code:     http.StatusOK,
+				})
+			},
+		},
+		{
+			name:           "returns ErrUserNotFound when no user matches",
+			requesterOrgID: 1,
+			cmd:            &user.DeleteUserCommand{UserID: 99},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"apiVersion": "v1",
+					"kind":       "List",
+					"items":      []any{},
+				})
+			},
+			expectErr: true,
+		},
+		{
+			name:           "returns error when multiple users found with same internal ID",
+			requesterOrgID: 1,
+			cmd:            &user.DeleteUserCommand{UserID: 5},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"apiVersion": "v1",
+					"kind":       "List",
+					"items": []any{
+						newTestK8sUser("uid-1", "org-1", "user-a", "a@example.com"),
+						newTestK8sUser("uid-2", "org-1", "user-b", "b@example.com"),
+					},
+				})
+			},
+			expectErr: true,
+		},
+		{
+			name:           "returns error when list call fails",
+			requesterOrgID: 1,
+			cmd:            &user.DeleteUserCommand{UserID: 42},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusFailure,
+					Message:  "internal server error",
+					Code:     http.StatusInternalServerError,
+				})
+			},
+			expectErr: true,
+		},
+		{
+			name:           "propagates error from client.Delete",
+			requesterOrgID: 1,
+			cmd:            &user.DeleteUserCommand{UserID: 42},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if r.Method == http.MethodGet {
+					_ = json.NewEncoder(w).Encode(map[string]any{
+						"apiVersion": "v1",
+						"kind":       "List",
+						"items":      []any{newTestK8sUser("some-uid", "org-1", "jdoe", "jdoe@example.com")},
+					})
+					return
+				}
+				w.WriteHeader(http.StatusConflict)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusFailure,
+					Message:  "conflict",
+					Code:     http.StatusConflict,
+				})
+			},
+			expectErr: true,
+		},
+		{
+			name:        "returns error when config provider not initialized",
+			cmd:         &user.DeleteUserCommand{UserID: 42},
+			nilProvider: true,
+			expectErr:   true,
+		},
+		{
+			name:         "returns error when no request context",
+			cmd:          &user.DeleteUserCommand{UserID: 42},
+			noReqContext: true,
+			expectErr:    true,
+		},
+		{
+			name:        "returns error when no requester in context",
+			cmd:         &user.DeleteUserCommand{UserID: 42},
+			noRequester: true,
+			expectErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+				nilProvider:    tt.nilProvider,
+				noReqContext:   tt.noReqContext,
+				noRequester:    tt.noRequester,
+				requesterOrgID: tt.requesterOrgID,
+				serverResponse: tt.serverResponse,
+			})
+
+			err := svc.Delete(ctx, tt.cmd)
+
+			if tt.expectErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestUserK8sService_UpdateLastSeenAt(t *testing.T) {
 	makeListResponse := func(userID int64, lastSeenAtSec int64) func(http.ResponseWriter, *http.Request) {
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -2041,14 +2188,19 @@ func newTestK8sUser(uid, namespace, login, email string) v0alpha1.User {
 	}
 }
 
-// testClientGenerator creates a resource.ClientGenerator backed by a test HTTP server.
-func testClientGenerator(serverURL string) resource.ClientGenerator {
-	return apiserver.ProvideClientGenerator(apiserver.RestConfigProviderFunc(
-		func(_ context.Context) (*rest.Config, error) {
-			return &rest.Config{Host: serverURL}, nil
-		},
-	))
+type testDirectRestConfigProvider struct {
+	serverURL string
 }
+
+func (p *testDirectRestConfigProvider) GetDirectRestConfig(_ *contextmodel.ReqContext) *rest.Config {
+	return &rest.Config{Host: p.serverURL}
+}
+
+func (p *testDirectRestConfigProvider) DirectlyServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
+
+func (p *testDirectRestConfigProvider) IsReady() bool { return true }
+
+var _ apiserver.DirectRestConfigProvider = (*testDirectRestConfigProvider)(nil)
 
 func contextWithReqContext() context.Context {
 	reqCtx := &contextmodel.ReqContext{}
@@ -2074,7 +2226,7 @@ func setupServiceAndCtx(t *testing.T, s svcTestSetup) (*UserK8sService, context.
 	} else {
 		ts := httptest.NewServer(http.HandlerFunc(s.serverResponse))
 		t.Cleanup(ts.Close)
-		svc = NewUserK8sService(log.NewNopLogger(), s.cfg, testClientGenerator(ts.URL), tracer)
+		svc = NewUserK8sService(log.NewNopLogger(), s.cfg, &testDirectRestConfigProvider{serverURL: ts.URL}, tracer)
 	}
 
 	ctx := contextWithReqContext()

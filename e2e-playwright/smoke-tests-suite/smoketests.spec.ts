@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
-
 import { test, expect } from '@grafana/plugin-e2e';
 
 test.describe(
@@ -15,7 +13,7 @@ test.describe(
       page,
     }) => {
       const dataSourceConfigPage = await createDataSourceConfigPage({
-        name: `e2e-${uuidv4()}`,
+        name: `e2e-${crypto.randomUUID()}`,
         type: 'grafana-testdata-datasource',
       });
       const { datasource } = dataSourceConfigPage;

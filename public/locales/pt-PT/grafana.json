@@ -440,7 +440,10 @@
       "label-value": "Valor"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "Ações"
+      "n-contact-points_one": "",
+      "n-contact-points_other": "",
+      "view-route_one": "",
+      "view-route_other": ""
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Adicionar dados de alerta à carga útil",
@@ -456,6 +459,7 @@
     },
     "alert-instances-table": {
       "created": "Criado",
+      "destination": "",
       "labels": "Etiquetas",
       "state": "Estado"
     },
@@ -515,7 +519,8 @@
         "edit-yaml": "Editar YAML",
         "save": "Guardar"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nome",
@@ -1153,6 +1158,9 @@
         "rule-viewer-section-extension": "Falha ao carregar a secção de enriquecimento do visualizador de regras"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Falha ao atualizar a sua configuração:",
       "title-something-went-wrong": "Ocorreu um problema"
@@ -1161,10 +1169,14 @@
       "content-show-all-errors": "Mostrar todos os erros"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} falhou com {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Necessário."
       }
     },
@@ -2333,6 +2345,7 @@
     },
     "notification-route": {
       "no-labels": "Sem etiquetas",
+      "notification-policies": "",
       "notification-policy": "Política de notificação"
     },
     "notification-route-header": {
@@ -2869,6 +2882,11 @@
         },
         "group-name": "Nome do grupo de avaliação",
         "group-text": "Todas as regras no grupo selecionado são avaliadas a cada {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Novo grupo de avaliação",
         "pause": {
           "alerting": "Ativar para colocar em pausa a avaliação desta regra de alerta.",
@@ -3174,9 +3192,7 @@
       "deleting": "A eliminar",
       "text-federated": "Federado",
       "text-provisioned": "Aprovisionado",
-      "ungrouped": "Não agrupado",
-      "ungrouped-suffix": "{{ruleName}} (Não agrupado)",
-      "unknown-rule": "Regra desconhecida"
+      "ungrouped": "Não agrupado"
     },
     "saved-searches": {
       "actions-aria-label": "Ações",
@@ -4369,7 +4385,6 @@
       "button-cancel": "Cancelar",
       "button-delete": "Eliminar",
       "button-deleting": "A eliminar...",
-      "commit": "Eliminar pasta",
       "delete-warning": "Isto eliminará esta pasta e todas as suas descendentes. No total, isto afetará:",
       "missing-info": "Campos obrigatórios em falta",
       "success-message": "Pasta eliminada com sucesso"
@@ -4483,7 +4498,6 @@
       "button-cancel": "Cancelar",
       "button-rename": "Renomear",
       "button-renaming": "A renomear...",
-      "commit": "Renomear a pasta",
       "error-saving": "Falha ao renomear a pasta",
       "label-folder-name": "Nome da pasta",
       "missing-info": "Campos obrigatórios em falta",
@@ -5778,8 +5792,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operador",
-        "placeholder": "Selecionar operador"
+        "aria-label": "Operador"
       },
       "restore": "Restaurar valor predefinido",
       "search": {
@@ -6372,6 +6385,8 @@
         "ungroup-tabs": "Desagrupar separadores"
       },
       "name": "Separadores",
+      "scroll-tabs-left": "",
+      "scroll-tabs-right": "",
       "tab": {
         "new": "Novo separador",
         "repeat": {
@@ -6469,6 +6484,10 @@
         },
         "save-dashboard-short": "Guardar",
         "save-library-panel": "Guardar painel de biblioteca",
+        "save-template": {
+          "label": "",
+          "tooltip": ""
+        },
         "share": {
           "arrow": "Partilhar",
           "tooltip": "Copiar link"
@@ -6482,6 +6501,9 @@
       "read-only": "Apenas para leitura",
       "refresh": "Atualizar o painel de controlo",
       "save": "Guardar o painel de controlo",
+      "save-as-template": {
+        "label": ""
+      },
       "save-dashboard": {
         "label": "Guardar o painel de controlo",
         "tooltip": "Guardar alterações"
@@ -7514,7 +7536,9 @@
         "label-details": "Detalhes",
         "title": "Guardar o painel de controlo",
         "title-copy": "Guardar a cópia do painel de controlo",
-        "title-provisioned": "Painel de controlo fornecido"
+        "title-provisioned": "Painel de controlo fornecido",
+        "title-template": "",
+        "title-update-template": ""
       }
     },
     "save-dashboard-form": {
@@ -7591,6 +7615,10 @@
     },
     "section-filters-list": {
       "add-filter": ""
+    },
+    "section-placement": {
+      "top-row": "",
+      "top-tab": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Permite que vários valores sejam selecionados ao mesmo tempo",
@@ -7731,9 +7759,6 @@
     "variable-display-select": {
       "label": "Visualização",
       "options": {
-        "above-dashboard": {
-          "label": "Acima do painel de controlo"
-        },
         "controls-menu": {
           "description": "Visível quando o menu de controlos está aberto",
           "label": "Menu de controlos"
@@ -7742,9 +7767,9 @@
           "description": "Visível apenas no modo de edição",
           "label": "Oculto"
         },
-        "hidden-label": {
-          "description": "Acima do painel, mas sem mostrar o nome da variável",
-          "label": "Acima do painel de controlo, etiqueta oculta"
+        "top-placement-hidden-label": {
+          "description": "",
+          "label": ""
         }
       }
     },
@@ -7827,12 +7852,15 @@
           "reorder-variables-list": "Reordenar lista de variáveis"
         }
       },
-      "title-above-dashboard_one": "Acima do painel de controlo ({{count}})",
-      "title-above-dashboard_other": "Acima do painel de controlo ({{count}})",
+      "top-placement": {
+        "default": ""
+      },
       "title-controls-menu_one": "Menu de controlos ({{count}})",
       "title-controls-menu_other": "Menu de controlos ({{count}})",
       "title-hidden_one": "Oculto ({{count}})",
-      "title-hidden_other": "Oculto ({{count}})"
+      "title-hidden_other": "Oculto ({{count}})",
+      "title-top-placement_one": "",
+      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -9033,7 +9061,6 @@
       "copy-button": "Copiar para a área de transferência",
       "download-button": "Transferir ficheiro",
       "download-successful_toast_message": "O seu JSON foi descarregado",
-      "export-externally-label": "Exportar o painel de controlo para utilizar noutra instância",
       "export-format": "Formato",
       "export-mode": "Modelo",
       "info-text": "Copiar ou descarregar um ficheiro que contém a definição do seu painel de controlo",
@@ -9126,6 +9153,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "Pasta eliminada",
       "folder-move-error-provisioned": "Não é possível mover a pasta disponibilizada. Para a mover, mova-a no repositório e sincronize para aplicar as alterações.",
@@ -10736,7 +10764,7 @@
     "name-unit": "Unidade",
     "name-value-name": "Nome do valor",
     "name-y-axis-scale": "Escala do eixo Y",
-    "name-y-bucket-scale": "Escala de registo Y",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Automático",
     "placeholder-axis-width": "Automático",
     "placeholder-decimals": "Automático",
@@ -10849,6 +10877,44 @@
     "name-gradient-mode": "Modo de gradiente",
     "name-line-width": "Largura da linha",
     "name-stacking": "Empilhamento"
+  },
+  "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    }
   },
   "inspector": {
     "inspect-data-tab": {
@@ -11331,6 +11397,8 @@
       "clear-search": "Limpar",
       "close-inline-details": "Fechar detalhes deste registo",
       "close-sidebar-details": "Fechar barra lateral de detalhes do registo",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Copiar link curto",
       "copy-to-clipboard": "Copiar para a área de transferência",
       "displayed-fields-section": "Organizar campos exibidos",
@@ -11379,7 +11447,8 @@
     },
     "log-line-menu": {
       "copy-link": "Copiar link para a linha de registo",
-      "copy-log": "Copiar linha de registo",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Mostrar detalhes do registo",
       "icon-label": "Menu de registo",
       "log-line": "Linha de registo",
@@ -11630,11 +11699,10 @@
       "published-by": "Publicado por",
       "updated-on": "Atualizado a"
     },
-    "import-resource-format-error": {
-      "cancel": "Cancelar",
-      "title": "Formato não suportado",
-      "v1-message": "Este painel de controlo está no formato de recurso Kubernetes v1 e não pode ser importado quando a funcionalidade de painéis de controlo do Kubernetes está desativada. Ative o botão da funcionalidade kubernetesDashboards para importar este painel de controlo.",
-      "v2-message": "Este painel de controlo está no formato de recurso v2 e não pode ser importado quando a funcionalidade de painéis de controlo do Kubernetes está desativada. Ative a alternância da funcionalidade kubernetesDashboards para importar este painel de controlo."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Tem a certeza de que pretende eliminar '{{snapshotToRemove}}'?",
@@ -11940,6 +12008,9 @@
     "admin": {
       "subtitle": "Gerir definições de todo o servidor e acesso a recursos como organizações, utilizadores e licenças",
       "title": "Administrador do servidor"
+    },
+    "agentic-testing": {
+      "title": ""
     },
     "alert-list-legacy": {
       "title": "Regras de alerta"
@@ -12537,6 +12608,9 @@
       "save-tooltip": ""
     }
   },
+  "page-loader": {
+    "default": ""
+  },
   "panel": {
     "dashlist": {
       "empty-state-message": "Nenhum grupo de painel de controlo configurado",
@@ -13125,6 +13199,7 @@
       "label-filename": "Nome do ficheiro",
       "label-folder": "Pasta",
       "label-path": "Caminho",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Selecione ou introduza o caminho da pasta",
       "suffix-configured-branch": "Ramo sincronizado",
@@ -13204,11 +13279,24 @@
     "code-block": {
       "aria-label-copy": "Copiar o código para a área de transferência"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "Definições do repositório guardadas",
       "alert-repository-settings-updated": "Definições do repositório atualizadas",
       "button-save": "Guardar",
       "button-saving": "A guardar...",
+      "description-commit-message-template": "",
       "description-connection": "Selecione a ligação da aplicação GitHub a utilizar",
       "description-enabled": "Assim que a extração automática estiver ativada, o alvo não pode ser alterado.",
       "description-read-only": "Os recursos não podem ser modificados através da Grafana.",
@@ -13219,6 +13307,7 @@
       "error-save-failed": "Não foi possível guardar a definição do repositório",
       "error-save-repository": "Não foi possível guardar as definições do repositório",
       "label-automatic-pulling": "Extração automática",
+      "label-commit-message-template": "",
       "label-connection": "Ligação da aplicação GitHub",
       "label-enabled": "Ativado",
       "label-interval-seconds": "Intervalo (segundos)",
@@ -13227,6 +13316,7 @@
       "label-title": "Título",
       "option-entire-instance": "Instância inteira",
       "option-managed-folder": "Pasta gerida",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "A minha configuração"
     },
@@ -13436,7 +13526,7 @@
       "modal-title-set-up-public-access": "Configurar acesso público",
       "modal-title-set-up-required-features": "Configurar as funcionalidades necessárias",
       "step-description-copy-url": "A partir da saída do ngrok, copie o URL de encaminhamento https:// que tem o seguinte aspeto:",
-      "step-description-enable-feature-toggles": "Adicione a funcionalidade de provisionamento ao seu ficheiro custom.ini. Nota: o kubernetesDashboards está ativado por predefinição, mas se o tiver desativado explicitamente, terá de o ativar nas suas definições da Grafana ou remover a substituição da sua configuração.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Execute este comando para criar um túnel seguro para a sua Grafana local:",
       "step-description-update-grafana-config": "Adicione isto ao seu ficheiro custom.ini, substituindo o URL pelo seu URL ngrok atual:",
       "step-title-copy-url": "Copie o seu URL público",
@@ -14119,6 +14209,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Adicionar filtro",
+      "cancel-delete": "",
+      "confirm-delete": "",
+      "confirm-delete-confirm": "",
+      "delete-confirmation-group": "",
       "disable": "Desativar {{type}}",
       "duplicate": "Duplicar {{type}}",
       "enable": "Ativar {{type}}",
@@ -14160,10 +14254,7 @@
       "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
-      "body-query": "Tem a certeza de que pretende eliminar esta consulta?",
-      "body-transformation": "Remover uma transformação pode danificar outras.",
-      "confirm": "Eliminar",
-      "title": "Eliminar {{name}}?"
+      "body-transformation": "Remover uma transformação pode danificar outras."
     },
     "details-sidebar": {
       "cache-timeout": "Tempo limite da cache",
@@ -14627,7 +14718,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Exportar como imagem",
-      "export-json-title": "Exportar como JSON",
       "share-externally-title": "Partilhar externamente",
       "share-internally-title": "Partilhar internamente",
       "share-snapshot-title": "Partilhar instantâneo"
@@ -14828,9 +14918,6 @@
       "home-dashboard-placeholder": "Painel de controlo predefinido",
       "language-preference-label": "Idioma",
       "language-preference-placeholder": "Escolher idioma",
-      "locale-preference-description": "Escolha a sua região para ver a data, hora e formato de número correspondentes",
-      "locale-preference-label": "Formato da região",
-      "locale-preference-placeholder": "Escolha uma região",
       "theme-description": "Está a gostar dos temas experimentais? Diga-nos o que gostaria de ver <2>aqui.</2>",
       "theme-label": "Tema da interface",
       "week-start-label": "Início da semana"
@@ -15130,6 +15217,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Criado em",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Transferir",
       "expires": "Expira",
       "requested-by": "Solicitado por",
@@ -15530,8 +15619,8 @@
     },
     "legend": {
       "category": "Legenda",
-      "description-faceted-filter": "Mostrar filtro de visibilidade de séries com base em etiquetas",
-      "name-faceted-filter": "Filtro com facetas"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
@@ -16021,7 +16110,9 @@
       "description": {
         "group-by-field-value": "Agrupar dados por um valor de campo e criar tabelas aninhadas com os dados agrupados."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Se esta opção estiver ativada, as tabelas aninhadas mostrarão os nomes dos campos como cabeçalho da tabela",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Mostrar nomes de campos em tabelas aninhadas",
       "name": {
         "group-to-nested-tables": "Agrupar em tabelas aninhadas"
