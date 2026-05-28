@@ -277,3 +277,6 @@ export const lokiGrammar: Grammar = {
   operator: /\s?(\|[=~]?|!=?|<(?:=>?|<|>)?|>[>=]?)\s?/i,
   punctuation: /[{}(),.]/,
 };
+
+/** @alias */
+export default lokiGrammar;

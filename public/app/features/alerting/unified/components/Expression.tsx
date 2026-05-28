@@ -6,7 +6,7 @@ import { Editor } from 'slate-react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { promqlGrammar } from '@grafana/prometheus';
 import { SlatePrism, makeValue, useStyles2 } from '@grafana/ui';
-import { lokiGrammar as LogqlSyntax } from 'app/plugins/datasource/loki/syntax';
+import LogqlSyntax from 'app/plugins/datasource/loki/syntax';
 import { type RulesSource } from 'app/types/unified-alerting';
 
 import { DataSourceType, isCloudRulesSource } from '../utils/datasource';
