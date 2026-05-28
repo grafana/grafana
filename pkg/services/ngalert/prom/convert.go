@@ -118,7 +118,7 @@ func NewConverter(cfg Config) (*Converter, error) {
 	if cfg.KeepOriginalRuleDefinition == nil {
 		cfg.KeepOriginalRuleDefinition = defaultConfig.KeepOriginalRuleDefinition
 	}
-	if cfg.DatasourceType != datasources.DS_PROMETHEUS && cfg.DatasourceType != datasources.DS_LOKI {
+	if cfg.DatasourceType != datasources.DS_PROMETHEUS && cfg.DatasourceType != datasources.DS_LOKI && cfg.DatasourceType != datasources.DS_AMAZON_PROMETHEUS && cfg.DatasourceType != datasources.DS_AZURE_PROMETHEUS {
 		return nil, ErrInvalidDatasourceType.Errorf("invalid datasource type: %s, must be prometheus or loki", cfg.DatasourceType)
 	}
 
@@ -218,7 +218,7 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	}
 
 	if isRecordingRule {
-		if p.cfg.TargetDatasourceType != datasources.DS_PROMETHEUS {
+		if p.cfg.TargetDatasourceType != datasources.DS_PROMETHEUS && p.cfg.TargetDatasourceType != datasources.DS_AMAZON_PROMETHEUS && p.cfg.TargetDatasourceType != datasources.DS_AZURE_PROMETHEUS {
 			return models.AlertRule{}, ErrInvalidTargetDatasourceType.Errorf("invalid target datasource type: %s, must be prometheus", p.cfg.TargetDatasourceType)
 		}
 
