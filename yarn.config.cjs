@@ -7,7 +7,6 @@ const semver = require('semver');
 // These packages are in a different version across the workspaces and are currently excluded from the check.
 // These should be cleaned up over time.
 const excludedPackages = [
-  // '@emotion/css',
   '@faker-js/faker',
   '@grafana/api-clients',
   '@grafana/assistant',
