@@ -37,6 +37,9 @@ const config: KnipConfig = {
       webpack: {
         config: ['scripts/webpack/webpack.dev.ts', 'scripts/webpack/webpack.prod.ts'],
       },
+      postcss: {
+        config: 'scripts/webpack/postcss.config.js',
+      },
     },
     'public/app/plugins/datasource/*': {
       // TODO figure out how to properly include webpack/jest configs
