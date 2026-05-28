@@ -380,7 +380,7 @@ jobs:
       # TODO reduce this to just `yarn run knip`
       run: |
         yarn run knip --workspace '@grafana/*'
-        yarn run knip --workspace '@test-plugins/extensions-test-app'
+        yarn run knip --workspace '@test-plugins/*'
 
   yarn-install-validation:
     needs:
