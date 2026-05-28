@@ -8,7 +8,9 @@ import (
 	"slices"
 	"strings"
 
+	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
+
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -393,6 +395,12 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	span.AddEvent("Loaded Alertmanager configuration", trace.WithAttributes(attribute.String("concurrency_token", revision.ConcurrencyToken)))
 
 	createdReceiver := r.Clone()
+	for _, integration := range createdReceiver.Integrations {
+		iType := integration.Config.Type()
+		if err := rs.validateNoDuplicateSecretFields(iType, integration.Settings); err != nil {
+			return nil, models.ErrReceiverInvalid(err)
+		}
+	}
 	err = createdReceiver.Encrypt(rs.encryptor(ctx))
 	if err != nil {
 		return nil, err
@@ -519,6 +527,12 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	// 2. For updates, callers do not re-send unchanged secure settings and instead mark them in SecureFields. We need
 	//      to load these secure settings from the existing integration.
 	updatedReceiver := r.Clone()
+	for _, integration := range updatedReceiver.Integrations {
+		iType := integration.Config.Type()
+		if err := rs.validateNoDuplicateSecretFields(iType, integration.Settings); err != nil {
+			return nil, models.ErrReceiverInvalid(err)
+		}
+	}
 	err = updatedReceiver.Encrypt(rs.encryptor(ctx))
 	if err != nil {
 		return nil, err
@@ -877,6 +891,36 @@ func (rs *ReceiverService) validateReceiver(ctx context.Context, orgID int64, re
 		}
 		if err := rs.emailValidator.ValidateIntegration(ctx, orgID, *integration, l); err != nil {
 			return fmt.Errorf("invalid email integration[%d]: %w", idx, err)
+		}
+	}
+	return nil
+}
+
+func (rs *ReceiverService) validateNoDuplicateSecretFields(iType schema.IntegrationType, settings map[string]any) error {
+	typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(iType, schema.V1)
+	if !ok {
+		return fmt.Errorf("failed to get schema for receiver type %s", iType)
+	}
+	for _, secretPath := range typeSchema.GetSecretFieldsPaths() {
+		node := settings
+		for _, segment := range secretPath {
+			var matches []string
+			for k := range node {
+				if strings.EqualFold(k, segment) {
+					matches = append(matches, k)
+				}
+			}
+			if len(matches) == 0 {
+				break
+			}
+			if len(matches) > 1 {
+				return fmt.Errorf("duplicate keys found for secret field %s", secretPath.String())
+			}
+			next, ok := node[matches[0]].(map[string]any)
+			if !ok {
+				break
+			}
+			node = next
 		}
 	}
 	return nil
