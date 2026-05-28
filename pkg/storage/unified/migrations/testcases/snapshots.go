@@ -38,7 +38,7 @@ func (tc *snapshotsTestCase) FeatureToggles() []string {
 }
 
 func (tc *snapshotsTestCase) RenameTables() []string {
-	return []string{"dashboard_snapshot"}
+	return []string{}
 }
 
 func (tc *snapshotsTestCase) Resources() []schema.GroupVersionResource {
