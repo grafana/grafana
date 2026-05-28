@@ -3,7 +3,7 @@ import color from 'tinycolor2';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import { ColorSchemeDiff } from '../types';
+import { ColorSchemeDiff, FrameType } from '../types';
 
 import murmurhash3_32_gc from './murmur3';
 
@@ -38,8 +38,13 @@ const packageColors = [
 
 const byValueMinColor = getBarColorByValue(1, 100, 0, 1);
 const byValueMaxColor = getBarColorByValue(100, 100, 0, 1);
-export const byValueGradient = `linear-gradient(90deg, ${byValueMinColor} 0%, ${byValueMaxColor} 100%)`;
 
+const kernelSpace = color({ r: 231, g: 161, b: 81 })
+const userSpace = color({ r: 231, g: 231, b: 81 });
+const unknownSpace = color({ r: 255, g: 182, b: 193 })
+
+export const byValueGradient = `linear-gradient(90deg, ${byValueMinColor} 0%, ${byValueMaxColor} 100%)`;
+export const bySpaceGradient = `linear-gradient(90deg, ${kernelSpace} 0%, ${userSpace} 100%)`;
 // Handpicked some vaguely rainbow-ish colors
 export const byPackageGradient = `linear-gradient(90deg, ${packageColors[0]} 0%, ${packageColors[2]} 30%, ${packageColors[6]} 50%, ${packageColors[7]} 70%, ${packageColors[8]} 100%)`;
 
@@ -62,6 +67,17 @@ export function getBarColorByPackage(label: string, theme: GrafanaTheme2) {
     packageColor = packageColor.brighten(15);
   }
   return packageColor;
+}
+
+export function getBarColorBySpace(frameType: FrameType) {
+  switch (frameType) {
+    case FrameType.Kernel:
+      return kernelSpace.clone();
+    case FrameType.User:
+      return userSpace.clone();
+    default:
+      return unknownSpace.clone();
+  }
 }
 
 // green to red

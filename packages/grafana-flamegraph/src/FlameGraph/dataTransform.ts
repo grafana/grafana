@@ -8,9 +8,9 @@ import {
   type GrafanaTheme2,
 } from '@grafana/data';
 
-import { SampleUnit } from '../types';
+import {DataSourceType, FrameType, SampleUnit} from '../types';
 
-import { mergeParentSubtrees, mergeSubtrees } from './treeTransforms';
+import {mergeParentSubtrees, mergeSubtrees} from './treeTransforms';
 
 export type LevelItem = {
   // Offset from the start of the level.
@@ -269,6 +269,8 @@ export class FlameGraphDataContainer {
   levelField: Field;
   valueField: Field;
   selfField: Field;
+  filenameField?: Field;
+  frameTypeField?: Field;
 
   // Optional fields for diff view
   valueRightField?: Field;
@@ -281,10 +283,13 @@ export class FlameGraphDataContainer {
   private levels: LevelItem[][] | undefined;
   private uniqueLabelsMap: Record<string, LevelItem[]> | undefined;
   private collapsedMap: CollapsedMap | undefined;
+  private dataSource: DataSourceType;
 
-  constructor(data: DataFrame, options: Options, theme: GrafanaTheme2 = createTheme()) {
+
+  constructor(data: DataFrame, options: Options, theme: GrafanaTheme2 = createTheme(), dataSource: DataSourceType = DataSourceType.Unknown) {
     this.data = data;
     this.options = options;
+    this.dataSource = dataSource;
 
     const wrongFields = checkFields(data);
     if (wrongFields) {
@@ -295,6 +300,8 @@ export class FlameGraphDataContainer {
     this.levelField = data.fields.find((f) => f.name === 'level')!;
     this.valueField = data.fields.find((f) => f.name === 'value')!;
     this.selfField = data.fields.find((f) => f.name === 'self')!;
+    this.filenameField = data.fields.find((f) => f.name === 'filename');
+    this.frameTypeField = data.fields.find((f) => f.name === 'frameType');
 
     this.valueRightField = data.fields.find((f) => f.name === 'valueRight')!;
     this.selfRightField = data.fields.find((f) => f.name === 'selfRight')!;
@@ -332,6 +339,17 @@ export class FlameGraphDataContainer {
 
   getLabel(index: number) {
     return this.labelDisplayProcessor(this.labelField.values[index]).text;
+  }
+
+  getFilename(index: number) {
+    return this.filenameField?.values[index] ?? '';
+  }
+
+  getFrameType(index: number): FrameType {
+    if (this.dataSource == DataSourceType.PprofPyroscope) {
+      return getFrameTypeByFilename(this.filenameField!.values[index])
+    }
+    return this.frameTypeField?.values[index] ?? FrameType.Unknown;
   }
 
   getLevel(index: number) {
@@ -421,4 +439,14 @@ function fieldAccessor(field: Field | undefined, index: number | number[]) {
   return indexArray.reduce((acc, index) => {
     return acc + field.values[index];
   }, 0);
+}
+
+function getFrameTypeByFilename(filename: string): FrameType {
+  if (!filename) {
+    return FrameType.Unknown;
+  }
+  if (filename.startsWith('[kernel]')) {
+    return FrameType.Kernel;
+  }
+  return FrameType.User;
 }
