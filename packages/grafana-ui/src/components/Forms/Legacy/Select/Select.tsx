@@ -16,8 +16,8 @@ import { SelectCommonProps, SelectAsyncProps } from '../../../Select/types';
 import { Tooltip } from '../../../Tooltip/Tooltip';
 import { PopoverContent } from '../../../Tooltip/types';
 
-import IndicatorsContainer from './IndicatorsContainer';
-import NoOptionsMessage from './NoOptionsMessage';
+import { IndicatorsContainer } from './IndicatorsContainer';
+import { NoOptionsMessage } from './NoOptionsMessage';
 import { SelectOption } from './SelectOption';
 import { SelectOptionGroup } from './SelectOptionGroup';
 
@@ -43,7 +43,7 @@ export interface LegacySelectProps<T> extends LegacyCommonProps<T> {
   value?: SelectableValue<T>;
 }
 
-export const MenuList = (props: MenuListProps) => {
+const MenuList = (props: MenuListProps) => {
   return (
     <components.MenuList {...props}>
       <ScrollContainer showScrollIndicators overflowX="hidden" maxHeight="inherit">
@@ -274,7 +274,7 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
   }
 }
 
-export interface TooltipWrapperProps {
+interface TooltipWrapperProps {
   children: (onOpenMenu: () => void, onCloseMenu: () => void) => React.ReactNode;
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
@@ -282,11 +282,11 @@ export interface TooltipWrapperProps {
   tooltipContent?: PopoverContent;
 }
 
-export interface TooltipWrapperState {
+interface TooltipWrapperState {
   isOpenInternal: boolean;
 }
 
-export class WrapInTooltip extends PureComponent<TooltipWrapperProps, TooltipWrapperState> {
+class WrapInTooltip extends PureComponent<TooltipWrapperProps, TooltipWrapperState> {
   state: TooltipWrapperState = {
     isOpenInternal: false,
   };
@@ -331,5 +331,3 @@ export class WrapInTooltip extends PureComponent<TooltipWrapperProps, TooltipWra
     }
   }
 }
-
-export default Select;

@@ -424,6 +424,53 @@ func TestParseRequestOptionsPathValidation(t *testing.T) {
 	}
 }
 
+func TestParseRequestOptionsRefValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		ref     string
+		wantErr bool
+	}{
+		{name: "empty ref is allowed", ref: ""},
+		{name: "valid branch name", ref: "main"},
+		{name: "valid branch with slash", ref: "feature/my-branch"},
+		{name: "valid short commit SHA", ref: "abc1234"},
+		{name: "valid full commit SHA", ref: "abcdef0123456789abcdef0123456789abcdef01"},
+		{name: "invalid ref with semicolon", ref: "main; rm -rf /", wantErr: true},
+		{name: "invalid ref with space", ref: "main branch", wantErr: true},
+		{name: "invalid ref with backtick", ref: "main`whoami`", wantErr: true},
+		{name: "invalid ref with double dots", ref: "feature/..bad", wantErr: true},
+		{name: "invalid ref with newline", ref: "main\nfoo", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := repository.NewMockRepository(t)
+			mockRepo.On("Config").Return(&provisioningapi.Repository{
+				Spec: provisioningapi.RepositorySpec{
+					Title: "test-repo",
+				},
+			}).Maybe()
+
+			connector := &filesConnector{}
+			r := httptest.NewRequest(http.MethodGet, "/test-repo/files/dashboard.json", nil)
+			if tt.ref != "" {
+				q := r.URL.Query()
+				q.Set("ref", tt.ref)
+				r.URL.RawQuery = q.Encode()
+			}
+
+			_, err := connector.parseRequestOptions(r, "test-repo", mockRepo)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				require.ErrorIs(t, err, repository.ErrInvalidRef)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestHandleGetRawFile(t *testing.T) {
 	tests := []struct {
 		name           string

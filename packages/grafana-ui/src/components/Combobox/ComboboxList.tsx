@@ -14,7 +14,7 @@ import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION }
 import { ALL_OPTION_VALUE, type ComboboxOption } from './types';
 import { isNewGroup } from './utils';
 
-export const VIRTUAL_OVERSCAN_ITEMS = 4;
+const VIRTUAL_OVERSCAN_ITEMS = 4;
 
 interface ComboboxListProps<T extends string | number> {
   options: Array<ComboboxOption<T>>;

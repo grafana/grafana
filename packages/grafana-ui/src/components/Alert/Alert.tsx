@@ -122,7 +122,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
 Alert.displayName = 'Alert';
 
-export const getIconFromSeverity = (severity: AlertVariant): IconName => {
+const getIconFromSeverity = (severity: AlertVariant): IconName => {
   switch (severity) {
     case 'error':
       return 'exclamation-circle';
