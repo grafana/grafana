@@ -26,6 +26,6 @@ func SnapshotMigration(migrator migrator.SnapshotMigrator) migrations.MigrationD
 				Where: "org_id = ?",
 			}),
 		},
-		RenameTables: []string{"dashboard_snapshot"},
+		RenameTables: []string{},
 	}
 }
