@@ -21,7 +21,6 @@ export interface CorrelationsResponse {
   page: number;
   limit: number;
   totalCount: number;
-  doesContinue: boolean;
 }
 
 export const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): CorrelationData | undefined => {
@@ -95,7 +94,7 @@ export const useCorrelations = () => {
       return lastValueFrom(
         backend.fetch<CorrelationsResponse>({
           url: '/api/datasources/correlations',
-          params: { page: params.page, limit: 10 },
+          params: { page: params.page },
           method: 'GET',
           showErrorAlert: false,
         })
