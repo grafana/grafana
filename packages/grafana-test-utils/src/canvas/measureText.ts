@@ -10,15 +10,20 @@
  * import { measureText as uPlotAxisMeasureText } from '@grafana/ui';
  * import { applyDefaultUPlotAxisMeasureTextMock } from '@grafana/test-utils/canvas';
  *
+ * let uPlotInstance: InstanceType<typeof uPlot> | undefined;
  * jest.mock('@grafana/ui/src/utils/measureText', () =>
- *   require('@grafana/test-utils/canvas').createGrafanaUiMeasureTextJestMock()
+ *   require('@grafana/test-utils/canvas').createGrafanaUiMeasureTextJestMock(() => uPlotInstance)
  * );
  *
  * beforeEach(() => {
- *   applyDefaultUPlotAxisMeasureTextMock(uPlotAxisMeasureText as jest.MockedFunction<typeof uPlotAxisMeasureText>);
+ *   applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
+ *
+ *   // Set uPlotInstance by spying on the config builder and adding a hook, or by other means. See SparklineCell.canvas.test.tsx, or HeatmapPanel.canvas.test.tsx for examples
  * });
  * ```
  */
+
+import type uPlot from 'uplot';
 
 /** Use as the `jest.mock()` module string (must be written literally at the call site). */
 export const GRAFANA_UI_MEASURE_TEXT_MODULE = '@grafana/ui/src/utils/measureText';
@@ -37,9 +42,19 @@ export type GrafanaUiMeasureTextFn = (text: string, fontSize: number, fontWeight
  * Factory for `jest.mock(…, () => …)`.
  * Call via `require('@grafana/test-utils/canvas')` inside the mock factory so Jest hoisting works.
  */
-export function createGrafanaUiMeasureTextJestMock() {
+export function createGrafanaUiMeasureTextJestMock(
+  getUplotInstance: () => InstanceType<typeof uPlot> | undefined = () => undefined
+) {
   const actual = jest.requireActual(GRAFANA_UI_MEASURE_TEXT_MODULE);
-  return { ...actual, measureText: jest.fn() };
+  return {
+    ...actual,
+    measureText: jest.fn(),
+    // gradientFills.ts creates linear gradients on the shared measureText canvas
+    // (getCanvasContext) — separate from uPlot's own ctx — so the createLinearGradient
+    // geometry never lands in uPlotInstance.ctx events and the viewer can't replay it.
+    // Routing both to the same ctx makes the snapshot self-contained.
+    getCanvasContext: jest.fn(() => getUplotInstance()?.ctx ?? actual.getCanvasContext()),
+  };
 }
 
 /**

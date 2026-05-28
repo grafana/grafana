@@ -24,7 +24,7 @@ const SPARKLINE_TOP_OFFSET_DIVISOR_CIRCLE = 4;
 const SPARKLINE_TOP_OFFSET_DIVISOR_CIRCLE_NAME_AND_VALUE = 3.3;
 const SPARKLINE_SPACING = 8;
 
-export function getSparklineDimensions(
+function getSparklineDimensions(
   radius: number,
   barWidth: number,
   showNameAndValue: boolean,

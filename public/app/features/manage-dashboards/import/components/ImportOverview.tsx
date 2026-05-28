@@ -1,4 +1,6 @@
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { Alert } from '@grafana/ui';
 import { isDashboardV1Spec, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 
 import { type DashboardInputs, type DashboardSource } from '../../types';
@@ -46,5 +48,18 @@ export function ImportOverview({ dashboard, dashboardUid, inputs, meta, source, 
     );
   }
 
-  return null;
+  return (
+    <Alert
+      severity="error"
+      title={t('manage-dashboards.import-overview.invalid-schema-title', 'Invalid or unknown dashboard schema')}
+      onRemove={onCancel}
+      buttonContent={
+        <Trans i18nKey="manage-dashboards.import-overview.invalid-schema-action">Try another dashboard</Trans>
+      }
+    >
+      <Trans i18nKey="manage-dashboards.import-overview.invalid-schema-body">
+        The dashboard could not be imported because its schema is not a recognized version.
+      </Trans>
+    </Alert>
+  );
 }
