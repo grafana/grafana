@@ -70,8 +70,8 @@ module.exports = defineConfig({
         continue;
       }
 
-      // Workspace package dependencies (such grafana depending on @grafana/ui) should use the
-      // exact version specified for that package
+      // Internal workspace dependencies (e.g. @grafana/ui) should depend on the exact version,
+      // not something from npm or `workspace:*`
       const workspacePackage = Yarn.workspace({ ident: dep.ident });
       if (workspacePackage) {
         dep.update(workspacePackage.manifest.version);
