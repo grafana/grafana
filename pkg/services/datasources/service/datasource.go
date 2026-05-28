@@ -207,7 +207,7 @@ func (s *Service) GetPrunableProvisionedDataSources(ctx context.Context) (res []
 	return s.SQLStore.GetPrunableProvisionedDataSources(ctx)
 }
 
-// NOTE: Authz IS applied to the results
+// NOTE: accesscontrol IS applied to the results
 func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
 	if query.AliasIDs == nil {
 		// Populate alias IDs from plugin store
@@ -218,15 +218,16 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 		query.AliasIDs = p.AliasIDs
 	}
 
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	all, err := s.SQLStore.GetDataSourcesByType(ctx, query)
 	if err != nil {
 		return nil, err
 	}
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return all, nil // When no user is found it is a system call and can see all datasources
+	}
+
 	filtered := make([]*datasources.DataSource, 0, len(all))
 	for _, ds := range all {
 		// Skip datasources they can not see
