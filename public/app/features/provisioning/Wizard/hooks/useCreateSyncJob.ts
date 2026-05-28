@@ -45,8 +45,9 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
             }
           : {
               action: 'pull' as const,
-              // TODO: SyncJobOptions has no `message` field on the backend yet — when
-              // it gains one, append the Grafana-saved-by trailer here too.
+              // TODO(grafana/git-ui-sync-project#1162): SyncJobOptions has no
+              // `message` field on the backend yet — when it gains one, append
+              // the Grafana-saved-by trailer here too.
               pull: {
                 incremental: false,
               },
