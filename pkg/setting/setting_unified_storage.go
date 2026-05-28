@@ -22,6 +22,7 @@ const (
 	PlaylistResource         = "playlists.playlist.grafana.app"
 	FolderResource           = "folders.folder.grafana.app"
 	DashboardResource        = "dashboards.dashboard.grafana.app"
+	LibraryPanelResource     = "librarypanels.dashboard.grafana.app"
 	ShortURLResource         = "shorturls.shorturl.grafana.app"
 	StarsResource            = "stars.collections.grafana.app"
 	PreferencesResource      = "preferences.preferences.grafana.app"
@@ -34,6 +35,7 @@ var MigratedUnifiedResources = map[string]bool{
 	PlaylistResource:         true,  // Only Mode5!
 	FolderResource:           true,  // Only Mode5!
 	DashboardResource:        true,  // Only Mode5!
+	LibraryPanelResource:     false, // Requires kubernetesLibraryPanels to be enabled by default
 	ShortURLResource:         false, // Requires kubernetesShortURLs to be enabled by default
 	StarsResource:            false,
 	PreferencesResource:      false,

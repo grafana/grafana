@@ -60,6 +60,8 @@ import (
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
+	librarypanelmigration "github.com/grafana/grafana/pkg/registry/apps/librarypanel"
+	librarypanelmigrator "github.com/grafana/grafana/pkg/registry/apps/librarypanel/migrator"
 	playlistmigration "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
 	querycachingmigration "github.com/grafana/grafana/pkg/registry/apps/querycaching"
@@ -247,6 +249,7 @@ var wireBasicSet = wire.NewSet(
 	provisioning.ProvideStubProvisioningService,
 	dashboardlegacy.ProvideMigrator,
 	dashboardmigrator.ProvideFoldersDashboardsMigrator,
+	librarypanelmigrator.ProvideLibraryPanelMigrator,
 	playlistmigrator.ProvidePlaylistMigrator,
 	querycachingmigrator.ProvideQueryCacheConfigMigrator,
 	shorturlmigrator.ProvideShortURLMigrator,
@@ -604,6 +607,7 @@ it with the registry here.
 */
 func provideMigrationRegistry(
 	dashMigrator dashboardmigrator.FoldersDashboardsMigrator,
+	libraryPanelMigrator librarypanelmigrator.LibraryPanelMigrator,
 	playlistMigrator playlistmigrator.PlaylistMigrator,
 	shortURLMigrator shorturlmigrator.ShortURLMigrator,
 	dataSourceMigrator dsmigrator.DataSourceMigrator,
@@ -613,6 +617,7 @@ func provideMigrationRegistry(
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
 	r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
+	r.Register(librarypanelmigration.LibraryPanelMigration(libraryPanelMigrator))
 	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
 	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
 	r.Register(dsmigrator.DataSourceMigration(dataSourceMigrator))
