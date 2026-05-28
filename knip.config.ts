@@ -23,14 +23,19 @@ const config: KnipConfig = {
     '.': {
       // TODO figure out how to properly include webpack/jest configs
       jest: false,
+      webpack: false,
+      project: ['!devenv', '!packages', '!pkg', '!public/app/plugins'],
     },
     'public/app/plugins/datasource/*': {
       // TODO figure out how to properly include webpack/jest configs
       webpack: false,
+      jest: true,
+      entry: [...packageEntries, 'module.{ts,tsx,js}'],
     },
     'e2e-playwright/test-plugins/*': {
       // TODO figure out how to properly include webpack/jest configs
       webpack: false,
+      entry: [...packageEntries, 'module.{ts,tsx,js}', 'plugins/*/module.{ts,tsx,js}'],
     },
     'packages/**': {
       entry: packageEntries,

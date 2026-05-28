@@ -70,7 +70,7 @@ type LinkModelProps = {
   path: string;
 };
 
-export function LinkModal(props: LinkModelProps): ReactElement {
+function LinkModal(props: LinkModelProps): ReactElement {
   const { onDismiss, title, path } = props;
   const openInNewTab = () => {
     global.open(locationUtil.assureBaseUrl(path), '_blank');
