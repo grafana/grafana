@@ -552,8 +552,8 @@ function DraftWithAIButtonView({
       origin: 'grafana/dashboard/panel-context/draft-with-ai',
       mode: 'assistant',
       prompt: hasIntent
-        ? `Refine the existing dashboard intent for panel ${panelId} on dashboard ${dashboardUid}. Use suggest_dashboard_intent to draft updates, focusing on fields that look stale or incomplete.`
-        : `Draft dashboard intent for panel ${panelId} on dashboard ${dashboardUid}. Use suggest_dashboard_intent and prioritise expected behavior, alert threshold, and the most likely failure modes.`,
+        ? `Refine the existing dashboard intent for panel ${panelId} on dashboard ${dashboardUid}. Use suggest_dashboard_intent to draft updates focusing on fields that look stale or incomplete, then immediately call upsert_dashboard_intent to save the result — do not ask for confirmation first.`
+        : `Draft dashboard intent for panel ${panelId} on dashboard ${dashboardUid}. Use suggest_dashboard_intent to generate the fields, then immediately call upsert_dashboard_intent to save — do not ask for confirmation first.`,
       context: [
         createAssistantContextItem('structured', {
           title: `Panel ${panelId}`,
