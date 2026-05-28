@@ -42,6 +42,7 @@ func TestMain(m *testing.M) {
 func defaultMigrationTestCases() []testcases.ResourceMigratorTestCase {
 	cases := []testcases.ResourceMigratorTestCase{
 		testcases.NewFoldersAndDashboardsTestCase(),
+		testcases.NewLibraryPanelsTestCase(),
 		testcases.NewPlaylistsTestCase(),
 		testcases.NewShortURLsTestCase(),
 		testcases.NewStarsTestCase(),
@@ -347,6 +348,7 @@ const (
 
 	playlistsID            = "playlists migration"
 	foldersAndDashboardsID = "folders and dashboards migration"
+	librarypanelsID        = "librarypanels migration"
 	shorturlsID            = "shorturls migration"
 	starsID                = "stars migration"
 	preferencesID          = "preferences migration"
@@ -356,6 +358,7 @@ const (
 var migrationIDsToDefault = map[string]bool{
 	playlistsID:            true,
 	foldersAndDashboardsID: true, // Auto-migrated when resource count is below threshold
+	librarypanelsID:        false,
 	shorturlsID:            false,
 	datasourceID:           false,
 	starsID:                false,

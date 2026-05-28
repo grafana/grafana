@@ -13,8 +13,9 @@ type FoldersDashboardsMigrator interface {
 	MigrateFolders(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
 }
 
-// foldersDashboardsMigrator handles migrating dashboards, folders, and library panels
-// from legacy SQL storage.
+// foldersDashboardsMigrator handles migrating dashboards and folders from
+// legacy SQL storage. Library panels are migrated by the dedicated migrator
+// under pkg/registry/apps/librarypanel.
 type foldersDashboardsMigrator struct {
 	migrator legacy.Migrator
 }
@@ -38,10 +39,4 @@ func (m *foldersDashboardsMigrator) MigrateDashboards(ctx context.Context, orgId
 // to the unified storage bulk process API.
 func (m *foldersDashboardsMigrator) MigrateFolders(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	return m.migrator.MigrateFolders(ctx, orgId, opts, stream)
-}
-
-// MigrateLibraryPanels reads library panels from legacy SQL storage and streams them
-// to the unified storage bulk process API.
-func (m *foldersDashboardsMigrator) MigrateLibraryPanels(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
-	return m.migrator.MigrateLibraryPanels(ctx, orgId, opts, stream)
 }

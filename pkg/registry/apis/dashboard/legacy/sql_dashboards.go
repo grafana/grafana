@@ -329,55 +329,6 @@ func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, op
 	return err
 }
 
-// MigrateLibraryPanels handles the library panel migration logic
-func (a *dashboardSqlAccess) MigrateLibraryPanels(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
-	opts.Progress(-1, "migrating library panels...")
-	panels, err := a.GetLibraryPanels(ctx, LibraryPanelQuery{
-		OrgID: orgId,
-		Limit: 1000000,
-	})
-	if err != nil {
-		return err
-	}
-	for i, panel := range panels.Items {
-		meta, err := utils.MetaAccessor(&panel)
-		if err != nil {
-			return err
-		}
-		body, err := json.Marshal(panel)
-		if err != nil {
-			return err
-		}
-
-		req := &resourcepb.BulkRequest{
-			Key: &resourcepb.ResourceKey{
-				Namespace: opts.Namespace,
-				Group:     dashboardV1.GROUP,
-				Resource:  dashboardV1.LIBRARY_PANEL_RESOURCE,
-				Name:      panel.Name,
-			},
-			Value:  body,
-			Folder: meta.GetFolder(),
-			Action: resourcepb.BulkRequest_ADDED,
-		}
-		if panel.Generation > 1 {
-			req.Action = resourcepb.BulkRequest_MODIFIED
-		}
-
-		opts.Progress(i, fmt.Sprintf("[v:%d] %s (%d)", i, meta.GetName(), len(req.Value)))
-
-		err = stream.Send(req)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				err = nil
-			}
-			return err
-		}
-	}
-	opts.Progress(-2, fmt.Sprintf("finished panels... (%d)", len(panels.Items)))
-	return nil
-}
-
 type rowsWrapper struct {
 	a       *dashboardSqlAccess
 	rows    *sql.Rows
