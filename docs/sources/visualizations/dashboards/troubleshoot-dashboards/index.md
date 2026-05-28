@@ -62,10 +62,10 @@ As you can see, there's a significant difference in the visualizations.
 
 If you click a data point expecting the tooltip to stick open so you can scroll or copy its content, but the tooltip immediately disappears or resets, the **Refresh live dashboards** setting is likely the cause.
 
-When **Refresh live dashboards** is enabled on a dashboard, Grafana continuously re-renders panels as new data arrives.
-Each re-render dismisses any pinned tooltip before you can interact with it.
+When you enable **Refresh live dashboards** on a dashboard, Grafana continuously re-renders panels as data arrives.
+If the refresh interval is too high, each re-render dismisses any pinned tooltip before you can interact with it.
 
 To fix this, do one of the following:
 
-- **Disable Refresh live dashboards** — Open the dashboard settings, go to **General**, and turn off **Refresh live dashboards**. The tooltip stays open on click after the next render cycle.
-- **Increase the refresh interval** — If you need live updates, set a longer refresh interval so the tooltip has time to stay open between re-renders.
+- **Disable Refresh live dashboards**: Open the dashboard settings, go to **General**, and turn off **Refresh live dashboards**. The tooltip stays open on click after the next render cycle.
+- **Increase the refresh interval**: If you need live updates, set a longer refresh interval so the tooltip has time to stay open between re-renders.
