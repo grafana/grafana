@@ -190,10 +190,10 @@ func mutateVariable(a admission.Attributes) error {
 		labels = make(map[string]string)
 	}
 
-	// Apistore stamps a root sentinel (typically "root") on root-parented
-	// resources, so any of "", "general", or "root" means "global scope" for
-	// the uniqueness label — set no folder label in that case. Without this,
-	// re-reading a stamped object on update would mirror "root" into the
+	// Apistore stamps the canonical "general" sentinel on root-parented
+	// resources, so both "" and "general" mean "global scope" for the
+	// uniqueness label — set no folder label in that case. Without this,
+	// re-reading a stamped object on update would mirror "general" into the
 	// label and incorrectly flip a global variable into folder scope.
 	if folderUID := meta.GetFolder(); !folder.IsRootFolderUID(folderUID) {
 		labels[variableFolderLabelKey] = folderUID
