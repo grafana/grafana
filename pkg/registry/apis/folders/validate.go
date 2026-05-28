@@ -242,22 +242,14 @@ func validateOnUpdate(ctx context.Context,
 	return checkSubtreeDepth(ctx, searcher, obj.Namespace, obj.Name, allowedDepth, maxDepth)
 }
 
-// folderTier is the Viewer/Editor/Admin level used by the /access subresource.
-// Comparing tiers across the move catches role-level escalations without
-// firing on per-verb churn.
+// folderTier (declared in sub_access.go) is the Viewer/Editor/Admin level used
+// by the /access subresource. Comparing tiers across the move catches
+// role-level escalations without firing on per-verb churn.
 //
 // Only the folder tier is compared. Built-in roles bundle dashboard, library
 // panel, alert, and annotation actions with the folder tier, so a folder-tier
 // jump catches them transitively. Custom roles that grant sub-resource
 // actions directly at folder scope without folder access are not caught here.
-type folderTier int
-
-const (
-	tierNone folderTier = iota
-	tierViewer
-	tierEditor
-	tierAdmin
-)
 
 // tierProbes are the verbs we ask Zanzana about to resolve a tier. setperms
 // signals Admin, the Editor verbs (create/update/delete) collectively signal
@@ -271,19 +263,6 @@ var tierProbes = []struct {
 	{"update", utils.VerbUpdate},
 	{"delete", utils.VerbDelete},
 	{"setperms", utils.VerbSetPermissions},
-}
-
-func resolveTier(allowed map[string]bool) folderTier {
-	switch {
-	case allowed["setperms"]:
-		return tierAdmin
-	case allowed["create"] || allowed["update"] || allowed["delete"]:
-		return tierEditor
-	case allowed["get"]:
-		return tierViewer
-	default:
-		return tierNone
-	}
 }
 
 func checkMoveAccess(
