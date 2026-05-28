@@ -47,6 +47,12 @@ const config: KnipConfig = {
     'packages/grafana-api-clients': {
       entry: [...packageEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/plopfile.ts'],
     },
+    'packages/grafana-plugin-configs': {
+      // TODO figure out how to properly include webpack/jest configs
+      webpack: false,
+      // this package contains shared dependencies that aren't immediately used by the package
+      ignoreDependencies: ['.*'],
+    },
   },
 };
 

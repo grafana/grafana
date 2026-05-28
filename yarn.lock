@@ -2834,7 +2834,6 @@ __metadata:
     replace-in-file-webpack-plugin: "npm:1.0.6"
     swc-loader: "npm:0.2.6"
     terser-webpack-plugin: "npm:^5.4.0"
-    tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
     webpack-bundle-analyzer: "npm:^4.10.2"
