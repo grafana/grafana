@@ -118,6 +118,22 @@ describe('QuickAdd', () => {
       expect(screen.getByRole('menuitem', { name: 'Use template' })).toBeInTheDocument();
     });
 
+    it('does not show a `Use template` button when there is no dashboard group', async () => {
+      const store = configureStore({
+        navBarTree: [
+          {
+            text: 'Alerting',
+            id: 'alerting',
+            url: '/alerting',
+            children: [{ text: 'New alert rule', id: 'alert', url: '/alerting/new', isCreateAction: true }],
+          },
+        ],
+      });
+      render(<QuickAdd hasTestDataSource />, { store });
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+      expect(screen.queryByRole('menuitem', { name: 'Use template' })).not.toBeInTheDocument();
+    });
+
     it('does not show a `Use template` button when hasTestDataSource is false', async () => {
       setup({ hasTestDataSource: false });
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
