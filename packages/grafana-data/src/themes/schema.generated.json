@@ -321,9 +321,6 @@
             "elevated": {
               "type": "string"
             },
-            "subtle": {
-              "type": "string"
-            },
             "input": {
               "type": "string"
             }

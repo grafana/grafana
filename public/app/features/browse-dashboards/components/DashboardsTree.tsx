@@ -305,7 +305,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     listBody: css({
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: theme.colors.background.secondary,
       border: `1px solid ${theme.colors.border.primary}`,
       borderRadius: theme.shape.radius.lg,
       padding: theme.spacing(4),

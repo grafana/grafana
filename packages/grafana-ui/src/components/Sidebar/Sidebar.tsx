@@ -144,7 +144,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       flex: '1 1 0',
       borderRadius: theme.shape.radius.lg,
       border: `1px solid ${theme.colors.border.subtle}`,
-      background: theme.colors.background.subtle,
+      background: theme.colors.background.primary,
       zIndex: theme.zIndex.navbarFixed,
       bottom: 0,
       top: 0,

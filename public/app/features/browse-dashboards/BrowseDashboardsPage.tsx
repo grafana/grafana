@@ -259,8 +259,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
     // Target the FilterInput input locally
     input: {
-      background: theme.colors.background.subtle,
-      borderColor: theme.colors.background.subtle,
+      background: theme.colors.background.primary,
+      borderColor: theme.colors.background.primary,
       borderRadius: theme.shape.radius.default,
     },
 
@@ -309,7 +309,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'subView',
     height: '100%',
     minHeight: '300px',
-    backgroundColor: theme.colors.background.subtle,
+    backgroundColor: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.subtle}`,
     borderRadius: theme.shape.radius.lg,
   }),

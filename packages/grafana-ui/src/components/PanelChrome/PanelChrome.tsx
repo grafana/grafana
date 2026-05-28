@@ -532,7 +532,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      overflow: 'hidden',
+
+      //Remove overflow hidden to show panelContent border
+      //overflow: 'hidden',
 
       '.always-show': {
         background: 'none',

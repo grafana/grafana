@@ -48,7 +48,6 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
          * themes it has a brighter shade to help give it contrast against the primary background.
          **/
         elevated: z.string().optional(),
-        subtle: z.string().optional(),
         input: z.string().optional(),
       }),
 
@@ -197,7 +196,6 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     primary: newPalette.ink800,
     secondary: newPalette.ink700,
     elevated: palette.gray15,
-    subtle: newPalette.ink850,
     input: newPalette.ink800,
   };
 
@@ -298,7 +296,6 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     primary: palette.white,
     secondary: palette.gray95,
     elevated: palette.white,
-    subtle: newPalette.neutral50,
     input: newPalette.neutral300,
   };
 

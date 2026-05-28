@@ -69,9 +69,9 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
   const panel = {
     padding: 1,
     headerHeight: 4.5,
-    background: colors.background.subtle,
+    background: colors.background.primary,
     borderColor: colors.border.subtle,
-    contentBackground: colors.background. primary,
+    contentBackground: colors.background.secondary,
     contentBorderColor: colors.border.primary,
     boxShadow: 'none',
   };
