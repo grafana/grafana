@@ -50,7 +50,7 @@ const excludedPackages = [
   'react-router-dom',
   'react-select-event',
   'rimraf',
-  // 'rxjs',
+  'rxjs',
   'semver',
   'tinycolor2',
   'type-fest',
@@ -78,8 +78,7 @@ module.exports = defineConfig({
         continue;
       }
 
-      // resolvedRanges maintains a cache of expected version for each dependency.
-      // Populate it, and then get it next.
+      // A package should not have multiple versions depended on
       if (!resolvedRanges.get(dep.ident)) {
         const siblings = Yarn.dependencies({ ident: dep.ident }).filter((d) => d.type !== 'peerDependencies');
         const resolved = pickHighestRange(siblings.map((d) => d.range));
