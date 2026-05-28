@@ -5792,8 +5792,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operator",
-        "placeholder": "Operator auswählen"
+        "aria-label": "Operator"
       },
       "restore": "Standardwert wiederherstellen",
       "search": {
@@ -9062,7 +9061,6 @@
       "copy-button": "In die Zwischenablage kopieren",
       "download-button": "Datei herunterladen",
       "download-successful_toast_message": "Ihre JSON-Datei wurde heruntergeladen",
-      "export-externally-label": "Exportieren Sie das Dashboard, um es in einer anderen Instanz zu verwenden",
       "export-format": "Format",
       "export-mode": "Modell",
       "info-text": "Kopieren oder downloaden Sie eine Datei, die die Definition Ihres Dashboards enthält",
@@ -9155,6 +9153,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "Ordner gelöscht",
       "folder-move-error-provisioned": "Bereitgestellter Ordner kann nicht verschoben werden. Um ihn zu verschieben, verschieben Sie ihn in das Repository und synchronisieren Sie es, um die Änderungen zu übernehmen.",
@@ -11700,11 +11699,10 @@
       "published-by": "Veröffentlicht von",
       "updated-on": "Aktualisiert am"
     },
-    "import-resource-format-error": {
-      "cancel": "Abbrechen",
-      "title": "Nicht unterstütztes Format",
-      "v1-message": "Dieses Dashboard liegt im Kubernetes-v1-Ressourcenformat vor und kann nicht importiert werden, wenn die Kubernetes-Dashboards-Funktion deaktiviert ist. Bitte aktivieren Sie den Kubernetes-Dashboards-Funktionsschalter, um dieses Dashboard zu importieren.",
-      "v2-message": "Dieses Dashboard liegt im v2-Ressourcenformat vor und kann nicht importiert werden, wenn die Kubernetes-Dashboard-Funktion deaktiviert ist. Bitte aktivieren Sie den Kubernetes-Dashboards-Funktionsschalter, um dieses Dashboard zu importieren."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Sind Sie sich sicher, dass Sie „{{snapshotToRemove}}“ löschen möchten?",
@@ -13201,6 +13199,7 @@
       "label-filename": "Dateiname",
       "label-folder": "Ordner",
       "label-path": "Pfad",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Ordnerpfad auswählen oder eingeben",
       "suffix-configured-branch": "Synchronisierter Branch",
@@ -13527,7 +13526,7 @@
       "modal-title-set-up-public-access": "Öffentlichen Zugriff einrichten",
       "modal-title-set-up-required-features": "Benötigte Funktionen einrichten",
       "step-description-copy-url": "Kopieren Sie von der ngrok-Ausgabe die https://-URL zur Weiterleitung, die wie folgt aussieht:",
-      "step-description-enable-feature-toggles": "Fügen Sie den Bereitstellungsfunktionsschalter zu Ihrer custom.ini-Datei hinzu. Hinweis: kubernetesDashboards ist standardmäßig aktiviert. Wenn Sie es jedoch explizit deaktiviert haben, müssen Sie es in Ihren Grafana-Einstellungen aktivieren oder die Überschreibung aus Ihrer Konfiguration entfernen.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Führen Sie diesen Befehl aus, um einen sicheren Tunnel zu Ihrer lokalen Grafana-Version zu erstellen:",
       "step-description-update-grafana-config": "Fügen Sie dies Ihrer custom.ini-Datei hinzu und ersetzen Sie die URL durch Ihre tatsächliche ngrok-URL:",
       "step-title-copy-url": "Kopieren Sie Ihre öffentliche URL",
@@ -14719,7 +14718,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Als Bild exportieren",
-      "export-json-title": "Als JSON exportieren",
       "share-externally-title": "Extern teilen",
       "share-internally-title": "Intern teilen",
       "share-snapshot-title": "Snapshot teilen"
