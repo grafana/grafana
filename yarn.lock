@@ -1575,7 +1575,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@faker-js/faker@npm:^9.0.0, @faker-js/faker@npm:^9.8.0":
+"@faker-js/faker@npm:^9.8.0":
   version: 9.9.0
   resolution: "@faker-js/faker@npm:9.9.0"
   checksum: 10/b24b1be0fb3090d54abaaa3a814f37d1a7551f1207dcd330a1af2c70f6312a8b95ebb82653577757dd62f4cbbb56caa3c83513053253654dc3e286a05040ecbe
@@ -3142,7 +3142,7 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@emotion/react": "npm:11.14.0"
     "@emotion/serialize": "npm:1.3.3"
-    "@faker-js/faker": "npm:^9.0.0"
+    "@faker-js/faker": "npm:^9.8.0"
     "@floating-ui/react": "npm:0.27.19"
     "@grafana/data": "npm:13.1.0-pre"
     "@grafana/e2e-selectors": "npm:13.1.0-pre"
@@ -18039,7 +18039,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fishery@npm:^2.2.2, fishery@npm:^2.3.1":
+"fishery@npm:^2.3.1":
   version: 2.3.1
   resolution: "fishery@npm:2.3.1"
   dependencies:
@@ -19142,7 +19142,7 @@ __metadata:
     fast-deep-equal: "npm:^3.1.3"
     fast-json-patch: "npm:3.1.1"
     file-saver: "npm:2.0.5"
-    fishery: "npm:^2.2.2"
+    fishery: "npm:^2.3.1"
     fork-ts-checker-webpack-plugin: "npm:9.1.0"
     github-codeowners: "npm:^0.2.1"
     history: "npm:4.10.1"

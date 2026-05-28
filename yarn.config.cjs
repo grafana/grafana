@@ -7,7 +7,6 @@ const semver = require('semver');
 // These packages are in a different version across the workspaces and are currently excluded from the check.
 // These should be cleaned up over time.
 const excludedPackages = [
-  '@faker-js/faker',
   '@grafana/api-clients',
   '@grafana/assistant',
   '@grafana/data',
@@ -38,7 +37,6 @@ const excludedPackages = [
   '@types/react-table',
   '@types/tinycolor2',
   '@typescript-eslint/utils',
-  'fishery',
   'fs-extra',
   'immutable',
   'jest',
