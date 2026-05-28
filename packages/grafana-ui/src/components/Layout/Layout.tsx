@@ -24,7 +24,7 @@ export interface LayoutProps extends Omit<HTMLProps<HTMLDivElement>, 'align' | '
   wrap?: boolean;
 }
 
-export interface ContainerProps {
+interface ContainerProps {
   padding?: Spacing;
   margin?: Spacing;
   grow?: number;

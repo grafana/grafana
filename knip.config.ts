@@ -10,6 +10,9 @@ const packageIgnoreDeps = [
 const packageEntries = ['i18next.config.ts'];
 
 const config: KnipConfig = {
+  compilers: {
+    mdx: true,
+  },
   exclude: [
     // we don't often use enums, but when we do we usually include members we'll utilise in the future
     'enumMembers',
@@ -17,19 +20,22 @@ const config: KnipConfig = {
   ignore: ['**/*.gen.ts*', '**/*_gen.ts*'],
   ignoreBinaries: ['make'],
   workspaces: {
-    // TODO figure out how to properly include webpack/jest configs
     '.': {
+      // TODO figure out how to properly include webpack/jest configs
       jest: false,
     },
     'public/app/plugins/datasource/*': {
+      // TODO figure out how to properly include webpack/jest configs
       webpack: false,
     },
     'e2e-playwright/test-plugins/*': {
+      // TODO figure out how to properly include webpack/jest configs
       webpack: false,
     },
     'packages/**': {
       entry: packageEntries,
       ignoreDependencies: packageIgnoreDeps,
+      jest: true,
     },
     // `grafana-alerting` has stories that are included in `grafana-ui`'s storybook
     // this is a bad idea
@@ -40,6 +46,12 @@ const config: KnipConfig = {
     },
     'packages/grafana-api-clients': {
       entry: [...packageEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/plopfile.ts'],
+    },
+    'packages/grafana-plugin-configs': {
+      // TODO figure out how to properly include webpack/jest configs
+      webpack: false,
+      // this package contains shared dependencies that aren't immediately used by the package
+      ignoreDependencies: ['.*'],
     },
   },
 };
