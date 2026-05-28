@@ -11,12 +11,14 @@ on:
       - '**/go.mod'
       - '**/go.sum'
       - '**.go'
-permissions:
-  contents: write
-  id-token: write
+permissions: {}
 jobs:
   update:
-    runs-on: "ubuntu-latest"
+    runs-on: ubuntu-arm64
+    permissions:
+      # Pushes use the app token explicitly in the git push URL; GITHUB_TOKEN needs only OIDC for Vault.
+      contents: read
+      id-token: write
     if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository }}
     continue-on-error: true
     steps:

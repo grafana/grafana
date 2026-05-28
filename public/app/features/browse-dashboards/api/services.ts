@@ -3,7 +3,7 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { legacyAPI } from 'app/api/clients/legacy';
 import { contextSrv } from 'app/core/services/context_srv';
-import { GENERAL_FOLDER_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
+import { TEAM_FOLDERS_UID, isRootFolderUID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult, type NestedFolderDTO } from 'app/features/search/service/types';
 import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
@@ -131,9 +131,10 @@ export async function listDashboards(parentUID?: string, page = 1, pageSize = PA
   return dashboardsResults.view.map((item) => {
     const viewItem = queryResultToViewItem(item, dashboardsResults.view);
 
-    // TODO: Once we remove nestedFolders feature flag, undo this and prevent the 'general'
-    // parentUID from being set in searcher
-    if (viewItem.parentUID === GENERAL_FOLDER_UID) {
+    // TODO: Once we remove nestedFolders feature flag, undo this and prevent
+    // the "general" parentUID from being set in searcher. Until then, treat
+    // any root sentinel ("" or "general") as "no parent" for the UI.
+    if (isRootFolderUID(viewItem.parentUID)) {
       viewItem.parentUID = undefined;
     }
 

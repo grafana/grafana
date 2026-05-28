@@ -1,6 +1,5 @@
 import { defaults } from 'lodash';
 import { Observable, throwError } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   type DataQueryRequest,
@@ -17,6 +16,7 @@ import {
   addRow,
   getDisplayProcessor,
   createTheme,
+  generateUUID,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 
@@ -352,8 +352,8 @@ export function runTracesStream(
 
     const pushNextEvent = () => {
       const subframe = createTraceSubFrame();
-      addRow(subframe, [uuidv4(), Date.now(), 'Grafana', 1500]);
-      addRow(data, [uuidv4(), Date.now(), 'Grafana', 'HTTP GET /explore', 1500, [subframe]]);
+      addRow(subframe, [generateUUID(), Date.now(), 'Grafana', 1500]);
+      addRow(data, [generateUUID(), Date.now(), 'Grafana', 'HTTP GET /explore', 1500, [subframe]]);
 
       subscriber.next({
         data: [data],

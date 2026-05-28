@@ -18,7 +18,7 @@ export type GetExtraContextMenuButtonsFunction = (
   }
 ) => ExtraContextMenuButton[];
 
-export type ExtraContextMenuButton = {
+type ExtraContextMenuButton = {
   label: string;
   icon: IconName;
   onClick: () => void;
