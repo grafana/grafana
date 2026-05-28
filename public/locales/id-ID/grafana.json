@@ -5760,8 +5760,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operator",
-        "placeholder": "Pilih operator"
+        "aria-label": "Operator"
       },
       "restore": "Pulihkan nilai default",
       "search": {
@@ -9012,7 +9011,6 @@
       "copy-button": "Salin ke papan klip",
       "download-button": "Unduh file",
       "download-successful_toast_message": "JSON Anda telah diunduh",
-      "export-externally-label": "Ekspor dasbor untuk digunakan di instans lain",
       "export-format": "Format",
       "export-mode": "Model",
       "info-text": "Salin atau unduh file yang berisi definisi dasbor Anda",
@@ -9105,6 +9103,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "Tidak dapat menghapus folder yang disediakan. Untuk menghapusnya, hapus dari repositori dan sinkronkan untuk menerapkan perubahan.",
       "folder-deleted-success": "Folder dihapus",
       "folder-move-error-provisioned": "Tidak dapat memindahkan folder yang disediakan. Untuk memindahkannya, pindahkan ke repositori dan sinkronkan untuk menerapkan perubahan.",
@@ -11632,11 +11631,10 @@
       "published-by": "Dipublikasi oleh",
       "updated-on": "Diperbarui pada"
     },
-    "import-resource-format-error": {
-      "cancel": "Batalkan",
-      "title": "Format tidak didukung",
-      "v1-message": "Dasbor ini memiliki format sumber daya Kubernetes v1 dan tidak dapat diimpor saat fitur dasbor Kubernetes dinonaktifkan. Aktifkan tombol fitur kubernetesDashboards untuk mengimpor dasbor ini.",
-      "v2-message": "Dasbor ini memiliki format sumber daya v2 dan tidak dapat diimpor saat fitur dasbor Kubernetes dinonaktifkan. Aktifkan tombol fitur kubernetesDashboards untuk mengimpor dasbor ini."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Yakin ingin menghapus '{{snapshotToRemove}}'?",
@@ -13130,6 +13128,7 @@
       "label-filename": "Nama file",
       "label-folder": "Folder",
       "label-path": "Jalur",
+      "path-exists": "",
       "placeholder-branch": "Pilih atau masukkan nama cabang",
       "placeholder-folder": "Pilih atau masukkan jalur folder",
       "suffix-configured-branch": "Cabang yang disinkronkan",
@@ -13450,7 +13449,7 @@
       "modal-title-set-up-public-access": "Atur akses publik",
       "modal-title-set-up-required-features": "Atur fitur yang diwajibkan",
       "step-description-copy-url": "Dari output ngrok, salin URL penerusan https:// yang terlihat seperti ini:",
-      "step-description-enable-feature-toggles": "Tambahkan tombol fitur provisioning ke file custom.ini Anda. Catatan: kubernetesDashboards diaktifkan secara default, tetapi jika Anda telah menonaktifkannya secara eksplisit, Anda harus mengaktifkannya di pengaturan Grafana atau menghapus penggantian dari konfigurasi Anda.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Jalankan perintah ini untuk membuat tunnel aman ke Grafana lokal Anda:",
       "step-description-update-grafana-config": "Tambahkan ini ke file custom.ini Anda, ganti URL dengan URL ngrok Anda yang sebenarnya:",
       "step-title-copy-url": "Salin URL publik Anda",
@@ -14625,7 +14624,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Ekspor sebagai gambar",
-      "export-json-title": "Ekspor sebagai JSON",
       "share-externally-title": "Bagikan secara eksternal",
       "share-internally-title": "Bagikan secara internal",
       "share-snapshot-title": "Bagikan snapshot"

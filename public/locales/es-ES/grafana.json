@@ -5792,8 +5792,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operador",
-        "placeholder": "Seleccionar operador"
+        "aria-label": "Operador"
       },
       "restore": "Restaurar el valor predeterminado",
       "search": {
@@ -9062,7 +9061,6 @@
       "copy-button": "Copiar al portapapeles",
       "download-button": "Descargar archivo",
       "download-successful_toast_message": "Tu JSON se ha descargado",
-      "export-externally-label": "Exportar el panel de control para utilizarlo en otra instancia",
       "export-format": "Formato",
       "export-mode": "Modelo",
       "info-text": "Copiar o descargar un archivo que contenga la definición de tu dashboard",
@@ -9155,6 +9153,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "Carpeta eliminada",
       "folder-move-error-provisioned": "No se puede mover la carpeta aprovisionada. Para moverla, desplázala en el repositorio y sincroniza para aplicar los cambios.",
@@ -11700,11 +11699,10 @@
       "published-by": "Publicado por",
       "updated-on": "Actualizado el"
     },
-    "import-resource-format-error": {
-      "cancel": "Cancelar",
-      "title": "Formato no compatible",
-      "v1-message": "Este dashboard está en formato de recurso Kubernetes v1 y no se puede importar cuando la función de dashboards de Kubernetes está deshabilitada. Habilita la opción de alternar características kubernetesDashboards para importar este dashboard.",
-      "v2-message": "Este dashboard está en formato de recurso v2 y no se puede importar cuando la función de dashboards de Kubernetes está deshabilitada. Habilita la opción de alternar características kubernetesDashboards para importar este dashboard."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "¿Seguro que quieres eliminar «{{snapshotToRemove}}»?",
@@ -13201,6 +13199,7 @@
       "label-filename": "Nombre de archivo",
       "label-folder": "Carpeta",
       "label-path": "Ruta",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Selecciona o introduce la ruta de la carpeta.",
       "suffix-configured-branch": "Rama sincronizada",
@@ -13527,7 +13526,7 @@
       "modal-title-set-up-public-access": "Configurar el acceso público",
       "modal-title-set-up-required-features": "Configurar las características necesarias",
       "step-description-copy-url": "Desde la salida de ngrok, copia la URL de redireccionamiento https:// que tiene el siguiente aspecto:",
-      "step-description-enable-feature-toggles": "Añade la función de aprovisionamiento a tu archivo custom.ini. Nota: kubernetesDashboards está habilitado de forma predeterminada, pero si lo has deshabilitado explícitamente, deberás habilitarlo en la configuración de Grafana o eliminar la anulación de tu configuración.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Ejecuta este comando para crear un túnel seguro a tu Grafana local:",
       "step-description-update-grafana-config": "Añade esto a tu archivo custom.ini, sustituyendo la URL por tu URL real de ngrok:",
       "step-title-copy-url": "Copia tu URL pública",
@@ -14719,7 +14718,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Exportar como imagen",
-      "export-json-title": "Exportar como JSON",
       "share-externally-title": "Compartir externamente",
       "share-internally-title": "Compartir internamente",
       "share-snapshot-title": "Compartir instantánea"
