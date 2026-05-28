@@ -4396,9 +4396,6 @@
       "missing-info": "Missing required fields",
       "success-message": "Folder deleted successfully"
     },
-    "descendant-count": {
-      "title-unable-to-retrieve-descendant-information": "Unable to retrieve descendant information"
-    },
     "empty-state": {
       "button-title": "Create dashboard",
       "pro-tip": "Add/move dashboards to your folder at <2>Browse dashboards</2>",
