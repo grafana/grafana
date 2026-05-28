@@ -87,7 +87,7 @@ describe('browse-dashboards MoveModal', () => {
         render(<MoveModal {...props} />);
 
         expect(
-          await screen.findByRole('status', { name: /contains other resources that will be moved/i })
+          await screen.findByRole('alert', { name: /contains other resources that will be moved/i })
         ).toBeInTheDocument();
       });
     });
