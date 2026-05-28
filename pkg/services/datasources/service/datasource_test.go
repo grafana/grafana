@@ -1619,12 +1619,18 @@ func TestIntegrationService_GetDataSourcesByType(t *testing.T) {
 		require.Empty(t, res)
 	})
 
-	t.Run("returns error when no requester is in context", func(t *testing.T) {
-		_, err := dsService.GetDataSourcesByType(context.Background(), &datasources.GetDataSourcesByTypeQuery{
+	t.Run("returns all (unfiltered) when no requester is in context", func(t *testing.T) {
+		// System/background callers have no requester and must not be filtered.
+		res, err := dsService.GetDataSourcesByType(context.Background(), &datasources.GetDataSourcesByTypeQuery{
 			OrgID: 1,
 			Type:  "test",
 		})
-		require.Error(t, err)
+		require.NoError(t, err)
+		ids := make([]string, 0, len(res))
+		for _, ds := range res {
+			ids = append(ids, ds.UID)
+		}
+		require.ElementsMatch(t, []string{"aaa", "bbb", "ccc"}, ids)
 	})
 
 	t.Run("resolves AliasIDs from plugin store when not provided", func(t *testing.T) {

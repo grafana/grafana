@@ -217,14 +217,16 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 		query.AliasIDs = p.AliasIDs
 	}
 
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err // must have a user in context
-	}
-
 	all, err := s.SQLStore.GetDataSourcesByType(ctx, query)
 	if err != nil {
 		return nil, err
+	}
+
+	// System/background callers (usage stats, prom-type migration, alerting,
+	// startup) have no requester in context — return all, unfiltered.
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return all, nil
 	}
 
 	filtered := make([]*datasources.DataSource, 0, len(all))
