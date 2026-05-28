@@ -8,7 +8,6 @@ import { optionPickerFactory } from '../pickers/OptionsPicker/OptionsPicker';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { toKeyedVariableIdentifier } from '../utils';
 
-import { ConstantVariableEditor } from './ConstantVariableEditor';
 import { updateConstantVariableOptions } from './actions';
 import { constantVariableReducer, initialConstantVariableModelState } from './reducer';
 
@@ -20,7 +19,6 @@ export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariabl
     initialState: initialConstantVariableModelState,
     reducer: constantVariableReducer,
     picker: optionPickerFactory<ConstantVariableModel>(),
-    editor: ConstantVariableEditor,
     dependsOn: () => {
       return false;
     },

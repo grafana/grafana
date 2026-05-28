@@ -5306,10 +5306,6 @@
       },
       "pane-header": "Add"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "Close 'Add Panel' widget",
-      "tooltip-close-widget": "Close widget"
-    },
     "add-menu": {
       "import": "Import from library",
       "paste-panel": "Paste panel",
@@ -5319,34 +5315,6 @@
     "alert-rules-drawer": {
       "redirect-link": "List in Grafana Alerting",
       "subtitle": "Alert rules related to this dashboard"
-    },
-    "annotation-settings-edit": {
-      "apply": "Apply",
-      "delete": "Delete",
-      "description-color-annotation-event-markers": "Color to use for the annotation event markers",
-      "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
-      "description-hidden": "Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden.",
-      "error-loading-panels": "Failed to load panel plugins",
-      "label-color": "Color",
-      "label-data-source": "Data source",
-      "label-enabled": "Enabled",
-      "label-hidden": "Hidden",
-      "label-name": "Name",
-      "label-show-in": "Show in",
-      "placeholder-choose-panels": "Choose panels",
-      "preview-in-dashboard": "Preview in dashboard",
-      "query": "Query",
-      "title-annotation-support-source": "No annotation support for this data source"
-    },
-    "annotation-settings-list": {
-      "aria-label-delete": "Delete query with title \"{{title}}\"",
-      "built-in": "{{name}} (Built-in)",
-      "data-source": "Data source",
-      "disabled": "(Disabled) {{name}}",
-      "new-query": "New query",
-      "query-name": "Query name",
-      "tooltip-move-down": "Move down",
-      "tooltip-move-up": "Move up"
     },
     "auto-grid": {
       "description": "Panels resize to fit and form uniform grids",
@@ -5511,16 +5479,6 @@
       "provisioning-title": "Dashboard preview",
       "text": {
         "not-found": "Not found"
-      }
-    },
-    "dashboard-settings": {
-      "actions": {
-        "close": "Close"
-      }
-    },
-    "dashboard-slice": {
-      "title": {
-        "dashboard-init-failed": "Dashboard init failed"
       }
     },
     "dashboard-srv": {
@@ -5774,11 +5732,6 @@
         "label": "Export dashboard menu"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Failed to fetch dashboard"
-      }
-    },
     "filters-overview": {
       "apply": "Apply",
       "apply-close": "Apply and close",
@@ -5812,29 +5765,9 @@
       "footer-text": "This content is AI-generated using the <2>Grafana LLM plugin</2>",
       "placeholder-tell-ai-what-to-do-next": "Tell AI what to do next..."
     },
-    "general-settings-unconnected": {
-      "editable-options": {
-        "label": {
-          "editable": "Editable",
-          "readonly": "Read-only"
-        }
-      },
-      "graph_tooltip_options": {
-        "label": {
-          "default": "Default",
-          "shared-crosshair": "Shared crosshair",
-          "shared-tooltip": "Shared tooltip"
-        }
-      }
-    },
     "get-debug-dashboard": {
       "title": {
         "annotations": "Annotations"
-      }
-    },
-    "get-errors": {
-      "message": {
-        "error-loading-data": "Error loading data"
       }
     },
     "get-field-override-categories": {
@@ -5874,18 +5807,6 @@
         "transform-data": "Transform data"
       }
     },
-    "get-panel-filters": {
-      "description": {
-        "annotation-following-panels": "Do not send annotation data to the following panels",
-        "annotation-panels-support-annotations": "Send the annotation data to all panels that support annotations",
-        "annotations-explicitly-listed-panels": "Send the annotations to the explicitly listed panels"
-      },
-      "label": {
-        "all-panels": "All panels",
-        "all-panels-except": "All panels except",
-        "selected-panels": "Selected panels"
-      }
-    },
     "get-panel-frame-category": {
       "descriptor": {
         "title": {
@@ -5909,11 +5830,6 @@
         "transparent-background": "Transparent background"
       }
     },
-    "get-panel-menu": {
-      "text": {
-        "extensions": "Extensions"
-      }
-    },
     "help-wizard": {
       "copy-to-clipboard": "Copy to clipboard",
       "description-obfuscate-data": "Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal.",
@@ -5935,20 +5851,13 @@
       "title-get-help-with-this-panel": "Get help with this panel",
       "troubleshooting-docs": "Troubleshooting docs"
     },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Failed create dashboard model"
-      }
-    },
     "inspect": {
       "data-tab": "Data",
       "error-tab": "Error",
       "json-tab": "JSON",
       "meta-tab": "Meta data",
       "query-tab": "Query",
-      "stats-tab": "Stats",
-      "subtitle": "{{queryCount}} queries with total query time of {{formatted}}",
-      "title": "Inspect: {{panelTitle}}"
+      "stats-tab": "Stats"
     },
     "inspect-data": {
       "data-options": "Data options",
@@ -6035,10 +5944,6 @@
           "dashboard-not-found": "Dashboard not found"
         }
       }
-    },
-    "make-editable": {
-      "dashboard-not-editable": "Dashboard not editable",
-      "make-editable": "Make editable"
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} of {{numberOfPages}}",
@@ -6136,24 +6041,6 @@
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "Raw data"
-    },
-    "panel-editor-unconnected": {
-      "editor-actions": {
-        "apply": "Apply",
-        "discard": "Discard",
-        "save": "Save",
-        "save-library-panel": "Save library panel",
-        "title-apply-changes-and-save-dashboard": "Apply changes and save dashboard",
-        "title-apply-changes-and-save-library-panel": "Apply changes and save library panel",
-        "title-apply-changes-dashboard": "Apply changes and go back to dashboard",
-        "title-undo-all-changes": "Undo all changes"
-      },
-      "table-view-label-table-view": "Table view",
-      "title-unlink": "Disconnects this panel from the library panel so that you can edit it regularly.",
-      "unlink": "Unlink"
-    },
     "panel-links": {
       "aria-label-panel-links": "Panel links"
     },
@@ -6189,23 +6076,6 @@
           "no-template-variables-found": "No template variables found"
         }
       }
-    },
-    "revert-dashboard-modal": {
-      "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
-      "confirmText-restore-version": "Yes, restore to version {{version}}",
-      "title-restore-version": "Restore version"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "Row options"
-    },
-    "row-options-form": {
-      "cancel": "Cancel",
-      "label-repeat-for": "Repeat for",
-      "label-title": "Title",
-      "update": "Update"
-    },
-    "row-options-modal": {
-      "title-row-options": "Row options"
     },
     "rows-layout": {
       "cancel": "Cancel",
@@ -6354,16 +6224,9 @@
       },
       "undo": "Undo"
     },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Loading & initializing dashboard",
-      "title-not-found": "Panel with id {{panelId}} not found"
-    },
     "source-link": {
       "title": "Source ({{provider}})",
       "tooltip": "View source file in repository"
-    },
-    "sub-menu-un-connected": {
-      "aria-label-template-variables": "Template variables"
     },
     "support-snapshot-service": {
       "description": {
@@ -6589,16 +6452,6 @@
       "discard": "Discard",
       "title-unsaved-changes": "Unsaved changes"
     },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Delete row",
-      "learn-more": "Learn more",
-      "title": {
-        "delete-row": "Delete row"
-      }
-    },
     "validation": {
       "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
       "invalid-json": "Not valid JSON",
@@ -6624,48 +6477,11 @@
         "action": "Change variable type"
       }
     },
-    "version-history-comparison": {
-      "button-restore": "Restore to version {{version}}",
-      "label-view-json-diff": "View JSON diff",
-      "new-updated-by": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}"
-    },
-    "version-history-table": {
-      "aria-label-toggle-selection": "Toggle selection of version {{version}}",
-      "date": "Date",
-      "name-latest": "Latest",
-      "notes": "Notes",
-      "restore": "Restore",
-      "updated-by": "Updated by",
-      "version": "Version"
-    },
     "view-json-modal": {
       "title-json": "JSON"
     },
     "view-panel": {
       "not-found": "Panel not found"
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Change visualization",
-      "aria-label-close": "Close options pane",
-      "aria-label-show": "Show options pane",
-      "tooltip-click-to-change-visualization": "Click to change visualization",
-      "tooltip-close": "Close options pane",
-      "tooltip-show": "Show options pane"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Search for...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Reusable panels you can share between multiple dashboards."
-        },
-        "label": {
-          "library-panels": "Library panels",
-          "suggestions": "Suggestions",
-          "visualizations": "Visualizations"
-        }
-      },
-      "title-close": "Close"
     },
     "viz-panel": {
       "delete-panel-text": "Deleting this panel will also remove all queries. Are you sure you want to continue?",
@@ -7954,17 +7770,6 @@
     },
     "permissions": {
       "title": "Permissions"
-    },
-    "provisioned-delete-modal": {
-      "confirm-button": "OK",
-      "text-1": "This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config file to delete it.",
-      "text-2": "See grafana documentation for more information about provisioning. ",
-      "text-3": "File path: {{provisionedId}}",
-      "text-link": "Go to docs page",
-      "title": "Cannot delete provisioned dashboard"
-    },
-    "settings": {
-      "title": "Settings"
     },
     "time-picker": {
       "hide-time-picker": "Hide time picker",
@@ -12655,7 +12460,6 @@
     "header-menu": {
       "copy": "Copy",
       "copy-styles": "Copy styles",
-      "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",
       "explore": "Explore",
@@ -16664,11 +16468,6 @@
         "aria-label-add-filter": "Add Filter"
       }
     },
-    "confirm-delete-modal": {
-      "body-delete-variable": "Are you sure you want to delete variable \"{{variableToDelete}}\"?",
-      "confirmText-delete": "Delete",
-      "title-delete-variable": "Delete variable"
-    },
     "create-ad-hoc-variable-adapter": {
       "description": {
         "add-keyvalue-filters-on-the-fly": "Add key/value filters on the fly."
@@ -16710,9 +16509,6 @@
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "No renamed or missing variables found."
     },
-    "picker-renderer": {
-      "couldnt-load-variable": "Couldn't load variable"
-    },
     "query-variable-refresh-select": {
       "description-update-values-variable": "When to update the values of this variable",
       "label-refresh": "Refresh"
@@ -16749,11 +16545,6 @@
       "value-header": "Value",
       "value-placeholder": "Value"
     },
-    "text-box-variable-editor": {
-      "name-default-value": "Default value",
-      "placeholder-default-value-if-any": "default value, if any",
-      "text-options": "Text options"
-    },
     "transform-usages-to-network": {
       "result": {
         "label": {
@@ -16768,42 +16559,8 @@
       "tooltip-renamed-or-missing-variables": "Click to expand a list with all variable references that have been renamed or are missing from the dashboard.",
       "variable": "Variable"
     },
-    "variable-check-indicator": {
-      "title-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
-      "title-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
-    },
-    "variable-editor-editor-un-connected": {
-      "apply": "Apply",
-      "aria-label-variable-editor-form": "Variable editor Form",
-      "delete": "Delete",
-      "description-optional-display-name": "Optional display name",
-      "description-template-variable-characters": "The name of the template variable. (Max. 50 characters)",
-      "general": "General",
-      "name-label": "Label",
-      "name-name": "Name",
-      "placeholder-descriptive-text": "Descriptive text",
-      "placeholder-label-name": "Label name",
-      "placeholder-variable-name": "Variable name",
-      "run-query": "Run query"
-    },
-    "variable-editor-list": {
-      "definition": "Definition",
-      "new-variable": "New variable",
-      "variable": "Variable"
-    },
-    "variable-editor-list-row": {
-      "drag-handle-label": "Reorder variable {{variableName}}",
-      "tooltip-duplicate-variable": "Duplicate variable",
-      "tooltip-remove-variable": "Remove variable"
-    },
-    "variable-editor-un-connected": {
-      "name-description": "Description"
-    },
     "variable-options": {
       "aria-label-toggle-all-values": "Toggle all values"
-    },
-    "variable-type-select": {
-      "name-select-variable-type": "Select variable type"
     },
     "variable-usages-button": {
       "tooltip-show-usages": "Show usages"

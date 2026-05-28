@@ -8,7 +8,6 @@ import { type VariableAdapter } from '../adapters';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { containsVariable, toKeyedVariableIdentifier } from '../utils';
 
-import { SwitchVariableEditor } from './SwitchVariableEditor';
 import { SwitchVariablePicker } from './SwitchVariablePicker';
 import { switchVariableReducer, initialSwitchVariableModelState } from './reducer';
 
@@ -20,7 +19,6 @@ export const createSwitchVariableAdapter = (): VariableAdapter<SwitchVariableMod
     initialState: initialSwitchVariableModelState,
     reducer: switchVariableReducer,
     picker: SwitchVariablePicker,
-    editor: SwitchVariableEditor,
     dependsOn: (variable, variableToTest) => {
       return containsVariable(variable.query, variableToTest.name);
     },
