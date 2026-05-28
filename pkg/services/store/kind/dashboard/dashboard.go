@@ -436,7 +436,8 @@ func checkAndSkipUnexpectedElement(iter *jsoniter.Iterator, jsonPath string, log
 // logRecursionLimit logs when a nested element is skipped because it exceeds the maximum
 // allowed nesting depth, mirroring how checkAndSkipUnexpectedElement appends log context.
 func logRecursionLimit(jsonPath, field string, logContext map[string]any) {
-	params := []any{"jsonPath", jsonPath, "field", field}
+	params := make([]any, 0, 4+2*len(logContext))
+	params = append(params, "jsonPath", jsonPath, "field", field)
 	for k, v := range logContext {
 		params = append(params, k, v)
 	}
