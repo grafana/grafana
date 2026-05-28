@@ -16,6 +16,13 @@ import (
 // the streaming ReadDashboard parser.
 //
 // Invariant: must not panic. Any error is acceptable.
+//
+// Coverage caveat: same as FuzzReadDashboard. Go's built-in fuzzer
+// mutates at the byte level, so most inputs fail to deserialize and the
+// deeper walker paths are rarely reached. This target is most useful for
+// catching panics on shallow inputs and as a regression harness against
+// the seed corpus. Structure-aware mutation (e.g. gosentry) is tracked
+// as a follow-up.
 func FuzzExtractDashboard(f *testing.F) {
 	seedDirs := []string{
 		"testdata",

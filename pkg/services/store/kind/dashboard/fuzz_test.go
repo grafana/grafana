@@ -23,6 +23,17 @@ func (fuzzNopLookup) ByType(string) []DataSourceRef       { return nil }
 // bugs on adversarial input.
 //
 // Invariant: must not panic. Any error is acceptable.
+//
+// Coverage caveat: Go's built-in fuzzer is format-agnostic and mutates
+// inputs at the byte level. On a deeply structured format like dashboard
+// JSON, most mutations break the document early and the parser bails
+// before reading any field, so deep grammar paths (panels, datasources,
+// template variables, v1/v2 polymorphism, recursive spec descent) are
+// rarely reached. This target is most useful for catching panics on
+// shallow inputs and as a regression harness against the seed corpus.
+// Comprehensive deep-grammar coverage would need a structure-aware
+// mutator (e.g. gosentry) or hand-written dashboard generators, tracked
+// as follow-ups.
 func FuzzReadDashboard(f *testing.F) {
 	seedDirs := []string{
 		"testdata",
