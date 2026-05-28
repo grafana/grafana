@@ -57,3 +57,15 @@ The graph in this next image shows bars instead of lines and has the **No value*
 {{< figure src="/static/img/docs/troubleshooting/grafana_null_zero.png" max-width="1200px" alt="Graph with null values not connected" >}}
 
 As you can see, there's a significant difference in the visualizations.
+
+## Tooltip doesn't stay open when clicked
+
+If you click a data point expecting the tooltip to stick open so you can scroll or copy its content, but the tooltip immediately disappears or resets, the **Refresh live dashboards** setting is likely the cause.
+
+When **Refresh live dashboards** is enabled on a dashboard, Grafana continuously re-renders panels as new data arrives.
+Each re-render dismisses any pinned tooltip before you can interact with it.
+
+To fix this, do one of the following:
+
+- **Disable Refresh live dashboards** — Open the dashboard settings, go to **General**, and turn off **Refresh live dashboards**. The tooltip stays open on click after the next render cycle.
+- **Increase the refresh interval** — If you need live updates, set a longer refresh interval so the tooltip has time to stay open between re-renders.
