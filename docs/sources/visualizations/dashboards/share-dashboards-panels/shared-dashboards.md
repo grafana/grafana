@@ -10,7 +10,7 @@ labels:
 title: Externally shared dashboards
 menuTitle: Shared dashboards
 description: Make your Grafana dashboards externally shared and share them with anyone
-weight: 8
+weight: 10
 refs:
   dashboard-sharing:
     - pattern: /docs/grafana/
