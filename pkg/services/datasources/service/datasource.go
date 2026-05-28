@@ -851,7 +851,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 	}
 
 	if ds.JsonData != nil {
-		opts.CustomOptions = ds.JsonData.MustMap()
+		opts.CustomOptions = ds.JsonDataMap()
 		// allow the plugin sdk to get the json data in JSONDataFromHTTPClientOptions
 		deepJsonDataCopy := make(map[string]any, len(opts.CustomOptions))
 		for k, v := range opts.CustomOptions {
