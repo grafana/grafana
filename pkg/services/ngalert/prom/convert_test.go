@@ -424,6 +424,71 @@ func TestPrometheusRulesToGrafanaWithDuplicateRuleNames(t *testing.T) {
 	require.Equal(t, "alert", group.Rules[3].Title)
 }
 
+func TestNewConverter_DatasourceType(t *testing.T) {
+	defaultInterval := 2 * time.Minute
+
+	t.Run("accepts Prometheus and Loki source datasources", func(t *testing.T) {
+		for _, dsType := range []string{
+			datasources.DS_PROMETHEUS,
+			datasources.DS_LOKI,
+			datasources.DS_AMAZON_PROMETHEUS,
+			datasources.DS_AZURE_PROMETHEUS,
+		} {
+			t.Run(dsType, func(t *testing.T) {
+				_, err := NewConverter(Config{
+					DatasourceUID:   "datasource-uid",
+					DatasourceType:  dsType,
+					DefaultInterval: defaultInterval,
+				})
+				require.NoError(t, err)
+			})
+		}
+	})
+
+	t.Run("rejects unknown source datasource type", func(t *testing.T) {
+		_, err := NewConverter(Config{
+			DatasourceUID:   "datasource-uid",
+			DatasourceType:  "graphite",
+			DefaultInterval: defaultInterval,
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "invalid datasource type: graphite")
+	})
+
+	t.Run("accepts Prometheus-compatible target datasources for recording rules", func(t *testing.T) {
+		recordingGroup := PrometheusRuleGroup{
+			Name:     "recording-group",
+			Interval: prommodel.Duration(10 * time.Second),
+			Rules: []PrometheusRule{
+				{
+					Record: "some_metric",
+					Expr:   "sum(rate(http_requests_total[5m]))",
+				},
+			},
+		}
+
+		for _, targetType := range []string{
+			datasources.DS_PROMETHEUS,
+			datasources.DS_AMAZON_PROMETHEUS,
+			datasources.DS_AZURE_PROMETHEUS,
+		} {
+			t.Run(targetType, func(t *testing.T) {
+				converter, err := NewConverter(Config{
+					DatasourceUID:        "datasource-uid",
+					DatasourceType:       datasources.DS_PROMETHEUS,
+					TargetDatasourceUID:  "target-datasource-uid",
+					TargetDatasourceType: targetType,
+					DefaultInterval:      defaultInterval,
+				})
+				require.NoError(t, err)
+
+				_, err = converter.PrometheusRulesToGrafana(1, "namespaceUID", recordingGroup)
+				require.NoError(t, err)
+			})
+		}
+	})
+}
+
 func TestCreateMathNode(t *testing.T) {
 	node, err := createMathNode()
 	require.NoError(t, err)
