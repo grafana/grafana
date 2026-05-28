@@ -1,4 +1,4 @@
-package api
+package acimpl
 
 import (
 	"context"
@@ -12,11 +12,14 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+var logger = log.New("accesscontrol.zanzana_resolver")
 
 // zanzanaPermissionResolver handles resolving user permissions using Zanzana
 type zanzanaPermissionResolver struct {
@@ -314,4 +317,52 @@ func (r *zanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, names
 		}
 	}
 	return permissions, nil
+}
+
+// mergePermissions unions permissions from two sources, deduplicating by action+scope per user.
+func mergePermissions(a, b map[int64][]ac.Permission) map[int64][]ac.Permission {
+	result := make(map[int64][]ac.Permission, len(a))
+	for userID, perms := range a {
+		result[userID] = append([]ac.Permission(nil), perms...)
+	}
+
+	for userID, perms := range b {
+		existing := result[userID]
+		if len(existing) == 0 {
+			result[userID] = perms
+			continue
+		}
+
+		seen := make(map[string]struct{}, len(existing))
+		for _, p := range existing {
+			seen[p.Action+"|"+p.Scope] = struct{}{}
+		}
+		for _, p := range perms {
+			key := p.Action + "|" + p.Scope
+			if _, ok := seen[key]; !ok {
+				existing = append(existing, p)
+				seen[key] = struct{}{}
+			}
+		}
+		result[userID] = existing
+	}
+
+	return result
+}
+
+// mergeUserPermissions unions permissions from legacy RBAC and Zanzana for a single user,
+// deduplicating by action+scope.
+func mergeUserPermissions(legacy, zanzana []ac.Permission) []ac.Permission {
+	seen := make(map[string]struct{}, len(legacy))
+	for _, p := range legacy {
+		seen[p.Action+"|"+p.Scope] = struct{}{}
+	}
+	for _, p := range zanzana {
+		key := p.Action + "|" + p.Scope
+		if _, ok := seen[key]; !ok {
+			legacy = append(legacy, p)
+			seen[key] = struct{}{}
+		}
+	}
+	return legacy
 }
