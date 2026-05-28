@@ -5792,8 +5792,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operátor",
-        "placeholder": "Válasszon operátort"
+        "aria-label": "Operátor"
       },
       "restore": "Alapértelmezett érték visszaállítása",
       "search": {
@@ -9062,7 +9061,6 @@
       "copy-button": "Másolás vágólapra",
       "download-button": "Fájl letöltése",
       "download-successful_toast_message": "A JSON-fájlja letöltődött",
-      "export-externally-label": "Exportálja az irányítópultot egy másik példányban való használathoz",
       "export-format": "Formátum",
       "export-mode": "Modell",
       "info-text": "Másolja vagy töltse le az irányítópult definícióját tartalmazó fájlt",
@@ -9155,6 +9153,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "Mappa törölve",
       "folder-move-error-provisioned": "A kiépített mappa nem helyezhető át. Az áthelyezéshez helyezze át az adattárba, és szinkronizálja a változtatások alkalmazásához.",
@@ -11700,11 +11699,10 @@
       "published-by": "Közzétette:",
       "updated-on": "Frissítve:"
     },
-    "import-resource-format-error": {
-      "cancel": "Mégse",
-      "title": "Nem támogatott formátum",
-      "v1-message": "Ez az irányítópult Kubernetes v1 erőforrás-formátumban van, és nem importálható, ha a Kubernetes-irányítópultok funkció le van tiltva. Az irányítópult importálásához engedélyezze a kubernetesDashboards funkcióváltót.",
-      "v2-message": "Ez az irányítópult v2 erőforrás-formátumban van, és nem importálható, ha a Kubernetes-irányítópultok funkció le van tiltva. Az irányítópult importálásához engedélyezze a kubernetesDashboards funkcióváltót."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Biztosan törölni szeretné a(z) „{{snapshotToRemove}}” elemet?",
@@ -13201,6 +13199,7 @@
       "label-filename": "Fájlnév",
       "label-folder": "Mappa",
       "label-path": "Útvonal",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Válassza ki vagy adja meg a mappa elérési útját",
       "suffix-configured-branch": "Szinkronizált ág",
@@ -13527,7 +13526,7 @@
       "modal-title-set-up-public-access": "Nyilvános hozzáférés beállítása",
       "modal-title-set-up-required-features": "Kötelező funkciók beállítása",
       "step-description-copy-url": "Az ngrok kimenetéből másolja ki a https:// átirányítási URL-címet, amely így néz ki:",
-      "step-description-enable-feature-toggles": "Adja hozzá a kiépítési funkció kapcsolóját a custom.ini fájlhoz. Megjegyzés: A kubernetesDashboards alapértelmezés szerint engedélyezve van, de ha kifejezetten letiltotta, engedélyeznie kell a Grafana beállításaiban, vagy el kell távolítania a felülbírálást a konfigurációból.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Futtassa ezt a parancsot egy biztonságos alagút létrehozásához a helyi Grafanához:",
       "step-description-update-grafana-config": "Adja hozzá ezt a custom.ini fájlhoz, lecserélve az URL-t a tényleges ngrok URL-címre:",
       "step-title-copy-url": "A nyilvános URL-cím kimásolása",
@@ -14719,7 +14718,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Exportálás képként",
-      "export-json-title": "Exportálás JSON-fájlként",
       "share-externally-title": "Külső megosztás",
       "share-internally-title": "Belső megosztás",
       "share-snapshot-title": "Pillanatkép megosztása"

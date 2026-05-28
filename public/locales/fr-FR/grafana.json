@@ -5792,8 +5792,7 @@
         }
       },
       "operator": {
-        "aria-label": "Opérateur",
-        "placeholder": "Sélectionner un opérateur"
+        "aria-label": "Opérateur"
       },
       "restore": "Restaurer la valeur par défaut",
       "search": {
@@ -9062,7 +9061,6 @@
       "copy-button": "Copier dans le presse-papiers",
       "download-button": "Télécharger le fichier",
       "download-successful_toast_message": "Votre JSON a été téléchargé",
-      "export-externally-label": "Exporter le tableau de bord pour l'utiliser dans une autre instance",
       "export-format": "Format",
       "export-mode": "Modèle",
       "info-text": "Copier ou télécharger un fichier contenant la définition de votre tableau de bord",
@@ -9155,6 +9153,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "Dossier supprimé",
       "folder-move-error-provisioned": "Impossible de déplacer le dossier provisionné. Pour le déplacer, effectuez l’opération dans le référentiel puis synchronisez afin d’appliquer les modifications.",
@@ -11700,11 +11699,10 @@
       "published-by": "Publié par",
       "updated-on": "Mise à niveau le"
     },
-    "import-resource-format-error": {
-      "cancel": "Annuler",
-      "title": "Format non pris en charge",
-      "v1-message": "Ce tableau de bord est au format de ressource Kubernetes v1 et ne peut pas être importé lorsque la fonctionnalité des tableaux de bord Kubernetes est désactivée. Veuillez activer le basculement de la fonctionnalité kubernetesDashboards pour importer ce tableau de bord.",
-      "v2-message": "Ce tableau de bord est au format de ressource v2 et ne peut pas être importé lorsque la fonctionnalité des tableaux de bord Kubernetes est désactivée. Veuillez activer le basculement de la fonctionnalité kubernetesDashboards pour importer ce tableau de bord."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Voulez-vous vraiment supprimer « {{snapshotToRemove}} » ?",
@@ -13201,6 +13199,7 @@
       "label-filename": "Nom de fichier",
       "label-folder": "Dossier",
       "label-path": "Chemin d’accès",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Sélectionner ou saisir le chemin du dossier",
       "suffix-configured-branch": "Branche synchronisée",
@@ -13527,7 +13526,7 @@
       "modal-title-set-up-public-access": "Configurer l’accès public",
       "modal-title-set-up-required-features": "Configurer les fonctionnalités requises",
       "step-description-copy-url": "À partir de la sortie ngrok, copiez l’URL de redirection https:// qui ressemble à ceci :",
-      "step-description-enable-feature-toggles": "Ajoutez l’option de fonctionnalité de provisionnement à votre fichier custom.ini. Remarque : kubernetesDashboards est activé par défaut, mais si vous l’avez explicitement désactivé, vous devrez l’activer dans les paramètres Grafana ou supprimer la surcharge de votre configuration.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Exécutez cette commande pour créer un tunnel sécurisé vers votre Grafana local :",
       "step-description-update-grafana-config": "Ajoutez ceci à votre fichier custom.ini, en remplaçant l’URL par votre URL ngrok réelle :",
       "step-title-copy-url": "Copier l’URL publique",
@@ -14719,7 +14718,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Exporter au format image",
-      "export-json-title": "Exporter en tant que JSON",
       "share-externally-title": "Partager en externe",
       "share-internally-title": "Partager en interne",
       "share-snapshot-title": "Partager l'instantané"
