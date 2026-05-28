@@ -21,6 +21,11 @@ const excludedPackages = [
   '@grafana/schema',
   '@grafana/sql',
   '@grafana/ui',
+  '@grafana/alerting',
+  '@grafana/flamegraph',
+  '@grafana/o11y-ds-frontend',
+  '@grafana/eslint-plugin',
+  '@grafana/test-utils',
   '@openfeature/ofrep-web-provider',
   '@storybook/addon-webpack5-compiler-swc',
   '@swc/helpers',
@@ -65,28 +70,48 @@ module.exports = defineConfig({
         continue;
       }
 
-      let highestRange = resolvedRanges.get(dep.ident);
-      if (highestRange === undefined) {
-        const siblings = Yarn.dependencies({ ident: dep.ident }).filter((d) => d.type !== 'peerDependencies');
-        highestRange = pickHighestRange(siblings.map((d) => d.range));
-        resolvedRanges.set(dep.ident, highestRange);
+      // If the dependency is a workspace package, expect the depended on version to match it
+      const workspacePackage = Yarn.workspace({ ident: dep.ident });
+      if (workspacePackage) {
+        dep.update(workspacePackage.manifest.version);
+        continue;
       }
 
-      if (highestRange !== null) {
-        dep.update(highestRange);
+      let resolved = resolvedRanges.get(dep.ident);
+      if (resolved === undefined) {
+        const siblings = Yarn.dependencies({ ident: dep.ident }).filter((d) => d.type !== 'peerDependencies');
+        resolved = pickHighestRange(siblings.map((d) => d.range));
+        resolvedRanges.set(dep.ident, resolved);
+      } else if (resolved.error) {
+        // Reporting an error (instead of calling .update) means the conflict is not
+        // auto-fixable — there's no safe range we can confidently rewrite to.
+        dep.error(resolved.error);
+      } else {
+        dep.update(resolved.range);
       }
     }
   },
 });
 
-// Returns the range whose minimum version is the highest among the inputs.
-// Returns null if any range can't be parsed as semver (e.g. workspace:*, git URLs),
-// since in that case "highest" isn't well-defined and we leave the deps alone.
+// Determines the range that all workspaces should share for a given ident.
+// When every range is semver-parseable, returns { range } with the one that has the
+// highest min version. Otherwise returns { error } so the constraint surfaces as an
+// unfixable error rather than risking an incorrect auto-fix suggestion.
+/**
+ * @param {Array<string>} ranges
+ */
 function pickHighestRange(ranges) {
+  // If every workspace already agrees there's nothing to resolve, even when the
+  // shared range isn't semver-parseable (e.g. workspace:*, link:, patch:, npm:alias).
+  const uniqueRanges = [...new Set(ranges)];
+  if (uniqueRanges.length === 1) {
+    return { range: uniqueRanges[0] };
+  }
+
   let bestRange = null;
   let bestVersion = null;
 
-  for (const range of ranges) {
+  for (const range of uniqueRanges) {
     let min;
     try {
       min = semver.minVersion(range);
@@ -94,7 +119,9 @@ function pickHighestRange(ranges) {
       min = null;
     }
     if (!min) {
-      return null;
+      return {
+        error: `Cannot determine highest version: range "${range}" is not semver-parseable, but other workspaces use different ranges (${uniqueRanges.map((r) => `"${r}"`).join(', ')}). Fix this manually.`,
+      };
     }
     if (!bestVersion || semver.gt(min, bestVersion)) {
       bestVersion = min;
@@ -102,5 +129,5 @@ function pickHighestRange(ranges) {
     }
   }
 
-  return bestRange;
+  return { range: bestRange };
 }
