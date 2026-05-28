@@ -633,12 +633,20 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 		isAdmin = *id.IsGrafanaAdmin
 	}
 
+	// Forward the identity's active-org role so the k8s User is created with the
+	// asserted Spec.Role instead of falling back to AutoAssignOrgRole.
+	var defaultOrgRole string
+	if len(id.OrgRoles) > 0 {
+		defaultOrgRole = string(id.GetOrgRole())
+	}
+
 	usr, err := s.userService.Create(ctx, &user.CreateUserCommand{
-		Login:        id.Login,
-		Email:        id.Email,
-		Name:         id.Name,
-		IsAdmin:      isAdmin,
-		SkipOrgSetup: len(id.OrgRoles) > 0,
+		Login:          id.Login,
+		Email:          id.Email,
+		Name:           id.Name,
+		IsAdmin:        isAdmin,
+		DefaultOrgRole: defaultOrgRole,
+		SkipOrgSetup:   len(id.OrgRoles) > 0,
 	})
 	if err != nil {
 		return nil, err
