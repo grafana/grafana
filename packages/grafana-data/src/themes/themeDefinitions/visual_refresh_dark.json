@@ -1,18 +1,6 @@
 {
   "name": "Visual Refresh (Dark)",
   "id": "visual_refresh_dark",
-  "visualization": {
-    "palette": [
-        "#d97e9b", "#ffc554", "#41cd94", "#64a6d8", "#f79cff",
-        "#e78a5f", "#c9e1a6", "#00cfe3", "#9b93df", "#ffb2be",
-        "#cea82e", "#9cf2d6", "#8fc3ff", "#ce84c1", "#ffc39d",
-        "#89c862", "#41aec7", "#cdb9ff", "#ef8488", "#e7db98",
-        "#00d8be", "#759ee6", "#ffb1e1", "#ee9941", "#baf2b8",
-        "#54d3ff", "#b78ee2", "#ff645a", "#c0bd2f", "#8ffff6",
-        "#b4c7ff", "#eb85b5", "#ffd49f", "#58db89", "#46abde",
-        "#eabcff", "#ff8e6f", "#deed9f", "#00dfe5", "#959df6"
-      ]
-  },
   "colors": {
     "mode": "dark",
     "background": {
