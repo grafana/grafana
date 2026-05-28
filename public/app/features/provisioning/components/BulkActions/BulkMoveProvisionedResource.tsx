@@ -119,7 +119,11 @@ function FormContent({
       resourceCount: resources.length,
     });
 
-    // Create the move job spec
+    // Create the move job spec.
+    // TODO(grafana/git-ui-sync-project#1162): MoveJobOptions has no `message`
+    // field on the backend yet — once it gains one, pass
+    // `withSavedByTrailer(<default or data.comment>)` so the
+    // Grafana-saved-by trailer rides through to the resulting git commit.
     const jobSpec: MoveJobSpec = {
       action: 'move',
       move: {

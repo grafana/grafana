@@ -79,6 +79,8 @@ Time series visualizations require time-series data—a sequence of measurements
 
 The dataset must contain at least one numeric field, and in the case of multiple numeric fields, each one is plotted as a new line, point, or bar labeled with the field name in the tooltip.
 
+Time series data is expected to contain unique timestamps for each data point within a series. If multiple points in the same series share the same timestamp, the visualization might not render or behave as expected.
+
 ### Example 1
 
 In the following example, there are three numeric fields represented by three lines in the chart:
