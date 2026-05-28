@@ -8,7 +8,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -57,4 +60,33 @@ func TestStandardDocumentBuilder(t *testing.T) {
 			"checksum": "xyz"
 		}
 	}`, string(jj))
+}
+
+func TestNewIndexableDocumentDefaultsFolder(t *testing.T) {
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "dashboards.grafana.app/v1beta1",
+		"kind":       "Dashboard",
+		"metadata":   map[string]any{"name": "abc"},
+	}}
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+
+	t.Run("stamps general on root-parented dashboards and folders", func(t *testing.T) {
+		for _, group := range []string{"dashboards.grafana.app", "folders.grafana.app"} {
+			doc := NewIndexableDocument(&resourcepb.ResourceKey{Group: group, Name: "abc"}, 1, meta, "")
+			require.Equal(t, folder.GeneralFolderUID, doc.Folder, group)
+		}
+	})
+
+	t.Run("leaves an explicit folder untouched", func(t *testing.T) {
+		meta.SetFolder("parent-uid")
+		doc := NewIndexableDocument(&resourcepb.ResourceKey{Group: "dashboards.grafana.app", Name: "abc"}, 1, meta, "")
+		require.Equal(t, "parent-uid", doc.Folder)
+		meta.SetFolder("")
+	})
+
+	t.Run("does not stamp other resource types", func(t *testing.T) {
+		doc := NewIndexableDocument(&resourcepb.ResourceKey{Group: "playlists.grafana.app", Name: "abc"}, 1, meta, "")
+		require.Equal(t, "", doc.Folder)
+	})
 }
