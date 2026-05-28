@@ -617,6 +617,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public getPageNav(location: H.Location, navIndex: NavIndex) {
     const { meta, viewPanel, editPanel, title, uid } = this.state;
     const isNew = !Boolean(uid);
+    // Trailing slash enforces a path-segment match so unrelated prefixes (e.g. `/dashboard/provisioning-foo/...`) don't match.
     const isProvisioningPreview = location.pathname.startsWith(PROVISIONING_PREVIEW_URL + '/');
     const clearPanelView = {
       viewPanel: null,
