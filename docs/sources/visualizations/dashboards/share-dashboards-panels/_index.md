@@ -249,7 +249,6 @@ To publish a dashboard to the community catalog, follow these steps:
 After you've published a dashboard, the catalog shows a **Submit** button instead of **Save and Publish**.
 Clicking **Submit** saves and publishes your metadata changes, including screenshots, a logo, and the README content.
 
-
 ## Share panels {#share-a-panel}
 
 You can share a panels in the following ways:
