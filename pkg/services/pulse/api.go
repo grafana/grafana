@@ -73,6 +73,17 @@ func (s *PulseService) registerAPIEndpoints() {
 		r.Get("/resources/:kind/:uid/version", authorize(read), routing.Wrap(s.getResourceVersionHandler))
 		r.Get("/resources/:kind/:uid/panel-mentions", authorize(read), routing.Wrap(s.listPanelMentionsHandler))
 		r.Get("/resources/:kind/:uid/participants", authorize(read), routing.Wrap(s.listParticipantsHandler))
+		// Per-resource unread count — powers the bubble overlaid on
+		// the dashboard sidebar's Pulse icon. Shares the same
+		// dashboard-read guard as the rest of the resource-scoped
+		// surface so a viewer who can't see the dashboard can't
+		// probe the badge for activity either.
+		r.Get("/resources/:kind/:uid/unread", authorize(read), routing.Wrap(s.getResourceUnreadCountHandler))
+		// Folder-rollup unread count — powers the tabCounter on the
+		// folder navmodel's Pulse tab. Reuses the rollup endpoint's
+		// dashboard-set resolution so the count and the listing
+		// always agree on which dashboards belong to this folder.
+		r.Get("/folders/:folderUID/unread", authorize(read), routing.Wrap(s.getFolderUnreadCountHandler))
 	}, middleware.ReqSignedIn, s.featureGate)
 }
 
@@ -1023,6 +1034,76 @@ func (s *PulseService) listParticipantsHandler(c *contextmodel.ReqContext) respo
 	})
 }
 
+// swagger:route GET /pulse/resources/{kind}/{uid}/unread pulse alpha getResourceUnreadCount
+//
+// Get the number of threads on a resource the caller has not yet read.
+//
+// Returns a small JSON envelope with the resource identifier and the
+// integer unread count. The frontend renders a numeric badge over the
+// dashboard sidebar's Pulse icon when the count is non-zero, so this
+// endpoint is hot — kept intentionally minimal (no per-thread
+// projections, no author resolution, no body bytes) so the badge can
+// refresh on every Pulse event without dominating the request budget.
+//
+// Responses:
+// 200: pulseResourceUnreadCountResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (s *PulseService) getResourceUnreadCountHandler(c *contextmodel.ReqContext) response.Response {
+	kind := ResourceKind(web.Params(c.Req)[":kind"])
+	uid := web.Params(c.Req)[":uid"]
+	if err := s.assertCanReadResource(c, kind, uid); err != nil {
+		return err
+	}
+	count, err := s.CountUnreadForResource(c.Req.Context(), c.GetOrgID(), s.actorUserID(c), kind, uid)
+	if err != nil {
+		return mapPulseError(err, "Failed to count unread threads")
+	}
+	return response.JSON(http.StatusOK, ResourceUnreadCountResponse{
+		ResourceKind: kind,
+		ResourceUID:  uid,
+		UnreadCount:  count,
+	})
+}
+
+// swagger:route GET /pulse/folders/{folderUID}/unread pulse alpha getFolderUnreadCount
+//
+// Get the number of unread threads across every dashboard the caller
+// can read under a folder hierarchy.
+//
+// Reuses the folder-rollup listing's dashboard resolution (folder
+// traversal + dashboards:read filter) so the count and the rolled-up
+// listing always agree on what counts as "this folder". Powers the
+// tabCounter rendered on the folder navmodel's Pulse tab — pages that
+// render the folder breadcrumbs (Dashboards, Library panels,
+// Alerting, Pulse) all call this endpoint so the badge shows up no
+// matter which tab the user is on.
+//
+// Responses:
+// 200: pulseFolderUnreadCountResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (s *PulseService) getFolderUnreadCountHandler(c *contextmodel.ReqContext) response.Response {
+	folderUID := web.Params(c.Req)[":folderUID"]
+	if strings.TrimSpace(folderUID) == "" {
+		return response.Error(http.StatusBadRequest, "Missing folder UID", nil)
+	}
+	count, err := s.CountUnreadForFolder(c.Req.Context(), c.GetOrgID(), s.actorUserID(c), c.SignedInUser, folderUID)
+	if err != nil {
+		return mapPulseError(err, "Failed to count unread threads")
+	}
+	return response.JSON(http.StatusOK, FolderUnreadCountResponse{
+		FolderUID:   folderUID,
+		UnreadCount: count,
+	})
+}
+
 // assertCanReadResource defers to the existing dashboard guardian for v1.
 // We do not consult the pulse_thread row here — the thread is irrelevant
 // for permission; only the underlying resource matters. Callers that have
@@ -1169,6 +1250,18 @@ type PulsePanelMentionsResponse struct {
 type PulseParticipantsResponse struct {
 	// in: body
 	Body ParticipantsResponse `json:"body"`
+}
+
+// swagger:response pulseResourceUnreadCountResponse
+type PulseResourceUnreadCountResponse struct {
+	// in: body
+	Body ResourceUnreadCountResponse `json:"body"`
+}
+
+// swagger:response pulseFolderUnreadCountResponse
+type PulseFolderUnreadCountResponse struct {
+	// in: body
+	Body FolderUnreadCountResponse `json:"body"`
 }
 
 // PulseUserSearchHit is one row in the Pulse-scoped user search

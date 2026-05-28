@@ -525,3 +525,37 @@ type MarkReadCommand struct {
 	UserID           int64  `json:"-"`
 	LastReadPulseUID string `json:"lastReadPulseUID"`
 }
+
+// ResourceUnreadCountResponse is the JSON envelope returned by the
+// per-resource unread-count endpoint. The frontend renders a numeric
+// badge over the dashboard sidebar's Pulse icon when UnreadCount > 0.
+//
+// "Unread" is defined as the union of two cases per (user, thread):
+//   - the thread has no pulse_read_state row for the user, OR
+//   - the thread's last_pulse_at is strictly newer than the user's
+//     last_read_at on that thread.
+//
+// Threads the user authored or replied to are marked read for the
+// author at write time (insertThreadAndPulse / insertPulse upsert a
+// read-state row for the author), so this surface never tells a user
+// they have unread activity that is entirely their own. Closed
+// threads are intentionally still counted — silencing a closed
+// thread the user has not yet seen would hide moderation/closure
+// events the user should know about.
+type ResourceUnreadCountResponse struct {
+	ResourceKind ResourceKind `json:"resourceKind"`
+	ResourceUID  string       `json:"resourceUID"`
+	UnreadCount  int64        `json:"unreadCount"`
+}
+
+// FolderUnreadCountResponse is the JSON envelope returned by the
+// folder unread-count endpoint. The folder isn't a Pulse resource;
+// the count rolls up across every dashboard the caller can read
+// under the folder hierarchy (same dashboard set as the rollup
+// listing). The Pulse tab in the folder navmodel renders this value
+// as a tabCounter so users see "where's the conversation happening"
+// at a glance.
+type FolderUnreadCountResponse struct {
+	FolderUID   string `json:"folderUID"`
+	UnreadCount int64  `json:"unreadCount"`
+}

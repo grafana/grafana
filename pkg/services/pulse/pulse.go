@@ -47,6 +47,8 @@ type Service interface {
 	Unsubscribe(ctx context.Context, cmd SubscribeCommand) error
 	MarkRead(ctx context.Context, cmd MarkReadCommand) error
 	GetResourceVersion(ctx context.Context, orgID int64, kind ResourceKind, uid string) (ResourceVersion, error)
+	CountUnreadForResource(ctx context.Context, orgID, userID int64, kind ResourceKind, uid string) (int64, error)
+	CountUnreadForFolder(ctx context.Context, orgID, userID int64, signedInUser identity.Requester, folderUID string) (int64, error)
 }
 
 // PulseService is the in-memory implementation backed by SQL.
@@ -718,6 +720,52 @@ func (s *PulseService) GetResourceVersion(ctx context.Context, orgID int64, kind
 		return ResourceVersion{}, err
 	}
 	return s.store.resourceVersion(ctx, orgID, kind, uid)
+}
+
+// CountUnreadForResource returns how many threads on the given
+// resource have activity the caller has not yet read. Permission to
+// see the resource itself is enforced at the API boundary; the store
+// query is org+resource scoped only.
+func (s *PulseService) CountUnreadForResource(ctx context.Context, orgID, userID int64, kind ResourceKind, uid string) (int64, error) {
+	if err := ensureThreadResource(kind, uid); err != nil {
+		return 0, err
+	}
+	return s.store.countUnreadThreadsForResource(ctx, orgID, userID, kind, uid)
+}
+
+// CountUnreadForFolder rolls up the unread-thread count across every
+// dashboard the caller can read under the given folder hierarchy.
+// Reuses the same folder traversal + dashboard search the rollup
+// listing uses, so the count can never include threads from a
+// dashboard the caller cannot see — and a viewer who can browse a
+// folder but not read a dashboard inside it will not see that
+// dashboard's threads inflate the badge.
+func (s *PulseService) CountUnreadForFolder(ctx context.Context, orgID, userID int64, signedInUser identity.Requester, folderUID string) (int64, error) {
+	if folderUID == "" {
+		return 0, ErrThreadResourceMissing
+	}
+	if s.folderSvc == nil || s.dashSvc == nil {
+		return 0, ErrPulseUnsupported
+	}
+	folderUIDs, err := s.collectDescendantFolderUIDs(ctx, orgID, signedInUser, folderUID)
+	if err != nil {
+		return 0, err
+	}
+	dashboards, err := s.findDashboardsInFolders(ctx, orgID, signedInUser, folderUIDs)
+	if err != nil {
+		return 0, err
+	}
+	if len(dashboards) == 0 {
+		return 0, nil
+	}
+	dashUIDs := make([]string, 0, len(dashboards))
+	for _, d := range dashboards {
+		if d.UID == "" {
+			continue
+		}
+		dashUIDs = append(dashUIDs, d.UID)
+	}
+	return s.store.countUnreadThreadsForDashboards(ctx, orgID, userID, dashUIDs)
 }
 
 // publishEvent is best-effort; failures are logged but do not affect the

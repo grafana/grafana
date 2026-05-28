@@ -56,6 +56,10 @@ func decodeCursor(s string) (cursor, error) {
 // insertThreadAndPulse atomically writes a new thread row plus its first
 // pulse and any mention rows. Done in a single transaction so a thread is
 // never observed without its parent pulse.
+//
+// The author is also marked as having read this initial pulse before the
+// transaction commits, so the per-resource unread-count badge does not
+// immediately light up for the person who just wrote the message.
 func (s *store) insertThreadAndPulse(ctx context.Context, t Thread, p Pulse, mentions []Mention) error {
 	return s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if _, err := sess.Insert(&t); err != nil {
@@ -64,7 +68,13 @@ func (s *store) insertThreadAndPulse(ctx context.Context, t Thread, p Pulse, men
 		if _, err := sess.Insert(&p); err != nil {
 			return err
 		}
-		return s.insertMentions(sess, p, mentions)
+		if err := s.insertMentions(sess, p, mentions); err != nil {
+			return err
+		}
+		return upsertReadStateInSession(sess, ReadState{
+			OrgID: p.OrgID, ThreadUID: t.UID, UserID: p.AuthorUserID,
+			LastReadPulseUID: p.UID, LastReadAt: p.Created,
+		})
 	})
 }
 
@@ -118,7 +128,17 @@ func (s *store) insertPulse(ctx context.Context, p Pulse, mentions []Mention) (T
 		if _, err := sess.ID(thread.ID).Get(&thread); err != nil {
 			return err
 		}
-		return s.insertMentions(sess, p, mentions)
+		if err := s.insertMentions(sess, p, mentions); err != nil {
+			return err
+		}
+		// Posting a reply means the author has seen everything up to
+		// and including their own pulse — keep the unread badge from
+		// firing on their own message by advancing their read marker
+		// inside the same transaction.
+		return upsertReadStateInSession(sess, ReadState{
+			OrgID: p.OrgID, ThreadUID: thread.UID, UserID: p.AuthorUserID,
+			LastReadPulseUID: p.UID, LastReadAt: p.Created,
+		})
 	})
 	return thread, err
 }
@@ -937,20 +957,127 @@ func (s *store) listSubscribers(ctx context.Context, orgID int64, threadUID stri
 // upsertReadState writes the user's last-read marker on a thread.
 func (s *store) upsertReadState(ctx context.Context, rs ReadState) error {
 	return s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		var existing ReadState
-		ok, err := sess.Where("org_id = ? AND thread_uid = ? AND user_id = ?", rs.OrgID, rs.ThreadUID, rs.UserID).Get(&existing)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			_, err := sess.Insert(&rs)
-			return err
-		}
-		existing.LastReadPulseUID = rs.LastReadPulseUID
-		existing.LastReadAt = rs.LastReadAt
-		_, err = sess.Where("org_id = ? AND thread_uid = ? AND user_id = ?", rs.OrgID, rs.ThreadUID, rs.UserID).Cols("last_read_pulse_uid", "last_read_at").Update(&existing)
+		return upsertReadStateInSession(sess, rs)
+	})
+}
+
+// upsertReadStateInSession is the inner half of upsertReadState, broken
+// out so write paths that already hold a transactional session (thread
+// + pulse creation) can advance the author's read marker atomically
+// with the write. Two callers, identical idempotent semantics.
+func upsertReadStateInSession(sess *db.Session, rs ReadState) error {
+	if rs.UserID == 0 || rs.ThreadUID == "" {
+		// Defensive: anonymous / service authors carry no user id, so
+		// there's nothing to mark read for. Skipping here keeps the
+		// pulse_read_state table free of zero-id rows that the count
+		// query would otherwise have to filter out at read time.
+		return nil
+	}
+	if rs.LastReadAt.IsZero() {
+		rs.LastReadAt = time.Now().UTC()
+	}
+	var existing ReadState
+	ok, err := sess.Where("org_id = ? AND thread_uid = ? AND user_id = ?", rs.OrgID, rs.ThreadUID, rs.UserID).Get(&existing)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		_, err := sess.Insert(&rs)
+		return err
+	}
+	existing.LastReadPulseUID = rs.LastReadPulseUID
+	existing.LastReadAt = rs.LastReadAt
+	_, err = sess.Where("org_id = ? AND thread_uid = ? AND user_id = ?", rs.OrgID, rs.ThreadUID, rs.UserID).Cols("last_read_pulse_uid", "last_read_at").Update(&existing)
+	return err
+}
+
+// countUnreadThreadsForResource returns the number of threads on a
+// single resource that the caller has unread activity on. "Unread" is
+// the union of (no read-state row for the user on that thread) and
+// (the thread's last_pulse_at is newer than the user's last_read_at
+// on that thread). Threads with a zero pulse_count are excluded so
+// hard-deletion races never inflate the badge.
+//
+// Authorisation is the caller's job at the API layer; the store query
+// is org-scoped only. Implementation note: we issue raw SQL with a
+// LEFT JOIN rather than two separate queries because the alternative
+// (load every thread + load every read-state row + join in Go) scales
+// poorly on chatty dashboards and the badge is rendered on every
+// dashboard view. The LEFT JOIN keeps the work inside the database
+// where it's cheapest.
+func (s *store) countUnreadThreadsForResource(ctx context.Context, orgID, userID int64, kind ResourceKind, uid string) (int64, error) {
+	if userID == 0 {
+		// Anonymous viewers don't have a per-user read marker, so
+		// "unread" is undefined for them. Returning zero avoids
+		// flashing a badge over the icon for someone who has no
+		// way to clear it.
+		return 0, nil
+	}
+	var count int64
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.SQL(`
+			SELECT COUNT(*) FROM pulse_thread t
+			LEFT JOIN pulse_read_state rs
+				ON rs.org_id = t.org_id
+				AND rs.thread_uid = t.uid
+				AND rs.user_id = ?
+			WHERE t.org_id = ?
+				AND t.resource_kind = ?
+				AND t.resource_uid = ?
+				AND t.pulse_count > 0
+				AND (rs.last_read_at IS NULL OR rs.last_read_at < t.last_pulse_at)
+		`, userID, orgID, string(kind), uid).Get(&count)
 		return err
 	})
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+// countUnreadThreadsForDashboards returns the unread thread count
+// across an allowlist of dashboard UIDs. Powers the folder Pulse tab
+// counter: the service layer resolves the folder hierarchy to a set
+// of accessible dashboards, hands the UIDs in here, and this query
+// rolls them into a single number.
+//
+// An empty allowlist short-circuits to zero rather than executing a
+// degenerate "WHERE resource_uid IN ()" query — dialect handling of
+// empty IN clauses is inconsistent, and we never want the folder
+// count to leak threads from outside the resolved set even by
+// accident.
+func (s *store) countUnreadThreadsForDashboards(ctx context.Context, orgID, userID int64, dashboardUIDs []string) (int64, error) {
+	if userID == 0 || len(dashboardUIDs) == 0 {
+		return 0, nil
+	}
+	var count int64
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		args := make([]any, 0, 3+len(dashboardUIDs))
+		args = append(args, userID, orgID, string(ResourceKindDashboard))
+		placeholders := make([]string, len(dashboardUIDs))
+		for i, uid := range dashboardUIDs {
+			placeholders[i] = "?"
+			args = append(args, uid)
+		}
+		query := `
+			SELECT COUNT(*) FROM pulse_thread t
+			LEFT JOIN pulse_read_state rs
+				ON rs.org_id = t.org_id
+				AND rs.thread_uid = t.uid
+				AND rs.user_id = ?
+			WHERE t.org_id = ?
+				AND t.resource_kind = ?
+				AND t.resource_uid IN (` + strings.Join(placeholders, ",") + `)
+				AND t.pulse_count > 0
+				AND (rs.last_read_at IS NULL OR rs.last_read_at < t.last_pulse_at)
+		`
+		_, err := sess.SQL(query, args...).Get(&count)
+		return err
+	})
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 // resourceVersion sums the versions of all threads on a resource. Cheap

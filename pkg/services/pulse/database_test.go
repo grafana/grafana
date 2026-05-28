@@ -782,6 +782,119 @@ func TestIntegrationPulseStore_ListFolderRolledUpThreads(t *testing.T) {
 	})
 }
 
+func TestIntegrationPulseStore_CountUnreadThreads(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	ctx := context.Background()
+	sql := db.InitTestDB(t)
+	st := newStore(sql)
+	now := time.Now().UTC()
+
+	plain := func(text string) json.RawMessage {
+		raw, _ := sampleBody(t, text)
+		return raw
+	}
+
+	// Fixture: three threads on dash-A, one on dash-B, one on
+	// dash-out (excluded from the folder rollup). Each thread starts
+	// with a single root pulse authored by user 1, so the author's
+	// auto-read state is exercised end-to-end through
+	// insertThreadAndPulse rather than mocked at the store layer.
+	threadUIDs := []string{
+		"unread-aaaaaaaaaa1", "unread-aaaaaaaaaa2", "unread-aaaaaaaaaa3",
+		"unread-bbbbbbbbbb1", "unread-cccccccccc1",
+	}
+	dashboardOf := map[string]string{
+		"unread-aaaaaaaaaa1": "dash-A",
+		"unread-aaaaaaaaaa2": "dash-A",
+		"unread-aaaaaaaaaa3": "dash-A",
+		"unread-bbbbbbbbbb1": "dash-B",
+		"unread-cccccccccc1": "dash-out",
+	}
+	authorOf := int64(1)
+	for _, uid := range threadUIDs {
+		require.NoError(t, st.insertThreadAndPulse(ctx,
+			Thread{
+				UID: uid, OrgID: 1, ResourceKind: ResourceKindDashboard, ResourceUID: dashboardOf[uid],
+				CreatedBy: authorOf, Created: now, Updated: now, LastPulseAt: now,
+				PulseCount: 1, Version: 1,
+			},
+			Pulse{
+				UID: util.GenerateShortUID(), ThreadUID: uid, OrgID: 1,
+				AuthorUserID: authorOf, AuthorKind: AuthorKindUser,
+				BodyText: "root", BodyJSON: plain("root"), Created: now, Updated: now,
+			},
+			nil,
+		))
+	}
+
+	// User 2 is a fresh reader who has never opened any thread.
+	const reader = int64(2)
+
+	t.Run("counts every thread on a resource for a brand-new reader", func(t *testing.T) {
+		got, err := st.countUnreadThreadsForResource(ctx, 1, reader, ResourceKindDashboard, "dash-A")
+		require.NoError(t, err)
+		// All three dash-A threads are unread for user 2 — they have
+		// no pulse_read_state rows on any of them yet.
+		require.EqualValues(t, 3, got)
+	})
+
+	t.Run("the thread author sees zero unread on their own writes", func(t *testing.T) {
+		got, err := st.countUnreadThreadsForResource(ctx, 1, authorOf, ResourceKindDashboard, "dash-A")
+		require.NoError(t, err)
+		// insertThreadAndPulse advances the author's read marker in
+		// the same transaction, so the badge does not fire on their
+		// own pulses.
+		require.EqualValues(t, 0, got)
+	})
+
+	t.Run("reading a thread drops it from the user's unread count", func(t *testing.T) {
+		require.NoError(t, st.upsertReadState(ctx, ReadState{
+			OrgID: 1, ThreadUID: "unread-aaaaaaaaaa1", UserID: reader,
+			LastReadPulseUID: "ignored", LastReadAt: now.Add(time.Hour),
+		}))
+		got, err := st.countUnreadThreadsForResource(ctx, 1, reader, ResourceKindDashboard, "dash-A")
+		require.NoError(t, err)
+		require.EqualValues(t, 2, got)
+	})
+
+	t.Run("a fresh reply on a previously-read thread re-arms the badge", func(t *testing.T) {
+		// Append a reply by user 1 to the thread user 2 just read.
+		// The reply's last_pulse_at jumps past user 2's last_read_at,
+		// so the thread should come back into the unread count.
+		_, err := st.insertPulse(ctx, Pulse{
+			UID: util.GenerateShortUID(), ThreadUID: "unread-aaaaaaaaaa1", OrgID: 1,
+			AuthorUserID: authorOf, AuthorKind: AuthorKindUser,
+			BodyText: "follow-up", BodyJSON: plain("follow-up"),
+			Created: now.Add(2 * time.Hour), Updated: now.Add(2 * time.Hour),
+		}, nil)
+		require.NoError(t, err)
+		got, err := st.countUnreadThreadsForResource(ctx, 1, reader, ResourceKindDashboard, "dash-A")
+		require.NoError(t, err)
+		require.EqualValues(t, 3, got)
+	})
+
+	t.Run("count is bounded by the dashboard allowlist", func(t *testing.T) {
+		got, err := st.countUnreadThreadsForDashboards(ctx, 1, reader, []string{"dash-A", "dash-B"})
+		require.NoError(t, err)
+		// dash-out is excluded; reader's count is now 3 on dash-A
+		// (after the reply re-armed unread-aaaaaaaaaa1) plus 1 on
+		// dash-B = 4.
+		require.EqualValues(t, 4, got)
+	})
+
+	t.Run("anonymous and empty inputs short-circuit to zero", func(t *testing.T) {
+		gotA, err := st.countUnreadThreadsForResource(ctx, 1, 0, ResourceKindDashboard, "dash-A")
+		require.NoError(t, err)
+		require.EqualValues(t, 0, gotA, "anonymous reader: no per-user marker exists")
+		gotB, err := st.countUnreadThreadsForDashboards(ctx, 1, reader, nil)
+		require.NoError(t, err)
+		require.EqualValues(t, 0, gotB, "empty allowlist: short-circuit without a degenerate IN ()")
+	})
+}
+
 func TestIntegrationPulseStore_ListThreads_QuerySearch(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
