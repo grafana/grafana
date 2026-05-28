@@ -1,8 +1,8 @@
 import { useCallback, useId, useState } from 'react';
-import { useCopyToClipboard } from 'react-use';
 
 import { QueryWithAssistantButton } from '@grafana/assistant';
 import { CoreApp, type DataSourceInstanceSettings, type SelectableValue } from '@grafana/data';
+import { useCopyToClipboard } from '@grafana/data/unstable';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect } from '@grafana/plugin-ui';
@@ -55,7 +55,7 @@ export function QueryHeader({
   app,
 }: QueryHeaderProps) {
   const { editorMode } = query;
-  const [_, copyToClipboard] = useCopyToClipboard();
+  const copyToClipboard = useCopyToClipboard();
   const [showConfirm, setShowConfirm] = useState(false);
   const toRawSql = db.toRawSql;
 

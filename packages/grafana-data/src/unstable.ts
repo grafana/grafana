@@ -9,4 +9,5 @@
  * and be subject to the standard policies
  */
 
+export { useCopyToClipboard } from './hooks/useCopyToClipboard';
 export { useObservable } from './hooks/useObservable';
