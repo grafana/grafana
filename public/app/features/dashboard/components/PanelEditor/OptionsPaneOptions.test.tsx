@@ -205,6 +205,16 @@ describe('OptionsPaneOptions', () => {
     expect(scenario.onPanelConfigChange).toHaveBeenCalledWith('title', 'New');
   });
 
+  it('should call onPanelConfigChange immediately when title is cleared without blur', () => {
+    const scenario = new OptionsPaneOptionsTestScenario();
+    scenario.setup();
+
+    const input = screen.getByDisplayValue(scenario.panel.title);
+    fireEvent.change(input, { target: { value: '' } });
+
+    expect(scenario.onPanelConfigChange).toHaveBeenCalledWith('title', '');
+  });
+
   it('should call onFieldConfigsChange when updating field config', () => {
     const scenario = new OptionsPaneOptionsTestScenario();
     scenario.setup();
