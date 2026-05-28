@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { FieldType } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data';
 import { type Panel } from '@grafana/schema';
 
 import { PanelIntentChips, PanelIntentChipsRenderer, computeChipStates } from './PanelIntentChips';
@@ -87,11 +87,11 @@ describe('PanelIntentChips', () => {
 // computeThresholdState (Phase E.5)
 // ---------------------------------------------------------------------------
 
-function makeFrame(values: number[]) {
+function makeFrame(values: number[]): DataFrame {
   return {
     fields: [
-      { type: FieldType.time, values: values.map((_, i) => i * 1000) },
-      { type: FieldType.number, values },
+      { type: FieldType.time, name: 'time', values: values.map((_, i) => i * 1000), config: {} },
+      { type: FieldType.number, name: 'value', values, config: {} },
     ],
     length: values.length,
   };
