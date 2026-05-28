@@ -454,6 +454,10 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = rbacSect.NewKey("single_organization", "true")
 		require.NoError(t, err)
 	}
+	if opts.BasicRoleAggregatorInterval > 0 {
+		_, err = rbacSect.NewKey("basic_role_aggregator_interval", opts.BasicRoleAggregatorInterval.String())
+		require.NoError(t, err)
+	}
 
 	if opts.DisableAuthZClientCache {
 		authzSect, err := cfg.NewSection("authorization")
@@ -987,18 +991,22 @@ type GrafanaOpts struct {
 	EnableRecordingRules                                 bool
 	EnableSCIM                                           bool
 	RBACSingleOrganization                               bool
-	APIServerRuntimeConfig                               string
-	DisableControllers                                   bool
-	DisableDBCleanup                                     bool
-	MigrationParquetBuffer                               bool
-	EnableSQLKVBackend                                   bool
-	SecretsManagerEnableDBMigrations                     bool
-	OpenFeatureAPIEnabled                                bool
-	DisableAuthZClientCache                              bool
-	ZanzanaReconciliationInterval                        time.Duration
-	ZanzanaReconcilerMode                                setting.ZanzanaReconcilerMode
-	DisableZanzanaCache                                  bool
-	DisableZanzanaServerCheckQueryCache                  bool
+	// BasicRoleAggregatorInterval, if > 0, sets `[rbac] basic_role_aggregator_interval`
+	// in the test server's ini. Used by tests that want the enterprise
+	// basic-role aggregator to tick faster than the production 30s default.
+	BasicRoleAggregatorInterval         time.Duration
+	APIServerRuntimeConfig              string
+	DisableControllers                  bool
+	DisableDBCleanup                    bool
+	MigrationParquetBuffer              bool
+	EnableSQLKVBackend                  bool
+	SecretsManagerEnableDBMigrations    bool
+	OpenFeatureAPIEnabled               bool
+	DisableAuthZClientCache             bool
+	ZanzanaReconciliationInterval       time.Duration
+	ZanzanaReconcilerMode               setting.ZanzanaReconcilerMode
+	DisableZanzanaCache                 bool
+	DisableZanzanaServerCheckQueryCache bool
 
 	// If set to 0, the default (2) is used.
 	DBMaxConns int
