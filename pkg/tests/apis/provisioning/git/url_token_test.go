@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"testing"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	apicommon "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/nanogit/gittest"
 	"github.com/stretchr/testify/assert"
@@ -31,11 +30,10 @@ func TestIntegrationProvisioning_GitRequiresNewTokenWhenRepositoryURLChanges(t *
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			repo, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
 			require.NoError(collect, err)
-			updated := common.MustToUnstructured(t, repo)
-			require.NoError(collect, unstructured.SetNestedField(updated.Object, "https://some-new-url/", "spec", "git", "url"))
-			unstructured.RemoveNestedField(updated.Object, "secure", "token")
+			require.NoError(collect, unstructured.SetNestedField(repo.Object, "https://some-new-url/", "spec", "git", "url"))
+			unstructured.RemoveNestedField(repo.Object, "secure", "token")
 
-			_, err = helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+			_, err = helper.Repositories.Resource.Update(ctx, repo, metav1.UpdateOptions{})
 			require.Error(collect, err)
 			require.True(collect, apierrors.IsInvalid(err), "expected invalid repository update, got %v", err)
 			require.ErrorContains(collect, err, "secure.token")
@@ -50,15 +48,15 @@ func TestIntegrationProvisioning_GitRequiresNewTokenWhenRepositoryURLChanges(t *
 			repo, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
 			require.NoError(collect, err)
 
-			repoObj := common.MustFromUnstructured[provisioning.Repository](t, repo)
+			repoObj := common.UnstructuredToRepository(t, repo)
 			repoObj.Spec.Git.URL = changedRemote.URL
 			repoObj.Spec.Git.TokenUser = changedUser.Username
 			repoObj.Secure.Token = apicommon.InlineSecureValue{Create: apicommon.RawSecureValue(changedUser.Password)}
 
-			result, err := helper.Repositories.Resource.Update(ctx, common.MustToUnstructured(t, repoObj), metav1.UpdateOptions{})
+			result, err := helper.Repositories.Resource.Update(ctx, common.RepositoryToUnstructured(t, repoObj), metav1.UpdateOptions{})
 			require.NoError(collect, err)
 
-			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, result)
+			updatedRepo := common.UnstructuredToRepository(t, result)
 			require.Equal(collect, changedRemote.URL, updatedRepo.Spec.Git.URL)
 			require.NotEmpty(collect, updatedRepo.Secure.Token.Name)
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
