@@ -90,7 +90,7 @@ func ProvideService(
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features != nil && features.IsEnabledGlobally(featuremgmt.FlagZanzanaMergeUserPermissions) && zanzanaClient != nil {
-		service.zanzanaResolver = newZanzanaPermissionResolver(zanzanaClient, userService)
+		service.zanzanaResolver = NewZanzanaPermissionResolver(zanzanaClient, userService)
 	}
 
 	return service, nil
@@ -138,7 +138,7 @@ type Service struct {
 	sql             db.DB
 	serverLock      *serverlock.ServerLockService
 	singleFlight    singleflight.Group
-	zanzanaResolver *zanzanaPermissionResolver
+	zanzanaResolver *ZanzanaPermissionResolver
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -169,9 +169,9 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	}
 
 	if s.zanzanaResolver != nil {
-		zPerms, zErr := s.zanzanaResolver.resolveCurrentUserPermissions(ctx, user)
+		zPerms, zErr := s.zanzanaResolver.ResolveCurrentUserPermissions(ctx, user)
 		if zErr == nil {
-			permissions = mergeUserPermissions(permissions, zPerms)
+			permissions = MergeUserPermissions(permissions, zPerms)
 		} else {
 			s.log.Warn("could not get zanzana user permissions, using legacy only", "error", zErr)
 		}
@@ -776,9 +776,9 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 	}
 
 	if s.zanzanaResolver != nil {
-		zPerms, zErr := s.zanzanaResolver.searchUsersPermissions(ctx, usr, usr.GetOrgID(), options)
+		zPerms, zErr := s.zanzanaResolver.SearchUsersPermissions(ctx, usr, usr.GetOrgID(), options)
 		if zErr == nil {
-			res = mergePermissions(res, zPerms)
+			res = MergePermissions(res, zPerms)
 		} else {
 			s.log.Warn("could not get zanzana user permissions, using legacy only", "error", zErr)
 		}

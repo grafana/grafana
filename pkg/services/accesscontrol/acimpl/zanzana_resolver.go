@@ -21,28 +21,28 @@ import (
 
 var logger = log.New("accesscontrol.zanzana_resolver")
 
-// zanzanaPermissionResolver handles resolving user permissions using Zanzana
-type zanzanaPermissionResolver struct {
+// ZanzanaPermissionResolver handles resolving user permissions using Zanzana
+type ZanzanaPermissionResolver struct {
 	client  zanzana.Client
 	userSvc user.Service
 }
 
-func newZanzanaPermissionResolver(client zanzana.Client, userSvc user.Service) *zanzanaPermissionResolver {
-	return &zanzanaPermissionResolver{
+func NewZanzanaPermissionResolver(client zanzana.Client, userSvc user.Service) *ZanzanaPermissionResolver {
+	return &ZanzanaPermissionResolver{
 		client:  client,
 		userSvc: userSvc,
 	}
 }
 
-// resolveCurrentUserPermissions lists Zanzana-supported permissions for the signed-in identity.
-func (r *zanzanaPermissionResolver) resolveCurrentUserPermissions(ctx context.Context, usr identity.Requester) ([]ac.Permission, error) {
+// ResolveCurrentUserPermissions lists Zanzana-supported permissions for the signed-in identity.
+func (r *ZanzanaPermissionResolver) ResolveCurrentUserPermissions(ctx context.Context, usr identity.Requester) ([]ac.Permission, error) {
 	subject := usr.GetUID()
 	namespace := claims.OrgNamespaceFormatter(usr.GetOrgID())
 	return r.listAllWithPrefix(ctx, namespace, subject, "", "")
 }
 
 // searchUsersPermissions searches for users' permissions using Zanzana
-func (r *zanzanaPermissionResolver) searchUsersPermissions(ctx context.Context, signedInUser identity.Requester, orgID int64, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) SearchUsersPermissions(ctx context.Context, signedInUser identity.Requester, orgID int64, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
 	// If we have a specific user ID, search for that user
 	if options.UserID > 0 {
 		return r.searchSingleUser(ctx, orgID, options.UserID, options)
@@ -53,7 +53,7 @@ func (r *zanzanaPermissionResolver) searchUsersPermissions(ctx context.Context, 
 }
 
 // searchSingleUser searches permissions for a single user.
-func (r *zanzanaPermissionResolver) searchSingleUser(ctx context.Context, orgID, userID int64, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) searchSingleUser(ctx context.Context, orgID, userID int64, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
 	usr, err := r.userSvc.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
@@ -64,7 +64,7 @@ func (r *zanzanaPermissionResolver) searchSingleUser(ctx context.Context, orgID,
 // searchPermissionsForIdentity resolves permissions when uid and account type are already known.
 // Used by searchAllUsers with data from user.Search (avoids one GetByID per user). Search results
 // only include non-service accounts; pass isServiceAccount accordingly for other call sites.
-func (r *zanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Context, orgID, userID int64, uid string, isServiceAccount bool, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Context, orgID, userID int64, uid string, isServiceAccount bool, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
 	result := make(map[int64][]ac.Permission)
 	permissions := []ac.Permission{}
 
@@ -108,7 +108,7 @@ func (r *zanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Con
 }
 
 // searchAllUsers searches permissions across all users for a given action
-func (r *zanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedInUser identity.Requester, orgID int64, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedInUser identity.Requester, orgID int64, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
 	result := make(map[int64][]ac.Permission)
 
 	if options.Action == "" && options.ActionPrefix == "" {
@@ -216,7 +216,7 @@ func isDashboardRBACAction(action string) bool {
 }
 
 // listPermissions lists permissions for a subject on a given group/resource
-func (r *zanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject, group, resource, verb, action, scope string) ([]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject, group, resource, verb, action, scope string) ([]ac.Permission, error) {
 	req := &authzv1.ListRequest{
 		Namespace: namespace,
 		Subject:   subject,
@@ -305,7 +305,7 @@ func (r *zanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 	return permissions, nil
 }
 
-func (r *zanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, namespace, subject, prefix, scope string) ([]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, namespace, subject, prefix, scope string) ([]ac.Permission, error) {
 	var permissions []ac.Permission
 	for _, entry := range common.SupportedActions() {
 		if strings.HasPrefix(entry.Action, prefix) {
@@ -319,50 +319,84 @@ func (r *zanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, names
 	return permissions, nil
 }
 
-// mergePermissions unions permissions from two sources, deduplicating by action+scope per user.
-func mergePermissions(a, b map[int64][]ac.Permission) map[int64][]ac.Permission {
-	result := make(map[int64][]ac.Permission, len(a))
+// permKey is the dedup key for action+scope pairs. Using a struct avoids the
+// per-permission string concatenation that the previous "action|scope" form did.
+type permKey struct {
+	action string
+	scope  string
+}
+
+// MergePermissions unions permissions from two sources, deduplicating by action+scope per user.
+// Inputs are consumed: returned slices may alias entries in a or b, so callers must not retain
+// or mutate the inputs after this call.
+func MergePermissions(a, b map[int64][]ac.Permission) map[int64][]ac.Permission {
+	if len(b) == 0 {
+		return a
+	}
+	if len(a) == 0 {
+		return b
+	}
+
+	result := make(map[int64][]ac.Permission, len(a)+len(b))
+	// Users only in a: alias the slice. No copy until we know we'll mutate it.
 	for userID, perms := range a {
-		result[userID] = append([]ac.Permission(nil), perms...)
+		result[userID] = perms
 	}
 
 	for userID, perms := range b {
-		existing := result[userID]
-		if len(existing) == 0 {
+		existing, ok := result[userID]
+		if !ok || len(existing) == 0 {
 			result[userID] = perms
 			continue
 		}
 
-		seen := make(map[string]struct{}, len(existing))
+		seen := make(map[permKey]struct{}, len(existing)+len(perms))
 		for _, p := range existing {
-			seen[p.Action+"|"+p.Scope] = struct{}{}
+			seen[permKey{p.Action, p.Scope}] = struct{}{}
 		}
+		// Single allocation sized to the worst-case merged length; avoids
+		// repeated grow during the append loop and also detaches from a's slice.
+		merged := make([]ac.Permission, len(existing), len(existing)+len(perms))
+		copy(merged, existing)
 		for _, p := range perms {
-			key := p.Action + "|" + p.Scope
-			if _, ok := seen[key]; !ok {
-				existing = append(existing, p)
-				seen[key] = struct{}{}
+			k := permKey{p.Action, p.Scope}
+			if _, dup := seen[k]; dup {
+				continue
 			}
+			merged = append(merged, p)
+			seen[k] = struct{}{}
 		}
-		result[userID] = existing
+		result[userID] = merged
 	}
 
 	return result
 }
 
-// mergeUserPermissions unions permissions from legacy RBAC and Zanzana for a single user,
-// deduplicating by action+scope.
-func mergeUserPermissions(legacy, zanzana []ac.Permission) []ac.Permission {
-	seen := make(map[string]struct{}, len(legacy))
+// MergeUserPermissions unions permissions from legacy RBAC and Zanzana for a single user,
+// deduplicating by action+scope. Mutates and returns the legacy slice (after a single
+// pre-grow if needed).
+func MergeUserPermissions(legacy, zanzana []ac.Permission) []ac.Permission {
+	if len(zanzana) == 0 {
+		return legacy
+	}
+
+	seen := make(map[permKey]struct{}, len(legacy)+len(zanzana))
 	for _, p := range legacy {
-		seen[p.Action+"|"+p.Scope] = struct{}{}
+		seen[permKey{p.Action, p.Scope}] = struct{}{}
+	}
+	// Pre-grow once to the worst-case combined length so the append loop never reallocates.
+	if cap(legacy)-len(legacy) < len(zanzana) {
+		grown := make([]ac.Permission, len(legacy), len(legacy)+len(zanzana))
+		copy(grown, legacy)
+		legacy = grown
 	}
 	for _, p := range zanzana {
-		key := p.Action + "|" + p.Scope
-		if _, ok := seen[key]; !ok {
-			legacy = append(legacy, p)
-			seen[key] = struct{}{}
+		k := permKey{p.Action, p.Scope}
+		if _, dup := seen[k]; dup {
+			continue
 		}
+		legacy = append(legacy, p)
+		seen[k] = struct{}{}
 	}
 	return legacy
 }

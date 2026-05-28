@@ -155,7 +155,7 @@ func TestMergePermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := mergePermissions(tt.a, tt.b)
+			result := MergePermissions(tt.a, tt.b)
 			require.Len(t, result, len(tt.expected))
 			for userID, expectedPerms := range tt.expected {
 				gotPerms, ok := result[userID]
@@ -198,7 +198,7 @@ func TestMergeUserPermissions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			legacy := append([]accesscontrol.Permission(nil), tt.legacy...)
-			got := mergeUserPermissions(legacy, tt.zanzana)
+			got := MergeUserPermissions(legacy, tt.zanzana)
 			sortPermissions(got)
 			expected := append([]accesscontrol.Permission(nil), tt.expected...)
 			sortPermissions(expected)
@@ -215,7 +215,7 @@ func setupServiceWithFakeStore(t *testing.T, store accesscontrol.Store, zClient 
 		nil, permreg.ProvidePermissionRegistry(), nil,
 	)
 	if zClient != nil {
-		svc.zanzanaResolver = newZanzanaPermissionResolver(zClient, userSvc)
+		svc.zanzanaResolver = NewZanzanaPermissionResolver(zClient, userSvc)
 	}
 	return svc
 }
