@@ -220,25 +220,6 @@ function PanelIntentEditorBody({ panel, intent }: BodyProps) {
             />
           </Field>
 
-          <Field label={t('panel-intent-editor.notes', 'Notes')}>
-            <TextArea
-              value={intent.expectedBehavior?.notes ?? ''}
-              rows={2}
-              onChange={(e) => {
-                const cur = currentIntent();
-                writeIntent(
-                  {
-                    ...cur,
-                    expectedBehavior: {
-                      ...cur.expectedBehavior,
-                      notes: e.currentTarget.value || undefined,
-                    },
-                  },
-                  t('panel-intent-editor.edit.notes', 'Edit notes')
-                );
-              }}
-            />
-          </Field>
         </fieldset>
 
         <FailureModesEditor
@@ -302,7 +283,6 @@ function hasAnyIntent(intent: PanelIntent): boolean {
       intent.owner ||
       intent.expectedBehavior?.normalRange ||
       intent.expectedBehavior?.alertThreshold ||
-      intent.expectedBehavior?.notes ||
       intent.failureModes?.length ||
       intent.relatedSlos?.length ||
       intent.runbooks?.length
@@ -525,9 +505,12 @@ function SuggestFieldButton({ panel, focus, tooltip }: SuggestFieldButtonProps) 
     });
   };
 
+  const styles = useStyles2(getStyles);
   return (
     <Tooltip content={tooltip} placement="top">
-      <IconButton name="ai-sparkle" size="sm" aria-label={tooltip} onClick={handleClick} />
+      <span className={styles.sparkle}>
+        <IconButton name="ai-sparkle" size="sm" aria-label={tooltip} onClick={handleClick} />
+      </span>
     </Tooltip>
   );
 }
@@ -596,7 +579,7 @@ function DraftWithAIButtonView({
           'Open the Grafana Assistant prefilled with a suggest_dashboard_intent prompt for this panel.'
         )}
       >
-        <Button variant="secondary" size="sm" icon="ai-sparkle" onClick={handleClick}>
+        <Button variant="secondary" size="sm" icon="ai-sparkle" onClick={handleClick} className={styles.sparkleButton}>
           {hasIntent
             ? t('panel-intent-editor.draft-with-ai.refine', 'Refine with AI')
             : t('panel-intent-editor.draft-with-ai.draft', 'Draft with AI')}
@@ -622,6 +605,20 @@ function getStyles(theme: GrafanaTheme2) {
     draftBar: css({
       display: 'flex',
       justifyContent: 'flex-end',
+    }),
+    sparkle: css({
+      display: 'inline-flex',
+      '& button': {
+        color: theme.colors.warning.text,
+      },
+      '& svg': {
+        color: theme.colors.warning.text,
+      },
+    }),
+    sparkleButton: css({
+      '& svg': {
+        color: theme.colors.warning.text,
+      },
     }),
   };
 }
