@@ -123,13 +123,13 @@ describe('PanelIntentEditor', () => {
     expect(intentOf(vizPanel)?.failureModes).toBeUndefined();
   });
 
-  it('does not render the "Draft with AI" button when the assistant is unavailable', () => {
+  it('does not render the "Write" button when the assistant is unavailable', () => {
     const { vizPanel } = buildPanel();
     render(<PanelIntentEditor panel={vizPanel} />);
-    expect(screen.queryByRole('button', { name: /Draft with AI|Refine with AI/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Write$|^Suggest$/i })).not.toBeInTheDocument();
   });
 
-  it('renders "Draft with AI" when the assistant is available and triggers openAssistant on click', async () => {
+  it('renders "Write" when the assistant is available and triggers openAssistant on click', async () => {
     const openAssistant = jest.fn();
     (useAssistant as jest.Mock).mockReturnValue({
       isAvailable: true,
@@ -139,7 +139,7 @@ describe('PanelIntentEditor', () => {
     const { vizPanel } = buildPanel();
     render(<PanelIntentEditor panel={vizPanel} />);
 
-    const button = screen.getByRole('button', { name: /Draft with AI/i });
+    const button = screen.getByRole('button', { name: /^Write$/i });
     await userEvent.click(button);
 
     expect(openAssistant).toHaveBeenCalledTimes(1);
@@ -151,7 +151,7 @@ describe('PanelIntentEditor', () => {
     expect(call.prompt).toMatch(/suggest_dashboard_intent/);
   });
 
-  it('renders "Refine with AI" when there is existing intent', () => {
+  it('renders "Suggest" when there is existing intent', () => {
     (useAssistant as jest.Mock).mockReturnValue({
       isAvailable: true,
       openAssistant: jest.fn(),
@@ -160,7 +160,7 @@ describe('PanelIntentEditor', () => {
     const { vizPanel } = buildPanel({ intent: { purpose: 'Existing' } });
     render(<PanelIntentEditor panel={vizPanel} />);
 
-    expect(screen.getByRole('button', { name: /Refine with AI/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Suggest$/i })).toBeInTheDocument();
   });
 
   describe('per-field Suggest buttons (E.3)', () => {

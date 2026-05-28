@@ -114,49 +114,55 @@ function PanelIntentEditorBody({ panel, intent }: BodyProps) {
       <DraftWithAIButton panel={panel} hasIntent={hasAnyIntent(intent)} />
 
       <Field
-        label={t('panel-intent-editor.purpose', 'Purpose')}
-        description={t(
-          'panel-intent-editor.purpose-desc',
-          'One sentence: what does this panel measure and why does it matter?'
-        )}
+        label={
+          <Stack direction="row" gap={0.5} alignItems="center">
+            <span>{t('panel-intent-editor.purpose', 'Purpose')}</span>
+            <SuggestFieldButton
+              panel={panel}
+              focus="purpose"
+              tooltip={t('panel-intent-editor.suggest.purpose', 'Suggest a purpose statement with AI')}
+            />
+          </Stack>
+        }
       >
-        <Stack direction="row" gap={0.5} alignItems="flex-start">
-          <TextArea
-            value={intent.purpose ?? ''}
-            rows={2}
-            onChange={(e) =>
-              writeIntent(
-                { ...currentIntent(), purpose: e.currentTarget.value || undefined },
-                t('panel-intent-editor.edit.purpose', 'Edit panel purpose')
-              )
-            }
-          />
-          <SuggestFieldButton
-            panel={panel}
-            focus="purpose"
-            tooltip={t('panel-intent-editor.suggest.purpose', 'Suggest a purpose statement with AI')}
-          />
-        </Stack>
+        <TextArea
+          value={intent.purpose ?? ''}
+          rows={2}
+          placeholder={t(
+            'panel-intent-editor.purpose-placeholder',
+            'One sentence: what does this panel measure and why does it matter?'
+          )}
+          onChange={(e) =>
+            writeIntent(
+              { ...currentIntent(), purpose: e.currentTarget.value || undefined },
+              t('panel-intent-editor.edit.purpose', 'Edit panel purpose')
+            )
+          }
+        />
       </Field>
 
-      <Field label={t('panel-intent-editor.owner', 'Owner')}>
-        <Stack direction="row" gap={0.5} alignItems="center">
-          <Input
-            value={intent.owner ?? ''}
-            placeholder="@team-handle"
-            onChange={(e) =>
-              writeIntent(
-                { ...currentIntent(), owner: e.currentTarget.value || undefined },
-                t('panel-intent-editor.edit.owner', 'Edit panel owner')
-              )
-            }
-          />
-          <SuggestFieldButton
-            panel={panel}
-            focus="owner"
-            tooltip={t('panel-intent-editor.suggest.owner', 'Suggest an owner with AI')}
-          />
-        </Stack>
+      <Field
+        label={
+          <Stack direction="row" gap={0.5} alignItems="center">
+            <span>{t('panel-intent-editor.owner', 'Owner')}</span>
+            <SuggestFieldButton
+              panel={panel}
+              focus="owner"
+              tooltip={t('panel-intent-editor.suggest.owner', 'Suggest an owner with AI')}
+            />
+          </Stack>
+        }
+      >
+        <Input
+          value={intent.owner ?? ''}
+          placeholder="@team-handle"
+          onChange={(e) =>
+            writeIntent(
+              { ...currentIntent(), owner: e.currentTarget.value || undefined },
+              t('panel-intent-editor.edit.owner', 'Edit panel owner')
+            )
+          }
+        />
       </Field>
 
       <fieldset className={styles.group}>
@@ -495,12 +501,9 @@ function SuggestFieldButton({ panel, focus, tooltip }: SuggestFieldButtonProps) 
     });
   };
 
-  const styles = useStyles2(getStyles);
   return (
     <Tooltip content={tooltip} placement="top">
-      <span className={styles.sparkle}>
-        <IconButton name="ai-sparkle" size="sm" aria-label={tooltip} onClick={handleClick} />
-      </span>
+      <IconButton name="ai-sparkle" size="sm" aria-label={tooltip} onClick={handleClick} />
     </Tooltip>
   );
 }
@@ -571,8 +574,8 @@ function DraftWithAIButtonView({
       >
         <Button variant="secondary" size="sm" icon="ai-sparkle" onClick={handleClick} className={styles.sparkleButton}>
           {hasIntent
-            ? t('panel-intent-editor.draft-with-ai.refine', 'Refine with AI')
-            : t('panel-intent-editor.draft-with-ai.draft', 'Draft with AI')}
+            ? t('panel-intent-editor.draft-with-ai.refine', 'Suggest')
+            : t('panel-intent-editor.draft-with-ai.draft', 'Write')}
         </Button>
       </Tooltip>
     </div>
@@ -595,15 +598,6 @@ function getStyles(theme: GrafanaTheme2) {
     draftBar: css({
       display: 'flex',
       justifyContent: 'flex-start',
-    }),
-    sparkle: css({
-      display: 'inline-flex',
-      '& button': {
-        color: theme.colors.warning.text,
-      },
-      '& svg': {
-        color: theme.colors.warning.text,
-      },
     }),
     sparkleButton: css({
       '& svg': {
