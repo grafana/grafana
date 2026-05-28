@@ -1,32 +1,36 @@
 import path from 'path';
 
-import { getClientGenerationState, getRTKClientEntries } from './clientState.ts';
+import { getClientGenerationState } from './clientState.ts';
 import { formatFiles, getFilesToFormat, runGenerateApis } from './commands.ts';
 import { injectBeforeMarkerIfMissing, writeNewFileIfMissing } from './files.ts';
 import { updatePackageJsonExports } from './packageExports.ts';
 import { confirmUpdateExistingClient, runPrompts } from './prompts.ts';
-import { renderBaseAPI, renderConfigEntry, renderIndexTs } from './templates.ts';
+import { renderBaseAPI, renderConfigEntry, renderIndexTs, getRTKClientEntries } from './templates.ts';
 import { MARKERS, variantFor } from './variants.ts';
 
-// Grafana root path
-const basePath = path.resolve(import.meta.dirname, '../../../..');
+async function main() {
+  // Grafana root path
+  const basePath = path.resolve(import.meta.dirname, '../../../..');
 
-const answers = await runPrompts(basePath);
-const variant = variantFor(answers.isEnterprise);
-const clientDir = path.join(basePath, variant.clientBase, answers.groupName, answers.version);
-const clientState = getClientGenerationState(basePath, variant, answers);
+  const answers = await runPrompts(basePath);
+  const variant = variantFor(answers.isEnterprise);
+  const clientDir = path.join(basePath, variant.clientBase, answers.groupName, answers.version);
+  const clientState = getClientGenerationState(basePath, variant, answers);
 
-if (clientState.isComplete) {
-  console.log(
-    `API client ${answers.groupName}/${answers.version} is already configured and wired. Update mode regenerates endpoints from the existing config and does not modify config, middleware, reducers, or package exports.`
-  );
+  if (clientState.isComplete) {
+    console.log(
+      `API client ${answers.groupName}/${answers.version} is already configured and wired. Update mode regenerates endpoints from the existing config and does not modify config, middleware, reducers, or package exports.`
+    );
 
-  if (await confirmUpdateExistingClient(answers.groupName, answers.version)) {
-    runGenerateApis(basePath, variant);
-  } else {
-    console.log('No changes made.');
+    if (await confirmUpdateExistingClient(answers.groupName, answers.version)) {
+      runGenerateApis(basePath, variant);
+    } else {
+      console.log('No changes made.');
+    }
+
+    return;
   }
-} else {
+
   const hasExistingClientState =
     clientState.hasConfigEntry ||
     clientState.existingClientFiles.length > 0 ||
@@ -71,3 +75,5 @@ if (clientState.isComplete) {
   formatFiles(basePath, getFilesToFormat(variant, answers.groupName, answers.version));
   runGenerateApis(basePath, variant);
 }
+
+await main();

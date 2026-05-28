@@ -2,23 +2,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import {
-  getRTKClientEntries,
-  hasAPIConfigEntry,
-  getExistingClientFiles,
-  getClientGenerationState,
-} from './clientState';
+import { hasAPIConfigEntry, getExistingClientFiles, getClientGenerationState } from './clientState';
 import { variantFor, PACKAGE_ROOT } from './variants';
-
-describe('getRTKClientEntries', () => {
-  it('returns import, reducer, and middleware entries', () => {
-    const result = getRTKClientEntries({ groupName: 'dashboard', version: 'v0alpha1', reducerPath: 'dashboardAPI' });
-
-    expect(result.importEntry).toContain("import { generatedAPI as dashboardAPI } from './dashboard/v0alpha1'");
-    expect(result.reducerEntry).toContain('[dashboardAPI.reducerPath]: dashboardAPI.reducer');
-    expect(result.middlewareEntry).toContain('dashboardAPI.middleware');
-  });
-});
 
 describe('hasAPIConfigEntry', () => {
   let tmpDir: string;

@@ -1,4 +1,11 @@
-import { formatEndpoints, renderConfigEntry, renderBaseAPI, renderIndexTs, type TemplateInput } from './templates';
+import {
+  formatEndpoints,
+  renderConfigEntry,
+  renderBaseAPI,
+  renderIndexTs,
+  getRTKClientEntries,
+  type TemplateInput,
+} from './templates';
 import { variantFor } from './variants';
 
 describe('formatEndpoints', () => {
@@ -61,5 +68,17 @@ describe('renderIndexTs', () => {
     const result = renderIndexTs();
     expect(result).toContain('export { BASE_URL, API_GROUP, API_VERSION }');
     expect(result).toContain('export const generatedAPI');
+  });
+});
+
+describe('getRTKClientEntries', () => {
+  it('returns import, reducer, and middleware entries for a given client', () => {
+    const result = getRTKClientEntries({ groupName: 'dashboard', version: 'v0alpha1', reducerPath: 'dashboardAPI' });
+
+    expect(result).toEqual({
+      importEntry: "import { generatedAPI as dashboardAPI } from './dashboard/v0alpha1';",
+      reducerEntry: '[dashboardAPI.reducerPath]: dashboardAPI.reducer,',
+      middlewareEntry: 'dashboardAPI.middleware,',
+    });
   });
 });

@@ -57,3 +57,14 @@ export function renderConfigEntry(input: Pick<TemplateInput, 'groupName' | 'vers
   const endpointsSuffix = input.endpoints ? `, [${formatEndpoints(input.endpoints)}]` : '';
   return `  ...createAPIConfig('${input.groupName}', '${input.version}'${endpointsSuffix}),`;
 }
+export function getRTKClientEntries({
+  groupName,
+  reducerPath,
+  version,
+}: Pick<TemplateInput, 'groupName' | 'reducerPath' | 'version'>) {
+  return {
+    importEntry: `import { generatedAPI as ${reducerPath} } from './${groupName}/${version}';`,
+    reducerEntry: `[${reducerPath}.reducerPath]: ${reducerPath}.reducer,`,
+    middlewareEntry: `${reducerPath}.middleware,`,
+  };
+}

@@ -2,6 +2,7 @@ import path from 'path';
 
 import { fileContains, repoPathExists } from './files.ts';
 import { hasPackageJsonExport } from './packageExports.ts';
+import { getRTKClientEntries } from './templates.ts';
 import { type Variant, PACKAGE_ROOT } from './variants.ts';
 
 interface ClientGenerationInput {
@@ -28,19 +29,9 @@ function clientSubpath(variant: Variant, groupName: string, version: string): st
   return `${variant.clientBase}/${groupName}/${version}`;
 }
 
-export function getRTKClientEntries({ groupName, reducerPath, version }: ClientGenerationInput) {
-  return {
-    importEntry: `import { generatedAPI as ${reducerPath} } from './${groupName}/${version}';`,
-    reducerEntry: `  [${reducerPath}.reducerPath]: ${reducerPath}.reducer,`,
-    middlewareEntry: `  ${reducerPath}.middleware,`,
-  };
-}
-
 export function hasAPIConfigEntry(basePath: string, variant: Variant, groupName: string, version: string): boolean {
   const configPath = path.join(basePath, variant.codegenScript);
-  const content = fileContains(configPath, `createAPIConfig('${groupName}', '${version}'`);
-
-  return content;
+  return fileContains(configPath, `createAPIConfig('${groupName}', '${version}'`);
 }
 
 export function getExistingClientFiles(
