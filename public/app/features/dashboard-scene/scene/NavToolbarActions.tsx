@@ -640,7 +640,7 @@ function addDynamicActions(
 }
 
 // This hook handles when panelEditor is not defined to avoid conditionally hook usage
-function usePanelEditDirty(panelEditor?: PanelEditor) {
+export function usePanelEditDirty(panelEditor?: PanelEditor) {
   const [isDirty, setIsDirty] = useState<Boolean | undefined>();
 
   useEffect(() => {
