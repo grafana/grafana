@@ -98,7 +98,7 @@ export const VizLegendTable = <T extends unknown>({
   }
 
   return (
-    <table className={cx(styles.grid, className)} style={{gridTemplateColumns: `auto minmax(75px, 600px) ${'auto '.repeat(Object.keys(header).length - 1)}`}}>
+    <table className={cx(styles.grid, className)} style={{gridTemplateColumns: `min-content auto ${'min-content '.repeat(Object.keys(header).length - 1)}`}}>
       <thead>
         <tr className={styles.header}>
           <th></th>

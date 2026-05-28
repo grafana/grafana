@@ -130,6 +130,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: 'inherit',
       padding: 0,
       width: '100%',
+      maxWidth: 600,
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       userSelect: 'text',
