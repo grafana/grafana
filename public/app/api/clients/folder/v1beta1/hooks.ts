@@ -138,16 +138,19 @@ export async function getFolderByUidFacade(uid: string) {
   const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
 
   if (shouldUseAppPlatformAPI) {
-    let virtualFolderResponse;
+    // Virtual folders aren't real resources, so skip the network entirely and
+    // synthesise the combined response from the hardcoded folder constants.
     if (isVirtualFolder) {
-      virtualFolderResponse = isRoot ? rootFolder : sharedWithMeFolder;
+      return combineFolderResponses(
+        isRoot ? rootFolder : sharedWithMeFolder,
+        { canAdmin: false, canDelete: false, canEdit: false, canSave: false, accessControl: {} },
+        []
+      );
     }
 
     const responses = await Promise.all([
       dispatch(folderAPIv1beta1.endpoints.getFolderAccess.initiate({ name: uid })),
-      isVirtualFolder
-        ? Promise.resolve({ data: virtualFolderResponse })
-        : dispatch(folderAPIv1beta1.endpoints.getFolder.initiate({ name: uid })),
+      dispatch(folderAPIv1beta1.endpoints.getFolder.initiate({ name: uid })),
       dispatch(folderAPIv1beta1.endpoints.getFolderParents.initiate({ name: uid })),
     ]);
 
@@ -211,7 +214,9 @@ export function useGetFolderQueryFacade(uid?: string) {
     !shouldUseAppPlatformAPI && uid ? { folderUID: uid, accesscontrol: true, isLegacyCall: false } : skipToken
   );
   let resultFolder = useGetFolderQuery(shouldUseAppPlatformAPI && !isVirtualFolder ? params : skipToken);
-  const resultAccess = useGetFolderAccessQuery(shouldUseAppPlatformAPI && uid ? { name: uid } : skipToken);
+  const resultAccess = useGetFolderAccessQuery(
+    shouldUseAppPlatformAPI && uid && !isVirtualFolder ? { name: uid } : skipToken
+  );
   // We get parents and folders for virtual folders too. Parents should just return empty array but it's easier to
   // stitch the responses this way and access can actually return different response based on the grafana setup.
   const resultParents = useGetFolderParentsQuery(shouldUseAppPlatformAPI ? params : skipToken);
