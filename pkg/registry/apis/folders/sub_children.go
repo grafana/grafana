@@ -54,10 +54,11 @@ func (r *subChildrenREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
-	if name == folder.GeneralFolderUID {
-		name = ""
-	} else if _, err := r.getter.Get(ctx, name, &v1.GetOptions{}); err != nil {
-		return nil, err
+	isRoot := folder.IsRootFolderUID(name)
+	if !isRoot {
+		if _, err := r.getter.Get(ctx, name, &v1.GetOptions{}); err != nil {
+			return nil, err
+		}
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -73,6 +74,18 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 			return
 		}
 
+		// Root children carry either the legacy empty value or the canonical
+		// "general" sentinel in the index, so match both at the root.
+		folderRequirement := &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_FOLDER,
+			Operator: "=",
+			Values:   []string{name},
+		}
+		if isRoot {
+			folderRequirement.Operator = "in"
+			folderRequirement.Values = []string{"", folder.GeneralFolderUID}
+		}
+
 		gvr := folders.FolderResourceInfo.GroupVersionResource()
 		resp, err := r.searcher.Search(ctx, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
@@ -81,11 +94,7 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 					Group:     gvr.Group,
 					Resource:  gvr.Resource,
 				},
-				Fields: []*resourcepb.Requirement{{
-					Key:      resource.SEARCH_FIELD_FOLDER,
-					Operator: "=",
-					Values:   []string{name},
-				}},
+				Fields: []*resourcepb.Requirement{folderRequirement},
 			},
 			Fields: []string{resource.SEARCH_FIELD_TITLE},
 			Limit:  limit,
