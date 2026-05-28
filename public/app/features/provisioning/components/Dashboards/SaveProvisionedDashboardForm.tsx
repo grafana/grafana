@@ -25,6 +25,7 @@ import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
@@ -241,6 +242,7 @@ export function SaveProvisionedDashboardForm({
       resourceKind: 'dashboard',
       resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
       title: dashboard.state.title ?? '',
+      ...getCurrentCommitUser(),
     });
 
     const body = rawDashboardJSON
