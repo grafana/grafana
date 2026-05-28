@@ -373,3 +373,12 @@ jobs:
       run: yarn install --immutable --check-cache
       env:
         YARN_ENABLE_HARDENED_MODE: 1
+
+    - name: Check yarn.lock is deduplicated
+      id: yarn-dedupe
+      run: yarn dedupe --check
+    - name: Report yarn dedupe failure
+      if: failure() && steps.yarn-dedupe.outcome == 'failure'
+      run: |
+        echo "::error::yarn.lock contains duplicate dependencies. Run 'yarn dedupe' locally, commit the updated yarn.lock, and push again."
+        exit 1
