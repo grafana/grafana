@@ -1300,7 +1300,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 
 		opts, err := dsService.httpClientOptions(context.Background(), &ds)
 		require.NoError(t, err)
-		require.Equal(t, ds.JsonData.MustMap()["grafanaData"], opts.CustomOptions["grafanaData"])
+		require.Equal(t, ds.JsonDataMap()["grafanaData"], opts.CustomOptions["grafanaData"])
 
 		// make sure we can still marshal the JsonData after httpClientOptions (avoid cycles)
 		_, err = ds.JsonData.MarshalJSON()
