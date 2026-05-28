@@ -58,7 +58,7 @@ const config: KnipConfig = {
       storybook: true,
     },
     'packages/grafana-api-clients': {
-      entry: [...packageEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/plopfile.ts'],
+      entry: [...packageEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/generate.ts'],
     },
     'packages/grafana-plugin-configs': {
       // TODO figure out how to properly include webpack/jest configs
