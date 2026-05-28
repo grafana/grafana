@@ -23,14 +23,23 @@ import { type Options } from './options/types';
 import { isCoreApp, isIsLabelFilterActive } from './types';
 
 interface Props extends Pick<PanelProps<Options>, 'onOptionsChange'> {
+  containerElement: HTMLDivElement | null;
   options: Options;
   timeRange: TimeRange;
   timeZone: string;
 }
 
-export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone }: Props) => {
-  const { currentLog, closeDetails, enableLogDetails, logs, setCurrentLog, showDetails, toggleDetails } =
-    useLogDetailsContext();
+export const LogsTableDetails = ({ containerElement, options, onOptionsChange, timeRange, timeZone }: Props) => {
+  const {
+    currentLog,
+    closeDetails,
+    enableLogDetails,
+    logs,
+    replaceDetails,
+    setCurrentLog,
+    showDetails,
+    toggleDetails,
+  } = useLogDetailsContext();
   const [search, setSearch] = useState('');
   const [detailsWidth, setDetailsWidth] = useState(options.logDetailsWidth ?? getDefaultLogDetailsWidth());
   const { onAddAdHocFilter, app } = usePanelContext();
@@ -49,6 +58,38 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
       document.removeEventListener('keyup', handleClose);
     };
   }, [closeDetails, showDetails.length]);
+
+  useEffect(() => {
+    function handleKeydown(e: KeyboardEvent) {
+      if (
+        containerElement &&
+        e.target instanceof Element &&
+        e.target.contains(containerElement) === false &&
+        containerElement.contains(e.target) === false
+      ) {
+        return;
+      }
+      let delta: number;
+      if (e.key === 'ArrowDown') {
+        delta = 1;
+      } else if (e.key === 'ArrowUp') {
+        delta = -1;
+      } else {
+        return;
+      }
+      if (!currentLog || logs.findIndex((log) => log.uid === currentLog.uid) < 0) {
+        return;
+      }
+      const nextLog = logs[logs.findIndex((log) => log.uid === currentLog.uid) + delta];
+      if (!nextLog) {
+        return;
+      }
+      e.preventDefault();
+      replaceDetails(nextLog);
+    }
+    document.addEventListener('keydown', handleKeydown);
+    return () => document.removeEventListener('keydown', handleKeydown);
+  }, [containerElement, currentLog, logs, replaceDetails]);
 
   const handleSearch = useCallback((newSearch: string) => {
     inputRef.current = newSearch;
@@ -144,6 +185,7 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
             displayedFields={[]}
             fontSize={store.get(`${SETTING_KEY_ROOT}.fontSize`) ?? 'default'}
             logs={logs}
+            logOptionsStorageKey={SETTING_KEY_ROOT}
             showControls={false}
             showTime={false}
             sortOrder={LogsSortOrder.Ascending}

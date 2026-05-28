@@ -71,7 +71,9 @@ export function useSelectionState({
   transformations,
   onClearSideEffects,
 }: UseSelectionStateOptions): UseSelectionStateResult {
-  // Initialize with first query selected so Shift+Click works immediately on load.
+  // Eagerly select the first query when available at mount time so the sidebar
+  // highlights it without waiting for a user click. Range-select has its own
+  // fallback in toggleQuerySelection for the late-loading case.
   const [selectedQueryRefIds, setSelectedQueryRefIds] = useState<string[]>(() =>
     queries[0]?.refId ? [queries[0].refId] : []
   );
@@ -112,9 +114,12 @@ export function useSelectionState({
     setSelectedTransformationIds([]);
 
     const currentSelection = selectedQueryRefIdsRef.current;
-    if (modifiers?.range && currentSelection.length > 0) {
-      // Shift+Click: range-select from the anchor to this query (inclusive).
-      const anchorRefId = currentSelection.at(-1)!;
+    // useSelectedCard visually selects queries[0] when nothing is explicitly selected
+    // (no transformation either), so fall back to it as the range-select anchor.
+    const hasTransformationSelected = selectedTransformationIdsRef.current.length > 0;
+    const anchorRefId =
+      currentSelection.at(-1) ?? (hasTransformationSelected ? undefined : queriesRef.current[0]?.refId);
+    if (modifiers?.range && anchorRefId) {
       const rangeSelection = computeRangeSelection(
         queriesRef.current.map(({ refId }) => refId),
         currentSelection,
@@ -128,10 +133,15 @@ export function useSelectionState({
     }
 
     if (modifiers?.multi) {
-      // Ctrl/Cmd+Click: toggle this query in/out of the selection.
+      // Ctrl/Cmd+Click: toggle this query in/out of the selection. Never empty
+      // the selection — keep the last item so we don't reach the "selection
+      // mode but nothing selected" state (matches `clearSelection` invariant).
       setSelectedQueryRefIds((prev) => {
         const idx = prev.indexOf(query.refId);
-        return idx === -1 ? [...prev, query.refId] : prev.filter((id) => id !== query.refId);
+        if (idx === -1) {
+          return [...prev, query.refId];
+        }
+        return prev.length === 1 ? prev : prev.filter((id) => id !== query.refId);
       });
     } else {
       // Plain click: replace entire selection with just this card.
@@ -162,11 +172,15 @@ export function useSelectionState({
       }
 
       if (modifiers?.multi) {
+        // Ctrl/Cmd+Click: toggle this transformation in/out of the selection.
+        // Never empty the selection — keep the last item to mirror the query
+        // toggle behavior and avoid a "selection mode but nothing selected".
         setSelectedTransformationIds((prev) => {
           const idx = prev.indexOf(transformation.transformId);
-          return idx === -1
-            ? [...prev, transformation.transformId]
-            : prev.filter((id) => id !== transformation.transformId);
+          if (idx === -1) {
+            return [...prev, transformation.transformId];
+          }
+          return prev.length === 1 ? prev : prev.filter((id) => id !== transformation.transformId);
         });
       } else {
         setSelectedTransformationIds([transformation.transformId]);
@@ -177,7 +191,8 @@ export function useSelectionState({
   );
 
   const clearSelection = useCallback(() => {
-    setSelectedQueryRefIds([]);
+    const firstQueryRefId = queriesRef.current[0]?.refId;
+    setSelectedQueryRefIds(firstQueryRefId ? [firstQueryRefId] : []);
     setSelectedTransformationIds([]);
     onClearSideEffectsRef.current?.();
   }, []);

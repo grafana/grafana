@@ -13,7 +13,9 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -21,6 +23,19 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+// ErrAPIInvalidUID and ErrAPIUIDTooLong are instantiated errutil.Error values
+// created from errutil.BadRequest bases, so the apiserver renders them via
+// APIStatus as 400 (not "Unhandled Error" 500). They wrap the legacy
+// dashboards sentinels via %w so errors.Is/As keeps matching for /api/folders
+// consumers (ToFolderErrorResponse). Defined here rather than in
+// pkg/services/folder/model.go to avoid the dashboards->folder import cycle.
+var (
+	ErrAPIInvalidUID = errutil.BadRequest("folder.invalid-uid-chars", errutil.WithPublicMessage("uid contains illegal characters")).
+				Errorf("%w", dashboards.ErrDashboardInvalidUid)
+	ErrAPIUIDTooLong = errutil.BadRequest("folder.uid-too-long", errutil.WithPublicMessage("uid too long, max 40 characters")).
+				Errorf("%w", dashboards.ErrDashboardUidTooLong)
 )
 
 var errOwnerRefsOnManagedFolder = fmt.Errorf("cannot set owner references on folders managed by a repository")
@@ -65,7 +80,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		folder.GeneralFolderUID,
 		folder.SharedWithMeFolderUID,
 	}, id) {
-		return folder.ErrInvalidUID
+		return folder.ErrAPIInvalidUID
 	}
 
 	meta, err := utils.MetaAccessor(f)
@@ -77,30 +92,30 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	// that the object name (which maps to the UID) is immutable, so re-validating here
 	// would be redundant.
 	if !util.IsValidShortUID(id) {
-		return dashboards.ErrDashboardInvalidUid
+		return ErrAPIInvalidUID
 	}
 
 	if util.IsShortUIDTooLong(id) {
-		return dashboards.ErrDashboardUidTooLong
+		return ErrAPIUIDTooLong
 	}
 
 	f.Spec.Title = strings.TrimSpace(f.Spec.Title)
 
 	if f.Spec.Title == "" {
-		return folder.ErrTitleEmpty
+		return folder.ErrAPITitleEmpty
 	}
 
 	if strings.EqualFold(f.Spec.Title, dashboards.RootFolderName) {
-		return folder.ErrNameExists
+		return folder.ErrNameExists.Errorf("a folder with that name already exists")
 	}
 
 	parentName := meta.GetFolder()
-	if parentName == "" {
+	if folder.IsRootFolderUID(parentName) {
 		return nil // OK, we do not need to validate the tree
 	}
 
 	if parentName == f.Name {
-		return folder.ErrFolderCannotBeParentOfItself
+		return folder.ErrAPIFolderCannotBeParentOfItself
 	}
 
 	// note: `parents` will include itself as the last item
@@ -112,7 +127,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	// Can not create a folder that will be too deep.
 	// We need to add +1 as we also have the root folder as part of the parents.
 	if len(parents.Items) > maxDepth+1 {
-		return fmt.Errorf("folder max depth exceeded, max depth is %d", maxDepth)
+		return folder.ErrMaximumDepthReached.Errorf("folder max depth exceeded, max depth is %d", maxDepth)
 	}
 
 	return nil
@@ -138,15 +153,20 @@ func validateOnUpdate(ctx context.Context,
 	obj.Spec.Title = strings.TrimSpace(obj.Spec.Title)
 
 	if obj.Spec.Title == "" {
-		return folder.ErrTitleEmpty
+		return folder.ErrAPITitleEmpty
 	}
 
 	if strings.EqualFold(obj.Spec.Title, dashboards.RootFolderName) {
-		return folder.ErrNameExists
+		return folder.ErrNameExists.Errorf("a folder with that name already exists")
 	}
 
 	if folderObj.GetFolder() == oldFolder.GetFolder() {
 		return nil
+	}
+
+	// the k6 folder itself may not be moved (matches legacy folder.Service.Move)
+	if obj.Name == accesscontrol.K6FolderUID {
+		return folder.ErrBadRequest.Errorf("k6 project may not be moved")
 	}
 
 	// Validate the move operation
@@ -156,13 +176,13 @@ func validateOnUpdate(ctx context.Context,
 	// before and wasn't too deep. This move will make it more shallow.
 	//
 	// We also don't need to validate circular references because the root folder cannot have a parent.
-	if newParent == folder.RootFolderUID {
+	if folder.IsRootFolderUID(newParent) {
 		return nil
 	}
 
-	// folder cannot be moved to a k6 folder
+	// folder cannot be moved into the k6 folder
 	if newParent == accesscontrol.K6FolderUID {
-		return fmt.Errorf("k6 project may not be moved")
+		return folder.ErrFolderCannotBeMovedToK6.Errorf("k6 project may not be moved")
 	}
 
 	parentObj, err := getter.Get(ctx, newParent, &metav1.GetOptions{})
@@ -182,7 +202,7 @@ func validateOnUpdate(ctx context.Context,
 	// This prevents circular references (e.g., moving A under B when B is already under A).
 	for _, ancestor := range info.Items {
 		if ancestor.Name == obj.Name {
-			return fmt.Errorf("cannot move folder under its own descendant, this would create a circular reference")
+			return folder.ErrCircularReference.Errorf("cannot move folder under its own descendant, this would create a circular reference")
 		}
 	}
 
@@ -214,7 +234,7 @@ func validateOnUpdate(ctx context.Context,
 // If the old parent depth is >= the new parent depth, the folder was already valid
 // and this move won't make descendants exceed max depth.
 func canSkipChildrenCheck(ctx context.Context, oldFolder utils.GrafanaMetaAccessor, getter rest.Getter, parents parentsGetter, newParentDepth int) bool {
-	if oldFolder.GetFolder() == folder.RootFolderUID {
+	if folder.IsRootFolderUID(oldFolder.GetFolder()) {
 		return false
 	}
 
@@ -338,15 +358,31 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		}
 	}
 
-	hasMore := resp.Results.NextPageToken != ""
+	// The bleve Search path populates TotalHits but not Results.NextPageToken, so
+	// pagination must be driven off TotalHits + offset rather than the token.
+	hasMore := resp.Results.NextPageToken != "" || offset+int64(len(resp.Results.Rows)) < resp.TotalHits
 	return children, hasMore, nil
 }
 
 func validateOnDelete(ctx context.Context,
 	f *folders.Folder,
 	searcher resourcepb.ResourceIndexClient,
+	deleteOptions *metav1.DeleteOptions,
+	cascadeDeleteEnabled bool,
 ) error {
-	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Folder: f.Name})
+	// Non-empty folder delete is opt-in via gracePeriodSeconds=0 when kubernetesFolderCascadeDelete
+	// is enabled (same pattern as dashboard delete validation). This only bypasses the empty-folder
+	// check; until cascade reconciliation runs, child resources are left orphaned.
+	if cascadeDeleteEnabled && forceDeleteFromDeleteOptions(deleteOptions) {
+		logging.FromContext(ctx).Warn(
+			"folder force-delete bypassing empty check; cascade deletion is not yet wired up so sub-folders, dashboards, alert rules, and library elements under this folder will be orphaned. This is a temporary state during the cascade delete rollout.",
+			"folder", f.Name,
+			"namespace", f.Namespace,
+		)
+		return nil
+	}
+
+	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
 	if err != nil {
 		return err
 	}

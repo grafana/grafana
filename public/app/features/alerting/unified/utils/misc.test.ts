@@ -108,7 +108,13 @@ describe('create links', () => {
   });
 
   it('should make folder alerts link', () => {
-    expect(makeFolderAlertsLink('abc123', 'my-title')).toBe('/dashboards/f/abc123/my-title/alerting');
+    expect(makeFolderAlertsLink('abc123', 'My Title')).toBe('/dashboards/f/abc123/my-title/alerting');
+  });
+
+  it('should slugify nested folder paths for folder alerts link', () => {
+    expect(makeFolderAlertsLink('abc123', 'MainFolder/Subfolder1')).toBe(
+      '/dashboards/f/abc123/mainfoldersubfolder1/alerting'
+    );
   });
 
   it('should make folder settings link', () => {

@@ -7,7 +7,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/utils/ptr"
 
 	"github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -64,7 +63,7 @@ func ConvertDashboard_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scop
 
 	out.Status = dashv1.DashboardStatus{
 		Conversion: &dashv1.DashboardConversionStatus{
-			StoredVersion: ptr.To(dashv0.VERSION),
+			StoredVersion: new(dashv0.VERSION),
 		},
 	}
 
@@ -78,7 +77,7 @@ func ConvertDashboard_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scop
 	ctxWithNamespace, _, err := prepareV0ConversionContext(in)
 	if err != nil {
 		out.Status.Conversion.Failed = true
-		out.Status.Conversion.Error = ptr.To(err.Error())
+		out.Status.Conversion.Error = new(err.Error())
 		return schemaversion.NewMigrationError(err.Error(), schemaversion.GetSchemaVersion(in.Spec.Object), schemaversion.LATEST_VERSION, "Convert_V0_to_V1")
 	}
 
@@ -101,7 +100,7 @@ func ConvertDashboard_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scop
 
 	if err := migrateV0Dashboard(ctx, out.Spec.Object, schemaversion.LATEST_VERSION); err != nil {
 		out.Status.Conversion.Failed = true
-		out.Status.Conversion.Error = ptr.To(err.Error())
+		out.Status.Conversion.Error = new(err.Error())
 		return schemaversion.NewMigrationError(err.Error(), schemaversion.GetSchemaVersion(in.Spec.Object), schemaversion.LATEST_VERSION, "Convert_V0_to_V1")
 	}
 

@@ -853,7 +853,6 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 	})
 
 	t.Run("non-metadata folder rename still works via delete and create", func(t *testing.T) {
-		t.Skip("Disabled due to flaky context deadline exceeded errors during resource insertion")
 		helper := sharedGitHelper(t)
 		ctx := context.Background()
 

@@ -27,6 +27,7 @@ import {
 import { defaultDashboard, defaultTimePickerConfig, type VariableType } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
+import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { NEW_LINK } from '../settings/links/utils';
 
@@ -446,6 +447,7 @@ describe('when creating variables objects', () => {
       description: 'Adhoc Description',
       allowCustomValue: false,
       applicabilityEnabled: false,
+      $behaviors: [expect.any(ReportInteractionBehavior)],
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -527,6 +529,7 @@ describe('when creating variables objects', () => {
       key: expect.any(String),
       description: 'Adhoc Description',
       applicabilityEnabled: false,
+      $behaviors: [expect.any(ReportInteractionBehavior)],
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',

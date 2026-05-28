@@ -9,7 +9,7 @@ import {
   getDataSourceRef,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { AdHocFiltersVariable, type AdHocFilterWithLabels, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -68,6 +68,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       (filters) => {
         const keep = originalFilters.filter((f) => !isOriginDashboard(f) || isGroupByOriginFilter(f));
         updateOriginalFilters([...keep, ...filters]);
+        reportInteraction('grafana_unified_drilldown_default_filters_changed', { count: filters.length });
       },
       wip,
       setWip,
@@ -95,6 +96,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       }));
     const keep = originalFilters.filter((f) => !isGroupByOriginFilter(f));
     updateOriginalFilters([...keep, ...groupByFilters]);
+    reportInteraction('grafana_unified_drilldown_default_groupby_changed', { count: groupByFilters.length });
   };
 
   const { value: datasourceSettings } = useAsync(async () => {
@@ -135,7 +137,9 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
   };
 
   const onEnableGroupByChange = (event: FormEvent<HTMLInputElement>) => {
-    variable.setState({ enableGroupBy: event.currentTarget.checked });
+    const enabled = event.currentTarget.checked;
+    variable.setState({ enableGroupBy: enabled });
+    reportInteraction('grafana_unified_drilldown_enable_groupby_toggled', { enabled });
   };
 
   const { value: groupByKeyOptions = [] } = useAsync(async () => {

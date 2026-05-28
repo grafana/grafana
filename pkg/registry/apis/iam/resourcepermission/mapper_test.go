@@ -417,3 +417,19 @@ func TestMapper_AllowsKind_RestrictedList(t *testing.T) {
 	assert.True(t, m.AllowsKind(v0alpha1.ResourcePermissionSpecPermissionKindTeam))
 	assert.False(t, m.AllowsKind(v0alpha1.ResourcePermissionSpecPermissionKindBasicRole))
 }
+
+func TestMapper_ActionSet_ServiceAccount(t *testing.T) {
+	m := NewMapperWithAttribute("serviceaccounts", []string{"Edit", "Admin"}, ScopeAttributeID, nil)
+
+	actionSet, err := m.ActionSet("Edit")
+	require.NoError(t, err)
+	assert.Equal(t, "serviceaccounts:edit", actionSet)
+
+	actionSet, err = m.ActionSet("Admin")
+	require.NoError(t, err)
+	assert.Equal(t, "serviceaccounts:admin", actionSet)
+
+	_, err = m.ActionSet("View")
+	require.Error(t, err)
+	require.ErrorIs(t, err, errInvalidSpec)
+}

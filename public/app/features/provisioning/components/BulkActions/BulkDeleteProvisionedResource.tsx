@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -10,7 +10,7 @@ import { DescendantCount } from 'app/features/browse-dashboards/components/Brows
 import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
+import { isRootFolderUID } from 'app/features/search/constants';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { type StepStatusInfo } from '../../Wizard/types';
@@ -140,12 +140,18 @@ export function BulkDeleteProvisionedResource({
   onDismiss,
 }: BulkActionProvisionResourceProps) {
   // Check if we're on the root browser dashboards page
-  const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
+  const isRootPage = isRootFolderUID(folderUid);
   const { selectedItemsRepoUID } = useSelectionRepoValidation(selectedItems);
+
+  // Capture the repo UID so it survives selection state changes during/after job execution
+  const resolvedRepoUID = useRef(selectedItemsRepoUID);
+  if (selectedItemsRepoUID) {
+    resolvedRepoUID.current = selectedItemsRepoUID;
+  }
 
   // For root provisioned folders, the folder UID is the repository name
   const { repository, isReadOnlyRepo } = useGetResourceRepositoryView({
-    folderName: isRootPage ? selectedItemsRepoUID : folderUid,
+    folderName: isRootPage ? resolvedRepoUID.current : folderUid,
   });
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const timestamp = generateTimestamp();

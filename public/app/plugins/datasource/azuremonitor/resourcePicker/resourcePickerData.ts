@@ -1,3 +1,5 @@
+import { uniq } from 'lodash';
+
 import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
 
 import { logsResourceTypes } from '../azureMetadata/logsResourceTypes';
@@ -7,7 +9,6 @@ import type AzureResourceGraphDatasource from '../azure_resource_graph/azure_res
 import { type ResourceRow, type ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
 import {
   addResources,
-  findRow,
   parseMultipleResourceDetails,
   parseResourceDetails,
   parseResourceURI,
@@ -58,31 +59,42 @@ export default class ResourcePickerData extends DataSourceWithBackend<
         return subscriptions;
       }
 
-      let resources = subscriptions;
-      const promises = currentSelection.map((selection) => async () => {
-        if (selection.subscription) {
-          const resourceGroupURI = `/subscriptions/${selection.subscription}/resourceGroups/${selection.resourceGroup}`;
+      const rgUriOf = (s: AzureMonitorResource) => `/subscriptions/${s.subscription}/resourceGroups/${s.resourceGroup}`;
 
-          if (selection.resourceGroup && !findRow(resources, resourceGroupURI)) {
-            const resourceGroups = await this.getResourceGroupsBySubscriptionId(selection.subscription, type);
-            resources = addResources(resources, `/subscriptions/${selection.subscription}`, resourceGroups);
-          }
+      const hasSubAndRG = (
+        s: AzureMonitorResource
+      ): s is AzureMonitorResource & { subscription: string; resourceGroup: string } =>
+        Boolean(s.subscription && s.resourceGroup);
 
-          const resourceURI = resourceToString(selection);
-          if (selection.resourceName && !findRow(resources, resourceURI)) {
-            const resourcesForResourceGroup = await this.getResourcesForResourceGroup(resourceGroupURI, type);
-            resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
-          }
-        }
-      });
+      const hasResource = (
+        s: AzureMonitorResource
+      ): s is AzureMonitorResource & { subscription: string; resourceGroup: string; resourceName: string } =>
+        hasSubAndRG(s) && Boolean(s.resourceName);
 
-      for (const promise of promises) {
-        // Fetch resources one by one, avoiding re-fetching the same resource
-        // and race conditions updating the resources array
-        await promise();
-      }
+      const subsToFetch = uniq(currentSelection.filter(hasSubAndRG).map(({ subscription }) => subscription));
 
-      return resources;
+      const rgUrisToFetch = uniq(currentSelection.filter(hasResource).map(rgUriOf));
+
+      const [groupsResults, resourcesResults] = await Promise.all([
+        Promise.all(
+          subsToFetch.map((sub) => this.getResourceGroupsBySubscriptionId(sub, type).then((rgs) => [sub, rgs] as const))
+        ),
+        Promise.all(
+          rgUrisToFetch.map((rgUri) =>
+            this.getResourcesForResourceGroup(rgUri, type).then((res) => [rgUri, res] as const)
+          )
+        ),
+      ]);
+
+      const withGroups = groupsResults.reduce<ResourceRowGroup>(
+        (acc, [sub, rgs]) => addResources(acc, `/subscriptions/${sub}`, rgs),
+        subscriptions
+      );
+
+      return resourcesResults.reduce<ResourceRowGroup>(
+        (acc, [rgUri, res]) => addResources(acc, rgUri, res),
+        withGroups
+      );
     } catch (err) {
       if (err instanceof Error) {
         if (err.message !== 'No subscriptions were found') {
