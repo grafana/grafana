@@ -120,9 +120,10 @@ function FormContent({
     });
 
     // Create the move job spec.
-    // TODO: MoveJobOptions has no `message` field on the backend yet — once it
-    // gains one, pass `withSavedByTrailer(<default or data.comment>)` so the
-    // Grafana-saved-by trailer rides through to the resulting git commit.
+    // TODO(#125602): MoveJobOptions has no `message` field on the backend
+    // yet — once it gains one, pass `withSavedByTrailer(<default or
+    // data.comment>)` so the Grafana-saved-by trailer rides through to the
+    // resulting git commit.
     const jobSpec: MoveJobSpec = {
       action: 'move',
       move: {
