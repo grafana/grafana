@@ -57,7 +57,10 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
       dashboardCount,
     });
 
-    // Create the delete job spec
+    // Create the delete job spec.
+    // TODO: DeleteJobOptions has no `message` field on the backend yet — once it
+    // gains one, pass `withSavedByTrailer(<default or data.comment>)` so the
+    // Grafana-saved-by trailer rides through to the resulting git commit.
     const jobSpec: DeleteJobSpec = {
       action: 'delete',
       delete: {

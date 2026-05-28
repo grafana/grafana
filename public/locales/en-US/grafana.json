@@ -13887,7 +13887,8 @@
     "sync-job": {
       "error-no-job-id": "Failed to start job",
       "error-no-repository-name": "No repository name provided",
-      "error-starting-job": "Error starting job"
+      "error-starting-job": "Error starting job",
+      "migrate-default-message": "Migrate Grafana resources into repository"
     },
     "sync-repository": {
       "error-pulling-resources": "Error pulling resources",
