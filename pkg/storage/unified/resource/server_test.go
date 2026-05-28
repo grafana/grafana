@@ -480,21 +480,72 @@ func TestSimpleServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		// Update should return a conflict error the second time
-
+		// First update with different bytes advances the resource version.
+		rawV2 := []byte(strings.Replace(string(raw), `"title": "hello"`, `"title": "world"`, 1))
 		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
-			Value:           raw,
+			Value:           rawV2,
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
+
+		// Second update with stale RV and different bytes should return a conflict.
+		rawV3 := []byte(strings.Replace(string(raw), `"title": "hello"`, `"title": "again"`, 1))
+		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             key,
+			Value:           rawV3,
+			ResourceVersion: created.ResourceVersion})
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusConflict), rsp.Error.Code)
+		require.Contains(t, rsp.Error.Message, "requested RV does not match current RV")
+	})
+
+	t.Run("playlist update with identical bytes does not increment RV", func(t *testing.T) {
+		raw := []byte(`{
+    	"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {
+				"name": "noop-rv-check",
+				"namespace": "default",
+				"uid": "noop-uid"
+			},
+			"spec": {
+				"title": "hello",
+				"interval": "5m",
+				"items": [
+					{
+						"type": "dashboard_by_uid",
+						"value": "vmie2cmWz"
+					}
+				]
+			}
+		}`)
+
+		key := &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "rrrr",
+			Namespace: "default",
+			Name:      "noop-rv-check",
+		}
+
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Value: raw,
+			Key:   key,
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
 
 		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusConflict), rsp.Error.Code)
-		require.Contains(t, rsp.Error.Message, "requested RV does not match current RV")
+		require.Nil(t, rsp.Error)
+		require.Equal(t, created.ResourceVersion, rsp.ResourceVersion, "RV should not change when bytes are identical")
+
+		// The stored resource version should also be unchanged.
+		read := server.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: key})
+		require.Nil(t, read.Error)
+		require.Equal(t, created.ResourceVersion, read.ResourceVersion)
 	})
 }
 

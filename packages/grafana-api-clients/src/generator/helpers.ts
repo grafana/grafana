@@ -1,6 +1,5 @@
 import { execSync } from 'child_process';
 import fs from 'fs';
-import { type OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
 type PlopActionFunction = (
@@ -9,7 +8,7 @@ type PlopActionFunction = (
 ) => string | Promise<string>;
 
 // Helper to remove quotes from operation IDs
-export const removeQuotes = (str: string | unknown) => {
+const removeQuotes = (str: string | unknown) => {
   if (typeof str !== 'string') {
     return str;
   }
@@ -167,23 +166,3 @@ export const updatePackageJsonExports =
       return '❌ Failed to update package.json exports. See error above.';
     }
   };
-
-/**
- * TODO: Make this work more generically with endpoints that don't have operationIds defined -
- * then we can allow selection of endpoints in the generator
- */
-export const getOperationIds = (apiSpec: OpenAPIV3.Document) => {
-  return (
-    Object.values(apiSpec.paths).flatMap((path) => {
-      return Object.entries(path || {})
-        .filter(([name]) => name !== 'parameters')
-        .flatMap(([_, pathItem]) => {
-          if (typeof pathItem === 'object' && 'operationId' in pathItem && pathItem.operationId) {
-            return pathItem.operationId;
-          }
-          return null;
-        })
-        .filter((id) => id !== null);
-    }) || []
-  );
-};
