@@ -18,13 +18,14 @@ const config: KnipConfig = {
     'enumMembers',
   ],
   ignore: ['**/*.gen.ts*', '**/*_gen.ts*'],
-  ignoreBinaries: ['make'],
+  ignoreBinaries: ['make', 'shellcheck'],
   workspaces: {
     '.': {
       // TODO figure out how to properly include webpack/jest configs
       jest: false,
       webpack: false,
-      project: ['!devenv', '!packages', '!pkg', '!public/app/plugins'],
+      project: ['public/app/**', '!devenv/**', '!packages/**', '!pkg/**', '!public/app/plugins/datasource/**'],
+      entry: ['public/app/app.ts', 'public/app/index.ts', 'public/app/plugins/panel/**/module.{ts,tsx,js}'],
     },
     'public/app/plugins/datasource/*': {
       // TODO figure out how to properly include webpack/jest configs
