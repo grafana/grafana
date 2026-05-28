@@ -21,11 +21,22 @@ const config: KnipConfig = {
   ignoreBinaries: ['make', 'shellcheck'],
   workspaces: {
     '.': {
-      // TODO figure out how to properly include webpack/jest configs
+      // TODO figure out how to properly include jest config
       jest: false,
-      webpack: false,
-      project: ['public/app/**', '!devenv/**', '!packages/**', '!pkg/**', '!public/app/plugins/datasource/**'],
+      // TODO remove these ignores when react 19 is released
+      ignoreDependencies: ['react-19', 'react-dom-19'],
+      project: [
+        'public/app/**',
+        'scripts/**/*.ts*',
+        '!devenv/**',
+        '!packages/**',
+        '!pkg/**',
+        '!public/app/plugins/datasource/**',
+      ],
       entry: ['public/app/app.ts', 'public/app/index.ts', 'public/app/plugins/panel/**/module.{ts,tsx,js}'],
+      webpack: {
+        config: ['scripts/webpack/webpack.dev.ts', 'scripts/webpack/webpack.prod.ts'],
+      },
     },
     'public/app/plugins/datasource/*': {
       // TODO figure out how to properly include webpack/jest configs
