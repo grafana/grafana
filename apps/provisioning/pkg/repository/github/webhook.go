@@ -41,6 +41,7 @@ type githubWebhookRepository struct {
 	gh                Client
 	webhookURL        string
 	incrementalPolicy repository.IncrementalSyncPolicy
+	deliveryCache     *deliveryIDCache
 }
 
 func NewGithubWebhookRepository(
@@ -48,6 +49,7 @@ func NewGithubWebhookRepository(
 	webhookURL string,
 	secret common.RawSecureValue,
 	incrementalPolicy repository.IncrementalSyncPolicy,
+	deliveryCache *deliveryIDCache,
 ) GithubWebhookRepository {
 	return &githubWebhookRepository{
 		GithubRepository:  basic,
@@ -58,6 +60,7 @@ func NewGithubWebhookRepository(
 		webhookURL:        webhookURL,
 		secret:            secret,
 		incrementalPolicy: incrementalPolicy,
+		deliveryCache:     deliveryCache,
 	}
 }
 
@@ -83,7 +86,7 @@ func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request
 	if deliveryID == "" {
 		return nil, apierrors.NewBadRequest("missing delivery id")
 	}
-	if sharedDeliveryCache.seenOrAdd(deliveryID) {
+	if r.deliveryCache.seenOrAdd(deliveryID) {
 		return nil, apierrors.NewUnauthorized("duplicate delivery id")
 	}
 
