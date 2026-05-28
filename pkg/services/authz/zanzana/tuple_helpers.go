@@ -37,10 +37,10 @@ const (
 // equivalent to `roles:*` (see pkg/services/authz/rbac/mapper.go), so both
 // scope shapes resolve to the same wildcard group_resource tuple here.
 const (
-	scopeKindPermissions       = "permissions"
-	scopeIdentifierDelegate    = "delegate"
-	scopeKindRoles             = "roles"
-	scopeIdentifierAllInstance = "*"
+	scopeKindPermissions    = "permissions"
+	scopeIdentifierDelegate = "delegate"
+	scopeKindRoles          = "roles"
+	scopeIdentifierWildcard = "*"
 )
 
 // TupleStringWithoutCondition returns the string representation of a tuple without its condition.
@@ -88,7 +88,7 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 		// "can't translate" message. Non-wildcard scopes on role-management
 		// actions are intentionally dropped (see RoleManagementToTuples).
 		if isRoleManagementAction(perm.Action) {
-			for _, t := range RoleManagementToTuples(subject, perm.Action, perm.Kind, perm.Identifier) {
+			for _, t := range RoleManagementToTuples(subject, perm) {
 				tupleMap[t.String()] = t
 			}
 			continue
@@ -185,17 +185,17 @@ func RoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*
 //     `roles:write` action covers create + update + patch + delete.
 //
 //   - `roles:delete` → `delete` on group_resource:iam.grafana.app/roles.
-func RoleManagementToTuples(subject, action, scopeKind, scopeIdentifier string) []*openfgav1.TupleKey {
+func RoleManagementToTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
 	rolesGroup := iamv0.RoleInfo.GroupResource().Group
 	rolesResource := iamv0.RoleInfo.GroupResource().Resource
 	globalRolesResource := iamv0.GlobalRoleInfo.GroupResource().Resource
 
-	if !isRolesWildcardScope(scopeKind, scopeIdentifier) {
+	if !isRolesWildcardScope(permission.Kind, permission.Identifier) {
 		return nil
 	}
 
 	var tuples []*openfgav1.TupleKey
-	switch action {
+	switch permission.Action {
 	case actionRolesRead:
 		tuples = append(tuples,
 			NewGroupResourceTuple(subject, RelationGet, rolesGroup, globalRolesResource, ""),
@@ -232,7 +232,7 @@ func isRolesWildcardScope(kind, identifier string) bool {
 	if kind == scopeKindPermissions && identifier == scopeIdentifierDelegate {
 		return true
 	}
-	if kind == scopeKindRoles && identifier == scopeIdentifierAllInstance {
+	if kind == scopeKindRoles && identifier == scopeIdentifierWildcard {
 		return true
 	}
 	return false
