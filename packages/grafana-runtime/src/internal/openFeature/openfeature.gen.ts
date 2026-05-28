@@ -49,6 +49,8 @@ export const FlagKeys = {
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables org-defined dashboard templates for enterprise */
   GrafanaOrgDashboardTemplates: "grafana.orgDashboardTemplates",
+  /** Replaces the Intercom survey for PanelEditNext feedback with an event that triggers an in-house survey */
+  GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Replaces the bundled home dashboard with the unified homepage React page */
@@ -291,6 +293,17 @@ export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOp
  */
 export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.orgDashboardTemplates", false, options).value;
+};
+
+/**
+ * Replaces the Intercom survey for PanelEditNext feedback with an event that triggers an in-house survey
+ *
+ * **Details:**
+ * - flag key: `grafana.panelEditNextFeedbackEvent`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelEditNextFeedbackEvent", false, options).value;
 };
 
 /**
