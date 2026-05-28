@@ -24,7 +24,7 @@ jobs:
         id: get-github-app-token
         uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          github_app: grafana-delivery-bot
+          github_app: grafana-pr-automation
 
       - name: Download PR info artifact
         uses: actions/download-artifact@v8
@@ -68,7 +68,7 @@ jobs:
           git config --local --add --bool push.autoSetupRemote true
 
       - name: Run backport
-        uses: grafana/grafana-github-actions-go/backport@dev
+        uses: grafana/grafana-github-actions-go/backport@cbf714b93d4ac1da0a09af9f7f487d4b6b3ed060 # main
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
           # If triggered by being labelled, only backport that label.
