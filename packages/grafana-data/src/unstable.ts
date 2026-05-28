@@ -9,4 +9,4 @@
  * and be subject to the standard policies
  */
 
-export {};
+export { useObservable } from './hooks/useObservable';
