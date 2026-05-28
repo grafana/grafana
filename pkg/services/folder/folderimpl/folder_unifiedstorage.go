@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -633,6 +634,11 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, folder.ErrAccessDenied
 	}
 
+	// Capture the folder's current parent so we can detect moves that cross
+	// the root folder boundary and keep the directly-assigned built-in role
+	// permissions in sync with whether the folder is at root.
+	previousParentUID, hadPrevious := s.folderPreviousParentUID(ctx, cmd)
+
 	f, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
 		UID:          cmd.UID,
 		OrgID:        cmd.OrgID,
@@ -642,7 +648,75 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to move folder: %w", err)
 	}
+
+	if hadPrevious {
+		switch {
+		case previousParentUID == "" && cmd.NewParentUID != "":
+			s.cleanUpAutoAssignedRootPermissions(ctx, cmd.OrgID, cmd.UID)
+		case previousParentUID != "" && cmd.NewParentUID == "":
+			s.applyDefaultRootPermissions(ctx, cmd.OrgID, cmd.UID)
+		}
+	}
+
 	return f, nil
+}
+
+// folderPreviousParentUID returns the folder's current parent UID before the
+// move is applied, along with a boolean indicating whether the lookup
+// succeeded. Used to detect moves that cross the root folder boundary.
+func (s *Service) folderPreviousParentUID(ctx context.Context, cmd *folder.MoveFolderCommand) (string, bool) {
+	uid := cmd.UID
+	existing, err := s.unifiedStore.Get(ctx, folder.GetFolderQuery{
+		UID:          &uid,
+		OrgID:        cmd.OrgID,
+		SignedInUser: cmd.SignedInUser,
+	})
+	if err != nil || existing == nil {
+		return "", false
+	}
+	return existing.ParentUID, true
+}
+
+// cleanUpAutoAssignedRootPermissions removes the Editor=Edit and Viewer=View
+// built-in role permissions that are automatically granted on folders created
+// in the root folder. It is intended to be called after a folder is moved out
+// of the root folder.
+func (s *Service) cleanUpAutoAssignedRootPermissions(ctx context.Context, orgID int64, uid string) {
+	perms := s.getFolderPermissions(ctx)
+	if perms == nil {
+		s.log.Warn("Folder permissions service not available, skipping auto-assigned root permissions cleanup", "uid", uid)
+		return
+	}
+	for _, role := range []string{string(org.RoleEditor), string(org.RoleViewer)} {
+		if _, err := perms.SetBuiltInRolePermission(ctx, orgID, role, uid, ""); err != nil {
+			s.log.Error("Could not clean up auto-assigned root permissions after folder move",
+				"uid", uid, "role", role, "error", err)
+		}
+	}
+}
+
+// applyDefaultRootPermissions re-applies the Editor=Edit and Viewer=View
+// built-in role grants on a folder that was just moved back into the root
+// folder, mirroring what is set when a folder is created at root.
+func (s *Service) applyDefaultRootPermissions(ctx context.Context, orgID int64, uid string) {
+	perms := s.getFolderPermissions(ctx)
+	if perms == nil {
+		s.log.Warn("Folder permissions service not available, skipping default root permissions apply", "uid", uid)
+		return
+	}
+	defaults := []struct {
+		role string
+		perm string
+	}{
+		{string(org.RoleEditor), "Edit"},
+		{string(org.RoleViewer), "View"},
+	}
+	for _, d := range defaults {
+		if _, err := perms.SetBuiltInRolePermission(ctx, orgID, d.role, uid, d.perm); err != nil {
+			s.log.Error("Could not apply default root permissions after folder move into root",
+				"uid", uid, "role", d.role, "error", err)
+		}
+	}
 }
 
 func (s *Service) canMove(ctx context.Context, cmd *folder.MoveFolderCommand) (bool, error) {

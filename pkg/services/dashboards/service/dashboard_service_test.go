@@ -910,6 +910,38 @@ func TestSaveDashboard(t *testing.T) {
 	})
 }
 
+func TestCleanUpAutoAssignedRootPermissions(t *testing.T) {
+	t.Run("removes Editor and Viewer built-in role permissions on the dashboard", func(t *testing.T) {
+		dashPerms := acmock.NewMockedPermissionsService()
+		dashPerms.On("SetBuiltInRolePermission", mock.Anything, int64(1), "Editor", "uid", "").Return(&accesscontrol.ResourcePermission{}, nil).Once()
+		dashPerms.On("SetBuiltInRolePermission", mock.Anything, int64(1), "Viewer", "uid", "").Return(&accesscontrol.ResourcePermission{}, nil).Once()
+
+		svc := &DashboardServiceImpl{
+			log:                       log.NewNopLogger(),
+			dashboardPermissions:      dashPerms,
+			dashboardPermissionsReady: make(chan struct{}),
+		}
+		close(svc.dashboardPermissionsReady)
+
+		svc.cleanUpAutoAssignedRootPermissions(context.Background(), 1, "uid", false)
+		dashPerms.AssertExpectations(t)
+	})
+
+	t.Run("removes Editor and Viewer built-in role permissions on the folder", func(t *testing.T) {
+		folderPerms := acmock.NewMockedPermissionsService()
+		folderPerms.On("SetBuiltInRolePermission", mock.Anything, int64(1), "Editor", "uid", "").Return(&accesscontrol.ResourcePermission{}, nil).Once()
+		folderPerms.On("SetBuiltInRolePermission", mock.Anything, int64(1), "Viewer", "uid", "").Return(&accesscontrol.ResourcePermission{}, nil).Once()
+
+		svc := &DashboardServiceImpl{
+			log:               log.NewNopLogger(),
+			folderPermissions: folderPerms,
+		}
+
+		svc.cleanUpAutoAssignedRootPermissions(context.Background(), 1, "uid", true)
+		folderPerms.AssertExpectations(t)
+	})
+}
+
 func TestDeleteDashboard(t *testing.T) {
 	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 	service := &DashboardServiceImpl{

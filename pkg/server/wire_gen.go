@@ -601,7 +601,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	sortService := sort.ProvideService()
 	folderimplService := folderimpl.ProvideService(accessControl, userimplService, featureToggles, bundleregistryService, v3, cfg, registerer, tracer, resourceClient, sortService, eventualRestConfigProvider)
-	folderPermissionsService, err := ossaccesscontrol.ProvideFolderPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, folderimplService, acimplService, teamimplService, userimplService, actionSetService, eventualRestConfigProvider)
+	folderPermissionsService, err := ossaccesscontrol.ProvideFolderPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, folderimplService, acimplService, teamimplService, userimplService, actionSetService, folderimplService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1330,7 +1330,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	sortService := sort.ProvideService()
 	folderimplService := folderimpl.ProvideService(accessControl, userimplService, featureToggles, bundleregistryService, v3, cfg, registerer, tracer, resourceClient, sortService, eventualRestConfigProvider)
-	folderPermissionsService, err := ossaccesscontrol.ProvideFolderPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, folderimplService, acimplService, teamimplService, userimplService, actionSetService, eventualRestConfigProvider)
+	folderPermissionsService, err := ossaccesscontrol.ProvideFolderPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, folderimplService, acimplService, teamimplService, userimplService, actionSetService, folderimplService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}

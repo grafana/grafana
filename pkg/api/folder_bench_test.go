@@ -426,7 +426,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		features, tracing.InitializeTracerForTest(), sc.db, permreg.ProvidePermissionRegistry(), nil,
 	)
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets, &mockDirectRestConfigProvider{host: "http://localhost"})
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets, folderServiceWithFlagOn, &mockDirectRestConfigProvider{host: "http://localhost"})
 	require.NoError(b, err)
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg,

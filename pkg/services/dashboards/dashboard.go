@@ -54,6 +54,14 @@ type PermissionsRegistrationService interface {
 
 	// Used to apply default permissions in unified storage after create
 	SetDefaultPermissionsAfterCreate(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
+
+	// SyncPermissionsAfterFolderChange is invoked by unified storage after a
+	// successful update that changes the parent folder of a dashboard or
+	// folder. It strips the auto-assigned Editor/Viewer built-in role
+	// permissions when the resource leaves the root folder, and re-applies
+	// them when it moves back into the root folder, mirroring what
+	// SetDefaultPermissionsAfterCreate would have done at creation time.
+	SyncPermissionsAfterFolderChange(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, oldFolder, newFolder string, obj utils.GrafanaMetaAccessor) error
 }
 
 // PluginService is a service for operating on plugin dashboards.

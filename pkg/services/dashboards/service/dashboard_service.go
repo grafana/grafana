@@ -1075,6 +1075,11 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 		return nil, err
 	}
 
+	// Detect whether this save moves an existing dashboard across the root
+	// folder boundary, so we can keep the directly-assigned built-in role
+	// permissions in sync with where the dashboard currently lives.
+	previousFolderUID, hadPrevious := dr.previousDashboardFolderUID(ctx, dto)
+
 	dash, err := dr.saveDashboard(ctx, cmd)
 	if err != nil {
 		return nil, err
@@ -1083,9 +1088,56 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 	// new dashboard created
 	if dto.Dashboard.ID == 0 {
 		dr.SetDefaultPermissions(ctx, dto, dash, false)
+	} else if hadPrevious {
+		switch {
+		case previousFolderUID == "" && dash.FolderUID != "":
+			dr.cleanUpAutoAssignedRootPermissions(ctx, dto.OrgID, dash.UID, dash.IsFolder)
+		case previousFolderUID != "" && dash.FolderUID == "":
+			resource := "dashboard"
+			if dash.IsFolder {
+				resource = "folder"
+			}
+			if dr.cfg.RBAC.PermissionsOnCreation(resource) {
+				dr.applyDefaultRootPermissions(ctx, dto.OrgID, dash.UID, dash.IsFolder)
+			}
+		}
 	}
 
 	return dash, nil
+}
+
+// previousDashboardFolderUID returns the FolderUID the dashboard had before
+// this save, along with a boolean indicating whether we successfully looked up
+// an existing record. It is used to detect saves that cross the root folder
+// boundary so that auto-assigned permissions can be kept in sync.
+func (dr *DashboardServiceImpl) previousDashboardFolderUID(ctx context.Context, dto *dashboards.SaveDashboardDTO) (string, bool) {
+	if dto.Dashboard.ID == 0 && dto.Dashboard.UID == "" {
+		return "", false
+	}
+	existing, err := dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+		OrgID: dto.OrgID,
+		ID:    dto.Dashboard.ID,
+		UID:   dto.Dashboard.UID,
+	})
+	if err != nil || existing == nil {
+		return "", false
+	}
+	return existing.FolderUID, true
+}
+
+// cleanUpAutoAssignedRootPermissions removes the Editor=Edit and Viewer=View
+// built-in role permissions that are automatically granted on resources created
+// in the root folder. It is intended to be called after a resource is moved
+// out of the root folder, so that access falls back to what is inherited from
+// the new parent folder.
+func (dr *DashboardServiceImpl) cleanUpAutoAssignedRootPermissions(ctx context.Context, orgID int64, uid string, isFolder bool) {
+	svc := dr.getPermissionsService(isFolder)
+	for _, role := range []string{string(org.RoleEditor), string(org.RoleViewer)} {
+		if _, err := svc.SetBuiltInRolePermission(ctx, orgID, role, uid, ""); err != nil {
+			dr.log.Error("Could not clean up auto-assigned root permissions after move",
+				"uid", uid, "role", role, "isFolder", isFolder, "error", err)
+		}
+	}
 }
 
 func (dr *DashboardServiceImpl) saveDashboard(ctx context.Context, cmd *dashboards.SaveDashboardCommand) (*dashboards.Dashboard, error) {
@@ -1259,6 +1311,57 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	}
 
 	return nil
+}
+
+// SyncPermissionsAfterFolderChange is invoked by unified storage after a
+// dashboard or folder is successfully moved between folders.
+//
+//   - Moving out of root ("" -> non-empty): strips the Editor=Edit /
+//     Viewer=View built-in role grants that were auto-assigned at creation
+//     time, so that access falls back to what is inherited from the new
+//     parent folder.
+//   - Moving back into root (non-empty -> ""): re-applies the same Editor /
+//     Viewer grants, mirroring what would have been set if the resource had
+//     been created at root. The resource owner / explicit user/team grants
+//     are not touched.
+func (dr *DashboardServiceImpl) SyncPermissionsAfterFolderChange(ctx context.Context, key *resourcepb.ResourceKey, _ claims.AuthInfo, oldFolder, newFolder string, obj utils.GrafanaMetaAccessor) error {
+	ctx, span := tracer.Start(ctx, "dashboards.service.SyncPermissionsAfterFolderChange")
+	defer span.End()
+
+	if oldFolder == newFolder {
+		return nil
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return err
+	}
+	isFolder := key.Resource == "folders"
+	uid := obj.GetName()
+
+	switch {
+	case oldFolder == "" && newFolder != "":
+		dr.cleanUpAutoAssignedRootPermissions(ctx, ns.OrgID, uid, isFolder)
+	case oldFolder != "" && newFolder == "":
+		dr.applyDefaultRootPermissions(ctx, ns.OrgID, uid, isFolder)
+	}
+	return nil
+}
+
+// applyDefaultRootPermissions re-applies the Editor=Edit and Viewer=View
+// built-in role grants that are normally added when a dashboard or folder is
+// created in the root folder. Used to restore those grants when a resource is
+// moved back into root after having been nested in a folder.
+func (dr *DashboardServiceImpl) applyDefaultRootPermissions(ctx context.Context, orgID int64, uid string, isFolder bool) {
+	svc := dr.getPermissionsService(isFolder)
+	perms := []accesscontrol.SetResourcePermissionCommand{
+		{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+		{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+	}
+	if _, err := svc.SetPermissions(ctx, orgID, uid, perms...); err != nil {
+		dr.log.Error("Could not apply default root permissions after move into root",
+			"uid", uid, "isFolder", isFolder, "error", err)
+	}
 }
 
 func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *dashboards.SaveDashboardDTO, dash *dashboards.Dashboard, provisioned bool) {

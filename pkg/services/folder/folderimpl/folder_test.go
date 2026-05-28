@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,6 +18,8 @@ import (
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -212,3 +215,65 @@ func TestGetUIDFromLegacyID(t *testing.T) {
 	require.Equal(t, "resolved-uid", uid)
 	fakeK8s.AssertExpectations(t)
 }
+
+func TestMoveFolderSyncsRootPermissions(t *testing.T) {
+	const orgID int64 = 1
+	usr := &user.SignedInUser{OrgID: orgID, UserID: 1, Permissions: map[int64]map[string][]string{
+		orgID: {
+			folder.ActionFoldersWrite:  {folder.ScopeFoldersAll},
+			folder.ActionFoldersCreate: {folder.ScopeFoldersAll},
+			folder.ActionFoldersRead:   {folder.ScopeFoldersAll},
+		},
+	}}
+	ctx := identity.WithRequester(context.Background(), usr)
+
+	newSvc := func(parentUID string, perms *acmock.MockPermissionsService) *Service {
+		store := folder.NewFakeStore()
+		store.ExpectedFolder = &folder.Folder{UID: "child", OrgID: orgID, ParentUID: parentUID}
+		s := &Service{
+			log:                 slog.Default(),
+			unifiedStore:        store,
+			accessControl:       actest.FakeAccessControl{ExpectedEvaluate: true},
+			tracer:              noop.NewTracerProvider().Tracer("test"),
+			folderPermissionsCh: make(chan struct{}),
+		}
+		s.RegisterFolderPermissions(&fakeFolderPermissionsService{MockPermissionsService: perms})
+		return s
+	}
+
+	t.Run("strips Editor and Viewer built-in role grants when moving out of root", func(t *testing.T) {
+		perms := acmock.NewMockedPermissionsService()
+		perms.On("SetBuiltInRolePermission", mock.Anything, orgID, "Editor", "child", "").Return(&accesscontrol.ResourcePermission{}, nil).Once()
+		perms.On("SetBuiltInRolePermission", mock.Anything, orgID, "Viewer", "child", "").Return(&accesscontrol.ResourcePermission{}, nil).Once()
+
+		s := newSvc("", perms)
+		_, err := s.Move(ctx, &folder.MoveFolderCommand{UID: "child", NewParentUID: "parent", OrgID: orgID, SignedInUser: usr})
+		require.NoError(t, err)
+		perms.AssertExpectations(t)
+	})
+
+	t.Run("does not touch permissions when moving between non-root folders", func(t *testing.T) {
+		perms := acmock.NewMockedPermissionsService()
+		s := newSvc("oldparent", perms)
+		_, err := s.Move(ctx, &folder.MoveFolderCommand{UID: "child", NewParentUID: "parent", OrgID: orgID, SignedInUser: usr})
+		require.NoError(t, err)
+		perms.AssertNotCalled(t, "SetBuiltInRolePermission", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("applies Editor and Viewer built-in role grants when moving into root", func(t *testing.T) {
+		perms := acmock.NewMockedPermissionsService()
+		perms.On("SetBuiltInRolePermission", mock.Anything, orgID, "Editor", "child", "Edit").Return(&accesscontrol.ResourcePermission{}, nil).Once()
+		perms.On("SetBuiltInRolePermission", mock.Anything, orgID, "Viewer", "child", "View").Return(&accesscontrol.ResourcePermission{}, nil).Once()
+
+		s := newSvc("oldparent", perms)
+		_, err := s.Move(ctx, &folder.MoveFolderCommand{UID: "child", NewParentUID: "", OrgID: orgID, SignedInUser: usr})
+		require.NoError(t, err)
+		perms.AssertExpectations(t)
+	})
+}
+
+type fakeFolderPermissionsService struct {
+	*acmock.MockPermissionsService
+}
+
+var _ accesscontrol.FolderPermissionsService = (*fakeFolderPermissionsService)(nil)

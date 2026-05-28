@@ -779,6 +779,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		storageOpts.Permissions = b.setDefaultDashboardPermissions
 	} else {
 		storageOpts.Permissions = b.dashboardPermissions.SetDefaultPermissionsAfterCreate
+		storageOpts.AfterFolderChange = b.dashboardPermissions.SyncPermissionsAfterFolderChange
 	}
 
 	opts.StorageOptsRegister(dashv0.DashboardResourceInfo.GroupResource(), storageOpts)

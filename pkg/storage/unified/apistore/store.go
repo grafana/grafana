@@ -32,6 +32,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/klog/v2"
 
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/concurrency"
@@ -55,6 +56,13 @@ var (
 
 type DefaultPermissionSetter = func(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
 
+// AfterFolderChangeFunc is invoked after a successful update that moves a
+// resource between folders. oldFolder/newFolder are the previous and new
+// values of the grafana.app/folder annotation (empty string means the root
+// folder). Errors from the hook are logged but do not fail the update — the
+// storage write has already succeeded by the time this fires.
+type AfterFolderChangeFunc = func(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, oldFolder, newFolder string, obj utils.GrafanaMetaAccessor) error
+
 // Optional settings that apply to a single resource
 type StorageOptions struct {
 	Scheme *runtime.Scheme
@@ -73,6 +81,11 @@ type StorageOptions struct {
 
 	// Temporary fix to support adding default permissions AfterCreate
 	Permissions DefaultPermissionSetter
+
+	// AfterFolderChange, when set, is invoked after every successful update
+	// that changes the parent folder of a resource. Used by dashboards/folders
+	// to clean up auto-assigned permissions that were granted at root.
+	AfterFolderChange AfterFolderChangeFunc
 }
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
@@ -703,6 +716,21 @@ func (s *Storage) GuaranteedUpdate(
 			return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
 		}
 
+		// Capture folder values before/after this update so that we can invoke
+		// the AfterFolderChange hook on success. This must happen before the
+		// write so that we know the previous folder even if the storage call
+		// retries or fails.
+		oldFolder, newFolder, folderChanged := "", "", false
+		if s.opts.AfterFolderChange != nil {
+			if prev, perr := utils.MetaAccessor(existingObj); perr == nil {
+				oldFolder = prev.GetFolder()
+			}
+			if next, nerr := utils.MetaAccessor(updatedObj); nerr == nil {
+				newFolder = next.GetFolder()
+			}
+			folderChanged = oldFolder != newFolder
+		}
+
 		req.Value = v.raw.Bytes()
 		req.ResourceVersion = readResponse.ResourceVersion
 		updateResponse, err := s.store.Update(ctx, req) // Also does RBAC check
@@ -718,6 +746,15 @@ func (s *Storage) GuaranteedUpdate(
 		// Cleanup secure values
 		if err = v.finish(ctx, err, s.opts.SecureValues); err != nil {
 			return err
+		}
+
+		if folderChanged {
+			info, _ := authtypes.AuthInfoFrom(ctx)
+			if newMeta, mErr := utils.MetaAccessor(updatedObj); mErr == nil {
+				if hookErr := s.opts.AfterFolderChange(ctx, req.Key, info, oldFolder, newFolder, newMeta); hookErr != nil {
+					klog.Warningf("AfterFolderChange hook failed for %s/%s: %v", s.gr.String(), req.Key.Name, hookErr)
+				}
+			}
 		}
 
 		if _, err := s.convertToObject(ctx, req.Value, destination); err != nil {

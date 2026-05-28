@@ -3,8 +3,17 @@ package folder
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
+
+// PermissionsRegistrationService is implemented by folder.Service implementations
+// that need a FolderPermissionsService injected after construction. This avoids
+// the circular dependency between folder.Service and FolderPermissionsService
+// (the latter depends on folder.Service for inherited scopes resolution).
+type PermissionsRegistrationService interface {
+	RegisterFolderPermissions(service accesscontrol.FolderPermissionsService)
+}
 
 // The folder.Service is backed by calls forwarding to an apiserver
 type Service interface {

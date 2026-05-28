@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -222,6 +223,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true,
 		Permissions:                 b.setDefaultFolderPermissions,
+		AfterFolderChange:           b.syncPermissionsAfterFolderChange,
 	})
 
 	// v1
@@ -323,6 +325,57 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 		return fmt.Errorf("create root permissions: %w", err)
 	}
 
+	return nil
+}
+
+// syncPermissionsAfterFolderChange keeps the directly-assigned Editor/Viewer
+// built-in role permissions on a folder in sync with whether the folder is
+// currently at the root of the folder tree. When a folder leaves root those
+// grants are stripped so access falls back to inheritance from the new parent,
+// and when a folder is moved back into root those grants are re-applied so the
+// folder behaves the same as one originally created at root. Matches the
+// behavior in folderimpl.Service.Move so the result is consistent regardless
+// of which API the client used.
+func (b *FolderAPIBuilder) syncPermissionsAfterFolderChange(ctx context.Context, key *resourcepb.ResourceKey, _ authlib.AuthInfo, oldFolder, newFolder string, obj utils.GrafanaMetaAccessor) error {
+	if oldFolder == newFolder {
+		return nil
+	}
+	if b.folderPermissionsSvc == nil {
+		return nil
+	}
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return err
+	}
+	log := logging.FromContext(ctx)
+	uid := obj.GetName()
+
+	switch {
+	case oldFolder == "" && newFolder != "":
+		for _, role := range []string{"Editor", "Viewer"} {
+			if _, err := b.folderPermissionsSvc.SetBuiltInRolePermission(ctx, ns.OrgID, role, uid, ""); err != nil {
+				log.Error("failed to clean up auto-assigned root permissions after folder move",
+					"uid", uid, "role", role, "error", err)
+			}
+		}
+	case oldFolder != "" && newFolder == "":
+		if !b.permissionsOnCreate {
+			return nil
+		}
+		defaults := []struct {
+			role string
+			perm string
+		}{
+			{"Editor", "Edit"},
+			{"Viewer", "View"},
+		}
+		for _, d := range defaults {
+			if _, err := b.folderPermissionsSvc.SetBuiltInRolePermission(ctx, ns.OrgID, d.role, uid, d.perm); err != nil {
+				log.Error("failed to apply default root permissions after folder move into root",
+					"uid", uid, "role", d.role, "error", err)
+			}
+		}
+	}
 	return nil
 }
 

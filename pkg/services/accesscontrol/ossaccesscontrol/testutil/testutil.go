@@ -93,6 +93,7 @@ func ProvideFolderPermissions(
 		teamSvc,
 		userSvc,
 		actionSets,
+		fService,
 		apiserver.ProvideDirectRestConfigProvider(),
 	)
 }

@@ -35,7 +35,8 @@ import (
 const FULLPATH_SEPARATOR = "/"
 
 var (
-	_ folder.Service = (*Service)(nil)
+	_ folder.Service                        = (*Service)(nil)
+	_ folder.PermissionsRegistrationService = (*Service)(nil)
 )
 
 type Service struct {
@@ -47,6 +48,13 @@ type Service struct {
 	maxNestedFolderDepth   int
 	dashboardK8sClient     client.K8sHandler
 	publicDashboardService publicdashboards.ServiceWrapper
+
+	// folderPermissions is registered after construction via
+	// RegisterFolderPermissions because the FolderPermissionsService itself
+	// depends on folder.Service (circular dependency).
+	folderPermissions     accesscontrol.FolderPermissionsService
+	folderPermissionsOnce sync.Once
+	folderPermissionsCh   chan struct{}
 
 	mutex    sync.RWMutex
 	registry map[string]folder.RegistryService
@@ -74,6 +82,7 @@ func ProvideService(
 		tracer:                 tracer,
 		publicDashboardService: publicDashboardService,
 		maxNestedFolderDepth:   cfg.MaxNestedFolderDepth,
+		folderPermissionsCh:    make(chan struct{}),
 	}
 
 	supportBundles.RegisterSupportItemCollector(srv.supportBundleCollector())
@@ -104,6 +113,37 @@ func ProvideService(
 	srv.dashboardK8sClient = dashHandler
 
 	return srv
+}
+
+// RegisterFolderPermissions installs the FolderPermissionsService used to
+// manipulate permissions on folders (e.g. to clean up auto-assigned root
+// permissions after a folder is moved out of the root folder). It is intended
+// to be called once at startup by the FolderPermissionsService provider, since
+// that service depends on folder.Service and cannot be injected through the
+// constructor without creating a cycle.
+func (s *Service) RegisterFolderPermissions(svc accesscontrol.FolderPermissionsService) {
+	s.folderPermissionsOnce.Do(func() {
+		s.folderPermissions = svc
+		if s.folderPermissionsCh != nil {
+			close(s.folderPermissionsCh)
+		}
+	})
+}
+
+// getFolderPermissions returns the FolderPermissionsService once it has been
+// registered. It returns nil if the service was never registered (e.g. in some
+// tests where the folder service is built directly without going through the
+// wire graph). Callers must tolerate a nil result.
+func (s *Service) getFolderPermissions(ctx context.Context) accesscontrol.FolderPermissionsService {
+	if s.folderPermissionsCh == nil {
+		return s.folderPermissions
+	}
+	select {
+	case <-s.folderPermissionsCh:
+		return s.folderPermissions
+	case <-ctx.Done():
+		return nil
+	}
 }
 
 func (s *Service) getUIDFromLegacyID(ctx context.Context, orgID int64, id int64) (string, error) {
