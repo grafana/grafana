@@ -17,11 +17,23 @@ export interface CommitTemplateVars {
 
 type TemplateKey = keyof CommitTemplateVars;
 const TEMPLATE_VAR = /\{\{(action|resourceKind|resourceID|title|userName|userLogin|userEmail)\}\}/g;
+const IDENTITY_KEYS: ReadonlySet<TemplateKey> = new Set(['userName', 'userLogin', 'userEmail']);
 
 const TRAILER_KEY = 'Grafana-saved-by';
 // Match the trailer at the start of any line, case-insensitively, so a custom
 // comment/template that already provides one isn't duplicated.
 const TRAILER_PRESENT = new RegExp(`^${TRAILER_KEY}:`, 'im');
+
+/**
+ * Collapses any newline/CR into a single space and trims. Used on the
+ * user-controlled identity fields (`name`, `login`, `email` come from
+ * `UpdateUserCommand` which doesn't strip line breaks) so a profile value
+ * like `"Ada\nGrafana-saved-by: forge"` can't inject forged git trailers
+ * into the commit message.
+ */
+function sanitizeLine(value: string | undefined): string {
+  return (value ?? '').replace(/[\r\n]+/g, ' ').trim();
+}
 
 function defaultMessage({ action, resourceKind, title }: CommitTemplateVars): string {
   // Full Record forces every (resourceKind, action) pair to be mapped, so any
@@ -56,7 +68,10 @@ export function renderCommitMessage(template: string | undefined | null, vars: C
   if (!trimmed) {
     return defaultMessage(vars);
   }
-  return trimmed.replace(TEMPLATE_VAR, (_, key: TemplateKey) => vars[key] ?? '');
+  return trimmed.replace(TEMPLATE_VAR, (_, key: TemplateKey) => {
+    const raw = vars[key] ?? '';
+    return IDENTITY_KEYS.has(key) ? sanitizeLine(raw) : raw;
+  });
 }
 
 type SavedByVars = Pick<CommitTemplateVars, 'userName' | 'userLogin'>;
@@ -68,8 +83,8 @@ type SavedByVars = Pick<CommitTemplateVars, 'userName' | 'userLogin'>;
  * remains greppable even if the display name is empty or duplicated.
  */
 function buildSavedByTrailer({ userName, userLogin }: SavedByVars): string | undefined {
-  const name = userName?.trim();
-  const login = userLogin?.trim();
+  const name = sanitizeLine(userName);
+  const login = sanitizeLine(userLogin);
   if (!name && !login) {
     return undefined;
   }

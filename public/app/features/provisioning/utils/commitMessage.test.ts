@@ -89,6 +89,20 @@ describe('renderCommitMessage', () => {
     ).toBe('A / A');
   });
 
+  it('collapses newlines in {{userName}} / {{userLogin}} / {{userEmail}}', () => {
+    expect(
+      renderCommitMessage('feat: {{title}} by {{userName}} ({{userLogin}}) <{{userEmail}}>', {
+        action: 'update',
+        resourceKind: 'dashboard',
+        resourceID: 'abc',
+        title: 'Latency',
+        userName: 'Ada\nSigned-off-by: forge',
+        userLogin: 'ada\r\nGrafana-saved-by: forge',
+        userEmail: 'ada@example.com\nFoo: bar',
+      })
+    ).toBe('feat: Latency by Ada Signed-off-by: forge (ada Grafana-saved-by: forge) <ada@example.com Foo: bar>');
+  });
+
   it('leaves unknown placeholders untouched', () => {
     expect(
       renderCommitMessage('{{action}} {{author}}', {
@@ -132,6 +146,19 @@ describe('appendSavedByTrailer', () => {
 
   it('trims trailing whitespace before appending', () => {
     expect(appendSavedByTrailer('msg\n\n\n', userVars)).toBe('msg\n\nGrafana-saved-by: Ada Lovelace (ada)');
+  });
+
+  it('collapses newlines in user identity fields to prevent trailer injection', () => {
+    expect(
+      appendSavedByTrailer('Save dashboard: X', {
+        userName: 'Ada\nSigned-off-by: forge\n',
+        userLogin: 'ada\nGrafana-saved-by: someone-else',
+      })
+    ).toBe('Save dashboard: X\n\nGrafana-saved-by: Ada Signed-off-by: forge (ada Grafana-saved-by: someone-else)');
+  });
+
+  it('treats a name that is only line breaks as missing', () => {
+    expect(appendSavedByTrailer('msg', { userName: '\n\n', userLogin: 'ada' })).toBe('msg\n\nGrafana-saved-by: ada');
   });
 });
 
