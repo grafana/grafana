@@ -5792,8 +5792,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operador",
-        "placeholder": "Selecionar operador"
+        "aria-label": "Operador"
       },
       "restore": "Restaurar valor predefinido",
       "search": {
@@ -9062,7 +9061,6 @@
       "copy-button": "Copiar para a área de transferência",
       "download-button": "Transferir ficheiro",
       "download-successful_toast_message": "O seu JSON foi descarregado",
-      "export-externally-label": "Exportar o painel de controlo para utilizar noutra instância",
       "export-format": "Formato",
       "export-mode": "Modelo",
       "info-text": "Copiar ou descarregar um ficheiro que contém a definição do seu painel de controlo",
@@ -9155,6 +9153,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "Pasta eliminada",
       "folder-move-error-provisioned": "Não é possível mover a pasta disponibilizada. Para a mover, mova-a no repositório e sincronize para aplicar as alterações.",
@@ -11700,11 +11699,10 @@
       "published-by": "Publicado por",
       "updated-on": "Atualizado a"
     },
-    "import-resource-format-error": {
-      "cancel": "Cancelar",
-      "title": "Formato não suportado",
-      "v1-message": "Este painel de controlo está no formato de recurso Kubernetes v1 e não pode ser importado quando a funcionalidade de painéis de controlo do Kubernetes está desativada. Ative o botão da funcionalidade kubernetesDashboards para importar este painel de controlo.",
-      "v2-message": "Este painel de controlo está no formato de recurso v2 e não pode ser importado quando a funcionalidade de painéis de controlo do Kubernetes está desativada. Ative a alternância da funcionalidade kubernetesDashboards para importar este painel de controlo."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Tem a certeza de que pretende eliminar '{{snapshotToRemove}}'?",
@@ -13201,6 +13199,7 @@
       "label-filename": "Nome do ficheiro",
       "label-folder": "Pasta",
       "label-path": "Caminho",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Selecione ou introduza o caminho da pasta",
       "suffix-configured-branch": "Ramo sincronizado",
@@ -13527,7 +13526,7 @@
       "modal-title-set-up-public-access": "Configurar acesso público",
       "modal-title-set-up-required-features": "Configurar as funcionalidades necessárias",
       "step-description-copy-url": "A partir da saída do ngrok, copie o URL de encaminhamento https:// que tem o seguinte aspeto:",
-      "step-description-enable-feature-toggles": "Adicione a funcionalidade de provisionamento ao seu ficheiro custom.ini. Nota: o kubernetesDashboards está ativado por predefinição, mas se o tiver desativado explicitamente, terá de o ativar nas suas definições da Grafana ou remover a substituição da sua configuração.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Execute este comando para criar um túnel seguro para a sua Grafana local:",
       "step-description-update-grafana-config": "Adicione isto ao seu ficheiro custom.ini, substituindo o URL pelo seu URL ngrok atual:",
       "step-title-copy-url": "Copie o seu URL público",
@@ -14719,7 +14718,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Exportar como imagem",
-      "export-json-title": "Exportar como JSON",
       "share-externally-title": "Partilhar externamente",
       "share-internally-title": "Partilhar internamente",
       "share-snapshot-title": "Partilhar instantâneo"

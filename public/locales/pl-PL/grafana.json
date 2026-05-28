@@ -5856,8 +5856,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operator",
-        "placeholder": "Wybierz operator"
+        "aria-label": "Operator"
       },
       "restore": "Przywróć wartość domyślną",
       "search": {
@@ -9162,7 +9161,6 @@
       "copy-button": "Kopiuj do schowka",
       "download-button": "Pobierz plik",
       "download-successful_toast_message": "Pobrano plik JSON",
-      "export-externally-label": "Eksportuj pulpit, aby użyć go w innej instancji",
       "export-format": "Format",
       "export-mode": "Model",
       "info-text": "Skopiuj lub pobierz plik zawierający definicję pulpitu",
@@ -9255,6 +9253,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "Folder usunięty",
       "folder-move-error-provisioned": "Nie można przenieść aprowizowanego folderu. Aby to zrobić, przenieś go do repozytorium i zsynchronizuj w celu zastosowania zmian.",
@@ -11836,11 +11835,10 @@
       "published-by": "Opublikowane przez",
       "updated-on": "Data aktualizacji"
     },
-    "import-resource-format-error": {
-      "cancel": "Anuluj",
-      "title": "Nieobsługiwany format",
-      "v1-message": "Ten pulpit jest w formacie zasobu Kubernetes v1 i nie można go zaimportować, gdy funkcja pulpitów Kubernetes jest wyłączona. Aby zaimportować ten pulpit, włącz przełącznik funkcji kubernetesDashboards.",
-      "v2-message": "Ten pulpit jest w formacie zasobu v2 i nie można go zaimportować, gdy funkcja pulpitów Kubernetes jest wyłączona. Aby zaimportować ten pulpit, włącz przełącznik funkcji kubernetesDashboards."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Czy na pewno chcesz usunąć „{{snapshotToRemove}}”?",
@@ -13343,6 +13341,7 @@
       "label-filename": "Nazwa pliku",
       "label-folder": "Folder",
       "label-path": "Ścieżka",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Wybierz lub podaj ścieżkę do folderu",
       "suffix-configured-branch": "Zsynchronizowana gałąź",
@@ -13681,7 +13680,7 @@
       "modal-title-set-up-public-access": "Skonfiguruj dostęp publiczny",
       "modal-title-set-up-required-features": "Skonfiguruj wymagane funkcje",
       "step-description-copy-url": "Z wyjścia narzędzia ngrok skopiuj adres URL https:// przekazywania, który wygląda następująco:",
-      "step-description-enable-feature-toggles": "Dodaj przełącznik funkcji aprowizacji do pliku custom.ini. Uwaga: opcja kubernetesDashboards jest domyślnie włączona, ale jeśli została celowo wyłączona, należy ją włączyć w ustawieniach Grafany lub usunąć zastąpienie z konfiguracji.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Uruchom to polecenie, aby utworzyć bezpieczny tunel do lokalnej instancji Grafany:",
       "step-description-update-grafana-config": "Dodaj to do pliku custom.ini, zastępując adres URL rzeczywistym adresem URL narzędzia ngrok:",
       "step-title-copy-url": "Skopiuj swój publiczny URL",
@@ -14907,7 +14906,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Eksportuj jako obraz",
-      "export-json-title": "Eksportowanie jako JSON",
       "share-externally-title": "Udostępnij na zewnątrz",
       "share-internally-title": "Udostępnij wewnętrznie",
       "share-snapshot-title": "Udostępnij migawkę"
