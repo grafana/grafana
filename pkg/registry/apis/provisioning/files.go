@@ -17,6 +17,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -189,6 +190,12 @@ func (c *filesConnector) parseRequestOptions(r *http.Request, name string, repo 
 		SkipDryRun:   query.Get("skipDryRun") == "true",
 		OriginalPath: query.Get("originalPath"),
 		Branch:       repo.Config().Branch(),
+	}
+
+	// Reject unvalidated refs before they reach any backend. Empty is allowed and
+	// is defaulted to the configured branch downstream.
+	if !git.IsValidRef(opts.Ref) {
+		return opts, repository.ErrInvalidRef
 	}
 
 	path, err := pathAfterPrefix(r.URL.Path, fmt.Sprintf("/%s/files", name))
