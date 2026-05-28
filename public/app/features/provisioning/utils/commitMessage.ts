@@ -15,9 +15,22 @@ export interface CommitTemplateVars {
   userEmail?: string;
 }
 
-type TemplateKey = keyof CommitTemplateVars;
-const TEMPLATE_VAR = /\{\{(action|resourceKind|resourceID|title|userName|userLogin|userEmail)\}\}/g;
-const IDENTITY_KEYS: ReadonlySet<TemplateKey> = new Set(['userName', 'userLogin', 'userEmail']);
+// Single source of truth for the keys the template understands. The regex,
+// the IDENTITY_KEYS set, and the TemplateKey type are all derived from these
+// arrays — adding/removing a key here is enough to keep them in sync.
+const IDENTITY_KEYS = ['userName', 'userLogin', 'userEmail'] as const satisfies ReadonlyArray<keyof CommitTemplateVars>;
+const TEMPLATE_KEYS = [
+  'action',
+  'resourceKind',
+  'resourceID',
+  'title',
+  ...IDENTITY_KEYS,
+] as const satisfies ReadonlyArray<keyof CommitTemplateVars>;
+
+type TemplateKey = (typeof TEMPLATE_KEYS)[number];
+
+const TEMPLATE_VAR = new RegExp(`\\{\\{(${TEMPLATE_KEYS.join('|')})\\}\\}`, 'g');
+const IDENTITY_KEY_SET: ReadonlySet<TemplateKey> = new Set(IDENTITY_KEYS);
 
 const TRAILER_KEY = 'Grafana-saved-by';
 // Match the trailer at the start of any line, case-insensitively, so a custom
@@ -70,7 +83,7 @@ export function renderCommitMessage(template: string | undefined | null, vars: C
   }
   return trimmed.replace(TEMPLATE_VAR, (_, key: TemplateKey) => {
     const raw = vars[key] ?? '';
-    return IDENTITY_KEYS.has(key) ? sanitizeLine(raw) : raw;
+    return IDENTITY_KEY_SET.has(key) ? sanitizeLine(raw) : raw;
   });
 }
 
