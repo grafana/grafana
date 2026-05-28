@@ -109,6 +109,7 @@ function PanelIntentEditorBody({ panel, intent }: BodyProps) {
   };
 
   return (
+    <div className={styles.formWrap}>
     <Stack direction="column" gap={1}>
       <DraftWithAIButton panel={panel} hasIntent={hasAnyIntent(intent)} />
 
@@ -242,6 +243,7 @@ function PanelIntentEditorBody({ panel, intent }: BodyProps) {
         }
       />
     </Stack>
+    </div>
   );
 }
 
@@ -592,7 +594,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     draftBar: css({
       display: 'flex',
-      justifyContent: 'flex-end',
+      justifyContent: 'flex-start',
     }),
     sparkle: css({
       display: 'inline-flex',
@@ -607,6 +609,9 @@ function getStyles(theme: GrafanaTheme2) {
       '& svg': {
         color: theme.colors.warning.text,
       },
+    }),
+    formWrap: css({
+      maxWidth: 600,
     }),
   };
 }
