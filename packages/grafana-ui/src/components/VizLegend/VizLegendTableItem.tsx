@@ -70,34 +70,34 @@ export const LegendTableItem = ({
   );
 
   return (
-    <tr className={cx(styles.row, className)}>
+    <tr className={cx(className)}>
       <td>
-        <span className={styles.itemWrapper}>
-          <VizLegendSeriesIcon
-            color={item.color}
-            seriesName={item.fieldName ?? item.label}
-            readonly={readonly}
-            lineStyle={item.lineStyle}
-          />
-          <button
-            disabled={readonly}
-            type="button"
-            title={item.label}
-            onBlur={onMouseOut}
-            onFocus={onMouseOver}
-            onMouseOver={onMouseOver}
-            onMouseOut={onMouseOut}
-            onClick={!readonly ? onClick : undefined}
-            className={cx(styles.label, item.disabled && styles.labelDisabled)}
-          >
-            {item.label}{' '}
-            {item.yAxis === 2 && hasMixedAxes && (
-              <span className={styles.yAxisLabel}>
-                <Trans i18nKey="grafana-ui.viz-legend.right-axis-indicator">(right y-axis)</Trans>
-              </span>
-            )}
-          </button>
-        </span>
+        <VizLegendSeriesIcon
+          color={item.color}
+          seriesName={item.fieldName ?? item.label}
+          readonly={readonly}
+          lineStyle={item.lineStyle}
+        />
+      </td>
+      <td>
+        <button
+          disabled={readonly}
+          type="button"
+          title={item.label}
+          onBlur={onMouseOut}
+          onFocus={onMouseOver}
+          onMouseOver={onMouseOver}
+          onMouseOut={onMouseOut}
+          onClick={!readonly ? onClick : undefined}
+          className={cx(styles.label, item.disabled && styles.labelDisabled)}
+        >
+          {item.label}{' '}
+          {item.yAxis === 2 && hasMixedAxes && (
+            <span className={styles.yAxisLabel}>
+              <Trans i18nKey="grafana-ui.viz-legend.right-axis-indicator">(right y-axis)</Trans>
+            </span>
+          )}
+        </button>
       </td>
       {item.getDisplayValues &&
         item.getDisplayValues().map((stat, index) => {
@@ -137,7 +137,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 'none',
       fontSize: 'inherit',
       padding: 0,
-      maxWidth: '600px',
+      width: '100%',
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       userSelect: 'text',
@@ -146,12 +146,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'LegendLabelDisabled',
       color: theme.colors.text.disabled,
     }),
-    itemWrapper: css({
-      display: 'flex',
-      whiteSpace: 'nowrap',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-    }),
+    // itemWrapper: css({
+    //   display: 'flex',
+    //   whiteSpace: 'nowrap',
+    //   alignItems: 'center',
+    //   gap: theme.spacing(1),
+    // }),
     value: css({
       textAlign: 'right',
     }),

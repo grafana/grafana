@@ -98,9 +98,10 @@ export const VizLegendTable = <T extends unknown>({
   }
 
   return (
-    <table className={cx(styles.table, className)}>
+    <table className={cx(styles.grid, className)} style={{gridTemplateColumns: 'auto auto auto auto auto'}}>
       <thead>
         <tr>
+          <th></th>
           {Object.keys(header).map((columnTitle) => (
             <th
               title={header[columnTitle]}
@@ -180,5 +181,31 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginLeft: theme.spacing(0.5),
     display: 'inline-flex',
     verticalAlign: 'middle',
+  }),
+
+  grid: css({
+    display: 'grid',
+    width: '100%',
+    // fontFamily: 'monospace',
+    // fontSize: '12px',
+    // color: '#3b4351',
+
+    'tbody,thead,tfoot,tr': {
+      display: 'grid',
+      gridColumn: '1 / -1',
+      gridTemplateColumns: 'subgrid',
+    },
+
+    'th,td': {
+      // padding: '10px 6px',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+      // maxWidth: '500px',
+      whiteSpace: 'nowrap',
+
+      // non-layout
+      fontSize: theme.v1.typography.size.sm,
+      // borderBottom: `1px solid ${theme.colors.border.weak}`,
+    },
   }),
 });
