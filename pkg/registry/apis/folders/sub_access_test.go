@@ -151,7 +151,7 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			store := grafanarest.NewMockStorage(t)
 			store.On("Get", mock.Anything, "this-folder", &metav1.GetOptions{}).Return(f, nil)
 
-			ac := &mockAccessClient{
+			ac := &subAccessMockClient{
 				batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 					if tc.checkErr != nil {
 						return authlib.BatchCheckResponse{}, tc.checkErr
@@ -199,20 +199,20 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 	}
 }
 
-// mockAccessClient is a minimal authlib.AccessClient used by subAccessREST tests.
-type mockAccessClient struct {
+// subAccessMockClient is a minimal authlib.AccessClient used by subAccessREST tests.
+type subAccessMockClient struct {
 	batchCheckFunc func(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error)
 }
 
-func (m *mockAccessClient) Check(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+func (m *subAccessMockClient) Check(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
 	return authlib.CheckResponse{}, nil
 }
 
-func (m *mockAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+func (m *subAccessMockClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
 	return nil, nil, nil
 }
 
-func (m *mockAccessClient) BatchCheck(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+func (m *subAccessMockClient) BatchCheck(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 	if m.batchCheckFunc != nil {
 		return m.batchCheckFunc(ctx, info, req)
 	}
