@@ -70,7 +70,7 @@ export const LegendTableItem = ({
   );
 
   return (
-    <tr className={cx(className)}>
+    <tr className={cx(styles.row, className)}>
       <td>
         <VizLegendSeriesIcon
           color={item.color}
@@ -79,7 +79,7 @@ export const LegendTableItem = ({
           lineStyle={item.lineStyle}
         />
       </td>
-      <td>
+      <td className={styles.name}>
         <button
           disabled={readonly}
           type="button"
@@ -100,13 +100,9 @@ export const LegendTableItem = ({
         </button>
       </td>
       {item.getDisplayValues &&
-        item.getDisplayValues().map((stat, index) => {
-          return (
-            <td className={styles.value} key={`${stat.title}-${index}`}>
-              {formattedValueToString(stat)}
-            </td>
-          );
-        })}
+        item
+          .getDisplayValues()
+          .map((stat, index) => <td key={`${stat.title}-${index}`}>{formattedValueToString(stat)}</td>)}
     </tr>
   );
 };
@@ -121,10 +117,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'LegendRow',
       fontSize: theme.v1.typography.size.sm,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
-      td: {
-        padding: theme.spacing(0.25, 1),
-        whiteSpace: 'nowrap',
-      },
 
       '&:hover': {
         background: rowHoverBg,
@@ -141,6 +133,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       userSelect: 'text',
+      textAlign: 'left',
     }),
     labelDisabled: css({
       label: 'LegendLabelDisabled',
@@ -152,8 +145,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     //   alignItems: 'center',
     //   gap: theme.spacing(1),
     // }),
-    value: css({
-      textAlign: 'right',
+    name: css({
+      textAlign: 'left',
     }),
     yAxisLabel: css({
       color: theme.colors.text.secondary,

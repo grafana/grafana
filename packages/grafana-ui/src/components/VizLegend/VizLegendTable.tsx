@@ -98,15 +98,15 @@ export const VizLegendTable = <T extends unknown>({
   }
 
   return (
-    <table className={cx(styles.grid, className)} style={{gridTemplateColumns: 'auto auto auto auto auto'}}>
+    <table className={cx(styles.grid, className)} style={{gridTemplateColumns: 'auto minmax(75px, 600px) auto auto auto'}}>
       <thead>
-        <tr>
+        <tr className={styles.header}>
           <th></th>
           {Object.keys(header).map((columnTitle) => (
             <th
               title={header[columnTitle]}
               key={columnTitle}
-              className={cx(styles.header, {
+              className={cx({
                 [styles.headerSortable]: Boolean(onToggleSort),
                 [styles.nameHeader]: isSortable,
                 [styles.withIcon]: sortKey === columnTitle,
@@ -147,13 +147,6 @@ export const VizLegendTable = <T extends unknown>({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  table: css({
-    width: '100%',
-    'th:first-child': {
-      width: '100%',
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-    },
-  }),
   header: css({
     position: 'sticky',
     top: 0,
@@ -162,14 +155,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.primary.text,
     fontWeight: theme.typography.fontWeightMedium,
     borderBottom: `1px solid ${theme.colors.border.weak}`,
-    padding: theme.spacing(0.25, 1, 0.25, 1),
     fontSize: theme.typography.bodySmall.fontSize,
     textAlign: 'right',
     whiteSpace: 'nowrap',
   }),
   nameHeader: css({
     textAlign: 'left',
-    paddingLeft: '30px',
   }),
   withIcon: css({
     paddingRight: '4px',
@@ -205,7 +196,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
       // non-layout
       fontSize: theme.v1.typography.size.sm,
+      padding: theme.spacing(0.25, 1),
       // borderBottom: `1px solid ${theme.colors.border.weak}`,
     },
+
+    'th:first-child,td:first-child': {
+      paddingLeft: theme.spacing(1)
+    }
   }),
 });
