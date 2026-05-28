@@ -499,6 +499,15 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	require.NoError(t, err)
 	_, err = analyticsSect.NewKey("intercom_secret", "intercom_secret_at_config")
 	require.NoError(t, err)
+	// Disable phone-home services in tests. Each of these makes outbound
+	// HTTP requests to grafana.com / stats.grafana.org on startup, which is
+	// a source of flakiness on CI runners and adds nothing to the tests.
+	_, err = analyticsSect.NewKey("reporting_enabled", "false")
+	require.NoError(t, err)
+	_, err = analyticsSect.NewKey("check_for_updates", "false")
+	require.NoError(t, err)
+	_, err = analyticsSect.NewKey("check_for_plugin_updates", "false")
+	require.NoError(t, err)
 
 	grpcServerAuth, err := cfg.NewSection("grpc_server_authentication")
 	require.NoError(t, err)
