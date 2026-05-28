@@ -31,6 +31,9 @@ const config: KnipConfig = {
       webpack: false,
       jest: true,
       entry: [...packageEntries, 'module.{ts,tsx,js}'],
+      // these are provided by grafana-plugin-configs
+      ignoreDependencies: ['@swc/jest'],
+      ignoreUnresolved: ['identity-obj-proxy'],
     },
     'e2e-playwright/test-plugins/*': {
       // TODO figure out how to properly include webpack/jest configs
