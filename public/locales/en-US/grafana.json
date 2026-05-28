@@ -3312,6 +3312,10 @@
         "tooltip-description": "Find silences by matcher. Matches label name, value, and operator exactly.",
         "tooltip-example": "Example: <1>env=~\"prod.*\"</1> finds silences with an <4>env=~\"prod.*\"</4> matcher."
       },
+      "missing-alert-rule-warning": {
+        "text": "Alert rule unavailable",
+        "tooltip": "This alert rule may have been deleted, or you may not have permission to view it. Alert rule UID: {{ruleUid}}"
+      },
       "only-firing-instances": "Only alert instances in the firing state are displayed.",
       "operator": {
         "equals": "Equals",
@@ -5500,9 +5504,6 @@
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}} dashboard",
       "label-no-dashboards-found": "No dashboards found"
-    },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Cancel loading dashboard"
     },
     "dashboard-page-error": {
       "back-to-dashboards": "Back to dashboards",
@@ -13296,7 +13297,7 @@
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
-      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}. Leave empty to use the built-in defaults.",
+      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. A \"Grafana-saved-by: <name> (<login>)\" trailer is appended automatically. Leave empty to use the built-in defaults.",
       "description-connection": "Select the GitHub App connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
@@ -13890,7 +13891,8 @@
     "sync-job": {
       "error-no-job-id": "Failed to start job",
       "error-no-repository-name": "No repository name provided",
-      "error-starting-job": "Error starting job"
+      "error-starting-job": "Error starting job",
+      "migrate-default-message": "Migrate Grafana resources into repository"
     },
     "sync-repository": {
       "error-pulling-resources": "Error pulling resources",
