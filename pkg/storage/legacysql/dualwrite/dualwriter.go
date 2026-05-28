@@ -499,7 +499,6 @@ func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest
 		return nil, err
 	}
 	return deletedLegacy, nil
-
 }
 
 func (d *dualWriter) Destroy() {

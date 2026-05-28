@@ -153,7 +153,7 @@ func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd Crea
 	sourceType := cmd.SourceType
 
 	if sourceType == "" {
-		cmd := &datasources.GetDataSourceQuery{OrgID: cmd.OrgId, UID: *&cmd.SourceUID}
+		cmd := &datasources.GetDataSourceQuery{OrgID: cmd.OrgId, UID: cmd.SourceUID}
 		sourceDs, err := s.DataSourceService.GetDataSource(ctx, cmd)
 		if err != nil {
 			return Correlation{}, err
@@ -220,7 +220,7 @@ func (s *CorrelationsK8sService) UpdateCorrelation(ctx context.Context, cmd Upda
 		Type: *cmd.Type,
 	}
 
-	dsCmd := &datasources.GetDataSourceQuery{OrgID: cmd.OrgId, UID: *&cmd.SourceUID}
+	dsCmd := &datasources.GetDataSourceQuery{OrgID: cmd.OrgId, UID: cmd.SourceUID}
 	sourceDs, err := s.DataSourceService.GetDataSource(ctx, dsCmd)
 	if err != nil {
 		return Correlation{}, err

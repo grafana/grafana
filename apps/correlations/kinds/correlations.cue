@@ -23,7 +23,7 @@ correlationsv0alpha1: {
 		"spec.source.name",
 		"spec.source.group",
 		"spec.target.name",
-		"spec.target.group"
+		"spec.target.group",
 	]
 }
 

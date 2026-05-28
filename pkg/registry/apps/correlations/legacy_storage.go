@@ -271,7 +271,6 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 	} else {
 		return nil, s.service.DeleteCorrelationsByTargetUID(ctx, correlations.DeleteCorrelationsByTargetUIDCommand{TargetUID: datasourceToDelete["name"], TargetType: datasourceToDelete["group"], OrgId: orgID})
 	}
-
 }
 
 type continueToken struct {
