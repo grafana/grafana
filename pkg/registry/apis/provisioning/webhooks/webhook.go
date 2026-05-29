@@ -117,8 +117,10 @@ func (s *webhookConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 	return nil
 }
 
+func (s *webhookConnector) Timeout() time.Duration { return s.timeout }
+
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return provisioningapis.WithTimeout(ctx, func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, span := tracing.Start(ctx, "provisioning.webhook.handle")
 		defer span.End()
 
@@ -208,7 +210,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		}
 
 		responder.Object(rsp.Code, rsp)
-	}, s.timeout), nil
+	}), nil
 }
 
 // statusPatcher is the subset of the status patcher API used by updateLastEvent.
@@ -253,7 +255,8 @@ func updateLastEvent(ctx context.Context, cfg *provisioning.Repository, patcher 
 }
 
 var (
-	_ rest.Storage         = (*webhookConnector)(nil)
-	_ rest.Connecter       = (*webhookConnector)(nil)
-	_ rest.StorageMetadata = (*webhookConnector)(nil)
+	_ rest.Storage                     = (*webhookConnector)(nil)
+	_ rest.Connecter                   = (*webhookConnector)(nil)
+	_ rest.StorageMetadata             = (*webhookConnector)(nil)
+	_ provisioningapis.TimeoutProvider = (*webhookConnector)(nil)
 )

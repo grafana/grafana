@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -123,17 +122,17 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 }
 
 // TODO: why didn't we create a connector as we did before or have a separate file?
-func (b *APIBuilder) handleStats(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	u, ok := authlib.AuthInfoFrom(ctx)
+func (b *APIBuilder) handleStats(w http.ResponseWriter, r *http.Request) {
+	u, ok := authlib.AuthInfoFrom(r.Context())
 	if !ok {
 		w.WriteHeader(400)
 		_, _ = w.Write([]byte("expected user"))
 		return
 	}
 	// TODO: check if lister could list too many repositories or resources
-	stats, err := b.resourceLister.Stats(ctx, u.GetNamespace(), "")
+	stats, err := b.resourceLister.Stats(r.Context(), u.GetNamespace(), "")
 	if err != nil {
-		errhttp.Write(ctx, err, w)
+		errhttp.Write(r.Context(), err, w)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -142,15 +141,15 @@ func (b *APIBuilder) handleStats(ctx context.Context, w http.ResponseWriter, r *
 
 // TODO: why didn't we create a connector as we did before or have a separate file?
 // TODO: is there a better way to provide a filtered view of the repositories to the frontend?
-func (b *APIBuilder) handleSettings(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	u, ok := authlib.AuthInfoFrom(ctx)
+func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
+	u, ok := authlib.AuthInfoFrom(r.Context())
 	if !ok {
-		errhttp.Write(ctx, fmt.Errorf("expected user"), w)
+		errhttp.Write(r.Context(), fmt.Errorf("expected user"), w)
 		return
 	}
 
 	ns := u.GetNamespace()
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, ns)
+	ctx, _, err := identity.WithProvisioningIdentity(r.Context(), ns)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return

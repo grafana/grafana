@@ -114,13 +114,15 @@ func (c *renderConnector) UpdateStorage(storage map[string]rest.Storage) error {
 	return nil
 }
 
+func (c *renderConnector) Timeout() time.Duration { return c.timeout }
+
 func (c *renderConnector) Connect(
 	ctx context.Context,
 	name string,
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
-	return provisioningapis.WithTimeout(ctx, func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		namespace := request.NamespaceValue(ctx)
 		prefix := fmt.Sprintf("/%s/render", name)
 		idx := strings.Index(r.URL.Path, prefix)
@@ -175,11 +177,12 @@ func (c *renderConnector) Connect(
 				},
 			})
 		}
-	}, c.timeout), nil
+	}), nil
 }
 
 var (
-	_ rest.Connecter       = (*renderConnector)(nil)
-	_ rest.Storage         = (*renderConnector)(nil)
-	_ rest.StorageMetadata = (*renderConnector)(nil)
+	_ rest.Connecter                   = (*renderConnector)(nil)
+	_ rest.Storage                     = (*renderConnector)(nil)
+	_ rest.StorageMetadata             = (*renderConnector)(nil)
+	_ provisioningapis.TimeoutProvider = (*renderConnector)(nil)
 )

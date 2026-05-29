@@ -49,8 +49,10 @@ func (*refsConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
+func (c *refsConnector) Timeout() time.Duration { return c.timeout }
+
 func (c *refsConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return WithTimeout(ctx, func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := logging.FromContext(ctx).With("logger", "refs-connector", "repository_name", name)
 		ctx = logging.Context(ctx, logger)
 
@@ -83,11 +85,12 @@ func (c *refsConnector) Connect(ctx context.Context, name string, opts runtime.O
 		}
 
 		responder.Object(http.StatusOK, refsList)
-	}, c.timeout), nil
+	}), nil
 }
 
 var (
 	_ rest.Storage         = (*refsConnector)(nil)
 	_ rest.Connecter       = (*refsConnector)(nil)
 	_ rest.StorageMetadata = (*refsConnector)(nil)
+	_ TimeoutProvider      = (*listConnector)(nil)
 )

@@ -88,13 +88,15 @@ func (*jobsConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, true, "" // path -> uid
 }
 
+func (c *jobsConnector) Timeout() time.Duration { return c.timeout }
+
 func (c *jobsConnector) Connect(
 	ctx context.Context,
 	name string,
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
-	return WithTimeout(ctx, func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		prefix := fmt.Sprintf("/%s/jobs/", name)
 		idx := strings.Index(r.URL.Path, prefix)
 
@@ -121,7 +123,7 @@ func (c *jobsConnector) Connect(
 		}
 
 		c.handleCreateJob(ctx, r, name, spec, responder)
-	}, c.timeout), nil
+	}), nil
 }
 
 // handleGetJob serves GET requests for job history — either a single job by
@@ -465,3 +467,10 @@ func ValidUUID(id string) bool {
 	}
 	return true
 }
+
+var (
+	_ rest.Storage         = (*historySubresource)(nil)
+	_ rest.Connecter       = (*historySubresource)(nil)
+	_ rest.StorageMetadata = (*historySubresource)(nil)
+	_ TimeoutProvider      = (*filesConnector)(nil)
+)

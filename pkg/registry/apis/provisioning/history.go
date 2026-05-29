@@ -37,19 +37,11 @@ func (h *historySubresource) New() runtime.Object {
 
 func (h *historySubresource) Destroy() {}
 
-func (h *historySubresource) NamespaceScoped() bool {
-	return true
-}
-
-func (h *historySubresource) GetSingularName() string {
-	return "History"
-}
-
 func (h *historySubresource) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"}
 }
 
-func (h *historySubresource) ProducesObject(verb string) runtime.Object {
+func (h *historySubresource) ProducesObject(verb string) any {
 	return &provisioning.HistoryList{}
 }
 
@@ -61,10 +53,12 @@ func (h *historySubresource) NewConnectOptions() (runtime.Object, bool, string) 
 	return nil, true, "" // true adds the {path} component
 }
 
+func (h *historySubresource) Timeout() time.Duration { return h.timeout }
+
 func (h *historySubresource) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return WithTimeout(ctx, func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := logging.FromContext(ctx).With("logger", "history-subresource")
-		ctx = logging.Context(ctx, logger)
+		ctx := logging.Context(ctx, logger)
 
 		query := r.URL.Query()
 		ref := query.Get("ref")
@@ -111,5 +105,12 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 		}
 
 		responder.Object(http.StatusOK, &provisioning.HistoryList{Items: commits})
-	}, h.timeout), nil
+	}), nil
 }
+
+var (
+	_ rest.Storage         = (*historySubresource)(nil)
+	_ rest.Connecter       = (*historySubresource)(nil)
+	_ rest.StorageMetadata = (*historySubresource)(nil)
+	_ TimeoutProvider      = (*filesConnector)(nil)
+)

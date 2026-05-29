@@ -822,6 +822,13 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		}
 	}
 
+	// Apply the timeout wrapper to every connecter so individual Connect()
+	// implementations don't have to call WithTimeout themselves. Must run
+	// after extras so it covers webhook/render connectors too.
+	for path, s := range storage {
+		storage[path] = WithTimeout(s)
+	}
+
 	apiGroupInfo.VersionedResourcesStorageMap[b.gv.Version] = storage
 	return nil
 }

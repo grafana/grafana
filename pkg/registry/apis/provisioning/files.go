@@ -87,13 +87,14 @@ func (c *filesConnector) getRepo(ctx context.Context, method, name string) (repo
 	}
 }
 
+func (c *filesConnector) Timeout() time.Duration { return c.timeout }
+
 // TODO: document the synchronous write and delete on the API Spec
 func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return WithTimeout(ctx, func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
-		ctx = logging.Context(ctx, logger)
-		c.handleRequest(ctx, name, r, responder, logger)
-	}, c.timeout), nil
+		c.handleRequest(logging.Context(ctx, logger), name, r, responder, logger)
+	}), nil
 }
 
 // handleRequest processes the HTTP request for files operations.
@@ -459,4 +460,5 @@ var (
 	_ rest.Storage         = (*filesConnector)(nil)
 	_ rest.Connecter       = (*filesConnector)(nil)
 	_ rest.StorageMetadata = (*filesConnector)(nil)
+	_ TimeoutProvider      = (*filesConnector)(nil)
 )

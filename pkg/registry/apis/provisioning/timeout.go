@@ -5,29 +5,90 @@ import (
 	"net/http"
 	"time"
 
-	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/registry/rest"
 )
 
-// CtxHandlerFunc is a request handler that receives the timeout-bounded
-// context as an explicit first parameter. Pass this to WithTimeout /
-// WithTimeoutFunc so backend calls inside the handler use the bounded ctx
-// instead of an outer-scope one captured by closure.
-type CtxHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request)
+const defaultConnectTimeout = 30 * time.Second
 
-func WithTimeout(ctx context.Context, f CtxHandlerFunc, timeout time.Duration) http.Handler {
+// WithTimeoutFunc adds a timeout context to the request
+func WithTimeoutFunc(f http.HandlerFunc, timeout time.Duration) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		reqCtx := r.Context()
-		if ns, ok := request.NamespaceFrom(ctx); ok {
-			reqCtx = request.WithNamespace(reqCtx, ns)
-		}
-
-		ctxWithTimeout, cancel := context.WithTimeout(reqCtx, timeout)
+		ctxWithTimeout, cancel := context.WithTimeout(r.Context(), timeout)
 		defer cancel()
-		f(ctxWithTimeout, w, r.WithContext(ctxWithTimeout))
+		f.ServeHTTP(w, r.WithContext(ctxWithTimeout))
 	})
 }
 
-// WithTimeoutFunc adds a timeout context to the request
-func WithTimeoutFunc(f CtxHandlerFunc, timeout time.Duration) http.HandlerFunc {
-	return WithTimeout(context.Background(), f, timeout).ServeHTTP
+// TimeoutProvider lets a connector expose its desired Connect timeout so
+// the storage-level wrapper can apply it uniformly without each Connect
+// needing to call WithTimeout itself.
+type TimeoutProvider interface {
+	Timeout() time.Duration
 }
+
+// WithTimeout wraps any rest.Storage that implements rest.Connecter
+// so the handler returned by Connect runs under a timeout context. Storage
+// objects that aren't connecters are returned unchanged.
+func WithTimeout(s rest.Storage) rest.Storage {
+	c, ok := s.(rest.Connecter)
+	if !ok {
+		return s
+	}
+
+	timeout := defaultConnectTimeout
+	if tp, ok := s.(TimeoutProvider); ok {
+		timeout = tp.Timeout()
+	}
+
+	return &timeoutConnecter{storage: s, inner: c, timeout: timeout}
+}
+
+type timeoutConnecter struct {
+	storage rest.Storage
+	inner   rest.Connecter
+	timeout time.Duration
+}
+
+// Functions that fulfil the rest.Storage and rest.Connector interface
+func (t *timeoutConnecter) New() runtime.Object      { return t.storage.New() }
+func (t *timeoutConnecter) Destroy()                 { t.storage.Destroy() }
+func (t *timeoutConnecter) ConnectMethods() []string { return t.inner.ConnectMethods() }
+func (t *timeoutConnecter) NewConnectOptions() (runtime.Object, bool, string) {
+	return t.inner.NewConnectOptions()
+}
+
+// Connect passes a bound ctx to the HTTP handler.
+func (t *timeoutConnecter) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	boundCtx, cancel := context.WithTimeout(ctx, t.timeout)
+	handler, err := t.inner.Connect(boundCtx, name, opts, responder)
+	if err != nil {
+		cancel()
+		return nil, err
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer cancel()
+		handler.ServeHTTP(w, r.WithContext(boundCtx))
+	}), nil
+}
+
+// Functions that implement the rest.StorageMetadata
+func (t *timeoutConnecter) ProducesMIMETypes(verb string) []string {
+	if m, ok := t.inner.(rest.StorageMetadata); ok {
+		return m.ProducesMIMETypes(verb)
+	}
+	return nil
+}
+
+func (t *timeoutConnecter) ProducesObject(verb string) any {
+	if m, ok := t.inner.(rest.StorageMetadata); ok {
+		return m.ProducesObject(verb)
+	}
+	return nil
+}
+
+var (
+	_ rest.Storage         = (*timeoutConnecter)(nil)
+	_ rest.Connecter       = (*timeoutConnecter)(nil)
+	_ rest.StorageMetadata = (*timeoutConnecter)(nil)
+)

@@ -51,8 +51,10 @@ func (*listConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
+func (s *listConnector) Timeout() time.Duration { return s.timeout }
+
 func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return WithTimeout(ctx, func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ns, ok := request.NamespaceFrom(ctx)
 		if !ok {
 			responder.Error(k8serrors.NewBadRequest("missing namespace"))
@@ -65,11 +67,12 @@ func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.O
 		} else {
 			responder.Object(200, rsp)
 		}
-	}, s.timeout), nil
+	}), nil
 }
 
 var (
 	_ rest.Storage         = (*listConnector)(nil)
 	_ rest.Connecter       = (*listConnector)(nil)
 	_ rest.StorageMetadata = (*listConnector)(nil)
+	_ TimeoutProvider      = (*listConnector)(nil)
 )
