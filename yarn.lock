@@ -2044,6 +2044,7 @@ __metadata:
     d3-random: "npm:^3.0.1"
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
+    lru-cache: "npm:11.2.2"
     micro-memoize: "npm:^4.1.2"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
@@ -2065,6 +2066,7 @@ __metadata:
   resolution: "@grafana-plugins/mssql@workspace:public/app/plugins/datasource/mssql"
   dependencies:
     "@emotion/css": "npm:11.13.5"
+    "@grafana/azure-sdk": "npm:0.1.0"
     "@grafana/data": "npm:13.1.0-pre"
     "@grafana/e2e-selectors": "npm:13.1.0-pre"
     "@grafana/i18n": "npm:13.1.0-pre"

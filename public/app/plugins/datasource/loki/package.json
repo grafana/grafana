@@ -15,6 +15,7 @@
     "@grafana/ui": "13.1.0-pre",
     "d3-random": "^3.0.1",
     "lodash": "^4.17.23",
+    "lru-cache": "11.2.2",
     "micro-memoize": "^4.1.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",

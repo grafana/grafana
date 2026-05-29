@@ -45,6 +45,7 @@ const config: KnipConfig = {
       project: [
         'public/app/**',
         'scripts/**/*.ts*',
+        '.github/**',
 
         // paths to ignore
         '!devenv/**',
