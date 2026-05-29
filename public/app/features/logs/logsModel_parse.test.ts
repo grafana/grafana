@@ -1264,4 +1264,45 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
 
     expect(logSeriesToLogsModel(frames)).toStrictEqual(expected);
   });
+
+  it('distinguishes a missing level (unspecified) from an explicit unknown level', () => {
+    const frames: DataFrame[] = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'timestamp',
+            type: FieldType.time,
+            config: {},
+            values: [1686142519756, 1686142520411],
+          },
+          {
+            name: 'severity',
+            type: FieldType.string,
+            config: {},
+            // First row has an explicit "unknown" level, second row has no level at all.
+            values: ['unknown', ''],
+          },
+          {
+            name: 'body',
+            type: FieldType.string,
+            config: {},
+            values: ['line1', 'line2'],
+          },
+        ],
+        length: 2,
+        meta: {
+          type: DataFrameType.LogLines,
+        },
+      },
+    ];
+
+    const model = logSeriesToLogsModel(frames);
+
+    expect(model?.rows[0].logLevel).toBe(LogLevel.unknown);
+    expect(model?.rows[0].logLevel).toBe('unknown');
+
+    expect(model?.rows[1].logLevel).toBe(LogLevel.unspecified);
+    expect(model?.rows[1].logLevel).toBe('');
+  });
 });
