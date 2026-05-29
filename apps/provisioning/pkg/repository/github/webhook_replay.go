@@ -6,47 +6,49 @@ import (
 	"time"
 )
 
-// defaultDeliveryIDCacheTTL is the lifetime of a recorded GitHub webhook
-// delivery ID. It must comfortably exceed GitHub's webhook retry window so
-// that a replayed request is still considered a duplicate.
-const defaultDeliveryIDCacheTTL = time.Hour
+// defaultReplayCacheTTL is the lifetime of a recorded webhook replay key. It
+// must comfortably exceed GitHub's webhook retry window so that a replayed
+// request is still considered a duplicate.
+const defaultReplayCacheTTL = time.Hour
 
-// deliveryIDCache tracks recently-seen GitHub webhook delivery IDs so the
-// webhook handler can reject replayed requests. GitHub sets a unique UUID in
-// the X-GitHub-Delivery header for every delivery attempt of an event.
+// replayCache tracks recently-seen webhook replay keys so the webhook handler
+// can reject replayed requests. The key is the validated HMAC signature
+// (X-Hub-Signature-256), which binds the entry to the signed request body and
+// the repository's unique secret — see Webhook for why the unauthenticated
+// X-GitHub-Delivery header is not used as the key.
 //
 // Eviction is amortized O(1): every entry shares the same TTL, so insertion
 // order equals expiration order. We walk a FIFO from the front and stop at
 // the first live entry — work is proportional to the number of newly-expired
 // entries, not to the cache size.
-type deliveryIDCache struct {
+type replayCache struct {
 	ttl time.Duration
 	now func() time.Time
 
 	mu    sync.Mutex
-	ids   map[string]*list.Element // id → element in order
+	keys  map[string]*list.Element // key → element in order
 	order *list.List               // FIFO of *cacheEntry, oldest at front
 }
 
 type cacheEntry struct {
-	id     string
+	key    string
 	expiry time.Time
 }
 
-func newDeliveryIDCache(ttl time.Duration) *deliveryIDCache {
-	return &deliveryIDCache{
+func newReplayCache(ttl time.Duration) *replayCache {
+	return &replayCache{
 		ttl:   ttl,
 		now:   time.Now,
-		ids:   make(map[string]*list.Element),
+		keys:  make(map[string]*list.Element),
 		order: list.New(),
 	}
 }
 
-// seenOrAdd returns true if id has been recorded within the TTL window.
-// Otherwise it records id and returns false. An empty id is never considered
-// a duplicate so callers can decide how to handle missing headers.
-func (c *deliveryIDCache) seenOrAdd(id string) bool {
-	if id == "" {
+// seenOrAdd returns true if key has been recorded within the TTL window.
+// Otherwise it records key and returns false. An empty key is never considered
+// a duplicate so callers can decide how to handle missing values.
+func (c *replayCache) seenOrAdd(key string) bool {
+	if key == "" {
 		return false
 	}
 
@@ -60,13 +62,13 @@ func (c *deliveryIDCache) seenOrAdd(id string) bool {
 			break
 		}
 		c.order.Remove(e)
-		delete(c.ids, entry.id)
+		delete(c.keys, entry.key)
 	}
 
-	if _, ok := c.ids[id]; ok {
+	if _, ok := c.keys[key]; ok {
 		return true
 	}
-	el := c.order.PushBack(&cacheEntry{id: id, expiry: now.Add(c.ttl)})
-	c.ids[id] = el
+	el := c.order.PushBack(&cacheEntry{key: key, expiry: now.Add(c.ttl)})
+	c.keys[key] = el
 	return false
 }

@@ -82,7 +82,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("decrypt webhookSecret: %w", err)
 	}
 
-	return NewGithubWebhookRepository(ghRepo, webhookURL, webhookSecret, e.incrementalPolicy, e.factory.deliveryCache), nil
+	return NewGithubWebhookRepository(ghRepo, webhookURL, webhookSecret, e.incrementalPolicy, e.factory.replayCache), nil
 }
 
 func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {

@@ -17,15 +17,15 @@ type Factory struct {
 	// FIXME: we should replace in this way. We should add some options pattern for the factory.
 	Client *http.Client
 
-	// deliveryCache is the process-wide webhook replay cache. It lives on
+	// replayCache is the process-wide webhook replay cache. It lives on
 	// the factory so a single instance is shared across every per-request
 	// githubWebhookRepository the factory ultimately produces.
-	deliveryCache *deliveryIDCache
+	replayCache *replayCache
 }
 
 func ProvideFactory() *Factory {
 	return &Factory{
-		deliveryCache: newDeliveryIDCache(defaultDeliveryIDCacheTTL),
+		replayCache: newReplayCache(defaultReplayCacheTTL),
 	}
 }
 

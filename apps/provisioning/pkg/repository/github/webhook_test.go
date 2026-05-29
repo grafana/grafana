@@ -184,8 +184,22 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 			"full_name": "grafana/grafana"
 		}
 	}`
+	// A byte-different but still valid push payload — produces a different
+	// HMAC signature, so it is a distinct (non-replayed) request.
+	otherPayload := `{
+		"ref": "refs/heads/main",
+		"after": "deadbeef",
+		"repository": {
+			"full_name": "grafana/grafana"
+		}
+	}`
 
-	newSignedRequest := func(payload, deliveryID string) *http.Request {
+	const defaultSecret = "webhook-secret"
+
+	// newSignedRequest signs payload with secret and sets the headers GitHub
+	// sends. deliveryID populates X-GitHub-Delivery; it is intentionally
+	// independent of the signature so tests can vary it freely.
+	newSignedRequest := func(payload, deliveryID, secret string) *http.Request {
 		req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
 		req.Header.Set("X-GitHub-Event", "push")
 		req.Header.Set("Content-Type", "application/json")
@@ -193,7 +207,7 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 			req.Header.Set("X-GitHub-Delivery", deliveryID)
 		}
 
-		mac := hmac.New(sha256.New, []byte("webhook-secret"))
+		mac := hmac.New(sha256.New, []byte(secret))
 		mac.Write([]byte(payload))
 		signature := hex.EncodeToString(mac.Sum(nil))
 		req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
@@ -201,7 +215,7 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		return req
 	}
 
-	newRepo := func(cache *deliveryIDCache) *githubWebhookRepository {
+	newRepo := func(cache *replayCache, secret string) *githubWebhookRepository {
 		return &githubWebhookRepository{
 			config: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
@@ -213,46 +227,78 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 					Webhook: &provisioning.WebhookStatus{},
 				},
 			},
-			owner:         "grafana",
-			repo:          "grafana",
-			secret:        common.RawSecureValue("webhook-secret"),
-			deliveryCache: cache,
+			owner:       "grafana",
+			repo:        "grafana",
+			secret:      common.RawSecureValue(secret),
+			replayCache: cache,
 		}
 	}
 
 	t.Run("first delivery is accepted", func(t *testing.T) {
-		gh := newRepo(newDeliveryIDCache(time.Hour))
+		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
 
-		rsp, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-1"))
+		rsp, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-1", defaultSecret))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusAccepted, rsp.Code)
 	})
 
-	t.Run("duplicate delivery id is silently accepted", func(t *testing.T) {
-		gh := newRepo(newDeliveryIDCache(time.Hour))
+	t.Run("replayed request is silently dropped", func(t *testing.T) {
+		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
 
 		// First delivery succeeds with the normal accepted-job response.
-		first, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-dup"))
+		first, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-dup", defaultSecret))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusAccepted, first.Code)
 
-		// Replaying the same delivery id returns a generic 200 OK — same
+		// Replaying the same signed request returns a generic 200 OK — same
 		// shape as other no-op paths so an attacker can't tell from the
 		// response whether the payload was previously processed.
-		dup, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-dup"))
+		dup, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-dup", defaultSecret))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, dup.Code)
 		require.Equal(t, "ok", dup.Message)
-		require.Nil(t, dup.Job, "duplicate must not enqueue a job")
+		require.Nil(t, dup.Job, "replay must not enqueue a job")
 	})
 
-	t.Run("different delivery ids are independent", func(t *testing.T) {
-		gh := newRepo(newDeliveryIDCache(time.Hour))
+	t.Run("replay with a fresh delivery id is still dropped", func(t *testing.T) {
+		// Regression: the X-GitHub-Delivery header is not covered by the HMAC,
+		// so an attacker can replay a captured (body, signature) under a new
+		// delivery ID. Keying on the signature must still catch it.
+		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
 
-		_, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-A"))
+		_, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-A", defaultSecret))
 		require.NoError(t, err)
 
-		rsp, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-B"))
+		dup, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-B", defaultSecret))
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, dup.Code, "same signed body under a different delivery id is still a replay")
+		require.Nil(t, dup.Job)
+	})
+
+	t.Run("distinct payloads are independent", func(t *testing.T) {
+		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
+
+		_, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-A", defaultSecret))
+		require.NoError(t, err)
+
+		// A different body yields a different signature, so it is processed.
+		rsp, err := gh.Webhook(context.Background(), newSignedRequest(otherPayload, "delivery-B", defaultSecret))
+		require.NoError(t, err)
+		require.Equal(t, http.StatusAccepted, rsp.Code)
+	})
+
+	t.Run("identical body under different secrets does not collide", func(t *testing.T) {
+		// The shared cache is consulted by every repository. Two repos with
+		// distinct webhook secrets produce distinct signatures for the same
+		// body, so one repo's delivery must not shadow another's.
+		cache := newReplayCache(time.Hour)
+		repoA := newRepo(cache, "secret-a")
+		repoB := newRepo(cache, "secret-b")
+
+		_, err := repoA.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-A", "secret-a"))
+		require.NoError(t, err)
+
+		rsp, err := repoB.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-B", "secret-b"))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusAccepted, rsp.Code)
 	})
@@ -260,50 +306,39 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 	t.Run("repositories sharing a cache silently drop cross-instance replays", func(t *testing.T) {
 		// Mirrors production: extras.Build rebuilds a repository per request
 		// but threads the factory's single cache through each instance.
-		cache := newDeliveryIDCache(time.Hour)
-		first := newRepo(cache)
-		second := newRepo(cache)
+		cache := newReplayCache(time.Hour)
+		first := newRepo(cache, defaultSecret)
+		second := newRepo(cache, defaultSecret)
 
-		_, err := first.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-shared"))
+		_, err := first.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-1", defaultSecret))
 		require.NoError(t, err)
 
-		dup, err := second.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-shared"))
+		dup, err := second.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-2", defaultSecret))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, dup.Code)
 		require.Equal(t, "ok", dup.Message)
 		require.Nil(t, dup.Job)
 	})
 
-	t.Run("expired delivery id is accepted again", func(t *testing.T) {
-		cache := newDeliveryIDCache(time.Hour)
+	t.Run("expired entry is accepted again", func(t *testing.T) {
+		cache := newReplayCache(time.Hour)
 		// Pin the clock so we can step past the TTL deterministically.
 		fakeNow := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 		cache.now = func() time.Time { return fakeNow }
-		gh := newRepo(cache)
+		gh := newRepo(cache, defaultSecret)
 
-		_, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-X"))
+		_, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-X", defaultSecret))
 		require.NoError(t, err)
 
 		// Move clock past TTL so the prior entry is evicted before lookup.
 		fakeNow = fakeNow.Add(2 * time.Hour)
-		rsp, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-X"))
+		rsp, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-X", defaultSecret))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusAccepted, rsp.Code)
 	})
 
-	t.Run("missing delivery id is rejected", func(t *testing.T) {
-		gh := newRepo(newDeliveryIDCache(time.Hour))
-
-		_, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, ""))
-		require.Error(t, err)
-		var statusErr *apierrors.StatusError
-		require.True(t, errors.As(err, &statusErr))
-		require.Equal(t, int32(http.StatusBadRequest), statusErr.Status().Code)
-		require.Equal(t, "missing delivery id", statusErr.Status().Message)
-	})
-
-	t.Run("invalid signature still rejected before replay check", func(t *testing.T) {
-		gh := newRepo(newDeliveryIDCache(time.Hour))
+	t.Run("invalid signature is rejected before the replay check", func(t *testing.T) {
+		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
 
 		req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(pushPayload))
 		req.Header.Set("X-GitHub-Event", "push")
@@ -314,9 +349,9 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		_, err := gh.Webhook(context.Background(), req)
 		require.Error(t, err)
 
-		// A subsequent valid request with the same delivery ID must still
-		// succeed — failed signatures must not poison the replay cache.
-		rsp, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-bad-sig"))
+		// A subsequent valid request must still succeed — a failed signature
+		// must not poison the replay cache.
+		rsp, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-good", defaultSecret))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusAccepted, rsp.Code)
 	})
@@ -1076,27 +1111,20 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		},
 	}
 
-	for i, tt := range tests {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a GitHub repository with the test config. A fresh cache
 			// per subtest keeps replay state from leaking across cases.
 			repo := &githubWebhookRepository{
-				config:        tt.config,
-				owner:         "grafana",
-				repo:          "grafana",
-				secret:        common.RawSecureValue("webhook-secret"),
-				deliveryCache: newDeliveryIDCache(time.Hour),
-			}
-
-			req := tt.setupRequest()
-			// Inject a unique delivery ID so the replay check passes — these
-			// cases predate the X-GitHub-Delivery header requirement.
-			if req.Header.Get("X-GitHub-Delivery") == "" {
-				req.Header.Set("X-GitHub-Delivery", fmt.Sprintf("test-delivery-%d", i))
+				config:      tt.config,
+				owner:       "grafana",
+				repo:        "grafana",
+				secret:      common.RawSecureValue("webhook-secret"),
+				replayCache: newReplayCache(time.Hour),
 			}
 
 			// Call the Webhook method
-			response, err := repo.Webhook(context.Background(), req)
+			response, err := repo.Webhook(context.Background(), tt.setupRequest())
 
 			// Check the error
 			if tt.expectedError != nil {

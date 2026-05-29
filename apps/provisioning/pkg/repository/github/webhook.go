@@ -41,7 +41,7 @@ type githubWebhookRepository struct {
 	gh                Client
 	webhookURL        string
 	incrementalPolicy repository.IncrementalSyncPolicy
-	deliveryCache     *deliveryIDCache
+	replayCache       *replayCache
 }
 
 func NewGithubWebhookRepository(
@@ -49,8 +49,13 @@ func NewGithubWebhookRepository(
 	webhookURL string,
 	secret common.RawSecureValue,
 	incrementalPolicy repository.IncrementalSyncPolicy,
-	deliveryCache *deliveryIDCache,
+	replay *replayCache,
 ) GithubWebhookRepository {
+	// Defensive: callers should pass the factory-owned cache, but never leave
+	// Webhook with a nil cache to dereference.
+	if replay == nil {
+		replay = newReplayCache(defaultReplayCacheTTL)
+	}
 	return &githubWebhookRepository{
 		GithubRepository:  basic,
 		config:            basic.Config(),
@@ -60,7 +65,7 @@ func NewGithubWebhookRepository(
 		webhookURL:        webhookURL,
 		secret:            secret,
 		incrementalPolicy: incrementalPolicy,
-		deliveryCache:     deliveryCache,
+		replayCache:       replay,
 	}
 }
 
@@ -79,17 +84,24 @@ func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request
 		return nil, apierrors.NewUnauthorized("invalid signature")
 	}
 
-	// Replay protection: GitHub assigns a unique UUID to each delivery in the
-	// X-GitHub-Delivery header. Silently drop a request whose delivery ID we
-	// have already processed within the cache TTL — returning a generic 200
-	// avoids confirming to a replay attacker that the captured payload was a
-	// real previously-processed delivery.
-	deliveryID := github.DeliveryID(req)
-	if deliveryID == "" {
-		return nil, apierrors.NewBadRequest("missing delivery id")
+	// Replay protection: key on the validated signature, not the
+	// X-GitHub-Delivery header. GitHub computes the HMAC over the request body
+	// only, so the delivery ID is unauthenticated — an attacker replaying a
+	// captured (body, signature) could simply pick a fresh delivery ID and
+	// slip past a delivery-ID cache. The signature, by contrast, is bound to
+	// both the signed body and the repository's unique secret, so it cannot be
+	// forged or collided across repositories.
+	//
+	// Silently drop a request whose signature we have already processed within
+	// the cache TTL — returning a generic 200 avoids confirming to a replay
+	// attacker that the captured payload was a real previously-processed
+	// delivery.
+	signature := req.Header.Get(github.SHA256SignatureHeader)
+	if signature == "" {
+		signature = req.Header.Get(github.SHA1SignatureHeader)
 	}
-	if r.deliveryCache.seenOrAdd(deliveryID) {
-		logging.FromContext(ctx).Info("dropping duplicate webhook delivery", "delivery_id", deliveryID)
+	if r.replayCache.seenOrAdd(signature) {
+		logging.FromContext(ctx).Debug("dropping replayed webhook delivery", "delivery_id", github.DeliveryID(req))
 		return &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ok"}, nil
 	}
 

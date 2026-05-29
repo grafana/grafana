@@ -8,21 +8,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDeliveryIDCache(t *testing.T) {
+func TestReplayCache(t *testing.T) {
 	t.Run("first add returns false, duplicate returns true", func(t *testing.T) {
-		c := newDeliveryIDCache(time.Hour)
+		c := newReplayCache(time.Hour)
 		require.False(t, c.seenOrAdd("abc"))
 		require.True(t, c.seenOrAdd("abc"))
 	})
 
-	t.Run("empty id is never considered seen", func(t *testing.T) {
-		c := newDeliveryIDCache(time.Hour)
+	t.Run("empty key is never considered seen", func(t *testing.T) {
+		c := newReplayCache(time.Hour)
 		require.False(t, c.seenOrAdd(""))
 		require.False(t, c.seenOrAdd(""))
 	})
 
 	t.Run("entries expire after ttl", func(t *testing.T) {
-		c := newDeliveryIDCache(time.Hour)
+		c := newReplayCache(time.Hour)
 		now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 		c.now = func() time.Time { return now }
 
@@ -33,8 +33,8 @@ func TestDeliveryIDCache(t *testing.T) {
 		require.False(t, c.seenOrAdd("abc"))
 	})
 
-	t.Run("concurrent adds of the same id register exactly one as new", func(t *testing.T) {
-		c := newDeliveryIDCache(time.Hour)
+	t.Run("concurrent adds of the same key register exactly one as new", func(t *testing.T) {
+		c := newReplayCache(time.Hour)
 
 		const goroutines = 64
 		var wg sync.WaitGroup
