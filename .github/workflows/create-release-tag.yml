@@ -11,7 +11,7 @@ on:
         description: 'Tag message'
         required: true
         type: string
-      object:
+      commit:
         description: 'Commit SHA to tag'
         required: true
         type: string
@@ -32,17 +32,21 @@ jobs:
 
       - name: Create annotated tag
         env:
+          TAG: ${{ inputs.tag }}
+          TAG_MESSAGE: ${{ inputs.message }}
+          COMMIT_SHA: ${{ inputs.commit }}
+          REPO: ${{ github.repository }}
           GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
         run: |
-          tag_sha=$(gh api "repos/${{ github.repository }}/git/tags" \
+          tag_sha=$(gh api "repos/${REPO}/git/tags" \
             --method POST \
-            -f tag="${{ inputs.tag }}" \
-            -f message="${{ inputs.message }}" \
-            -f object="${{ inputs.object }}" \
+            -f "tag=${TAG}" \
+            -f "message=${TAG_MESSAGE}" \
+            -f "object=${COMMIT_SHA}" \
             -f type="commit" \
             --jq '.sha')
 
-          gh api "repos/${{ github.repository }}/git/refs" \
+          gh api "repos/${REPO}/git/refs" \
             --method POST \
-            -f ref="refs/tags/${{ inputs.tag }}" \
-            -f sha="${tag_sha}"
+            -f "ref=refs/tags/${TAG}" \
+            -f "sha=${tag_sha}"
