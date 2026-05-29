@@ -401,6 +401,14 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		Index:                b.unified,
 		DeprecatedInternalID: apistore.DeprecatedID_Required,
 	})
+	opts.StorageOptsRegister(iamv0.ServiceAccountResourceInfo.GroupResource(), apistore.StorageOptions{
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
+	})
+	opts.StorageOptsRegister(iamv0.TeamBindingResourceInfo.GroupResource(), apistore.StorageOptions{
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Optional,
+	})
 
 	if enableTeamsApi {
 		if err := b.UpdateTeamsAPIGroup(opts, storage, enableZanzanaSync); err != nil {
