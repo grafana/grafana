@@ -2497,7 +2497,9 @@ __metadata:
     "@typescript-eslint/utils": "npm:^8.9.0"
     eslint: "npm:9.32.0"
     eslint-no-restricted: "npm:^0.1.1"
+    html-tags: "npm:^5.1.0"
     jest: "npm:29.7.0"
+    known-css-properties: "npm:^0.37.0"
   languageName: unknown
   linkType: soft
 
@@ -10403,7 +10405,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/mailparser@npm:^3.4.0":
+"@types/mailparser@npm:3.4.4, @types/mailparser@npm:^3.4.0":
   version: 3.4.4
   resolution: "@types/mailparser@npm:3.4.4"
   dependencies:
@@ -18830,10 +18832,12 @@ __metadata:
     "@types/lodash": "npm:4.17.20"
     "@types/logfmt": "npm:^1.2.3"
     "@types/lucene": "npm:^2"
+    "@types/mailparser": "npm:3.4.4"
     "@types/mdx": "npm:^2.0.0"
     "@types/node": "npm:24.10.1"
     "@types/node-forge": "npm:^1"
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.3.0"
+    "@types/papaparse": "npm:5.3.16"
     "@types/pluralize": "npm:^0.0.33"
     "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:18.3.18"
@@ -18968,6 +18972,7 @@ __metadata:
     lru-memoize: "npm:^1.1.0"
     lucene: "npm:^2.1.1"
     madge: "npm:^8.0.0"
+    mailparser: "npm:3.9.8"
     marked: "npm:16.3.0"
     memoize-one: "npm:6.0.0"
     micro-memoize: "npm:^4.1.2"
@@ -18989,6 +18994,7 @@ __metadata:
     ol-mapbox-style: "npm:^13.0.1"
     open: "npm:^10.2.0"
     ora: "npm:^9.0.0"
+    papaparse: "npm:5.5.3"
     pdf-parse: "npm:^1.1.1"
     pluralize: "npm:^8.0.0"
     postcss: "npm:8.5.10"
@@ -23217,7 +23223,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mailparser@npm:^3.5.0":
+"mailparser@npm:3.9.8, mailparser@npm:^3.5.0":
   version: 3.9.8
   resolution: "mailparser@npm:3.9.8"
   dependencies:

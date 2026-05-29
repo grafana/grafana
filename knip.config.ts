@@ -7,7 +7,7 @@ const packageIgnoreDeps = [
   'rollup-plugin-node-externals',
 ];
 
-const packageEntries = ['i18next.config.ts'];
+const defaultEntries = ['i18next.config.ts'];
 
 const externalisedDatasources = [
   'azuremonitor',
@@ -35,7 +35,7 @@ const config: KnipConfig = {
     'enumMembers',
   ],
   ignore: ['**/*.gen.ts*', '**/*_gen.ts*'],
-  ignoreBinaries: ['make', 'shellcheck'],
+  ignoreBinaries: ['jq', 'make', 'shellcheck'],
   workspaces: {
     '.': {
       // TODO figure out how to properly include jest config
@@ -47,11 +47,20 @@ const config: KnipConfig = {
 
         // TODO figure out how to properly include jest config
         'jest-*',
+
+        // needed by github actions
+        '@grafana/levitate',
+        'wait-on',
+
+        // used via `yarn <bin>` in scripts/validate-npm-packages.sh — knip doesn't detect yarn-invoked binaries
+        '@arethetypeswrong/cli',
+        'publint',
       ],
       project: [
         'public/app/**',
-        'scripts/**/*.ts*',
+        'scripts/**',
         '.github/**',
+        'e2e-playwright/**',
 
         // paths to ignore
         '!devenv/**',
@@ -60,7 +69,16 @@ const config: KnipConfig = {
         '!pkg/**',
         ...externalisedDatasources.map((ds) => `!public/app/plugins/datasource/${ds}/**`),
       ],
-      entry: ['public/app/app.ts', 'public/app/index.ts', 'public/app/plugins/**/module.{ts,tsx,js}'],
+      entry: [
+        ...defaultEntries,
+        'public/app/app.ts',
+        'public/app/index.ts',
+        'public/app/plugins/**/module.{ts,tsx,js}',
+        'scripts/*.{t,j}s*',
+
+        // TODO figure out how to properly include jest config
+        'jest.config.codeowner.js',
+      ],
       webpack: {
         config: ['scripts/webpack/webpack.dev.ts', 'scripts/webpack/webpack.prod.ts'],
       },
@@ -72,7 +90,7 @@ const config: KnipConfig = {
       // TODO figure out how to properly include webpack config
       webpack: false,
       jest: true,
-      entry: [...packageEntries, 'module.{ts,tsx,js}'],
+      entry: [...defaultEntries, 'module.{ts,tsx,js}'],
       // these are provided by grafana-plugin-configs
       ignoreDependencies: ['@swc/jest'],
       ignoreUnresolved: ['identity-obj-proxy'],
@@ -80,10 +98,10 @@ const config: KnipConfig = {
     'e2e-playwright/test-plugins/*': {
       // TODO figure out how to properly include webpack/jest configs
       webpack: false,
-      entry: [...packageEntries, 'module.{ts,tsx,js}', 'plugins/*/module.{ts,tsx,js}'],
+      entry: [...defaultEntries, 'module.{ts,tsx,js}', 'plugins/*/module.{ts,tsx,js}'],
     },
     'packages/**': {
-      entry: packageEntries,
+      entry: defaultEntries,
       ignoreDependencies: packageIgnoreDeps,
       jest: true,
     },
@@ -93,7 +111,7 @@ const config: KnipConfig = {
     //   - its stories/mdx docs reference dependencies that are managed by `grafana-ui`
     // TODO `grafana-alerting` should probably have its own storybook (like `grafana-flamegraph`)
     'packages/grafana-alerting': {
-      entry: packageEntries,
+      entry: defaultEntries,
       ignoreDependencies: [
         ...packageIgnoreDeps,
         '@storybook/addon-docs',
@@ -103,7 +121,7 @@ const config: KnipConfig = {
       storybook: true,
     },
     'packages/grafana-api-clients': {
-      entry: [...packageEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/generate.ts'],
+      entry: [...defaultEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/generate.ts'],
     },
     'packages/grafana-plugin-configs': {
       // TODO figure out how to properly include webpack/jest configs
