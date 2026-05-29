@@ -21,6 +21,8 @@ import {
 import { fetchRules } from './prometheus';
 import { fetchTestRulerRulesGroup } from './ruler';
 
+const MIMIR_RULER_SUBTYPE = 'mimir';
+
 export async function discoverFeaturesByUid(dataSourceUid: string): Promise<PromApiFeatures> {
   if (dataSourceUid === GRAFANA_RULES_SOURCE_NAME) {
     return {
@@ -105,10 +107,13 @@ export async function discoverDataSourceFeatures(dsSettings: {
   }
 
   // if we have both features and buildinfo reported we're talking to Mimir
+  const rulerConfigApiEnabled = features?.ruler_config_api === 'true';
+  const rulerSupported = rulerConfigApiEnabled ? await hasRulerSupport(name, MIMIR_RULER_SUBTYPE) : false;
+
   return {
     application: PromApplication.Mimir,
     features: {
-      rulerApiEnabled: features?.ruler_config_api === 'true',
+      rulerApiEnabled: rulerSupported,
     },
   };
 }
@@ -186,9 +191,13 @@ async function hasPromRulesSupport(dataSourceName: string) {
  * Attempt to check if the ruler API is enabled for Cortex, Prometheus does not support it and Mimir
  * reports this via the buildInfo "features"
  */
-async function hasRulerSupport(dataSourceName: string) {
+async function hasRulerSupport(dataSourceName: string, subtype?: 'mimir') {
   try {
-    await fetchTestRulerRulesGroup(dataSourceName);
+    if (subtype) {
+      await fetchTestRulerRulesGroup(dataSourceName, subtype);
+    } else {
+      await fetchTestRulerRulesGroup(dataSourceName);
+    }
     return true;
   } catch (e) {
     if (errorIndicatesMissingRulerSupport(e)) {
@@ -197,11 +206,24 @@ async function hasRulerSupport(dataSourceName: string) {
     throw e;
   }
 }
-// there errors indicate that the ruler API might be disabled or not supported for Cortex
+
+function getRulerSupportErrorMessage(error: unknown): string {
+  if (isFetchError(error)) {
+    return [error.data.message, error.data.error].filter(Boolean).join(' ');
+  }
+
+  return error instanceof Error ? error.message : '';
+}
+
+// these errors indicate that the ruler API might be disabled or not supported
 function errorIndicatesMissingRulerSupport(error: unknown) {
-  return isFetchError(error)
-    ? error.data.message?.includes('GetRuleGroup unsupported in rule local store') || // "local" rule storage
-        error.data.message?.includes('page not found') || // ruler api disabled
-        error.data.message?.includes(RULER_NOT_SUPPORTED_MSG) // ruler api not supported
-    : error instanceof Error && error.message?.includes('404 from rules config endpoint'); // ruler api disabled
+  const message = getRulerSupportErrorMessage(error);
+
+  return (
+    message.includes('GetRuleGroup unsupported in rule local store') ||
+    (message.includes('failed to load rule group') && message.includes('no such file or directory')) ||
+    message.includes('page not found') ||
+    message.includes(RULER_NOT_SUPPORTED_MSG) ||
+    message.includes('404 from rules config endpoint')
+  );
 }

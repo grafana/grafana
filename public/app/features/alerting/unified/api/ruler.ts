@@ -24,6 +24,8 @@ export interface RulerRequestUrl {
 const QUERY_NAMESPACE_TAG = 'QUERY_NAMESPACE';
 const QUERY_GROUP_TAG = 'QUERY_GROUP';
 
+type RulerApiSubtype = 'cortex' | 'mimir';
+
 export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
   const rulerPath = getRulerPath(rulerConfig);
   const queryDetailsProvider = getQueryDetailsProvider(rulerConfig);
@@ -144,10 +146,16 @@ export async function fetchRulerRulesNamespace(rulerConfig: RulerDataSourceConfi
 
 // fetch a particular rule group
 // will throw with { status: 404 } if rule group does not exist
-export async function fetchTestRulerRulesGroup(dataSourceName: string): Promise<RulerRuleGroupDTO | null> {
+export async function fetchTestRulerRulesGroup(
+  dataSourceName: string,
+  subtype?: RulerApiSubtype
+): Promise<RulerRuleGroupDTO | null> {
+  const params = subtype ? { subtype } : undefined;
+
   return rulerGetRequest<RulerRuleGroupDTO | null>(
     `/api/ruler/${getDatasourceAPIUid(dataSourceName)}/api/v1/rules/test/test`,
-    null
+    null,
+    params
   );
 }
 
