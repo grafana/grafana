@@ -534,6 +534,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	require.NoError(t, err)
 	_, err = pluginsSect.NewKey("disable_plugins", "grafana-assistant-app")
 	require.NoError(t, err)
+	// Disable async plugin preinstall in tests. The background installer
+	// downloads plugins from grafana.com into the test's tempdir, racing
+	// t.TempDir cleanup and producing "directory not empty" failures, and
+	// adds a network dependency that no integration test actually needs.
+	_, err = pluginsSect.NewKey("preinstall_disabled", "true")
+	require.NoError(t, err)
 
 	if opts.EnableCSP {
 		securitySect, err := cfg.NewSection("security")
