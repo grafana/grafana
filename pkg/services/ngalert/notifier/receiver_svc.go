@@ -8,7 +8,6 @@ import (
 	"slices"
 	"strings"
 
-	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -396,8 +395,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 
 	createdReceiver := r.Clone()
 	for _, integration := range createdReceiver.Integrations {
-		iType := integration.Config.Type()
-		if err := rs.validateNoDuplicateSecretFields(iType, integration.Settings); err != nil {
+		if err := rs.validateNoDuplicateSecretFields(integration.Config, integration.Settings); err != nil {
 			return nil, models.ErrReceiverInvalid(err)
 		}
 	}
@@ -529,8 +527,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	//    to load these secure settings from the existing integration.
 	updatedReceiver := r.Clone()
 	for _, integration := range updatedReceiver.Integrations {
-		iType := integration.Config.Type()
-		if err := rs.validateNoDuplicateSecretFields(iType, integration.Settings); err != nil {
+		if err := rs.validateNoDuplicateSecretFields(integration.Config, integration.Settings); err != nil {
 			return nil, models.ErrReceiverInvalid(err)
 		}
 	}
@@ -897,11 +894,7 @@ func (rs *ReceiverService) validateReceiver(ctx context.Context, orgID int64, re
 	return nil
 }
 
-func (rs *ReceiverService) validateNoDuplicateSecretFields(iType schema.IntegrationType, settings map[string]any) error {
-	typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(iType, schema.V1)
-	if !ok {
-		return fmt.Errorf("failed to get schema for receiver type %s", iType)
-	}
+func (rs *ReceiverService) validateNoDuplicateSecretFields(typeSchema schema.IntegrationSchemaVersion, settings map[string]any) error {
 	for _, secretPath := range typeSchema.GetSecretFieldsPaths() {
 		node := settings
 		for _, segment := range secretPath {

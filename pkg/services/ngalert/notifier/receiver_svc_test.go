@@ -1219,17 +1219,13 @@ func TestReceiverService_validateNoDuplicateSecretFields(t *testing.T) {
 			integration: "slack",
 			settings:    nil,
 		},
-		{
-			name:        "unknown integration type errors",
-			integration: "does-not-exist",
-			settings:    map[string]any{},
-			wantErr:     "failed to get schema for receiver type does-not-exist",
-		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := rs.validateNoDuplicateSecretFields(schema.IntegrationType(tc.integration), tc.settings)
+			integrationGenerator := models.IntegrationGen(models.IntegrationMuts.WithName(tc.name), models.IntegrationMuts.WithValidConfig(schema.IntegrationType(tc.integration)), models.IntegrationMuts.WithSettings(tc.settings))
+			integration := integrationGenerator()
+			err := rs.validateNoDuplicateSecretFields(integration.Config, integration.Settings)
 			if tc.wantErr == "" {
 				require.NoError(t, err)
 				return
