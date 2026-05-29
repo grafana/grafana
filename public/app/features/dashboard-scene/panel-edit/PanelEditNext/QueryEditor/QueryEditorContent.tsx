@@ -41,6 +41,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
+    // Flush to the editor's bottom edge, so the lower corners are squared.
+    borderBottomLeftRadius: 'unset',
+    borderBottomRightRadius: 'unset',
     height: '100%',
     width: '100%',
     overflow: 'hidden',
