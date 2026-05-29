@@ -221,6 +221,9 @@
       "text": "palette.ink300",
       "contrastText": "palette.ink200"
     },
+    "tertiary": {
+      "main": "palette.violet400"
+    },
     "accent": {
       "main": "palette.orange400",
       "text": "palette.orange400"
