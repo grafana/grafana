@@ -187,6 +187,27 @@ export function getPanelMenu(
       return;
     }
 
+    // The drawer is intentionally narrower than the full rule editor and has no datasource picker,
+    // so a blank drawer would leave the user with no way to recover. Surface the same info as the
+    // edit-panel button's inline Alert and skip opening the drawer.
+    if (!formValues) {
+      dispatch(
+        notifyApp(
+          createErrorNotification(
+            t(
+              'alerting.new-rule-from-panel-button.title-no-alerting-capable-query-found',
+              'No alerting capable query found'
+            ),
+            t(
+              'alerting.new-rule-from-panel-button.body-no-alerting-capable-query-found',
+              'Cannot create alerts from this panel because no query to an alerting capable datasource is found.'
+            )
+          )
+        )
+      );
+      return;
+    }
+
     logInfo(LogMessages.alertRuleFromPanel);
     trackCreateRuleFromPanelDrawerOpened();
 

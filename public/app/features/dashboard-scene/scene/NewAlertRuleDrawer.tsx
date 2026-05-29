@@ -1,17 +1,10 @@
-import {
-  type SceneComponentProps,
-  SceneObjectBase,
-  type SceneObjectRef,
-  type SceneObjectState,
-  type VizPanel,
-} from '@grafana/scenes';
+import { type SceneComponentProps, SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
 import { PanelAlertRuleDrawer } from 'app/features/alerting/unified/components/PanelAlertRuleDrawer';
 import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
 export interface NewAlertRuleDrawerState extends SceneObjectState {
-  panelRef: SceneObjectRef<VizPanel>;
   prefill?: Partial<RuleFormValues>;
 }
 

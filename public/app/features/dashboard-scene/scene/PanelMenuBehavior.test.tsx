@@ -817,7 +817,7 @@ describe('panelMenuBehavior', () => {
       expect((drawer as NewAlertRuleDrawer).state.prefill).toEqual(mockFormValues);
     });
 
-    it('should open the new alert rule drawer with no prefill when no alerting-capable query is found', async () => {
+    it('should show error notification and not open the drawer when no alerting-capable query is found', async () => {
       const { menu, scene } = await buildTestScene({});
 
       config.unifiedAlertingEnabled = true;
@@ -837,10 +837,8 @@ describe('panelMenuBehavior', () => {
       await alertMenuItem?.({} as React.MouseEvent);
       await new Promise((r) => setTimeout(r, 0));
 
-      expect(showModalSpy).toHaveBeenCalledTimes(1);
-      const drawer = showModalSpy.mock.calls[0][0];
-      expect(drawer).toBeInstanceOf(NewAlertRuleDrawer);
-      expect((drawer as NewAlertRuleDrawer).state.prefill).toBeUndefined();
+      expect(showModalSpy).not.toHaveBeenCalled();
+      expect(storeModule.dispatch).toHaveBeenCalled();
     });
 
     it('should show error notification and not open the drawer on failure', async () => {

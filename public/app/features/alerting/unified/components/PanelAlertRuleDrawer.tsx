@@ -22,7 +22,10 @@ interface Props {
 export function PanelAlertRuleDrawer({ prefill, isOpen = true, onDismiss }: Props) {
   const location = useLocation();
 
-  const { onContinueInAlertingFromDrawer } = createPanelAlertRuleNavigation(() => Promise.resolve(prefill), location);
+  // AlertRuleDrawerForm always passes the live form values to onContinueInAlerting, so the
+  // getFormValues fallback inside createPanelAlertRuleNavigation is never invoked from this caller.
+  // Passing a noop makes the dead branch explicit.
+  const { onContinueInAlertingFromDrawer } = createPanelAlertRuleNavigation(() => Promise.resolve(undefined), location);
 
   return (
     <AlertRuleDrawerForm
