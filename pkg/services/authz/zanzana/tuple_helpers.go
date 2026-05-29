@@ -20,6 +20,29 @@ var (
 	errUnknownKind      = errors.New("unknown permission kind")
 )
 
+// Legacy role-management actions. Kept here (instead of importing acmodels) to
+// avoid an extension/legacy package dependency from the shared zanzana helpers.
+const (
+	actionRolesRead   = "roles:read"
+	actionRolesWrite  = "roles:write"
+	actionRolesDelete = "roles:delete"
+)
+
+// Scope fragments produced by splitScope for the two "all roles" scopes we
+// honor when translating role-management permissions:
+//   - permissions:type:delegate → kind="permissions", identifier="delegate"
+//   - roles:*                   → kind="roles",       identifier="*"
+//
+// The K8s mapper for roles already treats `permissions:type:delegate` as
+// equivalent to `roles:*` (see pkg/services/authz/rbac/mapper.go), so both
+// scope shapes resolve to the same wildcard group_resource tuple here.
+const (
+	scopeKindPermissions    = "permissions"
+	scopeIdentifierDelegate = "delegate"
+	scopeKindRoles          = "roles"
+	scopeIdentifierWildcard = "*"
+)
+
 // TupleStringWithoutCondition returns the string representation of a tuple without its condition.
 // This is useful for deduplicating tuples that have the same user, relation, and object
 // but different conditions that need to be merged.
@@ -58,6 +81,19 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 	folderResourceTuples := make(map[string]*openfgav1.TupleKey) // key is tuple without condition
 
 	for _, perm := range permissions {
+		// Role-management actions (roles:read/write/delete) take a dedicated
+		// translation path — their scope kinds (permissions:type:delegate,
+		// roles:*) aren't in the standard resource translation table, so
+		// falling through to TranslateToResourceTuple would log a misleading
+		// "can't translate" message. Non-wildcard scopes on role-management
+		// actions are intentionally dropped (see RoleManagementToTuples).
+		if isRoleManagementAction(perm.Action) {
+			for _, t := range RoleManagementToTuples(subject, perm) {
+				tupleMap[t.String()] = t
+			}
+			continue
+		}
+
 		// Convert RBAC action/kind to Zanzana tuple
 		tuple, ok := TranslateToResourceTuple(subject, perm.Action, perm.Kind, perm.Identifier)
 		if !ok {
@@ -117,6 +153,89 @@ func RoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*
 	}
 
 	return tuples, nil
+}
+
+// RoleManagementToTuples returns the Zanzana tuples that grant a role the
+// ability to manage other roles in the namespace and/or read global roles,
+// based on its legacy role-management permissions.
+//
+// The legacy RBAC layer scopes role-management actions in two equivalent
+// shapes that both mean "any role" — `permissions:type:delegate` (the
+// canonical form for write/delete) and `roles:*` (the wildcard form used by
+// `roles:read`). We treat the two as interchangeable here, matching the
+// rbac mapper's behavior.
+//
+// Only wildcard-scoped permissions produce tuples. The FGA schema for
+// `iam.grafana.app` only exposes a `group_resource` type — there is no
+// per-role instance type — so a permission scoped to a specific role
+// (e.g. `roles:uid:<specific>`) cannot be expressed in Zanzana without
+// silently broadening the grant to all roles, and is therefore dropped.
+//
+// Mapping (subject is `role:<roleUID>#assignee`, wildcard scope required):
+//
+//   - `roles:read`   → `get`    on group_resource:iam.grafana.app/roles AND
+//     `get` on group_resource:iam.grafana.app/globalroles
+//     (the legacy `roles:read` action covers both APIs — see
+//     pkg/services/authz/rbac/mapper.go, where `globalroles` is wired with
+//     `useWildcardScope: true`).
+//
+//   - `roles:write`  → `edit`   on group_resource:iam.grafana.app/roles.
+//     `edit` is used (instead of `update`) because the FGA schema defines
+//     create/update/delete on group_resource as `... or edit`, and the legacy
+//     `roles:write` action covers create + update + patch + delete.
+//
+//   - `roles:delete` → `delete` on group_resource:iam.grafana.app/roles.
+func RoleManagementToTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
+	rolesGroup := iamv0.RoleInfo.GroupResource().Group
+	rolesResource := iamv0.RoleInfo.GroupResource().Resource
+	globalRolesResource := iamv0.GlobalRoleInfo.GroupResource().Resource
+
+	if !isRolesWildcardScope(permission.Kind, permission.Identifier) {
+		return nil
+	}
+
+	var tuples []*openfgav1.TupleKey
+	switch permission.Action {
+	case actionRolesRead:
+		tuples = append(tuples,
+			NewGroupResourceTuple(subject, RelationGet, rolesGroup, globalRolesResource, ""),
+			NewGroupResourceTuple(subject, RelationGet, rolesGroup, rolesResource, ""),
+		)
+	case actionRolesWrite:
+		tuples = append(tuples,
+			NewGroupResourceTuple(subject, RelationSetEdit, rolesGroup, rolesResource, ""),
+		)
+	case actionRolesDelete:
+		tuples = append(tuples,
+			NewGroupResourceTuple(subject, RelationDelete, rolesGroup, rolesResource, ""),
+		)
+	}
+	return tuples
+}
+
+// isRoleManagementAction reports whether the action is one of the legacy
+// role-management actions (roles:read/write/delete). These take a dedicated
+// translation path in ConvertRolePermissionsToTuples — see RoleManagementToTuples.
+func isRoleManagementAction(action string) bool {
+	switch action {
+	case actionRolesRead, actionRolesWrite, actionRolesDelete:
+		return true
+	}
+	return false
+}
+
+// isRolesWildcardScope reports whether the (kind, identifier) pair represents
+// an "all roles" scope. Both legacy shapes resolve to true:
+//   - permissions:type:delegate → kind="permissions", identifier="delegate"
+//   - roles:*                   → kind="roles",       identifier="*"
+func isRolesWildcardScope(kind, identifier string) bool {
+	if kind == scopeKindPermissions && identifier == scopeIdentifierDelegate {
+		return true
+	}
+	if kind == scopeKindRoles && identifier == scopeIdentifierWildcard {
+		return true
+	}
+	return false
 }
 
 func splitScope(scope string) (string, string, string) {

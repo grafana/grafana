@@ -7,30 +7,6 @@ route:
     group_interval: 1m
     repeat_interval: 1m
     routes:
-        - receiver: recv
-          group_by:
-            - alertname
-            - groupby
-          group_wait: 65s
-          group_interval: 20m
-          repeat_interval: 10h
-          matchers:
-            - __mimir__="true"
-            - __datasource_uid__="12345"
-          routes:
-            - receiver: recv2
-              group_by:
-                - teste
-                - test2f
-              matchers:
-                - team="teamC"
-              mute_time_intervals:
-                - mti-2
-              active_time_intervals:
-                - ti-2
-              group_wait: 0s
-              group_interval: 1m
-              repeat_interval: 1m
         - receiver: test-webhook
           group_by:
             - teste
@@ -101,15 +77,5 @@ inhibit_rules:
       target_matchers:
         - alertname="test2"
         - cluster="test1"
-      equal:
-        - namespace
-    - source_matchers:
-        - alertname="test"
-        - __datasource_uid__="12345"
-        - __mimir__="true"
-      target_matchers:
-        - servicename="test2"
-        - __datasource_uid__="12345"
-        - __mimir__="true"
       equal:
         - namespace

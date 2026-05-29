@@ -190,6 +190,7 @@ func NewAPIBuilder(
 	folderMetadataEnabled bool,
 	folderAPIVersion string,
 	incrementalPolicy repository.IncrementalSyncPolicy,
+	maxFileSize int64,
 ) (*APIBuilder, error) {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -242,10 +243,8 @@ func NewAPIBuilder(
 		folderMetadataEnabled:               folderMetadataEnabled,
 		folderAPIVersion:                    folderAPIVersion,
 		incrementalPolicy:                   incrementalPolicy,
-		// Default cap for the files API. Callers (e.g. RegisterAPIService)
-		// may overwrite b.maxFileSize after construction; any non-positive
-		// value (<=0) disables the cap.
-		maxFileSize: setting.ProvisioningMaxFileSizeDefault,
+		// Per-file cap for the files API. Non-positive (<=0) disables the cap.
+		maxFileSize: maxFileSize,
 	}
 
 	for _, builder := range extraBuilders {
@@ -354,12 +353,12 @@ func RegisterAPIService(
 		folderMetadataEnabled,
 		folderAPIVersion,
 		incrementalPolicy,
+		maxFileSize,
 	)
 	if err != nil {
 		return nil, err
 	}
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
-	builder.maxFileSize = maxFileSize
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -393,12 +392,12 @@ func RegisterAPIService(
 		folderMetadataEnabled,
 		folderAPIVersion,
 		incrementalPolicy,
+		maxFileSize,
 	)
 	if err != nil {
 		return nil, err
 	}
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
-	v1beta1Builder.maxFileSize = maxFileSize
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers

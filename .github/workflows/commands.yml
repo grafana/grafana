@@ -13,7 +13,7 @@ permissions: {}
 
 jobs:
   config:
-    runs-on: "ubuntu-latest"
+    runs-on: ubuntu-arm64-small
     outputs:
       has-secrets: ${{ steps.check.outputs.has-secrets }}
     steps:
@@ -28,29 +28,20 @@ jobs:
   main:
     needs: config
     if: needs.config.outputs.has-secrets
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
       id-token: write
     steps:
-      - name: Get vault secrets
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          repo_secrets: |
-            GITHUB_APP_ID=grafana_pr_automation_app:app_id
-            GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
-
-      - name: Generate token
-        id: generate_token
-        uses: actions/create-github-app-token@3ff1caaa28b64c9cc276ce0a02e2ff584f3900c5 # v2.0.2
-        with:
-          app-id: ${{ env.GITHUB_APP_ID }}
-          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+          github_app: grafana-pr-automation
 
       - name: Run commands
         uses: grafana/grafana-github-actions/commands@main
         with:
           metricsWriteAPIKey: ""
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ steps.get-github-app-token.outputs.token }}
           configPath: commands

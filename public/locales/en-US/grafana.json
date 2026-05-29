@@ -440,7 +440,10 @@
       "label-value": "Value"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "Actions"
+      "n-contact-points_one": "{{count}} contact point",
+      "n-contact-points_other": "{{count}} contact points",
+      "view-route_one": "View route",
+      "view-route_other": "View routes"
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Add alert data to payload",
@@ -456,6 +459,7 @@
     },
     "alert-instances-table": {
       "created": "Created",
+      "destination": "Destination",
       "labels": "Labels",
       "state": "State"
     },
@@ -2341,6 +2345,7 @@
     },
     "notification-route": {
       "no-labels": "No labels",
+      "notification-policies": "Notification policies",
       "notification-policy": "Notification policy"
     },
     "notification-route-header": {
@@ -3306,6 +3311,10 @@
         "search-by-matchers": "Search by matchers",
         "tooltip-description": "Find silences by matcher. Matches label name, value, and operator exactly.",
         "tooltip-example": "Example: <1>env=~\"prod.*\"</1> finds silences with an <4>env=~\"prod.*\"</4> matcher."
+      },
+      "missing-alert-rule-warning": {
+        "text": "Alert rule unavailable",
+        "tooltip": "This alert rule may have been deleted, or you may not have permission to view it. Alert rule UID: {{ruleUid}}"
       },
       "only-firing-instances": "Only alert instances in the firing state are displayed.",
       "operator": {
@@ -4380,7 +4389,6 @@
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "commit": "Delete folder",
       "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:",
       "missing-info": "Missing required fields",
       "success-message": "Folder deleted successfully"
@@ -4494,7 +4502,6 @@
       "button-cancel": "Cancel",
       "button-rename": "Rename",
       "button-renaming": "Renaming...",
-      "commit": "Rename folder",
       "error-saving": "Failed to rename folder",
       "label-folder-name": "Folder name",
       "missing-info": "Missing required fields",
@@ -5498,9 +5505,6 @@
       "aria-label-dashboard-name": "{{dashboardName}} dashboard",
       "label-no-dashboards-found": "No dashboards found"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Cancel loading dashboard"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "Back to dashboards",
       "provisioning-message": "Dashboard preview could not be loaded",
@@ -5789,8 +5793,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operator",
-        "placeholder": "Select operator"
+        "aria-label": "Operator"
       },
       "restore": "Restore default value",
       "search": {
@@ -6376,6 +6379,8 @@
         "ungroup-tabs": "Ungroup tabs"
       },
       "name": "Tabs",
+      "scroll-tabs-left": "Scroll tabs left",
+      "scroll-tabs-right": "Scroll tabs right",
       "tab": {
         "new": "New tab",
         "repeat": {
@@ -6473,6 +6478,10 @@
         },
         "save-dashboard-short": "Save",
         "save-library-panel": "Save library panel",
+        "save-template": {
+          "label": "Save",
+          "tooltip": "Save template changes"
+        },
         "share": {
           "arrow": "Share",
           "tooltip": "Copy link"
@@ -6486,6 +6495,9 @@
       "read-only": "Read only",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
+      "save-as-template": {
+        "label": "Save as template"
+      },
       "save-dashboard": {
         "label": "Save dashboard",
         "tooltip": "Save changes"
@@ -7518,7 +7530,9 @@
         "label-details": "Details",
         "title": "Save dashboard",
         "title-copy": "Save dashboard copy",
-        "title-provisioned": "Provisioned dashboard"
+        "title-provisioned": "Provisioned dashboard",
+        "title-template": "Save as template",
+        "title-update-template": "Save template"
       }
     },
     "save-dashboard-form": {
@@ -7595,6 +7609,10 @@
     },
     "section-filters-list": {
       "add-filter": "Add filter"
+    },
+    "section-placement": {
+      "top-row": "Top of row",
+      "top-tab": "Top of tab"
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Enables multiple values to be selected at the same time",
@@ -7735,9 +7753,6 @@
     "variable-display-select": {
       "label": "Display",
       "options": {
-        "above-dashboard": {
-          "label": "Above dashboard"
-        },
         "controls-menu": {
           "description": "Visible when the controls menu is open",
           "label": "Controls menu"
@@ -7746,9 +7761,9 @@
           "description": "Only visible in edit mode",
           "label": "Hidden"
         },
-        "hidden-label": {
-          "description": "Above the dashboard, but without showing the name of variable",
-          "label": "Above dashboard, label hidden"
+        "top-placement-hidden-label": {
+          "description": "{{placement}}, but without showing the name of variable",
+          "label": "{{placement}}, label hidden"
         }
       }
     },
@@ -7831,12 +7846,15 @@
           "reorder-variables-list": "Reorder variables list"
         }
       },
-      "title-above-dashboard_one": "Above dashboard ({{count}})",
-      "title-above-dashboard_other": "Above dashboard ({{count}})",
       "title-controls-menu_one": "Controls menu ({{count}})",
       "title-controls-menu_other": "Controls menu ({{count}})",
       "title-hidden_one": "Hidden ({{count}})",
-      "title-hidden_other": "Hidden ({{count}})"
+      "title-hidden_other": "Hidden ({{count}})",
+      "title-top-placement_one": "{{placement}} ({{count}})",
+      "title-top-placement_other": "{{placement}} ({{count}})",
+      "top-placement": {
+        "default": "Above dashboard"
+      }
     },
     "version-history": {
       "comparison": {
@@ -9129,6 +9147,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "Anonymous",
       "folder-delete-error-provisioned": "Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.",
       "folder-deleted-success": "Folder deleted",
       "folder-move-error-provisioned": "Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.",
@@ -10739,7 +10758,7 @@
     "name-unit": "Unit",
     "name-value-name": "Value name",
     "name-y-axis-scale": "Y axis scale",
-    "name-y-bucket-scale": "Y bucket scale",
+    "name-y-bucket-scale": "Y Bucket scale",
     "placeholder-axis-label": "Auto",
     "placeholder-axis-width": "Auto",
     "placeholder-decimals": "Auto",
@@ -10854,6 +10873,12 @@
     "name-stacking": "Stacking"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "Recent",
+      "recent-active": "Recent dashboards",
+      "starred": "Starred",
+      "starred-active": "Starred dashboards"
+    },
     "home-page": {
       "edition": {
         "cloud": "Grafana Cloud",
@@ -10866,6 +10891,23 @@
         "morning": "Good morning."
       },
       "placeholder": "Welcome to {{edition}}."
+    },
+    "recent-dashboards-tab": {
+      "browse": "Browse dashboards",
+      "clear": "Clear history",
+      "create": "Create your first dashboard",
+      "empty": "Dashboards you've recently viewed will appear here.",
+      "empty-description": "After you've connected data, you can use dashboards to query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
+      "error-title": "Could not load recently viewed dashboards",
+      "loading": "Loading recently viewed dashboards...",
+      "retry": "Retry"
+    },
+    "starred-dashboards-tab": {
+      "empty": "Your starred dashboards will appear here.",
+      "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
+      "error-title": "Could not load starred dashboards",
+      "loading": "Loading starred dashboards...",
+      "retry": "Retry"
     }
   },
   "inspector": {
@@ -11651,6 +11693,11 @@
       "published-by": "Published by",
       "updated-on": "Updated on"
     },
+    "import-overview": {
+      "invalid-schema-action": "Try another dashboard",
+      "invalid-schema-body": "The dashboard could not be imported because its schema is not a recognized version.",
+      "invalid-schema-title": "Invalid or unknown dashboard schema"
+    },
     "snapshot-list-table": {
       "body-delete": "Are you sure you want to delete '{{snapshotToRemove}}'?",
       "confirmText-delete": "Delete",
@@ -11955,6 +12002,9 @@
     "admin": {
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
+    },
+    "agentic-testing": {
+      "title": "Agentic testing"
     },
     "alert-list-legacy": {
       "title": "Alert rules"
@@ -12552,6 +12602,9 @@
       "save-tooltip": "Save"
     }
   },
+  "page-loader": {
+    "default": "Loading ..."
+  },
   "panel": {
     "dashlist": {
       "empty-state-message": "No dashboard groups configured",
@@ -13140,6 +13193,7 @@
       "label-filename": "Filename",
       "label-folder": "Folder",
       "label-path": "Path",
+      "path-exists": "A file with this name already exists at this path",
       "placeholder-branch": "Select or enter branch name",
       "placeholder-folder": "Select or enter folder path",
       "suffix-configured-branch": "Synchronized branch",
@@ -13219,11 +13273,24 @@
     "code-block": {
       "aria-label-copy": "Copy code to clipboard"
     },
+    "commit-message": {
+      "dashboard-create-default": "New dashboard: {{title}}",
+      "dashboard-delete-default": "Delete dashboard: {{title}}",
+      "dashboard-move-default": "Move dashboard: {{title}}",
+      "dashboard-rename-default": "Rename dashboard: {{title}}",
+      "dashboard-update-default": "Save dashboard: {{title}}",
+      "folder-create-default": "Create folder: {{title}}",
+      "folder-delete-default": "Delete folder: {{title}}",
+      "folder-move-default": "Move folder: {{title}}",
+      "folder-rename-default": "Rename folder: {{title}}",
+      "folder-update-default": "Save folder: {{title}}"
+    },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
+      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. A \"Grafana-saved-by: <name> (<login>)\" trailer is appended automatically. Leave empty to use the built-in defaults.",
       "description-connection": "Select the GitHub App connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
@@ -13234,6 +13301,7 @@
       "error-save-failed": "Failed to save repository setting",
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
+      "label-commit-message-template": "Commit message template",
       "label-connection": "GitHub App connection",
       "label-enabled": "Enabled",
       "label-interval-seconds": "Interval (seconds)",
@@ -13242,6 +13310,7 @@
       "label-title": "Title",
       "option-entire-instance": "Entire instance",
       "option-managed-folder": "Managed folder",
+      "placeholder-commit-message-template": "feat(dashboards): {{actionVar}} {{titleVar}}",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "My config"
     },
@@ -13525,6 +13594,9 @@
       "authentication-failed": "Authentication failed. Please check your access token.",
       "request-failed": "Request failed",
       "resource-not-found": "Resource not found. Please check the URL or repository."
+    },
+    "import": {
+      "error": "An error occurred while importing the dashboard."
     },
     "instance-sync-deprecation": {
       "message": "Instance sync is currently not fully supported and breaks library panels and alerts. To use library panels and alerts, disconnect your repository and reconnect it using folder sync instead.",
@@ -13812,7 +13884,8 @@
     "sync-job": {
       "error-no-job-id": "Failed to start job",
       "error-no-repository-name": "No repository name provided",
-      "error-starting-job": "Error starting job"
+      "error-starting-job": "Error starting job",
+      "migrate-default-message": "Migrate Grafana resources into repository"
     },
     "sync-repository": {
       "error-pulling-resources": "Error pulling resources",
@@ -14134,6 +14207,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Add filter",
+      "cancel-delete": "Cancel",
+      "confirm-delete": "Delete",
+      "confirm-delete-confirm": "Confirm",
+      "delete-confirmation-group": "Delete confirmation",
       "disable": "Disable {{type}}",
       "duplicate": "Duplicate {{type}}",
       "enable": "Enable {{type}}",
@@ -14175,10 +14252,7 @@
       "toolbar-label": "Bulk actions"
     },
     "delete-modal": {
-      "body-query": "Are you sure you want to delete this query?",
-      "body-transformation": "Removing one transformation may break others.",
-      "confirm": "Delete",
-      "title": "Delete {{name}}?"
+      "body-transformation": "Removing one transformation may break others."
     },
     "details-sidebar": {
       "cache-timeout": "Cache timeout",

@@ -2,8 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import React from 'react';
 
-import { mockComboboxRect } from '@grafana/test-utils';
-
+import { mockComboboxRect } from '../../test-utils/mockDom';
 import { Drawer } from '../Drawer/Drawer';
 import { Modal } from '../Modal/Modal';
 

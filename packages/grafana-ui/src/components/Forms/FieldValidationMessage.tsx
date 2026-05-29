@@ -35,7 +35,7 @@ export const FieldValidationMessage = ({
   );
 };
 
-export const getFieldValidationMessageStyles = (theme: GrafanaTheme2) => {
+const getFieldValidationMessageStyles = (theme: GrafanaTheme2) => {
   const baseStyle = `
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.fontWeightMedium};
