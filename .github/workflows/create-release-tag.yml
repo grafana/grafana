@@ -8,9 +8,8 @@ on:
         required: true
         type: string
       message:
-        description: 'Tag message'
+        description: 'Tag message (defaults to tag name if not provided)'
         required: false
-        default: ${{ inputs.tag }}
         type: string
       commit:
         description: 'Commit SHA to tag'
@@ -19,15 +18,14 @@ on:
 
 permissions: {}
 
-concurrency:
-  group: create-release-tag-${{ inputs.tag }}
-  cancel-in-progress: false
-
 jobs:
   create-tag:
     runs-on: ubuntu-arm64-small
     permissions:
       contents: write
+    concurrency:
+      group: create-release-tag-${{ inputs.tag }}
+      cancel-in-progress: false
     steps:
       - name: Create annotated tag
         env:
@@ -40,7 +38,7 @@ jobs:
           tag_sha=$(gh api "repos/${REPO}/git/tags" \
             --method POST \
             -f "tag=${TAG}" \
-            -f "message=${TAG_MESSAGE}" \
+            -f "message=${TAG_MESSAGE:-${TAG}}" \
             -f "object=${COMMIT_SHA}" \
             -f type="commit" \
             --jq '.sha')
