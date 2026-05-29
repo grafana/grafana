@@ -102,8 +102,6 @@ const config: KnipConfig = {
       },
     },
     [`public/app/plugins/datasource/{${externalisedDatasources.join(',')}}`]: {
-      // TODO figure out how to properly include this webpack config
-      webpack: false,
       jest: true,
       entry: [...defaultEntries, 'module.{ts,tsx,js}'],
       // these are provided by grafana-plugin-configs
@@ -111,8 +109,6 @@ const config: KnipConfig = {
       ignoreUnresolved: ['identity-obj-proxy'],
     },
     'e2e-playwright/test-plugins/*': {
-      // TODO figure out how to properly include this webpack config
-      webpack: false,
       entry: [...defaultEntries, 'module.{ts,tsx,js}', 'plugins/*/module.{ts,tsx,js}'],
     },
     'packages/**': {
