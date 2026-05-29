@@ -81,13 +81,16 @@ class DeletedDashboardsCache {
   private async fetchTable(): Promise<TableResponse> {
     try {
       const api = await getDashboardAPI();
-      const rows: TableRow[] = [];
+      // The backend may return multiple soft-deleted versions of the same dashboard
+      // after restore+re-delete cycles. Dedup by UID as we page so the limit counts
+      // unique dashboards, keeping the newest resourceVersion per UID.
+      const deduped = new Map<string, TableRow>();
       let continueToken: string | undefined;
       let lastResponse: TableResponse | undefined;
 
       do {
         const response = await api.listDeletedDashboards({
-          limit: DELETED_DASHBOARDS_LIMIT - rows.length,
+          limit: DELETED_DASHBOARDS_LIMIT - deduped.size,
           continue: continueToken,
         });
 
@@ -95,23 +98,29 @@ class DeletedDashboardsCache {
           break;
         }
 
-        rows.push(...response.rows);
+        for (const row of response.rows) {
+          const uid = row.object.metadata.name;
+          const existing = deduped.get(uid);
+          if (
+            !existing ||
+            (row.object.metadata.resourceVersion ?? '') > (existing.object.metadata.resourceVersion ?? '')
+          ) {
+            deduped.set(uid, row);
+          }
+        }
+
         continueToken = response.metadata.continue;
         lastResponse = response;
-      } while (rows.length < DELETED_DASHBOARDS_LIMIT && continueToken);
+      } while (deduped.size < DELETED_DASHBOARDS_LIMIT && continueToken);
 
       if (!lastResponse) {
         return EMPTY_TABLE_RESPONSE;
       }
 
-      // The backend may return multiple soft-deleted versions of the same dashboard
-      // after restore+re-delete cycles. Keep only the newest per UID.
-      const deduped = deduplicateRows(rows);
-
       return {
         ...lastResponse,
         metadata: { ...lastResponse.metadata, continue: continueToken },
-        rows: deduped,
+        rows: Array.from(deduped.values()),
       };
     } catch (error) {
       console.error('Failed to fetch deleted dashboards:', error);
@@ -121,23 +130,6 @@ class DeletedDashboardsCache {
 }
 
 export const deletedDashboardsCache = new DeletedDashboardsCache();
-
-/**
- * Deduplicates rows by `object.metadata.name` (UID), keeping the entry with the highest
- * `resourceVersion`. The backend can return multiple soft-deleted rows for the same
- * dashboard after restore+re-delete cycles.
- */
-function deduplicateRows(rows: TableRow[]): TableRow[] {
-  const map = new Map<string, TableRow>();
-  for (const row of rows) {
-    const uid = row.object.metadata.name;
-    const existing = map.get(uid);
-    if (!existing || (row.object.metadata.resourceVersion ?? '') > (existing.object.metadata.resourceVersion ?? '')) {
-      map.set(uid, row);
-    }
-  }
-  return map.size === rows.length ? rows : Array.from(map.values());
-}
 
 /**
  * Max UIDs per `getDisplayMapping` request. Keeps the URL well under nginx's default

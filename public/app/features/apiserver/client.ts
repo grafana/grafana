@@ -150,12 +150,13 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     });
   }
 
-  public async update(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>> {
+  public async update(obj: Resource<T, S, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>> {
+    const { name } = obj.metadata;
+    if (!name) {
+      return Promise.reject(new Error('update requires metadata.name'));
+    }
     setSavedFromUIAnnotation(obj.metadata);
-    const url = `${this.url}/${obj.metadata.name!}`;
-    return getBackendSrv().put<Resource<T, S, K>>(url, obj, {
-      params,
-    });
+    return getBackendSrv().put<Resource<T, S, K>>(`${this.url}/${name}`, obj, { params });
   }
 
   public async delete(name: string, showSuccessAlert: boolean): Promise<MetaStatus> {

@@ -1,5 +1,6 @@
 import { iamAPIv0alpha1, type Display, type DisplayList } from 'app/api/clients/iam/v0alpha1';
 import { AnnoKeyUpdatedBy, EMPTY_TABLE_RESPONSE } from 'app/features/apiserver/types';
+import { DELETED_DASHBOARDS_LIMIT } from 'app/features/browse-dashboards/components/DeletedDashboardsLimitBanner';
 import { dispatch } from 'app/types/store';
 
 import { deletedDashboardsCache, resolveDeletedByDisplayMap } from './deletedDashboardsCache';
@@ -535,6 +536,93 @@ describe('DeletedDashboardsCache', () => {
 
     expect(result).toHaveLength(2);
     expect(result.map((r) => r.title)).toEqual(['Dashboard A (new)', 'Dashboard B']);
+  });
+
+  it('counts unique dashboards toward the limit when paging (limit applied after dedup)', async () => {
+    // page1: 3 raw rows, 2 unique (dash-a appears twice with different resourceVersions, dash-b once)
+    const page1 = {
+      ...EMPTY_TABLE_RESPONSE,
+      metadata: { resourceVersion: '1', continue: 'page2-token' },
+      columnDefinitions: [
+        { name: 'Name', type: 'string' },
+        { name: 'Title', type: 'string' },
+        { name: 'Created At', type: 'date' },
+      ],
+      rows: [
+        {
+          cells: ['dash-a', 'Dashboard A (v1)', '2024-01-01T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-a',
+              resourceVersion: '100',
+              creationTimestamp: '2024-01-01T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:alice' },
+            },
+          },
+        },
+        {
+          cells: ['dash-a', 'Dashboard A (v2)', '2024-01-02T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-a',
+              resourceVersion: '200',
+              creationTimestamp: '2024-01-02T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:alice' },
+            },
+          },
+        },
+        {
+          cells: ['dash-b', 'Dashboard B', '2024-01-01T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-b',
+              resourceVersion: '150',
+              creationTimestamp: '2024-01-01T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:bob' },
+            },
+          },
+        },
+      ],
+    };
+
+    const page2 = {
+      ...EMPTY_TABLE_RESPONSE,
+      metadata: { resourceVersion: '2' },
+      columnDefinitions: page1.columnDefinitions,
+      rows: [
+        {
+          cells: ['dash-c', 'Dashboard C', '2024-01-01T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-c',
+              resourceVersion: '300',
+              creationTimestamp: '2024-01-01T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:carol' },
+            },
+          },
+        },
+      ],
+    };
+
+    const mockList = jest.fn().mockResolvedValueOnce(page1).mockResolvedValueOnce(page2);
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockList });
+
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([
+          { identity: { type: 'user', name: 'alice' }, displayName: 'Alice' },
+          { identity: { type: 'user', name: 'bob' }, displayName: 'Bob' },
+          { identity: { type: 'user', name: 'carol' }, displayName: 'Carol' },
+        ]),
+      })
+    );
+
+    const result = await deletedDashboardsCache.get();
+
+    expect(result).toHaveLength(3);
+    expect(mockList).toHaveBeenCalledTimes(2);
+    // The second page's limit must reflect 2 unique dashboards, not 3 raw rows.
+    expect(mockList).toHaveBeenNthCalledWith(2, expect.objectContaining({ limit: DELETED_DASHBOARDS_LIMIT - 2 }));
   });
 
   it('removeItems filters specified UIDs from the cached table', async () => {

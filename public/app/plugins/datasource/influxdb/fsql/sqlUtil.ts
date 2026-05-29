@@ -90,7 +90,7 @@ export function quoteIdentifierIfNecessary(value: string) {
  * Validates the identifier from MySql and returns true if it
  * doesn't need to be escaped.
  */
-export function isValidIdentifier(identifier: string): boolean {
+function isValidIdentifier(identifier: string): boolean {
   const isValidName = /^[a-zA-Z_][a-zA-Z0-9_$]*$/g.test(identifier);
   const isReservedWord = RESERVED_WORDS.includes(identifier.toUpperCase());
   return !isReservedWord && isValidName;

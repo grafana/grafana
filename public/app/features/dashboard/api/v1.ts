@@ -16,6 +16,7 @@ import {
   DeprecatedInternalId,
   ManagerKind,
   type Resource,
+  type ResourceClient,
   type ResourceForCreate,
   type ResourceList,
   type TableResponse,
@@ -48,7 +49,7 @@ export function getK8sV1DashboardApiConfig() {
 }
 
 export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
-  private client: ScopedResourceClient<DashboardDataDTO, Status>;
+  private client: ResourceClient<DashboardDataDTO, Status>;
 
   constructor() {
     this.client = new ScopedResourceClient<DashboardDataDTO>(getK8sV1DashboardApiConfig());
