@@ -160,10 +160,7 @@ export async function getFolderByUidFacade(uid: string) {
       // Throw the original error (with HTTP status) so callers can detect e.g. 403 and
       // gracefully continue — this handles the case when a user has access to a dashboard
       // but not to the containing folder.
-      const error =
-        ('error' in folderResponse ? folderResponse.error : undefined) ||
-        ('error' in accessResponse ? accessResponse.error : undefined) ||
-        ('error' in parentsResponse ? parentsResponse.error : undefined);
+      const error = folderResponse.error || parentsResponse.error || accessResponse.error;
       throw error || new Error('One of the folder responses is undefined');
     }
 
@@ -253,29 +250,42 @@ export function useGetFolderQueryFacade(uid?: string) {
       data: isRoot ? rootFolder : sharedWithMeFolder,
       currentData: isRoot ? rootFolder : sharedWithMeFolder,
     };
-  }
 
-  // Stitch together the responses to create a single FolderDTO object so on the outside this behaves as the legacy
-  // api client.
-  let newData: CombinedFolder | undefined = undefined;
-  if (resultFolder.data && resultParents.data && resultAccess.data && (needsUserData ? resultUserDisplay.data : true)) {
-    newData = combineFolderResponses(
-      resultFolder.data,
-      resultAccess.data,
-      resultParents.data.items,
-      resultUserDisplay.data
-    );
-  }
+    // Wrap the stitched data into single RTK query response type object so this looks like a single API call
+    return {
+      ...resultFolder,
+      refetch: async () => {
+        return Promise.all([resultFolder.refetch(), resultParents.refetch(), resultAccess.refetch()]);
+      },
+    };
+  } else {
+    // Stitch together the responses to create a single FolderDTO object so on the outside this behaves as the legacy
+    // api client.
+    let newData: CombinedFolder | undefined;
+    if (
+      resultFolder.data &&
+      resultParents.data &&
+      resultAccess.data &&
+      (needsUserData ? resultUserDisplay.data : true)
+    ) {
+      newData = combineFolderResponses(
+        resultFolder.data,
+        resultAccess.data,
+        resultParents.data.items,
+        resultUserDisplay.data
+      );
+    }
 
-  // Wrap the stitched data into single RTK query response type object so this looks like a single API call
-  return {
-    ...resultFolder,
-    ...combinedState(resultFolder, resultParents, resultAccess, resultUserDisplay, needsUserData),
-    refetch: async () => {
-      return Promise.all([resultFolder.refetch(), resultParents.refetch(), resultAccess.refetch()]);
-    },
-    data: newData,
-  };
+    // Wrap the stitched data into single RTK query response type object so this looks like a single API call
+    return {
+      ...resultFolder,
+      ...combinedState(resultFolder, resultParents, resultAccess, resultUserDisplay, needsUserData),
+      refetch: async () => {
+        return Promise.all([resultFolder.refetch(), resultParents.refetch(), resultAccess.refetch()]);
+      },
+      data: newData,
+    };
+  }
 }
 
 export function useDeleteFolderMutationFacade() {
