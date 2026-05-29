@@ -39,8 +39,6 @@ const config: KnipConfig = {
   tags: ['-lintignore'],
   workspaces: {
     '.': {
-      // TODO figure out how to properly include jest config
-      jest: false,
       ignore: ['scripts/grafana-server/tmp/**', 'devenv/**'],
       ignoreDependencies: [
         // TODO remove these ignores when react 19 is released
@@ -80,7 +78,13 @@ const config: KnipConfig = {
         'scripts/**/*.m{t,j}s*',
         'scripts/**/*.cjs',
 
-        // TODO figure out how to properly include jest config
+        // reporter for playwright
+        'e2e-playwright/utils/axe-a11y/reporter.ts',
+
+        // levitate
+        '.github/workflows/scripts/levitate/*.js',
+
+        // custom jest config for code coverage
         'jest.config.codeowner.js',
       ],
       webpack: {
@@ -98,7 +102,7 @@ const config: KnipConfig = {
       },
     },
     [`public/app/plugins/datasource/{${externalisedDatasources.join(',')}}`]: {
-      // TODO figure out how to properly include webpack config
+      // TODO figure out how to properly include this webpack config
       webpack: false,
       jest: true,
       entry: [...defaultEntries, 'module.{ts,tsx,js}'],
@@ -107,7 +111,7 @@ const config: KnipConfig = {
       ignoreUnresolved: ['identity-obj-proxy'],
     },
     'e2e-playwright/test-plugins/*': {
-      // TODO figure out how to properly include webpack/jest configs
+      // TODO figure out how to properly include this webpack config
       webpack: false,
       entry: [...defaultEntries, 'module.{ts,tsx,js}', 'plugins/*/module.{ts,tsx,js}'],
     },
@@ -135,7 +139,7 @@ const config: KnipConfig = {
       entry: [...defaultEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/generate.ts'],
     },
     'packages/grafana-plugin-configs': {
-      // TODO figure out how to properly include webpack/jest configs
+      // TODO figure out how to properly include this webpack config
       webpack: false,
       // this package contains shared dependencies that aren't immediately used by the package
       ignoreDependencies: ['.*'],
