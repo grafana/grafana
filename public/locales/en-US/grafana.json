@@ -3312,6 +3312,10 @@
         "tooltip-description": "Find silences by matcher. Matches label name, value, and operator exactly.",
         "tooltip-example": "Example: <1>env=~\"prod.*\"</1> finds silences with an <4>env=~\"prod.*\"</4> matcher."
       },
+      "missing-alert-rule-warning": {
+        "text": "Alert rule unavailable",
+        "tooltip": "This alert rule may have been deleted, or you may not have permission to view it. Alert rule UID: {{ruleUid}}"
+      },
       "only-firing-instances": "Only alert instances in the firing state are displayed.",
       "operator": {
         "equals": "Equals",
@@ -6029,13 +6033,6 @@
       },
       "ungroup-nested-text": "This will ungroup all nested groups.",
       "ungroup-nested-title": "Ungroup nested groups?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Dashboard not found"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Dashboard not editable",
