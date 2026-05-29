@@ -10,6 +10,7 @@ import { css } from '@emotion/css';
 import { useState, type JSX } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
+import { useAssistant, type OpenAssistantProps } from '@grafana/assistant';
 import { type GrafanaTheme2, type GrafanaPlugin } from '@grafana/data';
 import { Badge, Box, Button, Icon, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -22,6 +23,7 @@ import { type CatalogPlugin } from '../types';
 export const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
 
 type SetupState = 'not-installed' | 'reloading' | 'not-connected' | 'connected';
+type AssistantOpenOverrides = Omit<Partial<OpenAssistantProps>, 'origin'>;
 
 interface AssistantGetStartedProps {
   plugin: CatalogPlugin;
@@ -46,10 +48,15 @@ function isSetupState(value: string): value is SetupState {
   return ['not-installed', 'reloading', 'not-connected', 'connected'].includes(value);
 }
 
-export function AssistantGetStarted({ plugin, pluginConfig, pluginConfigLoading }: AssistantGetStartedProps): JSX.Element {
+export function AssistantGetStarted({
+  plugin,
+  pluginConfig,
+  pluginConfigLoading,
+}: AssistantGetStartedProps): JSX.Element {
   const styles = useStyles2(getStyles);
   const installPlugin = useInstall();
   const { isInstalling } = useInstallStatus();
+  const { openAssistant } = useAssistant();
   const [installedReloading, setInstalledReloading] = useState(false);
   const canInstall = contextSrv.hasPermission(AccessControlAction.PluginsInstall);
   const location = useLocation();
@@ -58,7 +65,8 @@ export function AssistantGetStarted({ plugin, pluginConfig, pluginConfigLoading 
   const devStateParam = new URLSearchParams(location.search).get('devState');
   const devState = devStateParam && isSetupState(devStateParam) ? devStateParam : null;
 
-  const state = devState ?? (installedReloading ? 'reloading' : getSetupState(plugin, pluginConfig, pluginConfigLoading));
+  const state =
+    devState ?? (installedReloading ? 'reloading' : getSetupState(plugin, pluginConfig, pluginConfigLoading));
 
   const handleInstall = async () => {
     try {
@@ -73,6 +81,13 @@ export function AssistantGetStarted({ plugin, pluginConfig, pluginConfigLoading 
     }
   };
 
+  const handleOpenAssistant = (props?: AssistantOpenOverrides) => {
+    openAssistant?.({
+      origin: 'grafana/plugins/admin/assistant-get-started',
+      ...props,
+    });
+  };
+
   return (
     <div className={styles.container}>
       <Stack direction="column" gap={2}>
@@ -82,11 +97,7 @@ export function AssistantGetStarted({ plugin, pluginConfig, pluginConfigLoading 
         <div className={styles.stepsGrid} aria-label="Setup steps">
           <StepCard
             number={1}
-            title={
-              state === 'reloading'
-                ? 'Installed! Loading plugin...'
-                : 'Install the plugin'
-            }
+            title={state === 'reloading' ? 'Installed! Loading plugin...' : 'Install the plugin'}
             description={
               state === 'reloading'
                 ? 'The page will refresh automatically.'
@@ -110,7 +121,12 @@ export function AssistantGetStarted({ plugin, pluginConfig, pluginConfigLoading 
             state={getStepState(state, 2)}
             action={
               getStepState(state, 2) === 'active' ? (
-                <LinkButton size="sm" href="https://grafana.com/auth/sign-up/?utm_source=grafana_oss&utm_medium=onprem_assistant&utm_campaign=assistant_onboarding&cta=connect_step2" target="_blank" rel="noopener noreferrer">
+                <LinkButton
+                  size="sm"
+                  href="https://grafana.com/auth/sign-up/?utm_source=grafana_oss&utm_medium=onprem_assistant&utm_campaign=assistant_onboarding&cta=connect_step2"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   Connect
                 </LinkButton>
               ) : undefined
@@ -123,16 +139,16 @@ export function AssistantGetStarted({ plugin, pluginConfig, pluginConfigLoading 
             state={getStepState(state, 3)}
             action={
               getStepState(state, 3) === 'active' ? (
-                <LinkButton size="sm" href={`/a/${ASSISTANT_PLUGIN_ID}`}>
+                <Button size="sm" onClick={() => handleOpenAssistant()}>
                   Open Assistant
-                </LinkButton>
+                </Button>
               ) : undefined
             }
           />
         </div>
       </Stack>
 
-      {state === 'connected' && <TryAskingSection />}
+      {state === 'connected' && <TryAskingSection onOpenAssistant={handleOpenAssistant} />}
 
       <IncludedFreePanel />
       <DataAccessSection />
@@ -191,12 +207,7 @@ function StepCard({
           ? styles.stepNumberDisabled
           : styles.stepNumber;
 
-  const cardClass =
-    state === 'disabled'
-      ? styles.cardDisabled
-      : state === 'warning'
-        ? styles.cardWarning
-        : styles.card;
+  const cardClass = state === 'disabled' ? styles.cardDisabled : state === 'warning' ? styles.cardWarning : styles.card;
 
   const stepLabel =
     state === 'complete'
@@ -243,15 +254,15 @@ function IncludedFreePanel() {
             started right away.
           </Text>
           <Stack direction="column" gap={1}>
-            <FeatureItem text="3 active AI users per month" />
-            <FeatureItem text="40M tokens per user per month" />
+            <FeatureItem text="Free access for your team on Grafana Cloud" />
+            <FeatureItem text="Generous usage for getting started" />
             <FeatureItem text="Natural language to PromQL, LogQL, TraceQL, and SQL" />
             <FeatureItem text="Dashboard creation and editing" />
             <FeatureItem text="Alert investigation and troubleshooting" />
             <FeatureItem text="Navigation and discovery assistance" />
           </Stack>
           <Text color="secondary" variant="bodySmall">
-            Need more users or higher limits?{' '}
+            Need more capacity or advanced plan features?{' '}
             <TextLink href="https://grafana.com/pricing/" external>
               View pricing plans →
             </TextLink>
@@ -307,15 +318,23 @@ function DataAccessSection() {
       <table className={styles.faqTable} role="table">
         <thead>
           <tr className={styles.faqHeader}>
-            <th><Text weight="medium">Question</Text></th>
-            <th><Text weight="medium">Answer</Text></th>
+            <th>
+              <Text weight="medium">Question</Text>
+            </th>
+            <th>
+              <Text weight="medium">Answer</Text>
+            </th>
           </tr>
         </thead>
         <tbody>
           {faqs.map((faq) => (
             <tr key={faq.question} className={styles.faqRow}>
-              <td><Text>{faq.question}</Text></td>
-              <td><Text color="secondary">{faq.answer}</Text></td>
+              <td>
+                <Text>{faq.question}</Text>
+              </td>
+              <td>
+                <Text color="secondary">{faq.answer}</Text>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -356,7 +375,7 @@ function RequirementsSection() {
   );
 }
 
-function TryAskingSection() {
+function TryAskingSection({ onOpenAssistant }: { onOpenAssistant: (props?: AssistantOpenOverrides) => void }) {
   const styles = useStyles2(getStyles);
 
   const queries = [
@@ -373,12 +392,17 @@ function TryAskingSection() {
       </Text>
       <div className={styles.tryQueriesGrid}>
         {queries.map((query) => (
-          <Box key={query} backgroundColor="secondary" borderColor="weak" borderStyle="solid" padding={2}>
+          <button
+            key={query}
+            type="button"
+            className={styles.tryQueryButton}
+            onClick={() => onOpenAssistant({ prompt: query, autoSend: true })}
+          >
             <Stack direction="row" gap={1} alignItems="center">
               <Icon name="comment-alt" />
               <Text>{query}</Text>
             </Stack>
-          </Box>
+          </button>
         ))}
       </div>
     </Stack>
@@ -392,12 +416,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(4),
-    maxWidth: '900px',
+    width: '100%',
+    maxWidth: `${theme.breakpoints.values.xl}px`,
   }),
   stepsGrid: css({
     display: 'grid',
     gap: theme.spacing(2),
-    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+    [theme.breakpoints.down('lg')]: {
+      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    },
   }),
   faqTable: css({
     width: '100%',
@@ -427,7 +455,33 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tryQueriesGrid: css({
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+    [theme.breakpoints.down('xl')]: {
+      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    },
+    [theme.breakpoints.down('md')]: {
+      gridTemplateColumns: '1fr',
+    },
+  }),
+  tryQueryButton: css({
+    alignItems: 'center',
+    background: theme.colors.background.secondary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    color: theme.colors.text.primary,
+    cursor: 'pointer',
+    display: 'flex',
+    padding: theme.spacing(2),
+    textAlign: 'left',
+    width: '100%',
+    '&:hover': {
+      background: theme.colors.background.primary,
+      borderColor: theme.colors.border.medium,
+    },
+    '&:focus-visible': {
+      outline: `2px solid ${theme.colors.primary.border}`,
+      outlineOffset: 2,
+    },
   }),
 });
 
@@ -472,9 +526,21 @@ const getStepStyles = (theme: GrafanaTheme2) => {
         opacity: 0.45,
       },
     ]),
-    stepNumber: css([stepNumberBase, { backgroundColor: theme.colors.primary.main, color: theme.colors.primary.contrastText }]),
-    stepNumberComplete: css([stepNumberBase, { backgroundColor: theme.colors.success.main, color: theme.colors.success.contrastText }]),
-    stepNumberWarning: css([stepNumberBase, { backgroundColor: theme.colors.warning.main, color: theme.colors.warning.contrastText }]),
-    stepNumberDisabled: css([stepNumberBase, { backgroundColor: theme.colors.action.disabledBackground, color: theme.colors.text.disabled }]),
+    stepNumber: css([
+      stepNumberBase,
+      { backgroundColor: theme.colors.primary.main, color: theme.colors.primary.contrastText },
+    ]),
+    stepNumberComplete: css([
+      stepNumberBase,
+      { backgroundColor: theme.colors.success.main, color: theme.colors.success.contrastText },
+    ]),
+    stepNumberWarning: css([
+      stepNumberBase,
+      { backgroundColor: theme.colors.warning.main, color: theme.colors.warning.contrastText },
+    ]),
+    stepNumberDisabled: css([
+      stepNumberBase,
+      { backgroundColor: theme.colors.action.disabledBackground, color: theme.colors.text.disabled },
+    ]),
   };
 };

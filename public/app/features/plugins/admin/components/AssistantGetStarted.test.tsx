@@ -1,9 +1,11 @@
 import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { JSX } from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
+import { useAssistant } from '@grafana/assistant';
 import { PluginType } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 
@@ -17,6 +19,13 @@ jest.mock('app/core/services/context_srv', () => ({
     user: { orgId: 1, timezone: 'browser', weekStart: '', locale: '' },
   },
 }));
+
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn(),
+}));
+
+const mockUseAssistant = jest.mocked(useAssistant);
+const mockOpenAssistant = jest.fn();
 
 function renderWithStore(component: JSX.Element) {
   const store = configureStore();
@@ -76,6 +85,14 @@ describe('AssistantGetStarted', () => {
   beforeEach(() => {
     const { contextSrv } = jest.requireMock('app/core/services/context_srv');
     contextSrv.hasPermission.mockReturnValue(true);
+    mockOpenAssistant.mockClear();
+    mockUseAssistant.mockReturnValue({
+      isLoading: false,
+      isAvailable: true,
+      openAssistant: mockOpenAssistant,
+      closeAssistant: jest.fn(),
+      toggleAssistant: jest.fn(),
+    });
   });
 
   describe('state: not-installed', () => {
@@ -89,7 +106,7 @@ describe('AssistantGetStarted', () => {
       expect(screen.getByText('Connect to Grafana Cloud')).toBeInTheDocument();
       expect(screen.getByText('Start a conversation')).toBeInTheDocument();
       expect(screen.queryByRole('link', { name: 'Connect' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('link', { name: 'Open Assistant' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Open Assistant' })).not.toBeInTheDocument();
     });
   });
 
@@ -110,11 +127,25 @@ describe('AssistantGetStarted', () => {
   });
 
   describe('state: connected', () => {
-    it('shows Open Assistant link on step 3', () => {
+    it('shows Open Assistant button on step 3', () => {
       renderWithStore(
         <AssistantGetStarted plugin={installedPlugin} pluginConfig={enabledPluginConfig} pluginConfigLoading={false} />
       );
-      expect(screen.getByRole('link', { name: 'Open Assistant' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Open Assistant' })).toBeInTheDocument();
+    });
+
+    it('opens Assistant through the SDK when Open Assistant is clicked', async () => {
+      const user = userEvent.setup();
+
+      renderWithStore(
+        <AssistantGetStarted plugin={installedPlugin} pluginConfig={enabledPluginConfig} pluginConfigLoading={false} />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Open Assistant' }));
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith({
+        origin: 'grafana/plugins/admin/assistant-get-started',
+      });
     });
 
     it('shows Try asking section', () => {
@@ -124,20 +155,32 @@ describe('AssistantGetStarted', () => {
       expect(screen.getByText('Try asking:')).toBeInTheDocument();
       expect(screen.getByText('What data sources do I have?')).toBeInTheDocument();
     });
+
+    it('opens Assistant with the selected prompt through the SDK', async () => {
+      const user = userEvent.setup();
+
+      renderWithStore(
+        <AssistantGetStarted plugin={installedPlugin} pluginConfig={enabledPluginConfig} pluginConfigLoading={false} />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'What data sources do I have?' }));
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith({
+        origin: 'grafana/plugins/admin/assistant-get-started',
+        prompt: 'What data sources do I have?',
+        autoSend: true,
+      });
+    });
   });
 
   describe('state: installed but config not loaded', () => {
     it('shows Connect button when installed but config is null', () => {
-      renderWithStore(
-        <AssistantGetStarted plugin={installedPlugin} pluginConfig={null} pluginConfigLoading={false} />
-      );
+      renderWithStore(<AssistantGetStarted plugin={installedPlugin} pluginConfig={null} pluginConfigLoading={false} />);
       expect(screen.getByRole('link', { name: 'Connect' })).toBeInTheDocument();
     });
 
     it('shows step 1 as complete', () => {
-      renderWithStore(
-        <AssistantGetStarted plugin={installedPlugin} pluginConfig={null} pluginConfigLoading={false} />
-      );
+      renderWithStore(<AssistantGetStarted plugin={installedPlugin} pluginConfig={null} pluginConfigLoading={false} />);
       expect(screen.getByLabelText('Step 1: complete')).toBeInTheDocument();
     });
   });
