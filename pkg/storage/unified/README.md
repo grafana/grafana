@@ -227,7 +227,6 @@ unifiedStorageSearchPermissionFiltering = false
 
 [unified_storage]
 enable_search = true
-https_skip_verify = true
 ```
 
 You should also have a MySQL database running. You can create one with our docker blocks by running:

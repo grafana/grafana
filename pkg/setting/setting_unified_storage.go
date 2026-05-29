@@ -207,8 +207,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexModificationCacheTTL = section.Key("index_modification_cache_ttl").MustDuration(0)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
-	cfg.CACertPath = section.Key("ca_cert_path").String()
-	cfg.HttpsSkipVerify = section.Key("https_skip_verify").MustBool(false)
 	cfg.ResourceServerJoinRingTimeout = section.Key("resource_server_join_ring_timeout").MustDuration(10 * time.Second)
 
 	// quotas/limits config

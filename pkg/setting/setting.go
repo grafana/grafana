@@ -697,8 +697,6 @@ type Cfg struct {
 	InstanceID                                 string
 	SprinklesApiServer                         string
 	SprinklesApiServerPageLimit                int
-	CACertPath                                 string
-	HttpsSkipVerify                            bool
 	ResourceServerJoinRingTimeout              time.Duration
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
