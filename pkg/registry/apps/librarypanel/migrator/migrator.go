@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strconv"
 	"text/template"
 	"time"
 
@@ -124,7 +123,6 @@ func buildLibraryPanel(p libraryPanelRow, namespace string) (*dashboardV0.Librar
 			Name:              p.uid,
 			Namespace:         namespace,
 			CreationTimestamp: metav1.NewTime(p.created),
-			ResourceVersion:   strconv.FormatInt(p.updated.UnixMicro(), 10),
 		},
 	}
 
