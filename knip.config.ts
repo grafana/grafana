@@ -41,6 +41,7 @@ const config: KnipConfig = {
     '.': {
       // TODO figure out how to properly include jest config
       jest: false,
+      ignore: ['scripts/grafana-server/tmp/**', 'devenv/**'],
       ignoreDependencies: [
         // TODO remove these ignores when react 19 is released
         'react-19',
@@ -75,7 +76,9 @@ const config: KnipConfig = {
         'public/app/app.ts',
         'public/app/index.ts',
         'public/app/plugins/**/module.{ts,tsx,js}',
-        'scripts/*.{t,j}s*',
+        'scripts/**/*.{t,j}s*',
+        'scripts/**/*.m{t,j}s*',
+        'scripts/**/*.cjs',
 
         // TODO figure out how to properly include jest config
         'jest.config.codeowner.js',
@@ -85,6 +88,13 @@ const config: KnipConfig = {
       },
       postcss: {
         config: 'scripts/webpack/postcss.config.js',
+      },
+      playwright: {
+        config: [
+          'e2e-playwright/playwright.config.ts',
+          'e2e-playwright/extensions/enterprise/playwright-enterprise.config.ts',
+          'e2e-playwright/extensions/oem/playwright-enterprise-oem.config.ts',
+        ],
       },
     },
     [`public/app/plugins/datasource/{${externalisedDatasources.join(',')}}`]: {

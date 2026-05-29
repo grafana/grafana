@@ -19064,6 +19064,7 @@ __metadata:
     wait-on: "npm:^9.0.10"
     webpack: "npm:^5.105.0"
     webpack-assets-manifest: "npm:^5.1.0"
+    webpack-bundle-analyzer: "npm:^4.10.2"
     webpack-cli: "npm:6.0.1"
     webpack-livereload-plugin: "npm:3.0.2"
     webpack-manifest-plugin: "npm:5.0.1"
