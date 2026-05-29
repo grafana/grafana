@@ -182,7 +182,7 @@ function useDefaultPage(plugin: CatalogPlugin | undefined, pluginConfig: Grafana
   }
 
   // Assistant plugin always defaults to Overview for guided onboarding
-  if (config.featureToggles.assistantOnboarding && plugin.id === ASSISTANT_PLUGIN_ID) {
+  if (plugin.id === ASSISTANT_PLUGIN_ID) {
     return PluginTabIds.OVERVIEW;
   }
 

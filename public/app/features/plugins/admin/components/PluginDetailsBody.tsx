@@ -52,13 +52,9 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
   };
 
   if (pageId === PluginTabIds.OVERVIEW) {
-    if (config.featureToggles.assistantOnboarding && plugin.id === ASSISTANT_PLUGIN_ID) {
+    if (plugin.id === ASSISTANT_PLUGIN_ID) {
       return (
-        <AssistantGetStarted
-          plugin={plugin}
-          pluginConfig={pluginConfig}
-          pluginConfigLoading={pluginConfigLoading}
-        />
+        <AssistantGetStarted plugin={plugin} pluginConfig={pluginConfig} pluginConfigLoading={pluginConfigLoading} />
       );
     }
     return (

@@ -1650,9 +1650,4 @@ export interface FeatureToggles {
   * @default false
   */
   ['alerting.syncExternalAlertmanager']?: boolean;
-  /**
-  * Enables a custom onboarding experience for the Grafana Assistant plugin on the plugin details page
-  * @default false
-  */
-  assistantOnboarding?: boolean;
 }

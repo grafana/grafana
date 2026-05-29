@@ -978,7 +978,8 @@
       "metadata": {
         "name": "assistantOnboarding",
         "resourceVersion": "1779830129823",
-        "creationTimestamp": "2026-05-26T21:15:29Z"
+        "creationTimestamp": "2026-05-26T21:15:29Z",
+        "deletionTimestamp": "2026-05-29T12:00:57Z"
       },
       "spec": {
         "description": "Enables a custom onboarding experience for the Grafana Assistant plugin on the plugin details page",

@@ -106,8 +106,7 @@ describe('usePluginDetailsTabs', () => {
     expect(overviewTab).toBeDefined();
   });
 
-  it('should default to overview tab for grafana-assistant-app when assistantOnboarding is enabled', () => {
-    config.featureToggles.assistantOnboarding = true;
+  it('should default to overview tab for grafana-assistant-app', () => {
     mockUsePluginConfig.mockReturnValue({
       loading: false,
       error: undefined,
@@ -119,7 +118,6 @@ describe('usePluginDetailsTabs', () => {
 
     // Without a pageId, activePageId should default to overview (not the first config page)
     expect(result.current.activePageId).toBe('overview');
-    config.featureToggles.assistantOnboarding = false;
   });
 
   it('should include config-specific tabs when plugin config is loaded', () => {
