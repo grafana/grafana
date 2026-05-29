@@ -41,25 +41,25 @@ func WithTimeout(s rest.Storage) rest.Storage {
 		timeout = tp.Timeout()
 	}
 
-	return &timeoutConnecter{storage: s, inner: c, timeout: timeout}
+	return &timeoutConnector{storage: s, inner: c, timeout: timeout}
 }
 
-type timeoutConnecter struct {
+type timeoutConnector struct {
 	storage rest.Storage
 	inner   rest.Connecter
 	timeout time.Duration
 }
 
 // Functions that fulfil the rest.Storage and rest.Connector interface
-func (t *timeoutConnecter) New() runtime.Object      { return t.storage.New() }
-func (t *timeoutConnecter) Destroy()                 { t.storage.Destroy() }
-func (t *timeoutConnecter) ConnectMethods() []string { return t.inner.ConnectMethods() }
-func (t *timeoutConnecter) NewConnectOptions() (runtime.Object, bool, string) {
+func (t *timeoutConnector) New() runtime.Object      { return t.storage.New() }
+func (t *timeoutConnector) Destroy()                 { t.storage.Destroy() }
+func (t *timeoutConnector) ConnectMethods() []string { return t.inner.ConnectMethods() }
+func (t *timeoutConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return t.inner.NewConnectOptions()
 }
 
 // Connect passes a bound ctx to the HTTP handler.
-func (t *timeoutConnecter) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (t *timeoutConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	boundCtx, cancel := context.WithTimeout(ctx, t.timeout)
 	handler, err := t.inner.Connect(boundCtx, name, opts, responder)
 	if err != nil {
@@ -73,14 +73,14 @@ func (t *timeoutConnecter) Connect(ctx context.Context, name string, opts runtim
 }
 
 // Functions that implement the rest.StorageMetadata
-func (t *timeoutConnecter) ProducesMIMETypes(verb string) []string {
+func (t *timeoutConnector) ProducesMIMETypes(verb string) []string {
 	if m, ok := t.inner.(rest.StorageMetadata); ok {
 		return m.ProducesMIMETypes(verb)
 	}
 	return nil
 }
 
-func (t *timeoutConnecter) ProducesObject(verb string) any {
+func (t *timeoutConnector) ProducesObject(verb string) any {
 	if m, ok := t.inner.(rest.StorageMetadata); ok {
 		return m.ProducesObject(verb)
 	}
@@ -88,7 +88,7 @@ func (t *timeoutConnecter) ProducesObject(verb string) any {
 }
 
 var (
-	_ rest.Storage         = (*timeoutConnecter)(nil)
-	_ rest.Connecter       = (*timeoutConnecter)(nil)
-	_ rest.StorageMetadata = (*timeoutConnecter)(nil)
+	_ rest.Storage         = (*timeoutConnector)(nil)
+	_ rest.Connecter       = (*timeoutConnector)(nil)
+	_ rest.StorageMetadata = (*timeoutConnector)(nil)
 )

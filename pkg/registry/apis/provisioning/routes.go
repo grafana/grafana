@@ -142,14 +142,15 @@ func (b *APIBuilder) handleStats(w http.ResponseWriter, r *http.Request) {
 // TODO: why didn't we create a connector as we did before or have a separate file?
 // TODO: is there a better way to provide a filtered view of the repositories to the frontend?
 func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
-	u, ok := authlib.AuthInfoFrom(r.Context())
+	ctx := r.Context()
+	u, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
-		errhttp.Write(r.Context(), fmt.Errorf("expected user"), w)
+		errhttp.Write(ctx, fmt.Errorf("expected user"), w)
 		return
 	}
 
 	ns := u.GetNamespace()
-	ctx, _, err := identity.WithProvisioningIdentity(r.Context(), ns)
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, ns)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
