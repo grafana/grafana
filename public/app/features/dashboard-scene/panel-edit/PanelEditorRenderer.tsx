@@ -4,17 +4,16 @@ import { useEffect, useMemo } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { useSceneObjectState, type SceneComponentProps, type VizPanel } from '@grafana/scenes';
+import { type SceneComponentProps } from '@grafana/scenes';
 import { Button, Spinner, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
-import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../scene/SoloPanelContext';
 import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
+import { PanelEditPanelWrapper } from './PanelEditPanelWrapper';
 import { type PanelEditor } from './PanelEditor';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
@@ -115,7 +114,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
       )}
       <div {...containerProps}>
         <div {...primaryProps} className={cx(primaryProps.className, isScrollingLayout && styles.fixedSizeViz)}>
-          <VizWrapper panel={panel} tableView={tableView} dashboard={dashboard} />
+          <PanelEditPanelWrapper panel={panel} tableView={tableView} dashboard={dashboard} />
         </div>
         {showLibraryPanelSaveModal && libraryPanel && (
           <SaveLibraryVizPanelModal
@@ -158,37 +157,6 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
           </>
         )}
       </div>
-    </div>
-  );
-}
-
-interface VizWrapperProps {
-  panel: VizPanel;
-  tableView?: VizPanel;
-  dashboard: DashboardScene;
-}
-
-function VizWrapper({ panel, tableView, dashboard }: VizWrapperProps) {
-  const styles = useStyles2(getStyles);
-  const soloPanelContext = useDefineSoloPanelContext(panel.getPathId());
-
-  // This is to make sure the panel always remains active even when tableView is
-  // rendered as the queries tab and other things subscribe / update panel state
-  useSceneObjectState(panel, { shouldActivateOrKeepAlive: true });
-
-  if (tableView) {
-    return (
-      <div className={styles.vizWrapper}>
-        <tableView.Component model={tableView} />
-      </div>
-    );
-  }
-
-  return (
-    <div className={styles.vizWrapper}>
-      <SoloPanelContextProvider value={soloPanelContext!} singleMatch={true} dashboard={dashboard}>
-        <dashboard.state.body.Component model={dashboard.state.body} />
-      </SoloPanelContextProvider>
     </div>
   );
 }
@@ -286,11 +254,6 @@ function getStyles(theme: GrafanaTheme2) {
       svg: {
         rotate: '-90deg',
       },
-    }),
-    vizWrapper: css({
-      height: '100%',
-      width: '100%',
-      paddingLeft: theme.spacing(2),
     }),
     fixedSizeViz: css({
       height: '100vh',
