@@ -3,7 +3,7 @@ import { forwardRef, type HTMLAttributes } from 'react';
 import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';
@@ -77,20 +77,15 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
   } else {
     colors = getTagColor(colorIndex);
   }
-  const darkColor = theme.v1.palette.gray98;
-  const lightColor = theme.v1.palette.gray05;
-  const CONTRAST_THRESHOLD_MAX = 4.5;
   return {
     wrapper: css({
       appearance: 'none',
       borderStyle: 'none',
-      fontWeight: theme.typography.fontWeightMedium,
       fontSize: theme.typography.size.sm,
       lineHeight: theme.typography.bodySmall.lineHeight,
       verticalAlign: 'baseline',
       backgroundColor: colors.color,
-      color:
-        colorManipulator.getContrastRatio(darkColor, colors.color) >= CONTRAST_THRESHOLD_MAX ? darkColor : lightColor,
+      color: colors.borderColor,
       whiteSpace: 'pre',
       textShadow: 'none',
       padding: '3px 6px',
