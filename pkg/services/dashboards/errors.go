@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 )
@@ -100,4 +101,16 @@ type UpdatePluginDashboardError struct {
 
 func (d UpdatePluginDashboardError) Error() string {
 	return "Dashboard belongs to plugin"
+}
+
+// DeprecatedInternalIDConflictError is returned when more than one dashboard
+// shares the same grafana.app/deprecatedInternalID label, making lookup-by-id
+// ambiguous.
+type DeprecatedInternalIDConflictError struct {
+	ID    int64
+	Count int
+}
+
+func (e *DeprecatedInternalIDConflictError) Error() string {
+	return fmt.Sprintf("unexpected number of dashboards for id %d. found: %d. desired: 1", e.ID, e.Count)
 }

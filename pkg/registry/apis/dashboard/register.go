@@ -496,6 +496,32 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		}
 	}
 
+	// Enforce uniqueness of the deprecated internal ID label. Without this check,
+	// JSON imports carrying spec.id collide with existing dashboards (the
+	// mutation hook stamps spec.id onto the label) and the duplicate only
+	// surfaces later as an HTTP 500 from GetDashboardUIDByID.
+	if !b.isStandalone && !a.IsDryRun() {
+		internalID := accessor.GetDeprecatedInternalID() //nolint:staticcheck
+		if internalID > 0 {
+			ref, err := b.dashboardService.GetDashboardUIDByID(ctx, &dashboards.GetDashboardRefByIDQuery{ID: internalID})
+			var dupErr *dashboards.DeprecatedInternalIDConflictError
+			switch {
+			case err == nil:
+				if ref != nil && ref.UID != accessor.GetName() {
+					return apierrors.NewConflict(dashv1.DashboardResourceInfo.GroupResource(), a.GetName(),
+						fmt.Errorf("dashboard with deprecatedInternalID=%d already exists (uid=%s); choose a different id or omit it from the spec to auto-generate one", internalID, ref.UID))
+				}
+			case errors.Is(err, dashboards.ErrDashboardNotFound):
+				// id is free — fall through
+			case errors.As(err, &dupErr):
+				return apierrors.NewConflict(dashv1.DashboardResourceInfo.GroupResource(), a.GetName(),
+					fmt.Errorf("cannot create dashboard with deprecatedInternalID=%d: id is already used by %d existing dashboards; resolve duplicates before creating a new one", dupErr.ID, dupErr.Count))
+			default:
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
