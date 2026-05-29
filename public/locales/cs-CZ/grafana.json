@@ -5856,8 +5856,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operátor",
-        "placeholder": "Vyberte operátora"
+        "aria-label": "Operátor"
       },
       "restore": "Obnovit výchozí hodnotu",
       "search": {
@@ -9162,7 +9161,6 @@
       "copy-button": "Kopírovat do schránky",
       "download-button": "Stáhnout soubor",
       "download-successful_toast_message": "JSON byl stažen",
-      "export-externally-label": "Exportovat nástěnku pro použití v jiné instanci",
       "export-format": "Formát",
       "export-mode": "Model",
       "info-text": "Zkopírujte nebo stáhněte soubor obsahující definici vaší nástěnky",
@@ -9255,6 +9253,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "Složka byla odstraněna",
       "folder-move-error-provisioned": "Poskytnutou složku nelze přesunout. Přesuňte ji do úložiště a proveďte synchronizaci pro použití změn.",
@@ -11836,11 +11835,10 @@
       "published-by": "Zveřejnil uživatel",
       "updated-on": "Aktualizováno dne"
     },
-    "import-resource-format-error": {
-      "cancel": "Zrušit",
-      "title": "Nepodporovaný formát",
-      "v1-message": "Tato nástěnka je ve formátu zdroje Kubernetes v1 a nelze ji importovat, pokud je funkce nástěnek Kubernetes zakázána. Chcete-li tuto nástěnku importovat, povolte přepínač funkce kubernetesDashboards.",
-      "v2-message": "Tato nástěnka je ve formátu zdroje v2 a nelze ji importovat, pokud je funkce nástěnek Kubernetes zakázána. Chcete-li tuto nástěnku importovat, povolte přepínač funkce kubernetesDashboards."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Opravdu chcete odstranit „{{snapshotToRemove}}“?",
@@ -13343,6 +13341,7 @@
       "label-filename": "Název souboru",
       "label-folder": "Složka",
       "label-path": "Cesta",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Vyberte nebo zadejte cestu ke složce",
       "suffix-configured-branch": "Synchronizovaná větev",
@@ -13681,7 +13680,7 @@
       "modal-title-set-up-public-access": "Nastavit veřejný přístup",
       "modal-title-set-up-required-features": "Nastavte povinné prvky",
       "step-description-copy-url": "Z výstupu „ngrok“ zkopírujte část adresy URL pro přesměrování (https://), která vypadá následovně:",
-      "step-description-enable-feature-toggles": "Přidejte přepínač funkce poskytování do souboru custom.ini. Poznámka: kubernetesDashboards je ve výchozím nastavení povoleno, ale pokud jste jej výslovně zakázali, budete jej muset povolit v nastavení Grafany nebo odebrat přepsání z konfigurace.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Spuštěním tohoto příkazu vytvoříte zabezpečené připojení k místní instanci Grafany:",
       "step-description-update-grafana-config": "Přidejte to do souboru custom.ini a nahraďte adresu URL aktuální adresou URL ngrok:",
       "step-title-copy-url": "Kopírovat veřejnou adresu URL",
@@ -14907,7 +14906,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Exportovat jako obrázek",
-      "export-json-title": "Exportovat jako JSON",
       "share-externally-title": "Sdílet externě",
       "share-internally-title": "Sdílet interně",
       "share-snapshot-title": "Sdílet snímek"
