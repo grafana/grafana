@@ -14,6 +14,7 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -73,14 +74,19 @@ type KVRemoteIndexStoreConfig struct {
 // Layout:
 //
 //	IndexSnapshotManifestSection
-//	    <namespace>/<resource>.<group>/<index-key>
+//	    <namespace>/<resource>/<group>/<index-key>
 //	    One value per snapshot; written last. Its presence is the
 //	    snapshot completion signal, matching BucketRemoteIndexStore's
 //	    contract.
 //
 //	IndexSnapshotDataSection
-//	    <namespace>/<resource>.<group>/<index-key>/<relPath>
+//	    <namespace>/<resource>/<group>/<index-key>/<relPath>
 //	    One value per data file.
+//
+// '/' is the only character that's always reserved by the apimachinery
+// validators, so it's the natural separator between every field. Namespaces,
+// resources, and groups are validated at every public entry point against
+// the same rules used elsewhere in the codebase.
 //
 // Locks live in kv.LeasesSection (managed by lease.Manager), so snapshot
 // keys and lease keys never overlap.
@@ -122,10 +128,11 @@ func NewKVRemoteIndexStore(cfg KVRemoteIndexStoreConfig) (*KVRemoteIndexStore, e
 // kvResourceSubPath returns the per-resource path used as a prefix in both
 // snapshot KV sections. Unlike the bucket store's resourceSubPath (which
 // applies cleanFileSegment for filesystem safety), this version preserves
-// the input verbatim so namespaces and groups round-trip exactly through
-// listing. Inputs are guarded by validateNsResource at the public boundary.
+// the input verbatim so namespaces, resources, and groups round-trip
+// exactly through listing. Inputs are guarded by validateNsResource at the
+// public boundary, which delegates to the apimachinery validators.
 func kvResourceSubPath(ns resource.NamespacedResource) string {
-	return ns.Namespace + "/" + ns.Resource + "." + ns.Group
+	return ns.Namespace + "/" + ns.Resource + "/" + ns.Group
 }
 
 // kvDataPrefix returns the data-section key prefix shared by all files of a
@@ -157,46 +164,37 @@ func (s *KVRemoteIndexStore) manifestKey(ns resource.NamespacedResource, indexKe
 	return kvResourceSubPath(ns) + "/" + indexKey.String()
 }
 
-// validateNamespace ensures namespace is safe to embed as a single KV path
-// segment: non-empty, KV-key-safe, and free of characters that would
-// confuse the path parser (`/`) or collide with the lease package's
-// generation separator (`~`).
+// validateNamespace ensures namespace is safe to embed as a KV path
+// segment. Delegates to apimachinery validation.IsValidNamespace, which
+// rejects '/', '~', and any other character outside the Grafana name
+// alphabet — plus length bounds. The empty namespace is explicitly
+// rejected here because apimachinery permits it (for cluster-scoped
+// resources), but a snapshot key with an empty namespace segment would
+// produce an ambiguous path.
 func validateNamespace(namespace string) error {
 	if namespace == "" {
 		return fmt.Errorf("namespace must not be empty")
 	}
-	if strings.ContainsAny(namespace, "/~") {
-		return fmt.Errorf("namespace %q must not contain '/' or '~'", namespace)
-	}
-	if !kv.IsValidKey(namespace) {
-		return fmt.Errorf("namespace %q contains characters not allowed in KV keys", namespace)
+	if errs := validation.IsValidNamespace(namespace); len(errs) > 0 {
+		return fmt.Errorf("invalid namespace %q: %s", namespace, errs[0])
 	}
 	return nil
 }
 
 // validateNsResource ensures the namespaced resource fields can be embedded
-// in KV keys with exact round-trip. The layout uses '/' as the path
-// separator and splits <resource>.<group> on the first '.', so resource
-// must not contain '.', and neither resource nor group may contain '/' or
-// '~'.
+// in KV keys with exact round-trip. Delegates to the apimachinery validators
+// for namespace, resource, and group, which between them disallow any
+// character that would confuse the path parser ('/', '~') or collide with
+// reserved values elsewhere.
 func validateNsResource(ns resource.NamespacedResource) error {
 	if err := validateNamespace(ns.Namespace); err != nil {
 		return err
 	}
-	if ns.Resource == "" {
-		return fmt.Errorf("resource must not be empty")
+	if errs := validation.IsValidResource(ns.Resource); len(errs) > 0 {
+		return fmt.Errorf("invalid resource %q: %s", ns.Resource, errs[0])
 	}
-	if strings.ContainsAny(ns.Resource, "/.~") {
-		return fmt.Errorf("resource %q must not contain '/', '.', or '~'", ns.Resource)
-	}
-	if ns.Group == "" {
-		return fmt.Errorf("group must not be empty")
-	}
-	if strings.ContainsAny(ns.Group, "/~") {
-		return fmt.Errorf("group %q must not contain '/' or '~'", ns.Group)
-	}
-	if !kv.IsValidKey(ns.Resource + "." + ns.Group) {
-		return fmt.Errorf("resource %q and group %q contain characters not allowed in KV keys", ns.Resource, ns.Group)
+	if errs := validation.IsValidGroup(ns.Group); len(errs) > 0 {
+		return fmt.Errorf("invalid group %q: %s", ns.Group, errs[0])
 	}
 	return nil
 }
@@ -314,19 +312,33 @@ func (s *KVRemoteIndexStore) ListNamespaceResources(ctx context.Context, namespa
 	if err := validateNamespace(namespace); err != nil {
 		return nil, err
 	}
-	return listDistinctSegments(ctx, s.store, IndexSnapshotDataSection, kvNamespacePrefix(namespace), func(seg string) (resource.NamespacedResource, bool) {
-		// `<resource>.<group>` — split on the first dot only; group may
-		// contain further dots (e.g. `dashboard.grafana.app`).
-		res, group, ok := strings.Cut(seg, ".")
-		if !ok || res == "" || group == "" {
-			return resource.NamespacedResource{}, false
+	prefix := kvNamespacePrefix(namespace)
+	end := kv.PrefixRangeEnd(prefix)
+
+	seen := make(map[resource.NamespacedResource]struct{})
+	var result []resource.NamespacedResource
+	for key, err := range s.store.Keys(ctx, IndexSnapshotDataSection, kv.ListOptions{StartKey: prefix, EndKey: end}) {
+		if err != nil {
+			return nil, err
 		}
-		return resource.NamespacedResource{
-			Namespace: namespace,
-			Resource:  res,
-			Group:     group,
-		}, true
-	})
+		// Layout under prefix: "<resource>/<group>/<ULID>/<relPath>".
+		rest := strings.TrimPrefix(key, prefix)
+		res, after, ok := strings.Cut(rest, "/")
+		if !ok || res == "" {
+			continue
+		}
+		group, _, ok := strings.Cut(after, "/")
+		if !ok || group == "" {
+			continue
+		}
+		nr := resource.NamespacedResource{Namespace: namespace, Resource: res, Group: group}
+		if _, dup := seen[nr]; dup {
+			continue
+		}
+		seen[nr] = struct{}{}
+		result = append(result, nr)
+	}
+	return result, nil
 }
 
 // ListIndexKeys returns the ULID keys of all complete snapshots under
