@@ -2241,7 +2241,6 @@ __metadata:
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/lezer-traceql": "npm:0.0.25"
-    "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "npm:13.1.0-pre"
     "@grafana/plugin-ui": "npm:^0.13.1"
@@ -2263,26 +2262,16 @@ __metadata:
     "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
-    "@types/semver": "npm:7.7.1"
-    buffer: "npm:6.0.3"
-    events: "npm:3.3.0"
     i18next: "npm:^25.0.0"
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
-    lru-cache: "npm:11.2.2"
     monaco-editor: "npm:0.34.1"
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.2"
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.2"
-    semver: "npm:7.7.3"
-    stream-browserify: "npm:3.0.0"
-    string_decoder: "npm:1.3.0"
-    ts-node: "npm:10.9.2"
-    tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -13169,16 +13158,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"buffer@npm:6.0.3, buffer@npm:^6.0.3":
-  version: 6.0.3
-  resolution: "buffer@npm:6.0.3"
-  dependencies:
-    base64-js: "npm:^1.3.1"
-    ieee754: "npm:^1.2.1"
-  checksum: 10/b6bc68237ebf29bdacae48ce60e5e28fc53ae886301f2ad9496618efac49427ed79096750033e7eab1897a4f26ae374ace49106a5758f38fb70c78c9fda2c3b1
-  languageName: node
-  linkType: hard
-
 "buffer@npm:^5.5.0":
   version: 5.7.1
   resolution: "buffer@npm:5.7.1"
@@ -13186,6 +13165,16 @@ __metadata:
     base64-js: "npm:^1.3.1"
     ieee754: "npm:^1.1.13"
   checksum: 10/997434d3c6e3b39e0be479a80288875f71cd1c07d75a3855e6f08ef848a3c966023f79534e22e415ff3a5112708ce06127277ab20e527146d55c84566405c7c6
+  languageName: node
+  linkType: hard
+
+"buffer@npm:^6.0.3":
+  version: 6.0.3
+  resolution: "buffer@npm:6.0.3"
+  dependencies:
+    base64-js: "npm:^1.3.1"
+    ieee754: "npm:^1.2.1"
+  checksum: 10/b6bc68237ebf29bdacae48ce60e5e28fc53ae886301f2ad9496618efac49427ed79096750033e7eab1897a4f26ae374ace49106a5758f38fb70c78c9fda2c3b1
   languageName: node
   linkType: hard
 
@@ -17216,7 +17205,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"events@npm:3.3.0, events@npm:^3.2.0, events@npm:^3.3.0":
+"events@npm:^3.2.0, events@npm:^3.3.0":
   version: 3.3.0
   resolution: "events@npm:3.3.0"
   checksum: 10/a3d47e285e28d324d7180f1e493961a2bbb4cad6412090e4dec114f4db1f5b560c7696ee8e758f55e23913ede856e3689cd3aa9ae13c56b5d8314cd3b3ddd1be
@@ -30816,7 +30805,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"string_decoder@npm:1.3.0, string_decoder@npm:^1.1.1":
+"string_decoder@npm:^1.1.1":
   version: 1.3.0
   resolution: "string_decoder@npm:1.3.0"
   dependencies:
