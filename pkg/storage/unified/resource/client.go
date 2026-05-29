@@ -169,6 +169,8 @@ type RemoteResourceClientConfig struct {
 	Audiences        []string
 	Namespace        string
 	AllowInsecure    bool
+	// TokenExchanger overrides the default exchange client when non-nil.
+	TokenExchanger authnlib.TokenExchanger
 }
 
 func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
@@ -178,13 +180,18 @@ func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface,
 		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}))
 	}
 
-	tc, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
-		Token:            cfg.Token,
-		TokenExchangeURL: cfg.TokenExchangeURL,
-	}, exchangeOpts...)
-
-	if err != nil {
-		return nil, err
+	var tc authnlib.TokenExchanger
+	if cfg.TokenExchanger != nil {
+		tc = cfg.TokenExchanger
+	} else {
+		var err error
+		tc, err = authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+			Token:            cfg.Token,
+			TokenExchangeURL: cfg.TokenExchangeURL,
+		}, exchangeOpts...)
+		if err != nil {
+			return nil, err
+		}
 	}
 	clientInt := authnlib.NewGrpcClientInterceptor(
 		tc,
