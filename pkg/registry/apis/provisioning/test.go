@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
@@ -58,25 +57,18 @@ type testConnector struct {
 	connectionGetter ConnectionGetter
 	healthProvider   HealthCheckerProvider
 	tester           repository.Tester
-	timeout          time.Duration
 }
 
 func NewTestConnector(
 	deps ConnectorDependencies,
 	tester repository.Tester,
-	customTimeout *time.Duration,
 ) *testConnector {
-	timeout := 30 * time.Second
-	if customTimeout != nil {
-		timeout = *customTimeout
-	}
 	return &testConnector{
 		repoFactory:      deps.GetRepoFactory(),
 		repoGetter:       deps,
 		connectionGetter: deps,
 		healthProvider:   deps,
 		tester:           tester,
-		timeout:          timeout,
 	}
 }
 
@@ -101,8 +93,6 @@ func (*testConnector) ConnectMethods() []string {
 func (*testConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
-
-func (s *testConnector) Timeout() time.Duration { return s.timeout }
 
 func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -327,5 +317,4 @@ var (
 	_ rest.Storage         = (*testConnector)(nil)
 	_ rest.Connecter       = (*testConnector)(nil)
 	_ rest.StorageMetadata = (*testConnector)(nil)
-	_ TimeoutProvider      = (*listConnector)(nil)
 )

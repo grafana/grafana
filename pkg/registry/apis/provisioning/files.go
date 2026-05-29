@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -34,14 +33,9 @@ type filesConnector struct {
 	// maxFileSize caps the size in bytes of files read from or written to the
 	// repository through this connector. <=0 disables the check.
 	maxFileSize int64
-	timeout     time.Duration
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string, maxFileSize int64, customTimeout *time.Duration) *filesConnector {
-	timeout := 30 * time.Second
-	if customTimeout != nil {
-		timeout = *customTimeout
-	}
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string, maxFileSize int64) *filesConnector {
 	return &filesConnector{
 		getter:                getter,
 		parsers:               parsers,
@@ -50,7 +44,6 @@ func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clien
 		folderMetadataEnabled: folderMetadataEnabled,
 		folderAPIVersion:      folderAPIVersion,
 		maxFileSize:           maxFileSize,
-		timeout:               timeout,
 	}
 }
 
@@ -86,8 +79,6 @@ func (c *filesConnector) getRepo(ctx context.Context, method, name string) (repo
 		return c.getter.GetHealthyRepository(ctx, name)
 	}
 }
-
-func (c *filesConnector) Timeout() time.Duration { return c.timeout }
 
 // TODO: document the synchronous write and delete on the API Spec
 func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
@@ -460,5 +451,4 @@ var (
 	_ rest.Storage         = (*filesConnector)(nil)
 	_ rest.Connecter       = (*filesConnector)(nil)
 	_ rest.StorageMetadata = (*filesConnector)(nil)
-	_ TimeoutProvider      = (*filesConnector)(nil)
 )

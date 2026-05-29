@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,18 +16,12 @@ import (
 )
 
 type connectionRepositoriesConnector struct {
-	getter  ConnectionGetter
-	timeout time.Duration
+	getter ConnectionGetter
 }
 
-func NewConnectionRepositoriesConnector(getter ConnectionGetter, customTimeout *time.Duration) *connectionRepositoriesConnector {
-	timeout := 30 * time.Second
-	if customTimeout != nil {
-		timeout = *customTimeout
-	}
+func NewConnectionRepositoriesConnector(getter ConnectionGetter) *connectionRepositoriesConnector {
 	return &connectionRepositoriesConnector{
-		getter:  getter,
-		timeout: timeout,
+		getter: getter,
 	}
 }
 
@@ -53,8 +46,6 @@ func (*connectionRepositoriesConnector) ConnectMethods() []string {
 func (*connectionRepositoriesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
-
-func (c *connectionRepositoriesConnector) Timeout() time.Duration { return c.timeout }
 
 func (c *connectionRepositoriesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -107,5 +98,4 @@ var (
 	_ rest.Storage         = (*connectionRepositoriesConnector)(nil)
 	_ rest.Connecter       = (*connectionRepositoriesConnector)(nil)
 	_ rest.StorageMetadata = (*connectionRepositoriesConnector)(nil)
-	_ TimeoutProvider      = (*connectionRepositoriesConnector)(nil)
 )

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +36,6 @@ type jobsConnector struct {
 	access                auth.AccessChecker
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
-	timeout               time.Duration
 }
 
 func NewJobsConnector(
@@ -48,12 +46,7 @@ func NewJobsConnector(
 	access auth.AccessChecker,
 	clients resources.ClientFactory,
 	folderMetadataEnabled bool,
-	customTimeout *time.Duration,
 ) *jobsConnector {
-	timeout := 30 * time.Second
-	if customTimeout != nil {
-		timeout = *customTimeout
-	}
 	return &jobsConnector{
 		repoGetter:            repoGetter,
 		statusPatcherProvider: statusPatcherProvider,
@@ -62,7 +55,6 @@ func NewJobsConnector(
 		access:                access,
 		clients:               clients,
 		folderMetadataEnabled: folderMetadataEnabled,
-		timeout:               timeout,
 	}
 }
 
@@ -87,8 +79,6 @@ func (*jobsConnector) ConnectMethods() []string {
 func (*jobsConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, true, "" // path -> uid
 }
-
-func (c *jobsConnector) Timeout() time.Duration { return c.timeout }
 
 func (c *jobsConnector) Connect(
 	ctx context.Context,
@@ -467,10 +457,3 @@ func ValidUUID(id string) bool {
 	}
 	return true
 }
-
-var (
-	_ rest.Storage         = (*historySubresource)(nil)
-	_ rest.Connecter       = (*historySubresource)(nil)
-	_ rest.StorageMetadata = (*historySubresource)(nil)
-	_ TimeoutProvider      = (*filesConnector)(nil)
-)

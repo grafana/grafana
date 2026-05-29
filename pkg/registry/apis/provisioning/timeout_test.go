@@ -51,15 +51,6 @@ func (f *fakeConnecter) Connect(ctx context.Context, _ string, _ runtime.Object,
 func (f *fakeConnecter) ProducesMIMETypes(string) []string { return f.mimes }
 func (f *fakeConnecter) ProducesObject(string) any         { return f.obj }
 
-// fakeConnecterWithTimeout adds TimeoutProvider so tests can assert that a
-// custom timeout from the inner overrides the default.
-type fakeConnecterWithTimeout struct {
-	fakeConnecter
-	timeout time.Duration
-}
-
-func (f *fakeConnecterWithTimeout) Timeout() time.Duration { return f.timeout }
-
 // recordingResponder captures whatever a handler reports.
 type recordingResponder struct {
 	mu      sync.Mutex
@@ -84,7 +75,7 @@ func (r *recordingResponder) Object(statusCode int, obj runtime.Object) {
 	r.written = true
 }
 
-func TestTimeoutConnecter_RunsInnerHandler(t *testing.T) {
+func TestWithTimeout_RunsInnerHandler(t *testing.T) {
 	called := false
 	inner := &fakeConnecter{
 		handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -93,7 +84,7 @@ func TestTimeoutConnecter_RunsInnerHandler(t *testing.T) {
 		}),
 	}
 
-	wrapped := WithTimeout(inner).(rest.Connecter)
+	wrapped := WithTimeout(inner, 30*time.Second).(rest.Connecter)
 	h, err := wrapped.Connect(context.Background(), "repo", nil, &recordingResponder{})
 	require.NoError(t, err)
 
@@ -104,7 +95,7 @@ func TestTimeoutConnecter_RunsInnerHandler(t *testing.T) {
 	require.Equal(t, http.StatusTeapot, rr.Code, "inner handler's response should pass through")
 }
 
-func TestTimeoutConnecter_OverridesRequestContext(t *testing.T) {
+func TestWithTimeout_OverridesRequestContext(t *testing.T) {
 	type ctxKey struct{}
 	outerCtx := context.WithValue(context.Background(), ctxKey{}, "from-connect")
 
@@ -117,7 +108,7 @@ func TestTimeoutConnecter_OverridesRequestContext(t *testing.T) {
 		}),
 	}
 
-	wrapped := WithTimeout(inner).(rest.Connecter)
+	wrapped := WithTimeout(inner, 30*time.Second).(rest.Connecter)
 	h, err := wrapped.Connect(outerCtx, "repo", nil, &recordingResponder{})
 	require.NoError(t, err)
 
@@ -132,12 +123,9 @@ func TestTimeoutConnecter_OverridesRequestContext(t *testing.T) {
 		"inner handler should see values from the outer Connect ctx via r.Context()")
 }
 
-func TestTimeoutConnecter_HandlerSeesTimeoutCancellation(t *testing.T) {
+func TestWithTimeout_HandlerSeesTimeoutCancellation(t *testing.T) {
 	const timeout = 20 * time.Millisecond
-	inner := &fakeConnecterWithTimeout{
-		fakeConnecter: fakeConnecter{},
-		timeout:       timeout,
-	}
+	inner := &fakeConnecter{}
 
 	// The handler blocks until r.Context() is canceled and reports which kind
 	// of cancellation it saw via the response status. 504 means the deadline
@@ -151,7 +139,7 @@ func TestTimeoutConnecter_HandlerSeesTimeoutCancellation(t *testing.T) {
 		}
 	})
 
-	wrapped := WithTimeout(inner).(rest.Connecter)
+	wrapped := WithTimeout(inner, timeout).(rest.Connecter)
 	h, err := wrapped.Connect(context.Background(), "repo", nil, &recordingResponder{})
 	require.NoError(t, err)
 
@@ -162,11 +150,11 @@ func TestTimeoutConnecter_HandlerSeesTimeoutCancellation(t *testing.T) {
 		"inner handler should observe context.DeadlineExceeded once timeout fires")
 }
 
-func TestTimeoutConnecter_PropagatesConnectError(t *testing.T) {
+func TestWithTimeout_PropagatesConnectError(t *testing.T) {
 	want := errors.New("inner refused")
 	inner := &fakeConnecter{connectErr: want}
 
-	wrapped := WithTimeout(inner).(rest.Connecter)
+	wrapped := WithTimeout(inner, 30*time.Second).(rest.Connecter)
 	h, err := wrapped.Connect(context.Background(), "repo", nil, &recordingResponder{})
 
 	require.ErrorIs(t, err, want, "inner Connect error should bubble up")
@@ -225,11 +213,11 @@ func TestWithTimeoutFunc(t *testing.T) {
 	})
 }
 
-func TestTimeoutConnecter_ForwardsStorageMetadata(t *testing.T) {
+func TestWithTimeout_ForwardsStorageMetadata(t *testing.T) {
 	// Zero fields on the inner: wrapper should forward to ProducesMIMETypes /
 	// ProducesObject and return whatever the inner returns (nil here).
 	empty := &fakeConnecter{handler: http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})}
-	wrapped := WithTimeout(empty).(rest.StorageMetadata)
+	wrapped := WithTimeout(empty, 30*time.Second).(rest.StorageMetadata)
 
 	require.Nil(t, wrapped.ProducesMIMETypes(http.MethodGet))
 	require.Nil(t, wrapped.ProducesObject(http.MethodGet))
@@ -240,7 +228,7 @@ func TestTimeoutConnecter_ForwardsStorageMetadata(t *testing.T) {
 		mimes:   []string{"application/test"},
 		obj:     "the-object",
 	}
-	wrapped = WithTimeout(populated).(rest.StorageMetadata)
+	wrapped = WithTimeout(populated, time.Second).(rest.StorageMetadata)
 
 	require.Equal(t, []string{"application/test"}, wrapped.ProducesMIMETypes(http.MethodGet))
 	require.Equal(t, "the-object", wrapped.ProducesObject(http.MethodGet))
@@ -250,8 +238,4 @@ var (
 	_ rest.Storage         = (*fakeConnecter)(nil)
 	_ rest.Connecter       = (*fakeConnecter)(nil)
 	_ rest.StorageMetadata = (*fakeConnecter)(nil)
-
-	_ rest.Storage    = (*fakeConnecterWithTimeout)(nil)
-	_ rest.Connecter  = (*fakeConnecterWithTimeout)(nil)
-	_ TimeoutProvider = (*fakeConnecterWithTimeout)(nil)
 )

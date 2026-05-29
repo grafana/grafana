@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,15 +18,10 @@ import (
 
 type historySubresource struct {
 	repoGetter RepoGetter
-	timeout    time.Duration
 }
 
-func NewHistorySubresource(repoGetter RepoGetter, customTimeout *time.Duration) *historySubresource {
-	timeout := 30 * time.Second
-	if customTimeout != nil {
-		timeout = *customTimeout
-	}
-	return &historySubresource{repoGetter: repoGetter, timeout: timeout}
+func NewHistorySubresource(repoGetter RepoGetter) *historySubresource {
+	return &historySubresource{repoGetter: repoGetter}
 }
 
 func (h *historySubresource) New() runtime.Object {
@@ -37,11 +31,19 @@ func (h *historySubresource) New() runtime.Object {
 
 func (h *historySubresource) Destroy() {}
 
+func (h *historySubresource) NamespaceScoped() bool {
+	return true
+}
+
+func (h *historySubresource) GetSingularName() string {
+	return "History"
+}
+
 func (h *historySubresource) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"}
 }
 
-func (h *historySubresource) ProducesObject(verb string) any {
+func (h *historySubresource) ProducesObject(verb string) runtime.Object {
 	return &provisioning.HistoryList{}
 }
 
@@ -52,8 +54,6 @@ func (h *historySubresource) ConnectMethods() []string {
 func (h *historySubresource) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, true, "" // true adds the {path} component
 }
-
-func (h *historySubresource) Timeout() time.Duration { return h.timeout }
 
 func (h *historySubresource) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -107,10 +107,3 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 		responder.Object(http.StatusOK, &provisioning.HistoryList{Items: commits})
 	}), nil
 }
-
-var (
-	_ rest.Storage         = (*historySubresource)(nil)
-	_ rest.Connecter       = (*historySubresource)(nil)
-	_ rest.StorageMetadata = (*historySubresource)(nil)
-	_ TimeoutProvider      = (*filesConnector)(nil)
-)

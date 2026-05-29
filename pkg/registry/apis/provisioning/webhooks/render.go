@@ -25,18 +25,12 @@ import (
 type renderConnector struct {
 	unified resource.ResourceClient
 	core    *provisioningapis.APIBuilder
-	timeout time.Duration
 }
 
-func NewRenderConnector(unified resource.ResourceClient, core *provisioningapis.APIBuilder, customTimeout *time.Duration) *renderConnector {
-	timeout := 20 * time.Second
-	if customTimeout != nil {
-		timeout = *customTimeout
-	}
+func NewRenderConnector(unified resource.ResourceClient, core *provisioningapis.APIBuilder) *renderConnector {
 	return &renderConnector{
 		unified: unified,
 		core:    core,
-		timeout: timeout,
 	}
 }
 
@@ -110,11 +104,9 @@ func (c *renderConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 }
 
 func (c *renderConnector) UpdateStorage(storage map[string]rest.Storage) error {
-	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = c
+	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = provisioningapis.WithTimeout(c, 20*time.Second)
 	return nil
 }
-
-func (c *renderConnector) Timeout() time.Duration { return c.timeout }
 
 func (c *renderConnector) Connect(
 	ctx context.Context,
@@ -181,8 +173,7 @@ func (c *renderConnector) Connect(
 }
 
 var (
-	_ rest.Connecter                   = (*renderConnector)(nil)
-	_ rest.Storage                     = (*renderConnector)(nil)
-	_ rest.StorageMetadata             = (*renderConnector)(nil)
-	_ provisioningapis.TimeoutProvider = (*renderConnector)(nil)
+	_ rest.Connecter       = (*renderConnector)(nil)
+	_ rest.Storage         = (*renderConnector)(nil)
+	_ rest.StorageMetadata = (*renderConnector)(nil)
 )

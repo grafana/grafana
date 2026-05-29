@@ -39,7 +39,6 @@ type webhookConnector struct {
 	renderer        pullrequest.ScreenshotRenderer
 	registry        prometheus.Registerer
 	metrics         webhookMetrics
-	timeout         time.Duration
 }
 
 func NewWebhookConnector(
@@ -48,20 +47,14 @@ func NewWebhookConnector(
 	core *provisioningapis.APIBuilder,
 	renderer pullrequest.ScreenshotRenderer,
 	registry prometheus.Registerer,
-	customTimeout *time.Duration,
 ) *webhookConnector {
 	metrics := registerWebhookMetrics(registry)
-	timeout := 30 * time.Second
-	if customTimeout != nil {
-		timeout = *customTimeout
-	}
 	return &webhookConnector{
 		webhooksEnabled: webhooksEnabled,
 		core:            core,
 		renderer:        renderer,
 		registry:        registry,
 		metrics:         metrics,
-		timeout:         timeout,
 	}
 }
 
@@ -99,7 +92,7 @@ func (s *webhookConnector) Authorize(ctx context.Context, a authorizer.Attribute
 }
 
 func (s *webhookConnector) UpdateStorage(storage map[string]rest.Storage) error {
-	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = s
+	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = provisioningapis.WithTimeout(s, 30*time.Second)
 	return nil
 }
 
@@ -116,8 +109,6 @@ func (s *webhookConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 
 	return nil
 }
-
-func (s *webhookConnector) Timeout() time.Duration { return s.timeout }
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -196,7 +187,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			actionTaken = string(rsp.Job.Action)
 			span.SetAttributes(attribute.String("job.action", actionTaken))
 
-			job, err := s.core.GetJobQueue().Insert(ctx, request.NamespaceValue(ctx), *rsp.Job)
+			job, err := s.core.GetJobQueue().Insert(ctx, namespace, *rsp.Job)
 			if err != nil {
 				span.RecordError(err)
 				logger.Error("failed to insert job", "error", err)
@@ -255,8 +246,7 @@ func updateLastEvent(ctx context.Context, cfg *provisioning.Repository, patcher 
 }
 
 var (
-	_ rest.Storage                     = (*webhookConnector)(nil)
-	_ rest.Connecter                   = (*webhookConnector)(nil)
-	_ rest.StorageMetadata             = (*webhookConnector)(nil)
-	_ provisioningapis.TimeoutProvider = (*webhookConnector)(nil)
+	_ rest.Storage         = (*webhookConnector)(nil)
+	_ rest.Connecter       = (*webhookConnector)(nil)
+	_ rest.StorageMetadata = (*webhookConnector)(nil)
 )

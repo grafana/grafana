@@ -3027,7 +3027,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/HistoryList"
+                  "type": "string"
                 }
               }
             }
@@ -3087,7 +3087,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/HistoryList"
+                  "type": "string"
                 }
               }
             }
@@ -4568,12 +4568,7 @@
           "authors": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Author"
-                }
-              ]
+              "default": {}
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -4604,12 +4599,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/HistoryItem"
-                }
-              ]
+              "default": {}
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -4618,21 +4608,9 @@
             "type": "string"
           },
           "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ListMeta"
-              }
-            ]
+            "default": {}
           }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "provisioning.grafana.app",
-            "kind": "HistoryList",
-            "version": "v0alpha1"
-          }
-        ]
+        }
       },
       "Job": {
         "description": "The repository name and type are stored as labels",

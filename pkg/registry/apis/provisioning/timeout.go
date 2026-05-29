@@ -9,8 +9,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
-const defaultConnectTimeout = 30 * time.Second
-
 // WithTimeoutFunc adds a timeout context to the request
 func WithTimeoutFunc(f http.HandlerFunc, timeout time.Duration) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -20,25 +18,11 @@ func WithTimeoutFunc(f http.HandlerFunc, timeout time.Duration) http.HandlerFunc
 	})
 }
 
-// TimeoutProvider lets a connector expose its desired Connect timeout so
-// the storage-level wrapper can apply it uniformly without each Connect
-// needing to call WithTimeout itself.
-type TimeoutProvider interface {
-	Timeout() time.Duration
-}
-
-// WithTimeout wraps any rest.Storage that implements rest.Connecter
-// so the handler returned by Connect runs under a timeout context. Storage
-// objects that aren't connecters are returned unchanged.
-func WithTimeout(s rest.Storage) rest.Storage {
+// WithTimeout adds a timeout context to the request
+func WithTimeout(s rest.Storage, timeout time.Duration) rest.Storage {
 	c, ok := s.(rest.Connecter)
 	if !ok {
 		return s
-	}
-
-	timeout := defaultConnectTimeout
-	if tp, ok := s.(TimeoutProvider); ok {
-		timeout = tp.Timeout()
 	}
 
 	return &timeoutConnector{storage: s, inner: c, timeout: timeout}

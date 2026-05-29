@@ -3195,7 +3195,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.HistoryList"
+                  "type": "string"
                 }
               }
             }
@@ -3267,7 +3267,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.HistoryList"
+                  "type": "string"
                 }
               }
             }

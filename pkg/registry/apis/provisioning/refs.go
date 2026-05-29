@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"net/http"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,16 +14,11 @@ import (
 )
 
 type refsConnector struct {
-	getter  RepoGetter
-	timeout time.Duration
+	getter RepoGetter
 }
 
-func NewRefsConnector(getter RepoGetter, customTimeout *time.Duration) *refsConnector {
-	timeout := 30 * time.Second
-	if customTimeout != nil {
-		timeout = *customTimeout
-	}
-	return &refsConnector{getter: getter, timeout: timeout}
+func NewRefsConnector(getter RepoGetter) *refsConnector {
+	return &refsConnector{getter: getter}
 }
 
 func (*refsConnector) New() runtime.Object {
@@ -48,8 +42,6 @@ func (*refsConnector) ConnectMethods() []string {
 func (*refsConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
-
-func (c *refsConnector) Timeout() time.Duration { return c.timeout }
 
 func (c *refsConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -92,5 +84,4 @@ var (
 	_ rest.Storage         = (*refsConnector)(nil)
 	_ rest.Connecter       = (*refsConnector)(nil)
 	_ rest.StorageMetadata = (*refsConnector)(nil)
-	_ TimeoutProvider      = (*listConnector)(nil)
 )
