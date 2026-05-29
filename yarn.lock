@@ -4993,12 +4993,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mapbox/jsonlint-lines-primitives@github:mapbox/jsonlint#commit=e31b7289baedf3e1000d7ae7edd42268212c9954":
-  version: 2.0.2
-  resolution: "@mapbox/jsonlint-lines-primitives@https://github.com/mapbox/jsonlint.git#commit=e31b7289baedf3e1000d7ae7edd42268212c9954"
-  checksum: 10/660bd93beac97f0f4bdcfbbded3282efaf2ab4debb99da55f7fb7b27250e0dfa7dd572a9040802fdc008c71d0bb5ff7e565a7426177fda6c3d17e9bf1598bbaf
-  languageName: node
-  linkType: hard
+"@mapbox/jsonlint-lines-primitives@workspace:*, @mapbox/jsonlint-lines-primitives@workspace:packages/mapbox-jsonlint-lines-primitives":
+  version: 0.0.0-use.local
+  resolution: "@mapbox/jsonlint-lines-primitives@workspace:packages/mapbox-jsonlint-lines-primitives"
+  languageName: unknown
+  linkType: soft
 
 "@mapbox/unitbezier@npm:^0.0.1":
   version: 0.0.1

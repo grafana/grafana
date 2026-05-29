@@ -546,6 +546,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 
 # Vendored
 /packages/get-document/ @grafana/grafana-frontend-platform
+/packages/mapbox-jsonlint-lines-primitives/ @grafana/grafana-frontend-platform
 
 # @grafana/alerting
 /packages/grafana-alerting/ @grafana/alerting-frontend
