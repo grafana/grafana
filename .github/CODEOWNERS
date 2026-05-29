@@ -1262,6 +1262,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/report-go-cache-sizes/ @grafana/grafana-backend-group
 /.github/actions/build-go @grafana/grafana-backend-services-squad
 /.github/actions/build-targz @grafana/grafana-backend-services-squad
+/.github/actions/bundle-schema-types @grafana/grafana-frontend-platform
 /.github/actions/change-detection @grafana/grafana-backend-services-squad
 /.github/actions/setup-fpm @grafana/grafana-backend-services-squad
 /.github/actions/setup-node @grafana/grafana-frontend-platform
@@ -1367,9 +1368,12 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/defaults-ini-docs-reminder.yml @grafana/docs-tooling @jtvdez
 /.github/workflows/pr-build-grafana.yml @grafana/grafana-backend-services-squad
 /.github/workflows/build-docker-variants.yml @grafana/grafana-backend-services-squad
+/.github/workflows/create-release-tag.yml @grafana/grafana-backend-services-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
+/packages/grafana-runtime/src/internal/openFeature/openfeature-types.gen.d.ts @grafanabot
+/packages/grafana-runtime/src/internal/openFeature/openfeature.gen.ts @grafanabot
 /docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md @grafanabot
 /pkg/services/featuremgmt/toggles_gen.csv @grafanabot
 /pkg/services/featuremgmt/toggles_gen.go @grafanabot

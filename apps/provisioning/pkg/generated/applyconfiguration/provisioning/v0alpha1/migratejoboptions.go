@@ -7,7 +7,9 @@ package v0alpha1
 // MigrateJobOptionsApplyConfiguration represents a declarative configuration of the MigrateJobOptions type for use
 // with apply.
 type MigrateJobOptionsApplyConfiguration struct {
-	// Message to use when committing the changes in a single commit
+	// Message to use when committing the changes in a single commit.
+	// Deprecated: set JobSpec.Message instead. This field is kept for
+	// backwards compatibility and is only used when JobSpec.Message is empty.
 	Message *string `json:"message,omitempty"`
 	// Resources to migrate. When empty, every unmanaged resource in the namespace
 	// is migrated (legacy behavior). When non-empty, only the listed resources
