@@ -321,17 +321,14 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 	})
 
 	t.Run("expired entry is accepted again", func(t *testing.T) {
-		cache := newReplayCache(time.Hour)
-		// Pin the clock so we can step past the TTL deterministically.
-		fakeNow := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-		cache.now = func() time.Time { return fakeNow }
-		gh := newRepo(cache, defaultSecret)
+		const ttl = 50 * time.Millisecond
+		gh := newRepo(newReplayCache(ttl), defaultSecret)
 
 		_, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-X", defaultSecret))
 		require.NoError(t, err)
 
-		// Move clock past TTL so the prior entry is evicted before lookup.
-		fakeNow = fakeNow.Add(2 * time.Hour)
+		// Once the entry expires, the same signed request is processed again.
+		time.Sleep(ttl + 20*time.Millisecond)
 		rsp, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-X", defaultSecret))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusAccepted, rsp.Code)

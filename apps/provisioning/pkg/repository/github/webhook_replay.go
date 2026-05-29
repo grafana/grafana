@@ -1,9 +1,10 @@
 package github
 
 import (
-	"container/list"
 	"sync"
 	"time"
+
+	"github.com/hashicorp/golang-lru/v2/expirable"
 )
 
 // defaultReplayCacheTTL is the lifetime of a recorded webhook replay key. It
@@ -11,36 +12,28 @@ import (
 // request is still considered a duplicate.
 const defaultReplayCacheTTL = time.Hour
 
+// maxReplayCacheEntries bounds the cache memory footprint. Provisioning webhook
+// volume per instance is low, so an attacker would need an implausible burst to
+// evict a still-live entry within the TTL — and the worst case of an
+// evicted-then-replayed delivery is a single idempotent sync job.
+const maxReplayCacheEntries = 10000
+
 // replayCache tracks recently-seen webhook replay keys so the webhook handler
 // can reject replayed requests. The key is the validated HMAC signature
 // (X-Hub-Signature-256), which binds the entry to the signed request body and
 // the repository's unique secret — see Webhook for why the unauthenticated
 // X-GitHub-Delivery header is not used as the key.
-//
-// Eviction is amortized O(1): every entry shares the same TTL, so insertion
-// order equals expiration order. We walk a FIFO from the front and stop at
-// the first live entry — work is proportional to the number of newly-expired
-// entries, not to the cache size.
 type replayCache struct {
-	ttl time.Duration
-	now func() time.Time
-
-	mu    sync.Mutex
-	keys  map[string]*list.Element // key → element in order
-	order *list.List               // FIFO of *cacheEntry, oldest at front
-}
-
-type cacheEntry struct {
-	key    string
-	expiry time.Time
+	// expirable.LRU is internally locked, but seenOrAdd's Get-then-Add is two
+	// calls; this mutex makes the check-and-set atomic so concurrent identical
+	// requests register exactly one as new.
+	mu  sync.Mutex
+	lru *expirable.LRU[string, struct{}]
 }
 
 func newReplayCache(ttl time.Duration) *replayCache {
 	return &replayCache{
-		ttl:   ttl,
-		now:   time.Now,
-		keys:  make(map[string]*list.Element),
-		order: list.New(),
+		lru: expirable.NewLRU[string, struct{}](maxReplayCacheEntries, nil, ttl),
 	}
 }
 
@@ -55,20 +48,11 @@ func (c *replayCache) seenOrAdd(key string) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	now := c.now()
-	for e := c.order.Front(); e != nil; e = c.order.Front() {
-		entry := e.Value.(*cacheEntry)
-		if entry.expiry.After(now) {
-			break
-		}
-		c.order.Remove(e)
-		delete(c.keys, entry.key)
-	}
-
-	if _, ok := c.keys[key]; ok {
+	// Get honors per-entry expiry on read; Contains only checks map membership
+	// and would report an expired-but-unswept entry as still present.
+	if _, ok := c.lru.Get(key); ok {
 		return true
 	}
-	el := c.order.PushBack(&cacheEntry{key: key, expiry: now.Add(c.ttl)})
-	c.keys[key] = el
+	c.lru.Add(key, struct{}{})
 	return false
 }

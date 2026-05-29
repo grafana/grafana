@@ -22,14 +22,15 @@ func TestReplayCache(t *testing.T) {
 	})
 
 	t.Run("entries expire after ttl", func(t *testing.T) {
-		c := newReplayCache(time.Hour)
-		now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-		c.now = func() time.Time { return now }
+		const ttl = 50 * time.Millisecond
+		c := newReplayCache(ttl)
 
 		require.False(t, c.seenOrAdd("abc"))
 		require.True(t, c.seenOrAdd("abc"))
 
-		now = now.Add(2 * time.Hour)
+		// Get honors expiry on read, so sleeping past the TTL makes the entry
+		// look absent without depending on the background sweeper.
+		time.Sleep(ttl + 20*time.Millisecond)
 		require.False(t, c.seenOrAdd("abc"))
 	})
 
