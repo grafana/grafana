@@ -606,7 +606,9 @@ For configuration information on all other data source plugins, refer to the [Pl
 
 ## Global variables
 
-Grafana has global built-in variables that can be used in expressions in the query editor. This topic lists them in alphabetical order and defines them. These variables are useful in queries, dashboard links, panel links, and data links.
+Grafana has global built-in variables that can be used in expressions in the query editor.
+This topic lists them in alphabetical order and defines them.
+Most variables are useful in queries, dashboard links, panel links, and data links — but some, like `$__url_time_range`, are intended only for use in links, not query editors.
 
 ### `$__dashboard`
 
@@ -716,13 +718,13 @@ You must include the `?` or `&` separator yourself when constructing URLs:
 
 <!-- prettier-ignore-end -->
 
-For example, to create a data link that opens another dashboard with the same time range:
+To link to another dashboard while preserving the current time range, follow this pattern:
 
 ```text
 https://your-grafana/d/other-dashboard?${__url_time_range}
 ```
 
-To combine it with other variables:
+To also pass a variable value from the current dashboard, follow this pattern:
 
 ```text
 https://your-grafana/d/other-dashboard?{__url_time_range}&var-host= {host}
