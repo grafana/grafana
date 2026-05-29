@@ -1,7 +1,7 @@
 ![Grafana Logo (Light)](docs/logo-horizontal.png#gh-light-mode-only)
 ![Grafana Logo (Dark)](docs/logo-horizontal-dark.png#gh-dark-mode-only)
 
-Test2
+Test3
 
 The open-source platform for monitoring and observability
 
