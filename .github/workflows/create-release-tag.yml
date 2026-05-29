@@ -1,0 +1,48 @@
+name: Create Release Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag name (e.g. v10.0.0)'
+        required: true
+        type: string
+      message:
+        description: 'Tag message'
+        required: true
+        type: string
+      object:
+        description: 'Commit SHA to tag'
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-arm64-small
+    permissions:
+      id-token: write
+    steps:
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-releases-oss
+
+      - name: Create annotated tag
+        env:
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+        run: |
+          tag_sha=$(gh api "repos/${{ github.repository }}/git/tags" \
+            --method POST \
+            -f tag="${{ inputs.tag }}" \
+            -f message="${{ inputs.message }}" \
+            -f object="${{ inputs.object }}" \
+            -f type="commit" \
+            --jq '.sha')
+
+          gh api "repos/${{ github.repository }}/git/refs" \
+            --method POST \
+            -f ref="refs/tags/${{ inputs.tag }}" \
+            -f sha="${tag_sha}"
