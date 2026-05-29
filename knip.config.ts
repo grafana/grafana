@@ -9,6 +9,23 @@ const packageIgnoreDeps = [
 
 const packageEntries = ['i18next.config.ts'];
 
+const externalisedDatasources = [
+  'azuremonitor',
+  'cloud-monitoring',
+  'grafana-postgresql-datasource',
+  'grafana-pyroscope-datasource',
+  'grafana-testdata-datasource',
+  'graphite',
+  'influxdb',
+  'jaeger',
+  'loki',
+  'mssql',
+  'mysql',
+  'opentsdb',
+  'parca',
+  'tempo',
+];
+
 const config: KnipConfig = {
   compilers: {
     mdx: true,
@@ -28,12 +45,15 @@ const config: KnipConfig = {
       project: [
         'public/app/**',
         'scripts/**/*.ts*',
+
+        // paths to ignore
         '!devenv/**',
+        '!e2e-playwright/test-plugins/**',
         '!packages/**',
         '!pkg/**',
-        '!public/app/plugins/datasource/**',
+        ...externalisedDatasources.map((ds) => `!public/app/plugins/datasource/${ds}/**`),
       ],
-      entry: ['public/app/app.ts', 'public/app/index.ts', 'public/app/plugins/panel/**/module.{ts,tsx,js}'],
+      entry: ['public/app/app.ts', 'public/app/index.ts', 'public/app/plugins/**/module.{ts,tsx,js}'],
       webpack: {
         config: ['scripts/webpack/webpack.dev.ts', 'scripts/webpack/webpack.prod.ts'],
       },
@@ -41,8 +61,8 @@ const config: KnipConfig = {
         config: 'scripts/webpack/postcss.config.js',
       },
     },
-    'public/app/plugins/datasource/*': {
-      // TODO figure out how to properly include webpack/jest configs
+    [`public/app/plugins/datasource/{${externalisedDatasources.join(',')}}`]: {
+      // TODO figure out how to properly include webpack config
       webpack: false,
       jest: true,
       entry: [...packageEntries, 'module.{ts,tsx,js}'],
