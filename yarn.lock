@@ -37,6 +37,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@apidevtools/json-schema-ref-parser@npm:^11.5.5":
+  version: 11.9.3
+  resolution: "@apidevtools/json-schema-ref-parser@npm:11.9.3"
+  dependencies:
+    "@jsdevtools/ono": "npm:^7.1.3"
+    "@types/json-schema": "npm:^7.0.15"
+    js-yaml: "npm:^4.1.0"
+  checksum: 10/3d3618dbb611d1296b99bdee4ff0dde664dad47632d30e0310c6d10de8081f6378ccb58329ea4e03103eca9347d5143671d03f0527b1c3f0916d95f8c09215e2
+  languageName: node
+  linkType: hard
+
 "@apidevtools/openapi-schemas@npm:^2.1.0":
   version: 2.1.0
   resolution: "@apidevtools/openapi-schemas@npm:2.1.0"
@@ -1832,8 +1843,6 @@ __metadata:
     lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
     rxjs: "npm:7.8.2"
-    ts-node: "npm:10.9.2"
-    tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -1853,7 +1862,6 @@ __metadata:
     "@grafana/schema": "npm:13.1.0-pre"
     "@grafana/ui": "npm:13.1.0-pre"
     "@testing-library/dom": "npm:10.4.1"
-    "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/jest": "npm:29.5.14"
@@ -1862,7 +1870,6 @@ __metadata:
     "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
-    css-loader: "npm:7.1.2"
     fast-deep-equal: "npm:^3.1.3"
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
@@ -1872,9 +1879,6 @@ __metadata:
     react-dom: "npm:18.3.1"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.2"
-    style-loader: "npm:4.0.0"
-    ts-node: "npm:10.9.2"
-    tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -1924,17 +1928,13 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:13.1.0-pre"
-    "@grafana/e2e-selectors": "npm:13.1.0-pre"
     "@grafana/plugin-configs": "npm:13.1.0-pre"
-    "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/runtime": "npm:13.1.0-pre"
     "@grafana/schema": "npm:13.1.0-pre"
     "@grafana/ui": "npm:13.1.0-pre"
     "@reduxjs/toolkit": "npm:2.10.1"
     "@testing-library/dom": "npm:10.4.1"
-    "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
-    "@testing-library/user-event": "npm:14.6.1"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.20"
     "@types/node": "npm:24.10.1"
@@ -1950,8 +1950,6 @@ __metadata:
     redux: "npm:5.0.1"
     rxjs: "npm:7.8.2"
     semver: "npm:7.7.3"
-    ts-node: "npm:10.9.2"
-    tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -1969,7 +1967,6 @@ __metadata:
     "@grafana/plugin-configs": "npm:13.1.0-pre"
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/runtime": "npm:13.1.0-pre"
-    "@grafana/schema": "npm:13.1.0-pre"
     "@grafana/sql": "npm:13.1.0-pre"
     "@grafana/ui": "npm:13.1.0-pre"
     "@testing-library/dom": "npm:10.4.1"
@@ -1987,8 +1984,6 @@ __metadata:
     react-dom: "npm:18.3.1"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.2"
-    ts-node: "npm:10.9.2"
-    tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -2013,23 +2008,14 @@ __metadata:
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/jest": "npm:29.5.14"
-    "@types/lodash": "npm:4.17.20"
-    "@types/logfmt": "npm:^1.2.3"
     "@types/node": "npm:24.10.1"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
-    "@types/react-window": "npm:1.8.8"
     jest: "npm:29.7.0"
-    lodash: "npm:^4.17.23"
-    logfmt: "npm:^1.3.2"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.2"
-    react-window: "npm:1.8.11"
     rxjs: "npm:7.8.2"
     stream-browserify: "npm:3.0.0"
-    ts-node: "npm:10.9.2"
-    tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -2106,8 +2092,6 @@ __metadata:
     lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
     rxjs: "npm:7.8.2"
-    ts-node: "npm:10.9.2"
-    tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -2138,8 +2122,6 @@ __metadata:
     lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
     rxjs: "npm:7.8.2"
-    ts-node: "npm:10.9.2"
-    tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -2153,15 +2135,12 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "workspace:*"
-    "@grafana/e2e-selectors": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/schema": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
-    "@testing-library/user-event": "npm:14.6.1"
     "@types/debounce-promise": "npm:3.1.9"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.20"
@@ -2173,11 +2152,7 @@ __metadata:
     lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.2"
-    react-use: "npm:17.6.0"
     rxjs: "npm:7.8.2"
-    ts-node: "npm:10.9.2"
-    tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -2210,8 +2185,6 @@ __metadata:
     react-dom: "npm:18.3.1"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.2"
-    ts-node: "npm:10.9.2"
-    tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -2240,25 +2213,18 @@ __metadata:
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.20"
     "@types/node": "npm:24.10.1"
-    "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     debounce-promise: "npm:3.1.2"
     fast-deep-equal: "npm:^3.1.3"
-    i18next: "npm:^25.0.0"
-    immer: "npm:10.2.0"
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
     monaco-editor: "npm:0.34.1"
-    prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.2"
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.2"
-    ts-node: "npm:10.9.2"
-    tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -5035,12 +5001,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mapbox/jsonlint-lines-primitives@github:mapbox/jsonlint#commit=e31b7289baedf3e1000d7ae7edd42268212c9954":
-  version: 2.0.2
-  resolution: "@mapbox/jsonlint-lines-primitives@https://github.com/mapbox/jsonlint.git#commit=e31b7289baedf3e1000d7ae7edd42268212c9954"
-  checksum: 10/660bd93beac97f0f4bdcfbbded3282efaf2ab4debb99da55f7fb7b27250e0dfa7dd572a9040802fdc008c71d0bb5ff7e565a7426177fda6c3d17e9bf1598bbaf
-  languageName: node
-  linkType: hard
+"@mapbox/jsonlint-lines-primitives@workspace:*, @mapbox/jsonlint-lines-primitives@workspace:packages/mapbox-jsonlint-lines-primitives":
+  version: 0.0.0-use.local
+  resolution: "@mapbox/jsonlint-lines-primitives@workspace:packages/mapbox-jsonlint-lines-primitives"
+  languageName: unknown
+  linkType: soft
 
 "@mapbox/unitbezier@npm:^0.0.1":
   version: 0.0.1
@@ -10360,7 +10325,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:*, @types/lodash@npm:4.17.20, @types/lodash@npm:^4, @types/lodash@npm:^4.14.172":
+"@types/lodash@npm:*, @types/lodash@npm:^4, @types/lodash@npm:^4.14.172, @types/lodash@npm:^4.17.7":
+  version: 4.17.24
+  resolution: "@types/lodash@npm:4.17.24"
+  checksum: 10/0f2082565f60f9787eefc046edc38458054512be5a8b3584ef0bad5fd9e85d0ab55ec5a1fbfae1ed6ba015cf1f9e837d5fb4da1f99fc60b8f74b2a46146fb00f
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:4.17.20":
   version: 4.17.20
   resolution: "@types/lodash@npm:4.17.20"
   checksum: 10/8cd8ad3bd78d2e06a93ae8d6c9907981d5673655fec7cb274a4d9a59549aab5bb5b3017361280773b8990ddfccf363e14d1b37c97af8a9fe363de677f9a61524
@@ -18249,12 +18221,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"get-document@github:webmodules/get-document#commit=a04ccb499d6e0433a368c3bb150b4899b698461f":
-  version: 1.0.0
-  resolution: "get-document@https://github.com/webmodules/get-document.git#commit=a04ccb499d6e0433a368c3bb150b4899b698461f"
-  checksum: 10/5ec51321f3a5257a08c3ea9ac1984d64302a34c786f5d5691ae1ee00aba189eedac63f401e0cf746b0c77fb84091a4d2a9b66ac23dc0e872cbac860e5e0c5245
-  languageName: node
-  linkType: hard
+"get-document@workspace:*, get-document@workspace:packages/get-document":
+  version: 0.0.0-use.local
+  resolution: "get-document@workspace:packages/get-document"
+  languageName: unknown
+  linkType: soft
 
 "get-east-asian-width@npm:^1.0.0, get-east-asian-width@npm:^1.3.0":
   version: 1.4.0
@@ -18924,6 +18895,7 @@ __metadata:
     jquery: "npm:3.7.1"
     js-yaml: "npm:^4.1.0"
     json-markup: "npm:^1.1.0"
+    json-schema-to-typescript: "npm:15.0.4"
     json-source-map: "npm:0.6.1"
     jsurl: "npm:^0.1.5"
     kbar: "npm:0.1.0-beta.48"
@@ -22199,6 +22171,25 @@ __metadata:
   version: 5.0.0
   resolution: "json-parse-even-better-errors@npm:5.0.0"
   checksum: 10/b5aeaa65e072bc3bda2cb1da50bf1822814b4aa7c568e7c2bed25af89d730f113dcb74393da574c0a32e889eeba4a826db600b8a6ecef917c59c8c6b38f2efaa
+  languageName: node
+  linkType: hard
+
+"json-schema-to-typescript@npm:15.0.4":
+  version: 15.0.4
+  resolution: "json-schema-to-typescript@npm:15.0.4"
+  dependencies:
+    "@apidevtools/json-schema-ref-parser": "npm:^11.5.5"
+    "@types/json-schema": "npm:^7.0.15"
+    "@types/lodash": "npm:^4.17.7"
+    is-glob: "npm:^4.0.3"
+    js-yaml: "npm:^4.1.0"
+    lodash: "npm:^4.17.21"
+    minimist: "npm:^1.2.8"
+    prettier: "npm:^3.2.5"
+    tinyglobby: "npm:^0.2.9"
+  bin:
+    json2ts: dist/src/cli.js
+  checksum: 10/99544c8b2e10f1487fd685357d8333e70f5eb9c1ba96fbdcc172d8cf62dc382158276ad82648a93911562f07da7c2adf7733d4608ffdeca9525d08d7930b9880
   languageName: node
   linkType: hard
 
@@ -31529,7 +31520,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tinyglobby@npm:^0.2.12, tinyglobby@npm:^0.2.13, tinyglobby@npm:^0.2.14, tinyglobby@npm:^0.2.15, tinyglobby@npm:^0.2.16":
+"tinyglobby@npm:^0.2.12, tinyglobby@npm:^0.2.13, tinyglobby@npm:^0.2.14, tinyglobby@npm:^0.2.15, tinyglobby@npm:^0.2.16, tinyglobby@npm:^0.2.9":
   version: 0.2.16
   resolution: "tinyglobby@npm:0.2.16"
   dependencies:
