@@ -329,6 +329,9 @@ describe('GroupDetailsPage', () => {
 
       const group = alertingFactory.ruler.group.build({ name: 'test-group-cpu', interval: '11m40s' });
       setRulerRuleGroupResolver((req) => {
+        if (req.params.namespace === 'test' && req.params.groupName === 'test') {
+          return HttpResponse.json({ message: 'group does not exist' }, { status: 404 });
+        }
         if (req.params.namespace === 'test-mimir-namespace' && req.params.groupName === 'test-group-cpu') {
           return HttpResponse.json(group);
         }

@@ -174,7 +174,10 @@ describe('GroupEditPage', () => {
       groupsByName.clear();
       groupsByName.set(group.name, group);
 
-      setRulerRuleGroupResolver(async ({ params: { groupName } }) => {
+      setRulerRuleGroupResolver(async ({ params: { namespace, groupName } }) => {
+        if (namespace === 'test' && groupName === 'test') {
+          return HttpResponse.json({ message: 'group does not exist' }, { status: 404 });
+        }
         if (groupsByName.has(groupName)) {
           return HttpResponse.json(groupsByName.get(groupName));
         }
