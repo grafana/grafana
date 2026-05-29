@@ -106,8 +106,8 @@ export const VizLegendTable = <T extends unknown>({
         gridTemplateColumns: `min-content minmax(55px, auto) ${'min-content '.repeat(Object.keys(header).length - 1)}`,
       }}
     >
-      <thead>
-        <tr className={styles.header}>
+      <thead className={styles.header}>
+        <tr>
           <th></th>
           {Object.keys(header).map((columnTitle) => (
             <th
@@ -157,7 +157,8 @@ const getStyles = (theme: GrafanaTheme2, placement: LegendPlacement = 'bottom') 
   header: css({
     position: 'sticky',
     top: 0,
-    zIndex: 1,
+    backgroundColor: theme.colors.background.primary,
+
     color: theme.colors.primary.text,
     fontWeight: theme.typography.fontWeightMedium,
     borderBottom: `1px solid ${theme.colors.border.weak}`,
