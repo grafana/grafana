@@ -354,7 +354,8 @@ func (s *KVRemoteIndexStore) ListIndexKeys(ctx context.Context, nsResource resou
 		ulidStr := strings.TrimPrefix(key, prefix)
 		u, err := ulid.Parse(ulidStr)
 		if err != nil {
-			// Defensive: skip non-ULID keys. Should not occur in practice.
+			// Shouldn't occur in practice; log so it doesn't disappear silently.
+			s.log.Warn("skipping non-ULID key in manifest section", "key", key, "err", err)
 			continue
 		}
 		result = append(result, u)
@@ -505,15 +506,12 @@ type kvIndexStoreLock struct {
 // Release stops the auto-renewal goroutine and tombstones the underlying
 // lease. After Lost() has been signaled, Release is best-effort cleanup; a
 // nil return does not mean the caller retained ownership until release.
+// Callers that care about the lost-lease case can branch on
+// lease.ErrLeaseLost via errors.Is.
 func (l *kvIndexStoreLock) Release() error {
 	ctx, cancel := context.WithTimeout(context.Background(), l.releaseTimeout)
 	defer cancel()
 	if err := l.mgr.Release(ctx, l.lease); err != nil {
-		// Releasing a lost lease is expected — surface it without wrapping
-		// so callers can branch on lease.ErrLeaseLost when they care.
-		if errors.Is(err, lease.ErrLeaseLost) {
-			return err
-		}
 		return fmt.Errorf("releasing lease: %w", err)
 	}
 	return nil

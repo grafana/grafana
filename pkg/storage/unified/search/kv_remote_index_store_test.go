@@ -357,14 +357,14 @@ func TestKVRemoteIndexStore_ListingSemantics(t *testing.T) {
 		assert.Empty(t, keys, "a namespace with only incomplete uploads must not surface any ULIDs")
 	})
 
-	t.Run("ListNamespaces includes namespaces with only incomplete uploads", func(t *testing.T) {
+	t.Run("ListNamespaces returns namespaces with complete or incomplete snapshots", func(t *testing.T) {
 		namespaces, err := store.ListNamespaces(ctx)
 		require.NoError(t, err)
 		assert.Contains(t, namespaces, nsMixed.Namespace)
 		assert.Contains(t, namespaces, nsOrphansOnly.Namespace)
 	})
 
-	t.Run("ListNamespaceResources includes resources with only incomplete uploads", func(t *testing.T) {
+	t.Run("ListNamespaceResources returns resources with complete or incomplete snapshots", func(t *testing.T) {
 		resources, err := store.ListNamespaceResources(ctx, nsMixed.Namespace)
 		require.NoError(t, err)
 		assert.Contains(t, resources, nsMixed)
