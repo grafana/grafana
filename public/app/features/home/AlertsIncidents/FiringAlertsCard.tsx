@@ -8,6 +8,7 @@ import { t, Trans } from '@grafana/i18n';
 import { Alert, Badge, Box, Button, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
+import { canonicalSeverity, SEVERITY_DEFINITIONS } from 'app/features/alerting/unified/triage/scene/filters/severity';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -15,7 +16,6 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { useUserTeams } from './useUserTeams';
 
 const MAX_ALERTS = 5;
-const SEVERITY_ORDER: Record<string, number> = { critical: 0, high: 1, warning: 2 };
 
 /** Extract pathname from an absolute generatorURL, falling back to the raw value. */
 function alertDetailHref(alert: AlertmanagerAlert) {
@@ -31,7 +31,8 @@ function alertDetailHref(alert: AlertmanagerAlert) {
 }
 
 function severityRank(alert: AlertmanagerAlert) {
-  return SEVERITY_ORDER[alert.labels.severity] ?? 3;
+  const level = canonicalSeverity(alert.labels.severity);
+  return level ? SEVERITY_DEFINITIONS.findIndex((d) => d.level === level) : -1;
 }
 
 function buildTeamMatchers(teamNames: string[]) {
@@ -89,7 +90,7 @@ function FiringAlertsCardInner() {
       return [];
     }
     return [...alerts].sort((a, b) => {
-      const s = severityRank(a) - severityRank(b);
+      const s = severityRank(b) - severityRank(a);
       if (s !== 0) {
         return s;
       }
