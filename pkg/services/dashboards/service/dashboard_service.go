@@ -1947,29 +1947,13 @@ func (dr *DashboardServiceImpl) buildDashboardSearchRequest(query *dashboards.Fi
 	}
 
 	if len(query.FolderUIDs) > 0 {
-		// Grafana frontend issues a call to search for dashboards in the
-		// "general" folder. General folder doesn't exist (it is a synthetic
-		// root). The index may carry either of two root sentinels: legacy
-		// empty values from pre-migration rows, or the canonical "general"
-		// stamped by the apistore on write — so when the caller asks for the
-		// root, match both.
-		values := make([]string, 0, len(query.FolderUIDs)+2)
-		includeRoot := false
-		for _, uid := range query.FolderUIDs {
-			if folder.IsRootFolderUID(uid) {
-				includeRoot = true
-				continue
-			}
-			values = append(values, uid)
-		}
-		if includeRoot {
-			values = append(values, "", folder.GeneralFolderUID)
-		}
-
+		// A root folder UID ("general" or the legacy "") is expanded to match
+		// both root sentinels by the search backend, so pass the UIDs through
+		// unchanged here.
 		req := []*resourcepb.Requirement{{
 			Key:      resource.SEARCH_FIELD_FOLDER,
 			Operator: string(selection.In),
-			Values:   values,
+			Values:   query.FolderUIDs,
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)
 	} else if len(query.FolderIds) > 0 { // nolint:staticcheck
