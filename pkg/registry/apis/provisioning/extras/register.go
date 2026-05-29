@@ -38,7 +38,7 @@ func ProvideProvisioningOSSRepositoryExtras(
 	folderMetadataEnabled := resources.IsFolderMetadataEnabled(cfg)
 	// http:// URLs with a token are only allowed in development or when explicitly opted in,
 	// since the token would otherwise travel in cleartext.
-	allowInsecure := cfg.Env == setting.Dev || cfg.ProvisioningAllowInsecureToken
+	allowInsecure := cfg.Env == setting.Dev || cfg.ProvisioningAllowInsecure
 	return []repository.Extra{
 		local.Extra(
 			cfg.HomePath,

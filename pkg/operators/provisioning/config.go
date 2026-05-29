@@ -546,7 +546,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 
 	// http:// URLs with a token are only allowed in development or when explicitly opted in,
 	// since the token would otherwise travel in cleartext.
-	allowInsecure := c.Settings.Env == setting.Dev || provisioningSec.Key("allow_insecure_token").MustBool(false)
+	allowInsecure := c.Settings.Env == setting.Dev || provisioningSec.Key("allow_insecure").MustBool(false)
 
 	extras := make([]repository.Extra, 0)
 	for _, t := range repoTypes {

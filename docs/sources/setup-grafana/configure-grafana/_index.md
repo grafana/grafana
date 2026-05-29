@@ -2823,7 +2823,7 @@ Comma-separated list of targets that a repository can control. `folder` by defau
 
 Whether image rendering is allowed for dashboard previews. Requires the image rendering service to be configured. Default is `true`.
 
-#### `allow_insecure_token`
+#### `allow_insecure`
 
 Whether to allow `http://` repository URLs together with a configured token. Because this sends the token in cleartext on every Git operation, it's rejected by default. Intended for local and development use only. It's also implicitly allowed when `app_mode = development`. Default is `false`.
 
