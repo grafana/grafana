@@ -9,4 +9,4 @@
  * and be subject to the standard policies
  */
 
-export {};
+export { palette } from './themes/palette_new';
