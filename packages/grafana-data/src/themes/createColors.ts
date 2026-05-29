@@ -330,19 +330,26 @@ function resolveRefs(value: string): string {
   return value.replace(PALETTE_TOKEN_REGEX, (match, key) => (isPaletteKey(key) ? newPalette[key] : match));
 }
 
-function resolvePaletteRefs(input: ThemeColorsInput): ThemeColorsInput {
-  const walk = (node: unknown): unknown => {
+export function resolvePaletteRefs<T>(input: T): T {
+  const walk = (node: T): T => {
     if (typeof node === 'string') {
-      return resolveRefs(node);
+      // can't avoid this type assertion unfortunately
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return resolveRefs(node) as T;
     }
     if (node === null || typeof node !== 'object') {
       return node;
     }
-    return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, walk(v)]));
+    if (Array.isArray(node)) {
+      // can't avoid this type assertion unfortunately
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return node.map(walk) as T;
+    }
+    // can't avoid this type assertion unfortunately
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, walk(v)])) as T;
   };
-  // can't avoid this type assertion unfortunately
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return walk(input) as ThemeColorsInput;
+  return walk(input);
 }
 
 export function createColors(colors: ThemeColorsInput): ThemeColors {

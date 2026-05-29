@@ -43,6 +43,164 @@
       "#deed9f",
       "#00dfe5",
       "#959df6"
+    ],
+    "hues": [
+      {
+        "name": "red",
+        "shades": [
+          {
+            "name": "dark-red",
+            "color": "palette.coral700"
+          },
+          {
+            "name": "semi-dark-red",
+            "color": "palette.coral500"
+          },
+          {
+            "name": "red",
+            "color": "palette.coral400",
+            "primary": true
+          },
+          {
+            "name": "light-red",
+            "color": "palette.coral300"
+          },
+          {
+            "name": "super-light-red",
+            "color": "palette.coral200"
+          }
+        ]
+      },
+      {
+        "name": "orange",
+        "shades": [
+          {
+            "name": "dark-orange",
+            "color": "palette.peach700"
+          },
+          {
+            "name": "semi-dark-orange",
+            "color": "palette.peach500"
+          },
+          {
+            "name": "orange",
+            "color": "palette.peach400",
+            "primary": true
+          },
+          {
+            "name": "light-orange",
+            "color": "palette.peach300"
+          },
+          {
+            "name": "super-light-orange",
+            "color": "palette.peach200"
+          }
+        ]
+      },
+      {
+        "name": "yellow",
+        "shades": [
+          {
+            "name": "dark-yellow",
+            "color": "palette.amber700"
+          },
+          {
+            "name": "semi-dark-yellow",
+            "color": "palette.amber500"
+          },
+          {
+            "name": "yellow",
+            "color": "palette.amber400",
+            "primary": true
+          },
+          {
+            "name": "light-yellow",
+            "color": "palette.amber300"
+          },
+          {
+            "name": "super-light-yellow",
+            "color": "palette.amber200"
+          }
+        ]
+      },
+      {
+        "name": "green",
+        "shades": [
+          {
+            "name": "dark-green",
+            "color": "palette.sage700"
+          },
+          {
+            "name": "semi-dark-green",
+            "color": "palette.sage500"
+          },
+          {
+            "name": "green",
+            "color": "palette.sage400",
+            "primary": true
+          },
+          {
+            "name": "light-green",
+            "color": "palette.sage300"
+          },
+          {
+            "name": "super-light-green",
+            "color": "palette.sage200"
+          }
+        ]
+      },
+      {
+        "name": "blue",
+        "shades": [
+          {
+            "name": "dark-blue",
+            "color": "palette.sky700"
+          },
+          {
+            "name": "semi-dark-blue",
+            "color": "palette.sky500"
+          },
+          {
+            "name": "blue",
+            "color": "palette.sky400",
+            "primary": true
+          },
+          {
+            "name": "light-blue",
+            "color": "palette.sky300"
+          },
+          {
+            "name": "super-light-blue",
+            "color": "palette.sky200"
+          }
+        ]
+      },
+      {
+        "name": "purple",
+        "shades": [
+          {
+            "name": "dark-purple",
+            "color": "palette.violet700"
+          },
+          {
+            "name": "semi-dark-purple",
+            "color": "palette.violet500"
+          },
+          {
+            "name": "purple",
+            "color": "palette.violet400",
+            "primary": true
+          },
+          {
+            "name": "light-purple",
+            "color": "palette.violet300"
+          },
+          {
+            "name": "super-light-purple",
+            "color": "palette.violet200"
+          }
+        ]
+      }
     ]
   },
   "colors": {

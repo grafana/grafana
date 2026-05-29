@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { FALLBACK_COLOR } from '../types/fieldColor';
 
-import { type ThemeColors } from './createColors';
+import { type ThemeColors, resolvePaletteRefs } from './createColors';
 
 /**
  * @alpha
@@ -74,6 +74,7 @@ export function createVisualizationColors(
   colors: ThemeColors,
   options: ThemeVisualizationColorsInput = {}
 ): ThemeVisualizationColors {
+  options = resolvePaletteRefs(options);
   const baseHues = colors.mode === 'light' ? getLightHues() : getDarkHues();
   const { palette = getClassicPalette(), hues: hueOverrides = [] } = options;
 
