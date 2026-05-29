@@ -36,6 +36,7 @@ const config: KnipConfig = {
   ],
   ignore: ['**/*.gen.ts*', '**/*_gen.ts*'],
   ignoreBinaries: ['jq', 'make', 'shellcheck'],
+  tags: ['-lintignore'],
   workspaces: {
     '.': {
       // TODO figure out how to properly include jest config
