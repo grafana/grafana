@@ -6,7 +6,7 @@ import { type AnnotationQueryKind, type Spec as DashboardV2Spec } from '@grafana
 import { isRecord } from 'app/core/utils/isRecord';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV1Resource, isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
-import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
+import { ExportDatasourceName, ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
 import { type LibraryElementExport } from '../../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../../library-panels/state/api';
@@ -70,6 +70,14 @@ function getExportLabel(labels?: { [ExportLabel]?: string }): string | undefined
   }
 
   return labels[ExportLabel];
+}
+
+function getExportDatasourceName(labels?: { [ExportDatasourceName]?: string }): string | undefined {
+  if (!labels) {
+    return undefined;
+  }
+
+  return labels[ExportDatasourceName];
 }
 
 /**
@@ -207,21 +215,32 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
   }
 
   const dsTypes: { [label: string]: string } = {};
+  const dsNames: { [label: string]: string } = {};
+
+  const recordDatasource = (
+    exportLabel: string | undefined,
+    dsType: string | undefined,
+    dsName: string | undefined
+  ) => {
+    if (!exportLabel || !dsType) {
+      return;
+    }
+    dsTypes[exportLabel] = dsType;
+    if (dsName && !dsNames[exportLabel]) {
+      dsNames[exportLabel] = dsName;
+    }
+  };
 
   if (dashboard.variables) {
     for (const variable of dashboard.variables) {
       if (variable.kind === 'QueryVariable') {
-        const dsType = variable.spec.query?.group;
-        const exportLabel = getExportLabel(variable.spec.query.labels);
-        if (dsType && exportLabel) {
-          dsTypes[exportLabel] = dsType;
-        }
+        recordDatasource(
+          getExportLabel(variable.spec.query.labels),
+          variable.spec.query?.group,
+          getExportDatasourceName(variable.spec.query.labels)
+        );
       } else if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
-        const dsType = variable.group;
-        const exportLabel = getExportLabel(variable.labels);
-        if (dsType && exportLabel) {
-          dsTypes[exportLabel] = dsType;
-        }
+        recordDatasource(getExportLabel(variable.labels), variable.group, getExportDatasourceName(variable.labels));
       }
     }
   }
@@ -233,11 +252,11 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
         continue;
       }
 
-      const dsType = annotation.spec.query?.group;
-      const exportLabel = getExportLabel(annotation.spec.query.labels);
-      if (dsType && exportLabel) {
-        dsTypes[exportLabel] = dsType;
-      }
+      recordDatasource(
+        getExportLabel(annotation.spec.query.labels),
+        annotation.spec.query?.group,
+        getExportDatasourceName(annotation.spec.query.labels)
+      );
     }
   }
 
@@ -246,11 +265,11 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
       if (element.kind === 'Panel' && element.spec.data?.kind === 'QueryGroup') {
         for (const query of element.spec.data.spec.queries) {
           if (query.kind === 'PanelQuery') {
-            const dsType = query.spec.query?.group;
-            const exportLabel = getExportLabel(query.spec.query.labels);
-            if (dsType && exportLabel) {
-              dsTypes[exportLabel] = dsType;
-            }
+            recordDatasource(
+              getExportLabel(query.spec.query.labels),
+              query.spec.query?.group,
+              getExportDatasourceName(query.spec.query.labels)
+            );
           }
         }
       }
@@ -268,11 +287,12 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
     }
 
     const dsInfo = getDataSourceSrv().getList({ pluginId: dsType });
+    const originalName = dsNames[label];
     inputs.dataSources.push({
       name: label,
-      label: label,
+      label: originalName ? `${label} (${originalName})` : label,
       info: dsInfo.length > 0 ? `Select a ${dsType} data source` : `No ${dsType} data sources found`,
-      description: `${dsType} data source`,
+      description: originalName ? `${dsType} data source — originally "${originalName}"` : `${dsType} data source`,
       value: '',
       type: InputType.DataSource,
       pluginId: dsType,
@@ -520,9 +540,10 @@ function replaceAnnotationDatasources(
       return annotation;
     }
 
-    // remove export label
+    // remove export labels
     if (annotation.spec.query?.labels) {
       delete annotation.spec.query.labels[ExportLabel];
+      delete annotation.spec.query.labels[ExportDatasourceName];
     }
 
     return {
@@ -554,9 +575,10 @@ function replaceVariableDatasources(
         return variable;
       }
 
-      // remove export label
+      // remove export labels
       if (variable.spec.query?.labels) {
         delete variable.spec.query.labels[ExportLabel];
+        delete variable.spec.query.labels[ExportDatasourceName];
       }
 
       return {
@@ -638,9 +660,10 @@ function replaceElementDatasources(
               return query;
             }
 
-            // remove export label
+            // remove export labels
             if (query.spec.query?.labels) {
               delete query.spec.query.labels[ExportLabel];
+              delete query.spec.query.labels[ExportDatasourceName];
             }
 
             return {

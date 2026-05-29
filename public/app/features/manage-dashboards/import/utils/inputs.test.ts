@@ -7,7 +7,7 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type Dashboard, type Panel, type VariableModel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { ExportFormat } from 'app/features/dashboard/api/types';
-import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
+import { ExportDatasourceName, ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
 import {
   type DashboardInputs,
@@ -347,6 +347,59 @@ describe('extractV2Inputs', () => {
   it('should handle empty dashboard gracefully', async () => {
     const result = await extractV2Inputs({});
     expect(result).toEqual(emptyInputs);
+  });
+
+  it('should surface the original datasource name on the input label and description', async () => {
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: {
+            name: 'var1',
+            query: {
+              group: 'mysql',
+              labels: { [ExportLabel]: 'mysql-1', [ExportDatasourceName]: 'Production MySQL' },
+            },
+          },
+        },
+        {
+          kind: 'QueryVariable',
+          spec: {
+            name: 'var2',
+            query: {
+              group: 'mysql',
+              labels: { [ExportLabel]: 'mysql-2', [ExportDatasourceName]: 'Reports MySQL' },
+            },
+          },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources).toHaveLength(2);
+    expect(result.dataSources[0].name).toBe('mysql-1');
+    expect(result.dataSources[0].label).toBe('mysql-1 (Production MySQL)');
+    expect(result.dataSources[0].description).toBe('mysql data source — originally "Production MySQL"');
+    expect(result.dataSources[1].name).toBe('mysql-2');
+    expect(result.dataSources[1].label).toBe('mysql-2 (Reports MySQL)');
+  });
+
+  it('falls back to the export label when no datasource name is present', async () => {
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'var1', query: { group: 'mysql', labels: { [ExportLabel]: 'mysql-1' } } },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+    expect(result.dataSources[0].label).toBe('mysql-1');
+    expect(result.dataSources[0].description).toBe('mysql data source');
   });
 
   it('should keep distinct datasource labels', async () => {
@@ -981,7 +1034,7 @@ describe('applyV2Inputs', () => {
                     spec: {
                       query: {
                         group: 'prometheus',
-                        labels: { [ExportLabel]: 'prometheus-1' },
+                        labels: { [ExportLabel]: 'prometheus-1', [ExportDatasourceName]: 'Original Prometheus' },
                         datasource: { name: 'old-ds' },
                       },
                     },
@@ -998,7 +1051,7 @@ describe('applyV2Inputs', () => {
           spec: {
             query: {
               group: 'prometheus',
-              labels: { [ExportLabel]: 'prometheus-1' },
+              labels: { [ExportLabel]: 'prometheus-1', [ExportDatasourceName]: 'Original Prometheus' },
               datasource: { name: 'old-ds' },
             },
           },
@@ -1010,7 +1063,7 @@ describe('applyV2Inputs', () => {
           spec: {
             query: {
               group: 'prometheus',
-              labels: { [ExportLabel]: 'prometheus-1' },
+              labels: { [ExportLabel]: 'prometheus-1', [ExportDatasourceName]: 'Original Prometheus' },
               datasource: { name: 'old-ds' },
             },
           },
@@ -1039,6 +1092,14 @@ describe('applyV2Inputs', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const querySpec = updatedQuery?.spec as any;
     expect(querySpec?.query?.datasource?.name).toBe('ds-uid');
+
+    // export-only labels must be stripped after applying inputs
+    expect(updatedAnnotation.spec.query?.labels?.[ExportLabel]).toBeUndefined();
+    expect(updatedAnnotation.spec.query?.labels?.[ExportDatasourceName]).toBeUndefined();
+    expect(updatedVariable.spec.query?.labels?.[ExportLabel]).toBeUndefined();
+    expect(updatedVariable.spec.query?.labels?.[ExportDatasourceName]).toBeUndefined();
+    expect(querySpec?.query?.labels?.[ExportLabel]).toBeUndefined();
+    expect(querySpec?.query?.labels?.[ExportDatasourceName]).toBeUndefined();
   });
 
   it('uses datasource labels to keep selections independent', () => {

@@ -124,6 +124,37 @@ describe('ImportDashboardFormV2', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('renders the original datasource name on the field label when label and name differ', () => {
+    const inputs: DashboardInputs = {
+      ...mockInputs,
+      dataSources: [
+        {
+          name: 'mysql-1',
+          label: 'mysql-1 (Production MySQL)',
+          pluginId: 'mysql',
+          type: InputType.DataSource,
+          description: 'mysql data source — originally "Production MySQL"',
+          info: 'Select a mysql data source',
+          value: '',
+        },
+        {
+          name: 'mysql-2',
+          label: 'mysql-2 (Reports MySQL)',
+          pluginId: 'mysql',
+          type: InputType.DataSource,
+          description: 'mysql data source — originally "Reports MySQL"',
+          info: 'Select a mysql data source',
+          value: '',
+        },
+      ],
+    };
+
+    renderForm(false, inputs);
+
+    expect(screen.getByText('mysql-1 (Production MySQL)')).toBeInTheDocument();
+    expect(screen.getByText('mysql-2 (Reports MySQL)')).toBeInTheDocument();
+  });
+
   it('renders UID field as read-only first and enables editing after clicking change uid', async () => {
     const user = userEvent.setup();
     renderForm(false, mockInputs, 'existing-uid');
