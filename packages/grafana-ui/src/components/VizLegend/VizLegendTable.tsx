@@ -11,6 +11,7 @@ import { useLimit } from '../List/hooks';
 
 import { LegendTableItem } from './VizLegendTableItem';
 import { type VizLegendItem, type VizLegendTableProps } from './types';
+import { LegendPlacement } from '@grafana/schema';
 
 const nameSortKey = 'Name';
 const naturalCompare = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare;
@@ -32,8 +33,9 @@ export const VizLegendTable = <T extends unknown>({
   isSortable,
   limit = 0,
   filterAction,
+  placement,
 }: VizLegendTableProps<T>): JSX.Element => {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, placement);
   const header: Record<string, string> = {
     [nameSortKey]: '',
   };
@@ -98,7 +100,10 @@ export const VizLegendTable = <T extends unknown>({
   }
 
   return (
-    <table className={cx(styles.grid, className)} style={{gridTemplateColumns: `min-content auto ${'min-content '.repeat(Object.keys(header).length - 1)}`}}>
+    <table
+      className={cx(styles.grid, className)}
+      style={{ gridTemplateColumns: `min-content auto ${'min-content '.repeat(Object.keys(header).length - 1)}` }}
+    >
       <thead>
         <tr className={styles.header}>
           <th></th>
@@ -146,7 +151,7 @@ export const VizLegendTable = <T extends unknown>({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, placement: LegendPlacement = 'bottom') => ({
   header: css({
     position: 'sticky',
     top: 0,
@@ -176,9 +181,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   grid: css({
     display: 'grid',
     width: '100%',
-    // fontFamily: 'monospace',
-    // fontSize: '12px',
-    // color: '#3b4351',
 
     'tbody,thead,tfoot,tr': {
       display: 'grid',
@@ -187,20 +189,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
 
     'th,td': {
-      // padding: '10px 6px',
-      textOverflow: 'ellipsis',
-      overflow: 'hidden',
-      // maxWidth: '500px',
       whiteSpace: 'nowrap',
 
       // non-layout
       fontSize: theme.v1.typography.size.sm,
       padding: theme.spacing(0.25, 1),
-      // borderBottom: `1px solid ${theme.colors.border.weak}`,
-    },
 
-    'th:first-child,td:first-child': {
-      paddingLeft: theme.spacing(1)
-    }
+      // series color/icon column
+      '&:nth-child(1)': {
+        paddingLeft: theme.spacing(1),
+      },
+
+      // series name column
+      '&:nth-child(2)': {
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        maxWidth: placement === 'right' ? 600 : undefined,
+      },
+    },
   }),
 });
