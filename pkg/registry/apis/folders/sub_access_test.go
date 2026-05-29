@@ -204,7 +204,7 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 func TestSubAccessREST_getAccessInfo_virtualFolders(t *testing.T) {
 	t.Run("root/general folder runs real access checks against the general scope without a Get", func(t *testing.T) {
 		// "general" and the legacy empty UID must both resolve to the general scope.
-		for _, name := range []string{folder.GeneralFolderUID, folder.LegacyRootFolderUID} {
+		for _, name := range []string{folder.GeneralFolderUID, folder.LegacyRootFolderUID} { //nolint:staticcheck // testing the deprecated legacy empty-string root UID is intentional
 			t.Run("name="+strconv.Quote(name), func(t *testing.T) {
 				// Bare mock with no expectations: fails if Get is called.
 				store := grafanarest.NewMockStorage(t)
