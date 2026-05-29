@@ -219,8 +219,9 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		// Preserve apiVersion/kind from the client on write. Without Scheme, apistore.encode
 		// uses the global LegacyCodec and converts to a single preferred external version.
 		Scheme:               opts.Scheme,
+		Index:                b.searcher,
 		EnableFolderSupport:  true,
-		DeprecatedInternalID: apistore.NewDeprecatedIDLookup(b.searcher),
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
 		Permissions:          b.setDefaultFolderPermissions,
 	})
 

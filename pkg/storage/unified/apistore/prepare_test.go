@@ -11,6 +11,7 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/api/apitesting"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -269,10 +270,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Equal(t, "2025-12-17T01:01:00Z", tmp.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 	})
 
-	// Dummy function
-	s.opts.DeprecatedInternalID = func(ctx context.Context, key *resourcepb.ResourceKey, id int64) (bool, error) {
-		return id == 100, nil
-	}
+	s.opts.DeprecatedInternalID = DeprecatedID_Required
+	s.opts.Index = &fakeSearchIndex{inUse: map[string]bool{"100": true}}
 
 	t.Run("Should generate internal id", func(t *testing.T) {
 		dashboard := dashv1.Dashboard{}
@@ -824,4 +823,27 @@ func TestPrepareObjectForStorage_FolderSupportDisabled(t *testing.T) {
 		_, err := s.prepareObjectForStorage(ctx, dash)
 		require.NoError(t, err)
 	})
+}
+
+// fakeSearchIndex is a minimal resourcepb.ResourceIndexClient for tests. Search
+// reports a hit when the request filters on a deprecatedInternalID label whose
+// value is listed in inUse, and reports no hits otherwise.
+type fakeSearchIndex struct {
+	resourcepb.ResourceIndexClient
+	inUse map[string]bool // deprecatedInternalID label values that already exist
+}
+
+func (f *fakeSearchIndex) Search(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	rsp := &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}
+	for _, label := range req.GetOptions().GetLabels() {
+		if label.GetKey() != utils.LabelKeyDeprecatedInternalID {
+			continue
+		}
+		for _, v := range label.GetValues() {
+			if f.inUse[v] {
+				rsp.Results.Rows = append(rsp.Results.Rows, &resourcepb.ResourceTableRow{})
+			}
+		}
+	}
+	return rsp, nil
 }

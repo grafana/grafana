@@ -390,16 +390,16 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableSsoSettingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, false, openfeature.TransactionContext(ctx))
 	enableSaResourcePermissions := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions, false, openfeature.TransactionContext(ctx))
 
-	internalIDs := apistore.NewDeprecatedIDLookup(b.unified)
-
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
 		MaximumNameLength:    80,
-		DeprecatedInternalID: internalIDs,
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
 	})
 	opts.StorageOptsRegister(iamv0.UserResourceInfo.GroupResource(), apistore.StorageOptions{
 		MaximumNameLength:    80,
-		DeprecatedInternalID: internalIDs,
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
 	})
 
 	if enableTeamsApi {
