@@ -191,6 +191,8 @@ const getStyles = (theme: GrafanaTheme2, placement: LegendPlacement = 'bottom') 
     },
 
     'th,td': {
+      display: 'block',
+      alignContent: 'center',
       whiteSpace: 'nowrap',
 
       // non-layout
