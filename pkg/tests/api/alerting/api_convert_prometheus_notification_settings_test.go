@@ -52,7 +52,7 @@ func TestIntegrationConvertPrometheusNotificationSettings(t *testing.T) {
 			{
 				Alert: "TestAlert",
 				Expr:  "vector(1) > 0",
-				For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+				For:   new(prommodel.Duration(5 * time.Minute)),
 				Labels: map[string]string{
 					"severity": "critical",
 				},

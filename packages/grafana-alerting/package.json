@@ -71,7 +71,6 @@
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "@types/tinycolor2": "^1",
-    "i18next": "^25.5.2",
     "i18next-cli": "^1.48.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",

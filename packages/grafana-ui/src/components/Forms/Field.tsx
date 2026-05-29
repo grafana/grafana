@@ -94,7 +94,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
           </legend>
         );
       } else {
-        labelElement = <legend>{label}</legend>;
+        labelElement = <legend className={labelStyles.label}>{label}</legend>;
       }
     } else if (typeof label === 'string') {
       labelElement = (
@@ -165,7 +165,7 @@ function deleteUndefinedProps<T extends Object>(obj: T): Partial<T> {
   return obj;
 }
 
-export const getFieldStyles = (theme: GrafanaTheme2, noMargin?: boolean) => ({
+const getFieldStyles = (theme: GrafanaTheme2, noMargin?: boolean) => ({
   field: css({
     display: 'flex',
     flexDirection: 'column',

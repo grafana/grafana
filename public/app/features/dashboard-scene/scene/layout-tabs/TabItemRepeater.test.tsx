@@ -81,11 +81,11 @@ describe('TabItemRepeater', () => {
       const { repeatByVariable, tabToRepeat } = renderScene({ variableQueryTime: 0 });
       let stateUpdates = 0;
 
-      tabToRepeat.subscribeToState((s) => stateUpdates++);
-
       await waitFor(() => {
         expect(screen.queryByText('Tab C')).toBeInTheDocument();
       });
+
+      tabToRepeat.subscribeToState((s) => stateUpdates++);
 
       act(() => {
         repeatByVariable.changeValueTo(['A1', 'B1', 'C1']);

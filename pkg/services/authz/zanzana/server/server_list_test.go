@@ -12,6 +12,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
@@ -396,7 +397,7 @@ func TestIntegrationServerListStreamDeadline(t *testing.T) {
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(t, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil)
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector())
 	require.NoError(t, err)
 	t.Cleanup(func() { srv.Close() })
 

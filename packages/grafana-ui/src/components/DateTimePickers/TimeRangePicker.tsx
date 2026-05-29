@@ -70,10 +70,6 @@ export interface TimeRangePickerProps {
   weekStart?: WeekStart;
 }
 
-export interface State {
-  isOpen: boolean;
-}
-
 /**
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-timerangepicker--docs
  */

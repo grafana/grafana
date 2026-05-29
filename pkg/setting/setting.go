@@ -65,6 +65,11 @@ const zoneInfo = "ZONEINFO"
 // Default renderer auth token from [rendering]renderer_token.
 const DefaultRendererAuthToken = "-"
 
+// ProvisioningMaxFileSizeDefault is the default value for the
+// [provisioning] max_file_size key (5 MiB). It bounds files read from or
+// written to a provisioning repository through the files API.
+const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
+
 var (
 	customInitPath = "conf/custom.ini"
 
@@ -163,7 +168,9 @@ type Cfg struct {
 	ProvisioningMaxRepositories               int64         // default 10, 0 in config = unlimited (converted to -1 internally)
 	ProvisioningFolderAPIVersion              string        // "v1" (default for on-prem) or "v1beta1"
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
+	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
+	ProvisioningPublicRootURL                 string        // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
 	DataPath                                  string
 	LogsPath                                  string
 	EnterpriseLicensePath                     string
@@ -346,6 +353,7 @@ type Cfg struct {
 	ResponseLimit                  int64
 	DataProxyRowLimit              int64
 	DataProxyUserAgent             string
+	DataProxyForwardUserAgent      bool
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheSettings
@@ -670,6 +678,9 @@ type Cfg struct {
 	IndexSnapshotThreshold                     int           // Min doc count to use remote snapshots (must be >= IndexFileThreshold, default: 5000)
 	IndexSnapshotMaxAge                        time.Duration // Max snapshot age before deletion (must be >= MaxFileIndexAge, default: 7d)
 	IndexSnapshotCleanupGracePeriod            time.Duration // Time a new snapshot must exist before its predecessor in the same Grafana-version group is eligible for cleanup (default: 30m)
+	DiskIndexCleanupInterval                   time.Duration // How often to scan the bleve index root for folders to reclaim. Zero disables the loop (default: 0).
+	DiskIndexCleanupGracePeriod                time.Duration // Minimum age a candidate folder must have before disk cleanup is allowed to delete it (default: 1h).
+	DiskIndexCleanupUnopenedGracePeriod        time.Duration // Longer grace applied to the newest on-disk index of a resource this pod owns but has not opened. Lets cold-start BuildIndex reuse it instead of rebuilding from scratch (default: 24h).
 	EnableSharding                             bool
 	QOSEnabled                                 bool
 	QOSNumberWorker                            int
@@ -681,6 +692,7 @@ type Cfg struct {
 	MemberlistClusterLabel                     string
 	MemberlistClusterLabelVerificationDisabled bool
 	SearchRingReplicationFactor                int
+	SearchRingExtendReplicaSet                 bool
 	InstanceID                                 string
 	SprinklesApiServer                         string
 	SprinklesApiServerPageLimit                int
@@ -690,22 +702,50 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
-	// Vector storage (separate pgvector database)
-	EnableVectorBackend               bool
-	VectorDBHost                      string
-	VectorDBPort                      string
-	VectorDBName                      string
-	VectorDBUser                      string
-	VectorDBPassword                  string
-	VectorDBSSLMode                   string
-	VectorPromotionThreshold          int           // row count per tenant to trigger leaf promotion
-	VectorPromoterInterval            time.Duration // promoter tick interval; 0 disables
-	OverridesFilePath                 string
-	OverridesReloadInterval           time.Duration
-	EnforcedQuotaResources            []string
-	QuotasErrorMessageSupportInfo     string
+
+	// Vector storage
+	EnableVectorBackend      bool
+	VectorDBHost             string
+	VectorDBPort             string
+	VectorDBName             string
+	VectorDBUser             string
+	VectorDBPassword         string
+	VectorDBSSLMode          string
+	VectorIndexingEnabled    bool          // run the embedding backfiller and reconciler
+	VectorReconcilerInterval time.Duration // reconciler tick interval; default 60s
+	VectorPromotionThreshold int           // row count per tenant to trigger promotion
+	VectorPromoterInterval   time.Duration // promoter tick interval; 0 disables
+
+	// VectorSearch per-tenant query-embedding cache (DB-backed, FIFO).
+	VectorQueryCacheEnabled      bool
+	VectorQueryCacheMaxPerTenant int
+
+	// VectorSearch per-tenant rate limit (DB-backed, sliding window).
+	VectorRateLimitEnabled   bool
+	VectorRateLimitPerTenant int
+	VectorRateLimitWindow    time.Duration
+
+	// Embedding provider used by the VectorSearch RPC. "" = disabled.
+	EmbeddingProvider string // "vertex" | "bedrock" | ""
+	VertexProjectID   string
+	VertexLocation    string // default "us-central1"
+	VertexModel       string // default "gemini-embedding-001"
+	VertexDimensions  int    // default 768
+	VertexBatchSize   int    // texts per Vertex predict call; default 50
+	BedrockRegion     string // default "us-east-1"
+	BedrockModel      string // default "cohere.embed-v4:0"
+	BedrockDimensions int    // default 1024
+	BedrockBatchSize  int    // texts per Bedrock invoke call; default 50
+
+	// Overrides/Quotas
+	OverridesFilePath             string
+	OverridesReloadInterval       time.Duration
+	EnforcedQuotaResources        []string
+	QuotasErrorMessageSupportInfo string
+
 	EnableSQLKVBackend                bool
 	EnableSQLKVCompatibilityMode      bool
+	EnableKVLeases                    bool
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration
@@ -2450,7 +2490,9 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
 	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
+	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
+	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 const (
@@ -44,6 +45,11 @@ const (
 	// In OSS a noop (always-disabled) module is registered so the dependency
 	// graph resolves; enterprise overwrites it with the real implementation.
 	IAMRolesSyncer = accesscontrol.IAMRolesSyncerServiceName
+
+	// SQLStore is the module name for the SQLStore background service.
+	// It is the root of the dependency graph so that the database engine is
+	// closed last during shutdown, after every other service has stopped.
+	SQLStore = sqlstore.ServiceName
 )
 
 // dependencyMap returns the module dependency relationships for the background service system.
@@ -52,7 +58,8 @@ const (
 // unless they are explicitly listed in this map.
 func dependencyMap() map[string][]string {
 	return map[string][]string{
-		Tracing:            {},
+		SQLStore:           {},
+		Tracing:            {SQLStore},
 		GrafanaAPIServer:   {Tracing},
 		PluginStore:        {GrafanaAPIServer},
 		PluginInstaller:    {PluginStore},
