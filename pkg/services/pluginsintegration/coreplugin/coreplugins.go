@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
+	"github.com/grafana/grafana/pkg/tsdb/docker"
 )
 
 const (
@@ -55,6 +56,7 @@ const (
 	Pyroscope       = "grafana-pyroscope-datasource"
 	Parca           = "parca"
 	Jaeger          = "jaeger"
+	Docker			= "docker"
 )
 
 func init() {
@@ -97,7 +99,7 @@ func ProvideCoreProvider(coreRegistry *Registry) plugins.BackendFactoryProvider 
 func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service, cm *cloudmonitoring.Service,
 	grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
-	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service, jaeger *jaeger.Service) *Registry {
+	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service, jaeger *jaeger.Service, dckr *docker.Service) *Registry {
 	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
 	sdktracing.InitDefaultTracer(tracer)
 
@@ -119,6 +121,7 @@ func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *clou
 		Pyroscope:       asBackendPlugin(pyroscope),
 		Parca:           asBackendPlugin(parca),
 		Jaeger:          asBackendPlugin(jaeger),
+		Docker:			 asBackendPlugin(dckr),
 	})
 }
 
@@ -248,6 +251,8 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 		svc = parca.ProvideService(httpClientProvider)
 	case Jaeger:
 		svc = jaeger.ProvideService(httpClientProvider)
+	case Docker:
+		svc = docker.ProvideService(httpClientProvider, tracer)
 	default:
 		return nil, ErrCorePluginNotFound
 	}
