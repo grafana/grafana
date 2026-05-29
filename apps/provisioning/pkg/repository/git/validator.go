@@ -64,7 +64,9 @@ func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path st
 
 	// Reject http:// together with a token: the token would travel in cleartext on every git
 	// operation. The token is a presence check (IsZero) that works without decryption.
-	if !allowInsecure && strings.HasPrefix(url, "http://") && !repo.Secure.Token.IsZero() {
+	// URL schemes are case-insensitive, so normalize before comparing (https:// is unaffected,
+	// since it does not have the http:// prefix).
+	if !allowInsecure && strings.HasPrefix(strings.ToLower(url), "http://") && !repo.Secure.Token.IsZero() {
 		list = append(list, field.Invalid(field.NewPath("spec", t, "url"), url,
 			"http:// is not allowed when a token is configured; use https:// to avoid sending credentials in cleartext"))
 	}

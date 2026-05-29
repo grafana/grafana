@@ -278,6 +278,29 @@ func TestValidate(t *testing.T) {
 			allowInsecure: true,
 		},
 		{
+			name: "uppercase HTTP scheme with token is rejected",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "HTTP://localhost:3000/grafana/grafana.git",
+						Branch: "main",
+						Path:   "grafana",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-token"),
+					},
+				},
+			},
+			expectedError: true,
+			errorContains: []string{"http:// is not allowed when a token is configured"},
+		},
+		{
 			name: "http url without token is allowed",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
