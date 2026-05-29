@@ -65,6 +65,30 @@ func TestProxy_Authenticate(t *testing.T) {
 			},
 		},
 		{
+			desc: "should pass through GrafanaAdmin header in additional",
+			ips:  "127.0.0.1",
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{
+						"X-Username":      {"username"},
+						"X-Role":          {"Viewer"},
+						"X-Grafana-Admin": {"true"},
+					},
+					RemoteAddr: "127.0.0.1:333",
+				},
+			},
+			proxyHeader: "X-Username",
+			proxyHeaders: map[string]string{
+				proxyFieldRole:         "X-Role",
+				proxyFieldGrafanaAdmin: "X-Grafana-Admin",
+			},
+			expectedUsername: "username",
+			expectedAdditional: map[string]string{
+				proxyFieldRole:         "Viewer",
+				proxyFieldGrafanaAdmin: "true",
+			},
+		},
+		{
 			desc: "should fail when proxy header is empty",
 			req: &authn.Request{
 				HTTPRequest: &http.Request{Header: map[string][]string{
@@ -174,6 +198,23 @@ func TestProxy_Test(t *testing.T) {
 			assert.Equal(t, tt.expectedOK, c.Test(context.Background(), tt.req))
 		})
 	}
+}
+
+func TestProxy_CacheKey_GrafanaAdminInvalidatesCache(t *testing.T) {
+	username := "alice"
+
+	keyAdmin, ok := getProxyCacheKey(username, map[string]string{proxyFieldGrafanaAdmin: "true"})
+	require.True(t, ok)
+
+	keyNonAdmin, ok := getProxyCacheKey(username, map[string]string{proxyFieldGrafanaAdmin: "false"})
+	require.True(t, ok)
+
+	keyAbsent, ok := getProxyCacheKey(username, map[string]string{})
+	require.True(t, ok)
+
+	assert.NotEqual(t, keyAdmin, keyNonAdmin, "flipping GrafanaAdmin must change the cache key")
+	assert.NotEqual(t, keyAdmin, keyAbsent, "adding GrafanaAdmin must change the cache key")
+	assert.NotEqual(t, keyNonAdmin, keyAbsent, "adding GrafanaAdmin=false must change the cache key")
 }
 
 var _ proxyCache = new(fakeCache)
