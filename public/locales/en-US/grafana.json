@@ -11553,6 +11553,9 @@
         "oldest-first": "Oldest logs first",
         "show-search": "Search logs"
       },
+      "level": {
+        "unspecified": "Unspecified"
+      },
       "line-wrapping": {
         "enable": "Enable line wrapping",
         "enable-prettify": "Enable line wrapping and prettify JSON",

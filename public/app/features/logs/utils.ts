@@ -53,12 +53,12 @@ import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME, parseLogsFrame } fro
 export function getLogLevel(line: string): LogLevel {
   const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaLogLevelInference, false);
   if (!enabled) {
-    return LogLevel.unknown;
+    return LogLevel.unspecified;
   }
   if (!line) {
-    return LogLevel.unknown;
+    return LogLevel.unspecified;
   }
-  let level = LogLevel.unknown;
+  let level = LogLevel.unspecified;
   let currentIndex: number | undefined = undefined;
 
   for (const [key, value] of Object.entries(LogLevel)) {
@@ -87,13 +87,13 @@ export function getLogLevelFromKey(key: string | number): LogLevel {
     // Safety check to confirm that we're parsing a number and not a number with a string.
     // For example `parseInt('1abcd', 10)` outputs 1
     if (key.length === numericLevel.toString().length) {
-      return NumericLogLevel[key] || LogLevel.unknown;
+      return NumericLogLevel[key] || LogLevel.unspecified;
     }
   } else if (typeof key === 'number') {
-    return NumericLogLevel[key] || LogLevel.unknown;
+    return NumericLogLevel[key] || LogLevel.unspecified;
   }
 
-  return LogLevel.unknown;
+  return LogLevel.unspecified;
 }
 
 export function calculateLogsLabelStats(rows: LogRowModel[], label: string): LogLabelStatsModel[] {
