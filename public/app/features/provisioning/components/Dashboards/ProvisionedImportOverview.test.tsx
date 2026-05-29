@@ -31,6 +31,14 @@ jest.mock('../../hooks/useImportProvisionedSave', () => ({
   }),
 }));
 
+jest.mock('../Shared/ProvisioningAwareFolderPicker', () => ({
+  ProvisioningAwareFolderPicker: ({ onChange }: { onChange: (uid?: string, title?: string) => void }) => (
+    <button type="button" data-testid="grafana-folder-picker" onClick={() => onChange('switched-folder', 'Switched')}>
+      Folder picker
+    </button>
+  ),
+}));
+
 jest.mock('app/features/manage-dashboards/import/utils/validation', () => ({
   validateUid: jest.fn().mockResolvedValue(true),
 }));
@@ -96,6 +104,7 @@ async function setup(overrides: Partial<Parameters<typeof ProvisionedImportOverv
     status: RepoViewStatus.Ready,
     repository,
     onCancel: jest.fn(),
+    onFolderChange: jest.fn(),
     ...overrides,
   };
 
@@ -131,6 +140,24 @@ describe('ProvisionedImportOverview', () => {
       await setup();
       expect(await screen.findByRole('combobox', { name: /branch/i })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
+    });
+
+    it('renders the persistent Grafana folder picker', async () => {
+      await setup();
+      expect(screen.getByTestId('grafana-folder-picker')).toBeInTheDocument();
+    });
+
+    it('renders name before the Grafana folder picker', async () => {
+      await setup();
+      const nameInput = screen.getByTestId(selectors.components.ImportDashboardForm.name);
+      const folderPicker = screen.getByTestId('grafana-folder-picker');
+      expect(nameInput.compareDocumentPosition(folderPicker) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('calls onFolderChange when the Grafana folder picker changes', async () => {
+      const { props } = await setup();
+      await userEvent.click(screen.getByTestId('grafana-folder-picker'));
+      expect(props.onFolderChange).toHaveBeenCalledWith('switched-folder');
     });
 
     it('renders import button', async () => {
@@ -410,7 +437,7 @@ describe('ProvisionedImportOverview', () => {
       const filenameInput = screen.getByRole('textbox', { name: /filename/i });
       expect(filenameInput).toHaveValue('v1-dashboard.json');
       // The full path should start with the folder source path
-      const folderCombobox = screen.getByRole('combobox', { name: /folder/i });
+      const folderCombobox = screen.getByRole('combobox', { name: /repository folder/i });
       expect(folderCombobox).toHaveValue('dashboards/subfolder');
     });
 
@@ -419,18 +446,14 @@ describe('ProvisionedImportOverview', () => {
 
       const filenameInput = screen.getByRole('textbox', { name: /filename/i });
       expect(filenameInput).toHaveValue('v1-dashboard.json');
-      const folderCombobox = screen.getByRole('combobox', { name: /folder/i });
+      const folderCombobox = screen.getByRole('combobox', { name: /repository folder/i });
       expect(folderCombobox).toHaveValue('');
     });
 
-    it('does not render a Grafana folder picker (ProvisioningAwareFolderPicker)', async () => {
+    it('renders the repository folder field with a distinct label', async () => {
       await setup();
-      // The repo folder combobox should be present
-      expect(screen.getByRole('combobox', { name: /folder/i })).toBeInTheDocument();
-      // But no Grafana-style folder picker with label "Folder" outside the repo fields
-      // The only "Folder" control should be the repo folder combobox
-      const folderControls = screen.getAllByRole('combobox', { name: /folder/i });
-      expect(folderControls).toHaveLength(1);
+      expect(screen.getByTestId('grafana-folder-picker')).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /repository folder/i })).toBeInTheDocument();
     });
   });
 

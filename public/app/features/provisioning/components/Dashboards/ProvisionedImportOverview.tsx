@@ -48,6 +48,7 @@ interface Props {
   status: RepoViewStatus;
   repository?: RepositoryView;
   folder?: Folder;
+  onFolderChange?: (uid: string) => void;
   onCancel: () => void;
 }
 
@@ -90,6 +91,7 @@ function ProvisionedImportOverviewReady({
   folderUid,
   repository,
   folder,
+  onFolderChange,
   onCancel,
 }: ReadyProps) {
   const isV2 = isDashboardV2Spec(dashboard);
@@ -98,9 +100,8 @@ function ProvisionedImportOverviewReady({
   const isLibraryPanelImportBlocked = !isV2 && inputs.libraryPanels.length > 0;
 
   const { layout: normalizedLayout, modified: hasFloatGridItems } = useMemo(
-    () =>
-      isDashboardV2Spec(dashboard) ? truncateFloatGridItems(dashboard.layout) : { layout: undefined, modified: false },
-    [dashboard]
+    () => (isV2 ? truncateFloatGridItems(dashboard.layout) : { layout: undefined, modified: false }),
+    [dashboard, isV2]
   );
 
   const { save, isLoading, error } = useImportProvisionedSave({ repository });
@@ -128,7 +129,7 @@ function ProvisionedImportOverviewReady({
   });
 
   async function onSubmit(form: ProvisionedImportFormData) {
-    const spec = isDashboardV2Spec(dashboard)
+    const spec = isV2
       ? buildV2Spec(dashboard, form, normalizedLayout, hasFloatGridItems)
       : buildV1Spec(dashboard, form, inputs);
 
@@ -147,7 +148,7 @@ function ProvisionedImportOverviewReady({
     });
   }
 
-  const gnetId = isDashboardV2Spec(dashboard) ? undefined : dashboard.gnetId;
+  const gnetId = isV2 ? undefined : dashboard.gnetId;
 
   return (
     <>
@@ -164,6 +165,7 @@ function ProvisionedImportOverviewReady({
           repository={repository}
           isLoading={isLoading}
           error={error}
+          onFolderChange={onFolderChange}
           onSubmit={onSubmit}
           onCancel={onCancel}
         />

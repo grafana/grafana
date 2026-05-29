@@ -41,7 +41,7 @@ jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => 
   }),
 }));
 
-// Capture onFolderChange from standard form mocks so tests can simulate a folder change.
+// Capture onFolderChange from overview mocks so tests can simulate a folder change.
 let capturedOnFolderChange: ((uid: string) => void) | undefined;
 
 jest.mock('./ImportOverviewV1', () => ({
@@ -59,11 +59,14 @@ jest.mock('./ImportOverviewV2', () => ({
 }));
 
 jest.mock('app/features/provisioning/components/Dashboards/ProvisionedImportOverview', () => ({
-  ProvisionedImportOverview: (props: { status: string }) => (
-    <div data-testid="provisioned-import" data-status={props.status}>
-      Provisioned Import
-    </div>
-  ),
+  ProvisionedImportOverview: (props: { status: string; onFolderChange?: (uid: string) => void }) => {
+    capturedOnFolderChange = props.onFolderChange;
+    return (
+      <div data-testid="provisioned-import" data-status={props.status}>
+        Provisioned Import
+      </div>
+    );
+  },
 }));
 
 const repository: RepositoryView = {
@@ -214,6 +217,21 @@ describe('ImportOverview dispatcher', () => {
 
       expect(screen.getByTestId('provisioned-import')).toBeInTheDocument();
       expect(screen.queryByTestId('standard-v2')).not.toBeInTheDocument();
+    });
+
+    it('switches from provisioned import to standard import when user selects a non-provisioned folder', () => {
+      setRepoView({ status: RepoViewStatus.Ready, repository });
+      repoViewByFolder['regular-folder'] = { status: RepoViewStatus.Ready, repository: undefined };
+
+      render(<ImportOverview {...defaultProps} dashboard={v1Dashboard} />);
+      expect(screen.getByTestId('provisioned-import')).toBeInTheDocument();
+
+      act(() => {
+        capturedOnFolderChange?.('regular-folder');
+      });
+
+      expect(screen.getByTestId('standard-v1')).toBeInTheDocument();
+      expect(screen.queryByTestId('provisioned-import')).not.toBeInTheDocument();
     });
 
     it('stays on standard import when user selects a non-provisioned folder', () => {

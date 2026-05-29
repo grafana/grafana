@@ -54,6 +54,8 @@ export function ImportOverview({ dashboard, dashboardUid, inputs, meta, source, 
   ) {
     return (
       <ProvisionedImportOverview
+        // RHF defaultValues are mount-only; remount when the target folder changes.
+        key={selectedFolderUid}
         dashboard={dashboard}
         dashboardUid={dashboardUid}
         inputs={inputs}
@@ -63,6 +65,7 @@ export function ImportOverview({ dashboard, dashboardUid, inputs, meta, source, 
         status={status}
         repository={repository}
         folder={folder}
+        onFolderChange={setSelectedFolderUid}
         onCancel={onCancel}
       />
     );

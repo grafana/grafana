@@ -13,6 +13,7 @@ import { validateUid } from 'app/features/manage-dashboards/import/utils/validat
 import { type DashboardInput, type DashboardInputs, type DataSourceInput } from 'app/features/manage-dashboards/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 
@@ -27,6 +28,7 @@ interface Props {
   repository?: RepositoryView;
   isLoading: boolean;
   error?: string;
+  onFolderChange?: (uid: string) => void;
   onSubmit: (form: ProvisionedImportFormData) => void;
   onCancel: () => void;
 }
@@ -40,6 +42,7 @@ export function ProvisionedImportForm({
   repository,
   isLoading,
   error,
+  onFolderChange,
   onSubmit,
   onCancel,
 }: Props) {
@@ -78,6 +81,55 @@ export function ProvisionedImportForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
       <Stack direction="column" gap={2}>
+        <Field
+          label={t('provisioning.import.label-name', 'Name')}
+          invalid={!!errors.title}
+          error={errors.title?.message}
+          noMargin
+        >
+          <Input
+            {...register('title', {
+              required: t('provisioning.import.name-required', 'Name is required'),
+            })}
+            type="text"
+            data-testid={selectors.components.ImportDashboardForm.name}
+          />
+        </Field>
+
+        <Field label={t('provisioning.import.label-folder', 'Folder')} noMargin>
+          <Controller
+            name="folderUid"
+            control={control}
+            render={({ field: { ref: _ref, value, onChange, ...field } }) => (
+              <ProvisioningAwareFolderPicker
+                {...field}
+                value={value}
+                showAllFolders
+                onChange={(uid) => {
+                  onChange(uid ?? '');
+                  onFolderChange?.(uid ?? '');
+                }}
+              />
+            )}
+          />
+        </Field>
+
+        <Field
+          label={getUidFieldLabel()}
+          description={getUidFieldDescription()}
+          invalid={!!errors.uid}
+          error={errors.uid?.message}
+          noMargin
+        >
+          <Input
+            {...register('uid', {
+              validate: (v) => (!v ? true : validateUid(v)),
+            })}
+            type="text"
+            data-testid="provisioned-import-uid"
+          />
+        </Field>
+
         {isReadOnlyRepo && <RepoInvalidStateBanner noRepository={false} isReadOnlyRepo={isReadOnlyRepo} />}
 
         {isLibraryPanelImportBlocked && (
@@ -104,37 +156,6 @@ export function ProvisionedImportForm({
             </Trans>
           </Alert>
         )}
-
-        <Field
-          label={t('provisioning.import.label-name', 'Name')}
-          invalid={!!errors.title}
-          error={errors.title?.message}
-          noMargin
-        >
-          <Input
-            {...register('title', {
-              required: t('provisioning.import.name-required', 'Name is required'),
-            })}
-            type="text"
-            data-testid={selectors.components.ImportDashboardForm.name}
-          />
-        </Field>
-
-        <Field
-          label={getUidFieldLabel()}
-          description={getUidFieldDescription()}
-          invalid={!!errors.uid}
-          error={errors.uid?.message}
-          noMargin
-        >
-          <Input
-            {...register('uid', {
-              validate: (v) => (!v ? true : validateUid(v)),
-            })}
-            type="text"
-            data-testid="provisioned-import-uid"
-          />
-        </Field>
 
         {inputs.dataSources.map((input: DataSourceInput) => {
           if (input.pluginId === ExpressionDatasourceRef.type) {
