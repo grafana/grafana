@@ -18561,7 +18561,6 @@ __metadata:
     jest-environment-jsdom: "npm:29.7.0"
     jest-fail-on-console: "npm:3.3.1"
     jest-junit: "npm:16.0.0"
-    jest-matcher-utils: "npm:29.7.0"
     jest-monocart-coverage: "npm:^1.1.1"
     jest-watch-typeahead: "npm:^2.2.2"
     jimp: "npm:^1.6.0"

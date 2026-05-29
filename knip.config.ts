@@ -45,8 +45,11 @@ const config: KnipConfig = {
         'react-19',
         'react-dom-19',
 
-        // TODO figure out how to properly include jest config
-        'jest-*',
+        // used by yarn test:ci
+        'jest-junit',
+
+        // used by coverage script, see jest.config.codeowner.js
+        'jest-monocart-coverage',
 
         // needed by github actions
         '@grafana/levitate',
@@ -135,9 +138,8 @@ const config: KnipConfig = {
       entry: [...defaultEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/generate.ts'],
     },
     'packages/grafana-plugin-configs': {
-      // TODO figure out how to properly include this webpack config
+      // this package contains shared code that isn't immediately used by the package
       webpack: false,
-      // this package contains shared dependencies that aren't immediately used by the package
       ignoreDependencies: ['.*'],
     },
   },
