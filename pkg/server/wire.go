@@ -207,6 +207,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
+	"github.com/grafana/grafana/pkg/tsdb/docker"
 )
 
 func otelTracer() trace.Tracer {
@@ -316,6 +317,7 @@ var wireBasicSet = wire.NewSet(
 	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*socialimpl.SocialService)),
 	tempo.ProvideService,
+	docker.ProvideService,
 	loki.ProvideService,
 	graphite.ProvideService,
 	prometheus.ProvideService,

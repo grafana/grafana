@@ -59,7 +59,7 @@ require (
 	github.com/crewjam/saml v0.4.14 // @grafana/identity-access-team
 	github.com/dgraph-io/badger/v4 v4.9.1 // @grafana/grafana-search-and-storage
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/grafana-backend-group
-	github.com/docker/go-connections v0.6.0 // indirect; @grafana/grafana-app-platform-squad
+	github.com/docker/go-connections v0.7.0 // indirect; @grafana/grafana-app-platform-squad
 	github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e // @grafana/grafana-datasources-core-services
 	github.com/dolthub/vitess v0.0.0-20260225173707-20566e4abe9e // @grafana/grafana-datasources-core-services
 	github.com/dustin/go-humanize v1.0.1 // @grafana/observability-traces-and-profiling
@@ -572,8 +572,8 @@ require (
 	github.com/mithrandie/ternary v1.1.1 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/go-archive v0.2.0 // indirect
-	github.com/moby/moby/api v1.54.1 // indirect
-	github.com/moby/moby/client v0.4.0 // indirect
+	github.com/moby/moby/api v1.54.2 // indirect
+	github.com/moby/moby/client v0.4.1 // indirect
 	github.com/moby/patternmatcher v0.6.1 // indirect
 	github.com/moby/spdystream v0.5.1 // indirect
 	github.com/moby/sys/sequential v0.6.0 // indirect
