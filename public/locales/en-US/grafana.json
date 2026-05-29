@@ -6029,13 +6029,6 @@
       "ungroup-nested-text": "This will ungroup all nested groups.",
       "ungroup-nested-title": "Ungroup nested groups?"
     },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Dashboard not found"
-        }
-      }
-    },
     "make-editable": {
       "dashboard-not-editable": "Dashboard not editable",
       "make-editable": "Make editable"
