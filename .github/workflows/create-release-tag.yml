@@ -9,7 +9,8 @@ on:
         type: string
       message:
         description: 'Tag message'
-        required: true
+        required: false
+        default: ${{ inputs.tag }}
         type: string
       commit:
         description: 'Commit SHA to tag'
@@ -18,25 +19,23 @@ on:
 
 permissions: {}
 
+concurrency:
+  group: create-release-tag-${{ inputs.tag }}
+  cancel-in-progress: false
+
 jobs:
   create-tag:
     runs-on: ubuntu-arm64-small
     permissions:
-      id-token: write
+      contents: write
     steps:
-      - name: Get GitHub App token
-        id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
-        with:
-          github_app: grafana-releases-oss
-
       - name: Create annotated tag
         env:
           TAG: ${{ inputs.tag }}
           TAG_MESSAGE: ${{ inputs.message }}
           COMMIT_SHA: ${{ inputs.commit }}
           REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           tag_sha=$(gh api "repos/${REPO}/git/tags" \
             --method POST \
