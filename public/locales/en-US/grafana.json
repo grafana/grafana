@@ -12662,10 +12662,14 @@
       "view": "View"
     },
     "panel-data-error-view": {
+      "field-name": {
+        "number": "number",
+        "string": "string",
+        "time": "time"
+      },
+      "missing-field": "Data is missing a {{field}} field",
+      "missing-fields": "Data is missing {{fields}} fields",
       "missing-value": {
-        "number": "Data is missing a number field",
-        "string": "Data is missing a string field",
-        "time": "Data is missing a time field",
         "unknown": "Cannot visualize data"
       },
       "no-value": {
