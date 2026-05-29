@@ -34,7 +34,7 @@ export interface GetDataSourceInstanceSettingsListOptions {
 }
 
 /** @internal */
-export type GenericDataSourcePlugin = DataSourcePlugin<
+type GenericDataSourcePlugin = DataSourcePlugin<
   DataSourceApi<DataQuery, DataSourceJsonData>,
   DataQuery,
   DataSourceJsonData

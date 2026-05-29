@@ -202,6 +202,11 @@ To export a JSON file, follow these steps:
 1. Paste the JSON in another location.
 1. Click the **X** at the top-right corner to close the share drawer.
 
+{{< admonition type="note" >}}
+To publish a dashboard to the Grafana community catalog, you must export it using the **Classic** model.
+For steps on how to add dashboards to the Grafana community catalog, refer to the [Publish a community dashboard](#publish-a-community-dashboard).
+{{< /admonition >}}
+
 ### Export a dashboard as an image
 
 {{< admonition type="note">}}
@@ -225,6 +230,24 @@ To export a dashboard in its current state as a PNG image file, follow these ste
 
 The generated image reflects how the dashboard appears in your browser.
 To change it, make changes to the dashboard or browser, like zooming in or out or resizing.
+
+## Publish a community dashboard
+
+You can share dashboards publicly by publishing them to the [Grafana community catalog](https://grafana.com/grafana/dashboards/).
+Published dashboards are available for anyone to discover and import.
+
+To publish a dashboard to the community catalog, follow these steps:
+
+1. [Export your dashboard](#export-a-dashboard-as-code) using the **Classic** model.
+1. Go to [Grafana](https://grafana.com/auth/sign-in) and sign in to your Grafana Cloud account.
+1. Navigate to **My dashboards** and click **Upload dashboard**.
+1. Upload the Classic JSON file you exported from Grafana.
+1. Fill in the required metadata fields, then click **Save and Publish**.
+
+### Metadata updates for published dashboards
+
+After you've published a dashboard, the catalog shows a **Submit** button instead of **Save and Publish**.
+Clicking **Submit** saves and publishes your metadata changes, including screenshots, a logo, and the README content.
 
 ## Share panels {#share-a-panel}
 

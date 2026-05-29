@@ -5792,8 +5792,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operator",
-        "placeholder": "Operator selecteren"
+        "aria-label": "Operator"
       },
       "restore": "Standaardwaarde herstellen",
       "search": {
@@ -9062,7 +9061,6 @@
       "copy-button": "Kopiëren naar klembord",
       "download-button": "Bestand downloaden",
       "download-successful_toast_message": "Je JSON is gedownload",
-      "export-externally-label": "Exporteer het dashboard om het in een andere instantie te gebruiken",
       "export-format": "Formaat",
       "export-mode": "Model",
       "info-text": "Kopieer of download een JSON-bestand met de JSON van je dashboard",
@@ -9155,6 +9153,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "Map verwijderd",
       "folder-move-error-provisioned": "Kan de geprovisioneerde map niet verplaatsen. Om deze te verplaatsen, verplaats je de map in de repository en synchroniseer je ze om de wijzigingen toe te passen.",
@@ -11700,11 +11699,10 @@
       "published-by": "Gepubliceerd door",
       "updated-on": "Bijgewerkt op"
     },
-    "import-resource-format-error": {
-      "cancel": "Annuleren",
-      "title": "Niet-ondersteunde indeling",
-      "v1-message": "Dit dashboard heeft de Kubernetes v1-bronindeling en kan niet worden geïmporteerd als de Kubernetes-dashboardfunctie is uitgeschakeld. Schakel de functieschakelaar kubernetesDashboards in om dit dashboard te importeren.",
-      "v2-message": "Dit dashboard heeft de bronindeling v2 en kan niet worden geïmporteerd als de Kubernetes-dashboardfunctie is uitgeschakeld. Schakel de functieschakelaar kubernetesDashboards in om dit dashboard te importeren."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Weet je zeker dat je '{{snapshotToRemove}}' wilt verwijderen?",
@@ -13201,6 +13199,7 @@
       "label-filename": "Bestandsnaam",
       "label-folder": "Map",
       "label-path": "Pad",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Selecteer of voer het mappad in",
       "suffix-configured-branch": "Gesynchroniseerde branch",
@@ -13527,7 +13526,7 @@
       "modal-title-set-up-public-access": "Openbare toegang instellen",
       "modal-title-set-up-required-features": "Vereiste functies instellen",
       "step-description-copy-url": "Kopieer vanuit de ngrok-uitvoer de https:// forwarding-URL die er als volgt uitziet:",
-      "step-description-enable-feature-toggles": "De provisioning-featuretoggle toevoegen aan je custom.ini-bestand. Opmerking: kubernetesDashboards is standaard ingeschakeld, maar als je dit expliciet hebt uitgeschakeld, moet je het inschakelen in je Grafana-instellingen of de override uit je configuratie verwijderen.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Voer dit commando uit om een veilige tunnel naar je lokale Grafana te maken:",
       "step-description-update-grafana-config": "Voeg dit toe aan je custom.ini-bestand en vervang de URL door je werkelijke ngrok-URL:",
       "step-title-copy-url": "Kopieer je openbare URL",
@@ -14719,7 +14718,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Exporteren als afbeelding",
-      "export-json-title": "Exporteren als JSON",
       "share-externally-title": "Extern delen",
       "share-internally-title": "Intern delen",
       "share-snapshot-title": "Snapshot delen"
