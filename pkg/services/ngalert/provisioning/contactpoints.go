@@ -690,7 +690,7 @@ func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint
 	return models.ValidateIntegration(ctx, integration, decryptFunc)
 }
 
-// validateSecretFields rejects duplicate keys that differ only by case in secret fields to avoid amibiguity in secret redaction
+// validateSecretFields rejects duplicate keys that differ only by case in secret fields to avoid ambiguity in secret redaction
 func validateSecretFields(e *apimodels.EmbeddedContactPoint) error {
 	typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(schema.IntegrationType(e.Type), schema.V1)
 	if !ok {
