@@ -100,9 +100,9 @@ export const LegendTableItem = ({
         </button>
       </td>
       {item.getDisplayValues &&
-        item
-          .getDisplayValues()
-          .map((stat, index) => <td key={`${stat.title}-${index}`}>{formattedValueToString(stat)}</td>)}
+        item.getDisplayValues().map((stat, index) => {
+          return <td key={`${stat.title}-${index}`}>{formattedValueToString(stat)}</td>;
+        })}
     </tr>
   );
 };
