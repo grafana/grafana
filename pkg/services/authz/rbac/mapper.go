@@ -374,6 +374,15 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"*.datasource.grafana.app": {
 			"datasources": newResourceTranslation("datasources", "uid", false, nil),
+			"datasources/query": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate: "datasources:query",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: nil,
+			},
 		},
 		"plugins.grafana.app": {
 			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),

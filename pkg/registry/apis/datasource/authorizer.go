@@ -7,6 +7,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
@@ -31,6 +32,7 @@ func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 			// Must have query permission to access any subresource
 			if attr.GetSubresource() != "" {
+				req.Verb = utils.VerbCreate
 				req.Subresource = "query"
 			}
 
