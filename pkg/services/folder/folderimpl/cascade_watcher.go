@@ -37,6 +37,11 @@ import (
 
 const defaultCascadeWatcherResync = 60 * time.Second
 
+// terminatingFolderSelector limits the cascade watcher's List+Watch to folders the delete
+// path has marked terminating, so its cost scales with folders being deleted rather than the
+// total number of folders.
+var terminatingFolderSelector = folders.TerminatingLabel + "=" + folders.TerminatingLabelValue
+
 // folderSearcher is the subset of client.K8sHandler used to list child folders via unified search.
 type folderSearcher interface {
 	Search(ctx context.Context, orgID int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)
@@ -55,8 +60,9 @@ type folderMutator interface {
 // Child folder lookups use unified search (folder parent index), not a full folder List or
 // informer cache scan, so cost scales with the number of direct children, not org size.
 //
-// Note: the informer still performs an initial List+Watch of all folder CRs on startup.
-// At very large scale, consider replacing it with a targeted watch path.
+// The informer List+Watches only folders carrying the terminating label (stamped by the
+// folder delete path), so its cost scales with the number of folders being deleted rather
+// than the total folder count.
 type CascadeWatcher struct {
 	restConfig    apiserver.RestConfigProvider
 	folderSearch  folderSearcher
@@ -122,7 +128,14 @@ func (w *CascadeWatcher) Run(ctx context.Context) error {
 	gvr := foldersv1.FolderResourceInfo.GroupVersionResource()
 	w.folderMutator = &dynamicFolderMutator{client: dyn.Resource(gvr)}
 
-	factory := dynamicinformer.NewDynamicSharedInformerFactory(dyn, w.resync)
+	factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(
+		dyn,
+		w.resync,
+		metav1.NamespaceAll,
+		func(opts *metav1.ListOptions) {
+			opts.LabelSelector = terminatingFolderSelector
+		},
+	)
 	informer := factory.ForResource(gvr).Informer()
 
 	if _, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{

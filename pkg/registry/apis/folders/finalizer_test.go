@@ -47,3 +47,34 @@ func TestEnsureCascadeFinalizerOnObject(t *testing.T) {
 		require.Empty(t, f.Finalizers)
 	})
 }
+
+func TestApplyTerminationMetadata(t *testing.T) {
+	t.Run("adds finalizer and label when both missing", func(t *testing.T) {
+		o := &metav1.ObjectMeta{}
+		require.True(t, applyTerminationMetadata(o))
+		require.Contains(t, o.Finalizers, CascadeDeleteFinalizer)
+		require.Equal(t, TerminatingLabelValue, o.Labels[TerminatingLabel])
+	})
+
+	t.Run("adds only the label when the finalizer is already present", func(t *testing.T) {
+		o := &metav1.ObjectMeta{Finalizers: []string{CascadeDeleteFinalizer}}
+		require.True(t, applyTerminationMetadata(o))
+		require.Len(t, o.Finalizers, 1)
+		require.Equal(t, TerminatingLabelValue, o.Labels[TerminatingLabel])
+	})
+
+	t.Run("adds only the finalizer when the label is already present", func(t *testing.T) {
+		o := &metav1.ObjectMeta{Labels: map[string]string{TerminatingLabel: TerminatingLabelValue}}
+		require.True(t, applyTerminationMetadata(o))
+		require.Contains(t, o.Finalizers, CascadeDeleteFinalizer)
+		require.Len(t, o.Labels, 1)
+	})
+
+	t.Run("reports no change when both already present", func(t *testing.T) {
+		o := &metav1.ObjectMeta{
+			Finalizers: []string{CascadeDeleteFinalizer},
+			Labels:     map[string]string{TerminatingLabel: TerminatingLabelValue},
+		}
+		require.False(t, applyTerminationMetadata(o))
+	})
+}
