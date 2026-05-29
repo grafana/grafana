@@ -5792,8 +5792,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operatör",
-        "placeholder": "Välj operatör"
+        "aria-label": "Operatör"
       },
       "restore": "Återställ standardvärdet",
       "search": {
@@ -9062,7 +9061,6 @@
       "copy-button": "Kopiera till urklippet",
       "download-button": "Ladda ner fil",
       "download-successful_toast_message": "Din JSON har laddats ner",
-      "export-externally-label": "Exportera instrumentpanelen om du vill använda i en annan instans",
       "export-format": "Format",
       "export-mode": "Modell",
       "info-text": "Kopiera eller ladda ner en fil som innehåller instrumentpanelens definition",
@@ -9155,6 +9153,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "Mappen raderad",
       "folder-move-error-provisioned": "Det går inte att flytta den tilldelade mappen. Om du vill flytta den flyttar du den i lagringsplatsen och synkroniserar för att tillämpa ändringarna.",
@@ -11700,11 +11699,10 @@
       "published-by": "Publicerad av",
       "updated-on": "Uppdaterat den"
     },
-    "import-resource-format-error": {
-      "cancel": "Avbryt",
-      "title": "Format som inte stöds",
-      "v1-message": "Den här instrumentpanelen har resursformatet Kubernetes v1 och kan inte importeras när funktionen för Kubernetes-instrumentpaneler är inaktiverad. Aktivera funktionsväxlaren kubernetesDashboards för att importera den här instrumentpanelen.",
-      "v2-message": "Den här instrumentpanelen har resursformatet v2 och kan inte importeras när funktionen för Kubernetes-instrumentpaneler är inaktiverad. Aktivera funktionsväxlaren kubernetesDashboards för att importera den här instrumentpanelen."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Är du säker på att du vill radera ”{{snapshotToRemove}}”?",
@@ -13201,6 +13199,7 @@
       "label-filename": "Filnamn",
       "label-folder": "Mapp",
       "label-path": "Sökväg",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Välj eller ange mappens sökväg",
       "suffix-configured-branch": "Synkroniserad gren",
@@ -13527,7 +13526,7 @@
       "modal-title-set-up-public-access": "Konfigurera offentlig åtkomst",
       "modal-title-set-up-required-features": "Konfigurera obligatoriska funktioner",
       "step-description-copy-url": "Från ngroks utdata, kopiera den https://-vidarebefordringsadress som ser ut så här:",
-      "step-description-enable-feature-toggles": "Lägg till funktionsflaggan för tilldelning i din custom.ini-fil. Obs! kubernetesDashboards är aktiverat som standard. Om du uttryckligen har inaktiverat det måste du aktivera det igen i dina Grafana-inställningar eller ta bort åsidosättningen från din konfiguration.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Kör detta kommando för att skapa en säker tunnel till din lokala Grafana:",
       "step-description-update-grafana-config": "Lägg till detta i din custom.ini-fil och ersätt webbadressen med din faktiska ngrok-URL:",
       "step-title-copy-url": "Kopiera din offentliga webbadress",
@@ -14719,7 +14718,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Exportera som bild",
-      "export-json-title": "Exportera som JSON",
       "share-externally-title": "Dela externt",
       "share-internally-title": "Dela internt",
       "share-snapshot-title": "Dela ögonblicksbild"

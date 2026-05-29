@@ -86,7 +86,21 @@ func (m *ManagerAdapter) starting(ctx context.Context) error {
 	if err := m.manager.StartAsync(ctx); err != nil {
 		return err
 	}
-	return m.manager.AwaitRunning(ctx)
+	if err := m.manager.AwaitRunning(ctx); err != nil {
+		// If our context was cancelled while waiting for the inner manager
+		// to reach Running (i.e. Shutdown was called mid-startup), return
+		// nil so dskit's BasicService.main detects the cancellation via
+		// serviceContext.Err() and routes through stoppingFn. Without this,
+		// BasicService transitions directly from Starting to Failed and
+		// skips stoppingFn entirely, leaving m.manager and its background
+		// services running and racing with test cleanup (e.g. t.TempDir()
+		// removal).
+		if ctx.Err() != nil {
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 func (m *ManagerAdapter) running(ctx context.Context) error {

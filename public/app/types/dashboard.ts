@@ -1,4 +1,3 @@
-import { type DataQuery } from '@grafana/data';
 import { type Dashboard, type DataSourceRef } from '@grafana/schema';
 import { type ObjectMeta } from 'app/features/apiserver/types';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -133,11 +132,6 @@ export enum KioskMode {
 }
 
 export type GetMutableDashboardModelFn = () => DashboardModel | null;
-
-export interface QueriesToUpdateOnDashboardLoad {
-  panelId: number;
-  queries: DataQuery[];
-}
 
 export interface DashboardState {
   getModel: GetMutableDashboardModelFn;
