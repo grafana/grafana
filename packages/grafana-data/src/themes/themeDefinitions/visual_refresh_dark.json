@@ -218,7 +218,8 @@
     "secondary": {
       "main": "palette.ink700",
       "border": "palette.ink600",
-      "text": "palette.ink300"
+      "text": "palette.ink300",
+      "contrastText": "palette.ink200"
     },
     "accent": {
       "main": "palette.orange400",

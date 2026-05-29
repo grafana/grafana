@@ -12,7 +12,7 @@ export interface Props {
 }
 
 export const TagBadge = ({ count, label, onClick, removeIcon }: Props) => {
-  const { color } = getTagColorsFromName(label);
+  const { color, borderColor } = getTagColorsFromName(label);
   const styles = useStyles2(getStyles);
 
   const countLabel = count !== 0 && <span style={{ marginLeft: '3px' }}>{`(${count})`}</span>;
@@ -22,6 +22,7 @@ export const TagBadge = ({ count, label, onClick, removeIcon }: Props) => {
       className={styles.badge}
       style={{
         backgroundColor: color,
+        color: borderColor,
       }}
     >
       {removeIcon && <Icon onClick={onClick} name="times" />}
