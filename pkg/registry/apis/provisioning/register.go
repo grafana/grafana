@@ -1078,6 +1078,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 			if !cache.WaitForCacheSync(postStartHookCtx.Done(), connInformer.Informer().HasSynced) {
+				// WaitForCacheSync only returns false when the hook context is
+				// cancelled, which happens on apiserver shutdown. A sync aborted
+				// by shutdown is expected, not a startup failure — returning an
+				// error here escalates to klog.Fatalf and kills the process.
+				if postStartHookCtx.Err() != nil {
+					return nil
+				}
 				return fmt.Errorf("connection controller cache sync failed")
 			}
 			go connController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
