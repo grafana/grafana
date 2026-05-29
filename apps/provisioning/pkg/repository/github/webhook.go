@@ -40,6 +40,7 @@ type githubWebhookRepository struct {
 	gh                    Client
 	webhookURL            string
 	folderMetadataEnabled bool
+	replayCache           *replayCache
 }
 
 func NewGithubWebhookRepository(
@@ -47,7 +48,13 @@ func NewGithubWebhookRepository(
 	webhookURL string,
 	secret common.RawSecureValue,
 	folderMetadataEnabled bool,
+	replay *replayCache,
 ) GithubWebhookRepository {
+	// Defensive: callers should pass the factory-owned cache, but never leave
+	// Webhook with a nil cache to dereference.
+	if replay == nil {
+		replay = newReplayCache(defaultReplayCacheTTL)
+	}
 	return &githubWebhookRepository{
 		GithubRepository:      basic,
 		config:                basic.Config(),
@@ -57,6 +64,7 @@ func NewGithubWebhookRepository(
 		webhookURL:            webhookURL,
 		secret:                secret,
 		folderMetadataEnabled: folderMetadataEnabled,
+		replayCache:           replay,
 	}
 }
 
@@ -73,6 +81,27 @@ func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request
 	payload, err := github.ValidatePayload(req, []byte(r.secret))
 	if err != nil {
 		return nil, apierrors.NewUnauthorized("invalid signature")
+	}
+
+	// Replay protection: key on the validated signature, not the
+	// X-GitHub-Delivery header. GitHub computes the HMAC over the request body
+	// only, so the delivery ID is unauthenticated — an attacker replaying a
+	// captured (body, signature) could simply pick a fresh delivery ID and
+	// slip past a delivery-ID cache. The signature, by contrast, is bound to
+	// both the signed body and the repository's unique secret, so it cannot be
+	// forged or collided across repositories.
+	//
+	// Silently drop a request whose signature we have already processed within
+	// the cache TTL — returning a generic 200 avoids confirming to a replay
+	// attacker that the captured payload was a real previously-processed
+	// delivery.
+	signature := req.Header.Get(github.SHA256SignatureHeader)
+	if signature == "" {
+		signature = req.Header.Get(github.SHA1SignatureHeader)
+	}
+	if r.replayCache.seenOrAdd(signature) {
+		logging.FromContext(ctx).Debug("dropping replayed webhook delivery", "delivery_id", github.DeliveryID(req))
+		return &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ok"}, nil
 	}
 
 	return r.parseWebhook(github.WebHookType(req), payload)
