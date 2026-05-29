@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { type DataFrame, FieldType } from '@grafana/data';
 import { type Panel } from '@grafana/schema';
@@ -57,6 +58,22 @@ describe('PanelIntentChips', () => {
       ],
     });
     expect(screen.getByText('#spike +2')).toBeInTheDocument();
+  });
+
+  it('lists every failure mode tag (without descriptions) in the hover tooltip', async () => {
+    renderChips({
+      failureModes: [
+        { tag: 'spike', description: 'Sudden burst' },
+        { tag: 'oom', description: 'Out of memory' },
+        { tag: 'timeout' },
+      ],
+    });
+
+    await userEvent.hover(screen.getByText('#spike +2'));
+
+    // Tooltip lists all tags, comma-separated, no descriptions.
+    expect(await screen.findByText('#spike, #oom, #timeout')).toBeInTheDocument();
+    expect(screen.queryByText(/Out of memory/)).not.toBeInTheDocument();
   });
 
   it('renders nothing without crashing when failureModes is a bare string', () => {

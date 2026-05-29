@@ -55,8 +55,16 @@ export function DashboardIntentSummaryBar({ dashboard }: Props) {
     <div className={styles.wrapper} data-testid="dashboard-intent-summary-bar">
       <div className={styles.header}>
         <Stack direction="row" alignItems="center" gap={1}>
-          <Icon name="info-circle" className={styles.icon} aria-hidden />
-          <span className={styles.headerLabel}>{t('dashboard.intent-summary.label', 'About this dashboard')}</span>
+          <Tooltip
+            content={t(
+              'dashboard.intent-summary.info-tooltip',
+              'Centralizes all the context entered across this dashboard — purpose, owner, and the failure modes and runbooks declared on its panels.'
+            )}
+            placement="top"
+          >
+            <Icon name="info-circle" className={styles.icon} tabIndex={0} />
+          </Tooltip>
+          <span className={styles.headerLabel}>{t('dashboard.intent-summary.label', 'Dashboard context')}</span>
           {isEditing ? (
             <OwnerInput dashboard={dashboard} value={owner} />
           ) : (
@@ -279,12 +287,19 @@ function PurposeInput({ dashboard, value }: { dashboard: DashboardScene; value: 
 
 function OwnerChip({ owner, provenance }: { owner: string; provenance?: string }) {
   const styles = useStyles2(getChipStyles);
-  return (
-    <Tooltip content={provenanceTooltip('owner', provenance)} placement="top">
-      <span className={styles.owner}>
-        <Icon name="user" size="xs" aria-hidden /> {owner}
-      </span>
+  const phrase = provenanceLabel(provenance);
+  const chip = (
+    <span className={styles.owner}>
+      <Icon name="user" size="xs" aria-hidden /> {owner}
+    </span>
+  );
+  // Only wrap in a tooltip when there is meaningful provenance to show.
+  return phrase ? (
+    <Tooltip content={`owner — ${phrase}`} placement="top">
+      {chip}
     </Tooltip>
+  ) : (
+    chip
   );
 }
 
@@ -301,15 +316,20 @@ function FailureModeChip({ tag, description, panels }: { tag: string; descriptio
 
 function ProvenanceMarker({ value }: { value: string }) {
   const styles = useStyles2(getChipStyles);
+  const phrase = provenanceLabel(value);
+  // Provenance is internal metadata; only surface it when it carries signal.
+  if (!phrase) {
+    return null;
+  }
   return (
-    <Tooltip content={provenanceLabel(value)} placement="top">
+    <Tooltip content={phrase} placement="top">
       <span className={styles.provenanceMarker}>·</span>
     </Tooltip>
   );
 }
 
-// provenanceLabel turns the wire value into a short human-readable
-// description that fits in a tooltip.
+// provenanceLabel turns the wire value into a short human-readable description
+// that fits in a tooltip, or '' when there is no meaningful provenance to show.
 function provenanceLabel(value: string | undefined): string {
   switch (value) {
     case 'author-written':
@@ -325,12 +345,8 @@ function provenanceLabel(value: string | undefined): string {
     case 'computed-from-history':
       return 'Computed from historical data';
     default:
-      return 'No provenance recorded';
+      return '';
   }
-}
-
-function provenanceTooltip(field: string, value: string | undefined): string {
-  return `${field}: ${provenanceLabel(value)}`;
 }
 
 function getStyles(theme: GrafanaTheme2) {

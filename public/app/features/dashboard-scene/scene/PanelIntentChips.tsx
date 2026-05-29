@@ -197,7 +197,7 @@ export function PanelIntentChipsRenderer({ model }: SceneComponentProps<PanelInt
     <div className={styles.row} data-testid="panel-intent-chips">
       {expected?.normalRange && (
         <Tooltip
-          content={`Normal range — ${provenanceTooltip(expectedProvenance)}`}
+          content={withProvenance('Normal range', expectedProvenance)}
           placement="top"
         >
           <span className={resolvedChipClass(styles, chipStates?.range, expectedProvenance)}>
@@ -207,7 +207,7 @@ export function PanelIntentChipsRenderer({ model }: SceneComponentProps<PanelInt
       )}
       {expected?.alertThreshold && (
         <Tooltip
-          content={`Alert threshold — ${provenanceTooltip(thresholdProvenance)}`}
+          content={withProvenance('Alert threshold', thresholdProvenance)}
           placement="top"
         >
           <span className={resolvedChipClass(styles, chipStates?.alert, thresholdProvenance)}>
@@ -217,7 +217,7 @@ export function PanelIntentChipsRenderer({ model }: SceneComponentProps<PanelInt
       )}
       {primaryFailureMode && (
         <Tooltip
-          content={failureModeTooltip(primaryFailureMode, extraFailureModes, failureModesProvenance)}
+          content={failureModeTooltip(failureModes, failureModesProvenance)}
           placement="top"
         >
           {/*
@@ -285,7 +285,11 @@ function failureModeChipClass(
   return provenance === 'assistant-unconfirmed' ? styles.chipDraft : styles.chip;
 }
 
-function provenanceTooltip(value: string | undefined): string {
+// provenanceLabel maps a provenance value to a short human-readable phrase, or
+// returns '' when there is no meaningful provenance to show. Provenance is
+// internal metadata (who authored a field), so we only surface it when it adds
+// signal — never as a noisy "no provenance recorded" line.
+function provenanceLabel(value: string | undefined): string {
   switch (value) {
     case 'author-written':
       return 'written by the dashboard author';
@@ -300,18 +304,27 @@ function provenanceTooltip(value: string | undefined): string {
     case 'computed-from-history':
       return 'computed from history';
     default:
-      return 'no provenance recorded';
+      return '';
   }
 }
 
+// withProvenance appends the provenance phrase to a label only when there is
+// one, so tooltips read "Normal range — draft suggestion" or just "Normal range".
+function withProvenance(label: string, value: string | undefined): string {
+  const phrase = provenanceLabel(value);
+  return phrase ? `${label} — ${phrase}` : label;
+}
+
 function failureModeTooltip(
-  primary: NonNullable<Panel['intent']>['failureModes'] extends Array<infer T> | undefined ? T : never,
-  extra: number,
+  failureModes: NonNullable<NonNullable<Panel['intent']>['failureModes']>,
   provenance: string | undefined
 ): string {
-  const tail = primary.description ? `${primary.tag}: ${primary.description}` : primary.tag;
-  const more = extra > 0 ? ` (+ ${extra} more)` : '';
-  return `${tail}${more} — ${provenanceTooltip(provenance)}`;
+  // List every declared failure mode tag (the header chip only shows the
+  // first + a "+N" counter). Tags only — descriptions are surfaced in the
+  // Context editor, not here, so the tooltip stays a quick scannable list.
+  const tags = failureModes.map((fm) => `#${fm.tag}`).join(', ');
+  const phrase = provenanceLabel(provenance);
+  return phrase ? `${tags} — ${phrase}` : tags;
 }
 
 function getStyles(theme: GrafanaTheme2) {
