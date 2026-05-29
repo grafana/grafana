@@ -191,6 +191,12 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	return v, err
 }
 
+// ensureSingleDeprecatedInternalID rejects a write when the requested internal
+// ID is already in use. This is best effort, not a guarantee: the check queries
+// an eventually-consistent search index and is not atomic with the write, so
+// concurrent (or rapid sequential, before the index catches up) writes with the
+// same ID can both pass. It catches the common accidental-duplicate case, not
+// races.
 func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64, obj utils.GrafanaMetaAccessor) error {
 	if s.opts.Index == nil {
 		// The storage was not configured to verify uniqueness
