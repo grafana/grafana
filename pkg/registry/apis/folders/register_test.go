@@ -755,10 +755,9 @@ func TestFolderAPIBuilder_Mutate_cascadeFinalizerGatedByFeatureFlag(t *testing.T
 	us := grafanarest.NewMockStorage(t)
 	sm := resource.NewMockResourceClient(t)
 	b := &FolderAPIBuilder{
-		namespacer: func(_ int64) string { return "123" },
-		storage:    us,
-		searcher:   sm,
-		parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+		storage:  us,
+		searcher: sm,
+		parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
 	}
 
 	t.Run("flag off does not add finalizer", func(t *testing.T) {
