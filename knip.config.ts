@@ -40,8 +40,14 @@ const config: KnipConfig = {
     '.': {
       // TODO figure out how to properly include jest config
       jest: false,
-      // TODO remove these ignores when react 19 is released
-      ignoreDependencies: ['react-19', 'react-dom-19'],
+      ignoreDependencies: [
+        // TODO remove these ignores when react 19 is released
+        'react-19',
+        'react-dom-19',
+
+        // TODO figure out how to properly include jest config
+        'jest-*',
+      ],
       project: [
         'public/app/**',
         'scripts/**/*.ts*',
