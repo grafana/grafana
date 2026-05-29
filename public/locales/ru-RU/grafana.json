@@ -5856,8 +5856,7 @@
         }
       },
       "operator": {
-        "aria-label": "Оператор",
-        "placeholder": "Выбрать оператора"
+        "aria-label": "Оператор"
       },
       "restore": "Восстановить значение по умолчанию",
       "search": {
@@ -9162,7 +9161,6 @@
       "copy-button": "Копировать в буфер обмена",
       "download-button": "Загрузить файл",
       "download-successful_toast_message": "JSON-файл загружен",
-      "export-externally-label": "Экспорт дашборда для использования в другом экземпляре",
       "export-format": "Формат",
       "export-mode": "Модель",
       "info-text": "Скопируйте или загрузите файл, содержащий параметры вашего дашборда",
@@ -9255,6 +9253,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "Невозможно удалить подготовленную папку. Сначала удалите ее из репозитория и выполните синхронизацию, чтобы применить изменения.",
       "folder-deleted-success": "Папка удалена",
       "folder-move-error-provisioned": "Невозможно переместить подготовленную папку. Сначала перенесети ее в репозиторий и выполните синхронизацию, чтобы применить изменения.",
@@ -11836,11 +11835,10 @@
       "published-by": "Кем опубликовано",
       "updated-on": "Дата обновления"
     },
-    "import-resource-format-error": {
-      "cancel": "Отмена",
-      "title": "Неподдерживаемый формат",
-      "v1-message": "Формат ресурса этого дашборда — Kubernetes v1. Его нельзя импортировать, если отключена функция дашбордов Kubernetes. Для импорта измените положение переключателя функционала kubernetesDashboards.",
-      "v2-message": "Формат ресурса этого дашборда — v2. Его нельзя импортировать, если отключена функция дашбордов Kubernetes. Для импорта измените положение переключателя функционала kubernetesDashboards."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Действительно удалить «{{snapshotToRemove}}»?",
@@ -13343,6 +13341,7 @@
       "label-filename": "Имя файла",
       "label-folder": "Папка",
       "label-path": "Путь",
+      "path-exists": "",
       "placeholder-branch": "Выберите или введите имя ветви",
       "placeholder-folder": "Выберите или введите путь к папке",
       "suffix-configured-branch": "Синхронизированная ветвь",
@@ -13681,7 +13680,7 @@
       "modal-title-set-up-public-access": "Настройка общего доступа",
       "modal-title-set-up-required-features": "Настройка необходимых функций",
       "step-description-copy-url": "Из вывода ngrok скопируйте URL-адрес переадресации https://, который выглядит следующим образом:",
-      "step-description-enable-feature-toggles": "Добавьте переключатель функции подготовки в свой файл custom.ini. Примечание. Функция kubernetesDashboards включена по умолчанию. Если вы ее отключили, необходимо активировать ее в настройках Grafana или удалить переопределение из конфигурации.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Выполните эту команду, чтобы создать защищенный туннель к вашей локальной версии Grafana:",
       "step-description-update-grafana-config": "Добавьте данные в свой файл custom.ini, заменив URL-адрес на фактический URL-адрес ngrok:",
       "step-title-copy-url": "Копирование общедоступного URL-адреса",
@@ -14907,7 +14906,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Экспортировать как изображение",
-      "export-json-title": "Экспорт в формате JSON",
       "share-externally-title": "Общий доступ с внешними пользователями",
       "share-internally-title": "Общий доступ с внутренними пользователями",
       "share-snapshot-title": "Общий доступ к снимку"
