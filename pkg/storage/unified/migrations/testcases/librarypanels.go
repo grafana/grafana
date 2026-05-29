@@ -64,9 +64,10 @@ func (tc *libraryPanelsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper)
 		createTestLibraryPanel(t, helper, libraryElements, "Library Panel C", ""),
 	)
 
-	// libraryelements.Service writes through to the legacy library_element table,
-	// which the K8s API does not expose in Mode 0.
-	return false
+	// The LibraryPanelStore serves reads directly from the legacy library_element
+	// table, so panels created via libraryelements.Service are visible through the
+	// K8s API even in Mode 0.
+	return true
 }
 
 func (tc *libraryPanelsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
