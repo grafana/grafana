@@ -98,6 +98,17 @@ func (m *ManagerAdapter) starting(ctx context.Context) error {
 		if ctx.Err() != nil {
 			return nil
 		}
+		// When a service fails during startup, the inner manager's listener
+		// triggers a self-shutdown, so AwaitRunning can observe the manager
+		// transitioning through Stopping before its failure case is recorded.
+		// That yields a generic state error that hides the real cause. Wait
+		// for the manager to finish terminating and surface its actual failure.
+		termCtx, cancel := context.WithTimeout(context.Background(), stopTimeout)
+		defer cancel()
+		_ = m.manager.AwaitTerminated(termCtx)
+		if failure := m.manager.FailureCase(); failure != nil {
+			return failure
+		}
 		return err
 	}
 	return nil
