@@ -9,7 +9,6 @@ import {
   getDefaultTimeRange,
   store,
   toDataFrame,
-  urlUtil,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, locationService } from '@grafana/runtime';
@@ -34,6 +33,7 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
+import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelMenuBehavior } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
@@ -785,11 +785,10 @@ describe('panelMenuBehavior', () => {
     beforeEach(() => {
       jest.spyOn(storeModule, 'dispatch').mockImplementation(() => {});
       jest.spyOn(locationService, 'push').mockImplementation(() => {});
-      jest.spyOn(urlUtil, 'renderUrl').mockImplementation((url, params) => `${url}?${JSON.stringify(params)}`);
     });
 
-    it('should navigate to alert creation page on success', async () => {
-      const { menu, panel } = await buildTestScene({});
+    it('should open the new alert rule drawer with prefilled values on success', async () => {
+      const { menu, panel, scene } = await buildTestScene({});
       const mockFormValues = { someKey: 'someValue' };
 
       config.unifiedAlertingEnabled = true;
@@ -798,27 +797,59 @@ describe('panelMenuBehavior', () => {
       jest
         .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
         .mockResolvedValue(mockFormValues);
+      const showModalSpy = jest.spyOn(scene, 'showModal');
 
-      // activate the menu
       menu.activate();
-      // wait for the menu to be activated
       await new Promise((r) => setTimeout(r, 1));
-      // use userEvent mechanism to click the menu item
+
       const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
       const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
       expect(alertMenuItem).toBeDefined();
 
-      alertMenuItem?.({} as React.MouseEvent);
+      await alertMenuItem?.({} as React.MouseEvent);
+      await new Promise((r) => setTimeout(r, 0));
+
       expect(scenesPanelToRuleFormValues).toHaveBeenCalledWith(panel);
+      expect(locationService.push).not.toHaveBeenCalled();
+      expect(showModalSpy).toHaveBeenCalledTimes(1);
+      const drawer = showModalSpy.mock.calls[0][0];
+      expect(drawer).toBeInstanceOf(NewAlertRuleDrawer);
+      expect((drawer as NewAlertRuleDrawer).state.prefill).toEqual(mockFormValues);
     });
 
-    it('should show error notification on failure', async () => {
-      const { menu, panel } = await buildTestScene({});
+    it('should open the new alert rule drawer with no prefill when no alerting-capable query is found', async () => {
+      const { menu, scene } = await buildTestScene({});
+
+      config.unifiedAlertingEnabled = true;
+      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
+
+      jest
+        .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
+        .mockResolvedValue(undefined);
+      const showModalSpy = jest.spyOn(scene, 'showModal');
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+      const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
+
+      await alertMenuItem?.({} as React.MouseEvent);
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(showModalSpy).toHaveBeenCalledTimes(1);
+      const drawer = showModalSpy.mock.calls[0][0];
+      expect(drawer).toBeInstanceOf(NewAlertRuleDrawer);
+      expect((drawer as NewAlertRuleDrawer).state.prefill).toBeUndefined();
+    });
+
+    it('should show error notification and not open the drawer on failure', async () => {
+      const { menu, panel, scene } = await buildTestScene({});
       const mockError = new Error('Test error');
       jest
         .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
         .mockRejectedValue(mockError);
-      // Don't make notifyApp throw an error, just mock it
+      const showModalSpy = jest.spyOn(scene, 'showModal');
 
       menu.activate();
       await new Promise((r) => setTimeout(r, 1));
@@ -832,6 +863,7 @@ describe('panelMenuBehavior', () => {
       await new Promise((r) => setTimeout(r, 0));
 
       expect(scenesPanelToRuleFormValues).toHaveBeenCalledWith(panel);
+      expect(showModalSpy).not.toHaveBeenCalled();
     });
 
     it('should render "New alert rule" menu item when user has permissions to read and update alerts', async () => {

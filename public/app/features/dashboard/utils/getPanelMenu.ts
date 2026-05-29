@@ -1,11 +1,14 @@
-import { type PanelMenuItem, urlUtil, type PluginExtensionLink } from '@grafana/data';
+import { type PanelMenuItem, type PluginExtensionLink } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { appEvents } from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { LogMessages, logInfo, trackCreateRuleFromPanelDrawerOpened } from 'app/features/alerting/unified/Analytics';
+import { PanelAlertRuleDrawer } from 'app/features/alerting/unified/components/PanelAlertRuleDrawer';
 import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { panelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -23,6 +26,7 @@ import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { dispatch } from 'app/store/store';
+import { ShowModalReactEvent } from 'app/types/events';
 
 import { getCreateAlertInMenuAvailability } from '../../alerting/unified/utils/access-control';
 import { navigateToExplore } from '../../explore/state/main';
@@ -182,12 +186,16 @@ export function getPanelMenu(
       dispatch(notifyApp(createErrorNotification(message)));
       return;
     }
-    const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
-      defaults: JSON.stringify(formValues),
-      returnTo: window.location.pathname + window.location.search,
-    });
 
-    locationService.push(ruleFormUrl);
+    logInfo(LogMessages.alertRuleFromPanel);
+    trackCreateRuleFromPanelDrawerOpened();
+
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: PanelAlertRuleDrawer,
+        props: { prefill: formValues },
+      })
+    );
   };
 
   const onCreateAlert = (event: React.MouseEvent) => {
