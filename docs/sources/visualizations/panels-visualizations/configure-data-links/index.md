@@ -216,7 +216,7 @@ These variables allow you to include the current time range in the data link or 
 
 | Variable           | Description                                                              |
 | ------------------ | ------------------------------------------------------------------------ |
-| `__url_time_range` | Current dashboard's time range (for example, `?from=now-6h&to=now`)      |
+| `__url_time_range` | Current dashboard's time range (for example, `?from=now-6h&to=now`). For more information, refer to [Global variables](ref:global-variables). |
 | `__from`           | For more information, refer to [Global variables](ref:global-variables). |
 | `__to`             | For more information, refer to [Global variables](ref:global-variables). |
 
