@@ -78,7 +78,7 @@ export function getLogLevel(line: string): LogLevel {
 export function getLogLevelFromKey(key: string | number): LogLevel {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const level = LogLevel[key.toString().toLowerCase() as keyof typeof LogLevel];
-  if (level) {
+  if (level !== undefined) {
     return level;
   }
   if (typeof key === 'string') {
