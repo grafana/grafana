@@ -95,6 +95,38 @@ func TestDeleteWorker_ProcessMissingDeleteSettings(t *testing.T) {
 	require.EqualError(t, err, "missing delete settings")
 }
 
+func TestDeleteWorker_CommitMessageFromJobSpec(t *testing.T) {
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action:  v0alpha1.JobActionDelete,
+			Message: "custom commit message from spec",
+			Delete: &v0alpha1.DeleteJobOptions{
+				Paths: []string{"test/path"},
+			},
+		},
+	}
+
+	mockRepo := repository.NewMockRepository(t)
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
+		return opts.CommitOnlyOnceMessage == "custom commit message from spec"
+	}), mock.Anything).Return(nil)
+	mockProgress.On("SetTotal", mock.Anything, 1).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
+	mockProgress.On("ResetResults", true).Return()
+	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
+
+	mockSyncWorker := jobs.NewMockWorker(t)
+	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.Anything, mockProgress).Return(nil)
+
+	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	require.NoError(t, err)
+}
+
 func TestDeleteWorker_ProcessNotReaderWriter(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{

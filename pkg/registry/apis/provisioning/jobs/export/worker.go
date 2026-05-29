@@ -111,10 +111,11 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return err
 	}
 
-	msg := options.Message
-	if msg == "" {
-		msg = fmt.Sprintf("Export from Grafana %s", job.Name)
+	defaultMsg := options.Message
+	if defaultMsg == "" {
+		defaultMsg = fmt.Sprintf("Export from Grafana %s", job.Name)
 	}
+	msg := jobs.CommitMessage(job, defaultMsg)
 
 	cloneOptions := repository.StageOptions{
 		Ref:                   options.Branch,

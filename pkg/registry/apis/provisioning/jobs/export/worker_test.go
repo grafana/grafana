@@ -578,6 +578,85 @@ func TestExportWorker_ProcessGitRepositoryExportFnError(t *testing.T) {
 	require.EqualError(t, err, "export failed")
 }
 
+func TestExportWorker_CommitMessagePrecedence(t *testing.T) {
+	tests := []struct {
+		name        string
+		specMessage string
+		optsMessage string
+		wantMessage string
+	}{
+		{
+			name:        "spec message wins over options message",
+			specMessage: "from spec",
+			optsMessage: "from options",
+			wantMessage: "from spec",
+		},
+		{
+			name:        "falls back to options message when spec empty",
+			specMessage: "",
+			optsMessage: "from options",
+			wantMessage: "from options",
+		},
+		{
+			name:        "uses generated default when both empty",
+			specMessage: "",
+			optsMessage: "",
+			wantMessage: "Export from Grafana test-job",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			job := v0alpha1.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: v0alpha1.JobSpec{
+					Action:  v0alpha1.JobActionPush,
+					Message: tt.specMessage,
+					Push: &v0alpha1.ExportJobOptions{
+						Branch:  "feature-branch",
+						Message: tt.optsMessage,
+					},
+				},
+			}
+
+			mockRepo := repository.NewMockRepository(t)
+			mockRepo.On("Config").Return(&v0alpha1.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-namespace"},
+				Spec: v0alpha1.RepositorySpec{
+					Type:      v0alpha1.GitRepositoryType,
+					Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow, v0alpha1.BranchWorkflow},
+				},
+			})
+
+			mockProgress := jobs.NewMockJobProgressRecorder(t)
+			mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
+
+			mockClients := resources.NewMockClientFactory(t)
+			mockResourceClients := resources.NewMockResourceClients(t)
+			mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
+
+			mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
+			mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
+			mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
+
+			mockExportFn := NewMockExportFn(t)
+			mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+			mockReaderWriter := repository.NewMockReaderWriter(t)
+			mockStageFn := NewMockWrapWithStageFn(t)
+			mockStageFn.On("Execute", mock.Anything, mock.Anything, mock.MatchedBy(func(opts repository.StageOptions) bool {
+				return opts.CommitOnlyOnceMessage == tt.wantMessage
+			}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
+				return fn(mockReaderWriter, true)
+			})
+
+			r := NewExportWorker(mockClients, mockRepoResources, nil, mockExportFn.Execute, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true, "v1beta1")
+			err := r.Process(context.Background(), mockRepo, job, mockProgress)
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestExportWorker_RefURLsSetWithBranch(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{

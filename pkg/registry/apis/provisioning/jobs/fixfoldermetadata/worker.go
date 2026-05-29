@@ -70,7 +70,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		Timeout:               5 * time.Minute,
 		PushOnWrites:          false,
 		Mode:                  repository.StageModeCommitOnlyOnce,
-		CommitOnlyOnceMessage: fmt.Sprintf("Add folder metadata files\n\nTriggered by job %s at %s", job.Name, time.Now().UTC().Format(time.RFC3339)),
+		CommitOnlyOnceMessage: jobs.CommitMessage(job, fmt.Sprintf("Add folder metadata files\n\nTriggered by job %s at %s", job.Name, time.Now().UTC().Format(time.RFC3339))),
 	}
 
 	fn := func(stagedRepo repository.Repository, staged bool) error {

@@ -31,7 +31,11 @@ func NewUnifiedStorageMigrator(
 	}
 }
 
-func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
+func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.ReaderWriter, job provisioning.Job, progress jobs.JobProgressRecorder) error {
+	options := provisioning.MigrateJobOptions{}
+	if job.Spec.Migrate != nil {
+		options = *job.Spec.Migrate
+	}
 	namespace := repo.Config().GetNamespace()
 
 	// Export resources first (for both folder and instance sync).
@@ -43,6 +47,7 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
+			Message: job.Spec.Message,
 			Push: &provisioning.ExportJobOptions{
 				Message:   options.Message,
 				Resources: options.Resources,

@@ -26,17 +26,17 @@ func (_m *MockMigrator) EXPECT() *MockMigrator_Expecter {
 	return &MockMigrator_Expecter{mock: &_m.Mock}
 }
 
-// Migrate provides a mock function with given fields: ctx, rw, opts, progress
-func (_m *MockMigrator) Migrate(ctx context.Context, rw repository.ReaderWriter, opts v0alpha1.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
-	ret := _m.Called(ctx, rw, opts, progress)
+// Migrate provides a mock function with given fields: ctx, rw, job, progress
+func (_m *MockMigrator) Migrate(ctx context.Context, rw repository.ReaderWriter, job v0alpha1.Job, progress jobs.JobProgressRecorder) error {
+	ret := _m.Called(ctx, rw, job, progress)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Migrate")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter, v0alpha1.MigrateJobOptions, jobs.JobProgressRecorder) error); ok {
-		r0 = rf(ctx, rw, opts, progress)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter, v0alpha1.Job, jobs.JobProgressRecorder) error); ok {
+		r0 = rf(ctx, rw, job, progress)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -52,15 +52,15 @@ type MockMigrator_Migrate_Call struct {
 // Migrate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - rw repository.ReaderWriter
-//   - opts v0alpha1.MigrateJobOptions
+//   - job v0alpha1.Job
 //   - progress jobs.JobProgressRecorder
-func (_e *MockMigrator_Expecter) Migrate(ctx interface{}, rw interface{}, opts interface{}, progress interface{}) *MockMigrator_Migrate_Call {
-	return &MockMigrator_Migrate_Call{Call: _e.mock.On("Migrate", ctx, rw, opts, progress)}
+func (_e *MockMigrator_Expecter) Migrate(ctx interface{}, rw interface{}, job interface{}, progress interface{}) *MockMigrator_Migrate_Call {
+	return &MockMigrator_Migrate_Call{Call: _e.mock.On("Migrate", ctx, rw, job, progress)}
 }
 
-func (_c *MockMigrator_Migrate_Call) Run(run func(ctx context.Context, rw repository.ReaderWriter, opts v0alpha1.MigrateJobOptions, progress jobs.JobProgressRecorder)) *MockMigrator_Migrate_Call {
+func (_c *MockMigrator_Migrate_Call) Run(run func(ctx context.Context, rw repository.ReaderWriter, job v0alpha1.Job, progress jobs.JobProgressRecorder)) *MockMigrator_Migrate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(repository.ReaderWriter), args[2].(v0alpha1.MigrateJobOptions), args[3].(jobs.JobProgressRecorder))
+		run(args[0].(context.Context), args[1].(repository.ReaderWriter), args[2].(v0alpha1.Job), args[3].(jobs.JobProgressRecorder))
 	})
 	return _c
 }
@@ -70,7 +70,7 @@ func (_c *MockMigrator_Migrate_Call) Return(_a0 error) *MockMigrator_Migrate_Cal
 	return _c
 }
 
-func (_c *MockMigrator_Migrate_Call) RunAndReturn(run func(context.Context, repository.ReaderWriter, v0alpha1.MigrateJobOptions, jobs.JobProgressRecorder) error) *MockMigrator_Migrate_Call {
+func (_c *MockMigrator_Migrate_Call) RunAndReturn(run func(context.Context, repository.ReaderWriter, v0alpha1.Job, jobs.JobProgressRecorder) error) *MockMigrator_Migrate_Call {
 	_c.Call.Return(run)
 	return _c
 }
