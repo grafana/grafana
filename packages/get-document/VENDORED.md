@@ -17,7 +17,7 @@ previously motivated a `github:` resolution. To remove the `github:`
 indirection, we vendor the source here and serve it via a `workspace:*`
 resolution.
 
-Upstream is effectively abandoned (no commits since 2014).
+Upstream is effectively abandoned, no commits since 2017 (the LICENSE commit we vendor here is the latest on `master`) and no npm publish since `1.0.0` in January 2015.
 
 ## Syncing from upstream
 
