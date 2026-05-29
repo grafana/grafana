@@ -11,12 +11,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
-// fakeConnecter implements rest.Connecter used to drive timeoutConnecter
+// fakeConnector implements rest.Connecter used to drive timeoutConnecter
 // without pulling in any real connector's dependencies.
-type fakeConnecter struct {
+type fakeConnector struct {
 	mu sync.Mutex
 
 	handler    http.Handler
@@ -32,12 +33,12 @@ type fakeConnecter struct {
 	receivedCtx  context.Context
 }
 
-func (f *fakeConnecter) New() runtime.Object                               { return nil }
-func (f *fakeConnecter) Destroy()                                          {}
-func (f *fakeConnecter) ConnectMethods() []string                          { return []string{http.MethodGet} }
-func (f *fakeConnecter) NewConnectOptions() (runtime.Object, bool, string) { return nil, false, "" }
+func (f *fakeConnector) New() runtime.Object                               { return nil }
+func (f *fakeConnector) Destroy()                                          {}
+func (f *fakeConnector) ConnectMethods() []string                          { return []string{http.MethodGet} }
+func (f *fakeConnector) NewConnectOptions() (runtime.Object, bool, string) { return nil, false, "" }
 
-func (f *fakeConnecter) Connect(ctx context.Context, _ string, _ runtime.Object, _ rest.Responder) (http.Handler, error) {
+func (f *fakeConnector) Connect(ctx context.Context, _ string, _ runtime.Object, _ rest.Responder) (http.Handler, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.connectCalls++
@@ -48,8 +49,8 @@ func (f *fakeConnecter) Connect(ctx context.Context, _ string, _ runtime.Object,
 	return f.handler, nil
 }
 
-func (f *fakeConnecter) ProducesMIMETypes(string) []string { return f.mimes }
-func (f *fakeConnecter) ProducesObject(string) any         { return f.obj }
+func (f *fakeConnector) ProducesMIMETypes(string) []string { return f.mimes }
+func (f *fakeConnector) ProducesObject(string) any         { return f.obj }
 
 // recordingResponder captures whatever a handler reports.
 type recordingResponder struct {
@@ -77,7 +78,7 @@ func (r *recordingResponder) Object(statusCode int, obj runtime.Object) {
 
 func TestWithTimeout_RunsInnerHandler(t *testing.T) {
 	called := false
-	inner := &fakeConnecter{
+	inner := &fakeConnector{
 		handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			called = true
 			w.WriteHeader(http.StatusTeapot)
@@ -95,37 +96,52 @@ func TestWithTimeout_RunsInnerHandler(t *testing.T) {
 	require.Equal(t, http.StatusTeapot, rr.Code, "inner handler's response should pass through")
 }
 
-func TestWithTimeout_OverridesRequestContext(t *testing.T) {
-	type ctxKey struct{}
-	outerCtx := context.WithValue(context.Background(), ctxKey{}, "from-connect")
+// TestWithTimeout_PreservesRequestContext locks down the request-anchored
+// design: boundCtx must descend from r.Context() (so filter-populated values
+// like userInfo/requestInfo survive), and the namespace from the outer Connect
+// ctx must be forwarded onto the bound ctx.
+func TestWithTimeout_PreservesRequestContext(t *testing.T) {
+	type filterKey struct{}
 
 	var observedDeadline bool
-	var observedValue any
-	inner := &fakeConnecter{
+	var observedFilterValue any
+	var observedNamespace string
+	var observedNamespaceOK bool
+
+	inner := &fakeConnector{
 		handler: http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 			_, observedDeadline = r.Context().Deadline()
-			observedValue = r.Context().Value(ctxKey{})
+			observedFilterValue = r.Context().Value(filterKey{})
+			observedNamespace, observedNamespaceOK = request.NamespaceFrom(r.Context())
 		}),
 	}
 
+	// Mirror production: the outer Connect ctx has a namespace (k8s adds it in
+	// ConnectResource) but no filter-added values. The inbound request has the
+	// filter-added values but not the namespace.
+	connectCtx := request.WithNamespace(context.Background(), "ns-from-connect")
+
 	wrapped := WithTimeout(inner, 30*time.Second).(rest.Connecter)
-	h, err := wrapped.Connect(outerCtx, "repo", nil, &recordingResponder{})
+	h, err := wrapped.Connect(connectCtx, "repo", nil, &recordingResponder{})
 	require.NoError(t, err)
 
-	// Request comes in with a context that has neither the deadline nor the
-	// outer-Connect value, mirroring how k8s passes req in.
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req = req.WithContext(context.WithValue(req.Context(), filterKey{}, "from-filter"))
 	h.ServeHTTP(httptest.NewRecorder(), req)
 
 	require.True(t, observedDeadline,
-		"inner handler should see a deadline on r.Context() (wrapper overrode it with boundCtx)")
-	require.Equal(t, "from-connect", observedValue,
-		"inner handler should see values from the outer Connect ctx via r.Context()")
+		"inner handler should see a deadline on r.Context() (wrapper bounded it with timeout)")
+	require.Equal(t, "from-filter", observedFilterValue,
+		"values on the inbound request's context must survive — boundCtx descends from r.Context()")
+	require.True(t, observedNamespaceOK,
+		"namespace from the outer Connect ctx must reach the inner handler")
+	require.Equal(t, "ns-from-connect", observedNamespace,
+		"namespace forwarded onto boundCtx must match the one on the Connect ctx")
 }
 
 func TestWithTimeout_HandlerSeesTimeoutCancellation(t *testing.T) {
 	const timeout = 20 * time.Millisecond
-	inner := &fakeConnecter{}
+	inner := &fakeConnector{}
 
 	// The handler blocks until r.Context() is canceled and reports which kind
 	// of cancellation it saw via the response status. 504 means the deadline
@@ -152,13 +168,17 @@ func TestWithTimeout_HandlerSeesTimeoutCancellation(t *testing.T) {
 
 func TestWithTimeout_PropagatesConnectError(t *testing.T) {
 	want := errors.New("inner refused")
-	inner := &fakeConnecter{connectErr: want}
+	inner := &fakeConnector{connectErr: want}
 
 	wrapped := WithTimeout(inner, 30*time.Second).(rest.Connecter)
-	h, err := wrapped.Connect(context.Background(), "repo", nil, &recordingResponder{})
+	responder := &recordingResponder{}
+	h, err := wrapped.Connect(context.Background(), "repo", nil, responder)
 
-	require.ErrorIs(t, err, want, "inner Connect error should bubble up")
-	require.Nil(t, h, "wrapper should not return a handler when inner Connect fails")
+	require.NoError(t, err, "outer Connect should succeed; inner runs at request time")
+	require.NotNil(t, h, "outer Connect should always return a handler")
+
+	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+	require.ErrorIs(t, responder.err, want, "inner Connect error should reach responder.Error")
 }
 
 // TestWithTimeoutFunc covers the standalone helper used by routes.go for
@@ -216,14 +236,14 @@ func TestWithTimeoutFunc(t *testing.T) {
 func TestWithTimeout_ForwardsStorageMetadata(t *testing.T) {
 	// Zero fields on the inner: wrapper should forward to ProducesMIMETypes /
 	// ProducesObject and return whatever the inner returns (nil here).
-	empty := &fakeConnecter{handler: http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})}
+	empty := &fakeConnector{handler: http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})}
 	wrapped := WithTimeout(empty, 30*time.Second).(rest.StorageMetadata)
 
 	require.Nil(t, wrapped.ProducesMIMETypes(http.MethodGet))
 	require.Nil(t, wrapped.ProducesObject(http.MethodGet))
 
 	// Populated metadata: wrapper should pass the values through unchanged.
-	populated := &fakeConnecter{
+	populated := &fakeConnector{
 		handler: http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}),
 		mimes:   []string{"application/test"},
 		obj:     "the-object",
@@ -235,7 +255,7 @@ func TestWithTimeout_ForwardsStorageMetadata(t *testing.T) {
 }
 
 var (
-	_ rest.Storage         = (*fakeConnecter)(nil)
-	_ rest.Connecter       = (*fakeConnecter)(nil)
-	_ rest.StorageMetadata = (*fakeConnecter)(nil)
+	_ rest.Storage         = (*fakeConnector)(nil)
+	_ rest.Connecter       = (*fakeConnector)(nil)
+	_ rest.StorageMetadata = (*fakeConnector)(nil)
 )

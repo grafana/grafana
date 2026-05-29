@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
@@ -25,47 +26,44 @@ func WithTimeout(s rest.Storage, timeout time.Duration) rest.Storage {
 		return s
 	}
 
-	return &timeoutConnector{storage: s, inner: c, timeout: timeout}
+	return &timeoutConnector{Storage: s, Connecter: c, timeout: timeout}
 }
 
 type timeoutConnector struct {
-	storage rest.Storage
-	inner   rest.Connecter
+	rest.Storage
+	rest.Connecter
 	timeout time.Duration
 }
 
-// Functions that fulfil the rest.Storage and rest.Connector interface
-func (t *timeoutConnector) New() runtime.Object      { return t.storage.New() }
-func (t *timeoutConnector) Destroy()                 { t.storage.Destroy() }
-func (t *timeoutConnector) ConnectMethods() []string { return t.inner.ConnectMethods() }
-func (t *timeoutConnector) NewConnectOptions() (runtime.Object, bool, string) {
-	return t.inner.NewConnectOptions()
-}
-
-// Connect passes a bound ctx to the HTTP handler.
+// Connect attaches a bound ctx to the existing request context
 func (t *timeoutConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	boundCtx, cancel := context.WithTimeout(ctx, t.timeout)
-	handler, err := t.inner.Connect(boundCtx, name, opts, responder)
-	if err != nil {
-		cancel()
-		return nil, err
-	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// The k8s library does not copy over the namespace to the request context so we need to manually copy it over
+		// https://github.com/kubernetes/apiserver/blob/release-1.36/pkg/endpoints/handlers/rest.go#L189-L190
+		ns := request.NamespaceValue(ctx)
+		reqCtx := request.WithNamespace(r.Context(), ns)
+
+		boundCtx, cancel := context.WithTimeout(reqCtx, t.timeout)
 		defer cancel()
+		handler, err := t.Connecter.Connect(boundCtx, name, opts, responder)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
 		handler.ServeHTTP(w, r.WithContext(boundCtx))
 	}), nil
 }
 
 // Functions that implement the rest.StorageMetadata
 func (t *timeoutConnector) ProducesMIMETypes(verb string) []string {
-	if m, ok := t.inner.(rest.StorageMetadata); ok {
+	if m, ok := t.Connecter.(rest.StorageMetadata); ok {
 		return m.ProducesMIMETypes(verb)
 	}
 	return nil
 }
 
 func (t *timeoutConnector) ProducesObject(verb string) any {
-	if m, ok := t.inner.(rest.StorageMetadata); ok {
+	if m, ok := t.Connecter.(rest.StorageMetadata); ok {
 		return m.ProducesObject(verb)
 	}
 	return nil
