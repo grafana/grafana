@@ -9,6 +9,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
+import { AlertsIncidentsRow } from './AlertsIncidents/AlertsIncidentsRow';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import useHomeGreeting from './useHomeGreeting';
 
@@ -56,6 +57,7 @@ export default function HomePage() {
             })}
             <DashboardTabs />
           </Box>
+          <AlertsIncidentsRow />
 
           {renderLimitedComponents({
             props: {},

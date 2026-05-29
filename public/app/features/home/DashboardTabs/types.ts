@@ -26,3 +26,8 @@ export interface HomepageTabExtensionProps {
   active: boolean;
   register: (tab: HomepageTab) => () => void;
 }
+
+export interface HomepageTabExtensionProps {
+  active: boolean;
+  register: (tab: HomepageTab) => () => void;
+}

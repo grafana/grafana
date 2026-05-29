@@ -10880,11 +10880,31 @@
     "name-stacking": "Stacking"
   },
   "home": {
+    "active-incidents-card": {
+      "empty": "No active incidents.",
+      "title": "Active incidents",
+      "view-all": "View all incidents"
+    },
     "dashboard-tabs": {
+      "most-used": "Most used",
+      "most-used-active": "Most used dashboards",
       "recent": "Recent",
       "recent-active": "Recent dashboards",
       "starred": "Starred",
       "starred-active": "Starred dashboards"
+    },
+    "firing-alerts-card": {
+      "critical-count_one": "{{count}} critical",
+      "critical-count_other": "{{count}} critical",
+      "empty": "No firing alerts.",
+      "empty-teams": "No firing alerts for your teams.",
+      "error-title": "Could not load firing alerts",
+      "high-count_one": "{{count}} high",
+      "high-count_other": "{{count}} high",
+      "retry": "Retry",
+      "show-all": "Show all firing alerts",
+      "title": "Firing alerts",
+      "view-all": "View all firing alerts"
     },
     "home-page": {
       "edition": {
@@ -10898,6 +10918,12 @@
         "morning": "Good morning."
       },
       "placeholder": "Welcome to {{edition}}."
+    },
+    "most-used-dashboards-tab": {
+      "empty": "Most viewed dashboards in your organization will appear here once usage data is collected.",
+      "error-title": "Could not load most viewed dashboards",
+      "loading": "Loading most viewed dashboards...",
+      "retry": "Retry"
     },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",

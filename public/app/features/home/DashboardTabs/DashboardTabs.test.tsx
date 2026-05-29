@@ -4,7 +4,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
-import { setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
+import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -38,6 +38,11 @@ const starredHits: DashboardHit[] = [
   makeDashboardHit({ name: 'starred-3', title: 'Starred Dashboard 3' }),
 ];
 
+const mostUsedHits: DashboardHit[] = [
+  makeDashboardHit({ name: 'most-used-1', title: 'Most Used Dashboard 1' }),
+  makeDashboardHit({ name: 'most-used-2', title: 'Most Used Dashboard 2' }),
+];
+
 function seedRecent(uids: string[]) {
   window.localStorage.setItem(impressionKey, JSON.stringify(uids));
 }
@@ -50,6 +55,7 @@ beforeEach(() => {
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   window.localStorage.removeItem(impressionKey);
   seedStars([]);
+  config.licenseInfo.enabledFeatures = {};
 });
 
 const createDashboardTabsExtensionComponent = (
@@ -153,6 +159,66 @@ describe('DashboardTabs', () => {
     });
   });
 
+  describe('Most used tab', () => {
+    const allHits = [...recentHits, ...starredHits, ...mostUsedHits];
+
+    it('renders Most used tab when analytics feature is enabled', async () => {
+      config.licenseInfo.enabledFeatures = { analytics: true };
+      seedRecent(['recent-1', 'recent-2']);
+      server.use(getCustomSearchHandler(allHits));
+
+      render(<DashboardTabs />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /most used/i })).toBeInTheDocument();
+      });
+    });
+
+    it('does not render Most used tab when analytics feature is disabled', async () => {
+      config.licenseInfo.enabledFeatures = {};
+      seedRecent(['recent-1', 'recent-2']);
+      server.use(getCustomSearchHandler(allHits));
+
+      render(<DashboardTabs />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Recent Dashboard 1')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByRole('tab', { name: /most used/i })).not.toBeInTheDocument();
+    });
+
+    it('auto-switches to Most used when recent is empty and most-used has items', async () => {
+      config.licenseInfo.enabledFeatures = { analytics: true };
+      // No recent dashboards seeded
+      server.use(getCustomSearchHandler(allHits));
+
+      render(<DashboardTabs />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /most used/i })).toHaveAttribute('aria-selected', 'true');
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Most Used Dashboard 1')).toBeInTheDocument();
+        expect(screen.getByText('Most Used Dashboard 2')).toBeInTheDocument();
+      });
+    });
+
+    it('stays on Recent when recent has items even with most-used available', async () => {
+      config.licenseInfo.enabledFeatures = { analytics: true };
+      seedRecent(['recent-1', 'recent-2']);
+      server.use(getCustomSearchHandler(allHits));
+
+      render(<DashboardTabs />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Recent Dashboard 1')).toBeInTheDocument();
+      });
+
+      expect(screen.getByRole('tab', { name: /recent/i })).toHaveAttribute('aria-selected', 'true');
+    });
+  });
   it('renders extension tabs from plugins', async () => {
     const extensionComponents = [
       createDashboardTabsExtensionComponent(
@@ -181,7 +247,6 @@ describe('DashboardTabs', () => {
     await waitFor(() => {
       expect(screen.getByRole('tab', { name: 'Plugin Tab 1' })).toHaveAttribute('aria-selected', 'true');
     });
-
     expect(await screen.findByRole('tab', { name: 'Plugin Tab 2' })).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Plugin Tab 3' })).not.toBeInTheDocument();
 

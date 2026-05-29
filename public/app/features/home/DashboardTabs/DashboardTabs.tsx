@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints, type GrafanaTheme2 } from '@grafana/data';
@@ -7,17 +7,21 @@ import { t } from '@grafana/i18n';
 import { usePluginComponents } from '@grafana/runtime';
 import { ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
+import { getMostUsedDashboards, isMostUsedAvailable } from 'app/features/browse-dashboards/api/mostUsed';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
+import { MostUsedDashboardsTab } from './MostUsedDashboardsTab';
 import { RecentDashboardsTab } from './RecentDashboardsTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
 import { type HomepageTabExtensionProps, type HomepageTab, validateHomepageTab } from './types';
 
 const RECENT_TAB_ID = 'recent';
+const MOST_USED_TAB_ID = 'most-used';
 const STARRED_TAB_ID = 'starred';
 const MAX_RECENT = 20;
+const MAX_MOST_USED = 20;
 const MAX_STARRED = 30;
 
 function DashboardExtensionTab({
@@ -70,8 +74,20 @@ export function DashboardTabs() {
     return response.view.toArray();
   }, []);
 
+  const mostUsedAvailable = useMemo(() => isMostUsedAvailable(), []);
+
+  const {
+    value: mostUsedDashboards,
+    loading: mostUsedLoading,
+    error: mostUsedError,
+    retry: mostUsedRetry,
+  } = useAsyncRetry(
+    () => (mostUsedAvailable ? getMostUsedDashboards(MAX_MOST_USED) : Promise.resolve([])),
+    [mostUsedAvailable]
+  );
+
   const { foldersByUid } = useDashboardLocationInfo(
-    (recentDashboards?.length ?? 0) > 0 || (starredDashboards?.length ?? 0) > 0
+    (recentDashboards?.length ?? 0) > 0 || (mostUsedDashboards?.length ?? 0) > 0 || (starredDashboards?.length ?? 0) > 0
   );
 
   const { components: extensionComponents } = usePluginComponents<HomepageTabExtensionProps>({
@@ -86,17 +102,24 @@ export function DashboardTabs() {
   // Auto-switch to the non-empty tab when initial data finishes loading
   const didAutoSwitch = useRef(false);
   useEffect(() => {
-    if (didAutoSwitch.current || recentLoading || starredLoading) {
+    if (didAutoSwitch.current || recentLoading || starredLoading || (mostUsedAvailable && mostUsedLoading)) {
       return;
     }
 
     const recentEmpty = !recentDashboards?.length;
+    const mostUsedEmpty = !mostUsedDashboards?.length;
     const starredEmpty = !starredDashboards?.length;
 
-    if (activeTab === RECENT_TAB_ID && recentEmpty && !starredEmpty) {
-      setActiveTab(STARRED_TAB_ID);
-      didAutoSwitch.current = true;
-      return;
+    if (activeTab === RECENT_TAB_ID && recentEmpty) {
+      if (mostUsedAvailable && !mostUsedEmpty) {
+        setActiveTab(MOST_USED_TAB_ID);
+        didAutoSwitch.current = true;
+        return;
+      } else if (!starredEmpty) {
+        setActiveTab(STARRED_TAB_ID);
+        didAutoSwitch.current = true;
+        return;
+      }
     }
 
     if (activeTab === STARRED_TAB_ID && starredEmpty && !recentEmpty) {
@@ -105,7 +128,7 @@ export function DashboardTabs() {
       return;
     }
 
-    if ((activeTab === RECENT_TAB_ID || activeTab === STARRED_TAB_ID) && recentEmpty && starredEmpty) {
+    if ((activeTab === RECENT_TAB_ID || activeTab === STARRED_TAB_ID) && recentEmpty && starredEmpty && mostUsedEmpty) {
       const extensionTab = extensionTabs.find((tab) => !tab.href);
       if (extensionTab) {
         setActiveTab(extensionTab.id);
@@ -113,7 +136,17 @@ export function DashboardTabs() {
         return;
       }
     }
-  }, [recentLoading, starredLoading, recentDashboards, starredDashboards, extensionTabs, activeTab]);
+  }, [
+    recentLoading,
+    starredLoading,
+    mostUsedLoading,
+    mostUsedAvailable,
+    recentDashboards,
+    mostUsedDashboards,
+    starredDashboards,
+    extensionTabs,
+    activeTab,
+  ]);
 
   const builtInTabs: HomepageTab[] = [
     {
@@ -122,6 +155,16 @@ export function DashboardTabs() {
       activeLabel: t('home.dashboard-tabs.recent-active', 'Recent dashboards'),
       counter: recentDashboards?.length,
     },
+    ...(mostUsedAvailable
+      ? [
+          {
+            id: MOST_USED_TAB_ID,
+            label: t('home.dashboard-tabs.most-used', 'Most used'),
+            activeLabel: t('home.dashboard-tabs.most-used-active', 'Most used dashboards'),
+            counter: mostUsedDashboards?.length,
+          },
+        ]
+      : []),
     {
       id: STARRED_TAB_ID,
       label: t('home.dashboard-tabs.starred', 'Starred'),
@@ -154,7 +197,7 @@ export function DashboardTabs() {
         ))}
       </TabsBar>
 
-      {(activeTab === RECENT_TAB_ID || activeTab === STARRED_TAB_ID) && (
+      {(activeTab === RECENT_TAB_ID || activeTab === STARRED_TAB_ID || activeTab === MOST_USED_TAB_ID) && (
         <TabContent className={styles.tabContent}>
           <ScrollContainer showScrollIndicators maxHeight="256px" minHeight="256px">
             {activeTab === RECENT_TAB_ID && (
@@ -163,6 +206,15 @@ export function DashboardTabs() {
                 loading={recentLoading}
                 error={recentError}
                 retry={recentRetry}
+                foldersByUid={foldersByUid}
+              />
+            )}
+            {activeTab === MOST_USED_TAB_ID && (
+              <MostUsedDashboardsTab
+                dashboards={mostUsedDashboards ?? []}
+                loading={mostUsedLoading}
+                error={mostUsedError}
+                retry={mostUsedRetry}
                 foldersByUid={foldersByUid}
               />
             )}

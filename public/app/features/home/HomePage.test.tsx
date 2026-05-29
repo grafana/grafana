@@ -1,10 +1,12 @@
+import { http, HttpResponse } from 'msw';
 import { render, screen } from 'test/test-utils';
 
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
 import HomePage from './HomePage';
@@ -14,6 +16,18 @@ setupMockServer();
 
 beforeEach(() => {
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+
+  // Deny alerting permission so the FiringAlertsCard renders null
+  jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+
+  // Stub endpoints that AlertsIncidentsRow children would call
+  server.use(
+    http.get('/api/user/teams', () => HttpResponse.json([])),
+    http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json([])),
+    http.get('/api/plugins/:pluginId/settings', () =>
+      HttpResponse.json({ message: 'Plugin not found' }, { status: 404 })
+    )
+  );
 });
 
 const createHomepageExtensionComponent = (
@@ -37,6 +51,10 @@ describe('HomePage', () => {
   afterEach(() => {
     config.buildInfo = { ...originalBuildInfo };
     config.namespace = originalNamespace;
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
   });
 
   it('renders the greeting', async () => {
