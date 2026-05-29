@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
@@ -61,20 +62,20 @@ type DeprecatedIDLookup func(ctx context.Context, key *resourcepb.ResourceKey, i
 func NewDeprecatedIDLookup(index resourcepb.ResourceIndexClient) DeprecatedIDLookup {
 	return func(ctx context.Context, key *resourcepb.ResourceKey, id int64) (bool, error) {
 		rsp, err := index.Search(ctx, &resourcepb.ResourceSearchRequest{
-			Limit: 0, // We don't need the real results
+			Limit: 1, // we only need to know if any match exists
 			Options: &resourcepb.ListOptions{
 				Key: key,
 				Labels: []*resourcepb.Requirement{{
 					Key:      utils.LabelKeyDeprecatedInternalID,
-					Operator: "=",
-					Values:   []string{fmt.Sprintf("%d", id)},
+					Operator: string(selection.Equals),
+					Values:   []string{strconv.FormatInt(id, 10)},
 				}},
 			},
 		})
 		if err != nil {
 			return false, err
 		}
-		return rsp.TotalHits > 0, nil
+		return rsp.Results != nil && len(rsp.Results.Rows) > 0, nil
 	}
 }
 

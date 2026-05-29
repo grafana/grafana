@@ -202,6 +202,37 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Equal(t, int64(2), meta2.GetGeneration())
 	})
 
+	t.Run("Update can not change the deprecated internal ID", func(t *testing.T) {
+		// The previously stored object owns internal ID 50
+		previous := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test-name"}}
+		prevMeta, err := utils.MetaAccessor(previous)
+		require.NoError(t, err)
+		prevMeta.SetDeprecatedInternalID(50) // nolint:staticcheck
+
+		assertStoredID := func(t *testing.T, updated *dashv1.Dashboard) {
+			t.Helper()
+			v, err := s.prepareObjectForUpdate(ctx, updated, previous)
+			require.NoError(t, err)
+			stored, _, err := s.codec.Decode(v.raw.Bytes(), nil, &dashv1.Dashboard{})
+			require.NoError(t, err)
+			storedMeta, err := utils.MetaAccessor(stored)
+			require.NoError(t, err)
+			// The update is ignored: the internal ID stays pinned to the previous value
+			require.Equal(t, int64(50), storedMeta.GetDeprecatedInternalID()) // nolint:staticcheck
+		}
+
+		// Attempting to change it to a different value is ignored
+		changed := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test-name"}}
+		changedMeta, err := utils.MetaAccessor(changed)
+		require.NoError(t, err)
+		changedMeta.SetDeprecatedInternalID(999) // nolint:staticcheck
+		assertStoredID(t, changed)
+
+		// Attempting to clear it is also ignored
+		cleared := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test-name"}}
+		assertStoredID(t, cleared)
+	})
+
 	t.Run("Update should skip incrementing generation when content is unchanged", func(t *testing.T) {
 		dashboard := dashv1.Dashboard{
 			ObjectMeta: v1.ObjectMeta{
@@ -284,7 +315,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		meta.SetDeprecatedInternalID(100) // nolint:staticcheck
 
 		_, err = s.prepareObjectForStorage(ctx, obj)
-		require.True(t, apierrors.IsBadRequest(err))
+		require.True(t, apierrors.IsConflict(err))
 	})
 
 	t.Run("Should remove grant permissions annotation", func(t *testing.T) {

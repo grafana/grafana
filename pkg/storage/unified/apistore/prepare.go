@@ -148,17 +148,24 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	}
 
 	if s.opts.DeprecatedInternalID == nil {
-		obj.SetDeprecatedInternalID(0) // nolint:staticcheck make sure we do NOT have the label
+		obj.SetDeprecatedInternalID(0) // nolint:staticcheck // make sure we do NOT have the label
 	} else {
 		// nolint:staticcheck
 		id := obj.GetDeprecatedInternalID()
 		if id > 0 {
-			found, err := s.opts.DeprecatedInternalID(ctx, &resourcepb.ResourceKey{}, id)
+			// Best-effort guard: the index is eventually consistent, so two
+			// concurrent creates with the same id could still both pass here.
+			found, err := s.opts.DeprecatedInternalID(ctx, &resourcepb.ResourceKey{
+				Group:     s.gr.Group,
+				Resource:  s.gr.Resource,
+				Namespace: obj.GetNamespace(),
+			}, id)
 			if err != nil {
 				return v, err
 			}
 			if found {
-				return v, apierrors.NewBadRequest("The same deprecated internal ID already exists")
+				return v, apierrors.NewConflict(s.gr, obj.GetName(),
+					fmt.Errorf("deprecatedInternalID=%d is already in use", id))
 			}
 		} else {
 			// the ID must be smaller than 9007199254740991, otherwise we will lose precision
