@@ -1368,6 +1368,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/defaults-ini-docs-reminder.yml @grafana/docs-tooling @jtvdez
 /.github/workflows/pr-build-grafana.yml @grafana/grafana-backend-services-squad
 /.github/workflows/build-docker-variants.yml @grafana/grafana-backend-services-squad
+/.github/workflows/create-release-tag.yml @grafana/grafana-backend-services-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
