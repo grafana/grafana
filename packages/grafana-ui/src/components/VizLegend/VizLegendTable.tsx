@@ -100,56 +100,54 @@ export const VizLegendTable = <T extends unknown>({
   }
 
   return (
-    <table
-      className={cx(styles.grid, className)}
-      style={{
-        gridTemplateColumns: `min-content minmax(55px, auto) ${'min-content '.repeat(Object.keys(header).length - 1)}`,
-      }}
-    >
-      <thead className={styles.header}>
-        <tr>
-          <th></th>
-          {Object.keys(header).map((columnTitle) => (
-            <th
-              title={header[columnTitle]}
-              key={columnTitle}
-              className={cx({
-                [styles.headerSortable]: Boolean(onToggleSort),
-                [styles.nameHeader]: isSortable,
-                [styles.withIcon]: sortKey === columnTitle,
-                'sr-only': !isSortable,
-              })}
-              onClick={() => {
-                if (onToggleSort && isSortable) {
-                  onToggleSort(columnTitle);
-                }
-              }}
-            >
-              {columnTitle === nameSortKey && filterAction && (
-                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                <span className={styles.filterAction} onClick={(e) => e.stopPropagation()}>
-                  {filterAction}
-                </span>
-              )}
-              {columnTitle}
-              {sortKey === columnTitle && <Icon size="xs" name={sortDesc ? 'angle-down' : 'angle-up'} />}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>{limitedItems.map(itemRenderer!)}</tbody>
-      {curLimit > 0 && items.length > curLimit && (
-        <tfoot>
+    <>
+      <table
+        className={cx(styles.grid, className)}
+        style={{
+          gridTemplateColumns: `min-content minmax(55px, auto) ${'min-content '.repeat(Object.keys(header).length - 1)}`,
+        }}
+      >
+        <thead className={styles.header}>
           <tr>
-            <td colSpan={100} style={{ textAlign: 'right' }}>
-              <Button fill="text" variant="primary" size="sm" onClick={() => setLimit(0)}>
-                <Trans i18nKey={'legend.container.show-all-series'}>...show all {{ total: items.length }} items</Trans>
-              </Button>
-            </td>
+            <th></th>
+            {Object.keys(header).map((columnTitle) => (
+              <th
+                title={header[columnTitle]}
+                key={columnTitle}
+                className={cx({
+                  [styles.headerSortable]: Boolean(onToggleSort),
+                  [styles.nameHeader]: isSortable,
+                  [styles.withIcon]: sortKey === columnTitle,
+                  'sr-only': !isSortable,
+                })}
+                onClick={() => {
+                  if (onToggleSort && isSortable) {
+                    onToggleSort(columnTitle);
+                  }
+                }}
+              >
+                {columnTitle === nameSortKey && filterAction && (
+                  // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+                  <span className={styles.filterAction} onClick={(e) => e.stopPropagation()}>
+                    {filterAction}
+                  </span>
+                )}
+                {columnTitle}
+                {sortKey === columnTitle && <Icon size="xs" name={sortDesc ? 'angle-down' : 'angle-up'} />}
+              </th>
+            ))}
           </tr>
-        </tfoot>
+        </thead>
+        <tbody>{limitedItems.map(itemRenderer!)}</tbody>
+      </table>
+      {curLimit > 0 && items.length > curLimit && (
+        <Button fill="text" variant="primary" size="sm" onClick={() => setLimit(0)} className={styles.showAll}>
+          <Trans i18nKey={'legend.container.show-all-series'} className={styles.showAll}>
+            ...show all {{ total: items.length }} items
+          </Trans>
+        </Button>
       )}
-    </table>
+    </>
   );
 };
 
@@ -174,6 +172,9 @@ const getStyles = (theme: GrafanaTheme2, placement: LegendPlacement = 'bottom') 
     marginLeft: theme.spacing(0.5),
     display: 'inline-flex',
     verticalAlign: 'middle',
+  }),
+  showAll: css({
+    justifyContent: 'right',
   }),
 
   grid: css({
