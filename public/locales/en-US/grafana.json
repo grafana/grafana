@@ -6029,13 +6029,6 @@
       "ungroup-nested-text": "This will ungroup all nested groups.",
       "ungroup-nested-title": "Ungroup nested groups?"
     },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Dashboard not found"
-        }
-      }
-    },
     "make-editable": {
       "dashboard-not-editable": "Dashboard not editable",
       "make-editable": "Make editable"
@@ -6627,8 +6620,8 @@
     "version-history-comparison": {
       "button-restore": "Restore to version {{version}}",
       "label-view-json-diff": "View JSON diff",
-      "new-updated-by": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}"
+      "new-updated-by": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}",
+      "old-updated-by": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}"
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Toggle selection of version {{version}}",
@@ -7870,8 +7863,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "View JSON diff",
-      "new-version-updated": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}"
+      "new-version-updated": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}",
+      "old-version-updated": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}"
     },
     "version-history-header": {
       "compare-versions": "Comparing {{baseVersion}} <3></3> {{newVersion}}",
@@ -10230,7 +10223,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Help <1></1>",
-      "access-help-details": "Access mode controls how requests to the data source will be handled.<1><i>Server</i></1> should be the preferred way if nothing else is stated.",
+      "access-help-details": "Access mode controls how requests to the data source will be handled.<strong><i>Server</i></strong> should be the preferred way if nothing else is stated.",
       "access-help-title": "Access help",
       "access-label": "Access",
       "allowed-cookies": "Allowed cookies",
@@ -10916,6 +10909,10 @@
       "loading": "Loading starred dashboards...",
       "retry": "Retry"
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "Could not check whether the target folder is managed by a repository. Please try again or contact an administrator.",
+    "error-provisioning-status-title": "Unable to determine provisioning status"
   },
   "inspector": {
     "inspect-data-tab": {
@@ -13198,8 +13195,8 @@
       "label-branch": "Branch",
       "label-comment": "Comment",
       "label-filename": "Filename",
-      "label-folder": "Folder",
       "label-path": "Path",
+      "label-repository-folder": "Repository folder",
       "path-exists": "A file with this name already exists at this path",
       "placeholder-branch": "Select or enter branch name",
       "placeholder-folder": "Select or enter folder path",
@@ -13603,7 +13600,19 @@
       "resource-not-found": "Resource not found. Please check the URL or repository."
     },
     "import": {
-      "error": "An error occurred while importing the dashboard."
+      "cancel": "Cancel",
+      "constant-required": "{{label}} needs a value",
+      "datasource-required": "Please select a data source",
+      "error": "An error occurred while importing the dashboard.",
+      "float-grid-items-body": "The dashboard contains grid items with floating positions. This is not supported by Grafana and the numbers will be truncated to integers.",
+      "float-grid-items-title": "Floating grid items",
+      "import": "Import",
+      "importing": "Importing...",
+      "label-folder": "Folder",
+      "label-name": "Name",
+      "library-panels-blocked-body": "This dashboard contains library panels that cannot be created through a provisioned import. Import into a non-provisioned folder instead, or remove the library panel references first.",
+      "library-panels-blocked-title": "Library panels not supported",
+      "name-required": "Name is required"
     },
     "instance-sync-deprecation": {
       "message": "Instance sync is currently not fully supported and breaks library panels and alerts. To use library panels and alerts, disconnect your repository and reconnect it using folder sync instead.",
@@ -16613,7 +16622,7 @@
       "message": "No users found"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Your session token was automatically revoked because you have reached <2>the maximum number of {{numSessions}} concurrent sessions</2> for your account.",
+      "auto-revoked": "Your session token was automatically revoked because you have reached <strong>the maximum number of {{numSessions}} concurrent sessions</strong> for your account.",
       "resume-message": "<strong>To resume your session, sign in again.</strong>Contact your administrator or visit the license page to review your quota if you are repeatedly signed out automatically.",
       "sign-in": "Sign in",
       "title-you-have-been-automatically-signed-out": "You have been automatically signed out"

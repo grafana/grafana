@@ -22,6 +22,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
 const (
@@ -261,6 +262,12 @@ func isRetryableSnapshotStoreError(ctx context.Context, err error) bool {
 	}
 	if errors.Is(err, ErrSnapshotNotFound) || errors.Is(err, ErrInvalidManifest) || errors.Is(err, resource.ErrWriteLimitExceeded) {
 		return false
+	}
+
+	// kv.ErrRetryable marks transient errors from KV backends (e.g. gRPC
+	// status codes, retryable filesystem errors) wrapped by KVRemoteIndexStore.
+	if errors.Is(err, kv.ErrRetryable) {
+		return true
 	}
 
 	switch gcerrors.Code(err) {

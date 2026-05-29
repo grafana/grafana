@@ -399,6 +399,18 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		MaximumNameLength:           80,
 		RequireDeprecatedInternalID: true,
 	})
+	// Cap the apiserver name at 253 characters so callers get a clear
+	// validation error instead of a silent truncation/error at the storage
+	// layer. 253 is the Kubernetes DNS-1123 subdomain limit for metadata.name
+	// and also matches the size of the `name` column in the unified storage
+	// `resource`/`resource_history` tables, as well as the `role.uid` column
+	// expansion done by the legacy migration in this PR.
+	opts.StorageOptsRegister(iamv0.RoleInfo.GroupResource(), apistore.StorageOptions{
+		MaximumNameLength: 253,
+	})
+	opts.StorageOptsRegister(iamv0.GlobalRoleInfo.GroupResource(), apistore.StorageOptions{
+		MaximumNameLength: 253,
+	})
 
 	if enableTeamsApi {
 		if err := b.UpdateTeamsAPIGroup(opts, storage, enableZanzanaSync); err != nil {

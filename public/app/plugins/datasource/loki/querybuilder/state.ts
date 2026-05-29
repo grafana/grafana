@@ -14,7 +14,7 @@ export function changeEditorMode(query: LokiQuery, editorMode: QueryEditorMode, 
   onChange({ ...query, editorMode });
 }
 
-export function getDefaultEditorMode(expr: string) {
+function getDefaultEditorMode(expr: string) {
   // If we already have an expression default to code view
   if (expr != null && expr !== '') {
     return QueryEditorMode.Code;
