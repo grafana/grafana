@@ -3027,7 +3027,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/HistoryList"
                 }
               }
             }
@@ -3087,7 +3087,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/HistoryList"
                 }
               }
             }

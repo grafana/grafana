@@ -1323,14 +1323,14 @@ export type DeleteRepositoryFilesWithPathApiArg = {
   /** path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/') */
   originalPath?: string;
 };
-export type GetRepositoryHistoryApiResponse = /** status 200 OK */ string;
+export type GetRepositoryHistoryApiResponse = /** status 200 OK */ HistoryList;
 export type GetRepositoryHistoryApiArg = {
   /** name of the HistoryList */
   name: string;
   /** branch or commit hash */
   ref?: string;
 };
-export type GetRepositoryHistoryWithPathApiResponse = /** status 200 OK */ string;
+export type GetRepositoryHistoryWithPathApiResponse = /** status 200 OK */ HistoryList;
 export type GetRepositoryHistoryWithPathApiArg = {
   /** name of the HistoryList */
   name: string;
@@ -2220,6 +2220,25 @@ export type ResourceWrapper = {
   timestamp?: Time;
   /** Typed links for this file (only supported by external systems, github etc) */
   urls?: RepositoryUrLs;
+};
+export type Author = {
+  avatarURL?: string;
+  name: string;
+  username: string;
+};
+export type HistoryItem = {
+  authors: Author[];
+  createdAt: number;
+  message: string;
+  ref: string;
+};
+export type HistoryList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: HistoryItem[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ListMeta;
 };
 export type ResourceListItem = {
   folder?: string;
