@@ -37,3 +37,7 @@ eslint-suppressions.json
 
 packages/get-document/index.js
 packages/get-document/LICENSE
+
+packages/mapbox-jsonlint-lines-primitives/lib/jsonlint.js
+packages/mapbox-jsonlint-lines-primitives/lib/formatter.js
+packages/mapbox-jsonlint-lines-primitives/LICENSE
