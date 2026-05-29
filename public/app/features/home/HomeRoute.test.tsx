@@ -39,14 +39,10 @@ describe('HomeRoute', () => {
 
     // Deny alerting permission so the FiringAlertsCard renders null
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-
-    // Stub endpoints that AlertsIncidentsRow children would call
+    // Stub endpoints that FiringAlertsCard would call
     server.use(
       http.get('/api/user/teams', () => HttpResponse.json([])),
-      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json([])),
-      http.get('/api/plugins/:pluginId/settings', () =>
-        HttpResponse.json({ message: 'Plugin not found' }, { status: 404 })
-      )
+      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json([]))
     );
   });
 

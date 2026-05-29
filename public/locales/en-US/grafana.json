@@ -10880,11 +10880,6 @@
     "name-stacking": "Stacking"
   },
   "home": {
-    "active-incidents-card": {
-      "empty": "No active incidents.",
-      "title": "Active incidents",
-      "view-all": "View all incidents"
-    },
     "dashboard-tabs": {
       "most-used": "Most used",
       "most-used-active": "Most used dashboards",
