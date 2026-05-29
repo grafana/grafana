@@ -118,7 +118,7 @@ describe('deprecated getLoglevel()', () => {
     });
   });
 
-  describe('with grafana.logLevelInference disaabled', () => {
+  describe('with grafana.logLevelInference disabled', () => {
     it('returns unspecified (not unknown) regardless of the line content', () => {
       const level = getLogLevel('error warn info');
       expect(level).toBe(LogLevel.unspecified);
