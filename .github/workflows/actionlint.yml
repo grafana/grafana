@@ -29,7 +29,7 @@ concurrency:
 jobs:
   run-actionlint:
     name: Lint GitHub Actions files
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-small
     permissions:
       contents: read # to check out the code
       actions: read # to read the workflow files

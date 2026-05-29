@@ -47,10 +47,6 @@ import {
   compileFrameToRecords,
 } from './utils';
 
-export interface FilteredRowsOptions {
-  hasNestedFrames: boolean;
-}
-
 export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFrames?: boolean) {
   const [filter, setFilter] = useState<FilterType>({});
   const filterResult = useMemo(

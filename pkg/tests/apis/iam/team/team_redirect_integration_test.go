@@ -107,6 +107,17 @@ func TestIntegrationGetTeamByIDAPI(t *testing.T) {
 
 	directK8sTeam := getTeamViaK8sAPI(t, helper, uid)
 	assertRedirectMatchesK8sAPI(t, k8sTeam, directK8sTeam)
+
+	// Add a member; toggle off because the K8s adapter path needs FlagKubernetesUsersApi.
+	editorID, err := helper.Org1.Editor.Identity.GetInternalID()
+	require.NoError(t, err)
+	setTeamK8sFeatureToggle(t, false)
+	addTeamMemberViaAPI(t, helper, teamID, editorID)
+
+	// GET via K8s adapter — memberCount must reflect Spec.Members (creator-admin + editor)
+	setTeamK8sFeatureToggle(t, true)
+	teamWithMembers := getTeamByIDViaAPI(t, helper, teamID)
+	assert.EqualValues(t, 2, teamWithMembers.MemberCount)
 }
 
 // go test -timeout 120s -run ^TestIntegrationUpdateTeamAPI$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
@@ -167,6 +178,7 @@ type teamResponse struct {
 	Email         string `json:"email"`
 	ExternalUID   string `json:"externalUID"`
 	IsProvisioned bool   `json:"isProvisioned"`
+	MemberCount   int64  `json:"memberCount"`
 }
 
 func setupTeamTestHelper(t *testing.T) *apis.K8sTestHelper {
@@ -183,6 +195,7 @@ func setupTeamTestHelper(t *testing.T) *apis.K8sTestHelper {
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 			featuremgmt.FlagKubernetesTeamsApi,
 			featuremgmt.FlagKubernetesTeamsRedirect,
+			featuremgmt.FlagKubernetesUsersApi,
 		},
 	})
 
@@ -199,6 +212,12 @@ func setTeamK8sFeatureToggle(t *testing.T, enabled bool) {
 		},
 		featuremgmt.FlagKubernetesTeamsRedirect: {
 			Key:            featuremgmt.FlagKubernetesTeamsRedirect,
+			DefaultVariant: "default",
+			Variants:       map[string]any{"default": enabled},
+		},
+		// Gate also requires UsersApi for member enrichment.
+		featuremgmt.FlagKubernetesUsersApi: {
+			Key:            featuremgmt.FlagKubernetesUsersApi,
 			DefaultVariant: "default",
 			Variants:       map[string]any{"default": enabled},
 		},

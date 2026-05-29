@@ -348,7 +348,7 @@ export const Title = ({
         />
       )}
       {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} size="lg" />}
-      <Text variant="h1" truncate>
+      <Text element="h1" variant="h1" truncate>
         {name}
       </Text>
       {isProvisioned && <ProvisioningBadge tooltip provenance={provenance} />}

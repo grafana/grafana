@@ -212,7 +212,7 @@ export const LogsTable = ({
   );
 
   // Extract fields transform
-  const { extractedFrame } = useExtractFields({ rawTableFrame, fieldConfig, timeZone });
+  const { extractedFrame } = useExtractFields({ rawTableFrame, fieldConfig, timeZone, replaceVariables });
 
   // Organize fields transform
   const { organizedFrame } = useOrganizeFields({

@@ -35,6 +35,7 @@ policy:
             - Workflow .github/workflows/pr-go-workspace-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-k8s-codegen-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-mt-service-compatibility.yml succeeded or skipped
+            - Workflow .github/workflows/pr-patch-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration-pgvector.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
@@ -150,6 +151,7 @@ approval_rules:
           conclusions:
             - skipped
             - success
+            - failure
           workflows:
             - .github/workflows/check-frontend-test-coverage.yml
   - name: Workflow .github/workflows/codeowners-validator.yml succeeded or skipped

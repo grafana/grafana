@@ -246,7 +246,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			cancel()
 			return nil, errors.New("holder is required when enable_kv_leases is true")
 		}
-		leaseManager = lease.NewManager(kv, opts.Holder)
+		leaseManager = lease.NewManager(kv, opts.Holder, opts.Reg)
 	}
 
 	backend := &kvStorageBackend{
