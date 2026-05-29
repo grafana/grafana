@@ -45,7 +45,7 @@ import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME, parseLogsFrame } fro
 
 /**
  * Returns the log level of a log line.
- * Parse the line for level words. If no level is found, it returns `LogLevel.unknown`.
+ * Parse the line for level words. If no level is found, it returns `LogLevel.unspecified`.
  *
  * Example: `getLogLevel('WARN 1999-12-31 this is great') // LogLevel.warn`
  * @deprecated
