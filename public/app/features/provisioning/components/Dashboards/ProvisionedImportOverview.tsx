@@ -127,12 +127,12 @@ function ProvisionedImportOverviewReady({
     mode: 'onChange',
   });
 
-  function onSubmit(form: ProvisionedImportFormData) {
+  async function onSubmit(form: ProvisionedImportFormData) {
     const spec = isDashboardV2Spec(dashboard)
       ? buildV2Spec(dashboard, form, normalizedLayout, hasFloatGridItems)
       : buildV1Spec(dashboard, form, inputs);
 
-    save({
+    await save({
       spec,
       apiVersion: isV2 ? 'v2' : 'v1',
       uid: form.uid || undefined,

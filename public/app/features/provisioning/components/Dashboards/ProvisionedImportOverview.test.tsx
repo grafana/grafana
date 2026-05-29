@@ -1,4 +1,4 @@
-import { act } from '@testing-library/react';
+import { act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
@@ -110,6 +110,7 @@ async function setup(overrides: Partial<Parameters<typeof ProvisionedImportOverv
 describe('ProvisionedImportOverview', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSave.mockReturnValue(undefined);
     mockValidateUid.mockResolvedValue(true);
     dashboardAPIVersionResolver.set({ v1: 'v1', v2: 'v2' });
     server.use(
@@ -160,6 +161,40 @@ describe('ProvisionedImportOverview', () => {
       expect(call.apiVersion).toBe('v1');
       expect(call.folderUid).toBe('folder-1');
       expect(call.title).toBe('V1 Dashboard');
+    });
+
+    it('disables submit synchronously and stays disabled while save is pending', async () => {
+      let resolveSave!: () => void;
+      mockSave.mockReturnValue(
+        new Promise<void>((resolve) => {
+          resolveSave = resolve;
+        })
+      );
+      await setup({ dashboardUid: undefined });
+
+      const nameInput = screen.getByTestId(selectors.components.ImportDashboardForm.name);
+      await userEvent.clear(nameInput);
+      await userEvent.type(nameInput, 'Imported dashboard');
+
+      const submitBtn = screen.getByTestId(selectors.components.ImportDashboardForm.submit);
+      await waitFor(() => expect(submitBtn).not.toBeDisabled());
+
+      fireEvent.click(submitBtn);
+
+      expect(submitBtn).toBeDisabled();
+
+      await waitFor(() => {
+        expect(mockSave).toHaveBeenCalledTimes(1);
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(submitBtn).toBeDisabled();
+
+      await act(async () => {
+        resolveSave();
+        await Promise.resolve();
+      });
     });
   });
 

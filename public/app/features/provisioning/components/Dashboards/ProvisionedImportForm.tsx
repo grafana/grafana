@@ -49,7 +49,7 @@ export function ProvisionedImportForm({
     control,
     handleSubmit,
     trigger,
-    formState: { errors, isValid, isValidating },
+    formState: { errors, isValid, isValidating, isSubmitting },
   } = useFormContext<ProvisionedImportFormData>();
 
   const [hasInitiallyValidated, setHasInitiallyValidated] = useState(false);
@@ -67,7 +67,13 @@ export function ProvisionedImportForm({
   }, [trigger]);
 
   const submitDisabled =
-    !hasInitiallyValidated || isLibraryPanelImportBlocked || isReadOnlyRepo || isLoading || isValidating || !isValid;
+    !hasInitiallyValidated ||
+    isLibraryPanelImportBlocked ||
+    isReadOnlyRepo ||
+    isLoading ||
+    isValidating ||
+    isSubmitting ||
+    !isValid;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
