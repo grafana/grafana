@@ -1,9 +1,13 @@
 import { css } from '@emotion/css';
 
-import { FieldType, type DataFrame, type GrafanaTheme2 } from '@grafana/data';
-import { type Panel } from '@grafana/schema';
+import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
+import { FieldType, dateTimeFormat, type DataFrame, type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { sceneGraph, type SceneComponentProps, type SceneObjectState, SceneObjectBase, VizPanel } from '@grafana/scenes';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { type Panel } from '@grafana/schema';
+import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { isLessThanThreshold, parseAlertThreshold, parseNormalRange } from './parseIntentThresholds';
 
@@ -18,6 +22,17 @@ interface ChipStates {
   alert?: ChipState;
 }
 
+/**
+ * An active match between live panel data and the panel's declared failure
+ * modes (Phase F-lite). Present only while the panel is breaching its alert
+ * threshold — at which point the breach is attributed to the declared failure
+ * modes so the author sees "this is the pattern we warned about, happening now".
+ */
+export interface ActiveMatch {
+  /** Epoch ms when the breach was first detected this session. */
+  since: number;
+}
+
 interface PanelIntentChipsState extends SceneObjectState {
   intent: NonNullable<Panel['intent']>;
   /**
@@ -25,6 +40,11 @@ interface PanelIntentChipsState extends SceneObjectState {
    * undefined while data hasn't loaded yet or thresholds can't be parsed.
    */
   chipStates?: ChipStates;
+  /**
+   * Set while the panel is actively breaching its alert threshold and has
+   * declared failure modes to attribute the breach to. undefined otherwise.
+   */
+  activeMatch?: ActiveMatch;
 }
 
 /**
@@ -56,9 +76,10 @@ export class PanelIntentChips extends SceneObjectBase<PanelIntentChipsState> {
 
     const recompute = () => {
       const dataState = sceneGraph.getData(this).state;
-      this.setState({
-        chipStates: computeChipStates(this.state.intent, dataState.data?.series ?? []),
-      });
+      const chipStates = computeChipStates(this.state.intent, dataState.data?.series ?? []);
+      const failureModes = Array.isArray(this.state.intent.failureModes) ? this.state.intent.failureModes : [];
+      const activeMatch = computeActiveMatch(chipStates, failureModes, this.state.activeMatch, Date.now());
+      this.setState({ chipStates, activeMatch });
     };
 
     // Evaluate immediately with whatever data is already loaded.
@@ -128,6 +149,30 @@ export function computeChipStates(
 }
 
 /**
+ * Decide whether the panel is actively matching a declared failure mode
+ * (Phase F-lite). For now the trigger is deterministic: the panel is breaching
+ * its alert threshold (`chipStates.alert === 'alerting'`) AND it declares at
+ * least one failure mode to attribute the breach to. The match-start time is
+ * preserved across recomputes so the popover can show "since HH:MM"; it resets
+ * once the panel returns below the threshold.
+ *
+ * Step 2 (deferred) will let each failure mode carry its own condition so the
+ * match can name the specific mode rather than attributing to all declared ones.
+ */
+export function computeActiveMatch(
+  chipStates: ChipStates | undefined,
+  failureModes: Array<{ tag: string }>,
+  prev: ActiveMatch | undefined,
+  now: number
+): ActiveMatch | undefined {
+  const breaching = chipStates?.alert === 'alerting';
+  if (breaching && failureModes.length > 0) {
+    return prev ?? { since: now };
+  }
+  return undefined;
+}
+
+/**
  * Return the last value (per series) that represents the worst-case
  * relative to the threshold direction.
  *
@@ -164,7 +209,7 @@ function getWorstLastValue(series: DataFrame[], isLess: boolean): number | undef
 // ---------------------------------------------------------------------------
 
 export function PanelIntentChipsRenderer({ model }: SceneComponentProps<PanelIntentChips>) {
-  const { intent, chipStates } = model.useState();
+  const { intent, chipStates, activeMatch } = model.useState();
   const styles = useStyles2(getStyles);
 
   // Defensive shape coercion: the intent block is authored
@@ -215,28 +260,101 @@ export function PanelIntentChipsRenderer({ model }: SceneComponentProps<PanelInt
           </span>
         </Tooltip>
       )}
-      {primaryFailureMode && (
-        <Tooltip
-          content={failureModeTooltip(failureModes, failureModesProvenance)}
-          placement="top"
-        >
-          {/*
-           * Phase E.4: a declared failure mode is a pattern the
-           * author wants the team to watch for — not an active
-           * incident. Render it as a quiet tag (no warning icon, `#`
-           * prefix to read as a label) so it does not visually
-           * collide with the runtime panel-error chip (which uses
-           * `exclamation-triangle` + destructive red). The red +
-           * warning treatment is reserved for the active-match state
-           * tracked by Phase F.
-           */}
-          <span className={failureModeChipClass(styles, failureModesProvenance)}>
-            #{primaryFailureMode.tag}
-            {extraFailureModes > 0 ? ` +${extraFailureModes}` : ''}
-          </span>
-        </Tooltip>
-      )}
+      {primaryFailureMode &&
+        (activeMatch ? (
+          // Phase F-lite: the panel is breaching its alert threshold, which
+          // matches the declared failure mode(s) — surface it as an active,
+          // red chip with an interactive popover (distinct `bolt` icon so it
+          // doesn't read as the runtime panel-error chip's exclamation-triangle).
+          <ActiveMatchChip
+            model={model}
+            failureModes={failureModes}
+            since={activeMatch.since}
+            styles={styles}
+          />
+        ) : (
+          <Tooltip content={failureModeTooltip(failureModes, failureModesProvenance)} placement="top">
+            {/*
+             * Phase E.4: a declared failure mode is a pattern the author
+             * wants the team to watch for — not an active incident. Render
+             * it as a quiet tag (no warning icon, `#` prefix to read as a
+             * label) so it does not visually collide with the runtime
+             * panel-error chip. The red active-match treatment lives in
+             * ActiveMatchChip above.
+             */}
+            <span className={failureModeChipClass(styles, failureModesProvenance)}>
+              #{primaryFailureMode.tag}
+              {extraFailureModes > 0 ? ` +${extraFailureModes}` : ''}
+            </span>
+          </Tooltip>
+        ))}
     </div>
+  );
+}
+
+interface ActiveMatchChipProps {
+  model: PanelIntentChips;
+  failureModes: NonNullable<NonNullable<Panel['intent']>['failureModes']>;
+  since: number;
+  styles: ReturnType<typeof getStyles>;
+}
+
+/**
+ * The red, interactive chip shown while a panel is actively breaching its
+ * alert threshold (Phase F-lite). Lists the matched failure mode(s), shows
+ * since when, and — if the assistant is available — offers an "Investigate"
+ * shortcut that opens the Grafana Assistant to reason about the live data
+ * against the declared intent (the on-demand LLM layer).
+ */
+function ActiveMatchChip({ model, failureModes, since, styles }: ActiveMatchChipProps) {
+  const assistant = useAssistant();
+  const primary = failureModes[0];
+  const extra = failureModes.length - 1;
+  const tags = failureModes.map((fm) => `#${fm.tag}`).join(', ');
+  const sinceLabel = dateTimeFormat(since, { format: 'HH:mm' });
+
+  const handleInvestigate = () => {
+    const panel = model.parent instanceof VizPanel ? model.parent : undefined;
+    if (!panel || !assistant.openAssistant) {
+      return;
+    }
+    const dashboardUid = getDashboardSceneFor(panel).state.uid;
+    const panelId = getPanelIdForVizPanel(panel);
+    assistant.openAssistant({
+      origin: 'grafana/dashboard/panel-intent/investigate-match',
+      mode: 'assistant',
+      prompt: `Panel ${panelId} on dashboard ${dashboardUid} is currently breaching its alert threshold, which matches the declared failure mode(s) ${tags}. Investigate the likely cause using the panel's queries and the dashboard intent, then summarize what is happening and what to check next.`,
+      context: [
+        createAssistantContextItem('structured', {
+          title: `Panel ${panelId}`,
+          data: { dashboardUid, panelId, matchedFailureModes: tags, breachingSince: sinceLabel },
+        }),
+      ],
+      autoSend: true,
+    });
+  };
+
+  const popover = (
+    <Stack direction="column" gap={0.5}>
+      <span className={styles.matchTitle}>{t('panel-intent-chips.match-title', 'Matches {{tags}}', { tags })}</span>
+      <span className={styles.matchDetail}>
+        {t('panel-intent-chips.match-detail', 'Alert threshold breached since {{since}}', { since: sinceLabel })}
+      </span>
+      {assistant.isAvailable && assistant.openAssistant && (
+        <Button size="sm" variant="secondary" icon="ai-sparkle" onClick={handleInvestigate}>
+          {t('panel-intent-chips.investigate', 'Investigate')}
+        </Button>
+      )}
+    </Stack>
+  );
+
+  return (
+    <Tooltip content={popover} placement="top" interactive>
+      <span className={styles.chipMatch} data-testid="panel-intent-active-match">
+        <Icon name="bolt" size="xs" aria-hidden /> #{primary.tag}
+        {extra > 0 ? ` +${extra}` : ''}
+      </span>
+    </Tooltip>
   );
 }
 
@@ -390,6 +508,24 @@ function getStyles(theme: GrafanaTheme2) {
       backgroundColor: theme.colors.error.transparent,
       border: `1px solid ${theme.colors.error.border}`,
       color: theme.colors.error.text,
+    }),
+    // Phase F-lite: active failure-mode match. Stronger than chipAlerting
+    // (solid error fill + medium weight) so the "this is firing now" chip
+    // stands out from the threshold chips and reads as a live signal.
+    chipMatch: css({
+      ...chipBase,
+      backgroundColor: theme.colors.error.main,
+      border: `1px solid ${theme.colors.error.border}`,
+      color: theme.colors.error.contrastText,
+      fontWeight: theme.typography.fontWeightMedium,
+      cursor: 'pointer',
+    }),
+    matchTitle: css({
+      fontWeight: theme.typography.fontWeightMedium,
+    }),
+    matchDetail: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
     }),
   };
 }

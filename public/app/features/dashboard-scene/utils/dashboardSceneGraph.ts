@@ -120,6 +120,34 @@ function getAggregatedPanelIntent(scene: DashboardScene): AggregatedPanelIntent 
   };
 }
 
+/** A panel currently matching one or more of its declared failure modes. */
+export interface AnomalousPanel {
+  title: string;
+  tags: string[];
+}
+
+/**
+ * Collects panels that are actively matching a declared failure mode (Phase
+ * F-lite). A panel is anomalous when its `PanelIntentChips` has an `activeMatch`
+ * (set while it breaches its alert threshold and declares failure modes). Used
+ * by the dashboard summary bar to render a "needs attention" health strip.
+ */
+function getAnomalousPanels(scene: DashboardScene): AnomalousPanel[] {
+  const anomalous: AnomalousPanel[] = [];
+  for (const panel of getVizPanels(scene)) {
+    const chips = getPanelIntentChips(panel);
+    if (!chips?.state.activeMatch) {
+      continue;
+    }
+    const failureModes = Array.isArray(chips.state.intent.failureModes) ? chips.state.intent.failureModes : [];
+    anomalous.push({
+      title: panel.state.title || getPanelIdForVizPanel(panel).toString(),
+      tags: failureModes.map((fm) => fm.tag).filter(Boolean),
+    });
+  }
+  return anomalous;
+}
+
 /**
  * Will look for all panels in the entire scene starting from root
  * and find the next free panel id
@@ -203,6 +231,7 @@ export const dashboardSceneGraph = {
   getPanelLinks,
   getPanelIntentChips,
   getAggregatedPanelIntent,
+  getAnomalousPanels,
   getVizPanels,
   getDataLayers,
   getCursorSync,

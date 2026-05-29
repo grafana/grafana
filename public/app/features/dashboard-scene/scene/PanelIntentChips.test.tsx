@@ -4,12 +4,17 @@ import userEvent from '@testing-library/user-event';
 import { type DataFrame, FieldType } from '@grafana/data';
 import { type Panel } from '@grafana/schema';
 
-import { PanelIntentChips, PanelIntentChipsRenderer, computeChipStates } from './PanelIntentChips';
+import { PanelIntentChips, PanelIntentChipsRenderer, computeActiveMatch, computeChipStates } from './PanelIntentChips';
+
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: undefined }),
+  createAssistantContextItem: jest.fn(),
+}));
 
 type PanelIntent = NonNullable<Panel['intent']>;
 
-function renderChips(intent: PanelIntent) {
-  const chips = new PanelIntentChips({ intent });
+function renderChips(intent: PanelIntent, activeMatch?: { since: number }) {
+  const chips = new PanelIntentChips({ intent, activeMatch });
   // Render the renderer directly so we don't need to stand up a full
   // VizPanel + plugin import setup in the test. The parent-check
   // invariant in PanelIntentChips#onActivate is exercised in the
@@ -74,6 +79,61 @@ describe('PanelIntentChips', () => {
     // Tooltip lists all tags, comma-separated, no descriptions.
     expect(await screen.findByText('#spike, #oom, #timeout')).toBeInTheDocument();
     expect(screen.queryByText(/Out of memory/)).not.toBeInTheDocument();
+  });
+
+  describe('active failure-mode match (Phase F-lite)', () => {
+    it('renders the active-match chip with a bolt icon when activeMatch is set', () => {
+      renderChips({ failureModes: [{ tag: 'spike' }] }, { since: Date.UTC(2026, 0, 1, 15, 13) });
+      expect(screen.getByTestId('panel-intent-active-match')).toBeInTheDocument();
+    });
+
+    it('lists matched tags and breach time in the popover, no Investigate when assistant unavailable', async () => {
+      renderChips(
+        { failureModes: [{ tag: 'spike' }, { tag: 'oom' }] },
+        { since: Date.UTC(2026, 0, 1, 15, 13) }
+      );
+
+      await userEvent.hover(screen.getByTestId('panel-intent-active-match'));
+
+      expect(await screen.findByText('Matches #spike, #oom')).toBeInTheDocument();
+      expect(screen.getByText(/Alert threshold breached since/)).toBeInTheDocument();
+      // Assistant is mocked unavailable, so no Investigate shortcut.
+      expect(screen.queryByRole('button', { name: /Investigate/i })).not.toBeInTheDocument();
+    });
+
+    it('falls back to the quiet chip when there is no active match', () => {
+      renderChips({ failureModes: [{ tag: 'spike' }] });
+      expect(screen.queryByTestId('panel-intent-active-match')).not.toBeInTheDocument();
+      expect(screen.getByText('#spike')).toBeInTheDocument();
+    });
+  });
+
+  describe('computeActiveMatch', () => {
+    it('matches when alerting and at least one failure mode is declared', () => {
+      const result = computeActiveMatch({ alert: 'alerting' }, [{ tag: 'spike' }], undefined, 1000);
+      expect(result).toEqual({ since: 1000 });
+    });
+
+    it('does not match when alerting but no failure modes are declared', () => {
+      expect(computeActiveMatch({ alert: 'alerting' }, [], undefined, 1000)).toBeUndefined();
+    });
+
+    it('does not match when not alerting, even with failure modes', () => {
+      expect(computeActiveMatch({ alert: 'normal' }, [{ tag: 'spike' }], undefined, 1000)).toBeUndefined();
+      expect(computeActiveMatch({ range: 'warning' }, [{ tag: 'spike' }], undefined, 1000)).toBeUndefined();
+      expect(computeActiveMatch(undefined, [{ tag: 'spike' }], undefined, 1000)).toBeUndefined();
+    });
+
+    it('preserves the original since timestamp across recomputes while still breaching', () => {
+      const prev = { since: 500 };
+      const result = computeActiveMatch({ alert: 'alerting' }, [{ tag: 'spike' }], prev, 2000);
+      expect(result).toEqual({ since: 500 });
+    });
+
+    it('clears the match once the panel returns below the threshold', () => {
+      const prev = { since: 500 };
+      expect(computeActiveMatch({ alert: 'normal' }, [{ tag: 'spike' }], prev, 2000)).toBeUndefined();
+    });
   });
 
   it('renders nothing without crashing when failureModes is a bare string', () => {

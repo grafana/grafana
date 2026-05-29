@@ -4,11 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { VizPanel } from '@grafana/scenes';
 import { type Panel } from '@grafana/schema';
 
-import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-
-import { DashboardScene, type DashboardSceneState } from './DashboardScene';
 import { DashboardIntentSummaryBar } from './DashboardIntentSummaryBar';
+import { DashboardScene, type DashboardSceneState } from './DashboardScene';
 import { PanelIntentChips } from './PanelIntentChips';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 type PanelIntent = NonNullable<Panel['intent']>;
 
@@ -19,23 +18,36 @@ jest.mock('../edit-pane/shared', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  // The bar publishes active matches on the AppEvents bus; stub it so tests
+  // don't need a live event bus.
+  getAppEvents: () => ({ publish: jest.fn() }),
+}));
+
+interface PanelSpec {
+  intent: PanelIntent;
+  activeMatch?: { since: number };
+}
+
 interface BuildOpts {
   intent?: DashboardSceneState['intent'];
   isEditing?: boolean;
-  panelIntents?: Array<PanelIntent | undefined>;
+  panelIntents?: Array<PanelIntent | PanelSpec | undefined>;
 }
 
 function buildDashboard(opts: BuildOpts = {}): DashboardScene {
   const { intent, isEditing, panelIntents = [] } = opts;
-  const panels = panelIntents.map(
-    (panelIntent, i) =>
-      new VizPanel({
-        key: `panel-${i}`,
-        title: `Panel ${i}`,
-        pluginId: 'timeseries',
-        titleItems: panelIntent ? [new PanelIntentChips({ intent: panelIntent })] : [],
-      })
-  );
+  const panels = panelIntents.map((entry, i) => {
+    const spec: PanelSpec | undefined =
+      entry === undefined ? undefined : 'intent' in entry ? (entry as PanelSpec) : { intent: entry as PanelIntent };
+    return new VizPanel({
+      key: `panel-${i}`,
+      title: `Panel ${i}`,
+      pluginId: 'timeseries',
+      titleItems: spec ? [new PanelIntentChips({ intent: spec.intent, activeMatch: spec.activeMatch })] : [],
+    });
+  });
   const scene = new DashboardScene({
     title: 'Test',
     uid: 'dash-1',
@@ -151,6 +163,52 @@ describe('DashboardIntentSummaryBar', () => {
       expect(screen.queryByText('Track checkout p99 latency.')).not.toBeInTheDocument();
       expect(screen.getByText('@checkout-team')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Expand dashboard intent/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('active failure-mode chips (Phase F-lite)', () => {
+    it('reddens only the chips matching on a breaching panel (and shows no banner)', async () => {
+      const dashboard = buildDashboard({
+        intent: { purpose: 'Checkout health.' },
+        panelIntents: [
+          { intent: { failureModes: [{ tag: 'cpu-saturation' }] }, activeMatch: { since: 1 } },
+          { intent: { failureModes: [{ tag: 'oom' }] } },
+        ],
+      });
+      render(<DashboardIntentSummaryBar dashboard={dashboard} />);
+
+      // The old dashboard-level banner is gone.
+      expect(screen.queryByTestId('dashboard-intent-health-strip')).not.toBeInTheDocument();
+
+      // The matching chip's tooltip leads with "Currently matching".
+      await userEvent.hover(screen.getByText('cpu-saturation'));
+      expect(await screen.findByText(/Currently matching/)).toBeInTheDocument();
+    });
+
+    it('does not mark a chip whose panel is not breaching', async () => {
+      const dashboard = buildDashboard({
+        intent: { purpose: 'Checkout health.' },
+        panelIntents: [
+          { intent: { failureModes: [{ tag: 'cpu-saturation' }] }, activeMatch: { since: 1 } },
+          { intent: { failureModes: [{ tag: 'oom' }] } },
+        ],
+      });
+      render(<DashboardIntentSummaryBar dashboard={dashboard} />);
+
+      // 'oom' is only declared on a non-breaching panel, so it stays quiet.
+      await userEvent.hover(screen.getByText('oom'));
+      expect(screen.queryByText(/Currently matching/)).not.toBeInTheDocument();
+    });
+
+    it('marks no chip as matching when no panel is breaching', async () => {
+      const dashboard = buildDashboard({
+        intent: { purpose: 'Checkout health.' },
+        panelIntents: [{ failureModes: [{ tag: 'cpu-saturation' }] }],
+      });
+      render(<DashboardIntentSummaryBar dashboard={dashboard} />);
+
+      await userEvent.hover(screen.getByText('cpu-saturation'));
+      expect(screen.queryByText(/Currently matching/)).not.toBeInTheDocument();
     });
   });
 

@@ -2,12 +2,17 @@ import { css } from '@emotion/css';
 import { useEffect, useReducer, useRef, useState } from 'react';
 import { type Unsubscribable } from 'rxjs';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { BusEventWithPayload, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getAppEvents } from '@grafana/runtime';
 import { Icon, IconButton, Input, Stack, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { dashboardEditActions } from '../edit-pane/shared';
-import { type AggregatedPanelIntent, dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import {
+  type AggregatedPanelIntent,
+  type AnomalousPanel,
+  dashboardSceneGraph,
+} from '../utils/dashboardSceneGraph';
 
 import { type DashboardScene } from './DashboardScene';
 
@@ -16,6 +21,20 @@ interface Props {
 }
 
 type DashboardIntent = NonNullable<DashboardScene['state']['intent']>;
+
+/**
+ * Payload broadcasting which panels are currently matching a declared failure
+ * mode. Published on the Grafana AppEvents bus so the (separately-mounted)
+ * Assistant plugin can offer match-aware starter suggestions in its drawer.
+ * The event `type` string is shared verbatim with the plugin subscriber.
+ */
+interface DashboardIntentActiveMatchesPayload {
+  dashboardUid: string;
+  matches: AnomalousPanel[];
+}
+export class DashboardIntentActiveMatchesEvent extends BusEventWithPayload<DashboardIntentActiveMatchesPayload> {
+  static type = 'grafana-assistant:dashboard-intent-active-matches';
+}
 
 /**
  * A compact, always-on summary of a dashboard's operational intent.
@@ -34,11 +53,26 @@ export function DashboardIntentSummaryBar({ dashboard }: Props) {
   const { intent, isEditing } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const aggregated = useAggregatedPanelIntent(dashboard);
+  const anomalousPanels = dashboardSceneGraph.getAnomalousPanels(dashboard);
+  // Tags currently matching on at least one breaching panel — used to redden
+  // the corresponding chips in the failure-modes row.
+  const matchedTags = new Set(anomalousPanels.flatMap((p) => p.tags));
 
   const [collapsed, setCollapsed] = useState(false);
 
   const dashboardHasContent = hasDashboardContent(intent);
   const aggregatedHasContent = aggregated.failureModes.length > 0 || aggregated.runbooks.length > 0;
+
+  // Broadcast active matches to the Assistant plugin (separately mounted) so it
+  // can surface match-aware starter suggestions. Keyed by a stable serialization
+  // so we only publish when the set of matches actually changes.
+  const uid = dashboard.state.uid ?? '';
+  const matchesKey = JSON.stringify(anomalousPanels);
+  useEffect(() => {
+    getAppEvents().publish(new DashboardIntentActiveMatchesEvent({ dashboardUid: uid, matches: anomalousPanels }));
+    // anomalousPanels is recomputed each render; matchesKey is its stable identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid, matchesKey]);
 
   // Visibility gate: never show on a dashboard with no intent anywhere, even in
   // edit mode. The header (and its get-started CTA) only appears once a panel
@@ -109,7 +143,13 @@ export function DashboardIntentSummaryBar({ dashboard }: Props) {
             <Stack direction="row" alignItems="center" gap={1} wrap="wrap">
               <span className={styles.label}>{t('dashboard.intent-summary.failure-modes', 'Failure modes:')}</span>
               {aggregated.failureModes.map((fm) => (
-                <FailureModeChip key={fm.tag} tag={fm.tag} description={fm.description} panels={fm.panels} />
+                <FailureModeChip
+                  key={fm.tag}
+                  tag={fm.tag}
+                  description={fm.description}
+                  panels={fm.panels}
+                  active={matchedTags.has(fm.tag)}
+                />
               ))}
             </Stack>
           )}
@@ -295,7 +335,7 @@ function OwnerChip({ owner, provenance }: { owner: string; provenance?: string }
   );
   // Only wrap in a tooltip when there is meaningful provenance to show.
   return phrase ? (
-    <Tooltip content={`owner — ${phrase}`} placement="top">
+    <Tooltip content={t('dashboard.intent-summary.owner-provenance', 'owner — {{phrase}}', { phrase })} placement="top">
       {chip}
     </Tooltip>
   ) : (
@@ -303,13 +343,28 @@ function OwnerChip({ owner, provenance }: { owner: string; provenance?: string }
   );
 }
 
-function FailureModeChip({ tag, description, panels }: { tag: string; description?: string; panels: string[] }) {
+function FailureModeChip({
+  tag,
+  description,
+  panels,
+  active,
+}: {
+  tag: string;
+  description?: string;
+  panels: string[];
+  active?: boolean;
+}) {
   const styles = useStyles2(getChipStyles);
   const source = panels.length > 0 ? `From: ${panels.join(', ')}` : '';
-  const content = [description, source].filter(Boolean).join(' — ');
+  const base = [description, source].filter(Boolean).join(' — ');
+  // Phase F-lite: when a panel that declares this failure mode is breaching its
+  // alert threshold, the chip turns red and the tooltip leads with that fact.
+  const content = active
+    ? [t('dashboard.intent-summary.currently-matching', 'Currently matching'), base].filter(Boolean).join(' — ')
+    : base || tag;
   return (
-    <Tooltip content={content || tag} placement="top">
-      <span className={styles.chip}>{tag}</span>
+    <Tooltip content={content} placement="top">
+      <span className={active ? styles.chipActive : styles.chip}>{tag}</span>
     </Tooltip>
   );
 }
@@ -439,6 +494,17 @@ function getChipStyles(theme: GrafanaTheme2) {
       color: theme.colors.text.primary,
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: 1.4,
+    }),
+    chipActive: css({
+      display: 'inline-block',
+      padding: theme.spacing(0.125, 0.75),
+      borderRadius: theme.shape.radius.pill,
+      backgroundColor: theme.colors.error.transparent,
+      border: `1px solid ${theme.colors.error.border}`,
+      color: theme.colors.error.text,
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: 1.4,
+      fontWeight: theme.typography.fontWeightMedium,
     }),
     provenanceMarker: css({
       marginLeft: theme.spacing(0.5),
