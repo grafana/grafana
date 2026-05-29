@@ -25,6 +25,7 @@ import {
   parseLogsFrame,
 } from 'app/features/logs/logsFrame';
 import { dataFrameToLogsModel } from 'app/features/logs/logsModel';
+import { isMissingStringField, isMissingTimeField } from 'app/features/logs/utils';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
 import { LogDetailsContextProvider } from './LogDetailsContext';
@@ -279,7 +280,13 @@ export const LogsTable = ({
   // Show no data state if query returns nothing
   if ((noSeries || noValues || noLogsFrame) && data.state === LoadingState.Done) {
     return (
-      <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField needsTimeField />
+      <PanelDataErrorView
+        fieldConfig={fieldConfig}
+        panelId={id}
+        data={data}
+        needsStringField={isMissingStringField(data.series)}
+        needsTimeField={isMissingTimeField(data.series)}
+      />
     );
   }
 

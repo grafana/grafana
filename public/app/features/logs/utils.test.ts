@@ -36,6 +36,7 @@ import {
   getLogLevel,
   getLogLevelFromKey,
   getLogsVolumeMaximumRange,
+  isMissingStringField,
   isMissingTimeField,
   logRowsToReadableJson,
   mergeLogsVolumeDataFrames,
@@ -830,5 +831,39 @@ describe('isMissingTimeField', () => {
       fields: [{ name: 'message', type: FieldType.string, values: ['b'] }],
     });
     expect(isMissingTimeField([frameWithTime, frameWithoutTime])).toBe(false);
+  });
+});
+
+describe('isMissingStringField', () => {
+  it('returns false when series is undefined', () => {
+    expect(isMissingStringField(undefined)).toBe(false);
+  });
+
+  it('returns false when series is empty', () => {
+    expect(isMissingStringField([])).toBe(false);
+  });
+
+  it('returns false when frames have rows and a string field', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'timestamp', type: FieldType.time, values: [1, 2] },
+        { name: 'message', type: FieldType.string, values: ['a', 'b'] },
+      ],
+    });
+    expect(isMissingStringField([frame])).toBe(false);
+  });
+
+  it('returns false when frames are empty (no rows) even without a string field', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'timestamp', type: FieldType.time, values: [] }],
+    });
+    expect(isMissingStringField([frame])).toBe(false);
+  });
+
+  it('returns true when frames have rows but no string field', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'timestamp', type: FieldType.time, values: [1, 2] }],
+    });
+    expect(isMissingStringField([frame])).toBe(true);
   });
 });
