@@ -704,7 +704,7 @@ If the currently selected time zone is _Browser Time_, Grafana tries to determin
 ### `$__url_time_range`
 
 The `$__url_time_range` variable returns the current dashboard time range as URL query parameters.
-It's intended for use in **data links and panel links**, not in query editors.
+It's intended for use in data links and panel links, not in query editors.
 
 The variable expands to a string like `from=1607687293000&to=1607687293100`, where the values are Unix millisecond timestamps matching the current time range selection.
 
@@ -733,7 +733,7 @@ https://your-grafana/d/other-dashboard?{__url_time_range}&var-host= {host}
 
 {{< admonition type="note" >}}
 `$__url_time_range` always uses Unix millisecond epoch timestamps.
-To include only the start or end of the time range with specific formatting, use [`$__from` and `$__to`](#__from-and-__to) instead.
+To include only the start or end of the time range with specific formatting, use [`$__from` and `$__to` variables](#__from-and-__to) instead.
 {{< /admonition >}}
 
 ## Chained variables
