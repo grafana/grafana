@@ -139,12 +139,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'LegendLabelDisabled',
       color: theme.colors.text.disabled,
     }),
-    // itemWrapper: css({
-    //   display: 'flex',
-    //   whiteSpace: 'nowrap',
-    //   alignItems: 'center',
-    //   gap: theme.spacing(1),
-    // }),
     name: css({
       textAlign: 'left',
     }),

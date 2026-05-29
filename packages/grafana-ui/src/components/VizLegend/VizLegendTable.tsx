@@ -3,6 +3,7 @@ import { useMemo, type JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { type LegendPlacement } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Button } from '../Button/Button';
@@ -11,7 +12,6 @@ import { useLimit } from '../List/hooks';
 
 import { LegendTableItem } from './VizLegendTableItem';
 import { type VizLegendItem, type VizLegendTableProps } from './types';
-import { LegendPlacement } from '@grafana/schema';
 
 const nameSortKey = 'Name';
 const naturalCompare = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare;
