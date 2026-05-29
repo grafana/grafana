@@ -140,7 +140,6 @@ export {
   getFieldColorMode,
   fieldColorModeRegistry,
   type FieldColorMode,
-  getFieldSeriesColor,
   /** @internal */
   getColorByStringHash,
 } from './field/fieldColor';
@@ -162,7 +161,7 @@ export {
   cacheFieldDisplayNames,
   getUniqueFieldName,
 } from './field/fieldState';
-export { getScaleCalculator, getFieldConfigWithMinMax, getMinMaxAndDelta } from './field/scale';
+export { getScaleCalculator, getFieldConfigWithMinMax, getMinMaxAndDelta, getFieldSeriesColor } from './field/scale';
 export {
   type ReduceDataOptions,
   VAR_SERIES_NAME,
@@ -276,6 +275,7 @@ export { store, Store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
 export { throwIfAngular } from './utils/throwIfAngular';
 export { fuzzySearch } from './utils/fuzzySearch';
+export { generateUUID, isUUID } from './utils/uuid';
 
 // Transformations
 export { standardTransformers } from './transformations/transformers';
@@ -345,11 +345,6 @@ export { ThemeContext } from './themes/context';
 
 // ValueFormats
 export {
-  type FormattedValue,
-  type ValueFormatter,
-  type ValueFormat,
-  type ValueFormatCategory,
-  type ValueFormatterIndex,
   formattedValueToString,
   toFixed,
   toFixedScaled,
@@ -360,10 +355,16 @@ export {
   locale,
   simpleCountUnit,
   stringFormater,
-  getValueFormat,
-  getValueFormatterIndex,
-  getValueFormats,
-} from './valueFormats/valueFormats';
+} from './valueFormats/baseFormatters';
+export { getValueFormat, getValueFormatterIndex, getValueFormats } from './valueFormats/valueFormats';
+
+export {
+  type FormattedValue,
+  type ValueFormatter,
+  type ValueFormat,
+  type ValueFormatCategory,
+  type ValueFormatterIndex,
+} from './types/valueFormats';
 
 // datetime
 export * as dateMath from './datetime/datemath';
@@ -437,7 +438,13 @@ export {
   type RangeValueMatcherOptions,
 } from './transformations/matchers/valueMatchers/types';
 export { LayoutModes, type LayoutMode } from './types/layout';
-export { PanelPlugin, type SetFieldConfigOptionsArgs, type StandardOptionConfig } from './panel/PanelPlugin';
+export {
+  PanelPlugin,
+  type SetFieldConfigOptionsArgs,
+  type StandardOptionConfig,
+  type PanelScreenshotContext,
+  type PanelScreenshotHandler,
+} from './panel/PanelPlugin';
 export {
   getPanelOptionsWithDefaults,
   filterFieldConfigOverrides,

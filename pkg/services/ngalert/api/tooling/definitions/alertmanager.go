@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/alerting/definition/compat"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/alerting/definition"
@@ -608,7 +607,6 @@ type DatasourceUIDReference struct {
 
 type ExtraConfiguration struct {
 	Identifier         string            `yaml:"identifier" json:"identifier"`
-	MergeMatchers      config.Matchers   `yaml:"merge_matchers" json:"merge_matchers"`
 	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
 }
@@ -654,12 +652,6 @@ func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error
 func (c ExtraConfiguration) Validate() error {
 	if c.Identifier == "" {
 		return errors.New("identifier is required")
-	}
-
-	for _, m := range c.MergeMatchers {
-		if m.Type != labels.MatchEqual {
-			return errInvalidExtraConfiguration(errors.New("only matchers with type equal are supported"))
-		}
 	}
 
 	cfg, err := c.GetAlertmanagerConfig()
@@ -720,7 +712,6 @@ type PostableUserConfig struct {
 	ExtraConfigs           []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
 	ManagedRoutes          ManagedRoutes             `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"`                     // TODO: Move to ConfigRevision?
 	ManagedInhibitionRules ManagedInhibitionRules    `yaml:"managed_inhibition_rules,omitempty" json:"managed_inhibition_rules,omitempty"` // TODO: Move to ConfigRevision?
-	amSimple               map[string]interface{}    `yaml:"-" json:"-"`
 }
 
 // GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of Templates.
@@ -747,25 +738,11 @@ func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
 		return errors.New("only one extra config is supported")
 	}
 
-	type intermediate struct {
-		AlertmanagerConfig map[string]interface{} `yaml:"alertmanager_config" json:"alertmanager_config"`
-	}
-
-	var tmp intermediate
-	if err := json.Unmarshal(b, &tmp); err != nil {
-		return err
-	}
-	// store the map[string]interface{} variant for re-encoding later without redaction
-	c.amSimple = tmp.AlertmanagerConfig
-
 	return nil
 }
 
 func (c *PostableUserConfig) validate() error {
 	// Taken from https://github.com/prometheus/alertmanager/blob/master/config/config.go#L170-L191
-	// Check if we have a root route. We cannot check for it in the
-	// UnmarshalYAML method because it won't be called if the input is empty
-	// (e.g. the config file is empty or only contains whitespace).
 	if c.AlertmanagerConfig.Route == nil {
 		return fmt.Errorf("no route provided in config")
 	}
@@ -789,94 +766,12 @@ func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafana
 	return UIDs
 }
 
-// MarshalYAML implements yaml.Marshaller.
-func (c *PostableUserConfig) MarshalYAML() (interface{}, error) {
-	yml, err := yaml.Marshal(c.amSimple)
-	if err != nil {
-		return nil, err
-	}
-	// cortex/loki actually pass the AM config as a string.
-	cortexPostableUserConfig := struct {
-		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
-		AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
-	}{
-		TemplateFiles:      c.TemplateFiles,
-		AlertmanagerConfig: string(yml),
-	}
-	return cortexPostableUserConfig, nil
-}
-
-func (c *PostableUserConfig) UnmarshalYAML(value *yaml.Node) error {
-	// cortex/loki actually pass the AM config as a string.
-	type cortexPostableUserConfig struct {
-		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
-		AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
-	}
-
-	var tmp cortexPostableUserConfig
-
-	if err := value.Decode(&tmp); err != nil {
-		return err
-	}
-
-	if err := yaml.Unmarshal([]byte(tmp.AlertmanagerConfig), &c.AlertmanagerConfig); err != nil {
-		return err
-	}
-
-	c.TemplateFiles = tmp.TemplateFiles
-	return nil
-}
-
 // swagger:model
 type GettableUserConfig struct {
 	TemplateFiles           map[string]string         `yaml:"template_files" json:"template_files"`
 	TemplateFileProvenances map[string]Provenance     `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
 	AlertmanagerConfig      GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
 	ExtraConfigs            []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
-
-	// amSimple stores a map[string]interface of the decoded alertmanager config.
-	// This enables circumventing the underlying alertmanager secret type
-	// which redacts itself during encoding.
-	amSimple map[string]interface{} `yaml:"-" json:"-"`
-}
-
-func (c *GettableUserConfig) UnmarshalYAML(value *yaml.Node) error {
-	// cortex/loki actually pass the AM config as a string.
-	type cortexGettableUserConfig struct {
-		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
-		AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
-	}
-
-	var tmp cortexGettableUserConfig
-
-	if err := value.Decode(&tmp); err != nil {
-		return err
-	}
-
-	if err := yaml.Unmarshal([]byte(tmp.AlertmanagerConfig), &c.AlertmanagerConfig); err != nil {
-		return err
-	}
-
-	if err := yaml.Unmarshal([]byte(tmp.AlertmanagerConfig), &c.amSimple); err != nil {
-		return err
-	}
-
-	c.TemplateFiles = tmp.TemplateFiles
-	return nil
-}
-
-func (c *GettableUserConfig) MarshalJSON() ([]byte, error) {
-	type plain struct {
-		TemplateFiles      map[string]string      `yaml:"template_files" json:"template_files"`
-		AlertmanagerConfig map[string]interface{} `yaml:"alertmanager_config" json:"alertmanager_config"`
-	}
-
-	tmp := plain{
-		TemplateFiles:      c.TemplateFiles,
-		AlertmanagerConfig: c.amSimple,
-	}
-
-	return json.Marshal(tmp)
 }
 
 // GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers

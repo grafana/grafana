@@ -650,7 +650,7 @@ const NewUIContainer = ({
 /**
  * Based on the search string it does a fuzzy search over all the unique labels, so we can highlight them later.
  */
-export function useLabelSearch(
+function useLabelSearch(
   search: string | undefined,
   data: FlameGraphDataContainer | undefined
 ): Set<string> | undefined {

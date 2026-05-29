@@ -462,6 +462,12 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		if err == nil {
 			return nil // it worked, return
 		}
+		// Only fall through to Update when the resource was already created.
+		// For validation, permission, or any other non-conflict errors, return immediately.
+		// Retrying with a different HTTP method won't help.
+		if !apierrors.IsAlreadyExists(err) {
+			return err
+		}
 	}
 
 	// Try update, otherwise create

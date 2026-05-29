@@ -11,6 +11,7 @@ import { default as AsyncCreatable } from 'react-select/async-creatable';
 import Creatable from 'react-select/creatable';
 
 import { type SelectableValue, toOption } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
@@ -252,7 +253,7 @@ export function SelectBase<T, Rest = {}>({
 
   const commonSelectProps = {
     'aria-label': ariaLabel,
-    'data-testid': dataTestid,
+    'data-testid': dataTestid ?? selectors.components.Select.container,
     autoFocus,
     backspaceRemovesValue,
     blurInputOnSelect,

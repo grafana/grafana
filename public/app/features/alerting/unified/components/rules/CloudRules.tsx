@@ -67,8 +67,10 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
             {dataSourcesLoading.length ? (
               <LoadingPlaceholder
                 className={styles.loader}
-                text={t('alerting.list-view.section.loading-rules', 'Loading rules from {{count}} sources', {
+                text={t('alerting.list-view.section.loading-rules', '', {
                   count: dataSourcesLoading.length,
+                  defaultValue_one: 'Loading rules from {{count}} sources',
+                  defaultValue_other: 'Loading rules from {{count}} sources',
                 })}
               />
             ) : (

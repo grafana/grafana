@@ -3,13 +3,13 @@ package search
 import (
 	"context"
 	"errors"
-	"io"
+	"os"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/oklog/ulid/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -508,11 +508,17 @@ func (s *recordingStore) DeleteIndex(ctx context.Context, r resource.NamespacedR
 func (s *recordingStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
 	return s.inner.LockBuildIndex(ctx, r, buildVersion)
 }
-func (s *recordingStore) WriteSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, in io.Reader) error {
-	return s.inner.WriteSnapshotFile(ctx, r, k, relPath, in)
+func (s *recordingStore) WriteSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, src *os.File) error {
+	return s.inner.WriteSnapshotFile(ctx, r, k, relPath, src)
 }
-func (s *recordingStore) ReadSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, out io.Writer) error {
-	return s.inner.ReadSnapshotFile(ctx, r, k, relPath, out)
+func (s *recordingStore) ReadSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
+	return s.inner.ReadSnapshotFile(ctx, r, k, relPath, dst, expectedSize)
+}
+func (s *recordingStore) WriteSnapshotManifest(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, manifest []byte) error {
+	return s.inner.WriteSnapshotManifest(ctx, r, k, manifest)
+}
+func (s *recordingStore) ReadSnapshotManifest(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) ([]byte, error) {
+	return s.inner.ReadSnapshotManifest(ctx, r, k)
 }
 
 func TestRunCleanup_OwnershipFilter_NamespaceLevel(t *testing.T) {
@@ -624,11 +630,17 @@ func (s *controllableLockStore) DeleteIndex(ctx context.Context, r resource.Name
 func (s *controllableLockStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
 	return s.inner.LockBuildIndex(ctx, r, buildVersion)
 }
-func (s *controllableLockStore) WriteSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, in io.Reader) error {
-	return s.inner.WriteSnapshotFile(ctx, r, k, relPath, in)
+func (s *controllableLockStore) WriteSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, src *os.File) error {
+	return s.inner.WriteSnapshotFile(ctx, r, k, relPath, src)
 }
-func (s *controllableLockStore) ReadSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, out io.Writer) error {
-	return s.inner.ReadSnapshotFile(ctx, r, k, relPath, out)
+func (s *controllableLockStore) ReadSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
+	return s.inner.ReadSnapshotFile(ctx, r, k, relPath, dst, expectedSize)
+}
+func (s *controllableLockStore) WriteSnapshotManifest(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, manifest []byte) error {
+	return s.inner.WriteSnapshotManifest(ctx, r, k, manifest)
+}
+func (s *controllableLockStore) ReadSnapshotManifest(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) ([]byte, error) {
+	return s.inner.ReadSnapshotManifest(ctx, r, k)
 }
 
 func TestRunCleanup_LockLossAbortsNamespace(t *testing.T) {
