@@ -105,6 +105,8 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
     primaryProps.style.flexGrow = 1;
   }
 
+  primaryProps.className = cx(primaryProps.className, styles.viz, isScrollingLayout && styles.fixedSizeViz);
+
   return (
     <div className={cx(styles.pageContainer, controls && styles.pageContainerWithControls)}>
       {controls && (
@@ -113,7 +115,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
         </div>
       )}
       <div {...containerProps}>
-        <div {...primaryProps} className={cx(primaryProps.className, isScrollingLayout && styles.fixedSizeViz)}>
+        <div {...primaryProps}>
           <PanelEditPanelWrapper panel={panel} tableView={tableView} dashboard={dashboard} />
         </div>
         {showLibraryPanelSaveModal && libraryPanel && (
@@ -254,6 +256,9 @@ function getStyles(theme: GrafanaTheme2) {
       svg: {
         rotate: '-90deg',
       },
+    }),
+    viz: css({
+      paddingLeft: theme.spacing(2),
     }),
     fixedSizeViz: css({
       height: '100vh',
