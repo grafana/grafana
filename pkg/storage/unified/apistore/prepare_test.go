@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var rtscheme = runtime.NewScheme()
@@ -237,7 +238,11 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Equal(t, "2025-12-17T01:01:00Z", tmp.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 	})
 
-	s.opts.RequireDeprecatedInternalID = true
+	// Dummy function
+	s.opts.DeprecatedInternalID = func(ctx context.Context, key *resourcepb.ResourceKey, id int64) (bool, error) {
+		return id == 100, nil
+	}
+
 	t.Run("Should generate internal id", func(t *testing.T) {
 		dashboard := dashv1.Dashboard{}
 		dashboard.Name = "test-name"
@@ -268,6 +273,18 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		meta, err = utils.MetaAccessor(newObject)
 		require.NoError(t, err)
 		require.Equal(t, meta.GetDeprecatedInternalID(), int64(1)) // nolint:staticcheck
+	})
+
+	t.Run("Should fail if deprecated ID if already in use", func(t *testing.T) {
+		dashboard := dashv1.Dashboard{}
+		dashboard.Name = "test-name"
+		obj := dashboard.DeepCopyObject()
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetDeprecatedInternalID(100) // nolint:staticcheck
+
+		_, err = s.prepareObjectForStorage(ctx, obj)
+		require.True(t, apierrors.IsBadRequest(err))
 	})
 
 	t.Run("Should remove grant permissions annotation", func(t *testing.T) {

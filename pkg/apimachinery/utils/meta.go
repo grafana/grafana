@@ -199,6 +199,9 @@ func (m *grafanaMetaAccessor) SetAnnotation(key string, val string) {
 	if val == "" {
 		if anno != nil {
 			delete(anno, key)
+			if len(anno) == 0 {
+				anno = nil // clear the whole object
+			}
 		}
 	} else {
 		if anno == nil {
@@ -316,6 +319,9 @@ func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
 	if id == 0 {
 		if labels != nil {
 			delete(labels, LabelKeyDeprecatedInternalID)
+			if len(labels) == 0 {
+				labels = nil
+			}
 			m.obj.SetLabels(labels)
 		}
 		return

@@ -55,6 +55,29 @@ var (
 
 type DefaultPermissionSetter = func(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
 
+// Find the previous value by internal ID
+type DeprecatedIDLookup func(ctx context.Context, key *resourcepb.ResourceKey, id int64) (bool, error)
+
+func NewDeprecatedIDLookup(index resourcepb.ResourceIndexClient) DeprecatedIDLookup {
+	return func(ctx context.Context, key *resourcepb.ResourceKey, id int64) (bool, error) {
+		rsp, err := index.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Limit: 0, // We don't need the real results
+			Options: &resourcepb.ListOptions{
+				Key: key,
+				Labels: []*resourcepb.Requirement{{
+					Key:      utils.LabelKeyDeprecatedInternalID,
+					Operator: "=",
+					Values:   []string{fmt.Sprintf("%d", id)},
+				}},
+			},
+		})
+		if err != nil {
+			return false, err
+		}
+		return rsp.TotalHits > 0, nil
+	}
+}
+
 // Optional settings that apply to a single resource
 type StorageOptions struct {
 	Scheme *runtime.Scheme
@@ -66,7 +89,7 @@ type StorageOptions struct {
 	MaximumNameLength int
 
 	// Add internalID label when missing
-	RequireDeprecatedInternalID bool
+	DeprecatedInternalID DeprecatedIDLookup
 
 	// Process inline secure values
 	SecureValues secrets.InlineSecureValueSupport
@@ -170,7 +193,7 @@ func NewStorage(
 			"resource", config.GroupResource.String())
 	}
 
-	if opts.RequireDeprecatedInternalID {
+	if opts.DeprecatedInternalID != nil {
 		node, err := snowflake.NewNode(rand.Int64N(1024))
 		if err != nil {
 			return nil, nil, err
@@ -246,16 +269,19 @@ func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
 	ctx, span := tracer.Start(ctx, "apistore.Storage.Create")
 	defer span.End()
+
+	rkey, err := s.getKey(key)
+	if err != nil {
+		return err
+	}
+
 	v, err := s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
 		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_ADDED, key, obj, out)
 	}
 	req := &resourcepb.CreateRequest{
 		Value: v.raw.Bytes(),
-	}
-	req.Key, err = s.getKey(key)
-	if err != nil {
-		return err
+		Key:   rkey,
 	}
 
 	v.permissionCreator, err = afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, obj, s.opts.Permissions)
