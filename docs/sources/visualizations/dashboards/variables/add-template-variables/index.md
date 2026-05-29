@@ -616,7 +616,8 @@ This variable is the name of the current dashboard.
 
 ### `$__from` and `$__to`
 
-Grafana has two built-in time range variables: `$__from` and `$__to`. They are currently always interpolated as epoch milliseconds by default, but you can control date formatting.
+Grafana has built-in time range variables: `$__from` and `$__to`.
+They're always interpolated as epoch milliseconds by default, but you can control date formatting.
 
 <!-- prettier-ignore-start -->
 
