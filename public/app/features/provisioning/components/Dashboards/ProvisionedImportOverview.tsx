@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { Alert } from '@grafana/ui';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { isRecord } from 'app/core/utils/isRecord';
@@ -19,9 +21,11 @@ import {
   type ImportFormDataV2,
 } from 'app/features/manage-dashboards/types';
 
+import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useImportProvisionedSave } from '../../hooks/useImportProvisionedSave';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { getIsReadOnlyRepo } from '../../utils/repository';
+import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
 import { generatePath, slugifyForFilename } from '../utils/path';
 import { generateTimestamp } from '../utils/timestamp';
@@ -41,12 +45,43 @@ interface Props {
   meta: { updatedAt: string; orgName: string };
   source: DashboardSource;
   folderUid: string;
-  repository: RepositoryView;
+  status: RepoViewStatus;
+  repository?: RepositoryView;
   folder?: Folder;
   onCancel: () => void;
 }
 
-export function ProvisionedImportOverview({
+export function ProvisionedImportOverview({ status, repository, ...rest }: Props) {
+  // Fail closed — standard import must not write into a repo-managed folder.
+  if (status === RepoViewStatus.Orphaned) {
+    return <RepoInvalidStateBanner noRepository isReadOnlyRepo={false} />;
+  }
+
+  // Fail closed — can't confirm the folder isn't repo-managed.
+  if (status === RepoViewStatus.Error) {
+    return (
+      <Alert
+        title={t('import-overview.error-provisioning-status-title', 'Unable to determine provisioning status')}
+        severity="error"
+      >
+        <Trans i18nKey="import-overview.error-provisioning-status">
+          Could not check whether the target folder is managed by a repository. Please try again or contact an
+          administrator.
+        </Trans>
+      </Alert>
+    );
+  }
+
+  if (status !== RepoViewStatus.Ready || !repository) {
+    return null;
+  }
+
+  return <ProvisionedImportOverviewReady {...rest} repository={repository} />;
+}
+
+type ReadyProps = Omit<Props, 'status' | 'repository'> & { repository: RepositoryView };
+
+function ProvisionedImportOverviewReady({
   dashboard,
   dashboardUid,
   inputs,
@@ -56,7 +91,7 @@ export function ProvisionedImportOverview({
   repository,
   folder,
   onCancel,
-}: Props) {
+}: ReadyProps) {
   const isV2 = isDashboardV2Spec(dashboard);
   const isReadOnlyRepo = getIsReadOnlyRepo(repository);
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
@@ -70,7 +105,7 @@ export function ProvisionedImportOverview({
 
   const { save, isLoading, error } = useImportProvisionedSave({ repository });
 
-  const title = isDashboardV2Spec(dashboard) ? (dashboard.title ?? '') : (dashboard.title ?? '');
+  const title = dashboard.title ?? '';
 
   const defaultValues = useMemo<ProvisionedImportFormData>(() => {
     const slug = slugifyForFilename(title);

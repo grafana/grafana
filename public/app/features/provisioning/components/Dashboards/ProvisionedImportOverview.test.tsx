@@ -15,6 +15,7 @@ import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/Dashboar
 import { validateUid } from 'app/features/manage-dashboards/import/utils/validation';
 import { type DashboardInputs, DashboardSource, LibraryPanelInputState } from 'app/features/manage-dashboards/types';
 
+import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { setupProvisioningMswServer } from '../../mocks/server';
 
 import { ProvisionedImportOverview } from './ProvisionedImportOverview';
@@ -92,6 +93,7 @@ async function setup(overrides: Partial<Parameters<typeof ProvisionedImportOverv
     meta: { updatedAt: '2024-01-01', orgName: 'Test Org' },
     source: DashboardSource.Json,
     folderUid: 'folder-1',
+    status: RepoViewStatus.Ready,
     repository,
     onCancel: jest.fn(),
     ...overrides,
@@ -334,11 +336,13 @@ describe('ProvisionedImportOverview', () => {
     });
 
     it('keeps submit disabled until initial async validation completes', async () => {
-      let resolveUid!: (value: true | string) => void;
+      // RHF may call the validator multiple times (trigger + internal isValid recomputation),
+      // so track all pending promises and resolve them together.
+      const pendingResolvers: Array<(value: true | string) => void> = [];
       mockValidateUid.mockImplementation(
         () =>
           new Promise<true | string>((resolve) => {
-            resolveUid = resolve;
+            pendingResolvers.push(resolve);
           })
       );
 
@@ -348,7 +352,7 @@ describe('ProvisionedImportOverview', () => {
       expect(submitBtn).toBeDisabled();
 
       await act(async () => {
-        resolveUid(true);
+        pendingResolvers.forEach((r) => r(true));
       });
 
       await waitFor(() => expect(submitBtn).not.toBeDisabled());
@@ -392,6 +396,25 @@ describe('ProvisionedImportOverview', () => {
       // The only "Folder" control should be the repo folder combobox
       const folderControls = screen.getAllByRole('combobox', { name: /folder/i });
       expect(folderControls).toHaveLength(1);
+    });
+  });
+
+  describe('provisioning status handling', () => {
+    it('renders RepoInvalidStateBanner when status is Orphaned', async () => {
+      await setup({ status: RepoViewStatus.Orphaned, repository: undefined });
+      expect(screen.getByRole('alert', { name: /repository not found/i })).toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.components.ImportDashboardForm.submit)).not.toBeInTheDocument();
+    });
+
+    it('renders provisioning status error alert when status is Error', async () => {
+      await setup({ status: RepoViewStatus.Error, repository: undefined });
+      expect(screen.getByRole('alert', { name: /unable to determine provisioning status/i })).toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.components.ImportDashboardForm.submit)).not.toBeInTheDocument();
+    });
+
+    it('renders nothing for unexpected non-Ready status', async () => {
+      const { container } = await setup({ status: RepoViewStatus.Disabled as RepoViewStatus, repository: undefined });
+      expect(container).toBeEmptyDOMElement();
     });
   });
 });

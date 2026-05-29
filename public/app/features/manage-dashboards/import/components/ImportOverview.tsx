@@ -1,9 +1,10 @@
+import { useState } from 'react';
+
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, Spinner, Stack } from '@grafana/ui';
 import { isDashboardV1Spec, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { ProvisionedImportOverview } from 'app/features/provisioning/components/Dashboards/ProvisionedImportOverview';
-import { RepoInvalidStateBanner } from 'app/features/provisioning/components/Shared/RepoInvalidStateBanner';
 import {
   RepoViewStatus,
   useGetResourceRepositoryView,
@@ -25,9 +26,13 @@ type Props = {
 
 export function ImportOverview({ dashboard, dashboardUid, inputs, meta, source, onCancel }: Props) {
   const searchObj = locationService.getSearchObject();
-  const folderUid = searchObj.folderUid ? String(searchObj.folderUid) : '';
+  const initialFolderUid = searchObj.folderUid ? String(searchObj.folderUid) : '';
+  const [selectedFolderUid, setSelectedFolderUid] = useState(initialFolderUid);
 
-  const { repository, folder, status } = useGetResourceRepositoryView({ folderName: folderUid, includeInstance: true });
+  const { repository, folder, status } = useGetResourceRepositoryView({
+    folderName: selectedFolderUid,
+    includeInstance: true,
+  });
 
   // While detecting provisioning status, show a spinner
   if (status === RepoViewStatus.Loading) {
@@ -38,8 +43,15 @@ export function ImportOverview({ dashboard, dashboardUid, inputs, meta, source, 
     );
   }
 
-  // Provisioned folder with an active repository → provisioned import flow
-  if (status === RepoViewStatus.Ready && repository && (isDashboardV2Spec(dashboard) || isDashboardV1Spec(dashboard))) {
+  const isRecognizedDashboardSpec = isDashboardV2Spec(dashboard) || isDashboardV1Spec(dashboard);
+
+  // Error/Orphaned route here to fail closed — block standard import into a potentially repo-managed folder.
+  if (
+    isRecognizedDashboardSpec &&
+    ((status === RepoViewStatus.Ready && repository) ||
+      status === RepoViewStatus.Orphaned ||
+      status === RepoViewStatus.Error)
+  ) {
     return (
       <ProvisionedImportOverview
         dashboard={dashboard}
@@ -47,29 +59,12 @@ export function ImportOverview({ dashboard, dashboardUid, inputs, meta, source, 
         inputs={inputs}
         meta={meta}
         source={source}
-        folderUid={folderUid}
+        folderUid={selectedFolderUid}
+        status={status}
         repository={repository}
         folder={folder}
         onCancel={onCancel}
       />
-    );
-  }
-  // Error or orphaned state — block import to avoid inconsistent state
-  if (status === RepoViewStatus.Orphaned) {
-    return <RepoInvalidStateBanner noRepository isReadOnlyRepo={false} />;
-  }
-
-  if (status === RepoViewStatus.Error) {
-    return (
-      <Alert
-        title={t('import-overview.error-provisioning-status-title', 'Unable to determine provisioning status')}
-        severity="error"
-      >
-        <Trans i18nKey="import-overview.error-provisioning-status">
-          Could not check whether the target folder is managed by a repository. Please try again or contact an
-          administrator.
-        </Trans>
-      </Alert>
     );
   }
 
@@ -82,7 +77,8 @@ export function ImportOverview({ dashboard, dashboardUid, inputs, meta, source, 
         inputs={inputs}
         meta={meta}
         source={source}
-        folderUid={folderUid}
+        folderUid={selectedFolderUid}
+        onFolderChange={setSelectedFolderUid}
         onCancel={onCancel}
       />
     );
@@ -95,7 +91,8 @@ export function ImportOverview({ dashboard, dashboardUid, inputs, meta, source, 
         inputs={inputs}
         meta={meta}
         source={source}
-        folderUid={folderUid}
+        folderUid={selectedFolderUid}
+        onFolderChange={setSelectedFolderUid}
         onCancel={onCancel}
       />
     );

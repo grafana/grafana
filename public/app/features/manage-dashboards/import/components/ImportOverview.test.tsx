@@ -1,4 +1,4 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, act } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
@@ -21,6 +21,9 @@ const mockRepoView: ReturnType<typeof useGetResourceRepositoryView> = {
   isReadOnlyRepo: false,
 };
 
+// Track which folderName the hook is called with so tests can configure per-folder responses.
+let repoViewByFolder: Record<string, Partial<ReturnType<typeof useGetResourceRepositoryView>>> = {};
+
 jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
   RepoViewStatus: {
     Disabled: 'disabled',
@@ -29,19 +32,38 @@ jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => 
     Error: 'error',
     Orphaned: 'orphaned',
   },
-  useGetResourceRepositoryView: jest.fn(() => mockRepoView),
+  useGetResourceRepositoryView: jest.fn((args: { folderName?: string }) => {
+    const perFolder = args.folderName ? repoViewByFolder[args.folderName] : undefined;
+    if (perFolder) {
+      return { ...mockRepoView, ...perFolder };
+    }
+    return mockRepoView;
+  }),
 }));
 
+// Capture onFolderChange from standard form mocks so tests can simulate a folder change.
+let capturedOnFolderChange: ((uid: string) => void) | undefined;
+
 jest.mock('./ImportOverviewV1', () => ({
-  ImportOverviewV1: () => <div data-testid="standard-v1">Standard V1</div>,
+  ImportOverviewV1: (props: { onFolderChange?: (uid: string) => void }) => {
+    capturedOnFolderChange = props.onFolderChange;
+    return <div data-testid="standard-v1">Standard V1</div>;
+  },
 }));
 
 jest.mock('./ImportOverviewV2', () => ({
-  ImportOverviewV2: () => <div data-testid="standard-v2">Standard V2</div>,
+  ImportOverviewV2: (props: { onFolderChange?: (uid: string) => void }) => {
+    capturedOnFolderChange = props.onFolderChange;
+    return <div data-testid="standard-v2">Standard V2</div>;
+  },
 }));
 
 jest.mock('app/features/provisioning/components/Dashboards/ProvisionedImportOverview', () => ({
-  ProvisionedImportOverview: () => <div data-testid="provisioned-import">Provisioned Import</div>,
+  ProvisionedImportOverview: (props: { status: string }) => (
+    <div data-testid="provisioned-import" data-status={props.status}>
+      Provisioned Import
+    </div>
+  ),
 }));
 
 const repository: RepositoryView = {
@@ -109,6 +131,8 @@ describe('ImportOverview dispatcher', () => {
     jest.clearAllMocks();
     jest.spyOn(locationService, 'getSearchObject').mockReturnValue({ folderUid: 'folder-1' });
     setRepoView({ status: RepoViewStatus.Disabled });
+    repoViewByFolder = {};
+    capturedOnFolderChange = undefined;
   });
 
   describe('standard (non-provisioned) routing', () => {
@@ -155,6 +179,62 @@ describe('ImportOverview dispatcher', () => {
     });
   });
 
+  describe('folder change triggers provisioning switch', () => {
+    it('switches V1 to provisioned import when user selects a provisioned folder', () => {
+      // Start with no provisioning (root browse)
+      jest.spyOn(locationService, 'getSearchObject').mockReturnValue({});
+      setRepoView({ status: RepoViewStatus.Disabled });
+
+      // Configure per-folder: 'provisioned-folder' is repo-managed
+      repoViewByFolder['provisioned-folder'] = { status: RepoViewStatus.Ready, repository };
+
+      render(<ImportOverview {...defaultProps} dashboard={v1Dashboard} />);
+      expect(screen.getByTestId('standard-v1')).toBeInTheDocument();
+
+      // Simulate folder change from the standard form
+      act(() => {
+        capturedOnFolderChange?.('provisioned-folder');
+      });
+
+      expect(screen.getByTestId('provisioned-import')).toBeInTheDocument();
+      expect(screen.queryByTestId('standard-v1')).not.toBeInTheDocument();
+    });
+
+    it('switches V2 to provisioned import when user selects a provisioned folder', () => {
+      jest.spyOn(locationService, 'getSearchObject').mockReturnValue({});
+      setRepoView({ status: RepoViewStatus.Disabled });
+      repoViewByFolder['provisioned-folder'] = { status: RepoViewStatus.Ready, repository };
+
+      render(<ImportOverview {...defaultProps} dashboard={v2Dashboard} />);
+      expect(screen.getByTestId('standard-v2')).toBeInTheDocument();
+
+      act(() => {
+        capturedOnFolderChange?.('provisioned-folder');
+      });
+
+      expect(screen.getByTestId('provisioned-import')).toBeInTheDocument();
+      expect(screen.queryByTestId('standard-v2')).not.toBeInTheDocument();
+    });
+
+    it('stays on standard import when user selects a non-provisioned folder', () => {
+      jest.spyOn(locationService, 'getSearchObject').mockReturnValue({});
+      setRepoView({ status: RepoViewStatus.Disabled });
+
+      // Both folders are non-provisioned
+      repoViewByFolder['regular-folder'] = { status: RepoViewStatus.Ready, repository: undefined };
+
+      render(<ImportOverview {...defaultProps} dashboard={v1Dashboard} />);
+      expect(screen.getByTestId('standard-v1')).toBeInTheDocument();
+
+      act(() => {
+        capturedOnFolderChange?.('regular-folder');
+      });
+
+      expect(screen.getByTestId('standard-v1')).toBeInTheDocument();
+      expect(screen.queryByTestId('provisioned-import')).not.toBeInTheDocument();
+    });
+  });
+
   describe('loading state', () => {
     it('shows spinner while detecting provisioning status', () => {
       setRepoView({ status: RepoViewStatus.Loading, isLoading: true });
@@ -165,21 +245,41 @@ describe('ImportOverview dispatcher', () => {
     });
   });
 
-  describe('error / orphaned states', () => {
-    it('shows error banner when status is Error', () => {
+  describe('error / orphaned states (fail-closed)', () => {
+    it('routes to ProvisionedImportOverview with Error status — blocks standard import', () => {
       setRepoView({ status: RepoViewStatus.Error, error: new Error('fail') });
       render(<ImportOverview {...defaultProps} dashboard={v1Dashboard} />);
-      expect(screen.getByRole('alert')).toBeInTheDocument();
+      const el = screen.getByTestId('provisioned-import');
+      expect(el).toBeInTheDocument();
+      expect(el).toHaveAttribute('data-status', 'error');
       expect(screen.queryByTestId('standard-v1')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('provisioned-import')).not.toBeInTheDocument();
     });
 
-    it('shows error banner when status is Orphaned', () => {
+    it('routes to ProvisionedImportOverview with Orphaned status — blocks standard import', () => {
       setRepoView({ status: RepoViewStatus.Orphaned });
       render(<ImportOverview {...defaultProps} dashboard={v2Dashboard} />);
-      expect(screen.getByRole('alert')).toBeInTheDocument();
+      const el = screen.getByTestId('provisioned-import');
+      expect(el).toBeInTheDocument();
+      expect(el).toHaveAttribute('data-status', 'orphaned');
       expect(screen.queryByTestId('standard-v2')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('provisioned-import')).not.toBeInTheDocument();
+    });
+
+    it('routes to ProvisionedImportOverview when folder change results in Error status', () => {
+      jest.spyOn(locationService, 'getSearchObject').mockReturnValue({});
+      setRepoView({ status: RepoViewStatus.Disabled });
+      repoViewByFolder['broken-folder'] = { status: RepoViewStatus.Error, error: new Error('lookup failed') };
+
+      render(<ImportOverview {...defaultProps} dashboard={v1Dashboard} />);
+      expect(screen.getByTestId('standard-v1')).toBeInTheDocument();
+
+      act(() => {
+        capturedOnFolderChange?.('broken-folder');
+      });
+
+      const el = screen.getByTestId('provisioned-import');
+      expect(el).toBeInTheDocument();
+      expect(el).toHaveAttribute('data-status', 'error');
+      expect(screen.queryByTestId('standard-v1')).not.toBeInTheDocument();
     });
   });
 });
