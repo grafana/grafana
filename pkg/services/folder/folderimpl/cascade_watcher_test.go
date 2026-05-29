@@ -35,6 +35,10 @@ func TestIsTerminatingForCascade(t *testing.T) {
 	}))
 }
 
+func TestTerminatingFolderSelector(t *testing.T) {
+	require.Equal(t, "folder.grafana.app/terminating=true", terminatingFolderSelector)
+}
+
 func TestOrgIDFromNamespace(t *testing.T) {
 	orgID, err := orgIDFromNamespace("org-12")
 	require.NoError(t, err)
