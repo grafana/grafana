@@ -21,8 +21,6 @@ import {
 import { fetchRules } from './prometheus';
 import { fetchTestRulerRulesGroup } from './ruler';
 
-const MIMIR_RULER_SUBTYPE = 'mimir';
-
 export async function discoverFeaturesByUid(dataSourceUid: string): Promise<PromApiFeatures> {
   if (dataSourceUid === GRAFANA_RULES_SOURCE_NAME) {
     return {
@@ -108,7 +106,7 @@ export async function discoverDataSourceFeatures(dsSettings: {
 
   // if we have both features and buildinfo reported we're talking to Mimir
   const rulerConfigApiEnabled = features?.ruler_config_api === 'true';
-  const rulerSupported = rulerConfigApiEnabled ? await hasRulerSupport(name, MIMIR_RULER_SUBTYPE) : false;
+  const rulerSupported = rulerConfigApiEnabled ? await hasRulerSupport(name, 'mimir') : false;
 
   return {
     application: PromApplication.Mimir,
