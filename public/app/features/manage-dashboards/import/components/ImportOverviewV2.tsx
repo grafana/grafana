@@ -23,10 +23,20 @@ type Props = {
   meta: { updatedAt: string; orgName: string };
   source: DashboardSource;
   folderUid: string;
+  onFolderChange?: (uid: string) => void;
   onCancel: () => void;
 };
 
-export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source, folderUid, onCancel }: Props) {
+export function ImportOverviewV2({
+  dashboard,
+  dashboardUid,
+  inputs,
+  meta,
+  source,
+  folderUid,
+  onFolderChange,
+  onCancel,
+}: Props) {
   const { layout: normalizedLayout, modified: hasFloatGridItems } = useMemo(
     () => truncateFloatGridItems(dashboard.layout),
     [dashboard.layout]
@@ -90,6 +100,7 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
             onSubmit={onSubmit}
             watch={watch}
             hasFloatGridItems={hasFloatGridItems}
+            onFolderChange={onFolderChange}
           />
         )}
       </Form>

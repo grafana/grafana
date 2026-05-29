@@ -9150,11 +9150,11 @@ __metadata:
   linkType: hard
 
 "@swc/types@npm:^0.1.23, @swc/types@npm:^0.1.25":
-  version: 0.1.25
-  resolution: "@swc/types@npm:0.1.25"
+  version: 0.1.26
+  resolution: "@swc/types@npm:0.1.26"
   dependencies:
     "@swc/counter": "npm:^0.1.3"
-  checksum: 10/f6741450224892d12df43e5ca7f3cc0287df644dcd672626eb0cc2a3a8e3e875f4b29eb11336f37c7240cf6e010ba59eb3a79f4fb8bee5cbd168dfc1326ff369
+  checksum: 10/07de03b9da3928cdf69bda70bf2c809dd86f16ef23e357759e577bbd975529cb20218c2e54e72b00585abae2b5e04e39b8947cea7a6f4de2d40a7633be441919
   languageName: node
   linkType: hard
 
@@ -25304,7 +25304,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ora@npm:9.3.0, ora@npm:^9.0.0":
+"ora@npm:9.3.0":
   version: 9.3.0
   resolution: "ora@npm:9.3.0"
   dependencies:
@@ -25334,6 +25334,22 @@ __metadata:
     strip-ansi: "npm:^6.0.0"
     wcwidth: "npm:^1.0.1"
   checksum: 10/8d071828f40090a8e1c6e8f350c6eb065808e9ab2b3e57fa37e0d5ae78cb46dac00117c8f12c3c8b8da2923454afbd8265e08c10b69881170c5b269f451e7fef
+  languageName: node
+  linkType: hard
+
+"ora@npm:^9.0.0":
+  version: 9.4.0
+  resolution: "ora@npm:9.4.0"
+  dependencies:
+    chalk: "npm:^5.6.2"
+    cli-cursor: "npm:^5.0.0"
+    cli-spinners: "npm:^3.2.0"
+    is-interactive: "npm:^2.0.0"
+    is-unicode-supported: "npm:^2.1.0"
+    log-symbols: "npm:^7.0.1"
+    stdin-discarder: "npm:^0.3.2"
+    string-width: "npm:^8.1.0"
+  checksum: 10/48fe48f98764d1132a77d845862fab1b1f8d7aacd4c38c39ad42a874a55686c5949194eeb836a7ee4c43027a471ffb93937eff69f4db7353d6800b678073de55
   languageName: node
   linkType: hard
 
@@ -27311,7 +27327,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-19@npm:react@^19.2.4, react@npm:^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0, react@npm:^19.2.4":
+"react-19@npm:react@^19.2.4":
   version: 19.2.4
   resolution: "react@npm:19.2.4"
   checksum: 10/18179fe217f67eb2d0bc61cd04e7ad3c282ea09a1dface7eacd71816f62609f4bbf566c447c704335284deb8397b00bca084e0cd60e6f437279a7498e2d0bfe0
@@ -28149,6 +28165,13 @@ __metadata:
   dependencies:
     loose-envify: "npm:^1.1.0"
   checksum: 10/261137d3f3993eaa2368a83110466fc0e558bc2c7f7ae7ca52d94f03aac945f45146bd85e5f481044db1758a1dbb57879e2fcdd33924e2dde1bdc550ce73f7bf
+  languageName: node
+  linkType: hard
+
+"react@npm:^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0, react@npm:^19.2.4":
+  version: 19.2.6
+  resolution: "react@npm:19.2.6"
+  checksum: 10/205f0db93bd6c6485f94471d1c3437ae1d410f322297c76186fe4f658f88a6786bb0805e3cf8f330f24d1daa923b6b610ec63960d2461e9201bca64ca8361db9
   languageName: node
   linkType: hard
 
@@ -30224,10 +30247,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stdin-discarder@npm:^0.3.1":
-  version: 0.3.1
-  resolution: "stdin-discarder@npm:0.3.1"
-  checksum: 10/262d818227f6db99c545afb33544cf4e6a0c7afa6ff445aec2475ba6f0b1598e21b5f867723290c39befabe8359786789b9a44daabf5c1c1a0b65d5360662817
+"stdin-discarder@npm:^0.3.1, stdin-discarder@npm:^0.3.2":
+  version: 0.3.2
+  resolution: "stdin-discarder@npm:0.3.2"
+  checksum: 10/63c6912146efe079fd048ecc02e5c3bf5aaa4cb268ad4e365603d845444dd3048daa45868c2690c5fe2d020ba47273c8a20df684a8c424fb4bd7f359c795c2f5
   languageName: node
   linkType: hard
 
