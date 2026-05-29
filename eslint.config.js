@@ -130,6 +130,8 @@ module.exports = [
       'apps/plugins/plugin/src/generated/meta/v0alpha1',
       'apps/plugins/plugin/src/generated/plugin/v0alpha1',
       'packages/get-document/index.js',
+      'packages/mapbox-jsonlint-lines-primitives/lib/jsonlint.js',
+      'packages/mapbox-jsonlint-lines-primitives/lib/formatter.js',
     ],
   },
   ...grafanaConfig,
