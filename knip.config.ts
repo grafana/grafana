@@ -31,6 +31,9 @@ const config: KnipConfig = {
       webpack: false,
       jest: true,
       entry: [...packageEntries, 'module.{ts,tsx,js}'],
+      // these are provided by grafana-plugin-configs
+      ignoreDependencies: ['@swc/jest'],
+      ignoreUnresolved: ['identity-obj-proxy'],
     },
     'e2e-playwright/test-plugins/*': {
       // TODO figure out how to properly include webpack/jest configs
@@ -58,7 +61,7 @@ const config: KnipConfig = {
       storybook: true,
     },
     'packages/grafana-api-clients': {
-      entry: [...packageEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/plopfile.ts'],
+      entry: [...packageEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/generate.ts'],
     },
     'packages/grafana-plugin-configs': {
       // TODO figure out how to properly include webpack/jest configs
