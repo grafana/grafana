@@ -591,7 +591,7 @@ This is how those values are displayed in a preview:
 
 Then you can use `${varName.someProperty}` syntax to reference any property in your dashboard panels or metrics:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-multipropvar-used-12.4.png" max-width=750px" alt="Multi-property variable used in a text panel" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-multipropvar-used-12.4.png" max-width="750px" alt="Multi-property variable used in a text panel" >}}
 
 You can even deeply nest properties and still access them using familiar variable syntax. In the following example, each user has an address property with all the elements of an address nested within it:
 
@@ -697,6 +697,41 @@ This is used in several places, including:
 The `$__timezone` variable returns the currently selected time zone, either `utc` or an entry of the IANA time zone database (for example, `America/New_York`).
 
 If the currently selected time zone is _Browser Time_, Grafana tries to determine your browser time zone.
+
+### `$__url_time_range`
+
+The `$__url_time_range` variable returns the current dashboard time range as URL query parameters.
+It's intended for use in **data links and panel links**, not in query editors.
+
+The variable expands to a string like `from=1607687293000&to=1607687293100`, where the values are Unix millisecond timestamps matching the current time range selection.
+
+You must include the `?` or `&` separator yourself when constructing URLs:
+
+<!-- prettier-ignore-start -->
+
+| Usage | Example result |
+| ----- | -------------- |
+| `https://example.com/d/abc?${__url_time_range}`         | `https://example.com/d/abc?from=1594671549254&to=1594672349254`         |
+| `https://example.com/d/abc?orgId=1&${__url_time_range}` | `https://example.com/d/abc?orgId=1&from=1594671549254&to=1594672349254` |
+
+<!-- prettier-ignore-end -->
+
+For example, to create a data link that opens another dashboard with the same time range:
+
+```text
+https://your-grafana/d/other-dashboard?${__url_time_range}
+```
+
+To combine it with other variables:
+
+```text
+https://your-grafana/d/other-dashboard?{__url_time_range}&var-host= {host}
+```
+
+{{< admonition type="note" >}}
+`$__url_time_range` always uses Unix millisecond epoch timestamps.
+To include only the start or end of the time range with specific formatting, use [`$__from` and `$__to`](#__from-and-__to) instead.
+{{< /admonition >}}
 
 ## Chained variables
 
