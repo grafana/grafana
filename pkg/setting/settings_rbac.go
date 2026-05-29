@@ -28,6 +28,12 @@ type RBACSettings struct {
 	// milliseconds so they can poll for aggregator output without waiting
 	// the production interval.
 	BasicRoleAggregatorInterval time.Duration
+	// BasicRoleAggregatorEnabled turns the enterprise basic-role aggregator
+	// background service on or off. Defaults to false: the aggregator is
+	// opt-in while the basic-role override path is being stabilised. When
+	// false the service reports IsDisabled() regardless of Mode 5 or license
+	// state.
+	BasicRoleAggregatorEnabled bool
 	// set of resources that should generate managed permissions when created
 	resourcesWithPermissionsOnCreation map[string]struct{}
 
@@ -45,6 +51,7 @@ func (cfg *Cfg) readRBACSettings() {
 	s.SingleOrganization = rbac.Key("single_organization").MustBool(false)
 	s.PluginsCleanup = util.SplitString(rbac.Key("plugins_cleanup").MustString(""))
 	s.BasicRoleAggregatorInterval = rbac.Key("basic_role_aggregator_interval").MustDuration(DefaultBasicRoleAggregatorInterval)
+	s.BasicRoleAggregatorEnabled = rbac.Key("basic_role_aggregator_enabled").MustBool(false)
 
 	// List of resources to generate managed permissions for upon resource creation (dashboard, folder, service-account, datasource)
 	resources := util.SplitString(rbac.Key("resources_with_managed_permissions_on_creation").MustString("dashboard, folder, service-account, datasource"))

@@ -464,6 +464,10 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = rbacSect.NewKey("basic_role_aggregator_interval", opts.BasicRoleAggregatorInterval.String())
 		require.NoError(t, err)
 	}
+	if opts.BasicRoleAggregatorEnabled {
+		_, err = rbacSect.NewKey("basic_role_aggregator_enabled", "true")
+		require.NoError(t, err)
+	}
 
 	if opts.DisableAuthZClientCache {
 		authzSect, err := cfg.NewSection("authorization")
@@ -1009,7 +1013,12 @@ type GrafanaOpts struct {
 	// BasicRoleAggregatorInterval, if > 0, sets `[rbac] basic_role_aggregator_interval`
 	// in the test server's ini. Used by tests that want the enterprise
 	// basic-role aggregator to tick faster than the production 30s default.
-	BasicRoleAggregatorInterval         time.Duration
+	BasicRoleAggregatorInterval time.Duration
+	// BasicRoleAggregatorEnabled, if true, sets `[rbac] basic_role_aggregator_enabled`
+	// in the test server's ini, turning on the enterprise basic-role
+	// aggregator (off by default). Tests that depend on the aggregator
+	// populating the basic GlobalRoles must set this.
+	BasicRoleAggregatorEnabled          bool
 	APIServerRuntimeConfig              string
 	DisableControllers                  bool
 	DisableDBCleanup                    bool
