@@ -194,7 +194,7 @@ func RegisterAPIService(
 		dashboardK8sClient:       dashboardClient,
 		folderClientProvider:     newSimpleClientProvider(folderClient),
 		libraryPanels:            libraryPanels,
-		libraryPanelsEnabled:     features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs), // nolint:staticcheck
+		libraryPanelsEnabled:     features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) || features.IsEnabledGlobally(featuremgmt.FlagKubernetesLibraryPanels), // nolint:staticcheck
 		publicDashboardService:   publicDashboardService,
 		snapshotService:          snapshotService,
 		snapshotOptions:          snapshotOptions,
