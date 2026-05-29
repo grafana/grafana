@@ -1,8 +1,13 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useReducer, useRef, useState } from 'react';
+import { type Unsubscribable } from 'rxjs';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Icon, IconButton, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Icon, IconButton, Input, Stack, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
+
+import { dashboardEditActions } from '../edit-pane/shared';
+import { type AggregatedPanelIntent, dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
 import { type DashboardScene } from './DashboardScene';
 
@@ -10,56 +15,61 @@ interface Props {
   dashboard: DashboardScene;
 }
 
+type DashboardIntent = NonNullable<DashboardScene['state']['intent']>;
+
 /**
- * A compact, always-on summary of the dashboard-level `intent` block.
+ * A compact, always-on summary of a dashboard's operational intent.
  *
- * Renders nothing when the dashboard has no intent — this is the
- * dominant case today, so the cost of mounting the component must
- * round to zero.
+ * Owner and purpose are dashboard-level fields the author edits inline here
+ * (stored on `dashboard.state.intent`). Failure modes and runbooks are a
+ * read-only roll-up of the intent declared on the panels below — the header is
+ * where an SRE scanning a dashboard cold sees, in one place, what the dashboard
+ * is for, who owns it, and which failure patterns the panels are watching for.
  *
- * Visible information is deliberately limited to the things an SRE
- * scanning a dashboard cold needs in the first three seconds:
- * purpose, owner, failure modes, and runbook shortcuts. The full
- * structured intent (expected behavior, related SLOs, per-field
- * provenance) lives in the edit-mode panel context section (C3); a
- * summary bar that tried to surface all of it would defeat its own
- * purpose.
+ * Renders nothing until some intent exists anywhere in the dashboard (a panel
+ * with intent, or an author-entered owner/purpose). A blank dashboard shows no
+ * header at all.
  */
 export function DashboardIntentSummaryBar({ dashboard }: Props) {
-  const { intent } = dashboard.useState();
+  const { intent, isEditing } = dashboard.useState();
   const styles = useStyles2(getStyles);
+  const aggregated = useAggregatedPanelIntent(dashboard);
 
-  // Default to expanded; user can collapse with the chevron. A
-  // "collapse by default on dense dashboards" heuristic would need a
-  // reliable panel count from the scene model, which the layouts
-  // refactor abstracts away — revisit when there's a stable accessor.
   const [collapsed, setCollapsed] = useState(false);
 
-  if (!intent || !hasAnyContent(intent)) {
+  const dashboardHasContent = hasDashboardContent(intent);
+  const aggregatedHasContent = aggregated.failureModes.length > 0 || aggregated.runbooks.length > 0;
+
+  // Visibility gate: never show on a dashboard with no intent anywhere, even in
+  // edit mode. The header (and its get-started CTA) only appears once a panel
+  // carries intent or an author has typed an owner/purpose.
+  if (!dashboardHasContent && !aggregatedHasContent) {
     return null;
   }
 
-  // Defensively coerce list fields. The intent block is authored
-  // free-form (legacy hand-edits, LLM drafts, cross-version imports)
-  // and we have observed `failureModes` and `runbooks` arriving as
-  // bare strings or missing entirely. Render nothing rather than
-  // crash the dashboard when a list-shaped field isn't actually a
-  // list.
-  const { purpose, owner } = intent;
-  const failureModes = Array.isArray(intent.failureModes) ? intent.failureModes : [];
-  const runbooks = Array.isArray(intent.runbooks) ? intent.runbooks : [];
+  const purpose = intent?.purpose ?? '';
+  const owner = intent?.owner ?? '';
+  const showGetStarted = Boolean(isEditing) && !purpose && !owner;
 
   return (
     <div className={styles.wrapper} data-testid="dashboard-intent-summary-bar">
       <div className={styles.header}>
         <Stack direction="row" alignItems="center" gap={1}>
           <Icon name="info-circle" className={styles.icon} aria-hidden />
-          <span className={styles.headerLabel}>About this dashboard</span>
-          {owner && <OwnerChip owner={owner} provenance={intent.provenance?.owner} />}
+          <span className={styles.headerLabel}>{t('dashboard.intent-summary.label', 'About this dashboard')}</span>
+          {isEditing ? (
+            <OwnerInput dashboard={dashboard} value={owner} />
+          ) : (
+            owner && <OwnerChip owner={owner} provenance={intent?.provenance?.owner} />
+          )}
         </Stack>
         <IconButton
           name={collapsed ? 'angle-down' : 'angle-up'}
-          aria-label={collapsed ? 'Expand dashboard intent' : 'Collapse dashboard intent'}
+          aria-label={
+            collapsed
+              ? t('dashboard.intent-summary.expand', 'Expand dashboard intent')
+              : t('dashboard.intent-summary.collapse', 'Collapse dashboard intent')
+          }
           onClick={() => setCollapsed((v) => !v)}
           size="md"
         />
@@ -67,33 +77,47 @@ export function DashboardIntentSummaryBar({ dashboard }: Props) {
 
       {!collapsed && (
         <div className={styles.body}>
-          {purpose && (
-            <p className={styles.purpose}>
-              {purpose}
-              {intent.provenance?.purpose && <ProvenanceMarker value={intent.provenance.purpose} />}
+          {showGetStarted && (
+            <p className={styles.getStarted}>
+              {t(
+                'dashboard.intent-summary.get-started',
+                'Add a purpose and owner so others understand what this dashboard is for.'
+              )}
             </p>
           )}
 
-          {failureModes.length > 0 && (
+          {isEditing ? (
+            <PurposeInput dashboard={dashboard} value={purpose} />
+          ) : (
+            purpose && (
+              <p className={styles.purpose}>
+                {purpose}
+                {intent?.provenance?.purpose && <ProvenanceMarker value={intent.provenance.purpose} />}
+              </p>
+            )
+          )}
+
+          {aggregated.failureModes.length > 0 && (
             <Stack direction="row" alignItems="center" gap={1} wrap="wrap">
-              <span className={styles.label}>Failure modes:</span>
-              {failureModes.map((fm) => (
-                <FailureModeChip
-                  key={fm.tag}
-                  tag={fm.tag}
-                  description={fm.description}
-                  provenance={intent.provenance?.failure_modes}
-                />
+              <span className={styles.label}>{t('dashboard.intent-summary.failure-modes', 'Failure modes:')}</span>
+              {aggregated.failureModes.map((fm) => (
+                <FailureModeChip key={fm.tag} tag={fm.tag} description={fm.description} panels={fm.panels} />
               ))}
             </Stack>
           )}
 
-          {runbooks.length > 0 && (
+          {aggregated.runbooks.length > 0 && (
             <Stack direction="row" alignItems="center" gap={1} wrap="wrap">
               <Icon name="book" size="sm" aria-hidden />
-              <span className={styles.label}>Runbooks:</span>
-              {runbooks.map((rb) => (
-                <a key={rb.url || rb.title} className={styles.runbookLink} href={rb.url} target="_blank" rel="noopener noreferrer">
+              <span className={styles.label}>{t('dashboard.intent-summary.runbooks', 'Runbooks:')}</span>
+              {aggregated.runbooks.map((rb) => (
+                <a
+                  key={rb.url || rb.title}
+                  className={styles.runbookLink}
+                  href={rb.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   {rb.title}
                   <Icon name="external-link-alt" size="xs" className={styles.runbookIcon} aria-hidden />
                 </a>
@@ -106,13 +130,150 @@ export function DashboardIntentSummaryBar({ dashboard }: Props) {
   );
 }
 
-function hasAnyContent(intent: NonNullable<DashboardScene['state']['intent']>): boolean {
-  return Boolean(
-    intent.purpose ||
-      intent.owner ||
-      (intent.failureModes && intent.failureModes.length > 0) ||
-      (intent.runbooks && intent.runbooks.length > 0) ||
-      intent.expectedBehavior?.notes
+/**
+ * Re-renders the bar whenever any panel's intent changes, a panel is added or
+ * removed, or the dashboard's own state changes. Panel intent lives on
+ * per-panel `PanelIntentChips` scene objects, so a plain `dashboard.useState()`
+ * would miss those edits; this hook subscribes to each panel and chip and
+ * re-derives the aggregate.
+ */
+function useAggregatedPanelIntent(dashboard: DashboardScene): AggregatedPanelIntent {
+  const [, forceUpdate] = useReducer((n: number) => n + 1, 0);
+  // Bumped when the set of panels changes so the per-panel/per-chip
+  // subscriptions are torn down and re-established.
+  const [topologyVersion, bumpTopology] = useReducer((n: number) => n + 1, 0);
+
+  // Dashboard + layout-level subscriptions: catch panel add/remove and
+  // dashboard-level intent edits.
+  useEffect(() => {
+    const subs: Unsubscribable[] = [];
+    subs.push(dashboard.subscribeToState(() => forceUpdate()));
+    subs.push(
+      dashboard.state.body.subscribeToState(() => {
+        bumpTopology();
+        forceUpdate();
+      })
+    );
+    return () => subs.forEach((s) => s.unsubscribe());
+  }, [dashboard]);
+
+  // Per-panel + per-chip subscriptions, re-established when the panel set
+  // changes. A panel-state change (e.g. a chip created on first edit) bumps the
+  // topology so the new chip gets a subscription.
+  useEffect(() => {
+    const subs: Unsubscribable[] = [];
+    for (const panel of dashboardSceneGraph.getVizPanels(dashboard)) {
+      subs.push(
+        panel.subscribeToState((next, prev) => {
+          if (next.titleItems !== prev.titleItems) {
+            bumpTopology();
+          }
+          forceUpdate();
+        })
+      );
+      const chip = dashboardSceneGraph.getPanelIntentChips(panel);
+      if (chip) {
+        subs.push(chip.subscribeToState(() => forceUpdate()));
+      }
+    }
+    return () => subs.forEach((s) => s.unsubscribe());
+  }, [dashboard, topologyVersion]);
+
+  return dashboardSceneGraph.getAggregatedPanelIntent(dashboard);
+}
+
+function hasDashboardContent(intent: DashboardScene['state']['intent']): boolean {
+  return Boolean(intent?.purpose || intent?.owner);
+}
+
+/** Reads the live dashboard intent, returning an empty object when absent. */
+function currentIntent(dashboard: DashboardScene): DashboardIntent {
+  return dashboard.state.intent ?? {};
+}
+
+/**
+ * Commits a dashboard-level intent change through the edit-action system so it
+ * participates in undo/redo and marks the dashboard dirty (`intent` is in
+ * PERSISTED_PROPS).
+ */
+function commitIntent(dashboard: DashboardScene, prev: DashboardIntent, next: DashboardIntent, description: string) {
+  dashboardEditActions.edit({
+    description,
+    source: dashboard,
+    perform: () => dashboard.setState({ intent: next }),
+    undo: () => dashboard.setState({ intent: prev }),
+  });
+}
+
+function OwnerInput({ dashboard, value }: { dashboard: DashboardScene; value: string }) {
+  const styles = useStyles2(getStyles);
+  const before = useRef<DashboardIntent>(currentIntent(dashboard));
+
+  return (
+    <Input
+      className={styles.ownerInput}
+      value={value}
+      placeholder={t('dashboard.intent-summary.owner-placeholder', '@team-handle')}
+      onFocus={() => {
+        before.current = currentIntent(dashboard);
+      }}
+      onChange={(e) => {
+        const cur = currentIntent(dashboard);
+        const owner = e.currentTarget.value || undefined;
+        dashboard.setState({
+          intent: {
+            ...cur,
+            owner,
+            provenance: owner ? { ...cur.provenance, owner: 'author-written' } : cur.provenance,
+          },
+        });
+      }}
+      onBlur={() => {
+        commitIntent(
+          dashboard,
+          before.current,
+          currentIntent(dashboard),
+          t('dashboard.intent-summary.edit-owner', 'Edit dashboard owner')
+        );
+      }}
+    />
+  );
+}
+
+function PurposeInput({ dashboard, value }: { dashboard: DashboardScene; value: string }) {
+  const before = useRef<DashboardIntent>(currentIntent(dashboard));
+
+  return (
+    <TextArea
+      value={value}
+      rows={2}
+      placeholder={t(
+        'dashboard.intent-summary.purpose-placeholder',
+        'Describe what this dashboard is for and what to watch for.'
+      )}
+      onFocus={() => {
+        before.current = currentIntent(dashboard);
+      }}
+      onChange={(e) => {
+        const cur = currentIntent(dashboard);
+        const purpose = e.currentTarget.value || undefined;
+        dashboard.setState({
+          intent: {
+            ...cur,
+            purpose,
+            provenance: purpose ? { ...cur.provenance, purpose: 'author-written' } : cur.provenance,
+          },
+        });
+      }}
+      onBlur={() => {
+        commitIntent(
+          dashboard,
+          before.current,
+          currentIntent(dashboard),
+          t('dashboard.intent-summary.edit-purpose', 'Edit dashboard purpose')
+        );
+      }}
+    />
   );
 }
 
@@ -127,12 +288,13 @@ function OwnerChip({ owner, provenance }: { owner: string; provenance?: string }
   );
 }
 
-function FailureModeChip({ tag, description, provenance }: { tag: string; description?: string; provenance?: string }) {
+function FailureModeChip({ tag, description, panels }: { tag: string; description?: string; panels: string[] }) {
   const styles = useStyles2(getChipStyles);
-  const isDraft = provenance === 'assistant-unconfirmed';
+  const source = panels.length > 0 ? `From: ${panels.join(', ')}` : '';
+  const content = [description, source].filter(Boolean).join(' — ');
   return (
-    <Tooltip content={description ? `${description} (${provenanceLabel(provenance)})` : provenanceLabel(provenance)} placement="top">
-      <span className={isDraft ? styles.chipDraft : styles.chip}>{tag}</span>
+    <Tooltip content={content || tag} placement="top">
+      <span className={styles.chip}>{tag}</span>
     </Tooltip>
   );
 }
@@ -147,8 +309,7 @@ function ProvenanceMarker({ value }: { value: string }) {
 }
 
 // provenanceLabel turns the wire value into a short human-readable
-// description that fits in a tooltip. Kept tiny on purpose — anything
-// more detailed belongs in the edit-mode section, not in a hover state.
+// description that fits in a tooltip.
 function provenanceLabel(value: string | undefined): string {
   switch (value) {
     case 'author-written':
@@ -203,11 +364,20 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       paddingTop: theme.spacing(0.75),
     }),
+    getStarted: css({
+      margin: 0,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontStyle: 'italic',
+      color: theme.colors.text.secondary,
+    }),
     purpose: css({
       margin: 0,
       fontSize: theme.typography.body.fontSize,
       color: theme.colors.text.primary,
       lineHeight: 1.4,
+    }),
+    ownerInput: css({
+      maxWidth: 220,
     }),
     label: css({
       fontSize: theme.typography.bodySmall.fontSize,
@@ -251,17 +421,6 @@ function getChipStyles(theme: GrafanaTheme2) {
       backgroundColor: theme.colors.background.canvas,
       border: `1px solid ${theme.colors.border.weak}`,
       color: theme.colors.text.primary,
-      fontSize: theme.typography.bodySmall.fontSize,
-      lineHeight: 1.4,
-    }),
-    chipDraft: css({
-      display: 'inline-block',
-      padding: theme.spacing(0.125, 0.75),
-      borderRadius: theme.shape.radius.pill,
-      backgroundColor: theme.colors.background.canvas,
-      border: `1px dashed ${theme.colors.border.medium}`,
-      color: theme.colors.text.secondary,
-      fontStyle: 'italic',
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: 1.4,
     }),

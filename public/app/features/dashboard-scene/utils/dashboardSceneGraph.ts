@@ -1,4 +1,5 @@
 import { VizPanel, sceneGraph, behaviors, type SceneObject, SceneGridRow } from '@grafana/scenes';
+import { type Panel } from '@grafana/schema';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -37,6 +38,86 @@ function getPanelIntentChips(panel: VizPanel): PanelIntentChips | null {
 
 function getVizPanels(scene: DashboardScene): VizPanel[] {
   return scene.state.body.getVizPanels();
+}
+
+type PanelIntent = NonNullable<Panel['intent']>;
+type FailureMode = NonNullable<PanelIntent['failureModes']>[number];
+type Runbook = NonNullable<PanelIntent['runbooks']>[number];
+
+/**
+ * A failure mode / runbook aggregated up from one or more panels, carrying the
+ * titles of the panels it was sourced from so the dashboard summary bar can
+ * attribute it in a tooltip.
+ */
+export interface AggregatedFailureMode extends FailureMode {
+  panels: string[];
+}
+export interface AggregatedRunbook extends Runbook {
+  panels: string[];
+}
+export interface AggregatedPanelIntent {
+  failureModes: AggregatedFailureMode[];
+  runbooks: AggregatedRunbook[];
+}
+
+/**
+ * Collects failure modes and runbooks from every panel's intent into a single
+ * deduplicated list for the dashboard-level summary bar. Failure modes dedupe
+ * by `tag`, runbooks by `url || title`. The dashboard header is a read-only
+ * summary of the operational knowledge declared on the panels below it; owner
+ * and purpose live on the dashboard-level intent block, not here.
+ */
+function getAggregatedPanelIntent(scene: DashboardScene): AggregatedPanelIntent {
+  const failureModesByTag = new Map<string, AggregatedFailureMode>();
+  const runbooksByKey = new Map<string, AggregatedRunbook>();
+
+  for (const panel of getVizPanels(scene)) {
+    const intent = getPanelIntentChips(panel)?.state.intent;
+    if (!intent) {
+      continue;
+    }
+    const panelTitle = panel.state.title || getPanelIdForVizPanel(panel).toString();
+
+    const failureModes = Array.isArray(intent.failureModes) ? intent.failureModes : [];
+    for (const fm of failureModes) {
+      if (!fm.tag) {
+        continue;
+      }
+      const existing = failureModesByTag.get(fm.tag);
+      if (existing) {
+        if (!existing.panels.includes(panelTitle)) {
+          existing.panels.push(panelTitle);
+        }
+        // Keep the first non-empty description we encounter.
+        if (!existing.description && fm.description) {
+          existing.description = fm.description;
+        }
+      } else {
+        failureModesByTag.set(fm.tag, { ...fm, panels: [panelTitle] });
+      }
+    }
+
+    const runbooks = Array.isArray(intent.runbooks) ? intent.runbooks : [];
+    for (const rb of runbooks) {
+      const key = rb.url || rb.title;
+      if (!key) {
+        continue;
+      }
+      const existing = runbooksByKey.get(key);
+      if (existing) {
+        if (!existing.panels.includes(panelTitle)) {
+          existing.panels.push(panelTitle);
+        }
+      } else {
+        runbooksByKey.set(key, { ...rb, panels: [panelTitle] });
+      }
+    }
+  }
+
+  return {
+    failureModes: Array.from(failureModesByTag.values()),
+    runbooks: Array.from(runbooksByKey.values()),
+  };
 }
 
 /**
@@ -121,6 +202,7 @@ export const dashboardSceneGraph = {
   getRefreshPicker,
   getPanelLinks,
   getPanelIntentChips,
+  getAggregatedPanelIntent,
   getVizPanels,
   getDataLayers,
   getCursorSync,

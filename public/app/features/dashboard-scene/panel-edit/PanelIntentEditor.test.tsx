@@ -20,6 +20,17 @@ jest.mock('../edit-pane/shared', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+  // The editor subscribes to PanelIntentFillEvent on mount; give it an event
+  // bus stub that returns an unsubscribable.
+  getAppEvents: () => ({
+    subscribe: () => ({ unsubscribe: jest.fn() }),
+    publish: jest.fn(),
+  }),
+}));
+
 function buildPanel(initial?: { intent?: PanelIntent }) {
   const titleItems = initial?.intent ? [new PanelIntentChips({ intent: initial.intent })] : [];
   const vizPanel = new VizPanel({
@@ -64,10 +75,17 @@ describe('PanelIntentEditor', () => {
     // Grafana's <Field> nests the description inside the <label>, so
     // getByLabelText's exact match fails on multi-line labels. Use
     // placeholder/role queries for stable matching across labels with
-    // and without descriptions.
-    expect(screen.getByPlaceholderText('@team-handle')).toHaveValue('');
+    // and without descriptions. Owner is no longer a panel field — it
+    // lives on the dashboard-level intent (DashboardIntentSummaryBar).
     expect(screen.getByPlaceholderText('p99 < 250ms')).toHaveValue('');
     expect(screen.getByPlaceholderText('p99 > 500ms for 5m')).toHaveValue('');
+  });
+
+  it('does not render an owner field (owner is dashboard-level)', () => {
+    const { vizPanel } = buildPanel();
+    render(<PanelIntentEditor panel={vizPanel} />);
+
+    expect(screen.queryByPlaceholderText('@team-handle')).not.toBeInTheDocument();
   });
 
   it('renders the body unconditionally — the tab is the container', () => {
@@ -76,7 +94,7 @@ describe('PanelIntentEditor', () => {
 
     // No collapse: the body is visible as soon as the tab is mounted,
     // regardless of whether the panel has existing intent.
-    expect(screen.getByPlaceholderText('@team-handle')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('p99 < 250ms')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Panel context/i })).not.toBeInTheDocument();
   });
 
@@ -84,26 +102,24 @@ describe('PanelIntentEditor', () => {
     const { vizPanel } = buildPanel({
       intent: {
         purpose: 'Track checkout p99.',
-        owner: '@checkout-team',
         expectedBehavior: { normalRange: 'p99 < 250ms', alertThreshold: 'p99 > 500ms' },
       },
     });
     render(<PanelIntentEditor panel={vizPanel} />);
 
     expect(screen.getByDisplayValue('Track checkout p99.')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('@checkout-team')).toBeInTheDocument();
     expect(screen.getByDisplayValue('p99 < 250ms')).toBeInTheDocument();
     expect(screen.getByDisplayValue('p99 > 500ms')).toBeInTheDocument();
   });
 
-  it('writes owner back into the panel intent on edit, creating the chip if missing', async () => {
+  it('writes a field back into the panel intent on edit, creating the chip if missing', async () => {
     const { vizPanel } = buildPanel();
     expect(intentOf(vizPanel)).toBeUndefined();
 
     render(<PanelIntentEditor panel={vizPanel} />);
-    await userEvent.type(screen.getByPlaceholderText('@team-handle'), 'me');
+    await userEvent.type(screen.getByPlaceholderText('p99 < 250ms'), '10');
 
-    expect(intentOf(vizPanel)?.owner).toBe('me');
+    expect(intentOf(vizPanel)?.expectedBehavior?.normalRange).toBe('10');
   });
 
   it('adds and removes failure modes round-trip', async () => {
@@ -168,7 +184,6 @@ describe('PanelIntentEditor', () => {
       const { vizPanel } = buildPanel();
       render(<PanelIntentEditor panel={vizPanel} />);
       expect(screen.queryByLabelText(/Suggest a purpose statement with AI/i)).not.toBeInTheDocument();
-      expect(screen.queryByLabelText(/Suggest an owner with AI/i)).not.toBeInTheDocument();
       expect(screen.queryByLabelText(/Suggest expected behavior with AI/i)).not.toBeInTheDocument();
       expect(screen.queryByLabelText(/Suggest failure modes with AI/i)).not.toBeInTheDocument();
     });
@@ -181,7 +196,6 @@ describe('PanelIntentEditor', () => {
       const { vizPanel } = buildPanel();
       render(<PanelIntentEditor panel={vizPanel} />);
       expect(screen.getByLabelText(/Suggest a purpose statement with AI/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Suggest an owner with AI/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Suggest expected behavior with AI/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Suggest failure modes with AI/i)).toBeInTheDocument();
     });

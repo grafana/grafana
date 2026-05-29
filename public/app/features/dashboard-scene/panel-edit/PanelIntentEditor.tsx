@@ -146,7 +146,6 @@ function PanelIntentEditorBody({ panel, intent }: BodyProps) {
       const next: PanelIntent = {
         ...cur,
         ...(payload.purpose !== undefined ? { purpose: payload.purpose || undefined } : {}),
-        ...(payload.owner !== undefined ? { owner: payload.owner || undefined } : {}),
         ...(payload.expectedBehavior !== undefined
           ? {
               expectedBehavior: {
@@ -217,31 +216,6 @@ function PanelIntentEditorBody({ panel, intent }: BodyProps) {
             writeIntent(
               { ...currentIntent(), purpose: e.currentTarget.value || undefined },
               t('panel-intent-editor.edit.purpose', 'Edit panel purpose')
-            )
-          }
-        />
-      </Field>
-
-      <Field
-        noMargin
-        label={
-          <Stack direction="row" gap={0.5} alignItems="center">
-            <span>{t('panel-intent-editor.owner', 'Owner')}</span>
-            <SuggestFieldButton
-              panel={panel}
-              focus="owner"
-              tooltip={t('panel-intent-editor.suggest.owner', 'Suggest an owner with AI')}
-            />
-          </Stack>
-        }
-      >
-        <Input
-          value={intent.owner ?? ''}
-          placeholder={t('panel-intent-editor.owner-placeholder', '@team-handle')}
-          onChange={(e) =>
-            writeIntent(
-              { ...currentIntent(), owner: e.currentTarget.value || undefined },
-              t('panel-intent-editor.edit.owner', 'Edit panel owner')
             )
           }
         />
@@ -358,7 +332,6 @@ function upsertIntent(panel: VizPanel, intent: PanelIntent) {
 function hasAnyIntent(intent: PanelIntent): boolean {
   return Boolean(
     intent.purpose ||
-      intent.owner ||
       intent.expectedBehavior?.normalRange ||
       intent.expectedBehavior?.alertThreshold ||
       intent.failureModes?.length ||
