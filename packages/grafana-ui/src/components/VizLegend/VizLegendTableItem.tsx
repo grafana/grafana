@@ -115,8 +115,6 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     row: css({
       label: 'LegendRow',
-      fontSize: theme.v1.typography.size.sm,
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
 
       '&:hover': {
         background: rowHoverBg,

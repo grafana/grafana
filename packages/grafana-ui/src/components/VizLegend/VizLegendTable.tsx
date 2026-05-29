@@ -160,11 +160,6 @@ const getStyles = (theme: GrafanaTheme2, placement: LegendPlacement = 'bottom') 
     backgroundColor: theme.colors.background.primary,
 
     color: theme.colors.primary.text,
-    fontWeight: theme.typography.fontWeightMedium,
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    fontSize: theme.typography.bodySmall.fontSize,
-    textAlign: 'right',
-    whiteSpace: 'nowrap',
   }),
   nameHeader: css({
     textAlign: 'left',
@@ -185,10 +180,19 @@ const getStyles = (theme: GrafanaTheme2, placement: LegendPlacement = 'bottom') 
     display: 'grid',
     width: '100%',
 
+    // non-layout
+    fontSize: theme.typography.bodySmall.fontSize,
+    textAlign: 'right',
+    whiteSpace: 'nowrap',
+
     'tbody,thead,tfoot,tr': {
       display: 'grid',
       gridColumn: '1 / -1',
       gridTemplateColumns: 'subgrid',
+    },
+
+    tr: {
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     },
 
     'th,td': {
@@ -197,7 +201,6 @@ const getStyles = (theme: GrafanaTheme2, placement: LegendPlacement = 'bottom') 
       whiteSpace: 'nowrap',
 
       // non-layout
-      fontSize: theme.v1.typography.size.sm,
       padding: theme.spacing(0.25, 1),
 
       // series color/icon column
