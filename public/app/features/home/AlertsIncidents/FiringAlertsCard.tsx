@@ -9,7 +9,7 @@ import { Alert, Badge, Box, Button, LinkButton, Stack, Text, TextLink, useStyles
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
-import { type AlertmanagerAlert, type Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { useUserTeams } from './useUserTeams';
@@ -18,7 +18,7 @@ const MAX_ALERTS = 5;
 const SEVERITY_ORDER: Record<string, number> = { critical: 0, high: 1, warning: 2 };
 
 /** Extract pathname from an absolute generatorURL, falling back to the raw value. */
-function alertDetailHref(alert: AlertmanagerAlert): string | undefined {
+function alertDetailHref(alert: AlertmanagerAlert) {
   const raw = alert.generatorURL;
   if (!raw) {
     return undefined;
@@ -30,11 +30,11 @@ function alertDetailHref(alert: AlertmanagerAlert): string | undefined {
   }
 }
 
-function severityRank(alert: AlertmanagerAlert): number {
+function severityRank(alert: AlertmanagerAlert) {
   return SEVERITY_ORDER[alert.labels.severity] ?? 3;
 }
 
-function buildTeamMatchers(teamNames: string[]): Matcher[] {
+function buildTeamMatchers(teamNames: string[]) {
   if (teamNames.length === 0) {
     return [];
   }
