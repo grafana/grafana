@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { useEffect, useReducer } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { type OpenAssistantProps, createAssistantContextItem, useAssistant } from '@grafana/assistant';
+import { BusEventWithPayload, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { type Panel } from '@grafana/schema';
 import { Button, Field, IconButton, Input, Stack, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
@@ -18,6 +18,29 @@ type PanelIntent = NonNullable<Panel['intent']>;
 type FailureMode = NonNullable<PanelIntent['failureModes']>[number];
 type RelatedSlo = NonNullable<PanelIntent['relatedSlos']>[number];
 type Runbook = NonNullable<PanelIntent['runbooks']>[number];
+
+// Payload published by the assistant plugin when it wants to fill the intent
+// form fields without saving to the Grafana API. The event type string is shared
+// with `fill_panel_intent_fields` tool in grafana-assistant-app.
+interface PanelIntentFillPayload {
+  dashboardUid: string;
+  panelId: string;
+  purpose?: string;
+  owner?: string;
+  expectedBehavior?: {
+    normalRange?: string;
+    alertThreshold?: string;
+    notes?: string;
+  };
+  failureModes?: Array<{ tag: string; notes?: string }>;
+  relatedSlos?: string[];
+  runbooks?: string[];
+  provenance?: Record<string, string>;
+}
+
+class PanelIntentFillEvent extends BusEventWithPayload<PanelIntentFillPayload> {
+  static type = 'grafana-assistant:panel-intent-fill';
+}
 
 interface Props {
   panel: VizPanel;
@@ -108,12 +131,70 @@ function PanelIntentEditorBody({ panel, intent }: BodyProps) {
     });
   };
 
+  // Subscribe to AI fill events so the assistant can populate fields
+  // without saving to the Grafana API. The user reviews and saves normally.
+  useEffect(() => {
+    const dashboardUid = getDashboardSceneFor(panel).state.uid ?? '';
+    const panelId = String(getPanelIdForVizPanel(panel));
+
+    const sub = getAppEvents().subscribe(PanelIntentFillEvent, (event) => {
+      const payload = event.payload;
+      if (payload.dashboardUid !== dashboardUid || payload.panelId !== panelId) {
+        return;
+      }
+      const cur = currentIntent();
+      const next: PanelIntent = {
+        ...cur,
+        ...(payload.purpose !== undefined ? { purpose: payload.purpose || undefined } : {}),
+        ...(payload.owner !== undefined ? { owner: payload.owner || undefined } : {}),
+        ...(payload.expectedBehavior !== undefined
+          ? {
+              expectedBehavior: {
+                ...cur.expectedBehavior,
+                ...(payload.expectedBehavior.normalRange !== undefined
+                  ? { normalRange: payload.expectedBehavior.normalRange || undefined }
+                  : {}),
+                ...(payload.expectedBehavior.alertThreshold !== undefined
+                  ? { alertThreshold: payload.expectedBehavior.alertThreshold || undefined }
+                  : {}),
+                ...(payload.expectedBehavior.notes !== undefined
+                  ? { notes: payload.expectedBehavior.notes || undefined }
+                  : {}),
+              },
+            }
+          : {}),
+        ...(payload.failureModes !== undefined
+          ? {
+              failureModes: payload.failureModes.map((fm) => ({
+                tag: fm.tag,
+                description: fm.notes,
+              })),
+            }
+          : {}),
+        ...(payload.relatedSlos !== undefined
+          ? {
+              relatedSlos: payload.relatedSlos.map((name) => ({ name })),
+            }
+          : {}),
+        ...(payload.runbooks !== undefined
+          ? {
+              runbooks: payload.runbooks.map((url) => ({ title: url, url })),
+            }
+          : {}),
+      };
+      writeIntent(next, t('panel-intent-editor.fill-from-ai', 'Fill from AI'));
+    });
+    return () => sub.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [panel]);
+
   return (
     <div className={styles.formWrap}>
     <Stack direction="column" gap={1}>
       <DraftWithAIButton panel={panel} hasIntent={hasAnyIntent(intent)} />
 
       <Field
+        noMargin
         label={
           <Stack direction="row" gap={0.5} alignItems="center">
             <span>{t('panel-intent-editor.purpose', 'Purpose')}</span>
@@ -142,6 +223,7 @@ function PanelIntentEditorBody({ panel, intent }: BodyProps) {
       </Field>
 
       <Field
+        noMargin
         label={
           <Stack direction="row" gap={0.5} alignItems="center">
             <span>{t('panel-intent-editor.owner', 'Owner')}</span>
@@ -155,7 +237,7 @@ function PanelIntentEditorBody({ panel, intent }: BodyProps) {
       >
         <Input
           value={intent.owner ?? ''}
-          placeholder="@team-handle"
+          placeholder={t('panel-intent-editor.owner-placeholder', '@team-handle')}
           onChange={(e) =>
             writeIntent(
               { ...currentIntent(), owner: e.currentTarget.value || undefined },
@@ -177,10 +259,10 @@ function PanelIntentEditorBody({ panel, intent }: BodyProps) {
           </Stack>
         </legend>
 
-        <Field label={t('panel-intent-editor.normal-range', 'Normal range')}>
+        <Field noMargin label={t('panel-intent-editor.normal-range', 'Normal range')}>
           <Input
             value={intent.expectedBehavior?.normalRange ?? ''}
-            placeholder="p99 < 250ms"
+            placeholder={t('panel-intent-editor.normal-range-placeholder', 'p99 < 250ms')}
             onChange={(e) => {
               const cur = currentIntent();
               writeIntent(
@@ -197,10 +279,10 @@ function PanelIntentEditorBody({ panel, intent }: BodyProps) {
           />
         </Field>
 
-        <Field label={t('panel-intent-editor.alert-threshold', 'Alert threshold')}>
+        <Field noMargin label={t('panel-intent-editor.alert-threshold', 'Alert threshold')}>
           <Input
             value={intent.expectedBehavior?.alertThreshold ?? ''}
-            placeholder="p99 > 500ms for 5m"
+            placeholder={t('panel-intent-editor.alert-threshold-placeholder', 'p99 > 500ms for 5m')}
             onChange={(e) => {
               const cur = currentIntent();
               writeIntent(
@@ -310,7 +392,7 @@ function FailureModesEditor({ failureModes, onChange, panel }: FailureModesEdito
           <Stack key={idx} direction="row" gap={0.5} alignItems="center">
             <Input
               value={fm.tag}
-              placeholder="db-slow"
+              placeholder={t('panel-intent-editor.failure-modes.tag-placeholder', 'db-slow')}
               onChange={(e) => {
                 const next = [...failureModes];
                 next[idx] = { ...fm, tag: e.currentTarget.value };
@@ -370,7 +452,7 @@ function RelatedSlosEditor({ slos, onChange }: RelatedSlosEditorProps) {
             />
             <Input
               value={slo.target ?? ''}
-              placeholder="99.9%"
+              placeholder={t('panel-intent-editor.related-slos.target-placeholder', '99.9%')}
               onChange={(e) => {
                 const next = [...slos];
                 next[idx] = { ...slo, target: e.currentTarget.value || undefined };
@@ -379,7 +461,7 @@ function RelatedSlosEditor({ slos, onChange }: RelatedSlosEditorProps) {
             />
             <Input
               value={slo.url ?? ''}
-              placeholder="https://"
+              placeholder={t('panel-intent-editor.related-slos.url-placeholder', 'https://')}
               onChange={(e) => {
                 const next = [...slos];
                 next[idx] = { ...slo, url: e.currentTarget.value || undefined };
@@ -430,7 +512,7 @@ function RunbooksEditor({ runbooks, onChange }: RunbooksEditorProps) {
             />
             <Input
               value={rb.url ?? ''}
-              placeholder="https://"
+              placeholder={t('panel-intent-editor.runbooks.url-placeholder', 'https://')}
               onChange={(e) => {
                 const next = [...runbooks];
                 next[idx] = { ...rb, url: e.currentTarget.value };
@@ -552,8 +634,8 @@ function DraftWithAIButtonView({
       origin: 'grafana/dashboard/panel-context/draft-with-ai',
       mode: 'assistant',
       prompt: hasIntent
-        ? `Refine the existing dashboard intent for panel ${panelId} on dashboard ${dashboardUid}. Use suggest_dashboard_intent to draft updates focusing on fields that look stale or incomplete, then immediately call upsert_dashboard_intent to save the result — do not ask for confirmation first.`
-        : `Draft dashboard intent for panel ${panelId} on dashboard ${dashboardUid}. Use suggest_dashboard_intent to generate the fields, then immediately call upsert_dashboard_intent to save — do not ask for confirmation first.`,
+        ? `Refine the existing dashboard intent for panel ${panelId} on dashboard ${dashboardUid}. Call suggest_dashboard_intent to draft updates for stale or incomplete fields, then immediately call fill_panel_intent_fields with the result — do not ask for confirmation first. Do NOT call upsert_dashboard_intent; the user will save via "Save dashboard".`
+        : `Draft dashboard intent for panel ${panelId} on dashboard ${dashboardUid}. Call suggest_dashboard_intent to generate the fields, then immediately call fill_panel_intent_fields with the result — do not ask for confirmation first. Do NOT call upsert_dashboard_intent; the user will save via "Save dashboard".`,
       context: [
         createAssistantContextItem('structured', {
           title: `Panel ${panelId}`,
