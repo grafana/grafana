@@ -437,7 +437,8 @@
       "label-value": "値"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "操作"
+      "n-contact-points_other": "",
+      "view-route_other": ""
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "ペイロードにアラートデータを追加",
@@ -453,6 +454,7 @@
     },
     "alert-instances-table": {
       "created": "作成済み",
+      "destination": "",
       "labels": "ラベル",
       "state": "状態"
     },
@@ -512,7 +514,8 @@
         "edit-yaml": "YAMLを編集",
         "save": "保存"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "名前",
@@ -1166,6 +1169,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "必須項目です。"
       }
     },
@@ -2326,6 +2330,7 @@
     },
     "notification-route": {
       "no-labels": "ラベルなし",
+      "notification-policies": "",
       "notification-policy": "通知ポリシー"
     },
     "notification-route-header": {
@@ -2859,6 +2864,11 @@
         },
         "group-name": "評価グループ名",
         "group-text": "選択したグループ内のすべてのルールは、{{evaluateEvery}}毎に評価されます。",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "新しい評価グループ",
         "pause": {
           "alerting": "このアラートルールの評価を一時停止するには、オンにします。",
@@ -4346,7 +4356,6 @@
       "button-cancel": "キャンセル",
       "button-delete": "削除",
       "button-deleting": "削除中…",
-      "commit": "フォルダを削除",
       "delete-warning": "このフォルダとその下位のすべてのフォルダやコンテンツが削除されます。影響のある項目は次のとおりです。",
       "missing-info": "必須フィールドが不足しています",
       "success-message": "フォルダが正常に削除されました"
@@ -4460,7 +4469,6 @@
       "button-cancel": "キャンセル",
       "button-rename": "名前を変更",
       "button-renaming": "名前を変更しています...",
-      "commit": "フォルダ名を変更",
       "error-saving": "フォルダ名の変更に失敗しました",
       "label-folder-name": "フォルダ名",
       "missing-info": "必須フィールドが不足しています",
@@ -5752,8 +5760,7 @@
         }
       },
       "operator": {
-        "aria-label": "演算子",
-        "placeholder": "演算子を選択"
+        "aria-label": "演算子"
       },
       "restore": "デフォルト値を復元",
       "search": {
@@ -6345,6 +6352,8 @@
         "ungroup-tabs": "タブのグループ化を解除"
       },
       "name": "タブ",
+      "scroll-tabs-left": "",
+      "scroll-tabs-right": "",
       "tab": {
         "new": "新しいタブ",
         "repeat": {
@@ -6442,6 +6451,10 @@
         },
         "save-dashboard-short": "保存",
         "save-library-panel": "ライブラリパネルを保存",
+        "save-template": {
+          "label": "",
+          "tooltip": ""
+        },
         "share": {
           "arrow": "共有",
           "tooltip": "リンクをコピー"
@@ -6455,6 +6468,9 @@
       "read-only": "読み取り専用",
       "refresh": "ダッシュボードを更新",
       "save": "ダッシュボードを保存",
+      "save-as-template": {
+        "label": ""
+      },
       "save-dashboard": {
         "label": "ダッシュボードを保存",
         "tooltip": "変更を保存"
@@ -7477,7 +7493,9 @@
         "label-details": "詳細",
         "title": "ダッシュボードを保存",
         "title-copy": "ダッシュボードのコピーを保存",
-        "title-provisioned": "プロビジョニング済みダッシュボード"
+        "title-provisioned": "プロビジョニング済みダッシュボード",
+        "title-template": "",
+        "title-update-template": ""
       }
     },
     "save-dashboard-form": {
@@ -7553,6 +7571,10 @@
     },
     "section-filters-list": {
       "add-filter": ""
+    },
+    "section-placement": {
+      "top-row": "",
+      "top-tab": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "複数の値を同時に選択可能にします",
@@ -7693,9 +7715,6 @@
     "variable-display-select": {
       "label": "表示",
       "options": {
-        "above-dashboard": {
-          "label": "ダッシュボード上部"
-        },
         "controls-menu": {
           "description": "コントロールメニューが開いているときに表示されます",
           "label": "コントロールメニュー"
@@ -7704,9 +7723,9 @@
           "description": "編集モードでのみ表示されます",
           "label": "非表示"
         },
-        "hidden-label": {
-          "description": "ダッシュボード上部に表示されますが、変数名は表示されません",
-          "label": "ダッシュボード上部（ラベル非表示）"
+        "top-placement-hidden-label": {
+          "description": "",
+          "label": ""
         }
       }
     },
@@ -7788,9 +7807,12 @@
           "reorder-variables-list": "変数リストの並べ替え"
         }
       },
-      "title-above-dashboard_other": "ダッシュボード上部（{{count}}）",
+      "top-placement": {
+        "default": ""
+      },
       "title-controls-menu_other": "コントロールメニュー（{{count}}）",
-      "title-hidden_other": "非表示（{{count}}）"
+      "title-hidden_other": "非表示（{{count}}）",
+      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -8989,7 +9011,6 @@
       "copy-button": "クリップボードにコピー",
       "download-button": "ファイルをダウンロード",
       "download-successful_toast_message": "JSONがダウンロードされました",
-      "export-externally-label": "ダッシュボードをエクスポートして別のインスタンスで使用する",
       "export-format": "形式",
       "export-mode": "モデル",
       "info-text": "ダッシュボードの定義を含むファイルをコピーまたはダウンロード",
@@ -9082,6 +9103,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "フォルダは削除されました",
       "folder-move-error-provisioned": "プロビジョニングされたフォルダを移動できません。フォルダを移動するには、リポジトリ内で移動して同期し、変更を適用してください。",
@@ -10682,7 +10704,7 @@
     "name-unit": "単位",
     "name-value-name": "値の名前",
     "name-y-axis-scale": "Y軸スケール",
-    "name-y-bucket-scale": "Y軸バケットスケール",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "自動",
     "placeholder-axis-width": "自動",
     "placeholder-decimals": "自動",
@@ -10797,6 +10819,12 @@
     "name-stacking": "積み上げ"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10809,6 +10837,23 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
   },
   "inspector": {
@@ -11284,6 +11329,8 @@
       "clear-search": "クリア",
       "close-inline-details": "このログの詳細を閉じる",
       "close-sidebar-details": "ログの詳細サイドバーを閉じる",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "ショートリンクをコピー",
       "copy-to-clipboard": "クリップボードにコピー",
       "displayed-fields-section": "表示フィールドを整理",
@@ -11332,7 +11379,8 @@
     },
     "log-line-menu": {
       "copy-link": "ログ行へのリンクをコピー",
-      "copy-log": "ログ行をコピー",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "ログの詳細を表示",
       "icon-label": "ログメニュー",
       "log-line": "ログ行",
@@ -11583,11 +11631,10 @@
       "published-by": "公開者",
       "updated-on": "更新日"
     },
-    "import-resource-format-error": {
-      "cancel": "キャンセル",
-      "title": "サポートされていない形式",
-      "v1-message": "このダッシュボードはKubernetes v1リソース形式であり、Kubernetesダッシュボード機能が無効になっている場合はインポートできません。このダッシュボードをインポートするには、kubernetesDashboards機能トグルを有効にしてください。",
-      "v2-message": "このダッシュボードはv2リソース形式であり、Kubernetesダッシュボード機能が無効になっている場合はインポートできません。このダッシュボードをインポートするには、kubernetesDashboards機能トグルを有効にしてください。"
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "「{{snapshotToRemove}}」を削除してもよろしいですか？",
@@ -11893,6 +11940,9 @@
     "admin": {
       "subtitle": "サーバー全体の設定と、組織、ユーザー、ライセンスなどのリソースへのアクセスを管理します",
       "title": "サーバー管理者"
+    },
+    "agentic-testing": {
+      "title": ""
     },
     "alert-list-legacy": {
       "title": "アラートルール"
@@ -12487,6 +12537,9 @@
       "save-tooltip": ""
     }
   },
+  "page-loader": {
+    "default": ""
+  },
   "panel": {
     "dashlist": {
       "empty-state-message": "ダッシュボードグループが設定されていません",
@@ -13075,6 +13128,7 @@
       "label-filename": "ファイル名",
       "label-folder": "フォルダ",
       "label-path": "パス",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "フォルダパスを選択または入力",
       "suffix-configured-branch": "同期済みブランチ",
@@ -13151,11 +13205,24 @@
     "code-block": {
       "aria-label-copy": "コードをクリップボードにコピー"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "リポジトリ設定を保存しました",
       "alert-repository-settings-updated": "リポジトリ設定が更新されました",
       "button-save": "保存",
       "button-saving": "保存中…",
+      "description-commit-message-template": "",
       "description-connection": "使用するGitHubアプリ接続を選択します",
       "description-enabled": "自動取得を有効にすると、対象を変更できなくなります。",
       "description-read-only": "Grafanaではリソースを変更できません。",
@@ -13166,6 +13233,7 @@
       "error-save-failed": "リポジトリ設定の保存に失敗しました",
       "error-save-repository": "リポジトリ設定の保存に失敗しました",
       "label-automatic-pulling": "自動取得",
+      "label-commit-message-template": "",
       "label-connection": "GitHubアプリ接続",
       "label-enabled": "有効化",
       "label-interval-seconds": "間隔（秒）",
@@ -13174,6 +13242,7 @@
       "label-title": "タイトル",
       "option-entire-instance": "インスタンス全体",
       "option-managed-folder": "管理フォルダ",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "私の設定"
     },
@@ -13380,7 +13449,7 @@
       "modal-title-set-up-public-access": "公開アクセスを設定",
       "modal-title-set-up-required-features": "必要な機能を設定",
       "step-description-copy-url": "ngrokの出力から、https://ではじまる転送URLをコピーしてください。",
-      "step-description-enable-feature-toggles": "プロビジョニング機能トグルをcustom.iniファイルに追加します。注：kubernetesDashboardsはデフォルトで有効になっていますが、明示的に無効にした場合は、Grafana設定で有効にするか、設定からオーバーライドを削除する必要があります。",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "このコマンドを実行して、ローカルのGrafanaへの安全なトンネルを作成します。",
       "step-description-update-grafana-config": "これをcustom.iniファイルに追加し、URLを実際のngrok URLに置き換えてください。",
       "step-title-copy-url": "公開URLをコピー",
@@ -14054,6 +14123,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "フィルターを追加",
+      "cancel-delete": "",
+      "confirm-delete": "",
+      "confirm-delete-confirm": "",
+      "delete-confirmation-group": "",
       "disable": "{{type}}を無効化",
       "duplicate": "{{type}}を複製",
       "enable": "{{type}}を有効化",
@@ -14093,10 +14166,7 @@
       "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
-      "body-query": "本当にこのクエリを削除してもよろしいですか？",
-      "body-transformation": "1つの変換を削除すると、他の変換が破損する可能性があります。",
-      "confirm": "削除",
-      "title": "{{name}}を削除しますか？"
+      "body-transformation": "1つの変換を削除すると、他の変換が破損する可能性があります。"
     },
     "details-sidebar": {
       "cache-timeout": "キャッシュタイムアウト",
@@ -14554,7 +14624,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "画像としてエクスポート",
-      "export-json-title": "JSON形式でエクスポート",
       "share-externally-title": "外部と共有",
       "share-internally-title": "内部と共有",
       "share-snapshot-title": "スナップショットを共有"
@@ -15053,6 +15122,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "作成日",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "ダウンロード",
       "expires": "有効期限",
       "requested-by": "依頼者",
@@ -15453,8 +15524,8 @@
     },
     "legend": {
       "category": "凡例",
-      "description-faceted-filter": "ラベルに基づく系列の表示状態フィルターを表示",
-      "name-faceted-filter": "ファセットフィルター"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
