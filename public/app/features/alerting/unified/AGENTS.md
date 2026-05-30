@@ -249,8 +249,9 @@ Located in `testSetup/datasources.ts` for data source mocking patterns
 
 For Kubernetes APIs and new schemas – use the `@grafana/alerting` package.
 
-Mock factories are defined in `packages/grafana-alerting/src/grafana/api/notifications/<version>/mocks/fakes` (both `v0alpha1` and `v1beta1` exist with identical surfaces; `@grafana/alerting/testing` re-exports v0alpha1 factories by default and v1beta1 factories with a `V1Beta1` suffix).
-MSW handlers in `packages/grafana-alerting/src/grafana/api/notifications/<version>/mocks/handlers` (same versioning convention).
+Mock factories are defined in `packages/grafana-alerting/src/grafana/api/notifications/mocks/fakes` and MSW handlers in `packages/grafana-alerting/src/grafana/api/notifications/mocks/handlers`. Both follow the `alerting.notificationsAPIV1Beta1` toggle: they read `API_GROUP` / `API_VERSION` from the centralized dispatcher (`notifications/index.ts`), so factories produce the matching `apiVersion` and handlers register against the matching URL automatically — no per-version files. Import them from `@grafana/alerting/testing`.
+
+Tests that need to exercise the toggle-enabled branch must reset the module registry (`jest.resetModules()`) and dynamically `await import(...)` both `@grafana/runtime` and the consumer together, because the dispatcher caches the toggle value at module-load time. See `packages/grafana-alerting/src/grafana/api/notifications/index.test.ts` for the canonical pattern.
 
 And there are "scenarios" that combine the two above. An example of such is `packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.test.scenario.ts` and is used for integration tests.
 
