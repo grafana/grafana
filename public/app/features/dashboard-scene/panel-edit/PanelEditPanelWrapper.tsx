@@ -1,7 +1,9 @@
-import { type VizPanel, useSceneObjectState } from '@grafana/scenes';
+import { useMemo } from 'react';
+
+import { type VizPanel } from '@grafana/scenes';
 
 import { type DashboardScene } from '../scene/DashboardScene';
-import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../scene/SoloPanelContext';
+import { t, SoloPanelContextProvider, SoloPanelContextForPanelEdit } from '../scene/SoloPanelContext';
 
 interface PanelEditPanelWrapperProps {
   panel: VizPanel;
@@ -10,11 +12,7 @@ interface PanelEditPanelWrapperProps {
 }
 
 export function PanelEditPanelWrapper({ panel, tableView, dashboard }: PanelEditPanelWrapperProps) {
-  const soloPanelContext = useDefineSoloPanelContext(panel.getPathId());
-
-  // This is to make sure the panel always remains active even when tableView is
-  // rendered as the queries tab and other things subscribe / update panel state
-  useSceneObjectState(panel, { shouldActivateOrKeepAlive: true });
+  const soloPanelContext = useMemo(() => new SoloPanelContextForPanelEdit(panel), [panel]);
 
   if (tableView) {
     return <tableView.Component model={tableView} />;
