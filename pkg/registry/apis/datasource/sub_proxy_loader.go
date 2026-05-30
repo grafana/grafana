@@ -19,9 +19,11 @@ type providerLoader struct {
 	uid        string
 	pluginType string
 
-	// instance settings are immutable for the lifetime of a single proxied
-	// request, so cache them to avoid repeated lookups and decryptions.
-	settings *backend.DataSourceInstanceSettings
+	// The datasource and its decrypted settings are immutable for the lifetime
+	// of a single proxied request, so cache them to avoid repeated lookups and
+	// decryptions (DataSource is read both for validation and inside the proxy).
+	datasource *datasourceV0.DataSource
+	settings   *backend.DataSourceInstanceSettings
 }
 
 var _ pluginproxy.DataSourceLoader = (*providerLoader)(nil)
@@ -35,7 +37,15 @@ func (l *providerLoader) PluginType() string {
 }
 
 func (l *providerLoader) DataSource(ctx context.Context) (*datasourceV0.DataSource, error) {
-	return l.provider.GetDataSource(ctx, l.uid)
+	if l.datasource != nil {
+		return l.datasource, nil
+	}
+	ds, err := l.provider.GetDataSource(ctx, l.uid)
+	if err != nil {
+		return nil, err
+	}
+	l.datasource = ds
+	return ds, nil
 }
 
 func (l *providerLoader) instanceSettings(ctx context.Context) (*backend.DataSourceInstanceSettings, error) {

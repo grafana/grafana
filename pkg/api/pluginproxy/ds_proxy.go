@@ -288,24 +288,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 			return
 		}
 
-		// JSONData may be absent or stored as a non-map value; ApplyRoute requires a non-nil map, so fall back to empty.
-		jsonData, ok := ds.Spec.JSONData().(map[string]any)
-		if !ok {
-			jsonData = make(map[string]any)
-		}
-		meta, _ := utils.MetaAccessor(ds)
-		ts, _ := meta.GetUpdatedTimestamp()
-		if ts == nil {
-			ts = &ds.CreationTimestamp.Time
-		}
-
-		ApplyRoute(req.Context(), req, proxy.proxyPath, proxy.matchedRoute, DSInfo{
-			ID:                      meta.GetDeprecatedInternalID(), // nolint:staticcheck
-			URL:                     ds.Spec.URL(),
-			Updated:                 *ts,
-			JSONData:                jsonData,
-			DecryptedSecureJSONData: decryptedValues,
-		}, proxy.settings)
+		ApplyRoute(req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo(ds, decryptedValues), proxy.settings)
 	}
 
 	if ds.Spec.IsOAuthPassThruEnabled() {
@@ -320,6 +303,30 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	}
 
 	proxyutil.ApplyForwardIDHeader(req, proxy.requester)
+}
+
+// dsInfo builds the DSInfo that ApplyRoute needs from a v0 datasource.
+func dsInfo(ds *datasourcesV0.DataSource, decryptedValues map[string]string) DSInfo {
+	// JSONData may be absent or stored as a non-map value; ApplyRoute requires a non-nil map, so fall back to empty.
+	jsonData, ok := ds.Spec.JSONData().(map[string]any)
+	if !ok {
+		jsonData = make(map[string]any)
+	}
+
+	meta, _ := utils.MetaAccessor(ds)
+	updated := ds.CreationTimestamp.Time
+	if ts, _ := meta.GetUpdatedTimestamp(); ts != nil {
+		updated = *ts
+	}
+
+	return DSInfo{
+		ID: meta.GetDeprecatedInternalID(), // nolint:staticcheck
+
+		URL:                     ds.Spec.URL(),
+		Updated:                 updated,
+		JSONData:                jsonData,
+		DecryptedSecureJSONData: decryptedValues,
+	}
 }
 
 func (proxy *DataSourceProxy) validateRequest() error {
