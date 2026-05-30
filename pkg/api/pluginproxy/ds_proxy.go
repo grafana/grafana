@@ -43,20 +43,19 @@ var (
 // appended to the data proxy User-Agent when forward_user_agent is enabled.
 const maxForwardedUserAgentLen = 255
 
-type HttpContext struct {
+type HTTPContext struct {
 	Req  *http.Request
 	Resp http.ResponseWriter
 
 	// TODO? eventually this should come from the user in the request context
-	UserToken      *usertoken.UserToken
-	GetPermissions func() map[string][]string
+	UserToken *usertoken.UserToken
 }
 
 type DataSourceProxy struct {
 	ds                *datasourcesV0.DataSource
 	requester         identity.Requester
 	dataSource        DataSourceLoader
-	ctx               HttpContext
+	ctx               HTTPContext
 	targetUrl         *url.URL
 	proxyPath         string
 	matchedRoute      *plugins.Route
@@ -74,7 +73,7 @@ type httpClient interface {
 
 // NewDataSourceProxy creates a new Datasource proxy
 func NewDataSourceProxy(dataSource DataSourceLoader,
-	pluginRoutes []*plugins.Route, ctx HttpContext,
+	pluginRoutes []*plugins.Route, ctx HTTPContext,
 	proxyPath string, settings *DataSourceProxySettings, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer, features featuremgmt.FeatureToggles,
@@ -398,7 +397,7 @@ func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 	if route.ReqAction != "" {
 		routeEval := pluginac.GetDataSourceRouteEvaluator(proxy.ds.Name, route.ReqAction)
-		hasAccess := routeEval.Evaluate(proxy.ctx.GetPermissions())
+		hasAccess := routeEval.Evaluate(proxy.requester.GetPermissions())
 		if !hasAccess {
 			ctxLogger.Debug("plugin route is covered by RBAC, user doesn't have access", "route", proxy.ctx.Req.URL.Path, "action", route.ReqAction, "path", route.Path, "method", route.Method)
 		}
@@ -427,8 +426,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		}
 	}
 
-	ctx := proxy.ctx.Req.Context()
-	ctxLogger := logger.FromContext(ctx)
+	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 	panelPluginId := proxy.ctx.Req.Header.Get("X-Panel-Plugin-Id")
 
 	uri, err := util.SanitizeURI(proxy.ctx.Req.RequestURI)
@@ -436,16 +434,12 @@ func (proxy *DataSourceProxy) logRequest() {
 		ctxLogger.Error("Could not sanitize RequestURI", "error", err)
 	}
 
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		user = &identity.StaticRequester{}
-	}
-	userid, _ := user.GetInternalID()
+	userid, _ := proxy.requester.GetInternalID()
 
 	ctxLogger.Info("Proxying incoming request",
 		"userid", userid,
-		"orgid", user.GetOrgID(),
-		"username", user.GetLogin(),
+		"orgid", proxy.requester.GetOrgID(),
+		"username", proxy.requester.GetLogin(),
 		"datasource", proxy.dataSource.PluginType(),
 		"uri", uri,
 		"method", proxy.ctx.Req.Method,

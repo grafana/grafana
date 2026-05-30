@@ -66,6 +66,7 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
 	wire.Bind(new(appplugin.PluginContextWrapper), new(*plugincontext.Provider)),
 	datasource.ProvideDefaultPluginConfigs,
+	datasource.ProvideProxyDependencies,
 
 	// Secrets
 	secret.RegisterDependencies,

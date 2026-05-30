@@ -24,7 +24,6 @@ import (
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -35,8 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
-	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
@@ -67,6 +64,7 @@ type DataSourceAPIBuilder struct {
 	schemas                map[string]*pluginschema.PluginSchema
 	queryTypes             *datasourceV0.QueryTypeDefinitionList
 	cfg                    DataSourceAPIBuilderConfig
+	proxyDeps              *ProxyDependencies
 	dataSourceCRUDMetric   *prometheus.HistogramVec
 
 	// Legacy or Unified -- depending on config
@@ -84,16 +82,12 @@ func RegisterAPIService(
 	accessClient authlib.AccessClient,
 	reg prometheus.Registerer,
 	pluginSources sources.Registry,
-	cfg *setting.Cfg, // for proxy
-	dataSourceRequestValidator validations.DataSourceRequestValidator,
-	HTTPClientProvider httpclient.Provider,
-	oAuthTokenService *oauthtoken.Service,
+	proxyDeps *ProxyDependencies,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
 		return nil, nil
 	}
-	//	proxyCfg * pluginproxy.DataSourceProxySettings,
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	flags := DataSourceAPIBuilderConfig{
@@ -143,6 +137,7 @@ func RegisterAPIService(
 			accessControl,
 			decrypter,
 			flags,
+			proxyDeps,
 		)
 		if err != nil {
 			return nil, err
@@ -180,6 +175,7 @@ func NewDataSourceAPIBuilder(
 	accessControl accesscontrol.AccessControl,
 	decrypter decrypt.DecryptService, // when not reading legacy
 	cfg DataSourceAPIBuilderConfig,
+	proxyDeps *ProxyDependencies,
 ) (*DataSourceAPIBuilder, error) {
 	registerSubresourceMetrics(prometheus.DefaultRegisterer)
 
@@ -192,6 +188,7 @@ func NewDataSourceAPIBuilder(
 		accessControl:          accessControl,
 		decrypter:              decrypter,
 		cfg:                    cfg,
+		proxyDeps:              proxyDeps,
 	}
 	return builder, nil
 }
@@ -306,7 +303,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// Frontend proxy
 	if len(b.pluginJSON.Routes) > 0 {
-		storage[ds.StoragePath("proxy")] = &subProxyREST{pluginJSON: b.pluginJSON}
+		storage[ds.StoragePath("proxy")] = &subProxyREST{builder: b}
 	}
 
 	// Register query types (convert to real k8s type first)

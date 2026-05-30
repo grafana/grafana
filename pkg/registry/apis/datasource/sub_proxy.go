@@ -2,29 +2,58 @@ package datasource
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/http"
+	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
+// ProxyDependencies bundles everything the datasource frontend proxy needs.
+// It is wired as a single dependency so RegisterAPIService doesn't have to
+// thread each proxy-only service through its signature.
 type ProxyDependencies struct {
 	ProxyCfg                   *pluginproxy.DataSourceProxySettings
 	DataSourceRequestValidator validations.DataSourceRequestValidator
 	HTTPClientProvider         httpclient.Provider
 	OAuthTokenService          *oauthtoken.Service
+	Tracer                     tracing.Tracer
+	Features                   featuremgmt.FeatureToggles
+}
+
+// ProvideProxyDependencies is the wire provider for ProxyDependencies.
+func ProvideProxyDependencies(
+	cfg *setting.Cfg,
+	dataSourceRequestValidator validations.DataSourceRequestValidator,
+	httpClientProvider httpclient.Provider,
+	oAuthTokenService *oauthtoken.Service,
+	tracer tracing.Tracer,
+	features featuremgmt.FeatureToggles,
+) *ProxyDependencies {
+	return &ProxyDependencies{
+		ProxyCfg:                   pluginproxy.NewDataSourceProxySettings(cfg),
+		DataSourceRequestValidator: dataSourceRequestValidator,
+		HTTPClientProvider:         httpClientProvider,
+		OAuthTokenService:          oAuthTokenService,
+		Tracer:                     tracer,
+		Features:                   features,
+	}
 }
 
 type subProxyREST struct {
-	pluginJSON plugins.JSONData
+	builder *DataSourceAPIBuilder
 }
 
 var _ = rest.Connecter(&subProxyREST{})
@@ -38,12 +67,12 @@ func (r *subProxyREST) Destroy() {}
 func (r *subProxyREST) ConnectMethods() []string {
 	unique := map[string]bool{}
 	methods := []string{}
-	for _, r := range r.pluginJSON.Routes {
-		if unique[r.Method] {
+	for _, route := range r.builder.pluginJSON.Routes {
+		if unique[route.Method] {
 			continue
 		}
-		unique[r.Method] = true
-		methods = append(methods, r.Method)
+		unique[route.Method] = true
+		methods = append(methods, route.Method)
 	}
 	return methods
 }
@@ -53,12 +82,74 @@ func (r *subProxyREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	m := newConnectMetric("proxy", r.pluginJSON.ID)
+	m := newConnectMetric("proxy", r.builder.pluginJSON.ID)
+
+	deps := r.builder.proxyDeps
+	if deps == nil {
+		m.SetError()
+		m.Record()
+		return nil, errors.New("datasource proxy is not configured")
+	}
+
+	loader := newProviderLoader(r.builder.datasources, name, r.builder.pluginJSON.ID)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		m.SetError()
 		defer m.Record()
 
-		responder.Error(fmt.Errorf("TODO, proxy: %s", r.pluginJSON.ID))
+		// The apiserver request context carries the authenticated identity that
+		// NewDataSourceProxy reads via identity.GetRequester.
+		req = req.WithContext(ctx)
+
+		ds, err := loader.DataSource(req.Context())
+		if err != nil {
+			if errors.Is(err, datasources.ErrDataSourceNotFound) {
+				m.SetNotFound()
+				responder.Error(r.builder.datasourceResourceInfo.NewNotFound(name))
+				return
+			}
+			m.SetError()
+			responder.Error(err)
+			return
+		}
+		jsonData, _ := ds.Spec.JSONData().(map[string]any)
+		if err := deps.DataSourceRequestValidator.Validate(ds.Spec.URL(), jsonData, req); err != nil {
+			m.SetError()
+			responder.Error(apierrors.NewForbidden(r.builder.datasourceResourceInfo.GroupResource(), name, err))
+			return
+		}
+
+		proxy, err := pluginproxy.NewDataSourceProxy(
+			loader,
+			r.builder.pluginJSON.Routes,
+			pluginproxy.HTTPContext{Req: req, Resp: w},
+			proxyPathFromRequest(req, name),
+			deps.ProxyCfg,
+			deps.HTTPClientProvider,
+			deps.OAuthTokenService,
+			deps.Tracer,
+			deps.Features,
+		)
+		if err != nil {
+			m.SetError()
+			responder.Error(err)
+			return
+		}
+		proxy.HandleRequest()
 	}), nil
+}
+
+// proxyPathFromRequest returns everything after the "<name>/proxy" subresource
+// boundary, which is the path that should be forwarded to the datasource.
+//
+// We anchor on the datasource name to avoid matching a literal "/proxy" that
+// the forwarded path itself may contain. The real subresource boundary always
+// precedes the forwarded subpath, so the first occurrence is the correct one.
+func proxyPathFromRequest(req *http.Request, name string) string {
+	path := req.URL.EscapedPath()
+	marker := "/" + name + "/proxy"
+	idx := strings.Index(path, marker)
+	if idx < 0 {
+		return ""
+	}
+	return strings.TrimPrefix(path[idx+len(marker):], "/")
 }

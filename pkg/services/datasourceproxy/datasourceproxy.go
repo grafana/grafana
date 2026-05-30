@@ -130,12 +130,11 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 		return
 	}
 
-	hc := pluginproxy.HttpContext{
+	hc := pluginproxy.HTTPContext{
 		Req:  c.Req,
 		Resp: c.Resp,
 
-		UserToken:      c.UserToken,
-		GetPermissions: c.GetPermissions,
+		UserToken: c.UserToken,
 	}
 
 	proxyPath := getProxyPath(c)

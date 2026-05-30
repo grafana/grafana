@@ -1164,7 +1164,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, pro
 	loader, err := NewDataSourceLoader(ds, dsService)
 	require.NoError(t, err)
 
-	proxy, err := NewDataSourceProxy(loader, routes, toHttpContext(t, ctx), "", proxyCfg, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
+	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), "", proxyCfg, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
 	require.NoError(t, err)
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 	require.NoError(t, err)
@@ -1295,7 +1295,7 @@ func runDatasourceAuthTest(t *testing.T,
 	loader, err := NewDataSourceLoader(test.datasource, dsService)
 	require.NoError(t, err)
 
-	proxy, err := NewDataSourceProxy(loader, routes, toHttpContext(t, ctx), "", &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
+	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), "", &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
@@ -1359,7 +1359,7 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 	loader, err := NewDataSourceLoader(ds, dsService)
 	require.NoError(t, err)
 
-	proxy, err := NewDataSourceProxy(loader, routes, toHttpContext(t, ctx), path, &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
+	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), path, &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
 	if err != nil {
 		return nil, err
 	}
@@ -1384,11 +1384,11 @@ func newReqContext(t *testing.T) *contextmodel.ReqContext {
 	}
 }
 
-// toHttpContext builds an HttpContext suitable for NewDataSourceProxy from a
+// toHTTPContext builds an HTTPContext suitable for NewDataSourceProxy from a
 // ReqContext used in tests. It fills in a default Req and SignedInUser if absent
 // and injects the SignedInUser into the request context so identity.GetRequester
 // can find it.
-func toHttpContext(t *testing.T, ctx *contextmodel.ReqContext) HttpContext {
+func toHTTPContext(t *testing.T, ctx *contextmodel.ReqContext) HTTPContext {
 	t.Helper()
 	if ctx.Context == nil {
 		ctx.Context = &web.Context{}
@@ -1402,10 +1402,9 @@ func toHttpContext(t *testing.T, ctx *contextmodel.ReqContext) HttpContext {
 		ctx.SignedInUser = &user.SignedInUser{}
 	}
 	ctx.Req = ctx.Req.WithContext(identity.WithRequester(ctx.Req.Context(), ctx.SignedInUser))
-	return HttpContext{
-		Req:            ctx.Req,
-		Resp:           ctx.Resp,
-		UserToken:      ctx.UserToken,
-		GetPermissions: ctx.GetPermissions,
+	return HTTPContext{
+		Req:       ctx.Req,
+		Resp:      ctx.Resp,
+		UserToken: ctx.UserToken,
 	}
 }
