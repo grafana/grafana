@@ -121,14 +121,22 @@ func TestSubProxyREST_Connect(t *testing.T) {
 }
 
 func TestProxyPathFromRequest(t *testing.T) {
-	tests := map[string]string{
-		"/namespaces/default/datasources/x/proxy/api/v1/query": "api/v1/query",
-		"/namespaces/default/datasources/x/proxy":              "",
-		"/namespaces/default/datasources/x/proxy/":             "",
-		"/no/proxy/segment/here":                               "segment/here",
+	tests := []struct {
+		path string
+		name string
+		want string
+	}{
+		{"/namespaces/default/datasources/x/proxy/api/v1/query", "x", "api/v1/query"},
+		{"/namespaces/default/datasources/x/proxy", "x", ""},
+		{"/namespaces/default/datasources/x/proxy/", "x", ""},
+		// the forwarded path itself contains "/proxy": must keep it intact.
+		{"/namespaces/default/datasources/x/proxy/admin/proxy/settings", "x", "admin/proxy/settings"},
+		// the namespace happens to match the datasource name.
+		{"/namespaces/proxy/datasources/proxy/proxy/api", "proxy", "api"},
+		{"/no/match/here", "x", ""},
 	}
-	for path, want := range tests {
-		req := httptest.NewRequest(http.MethodGet, path, nil)
-		require.Equal(t, want, proxyPathFromRequest(req), "path %q", path)
+	for _, tc := range tests {
+		req := httptest.NewRequest(http.MethodGet, tc.path, nil)
+		require.Equal(t, tc.want, proxyPathFromRequest(req, tc.name), "path %q", tc.path)
 	}
 }

@@ -145,11 +145,9 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 // the forwarded path itself may contain. The real subresource boundary always
 // precedes the forwarded subpath, so the first occurrence is the correct one.
 func proxyPathFromRequest(req *http.Request, name string) string {
-	path := req.URL.EscapedPath()
-	marker := "/" + name + "/proxy"
-	idx := strings.Index(path, marker)
-	if idx < 0 {
+	_, after, found := strings.Cut(req.URL.EscapedPath(), "/"+name+"/proxy")
+	if !found {
 		return ""
 	}
-	return strings.TrimPrefix(path[idx+len(marker):], "/")
+	return strings.TrimPrefix(after, "/")
 }
