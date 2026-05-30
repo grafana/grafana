@@ -240,7 +240,10 @@ func (b *DataSourceAPIBuilder) AllowedV0Alpha1Resources() []string {
 func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	if opts.StorageOptsRegister != nil {
 		opts.StorageOptsRegister(b.datasourceResourceInfo.GroupResource(), apistore.StorageOptions{
-			EnableFolderSupport: false,
+			Index: nil, // TODO, required to check that they are unique
+
+			// Keep them for now, but we should get rid of them when possible
+			DeprecatedInternalID: apistore.DeprecatedID_Required,
 
 			// Setting the schema explicitly will force the apistore to explicitly marshal with a matching Group+version
 			// This is required because we map the same go type (DataSourceConfig) across multiple api groups
