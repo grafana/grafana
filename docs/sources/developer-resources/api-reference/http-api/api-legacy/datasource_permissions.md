@@ -178,7 +178,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-When granting "Query" permission, The subject also has read access to the datasource.
+When granting "Query" permission, The subject also has read access to the data source.
 
 **Example response:**
 
