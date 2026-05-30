@@ -201,6 +201,22 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "queryHistory.localOnly",
+			Description: "Store query history in browser IndexedDB instead of server-side",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "queryHistory.recentQueriesUI",
+			Description: "Replace the Query History drawer with a new Recent Queries modal UI",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageGeneralAvailability,
@@ -3147,6 +3163,14 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:        "plugins.initDataSourcesAsync",
+			Description: "Initializes data source instance settings asynchronously from the API instead of synchronously from boot data",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaCatalogSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "frontendService.reducedBootDataAPI",
 			Description:  "Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed",
 			Stage:        FeatureStageExperimental,
@@ -3154,6 +3178,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "grafana.panelEditNextFeedbackEvent",
+			Description:  "Replaces the Intercom survey for PanelEditNext feedback with an event that triggers an in-house survey",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataProSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

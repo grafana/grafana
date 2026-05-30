@@ -119,14 +119,14 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
   }
 }
 
-export type CompletionType = 'LABEL_NAME' | 'LABEL_VALUE';
+type CompletionType = 'LABEL_NAME' | 'LABEL_VALUE';
 type Completion = {
   type: CompletionType;
   label: string;
   insertText: string;
 };
 
-export type Label = {
+type Label = {
   name: string;
   value: string;
 };

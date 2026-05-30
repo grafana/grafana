@@ -83,3 +83,7 @@ func CopySecureValues(new, old *provisioning.Repository) {
 		new.Secure.WebhookSecret = old.Secure.WebhookSecret
 	}
 }
+
+func RequiresNewTokenForURLChange(new, old *provisioning.Repository) bool {
+	return old != nil && new.URL() != old.URL() && new.Secure.Token.IsZero()
+}
