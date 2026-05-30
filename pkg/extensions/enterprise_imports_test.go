@@ -7,7 +7,6 @@ package extensions
 
 import (
 	_ "github.com/alicebob/miniredis/v2"
-	_ "github.com/aws/aws-sdk-go/aws/client"
 	_ "github.com/grafana/authlib/authz/proto/v1"
 	_ "github.com/grafana/dataplane/examples"
 	_ "github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
