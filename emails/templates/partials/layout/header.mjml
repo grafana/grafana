@@ -1,3 +1,3 @@
 <mj-column background-color="transparent">
-  <mj-image padding="0" width="200px" src="https://grafana.com/static/assets/img/logo_new_transparent_light_400x100.png" align="left" />
+  <mj-text padding="0" font-size="24px" font-weight="700" color="#24292e">Grafana</mj-text>
 </mj-column>

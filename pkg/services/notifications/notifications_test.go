@@ -2,6 +2,8 @@ package notifications
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"regexp"
 	"testing"
 
@@ -46,6 +48,60 @@ func TestProvideService(t *testing.T) {
 
 		require.NoError(t, err)
 	})
+}
+
+func TestDefaultEmailTemplatesDoNotLoadRemoteAssets(t *testing.T) {
+	files, err := filepath.Glob("../../../public/emails/*.html")
+	require.NoError(t, err)
+	require.NotEmpty(t, files)
+
+	disallowedAssetMarkers := []string{
+		"fonts.googleapis.com",
+		"fonts.gstatic.com",
+		"logo_new_transparent_light_400x100.png",
+		"logo_new_transparent_200x48.png",
+		"play.grafana.org",
+	}
+	disallowedAutoLoadPatterns := []struct {
+		name    string
+		pattern *regexp.Regexp
+	}{
+		{
+			name:    "remote src attribute",
+			pattern: regexp.MustCompile(`(?is)<(?:img|source|track|audio|video|script|iframe|embed|object)\b[^>]*\bsrc\s*=\s*["']https?://`),
+		},
+		{
+			name:    "remote srcset attribute",
+			pattern: regexp.MustCompile(`(?is)\bsrcset\s*=\s*["'][^"']*https?://`),
+		},
+		{
+			name:    "remote link href",
+			pattern: regexp.MustCompile(`(?is)<link\b[^>]*\bhref\s*=\s*["']https?://`),
+		},
+		{
+			name:    "remote CSS import",
+			pattern: regexp.MustCompile(`(?is)@import\s+(?:url\()?["']?https?://`),
+		},
+		{
+			name:    "remote CSS url",
+			pattern: regexp.MustCompile(`(?is)url\(\s*["']?https?://`),
+		},
+	}
+
+	for _, file := range files {
+		t.Run(filepath.Base(file), func(t *testing.T) {
+			body, err := os.ReadFile(file)
+			require.NoError(t, err)
+
+			html := string(body)
+			for _, asset := range disallowedAssetMarkers {
+				assert.NotContains(t, html, asset)
+			}
+			for _, autoLoad := range disallowedAutoLoadPatterns {
+				assert.NotRegexp(t, autoLoad.pattern, html, autoLoad.name)
+			}
+		})
+	}
 }
 
 func TestSendEmailSync(t *testing.T) {
