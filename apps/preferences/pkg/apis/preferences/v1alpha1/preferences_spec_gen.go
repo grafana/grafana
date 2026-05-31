@@ -37,6 +37,8 @@ func (PreferencesNavbarPreference) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type PreferencesSpec struct {
+	// Explicit home URL (NOTE: this can only be modified in the system settings)
+	HomeURL *string `json:"homeURL,omitempty"`
 	// UID for the home dashboard
 	HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`
 	// The timezone selection
@@ -47,9 +49,6 @@ type PreferencesSpec struct {
 	Theme *string `json:"theme,omitempty"`
 	// Selected language
 	Language *string `json:"language,omitempty"`
-	// Selected locale (beta)
-	// TODO: Will be removed
-	RegionalFormat *string `json:"regionalFormat,omitempty"`
 	// Explore query history preferences
 	QueryHistory *PreferencesQueryHistoryPreference `json:"queryHistory,omitempty"`
 	// Navigation preferences

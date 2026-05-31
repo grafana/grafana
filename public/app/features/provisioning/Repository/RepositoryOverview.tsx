@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { textUtil, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Box, Card, type CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
@@ -214,7 +214,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 function getWebhookURL(repo: Repository) {
   const { status, spec } = repo;
   if (spec?.type === 'github' && status?.webhook?.url && spec.github?.url) {
-    return `${spec.github.url}/settings/hooks/${status.webhook?.id}`;
+    return textUtil.sanitizeUrl(`${spec.github.url}/settings/hooks/${status.webhook?.id}`);
   }
   return undefined;
 }

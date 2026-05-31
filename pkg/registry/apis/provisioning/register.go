@@ -139,6 +139,7 @@ type APIBuilder struct {
 	registry                      prometheus.Registerer
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
+	maxFileSize                   int64
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	folderAPIVersion              string
 	webhookSecretRotationInterval time.Duration
@@ -189,6 +190,7 @@ func NewAPIBuilder(
 	folderMetadataEnabled bool,
 	folderAPIVersion string,
 	incrementalPolicy repository.IncrementalSyncPolicy,
+	maxFileSize int64,
 ) (*APIBuilder, error) {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -241,6 +243,8 @@ func NewAPIBuilder(
 		folderMetadataEnabled:               folderMetadataEnabled,
 		folderAPIVersion:                    folderAPIVersion,
 		incrementalPolicy:                   incrementalPolicy,
+		// Per-file cap for the files API. Non-positive (<=0) disables the cap.
+		maxFileSize: maxFileSize,
 	}
 
 	for _, builder := range extraBuilders {
@@ -315,6 +319,7 @@ func RegisterAPIService(
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
+	maxFileSize := cfg.ProvisioningMaxFileSize
 	incrementalPolicy := repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges)
 
 	// Register v0alpha1 (preferred version)
@@ -348,6 +353,7 @@ func RegisterAPIService(
 		folderMetadataEnabled,
 		folderAPIVersion,
 		incrementalPolicy,
+		maxFileSize,
 	)
 	if err != nil {
 		return nil, err
@@ -386,6 +392,7 @@ func RegisterAPIService(
 		folderMetadataEnabled,
 		folderAPIVersion,
 		incrementalPolicy,
+		maxFileSize,
 	)
 	if err != nil {
 		return nil, err
@@ -802,7 +809,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// connector via ProvisioningAuthorizer.AuthorizeResource, and repository-
 	// level operations remain Admin-gated by authorizeRepositorySubresource.
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion, b.maxFileSize)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
@@ -921,6 +928,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				metrics,
 				b.tracer,
 				10,
+				b.maxFileSize,
 			)
 
 			// Migration export preserves original names so the takeover
@@ -1070,6 +1078,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 			if !cache.WaitForCacheSync(postStartHookCtx.Done(), connInformer.Informer().HasSynced) {
+				// WaitForCacheSync only returns false when the hook context is
+				// cancelled, which happens on apiserver shutdown. A sync aborted
+				// by shutdown is expected, not a startup failure — returning an
+				// error here escalates to klog.Fatalf and kills the process.
+				if postStartHookCtx.Err() != nil {
+					return nil
+				}
 				return fmt.Errorf("connection controller cache sync failed")
 			}
 			go connController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})

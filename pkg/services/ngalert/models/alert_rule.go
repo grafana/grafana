@@ -966,7 +966,7 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 	}
 
 	if alertRule.NotificationSettings != nil {
-		result.NotificationSettings = util.Pointer(CopyNotificationSettings(*alertRule.NotificationSettings))
+		result.NotificationSettings = new(CopyNotificationSettings(*alertRule.NotificationSettings))
 	}
 
 	return &result

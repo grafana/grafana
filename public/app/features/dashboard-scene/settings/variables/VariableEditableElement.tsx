@@ -30,6 +30,8 @@ import {
 } from '../../scene/types/EditableDashboardElement';
 import { VariableDisplaySelect } from '../../settings/variables/components/VariableDisplaySelect';
 import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import { openChangeVariableTypePane } from './VariableTypeSelectionPane';
@@ -116,12 +118,17 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
     }
 
     const variableEditorDef = getEditableVariableDefinition(this.variable.state.type);
+    const { label, name } = this.variable.state;
+    const hasLabel = !!label && label.trim() !== '';
+    const instanceName = hasLabel ? label! : name;
+    const tooltip = hasLabel ? `$${name}` : undefined;
 
     if (sceneUtils.isAdHocVariable(this.variable)) {
       return {
         typeName: t('dashboard.edit-pane.elements.filter', 'Filter'),
         icon: 'filter',
-        instanceName: this.variable.state.name,
+        instanceName,
+        tooltip,
         isHidden: this.variable.state.hide === VariableHide.hideVariable,
       };
     }
@@ -129,7 +136,8 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
     return {
       typeName: t('dashboard.edit-pane.elements.variable', '{{type}} variable', { type: variableEditorDef.name }),
       icon: 'dollar-alt',
-      instanceName: this.variable.state.name,
+      instanceName,
+      tooltip,
       isHidden: this.variable.state.hide === VariableHide.hideVariable,
     };
   }
@@ -365,6 +373,8 @@ function VariableDescriptionTextArea({ variable, id }: VariableInputProps) {
 
 function VariableDisplayInput({ variable }: VariableInputProps) {
   const { hide: display = VariableHide.dontHide } = variable.useState();
+  const sectionOwner = dashboardSceneGraph.findSectionOwner(variable);
+  const topPlacementLabel = sectionOwner ? getTopPlacementLabel(sectionOwner) : undefined;
 
   const onChange = (option: VariableHide) => {
     dashboardEditActions.changeVariableHideValue({
@@ -379,6 +389,7 @@ function VariableDisplayInput({ variable }: VariableInputProps) {
       display={display}
       type={variable.state.type}
       hideControlsMenuOption={shouldHideControlsMenuOption(variable)}
+      topPlacementLabel={topPlacementLabel}
       onChange={onChange}
     />
   );

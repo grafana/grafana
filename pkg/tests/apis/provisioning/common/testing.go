@@ -1215,6 +1215,17 @@ func WithProvisioningMaxIncrementalChanges(n int) GrafanaOption {
 	}
 }
 
+// WithProvisioningMaxFileSize overrides the per-file size cap enforced by the
+// files API on both reads and writes. A small value (e.g. 1024) keeps the
+// fixture cheap to generate; any non-positive value (<=0) disables the check
+// entirely. Pass an int64 — the helper takes its address so GrafanaOpts can
+// distinguish "not set" (nil) from an explicit 0.
+func WithProvisioningMaxFileSize(n int64) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningMaxFileSize = &n
+	}
+}
+
 // WithoutExportFeatureFlag disables the provisioningExport feature flag.
 func WithoutExportFeatureFlag(opts *testinfra.GrafanaOpts) {
 	// Remove provisioningExport from the enabled feature toggles
@@ -1252,6 +1263,9 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 		// Allow both folder and instance sync targets for tests
 		// (instance is needed for export jobs, folder for most operations)
 		ProvisioningAllowedTargets: []string{"folder", "instance"},
+		// Tests use a local Gitea server over http:// with a token, so permit the
+		// otherwise-rejected http:// + token combination.
+		ProvisioningAllowInsecure: true,
 	}
 }
 
@@ -1942,25 +1956,25 @@ func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 	// Setup mock repositories for the ListRepos endpoint
 	expectedRepos := []*github.Repository{
 		{
-			Name: github.Ptr("test-repo-1"),
+			Name: new("test-repo-1"),
 			Owner: &github.User{
-				Login: github.Ptr("test-owner-1"),
+				Login: new("test-owner-1"),
 			},
-			HTMLURL: github.Ptr("https://github.com/test-owner-1/test-repo-1"),
+			HTMLURL: new("https://github.com/test-owner-1/test-repo-1"),
 		},
 		{
-			Name: github.Ptr("test-repo-2"),
+			Name: new("test-repo-2"),
 			Owner: &github.User{
-				Login: github.Ptr("test-owner-2"),
+				Login: new("test-owner-2"),
 			},
-			HTMLURL: github.Ptr("https://github.com/test-owner-2/test-repo-2"),
+			HTMLURL: new("https://github.com/test-owner-2/test-repo-2"),
 		},
 		{
-			Name: github.Ptr("test-repo-3"),
+			Name: new("test-repo-3"),
 			Owner: &github.User{
-				Login: github.Ptr("test-owner-3"),
+				Login: new("test-owner-3"),
 			},
-			HTMLURL: github.Ptr("https://github.com/test-owner-3/test-repo-3"),
+			HTMLURL: new("https://github.com/test-owner-3/test-repo-3"),
 		},
 	}
 
@@ -1973,10 +1987,10 @@ func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 					ID:   &id,
 					Slug: &appSlug,
 					Permissions: &github.InstallationPermissions{
-						Contents:        github.Ptr("write"),
-						Metadata:        github.Ptr("read"),
-						PullRequests:    github.Ptr("write"),
-						RepositoryHooks: github.Ptr("write"),
+						Contents:        new("write"),
+						Metadata:        new("read"),
+						PullRequests:    new("write"),
+						RepositoryHooks: new("write"),
 					},
 				}
 				_, _ = w.Write(ghmock.MustMarshal(app))
@@ -1991,10 +2005,10 @@ func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 				installation := github.Installation{
 					ID: &idInt,
 					Permissions: &github.InstallationPermissions{
-						Contents:        github.Ptr("write"),
-						Metadata:        github.Ptr("read"),
-						PullRequests:    github.Ptr("write"),
-						RepositoryHooks: github.Ptr("write"),
+						Contents:        new("write"),
+						Metadata:        new("read"),
+						PullRequests:    new("write"),
+						RepositoryHooks: new("write"),
 					},
 				}
 				_, _ = w.Write(ghmock.MustMarshal(installation))
@@ -2005,7 +2019,7 @@ func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				installation := github.InstallationToken{
-					Token:     github.Ptr("someToken"),
+					Token:     new("someToken"),
 					ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Hour * 2)},
 				}
 				_, _ = w.Write(ghmock.MustMarshal(installation))
@@ -2017,7 +2031,7 @@ func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 				w.WriteHeader(http.StatusOK)
 				reposResponse := &github.ListRepositories{
 					Repositories: expectedRepos,
-					TotalCount:   github.Ptr(len(expectedRepos)),
+					TotalCount:   new(len(expectedRepos)),
 				}
 				_, _ = w.Write(ghmock.MustMarshal(reposResponse))
 			}),
@@ -2101,6 +2115,24 @@ func RequireDashboardCount(t *testing.T, dashboardClient *apis.K8sResourceClient
 		}
 		assert.Len(c, list.Items, expected, "unexpected dashboard count")
 	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %d dashboard(s)", expected)
+}
+
+// RequireRepoManagedDashboard waits until the dashboard with the given uid is
+// available in unified storage and is annotated as managed by the named repo
+// at the given source path. Polls until the assertions hold or the default
+// wait timeout elapses.
+func RequireRepoManagedDashboard(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, uid, repoName, sourcePath string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		dash, err := dashboardClient.Resource.Get(ctx, uid, metav1.GetOptions{})
+		if !assert.NoError(c, err) {
+			return
+		}
+		annotations := dash.GetAnnotations()
+		assert.Equal(c, string(utils.ManagerKindRepo), annotations[utils.AnnoKeyManagerKind])
+		assert.Equal(c, repoName, annotations[utils.AnnoKeyManagerIdentity])
+		assert.Equal(c, sourcePath, annotations[utils.AnnoKeySourcePath])
+	}, WaitTimeoutDefault, WaitIntervalDefault, "dashboard %q should be managed by repo %q at %q", uid, repoName, sourcePath)
 }
 
 // RequireDashboardTitle asserts that the dashboard with the given uid (K8s name)
@@ -2550,6 +2582,37 @@ func DashboardJSON(uid, title string, version int) []byte {
 	return data
 }
 
+// NewManagedDashboard builds an unstructured Dashboard with the manager
+// annotations required to route a Dashboard API write through the
+// provisioning files endpoint (handleManagedResourceRouting). If message is
+// empty, the grafana.app/message annotation is omitted so callers can
+// exercise the action-specific fallback ("Create <name>" / "Update <name>"
+// / "Delete <name>").
+func NewManagedDashboard(apiVersion, name, repoName, sourcePath, message string) *unstructured.Unstructured {
+	annotations := map[string]interface{}{
+		utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+		utils.AnnoKeyManagerIdentity: repoName,
+		utils.AnnoKeySourcePath:      sourcePath,
+	}
+	if message != "" {
+		annotations[utils.AnnoKeyMessage] = message
+	}
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": apiVersion,
+			"kind":       "Dashboard",
+			"metadata": map[string]interface{}{
+				"name":        name,
+				"annotations": annotations,
+			},
+			"spec": map[string]interface{}{
+				"title":         name,
+				"schemaVersion": 41,
+			},
+		},
+	}
+}
+
 type exportRepoInfo struct {
 	user   *gittest.User
 	remote *gittest.RemoteRepository
@@ -2708,6 +2771,18 @@ func (h *GitTestHelper) CreateGitRepo(t *testing.T, repoName string, initialFile
 // repos can coexist on the same Grafana server. workflows is optional; defaults to ["write"].
 func (h *GitTestHelper) CreateFolderTargetGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
 	return h.createGitRepo(t, repoName, "folder", initialFiles, workflows...)
+}
+
+// CreateSyncEnabledGitRepo creates a git repository with sync target "instance"
+// and sync.enabled=true. Sync must be on for the provisioning files endpoint to
+// dual-write into unified storage — without it, callers that write a new
+// repo-managed resource via the Dashboard API would fail at the post-write Get
+// inside handleManagedResourceRouting with KeyNotFound.
+// workflows is optional; defaults to ["write"].
+func (h *GitTestHelper) CreateSyncEnabledGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	return h.createRepo(t, repoName, "git", "instance", true, initialFiles, map[string]any{
+		"SyncEnabled": true,
+	}, workflows...)
 }
 
 // CreateGithubRepo creates a github-type repository backed by the gittest server.

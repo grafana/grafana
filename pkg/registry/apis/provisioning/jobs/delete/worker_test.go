@@ -3,6 +3,7 @@ package delete
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -359,6 +360,12 @@ func TestDeleteWorker_deleteFiles(t *testing.T) {
 			deleteResults: []error{repository.ErrFileNotFound, nil},
 			expectedCalls: 2,
 		},
+		{
+			name:          "file not found does not count as error for TooManyErrors",
+			paths:         []string{"test/file1.yaml"},
+			deleteResults: []error{repository.ErrFileNotFound},
+			expectedCalls: 1,
+		},
 	}
 
 	for _, tt := range tests {
@@ -401,6 +408,165 @@ func TestDeleteWorker_deleteFiles(t *testing.T) {
 			mockProgress.AssertExpectations(t)
 		})
 	}
+}
+
+func TestDeleteWorker_Process_FileNotFoundIsWarning(t *testing.T) {
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
+				Paths: []string{"test/nonexistent.yaml"},
+				Ref:   "main",
+			},
+		},
+	}
+
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockRepo, false)
+	})
+
+	mockProgress.On("SetTotal", mock.Anything, 1).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
+	mockProgress.On("SetMessage", mock.Anything, "Deleting test/nonexistent.yaml").Return()
+	mockProgress.On("TooManyErrors").Return(nil)
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
+
+	mockRepo.On("Delete", mock.Anything, "test/nonexistent.yaml", "main", "Delete test/nonexistent.yaml").Return(repository.ErrFileNotFound)
+
+	// Result must have Warning set and no Error
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Path() == "test/nonexistent.yaml" &&
+			result.Action() == repository.FileActionDeleted &&
+			result.Warning() != nil &&
+			errors.Is(result.Warning(), repository.ErrFileNotFound) &&
+			result.Error() == nil
+	})).Return()
+
+	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	require.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+	mockProgress.AssertExpectations(t)
+}
+
+func TestDeleteWorker_Process_ResourceNotFoundIsWarning(t *testing.T) {
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
+				Resources: []v0alpha1.ResourceRef{
+					{
+						Name:  "missing-dashboard",
+						Kind:  "Dashboard",
+						Group: "dashboard.grafana.app",
+					},
+				},
+				Ref: "main",
+			},
+		},
+	}
+
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+	mockRepositoryResources := resources.NewMockRepositoryResources(t)
+
+	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepositoryResources, nil)
+	mockRepositoryResources.On("FindResourcePath", mock.Anything, "missing-dashboard", schema.GroupVersionKind{
+		Group: "dashboard.grafana.app",
+		Kind:  "Dashboard",
+	}).Return("", fmt.Errorf("dashboard.grafana.app/dashboards/missing-dashboard: %w", resources.ErrResourceNotFound))
+
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockRepo, false)
+	})
+
+	mockProgress.On("SetTotal", mock.Anything, 1).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
+	mockProgress.On("SetMessage", mock.Anything, "Resolving resource paths").Return()
+	mockProgress.On("SetMessage", mock.Anything, "Finding path for resource dashboard.grafana.app/Dashboard/missing-dashboard").Return()
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
+
+	// Warning recorded, no Error — ErrResourceNotFound is a warn-only condition.
+	// TooManyErrors is NOT called: warnings don't count as errors.
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Name() == "missing-dashboard" &&
+			result.Action() == repository.FileActionDeleted &&
+			result.Warning() != nil &&
+			result.Error() == nil
+	})).Return()
+
+	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	require.NoError(t, err)
+	mockRepositoryResources.AssertExpectations(t)
+	mockProgress.AssertExpectations(t)
+}
+
+func TestDeleteWorker_deleteFilesFileNotFoundIsWarning(t *testing.T) {
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+
+	opts := v0alpha1.DeleteJobOptions{Ref: "main"}
+	path := "test/nonexistent.yaml"
+
+	mockRepo.On("Delete", mock.Anything, path, "main", "Delete "+path).Return(repository.ErrFileNotFound)
+	mockProgress.On("SetMessage", mock.Anything, "Deleting "+path).Return()
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Path() == path &&
+			result.Action() == repository.FileActionDeleted &&
+			result.Warning() != nil &&
+			errors.Is(result.Warning(), repository.ErrFileNotFound) &&
+			result.Error() == nil
+	})).Return()
+	mockProgress.On("TooManyErrors").Return(nil)
+
+	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.deleteFiles(context.Background(), mockRepo, mockProgress, opts, path)
+
+	require.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+	mockProgress.AssertExpectations(t)
+}
+
+func TestDeleteWorker_deleteFilesOtherErrorIsNotWarning(t *testing.T) {
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+
+	opts := v0alpha1.DeleteJobOptions{Ref: "main"}
+	path := "test/file.yaml"
+	deleteError := errors.New("permission denied")
+
+	mockRepo.On("Delete", mock.Anything, path, "main", "Delete "+path).Return(deleteError)
+	mockProgress.On("SetMessage", mock.Anything, "Deleting "+path).Return()
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Path() == path &&
+			result.Action() == repository.FileActionDeleted &&
+			result.Error() != nil &&
+			errors.Is(result.Error(), deleteError) &&
+			result.Warning() == nil
+	})).Return()
+	mockProgress.On("TooManyErrors").Return(nil)
+
+	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.deleteFiles(context.Background(), mockRepo, mockProgress, opts, path)
+
+	require.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+	mockProgress.AssertExpectations(t)
 }
 
 func TestDeleteWorker_ProcessWithResourceRefs(t *testing.T) {

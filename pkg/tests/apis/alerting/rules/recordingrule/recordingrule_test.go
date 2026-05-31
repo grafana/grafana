@@ -7,18 +7,15 @@ import (
 	"testing"
 	"time"
 
+	prom_model "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
-
-	prom_model "github.com/prometheus/common/model"
-
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -57,10 +54,10 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
-					QueryType:     util.Pointer(rule.Data[0].QueryType),
-					DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					QueryType:     new(rule.Data[0].QueryType),
+					DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
-					Source:        util.Pointer(true),
+					Source:        new(true),
 					RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 						From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 						To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -155,10 +152,10 @@ func TestIntegrationAccessControl(t *testing.T) {
 			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
-					QueryType:     util.Pointer(rule.Data[0].QueryType),
-					DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					QueryType:     new(rule.Data[0].QueryType),
+					DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
-					Source:        util.Pointer(true),
+					Source:        new(true),
 					RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 						From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 						To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -240,10 +237,10 @@ func TestIntegrationCRUD(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -292,10 +289,10 @@ func TestIntegrationCRUD(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -350,10 +347,10 @@ func TestIntegrationCRUD(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -402,8 +399,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
@@ -438,10 +435,10 @@ func TestIntegrationCRUD(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -492,10 +489,10 @@ func TestIntegrationPatch(t *testing.T) {
 			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
-					QueryType:     util.Pointer(rule.Data[0].QueryType),
-					DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					QueryType:     new(rule.Data[0].QueryType),
+					DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
-					Source:        util.Pointer(true),
+					Source:        new(true),
 					RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 						From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 						To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -593,10 +590,10 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -638,10 +635,10 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -675,10 +672,10 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -725,10 +722,10 @@ func TestIntegrationListWithLabelSelectors(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -809,10 +806,10 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -865,9 +862,9 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 
 	t.Run("filter by spec.paused", func(t *testing.T) {
 		paused1 := baseRule("rr-fs-folder")
-		paused1.Spec.Paused = util.Pointer(true)
+		paused1.Spec.Paused = new(true)
 		paused2 := baseRule("rr-fs-folder")
-		paused2.Spec.Paused = util.Pointer(true)
+		paused2.Spec.Paused = new(true)
 		active1 := baseRule("rr-fs-folder")
 		active2 := baseRule("rr-fs-folder")
 

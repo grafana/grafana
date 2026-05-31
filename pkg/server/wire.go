@@ -15,7 +15,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-
 	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/api"
@@ -27,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log/slogadapter"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -48,6 +48,7 @@ import (
 	dashboardlegacy "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
 	dsmigrator "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
+	legacypreferences "github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -136,6 +137,7 @@ import (
 	pluginDashboards "github.com/grafana/grafana/pkg/services/pluginsintegration/dashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	promTypeMigration "github.com/grafana/grafana/pkg/services/promtypemigration"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -250,6 +252,7 @@ var wireBasicSet = wire.NewSet(
 	querycachingmigrator.ProvideQueryCacheConfigMigrator,
 	shorturlmigrator.ProvideShortURLMigrator,
 	legacystars.ProvideStarsMigrator,
+	legacypreferences.ProvidePreferencesMigrator,
 	dsmigrator.ProvideDataSourceMigrator,
 	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
@@ -389,6 +392,8 @@ var wireBasicSet = wire.NewSet(
 	publicdashboards.ProvideMetricsService,
 	publicdashboards.ProvideApi,
 	starApi.ProvideApi,
+	prefapi.ProvideK8sHandler,
+	starApi.ProvideK8sClients,
 	userimpl.ProvideService,
 	wire.Bind(new(user.Service), new(*userimpl.Service)),
 	orgimpl.ProvideService,
@@ -417,6 +422,7 @@ var wireBasicSet = wire.NewSet(
 	acimpl.ProvideAccessControl,
 	accesscontrol.ProvideFixedRolesLoader,
 	accesscontrol.ProvideNoopIAMRolesSyncer,
+	accesscontrol.ProvideNoopGlobalRoleSeeder,
 	dualwrite.ProvideZanzanaReconciler,
 	navtreeimpl.ProvideService,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
@@ -477,6 +483,7 @@ var wireBasicSet = wire.NewSet(
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
+	resource.ProvideVectorMetrics,
 	unifiedmigrations.ProvideUnifiedStorageMigrationService,
 	unifiedmigrations.ProvideMigrationStatusReader,
 	// Kubernetes API server
@@ -500,6 +507,10 @@ var wireSet = wire.NewSet(
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
+	// Server only — builds the kvlease-backed Elector for the embedded zanzana
+	// reconciler. CLI/test sets bind Elector to NewDefaultElector instead, so
+	// the unified-storage KV is never opened from grafana-cli.
+	authz.ProvideEmbeddedZanzanaElector,
 )
 
 var wireCLISet = wire.NewSet(
@@ -515,6 +526,10 @@ var wireCLISet = wire.NewSet(
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
+	// CLI never participates in leader election; binding directly to the
+	// default elector keeps grafana-cli from pulling in the KV store.
+	leaderelection.NewDefaultElector,
+	wire.Bind(new(leaderelection.Elector), new(*leaderelection.DefaultElector)),
 )
 
 var wireTestSet = wire.NewSet(
@@ -533,6 +548,10 @@ var wireTestSet = wire.NewSet(
 	oauthtokentest.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
 	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
+	// Tests get a default elector — none of the integration tests today need to
+	// exercise real leader election.
+	leaderelection.NewDefaultElector,
+	wire.Bind(new(leaderelection.Elector), new(*leaderelection.DefaultElector)),
 )
 
 func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {
@@ -590,6 +609,7 @@ func provideMigrationRegistry(
 	shortURLMigrator shorturlmigrator.ShortURLMigrator,
 	dataSourceMigrator dsmigrator.DataSourceMigrator,
 	starsMigrator legacystars.StarsMigrator,
+	preferencesMigrator legacypreferences.PreferencesMigrator,
 	queryCacheConfigMigrator querycachingmigrator.QueryCacheConfigMigrator,
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
@@ -598,6 +618,7 @@ func provideMigrationRegistry(
 	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
 	r.Register(dsmigrator.DataSourceMigration(dataSourceMigrator))
 	r.Register(legacystars.StarsMigrationDefinition(starsMigrator))
+	r.Register(legacypreferences.PreferencesMigrationDefinition(preferencesMigrator))
 	r.Register(querycachingmigration.QueryCacheConfigMigration(queryCacheConfigMigrator))
 	return r
 }
