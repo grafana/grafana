@@ -61,6 +61,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/candlestick/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/candlestick/
+  box-plot:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/box-plot/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/box-plot/
   bar-gauge:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/bar-gauge/
@@ -166,6 +171,7 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Heatmap](ref:heatmap) visualizes data in two dimensions, used typically for the magnitude of a phenomenon.
   - [Pie chart](ref:pie-chart) is typically used where proportionality is important.
   - [Candlestick](ref:candlestick) is typically for financial data where the focus is price/data movement.
+  - [Box plot](ref:box-plot) shows the distribution of summary statistics, such as quartiles and outliers, across categories.
   - [Gauge](ref:gauge) is the traditional rounded visual showing how far a single metric is from a threshold.
   - [Trend](ref:trend) for datasets that have a sequential, numeric x that is not time.
   - [XY chart](ref:xy-chart) provides a way to visualize arbitrary x and y values in a graph.
