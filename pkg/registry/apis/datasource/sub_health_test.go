@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -137,7 +138,7 @@ func TestSubHealthREST_Connect(t *testing.T) {
 		require.Contains(t, err.Error(), "failed to create plugin context")
 	})
 
-	t.Run("returns error when CheckHealth fails", func(t *testing.T) {
+	t.Run("reports CheckHealth failure via the responder", func(t *testing.T) {
 		builder := &DataSourceAPIBuilder{
 			datasources:     &mockHealthDatasourceProvider{instanceSettings: &backend.DataSourceInstanceSettings{}},
 			contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: config.NewGrafanaCfg(map[string]string{})}},
@@ -147,10 +148,12 @@ func TestSubHealthREST_Connect(t *testing.T) {
 
 		responder := &mockHealthResponder{}
 		handler, err := r.Connect(context.Background(), "test-ds", nil, responder)
+		require.NoError(t, err)
+		require.NotNil(t, handler)
 
-		require.Error(t, err)
-		require.Nil(t, handler)
-		require.Contains(t, err.Error(), "test")
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+		require.Error(t, responder.err)
+		require.Contains(t, responder.err.Error(), "test")
 	})
 }
 
@@ -411,4 +414,34 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 		require.NoError(t, responder.err)
 		require.Equal(t, http.StatusOK, responder.statusCode)
 	})
+
+	t.Run("a denied request validation gates the health check", func(t *testing.T) {
+		var checkHealthCalled bool
+		shr := subHealthREST{
+			builder: &DataSourceAPIBuilder{
+				datasourceResourceInfo: datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("test.datasource.grafana.app", "test"),
+				client: mockHealthClient{checkHealthFunc: func(context.Context, *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+					checkHealthCalled = true
+					return &backend.CheckHealthResult{Status: backend.HealthStatusOk}, nil
+				}},
+				datasources:                &mockHealthDatasourceProvider{instanceSettings: &backend.DataSourceInstanceSettings{URL: "http://example.com"}},
+				contextProvider:            &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: config.NewGrafanaCfg(map[string]string{})}},
+				dataSourceRequestValidator: denyValidator{err: errors.New("blocked")},
+			},
+		}
+
+		responder := &mockHealthResponder{}
+		handler, err := shr.Connect(context.Background(), "dsname", nil, responder)
+		require.NoError(t, err)
+
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+
+		require.True(t, apierrors.IsForbidden(responder.err), "expected forbidden, got: %v", responder.err)
+		require.False(t, checkHealthCalled, "validation should gate the health check")
+	})
 }
+
+// denyValidator rejects every request with a fixed error.
+type denyValidator struct{ err error }
+
+func (v denyValidator) Validate(string, map[string]any, *http.Request) error { return v.err }

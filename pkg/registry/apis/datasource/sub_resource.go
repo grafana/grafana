@@ -92,7 +92,7 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 		callCtx = contextualMiddlewares(callCtx)
 
 		_, cloneSpan := tracing.Start(reqCtx, "datasource.resource.normalizeRequest")
-		clonedReq, err := resourceRequest(req)
+		clonedReq, err := resourceRequest(req, name)
 		cloneSpan.End()
 		if err != nil {
 			_ = tracing.Error(reqSpan, err)
@@ -136,17 +136,19 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 	}), nil
 }
 
-func resourceRequest(req *http.Request) (*http.Request, error) {
-	idx := strings.LastIndex(req.URL.Path, "/resources")
-	if idx < 0 {
+func resourceRequest(req *http.Request, name string) (*http.Request, error) {
+	// Anchor on the "<name>/resources" subresource boundary rather than a bare
+	// "/resources" so a forwarded path that itself contains "/resources" is not
+	// split at the wrong place. The real boundary always precedes the forwarded
+	// subpath, so the first occurrence is the correct one.
+	_, after, found := strings.Cut(req.URL.Path, "/"+name+"/resources")
+	if !found {
 		return nil, fmt.Errorf("expected resource path") // 400?
 	}
 
 	clonedReq := req.Clone(req.Context())
-	rawURL := strings.TrimLeft(req.URL.Path[idx+len("/resources"):], "/")
-
 	clonedReq.URL = &url.URL{
-		Path:     rawURL,
+		Path:     strings.TrimPrefix(after, "/"),
 		RawQuery: clonedReq.URL.RawQuery,
 	}
 

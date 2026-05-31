@@ -941,8 +941,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	proxyDependencies := datasource.ProvideProxyDependencies(cfg, ossDataSourceRequestValidator, httpclientProvider, oauthtokenService, tracingService, featureToggles)
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessClient, registerer, pluginsourcesService, proxyDependencies)
+	proxyDependencies := datasource.ProvideProxyDependencies(cfg, httpclientProvider, oauthtokenService, tracingService, featureToggles)
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessClient, registerer, pluginsourcesService, ossDataSourceRequestValidator, proxyDependencies)
 	if err != nil {
 		return nil, err
 	}
@@ -1673,8 +1673,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	proxyDependencies := datasource.ProvideProxyDependencies(cfg, ossDataSourceRequestValidator, httpclientProvider, oauthtokenService, tracingService, featureToggles)
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessClient, registerer, pluginsourcesService, proxyDependencies)
+	proxyDependencies := datasource.ProvideProxyDependencies(cfg, httpclientProvider, oauthtokenService, tracingService, featureToggles)
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessClient, registerer, pluginsourcesService, ossDataSourceRequestValidator, proxyDependencies)
 	if err != nil {
 		return nil, err
 	}

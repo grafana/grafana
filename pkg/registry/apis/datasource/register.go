@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
@@ -33,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
@@ -65,6 +67,10 @@ type DataSourceAPIBuilder struct {
 	proxyDeps              *ProxyDependencies
 	dataSourceCRUDMetric   *prometheus.HistogramVec
 
+	// dataSourceRequestValidator gates outbound datasource requests (proxy and
+	// health), matching the legacy HTTP API behavior.
+	dataSourceRequestValidator validations.DataSourceRequestValidator
+
 	// Legacy or Unified -- depending on config
 	store grafanarest.Storage
 }
@@ -79,6 +85,7 @@ func RegisterAPIService(
 	accessClient authlib.AccessClient,
 	reg prometheus.Registerer,
 	pluginSources sources.Registry,
+	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	proxyDeps *ProxyDependencies,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -134,6 +141,7 @@ func RegisterAPIService(
 			accessClient,
 			decrypter,
 			flags,
+			dataSourceRequestValidator,
 			proxyDeps,
 		)
 		if err != nil {
@@ -172,22 +180,34 @@ func NewDataSourceAPIBuilder(
 	accessClient authlib.AccessClient,
 	decrypter decrypt.DecryptService, // when not reading legacy
 	cfg DataSourceAPIBuilderConfig,
+	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	proxyDeps *ProxyDependencies,
 ) (*DataSourceAPIBuilder, error) {
 	registerSubresourceMetrics(prometheus.DefaultRegisterer)
 
 	builder := &DataSourceAPIBuilder{
-		datasourceResourceInfo: datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(groupName, plugin.ID),
-		pluginJSON:             plugin,
-		client:                 client,
-		datasources:            datasources,
-		contextProvider:        contextProvider,
-		accessClient:           accessClient,
-		decrypter:              decrypter,
-		cfg:                    cfg,
-		proxyDeps:              proxyDeps,
+		datasourceResourceInfo:     datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(groupName, plugin.ID),
+		pluginJSON:                 plugin,
+		client:                     client,
+		datasources:                datasources,
+		contextProvider:            contextProvider,
+		accessClient:               accessClient,
+		decrypter:                  decrypter,
+		cfg:                        cfg,
+		dataSourceRequestValidator: dataSourceRequestValidator,
+		proxyDeps:                  proxyDeps,
 	}
 	return builder, nil
+}
+
+// validateDataSourceRequest runs the configured request validator against the
+// datasource URL and jsonData. It is used by the proxy and health subresources
+// to mirror the legacy HTTP API, which rejects requests the validator denies.
+func (b *DataSourceAPIBuilder) validateDataSourceRequest(dsURL string, jsonData map[string]any, req *http.Request) error {
+	if b.dataSourceRequestValidator == nil {
+		return nil
+	}
+	return b.dataSourceRequestValidator.Validate(dsURL, jsonData, req)
 }
 
 func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {

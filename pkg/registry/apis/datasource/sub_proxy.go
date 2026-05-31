@@ -17,38 +17,35 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
-	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// ProxyDependencies bundles everything the datasource frontend proxy needs.
-// It is wired as a single dependency so RegisterAPIService doesn't have to
-// thread each proxy-only service through its signature.
+// ProxyDependencies bundles the proxy-only services the datasource frontend
+// proxy needs. It is wired as a single dependency so RegisterAPIService doesn't
+// have to thread each one through its signature. The request validator is not
+// here because it is shared with the health endpoint (see DataSourceAPIBuilder).
 type ProxyDependencies struct {
-	ProxyCfg                   *pluginproxy.DataSourceProxySettings
-	DataSourceRequestValidator validations.DataSourceRequestValidator
-	HTTPClientProvider         httpclient.Provider
-	OAuthTokenService          *oauthtoken.Service
-	Tracer                     tracing.Tracer
-	Features                   featuremgmt.FeatureToggles
+	ProxyCfg           *pluginproxy.DataSourceProxySettings
+	HTTPClientProvider httpclient.Provider
+	OAuthTokenService  *oauthtoken.Service
+	Tracer             tracing.Tracer
+	Features           featuremgmt.FeatureToggles
 }
 
 // ProvideProxyDependencies is the wire provider for ProxyDependencies.
 func ProvideProxyDependencies(
 	cfg *setting.Cfg,
-	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	httpClientProvider httpclient.Provider,
 	oAuthTokenService *oauthtoken.Service,
 	tracer tracing.Tracer,
 	features featuremgmt.FeatureToggles,
 ) *ProxyDependencies {
 	return &ProxyDependencies{
-		ProxyCfg:                   pluginproxy.NewDataSourceProxySettings(cfg),
-		DataSourceRequestValidator: dataSourceRequestValidator,
-		HTTPClientProvider:         httpClientProvider,
-		OAuthTokenService:          oAuthTokenService,
-		Tracer:                     tracer,
-		Features:                   features,
+		ProxyCfg:           pluginproxy.NewDataSourceProxySettings(cfg),
+		HTTPClientProvider: httpClientProvider,
+		OAuthTokenService:  oAuthTokenService,
+		Tracer:             tracer,
+		Features:           features,
 	}
 }
 
@@ -112,7 +109,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 		jsonData, _ := ds.Spec.JSONData().(map[string]any)
-		if err := deps.DataSourceRequestValidator.Validate(ds.Spec.URL(), jsonData, req); err != nil {
+		if err := r.builder.validateDataSourceRequest(ds.Spec.URL(), jsonData, req); err != nil {
 			m.SetError()
 			responder.Error(apierrors.NewForbidden(r.builder.datasourceResourceInfo.GroupResource(), name, err))
 			return

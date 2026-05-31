@@ -40,16 +40,16 @@ func (allowAllValidator) Validate(_ string, _ map[string]any, _ *http.Request) e
 
 func newProxyTestBuilder(provider PluginDatasourceProvider) *DataSourceAPIBuilder {
 	return &DataSourceAPIBuilder{
-		datasourceResourceInfo: datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("test.datasource.grafana.app", "test"),
-		pluginJSON:             plugins.JSONData{ID: "test"},
-		datasources:            provider,
+		datasourceResourceInfo:     datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("test.datasource.grafana.app", "test"),
+		pluginJSON:                 plugins.JSONData{ID: "test"},
+		datasources:                provider,
+		dataSourceRequestValidator: allowAllValidator{},
 		proxyDeps: &ProxyDependencies{
-			ProxyCfg:                   pluginproxy.NewDataSourceProxySettings(setting.NewCfg()),
-			DataSourceRequestValidator: allowAllValidator{},
-			HTTPClientProvider:         httpclient.NewProvider(),
-			OAuthTokenService:          &oauthtoken.Service{},
-			Tracer:                     tracing.InitializeTracerForTest(),
-			Features:                   featuremgmt.WithFeatures(),
+			ProxyCfg:           pluginproxy.NewDataSourceProxySettings(setting.NewCfg()),
+			HTTPClientProvider: httpclient.NewProvider(),
+			OAuthTokenService:  &oauthtoken.Service{},
+			Tracer:             tracing.InitializeTracerForTest(),
+			Features:           featuremgmt.WithFeatures(),
 		},
 	}
 }
