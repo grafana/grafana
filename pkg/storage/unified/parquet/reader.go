@@ -108,8 +108,7 @@ func (r *parquetReader) close() {
 
 func newResourceReader(inputPath string, batchSize int64) (*parquetReader, error) {
 	// memoryMap must be false: arrow-go does not implement mmap on Windows
-	// (returns "mmap not implemented on windows"), which would break the
-	// SQLite parquet-buffer migration fallback on Windows on-prem installs.
+	// (returns "mmap not implemented on windows")
 	rdr, err := file.OpenParquetFile(inputPath, false)
 	if err != nil {
 		return nil, err
