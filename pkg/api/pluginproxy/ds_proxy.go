@@ -14,15 +14,14 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	datasourcesV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/models/usertoken"
-
 	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	datasourcesV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -383,17 +382,13 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		return nil
 	}
 
-	// Trailing validation below this point for routes that were not matched
 	switch proxy.dataSource.PluginType() {
-	case datasources.DS_PROMETHEUS, datasources.DS_AMAZON_PROMETHEUS, datasources.DS_AZURE_PROMETHEUS:
-		if proxy.ctx.Req.Method == "DELETE" {
-			return errors.New("non allow-listed DELETEs not allowed on proxied Prometheus datasource")
-		}
-		if proxy.ctx.Req.Method == "PUT" {
-			return errors.New("non allow-listed PUTs not allowed on proxied Prometheus datasource")
-		}
-		if proxy.ctx.Req.Method == "POST" {
-			return errors.New("non allow-listed POSTs not allowed on proxied Prometheus datasource")
+	case datasources.DS_PROMETHEUS,
+		datasources.DS_AMAZON_PROMETHEUS,
+		datasources.DS_AZURE_PROMETHEUS:
+		switch proxy.ctx.Req.Method {
+		case "DELETE", "PUT", "POST":
+			return fmt.Errorf("non allow-listed %ss not allowed on proxied Prometheus datasource", proxy.ctx.Req.Method)
 		}
 	}
 
