@@ -80,6 +80,13 @@ func (ds *DataSource) executeLogActions(ctx context.Context, req *backend.QueryD
 				return nil
 			}
 
+			if dataframe == nil {
+				resultChan <- backend.Responses{
+					query.RefID: backend.DataResponse{Frames: data.Frames{}},
+				}
+				return nil
+			}
+
 			groupedFrames, err := groupResponseFrame(dataframe, logsQuery.StatsGroups)
 			if err != nil {
 				return err
@@ -465,6 +472,10 @@ func (ds *DataSource) handleGetQueryResults(ctx context.Context, logsClient mode
 func groupResponseFrame(frame *data.Frame, statsGroups []string) (data.Frames, error) {
 	var dataFrames data.Frames
 
+	if frame == nil {
+		return dataFrames, nil
+	}
+
 	// When a query of the form "stats ... by ..." is made, we want to return
 	// one series per group defined in the query, but due to the format
 	// the query response is in, there does not seem to be a way to tell
@@ -502,6 +513,9 @@ func setPreferredVisType(frame *data.Frame, visType data.VisType) {
 }
 
 func hasTimeField(frame *data.Frame) bool {
+	if frame == nil {
+		return false
+	}
 	for _, field := range frame.Fields {
 		if field.Type() == data.FieldTypeNullableTime {
 			return true
