@@ -11,10 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 )
 
-// providerLoader adapts a PluginDatasourceProvider into the pluginproxy.DataSourceLoader
+// datasourceLoader adapts a PluginDatasourceProvider into the pluginproxy.DataSourceLoader
 // the frontend proxy expects. It keeps the proxy decoupled from the legacy
 // DataSourceService: everything is derived from the provider's public methods.
-type providerLoader struct {
+type datasourceLoader struct {
 	provider   PluginDatasourceProvider
 	uid        string
 	pluginType string
@@ -26,17 +26,17 @@ type providerLoader struct {
 	settings   *backend.DataSourceInstanceSettings
 }
 
-var _ pluginproxy.DataSourceLoader = (*providerLoader)(nil)
+var _ pluginproxy.DataSourceLoader = (*datasourceLoader)(nil)
 
-func newProviderLoader(provider PluginDatasourceProvider, uid, pluginType string) *providerLoader {
-	return &providerLoader{provider: provider, uid: uid, pluginType: pluginType}
+func newDatasourceLoader(provider PluginDatasourceProvider, uid, pluginType string) *datasourceLoader {
+	return &datasourceLoader{provider: provider, uid: uid, pluginType: pluginType}
 }
 
-func (l *providerLoader) PluginType() string {
+func (l *datasourceLoader) PluginType() string {
 	return l.pluginType
 }
 
-func (l *providerLoader) DataSource(ctx context.Context) (*datasourceV0.DataSource, error) {
+func (l *datasourceLoader) DataSource(ctx context.Context) (*datasourceV0.DataSource, error) {
 	if l.datasource != nil {
 		return l.datasource, nil
 	}
@@ -48,7 +48,7 @@ func (l *providerLoader) DataSource(ctx context.Context) (*datasourceV0.DataSour
 	return ds, nil
 }
 
-func (l *providerLoader) instanceSettings(ctx context.Context) (*backend.DataSourceInstanceSettings, error) {
+func (l *datasourceLoader) instanceSettings(ctx context.Context) (*backend.DataSourceInstanceSettings, error) {
 	if l.settings != nil {
 		return l.settings, nil
 	}
@@ -60,7 +60,7 @@ func (l *providerLoader) instanceSettings(ctx context.Context) (*backend.DataSou
 	return settings, nil
 }
 
-func (l *providerLoader) DecryptedValues(ctx context.Context) (map[string]string, error) {
+func (l *datasourceLoader) DecryptedValues(ctx context.Context) (map[string]string, error) {
 	settings, err := l.instanceSettings(ctx)
 	if err != nil {
 		return nil, err
@@ -68,15 +68,15 @@ func (l *providerLoader) DecryptedValues(ctx context.Context) (map[string]string
 	return settings.DecryptedSecureJSONData, nil
 }
 
-func (l *providerLoader) DecryptedPassword(ctx context.Context) (string, error) {
+func (l *datasourceLoader) DecryptedPassword(ctx context.Context) (string, error) {
 	return l.secureValue(ctx, "password")
 }
 
-func (l *providerLoader) DecryptedBasicAuthPassword(ctx context.Context) (string, error) {
+func (l *datasourceLoader) DecryptedBasicAuthPassword(ctx context.Context) (string, error) {
 	return l.secureValue(ctx, "basicAuthPassword")
 }
 
-func (l *providerLoader) secureValue(ctx context.Context, key string) (string, error) {
+func (l *datasourceLoader) secureValue(ctx context.Context, key string) (string, error) {
 	values, err := l.DecryptedValues(ctx)
 	if err != nil {
 		return "", err
@@ -84,7 +84,7 @@ func (l *providerLoader) secureValue(ctx context.Context, key string) (string, e
 	return values[key], nil
 }
 
-func (l *providerLoader) GetHTTPTransport(ctx context.Context, clientProvider httpclient.Provider) (http.RoundTripper, error) {
+func (l *datasourceLoader) GetHTTPTransport(ctx context.Context, clientProvider httpclient.Provider) (http.RoundTripper, error) {
 	settings, err := l.instanceSettings(ctx)
 	if err != nil {
 		return nil, err

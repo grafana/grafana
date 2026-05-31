@@ -91,7 +91,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		return nil, errors.New("datasource proxy is not configured")
 	}
 
-	loader := newProviderLoader(r.builder.datasources, name, r.builder.pluginJSON.ID)
+	loader := newDatasourceLoader(r.builder.datasources, name, r.builder.pluginJSON.ID)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
