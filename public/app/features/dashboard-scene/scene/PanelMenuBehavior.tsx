@@ -9,6 +9,7 @@ import {
   type PanelPlugin,
   type PluginExtensionPanelContext,
   PluginExtensionPoints,
+  urlUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getObservablePluginLinks, locationService } from '@grafana/runtime';
@@ -551,6 +552,18 @@ const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
   } catch (err) {
     const message = `Error getting rule values from the panel: ${getMessageFromError(err)}`;
     dispatch(notifyApp(createErrorNotification(message)));
+    return;
+  }
+
+  // When the drawer flow is disabled, fall back to the legacy full-page rule editor.
+  // This preserves the historical behaviour of navigating with whatever defaults are available
+  // (including undefined, which simply lands the user in a blank form).
+  if (!config.featureToggles.createAlertRuleFromPanel) {
+    const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
+      defaults: JSON.stringify(formValues),
+      returnTo: window.location.pathname + window.location.search,
+    });
+    locationService.push(ruleFormUrl);
     return;
   }
 

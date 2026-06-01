@@ -785,6 +785,11 @@ describe('panelMenuBehavior', () => {
     beforeEach(() => {
       jest.spyOn(storeModule, 'dispatch').mockImplementation(() => {});
       jest.spyOn(locationService, 'push').mockImplementation(() => {});
+      config.featureToggles.createAlertRuleFromPanel = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.createAlertRuleFromPanel = false;
     });
 
     it('should open the new alert rule drawer with prefilled values on success', async () => {
@@ -862,6 +867,34 @@ describe('panelMenuBehavior', () => {
 
       expect(scenesPanelToRuleFormValues).toHaveBeenCalledWith(panel);
       expect(showModalSpy).not.toHaveBeenCalled();
+    });
+
+    it('should navigate to /alerting/new and not open the drawer when createAlertRuleFromPanel is disabled', async () => {
+      config.featureToggles.createAlertRuleFromPanel = false;
+
+      const { menu, scene } = await buildTestScene({});
+      const mockFormValues = { someKey: 'someValue' };
+
+      config.unifiedAlertingEnabled = true;
+      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
+
+      jest
+        .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
+        .mockResolvedValue(mockFormValues);
+      const showModalSpy = jest.spyOn(scene, 'showModal');
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+      const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
+
+      await alertMenuItem?.({} as React.MouseEvent);
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(showModalSpy).not.toHaveBeenCalled();
+      expect(locationService.push).toHaveBeenCalledTimes(1);
+      expect(locationService.push).toHaveBeenCalledWith(expect.stringContaining('/alerting/new'));
     });
 
     it('should render "New alert rule" menu item when user has permissions to read and update alerts', async () => {
