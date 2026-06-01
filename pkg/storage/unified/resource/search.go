@@ -41,6 +41,9 @@ import (
 
 const maxBatchSize = 1000
 
+// openIndexStatsMaxAge is how far back startup accepts the local open index list.
+const openIndexStatsMaxAge = time.Hour
+
 // unknownBuildSize is passed when the caller does not have a cheap size hint.
 // Backends should treat it as unknown, not as an empty resource.
 const unknownBuildSize int64 = -1
@@ -122,8 +125,15 @@ type BuildFn func(index ResourceIndex) (int64, error)
 // UpdateFn is responsible for updating index with changes since given RV. It should return new RV (to be used as next sinceRV), number of updated documents and error, if any.
 type UpdateFn func(context context.Context, index ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error)
 
-// SearchBackend contains the technology specific logic to support search
+// SearchBackend contains the technology specific logic to support search.
 type SearchBackend interface {
+	// LoadOpenIndexStats returns recently-open indexes from local backend state.
+	// Empty stats means no usable state exists, and callers should fall back to storage stats.
+	LoadOpenIndexStats(now time.Time, maxAge time.Duration) ([]ResourceStats, error)
+
+	// WriteOpenIndexStats persists currently-open indexes to local backend state.
+	WriteOpenIndexStats(now time.Time) error
+
 	// GetIndex returns existing index, or nil.
 	GetIndex(key NamespacedResource) ResourceIndex
 
@@ -156,6 +166,9 @@ type SearchBackend interface {
 
 	// GetOpenIndexes returns the list of indexes that are currently open.
 	GetOpenIndexes() []NamespacedResource
+
+	// Stop closes indexes and stops backend background tasks.
+	Stop()
 }
 
 // searchServer supports indexing+search regardless of implementation.
@@ -1075,12 +1088,26 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 	}, nil
 }
 
+func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, error) {
+	stats, err := s.search.LoadOpenIndexStats(time.Now(), openIndexStatsMaxAge)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("failed to load open index stats, falling back to resource stats", "error", err)
+	} else if len(stats) > 0 {
+		s.log.FromContext(ctx).Info("using open index stats", "indexes", len(stats))
+		return stats, nil
+	} else {
+		s.log.FromContext(ctx).Debug("open index stats unavailable, falling back to resource stats")
+	}
+
+	return s.storage.GetResourceStats(ctx, NamespacedResource{}, s.initMinSize)
+}
+
 func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 	totalBatchesIndexed := 0
 	group := errgroup.Group{}
 	group.SetLimit(s.initWorkers)
 
-	stats, err := s.storage.GetResourceStats(ctx, NamespacedResource{}, s.initMinSize)
+	stats, err := s.startupIndexStats(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -1145,9 +1172,12 @@ func (s *searchServer) init(ctx context.Context) error {
 }
 
 func (s *searchServer) stop() {
-	// Stop background tasks.
+	// This stops search-server tasks only: rebuild workers, rebuild scans, and rate-limit sweeping.
 	s.bgTaskCancel()
 	s.bgTaskWg.Wait()
+
+	// Stop the backend after search-server workers so no rebuild can race with closing indexes.
+	s.search.Stop()
 }
 
 // Init initializes the search server.
