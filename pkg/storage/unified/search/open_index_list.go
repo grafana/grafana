@@ -38,8 +38,17 @@ type openIndexListEntry struct {
 }
 
 func (b *bleveBackend) LoadOpenIndexStats(now time.Time, maxAge time.Duration) ([]resource.ResourceStats, error) {
-	path := filepath.Join(b.opts.Root, openIndexListFileName)
-	file, err := os.Open(path)
+	root, err := os.OpenRoot(b.opts.Root)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if closeErr := root.Close(); closeErr != nil {
+			b.log.Warn("failed to close open index list root", "path", b.opts.Root, "err", closeErr)
+		}
+	}()
+
+	file, err := root.Open(openIndexListFileName)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil
 	}
@@ -48,7 +57,7 @@ func (b *bleveBackend) LoadOpenIndexStats(now time.Time, maxAge time.Duration) (
 	}
 	defer func() {
 		if closeErr := file.Close(); closeErr != nil {
-			b.log.Warn("failed to close open index list", "path", path, "err", closeErr)
+			b.log.Warn("failed to close open index list", "path", filepath.Join(b.opts.Root, openIndexListFileName), "err", closeErr)
 		}
 	}()
 
@@ -76,7 +85,7 @@ func readOpenIndexList(reader io.Reader, now time.Time, maxAge time.Duration) ([
 			return nil, fmt.Errorf("invalid index entry at position %d", i)
 		}
 		if seen[stat.NamespacedResource] {
-			return nil, fmt.Errorf("duplicate index entry for %s", stat.NamespacedResource.String())
+			return nil, fmt.Errorf("duplicate index entry for %s", stat.String())
 		}
 		seen[stat.NamespacedResource] = true
 		stats = append(stats, stat)
