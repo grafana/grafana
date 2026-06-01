@@ -1,0 +1,33 @@
+{
+  "name": "Docker",
+  "type": "datasource",
+  "id": "docker",
+
+  "metrics": true,
+  "backend": true,
+  "streaming": true,
+
+  "executable": "gpx_docker",
+  "info": {
+    "description": "Container management datasource for Docker stats and system metrics",
+    "author": {
+      "name": "Pedro Antunes & Sebastião Mendonça"
+    },
+    "logos": {
+      "small": "img/docker_logo.png",
+      "large": "img/docker_logo.png"
+    },
+    "links": [
+      {
+        "name": "Docker API documentation",
+        "url": "https://docs.docker.com/reference/api/engine/version/v1.54/"
+      }
+    ],
+    "version": "1.0.0"
+  },
+
+  "dependencies": {
+    "grafanaDependency": ">=11.0.0",
+    "plugins": []
+  }
+}
