@@ -42,6 +42,11 @@ const defaultCascadeWatcherResync = 60 * time.Second
 // total number of folders.
 var terminatingFolderSelector = folders.TerminatingLabel + "=" + folders.TerminatingLabelValue
 
+// terminatingLabelField is the search return-field carrying the terminating label, so each
+// child hit reports whether its own deletion has already begun. It lets the watcher skip
+// re-issuing deletes for children already draining, without a second search or lookup.
+var terminatingLabelField = resource.SEARCH_FIELD_LABELS + "." + folders.TerminatingLabel
+
 // folderSearcher is the subset of client.K8sHandler used to list child folders via unified search.
 type folderSearcher interface {
 	Search(ctx context.Context, orgID int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)
@@ -168,13 +173,15 @@ func (w *CascadeWatcher) onFolder(obj interface{}) {
 	}
 
 	svcCtx := identity.WithServiceIdentityContext(context.Background(), orgID)
-	childNames, err := listDirectChildFolderNames(svcCtx, w.folderSearch, orgID, f.Name)
+	children, err := listDirectChildFolders(svcCtx, w.folderSearch, orgID, f.Name)
 	if err != nil {
 		w.log.Warn("failed to list child folders", "namespace", f.Namespace, "name", f.Name, "error", err)
 		return
 	}
 
-	if len(childNames) == 0 {
+	// The parent keeps its finalizer until the whole subtree is gone: removal is gated on the
+	// total child count, including children still terminating, not just the ones deleted below.
+	if len(children) == 0 {
 		if w.folderMutator == nil {
 			return
 		}
@@ -186,27 +193,49 @@ func (w *CascadeWatcher) onFolder(obj interface{}) {
 		return
 	}
 
-	w.log.Info("cascading delete to child folders",
-		"namespace", f.Namespace,
-		"name", f.Name,
-		"orgID", orgID,
-		"childFolderCount", len(childNames),
-	)
-
 	if w.folderMutator == nil {
 		return
 	}
+
+	// Only delete children that are not already terminating; the rest are draining via their
+	// own finalizers, so re-issuing a delete each resync would be redundant.
 	gracePeriod := f.DeletionGracePeriodSeconds
-	for _, child := range childNames {
-		if err := w.folderMutator.Delete(svcCtx, f.Namespace, child, gracePeriod); err != nil && !apierrors.IsNotFound(err) {
-			w.log.Warn("failed to delete child folder", "namespace", f.Namespace, "parent", f.Name, "child", child, "error", err)
+	deleted := 0
+	for _, child := range children {
+		if child.terminating {
+			continue
 		}
+		if err := w.folderMutator.Delete(svcCtx, f.Namespace, child.name, gracePeriod); err != nil && !apierrors.IsNotFound(err) {
+			w.log.Warn("failed to delete child folder", "namespace", f.Namespace, "parent", f.Name, "child", child.name, "error", err)
+			continue
+		}
+		deleted++
+	}
+
+	if deleted > 0 {
+		w.log.Info("cascading delete to child folders",
+			"namespace", f.Namespace,
+			"name", f.Name,
+			"orgID", orgID,
+			"childFoldersDeleted", deleted,
+			"childFolderCount", len(children),
+		)
 	}
 }
 
-// listDirectChildFolderNames returns the UIDs of folder CRs whose grafana.app/folder parent
-// is parentUID, using unified search (same index as folder store GetDescendants / searchChildren).
-func listDirectChildFolderNames(ctx context.Context, searcher folderSearcher, orgID int64, parentUID string) ([]string, error) {
+// childFolder is a direct child folder returned by search, flagged with whether its own
+// deletion has already begun (the terminating label is present).
+type childFolder struct {
+	name        string
+	terminating bool
+}
+
+// listDirectChildFolders returns the direct child folders of parentUID via unified search
+// (same parent index as the folder store GetDescendants / searchChildren), each flagged with
+// whether it is already terminating. The terminating label is requested as a return field so a
+// single search both enumerates the children (for the parent's finalizer-removal gate) and
+// identifies which still need a delete issued.
+func listDirectChildFolders(ctx context.Context, searcher folderSearcher, orgID int64, parentUID string) ([]childFolder, error) {
 	if searcher == nil {
 		return nil, nil
 	}
@@ -220,10 +249,11 @@ func listDirectChildFolderNames(ctx context.Context, searcher folderSearcher, or
 		Values:   []string{parentUID},
 	}}
 
-	var names []string
+	var children []childFolder
 	for offset := int64(0); ; {
 		resp, err := searcher.Search(ctx, orgID, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{Fields: fields},
+			Fields:  []string{terminatingLabelField},
 			Limit:   searchPageSize,
 			Offset:  offset,
 		})
@@ -237,12 +267,15 @@ func listDirectChildFolderNames(ctx context.Context, searcher folderSearcher, or
 		}
 
 		for _, h := range parsed.Hits {
-			names = append(names, h.Name)
+			children = append(children, childFolder{
+				name:        h.Name,
+				terminating: h.Field != nil && h.Field.GetNestedString(terminatingLabelField) == folders.TerminatingLabelValue,
+			})
 		}
 
 		n := int64(len(parsed.Hits))
 		if n < searchPageSize {
-			return names, nil
+			return children, nil
 		}
 		offset += n
 	}
