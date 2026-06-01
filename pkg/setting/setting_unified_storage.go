@@ -23,6 +23,7 @@ const (
 	FolderResource           = "folders.folder.grafana.app"
 	DashboardResource        = "dashboards.dashboard.grafana.app"
 	ShortURLResource         = "shorturls.shorturl.grafana.app"
+	SnapshotResource         = "snapshots.dashboard.grafana.app"
 	StarsResource            = "stars.collections.grafana.app"
 	PreferencesResource      = "preferences.preferences.grafana.app"
 	DataSourceResources      = "datasources.datasource.grafana.app" // All datasources
@@ -35,6 +36,7 @@ var MigratedUnifiedResources = map[string]bool{
 	FolderResource:           true,  // Only Mode5!
 	DashboardResource:        true,  // Only Mode5!
 	ShortURLResource:         false, // Requires kubernetesShortURLs to be enabled by default
+	SnapshotResource:         false, // Requires kubernetesSnapshots to be enabled by default
 	StarsResource:            false,
 	PreferencesResource:      false,
 	DataSourceResources:      false,
