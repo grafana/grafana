@@ -46,6 +46,18 @@ const (
 	// graph resolves; enterprise overwrites it with the real implementation.
 	IAMRolesSyncer = accesscontrol.IAMRolesSyncerServiceName
 
+	// GlobalRoleSeeder is the module name for the GlobalRole seeder service.
+	// OSS registers an always-disabled noop; enterprise overwrites it with
+	// the real implementation. The basic-role aggregator depends on it.
+	GlobalRoleSeeder = accesscontrol.GlobalRoleSeederServiceName
+
+	// BasicRoleAggregator is the module name for the basic-role aggregator
+	// service. OSS registers an always-disabled noop; enterprise overwrites
+	// it with the real implementation. It depends on GlobalRoleSeeder so its
+	// single aggregation pass runs only after the fixed-role GlobalRoles it
+	// aggregates from have been seeded.
+	BasicRoleAggregator = accesscontrol.BasicRoleAggregatorServiceName
+
 	// SQLStore is the module name for the SQLStore background service.
 	// It is the root of the dependency graph so that the database engine is
 	// closed last during shutdown, after every other service has stopped.
@@ -58,16 +70,24 @@ const (
 // unless they are explicitly listed in this map.
 func dependencyMap() map[string][]string {
 	return map[string][]string{
-		SQLStore:           {},
-		Tracing:            {SQLStore},
-		GrafanaAPIServer:   {Tracing},
-		PluginStore:        {GrafanaAPIServer},
-		PluginInstaller:    {PluginStore},
-		IAMRolesSyncer:     {GrafanaAPIServer},
-		FixedRolesLoader:   {PluginInstaller, IAMRolesSyncer},
-		Provisioning:       {PluginStore, PluginInstaller, FixedRolesLoader},
-		InstallSync:        {Provisioning},
-		Core:               {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync},
-		BackgroundServices: {Core},
+		SQLStore:         {},
+		Tracing:          {SQLStore},
+		GrafanaAPIServer: {Tracing},
+		PluginStore:      {GrafanaAPIServer},
+		PluginInstaller:  {PluginStore},
+		IAMRolesSyncer:   {GrafanaAPIServer},
+		FixedRolesLoader: {PluginInstaller, IAMRolesSyncer},
+		Provisioning:     {PluginStore, PluginInstaller, FixedRolesLoader},
+		InstallSync:      {Provisioning},
+		// The basic-role aggregator runs a single aggregation pass on
+		// startup and must observe the GlobalRoles produced by the seeder,
+		// so it depends on GlobalRoleSeeder reaching Running. GlobalRoleSeeder
+		// itself is auto-registered as a background service depending on Core.
+		BasicRoleAggregator: {Core, GlobalRoleSeeder},
+		Core:                {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync},
+		// BasicRoleAggregator is listed explicitly (rather than being
+		// auto-added) so it lands in the BackgroundServices closure even
+		// though it is keyed in the dependency map above.
+		BackgroundServices: {Core, BasicRoleAggregator},
 	}
 }

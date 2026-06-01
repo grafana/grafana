@@ -1,15 +1,8 @@
 package setting
 
 import (
-	"time"
-
 	"github.com/grafana/grafana/pkg/util"
 )
-
-// DefaultBasicRoleAggregatorInterval is the production tick cadence of the
-// enterprise basic-role aggregator background service. Exposed so the test
-// infra can refer to it when constructing GrafanaOpts.
-const DefaultBasicRoleAggregatorInterval = 30 * time.Second
 
 type RBACSettings struct {
 	// Enable permission cache
@@ -23,11 +16,6 @@ type RBACSettings struct {
 	// PluginsCleanup lists plugin IDs whose RBAC data (roles, permissions, seed assignments)
 	// should be purged from the database at startup.
 	PluginsCleanup []string
-	// BasicRoleAggregatorInterval is the running-loop tick cadence of the
-	// enterprise basic-role aggregator. Defaults to 30s. Tests shrink it to
-	// milliseconds so they can poll for aggregator output without waiting
-	// the production interval.
-	BasicRoleAggregatorInterval time.Duration
 	// BasicRoleAggregatorEnabled turns the enterprise basic-role aggregator
 	// background service on or off. Defaults to false: the aggregator is
 	// opt-in while the basic-role override path is being stabilised. When
@@ -50,7 +38,6 @@ func (cfg *Cfg) readRBACSettings() {
 	s.ResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
 	s.SingleOrganization = rbac.Key("single_organization").MustBool(false)
 	s.PluginsCleanup = util.SplitString(rbac.Key("plugins_cleanup").MustString(""))
-	s.BasicRoleAggregatorInterval = rbac.Key("basic_role_aggregator_interval").MustDuration(DefaultBasicRoleAggregatorInterval)
 	s.BasicRoleAggregatorEnabled = rbac.Key("basic_role_aggregator_enabled").MustBool(false)
 
 	// List of resources to generate managed permissions for upon resource creation (dashboard, folder, service-account, datasource)

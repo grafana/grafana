@@ -460,10 +460,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = rbacSect.NewKey("single_organization", "true")
 		require.NoError(t, err)
 	}
-	if opts.BasicRoleAggregatorInterval > 0 {
-		_, err = rbacSect.NewKey("basic_role_aggregator_interval", opts.BasicRoleAggregatorInterval.String())
-		require.NoError(t, err)
-	}
 	if opts.BasicRoleAggregatorEnabled {
 		_, err = rbacSect.NewKey("basic_role_aggregator_enabled", "true")
 		require.NoError(t, err)
@@ -1023,10 +1019,6 @@ type GrafanaOpts struct {
 	EnableRecordingRules                                 bool
 	EnableSCIM                                           bool
 	RBACSingleOrganization                               bool
-	// BasicRoleAggregatorInterval, if > 0, sets `[rbac] basic_role_aggregator_interval`
-	// in the test server's ini. Used by tests that want the enterprise
-	// basic-role aggregator to tick faster than the production 30s default.
-	BasicRoleAggregatorInterval time.Duration
 	// BasicRoleAggregatorEnabled, if true, sets `[rbac] basic_role_aggregator_enabled`
 	// in the test server's ini, turning on the enterprise basic-role
 	// aggregator (off by default). Tests that depend on the aggregator
