@@ -116,6 +116,22 @@ func ProvideCascadeWatcher(
 	}
 }
 
+// cascadeDeleteFlagEnabled reports whether the cascade-delete feature is on. The watcher reads
+// it once, at startup, in Run.
+//
+// This is a second, independent boot-time read of the same flag that the folders API builder
+// captures in storageForVersion (FolderAPIBuilder.cascadeDeleteEnabled), which gates both the
+// finalizer storage wrapper and admission finalizer stamping. The two must agree: if admission
+// stamps the cascade finalizer but this watcher is not running, deleted folders would stay stuck
+// terminating with nothing to remove their finalizer.
+//
+// When the folders API server runs in the same process as this watcher, they agree because both
+// read the same flag at process startup; the flag is treated as static for the process lifetime,
+// so changing it (including per-tenant in a dynamic provider) requires a restart. But the API
+// server can also be deployed as a separate process from the Grafana process that runs this
+// watcher. In that split deployment the two reads happen in different processes, so agreement
+// depends on both being configured with the same flag value and rolled out together; a mismatch
+// (flag on for the API server, off where the watcher runs) reintroduces the stuck-terminating risk.
 func cascadeDeleteFlagEnabled(ctx context.Context) bool {
 	return openfeature.NewDefaultClient().Boolean(
 		ctx,
