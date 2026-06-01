@@ -12,8 +12,15 @@ import {
 } from '../../types/logAnalyticsMetadata';
 import { type AzureMonitorQuery } from '../../types/query';
 import { TablePlan } from '../../types/types';
+import { getSelectedLogTier, type SelectedLogTier } from '../LogsQueryEditor/utils';
 
 import { type BuildAndUpdateOptions, inputFieldSize } from './utils';
+
+export type TierAutoSwitchInfo = {
+  tableName: string;
+  fromTier: SelectedLogTier;
+  toTier: SelectedLogTier;
+};
 
 interface TableSectionProps {
   allColumns: AzureLogAnalyticsMetadataColumn[];
@@ -25,6 +32,7 @@ interface TableSectionProps {
   isLoadingSchema: boolean;
   basicLogsEnabled?: boolean;
   auxiliaryLogsEnabled?: boolean;
+  onTierAutoSwitch?: (info: TierAutoSwitchInfo) => void;
 }
 
 export const TableSection: React.FC<TableSectionProps> = (props) => {
@@ -37,6 +45,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     isLoadingSchema,
     basicLogsEnabled,
     auxiliaryLogsEnabled,
+    onTierAutoSwitch,
   } = props;
   const ALL_COLUMNS_VALUE = '__all_columns__';
 
@@ -97,6 +106,12 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       return;
     }
     const logTier = isBasic ? 'Basic' : isAux ? 'Auxiliary' : undefined;
+
+    const fromTier = getSelectedLogTier(query);
+    const toTier: SelectedLogTier = logTier ?? 'Analytics';
+    if (fromTier !== toTier && onTierAutoSwitch) {
+      onTierAutoSwitch({ tableName: selectedTable.name, fromTier, toTier });
+    }
 
     buildAndUpdateQuery({
       from: {

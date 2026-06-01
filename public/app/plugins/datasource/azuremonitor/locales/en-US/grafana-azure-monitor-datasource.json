@@ -199,7 +199,15 @@
     },
     "logs-query-editor": {
       "learn-more": "Learn More",
-      "view-query": "View query in Azure Portal"
+      "tier-switch-body-analytics": "<0>{{tableName}}</0> is an Analytics table.",
+      "tier-switch-body-auxiliary": "<0>{{tableName}}</0> is an Auxiliary Logs table — incurs cost per GiB scanned, has no response-time SLA, and isn't suitable for real-time or alerting scenarios.",
+      "tier-switch-body-basic": "<0>{{tableName}}</0> is a Basic Logs table — incurs cost per GiB scanned.",
+      "tier-switch-revert": "Revert to {{fromTier}}",
+      "tier-switch-title": "Query tier set to {{toTier}}",
+      "view-query": "View query in Azure Portal",
+      "warning-auxiliary-raw": "This is an Auxiliary Logs query — uses the search endpoint, incurs cost per GiB scanned, has no response-time SLA, and isn't suitable for real-time or alerting scenarios. Analytics-plan tables can't be queried in this mode (use the Analytics tier for those). ",
+      "warning-basic-raw": "This is a Basic Logs query — uses the search endpoint and incurs cost per GiB scanned. Analytics-plan tables can't be queried in this mode (use the Analytics tier for those). ",
+      "warning-data-ingested": "This query is processing {{dataIngested}} GiB when run. "
     },
     "metric-name-field": {
       "label-metric": "Metric"

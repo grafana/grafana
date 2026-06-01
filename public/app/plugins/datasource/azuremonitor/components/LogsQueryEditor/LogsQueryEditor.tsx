@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 
 import { type PanelData, type TimeRange } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { config, getTemplateSrv } from '@grafana/runtime';
-import { Alert, LinkButton, Space, Text, TextLink } from '@grafana/ui';
+import { Alert, Button, LinkButton, Space, Stack, Text, TextLink } from '@grafana/ui';
 
 import { LogsEditorMode, ResultFormat } from '../../dataquery.gen';
 import type Datasource from '../../datasource';
@@ -13,6 +13,7 @@ import { type AzureLogAnalyticsMetadataTable } from '../../types/logAnalyticsMet
 import { type AzureMonitorQuery } from '../../types/query';
 import { type AzureMonitorErrorish, type AzureMonitorOption, type EngineSchema } from '../../types/types';
 import { LogsQueryBuilder } from '../LogsQueryBuilder/LogsQueryBuilder';
+import { type TierAutoSwitchInfo } from '../LogsQueryBuilder/TableSection';
 import ResourceField from '../ResourceField/ResourceField';
 import { type ResourceRow, type ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
@@ -61,6 +62,7 @@ const LogsQueryEditor = ({
     shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], searchLogsEnabled)
   );
   const [dataIngestedWarning, setDataIngestedWarning] = useState<React.ReactNode | null>(null);
+  const [tierAutoSwitchNotice, setTierAutoSwitchNotice] = useState<TierAutoSwitchInfo | null>(null);
   const templateSrv = getTemplateSrv();
   const from = templateSrv?.replace('$__from');
   const to = templateSrv?.replace('$__to');
@@ -185,10 +187,20 @@ const LogsQueryEditor = ({
           const table = querySplit[0].trim();
           const dataIngested = await datasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage(query, table);
           const textToShow = !!dataIngested
-            ? `This query is processing ${dataIngested} GiB when run. `
+            ? t(
+                'components.logs-query-editor.warning-data-ingested',
+                'This query is processing {{dataIngested}} GiB when run. ',
+                { dataIngested }
+              )
             : selectedTier === 'Auxiliary'
-              ? 'This is an Auxiliary Logs query and incurs cost per GiB scanned. '
-              : 'This is a Basic Logs query and incurs cost per GiB scanned. ';
+              ? t(
+                  'components.logs-query-editor.warning-auxiliary-raw',
+                  "This is an Auxiliary Logs query — uses the search endpoint, incurs cost per GiB scanned, has no response-time SLA, and isn't suitable for real-time or alerting scenarios. Analytics-plan tables can't be queried in this mode (use the Analytics tier for those). "
+                )
+              : t(
+                  'components.logs-query-editor.warning-basic-raw',
+                  "This is a Basic Logs query — uses the search endpoint and incurs cost per GiB scanned. Analytics-plan tables can't be queried in this mode (use the Analytics tier for those). "
+                );
           setDataIngestedWarning(
             <>
               <Text color="primary">
@@ -304,6 +316,7 @@ const LogsQueryEditor = ({
             datasource={datasource}
             timeRange={timeRange}
             isLoadingSchema={isLoadingSchema}
+            onTierAutoSwitch={setTierAutoSwitchNotice}
           />
         ) : (
           <QueryField
@@ -315,6 +328,61 @@ const LogsQueryEditor = ({
             setError={setError}
             schema={schema}
           />
+        )}
+        {tierAutoSwitchNotice && (
+          <Alert
+            severity="info"
+            title={t('components.logs-query-editor.tier-switch-title', 'Query tier set to {{toTier}}', {
+              toTier: tierAutoSwitchNotice.toTier,
+            })}
+            onRemove={() => setTierAutoSwitchNotice(null)}
+          >
+            <Stack direction="column" gap={1}>
+              <Text>
+                {tierAutoSwitchNotice.toTier === 'Basic' && (
+                  <Trans
+                    i18nKey="components.logs-query-editor.tier-switch-body-basic"
+                    values={{ tableName: tierAutoSwitchNotice.tableName }}
+                  >
+                    <code>{'{{tableName}}'}</code> is a Basic Logs table — incurs cost per GiB scanned.
+                  </Trans>
+                )}
+                {tierAutoSwitchNotice.toTier === 'Auxiliary' && (
+                  <Trans
+                    i18nKey="components.logs-query-editor.tier-switch-body-auxiliary"
+                    values={{ tableName: tierAutoSwitchNotice.tableName }}
+                  >
+                    <code>{'{{tableName}}'}</code> is an Auxiliary Logs table — incurs cost per GiB scanned, has no
+                    response-time SLA, and isn&apos;t suitable for real-time or alerting scenarios.
+                  </Trans>
+                )}
+                {tierAutoSwitchNotice.toTier === 'Analytics' && (
+                  <Trans
+                    i18nKey="components.logs-query-editor.tier-switch-body-analytics"
+                    values={{ tableName: tierAutoSwitchNotice.tableName }}
+                  >
+                    <code>{'{{tableName}}'}</code> is an Analytics table.
+                  </Trans>
+                )}
+              </Text>
+              <div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    const { fromTier } = tierAutoSwitchNotice;
+                    const tierValue = fromTier === 'Analytics' ? undefined : fromTier;
+                    onChange(setLogTier(query, tierValue));
+                    setTierAutoSwitchNotice(null);
+                  }}
+                >
+                  {t('components.logs-query-editor.tier-switch-revert', 'Revert to {{fromTier}}', {
+                    fromTier: tierAutoSwitchNotice.fromTier,
+                  })}
+                </Button>
+              </div>
+            </Stack>
+          </Alert>
         )}
         {dataIngestedWarning}
         <EditorRow>

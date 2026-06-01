@@ -32,7 +32,7 @@ import { GroupBySection } from './GroupBySection';
 import KQLPreview from './KQLPreview';
 import { LimitSection } from './LimitSection';
 import { OrderBySection } from './OrderBySection';
-import { TableSection } from './TableSection';
+import { TableSection, type TierAutoSwitchInfo } from './TableSection';
 import { DEFAULT_LOGS_BUILDER_QUERY } from './utils';
 
 interface LogsQueryBuilderProps {
@@ -45,6 +45,7 @@ interface LogsQueryBuilderProps {
   datasource: Datasource;
   timeRange?: TimeRange;
   isLoadingSchema: boolean;
+  onTierAutoSwitch?: (info: TierAutoSwitchInfo) => void;
 }
 
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {

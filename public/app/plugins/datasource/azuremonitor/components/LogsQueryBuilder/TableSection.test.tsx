@@ -153,4 +153,97 @@ describe('TableSection', () => {
       expect(buildAndUpdateQuery).not.toHaveBeenCalled();
     });
   });
+
+  describe('onTierAutoSwitch callback', () => {
+    it('fires with Analytics → Basic when switching to a Basic-plan table from an Analytics query', async () => {
+      const onTierAutoSwitch = jest.fn();
+      const query = createMockQuery();
+      // baseline: no basicLogsQuery → tier is Analytics
+      renderTableSection({
+        basicLogsEnabled: true,
+        auxiliaryLogsEnabled: true,
+        onTierAutoSwitch,
+        query,
+      });
+
+      const select = await screen.findByLabelText('Table');
+      await selectOptionInTest(select, 'BasicTable');
+
+      expect(onTierAutoSwitch).toHaveBeenCalledWith({
+        tableName: 'BasicTable',
+        fromTier: 'Analytics',
+        toTier: 'Basic',
+      });
+    });
+
+    it('fires with Analytics → Auxiliary when switching to an Auxiliary-plan table from an Analytics query', async () => {
+      const onTierAutoSwitch = jest.fn();
+      renderTableSection({
+        basicLogsEnabled: true,
+        auxiliaryLogsEnabled: true,
+        onTierAutoSwitch,
+      });
+
+      const select = await screen.findByLabelText('Table');
+      await selectOptionInTest(select, 'AuxiliaryTable');
+
+      expect(onTierAutoSwitch).toHaveBeenCalledWith({
+        tableName: 'AuxiliaryTable',
+        fromTier: 'Analytics',
+        toTier: 'Auxiliary',
+      });
+    });
+
+    it('fires with Basic → Analytics when switching back to an Analytics-plan table from a Basic query', async () => {
+      const onTierAutoSwitch = jest.fn();
+      const query = createMockQuery({
+        azureLogAnalytics: { basicLogsQuery: true, logTier: 'Basic' },
+      });
+      renderTableSection({
+        basicLogsEnabled: true,
+        auxiliaryLogsEnabled: true,
+        onTierAutoSwitch,
+        query,
+      });
+
+      const select = await screen.findByLabelText('Table');
+      await selectOptionInTest(select, 'AnalyticsTable');
+
+      expect(onTierAutoSwitch).toHaveBeenCalledWith({
+        tableName: 'AnalyticsTable',
+        fromTier: 'Basic',
+        toTier: 'Analytics',
+      });
+    });
+
+    it('does NOT fire when the selected table has the same tier as the current query', async () => {
+      const onTierAutoSwitch = jest.fn();
+      const query = createMockQuery({
+        azureLogAnalytics: { basicLogsQuery: true, logTier: 'Basic' },
+      });
+      renderTableSection({
+        basicLogsEnabled: true,
+        auxiliaryLogsEnabled: true,
+        onTierAutoSwitch,
+        query,
+      });
+
+      const select = await screen.findByLabelText('Table');
+      await selectOptionInTest(select, 'BasicTable');
+
+      expect(onTierAutoSwitch).not.toHaveBeenCalled();
+    });
+
+    it('does not throw when no callback is provided', async () => {
+      const { buildAndUpdateQuery } = renderTableSection({
+        basicLogsEnabled: true,
+        auxiliaryLogsEnabled: true,
+      });
+
+      const select = await screen.findByLabelText('Table');
+      await selectOptionInTest(select, 'BasicTable');
+
+      expect(buildAndUpdateQuery).toHaveBeenCalled();
+    });
+  });
 });
