@@ -246,6 +246,6 @@ RUN mkdir -p ${GF_PLUGIN_DIR} && \
     unzip /tmp/grafana-clickhouse-datasource.zip -d ${GF_PLUGIN_DIR} && \
     rm /tmp/grafana-clickhouse-datasource.zip && \
     grafana cli plugins install marcusolsson-treemap-panel 2.0.1 && \
-    grafana cli plugins install victoriametrics-metrics-datasource 0.22 
+    grafana cli plugins install victoriametrics-metrics-datasource 0.22.0
 
 USER "$GF_UID"
