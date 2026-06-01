@@ -460,6 +460,10 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = rbacSect.NewKey("single_organization", "true")
 		require.NoError(t, err)
 	}
+	if opts.BasicRoleAggregatorEnabled {
+		_, err = rbacSect.NewKey("basic_role_aggregator_enabled", "true")
+		require.NoError(t, err)
+	}
 
 	if opts.DisableAuthZClientCache {
 		authzSect, err := cfg.NewSection("authorization")
@@ -1015,6 +1019,7 @@ type GrafanaOpts struct {
 	EnableRecordingRules                                 bool
 	EnableSCIM                                           bool
 	RBACSingleOrganization                               bool
+	BasicRoleAggregatorEnabled                           bool
 	APIServerRuntimeConfig                               string
 	DisableControllers                                   bool
 	DisableDBCleanup                                     bool
