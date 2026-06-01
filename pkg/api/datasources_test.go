@@ -372,7 +372,7 @@ func TestUpdateDataSourceByUID_UIDMismatch(t *testing.T) {
 		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
 	}
-	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration = setupDsConfigHandlerMetrics()
 
 	sc := setupScenarioContext(t, "/api/datasources/uid/url-uid")
 
