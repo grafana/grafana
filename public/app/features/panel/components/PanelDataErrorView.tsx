@@ -12,7 +12,6 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { getResolvedLanguage } from '@grafana/i18n/internal';
 import { type PanelDataErrorViewProps, locationService } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Icon, usePanelContext, useStyles2 } from '@grafana/ui';
@@ -157,27 +156,16 @@ function getMessageFor(
     return fieldConfig?.defaults.noValue ?? t('panel.panel-data-error-view.no-value.default', 'No data');
   }
 
-  const missingFields: string[] = [];
   if (needsTimeField && !dataSummary.hasFieldType(FieldType.time)) {
-    missingFields.push(t('panel.panel-data-error-view.field-name.time', 'time'));
-  }
-  if (needsStringField && !dataSummary.hasFieldType(FieldType.string)) {
-    missingFields.push(t('panel.panel-data-error-view.field-name.string', 'string'));
-  }
-  if (needsNumberField && !dataSummary.hasFieldType(FieldType.number)) {
-    missingFields.push(t('panel.panel-data-error-view.field-name.number', 'number'));
+    return t('panel.panel-data-error-view.missing-value.time', 'Data is missing a time field');
   }
 
-  if (missingFields.length === 1) {
-    return t('panel.panel-data-error-view.missing-field', 'Data is missing a {{field}} field', {
-      field: missingFields[0],
-    });
+  if (needsStringField && !dataSummary.hasFieldType(FieldType.string)) {
+    return t('panel.panel-data-error-view.missing-value.string', 'Data is missing a string field');
   }
-  if (missingFields.length > 1) {
-    const formatter = new Intl.ListFormat(getResolvedLanguage(), { style: 'long', type: 'conjunction' });
-    return t('panel.panel-data-error-view.missing-fields', 'Data is missing {{fields}} fields', {
-      fields: formatter.format(missingFields),
-    });
+
+  if (needsNumberField && !dataSummary.hasFieldType(FieldType.number)) {
+    return t('panel.panel-data-error-view.missing-value.number', 'Data is missing a number field');
   }
 
   return t('panel.panel-data-error-view.missing-value.unknown', 'Cannot visualize data');

@@ -153,7 +153,13 @@ describe('PanelDataErrorView', () => {
 });
 
 describe('missing field messages', () => {
-  it('shows "Data is missing a time field" when only time is absent', () => {
+  const seriesWithRowsButNoTimeOrString = [
+    toDataFrame({
+      fields: [{ name: 'count', type: FieldType.number, values: [1, 2] }],
+    }),
+  ];
+
+  it('shows "Data is missing a time field" when needsTimeField and needsStringField are both set but only time is absent', () => {
     renderWithProps({
       needsTimeField: true,
       needsStringField: true,
@@ -171,25 +177,22 @@ describe('missing field messages', () => {
     expect(screen.getByText('Data is missing a time field')).toBeInTheDocument();
   });
 
-  it('shows combined message when both time and string are absent', () => {
+  it('shows "Data is missing a time field" before "Data is missing a string field" when both fields are absent', () => {
     renderWithProps({
       needsTimeField: true,
       needsStringField: true,
       data: {
         state: LoadingState.Done,
-        series: [
-          toDataFrame({
-            fields: [{ name: 'count', type: FieldType.number, values: [1, 2] }],
-          }),
-        ],
+        series: seriesWithRowsButNoTimeOrString,
         timeRange: getDefaultTimeRange(),
       },
     });
 
-    expect(screen.getByText('Data is missing time and string fields')).toBeInTheDocument();
+    expect(screen.getByText('Data is missing a time field')).toBeInTheDocument();
+    expect(screen.queryByText('Data is missing a string field')).not.toBeInTheDocument();
   });
 
-  it('shows "Data is missing a string field" when only string is absent', () => {
+  it('shows "Data is missing a string field" when needsStringField is set and only string is absent', () => {
     renderWithProps({
       needsStringField: true,
       data: {
@@ -204,25 +207,6 @@ describe('missing field messages', () => {
     });
 
     expect(screen.getByText('Data is missing a string field')).toBeInTheDocument();
-  });
-
-  it('shows combined message when all three field types are absent', () => {
-    renderWithProps({
-      needsTimeField: true,
-      needsStringField: true,
-      needsNumberField: true,
-      data: {
-        state: LoadingState.Done,
-        series: [
-          toDataFrame({
-            fields: [{ name: 'flag', type: FieldType.boolean, values: [true] }],
-          }),
-        ],
-        timeRange: getDefaultTimeRange(),
-      },
-    });
-
-    expect(screen.getByText('Data is missing time, string, and number fields')).toBeInTheDocument();
   });
 });
 
