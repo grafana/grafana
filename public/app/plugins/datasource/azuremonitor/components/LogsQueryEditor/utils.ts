@@ -1,6 +1,9 @@
 import { getTemplateSrv } from '@grafana/runtime';
 
+import { type AzureMonitorQuery } from '../../types/query';
 import { parseResourceURI } from '../ResourcePicker/utils';
+
+export type SelectedLogTier = 'Analytics' | 'Basic' | 'Auxiliary';
 
 export function shouldShowBasicLogsToggle(resources: string[], basicLogsEnabled: boolean) {
   const searchLogsEnabled = basicLogsEnabled;
@@ -10,6 +13,15 @@ export function shouldShowBasicLogsToggle(resources: string[], basicLogsEnabled:
     resources.length === 1 &&
     parseResourceURI(selectedResource).metricNamespace?.toLowerCase() === 'microsoft.operationalinsights/workspaces'
   );
+}
+
+// Derives the currently-selected Logs tier from the query.
+// `basicLogsQuery: true` with no `logTier` is a legacy state from before Auxiliary support and is treated as Basic.
+export function getSelectedLogTier(query: AzureMonitorQuery): SelectedLogTier {
+  if (!query.azureLogAnalytics?.basicLogsQuery) {
+    return 'Analytics';
+  }
+  return query.azureLogAnalytics.logTier ?? 'Basic';
 }
 
 export function calculateTimeRange(from: number, to: number): number {

@@ -49,6 +49,7 @@ export const AuxiliaryLogsToggle = (props: Props) => {
     <Field
       description={description}
       label={t('components.auxiliary-logs-toggle.label-enable-auxiliary-logs', 'Enable Auxiliary Logs')}
+      noMargin
     >
       <div>
         <Switch

@@ -91,6 +91,7 @@ export interface BuildAndUpdateOptions {
   columns?: string[];
   from?: BuilderQueryEditorPropertyExpression;
   basicLogsQuery?: boolean;
+  logTier?: 'Basic' | 'Auxiliary';
 }
 
 export const aggregateOptions = [

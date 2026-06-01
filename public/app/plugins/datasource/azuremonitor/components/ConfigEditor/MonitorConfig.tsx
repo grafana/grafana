@@ -8,8 +8,8 @@ import { config } from '@grafana/runtime';
 import { getCredentials, updateCredentials } from '../../credentials';
 import { type AzureMonitorDataSourceSettings } from '../../types/types';
 
-import { AzureCredentialsForm, getAzureCloudOptions } from './AzureCredentialsForm';
 import { AuxiliaryLogsToggle } from './AuxiliaryLogsToggle';
+import { AzureCredentialsForm, getAzureCloudOptions } from './AzureCredentialsForm';
 import { BasicLogsToggle } from './BasicLogsToggle';
 import { DefaultSubscription } from './DefaultSubscription';
 

@@ -133,6 +133,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
           workspace,
           dashboardTime: item.dashboardTime,
           basicLogsQuery: item.basicLogsQuery,
+          logTier: item.logTier,
           timeColumn: this.templateSrv.replace(item.timeColumn, scopedVars),
         },
       };

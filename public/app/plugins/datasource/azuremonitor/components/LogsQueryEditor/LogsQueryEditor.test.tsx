@@ -462,7 +462,7 @@ describe('LogsQueryEditor', () => {
 
       expect(await screen.findByLabelText('la-workspace-1')).toBeDisabled();
       expect(
-        await screen.findByText('When using Basic & Auxiliary Logs, you may only select one resource at a time.')
+        await screen.findByText('When using Basic Logs, you may only select one resource at a time.')
       ).toBeInTheDocument();
     });
   });
@@ -499,7 +499,46 @@ describe('LogsQueryEditor', () => {
       await act(async () => {
         await waitFor(() =>
           expect(
-            screen.findByText(/This is a Basic\/Auxiliary Logs query and incurs cost per GiB scanned./)
+            screen.findByText(/This is a Basic Logs query and incurs cost per GiB scanned./)
+          ).resolves.toBeInTheDocument()
+        );
+      });
+    });
+
+    it('should show generic data ingested warning when running auxiliary logs queries', async () => {
+      const mockDatasource = createMockDatasource();
+      const onChange = jest.fn();
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+          ],
+          basicLogsQuery: true,
+          logTier: 'Auxiliary',
+        },
+      });
+      const onQueryChange = jest.fn();
+
+      mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0);
+      await act(async () => {
+        render(
+          <LogsQueryEditor
+            query={query}
+            datasource={mockDatasource}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onChange}
+            onQueryChange={onQueryChange}
+            setError={() => {}}
+            basicLogsEnabled={false}
+            auxiliaryLogsEnabled={true}
+          />
+        );
+      });
+
+      await act(async () => {
+        await waitFor(() =>
+          expect(
+            screen.findByText(/This is an Auxiliary Logs query and incurs cost per GiB scanned./)
           ).resolves.toBeInTheDocument()
         );
       });

@@ -1,4 +1,6 @@
-import { calculateTimeRange, shouldShowBasicLogsToggle } from './utils';
+import createMockQuery from '../../mocks/query';
+
+import { calculateTimeRange, getSelectedLogTier, shouldShowBasicLogsToggle } from './utils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -80,6 +82,39 @@ describe('LogsQueryEditor utils', () => {
           searchLogsEnabled
         )
       ).toBe(true);
+    });
+  });
+
+  describe('getSelectedLogTier', () => {
+    it('returns "Analytics" when basicLogsQuery is false', () => {
+      const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: false } });
+      expect(getSelectedLogTier(query)).toBe('Analytics');
+    });
+
+    it('returns "Analytics" when basicLogsQuery is undefined', () => {
+      const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: undefined } });
+      expect(getSelectedLogTier(query)).toBe('Analytics');
+    });
+
+    it('returns "Basic" when basicLogsQuery is true and logTier is "Basic"', () => {
+      const query = createMockQuery({
+        azureLogAnalytics: { basicLogsQuery: true, logTier: 'Basic' },
+      });
+      expect(getSelectedLogTier(query)).toBe('Basic');
+    });
+
+    it('returns "Auxiliary" when basicLogsQuery is true and logTier is "Auxiliary"', () => {
+      const query = createMockQuery({
+        azureLogAnalytics: { basicLogsQuery: true, logTier: 'Auxiliary' },
+      });
+      expect(getSelectedLogTier(query)).toBe('Auxiliary');
+    });
+
+    it('falls back to "Basic" for legacy queries with basicLogsQuery=true and no logTier', () => {
+      const query = createMockQuery({
+        azureLogAnalytics: { basicLogsQuery: true, logTier: undefined },
+      });
+      expect(getSelectedLogTier(query)).toBe('Basic');
     });
   });
 

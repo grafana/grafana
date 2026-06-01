@@ -22,9 +22,9 @@ import AdvancedResourcePicker from './AdvancedResourcePicker';
 import { LogsManagement } from './LogsManagement';
 import QueryField from './QueryField';
 import { TimeManagement } from './TimeManagement';
-import { onLoad, setBasicLogsQuery, setFormatAs, setKustoQuery } from './setQueryValue';
+import { onLoad, setFormatAs, setKustoQuery, setLogTier } from './setQueryValue';
 import useMigrations from './useMigrations';
-import { shouldShowBasicLogsToggle } from './utils';
+import { getSelectedLogTier, shouldShowBasicLogsToggle } from './utils';
 
 interface LogsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -66,6 +66,7 @@ const LogsQueryEditor = ({
   const to = templateSrv?.replace('$__to');
   const templateVariableOptions = templateSrv.getVariables();
   const isBasicLogsQuery = (searchLogsEnabled && query.azureLogAnalytics?.basicLogsQuery) ?? false;
+  const selectedTier = getSelectedLogTier(query);
   const [isLoadingSchema, setIsLoadingSchema] = useState<boolean>(false);
 
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
@@ -133,11 +134,18 @@ const LogsQueryEditor = ({
   }, [searchLogsEnabled, query.azureLogAnalytics?.resources, templateSrv]);
 
   useEffect(() => {
-    if ((!searchLogsEnabled || !showBasicLogsToggle) && query.azureLogAnalytics?.basicLogsQuery) {
-      const updatedBasicLogsQuery = setBasicLogsQuery(query, false);
-      onChange(setKustoQuery(updatedBasicLogsQuery, ''));
+    const tier = query.azureLogAnalytics?.logTier;
+    const tierStillEnabled =
+      (tier === 'Basic' && basicLogsEnabled) || (tier === 'Auxiliary' && auxiliaryLogsEnabled);
+    const shouldClear =
+      (!searchLogsEnabled || !showBasicLogsToggle) && query.azureLogAnalytics?.basicLogsQuery
+        ? true
+        : !!query.azureLogAnalytics?.basicLogsQuery && tier !== undefined && !tierStillEnabled;
+    if (shouldClear) {
+      const cleared = setLogTier(query, undefined);
+      onChange(setKustoQuery(cleared, ''));
     }
-  }, [searchLogsEnabled, onChange, query, showBasicLogsToggle]);
+  }, [searchLogsEnabled, basicLogsEnabled, auxiliaryLogsEnabled, onChange, query, showBasicLogsToggle]);
 
   useEffect(() => {
     const hasRawKql = !!query.azureLogAnalytics?.query;
@@ -178,7 +186,9 @@ const LogsQueryEditor = ({
           const dataIngested = await datasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage(query, table);
           const textToShow = !!dataIngested
             ? `This query is processing ${dataIngested} GiB when run. `
-            : 'This is a Basic/Auxiliary Logs query and incurs cost per GiB scanned. ';
+            : selectedTier === 'Auxiliary'
+              ? 'This is an Auxiliary Logs query and incurs cost per GiB scanned. '
+              : 'This is a Basic Logs query and incurs cost per GiB scanned. ';
           setDataIngestedWarning(
             <>
               <Text color="primary">
@@ -201,7 +211,7 @@ const LogsQueryEditor = ({
     };
 
     getBasicLogsUsage(query).catch((err) => console.error(err));
-  }, [datasource.azureLogAnalyticsDatasource, query, showBasicLogsToggle, from, to]);
+  }, [datasource.azureLogAnalyticsDatasource, query, showBasicLogsToggle, from, to, selectedTier]);
   let portalLinkButton = null;
 
   if (data?.series) {
@@ -253,7 +263,9 @@ const LogsQueryEditor = ({
               )}
               selectionNotice={(selected) => {
                 if (selected.length === 1 && isBasicLogsQuery) {
-                  return 'When using Basic & Auxiliary Logs, you may only select one resource at a time.';
+                  return selectedTier === 'Auxiliary'
+                    ? 'When using Auxiliary Logs, you may only select one resource at a time.'
+                    : 'When using Basic Logs, you may only select one resource at a time.';
                 }
                 return 'You may only choose items of the same resource type.';
               }}
@@ -265,6 +277,7 @@ const LogsQueryEditor = ({
                 variableOptionGroup={variableOptionGroup}
                 onQueryChange={onChange}
                 setError={setError}
+                basicLogsEnabled={basicLogsEnabled}
                 auxiliaryLogsEnabled={auxiliaryLogsEnabled}
               />
             )}
@@ -285,6 +298,7 @@ const LogsQueryEditor = ({
             query={query}
             schema={schema}
             basicLogsEnabled={basicLogsEnabled}
+            auxiliaryLogsEnabled={auxiliaryLogsEnabled}
             onQueryChange={onQueryChange}
             templateVariableOptions={templateVariableOptions}
             datasource={datasource}
