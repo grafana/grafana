@@ -1,0 +1,61 @@
+name: Build Go binary
+description: >
+  Compiles the Grafana Go binary for a single OS/arch target.
+  When build-version is omitted the version is derived from package.json
+  by substituting the "pre" placeholder with build-number, matching the
+  release-build convention.
+
+inputs:
+  os:
+    required: false
+    default: linux
+  arch:
+    required: false
+    default: amd64
+  arm:
+    description: GOARM value, e.g. "7". Leave empty for non-ARM targets.
+    required: false
+    default: ''
+  build-number:
+    description: Unique build identifier (github.run_id).
+    required: true
+  build-version:
+    description: >
+      Explicit version string. When empty, computed from package.json as
+      `version | sed s/pre/<build-number>/g`.
+    required: false
+    default: ''
+
+outputs:
+  version:
+    description: The version string used for the build.
+    value: ${{ steps.version.outputs.value }}
+
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/setup-go
+
+    - name: Resolve build version
+      id: version
+      shell: bash
+      env:
+        INPUT_VERSION: ${{ inputs.build-version }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+      run: |
+        if [ -n "$INPUT_VERSION" ]; then
+          echo "value=$INPUT_VERSION" >> "$GITHUB_OUTPUT"
+        else
+          ver=$(jq -r '.version' package.json | sed "s/pre/${BUILD_NUMBER}/g")
+          echo "value=${ver}" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Build Go binary
+      shell: bash
+      env:
+        CGO_ENABLED: '0'
+        GOOS: ${{ inputs.os }}
+        GOARCH: ${{ inputs.arch }}
+        GOARM: ${{ inputs.arm }}
+        BUILD_VERSION: ${{ steps.version.outputs.value }}
+      run: make build-go BUILD_VERSION="$BUILD_VERSION"

@@ -1,6 +1,6 @@
 import { createElement, memo } from 'react';
 
-import { type DataSourcePluginMeta, type DataSourceSettings } from '@grafana/data';
+import { type DataSourceConfigValidationAPI, type DataSourcePluginMeta, type DataSourceSettings } from '@grafana/data';
 import { writableProxy } from 'app/features/plugins/extensions/utils';
 
 import { type GenericDataSourcePlugin } from '../types';
@@ -10,9 +10,10 @@ export interface Props {
   dataSource: DataSourceSettings;
   dataSourceMeta: DataSourcePluginMeta;
   onModelChange: (dataSource: DataSourceSettings) => void;
+  validation?: DataSourceConfigValidationAPI;
 }
 
-export const DataSourcePluginSettings = memo(({ plugin, dataSource, onModelChange }: Props) => {
+export const DataSourcePluginSettings = memo(({ plugin, dataSource, onModelChange, validation }: Props) => {
   if (!plugin) {
     return null;
   }
@@ -27,6 +28,7 @@ export const DataSourcePluginSettings = memo(({ plugin, dataSource, onModelChang
             pluginVersion: plugin.meta?.info?.version,
           }),
           onOptionsChange: onModelChange,
+          validation,
         })}
     </div>
   );

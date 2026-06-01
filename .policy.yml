@@ -27,8 +27,6 @@ policy:
             - Workflow .github/workflows/policybot.yml succeeded or skipped
             - Workflow .github/workflows/pr-build-grafana.yml succeeded or skipped
             - Workflow .github/workflows/pr-checks.yml succeeded or skipped
-            - Workflow .github/workflows/pr-codeql-analysis-javascript.yml succeeded or skipped
-            - Workflow .github/workflows/pr-codeql-analysis-python.yml succeeded or skipped
             - Workflow .github/workflows/pr-commands.yml succeeded or skipped
             - Workflow .github/workflows/pr-dependabot-update-go-workspace.yml succeeded or skipped
             - Workflow .github/workflows/pr-e2e-tests.yml succeeded or skipped
@@ -37,8 +35,9 @@ policy:
             - Workflow .github/workflows/pr-go-workspace-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-k8s-codegen-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-mt-service-compatibility.yml succeeded or skipped
-            - Workflow .github/workflows/pr-patch-check-event.yml succeeded or skipped
+            - Workflow .github/workflows/pr-patch-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
+            - Workflow .github/workflows/pr-test-integration-pgvector.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
             - Workflow .github/workflows/reject-gh-secrets.yml succeeded or skipped
             - Workflow .github/workflows/run-schema-v2-e2e.yml succeeded or skipped
@@ -152,6 +151,7 @@ approval_rules:
           conclusions:
             - skipped
             - success
+            - failure
           workflows:
             - .github/workflows/check-frontend-test-coverage.yml
   - name: Workflow .github/workflows/codeowners-validator.yml succeeded or skipped
@@ -310,6 +310,7 @@ approval_rules:
           conclusions:
             - skipped
             - success
+            - failure
           workflows:
             - .github/workflows/govulncheck.yml
   - name: Workflow .github/workflows/i18n-verify.yml succeeded or skipped
@@ -391,44 +392,6 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/pr-checks.yml
-  - name: Workflow .github/workflows/pr-codeql-analysis-javascript.yml succeeded or skipped
-    if:
-      changed_files:
-        paths:
-          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.js$
-          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.ts$
-          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.tsx$
-      file_not_deleted:
-        paths:
-          - ^\.github\/workflows\/pr-codeql-analysis-javascript\.yml$
-      targets_branch:
-        pattern: (^main$)
-    requires:
-      conditions:
-        has_workflow_result:
-          conclusions:
-            - skipped
-            - success
-          workflows:
-            - .github/workflows/pr-codeql-analysis-javascript.yml
-  - name: Workflow .github/workflows/pr-codeql-analysis-python.yml succeeded or skipped
-    if:
-      changed_files:
-        paths:
-          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.py$
-      file_not_deleted:
-        paths:
-          - ^\.github\/workflows\/pr-codeql-analysis-python\.yml$
-      targets_branch:
-        pattern: (^main$)
-    requires:
-      conditions:
-        has_workflow_result:
-          conclusions:
-            - skipped
-            - success
-          workflows:
-            - .github/workflows/pr-codeql-analysis-python.yml
   - name: Workflow .github/workflows/pr-commands.yml succeeded or skipped
     if:
       file_not_deleted:
@@ -552,7 +515,7 @@ approval_rules:
         paths:
           - ^\.github\/workflows\/pr-mt-service-compatibility\.yml$
       targets_branch:
-        pattern: (^main$|^test\/frontend-backend-separation-action$)
+        pattern: (^main$)
     requires:
       conditions:
         has_workflow_result:
@@ -561,11 +524,11 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/pr-mt-service-compatibility.yml
-  - name: Workflow .github/workflows/pr-patch-check-event.yml succeeded or skipped
+  - name: Workflow .github/workflows/pr-patch-check.yml succeeded or skipped
     if:
       file_not_deleted:
         paths:
-          - ^\.github\/workflows\/pr-patch-check-event\.yml$
+          - ^\.github\/workflows\/pr-patch-check\.yml$
       targets_branch:
         pattern: (^main$|^release-(?:[^/]*)$)
     requires:
@@ -575,7 +538,7 @@ approval_rules:
             - skipped
             - success
           workflows:
-            - .github/workflows/pr-patch-check-event.yml
+            - .github/workflows/pr-patch-check.yml
   - name: Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
     if:
       changed_files:
@@ -607,6 +570,7 @@ approval_rules:
           - ^embed\.go$
           - ^packaging\/docker\/(?:(?:[^/]*(?:/|$))*)$
           - ^\.github\/workflows\/pr-test-docker\.yml$
+          - ^\.github\/workflows\/build-docker-variants\.yml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/pr-test-docker\.yml$
@@ -618,6 +582,32 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/pr-test-docker.yml
+  - name: Workflow .github/workflows/pr-test-integration-pgvector.yml succeeded or skipped
+    if:
+      changed_files:
+        paths:
+          - ^Makefile$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.work$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.work\.sum$
+          - ^pkg\/storage\/unified\/search\/vector\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/storage\/unified\/search\/embed\/(?:(?:[^/]*(?:/|$))*)$
+          - ^devenv\/docker\/blocks\/pgvector\/(?:(?:[^/]*(?:/|$))*)$
+          - ^devenv\/\.env$
+          - ^\.github\/actions\/setup-go\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/workflows\/pr-test-integration-pgvector\.yml$
+      file_not_deleted:
+        paths:
+          - ^\.github\/workflows\/pr-test-integration-pgvector\.yml$
+    requires:
+      conditions:
+        has_workflow_result:
+          conclusions:
+            - skipped
+            - success
+          workflows:
+            - .github/workflows/pr-test-integration-pgvector.yml
   - name: Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
     if:
       changed_files:

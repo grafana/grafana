@@ -30,6 +30,8 @@ import {
 } from '../../scene/types/EditableDashboardElement';
 import { VariableDisplaySelect } from '../../settings/variables/components/VariableDisplaySelect';
 import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import { openChangeVariableTypePane } from './VariableTypeSelectionPane';
@@ -116,12 +118,17 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
     }
 
     const variableEditorDef = getEditableVariableDefinition(this.variable.state.type);
+    const { label, name } = this.variable.state;
+    const hasLabel = !!label && label.trim() !== '';
+    const instanceName = hasLabel ? label! : name;
+    const tooltip = hasLabel ? `$${name}` : undefined;
 
     if (sceneUtils.isAdHocVariable(this.variable)) {
       return {
         typeName: t('dashboard.edit-pane.elements.filter', 'Filter'),
         icon: 'filter',
-        instanceName: this.variable.state.name,
+        instanceName,
+        tooltip,
         isHidden: this.variable.state.hide === VariableHide.hideVariable,
       };
     }
@@ -129,7 +136,8 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
     return {
       typeName: t('dashboard.edit-pane.elements.variable', '{{type}} variable', { type: variableEditorDef.name }),
       icon: 'dollar-alt',
-      instanceName: this.variable.state.name,
+      instanceName,
+      tooltip,
       isHidden: this.variable.state.hide === VariableHide.hideVariable,
     };
   }
@@ -137,11 +145,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   public useEditPaneOptions = useEditPaneOptions.bind(this);
 
   public renderActions() {
-    return (
-      <Stack grow={1}>
-        <ChangeVariableTypeButton variable={this.variable} />
-      </Stack>
-    );
+    return <ChangeVariableTypeButton variable={this.variable} />;
   }
 
   public onDuplicate() {
@@ -226,12 +230,12 @@ function ChangeVariableTypeButton({ variable }: { variable: SceneVariable }) {
   return (
     <Button
       size="sm"
-      fill="text"
       onClick={() => openChangeVariableTypePane(variable)}
       data-testid={selectors.components.PanelEditor.ElementEditPane.changeVariableType}
       aria-label={t('dashboard.edit-pane.variable.change-type-aria-label', 'Change variable type')}
+      variant="secondary"
     >
-      <Trans i18nKey="dashboard.edit-pane.variable.change-type">Change</Trans>
+      <Trans i18nKey="dashboard.edit-pane.variable.change-type">Change type</Trans>
     </Button>
   );
 }
@@ -369,6 +373,8 @@ function VariableDescriptionTextArea({ variable, id }: VariableInputProps) {
 
 function VariableDisplayInput({ variable }: VariableInputProps) {
   const { hide: display = VariableHide.dontHide } = variable.useState();
+  const sectionOwner = dashboardSceneGraph.findSectionOwner(variable);
+  const topPlacementLabel = sectionOwner ? getTopPlacementLabel(sectionOwner) : undefined;
 
   const onChange = (option: VariableHide) => {
     dashboardEditActions.changeVariableHideValue({
@@ -383,6 +389,7 @@ function VariableDisplayInput({ variable }: VariableInputProps) {
       display={display}
       type={variable.state.type}
       hideControlsMenuOption={shouldHideControlsMenuOption(variable)}
+      topPlacementLabel={topPlacementLabel}
       onChange={onChange}
     />
   );

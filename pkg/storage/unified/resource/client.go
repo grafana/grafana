@@ -14,6 +14,7 @@ import (
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"go.opentelemetry.io/otel"
@@ -29,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	authnGrpcUtils "github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -99,12 +101,18 @@ func NewLegacyResourceClient(channel grpc.ClientConnInterface, indexChannel grpc
 	return newResourceClient(cc, cci)
 }
 
-func NewLocalResourceClient(server ResourceServer) ResourceClient {
+func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 	// scenario: local in-proc
 	channel := &inprocgrpc.Channel{}
 	tracer := otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
 
 	grpcAuthInt := grpcutils.NewUnsafeAuthenticator(tracer)
+
+	var metricsInt grpc.UnaryServerInterceptor
+	if s, ok := srv.(*server); ok {
+		metricsInt = UnaryRequestDurationInterceptor(s.storageMetrics)
+	}
+
 	for _, desc := range []*grpc.ServiceDesc{
 		&resourcepb.ResourceStore_ServiceDesc,
 		&resourcepb.ResourceIndex_ServiceDesc,
@@ -114,13 +122,26 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 		&resourcepb.Diagnostics_ServiceDesc,
 		&resourcepb.Quotas_ServiceDesc,
 	} {
+		if metricsInt != nil && desc == &resourcepb.ResourceStore_ServiceDesc {
+			desc = grpchan.InterceptServer(desc, metricsInt, nil)
+		}
+
+		// Recovery is listed first so it is outermost and catches panics in auth and the handler.
+		// The shared grpcserver wires this same interceptor for the remote path; the in-proc
+		// channel here is its own server, so it needs its own wrap.
 		channel.RegisterService(
 			grpchan.InterceptServer(
 				desc,
-				grpcAuth.UnaryServerInterceptor(grpcAuthInt),
-				grpcAuth.StreamServerInterceptor(grpcAuthInt),
+				grpc_middleware.ChainUnaryServer(
+					interceptors.UnaryPanicRecoveryInterceptor(),
+					grpcAuth.UnaryServerInterceptor(grpcAuthInt),
+				),
+				grpc_middleware.ChainStreamServer(
+					interceptors.StreamPanicRecoveryInterceptor(),
+					grpcAuth.StreamServerInterceptor(grpcAuthInt),
+				),
 			),
-			server,
+			srv,
 		)
 	}
 
@@ -148,6 +169,8 @@ type RemoteResourceClientConfig struct {
 	Audiences        []string
 	Namespace        string
 	AllowInsecure    bool
+	// TokenExchanger overrides the default exchange client when non-nil.
+	TokenExchanger authnlib.TokenExchanger
 }
 
 func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
@@ -157,13 +180,18 @@ func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface,
 		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}))
 	}
 
-	tc, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
-		Token:            cfg.Token,
-		TokenExchangeURL: cfg.TokenExchangeURL,
-	}, exchangeOpts...)
-
-	if err != nil {
-		return nil, err
+	var tc authnlib.TokenExchanger
+	if cfg.TokenExchanger != nil {
+		tc = cfg.TokenExchanger
+	} else {
+		var err error
+		tc, err = authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+			Token:            cfg.Token,
+			TokenExchangeURL: cfg.TokenExchangeURL,
+		}, exchangeOpts...)
+		if err != nil {
+			return nil, err
+		}
 	}
 	clientInt := authnlib.NewGrpcClientInterceptor(
 		tc,

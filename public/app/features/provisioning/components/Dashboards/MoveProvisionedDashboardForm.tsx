@@ -23,9 +23,11 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type StatusInfo } from '../../types';
 import { type ProvisionedDashboardFormData } from '../../types/form';
+import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
-import { getTargetFolderPathInRepo } from '../BulkActions/utils';
+import { getTargetFolderPathInRepo, isResourceAlreadyInTarget } from '../BulkActions/utils';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { joinPath } from '../utils/path';
 
@@ -124,6 +126,17 @@ export function MoveProvisionedDashboardForm({
       return;
     }
 
+    const currentSourcePath = currentFileData?.resource?.dryRun?.metadata?.annotations?.[AnnoKeySourcePath];
+    if (currentSourcePath && isResourceAlreadyInTarget(currentSourcePath, targetFolderPath)) {
+      showError(
+        t(
+          'dashboard-scene.move-provisioned-dashboard-form.already-in-folder',
+          'Dashboard is already in the selected folder.'
+        )
+      );
+      return;
+    }
+
     reportInteraction('grafana_provisioning_dashboard_move_submitted', {
       workflow,
       repositoryName: repo,
@@ -146,7 +159,15 @@ export function MoveProvisionedDashboardForm({
       }
 
       const branchRef = ref;
-      const commitMessage = comment || `Move dashboard: ${dashboard.state.title}`;
+      const commitMessage = getSingleResourceCommitMessage({
+        comment,
+        repository,
+        action: 'move',
+        resourceKind: 'dashboard',
+        resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
+        title: dashboard.state.title ?? '',
+        ...getCurrentCommitUser(),
+      });
 
       try {
         await moveFile({

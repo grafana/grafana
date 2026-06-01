@@ -3,7 +3,7 @@ import type AutoSizer from 'react-virtualized-auto-sizer';
 import { render as testRender, screen, waitFor } from 'test/test-utils';
 
 import { store } from '@grafana/data';
-import { config, setBackendSrv } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { type ListMeta, type ResourceList } from 'app/features/apiserver/types';
@@ -110,10 +110,7 @@ function render() {
 const atLimitAlert = { name: /deleted dashboards limit reached/i };
 
 describe('RecentlyDeletedPage banner integration', () => {
-  let previousFlag: boolean | undefined;
-
   beforeEach(() => {
-    previousFlag = config.featureToggles.restoreDashboards;
     store.delete(DISMISS_STORAGE_KEY);
     mockGetAsResourceList.mockReset();
     currentSearchState = defaultSearchState();
@@ -133,26 +130,10 @@ describe('RecentlyDeletedPage banner integration', () => {
   });
 
   afterEach(() => {
-    config.featureToggles.restoreDashboards = previousFlag;
     jest.clearAllMocks();
   });
 
-  it('does not render the banner when the restoreDashboards feature flag is off', async () => {
-    config.featureToggles.restoreDashboards = false;
-    mockGetAsResourceList.mockResolvedValue(buildList(1000, { continue: 'next' }));
-
-    render();
-
-    // Let any pending effects settle so we can assert the banner genuinely never appears.
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText('Search for dashboards')).toBeInTheDocument();
-    });
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    expect(mockGetAsResourceList).not.toHaveBeenCalled();
-  });
-
-  it('renders the at_limit banner when the flag is on and the cache reports an overage', async () => {
-    config.featureToggles.restoreDashboards = true;
+  it('renders the at_limit banner when the cache reports an overage', async () => {
     mockGetAsResourceList.mockResolvedValue(buildList(1000, { continue: 'next' }));
 
     render();
@@ -161,7 +142,6 @@ describe('RecentlyDeletedPage banner integration', () => {
   });
 
   it('updates the banner when searchState.result changes (post-mutation reactivity)', async () => {
-    config.featureToggles.restoreDashboards = true;
     mockGetAsResourceList.mockResolvedValue(buildList(500));
 
     render();

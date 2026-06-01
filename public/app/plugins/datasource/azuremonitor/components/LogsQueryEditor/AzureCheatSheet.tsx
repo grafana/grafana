@@ -30,7 +30,7 @@ import {
 import { RawQuery } from './RawQuery';
 import tokenizer from './syntax';
 
-export interface AzureCheatSheetProps {
+interface AzureCheatSheetProps {
   onChange: (query: AzureMonitorQuery) => void;
   query: AzureMonitorQuery;
   datasource: AzureLogAnalyticsDatasource;

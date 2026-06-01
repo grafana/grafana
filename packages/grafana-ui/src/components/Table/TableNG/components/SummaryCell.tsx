@@ -113,7 +113,7 @@ export const SummaryCell = ({
   );
 };
 
-export const getStyles = (theme: GrafanaTheme2, textAlign: TextAlign, hideLabel: boolean) => ({
+const getStyles = (theme: GrafanaTheme2, textAlign: TextAlign, hideLabel: boolean) => ({
   footerCell: css({
     flexDirection: 'column',
     minHeight: '100%',

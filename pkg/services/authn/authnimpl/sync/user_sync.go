@@ -633,12 +633,20 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 		isAdmin = *id.IsGrafanaAdmin
 	}
 
+	// Forward the identity's active-org role so the k8s User is created with the
+	// asserted Spec.Role instead of falling back to AutoAssignOrgRole.
+	var defaultOrgRole string
+	if len(id.OrgRoles) > 0 {
+		defaultOrgRole = string(id.GetOrgRole())
+	}
+
 	usr, err := s.userService.Create(ctx, &user.CreateUserCommand{
-		Login:        id.Login,
-		Email:        id.Email,
-		Name:         id.Name,
-		IsAdmin:      isAdmin,
-		SkipOrgSetup: len(id.OrgRoles) > 0,
+		Login:          id.Login,
+		Email:          id.Email,
+		Name:           id.Name,
+		IsAdmin:        isAdmin,
+		DefaultOrgRole: defaultOrgRole,
+		SkipOrgSetup:   len(id.OrgRoles) > 0,
 	})
 	if err != nil {
 		return nil, err
@@ -759,8 +767,7 @@ func syncUserToIdentity(ctx context.Context, usr *user.User, id *authn.Identity)
 }
 
 // syncSignedInUserToIdentity syncs a user to an identity.
-// id.Groups must not be overridden as part of this function as it is used to store group information from the auth module
-// which is needed for role mapping in the case of SAML or for team sync.
+// id.ExternalGroups must not be overridden here — SAML role mapping and team sync rely on it.
 func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.UID = usr.UserUID
 	id.Name = usr.Name
@@ -771,6 +778,7 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.OrgRoles = map[int64]org.RoleType{id.OrgID: usr.OrgRole}
 	id.HelpFlags1 = usr.HelpFlags1
 	id.TeamIDs = usr.TeamIDs // nolint:staticcheck
+	id.Groups = usr.TeamUIDs
 	id.LastSeenAt = usr.LastSeenAt
 	id.IsDisabled = usr.IsDisabled
 	id.IsGrafanaAdmin = &usr.IsGrafanaAdmin

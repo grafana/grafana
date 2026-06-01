@@ -183,6 +183,7 @@ export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPane
 
   return (
     <PanelNonApplicableDrilldownsSubHeader
+      key={`${adhocFiltersVar ? '1' : '0'}|${groupByVar ? '1' : '0'}`}
       filtersVar={adhocFiltersVar}
       groupByVar={groupByVar}
       queryRunner={queryRunner}

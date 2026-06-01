@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   type DeepPartial,
@@ -60,6 +60,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       item: INTERACTION_ITEM.TOGGLE_DROPDOWN,
       open: newState,
     });
+
     this.setState({
       isVizPickerOpen: newState,
       hasPickedViz: this.state.hasPickedViz || newState === false,
@@ -198,7 +199,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
               <img alt={pluginMeta.name} src={pluginMeta.info.logos.small} className={styles.pluginIcon} />
               <Text
                 data-testid={selectors.components.PanelEditor.OptionsPane.header}
-                element="h3"
+                element="h2"
                 variant="body"
                 weight="medium"
                 truncate
@@ -265,7 +266,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
           onChange={model.onChangePanel}
           onClose={model.onToggleVizPicker}
           data={data}
-          showBackButton={config.featureToggles.newVizSuggestions ? hasPickedViz || !isNewPanel : true}
+          showBackButton={hasPickedViz || !isNewPanel}
           isNewPanel={isNewPanel}
           hasPickedViz={hasPickedViz}
         />

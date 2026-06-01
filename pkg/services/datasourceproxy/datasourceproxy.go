@@ -27,12 +27,15 @@ import (
 func ProvideService(dataSourceCache datasources.CacheService, datasourceReqValidator validations.DataSourceRequestValidator,
 	pluginStore pluginstore.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
 	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
-	tracer tracing.Tracer, secretsService secrets.Service, features featuremgmt.FeatureToggles) *DataSourceProxyService {
+	tracer tracing.Tracer,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	features featuremgmt.FeatureToggles,
+) *DataSourceProxyService {
 	return &DataSourceProxyService{
 		DataSourceCache:            dataSourceCache,
 		DataSourceRequestValidator: datasourceReqValidator,
 		pluginStore:                pluginStore,
-		Cfg:                        cfg,
+		proxyCfg:                   pluginproxy.NewDataSourceProxySettings(cfg),
 		HTTPClientProvider:         httpClientProvider,
 		OAuthTokenService:          oauthTokenService,
 		DataSourcesService:         dsService,
@@ -46,12 +49,12 @@ type DataSourceProxyService struct {
 	DataSourceCache            datasources.CacheService
 	DataSourceRequestValidator validations.DataSourceRequestValidator
 	pluginStore                pluginstore.Store
-	Cfg                        *setting.Cfg
+	proxyCfg                   *pluginproxy.DataSourceProxySettings
 	HTTPClientProvider         httpclient.Provider
 	OAuthTokenService          *oauthtoken.Service
 	DataSourcesService         datasources.DataSourceService
 	tracer                     tracing.Tracer
-	secretsService             secrets.Service
+	secretsService             secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	features                   featuremgmt.FeatureToggles
 }
 
@@ -108,7 +111,7 @@ func toAPIError(c *contextmodel.ReqContext, err error) {
 }
 
 func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqContext, ds *datasources.DataSource) {
-	err := p.DataSourceRequestValidator.Validate(ds.URL, ds.JsonData, c.Req)
+	err := p.DataSourceRequestValidator.Validate(ds.URL, ds.JsonDataMap(), c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return
@@ -122,7 +125,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 	}
 
 	proxyPath := getProxyPath(c)
-	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
+	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.proxyCfg, p.HTTPClientProvider,
 		p.OAuthTokenService, p.DataSourcesService, p.tracer, p.features)
 	if err != nil {
 		var urlValidationError datasource.URLValidationError

@@ -56,8 +56,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
-	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -67,11 +65,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
-	secretmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
+	embedderprovider "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
@@ -136,10 +134,8 @@ var wireExtsBasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
 	pluginsintegration.WireExtensionSet,
-	publicdashboardsApi.ProvideMiddleware,
-	wire.Bind(new(publicdashboards.Middleware), new(*publicdashboardsApi.Middleware)),
-	publicdashboardsService.ProvideServiceWrapper,
-	wire.Bind(new(publicdashboards.ServiceWrapper), new(*publicdashboardsService.PublicDashboardServiceWrapperImpl)),
+	publicdashboards.ProvideMiddleware,
+	publicdashboards.ProvideServiceWrapper,
 	caching.ProvideCachingService,
 	wire.Bind(new(caching.CachingService), new(*caching.OSSCachingService)),
 	secretsMigrator.ProvideSecretsMigrator,
@@ -156,13 +152,15 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Struct(new(unified.Options), "*"),
 	unified.ProvideUnifiedStorageClient,
 	sql.ProvideStorageBackend,
+	sql.ProvideKV,
+	sql.ProvideResourceDB,
 	vector.ProvideVectorBackend,
+	embedderprovider.ProvideEmbedder,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 	apisregistry.WireSetExts,
 	gsmKMSProviders.ProvideOSSKMSProviders,
 	gsmEncryptionManager.ProvideOSSDataKeyCache,
-	secretmetadata.ProvideSecureValueMetadataStorage,
 	secret.ProvideSecureValueClient,
 	provisioningExtras,
 	configProviderExtras,
@@ -212,6 +210,7 @@ var wireExtsModuleServerSet = wire.NewSet(
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
+	resource.ProvideVectorMetrics,
 	// Overridden by enterprise
 	ProvideNoopModuleRegisterer,
 	sql.ProvideStorageBackend,

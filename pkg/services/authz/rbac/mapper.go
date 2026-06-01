@@ -195,6 +195,48 @@ func newFolderTranslation() translation {
 	return folderTranslation
 }
 
+func newDatasourceQueryTranslation() translation {
+	dsTranslation := newResourceTranslation("datasources", "uid", false, map[string]bool{utils.VerbCreate: true})
+
+	dsTranslation.actionSetMapping = map[string][]string{
+		// utils.VerbWatch: {"datasources:query"},
+		utils.VerbGet:              {"datasources:query", "datasources:admin", "datasources:edit"},
+		utils.VerbList:             {"datasources:query", "datasources:admin", "datasources:edit"},
+		utils.VerbUpdate:           {"datasources:edit", "datasources:admin"},
+		utils.VerbPatch:            {"datasources:edit", "datasources:admin"},
+		utils.VerbDelete:           {"datasources:edit", "datasources:admin"},
+		utils.VerbDeleteCollection: {"datasources:edit", "datasources:admin"},
+		utils.VerbGetPermissions:   {"datasources:admin"},
+		utils.VerbSetPermissions:   {"datasources:admin"},
+	}
+	return dsTranslation
+}
+
+// newServiceAccountTranslation creates a translation for service accounts and maps actions to action sets.
+// Service accounts only have Edit and Admin permission levels — there is no View level.
+func newServiceAccountTranslation() translation {
+	saTranslation := newResourceTranslation("serviceaccounts", "uid", false, map[string]bool{utils.VerbCreate: true})
+
+	actionSetMapping := make(map[string][]string)
+	for verb, rbacAction := range saTranslation.verbMapping {
+		var (
+			actionSets    []string
+			containsEdit  = slices.Contains(ossaccesscontrol.ServiceAccountEditActions, rbacAction)
+			containsAdmin = slices.Contains(ossaccesscontrol.ServiceAccountAdminActions, rbacAction)
+		)
+		if containsEdit {
+			actionSets = append(actionSets, "serviceaccounts:edit")
+			actionSets = append(actionSets, "serviceaccounts:admin")
+		} else if containsAdmin {
+			actionSets = append(actionSets, "serviceaccounts:admin")
+		}
+		actionSetMapping[verb] = actionSets
+	}
+
+	saTranslation.actionSetMapping = actionSetMapping
+	return saTranslation
+}
+
 func NewMapperRegistry() MapperRegistry {
 	skipScopeOnAllVerbs := map[string]bool{
 		utils.VerbCreate:           true,
@@ -265,7 +307,7 @@ func NewMapperRegistry() MapperRegistry {
 				folderSupport:   false,
 				skipScopeOnVerb: map[string]bool{utils.VerbCreate: true},
 			},
-			"serviceaccounts": newResourceTranslation("serviceaccounts", "uid", false, map[string]bool{utils.VerbCreate: true}),
+			"serviceaccounts": newServiceAccountTranslation(),
 			// Teams is a special case. We translate user permissions from id to uid based.
 			"teams": newResourceTranslation("teams", "uid", false, map[string]bool{utils.VerbCreate: true}),
 			"globalroles": translation{
@@ -348,7 +390,16 @@ func NewMapperRegistry() MapperRegistry {
 			},
 		},
 		"*.datasource.grafana.app": {
-			"datasources": newResourceTranslation("datasources", "uid", false, nil),
+			"datasources": newDatasourceQueryTranslation(),
+			"datasources/query": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate: "datasources:query",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: nil,
+			},
 		},
 		"plugins.grafana.app": {
 			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),
