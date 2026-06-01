@@ -45,6 +45,10 @@ var terminatingFolderSelector = folders.TerminatingLabel + "=" + folders.Termina
 // terminatingLabelField is the search return-field carrying the terminating label, so each
 // child hit reports whether its own deletion has already begun. It lets the watcher skip
 // re-issuing deletes for children already draining, without a second search or lookup.
+//
+// This relies on the search backend (bleve) echoing back "labels."-prefixed return fields. If a
+// backend does not, every child parses as not-terminating and the watcher falls back to
+// re-issuing deletes each resync -- still correct (deletes are idempotent), just less efficient.
 var terminatingLabelField = resource.SEARCH_FIELD_LABELS + "." + folders.TerminatingLabel
 
 // folderSearcher is the subset of client.K8sHandler used to list child folders via unified search.
