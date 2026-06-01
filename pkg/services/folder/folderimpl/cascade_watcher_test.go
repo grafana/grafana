@@ -10,7 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"k8s.io/client-go/util/workqueue"
+
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -200,7 +203,7 @@ func TestCascadeWatcher_onFolder_deletesChildren(t *testing.T) {
 		log:           slog.Default(),
 	}
 
-	w.onFolder(newTerminatingFolder("parent"))
+	require.NoError(t, w.reconcileFolder(context.Background(), newTerminatingFolder("parent")))
 
 	require.Equal(t, []string{"child-a", "child-b"}, mut.deletedNames())
 	require.Nil(t, mut.deleted[0].gracePeriod)
@@ -233,7 +236,7 @@ func TestCascadeWatcher_onFolder_propagatesGracePeriodToChildren(t *testing.T) {
 	zero := int64(0)
 	parent.DeletionGracePeriodSeconds = &zero
 
-	w.onFolder(parent)
+	require.NoError(t, w.reconcileFolder(context.Background(), parent))
 
 	require.Len(t, mut.deleted, 1)
 	require.NotNil(t, mut.deleted[0].gracePeriod)
@@ -259,7 +262,7 @@ func TestCascadeWatcher_onFolder_removesFinalizerWhenEmpty(t *testing.T) {
 		log:           slog.Default(),
 	}
 
-	w.onFolder(newTerminatingFolder("leaf"))
+	require.NoError(t, w.reconcileFolder(context.Background(), newTerminatingFolder("leaf")))
 
 	require.Empty(t, mut.deleted)
 	require.Equal(t, []string{"leaf"}, mut.finalizerRemove)
@@ -288,7 +291,7 @@ func TestCascadeWatcher_onFolder_skipsAlreadyTerminatingChildren(t *testing.T) {
 		log:           slog.Default(),
 	}
 
-	w.onFolder(newTerminatingFolder("parent"))
+	require.NoError(t, w.reconcileFolder(context.Background(), newTerminatingFolder("parent")))
 
 	// Only the non-terminating child is (re-)deleted; the terminating one is already draining.
 	require.Equal(t, []string{"live-child"}, mut.deletedNames())
@@ -306,8 +309,67 @@ func TestCascadeWatcher_onFolder_skipsWhenNotTerminating(t *testing.T) {
 		log:           slog.Default(),
 	}
 
-	w.onFolder(&foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "alive", Namespace: "org-12"}})
+	require.NoError(t, w.reconcileFolder(context.Background(), &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "alive", Namespace: "org-12"}}))
 
 	require.Empty(t, mut.deletedNames())
 	require.Empty(t, mut.finalizerRemove)
+}
+
+func TestCascadeWatcher_enqueueParent(t *testing.T) {
+	w := &CascadeWatcher{
+		queue: workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]()),
+		log:   slog.Default(),
+	}
+	t.Cleanup(w.queue.ShutDown)
+
+	child := &foldersv1.Folder{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "child",
+			Namespace:   "org-12",
+			Annotations: map[string]string{utils.AnnoKeyFolder: "parent"},
+		},
+	}
+	w.enqueueParent(child)
+
+	require.Equal(t, 1, w.queue.Len())
+	key, _ := w.queue.Get()
+	require.Equal(t, "org-12/parent", key)
+}
+
+func TestCascadeWatcher_enqueueParent_skipsRootFolder(t *testing.T) {
+	w := &CascadeWatcher{
+		queue: workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]()),
+		log:   slog.Default(),
+	}
+	t.Cleanup(w.queue.ShutDown)
+
+	root := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "root", Namespace: "org-12"}}
+	w.enqueueParent(root)
+
+	require.Equal(t, 0, w.queue.Len())
+}
+
+func TestCascadeWatcher_enqueueParent_dedupesSiblings(t *testing.T) {
+	w := &CascadeWatcher{
+		queue: workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]()),
+		log:   slog.Default(),
+	}
+	t.Cleanup(w.queue.ShutDown)
+
+	newChild := func(name string) *foldersv1.Folder {
+		return &foldersv1.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        name,
+				Namespace:   "org-12",
+				Annotations: map[string]string{utils.AnnoKeyFolder: "parent"},
+			},
+		}
+	}
+
+	// Several children of the same parent draining together collapse into one queued parent key.
+	w.enqueueParent(newChild("child-a"))
+	w.enqueueParent(newChild("child-b"))
+	w.enqueueParent(newChild("child-c"))
+
+	require.Equal(t, 1, w.queue.Len())
 }

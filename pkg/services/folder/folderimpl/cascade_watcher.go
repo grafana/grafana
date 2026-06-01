@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
@@ -19,8 +20,10 @@ import (
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/retry"
+	"k8s.io/client-go/util/workqueue"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -72,6 +75,12 @@ type folderMutator interface {
 // The informer List+Watches only folders carrying the terminating label (stamped by the
 // folder delete path), so its cost scales with the number of folders being deleted rather
 // than the total folder count.
+//
+// Reconciliation runs through a rate-limited workqueue: informer events enqueue keys and a
+// worker reconciles them. When a folder is fully removed, its parent key is re-enqueued so the
+// parent re-checks its children immediately instead of waiting for the next resync. The queue
+// deduplicates, so a wide parent whose children drain together is reconciled a handful of times
+// rather than once per child.
 type CascadeWatcher struct {
 	restConfig    apiserver.RestConfigProvider
 	folderSearch  folderSearcher
@@ -79,6 +88,9 @@ type CascadeWatcher struct {
 	flagEnabled   func(ctx context.Context) bool
 	log           *slog.Logger
 	resync        time.Duration
+
+	queue   workqueue.TypedRateLimitingInterface[string]
+	indexer cache.Indexer
 }
 
 func ProvideCascadeWatcher(
@@ -136,6 +148,7 @@ func (w *CascadeWatcher) Run(ctx context.Context) error {
 
 	gvr := foldersv1.FolderResourceInfo.GroupVersionResource()
 	w.folderMutator = &dynamicFolderMutator{client: dyn.Resource(gvr)}
+	w.queue = workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]())
 
 	factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(
 		dyn,
@@ -146,10 +159,14 @@ func (w *CascadeWatcher) Run(ctx context.Context) error {
 		},
 	)
 	informer := factory.ForResource(gvr).Informer()
+	w.indexer = informer.GetIndexer()
 
 	if _, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    w.onFolder,
-		UpdateFunc: func(_, obj interface{}) { w.onFolder(obj) },
+		AddFunc:    w.enqueue,
+		UpdateFunc: func(_, obj interface{}) { w.enqueue(obj) },
+		// When a folder is fully removed, re-check its parent so the parent can drop its own
+		// finalizer immediately instead of waiting for the next resync.
+		DeleteFunc: w.enqueueParent,
 	}); err != nil {
 		return fmt.Errorf("add folder informer event handler: %w", err)
 	}
@@ -159,58 +176,134 @@ func (w *CascadeWatcher) Run(ctx context.Context) error {
 		return fmt.Errorf("sync folder informer cache")
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		w.runWorker(ctx)
+	}()
+
 	w.log.Info("folder cascade watcher started")
 	<-ctx.Done()
+	w.queue.ShutDown()
+	wg.Wait()
 	return nil
 }
 
-func (w *CascadeWatcher) onFolder(obj interface{}) {
-	f, ok := asFolderCR(obj)
-	if !ok || !isTerminatingForCascade(f) {
+// enqueue adds a folder's own key to the workqueue.
+func (w *CascadeWatcher) enqueue(obj interface{}) {
+	key, err := cache.MetaNamespaceKeyFunc(obj)
+	if err != nil {
+		w.log.Warn("failed to build folder key", "error", err)
 		return
+	}
+	w.queue.Add(key)
+}
+
+// enqueueParent adds the parent of a removed folder to the workqueue, so the parent re-checks
+// whether it still has children once a child is gone. The queue deduplicates, so children of the
+// same parent draining together collapse into a small number of parent reconciles.
+func (w *CascadeWatcher) enqueueParent(obj interface{}) {
+	if tombstone, ok := obj.(cache.DeletedFinalStateUnknown); ok {
+		obj = tombstone.Obj
+	}
+	f, ok := asFolderCR(obj)
+	if !ok {
+		return
+	}
+	parent := f.GetAnnotations()[utils.AnnoKeyFolder]
+	if parent == "" {
+		return // root-level folder: no parent to re-check
+	}
+	w.queue.Add(f.Namespace + "/" + parent)
+}
+
+func (w *CascadeWatcher) runWorker(ctx context.Context) {
+	for w.processNext(ctx) {
+	}
+}
+
+func (w *CascadeWatcher) processNext(ctx context.Context) bool {
+	key, shutdown := w.queue.Get()
+	if shutdown {
+		return false
+	}
+	defer w.queue.Done(key)
+
+	if err := w.reconcile(ctx, key); err != nil {
+		w.log.Warn("folder cascade reconcile failed, requeueing", "key", key, "error", err)
+		w.queue.AddRateLimited(key)
+		return true
+	}
+	w.queue.Forget(key)
+	return true
+}
+
+// reconcile looks the folder up in the informer cache and drives its cascade state. A missing
+// folder (already garbage-collected) is a no-op.
+func (w *CascadeWatcher) reconcile(ctx context.Context, key string) error {
+	obj, exists, err := w.indexer.GetByKey(key)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return nil
+	}
+	f, ok := asFolderCR(obj)
+	if !ok {
+		w.log.Warn("cached object is not a folder", "key", key)
+		return nil
+	}
+	return w.reconcileFolder(ctx, f)
+}
+
+func (w *CascadeWatcher) reconcileFolder(ctx context.Context, f *foldersv1.Folder) error {
+	if !isTerminatingForCascade(f) {
+		return nil
 	}
 
 	orgID, err := orgIDFromNamespace(f.Namespace)
 	if err != nil {
+		// A malformed namespace will not fix itself, so do not requeue.
 		w.log.Warn("failed to resolve org for terminating folder", "namespace", f.Namespace, "name", f.Name, "error", err)
-		return
+		return nil
 	}
 
-	svcCtx := identity.WithServiceIdentityContext(context.Background(), orgID)
+	svcCtx := identity.WithServiceIdentityContext(ctx, orgID)
 	children, err := listDirectChildFolders(svcCtx, w.folderSearch, orgID, f.Name)
 	if err != nil {
-		w.log.Warn("failed to list child folders", "namespace", f.Namespace, "name", f.Name, "error", err)
-		return
+		return fmt.Errorf("list child folders: %w", err)
 	}
 
 	// The parent keeps its finalizer until the whole subtree is gone: removal is gated on the
 	// total child count, including children still terminating, not just the ones deleted below.
 	if len(children) == 0 {
 		if w.folderMutator == nil {
-			return
+			return nil
 		}
 		if err := w.folderMutator.RemoveCascadeFinalizer(svcCtx, f.Namespace, f.Name); err != nil && !apierrors.IsNotFound(err) {
-			w.log.Warn("failed to remove cascade finalizer", "namespace", f.Namespace, "name", f.Name, "error", err)
-			return
+			return fmt.Errorf("remove cascade finalizer: %w", err)
 		}
 		w.log.Info("removed cascade finalizer", "namespace", f.Namespace, "name", f.Name, "orgID", orgID)
-		return
+		return nil
 	}
 
 	if w.folderMutator == nil {
-		return
+		return nil
 	}
 
 	// Only delete children that are not already terminating; the rest are draining via their
 	// own finalizers, so re-issuing a delete each resync would be redundant.
 	gracePeriod := f.DeletionGracePeriodSeconds
 	deleted := 0
+	var deleteErr error
 	for _, child := range children {
 		if child.terminating {
 			continue
 		}
 		if err := w.folderMutator.Delete(svcCtx, f.Namespace, child.name, gracePeriod); err != nil && !apierrors.IsNotFound(err) {
 			w.log.Warn("failed to delete child folder", "namespace", f.Namespace, "parent", f.Name, "child", child.name, "error", err)
+			deleteErr = err
 			continue
 		}
 		deleted++
@@ -225,6 +318,11 @@ func (w *CascadeWatcher) onFolder(obj interface{}) {
 			"childFolderCount", len(children),
 		)
 	}
+
+	if deleteErr != nil {
+		return fmt.Errorf("delete child folder: %w", deleteErr)
+	}
+	return nil
 }
 
 // childFolder is a direct child folder returned by search, flagged with whether its own
