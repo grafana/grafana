@@ -8,8 +8,13 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/util/workqueue"
 
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -520,4 +525,60 @@ func TestCascadeWatcher_reconcileFolder_cascadesWholeSubtree(t *testing.T) {
 	require.Empty(t, ft.folders, "entire subtree should be garbage-collected")
 	require.Empty(t, ft.violations, "a folder's finalizer must only be removed once it has no children")
 	require.ElementsMatch(t, []string{"root", "a", "b", "a1", "a2", "a2x", "b1"}, ft.deleteOrder)
+}
+
+func newFakeFolderClient(t *testing.T, obj *unstructured.Unstructured) dynamic.NamespaceableResourceInterface {
+	t.Helper()
+	gvr := foldersv1.FolderResourceInfo.GroupVersionResource()
+	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(),
+		map[schema.GroupVersionResource]string{gvr: "FolderList"})
+	_, err := client.Resource(gvr).Namespace(obj.GetNamespace()).Create(context.Background(), obj, metav1.CreateOptions{})
+	require.NoError(t, err)
+	return client.Resource(gvr)
+}
+
+func folderUnstructured(name string, finalizers ...string) *unstructured.Unstructured {
+	o := &unstructured.Unstructured{}
+	o.SetGroupVersionKind(foldersv1.FolderResourceInfo.GroupVersionKind())
+	o.SetNamespace("org-12")
+	o.SetName(name)
+	if len(finalizers) > 0 {
+		o.SetFinalizers(finalizers)
+	}
+	return o
+}
+
+func TestDynamicFolderMutator_RemoveCascadeFinalizer(t *testing.T) {
+	t.Run("removes only the cascade finalizer", func(t *testing.T) {
+		client := newFakeFolderClient(t, folderUnstructured("f", folders.CascadeDeleteFinalizer, "other.io/keep"))
+		mut := &dynamicFolderMutator{client: client}
+
+		require.NoError(t, mut.RemoveCascadeFinalizer(context.Background(), "org-12", "f"))
+
+		got, err := client.Namespace("org-12").Get(context.Background(), "f", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, []string{"other.io/keep"}, got.GetFinalizers())
+	})
+
+	t.Run("leaves other finalizers untouched when the cascade finalizer is absent", func(t *testing.T) {
+		client := newFakeFolderClient(t, folderUnstructured("f", "other.io/keep"))
+		mut := &dynamicFolderMutator{client: client}
+
+		require.NoError(t, mut.RemoveCascadeFinalizer(context.Background(), "org-12", "f"))
+
+		got, err := client.Namespace("org-12").Get(context.Background(), "f", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, []string{"other.io/keep"}, got.GetFinalizers())
+	})
+}
+
+func TestDynamicFolderMutator_Delete(t *testing.T) {
+	client := newFakeFolderClient(t, folderUnstructured("f", folders.CascadeDeleteFinalizer))
+	mut := &dynamicFolderMutator{client: client}
+
+	grace := int64(0)
+	require.NoError(t, mut.Delete(context.Background(), "org-12", "f", &grace))
+
+	_, err := client.Namespace("org-12").Get(context.Background(), "f", metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err))
 }
