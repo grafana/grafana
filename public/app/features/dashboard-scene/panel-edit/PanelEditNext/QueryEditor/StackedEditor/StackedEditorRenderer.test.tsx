@@ -131,4 +131,22 @@ describe('StackedEditorRenderer', () => {
 
     expect(exit).toHaveBeenCalledTimes(1);
   });
+
+  it('opens positioned on the selected card, not the first card', () => {
+    // jsdom doesn't implement scrollIntoView, so it can't be spied — stub it and restore after.
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    const scrollIntoView = jest.fn();
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      // B is selected, not the first card — the renderer must derive B as the jump target.
+      renderStackedEditor({ selectedQuery: queries[1] });
+
+      // The renderer's contract is *which* section we land on. The scroll options ('auto' / 'start')
+      // are the hook's contract and are covered in useStackedItemScroll.test.tsx.
+      expect(scrollIntoView.mock.instances[0]).toBe(screen.getByTestId(`stacked-section-${QueryEditorType.Query}-B`));
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
 });

@@ -11,13 +11,14 @@ import { type StackedItem } from './utils';
 
 interface StackProps {
   items: readonly StackedItem[];
+  initialItem?: StackedEditorItem | null;
   onActiveItemChange: (item: StackedEditorItem) => void;
   setScrollHandler: (handler: ((item: StackedEditorItem) => void) | null) => void;
 }
 
-function Stack({ items, onActiveItemChange, setScrollHandler }: StackProps) {
+function Stack({ items, initialItem = null, onActiveItemChange, setScrollHandler }: StackProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  useStackedItemScroll({ containerRef, items, onActiveItemChange, setScrollHandler });
+  useStackedItemScroll({ containerRef, items, initialItem, onActiveItemChange, setScrollHandler });
   return (
     <div ref={containerRef}>
       {items.map((item) => (
@@ -65,6 +66,37 @@ describe('useStackedItemScroll', () => {
     render(<Stack items={[makeQueryItem('A')]} onActiveItemChange={jest.fn()} setScrollHandler={setScrollHandler} />);
 
     expect(setScrollHandler).toHaveBeenCalledWith(expect.any(Function));
+  });
+
+  it('jumps to the initial item on mount without animation so the view opens on the selected card', () => {
+    const { setScrollHandler } = captureScrollHandler();
+    const items = [makeQueryItem('A'), makeQueryItem('B'), makeQueryItem('C')];
+    const { getByTestId } = render(
+      <Stack
+        items={items}
+        initialItem={{ type: QueryEditorType.Query, id: 'C' }}
+        onActiveItemChange={jest.fn()}
+        setScrollHandler={setScrollHandler}
+      />
+    );
+
+    expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+    expect(scrollIntoViewSpy.mock.instances[0]).toBe(getByTestId(`section-${QueryEditorType.Query}-C`));
+    expect(scrollIntoViewSpy).toHaveBeenCalledWith({ block: 'start', behavior: 'auto' });
+  });
+
+  it('does not scroll on mount when there is no initial item', () => {
+    const { setScrollHandler } = captureScrollHandler();
+    render(
+      <Stack
+        items={[makeQueryItem('A'), makeQueryItem('B')]}
+        initialItem={null}
+        onActiveItemChange={jest.fn()}
+        setScrollHandler={setScrollHandler}
+      />
+    );
+
+    expect(scrollIntoViewSpy).not.toHaveBeenCalled();
   });
 
   it('scrolls the matching section into view when invoked', () => {

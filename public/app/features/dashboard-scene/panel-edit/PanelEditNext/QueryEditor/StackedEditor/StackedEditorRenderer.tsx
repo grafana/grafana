@@ -6,7 +6,12 @@ import { t, Trans } from '@grafana/i18n';
 import { Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorType } from '../../constants';
-import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
+import {
+  type StackedEditorItem,
+  usePanelContext,
+  useQueryEditorUIContext,
+  useQueryRunnerContext,
+} from '../QueryEditorContext';
 
 import { StackedSection } from './StackedSection';
 import { useStackedItemScroll } from './useStackedItemScroll';
@@ -32,12 +37,23 @@ export function StackedEditorRenderer() {
     ),
   ];
 
-  // Wires the renderer into stacked-mode: registers an imperative scrollToItem with the wrapper
-  // (so sidebar clicks can scroll the right section into view) and sets up the IntersectionObserver
-  // that calls syncActiveItem as the user scrolls. No return value — all side effects.
+  // The card that was active in the single-card view, so opening stacked mode lands on it instead
+  // of resetting to the top. Transformations take precedence to mirror the primary-card rule used
+  // when entering stacked mode.
+  const initialItem: StackedEditorItem | null = selectedTransformation
+    ? { type: QueryEditorType.Transformation, id: selectedTransformation.transformId }
+    : selectedQuery
+      ? { type: getStackedQueryEditorType(selectedQuery), id: selectedQuery.refId }
+      : null;
+
+  // Wires the renderer into stacked-mode: jumps to the initially selected card on open, registers
+  // an imperative scrollToItem with the wrapper (so sidebar clicks can scroll the right section
+  // into view), and sets up the IntersectionObserver that calls syncActiveItem as the user scrolls.
+  // No return value — all side effects.
   useStackedItemScroll({
     containerRef,
     items,
+    initialItem,
     onActiveItemChange: stackedMode.syncActiveItem,
     setScrollHandler: stackedMode.setScrollHandler,
   });
