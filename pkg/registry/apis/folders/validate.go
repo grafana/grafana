@@ -518,11 +518,15 @@ func validateOnDelete(ctx context.Context,
 	// check. Child folders are cascade-deleted by the finalizer watcher, but contained dashboards,
 	// alert rules, and library elements are not yet cascaded and will be orphaned.
 	if cascadeDeleteEnabled && forceDeleteFromDeleteOptions(deleteOptions) {
-		logging.FromContext(ctx).Warn(
-			"folder force-delete bypassing empty check; child folders will be cascade-deleted, but dashboards, alert rules, and library elements under this folder are not yet cascaded and will be orphaned",
-			"folder", f.Name,
-			"namespace", f.Namespace,
-		)
+		// The cascade watcher force-deletes child folders under the service identity. Log the
+		// user-initiated delete at warn, but the recursive child deletes at debug, so a single
+		// delete of a large subtree doesn't emit a warn per folder.
+		msg := "folder force-delete bypassing empty check; child folders will be cascade-deleted, but dashboards, alert rules, and library elements under this folder are not yet cascaded and will be orphaned"
+		if identity.IsServiceIdentity(ctx) {
+			logging.FromContext(ctx).Debug(msg, "folder", f.Name, "namespace", f.Namespace)
+		} else {
+			logging.FromContext(ctx).Warn(msg, "folder", f.Name, "namespace", f.Namespace)
+		}
 		return nil
 	}
 
