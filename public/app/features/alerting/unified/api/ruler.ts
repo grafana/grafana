@@ -23,6 +23,8 @@ export interface RulerRequestUrl {
 
 const QUERY_NAMESPACE_TAG = 'QUERY_NAMESPACE';
 const QUERY_GROUP_TAG = 'QUERY_GROUP';
+export const RULER_CONFIG_API_PROBE_NAMESPACE = '__grafana_alerting_ruler_probe__';
+export const RULER_CONFIG_API_PROBE_GROUP = '__grafana_alerting_ruler_probe__';
 
 type RulerApiSubtype = 'cortex' | 'mimir';
 
@@ -151,9 +153,11 @@ export async function fetchTestRulerRulesGroup(
   subtype?: RulerApiSubtype
 ): Promise<RulerRuleGroupDTO | null> {
   const params = subtype ? { subtype } : undefined;
+  const namespace = encodeURIComponent(RULER_CONFIG_API_PROBE_NAMESPACE);
+  const group = encodeURIComponent(RULER_CONFIG_API_PROBE_GROUP);
 
   return rulerGetRequest<RulerRuleGroupDTO | null>(
-    `/api/ruler/${getDatasourceAPIUid(dataSourceName)}/api/v1/rules/test/test`,
+    `/api/ruler/${getDatasourceAPIUid(dataSourceName)}/api/v1/rules/${namespace}/${group}`,
     null,
     params
   );

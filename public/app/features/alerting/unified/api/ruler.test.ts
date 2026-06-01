@@ -8,7 +8,12 @@ import { setupDataSources } from '../testSetup/datasources';
 import { DataSourceType } from '../utils/datasource';
 
 import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';
-import { fetchTestRulerRulesGroup, rulerUrlBuilder } from './ruler';
+import {
+  RULER_CONFIG_API_PROBE_GROUP,
+  RULER_CONFIG_API_PROBE_NAMESPACE,
+  fetchTestRulerRulesGroup,
+  rulerUrlBuilder,
+} from './ruler';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -153,7 +158,7 @@ describe('fetchTestRulerRulesGroup', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(fetch).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: '/api/ruler/mimir-1/api/v1/rules/test/test',
+        url: `/api/ruler/mimir-1/api/v1/rules/${RULER_CONFIG_API_PROBE_NAMESPACE}/${RULER_CONFIG_API_PROBE_GROUP}`,
         params: { subtype: 'mimir' },
         showErrorAlert: false,
         showSuccessAlert: false,

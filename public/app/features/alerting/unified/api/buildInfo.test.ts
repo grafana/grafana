@@ -107,7 +107,7 @@ describe('discoverDataSourceFeatures', () => {
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledWith('Mimir', 'mimir');
     });
 
-    it('Should return Mimir with disabled ruler API when config API probe reports local ruler storage', async () => {
+    it('Should return Mimir with disabled ruler API when config API probe returns a bad request', async () => {
       fetch.mockReturnValue(
         of({
           data: {
@@ -124,8 +124,7 @@ describe('discoverDataSourceFeatures', () => {
       mocks.fetchTestRulerRulesGroup.mockRejectedValue({
         status: 400,
         data: {
-          message:
-            'failed to load rule group for user anonymous and namespace test: error parsing /rules/anonymous/test: open /rules/anonymous/test: no such file or directory',
+          message: 'bad request',
         },
       });
 
@@ -215,6 +214,37 @@ describe('discoverDataSourceFeatures', () => {
 
       expect(response.application).toBe(PromApplication.Cortex);
       expect(response.features.rulerApiEnabled).toBe(true);
+
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledWith('Cortex');
+
+      expect(mocks.fetchRules).toHaveBeenCalledTimes(1);
+      expect(mocks.fetchRules).toHaveBeenCalledWith('Cortex');
+    });
+
+    it('Should throw when Cortex ruler probe returns an unexpected bad request', async () => {
+      fetch.mockReturnValue(
+        throwError(() => ({
+          status: 404,
+        }))
+      );
+
+      const error = {
+        status: 400,
+        data: {
+          message: 'bad request',
+        },
+      };
+      mocks.fetchTestRulerRulesGroup.mockRejectedValue(error);
+      mocks.fetchRules.mockResolvedValue([]);
+
+      await expect(
+        discoverDataSourceFeatures({
+          url: '/datasource/proxy',
+          name: 'Cortex',
+          type: 'prometheus',
+        })
+      ).rejects.toBe(error);
 
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledWith('Cortex');

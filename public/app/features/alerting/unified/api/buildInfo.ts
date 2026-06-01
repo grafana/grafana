@@ -198,7 +198,7 @@ async function hasRulerSupport(dataSourceName: string, subtype?: 'mimir') {
     }
     return true;
   } catch (e) {
-    if (errorIndicatesMissingRulerSupport(e)) {
+    if (errorIndicatesMissingRulerSupport(e, subtype)) {
       return false;
     }
     throw e;
@@ -214,10 +214,12 @@ function getRulerSupportErrorMessage(error: unknown): string {
 }
 
 // these errors indicate that the ruler API might be disabled or not supported
-function errorIndicatesMissingRulerSupport(error: unknown) {
+function errorIndicatesMissingRulerSupport(error: unknown, subtype?: 'mimir') {
   const message = getRulerSupportErrorMessage(error);
+  const mimirConfigApiProbeFailed = subtype === 'mimir' && isFetchError(error) && error.status === 400;
 
   return (
+    mimirConfigApiProbeFailed ||
     message.includes('GetRuleGroup unsupported in rule local store') ||
     (message.includes('failed to load rule group') && message.includes('no such file or directory')) ||
     message.includes('page not found') ||

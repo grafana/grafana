@@ -22,7 +22,7 @@ exports[`reorder rules for rule group should correctly reorder rules 1`] = `
       ],
     ],
     "method": "GET",
-    "url": "http://localhost/api/ruler/mimir/api/v1/rules/test/test?subtype=mimir",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/__grafana_alerting_ruler_probe__/__grafana_alerting_ruler_probe__?subtype=mimir",
   },
   {
     "body": "",
@@ -111,7 +111,7 @@ exports[`useUpdateRuleGroupConfiguration should be able to move a Data Source ma
       ],
     ],
     "method": "GET",
-    "url": "http://localhost/api/ruler/mimir/api/v1/rules/test/test?subtype=mimir",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/__grafana_alerting_ruler_probe__/__grafana_alerting_ruler_probe__?subtype=mimir",
   },
   {
     "body": "",
