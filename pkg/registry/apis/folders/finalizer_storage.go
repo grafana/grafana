@@ -33,20 +33,26 @@ func (s *finalizerStorage) Delete(
 	options *metav1.DeleteOptions,
 ) (runtime.Object, bool, error) {
 	if options == nil || !dryrun.IsDryRun(options.DryRun) {
-		if err := s.ensureTerminationMetadata(ctx, name); err != nil {
+		if err := ensureTerminationMetadata(ctx, s.Store, name); err != nil {
 			return nil, false, err
 		}
 	}
 	return s.Store.Delete(ctx, name, deleteValidation, options)
 }
 
+// folderGetUpdater is the subset of the folder store used to backfill termination metadata.
+type folderGetUpdater interface {
+	rest.Getter
+	rest.Updater
+}
+
 // ensureTerminationMetadata stamps the cascade finalizer and terminating label before delete
 // proceeds. The finalizer blocks physical removal until children are gone; the label is what
 // the cascade watcher selects on, so it must be present before the delete sets the deletion
 // timestamp and the folder enters the watcher's filtered set.
-func (s *finalizerStorage) ensureTerminationMetadata(ctx context.Context, name string) error {
+func ensureTerminationMetadata(ctx context.Context, store folderGetUpdater, name string) error {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		obj, err := s.Get(ctx, name, &metav1.GetOptions{})
+		obj, err := store.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
@@ -71,7 +77,7 @@ func (s *finalizerStorage) ensureTerminationMetadata(ctx context.Context, name s
 			return nil
 		}
 
-		_, _, err = s.Update(
+		_, _, err = store.Update(
 			ctx,
 			name,
 			rest.DefaultUpdatedObjectInfo(updated),
