@@ -2645,11 +2645,20 @@ func TestIntegrationFolderCascadeDelete(t *testing.T) {
 		}
 	})
 
-	// Admission should have stamped the cascade finalizer on create.
-	root, err := client.Resource.Get(ctx, rootUID, metav1.GetOptions{})
-	require.NoError(t, err)
-	require.Contains(t, root.GetFinalizers(), cascadeDeleteFinalizer,
-		"cascade finalizer should be stamped on folder create when the flag is on")
+	// Admission should have stamped the cascade finalizer on every folder create.
+	for _, uid := range all {
+		got, err := client.Resource.Get(ctx, uid, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Contains(t, got.GetFinalizers(), cascadeDeleteFinalizer,
+			"cascade finalizer should be stamped on create for %q when the flag is on", uid)
+	}
+
+	// A normal (non-force) delete of a non-empty folder is rejected: cascade is opt-in via
+	// gracePeriodSeconds=0, so without it the empty-folder check still applies.
+	err := client.Resource.Delete(ctx, rootUID, metav1.DeleteOptions{})
+	require.Error(t, err, "non-empty folder delete without gracePeriodSeconds=0 should be rejected")
+	_, err = client.Resource.Get(ctx, rootUID, metav1.GetOptions{})
+	require.NoError(t, err, "root should still exist after the rejected non-force delete")
 
 	// Force-delete the (non-empty) root. This is opt-in via gracePeriodSeconds=0; the finalizer
 	// keeps the folder terminating until the watcher cascades the subtree.
@@ -2657,13 +2666,20 @@ func TestIntegrationFolderCascadeDelete(t *testing.T) {
 	require.NoError(t, client.Resource.Delete(ctx, rootUID, metav1.DeleteOptions{GracePeriodSeconds: &zero}))
 
 	// The whole subtree should eventually be garbage-collected by the cascade watcher.
-	require.Eventually(t, func() bool {
+	deadline := time.Now().Add(2 * time.Minute)
+	for {
+		var remaining []string
 		for _, uid := range all {
-			_, err := client.Resource.Get(ctx, uid, metav1.GetOptions{})
-			if !apierrors.IsNotFound(err) {
-				return false
+			if _, err := client.Resource.Get(ctx, uid, metav1.GetOptions{}); !apierrors.IsNotFound(err) {
+				remaining = append(remaining, uid)
 			}
 		}
-		return true
-	}, 2*time.Minute, time.Second, "cascade delete did not remove the whole folder subtree")
+		if len(remaining) == 0 {
+			break
+		}
+		if time.Now().After(deadline) {
+			require.FailNowf(t, "cascade delete did not complete", "folders still present after 2m: %v", remaining)
+		}
+		time.Sleep(time.Second)
+	}
 }
