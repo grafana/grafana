@@ -70,8 +70,31 @@ func (a *api) getFallbackStatus() string {
 	return "success"
 }
 
+// shouldStripLegacyAuth returns true when the operator enabled insecure_skip_legacy_auth_on_redirected_resources,
+// K8s resource-permission redirects are active, and this service is dashboards, folders, or teams.
+func (a *api) shouldStripLegacyAuth() bool {
+	if !a.cfg.RBAC.InsecureSkipLegacyAuthOnRedirectedResources {
+		return false
+	}
+	if !a.shouldUseK8sAPIs() {
+		return false
+	}
+	switch a.service.options.Resource {
+	case "dashboards", "folders", "teams":
+		return true
+	default:
+		return false
+	}
+}
+
 func (a *api) registerEndpoints() {
 	auth := accesscontrol.Middleware(a.ac)
+	maybeAuth := func(evaluator accesscontrol.Evaluator) web.Handler {
+		if a.shouldStripLegacyAuth() {
+			return func(_ *contextmodel.ReqContext) {}
+		}
+		return auth(evaluator)
+	}
 	licenseMW := a.service.options.LicenseMW
 	if licenseMW == nil {
 		licenseMW = nopMiddleware
@@ -103,17 +126,17 @@ func (a *api) registerEndpoints() {
 		actionRead := a.service.options.GetAction("read")
 		actionWrite := a.service.options.GetAction("write")
 		scope := a.service.options.GetScope(a.service.options.ResourceAttribute, accesscontrol.Parameter(":resourceID"))
-		r.Get("/description", auth(accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
-		r.Get("/:resourceID", resourceResolver, auth(accesscontrol.EvalPermission(actionRead, scope)), routing.Wrap(a.getPermissions))
-		r.Post("/:resourceID", resourceResolver, licenseMW, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setPermissions))
+		r.Get("/description", maybeAuth(accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
+		r.Get("/:resourceID", resourceResolver, maybeAuth(accesscontrol.EvalPermission(actionRead, scope)), routing.Wrap(a.getPermissions))
+		r.Post("/:resourceID", resourceResolver, licenseMW, maybeAuth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setPermissions))
 		if a.service.options.Assignments.Users {
-			r.Post("/:resourceID/users/:userID", licenseMW, resourceResolver, userUIDResolver, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setUserPermission))
+			r.Post("/:resourceID/users/:userID", licenseMW, resourceResolver, userUIDResolver, maybeAuth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setUserPermission))
 		}
 		if a.service.options.Assignments.Teams {
-			r.Post("/:resourceID/teams/:teamID", licenseMW, resourceResolver, teamUIDResolver, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setTeamPermission))
+			r.Post("/:resourceID/teams/:teamID", licenseMW, resourceResolver, teamUIDResolver, maybeAuth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setTeamPermission))
 		}
 		if a.service.options.Assignments.BuiltInRoles {
-			r.Post("/:resourceID/builtInRoles/:builtInRole", resourceResolver, licenseMW, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setBuiltinRolePermission))
+			r.Post("/:resourceID/builtInRoles/:builtInRole", resourceResolver, licenseMW, maybeAuth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setBuiltinRolePermission))
 		}
 	})
 }
@@ -221,6 +244,10 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 		teamPermissions, err := a.getTeamPermissionsFromMembers(c, c.Namespace, resourceID)
 		if err != nil {
 			span.RecordError(err)
+			// We skipped legacy auth, we must not fall back to legacy
+			if a.shouldStripLegacyAuth() {
+				return response.Err(err)
+			}
 			if errors.Is(err, ErrRestConfigNotAvailable) {
 				a.logger.Debug("k8s API not available for team permissions via team members, falling back to legacy", "error", err, "resourceID", resourceID)
 			} else {
@@ -242,6 +269,10 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 			return response.JSON(http.StatusOK, k8sPermissions)
 		}
 		span.RecordError(err)
+		// We skipped legacy auth, we must not fall back to legacy
+		if a.shouldStripLegacyAuth() {
+			return response.Err(err)
+		}
 		if errors.Is(err, ErrRestConfigNotAvailable) {
 			a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
 		} else {
@@ -380,6 +411,10 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 			if errors.Is(err, ErrExternalTeamMember) {
 				return response.Err(err)
 			}
+			// We skipped legacy auth, we must not fall back to legacy
+			if a.shouldStripLegacyAuth() {
+				return response.Err(err)
+			}
 			if errors.Is(err, ErrRestConfigNotAvailable) {
 				a.logger.Debug("k8s API not available for team permissions via team members, continuing with legacy", "error", err, "resourceID", resourceID)
 			} else {
@@ -397,6 +432,10 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 			return permissionSetResponse(cmd)
 		}
 		span.RecordError(err)
+		// We skipped legacy auth, we must not fall back to legacy
+		if a.shouldStripLegacyAuth() {
+			return response.Err(err)
+		}
 		if errors.Is(err, ErrRestConfigNotAvailable) {
 			a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
 		} else {
@@ -479,6 +518,10 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 			return permissionSetResponse(cmd)
 		}
 		span.RecordError(err)
+		// We skipped legacy auth, we must not fall back to legacy
+		if a.shouldStripLegacyAuth() {
+			return response.Err(err)
+		}
 		if errors.Is(err, ErrRestConfigNotAvailable) {
 			a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
 		} else {
@@ -558,6 +601,10 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 			return permissionSetResponse(cmd)
 		}
 		span.RecordError(err)
+		// We skipped legacy auth, we must not fall back to legacy
+		if a.shouldStripLegacyAuth() {
+			return response.Err(err)
+		}
 		if errors.Is(err, ErrRestConfigNotAvailable) {
 			a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
 		}
@@ -630,6 +677,10 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 			return response.Success("Permissions updated")
 		}
 		span.RecordError(err)
+		// We skipped legacy auth, we must not fall back to legacy
+		if a.shouldStripLegacyAuth() {
+			return response.Err(err)
+		}
 		if errors.Is(err, ErrRestConfigNotAvailable) {
 			a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
 		}

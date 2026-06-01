@@ -17,8 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -676,6 +678,136 @@ func setPermission(t *testing.T, server *web.Mux, resource, resourceID, permissi
 	server.ServeHTTP(recorder, req)
 
 	return recorder
+}
+
+func TestIntegrationApi_InsecureSkipLegacyAuth_stripsLegacyAcOnDescription(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	opts := Options{
+		Resource:          "dashboards",
+		ResourceAttribute: "id",
+		Assignments: Assignments{
+			Users: true,
+		},
+		PermissionsToActions: map[string][]string{"View": {"dashboards:read"}},
+	}
+
+	cfg := setting.NewCfg()
+	cfg.RBAC.InsecureSkipLegacyAuthOnRedirectedResources = true
+
+	features := featuremgmt.WithFeatures(
+		featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect,
+		featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
+	)
+
+	service, _, _ := setupTestEnvironmentWithCfg(t, opts, cfg, features)
+	noPermsUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{}}
+	server := setupTestServer(t, noPermsUser, service)
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/description", opts.Resource), nil)
+	require.NoError(t, err)
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var dto Description
+	require.NoError(t, json.NewDecoder(rec.Body).Decode(&dto))
+	assert.NotEmpty(t, dto.Permissions)
+}
+
+func TestIntegrationApi_InsecureSkipLegacyAuth_dashboards_keepsLegacyAcWithoutOpt(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	opts := Options{
+		Resource:          "dashboards",
+		ResourceAttribute: "id",
+		Assignments:       Assignments{Users: true},
+		PermissionsToActions: map[string][]string{
+			"View": {"dashboards:read"},
+		},
+	}
+
+	service, _, _ := setupTestEnvironmentWithCfg(t, opts, setting.NewCfg(),
+		featuremgmt.WithFeatures(
+			featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect,
+			featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
+		))
+
+	noPermsUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{}}
+	server := setupTestServer(t, noPermsUser, service)
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/description", opts.Resource), nil)
+	require.NoError(t, err)
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusForbidden, rec.Code)
+}
+
+func TestIntegrationApi_InsecureSkipLegacyAuth_nonAllowlistedResourceKeepsLegacyAc(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	opts := Options{
+		Resource:          "librarypanels",
+		ResourceAttribute: "uid",
+		Assignments:       Assignments{Users: true},
+		PermissionsToActions: map[string][]string{
+			"View": {"librarypanels:read"},
+		},
+	}
+	cfg := setting.NewCfg()
+	cfg.RBAC.InsecureSkipLegacyAuthOnRedirectedResources = true
+	features := featuremgmt.WithFeatures(
+		featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect,
+		featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
+	)
+
+	service, _, _ := setupTestEnvironmentWithCfg(t, opts, cfg, features)
+
+	noPermsUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{}}
+	server := setupTestServer(t, noPermsUser, service)
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/description", opts.Resource), nil)
+	require.NoError(t, err)
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusForbidden, rec.Code)
+}
+
+func TestIntegrationApi_InsecureSkipLegacyAuth_k8sFailureReturnsErrorWithoutLegacyFallback(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	opts := Options{
+		Resource:          "dashboards",
+		ResourceAttribute: "id",
+		Assignments: Assignments{
+			Users: true,
+		},
+		PermissionsToActions: map[string][]string{"View": {"dashboards:read"}},
+	}
+	cfg := setting.NewCfg()
+	cfg.RBAC.InsecureSkipLegacyAuthOnRedirectedResources = true
+	features := featuremgmt.WithFeatures(
+		featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect,
+		featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
+	)
+
+	service, _, _ := setupTestEnvironmentWithCfg(t, opts, cfg, features)
+	withDashboardPermRead := &user.SignedInUser{
+		OrgID:       1,
+		Permissions: map[int64]map[string][]string{1: {"dashboards.permissions:read": {"dashboards:id:1"}}},
+	}
+
+	server := setupTestServer(t, withDashboardPermRead, service)
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/1", opts.Resource), nil)
+	require.NoError(t, err)
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 }
 
 func checkSeededPermissions(t *testing.T, permissions []resourcePermissionDTO) {

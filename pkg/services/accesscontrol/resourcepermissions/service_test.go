@@ -708,9 +708,14 @@ func TestIsActionSetEnabledResource_ServiceAccount(t *testing.T) {
 
 func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, team.Service) {
 	t.Helper()
+	return setupTestEnvironmentWithCfg(t, ops, setting.NewCfg(), featuremgmt.WithFeatures())
+}
+
+func setupTestEnvironmentWithCfg(t *testing.T, ops Options, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Service, user.Service, team.Service) {
+	t.Helper()
+	require.NotNil(t, cfg)
 
 	sql := db.InitTestDB(t)
-	cfg := setting.NewCfg()
 	tracer := tracing.InitializeTracerForTest()
 
 	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracer, nil)
@@ -728,7 +733,6 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	acService := &actest.FakeService{}
-	features := featuremgmt.WithFeatures()
 	ac := acimpl.ProvideAccessControl(features)
 	service, err := New(
 		cfg, ops, features, routing.NewRouteRegister(), license,

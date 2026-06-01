@@ -460,6 +460,10 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = rbacSect.NewKey("single_organization", "true")
 		require.NoError(t, err)
 	}
+	if opts.RBACInsecureSkipLegacyAuthOnRedirectedResources {
+		_, err = rbacSect.NewKey("insecure_skip_legacy_auth_on_redirected_resources", "true")
+		require.NoError(t, err)
+	}
 
 	if opts.DisableAuthZClientCache {
 		authzSect, err := cfg.NewSection("authorization")
@@ -1015,6 +1019,7 @@ type GrafanaOpts struct {
 	EnableRecordingRules                                 bool
 	EnableSCIM                                           bool
 	RBACSingleOrganization                               bool
+	RBACInsecureSkipLegacyAuthOnRedirectedResources      bool
 	APIServerRuntimeConfig                               string
 	DisableControllers                                   bool
 	DisableDBCleanup                                     bool
