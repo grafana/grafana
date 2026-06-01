@@ -373,3 +373,151 @@ func TestCascadeWatcher_enqueueParent_dedupesSiblings(t *testing.T) {
 
 	require.Equal(t, 1, w.queue.Len())
 }
+
+// fakeFolderTree is an in-memory model of a folder subtree that implements both folderSearcher
+// and folderMutator, so the cascade recursion can be exercised end to end without an apiserver.
+// It mirrors the real lifecycle: deleting a folder that has the cascade finalizer marks it
+// terminating (sets a deletion timestamp) rather than removing it; removing the finalizer is what
+// actually garbage-collects it, which in turn re-enqueues its parent (as the informer DeleteFunc
+// would).
+type fakeFolderTree struct {
+	folders     map[string]*fakeFolder // name -> folder; absent means garbage-collected
+	enqueue     func(name string)      // mirrors the workqueue: schedules a reconcile
+	deleteOrder []string               // folders garbage-collected, in order
+	violations  []string               // folders whose finalizer was removed while children remained
+}
+
+type fakeFolder struct {
+	parent      string
+	terminating bool
+	finalizer   bool
+}
+
+func (ft *fakeFolderTree) Search(_ context.Context, _ int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	parent := in.Options.Fields[0].Values[0]
+	rows := make([]*resourcepb.ResourceTableRow, 0)
+	for name, f := range ft.folders {
+		if f.parent != parent {
+			continue
+		}
+		var cell []byte
+		if f.terminating {
+			cell = []byte(folders.TerminatingLabelValue)
+		}
+		rows = append(rows, &resourcepb.ResourceTableRow{
+			Key:   &resourcepb.ResourceKey{Name: name, Resource: "folder"},
+			Cells: [][]byte{cell},
+		})
+	}
+	return &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: []*resourcepb.ResourceTableColumnDefinition{
+				{Name: terminatingLabelField, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+			},
+			Rows: rows,
+		},
+	}, nil
+}
+
+func (ft *fakeFolderTree) Delete(_ context.Context, _, name string, _ *int64) error {
+	f, ok := ft.folders[name]
+	if !ok {
+		return nil
+	}
+	if !f.terminating {
+		// Folder carries the cascade finalizer, so delete only starts termination.
+		f.terminating = true
+		ft.enqueue(name)
+	}
+	return nil
+}
+
+func (ft *fakeFolderTree) RemoveCascadeFinalizer(_ context.Context, _, name string) error {
+	f, ok := ft.folders[name]
+	if !ok {
+		return nil
+	}
+	if ft.childrenOf(name) > 0 {
+		ft.violations = append(ft.violations, name)
+	}
+	delete(ft.folders, name)
+	ft.deleteOrder = append(ft.deleteOrder, name)
+	if f.parent != "" {
+		ft.enqueue(f.parent) // mirrors the informer DeleteFunc -> enqueueParent
+	}
+	return nil
+}
+
+func (ft *fakeFolderTree) childrenOf(name string) int {
+	n := 0
+	for _, f := range ft.folders {
+		if f.parent == name {
+			n++
+		}
+	}
+	return n
+}
+
+func (ft *fakeFolderTree) folderCR(name string) *foldersv1.Folder {
+	f := ft.folders[name]
+	obj := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "org-12"}}
+	if f.finalizer {
+		obj.Finalizers = []string{folders.CascadeDeleteFinalizer}
+	}
+	if f.terminating {
+		now := metav1.NewTime(time.Now())
+		obj.DeletionTimestamp = &now
+	}
+	return obj
+}
+
+func TestCascadeWatcher_reconcileFolder_cascadesWholeSubtree(t *testing.T) {
+	// root
+	// |- a
+	// |  |- a1
+	// |  |- a2
+	// |     |- a2x
+	// |- b
+	//    |- b1
+	parents := map[string]string{
+		"root": "",
+		"a":    "root",
+		"b":    "root",
+		"a1":   "a",
+		"a2":   "a",
+		"a2x":  "a2",
+		"b1":   "b",
+	}
+	ft := &fakeFolderTree{folders: map[string]*fakeFolder{}}
+	for name, parent := range parents {
+		// Every folder was created with the flag on, so it already carries the finalizer.
+		ft.folders[name] = &fakeFolder{parent: parent, finalizer: true}
+	}
+
+	var queue []string
+	ft.enqueue = func(name string) { queue = append(queue, name) }
+
+	w := &CascadeWatcher{
+		folderSearch:  ft,
+		folderMutator: ft,
+		log:           slog.Default(),
+	}
+
+	// User force-deletes the root: it starts terminating and is scheduled for reconcile.
+	ft.folders["root"].terminating = true
+	ft.enqueue("root")
+
+	for i := 0; len(queue) > 0; i++ {
+		require.Less(t, i, 1000, "cascade did not converge")
+		name := queue[0]
+		queue = queue[1:]
+		if _, ok := ft.folders[name]; !ok {
+			continue // already garbage-collected
+		}
+		require.NoError(t, w.reconcileFolder(context.Background(), ft.folderCR(name)))
+	}
+
+	require.Empty(t, ft.folders, "entire subtree should be garbage-collected")
+	require.Empty(t, ft.violations, "a folder's finalizer must only be removed once it has no children")
+	require.ElementsMatch(t, []string{"root", "a", "b", "a1", "a2", "a2x", "b1"}, ft.deleteOrder)
+}
