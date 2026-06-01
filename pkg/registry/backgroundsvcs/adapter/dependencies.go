@@ -70,24 +70,17 @@ const (
 // unless they are explicitly listed in this map.
 func dependencyMap() map[string][]string {
 	return map[string][]string{
-		SQLStore:         {},
-		Tracing:          {SQLStore},
-		GrafanaAPIServer: {Tracing},
-		PluginStore:      {GrafanaAPIServer},
-		PluginInstaller:  {PluginStore},
-		IAMRolesSyncer:   {GrafanaAPIServer},
-		FixedRolesLoader: {PluginInstaller, IAMRolesSyncer},
-		Provisioning:     {PluginStore, PluginInstaller, FixedRolesLoader},
-		InstallSync:      {Provisioning},
-		// The basic-role aggregator runs a single aggregation pass on
-		// startup and must observe the GlobalRoles produced by the seeder,
-		// so it depends on GlobalRoleSeeder reaching Running. GlobalRoleSeeder
-		// itself is auto-registered as a background service depending on Core.
-		BasicRoleAggregator: {Core, GlobalRoleSeeder},
+		SQLStore:            {},
+		Tracing:             {SQLStore},
+		GrafanaAPIServer:    {Tracing},
+		PluginStore:         {GrafanaAPIServer},
+		PluginInstaller:     {PluginStore},
+		IAMRolesSyncer:      {GrafanaAPIServer},
+		FixedRolesLoader:    {PluginInstaller, IAMRolesSyncer},
+		Provisioning:        {PluginStore, PluginInstaller, FixedRolesLoader},
+		InstallSync:         {Provisioning},
 		Core:                {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync},
-		// BasicRoleAggregator is listed explicitly (rather than being
-		// auto-added) so it lands in the BackgroundServices closure even
-		// though it is keyed in the dependency map above.
-		BackgroundServices: {Core, BasicRoleAggregator},
+		BasicRoleAggregator: {Core, GlobalRoleSeeder},
+		BackgroundServices:  {Core, BasicRoleAggregator},
 	}
 }

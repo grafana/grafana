@@ -1019,23 +1019,19 @@ type GrafanaOpts struct {
 	EnableRecordingRules                                 bool
 	EnableSCIM                                           bool
 	RBACSingleOrganization                               bool
-	// BasicRoleAggregatorEnabled, if true, sets `[rbac] basic_role_aggregator_enabled`
-	// in the test server's ini, turning on the enterprise basic-role
-	// aggregator (off by default). Tests that depend on the aggregator
-	// populating the basic GlobalRoles must set this.
-	BasicRoleAggregatorEnabled          bool
-	APIServerRuntimeConfig              string
-	DisableControllers                  bool
-	DisableDBCleanup                    bool
-	MigrationParquetBuffer              bool
-	EnableSQLKVBackend                  bool
-	SecretsManagerEnableDBMigrations    bool
-	OpenFeatureAPIEnabled               bool
-	DisableAuthZClientCache             bool
-	ZanzanaReconciliationInterval       time.Duration
-	ZanzanaReconcilerMode               setting.ZanzanaReconcilerMode
-	DisableZanzanaCache                 bool
-	DisableZanzanaServerCheckQueryCache bool
+	BasicRoleAggregatorEnabled                           bool
+	APIServerRuntimeConfig                               string
+	DisableControllers                                   bool
+	DisableDBCleanup                                     bool
+	MigrationParquetBuffer                               bool
+	EnableSQLKVBackend                                   bool
+	SecretsManagerEnableDBMigrations                     bool
+	OpenFeatureAPIEnabled                                bool
+	DisableAuthZClientCache                              bool
+	ZanzanaReconciliationInterval                        time.Duration
+	ZanzanaReconcilerMode                                setting.ZanzanaReconcilerMode
+	DisableZanzanaCache                                  bool
+	DisableZanzanaServerCheckQueryCache                  bool
 
 	// If set to 0, the default (2) is used.
 	DBMaxConns int
