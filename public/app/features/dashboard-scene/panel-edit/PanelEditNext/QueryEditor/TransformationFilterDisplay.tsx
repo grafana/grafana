@@ -7,12 +7,6 @@ import { DataTopic } from '@grafana/schema';
 import { Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
-import {
-  useActionsContext,
-  usePanelContext,
-  useQueryEditorUIContext,
-  useQueryRunnerContext,
-} from './QueryEditorContext';
 import { usePreviousTransformationOutput } from './hooks/usePreviousTransformationOutput';
 import { type Transformation } from './types';
 
@@ -120,22 +114,6 @@ export function TransformationFilterEditor({
         </Stack>
       </Field>
     </div>
-  );
-}
-
-export function TransformationFilterDisplay() {
-  const { selectedTransformation } = useQueryEditorUIContext();
-  const { data } = useQueryRunnerContext();
-  const { transformations } = usePanelContext();
-  const { updateTransformation } = useActionsContext();
-
-  return (
-    <TransformationFilterEditor
-      transformation={selectedTransformation}
-      transformations={transformations}
-      queryData={data}
-      onUpdate={updateTransformation}
-    />
   );
 }
 
