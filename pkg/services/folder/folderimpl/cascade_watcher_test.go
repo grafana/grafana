@@ -85,6 +85,37 @@ func TestListDirectChildFolders_search(t *testing.T) {
 	require.Equal(t, "folder1", gotParent)
 }
 
+func TestListDirectChildFolders_marksTerminatingFromLabel(t *testing.T) {
+	var gotReturnFields []string
+	searcher := &mockFolderSearcher{
+		search: func(_ context.Context, _ int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+			gotReturnFields = in.Fields
+			return &resourcepb.ResourceSearchResponse{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{
+						{Name: terminatingLabelField, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+					},
+					Rows: []*resourcepb.ResourceTableRow{
+						{Key: &resourcepb.ResourceKey{Name: "live", Resource: "folder"}, Cells: [][]byte{nil}},
+						{Key: &resourcepb.ResourceKey{Name: "terminating", Resource: "folder"}, Cells: [][]byte{[]byte(folders.TerminatingLabelValue)}},
+					},
+				},
+			}, nil
+		},
+	}
+
+	children, err := listDirectChildFolders(context.Background(), searcher, 12, "parent")
+	require.NoError(t, err)
+
+	// The terminating label must be requested as a return field; the dedup depends on the search
+	// backend echoing it back per hit.
+	require.Contains(t, gotReturnFields, terminatingLabelField)
+	require.Equal(t, []childFolder{
+		{name: "live", terminating: false},
+		{name: "terminating", terminating: true},
+	}, children)
+}
+
 func TestCascadeWatcher_Run_disabledByFeatureFlag(t *testing.T) {
 	w := ProvideCascadeWatcher(nil, apiserver.WithoutRestConfig, nil, nil)
 	w.flagEnabled = func(context.Context) bool { return false }
