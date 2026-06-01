@@ -56,7 +56,7 @@ func (m *mockFolderSearcher) Search(ctx context.Context, orgID int64, in *resour
 	return m.search(ctx, orgID, in)
 }
 
-func TestListDirectChildFolderNames_search(t *testing.T) {
+func TestListDirectChildFolders_search(t *testing.T) {
 	var gotOrgID int64
 	var gotParent string
 	searcher := &mockFolderSearcher{
@@ -78,9 +78,9 @@ func TestListDirectChildFolderNames_search(t *testing.T) {
 		},
 	}
 
-	names, err := listDirectChildFolderNames(context.Background(), searcher, 12, "folder1")
+	children, err := listDirectChildFolders(context.Background(), searcher, 12, "folder1")
 	require.NoError(t, err)
-	require.Equal(t, []string{"folder2", "folder3"}, names)
+	require.Equal(t, []childFolder{{name: "folder2"}, {name: "folder3"}}, children)
 	require.Equal(t, int64(12), gotOrgID)
 	require.Equal(t, "folder1", gotParent)
 }
@@ -232,6 +232,37 @@ func TestCascadeWatcher_onFolder_removesFinalizerWhenEmpty(t *testing.T) {
 
 	require.Empty(t, mut.deleted)
 	require.Equal(t, []string{"leaf"}, mut.finalizerRemove)
+}
+
+func TestCascadeWatcher_onFolder_skipsAlreadyTerminatingChildren(t *testing.T) {
+	searcher := &mockFolderSearcher{
+		search: func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+			return &resourcepb.ResourceSearchResponse{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{
+						{Name: terminatingLabelField, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+					},
+					Rows: []*resourcepb.ResourceTableRow{
+						{Key: &resourcepb.ResourceKey{Name: "live-child", Resource: "folder"}, Cells: [][]byte{nil}},
+						{Key: &resourcepb.ResourceKey{Name: "terminating-child", Resource: "folder"}, Cells: [][]byte{[]byte(folders.TerminatingLabelValue)}},
+					},
+				},
+			}, nil
+		},
+	}
+	mut := &recordingFolderMutator{}
+	w := &CascadeWatcher{
+		folderSearch:  searcher,
+		folderMutator: mut,
+		log:           slog.Default(),
+	}
+
+	w.onFolder(newTerminatingFolder("parent"))
+
+	// Only the non-terminating child is (re-)deleted; the terminating one is already draining.
+	require.Equal(t, []string{"live-child"}, mut.deletedNames())
+	// Both children still exist, so the parent keeps its finalizer.
+	require.Empty(t, mut.finalizerRemove)
 }
 
 func TestCascadeWatcher_onFolder_skipsWhenNotTerminating(t *testing.T) {
