@@ -3422,16 +3422,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/tempo/_importedDependencies/datasources/prometheus/language_utils.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/tempo/_importedDependencies/datasources/prometheus/types.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 3
-    }
-  },
   "public/app/plugins/datasource/tempo/configuration/TraceQLSearchSettings.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1

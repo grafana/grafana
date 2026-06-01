@@ -12,6 +12,8 @@ declare module "@openfeature/core" {
   export type BooleanFlagKey =
     | "lokiShardSplitting"
     | "faroSessionReplay"
+    | "queryHistory.localOnly"
+    | "queryHistory.recentQueriesUI"
     | "provisioningFolderMetadata"
     | "provisioning.readmes"
     | "grafana.kubernetesAnnotationsClient"
@@ -49,7 +51,8 @@ declare module "@openfeature/core" {
     | "alerting.syncExternalAlertmanager"
     | "grafana.enableScopesFirstMode"
     | "grafana.logLevelInference"
-    | "plugins.initDataSourcesAsync";
+    | "plugins.initDataSourcesAsync"
+    | "grafana.panelEditNextFeedbackEvent";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

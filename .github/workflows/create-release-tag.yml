@@ -1,0 +1,49 @@
+name: Create Release Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag name (e.g. v10.0.0)'
+        required: true
+        type: string
+      message:
+        description: 'Tag message (defaults to tag name if not provided)'
+        required: false
+        type: string
+      commit:
+        description: 'Commit SHA to tag'
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: write
+    concurrency:
+      group: create-release-tag-${{ inputs.tag }}
+      cancel-in-progress: false
+    steps:
+      - name: Create annotated tag
+        env:
+          TAG: ${{ inputs.tag }}
+          TAG_MESSAGE: ${{ inputs.message }}
+          COMMIT_SHA: ${{ inputs.commit }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag_sha=$(gh api "repos/${REPO}/git/tags" \
+            --method POST \
+            -f "tag=${TAG}" \
+            -f "message=${TAG_MESSAGE:-${TAG}}" \
+            -f "object=${COMMIT_SHA}" \
+            -f type="commit" \
+            --jq '.sha')
+
+          gh api "repos/${REPO}/git/refs" \
+            --method POST \
+            -f "ref=refs/tags/${TAG}" \
+            -f "sha=${tag_sha}"
