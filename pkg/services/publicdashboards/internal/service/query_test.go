@@ -1504,22 +1504,21 @@ func TestSanitizeData(t *testing.T) {
 		require.Len(t, panels, 1)
 		targets := simplejson.NewFromAny(panels[0]).Get("targets").MustArray()
 		require.Len(t, targets, 1)
-		target := simplejson.NewFromAny(targets[0])
+		targetMap := simplejson.NewFromAny(targets[0]).MustMap()
 
-		// query expression fields must be stripped
-		assert.Empty(t, target.Get("expr").MustString(), "expr should be stripped")
-		assert.Empty(t, target.Get("rawSql").MustString(), "rawSql should be stripped")
-		assert.Empty(t, target.Get("query").MustString(), "query should be stripped")
-		assert.Empty(t, target.Get("rawQuery").MustString(), "rawQuery should be stripped")
-		assert.Empty(t, target.Get("someNewDatasourceQueryField").MustString(), "unknown fields should be stripped")
+		// query expression fields must be absent from the map
+		for _, queryKey := range []string{"expr", "rawSql", "query", "rawQuery", "someNewDatasourceQueryField"} {
+			_, exists := targetMap[queryKey]
+			assert.False(t, exists, "query field %q should be stripped from target", queryKey)
+		}
 
-		// safe metadata fields must be preserved
-		assert.Equal(t, "A", target.Get("refId").MustString(), "refId should be preserved")
-		assert.Equal(t, "prometheus", target.Get("datasource").MustString(), "datasource should be preserved")
-		assert.Equal(t, "1m", target.Get("interval").MustString(), "interval should be preserved")
-		assert.Equal(t, "{{instance}}", target.Get("legendFormat").MustString(), "legendFormat should be preserved")
-		assert.Equal(t, "time_series", target.Get("format").MustString(), "format should be preserved")
-		assert.Equal(t, 100, target.Get("maxDataPoints").MustInt(), "maxDataPoints should be preserved")
+		// safe metadata fields must be retained
+		assert.Equal(t, "A", targetMap["refId"], "refId should be preserved")
+		assert.Equal(t, "prometheus", targetMap["datasource"], "datasource should be preserved")
+		assert.Equal(t, "1m", targetMap["interval"], "interval should be preserved")
+		assert.Equal(t, "{{instance}}", targetMap["legendFormat"], "legendFormat should be preserved")
+		assert.Equal(t, "time_series", targetMap["format"], "format should be preserved")
+		assert.Equal(t, 100, targetMap["maxDataPoints"], "maxDataPoints should be preserved")
 	})
 
 	t.Run("recursively sanitizes targets in collapsed rows", func(t *testing.T) {
@@ -1551,9 +1550,10 @@ func TestSanitizeData(t *testing.T) {
 		require.Len(t, innerPanels, 1)
 		targets := simplejson.NewFromAny(innerPanels[0]).Get("targets").MustArray()
 		require.Len(t, targets, 1)
-		t1 := simplejson.NewFromAny(targets[0])
-		assert.Empty(t, t1.Get("rawQuery").MustString(), "rawQuery should be stripped from collapsed row target")
-		assert.Equal(t, "A", t1.Get("refId").MustString(), "refId should be preserved in collapsed row target")
+		t1Map := simplejson.NewFromAny(targets[0]).MustMap()
+		_, rawQueryExists := t1Map["rawQuery"]
+		assert.False(t, rawQueryExists, "rawQuery should be stripped from collapsed row target")
+		assert.Equal(t, "A", t1Map["refId"], "refId should be preserved in collapsed row target")
 	})
 
 	t.Run("does not recurse into non-collapsed rows", func(t *testing.T) {
@@ -1676,22 +1676,25 @@ func TestSanitizeDataV2(t *testing.T) {
 			Get("spec").Get("data").Get("spec").Get("queries").MustArray()
 		require.Len(t, panel1Queries, 2)
 
-		q1spec := simplejson.NewFromAny(panel1Queries[0]).Get("spec").Get("query").Get("spec")
-		assert.Empty(t, q1spec.Get("expr").MustString())
-		assert.Equal(t, "A", q1spec.Get("refId").MustString())
-		assert.Equal(t, "prometheus", q1spec.Get("datasource").MustString())
+		q1map := simplejson.NewFromAny(panel1Queries[0]).Get("spec").Get("query").Get("spec").MustMap()
+		_, exprExists := q1map["expr"]
+		assert.False(t, exprExists, "expr should be stripped")
+		assert.Equal(t, "A", q1map["refId"], "refId should be preserved")
+		assert.Equal(t, "prometheus", q1map["datasource"], "datasource should be preserved")
 
-		q2spec := simplejson.NewFromAny(panel1Queries[1]).Get("spec").Get("query").Get("spec")
-		assert.Empty(t, q2spec.Get("rawSql").MustString())
-		assert.Equal(t, "B", q2spec.Get("refId").MustString())
-		assert.Equal(t, "time_series", q2spec.Get("format").MustString())
+		q2map := simplejson.NewFromAny(panel1Queries[1]).Get("spec").Get("query").Get("spec").MustMap()
+		_, rawSqlExists := q2map["rawSql"]
+		assert.False(t, rawSqlExists, "rawSql should be stripped")
+		assert.Equal(t, "B", q2map["refId"], "refId should be preserved")
+		assert.Equal(t, "time_series", q2map["format"], "format should be preserved")
 
 		panel2Queries := simplejson.NewFromAny(elements["panel-2"]).
 			Get("spec").Get("data").Get("spec").Get("queries").MustArray()
 		require.Len(t, panel2Queries, 1)
-		q3spec := simplejson.NewFromAny(panel2Queries[0]).Get("spec").Get("query").Get("spec")
-		assert.Empty(t, q3spec.Get("query").MustString())
-		assert.Equal(t, "A", q3spec.Get("refId").MustString())
+		q3map := simplejson.NewFromAny(panel2Queries[0]).Get("spec").Get("query").Get("spec").MustMap()
+		_, queryExists := q3map["query"]
+		assert.False(t, queryExists, "query should be stripped")
+		assert.Equal(t, "A", q3map["refId"], "refId should be preserved")
 	})
 
 	t.Run("strips unknown fields and preserves allowlisted fields in v2 query specs", func(t *testing.T) {
@@ -1730,11 +1733,13 @@ func TestSanitizeDataV2(t *testing.T) {
 		panel1Queries := simplejson.NewFromAny(elements["panel-1"]).
 			Get("spec").Get("data").Get("spec").Get("queries").MustArray()
 		require.Len(t, panel1Queries, 1)
-		q1spec := simplejson.NewFromAny(panel1Queries[0]).Get("spec").Get("query").Get("spec")
-		assert.Empty(t, q1spec.Get("rawQuery").MustString(), "rawQuery should be stripped")
-		assert.Empty(t, q1spec.Get("someNewDatasourceQueryField").MustString(), "unknown fields should be stripped")
-		assert.Equal(t, "A", q1spec.Get("refId").MustString(), "refId should be preserved")
-		assert.Equal(t, "time_series", q1spec.Get("format").MustString(), "format should be preserved")
+		q1map := simplejson.NewFromAny(panel1Queries[0]).Get("spec").Get("query").Get("spec").MustMap()
+		_, rawQueryExists := q1map["rawQuery"]
+		_, unknownExists := q1map["someNewDatasourceQueryField"]
+		assert.False(t, rawQueryExists, "rawQuery should be stripped")
+		assert.False(t, unknownExists, "unknown fields should be stripped")
+		assert.Equal(t, "A", q1map["refId"], "refId should be preserved")
+		assert.Equal(t, "time_series", q1map["format"], "format should be preserved")
 	})
 
 	t.Run("does not panic when queries key is missing", func(t *testing.T) {

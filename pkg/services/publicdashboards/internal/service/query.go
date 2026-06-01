@@ -442,14 +442,19 @@ func sanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
 	}
 }
 
-// targetQueryFieldAllowList contains the set of target fields that are safe to
-// expose to public dashboard viewers. Any field NOT in this list is considered a
-// potential query expression and will be stripped before the dashboard is returned.
+// targetSafeFieldAllowList contains the set of target metadata fields that are safe
+// to expose to public dashboard viewers. Any top-level field NOT in this list is
+// considered a potential raw query expression and will be stripped before the
+// dashboard is returned.
 //
-// Using an allowList (rather than a denylist) ensures that new datasource-specific
+// Note: sanitization is intentionally shallow — only top-level target keys are
+// evaluated. Known nested objects (e.g. "datasource": {"uid":..., "type":...}) are
+// retained verbatim; their subfields are standard Grafana metadata, not query text.
+//
+// Using an allowlist (rather than a denylist) ensures that new datasource-specific
 // query fields (e.g. rawQuery, rawSql, expr, query, flux, etc.) are automatically
 // removed without requiring a code change here each time.
-var targetQueryFieldAllowList = map[string]struct{}{
+var targetSafeFieldAllowList = map[string]struct{}{
 	"refId":          {},
 	"datasource":     {},
 	"exemplar":       {},
@@ -467,12 +472,16 @@ var targetQueryFieldAllowList = map[string]struct{}{
 	"expression": {},
 }
 
-// sanitizeTarget removes any fields from a target object that are not in
-// targetQueryFieldAllowList, protecting against raw query text exposure.
+// sanitizeTarget removes any top-level fields from a target object that are not in
+// targetSafeFieldAllowList, protecting against raw query text exposure.
 func sanitizeTarget(target *simplejson.Json) {
-	for key := range target.MustMap() {
-		if _, safe := targetQueryFieldAllowList[key]; !safe {
-			target.Del(key)
+	m, err := target.Map()
+	if err != nil {
+		return
+	}
+	for key := range m {
+		if _, safe := targetSafeFieldAllowList[key]; !safe {
+			delete(m, key)
 		}
 	}
 }
