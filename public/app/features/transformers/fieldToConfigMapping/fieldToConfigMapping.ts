@@ -275,7 +275,7 @@ function toNumericOrUndefined(value: unknown) {
 function toDecimalsOrUndefined(value: unknown) {
   const numeric = anyToNumber(value);
 
-  if (!Number.isInteger(numeric) || numeric < 0 || numeric > 20) {
+  if (!Number.isInteger(numeric) || numeric < 0 || numeric > 15) {
     return;
   }
 

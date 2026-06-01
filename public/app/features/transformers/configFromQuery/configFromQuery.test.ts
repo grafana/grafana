@@ -89,7 +89,7 @@ describe('config from data', () => {
     expect(results[0].fields[1].config.decimals).toBe(5);
   });
 
-  it.each([-3, 2.5, 21])('skips invalid decimals value %s', (decimals) => {
+  it.each([-3, 2.5, 16])('skips invalid decimals value %s', (decimals) => {
     const invalidConfig = toDataFrame({
       fields: [
         { name: 'Time', type: FieldType.time, values: [1] },
