@@ -197,7 +197,7 @@ func (c *ExtraConfiguration) GetAlertmanagerConfig() (PostableApiAlertingConfig,
 		}
 		config.Receivers = append(config.Receivers, grafana)
 	}
-	return config, err
+	return config, nil
 }
 
 func (c *ExtraConfiguration) parsePrometheusConfig() (config.Config, error) {
