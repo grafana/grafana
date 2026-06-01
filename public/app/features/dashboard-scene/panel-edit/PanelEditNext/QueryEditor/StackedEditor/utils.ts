@@ -36,6 +36,25 @@ export function getStackedQueryEditorType(query: DataQuery): QueryEditorType.Que
   return getEditorType(query) === QueryEditorType.Expression ? QueryEditorType.Expression : QueryEditorType.Query;
 }
 
+/**
+ * The primary selected card as an identity-only {@link StackedEditorItem}. Transformations take
+ * precedence over queries: they sit downstream in the pipeline, so when both are selected the user
+ * is most likely working on the transformation step. Single source of truth for that rule, shared
+ * by the stacked editor (what to pin) and the sidebar (which card to keep in view).
+ */
+export function getSelectedStackedItem(
+  selectedQuery: DataQuery | null,
+  selectedTransformation: Transformation | null
+): StackedEditorItem | null {
+  if (selectedTransformation) {
+    return { type: QueryEditorType.Transformation, id: selectedTransformation.transformId };
+  }
+  if (selectedQuery) {
+    return { type: getStackedQueryEditorType(selectedQuery), id: selectedQuery.refId };
+  }
+  return null;
+}
+
 export function isCurrentStackedItem({
   item,
   selectedQueryRefId,

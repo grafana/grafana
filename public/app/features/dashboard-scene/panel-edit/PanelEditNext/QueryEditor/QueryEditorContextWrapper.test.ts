@@ -334,23 +334,17 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     });
   });
 
-  it('plain query selection in stacked mode requests scrolling to that query', () => {
+  it('selects a clicked query as a single selection in stacked mode (scrolling is the renderer’s job)', () => {
     const dataPane = makeMockDataPane();
     const { result } = renderWithWrapper(dataPane);
-
-    // Stand in for the StackedEditorRenderer — register a handler so requestScroll has somewhere
-    // to dispatch to.
-    const scrollHandler = jest.fn();
-    act(() => result.current.stackedMode.setScrollHandler(scrollHandler));
 
     act(() => result.current.stackedMode.enter());
     act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery));
 
     expect(result.current.selectedQueryRefIds).toEqual(['B']);
-    expect(scrollHandler).toHaveBeenLastCalledWith({ type: QueryEditorType.Query, id: 'B' });
   });
 
-  it('plain transformation selection in stacked mode requests scrolling to that transformation', () => {
+  it('selects a clicked transformation as a single selection in stacked mode', () => {
     const { useTransformations } = require('./hooks/useTransformations');
     const mockTransformation: Transformation = {
       registryItem: undefined,
@@ -360,13 +354,11 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     useTransformations.mockReturnValue([mockTransformation]);
 
     const { result } = renderWithWrapper(makeMockDataPane());
-    const scrollHandler = jest.fn();
-    act(() => result.current.stackedMode.setScrollHandler(scrollHandler));
 
     act(() => result.current.stackedMode.enter());
     act(() => result.current.toggleTransformationSelection(mockTransformation));
 
-    expect(scrollHandler).toHaveBeenLastCalledWith({ type: QueryEditorType.Transformation, id: 'reduce-0' });
+    expect(result.current.selectedTransformationIds).toEqual(['reduce-0']);
   });
 
   it('syncStackedActiveItem mirrors observer-driven activations into the card selection', () => {

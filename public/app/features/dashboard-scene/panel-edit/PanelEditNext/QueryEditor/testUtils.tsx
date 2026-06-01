@@ -137,8 +137,6 @@ export function makeStackedMode(overrides: Partial<StackedEditorState> = {}): St
     enter: jest.fn(),
     exit: jest.fn(),
     syncActiveItem: jest.fn(),
-    requestScroll: jest.fn(),
-    setScrollHandler: jest.fn(),
     ...overrides,
   };
 }

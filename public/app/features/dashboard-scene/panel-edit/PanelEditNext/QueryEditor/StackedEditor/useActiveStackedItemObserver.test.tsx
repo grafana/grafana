@@ -1,5 +1,5 @@
 import { act, render } from '@testing-library/react';
-import { type MutableRefObject, useRef } from 'react';
+import { useRef } from 'react';
 
 import { QueryEditorType } from '../../constants';
 import { type StackedEditorItem } from '../QueryEditorContext';
@@ -10,12 +10,11 @@ interface StackProps {
   items: ReadonlyArray<{ id: string; type: StackedEditorItem['type'] }>;
   itemsKey: string;
   onActiveItemChange: (item: StackedEditorItem) => void;
-  pendingScrollKeyRef: MutableRefObject<string | null>;
 }
 
-function Stack({ items, itemsKey, onActiveItemChange, pendingScrollKeyRef }: StackProps) {
+function Stack({ items, itemsKey, onActiveItemChange }: StackProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  useActiveStackedItemObserver({ containerRef, itemsKey, onActiveItemChange, pendingScrollKeyRef });
+  useActiveStackedItemObserver({ containerRef, itemsKey, onActiveItemChange });
   return (
     <div ref={containerRef}>
       {items.map(({ id, type }) => (
@@ -108,17 +107,8 @@ describe('useActiveStackedItemObserver', () => {
 
   function renderStack(overrides: Partial<StackProps> = {}) {
     const onActiveItemChange = jest.fn();
-    const pendingScrollKeyRef: MutableRefObject<string | null> = { current: null };
-    render(
-      <Stack
-        items={ITEMS}
-        itemsKey={ITEMS_KEY}
-        onActiveItemChange={onActiveItemChange}
-        pendingScrollKeyRef={pendingScrollKeyRef}
-        {...overrides}
-      />
-    );
-    return { onActiveItemChange, pendingScrollKeyRef };
+    render(<Stack items={ITEMS} itemsKey={ITEMS_KEY} onActiveItemChange={onActiveItemChange} {...overrides} />);
+    return { onActiveItemChange };
   }
 
   it('reports the visible item with the highest intersection ratio as active', () => {
@@ -167,30 +157,6 @@ describe('useActiveStackedItemObserver', () => {
     observer.fire([makeEntry(getSection('B', QueryEditorType.Query), 0, 100)]);
 
     expect(onActiveItemChange).toHaveBeenLastCalledWith({ type: QueryEditorType.Query, id: 'A' });
-  });
-
-  it('suppresses sync while a pending scroll key is set until the target matches', () => {
-    const { onActiveItemChange, pendingScrollKeyRef } = renderStack();
-    pendingScrollKeyRef.current = `${QueryEditorType.Query}:B`;
-
-    // Sections passed mid-scroll must not be reported as active.
-    observer.fire([makeEntry(getSection('A', QueryEditorType.Query), 1, 0)]);
-    expect(onActiveItemChange).not.toHaveBeenCalled();
-
-    // Target reached: B is dominant. Sync resumes and the guard clears.
-    observer.fire([
-      makeEntry(getSection('A', QueryEditorType.Query), 0, 0),
-      makeEntry(getSection('B', QueryEditorType.Query), 1, 0),
-    ]);
-    expect(onActiveItemChange).toHaveBeenLastCalledWith({ type: QueryEditorType.Query, id: 'B' });
-    expect(pendingScrollKeyRef.current).toBeNull();
-
-    // Subsequent intersections sync normally now that the guard is gone.
-    observer.fire([
-      makeEntry(getSection('B', QueryEditorType.Query), 0, 0),
-      makeEntry(getSection('organize-0', QueryEditorType.Transformation), 1, 0),
-    ]);
-    expect(onActiveItemChange).toHaveBeenLastCalledWith({ type: QueryEditorType.Transformation, id: 'organize-0' });
   });
 
   it('ignores intersection entries on elements missing required data attributes', () => {

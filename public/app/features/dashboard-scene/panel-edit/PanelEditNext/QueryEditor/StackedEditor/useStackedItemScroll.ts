@@ -1,4 +1,4 @@
-import { type RefObject, useCallback, useLayoutEffect, useRef } from 'react';
+import { type RefObject, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 
 import { type StackedEditorItem } from '../QueryEditorContext';
 
@@ -6,11 +6,15 @@ import { useActiveStackedItemObserver } from './useActiveStackedItemObserver';
 import { getStackedItemKey, getStackedItemsKey, type StackedItem } from './utils';
 
 interface UseStackedItemScrollArgs {
+  /** The scrollable viewport. scrollIntoView targets the section's nearest scrollable ancestor. */
   containerRef: RefObject<HTMLDivElement>;
+  /** Wrapper around the sections, observed for size changes as their async editors finish loading. */
+  contentRef: RefObject<HTMLDivElement>;
   items: readonly StackedItem[];
-  initialItem: StackedEditorItem | null;
+  /** The currently selected card. While auto-following we keep it pinned to the top of the view. */
+  selectedItem: StackedEditorItem | null;
+  /** Called when the user scrolls to a different card, so selection can follow the scroll position. */
   onActiveItemChange: (item: StackedEditorItem) => void;
-  setScrollHandler: (handler: ((item: StackedEditorItem) => void) | null) => void;
 }
 
 function findSection(container: HTMLElement, item: StackedEditorItem): HTMLElement | null {
@@ -24,68 +28,115 @@ function findSection(container: HTMLElement, item: StackedEditorItem): HTMLEleme
 }
 
 /**
- * Wires the stacked editor into the wrapper's scroll bridge and the active-item observer.
+ * Keeps the selected card and the scroll position in sync, as a two-mode state machine:
  *
- * - On open, jumps the view to `initialItem` so stacked mode lands on the previously selected card
- *   instead of resetting to the top.
- * - Pushes an imperative `scrollToItem` to the wrapper via `setScrollHandler` so sidebar clicks
- *   can scroll a section into view without state or effects.
- * - Mounts the IntersectionObserver that calls `onActiveItemChange` as the user scrolls.
+ * - **auto-follow** (on open and after any deliberate selection change): the selected card is pinned
+ *   to the top. The IntersectionObserver is ignored, and a ResizeObserver re-pins as the sections'
+ *   async datasource editors finish loading and grow — otherwise an early scroll lands on a stale
+ *   offset once content above expands.
+ * - **manual** (entered the moment the user scrolls): the IntersectionObserver drives selection from
+ *   the scroll position, and re-pinning stops so we never fight deliberate navigation.
  *
- * The pieces share `pendingScrollKeyRef` so the observer holds off until an in-flight scroll (the
- * open jump or a sidebar-click smooth scroll) reaches its target.
+ * A selection change that didn't originate from scrolling flips us back to auto-follow.
+ * `scrollSyncedKeyRef` tags observer-driven selection changes so the auto-scroll effect can tell
+ * them apart from external (sidebar/open) ones and avoid yanking the user back.
  */
 export function useStackedItemScroll({
   containerRef,
+  contentRef,
   items,
-  initialItem,
+  selectedItem,
   onActiveItemChange,
-  setScrollHandler,
 }: UseStackedItemScrollArgs): void {
-  // Tracks the in-flight scroll so the observer doesn't sync the active item to whatever it passes
-  // over mid-scroll. A ref keeps the observer effect from tearing down on each click.
-  const pendingScrollKeyRef = useRef<string | null>(null);
+  const autoFollowRef = useRef(true);
+  const scrollSyncedKeyRef = useRef<string | null>(null);
 
-  const scrollToItem = useCallback(
-    (item: StackedEditorItem, behavior: ScrollBehavior = 'smooth') => {
+  // Latest selected item, read by the resize/scroll callbacks without making them reactive deps.
+  const selectedItemRef = useRef(selectedItem);
+  selectedItemRef.current = selectedItem;
+
+  const scrollSelectedIntoView = useCallback(
+    (behavior: ScrollBehavior) => {
+      const item = selectedItemRef.current;
       const container = containerRef.current;
-      if (!container) {
-        return;
-      }
-      const section = findSection(container, item);
-      if (!section) {
-        return;
-      }
-      pendingScrollKeyRef.current = getStackedItemKey(item);
-      section.scrollIntoView?.({ block: 'start', behavior });
+      const section = item && container && findSection(container, item);
+      section?.scrollIntoView?.({ block: 'start', behavior });
     },
     [containerRef]
   );
 
-  // Register the imperative scroll handler during render. Permitted because the wrapper stores
-  // it in a ref (no re-render) and scrollToItem is stable, so this is idempotent.
-  setScrollHandler(scrollToItem);
-
-  // Refs, not deps: the jump uses the item from when stacked mode opened and runs once, so a later
-  // selection change or scrollToItem identity change can't re-fire it and yank the user away.
-  const initialItemRef = useRef(initialItem);
-  const hasJumpedRef = useRef(false);
-
+  // Pin the selected card whenever it changes from an external source (open / sidebar click), but
+  // not when the change echoed back from the user scrolling — that would yank them back. Smooth so
+  // deliberate navigation animates; safe because auto-follow ignores the observer mid-scroll.
+  const selectedKey = selectedItem ? getStackedItemKey(selectedItem) : null;
   useLayoutEffect(() => {
-    const item = initialItemRef.current;
-    if (hasJumpedRef.current || !item) {
+    if (!selectedKey) {
       return;
     }
-    hasJumpedRef.current = true;
-    // Instant jump; the pending key it sets makes the observer hold off so the top section can't
-    // steal the active selection before the jump lands.
-    scrollToItem(item, 'auto');
-  }, [scrollToItem]);
+    if (selectedKey === scrollSyncedKeyRef.current) {
+      return;
+    }
+    autoFollowRef.current = true;
+    scrollSelectedIntoView('smooth');
+  }, [selectedKey, scrollSelectedIntoView]);
+
+  // Re-pin while auto-following as content grows; the first user scroll switches to manual.
+  useEffect(() => {
+    const content = contentRef.current;
+    const container = containerRef.current;
+    if (!content || !container || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    // Instant corrections: as content loads it can grow faster than a smooth animation completes,
+    // and chained smooth scrolls would lag behind the growth. The deliberate scroll above is smooth.
+    const resizeObserver = new ResizeObserver(() => {
+      if (autoFollowRef.current) {
+        scrollSelectedIntoView('auto');
+      }
+    });
+    resizeObserver.observe(content);
+
+    // User-intent events only — not 'scroll', which our own programmatic scrolls would trigger.
+    const onUserScroll = () => {
+      autoFollowRef.current = false;
+    };
+    // keydown bubbles up from the section editors and inputs, so only count keys pressed on the
+    // scroll region itself (keyboard scrolling) as intent — not typing inside a card.
+    const onContainerKeyDown = (event: KeyboardEvent) => {
+      if (event.target === container) {
+        autoFollowRef.current = false;
+      }
+    };
+    container.addEventListener('wheel', onUserScroll, { passive: true });
+    container.addEventListener('touchmove', onUserScroll, { passive: true });
+    container.addEventListener('keydown', onContainerKeyDown);
+
+    return () => {
+      resizeObserver.disconnect();
+      container.removeEventListener('wheel', onUserScroll);
+      container.removeEventListener('touchmove', onUserScroll);
+      container.removeEventListener('keydown', onContainerKeyDown);
+    };
+  }, [containerRef, contentRef, scrollSelectedIntoView]);
+
+  // While auto-following the selection is owned by the pin, so ignore the observer. Once the user
+  // takes over, mirror their scroll position into the selection (tagging it so the effect above
+  // recognises the echo and doesn't scroll back).
+  const handleActiveItemChange = useCallback(
+    (item: StackedEditorItem) => {
+      if (autoFollowRef.current) {
+        return;
+      }
+      scrollSyncedKeyRef.current = getStackedItemKey(item);
+      onActiveItemChange(item);
+    },
+    [onActiveItemChange]
+  );
 
   useActiveStackedItemObserver({
     containerRef,
     itemsKey: getStackedItemsKey(items),
-    onActiveItemChange,
-    pendingScrollKeyRef,
+    onActiveItemChange: handleActiveItemChange,
   });
 }

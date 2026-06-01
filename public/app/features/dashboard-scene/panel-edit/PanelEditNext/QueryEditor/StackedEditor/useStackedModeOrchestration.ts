@@ -3,8 +3,6 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { QueryEditorType } from '../../constants';
 import { type StackedEditorItem, type StackedEditorState } from '../QueryEditorContext';
 
-type ScrollHandler = (item: StackedEditorItem) => void;
-
 interface UseStackedModeOrchestrationArgs {
   /**
    * Card selection writer. Used by `enter` to promote a primary item into the selection and
@@ -35,17 +33,6 @@ export function useStackedModeOrchestration({
   onEnter,
 }: UseStackedModeOrchestrationArgs): StackedEditorState {
   const [isStackedMode, setIsStackedMode] = useState(false);
-
-  // Imperative scroll bridge: the active StackedEditorRenderer publishes its scroll function
-  // via `setScrollHandler`; consumers reach it through `requestScroll`. Stored on a ref (not
-  // state) so renderer (re)registration during render doesn't trigger an extra re-render.
-  const scrollHandlerRef = useRef<ScrollHandler | null>(null);
-  const requestScroll = useCallback<ScrollHandler>((item) => {
-    scrollHandlerRef.current?.(item);
-  }, []);
-  const setScrollHandler = useCallback((handler: ScrollHandler | null) => {
-    scrollHandlerRef.current = handler;
-  }, []);
 
   // `enter` is invoked imperatively from a button click, so reading the latest selection
   // and onEnter via refs is safe and keeps `enter` referentially stable across selections.
@@ -92,9 +79,7 @@ export function useStackedModeOrchestration({
       enter,
       exit,
       syncActiveItem,
-      requestScroll,
-      setScrollHandler,
     }),
-    [isStackedMode, enter, exit, syncActiveItem, requestScroll, setScrollHandler]
+    [isStackedMode, enter, exit, syncActiveItem]
   );
 }

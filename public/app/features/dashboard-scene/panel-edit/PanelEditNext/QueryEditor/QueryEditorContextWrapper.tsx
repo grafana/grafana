@@ -9,14 +9,9 @@ import { type ExpressionQuery } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { type PanelDataPaneNext } from '../PanelDataPaneNext';
-import { getQueryEditorTypeConfig, QueryEditorType } from '../constants';
+import { getQueryEditorTypeConfig } from '../constants';
 
-import {
-  type PendingSavedQuery,
-  QueryEditorProvider,
-  type SelectionModifiers,
-  type StackedEditorItem,
-} from './QueryEditorContext';
+import { type PendingSavedQuery, QueryEditorProvider, type SelectionModifiers } from './QueryEditorContext';
 import { useStackedModeOrchestration } from './StackedEditor/useStackedModeOrchestration';
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
 import { usePendingExpression } from './hooks/usePendingExpression';
@@ -118,40 +113,33 @@ export function QueryEditorContextWrapper({
   });
   // Destructured for tight dep arrays in the selection handlers below — these property reads
   // are referentially stable when their underlying state doesn't change.
-  const { enabled: isStackedMode, exit: exitStackedMode, requestScroll: requestStackedScroll } = stackedMode;
+  const { enabled: isStackedMode, exit: exitStackedMode } = stackedMode;
 
   const toggleQuerySelection = useCallback(
     (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => {
       setSelectedAlertId(null);
       if (isStackedMode) {
-        const item: StackedEditorItem = {
-          type:
-            getEditorType(query) === QueryEditorType.Expression ? QueryEditorType.Expression : QueryEditorType.Query,
-          id: query.refId,
-        };
+        // Stacked mode is single-select; the renderer scrolls to whatever becomes selected.
         onCardSelectionChange(query.refId, null);
-        requestStackedScroll(item);
         return;
       }
       setConfirmingDeleteActionKey(null);
       toggleQuerySelectionRaw(query, modifiers);
     },
-    [isStackedMode, onCardSelectionChange, requestStackedScroll, toggleQuerySelectionRaw]
+    [isStackedMode, onCardSelectionChange, toggleQuerySelectionRaw]
   );
 
   const toggleTransformationSelection = useCallback(
     (transformation: Transformation, modifiers?: SelectionModifiers) => {
       setSelectedAlertId(null);
       if (isStackedMode) {
-        const item: StackedEditorItem = { type: QueryEditorType.Transformation, id: transformation.transformId };
         onCardSelectionChange(null, transformation.transformId);
-        requestStackedScroll(item);
         return;
       }
       setConfirmingDeleteActionKey(null);
       toggleTransformationSelectionRaw(transformation, modifiers);
     },
-    [isStackedMode, onCardSelectionChange, requestStackedScroll, toggleTransformationSelectionRaw]
+    [isStackedMode, onCardSelectionChange, toggleTransformationSelectionRaw]
   );
 
   const clearSelection = useCallback(() => {

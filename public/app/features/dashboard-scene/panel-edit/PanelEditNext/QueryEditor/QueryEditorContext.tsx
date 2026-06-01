@@ -87,10 +87,6 @@ export interface StackedEditorState {
   enter: () => void;
   exit: () => void;
   syncActiveItem: (item: StackedEditorItem) => void;
-  /** Scroll the stacked editor to a specific item. No-op if no renderer is mounted. */
-  requestScroll: (item: StackedEditorItem) => void;
-  /** Renderer registers its imperative scroll handler. Stored in a ref — does not re-render. */
-  setScrollHandler: (handler: ((item: StackedEditorItem) => void) | null) => void;
 }
 
 export interface QueryEditorUIState {

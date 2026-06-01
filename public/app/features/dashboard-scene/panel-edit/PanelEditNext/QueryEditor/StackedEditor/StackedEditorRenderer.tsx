@@ -6,20 +6,22 @@ import { t, Trans } from '@grafana/i18n';
 import { Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorType } from '../../constants';
-import {
-  type StackedEditorItem,
-  usePanelContext,
-  useQueryEditorUIContext,
-  useQueryRunnerContext,
-} from '../QueryEditorContext';
+import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { StackedSection } from './StackedSection';
 import { useStackedItemScroll } from './useStackedItemScroll';
-import { getStackedItemKey, getStackedQueryEditorType, isCurrentStackedItem, type StackedItem } from './utils';
+import {
+  getSelectedStackedItem,
+  getStackedItemKey,
+  getStackedQueryEditorType,
+  isCurrentStackedItem,
+  type StackedItem,
+} from './utils';
 
 export function StackedEditorRenderer() {
   const styles = useStyles2(getStyles);
   const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const headingIdPrefix = useId();
 
   const { queries } = useQueryRunnerContext();
@@ -37,25 +39,18 @@ export function StackedEditorRenderer() {
     ),
   ];
 
-  // The card that was active in the single-card view, so opening stacked mode lands on it instead
-  // of resetting to the top. Transformations take precedence to mirror the primary-card rule used
-  // when entering stacked mode.
-  const initialItem: StackedEditorItem | null = selectedTransformation
-    ? { type: QueryEditorType.Transformation, id: selectedTransformation.transformId }
-    : selectedQuery
-      ? { type: getStackedQueryEditorType(selectedQuery), id: selectedQuery.refId }
-      : null;
+  // The selected card, in the identity-only shape the scroll machinery speaks.
+  const selectedItem = getSelectedStackedItem(selectedQuery, selectedTransformation);
 
-  // Wires the renderer into stacked-mode: jumps to the initially selected card on open, registers
-  // an imperative scrollToItem with the wrapper (so sidebar clicks can scroll the right section
-  // into view), and sets up the IntersectionObserver that calls syncActiveItem as the user scrolls.
-  // No return value — all side effects.
+  // Keeps the selected card and the scroll position in sync: pins the selected card to the top
+  // (re-pinning as async editors load), and syncs selection back as the user scrolls. All side
+  // effects — no return value.
   useStackedItemScroll({
     containerRef,
+    contentRef,
     items,
-    initialItem,
+    selectedItem,
     onActiveItemChange: stackedMode.syncActiveItem,
-    setScrollHandler: stackedMode.setScrollHandler,
   });
 
   return (
@@ -84,21 +79,25 @@ export function StackedEditorRenderer() {
         role="region"
         aria-label={t('query-editor-next.stacked.scroll-area-aria-label', 'Stacked editor items')}
       >
-        {items.map((item) => {
-          const key = getStackedItemKey(item);
-          return (
-            <StackedSection
-              key={key}
-              item={item}
-              isCurrent={isCurrentStackedItem({
-                item,
-                selectedQueryRefId: selectedQuery?.refId,
-                selectedTransformationId: selectedTransformation?.transformId,
-              })}
-              headingId={`${headingIdPrefix}-${key}`}
-            />
-          );
-        })}
+        {/* Wrapper exists so a ResizeObserver can watch the content height (not the fixed viewport)
+            and re-pin the target as async editors finish loading. */}
+        <div ref={contentRef}>
+          {items.map((item) => {
+            const key = getStackedItemKey(item);
+            return (
+              <StackedSection
+                key={key}
+                item={item}
+                isCurrent={isCurrentStackedItem({
+                  item,
+                  selectedQueryRefId: selectedQuery?.refId,
+                  selectedTransformationId: selectedTransformation?.transformId,
+                })}
+                headingId={`${headingIdPrefix}-${key}`}
+              />
+            );
+          })}
+        </div>
       </div>
     </div>
   );

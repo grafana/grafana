@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { memo } from 'react';
+import { memo, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -9,12 +9,14 @@ import { SegmentedToggle, type SegmentedToggleProps } from '../../SegmentedToggl
 import { QueryEditorType, type SidebarSize } from '../../constants';
 import { trackSidebarViewChange } from '../../tracking';
 import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { getSelectedStackedItem } from '../StackedEditor/utils';
 import { EMPTY_ALERT } from '../types';
 
 import { AlertsView } from './Alerts/AlertsView';
 import { SidebarFooter } from './Footer/SidebarFooter';
 import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
 import { SidebarHeaderActions } from './SidebarHeaderActions';
+import { useScrollSelectedCardIntoView } from './useScrollSelectedCardIntoView';
 
 interface SidebarProps {
   sidebarSize: SidebarSize;
@@ -23,9 +25,21 @@ interface SidebarProps {
 
 export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: SidebarProps) {
   const styles = useStyles2(getStyles);
-  const { setSelectedAlert, cardType, pendingExpression, pendingTransformation, stackedMode } =
-    useQueryEditorUIContext();
+  const {
+    setSelectedAlert,
+    cardType,
+    pendingExpression,
+    pendingTransformation,
+    stackedMode,
+    selectedQuery,
+    selectedTransformation,
+  } = useQueryEditorUIContext();
   const { alertRules, loading } = useAlertingContext();
+
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const selectedCardId = getSelectedStackedItem(selectedQuery, selectedTransformation)?.id ?? null;
+  useScrollSelectedCardIntoView(contentRef, selectedCardId);
 
   const handleViewChange = (view: QueryEditorType) => {
     trackSidebarViewChange(view);
@@ -75,7 +89,7 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
       </SidebarHeaderActions>
       {/** The translateX property of the hoverActions in SidebarCard causes the scroll container to overflow by 8px. */}
       <ScrollContainer overflowX="hidden">
-        <div className={styles.content}>
+        <div className={styles.content} ref={contentRef}>
           {cardType === QueryEditorType.Alert ? (
             <AlertsView alertRules={alertRules} />
           ) : (

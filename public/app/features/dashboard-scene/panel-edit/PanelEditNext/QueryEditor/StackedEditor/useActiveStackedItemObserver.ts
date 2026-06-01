@@ -1,4 +1,4 @@
-import { type MutableRefObject, type RefObject, useEffect, useRef } from 'react';
+import { type RefObject, useEffect, useRef } from 'react';
 
 import { type StackedEditorItem } from '../QueryEditorContext';
 
@@ -8,7 +8,6 @@ interface UseActiveStackedItemObserverArgs {
   containerRef: RefObject<HTMLDivElement>;
   itemsKey: string;
   onActiveItemChange: (item: StackedEditorItem) => void;
-  pendingScrollKeyRef: MutableRefObject<string | null>;
 }
 
 interface VisibleEntry {
@@ -40,14 +39,13 @@ function pickDominant(visibleItems: Map<string, VisibleEntry>): [string, Visible
  * dominant visible section changes. Dominance = highest intersection ratio, tie-break by closest
  * to the top.
  *
- * Honors `pendingScrollKeyRef` so an in-flight smooth scroll reaches its target before the active
- * item snaps to whatever passes under the viewport mid-flight.
+ * Callers decide whether to act on a change (e.g. the scroll hook ignores it while auto-following a
+ * pinned card) — this hook only reports the dominant section.
  */
 export function useActiveStackedItemObserver({
   containerRef,
   itemsKey,
   onActiveItemChange,
-  pendingScrollKeyRef,
 }: UseActiveStackedItemObserverArgs) {
   const activeKeyRef = useRef<string | null>(null);
 
@@ -84,16 +82,6 @@ export function useActiveStackedItemObserver({
 
         const [key, { item }] = dominant;
 
-        // Read the pending scroll target via ref so the observer is not re-created on every
-        // sidebar click (and the closure can't go stale between intersection events).
-        const pending = pendingScrollKeyRef.current;
-        if (pending) {
-          if (key !== pending) {
-            return;
-          }
-          pendingScrollKeyRef.current = null;
-        }
-
         if (activeKeyRef.current !== key) {
           activeKeyRef.current = key;
           onActiveItemChange(item);
@@ -112,5 +100,5 @@ export function useActiveStackedItemObserver({
       observer.disconnect();
     };
     // itemsKey changes only when items are added/removed/reordered — not on every keystroke.
-  }, [containerRef, itemsKey, onActiveItemChange, pendingScrollKeyRef]);
+  }, [containerRef, itemsKey, onActiveItemChange]);
 }
