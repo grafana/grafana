@@ -708,7 +708,9 @@ describe('Canvas', () => {
   const user = userEvent.setup();
 
   beforeEach(() => {
-    jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
+    jest
+      .spyOn(getDashboardSrv(), 'getCurrent')
+      .mockReturnValue({ editable: true, meta: { canEdit: true } } as DashboardModel);
   });
 
   afterEach(() => {
@@ -873,7 +875,9 @@ describe('Canvas', () => {
       updateConnectionsSizeSpy?.mockRestore();
     });
     it('Double click edit', async () => {
-      jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
+      jest
+        .spyOn(getDashboardSrv(), 'getCurrent')
+        .mockReturnValue({ editable: true, meta: { canEdit: true } } as DashboardModel);
       const elementFromPointTarget: { current: HTMLElement | null } = { current: null };
       Object.defineProperty(document, 'elementFromPoint', {
         configurable: true,

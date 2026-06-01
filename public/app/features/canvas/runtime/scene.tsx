@@ -113,12 +113,7 @@ export class Scene {
     public onSave: (cfg: CanvasFrameOptions) => void,
     panel: CanvasPanel
   ) {
-    // TODO: Will need to update this approach for dashboard scenes
-    // migration (new dashboard edit experience)
-    const dashboard = getDashboardSrv().getCurrent();
-    const enableEditing = options.inlineEditing && dashboard?.editable;
-
-    this.root = this.load(options, enableEditing);
+    this.root = this.load(options);
 
     this.subscription = this.editModeEnabled.subscribe((open) => {
       if (!this.moveable || !this.isEditingEnabled) {
@@ -150,7 +145,20 @@ export class Scene {
     return !this.byName.has(v);
   };
 
-  load(options: Options, enableEditing: boolean) {
+  // Editing is allowed only when the panel option is on, the dashboard
+  // itself is editable, AND the current user has edit permission on this
+  // dashboard. `dashboard.editable` is per-dashboard JSON; `meta.canEdit` is
+  // per-user — Viewers see editable=true but canEdit=false, so both must
+  // be checked here to keep the canvas read-only for them.
+  // TODO: Update this approach for dashboard scenes migration (new
+  // dashboard edit experience) — getDashboardSrv().getCurrent() returns
+  // the legacy DashboardModel; the scenes path will need a different probe.
+  private computeEnableEditing(options: Options): boolean {
+    const dashboard = getDashboardSrv().getCurrent();
+    return Boolean(options.inlineEditing && dashboard?.editable && dashboard?.meta?.canEdit);
+  }
+
+  load(options: Options) {
     const { root, showAdvancedTypes, panZoom, zoomToContent, tooltip } = options;
     const tooltipMode = tooltip?.mode ?? TooltipDisplayMode.Single;
     const tooltipDisableForOneClick = tooltip?.disableForOneClick ?? false;
@@ -164,6 +172,7 @@ export class Scene {
       this.save // callback when changes are made
     );
 
+    const enableEditing = this.computeEnableEditing(options);
     this.isEditingEnabled = enableEditing;
     this.shouldShowAdvancedTypes = showAdvancedTypes;
     this.shouldPanZoom = panZoom;
