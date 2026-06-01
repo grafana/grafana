@@ -1012,7 +1012,9 @@ func TestRetrieveSubscriptionDetails_KeysDisambiguate(t *testing.T) {
 		hits.Add(1)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_, _ = fmt.Fprintf(w, `{"displayName":"name-for-%s"}`, strings.TrimPrefix(r.URL.Path, "/subscriptions/"))
+		subID := strings.TrimPrefix(r.URL.Path, "/subscriptions/")
+		resp, _ := json.Marshal(map[string]string{"displayName": "name-for-" + subID})
+		_, _ = w.Write(resp)
 	}))
 	t.Cleanup(srv.Close)
 
