@@ -2574,3 +2574,96 @@ func TestIntegrationFolderValidationReturns400(t *testing.T) {
 		})
 	}
 }
+
+// TestIntegrationFolderCascadeDelete verifies the end-to-end cascade: with the feature flag on,
+// force-deleting a non-empty folder eventually removes the whole folder subtree via the
+// finalizer + cascade watcher.
+func TestIntegrationFolderCascadeDelete(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	// cascadeDeleteFinalizer mirrors folders.CascadeDeleteFinalizer in the API server package
+	// (not imported here to avoid an alias clash with the folder kind package).
+	const cascadeDeleteFinalizer = "folder.grafana.app/cascade-delete"
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagKubernetesFolderCascadeDelete,
+		},
+	})
+
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+	ctx := context.Background()
+
+	// Build a small tree:
+	//   root
+	//   ├── child-a
+	//   │    └── grandchild
+	//   └── child-b
+	createFolder := func(t *testing.T, name, parentUID string) {
+		t.Helper()
+		obj := &unstructured.Unstructured{
+			Object: map[string]any{
+				"spec": map[string]any{"title": name},
+			},
+		}
+		obj.SetName(name)
+		if parentUID != "" {
+			obj.SetAnnotations(map[string]string{utils.AnnoKeyFolder: parentUID})
+		}
+		_, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+	}
+
+	const (
+		rootUID       = "cascade-root"
+		childAUID     = "cascade-child-a"
+		childBUID     = "cascade-child-b"
+		grandchildUID = "cascade-grandchild"
+	)
+	all := []string{rootUID, childAUID, childBUID, grandchildUID}
+
+	createFolder(t, rootUID, "")
+	createFolder(t, childAUID, rootUID)
+	createFolder(t, childBUID, rootUID)
+	createFolder(t, grandchildUID, childAUID)
+
+	// Best-effort cleanup if the cascade does not complete.
+	t.Cleanup(func() {
+		zero := int64(0)
+		for _, uid := range all {
+			_ = client.Resource.Delete(ctx, uid, metav1.DeleteOptions{GracePeriodSeconds: &zero})
+		}
+	})
+
+	// Admission should have stamped the cascade finalizer on create.
+	root, err := client.Resource.Get(ctx, rootUID, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Contains(t, root.GetFinalizers(), cascadeDeleteFinalizer,
+		"cascade finalizer should be stamped on folder create when the flag is on")
+
+	// Force-delete the (non-empty) root. This is opt-in via gracePeriodSeconds=0; the finalizer
+	// keeps the folder terminating until the watcher cascades the subtree.
+	zero := int64(0)
+	require.NoError(t, client.Resource.Delete(ctx, rootUID, metav1.DeleteOptions{GracePeriodSeconds: &zero}))
+
+	// The whole subtree should eventually be garbage-collected by the cascade watcher.
+	require.Eventually(t, func() bool {
+		for _, uid := range all {
+			_, err := client.Resource.Get(ctx, uid, metav1.GetOptions{})
+			if !apierrors.IsNotFound(err) {
+				return false
+			}
+		}
+		return true
+	}, 2*time.Minute, time.Second, "cascade delete did not remove the whole folder subtree")
+}
