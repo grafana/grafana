@@ -305,11 +305,10 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 				).Once()
 			}
 
-			setKubernetesFolderCascadeDeleteToggle(t, tt.cascadeDeleteEnabled)
-
 			b := &FolderAPIBuilder{
-				storage:  us,
-				searcher: sm,
+				storage:              us,
+				searcher:             sm,
+				cascadeDeleteEnabled: tt.cascadeDeleteEnabled,
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -728,7 +727,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	}
 }
 
-func TestFolderAPIBuilder_Mutate_cascadeFinalizerGatedByFeatureFlag(t *testing.T) {
+func TestFolderAPIBuilder_Mutate_cascadeFinalizerGatedByBootDecision(t *testing.T) {
 	newAttrs := func(input *folders.Folder) admission.Attributes {
 		return admission.NewAttributesRecord(
 			input,
@@ -760,15 +759,18 @@ func TestFolderAPIBuilder_Mutate_cascadeFinalizerGatedByFeatureFlag(t *testing.T
 		parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
 	}
 
-	t.Run("flag off does not add finalizer", func(t *testing.T) {
-		setKubernetesFolderCascadeDeleteToggle(t, false)
+	t.Run("disabled at boot does not add finalizer even if the flag is on per-request", func(t *testing.T) {
+		// The per-request flag must not matter: only the boot-time decision gates the finalizer,
+		// so a runtime/per-tenant flip cannot stamp a finalizer the watcher will never clear.
+		setKubernetesFolderCascadeDeleteToggle(t, true)
+		b.cascadeDeleteEnabled = false
 		f := newFolder()
 		require.NoError(t, b.Mutate(context.Background(), newAttrs(f), nil))
 		require.Empty(t, f.Finalizers)
 	})
 
-	t.Run("flag on adds cascade finalizer", func(t *testing.T) {
-		setKubernetesFolderCascadeDeleteToggle(t, true)
+	t.Run("enabled at boot adds cascade finalizer", func(t *testing.T) {
+		b.cascadeDeleteEnabled = true
 		f := newFolder()
 		require.NoError(t, b.Mutate(context.Background(), newAttrs(f), nil))
 		require.Contains(t, f.Finalizers, CascadeDeleteFinalizer)
