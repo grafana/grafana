@@ -116,31 +116,35 @@ export function useSplitter(options: UseSplitterOptions) {
 
   const onUpdateSize = useCallback(
     (diff: number) => {
-      if (!containerSize.current || !primarySizeRef.current || !secondPaneRef.current) {
+      const firstPane = firstPaneRef.current;
+      const secondPane = secondPaneRef.current;
+      const splitter = splitterRef.current;
+      if (!containerSize.current || !primarySizeRef.current || !firstPane || !secondPane || !splitter) {
         return;
       }
 
+      const containerPixels = containerSize.current;
       const firstPanePixels = primarySizeRef.current;
-      const secondPanePixels = containerSize.current - firstPanePixels - handleSize;
+      const secondPanePixels = containerPixels - firstPanePixels - handleSize;
       const dims = referencePaneSize.current!;
 
       if (pixelPrimary) {
         // Handle is on the primary pane's trailing edge, so a positive drag grows it.
         const newSize = clamp(firstPanePixels + diff, dims[minDimProp], dims[maxDimProp]);
-        firstPaneRef.current!.style.flexBasis = `${newSize}px`;
-        splitterRef.current!.ariaValueNow = `${newSize}`;
-        onResizing?.(newSize, newSize, containerSize.current - newSize - handleSize);
+        firstPane.style.flexBasis = `${newSize}px`;
+        splitter.ariaValueNow = `${newSize}`;
+        onResizing?.(newSize, newSize, containerPixels - newSize - handleSize);
       } else if (usePixels) {
         const newSize = clamp(secondPanePixels - diff, dims[minDimProp], dims[maxDimProp]);
-        secondPaneRef.current!.style.flexBasis = `${newSize}px`;
-        splitterRef.current!.ariaValueNow = `${newSize}`;
+        secondPane.style.flexBasis = `${newSize}px`;
+        splitter.ariaValueNow = `${newSize}`;
         onResizing?.(newSize, firstPanePixels + diff, newSize);
       } else {
-        const newSize = clamp(primarySizeRef.current + diff, dims[minDimProp], dims[maxDimProp]);
-        const newFlex = newSize / (containerSize.current! - handleSize);
-        firstPaneRef.current!.style.flexGrow = `${newFlex}`;
-        secondPaneRef.current!.style.flexGrow = `${1 - newFlex}`;
-        splitterRef.current!.ariaValueNow = ariaValue(newSize, dims[minDimProp], dims[maxDimProp]);
+        const newSize = clamp(firstPanePixels + diff, dims[minDimProp], dims[maxDimProp]);
+        const newFlex = newSize / (containerPixels - handleSize);
+        firstPane.style.flexGrow = `${newFlex}`;
+        secondPane.style.flexGrow = `${1 - newFlex}`;
+        splitter.ariaValueNow = ariaValue(newSize, dims[minDimProp], dims[maxDimProp]);
         onResizing?.(newFlex, newSize, secondPanePixels - diff);
       }
     },
