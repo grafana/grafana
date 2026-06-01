@@ -515,10 +515,11 @@ func validateOnDelete(ctx context.Context,
 ) error {
 	// Non-empty folder delete is opt-in via gracePeriodSeconds=0 when kubernetesFolderCascadeDelete
 	// is enabled (same pattern as dashboard delete validation). This only bypasses the empty-folder
-	// check; until cascade reconciliation runs, child resources are left orphaned.
+	// check. Child folders are cascade-deleted by the finalizer watcher, but contained dashboards,
+	// alert rules, and library elements are not yet cascaded and will be orphaned.
 	if cascadeDeleteEnabled && forceDeleteFromDeleteOptions(deleteOptions) {
 		logging.FromContext(ctx).Warn(
-			"folder force-delete bypassing empty check; cascade deletion is not yet wired up so sub-folders, dashboards, alert rules, and library elements under this folder will be orphaned. This is a temporary state during the cascade delete rollout.",
+			"folder force-delete bypassing empty check; child folders will be cascade-deleted, but dashboards, alert rules, and library elements under this folder are not yet cascaded and will be orphaned",
 			"folder", f.Name,
 			"namespace", f.Namespace,
 		)
