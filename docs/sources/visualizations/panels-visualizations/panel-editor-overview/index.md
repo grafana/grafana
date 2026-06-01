@@ -80,10 +80,6 @@ For more information about individual visualizations, refer to [Visualizations o
 
 ### Panel styles
 
-{{< admonition type="note" >}}
-Panel styles is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the `vizPresets` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) to use this feature.
-{{< /admonition >}}
-
 While visualization suggestions help you choose _which_ panel type to use, panel styles help you decide _how_ that panel should look. The **Panel styles** section of the panel editor sidebar contains preconfigured options for the currently selected visualization. It appears after you've selected a visualization and the panel has data.
 
 ![Panel styles example for time series visualization](/media/docs/grafana/panels-visualizations/visualization-presets-13.png)

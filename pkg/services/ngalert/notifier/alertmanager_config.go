@@ -102,7 +102,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 		if !recv.HasMimirIntegrations() {
 			continue
 		}
-		grafana, err := legacy_storage.PostableMimirReceiverToPostableGrafanaReceiver(recv)
+		grafana, err := v1.PostableMimirReceiverToPostableGrafanaReceiver(recv)
 		if err != nil {
 			moa.logger.Warn("Failed to convert Mimir receiver to Grafana receiver. Ignoring receiver ", "identifier", mergeResult.Identifier, "receiver", recv.Name, "err", err)
 			failed++
@@ -136,7 +136,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 			} else {
 				managedRoutes[mergeResult.Identifier] = mergeResult.ExtraRoute
 
-				importedRules, err := legacy_storage.BuildManagedInhibitionRules(mergeResult.Identifier, mergeResult.ExtraInhibitRules)
+				importedRules, err := merge.BuildManagedInhibitionRules(mergeResult.Identifier, mergeResult.ExtraInhibitRules)
 				if err != nil {
 					moa.logger.Warn("failed to build managed inhibition rules for imported configuration", "identifier", mergeResult.Identifier, "err", err)
 				} else {
@@ -319,7 +319,6 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	}
 
 	alertmanagerConfig := cfg.AlertmanagerConfig
-	templateFiles := cfg.TemplateFiles
 
 	if withAutogen {
 		// We validate the notification settings in a similar way to when we POST.
@@ -333,7 +332,7 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	}
 
 	result := definitions.GettableUserConfig{
-		TemplateFiles: templateFiles,
+		TemplateFiles: v1.TemplatesToTemplateFiles(cfg.Templates),
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
 			Config: PostableApiAlertingConfigToAPI(alertmanagerConfig).Config,
 		},
@@ -556,8 +555,7 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 		}
 	}
 
-	tmpl := definitions.NotificationTemplate{}
-	tmplProvs, err := moa.ProvStore.GetProvenances(ctx, org, tmpl.ResourceType())
+	tmplProvs, err := moa.ProvStore.GetProvenances(ctx, org, (&v1.TemplateGroup{}).ResourceType())
 	if err != nil {
 		return definitions.GettableUserConfig{}, nil
 	}

@@ -2152,10 +2152,13 @@ func TestApiGetSnapshots(t *testing.T) {
 	cfg.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(cfg.AlertmanagerConfig.Route, cfg.ManagedRoutes)
 
 	// Templates
-	cfg.TemplateFiles = map[string]string{
-		"templateA": "{{ define \"templateA\" }}A{{ end }}",
-		"templateB": "{{ define \"templateB\" }}B{{ end }}",
-		"templateC": "{{ define \"templateC\" }}C{{ end }}",
+	t1 := v1.NewTemplateGroup("templateA", "{{ define \"templateA\" }}A{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
+	t2 := v1.NewTemplateGroup("templateB", "{{ define \"templateB\" }}B{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
+	t3 := v1.NewTemplateGroup("templateC", "{{ define \"templateC\" }}C{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
+	cfg.Templates = map[v1.ResourceUID]v1.TemplateGroup{
+		t1.UID: t1,
+		t2.UID: t2,
+		t3.UID: t3,
 	}
 
 	// Contact Points

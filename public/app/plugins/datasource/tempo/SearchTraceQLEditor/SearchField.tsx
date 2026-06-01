@@ -287,7 +287,7 @@ export default SearchField;
  * @param options a list of options
  * @returns the list of given options plus the template variables
  */
-export const withTemplateVariableOptions = (options: SelectableValue[] | undefined) => {
+const withTemplateVariableOptions = (options: SelectableValue[] | undefined) => {
   const templateVariables = getTemplateSrv().getVariables();
   return [...(options || []), ...templateVariables.map((v) => ({ label: `$${v.name}`, value: `$${v.name}` }))];
 };

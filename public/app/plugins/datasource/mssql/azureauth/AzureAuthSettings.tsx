@@ -9,7 +9,7 @@ import { type HttpSettingsBaseProps } from '@grafana/ui/internal';
 import { getCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 
-export const KnownAzureClouds: Array<SelectableValue<AzureCloud>> = [{ value: AzureCloud.Public, label: 'Azure' }];
+const KnownAzureClouds: Array<SelectableValue<AzureCloud>> = [{ value: AzureCloud.Public, label: 'Azure' }];
 
 export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
   const { dataSourceConfig: dsSettings, onChange } = props;
@@ -42,5 +42,3 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
     />
   );
 };
-
-export default AzureAuthSettings;
