@@ -106,25 +106,17 @@ jobs:
           go test -v -count=1 -timeout 5m -run TestIntegrationAvailableChannels ./pkg/tests/api/alerting/... || true
           go test -v -count=1 -timeout 5m -run TestIntegrationTypeSchemaList ./pkg/tests/apis/alerting/notifications/integrationtypeschema/... || true
 
-      - id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          repo_secrets: |
-            GITHUB_APP_ID=alerting-team:app-id
-            GITHUB_APP_PRIVATE_KEY=alerting-team:private-key
-
-      - name: "Generate token"
-        id: generate_token
-        uses: actions/create-github-app-token@0d564482f06ca65fa9e77e2510873638c82206f2 # 1.11.5
-        with:
-          app-id: ${{ env.GITHUB_APP_ID }}
-          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+          github_app: alerting-team
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # 7.0.6
         id: create-pr
         with:
-          token: '${{ steps.generate_token.outputs.token }}'
+          token: '${{ steps.get-github-app-token.outputs.token }}'
           title:  'Alerting: Update alerting module to ${{ steps.latest-commit.outputs.to_commit }}'
           branch: alerting/update-alerting-module
           delete-branch: true
