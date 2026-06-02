@@ -55,9 +55,23 @@ var (
 
 type DefaultPermissionSetter = func(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
 
+type DeprecatedIDState int
+
+const (
+	// The ID property will always be dropped
+	DeprecatedID_None DeprecatedIDState = iota
+	// The ID will always be added
+	DeprecatedID_Required
+	// OK if the value is sent, but not added automatically
+	DeprecatedID_Optional
+)
+
 // Optional settings that apply to a single resource
 type StorageOptions struct {
 	Scheme *runtime.Scheme
+
+	// Required to force unique constraints
+	Index resourcepb.ResourceIndexClient
 
 	// Allow writing objects with metadata.annotations[grafana.app/folder]
 	EnableFolderSupport bool
@@ -65,8 +79,8 @@ type StorageOptions struct {
 	// Some resources should not allow the absolute maximum (254 characters)
 	MaximumNameLength int
 
-	// Add internalID label when missing
-	RequireDeprecatedInternalID bool
+	// How should we handle deprecated internal IDs
+	DeprecatedInternalID DeprecatedIDState
 
 	// Process inline secure values
 	SecureValues secrets.InlineSecureValueSupport
@@ -170,7 +184,7 @@ func NewStorage(
 			"resource", config.GroupResource.String())
 	}
 
-	if opts.RequireDeprecatedInternalID {
+	if opts.DeprecatedInternalID == DeprecatedID_Required {
 		node, err := snowflake.NewNode(rand.Int64N(1024))
 		if err != nil {
 			return nil, nil, err
@@ -246,16 +260,33 @@ func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
 	ctx, span := tracer.Start(ctx, "apistore.Storage.Create")
 	defer span.End()
+
+	rkey, err := s.getKey(key)
+	if err != nil {
+		return err
+	}
+
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return err
+	}
+
+	// Make sure we are looking at the correct namespace
+	if meta.GetNamespace() != rkey.Namespace {
+		if meta.GetNamespace() == "" {
+			meta.SetNamespace(rkey.Namespace)
+		} else {
+			return apierrors.NewBadRequest("namespace mismatch")
+		}
+	}
+
 	v, err := s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
 		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_ADDED, key, obj, out)
 	}
 	req := &resourcepb.CreateRequest{
 		Value: v.raw.Bytes(),
-	}
-	req.Key, err = s.getKey(key)
-	if err != nil {
-		return err
+		Key:   rkey,
 	}
 
 	v.permissionCreator, err = afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, obj, s.opts.Permissions)
@@ -279,7 +310,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
-	meta, err := utils.MetaAccessor(out)
+	meta, err = utils.MetaAccessor(out)
 	if err != nil {
 		return err
 	}

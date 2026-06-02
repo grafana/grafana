@@ -4,9 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // Test-only wildcard pattern; not used in the real mapper.
@@ -23,8 +24,18 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 		require.True(t, ok, "Get(%q, \"datasources\") should find mapping", group)
 		require.NotNil(t, mapping)
 		assert.Equal(t, "datasources:uid:", mapping.Prefix())
+
+		// The datasources/query subresource is also mapped to a query action.
+		queryMapping, ok := reg.Get(group, "datasources", "query")
+		require.True(t, ok, "Get(%q, \"datasources\", \"query\") should find mapping", group)
+		require.NotNil(t, queryMapping)
+		action, ok := queryMapping.Action(utils.VerbCreate)
+		assert.True(t, ok)
+		assert.Equal(t, "datasources:query", action)
+
+		// The group exposes both the datasources resource and its query subresource.
 		all := reg.GetAll(group)
-		require.Len(t, all, 1)
+		require.Len(t, all, 2)
 	}
 
 	// Security: wildcard-matched group must not resolve to resources from other groups
