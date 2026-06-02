@@ -106,6 +106,15 @@ Git Sync is bidirectional, and syncs a repository resource with your Grafana ins
 
 You can find the provisioned dashboards organized in folders under **Dashboards**.
 
+### Sync targets
+
+The `spec.sync.target` field controls where Git Sync places synced resources in Grafana:
+
+- **`folder`**: Grafana creates a folder named after the repository and places all synced resources inside it. Subdirectories in the repository become subfolders within that folder. Multiple `folder` repositories can coexist with each other and with resources that aren't managed by Git Sync. This is the default behavior described above.
+- **`folderless`**: Grafana places synced resources at the top level, without creating a wrapper folder. Files at the repository path root become top-level resources, and subdirectories become top-level folders. Like `folder`, multiple `folderless` repositories can coexist with each other, with `folder` repositories, and with unprovisioned resources. Because there's no wrapper folder, Git Sync tracks which resources each repository manages individually, so a sync only affects the resources that repository owns.
+
+Use `folderless` when you want provisioned resources to appear at the top of your Dashboards view instead of nested inside a repository folder, while still keeping other repositories and manually created resources untouched.
+
 ### Git Sync states
 
 Your Grafana instance can be in one of the following Git Sync states:
