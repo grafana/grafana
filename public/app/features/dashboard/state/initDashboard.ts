@@ -252,6 +252,10 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     try {
       dashboard.processRepeats();
 
+      if (queryParams.expandRows) {
+        dashboard.expandRows();
+      }
+
       // handle auto fix experimental feature
       if (queryParams.autofitpanels) {
         dashboard.autoFitPanels(window.innerHeight, queryParams.kiosk);

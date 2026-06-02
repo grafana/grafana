@@ -1,6 +1,7 @@
-import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, SceneGridRow, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from './DashboardScene';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 describe('DashboardSceneUrlSync', () => {
@@ -20,6 +21,38 @@ describe('DashboardSceneUrlSync', () => {
       const layout = scene.state.body as DefaultGridLayoutManager;
       layout.state.grid.setState({ UNSAFE_fitPanels: true });
       expect(scene.urlSync?.getUrlState().autofitpanels).toBe('true');
+    });
+
+    it('Should expand all collapsed rows when url has expandRows', () => {
+      const row = new SceneGridRow({
+        key: 'row-1',
+        title: 'Row 1',
+        isCollapsed: true,
+        children: [
+          new DashboardGridItem({
+            body: new VizPanel({ title: 'Panel C', key: 'panel-3', pluginId: 'table' }),
+          }),
+        ],
+      });
+
+      const grid = new SceneGridLayout({
+        children: [
+          new DashboardGridItem({
+            body: new VizPanel({ title: 'Panel A', key: 'panel-1', pluginId: 'table' }),
+          }),
+          row,
+        ],
+      });
+
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        body: new DefaultGridLayoutManager({ grid }),
+      });
+
+      expect(row.state.isCollapsed).toBe(true);
+      scene.urlSync?.updateFromUrl({ expandRows: '' });
+      expect(row.state.isCollapsed).toBe(false);
     });
   });
 
