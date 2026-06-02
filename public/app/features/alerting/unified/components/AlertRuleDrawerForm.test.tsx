@@ -382,11 +382,32 @@ describe('AlertRuleDrawerForm', () => {
         expect(onClose).not.toHaveBeenCalled();
       });
 
-      it('hides the evaluation group picker', () => {
+      it('hides the evaluation group picker and shows a per-rule evaluation interval input', () => {
         renderDrawer({ prefill: submittablePrefill });
 
         expect(screen.queryByTestId('group-picker')).not.toBeInTheDocument();
         expect(screen.queryByTestId('new-evaluation-group-button')).not.toBeInTheDocument();
+        expect(screen.getByLabelText(/Evaluation interval/i)).toBeInTheDocument();
+      });
+
+      it('submits the evaluation interval as a rule property', async () => {
+        mockUpsertUngroupedGrafanaRule.mockResolvedValue('new-rule-uid');
+
+        const { user } = renderDrawer({ prefill: submittablePrefill });
+
+        const intervalInput = screen.getByLabelText(/Evaluation interval/i);
+        await user.clear(intervalInput);
+        await user.type(intervalInput, '5m');
+
+        await user.click(screen.getByRole('button', { name: /Create/i }));
+
+        await waitFor(() => {
+          expect(mockUpsertUngroupedGrafanaRule).toHaveBeenCalledWith(
+            expect.objectContaining({
+              values: expect.objectContaining({ evaluateEvery: '5m' }),
+            })
+          );
+        });
       });
     });
   });

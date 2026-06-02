@@ -7,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import {
   Combobox,
   type ComboboxOption,
+  Field,
   Icon,
   InlineField,
   InlineFieldRow,
@@ -21,10 +22,12 @@ import { ToLabel } from 'app/features/expressions/components/ToLabel';
 import { ExpressionDatasourceUID, reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
 import { isRangeEvaluator } from 'app/features/expressions/utils/expressionTypes';
 
+import { evaluateEveryValidationOptions } from '../group-details/validation';
 import { createSimpleConditionExpressions } from '../rule-editor/formProcessing';
 import { type RuleFormValues, type SimpleCondition } from '../types/rule-form';
 
 import { EvaluationGroupFieldRow } from './rule-editor/EvaluationGroupFieldRow';
+import { EvaluationGroupQuickPick } from './rule-editor/EvaluationGroupQuickPick';
 
 const DEFAULT_SIMPLE_CONDITION: SimpleCondition = {
   whenField: ReducerID.last,
@@ -32,15 +35,23 @@ const DEFAULT_SIMPLE_CONDITION: SimpleCondition = {
 };
 
 interface RuleConditionSectionProps {
-  // Hides the evaluation group selector. Used by the drawer when the v2
-  // groupless flow is active, since the rule won't belong to a group at all.
+  // Hides the evaluation group selector and exposes a per-rule evaluation
+  // interval input instead. Used by the drawer when the v2 groupless flow is
+  // active, since the rule won't belong to a group at all.
   hideEvaluationGroup?: boolean;
 }
 
 export function RuleConditionSection({ hideEvaluationGroup = false }: RuleConditionSectionProps = {}) {
   const base = useStyles2(getStyles);
-  const { watch, setValue, getValues } = useFormContext<RuleFormValues>();
+  const {
+    watch,
+    setValue,
+    getValues,
+    register,
+    formState: { errors },
+  } = useFormContext<RuleFormValues>();
   const evaluateFor = watch('evaluateFor') || '0s';
+  const evaluateEvery = watch('evaluateEvery');
 
   const [simpleCondition, setSimpleCondition] = useState<SimpleCondition>(DEFAULT_SIMPLE_CONDITION);
 
@@ -178,7 +189,29 @@ export function RuleConditionSection({ hideEvaluationGroup = false }: RuleCondit
             </InlineField>
           </InlineFieldRow>
 
-          {!hideEvaluationGroup && <EvaluationGroupFieldRow enableProvisionedGroups={false} />}
+          {hideEvaluationGroup ? (
+            <Stack direction="column" gap={1.5}>
+              <Field
+                noMargin
+                label={t('alerting.rule-form.evaluation.interval-label', 'Evaluation interval')}
+                error={errors.evaluateEvery?.message}
+                invalid={Boolean(errors.evaluateEvery?.message)}
+                htmlFor="evaluate-every-no-group"
+              >
+                <Input
+                  id="evaluate-every-no-group"
+                  width={8}
+                  {...register('evaluateEvery', evaluateEveryValidationOptions<{ evaluateEvery: string }>([]))}
+                />
+              </Field>
+              <EvaluationGroupQuickPick
+                currentInterval={evaluateEvery}
+                onSelect={(interval) => setValue('evaluateEvery', interval)}
+              />
+            </Stack>
+          ) : (
+            <EvaluationGroupFieldRow enableProvisionedGroups={false} />
+          )}
 
           {evaluateFor === '0s' && (
             <Stack direction="row" gap={0.5} alignItems="center">
