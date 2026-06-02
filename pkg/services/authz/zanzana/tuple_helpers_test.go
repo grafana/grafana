@@ -183,9 +183,8 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 	})
 
 	t.Run("should reconcile global users-writer permissions", func(t *testing.T) {
-		// A "global users writer" (Grafana Admin) set: the users:* family + the
-		// permissions sub-actions. Under the union model these map to the full
-		// CRUD + permission relations on iam.grafana.app/users.
+		// A "global users writer" (Grafana Admin) set: the users:* family plus the
+		// permissions sub-actions, mapping to full CRUD + permission relations.
 		permissions := []RolePermission{
 			{Action: "users:create", Kind: "", Identifier: ""},
 			{Action: "users:read", Kind: "global.users", Identifier: "*"},
@@ -210,11 +209,8 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 
 	t.Run("should reconcile org-admin (org.users) permissions", func(t *testing.T) {
 		// basic_admin (Org Admin) carries only the org.users:* family plus
-		// users.permissions:read, all scoped users:*. Under the union model these
-		// reach the same users relations as the global family — get/update/create/
-		// delete + get_permissions — so the Org Admin is functional for user
-		// management. Field-level escalation (grafanaAdmin/disabled) is still blocked
-		// by iam admission, independent of these grants.
+		// users.permissions:read. Under the union model these reach the same users
+		// relations as the global family, so the Org Admin is functional.
 		permissions := []RolePermission{
 			{Action: "org.users:read", Kind: "users", Identifier: "*"},
 			{Action: "org.users:write", Kind: "users", Identifier: "*"},
