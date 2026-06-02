@@ -31,7 +31,13 @@ const DEFAULT_SIMPLE_CONDITION: SimpleCondition = {
   evaluator: { params: [0], type: EvalFunction.IsAbove },
 };
 
-export function RuleConditionSection() {
+interface RuleConditionSectionProps {
+  // Hides the evaluation group selector. Used by the drawer when the v2
+  // groupless flow is active, since the rule won't belong to a group at all.
+  hideEvaluationGroup?: boolean;
+}
+
+export function RuleConditionSection({ hideEvaluationGroup = false }: RuleConditionSectionProps = {}) {
   const base = useStyles2(getStyles);
   const { watch, setValue, getValues } = useFormContext<RuleFormValues>();
   const evaluateFor = watch('evaluateFor') || '0s';
@@ -172,7 +178,7 @@ export function RuleConditionSection() {
             </InlineField>
           </InlineFieldRow>
 
-          <EvaluationGroupFieldRow enableProvisionedGroups={false} />
+          {!hideEvaluationGroup && <EvaluationGroupFieldRow enableProvisionedGroups={false} />}
 
           {evaluateFor === '0s' && (
             <Stack direction="row" gap={0.5} alignItems="center">

@@ -16,7 +16,9 @@ import {
   trackCreateRuleFromPanelDrawerRuleCreated,
 } from '../Analytics';
 import { isCloudGroupUpdatedResponse, isGrafanaGroupUpdatedResponse } from '../api/alertRuleModel';
+import { shouldUseRulesAPIV2 } from '../featureToggles';
 import { useAddRuleToRuleGroup } from '../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
+import { useUpsertUngroupedGrafanaRule } from '../hooks/useUpsertUngroupedGrafanaRule';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 import { formValuesToRulerGrafanaRuleDTO, normalizeContactPoints } from '../utils/rule-form';
@@ -46,8 +48,12 @@ export function AlertRuleDrawerForm({
   });
   const styles = useStyles2(getStyles);
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
+  const upsertUngroupedGrafanaRule = useUpsertUngroupedGrafanaRule();
   const notifyApp = useAppNotification();
   const ruleCreatedRef = useRef(false);
+  // When rule API v2 is on, the drawer creates rules through the App Platform groupless
+  // endpoint and we can drop the "derive group from rule name" fallback below.
+  const useRuleAPIV2 = shouldUseRulesAPIV2();
 
   // Reset form and ref when drawer opens
   useEffect(() => {
@@ -70,6 +76,23 @@ export function AlertRuleDrawerForm({
 
   const submit = async (values: RuleFormValues) => {
     try {
+      if (useRuleAPIV2) {
+        // Force ungrouped so this can't be misrouted by a stale prefill.
+        await upsertUngroupedGrafanaRule({
+          values: { ...values, isUngroupedRuleGroup: true },
+          existingUid: undefined,
+        });
+
+        ruleCreatedRef.current = true;
+        trackCreateRuleFromPanelDrawerRuleCreated();
+        notifyApp.success(
+          t('alerting.alert-rule-drawer.success-title', 'Alert rule created'),
+          t('alerting.alert-rule-drawer.success-message', 'Your alert rule has been created successfully.')
+        );
+        onClose();
+        return;
+      }
+
       // The drawer doesn't expose a group field to keep the UX simple.
       // We derive the group name from the rule name as a sensible default.
       // The 'default' fallback should rarely occur since 'name' is a required field.
@@ -128,7 +151,7 @@ export function AlertRuleDrawerForm({
         <FormProvider {...methods}>
           <RuleDefinitionSection />
           <div className={styles.divider} aria-hidden="true" />
-          <RuleConditionSection />
+          <RuleConditionSection hideEvaluationGroup={useRuleAPIV2} />
           <div className={styles.divider} aria-hidden="true" />
           <RuleNotificationSection />
           <div className={styles.footer}>
