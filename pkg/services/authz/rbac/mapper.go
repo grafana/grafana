@@ -195,6 +195,23 @@ func newFolderTranslation() translation {
 	return folderTranslation
 }
 
+func newDatasourceQueryTranslation() translation {
+	dsTranslation := newResourceTranslation("datasources", "uid", false, map[string]bool{utils.VerbCreate: true})
+
+	dsTranslation.actionSetMapping = map[string][]string{
+		// utils.VerbWatch: {"datasources:query"},
+		utils.VerbGet:              {"datasources:query", "datasources:admin", "datasources:edit"},
+		utils.VerbList:             {"datasources:query", "datasources:admin", "datasources:edit"},
+		utils.VerbUpdate:           {"datasources:edit", "datasources:admin"},
+		utils.VerbPatch:            {"datasources:edit", "datasources:admin"},
+		utils.VerbDelete:           {"datasources:edit", "datasources:admin"},
+		utils.VerbDeleteCollection: {"datasources:edit", "datasources:admin"},
+		utils.VerbGetPermissions:   {"datasources:admin"},
+		utils.VerbSetPermissions:   {"datasources:admin"},
+	}
+	return dsTranslation
+}
+
 // newServiceAccountTranslation creates a translation for service accounts and maps actions to action sets.
 // Service accounts only have Edit and Admin permission levels — there is no View level.
 func newServiceAccountTranslation() translation {
@@ -373,7 +390,16 @@ func NewMapperRegistry() MapperRegistry {
 			},
 		},
 		"*.datasource.grafana.app": {
-			"datasources": newResourceTranslation("datasources", "uid", false, nil),
+			"datasources": newDatasourceQueryTranslation(),
+			"datasources/query": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate: "datasources:query",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: nil,
+			},
 		},
 		"plugins.grafana.app": {
 			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),

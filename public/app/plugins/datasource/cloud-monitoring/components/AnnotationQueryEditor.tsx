@@ -16,7 +16,7 @@ import { MetricQueryEditor, defaultTimeSeriesList } from './MetricQueryEditor';
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
-export const defaultQuery: (datasource: CloudMonitoringDatasource) => TimeSeriesList = (datasource) => ({
+const defaultQuery: (datasource: CloudMonitoringDatasource) => TimeSeriesList = (datasource) => ({
   ...defaultTimeSeriesList(datasource),
   title: '',
   text: '',

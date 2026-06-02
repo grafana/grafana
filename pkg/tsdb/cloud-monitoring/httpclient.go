@@ -34,6 +34,10 @@ var routes = map[string]routeInfo{
 }
 
 func getMiddleware(model *datasourceInfo, routePath string) (httpclient.Middleware, error) {
+	if model.authenticationType == forwardOAuthIdentityAuthentication {
+		return nil, nil
+	}
+
 	providerConfig := tokenprovider.Config{
 		RoutePath:         routePath,
 		RouteMethod:       routes[routePath].method,
@@ -81,6 +85,8 @@ func newHTTPClient(model *datasourceInfo, opts httpclient.Options, clientProvide
 		return nil, err
 	}
 
-	opts.Middlewares = append(opts.Middlewares, m)
+	if m != nil {
+		opts.Middlewares = append(opts.Middlewares, m)
+	}
 	return clientProvider.New(opts)
 }

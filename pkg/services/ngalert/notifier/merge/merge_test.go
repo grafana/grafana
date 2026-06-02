@@ -3,12 +3,12 @@ package merge
 import (
 	"context"
 	_ "embed"
+	"encoding/json"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/alerting/definition"
-	httpcfg "github.com/grafana/alerting/http/v0mimir"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +18,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
-func TestMergeReceivers(t *testing.T) {
+func TestReceivers(t *testing.T) {
 	r := func(name string) *v1.PostableApiReceiver {
 		return &v1.PostableApiReceiver{
 			Receiver: definition.Receiver{
@@ -122,7 +122,7 @@ func TestMergeReceivers(t *testing.T) {
 				incomingNames = append(incomingNames, r.Name)
 			}
 
-			actual, actualRenames := MergeReceivers(tc.existing, tc.incoming, suffix)
+			actual, actualRenames := Receivers(tc.existing, tc.incoming, suffix)
 			require.Len(t, actual, len(tc.expected))
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
 			for i := range tc.expected {
@@ -151,7 +151,7 @@ func TestMergeReceivers(t *testing.T) {
 	}
 }
 
-func TestMergeTimeIntervals(t *testing.T) {
+func TestTimeIntervals(t *testing.T) {
 	ti := func(name string) v1.TimeInterval {
 		return v1.TimeInterval{
 			Name: name,
@@ -305,7 +305,7 @@ func TestMergeTimeIntervals(t *testing.T) {
 				incomingNames = append(incomingNames, r.Name)
 			}
 
-			actualTimeIntervals, actualRenames := MergeTimeIntervals(tc.existingMuteIntervals, tc.existingTimeIntervals, tc.incomingMuteIntervals, tc.incomingTimeIntervals, suffix)
+			actualTimeIntervals, actualRenames := TimeIntervals(tc.existingMuteIntervals, tc.existingTimeIntervals, tc.incomingMuteIntervals, tc.incomingTimeIntervals, suffix)
 			assert.Equal(t, tc.expected, actualTimeIntervals)
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
 
@@ -385,11 +385,23 @@ func TestMergeExtraConfig(t *testing.T) {
 	assertResult := func(t *testing.T, expected, actual MergeResult) {
 		t.Helper()
 		diff := cmp.Diff(expected, actual,
-			cmpopts.IgnoreUnexported(commoncfg.ProxyConfig{}, httpcfg.ProxyConfig{}, labels.Matcher{}, v1.AMConfigV1{}),
+			cmpopts.IgnoreUnexported(commoncfg.ProxyConfig{}, labels.Matcher{}, v1.AMConfigV1{}),
 			cmpopts.SortSlices(func(a, b *labels.Matcher) bool { return a.Name < b.Name }),
 			cmpopts.SortSlices(func(a, b *v1.PostableApiReceiver) bool { return a.Name < b.Name }),
 			cmpopts.EquateEmpty(),
 			cmpopts.IgnoreFields(MergeResult{}, "ExtraRoute", "ExtraInhibitRules"),
+			cmp.Comparer(func(a, b definition.RawMessage) bool {
+				var va, vb any
+				if err := json.Unmarshal(a, &va); err != nil {
+					return string(a) == string(b)
+				}
+				if err := json.Unmarshal(b, &vb); err != nil {
+					return string(a) == string(b)
+				}
+				ba, _ := json.Marshal(va)
+				bb, _ := json.Marshal(vb)
+				return string(ba) == string(bb)
+			}),
 		)
 		if !assert.Empty(t, diff) {
 			data, err := yaml.Marshal(actual.Config)
