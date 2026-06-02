@@ -60,6 +60,31 @@ func TestInsertQuery(t *testing.T) {
 	}
 }
 
+func TestColumnCheckSQL(t *testing.T) {
+	table, col := "alert_rule", "guid"
+
+	t.Run("postgres returns information_schema query scoped to current schema", func(t *testing.T) {
+		db := NewPostgresDialect()
+		sql, args := db.ColumnCheckSQL(table, col)
+		require.Equal(t, "SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name=? AND column_name=?", sql)
+		require.Equal(t, []any{table, col}, args)
+	})
+
+	t.Run("mysql returns INFORMATION_SCHEMA query scoped to DATABASE()", func(t *testing.T) {
+		db := NewMysqlDialect()
+		sql, args := db.ColumnCheckSQL(table, col)
+		require.NotEmpty(t, sql)
+		require.Equal(t, []any{table, col}, args)
+	})
+
+	t.Run("sqlite returns pragma_table_info query", func(t *testing.T) {
+		db := NewSQLite3Dialect()
+		sql, args := db.ColumnCheckSQL(table, col)
+		require.NotEmpty(t, sql)
+		require.Equal(t, []any{col}, args)
+	})
+}
+
 func TestUpdateQuery(t *testing.T) {
 	tests := []struct {
 		name                  string
