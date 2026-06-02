@@ -9,7 +9,7 @@ import { IconButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { Spacer } from '../../components/Spacer';
 
 interface GroupProps extends PropsWithChildren {
-  name: string;
+  name: NonNullable<ReactNode>;
   description?: ReactNode;
   metaRight?: ReactNode;
   actions?: ReactNode;

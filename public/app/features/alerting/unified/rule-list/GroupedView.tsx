@@ -8,7 +8,7 @@ import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { GrafanaRulesSource, getExternalRulesSources } from '../utils/datasource';
 
 import { PaginatedDataSourceLoader } from './PaginatedDataSourceLoader';
-import { PaginatedGrafanaLoader } from './PaginatedGrafanaLoader';
+import { K8sPaginatedGrafanaLoader } from './K8sPaginatedGrafanaLoader';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 import { DataSourceErrorBoundary } from './components/DataSourceErrorBoundary';
 import { DataSourceSection } from './components/DataSourceSection';
@@ -31,7 +31,7 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
   return (
     <Stack direction="column" gap={1} role="list">
       <DataSourceErrorBoundary rulesSourceIdentifier={GrafanaRulesSource}>
-        <PaginatedGrafanaLoader
+        <K8sPaginatedGrafanaLoader
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
           onLoadingStateChange={updateState}

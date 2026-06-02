@@ -14,6 +14,7 @@ import { type SavedSearch } from '../../components/saved-searches/savedSearchesS
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
+import { RecordingSplitModeSelector } from './RecordingSplitModeSelector';
 import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
 
 export interface RulesFilterProps {
@@ -131,6 +132,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
             isLoading={savedSearchesLoading}
           />
           <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
+          {viewMode === 'grouped' && <RecordingSplitModeSelector />}
         </Stack>
       </Stack>
     </form>
