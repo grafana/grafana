@@ -119,7 +119,10 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
     <div {...sidebarSplitter.containerProps}>
       {sidebarPane}
       <div {...sidebarSplitter.splitterProps} />
-      <div {...sidebarSplitter.secondaryProps} className={cx(sidebarSplitter.secondaryProps.className, styles.rightStack)}>
+      <div
+        {...sidebarSplitter.secondaryProps}
+        className={cx(sidebarSplitter.secondaryProps.className, styles.rightStack)}
+      >
         {controls}
         <VizDataSplit
           splitter={vizDataSplitter}
