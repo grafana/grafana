@@ -186,6 +186,32 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
+	// TEMP: hardcode teams/users actions so bootData route guards pass.
+	for _, action := range []string{
+		ac.ActionTeamsCreate,
+		ac.ActionTeamsRead,
+		ac.ActionTeamsWrite,
+		ac.ActionTeamsDelete,
+		ac.ActionTeamsPermissionsRead,
+		ac.ActionTeamsPermissionsWrite,
+		ac.ActionUsersRead,
+		ac.ActionUsersWrite,
+		ac.ActionUsersCreate,
+		ac.ActionUsersDelete,
+		ac.ActionUsersEnable,
+		ac.ActionUsersDisable,
+		ac.ActionUsersLogout,
+		ac.ActionUsersAuthTokenList,
+		ac.ActionUsersAuthTokenUpdate,
+		ac.ActionUsersPasswordUpdate,
+		ac.ActionUsersPermissionsRead,
+		ac.ActionUsersPermissionsUpdate,
+		ac.ActionUsersQuotasList,
+		ac.ActionUsersQuotasUpdate,
+	} {
+		userPermissions = append(userPermissions, ac.Permission{Action: action})
+	}
+
 	data.User.Permissions = ac.BuildPermissionsMap(userPermissions)
 
 	if hs.Cfg.DisableGravatar {

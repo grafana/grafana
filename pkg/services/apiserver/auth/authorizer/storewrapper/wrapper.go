@@ -254,6 +254,27 @@ func (w *Wrapper) ConvertToTable(ctx context.Context, object runtime.Object, tab
 	return w.inner.ConvertToTable(ctx, object, tableOptions)
 }
 
+// validationWithUserContext re-binds a create-validation callback to the original user ctx.
+// The store closure runs under storeCtx (service identity); admission code calling identity.GetRequester
+// would otherwise see the wrong identity and can nil-deref.
+func validationWithUserContext(userCtx context.Context, fn k8srest.ValidateObjectFunc) k8srest.ValidateObjectFunc {
+	if fn == nil {
+		return nil
+	}
+	return func(_ context.Context, obj runtime.Object) error {
+		return fn(userCtx, obj)
+	}
+}
+
+func updateValidationWithUserContext(userCtx context.Context, fn k8srest.ValidateObjectUpdateFunc) k8srest.ValidateObjectUpdateFunc {
+	if fn == nil {
+		return nil
+	}
+	return func(_ context.Context, obj, oldObj runtime.Object) error {
+		return fn(userCtx, obj, oldObj)
+	}
+}
+
 func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidation k8srest.ValidateObjectFunc, options *metaV1.CreateOptions) (result runtime.Object, err error) {
 	ctx, span := w.startSpan(ctx, "Create")
 	defer func() {
@@ -270,7 +291,7 @@ func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidati
 	}
 
 	innerStart := time.Now()
-	result, err = w.inner.Create(w.storeCtx(ctx), obj, createValidation, options)
+	result, err = w.inner.Create(w.storeCtx(ctx), obj, validationWithUserContext(ctx, createValidation), options)
 	w.observeInner(OpCreate, innerStart, err)
 	return result, err
 }
@@ -402,7 +423,7 @@ func (w *Wrapper) Update(
 	}
 
 	innerStart := time.Now()
-	result, updated, err = w.inner.Update(w.storeCtx(ctx), name, wrappedObjInfo, createValidation, updateValidation, forceAllowCreate, options)
+	result, updated, err = w.inner.Update(w.storeCtx(ctx), name, wrappedObjInfo, validationWithUserContext(ctx, createValidation), updateValidationWithUserContext(ctx, updateValidation), forceAllowCreate, options)
 	// Technically also includes the authorizer time, but it's not worth the complexity to split it out.
 	w.observeInner(OpUpdate, innerStart, err)
 	return result, updated, err

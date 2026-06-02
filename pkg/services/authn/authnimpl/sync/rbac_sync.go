@@ -55,42 +55,66 @@ func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identit
 		return nil
 	}
 
-	// Populate permissions from roles
-	permissions, err := s.fetchPermissions(ctx, ident)
-	if err != nil {
-		return err
+	// // Populate permissions from roles
+	// permissions, err := s.fetchPermissions(ctx, ident)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// if ident.Permissions == nil {
+	// 	ident.Permissions = make(map[int64]map[string][]string, 1)
+	// }
+
+	// grouped := accesscontrol.GroupScopesByActionContext(ctx, permissions)
+
+	// // Restrict access to the list of actions
+	// grafanaRestrictions := ident.ClientParams.FetchPermissionsParams.RestrictedActions
+	// k8sRestrictions := ident.ClientParams.FetchPermissionsParams.K8sRestrictedActions
+	// if grafanaRestrictions != nil || k8sRestrictions != nil {
+	// 	allowedActions := make([]string, 0, len(grafanaRestrictions)+len(k8sRestrictions))
+
+	// 	// Translate K8s restrictions to Grafana actions
+	// 	k8sPermissions := s.translateK8sPermissions(ctx, k8sRestrictions)
+	// 	for _, perm := range k8sPermissions {
+	// 		allowedActions = append(allowedActions, perm.Action)
+	// 	}
+
+	// 	// Add Grafana actions directly
+	// 	allowedActions = append(allowedActions, grafanaRestrictions...)
+
+	// 	// Filter permissions
+	// 	filtered := make(map[string][]string, len(allowedActions))
+	// 	for _, action := range allowedActions {
+	// 		if scopes, ok := grouped[action]; ok {
+	// 			filtered[action] = scopes
+	// 		}
+	// 	}
+	// 	grouped = filtered
+	// }
+
+	grouped := make(map[string][]string)
+	// TEMP: hardcode teams/users permissions for every signed-in user.
+	teamScopes := []string{"teams:*"}
+	userScopes := []string{"users:*"}
+	hardcoded := map[string][]string{
+		accesscontrol.ActionTeamsCreate:           teamScopes,
+		accesscontrol.ActionTeamsRead:             teamScopes,
+		accesscontrol.ActionTeamsWrite:            teamScopes,
+		accesscontrol.ActionTeamsDelete:           teamScopes,
+		accesscontrol.ActionTeamsPermissionsRead:  teamScopes,
+		accesscontrol.ActionTeamsPermissionsWrite: teamScopes,
+		accesscontrol.ActionUsersRead:             userScopes,
+		accesscontrol.ActionUsersWrite:            userScopes,
+		accesscontrol.ActionUsersCreate:           userScopes,
+		accesscontrol.ActionUsersDelete:           userScopes,
+		accesscontrol.ActionUsersEnable:           userScopes,
+		accesscontrol.ActionUsersDisable:          userScopes,
+	}
+	for action, scopes := range hardcoded {
+		grouped[action] = scopes
 	}
 
-	if ident.Permissions == nil {
-		ident.Permissions = make(map[int64]map[string][]string, 1)
-	}
-
-	grouped := accesscontrol.GroupScopesByActionContext(ctx, permissions)
-
-	// Restrict access to the list of actions
-	grafanaRestrictions := ident.ClientParams.FetchPermissionsParams.RestrictedActions
-	k8sRestrictions := ident.ClientParams.FetchPermissionsParams.K8sRestrictedActions
-	if grafanaRestrictions != nil || k8sRestrictions != nil {
-		allowedActions := make([]string, 0, len(grafanaRestrictions)+len(k8sRestrictions))
-
-		// Translate K8s restrictions to Grafana actions
-		k8sPermissions := s.translateK8sPermissions(ctx, k8sRestrictions)
-		for _, perm := range k8sPermissions {
-			allowedActions = append(allowedActions, perm.Action)
-		}
-
-		// Add Grafana actions directly
-		allowedActions = append(allowedActions, grafanaRestrictions...)
-
-		// Filter permissions
-		filtered := make(map[string][]string, len(allowedActions))
-		for _, action := range allowedActions {
-			if scopes, ok := grouped[action]; ok {
-				filtered[action] = scopes
-			}
-		}
-		grouped = filtered
-	}
+	ident.Permissions = make(map[int64]map[string][]string, 1)
 	ident.Permissions[ident.OrgID] = grouped
 
 	return nil

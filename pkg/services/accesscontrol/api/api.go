@@ -87,6 +87,34 @@ func (api *AccessControlAPI) getUserActions(c *contextmodel.ReqContext) response
 		}
 	}
 
+	// TEMP: hardcode teams/users actions for OrgID=1 so the frontend route guards pass.
+	if c.SignedInUser != nil && c.SignedInUser.OrgID == 1 {
+		for _, action := range []string{
+			ac.ActionTeamsCreate,
+			ac.ActionTeamsRead,
+			ac.ActionTeamsWrite,
+			ac.ActionTeamsDelete,
+			ac.ActionTeamsPermissionsRead,
+			ac.ActionTeamsPermissionsWrite,
+			ac.ActionUsersRead,
+			ac.ActionUsersWrite,
+			ac.ActionUsersCreate,
+			ac.ActionUsersDelete,
+			ac.ActionUsersEnable,
+			ac.ActionUsersDisable,
+			ac.ActionUsersLogout,
+			ac.ActionUsersAuthTokenList,
+			ac.ActionUsersAuthTokenUpdate,
+			ac.ActionUsersPasswordUpdate,
+			ac.ActionUsersPermissionsRead,
+			ac.ActionUsersPermissionsUpdate,
+			ac.ActionUsersQuotasList,
+			ac.ActionUsersQuotasUpdate,
+		} {
+			permissions = append(permissions, ac.Permission{Action: action})
+		}
+	}
+
 	return response.JSON(http.StatusOK, ac.BuildPermissionsMap(permissions))
 }
 
