@@ -158,6 +158,7 @@ type Cfg struct {
 	// Provisioning config
 	ProvisioningAllowedTargets                []string
 	ProvisioningAllowImageRendering           bool
+	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
 	ProvisioningMinSyncInterval               time.Duration
 	ProvisioningRepositoryTypes               []string
 	ProvisioningLokiURL                       string
@@ -2485,6 +2486,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 		cfg.ProvisioningAllowedTargets = []string{"folder"}
 	}
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
+	cfg.ProvisioningAllowInsecure = iniFile.Section("provisioning").Key("allow_insecure").MustBool(false)
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
 	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)

@@ -24,7 +24,9 @@ type MetricExtractor interface {
 type MetricsFetcher interface {
 	// FetchMetrics queries the datasource to get all available metric/entity names.
 	// The provided HTTP client should have proper authentication configured.
-	FetchMetrics(ctx context.Context, datasourceURL string, client *http.Client) ([]string, error)
+	// datasourceUID is passed so failure errors can identify the failing datasource
+	// without the fetcher needing to know about Grafana's datasource model.
+	FetchMetrics(ctx context.Context, datasourceUID, datasourceURL string, client *http.Client) ([]string, error)
 }
 
 // Query represents a dashboard query to validate

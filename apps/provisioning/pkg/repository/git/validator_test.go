@@ -16,6 +16,7 @@ func TestValidate(t *testing.T) {
 	tests := []struct {
 		name          string
 		obj           runtime.Object
+		allowInsecure bool
 		expectedError bool
 		errorContains []string
 	}{
@@ -232,6 +233,90 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
+			name: "http url with token is rejected",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "http://localhost:3000/grafana/grafana.git",
+						Branch: "main",
+						Path:   "grafana",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-token"),
+					},
+				},
+			},
+			expectedError: true,
+			errorContains: []string{"http:// is not allowed when a token is configured"},
+		},
+		{
+			name: "http url with token is allowed when insecure is permitted",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "http://localhost:3000/grafana/grafana.git",
+						Branch: "main",
+						Path:   "grafana",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-token"),
+					},
+				},
+			},
+			allowInsecure: true,
+		},
+		{
+			name: "uppercase HTTP scheme with token is rejected",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "HTTP://localhost:3000/grafana/grafana.git",
+						Branch: "main",
+						Path:   "grafana",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-token"),
+					},
+				},
+			},
+			expectedError: true,
+			errorContains: []string{"http:// is not allowed when a token is configured"},
+		},
+		{
+			name: "http url without token is allowed",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "http://localhost:3000/grafana/grafana.git",
+						Branch: "main",
+						Path:   "grafana",
+					},
+				},
+			},
+		},
+		{
 			name: "valid git repository with connection",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
@@ -255,7 +340,7 @@ func TestValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			list := Validate(context.Background(), tt.obj)
+			list := Validate(context.Background(), tt.obj, tt.allowInsecure)
 			if tt.expectedError {
 				assert.NotEmpty(t, list)
 				if len(tt.errorContains) > 0 {
