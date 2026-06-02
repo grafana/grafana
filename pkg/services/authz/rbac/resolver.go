@@ -247,7 +247,12 @@ func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, s
 		}
 		if resolved != "" {
 			scopeMap[resolved] = true
-			delete(scopeMap, scope)
+			// Keep permissions:type:* literals alongside their resolved value.
+			// delegate resolves to "*" for the roles resource, but the permissions resource
+			// skips wildcards (SkipWildcard) to block privilege escalation
+			if !strings.HasPrefix(scope, "permissions:type:") {
+				delete(scopeMap, scope)
+			}
 		}
 	}
 	return scopeMap, nil
