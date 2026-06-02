@@ -9,7 +9,7 @@ import { Portal } from '../Portal/Portal';
 
 import { VizTooltipContainer } from './VizTooltipContainer';
 
-export interface FlotPosition {
+interface FlotPosition {
   pageX: number;
   pageY: number;
   x: number;
@@ -23,9 +23,9 @@ export interface FlotPosition {
 // - key is the name of the dimension
 // - value is a tuple addressing which column and row from given dimension is active.
 //   If row is undefined, it means that we are not hovering over a datapoint
-export type ActiveDimensions<T extends Dimensions = any> = { [key in keyof T]: [number, number | undefined] | null };
+type ActiveDimensions<T extends Dimensions = any> = { [key in keyof T]: [number, number | undefined] | null };
 
-export interface VizTooltipContentProps<T extends Dimensions = any> {
+interface VizTooltipContentProps<T extends Dimensions = any> {
   // Each dimension is described by array of fields representing it
   // I.e. for graph there are two dimensions: x and y axis:
   // { xAxis: [<array of time fields>], yAxis: [<array of value fields>]}
@@ -37,7 +37,7 @@ export interface VizTooltipContentProps<T extends Dimensions = any> {
   mode: TooltipDisplayMode;
 }
 
-export interface VizTooltipProps {
+interface VizTooltipProps {
   /** Element used as tooltips content */
   content?: React.ReactElement;
 

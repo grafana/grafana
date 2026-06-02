@@ -286,10 +286,19 @@ func TestExportRules(t *testing.T) {
 	allRules = append(allRules, hasAccess2...)
 	allRules = append(allRules, noAccess1...)
 
+	defaultPerms := map[int64]map[string][]string{
+		orgID: {
+			folder2.ActionFoldersRead:            []string{folder2.ScopeFoldersProvider.GetResourceScopeUID(f1.UID), folder2.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)},
+			accesscontrol.ActionAlertingRuleRead: []string{folder2.ScopeFoldersProvider.GetResourceScopeUID(f1.UID), folder2.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)},
+			datasources.ActionQuery:              []string{datasources.ScopeProvider.GetResourceScopeUID(accessQuery.DatasourceUID)},
+		},
+	}
+
 	testCases := []struct {
 		title           string
 		params          url.Values
 		headers         http.Header
+		perms           map[int64]map[string][]string // overrides defaultPerms when non-nil
 		expectedStatus  int
 		expectedHeaders http.Header
 		expectedRules   []*ngmodels.AlertRule
@@ -381,6 +390,35 @@ func TestExportRules(t *testing.T) {
 			expectedRules:  nil,
 		},
 		{
+			// Previously this would have silently dropped the inaccessible folder
+			// and returned only the rules from the accessible one. The per-folder
+			// check in getRulesWithFolderFullPathInFolders now denies on the first
+			// folder the caller cannot see.
+			title: "forbidden when the folder list mixes accessible and inaccessible folders",
+			params: url.Values{
+				"folderUid": []string{hasAccessKey1.NamespaceUID, noAccessByFolder[0].NamespaceUID},
+			},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			// Caller can see f1 (folders:read) but lacks alert.rules:read, and
+			// asks for a group that has no rules in f1. Previously this fell
+			// through getAuthorizedRuleGroup with len(rules) == 0 → ErrAlertRuleNotFound
+			// → 500 via the generic error handler. The new AuthorizeAccessInFolder
+			// check in getRuleGroupWithFolderFullPath converts that to a 403.
+			title: "forbidden when group is requested in a folder visible but without rule-level access",
+			params: url.Values{
+				"folderUid": []string{hasAccessKey1.NamespaceUID},
+				"group":     []string{"group-that-does-not-exist"},
+			},
+			perms: map[int64]map[string][]string{
+				orgID: {
+					folder2.ActionFoldersRead: []string{folder2.ScopeFoldersProvider.GetResourceScopeUID(f1.UID)},
+				},
+			},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
 			title: "return in JSON if header is specified",
 			headers: http.Header{
 				"Accept": []string{"application/json"},
@@ -417,13 +455,11 @@ func TestExportRules(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.title, func(t *testing.T) {
-			rc := createRequestContextWithPerms(orgID, map[int64]map[string][]string{
-				orgID: {
-					folder2.ActionFoldersRead:            []string{folder2.ScopeFoldersProvider.GetResourceScopeUID(f1.UID), folder2.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)},
-					accesscontrol.ActionAlertingRuleRead: []string{folder2.ScopeFoldersProvider.GetResourceScopeUID(f1.UID), folder2.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)},
-					datasources.ActionQuery:              []string{datasources.ScopeProvider.GetResourceScopeUID(accessQuery.DatasourceUID)},
-				},
-			}, nil)
+			perms := tc.perms
+			if perms == nil {
+				perms = defaultPerms
+			}
+			rc := createRequestContextWithPerms(orgID, perms, nil)
 			rc.Req.Form = tc.params
 			rc.Req.Header = tc.headers
 

@@ -136,6 +136,7 @@ func handleCheckRoute(
 		defer cancel()
 
 		logger := log.WithContext(ctx)
+		ctx = logging.Context(ctx, logger)
 		logger.Info("Received compatibility check request")
 
 		// Step 1: Parse request body
@@ -200,7 +201,11 @@ func handleCheckRoute(
 			Datasources:   make([]validator.Datasource, 0, len(req.DatasourceMappings)),
 		}
 
-		logger.Info("Processing request", "dashboardTitle", req.DashboardJSON["title"], "numMappings", len(req.DatasourceMappings))
+		logger.Info("Processing request",
+			"numMappings", len(req.DatasourceMappings),
+			"datasourceUID", req.DatasourceMappings[0].UID,
+			"datasourceType", req.DatasourceMappings[0].Type,
+		)
 
 		// Get namespace from request (needed for datasource lookup)
 		// Namespace format is typically "org-{orgID}"
@@ -215,6 +220,7 @@ func handleCheckRoute(
 			)
 		}
 		logger = logger.With("orgID", orgID, "namespace", namespace)
+		ctx = logging.Context(ctx, logger)
 
 		// Extract the requester once for per-datasource scoped permission checks
 		user, err := identity.GetRequester(ctx)
