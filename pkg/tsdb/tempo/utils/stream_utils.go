@@ -20,7 +20,9 @@ const (
 // returns HTTP header key/value pairs for the outgoing Tempo streaming gRPC call.
 // It always includes datasource HTTP client option headers. When streamingForwardTeamHeadersTempo is enabled, it also merges
 // outgoing gRPC metadata: X-Prom-Label-Policy is set from the x-prom-label-policy metadata values, and every other
-// metadata entry is copied under its existing key.
+// metadata entry is copied under its existing key. Team headers whose key collides case-insensitively with a
+// datasource-configured header are dropped — HTTP/gRPC header names are case-insensitive on the wire, so keeping both
+// would let Go's randomised map iteration deliver the wrong value (e.g. x-scope-orgid).
 func GetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[string]string, error) {
 	plugin := backend.PluginConfigFromContext(ctx)
 	headers, err := getClientOptionsHeaders(ctx, plugin)
@@ -28,9 +30,20 @@ func GetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[
 		return nil, err
 	}
 
+	reserved := make(map[string]struct{}, len(headers))
+	for k := range headers {
+		reserved[strings.ToLower(k)] = struct{}{}
+	}
+
 	// fetch team headers from outgoing context.
 	teamHeaders := getTeamHeaders(ctx, logger, plugin)
 	for k, v := range teamHeaders {
+		if _, conflict := reserved[strings.ToLower(k)]; conflict {
+			if plugin.DataSourceInstanceSettings != nil {
+				logger.Debug("Skipping team header that conflicts with datasource header", "header", k, "datasource_uid", plugin.DataSourceInstanceSettings.UID)
+			}
+			continue
+		}
 		headers[k] = v
 	}
 	return headers, nil
