@@ -10,6 +10,8 @@ import mdx from './Combobox.mdx';
 import { fakeSearchAPI, generateGroupingOptions, generateOptions } from './storyUtils';
 import { type ComboboxOption } from './types';
 
+const VIRTUAL_SCROLL_REGRESSION_OPTION_COUNT = 1_000_000;
+
 type PropsAndCustomArgs<T extends string | number = string> = ComboboxProps<T> & {
   numberOfOptions: number;
 };
@@ -210,9 +212,92 @@ export const ManyOptions: Story = {
       }, 1000);
     }, [numberOfOptions, setArgs]);
 
-    const { onChange, ...rest } = args;
+    const { onBlur: _onBlur, onChange, onIsOpenChange: _onIsOpenChange, ...rest } = args;
     return (
       <Field label="Test input" description={options.length ? 'Input with a few options' : 'Preparing options...'}>
+        <Combobox
+          {...rest}
+          {...dynamicArgs}
+          options={options}
+          onChange={(value: ComboboxOption | null) => {
+            setArgs({ value: value?.value || null });
+            onChangeAction(value);
+          }}
+        />
+      </Field>
+    );
+  },
+};
+
+export const VirtualScrollRegression: Story = {
+  args: {
+    numberOfOptions: VIRTUAL_SCROLL_REGRESSION_OPTION_COUNT,
+    options: undefined,
+    value: undefined,
+  },
+  render: function VirtualScrollRegression({ numberOfOptions, ...args }: PropsAndCustomArgs) {
+    const [dynamicArgs, setArgs] = useArgs();
+    const [options, setOptions] = useState<ComboboxOption[]>([]);
+
+    useEffect(() => {
+      generateOptions(numberOfOptions).then((options) => {
+        setOptions(options);
+        setArgs({ value: options[5].value });
+      });
+    }, [numberOfOptions, setArgs]);
+
+    const { onBlur: _onBlur, onChange, onIsOpenChange: _onIsOpenChange, ...rest } = args;
+    return (
+      <Field
+        label="Virtual scroll regression"
+        description={`Combobox with ${numberOfOptions.toLocaleString()} uniformly sized options`}
+      >
+        <Combobox
+          {...rest}
+          {...dynamicArgs}
+          options={options}
+          onChange={(value: ComboboxOption | null) => {
+            setArgs({ value: value?.value || null });
+            onChangeAction(value);
+          }}
+        />
+      </Field>
+    );
+  },
+};
+
+export const VirtualScrollRegressionMixedHeights: Story = {
+  args: {
+    numberOfOptions: VIRTUAL_SCROLL_REGRESSION_OPTION_COUNT,
+    options: undefined,
+    value: undefined,
+  },
+  render: function VirtualScrollRegressionMixedHeights({ numberOfOptions, ...args }: PropsAndCustomArgs) {
+    const [dynamicArgs, setArgs] = useArgs();
+    const [options, setOptions] = useState<ComboboxOption[]>([]);
+
+    useEffect(() => {
+      generateGroupingOptions(numberOfOptions).then((options) => {
+        setOptions(
+          options.map((option, index) =>
+            index % 7 === 0
+              ? {
+                  ...option,
+                  description: `Description for option ${index}`,
+                }
+              : option
+          )
+        );
+        setArgs({ value: options[5].value });
+      });
+    }, [numberOfOptions, setArgs]);
+
+    const { onBlur: _onBlur, onChange, onIsOpenChange: _onIsOpenChange, ...rest } = args;
+    return (
+      <Field
+        label="Virtual scroll regression with mixed heights"
+        description={`Combobox with ${numberOfOptions.toLocaleString()} grouped options and descriptions`}
+      >
         <Combobox
           {...rest}
           {...dynamicArgs}

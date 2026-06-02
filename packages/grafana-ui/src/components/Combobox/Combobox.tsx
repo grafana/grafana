@@ -1,5 +1,4 @@
 import { cx } from '@emotion/css';
-import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import React, { type ComponentProps, useCallback, useId, useMemo } from 'react';
 
@@ -15,11 +14,10 @@ import { Portal } from '../Portal/Portal';
 import { ComboboxList } from './ComboboxList';
 import { SuffixIcon } from './SuffixIcon';
 import { itemToString } from './filter';
-import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
+import { getComboboxStyles } from './getComboboxStyles';
 import { type ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
-import { isNewGroup } from './utils';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
@@ -135,8 +133,6 @@ export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & Au
 
 const noop = () => {};
 
-const VIRTUAL_OVERSCAN_ITEMS = 4;
-
 /**
  * A performant and accessible combobox component that supports both synchronous and asynchronous options loading. It provides type-ahead filtering, keyboard navigation, and virtual scrolling for handling large datasets efficiently.
  * Replaces the Select component, and has better performance.
@@ -181,7 +177,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const {
     options: filteredOptions,
-    groupStartIndices,
     updateOptions,
     asyncLoading,
     asyncError,
@@ -238,51 +233,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     [onIsOpenChangeProp, updateOptions, resetSearch]
   );
 
-  // Injects the group header for the first rendered item into the range to render.
-  // Accepts the range that useVirtualizer wants to render, and then returns indexes
-  // to actually render.
-  const rangeExtractor = useCallback(
-    (range: Range) => {
-      const startIndex = Math.max(0, range.startIndex - range.overscan);
-      const endIndex = Math.min(filteredOptions.length - 1, range.endIndex + range.overscan);
-      const rangeToReturn = Array.from({ length: endIndex - startIndex + 1 }, (_, i) => startIndex + i);
-
-      // If the first item doesn't have a group, no need to find a header for it
-      const firstDisplayedOption = filteredOptions[rangeToReturn[0]];
-      if (firstDisplayedOption?.group) {
-        const groupStartIndex = groupStartIndices.get(firstDisplayedOption.group);
-        if (groupStartIndex !== undefined && groupStartIndex < rangeToReturn[0]) {
-          rangeToReturn.unshift(groupStartIndex);
-        }
-      }
-
-      return rangeToReturn;
-    },
-    [filteredOptions, groupStartIndices]
-  );
-
-  const rowVirtualizer = useVirtualizer({
-    count: filteredOptions.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: (index: number) => {
-      const firstGroupItem = isNewGroup(filteredOptions[index], index > 0 ? filteredOptions[index - 1] : undefined);
-      const hasDescription = 'description' in filteredOptions[index];
-      const hasGroup = 'group' in filteredOptions[index];
-
-      let itemHeight = MENU_OPTION_HEIGHT;
-      if (hasDescription) {
-        itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
-      }
-      if (firstGroupItem && hasGroup) {
-        itemHeight += MENU_OPTION_HEIGHT;
-      }
-      return itemHeight;
-    },
-    getItemKey: (index: number) => filteredOptions[index]?.value ?? index,
-    overscan: VIRTUAL_OVERSCAN_ITEMS,
-    rangeExtractor,
-  });
-
   const {
     isOpen,
     highlightedIndex,
@@ -330,12 +280,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     ...(isOpenProp !== undefined ? { isOpen: isOpenProp } : {}),
 
     onIsOpenChange: onIsOpenChangeHandler,
-
-    onHighlightedIndexChange: ({ highlightedIndex, type }) => {
-      if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
-        rowVirtualizer.scrollToIndex(highlightedIndex);
-      }
-    },
     onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
       switch (type) {
         case useCombobox.stateChangeTypes.InputChange:

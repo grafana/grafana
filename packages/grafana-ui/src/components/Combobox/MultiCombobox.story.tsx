@@ -10,6 +10,8 @@ import mdx from './MultiCombobox.mdx';
 import { generateOptions, fakeSearchAPI, generateGroupingOptions } from './storyUtils';
 import { type ComboboxOption } from './types';
 
+const VIRTUAL_SCROLL_REGRESSION_OPTION_COUNT = 1_000_000;
+
 const meta: Meta<typeof MultiCombobox> = {
   title: 'Inputs/MultiCombobox',
   component: MultiCombobox,
@@ -155,6 +157,15 @@ export const ManyOptions: StoryObj<ManyOptionsArgs> = {
   render: ManyOptionsStory,
 };
 
+export const VirtualScrollRegression: StoryObj<ManyOptionsArgs> = {
+  args: {
+    numberOfOptions: VIRTUAL_SCROLL_REGRESSION_OPTION_COUNT,
+    options: undefined,
+    value: undefined,
+  },
+  render: ManyOptionsStory,
+};
+
 const ManyOptionsGroupedStory: StoryFn<ManyOptionsArgs> = ({ numberOfOptions = 1e5, ...args }) => {
   const [dynamicArgs, setArgs] = useArgs();
   const [options, setOptions] = useState<ComboboxOption[]>([]);
@@ -184,6 +195,15 @@ const ManyOptionsGroupedStory: StoryFn<ManyOptionsArgs> = ({ numberOfOptions = 1
 export const ManyOptionsGrouped: StoryObj<ManyOptionsArgs> = {
   args: {
     numberOfOptions: 1e4,
+    options: undefined,
+    value: undefined,
+  },
+  render: ManyOptionsGroupedStory,
+};
+
+export const VirtualScrollRegressionGrouped: StoryObj<ManyOptionsArgs> = {
+  args: {
+    numberOfOptions: VIRTUAL_SCROLL_REGRESSION_OPTION_COUNT,
     options: undefined,
     value: undefined,
   },

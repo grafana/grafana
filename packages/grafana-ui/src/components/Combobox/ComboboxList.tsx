@@ -1,7 +1,14 @@
 import { cx } from '@emotion/css';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import {
+  defaultRangeExtractor,
+  elementScroll,
+  useVirtualizer,
+  type Range,
+  type Virtualizer,
+  type VirtualizerOptions,
+} from '@tanstack/react-virtual';
 import type { UseComboboxPropGetters } from 'downshift';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Checkbox } from '../Forms/Checkbox';
@@ -15,6 +22,10 @@ import { ALL_OPTION_VALUE, type ComboboxOption } from './types';
 import { isNewGroup } from './utils';
 
 const VIRTUAL_OVERSCAN_ITEMS = 4;
+const MAX_BROWSER_SCROLL_HEIGHT = 10_000_000;
+
+type ComboboxVirtualizer = Virtualizer<HTMLDivElement, Element>;
+type ScrollToOptions = Parameters<VirtualizerOptions<HTMLDivElement, Element>['scrollToFn']>[1];
 
 interface ComboboxListProps<T extends string | number> {
   options: Array<ComboboxOption<T>>;
@@ -61,13 +72,137 @@ export const ComboboxList = <T extends string | number>({
     [options]
   );
 
+  const logicalTotalSize = useMemo(() => {
+    return options.reduce((total, _, index) => total + estimateSize(index), 0);
+  }, [estimateSize, options]);
+
+  const physicalTotalSize = Math.min(logicalTotalSize, MAX_BROWSER_SCROLL_HEIGHT);
+  const usesScaledScrolling = logicalTotalSize > physicalTotalSize;
+  const scrollScalingRef = useRef({ logicalTotalSize, physicalTotalSize, usesScaledScrolling });
+  scrollScalingRef.current = { logicalTotalSize, physicalTotalSize, usesScaledScrolling };
+
+  const getScrollScale = useCallback(
+    (element: Element) => {
+      const { logicalTotalSize, physicalTotalSize, usesScaledScrolling } = scrollScalingRef.current;
+
+      if (!usesScaledScrolling) {
+        return 1;
+      }
+
+      const viewportSize = element.clientHeight;
+      const logicalScrollableSize = Math.max(1, logicalTotalSize - viewportSize);
+      const physicalScrollableSize = Math.max(1, physicalTotalSize - viewportSize);
+
+      return logicalScrollableSize / physicalScrollableSize;
+    },
+    []
+  );
+
+  const observeScaledElementOffset = useCallback(
+    (instance: ComboboxVirtualizer, callback: (offset: number, isScrolling: boolean) => void) => {
+      const element = instance.scrollElement;
+      if (!element) {
+        return;
+      }
+
+      const targetWindow = element.ownerDocument.defaultView;
+      let resetIsScrollingId: number | undefined;
+
+      const notify = (isScrolling: boolean) => {
+        callback(element.scrollTop * getScrollScale(element), isScrolling);
+      };
+
+      const handleScroll = () => {
+        notify(true);
+
+        if (resetIsScrollingId !== undefined) {
+          targetWindow?.clearTimeout(resetIsScrollingId);
+        }
+
+        resetIsScrollingId = targetWindow?.setTimeout(() => {
+          notify(false);
+        }, instance.options.isScrollingResetDelay);
+      };
+
+      notify(false);
+      element.addEventListener('scroll', handleScroll);
+
+      return () => {
+        if (resetIsScrollingId !== undefined) {
+          targetWindow?.clearTimeout(resetIsScrollingId);
+        }
+        element.removeEventListener('scroll', handleScroll);
+      };
+    },
+    [getScrollScale]
+  );
+
+  const scrollToScaledOffset = useCallback(
+    (offset: number, options: ScrollToOptions, instance: ComboboxVirtualizer) => {
+      if (!usesScaledScrolling || !instance.scrollElement) {
+        elementScroll(offset, options, instance);
+        return;
+      }
+
+      const adjustedOffset = offset + (options.adjustments ?? 0);
+      const physicalOffset = adjustedOffset / getScrollScale(instance.scrollElement);
+
+      instance.scrollElement.scrollTo({
+        top: physicalOffset,
+        behavior: options.behavior,
+      });
+    },
+    [getScrollScale, usesScaledScrolling]
+  );
+
+  const groupStartIndices = useMemo(() => {
+    const indices = new Map<string, number>();
+
+    for (let index = 0; index < options.length; index++) {
+      const item = options[index];
+      const previousItem = index > 0 ? options[index - 1] : undefined;
+
+      if (item.group && isNewGroup(item, previousItem)) {
+        indices.set(item.group, index);
+      }
+    }
+
+    return indices;
+  }, [options]);
+
+  const rangeExtractor = useCallback(
+    (range: Range) => {
+      const rangeToReturn = defaultRangeExtractor(range);
+      const firstDisplayedOption = options[rangeToReturn[0]];
+
+      if (firstDisplayedOption?.group) {
+        const groupStartIndex = groupStartIndices.get(firstDisplayedOption.group);
+        if (groupStartIndex !== undefined && groupStartIndex < rangeToReturn[0]) {
+          rangeToReturn.unshift(groupStartIndex);
+        }
+      }
+
+      return rangeToReturn;
+    },
+    [groupStartIndices, options]
+  );
+
   const rowVirtualizer = useVirtualizer({
     count: options.length,
     getScrollElement: () => scrollRef.current,
     estimateSize,
     getItemKey: (index: number) => options[index]?.value ?? index,
+    observeElementOffset: observeScaledElementOffset,
+    scrollToFn: scrollToScaledOffset,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
+    rangeExtractor,
   });
+
+  useEffect(() => {
+    if (highlightedIndex !== null && highlightedIndex >= 0 && highlightedIndex < options.length) {
+      rowVirtualizer.scrollToIndex(highlightedIndex);
+    }
+  }, [highlightedIndex, options.length, rowVirtualizer]);
 
   const isOptionSelected = useCallback(
     (item: ComboboxOption<T>) => selectedItems.some((opt) => opt.value === item.value),
@@ -78,10 +213,15 @@ export const ComboboxList = <T extends string | number>({
 
   return (
     <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef} padding={0.5}>
-      <div style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
+      <div style={{ height: physicalTotalSize }} className={styles.menuUlContainer}>
         {rowVirtualizer.getVirtualItems().map((virtualRow, index, allVirtualRows) => {
           const item = options[virtualRow.index];
           const startingNewGroup = isNewGroup(item, options[virtualRow.index - 1]);
+          const logicalOffset = rowVirtualizer.scrollOffset ?? 0;
+          const physicalOffset = scrollRef.current ? logicalOffset / getScrollScale(scrollRef.current) : logicalOffset;
+          const virtualRowStart = usesScaledScrolling
+            ? physicalOffset + virtualRow.start - logicalOffset
+            : virtualRow.start;
 
           // Find the item that renders the group header. It can be this same item if this is rendering it.
           const groupHeaderIndex = allVirtualRows.find((row) => {
@@ -103,7 +243,7 @@ export const ComboboxList = <T extends string | number>({
               className={styles.listItem}
               style={{
                 height: virtualRow.size,
-                transform: `translateY(${virtualRow.start}px)`,
+                transform: `translateY(${virtualRowStart}px)`,
               }}
             >
               {/* Group header */}
