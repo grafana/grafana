@@ -7,7 +7,8 @@ import { config } from '@grafana/runtime';
 import { type PageInfoItem } from '@grafana/runtime/internal';
 import { type CellProps, type Column, InteractiveTable, Stack, useStyles2, Carousel } from '@grafana/ui';
 
-import { AssistantGetStarted, ASSISTANT_PLUGIN_ID } from '../components/AssistantGetStarted';
+import { AssistantGetStarted } from '../components/AssistantGetStarted';
+import { ASSISTANT_PLUGIN_ID } from '../components/AssistantGetStarted/constants';
 import { Changelog } from '../components/Changelog';
 import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { VersionList } from '../components/VersionList';

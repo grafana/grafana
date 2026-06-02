@@ -7,7 +7,7 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { ASSISTANT_PLUGIN_ID } from '../components/AssistantGetStarted';
+import { ASSISTANT_PLUGIN_ID } from '../components/AssistantGetStarted/constants';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { type CatalogPlugin, PluginTabIds, PluginTabLabels } from '../types';
 

@@ -10,9 +10,9 @@ import { PluginType } from '@grafana/data';
 import { usePluginComponent } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { getCatalogPluginMock } from '../mocks/mockHelpers';
+import { getCatalogPluginMock } from '../../mocks/mockHelpers';
 
-import { AssistantGetStarted } from './AssistantGetStarted';
+import { AssistantGetStarted } from './index';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
