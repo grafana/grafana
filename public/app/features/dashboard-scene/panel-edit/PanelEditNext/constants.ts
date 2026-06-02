@@ -35,7 +35,7 @@ export const QUERY_EDITOR_V2_PREFERENCE_KEY = 'grafana.dashboard.query-editor-ne
 /** Default sidebar width. Persisted as an absolute value so it's independent of window size. */
 export const DEFAULT_SIDEBAR_WIDTH = 350;
 /** Below this width the sidebar snaps fully closed. */
-export const SIDEBAR_COLLAPSE_BELOW_PIXELS = 150;
+export const SIDEBAR_COLLAPSE_BELOW_PIXELS = 260;
 /** Below this height the bottom data pane snaps fully closed. */
 export const DATA_PANE_COLLAPSE_BELOW_PIXELS = 150;
 
