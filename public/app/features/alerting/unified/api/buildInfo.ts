@@ -19,7 +19,7 @@ import {
 } from '../utils/datasource';
 
 import { fetchRules } from './prometheus';
-import { fetchTestRulerRulesGroup, type RulerApiSubtype } from './ruler';
+import { type RulerApiSubtype, fetchTestRulerRulesGroup } from './ruler';
 
 export async function discoverFeaturesByUid(dataSourceUid: string): Promise<PromApiFeatures> {
   if (dataSourceUid === GRAFANA_RULES_SOURCE_NAME) {
