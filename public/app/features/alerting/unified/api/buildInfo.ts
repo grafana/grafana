@@ -19,7 +19,7 @@ import {
 } from '../utils/datasource';
 
 import { fetchRules } from './prometheus';
-import { fetchTestRulerRulesGroup } from './ruler';
+import { fetchTestRulerRulesGroup, type RulerApiSubtype } from './ruler';
 
 export async function discoverFeaturesByUid(dataSourceUid: string): Promise<PromApiFeatures> {
   if (dataSourceUid === GRAFANA_RULES_SOURCE_NAME) {
@@ -189,13 +189,9 @@ async function hasPromRulesSupport(dataSourceName: string) {
  * Attempt to check if the ruler API is enabled for Cortex, Prometheus does not support it and Mimir
  * reports this via the buildInfo "features"
  */
-async function hasRulerSupport(dataSourceName: string, subtype?: 'mimir') {
+async function hasRulerSupport(dataSourceName: string, subtype?: RulerApiSubtype) {
   try {
-    if (subtype) {
-      await fetchTestRulerRulesGroup(dataSourceName, subtype);
-    } else {
-      await fetchTestRulerRulesGroup(dataSourceName);
-    }
+    await fetchTestRulerRulesGroup(dataSourceName, subtype);
     return true;
   } catch (e) {
     if (errorIndicatesMissingRulerSupport(e, subtype)) {
@@ -207,14 +203,14 @@ async function hasRulerSupport(dataSourceName: string, subtype?: 'mimir') {
 
 function getRulerSupportErrorMessage(error: unknown): string {
   if (isFetchError(error)) {
-    return [error.data.message, error.data.error].filter(Boolean).join(' ');
+    return error.data.message ?? '';
   }
 
   return error instanceof Error ? error.message : '';
 }
 
 // these errors indicate that the ruler API might be disabled or not supported
-function errorIndicatesMissingRulerSupport(error: unknown, subtype?: 'mimir') {
+function errorIndicatesMissingRulerSupport(error: unknown, subtype?: RulerApiSubtype) {
   const message = getRulerSupportErrorMessage(error);
   const mimirConfigApiProbeFailed = subtype === 'mimir' && isFetchError(error) && error.status === 400;
 

@@ -26,13 +26,13 @@ const QUERY_GROUP_TAG = 'QUERY_GROUP';
 export const RULER_CONFIG_API_PROBE_NAMESPACE = '__grafana_alerting_ruler_probe__';
 export const RULER_CONFIG_API_PROBE_GROUP = '__grafana_alerting_ruler_probe__';
 
-type RulerApiSubtype = 'cortex' | 'mimir';
+export type RulerApiSubtype = 'cortex' | 'mimir';
 
 export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
   const rulerPath = getRulerPath(rulerConfig);
   const queryDetailsProvider = getQueryDetailsProvider(rulerConfig);
 
-  const subtype = rulerConfig.apiVersion === 'legacy' ? 'cortex' : 'mimir';
+  const subtype: RulerApiSubtype = rulerConfig.apiVersion === 'legacy' ? 'cortex' : 'mimir';
 
   return {
     rules: (filter?: FetchRulerRulesFilter): RulerRequestUrl => ({

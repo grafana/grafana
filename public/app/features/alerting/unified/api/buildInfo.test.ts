@@ -157,7 +157,7 @@ describe('discoverDataSourceFeatures', () => {
       expect(response.features.rulerApiEnabled).toBe(true);
 
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
-      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledWith('Loki');
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledWith('Loki', undefined);
 
       expect(mocks.fetchRules).toHaveBeenCalledTimes(1);
       expect(mocks.fetchRules).toHaveBeenCalledWith('Loki');
@@ -190,7 +190,7 @@ describe('discoverDataSourceFeatures', () => {
       expect(response.features.rulerApiEnabled).toBe(false);
 
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
-      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledWith('Cortex');
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledWith('Cortex', undefined);
 
       expect(mocks.fetchRules).toHaveBeenCalledTimes(1);
       expect(mocks.fetchRules).toHaveBeenCalledWith('Cortex');
@@ -216,7 +216,7 @@ describe('discoverDataSourceFeatures', () => {
       expect(response.features.rulerApiEnabled).toBe(true);
 
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
-      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledWith('Cortex');
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledWith('Cortex', undefined);
 
       expect(mocks.fetchRules).toHaveBeenCalledTimes(1);
       expect(mocks.fetchRules).toHaveBeenCalledWith('Cortex');
@@ -247,7 +247,7 @@ describe('discoverDataSourceFeatures', () => {
       ).rejects.toBe(error);
 
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
-      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledWith('Cortex');
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledWith('Cortex', undefined);
 
       expect(mocks.fetchRules).toHaveBeenCalledTimes(1);
       expect(mocks.fetchRules).toHaveBeenCalledWith('Cortex');
