@@ -400,3 +400,34 @@ func MergeUserPermissions(legacy, zanzana []ac.Permission) []ac.Permission {
 	}
 	return legacy
 }
+
+// MergeCurrentUser unions a single identity's legacy permissions with the ones Zanzana
+// resolves for migrated resources. It returns legacy unchanged when the resolver is nil
+// (Zanzana merge disabled) or when the Zanzana lookup fails, so callers don't need to
+// guard the nil case or handle the error themselves.
+func (r *ZanzanaPermissionResolver) MergeCurrentUser(ctx context.Context, usr identity.Requester, legacy []ac.Permission, log log.Logger) []ac.Permission {
+	if r == nil {
+		return legacy
+	}
+	zPerms, err := r.ResolveCurrentUserPermissions(ctx, usr)
+	if err != nil {
+		log.Warn("could not get zanzana user permissions, using legacy only", "error", err)
+		return legacy
+	}
+	return MergeUserPermissions(legacy, zPerms)
+}
+
+// MergeSearch unions per-user legacy permissions with the ones Zanzana resolves for migrated
+// resources. It returns legacy unchanged when the resolver is nil (Zanzana merge disabled) or
+// when the Zanzana lookup fails, so callers don't need to guard the nil case or the error.
+func (r *ZanzanaPermissionResolver) MergeSearch(ctx context.Context, usr identity.Requester, orgID int64, options ac.SearchOptions, legacy map[int64][]ac.Permission, log log.Logger) map[int64][]ac.Permission {
+	if r == nil {
+		return legacy
+	}
+	zPerms, err := r.SearchUsersPermissions(ctx, usr, orgID, options)
+	if err != nil {
+		log.Warn("could not get zanzana user permissions, using legacy only", "error", err)
+		return legacy
+	}
+	return MergePermissions(legacy, zPerms)
+}

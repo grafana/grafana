@@ -168,16 +168,7 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 		return nil, err
 	}
 
-	if s.zanzanaResolver != nil {
-		zPerms, zErr := s.zanzanaResolver.ResolveCurrentUserPermissions(ctx, user)
-		if zErr == nil {
-			permissions = MergeUserPermissions(permissions, zPerms)
-		} else {
-			s.log.Warn("could not get zanzana user permissions, using legacy only", "error", zErr)
-		}
-	}
-
-	return permissions, nil
+	return s.zanzanaResolver.MergeCurrentUser(ctx, user, permissions, s.log), nil
 }
 
 func (s *Service) getUserPermissions(ctx context.Context, user identity.Requester, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -775,16 +766,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 		}
 	}
 
-	if s.zanzanaResolver != nil {
-		zPerms, zErr := s.zanzanaResolver.SearchUsersPermissions(ctx, usr, usr.GetOrgID(), options)
-		if zErr == nil {
-			res = MergePermissions(res, zPerms)
-		} else {
-			s.log.Warn("could not get zanzana user permissions, using legacy only", "error", zErr)
-		}
-	}
-
-	return res, nil
+	return s.zanzanaResolver.MergeSearch(ctx, usr, usr.GetOrgID(), options, res, s.log), nil
 }
 
 func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {

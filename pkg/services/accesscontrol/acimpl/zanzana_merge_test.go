@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -205,6 +206,67 @@ func TestMergeUserPermissions(t *testing.T) {
 			require.Equal(t, expected, got)
 		})
 	}
+}
+
+func TestZanzanaPermissionResolver_MergeCurrentUser(t *testing.T) {
+	legacy := []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:legacy"}}
+
+	t.Run("nil resolver returns legacy unchanged", func(t *testing.T) {
+		var r *ZanzanaPermissionResolver
+		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{}, legacy, log.New("test"))
+		require.Equal(t, legacy, got)
+	})
+
+	t.Run("zanzana failure returns legacy only", func(t *testing.T) {
+		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listErr: errors.New("zanzana unavailable")}, &usertest.FakeUserService{})
+		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"))
+		require.Equal(t, legacy, got)
+	})
+
+	t.Run("success unions zanzana permissions", func(t *testing.T) {
+		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}}}, &usertest.FakeUserService{})
+		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"))
+		require.Contains(t, got, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:legacy"})
+		require.Contains(t, got, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:zanzana-dash"})
+	})
+}
+
+func TestZanzanaPermissionResolver_MergeSearch(t *testing.T) {
+	legacy := map[int64][]accesscontrol.Permission{
+		2: {{Action: "dashboards:read", Scope: "dashboards:uid:legacy"}},
+	}
+
+	t.Run("nil resolver returns legacy unchanged", func(t *testing.T) {
+		var r *ZanzanaPermissionResolver
+		got := r.MergeSearch(context.Background(), &user.SignedInUser{OrgID: 1}, 1, accesscontrol.SearchOptions{}, legacy, log.New("test"))
+		require.Equal(t, legacy, got)
+	})
+
+	t.Run("zanzana failure returns legacy only", func(t *testing.T) {
+		mockUserSvc := usertest.NewMockService(t)
+		mockUserSvc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: 2}).Return(&user.User{ID: 2, UID: "user_2_uid"}, nil).Maybe()
+		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listErr: errors.New("zanzana unavailable")}, mockUserSvc)
+		got := r.MergeSearch(context.Background(), &user.SignedInUser{OrgID: 1}, 1, accesscontrol.SearchOptions{Action: "dashboards:read", UserID: 2}, legacy, log.New("test"))
+		require.Equal(t, legacy, got)
+	})
+
+	t.Run("success unions and dedups per user", func(t *testing.T) {
+		base := map[int64][]accesscontrol.Permission{
+			2: {{Action: "dashboards:read", Scope: "dashboards:uid:legacy"}},
+		}
+		mockUserSvc := usertest.NewMockService(t)
+		mockUserSvc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: 2}).Return(&user.User{ID: 2, UID: "user_2_uid"}, nil)
+		// "legacy" overlaps an existing scope (must dedup), "zanzana" is new (must be added).
+		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"legacy", "zanzana"}}}, mockUserSvc)
+
+		got := r.MergeSearch(context.Background(), &user.SignedInUser{OrgID: 1}, 1, accesscontrol.SearchOptions{Action: "dashboards:read", UserID: 2}, base, log.New("test"))
+
+		require.Contains(t, got, int64(2))
+		require.ElementsMatch(t, []accesscontrol.Permission{
+			{Action: "dashboards:read", Scope: "dashboards:uid:legacy"},
+			{Action: "dashboards:read", Scope: "dashboards:uid:zanzana"},
+		}, got[2])
+	})
 }
 
 func setupServiceWithFakeStore(t *testing.T, store accesscontrol.Store, zClient zanzana.Client, userSvc user.Service) *Service {
