@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 
@@ -10,6 +10,7 @@ import { type GrafanaGroupUpdatedResponse } from '../api/alertRuleModel';
 import { type ContactPoint, RuleFormType, type RuleFormValues } from '../types/rule-form';
 
 import { AlertRuleDrawerForm, type AlertRuleDrawerFormProps } from './AlertRuleDrawerForm';
+import { EVALUATION_INTERVAL_FIELD_TEST_ID } from './rule-editor/RuleEvaluationIntervalField';
 
 setupMswServer();
 
@@ -387,7 +388,7 @@ describe('AlertRuleDrawerForm', () => {
 
         expect(screen.queryByTestId('group-picker')).not.toBeInTheDocument();
         expect(screen.queryByTestId('new-evaluation-group-button')).not.toBeInTheDocument();
-        expect(screen.getByLabelText(/Evaluation interval/i)).toBeInTheDocument();
+        expect(screen.getByTestId(EVALUATION_INTERVAL_FIELD_TEST_ID)).toBeInTheDocument();
       });
 
       it('submits the evaluation interval as a rule property', async () => {
@@ -395,7 +396,7 @@ describe('AlertRuleDrawerForm', () => {
 
         const { user } = renderDrawer({ prefill: submittablePrefill });
 
-        const intervalInput = screen.getByLabelText(/Evaluation interval/i);
+        const intervalInput = within(screen.getByTestId(EVALUATION_INTERVAL_FIELD_TEST_ID)).getByRole('textbox');
         await user.clear(intervalInput);
         await user.type(intervalInput, '5m');
 
