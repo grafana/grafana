@@ -13325,6 +13325,7 @@
       "label-title": "Title",
       "option-entire-instance": "Entire instance",
       "option-managed-folder": "Managed folder",
+      "option-top-level": "Top level (no folder)",
       "placeholder-commit-message-template": "feat(dashboards): {{actionVar}} {{titleVar}}",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "My config"
@@ -13690,6 +13691,11 @@
         "description": "After setup, a new Grafana folder will be created and synced with external storage. If any resources are present in external storage, they will be provisioned to this new folder. All new resources created in this folder will be stored and versioned in external storage.",
         "label": "Sync external storage to a new Grafana folder",
         "subtitle": "Use this option to sync external resources into a new folder without affecting the rest of your instance."
+      },
+      "folderless": {
+        "description": "After setup, resources from external storage are provisioned at the top level without creating a wrapper folder. Subdirectories in external storage become top-level folders. Other repositories and resources that are not managed by this repository are left untouched.",
+        "label": "Sync to top level (no folder)",
+        "subtitle": "Use this option to sync external resources to the top level, with no wrapper folder, while still supporting subfolders and coexisting with other content."
       },
       "instance": {
         "description": "Resources will be synced with external storage and provisioned into this instance. Existing Grafana resources will be migrated and merged if needed. After setup, all new resources and changes will be saved to external storage and automatically provisioned back into the instance.",
