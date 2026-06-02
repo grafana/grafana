@@ -28,6 +28,85 @@ const (
 	actionRolesDelete = "roles:delete"
 )
 
+// User-management actions. Hardcoded for the same reason as the role-management
+// actions above: the enterprise-only users.roles:* actions live in pkg/extensions
+// and these shared helpers must not depend on it.
+const (
+	actionUsersCreate = "users:create"
+	actionUsersRead   = "users:read"
+	actionUsersWrite  = "users:write"
+	actionUsersDelete = "users:delete"
+
+	actionUsersPermissionsRead  = "users.permissions:read"
+	actionUsersPermissionsWrite = "users.permissions:write"
+
+	actionUsersRolesRead   = "users.roles:read"
+	actionUsersRolesAdd    = "users.roles:add"
+	actionUsersRolesRemove = "users.roles:remove"
+
+	actionOrgUsersRead   = "org.users:read"
+	actionOrgUsersWrite  = "org.users:write"
+	actionOrgUsersAdd    = "org.users:add"
+	actionOrgUsersRemove = "org.users:remove"
+)
+
+// iam.grafana.app group and the two resources user-management actions gate.
+var (
+	iamGroup             = iamv0.UserResourceInfo.GroupResource().Group
+	usersResource        = iamv0.UserResourceInfo.GroupResource().Resource
+	roleBindingsResource = iamv0.RoleBindingInfo.GroupResource().Resource
+)
+
+// userActionMapping describes the group_resource (within iamGroup) and relation(s)
+// a user-management action grants on the iam K8s API.
+type userActionMapping struct {
+	resource  string
+	relations []string
+	// skipScope marks actions the mapper authorizes without a scope (create verbs);
+	// they translate regardless of the permission's scope.
+	skipScope bool
+}
+
+// userManagementMappings maps user-management RBAC actions to the iam group_resource
+// tuples they grant.
+//
+// On iam.grafana.app/users the global (users:*) and org (org.users:*) action families
+// converge on the same K8s verbs, so both translate to the same relation — a "union"
+// model. This is safe because the iam admission validators
+// (pkg/registry/apis/iam/user/validate.go) enforce field-level escalation guards
+// INDEPENDENTLY of this verb-level grant: only Grafana admins can change the
+// grafanaAdmin or disabled fields, and a non-service, non-admin requester may only
+// change the org role. So the relation only decides "may you attempt this verb"; it
+// can't be used to promote to server admin or edit privileged fields. Those guards
+// run server-side regardless of whether Zanzana or legacy RBAC serves the verb check.
+//
+// users.roles:* gate iam.grafana.app/rolebindings instead (NOT users — role
+// assignments are a distinct resource).
+//
+// Actions with no iam verb at all (users:enable/disable/logout, users.authtoken:*,
+// users.password:*, users.quotas:*) gate only legacy HTTP endpoints and are not
+// listed — there is no iam relation for them to grant.
+var userManagementMappings = map[string]userActionMapping{
+	actionUsersRead:    {resource: usersResource, relations: []string{RelationGet}},
+	actionOrgUsersRead: {resource: usersResource, relations: []string{RelationGet}},
+
+	actionUsersWrite:    {resource: usersResource, relations: []string{RelationUpdate}},
+	actionOrgUsersWrite: {resource: usersResource, relations: []string{RelationUpdate}},
+
+	actionUsersCreate: {resource: usersResource, relations: []string{RelationCreate}, skipScope: true},
+	actionOrgUsersAdd: {resource: usersResource, relations: []string{RelationCreate}},
+
+	actionUsersDelete:    {resource: usersResource, relations: []string{RelationDelete}},
+	actionOrgUsersRemove: {resource: usersResource, relations: []string{RelationDelete}},
+
+	actionUsersPermissionsRead:  {resource: usersResource, relations: []string{RelationGetPermissions}},
+	actionUsersPermissionsWrite: {resource: usersResource, relations: []string{RelationSetPermissions}},
+
+	actionUsersRolesRead:   {resource: roleBindingsResource, relations: []string{RelationGet}},
+	actionUsersRolesAdd:    {resource: roleBindingsResource, relations: []string{RelationCreate, RelationUpdate}},
+	actionUsersRolesRemove: {resource: roleBindingsResource, relations: []string{RelationDelete}},
+}
+
 // Scope fragments produced by splitScope for the two "all roles" scopes we
 // honor when translating role-management permissions:
 //   - permissions:type:delegate → kind="permissions", identifier="delegate"
@@ -89,6 +168,18 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 		// actions are intentionally dropped (see RoleManagementToTuples).
 		if isRoleManagementAction(perm.Action) {
 			for _, t := range RoleManagementToTuples(subject, perm) {
+				tupleMap[t.String()] = t
+			}
+			continue
+		}
+
+		// User-management actions (users:*, org.users:*, users.roles:*) take a
+		// dedicated translation path for the same reason as role-management
+		// actions: they map onto iam group_resources rather than via the standard
+		// resource translation table. Non-"all" scopes are intentionally dropped
+		// (see UserManagementToTuples).
+		if isUserManagementAction(perm.Action) {
+			for _, t := range UserManagementToTuples(subject, perm) {
 				tupleMap[t.String()] = t
 			}
 			continue
@@ -236,6 +327,54 @@ func isRolesWildcardScope(kind, identifier string) bool {
 		return true
 	}
 	return false
+}
+
+// UserManagementToTuples returns the Zanzana tuples that grant a role user- and
+// role-binding-management abilities in the namespace, based on its user-management
+// permissions.
+//
+// Only "all" scopes produce tuples. Both iam resources involved are wildcard-only
+// in Zanzana terms: the users resource is uid-based in FGA while the legacy scope
+// is id-based (e.g. users:id:42), so a specific-user scope can't be expressed
+// without an id→uid lookup; and rolebindings is wildcard-scoped by design in the
+// mapper. A permission scoped to a specific instance is therefore dropped — see
+// isAllUsersScope for the accepted "all" shapes. The create verb carries no scope
+// (skipScope) and always translates.
+func UserManagementToTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
+	m, ok := userManagementMappings[permission.Action]
+	if !ok {
+		return nil
+	}
+
+	if !m.skipScope && !isAllUsersScope(permission.Kind, permission.Identifier) {
+		return nil
+	}
+
+	tuples := make([]*openfgav1.TupleKey, 0, len(m.relations))
+	for _, relation := range m.relations {
+		tuples = append(tuples, NewGroupResourceTuple(subject, relation, iamGroup, m.resource, ""))
+	}
+	return tuples
+}
+
+// isUserManagementAction reports whether the action is one of the user-management
+// actions handled by UserManagementToTuples.
+func isUserManagementAction(action string) bool {
+	_, ok := userManagementMappings[action]
+	return ok
+}
+
+// isAllUsersScope reports whether the (kind, identifier) pair represents an "all"
+// scope for the user-management actions. The legacy shapes that appear are:
+//   - users:* / global.users:*  → identifier="*" (users.permissions:*, users:delete, users.roles:read)
+//   - permissions:type:delegate → kind="permissions", identifier="delegate" (users.roles:add/remove)
+//
+// Specific instance scopes (e.g. users:id:5) match none of these and are dropped.
+func isAllUsersScope(kind, identifier string) bool {
+	if identifier == scopeIdentifierWildcard {
+		return true
+	}
+	return kind == scopeKindPermissions && identifier == scopeIdentifierDelegate
 }
 
 func splitScope(scope string) (string, string, string) {
