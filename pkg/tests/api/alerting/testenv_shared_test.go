@@ -23,12 +23,12 @@ import (
 // (wraps ProvisioningTestHelper) and cannot be used here directly. A generic
 // version should eventually be extracted into testinfra and used by both.
 var (
-	standardOnce            sync.Once
-	standardEnvAddr         string
-	standardEnvServer       *server.TestEnv
-	standardEnvShutdownFn   func()
-	standardEnvInitErr      string
-	standardGrafanaUserID   int64
+	standardOnce          sync.Once
+	standardEnvAddr       string
+	standardEnvServer     *server.TestEnv
+	standardEnvShutdownFn func()
+	standardEnvInitErr    string
+	standardGrafanaUserID int64
 )
 
 // getStandardSharedEnv returns the shared Grafana server for tests using
