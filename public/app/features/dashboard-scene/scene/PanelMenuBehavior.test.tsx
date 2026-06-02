@@ -1,4 +1,5 @@
 import { of } from 'rxjs';
+import { testWithFeatureToggles } from 'test/test-utils';
 
 import {
   FieldType,
@@ -785,116 +786,117 @@ describe('panelMenuBehavior', () => {
     beforeEach(() => {
       jest.spyOn(storeModule, 'dispatch').mockImplementation(() => {});
       jest.spyOn(locationService, 'push').mockImplementation(() => {});
-      config.featureToggles.createAlertRuleFromPanel = true;
     });
 
-    afterEach(() => {
-      config.featureToggles.createAlertRuleFromPanel = false;
+    describe('when createAlertRuleFromPanel is enabled', () => {
+      testWithFeatureToggles({ enable: ['createAlertRuleFromPanel'] });
+
+      it('should open the new alert rule drawer with prefilled values on success', async () => {
+        const { menu, panel, scene } = await buildTestScene({});
+        const mockFormValues = { someKey: 'someValue' };
+
+        config.unifiedAlertingEnabled = true;
+        grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
+
+        jest
+          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
+          .mockResolvedValue(mockFormValues);
+        const showModalSpy = jest.spyOn(scene, 'showModal');
+
+        menu.activate();
+        await new Promise((r) => setTimeout(r, 1));
+
+        const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+        const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
+        expect(alertMenuItem).toBeDefined();
+
+        await alertMenuItem?.({} as React.MouseEvent);
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(scenesPanelToRuleFormValues).toHaveBeenCalledWith(panel);
+        expect(locationService.push).not.toHaveBeenCalled();
+        expect(showModalSpy).toHaveBeenCalledTimes(1);
+        const drawer = showModalSpy.mock.calls[0][0];
+        expect(drawer).toBeInstanceOf(NewAlertRuleDrawer);
+        expect((drawer as NewAlertRuleDrawer).state.prefill).toEqual(mockFormValues);
+      });
+
+      it('should show error notification and not open the drawer when no alerting-capable query is found', async () => {
+        const { menu, scene } = await buildTestScene({});
+
+        config.unifiedAlertingEnabled = true;
+        grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
+
+        jest
+          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
+          .mockResolvedValue(undefined);
+        const showModalSpy = jest.spyOn(scene, 'showModal');
+
+        menu.activate();
+        await new Promise((r) => setTimeout(r, 1));
+
+        const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+        const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
+
+        await alertMenuItem?.({} as React.MouseEvent);
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(showModalSpy).not.toHaveBeenCalled();
+        expect(storeModule.dispatch).toHaveBeenCalled();
+      });
+
+      it('should show error notification and not open the drawer on failure', async () => {
+        const { menu, panel, scene } = await buildTestScene({});
+        const mockError = new Error('Test error');
+        jest
+          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
+          .mockRejectedValue(mockError);
+        const showModalSpy = jest.spyOn(scene, 'showModal');
+
+        menu.activate();
+        await new Promise((r) => setTimeout(r, 1));
+
+        const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+        const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
+        expect(alertMenuItem).toBeDefined();
+
+        await alertMenuItem?.({} as React.MouseEvent);
+
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(scenesPanelToRuleFormValues).toHaveBeenCalledWith(panel);
+        expect(showModalSpy).not.toHaveBeenCalled();
+      });
     });
 
-    it('should open the new alert rule drawer with prefilled values on success', async () => {
-      const { menu, panel, scene } = await buildTestScene({});
-      const mockFormValues = { someKey: 'someValue' };
+    describe('when createAlertRuleFromPanel is disabled', () => {
+      testWithFeatureToggles({ disable: ['createAlertRuleFromPanel'] });
 
-      config.unifiedAlertingEnabled = true;
-      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
+      it('should navigate to /alerting/new and not open the drawer', async () => {
+        const { menu, scene } = await buildTestScene({});
+        const mockFormValues = { someKey: 'someValue' };
 
-      jest
-        .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-        .mockResolvedValue(mockFormValues);
-      const showModalSpy = jest.spyOn(scene, 'showModal');
+        config.unifiedAlertingEnabled = true;
+        grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
 
-      menu.activate();
-      await new Promise((r) => setTimeout(r, 1));
+        jest
+          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
+          .mockResolvedValue(mockFormValues);
+        const showModalSpy = jest.spyOn(scene, 'showModal');
 
-      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-      const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
-      expect(alertMenuItem).toBeDefined();
+        menu.activate();
+        await new Promise((r) => setTimeout(r, 1));
 
-      await alertMenuItem?.({} as React.MouseEvent);
-      await new Promise((r) => setTimeout(r, 0));
+        const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+        const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
 
-      expect(scenesPanelToRuleFormValues).toHaveBeenCalledWith(panel);
-      expect(locationService.push).not.toHaveBeenCalled();
-      expect(showModalSpy).toHaveBeenCalledTimes(1);
-      const drawer = showModalSpy.mock.calls[0][0];
-      expect(drawer).toBeInstanceOf(NewAlertRuleDrawer);
-      expect((drawer as NewAlertRuleDrawer).state.prefill).toEqual(mockFormValues);
-    });
+        await alertMenuItem?.({} as React.MouseEvent);
+        await new Promise((r) => setTimeout(r, 0));
 
-    it('should show error notification and not open the drawer when no alerting-capable query is found', async () => {
-      const { menu, scene } = await buildTestScene({});
-
-      config.unifiedAlertingEnabled = true;
-      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
-
-      jest
-        .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-        .mockResolvedValue(undefined);
-      const showModalSpy = jest.spyOn(scene, 'showModal');
-
-      menu.activate();
-      await new Promise((r) => setTimeout(r, 1));
-
-      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-      const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
-
-      await alertMenuItem?.({} as React.MouseEvent);
-      await new Promise((r) => setTimeout(r, 0));
-
-      expect(showModalSpy).not.toHaveBeenCalled();
-      expect(storeModule.dispatch).toHaveBeenCalled();
-    });
-
-    it('should show error notification and not open the drawer on failure', async () => {
-      const { menu, panel, scene } = await buildTestScene({});
-      const mockError = new Error('Test error');
-      jest
-        .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-        .mockRejectedValue(mockError);
-      const showModalSpy = jest.spyOn(scene, 'showModal');
-
-      menu.activate();
-      await new Promise((r) => setTimeout(r, 1));
-
-      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-      const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
-      expect(alertMenuItem).toBeDefined();
-
-      await alertMenuItem?.({} as React.MouseEvent);
-
-      await new Promise((r) => setTimeout(r, 0));
-
-      expect(scenesPanelToRuleFormValues).toHaveBeenCalledWith(panel);
-      expect(showModalSpy).not.toHaveBeenCalled();
-    });
-
-    it('should navigate to /alerting/new and not open the drawer when createAlertRuleFromPanel is disabled', async () => {
-      config.featureToggles.createAlertRuleFromPanel = false;
-
-      const { menu, scene } = await buildTestScene({});
-      const mockFormValues = { someKey: 'someValue' };
-
-      config.unifiedAlertingEnabled = true;
-      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
-
-      jest
-        .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-        .mockResolvedValue(mockFormValues);
-      const showModalSpy = jest.spyOn(scene, 'showModal');
-
-      menu.activate();
-      await new Promise((r) => setTimeout(r, 1));
-
-      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-      const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
-
-      await alertMenuItem?.({} as React.MouseEvent);
-      await new Promise((r) => setTimeout(r, 0));
-
-      expect(showModalSpy).not.toHaveBeenCalled();
-      expect(locationService.push).toHaveBeenCalledTimes(1);
-      expect(locationService.push).toHaveBeenCalledWith(expect.stringContaining('/alerting/new'));
+        expect(showModalSpy).not.toHaveBeenCalled();
+        expect(locationService.push).toHaveBeenCalledTimes(1);
+        expect(locationService.push).toHaveBeenCalledWith(expect.stringContaining('/alerting/new'));
+      });
     });
 
     it('should render "New alert rule" menu item when user has permissions to read and update alerts', async () => {
