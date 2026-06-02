@@ -1,4 +1,4 @@
-import { type PluginError, type PluginMeta, renderMarkdown } from '@grafana/data';
+import { type PluginError, renderMarkdown } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { installPluginMeta, logPluginMetaError, uninstallPluginMeta } from '@grafana/runtime/internal';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
@@ -260,16 +260,6 @@ export async function uninstallPlugin(id: string) {
 
   // Legacy uninstall path — kept until K8s settings API covers all plugin types.
   return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall`);
-}
-
-export async function updatePluginSettings(id: string, data: Partial<PluginMeta>) {
-  const response = await getBackendSrv().datasourceRequest({
-    url: `/api/plugins/${id}/settings`,
-    method: 'POST',
-    data,
-  });
-
-  return response?.data;
 }
 
 export async function getPluginEntitlement(id: string): Promise<boolean> {

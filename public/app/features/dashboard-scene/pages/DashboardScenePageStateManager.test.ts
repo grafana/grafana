@@ -10,6 +10,7 @@ import {
   type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -25,6 +26,7 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDataDTO, type DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';
 
 import {
@@ -1750,6 +1752,96 @@ describe('DashboardScenePageStateManager v2', () => {
       );
     });
   });
+
+  describe('Template route', () => {
+    const fakeTemplateResource = {
+      apiVersion: 'v0alpha1',
+      kind: 'DashboardTemplate',
+      metadata: {
+        name: 'tpl-1',
+        resourceVersion: '7',
+        creationTimestamp: '',
+      },
+      spec: {
+        title: 'My Template',
+        description: '',
+        tags: [],
+        dashboardVersion: '2',
+        dashboard: { ...defaultDashboardV2Spec(), title: 'Embedded' },
+      },
+    };
+
+    let loadTemplateSpy: jest.Mock;
+
+    beforeEach(() => {
+      loadTemplateSpy = jest.fn().mockResolvedValue(fakeTemplateResource);
+      jest.spyOn(DashboardTemplateExtensionModule, 'getDashboardTemplateExtension').mockReturnValue({
+        loadTemplate: loadTemplateSpy,
+        listHistory: jest.fn(),
+        restore: jest.fn(),
+      });
+    });
+
+    afterEach(async () => {
+      jest.restoreAllMocks();
+      setTestFlags({});
+    });
+
+    it('edit-template flow: sets isDashboardTemplate + dashboardTemplateUid, scene is clean', async () => {
+      setTestFlags({ 'grafana.orgDashboardTemplates': true });
+
+      const loader = new DashboardScenePageStateManagerV2({});
+      await loader.loadDashboard({
+        uid: '',
+        route: DashboardRoutes.Template,
+        dashboardTemplateUid: 'tpl-1',
+        editTemplate: true,
+      });
+
+      const scene = loader.state.dashboard!;
+      expect(loadTemplateSpy).toHaveBeenCalledWith('tpl-1');
+      expect(scene.state.meta.isDashboardTemplate).toBe(true);
+      expect(scene.state.meta.dashboardTemplateUid).toBe('tpl-1');
+      expect(scene.state.isEditing).toBe(true);
+      expect(scene.state.isDirty).toBeFalsy();
+    });
+
+    it('use-template flow: does not set template meta and scene is marked dirty', async () => {
+      setTestFlags({ 'grafana.orgDashboardTemplates': true });
+
+      const loader = new DashboardScenePageStateManagerV2({});
+      await loader.loadDashboard({
+        uid: '',
+        route: DashboardRoutes.Template,
+        dashboardTemplateUid: 'tpl-1',
+        editTemplate: false,
+      });
+
+      const scene = loader.state.dashboard!;
+      expect(loadTemplateSpy).toHaveBeenCalledWith('tpl-1');
+      expect(scene.state.meta.isDashboardTemplate).toBeFalsy();
+      expect(scene.state.meta.dashboardTemplateUid).toBeUndefined();
+      expect(scene.state.isEditing).toBe(true);
+      expect(scene.state.isDirty).toBe(true);
+    });
+
+    it('throws DashboardVersionError when the feature flag is off', async () => {
+      setTestFlags({ 'grafana.orgDashboardTemplates': false });
+
+      const loader = new DashboardScenePageStateManagerV2({});
+
+      await expect(
+        loader.loadDashboard({
+          uid: '',
+          route: DashboardRoutes.Template,
+          dashboardTemplateUid: 'tpl-1',
+          editTemplate: true,
+        })
+      ).rejects.toThrow(DashboardVersionError);
+
+      expect(loadTemplateSpy).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe('UnifiedDashboardScenePageStateManager', () => {
@@ -2370,7 +2462,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
   });
 
-  describe('Template dashboards', () => {
+  describe('Dashboard templates', () => {
     let originalGetLocation: typeof locationService.getLocation;
 
     beforeEach(() => {
@@ -2389,7 +2481,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       locationService.getLocation = originalGetLocation;
     });
 
-    it('should always use v1 manager for template dashboards even when dashboardNewLayouts is enabled', async () => {
+    it('should always use v1 manager for Grafana dashboard templates even when dashboardNewLayouts is enabled', async () => {
       config.featureToggles.dashboardNewLayouts = true;
       config.featureToggles.suggestedDashboards = true;
 
@@ -2421,7 +2513,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
       await manager.loadDashboard({ uid: '', route: DashboardRoutes.Template });
 
-      // Should switch to V1 manager for template dashboards
+      // Should switch to V1 manager for Grafana dashboard templates
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
     });
 
@@ -2441,7 +2533,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
           if (url.includes('/api/gnet/dashboards/')) {
             return Promise.resolve({
               json: {
-                title: 'Template Dashboard',
+                title: 'Dashboard Template',
                 uid: '',
                 panels: [],
                 schemaVersion: 40,
@@ -2462,6 +2554,41 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       await manager.loadDashboard({ uid: '', route: DashboardRoutes.New });
       // Should be back to V2 manager
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+    });
+
+    it('uses V2 manager for Custom dashboard template route when dashboardTemplateUid is set', async () => {
+      setTestFlags({ 'grafana.orgDashboardTemplates': true });
+      // Mock the template extension so the V2 manager's loadDashboardTemplate has something to consume.
+      const fakeTemplateResource = {
+        apiVersion: 'v0alpha1',
+        kind: 'DashboardTemplate',
+        metadata: { name: 'tpl-1', resourceVersion: '7', creationTimestamp: '' },
+        spec: {
+          title: 'My Template',
+          description: '',
+          tags: [],
+          dashboardVersion: '2',
+          dashboard: { ...defaultDashboardV2Spec(), title: 'Embedded' },
+        },
+      };
+      jest.spyOn(DashboardTemplateExtensionModule, 'getDashboardTemplateExtension').mockReturnValue({
+        loadTemplate: jest.fn().mockResolvedValue(fakeTemplateResource),
+        listHistory: jest.fn(),
+        restore: jest.fn(),
+      });
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+
+      await manager.loadDashboard({
+        uid: '',
+        route: DashboardRoutes.Template,
+        dashboardTemplateUid: 'tpl-1',
+        editTemplate: true,
+      });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+
+      jest.restoreAllMocks();
     });
   });
 });
