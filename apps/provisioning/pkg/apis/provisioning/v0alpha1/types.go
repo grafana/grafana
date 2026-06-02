@@ -445,6 +445,15 @@ const (
 	// It will contain a copy of everything from the remote
 	// The folder k8s name will be the same as the repository k8s name
 	SyncTargetTypeFolder SyncTargetType = "folder"
+
+	// Resources are saved at the top level without a wrapper folder.
+	// Like `folder`, multiple `folderless` repositories may coexist with each
+	// other, with `folder` repositories, and with unprovisioned resources.
+	// Unlike `folder`, no repo-named container folder is created: files at the
+	// repository path root become top-level resources and subdirectories become
+	// top-level folders. Ownership is tracked per-resource via manager
+	// annotations rather than by folder containment.
+	SyncTargetTypeFolderless SyncTargetType = "folderless"
 )
 
 type SyncOptions struct {
