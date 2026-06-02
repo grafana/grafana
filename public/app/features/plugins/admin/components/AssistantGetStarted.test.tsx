@@ -7,6 +7,7 @@ import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { useAssistant } from '@grafana/assistant';
 import { PluginType } from '@grafana/data';
+import { usePluginComponent } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { getCatalogPluginMock } from '../mocks/mockHelpers';
@@ -24,7 +25,13 @@ jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  usePluginComponent: jest.fn().mockReturnValue({ component: null, isLoading: false }),
+}));
+
 const mockUseAssistant = jest.mocked(useAssistant);
+const mockUsePluginComponent = jest.mocked(usePluginComponent);
 const mockOpenAssistant = jest.fn();
 
 function renderWithStore(component: JSX.Element) {
@@ -86,6 +93,7 @@ describe('AssistantGetStarted', () => {
     const { contextSrv } = jest.requireMock('app/core/services/context_srv');
     contextSrv.hasPermission.mockReturnValue(true);
     mockOpenAssistant.mockClear();
+    mockUsePluginComponent.mockReturnValue({ component: null, isLoading: false });
     mockUseAssistant.mockReturnValue({
       isLoading: false,
       isAvailable: true,
@@ -212,6 +220,41 @@ describe('AssistantGetStarted', () => {
       const connectLink = screen.getByRole('link', { name: 'Connect' });
       expect(connectLink).toBeInTheDocument();
       expect(connectLink).toHaveAttribute('target', '_blank');
+    });
+  });
+
+  describe('connect step extension point', () => {
+    it('renders the plugin-exposed connect component instead of the link when available', () => {
+      const ExposedConnect = () => <button>Plugin Connect</button>;
+      mockUsePluginComponent.mockReturnValue({ component: ExposedConnect, isLoading: false });
+
+      renderWithStore(
+        <AssistantGetStarted plugin={installedPlugin} pluginConfig={mockPluginConfig} pluginConfigLoading={false} />
+      );
+
+      expect(screen.getByRole('button', { name: 'Plugin Connect' })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Connect' })).not.toBeInTheDocument();
+    });
+
+    it('falls back to the Cloud sign-up link when the plugin exposes no component', () => {
+      mockUsePluginComponent.mockReturnValue({ component: null, isLoading: false });
+
+      renderWithStore(
+        <AssistantGetStarted plugin={installedPlugin} pluginConfig={mockPluginConfig} pluginConfigLoading={false} />
+      );
+
+      expect(screen.getByRole('link', { name: 'Connect' })).toBeInTheDocument();
+    });
+
+    it('renders no connect action while the plugin component is still loading', () => {
+      mockUsePluginComponent.mockReturnValue({ component: null, isLoading: true });
+
+      renderWithStore(
+        <AssistantGetStarted plugin={installedPlugin} pluginConfig={mockPluginConfig} pluginConfigLoading={false} />
+      );
+
+      expect(screen.queryByRole('link', { name: 'Connect' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Plugin Connect' })).not.toBeInTheDocument();
     });
   });
 
