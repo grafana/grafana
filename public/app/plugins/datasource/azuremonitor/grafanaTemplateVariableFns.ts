@@ -23,7 +23,7 @@ import { type AzureMonitorQuery } from './types/query';
   or if it's a KQL-type query
 */
 
-export const grafanaTemplateVariableFnMatches = (query: string) => {
+const grafanaTemplateVariableFnMatches = (query: string) => {
   return {
     subscriptions: query.match(/^Subscriptions\(\)/i),
     resourceGroups: query.match(/^ResourceGroups\(\)/i),

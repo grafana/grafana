@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
-const maxRetrievedTokens = 300
+const maxRetrievedTokens = 1000
 
 func (s *ServiceAccountsStoreImpl) ListTokens(
 	ctx context.Context, query *serviceaccounts.GetSATokensQuery,
