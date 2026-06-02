@@ -1,0 +1,125 @@
+import { t } from '@grafana/i18n';
+import { type ManagerStats, type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
+import { ManagerKind } from 'app/features/apiserver/types';
+
+export const FOLDER_GROUPS = ['folder.grafana.app', 'folders'];
+export const DASHBOARD_GROUPS = ['dashboard.grafana.app'];
+
+export interface GroupBreakdown {
+  group: string;
+  resource: string;
+  label: string;
+  total: number;
+  gitSyncCount: number;
+  otherManagedCount: number;
+  /** Counts of resources managed by each non-Git-Sync manager kind. */
+  managedByKind: Record<string, number>;
+  unmanagedCount: number;
+}
+
+export function resourceLabel(group: string): string {
+  if (FOLDER_GROUPS.includes(group)) {
+    return t('provisioning.migrate.folders', 'Folders');
+  }
+  if (DASHBOARD_GROUPS.includes(group)) {
+    return t('provisioning.migrate.dashboards', 'Dashboards');
+  }
+  return group;
+}
+
+/**
+ * Build per-type breakdowns for Folders and Dashboards from the API
+ * response. Always emits one row per type even when the API doesn't
+ * report any, so the cards read consistently.
+ */
+export function computeBreakdowns(data?: ResourceStats): GroupBreakdown[] {
+  const seedKeys = ['folder.grafana.app', 'dashboard.grafana.app'];
+  const seedResources: Record<string, string> = {
+    'folder.grafana.app': 'folders',
+    'dashboard.grafana.app': 'dashboards',
+  };
+
+  const map = new Map<string, GroupBreakdown>();
+  for (const group of seedKeys) {
+    map.set(group, {
+      group,
+      resource: seedResources[group],
+      label: resourceLabel(group),
+      total: 0,
+      gitSyncCount: 0,
+      otherManagedCount: 0,
+      managedByKind: {},
+      unmanagedCount: 0,
+    });
+  }
+
+  data?.instance?.forEach((c) => {
+    // Fold legacy `folders` group into folder.grafana.app for display.
+    const key = FOLDER_GROUPS.includes(c.group) ? 'folder.grafana.app' : c.group;
+    const entry = map.get(key);
+    if (entry) {
+      entry.total += c.count;
+    }
+  });
+
+  data?.managed?.forEach((m: ManagerStats) => {
+    const kind = m.kind ?? '';
+    const isGitSync = kind === ManagerKind.Repo;
+    m.stats.forEach((s) => {
+      const key = FOLDER_GROUPS.includes(s.group) ? 'folder.grafana.app' : s.group;
+      const entry = map.get(key);
+      if (!entry) {
+        return;
+      }
+      if (isGitSync) {
+        entry.gitSyncCount += s.count;
+      } else {
+        entry.otherManagedCount += s.count;
+        entry.managedByKind[kind] = (entry.managedByKind[kind] ?? 0) + s.count;
+      }
+    });
+  });
+
+  map.forEach((entry) => {
+    entry.unmanagedCount = Math.max(0, entry.total - entry.gitSyncCount - entry.otherManagedCount);
+  });
+
+  return Array.from(map.values());
+}
+
+export function aggregateTotals(breakdowns: GroupBreakdown[]) {
+  // The Migrate to GitOps page is dashboard-centric: the KPI row reports
+  // dashboard counts (folders are tracked separately by the gauge card). Skip
+  // non-dashboard groups so totals don't double-count.
+  const dashboardBreakdowns = breakdowns.filter((b) => DASHBOARD_GROUPS.includes(b.group));
+  let instanceTotal = 0;
+  let managed = 0;
+  let unmanaged = 0;
+  let gitSync = 0;
+  dashboardBreakdowns.forEach((b) => {
+    instanceTotal += b.total;
+    gitSync += b.gitSyncCount;
+    managed += b.gitSyncCount + b.otherManagedCount;
+    unmanaged += b.unmanagedCount;
+  });
+  return { instanceTotal, managed, unmanaged, gitSync };
+}
+
+/** Managed and total folder counts, derived from the folder breakdown. */
+export function aggregateFolderCounts(breakdowns: GroupBreakdown[]) {
+  const folderBreakdowns = breakdowns.filter((b) => FOLDER_GROUPS.includes(b.group));
+  let total = 0;
+  let managed = 0;
+  folderBreakdowns.forEach((b) => {
+    total += b.total;
+    managed += b.gitSyncCount + b.otherManagedCount;
+  });
+  return { managed, total };
+}
+
+export function percent(part: number, total: number): string {
+  if (total === 0) {
+    return '0%';
+  }
+  return `${Math.round((part / total) * 100)}%`;
+}
