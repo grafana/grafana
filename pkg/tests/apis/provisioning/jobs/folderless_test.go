@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"net/http"
 	"path"
 	"path/filepath"
 	"testing"
@@ -198,6 +199,81 @@ func TestIntegrationProvisioning_FolderlessMigrate(t *testing.T) {
 	fileCount, err := common.CountFilesInDir(repoPath)
 	require.NoError(t, err)
 	require.Equal(t, 2, fileCount, "both dashboards should be exported to the repo at the top level")
+}
+
+// TestIntegrationProvisioning_FolderlessFileCreate verifies that creating files
+// via the files endpoint maps a repo-root file to a top-level resource and a
+// file in a subdirectory to a resource inside a top-level folder, with no
+// wrapper folder for the repository.
+func TestIntegrationProvisioning_FolderlessFileCreate(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	const repo = "folderless-create"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:                   repo,
+		LocalPath:              path.Join(helper.ProvisioningPath, repo),
+		SyncTarget:             "folderless",
+		Workflows:              []string{"write"},
+		SkipResourceAssertions: true,
+	})
+
+	files := helper.NewFilesClient(repo)
+
+	rootDashboard := []byte(`{
+		"apiVersion": "dashboard.grafana.app/v0alpha1",
+		"kind": "Dashboard",
+		"metadata": {"name": "fldless-root"},
+		"spec": {"title": "Folderless Root Dashboard"}
+	}`)
+	subDashboard := []byte(`{
+		"apiVersion": "dashboard.grafana.app/v0alpha1",
+		"kind": "Dashboard",
+		"metadata": {"name": "fldless-sub"},
+		"spec": {"title": "Folderless Sub Dashboard"}
+	}`)
+
+	// Create a dashboard at the repository root -> top-level resource.
+	// Creation is POST with a body (PUT is reserved for updates).
+	resp := files.Do(t, http.MethodPost, "root-dashboard.json", rootDashboard)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "creating a root file should succeed: %s", resp.BodyString())
+
+	// Create a dashboard in a subdirectory -> resource inside a top-level folder.
+	resp = files.Do(t, http.MethodPost, "team-z/sub-dashboard.json", subDashboard)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "creating a file in a subdirectory should succeed: %s", resp.BodyString())
+
+	// No wrapper folder named after the repository.
+	_, err := helper.Folders.Resource.Get(ctx, repo, metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err), "folderless must not create a wrapper folder")
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		root, err := helper.DashboardsV1.Resource.Get(ctx, "fldless-root", metav1.GetOptions{})
+		if !assert.NoError(collect, err, "root dashboard should exist") {
+			return
+		}
+		assert.Equal(collect, repo, root.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+		assert.Empty(collect, root.GetAnnotations()[utils.AnnoKeyFolder],
+			"root file must map to a top-level resource")
+
+		sub, err := helper.DashboardsV1.Resource.Get(ctx, "fldless-sub", metav1.GetOptions{})
+		if !assert.NoError(collect, err, "subdirectory dashboard should exist") {
+			return
+		}
+		assert.Equal(collect, repo, sub.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+		parent := sub.GetAnnotations()[utils.AnnoKeyFolder]
+		if !assert.NotEmpty(collect, parent, "subdirectory file must map into a folder") {
+			return
+		}
+		assert.NotEqual(collect, repo, parent, "the parent folder must not be a repo wrapper folder")
+
+		// The parent folder must itself be top-level (no grandparent).
+		parentFolder, err := helper.Folders.Resource.Get(ctx, parent, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "parent folder should exist") {
+			return
+		}
+		assert.Empty(collect, parentFolder.GetAnnotations()[utils.AnnoKeyFolder],
+			"the subdirectory folder must be at the top level")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "created resources should map to top level / top-level folder")
 }
 
 // TestIntegrationProvisioning_FolderlessFileMove verifies that moving a file
