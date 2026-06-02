@@ -18,9 +18,11 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/discovery/targetgroup"
 	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/model/relabel"
 
 	"github.com/grafana/grafana/pkg/util/httpclient"
 )
@@ -394,4 +396,19 @@ func (s *alertmanagerSet) sync(tgs []*targetgroup.Group) {
 		s.metrics.errors.DeleteLabelValues(us, s.dataSourceUID)
 		seen[us] = struct{}{}
 	}
+}
+
+// validateRelabelConfigs validates each relabel config using the upstream Validate method,
+// which checks action constraints (target_label, modulus, replacement, etc.) in addition to
+// the action type itself.
+func validateRelabelConfigs(cfgs []*relabel.Config) error {
+	for i, cfg := range cfgs {
+		if cfg == nil {
+			return fmt.Errorf("relabel config at index %d is nil", i)
+		}
+		if err := cfg.Validate(model.LegacyValidation); err != nil {
+			return fmt.Errorf("relabel config at index %d: %w", i, err)
+		}
+	}
+	return nil
 }
