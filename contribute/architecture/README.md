@@ -4,3 +4,4 @@ Do you want to make Grafana contributions with bigger impact? These guides help 
 
 - To learn more about the frontend architecture, refer to [Frontend data requests](frontend-data-requests.md).
 - To learn more about the backend architecture, refer to [contribute/backend](/contribute/backend/README.md).
+- For the design of the `folderless` Git Sync provisioning target, refer to [Folderless sync target](folderless-sync-target.md).
