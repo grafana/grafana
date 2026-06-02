@@ -370,6 +370,33 @@ describe('BootstrapStep', () => {
       // Check that the folder option is now selected by looking for the title field
       expect(await screen.findByRole('textbox', { name: /display name/i })).toBeInTheDocument();
     });
+
+    it('should display the folderless option when it is enabled', async () => {
+      mockUseModeOptions.mockReturnValue({
+        enabledOptions: [
+          {
+            target: 'folderless',
+            label: 'Sync to top level (no folder)',
+            description: 'Resources are provisioned at the top level without a wrapper folder',
+            subtitle: 'Use this option to sync external resources to the top level',
+            disabled: false,
+          },
+        ],
+        disabledOptions: [],
+      });
+
+      setup({
+        settingsData: {
+          allowedTargets: ['folder', 'folderless'],
+          allowImageRendering: true,
+          items: [],
+          availableRepositoryTypes: [],
+          maxRepositories: 10,
+        },
+      });
+
+      expect(await screen.findByText('Sync to top level (no folder)')).toBeInTheDocument();
+    });
   });
 
   describe('title field visibility', () => {
@@ -378,6 +405,37 @@ describe('BootstrapStep', () => {
 
       // Default is folder, so title field should be visible
       expect(await screen.findByRole('textbox', { name: /display name/i })).toBeInTheDocument();
+    });
+
+    it('should not show title field for folderless sync target', async () => {
+      // Folderless has no wrapper folder, so the display-name field must not appear.
+      mockUseModeOptions.mockReturnValue({
+        enabledOptions: [
+          {
+            target: 'folderless',
+            label: 'Sync to top level (no folder)',
+            description: 'Resources are provisioned at the top level without a wrapper folder',
+            subtitle: 'Use this option to sync external resources to the top level',
+            disabled: false,
+          },
+        ],
+        disabledOptions: [],
+      });
+
+      const { user } = setup({
+        settingsData: {
+          allowedTargets: ['folder', 'folderless'],
+          allowImageRendering: true,
+          items: [],
+          availableRepositoryTypes: [],
+          maxRepositories: 10,
+        },
+      });
+
+      const folderlessOption = await screen.findByText('Sync to top level (no folder)');
+      await user.click(folderlessOption);
+
+      expect(screen.queryByRole('textbox', { name: /display name/i })).not.toBeInTheDocument();
     });
   });
 
