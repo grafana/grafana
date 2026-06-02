@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useController, useFormContext } from 'react-hook-form';
 
 import { type SelectableValue } from '@grafana/data';
@@ -50,14 +50,20 @@ export function PolicyTreeSelector() {
 
   const { currentData: policies, isLoading, error } = useListNotificationPolicyRoutes();
 
-  // Get current value: from selectedPolicy field (new) or from labels (old)
+  // A rule routed via notification_settings.policy carries a selectedPolicy value but no legacy label.
+  // They must keep editing through the policy field even when the toggle is OFF, so the two routing mechanisms never coexist.
+  const isPolicyFieldRule = useRef(
+    usePolicyRoutingSettings ||
+      (Boolean(selectedPolicyField.value) && !labels.some((label) => label.key === NAMED_ROOT_LABEL_NAME))
+  ).current;
+
+  // Resolve the current value, preferring the policy field (canonical, matches the save path)
+  // and falling back to the legacy label. selectedPolicy defaults to '' (falsy), so an empty
+  // value correctly falls through to the legacy label rather than masking it.
   const currentPolicyValue = useMemo(() => {
-    if (usePolicyRoutingSettings) {
-      return selectedPolicyField.value ?? '';
-    }
-    const existingLabel = labels.find((label) => label.key === NAMED_ROOT_LABEL_NAME);
-    return existingLabel?.value ?? '';
-  }, [usePolicyRoutingSettings, selectedPolicyField.value, labels]);
+    const legacyLabelValue = labels.find((label) => label.key === NAMED_ROOT_LABEL_NAME)?.value;
+    return selectedPolicyField.value || legacyLabelValue || '';
+  }, [selectedPolicyField.value, labels]);
 
   const isUsingDefaultPolicy = currentPolicyValue === '';
 
@@ -110,7 +116,7 @@ export function PolicyTreeSelector() {
 
   // Validate that existing label value is still valid when policies load (legacy label path only)
   useEffect(() => {
-    if (usePolicyRoutingSettings) {
+    if (isPolicyFieldRule) {
       return;
     }
     if (isLoading || !policies || policies.length === 0) {
@@ -136,11 +142,11 @@ export function PolicyTreeSelector() {
       const newLabels = labels.filter((label) => label.key !== NAMED_ROOT_LABEL_NAME);
       setValue('labels', newLabels);
     }
-  }, [usePolicyRoutingSettings, isLoading, policies, labels, setValue]);
+  }, [isPolicyFieldRule, isLoading, policies, labels, setValue]);
 
   const updatePolicyValue = useCallback(
     (newValue: string) => {
-      if (usePolicyRoutingSettings) {
+      if (isPolicyFieldRule) {
         selectedPolicyField.onChange(newValue || undefined);
         return;
       }
@@ -166,7 +172,7 @@ export function PolicyTreeSelector() {
 
       setValue('labels', newLabels);
     },
-    [usePolicyRoutingSettings, selectedPolicyField, getValues, setValue]
+    [isPolicyFieldRule, selectedPolicyField, getValues, setValue]
   );
 
   const handlePolicyChange = (option: SelectableValue<string>) => {

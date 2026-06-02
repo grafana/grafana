@@ -530,6 +530,77 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
       expect(policyTreeUi.policySelector.query()).not.toBeInTheDocument();
     });
   });
+
+  // Regression: a rule routed via notification_settings.policy (the canonical, backend-honored
+  // storage) was shown as "Default policy" and silently dropped on save when only
+  // alertingMultiplePolicies was enabled (alertingPolicyRoutingSettings OFF), because the
+  // selector/save paths only looked at the legacy __grafana_managed_route__ label.
+  describe('edit existing rule with notification_settings.policy (alertingPolicyRoutingSettings OFF)', () => {
+    const CUSTOM_POLICY_NAME = 'Managed Policy - Empty Provisioned';
+
+    beforeEach(() => {
+      setFolderResponse(
+        mockFolder({
+          uid: grafanaRulerNamespace.uid,
+          title: grafanaRulerNamespace.name,
+          accessControl: {
+            [AccessControlAction.AlertingRuleUpdate]: true,
+          },
+        })
+      );
+
+      const ruleWithPolicy: RulerGrafanaRuleDTO = {
+        ...grafanaRulerRule,
+        labels: {},
+        grafana_alert: {
+          ...grafanaRulerRule.grafana_alert,
+          notification_settings: { policy: CUSTOM_POLICY_NAME },
+        },
+      };
+      const group: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
+        ...grafanaRulerGroup,
+        rules: [ruleWithPolicy],
+      };
+      server.use(
+        http.get(`/api/ruler/grafana/api/v1/rules/${grafanaRulerNamespace.uid}/${grafanaRulerGroup.name}`, () =>
+          HttpResponse.json(group)
+        )
+      );
+    });
+
+    it('shows the policy from notification_settings.policy pre-selected, not "Default policy"', async () => {
+      renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeEnabled();
+      });
+
+      expect(screen.getByText(CUSTOM_POLICY_NAME)).toBeInTheDocument();
+      expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
+      expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
+      expect(policyTreeUi.defaultBadge.query()).not.toBeInTheDocument();
+    });
+
+    it('round-trips notification_settings.policy on save (does not drop it or add a legacy label)', async () => {
+      const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+
+      const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeEnabled();
+      });
+
+      await user.click(ui.buttons.save.get());
+      const requests = await capture;
+      const bodies = await Promise.all(
+        requests.map((r) => r.json() as Promise<RulerRuleGroupDTO<RulerGrafanaRuleDTO>>)
+      );
+      const savedRule = bodies[0].rules.find((r) => r.grafana_alert.title === grafanaRulerRule.grafana_alert.title);
+
+      expect(savedRule?.grafana_alert.notification_settings?.policy).toBe(CUSTOM_POLICY_NAME);
+      expect(savedRule?.labels?.[NAMED_ROOT_LABEL_NAME]).toBeUndefined();
+    });
+  });
 });
 
 describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
