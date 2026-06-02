@@ -86,5 +86,3 @@ export const MonitorConfig = (props: Props) => {
     </>
   );
 };
-
-export default MonitorConfig;

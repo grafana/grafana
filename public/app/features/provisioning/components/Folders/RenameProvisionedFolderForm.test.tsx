@@ -180,11 +180,41 @@ describe('RenameProvisionedFolderForm', () => {
       const request = requireCapturedRequest(capturedRequest);
       expect(request.url.pathname).toContain('/repositories/test-repo/files/');
       expect(request.url.searchParams.get('ref')).toBe('my-branch');
-      expect(request.url.searchParams.get('message')).toBe('Rename folder');
+      expect(request.url.searchParams.get('message')).toBe('Rename folder: Test Folder');
       // No metadata.name — omitting the ID lets the backend preserve the existing UID from the repo.
       expect(request.body).toEqual({
         spec: { title: 'Test Folder' },
       });
+    });
+
+    it('renders the message from the repo commit template when comment is empty', async () => {
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          const url = new URL(request.url);
+          capturedRequest = { url, body: await request.json() };
+          return HttpResponse.json({ resource: { upsert: {} } });
+        })
+      );
+
+      const { user } = setup(
+        {},
+        {
+          ...defaultHookData,
+          repository: {
+            ...defaultHookData.repository!,
+            commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
+          },
+          initialValues: { ...mockFormData, workflow: 'branch' as const, ref: 'my-branch' },
+        }
+      );
+
+      await user.click(await screen.findByRole('button', { name: /^rename$/i }));
+
+      await waitFor(() => {
+        expect(capturedRequest).not.toBeNull();
+      });
+      const request = requireCapturedRequest(capturedRequest);
+      expect(request.url.searchParams.get('message')).toBe('chore(folders): rename Test Folder');
     });
 
     it('should clear ref for write workflow', async () => {

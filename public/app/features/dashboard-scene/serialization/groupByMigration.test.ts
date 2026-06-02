@@ -4,18 +4,24 @@ import {
   LoadingState,
   type TypedVariableModel,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import type { AdhocVariableKind, GroupByVariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { migrateGroupByVariablesV1, migrateGroupByVariablesV2 } from './groupByMigration';
 
+function setUrl(query: string) {
+  locationService.replace(`/?${query}`);
+}
+
 describe('groupByMigration', () => {
   beforeEach(() => {
     config.featureToggles.dashboardUnifiedDrilldownControls = true;
+    locationService.replace('/');
   });
 
   afterEach(() => {
     config.featureToggles.dashboardUnifiedDrilldownControls = false;
+    locationService.replace('/');
   });
 
   describe('migrateGroupByVariablesV1', () => {
@@ -138,6 +144,74 @@ describe('groupByMigration', () => {
       expect((result[0] as AdHocVariableModel).enableGroupBy).toBeUndefined();
       expect((result[0] as AdHocVariableModel).filters).toEqual([]);
     });
+
+    describe('URL state', () => {
+      it('overrides JSON current with values from var-{groupByName}', () => {
+        setUrl('var-groupby=test1&var-groupby=test2');
+
+        const adhoc = makeAdhocV1();
+        const groupBy = makeGroupByV1({
+          current: { selected: true, text: ['cpu'], value: ['cpu'] },
+        });
+        const result = migrateGroupByVariablesV1([adhoc, groupBy]);
+        const migrated = result[0] as AdHocVariableModel;
+
+        expect(migrated.filters).toEqual([
+          { key: 'test1', operator: 'groupBy', value: '', condition: '' },
+          { key: 'test2', operator: 'groupBy', value: '', condition: '' },
+        ]);
+      });
+
+      it('rewrites URL: drops var-{groupByName}, folds values into var-{adhocName}', () => {
+        setUrl('var-groupby=test1&var-groupby=test2');
+
+        migrateGroupByVariablesV1([makeAdhocV1(), makeGroupByV1()]);
+
+        const after = locationService.getSearch();
+        expect(after.has('var-groupby')).toBe(false);
+        expect(after.getAll('var-adhoc')).toEqual(['test1|groupBy', 'test2|groupBy']);
+      });
+
+      it('drops the empty var-{adhocName} marker when migrating', () => {
+        setUrl('var-adhoc=&var-groupby=test1');
+
+        migrateGroupByVariablesV1([makeAdhocV1(), makeGroupByV1()]);
+
+        expect(locationService.getSearch().getAll('var-adhoc')).toEqual(['test1|groupBy']);
+      });
+
+      it('preserves existing user adhoc filters when merging groupBy URL values', () => {
+        setUrl('var-adhoc=region|=|us-east-1&var-groupby=test1');
+
+        migrateGroupByVariablesV1([makeAdhocV1(), makeGroupByV1()]);
+
+        expect(locationService.getSearch().getAll('var-adhoc')).toEqual(['region|=|us-east-1', 'test1|groupBy']);
+      });
+
+      it('falls back to JSON current when URL only carries the empty marker', () => {
+        setUrl('var-groupby=');
+
+        const adhoc = makeAdhocV1();
+        const groupBy = makeGroupByV1({
+          current: { selected: true, text: ['cpu'], value: ['cpu'] },
+        });
+        const result = migrateGroupByVariablesV1([adhoc, groupBy]);
+        const migrated = result[0] as AdHocVariableModel;
+
+        expect(migrated.filters).toEqual([{ key: 'cpu', operator: 'groupBy', value: '', condition: '' }]);
+      });
+
+      it('does not rewrite URL when groupBy URL is absent', () => {
+        const adhoc = makeAdhocV1();
+        const groupBy = makeGroupByV1({
+          current: { selected: true, text: ['cpu'], value: ['cpu'] },
+        });
+        migrateGroupByVariablesV1([adhoc, groupBy]);
+
+        // groupby key was never there; adhoc key wasn't set, so URL stays empty
+        expect(locationService.getSearch().toString()).toBe('');
+      });
+    });
   });
 
   describe('migrateGroupByVariablesV2', () => {
@@ -212,6 +286,67 @@ describe('groupByMigration', () => {
         { key: 'cpu', keyLabel: 'CPU', operator: 'groupBy', value: '', condition: '', origin: 'dashboard' },
         { key: 'network', keyLabel: 'Network', operator: 'groupBy', value: '', condition: '' },
       ]);
+    });
+
+    describe('URL state', () => {
+      it('overrides spec.current with values from var-{groupByName}', () => {
+        setUrl('var-groupby=test1&var-groupby=test2');
+
+        const adhoc = makeAdhocV2();
+        const groupBy = makeGroupByV2({ current: { text: ['cpu'], value: ['cpu'] } });
+        const result = migrateGroupByVariablesV2([adhoc, groupBy]);
+        const migrated = result[0] as AdhocVariableKind;
+
+        expect(migrated.spec.filters).toEqual([
+          { key: 'test1', operator: 'groupBy', value: '', condition: '' },
+          { key: 'test2', operator: 'groupBy', value: '', condition: '' },
+        ]);
+      });
+
+      it('rewrites URL: drops var-{groupByName}, folds values into var-{adhocName}', () => {
+        setUrl('var-groupby=test1&var-groupby=test2');
+
+        migrateGroupByVariablesV2([makeAdhocV2(), makeGroupByV2()]);
+
+        const after = locationService.getSearch();
+        expect(after.has('var-groupby')).toBe(false);
+        expect(after.getAll('var-adhoc')).toEqual(['test1|groupBy', 'test2|groupBy']);
+      });
+
+      it('drops the empty var-{adhocName} marker when migrating', () => {
+        setUrl('var-adhoc=&var-groupby=test1');
+
+        migrateGroupByVariablesV2([makeAdhocV2(), makeGroupByV2()]);
+
+        expect(locationService.getSearch().getAll('var-adhoc')).toEqual(['test1|groupBy']);
+      });
+
+      it('preserves existing user adhoc filters when merging groupBy URL values', () => {
+        setUrl('var-adhoc=region|=|us-east-1&var-groupby=test1');
+
+        migrateGroupByVariablesV2([makeAdhocV2(), makeGroupByV2()]);
+
+        expect(locationService.getSearch().getAll('var-adhoc')).toEqual(['region|=|us-east-1', 'test1|groupBy']);
+      });
+
+      it('falls back to spec.current when URL only carries the empty marker', () => {
+        setUrl('var-groupby=');
+
+        const adhoc = makeAdhocV2();
+        const groupBy = makeGroupByV2({ current: { text: ['cpu'], value: ['cpu'] } });
+        const result = migrateGroupByVariablesV2([adhoc, groupBy]);
+        const migrated = result[0] as AdhocVariableKind;
+
+        expect(migrated.spec.filters).toEqual([{ key: 'cpu', operator: 'groupBy', value: '', condition: '' }]);
+      });
+
+      it('does not rewrite URL when groupBy URL is absent', () => {
+        const adhoc = makeAdhocV2();
+        const groupBy = makeGroupByV2({ current: { text: ['cpu'], value: ['cpu'] } });
+        migrateGroupByVariablesV2([adhoc, groupBy]);
+
+        expect(locationService.getSearch().toString()).toBe('');
+      });
     });
   });
 });

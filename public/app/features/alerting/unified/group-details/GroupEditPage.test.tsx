@@ -302,9 +302,7 @@ describe('GroupEditPage', () => {
       await user.type(intervalInput, 'invalid');
       await user.click(saveButton);
 
-      // The exact error message depends on your validation logic
-      // This is a common pattern for testing validation errors
-      expect(screen.getByText(/must be of format/i)).toBeInTheDocument();
+      expect(screen.getByText(/cannot be None and must be a valid duration/i)).toBeInTheDocument();
     });
 
     it('should handle API error when saving fails', async () => {
@@ -323,6 +321,20 @@ describe('GroupEditPage', () => {
 
       expect(ui.successMessage.query()).not.toBeInTheDocument();
       expect(ui.errorMessage.query()).toBeInTheDocument();
+    });
+  });
+
+  describe('Ungrouped rules', () => {
+    it('shows EntityNotFound for ungrouped artificial group names', async () => {
+      const ruleUid = 'dfkgj15gwrawwa';
+      const artificialGroupName = `no_group_for_rule_${ruleUid}`.padEnd(200, '*');
+
+      renderGroupEditPage('grafana', 'test-folder-uid', artificialGroupName);
+
+      expect(await screen.findByText('Group not found')).toBeInTheDocument();
+      expect(ui.nameInput.query()).not.toBeInTheDocument();
+      expect(ui.intervalInput.query()).not.toBeInTheDocument();
+      expect(ui.saveButton.query()).not.toBeInTheDocument();
     });
   });
 });

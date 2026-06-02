@@ -1,4 +1,4 @@
-import { type EventProperty } from '@grafana/runtime/internal';
+import { type EventProperty } from '@grafana/runtime/unstable';
 
 export interface SaveButtonClicked extends EventProperty {
   /** Whether the preference being saved belongs to an org, team, or individual user. */
@@ -21,11 +21,4 @@ export interface LanguageChanged extends EventProperty {
   preferenceType: 'org' | 'team' | 'user';
   /** The language the user switched to. */
   toLanguage: string;
-}
-
-export interface RegionalFormatChanged extends EventProperty {
-  /** Whether the preference being changed belongs to an org, team, or individual user. */
-  preferenceType: 'org' | 'team' | 'user';
-  /** The regional format the user switched to. */
-  toRegionalFormat: string;
 }

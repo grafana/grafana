@@ -1,6 +1,16 @@
 import { t } from '@grafana/i18n';
 
+import { type ValueFormatCategory } from '../types/valueFormats';
+
 import { toHex, sci, toHex0x, toPercent, toPercentUnit } from './arithmeticFormatters';
+import {
+  locale,
+  scaledUnits,
+  simpleCountUnit,
+  toFixedUnit,
+  stringFormater,
+  booleanValueFormatter,
+} from './baseFormatters';
 import {
   dateTimeAsIso,
   dateTimeAsIsoNoDateIfToday,
@@ -26,15 +36,6 @@ import {
   dateTimeSystemFormatter,
 } from './dateTimeFormatters';
 import { binaryPrefix, currency, SIPrefix } from './symbolFormatters';
-import {
-  locale,
-  scaledUnits,
-  simpleCountUnit,
-  toFixedUnit,
-  type ValueFormatCategory,
-  stringFormater,
-  booleanValueFormatter,
-} from './valueFormats';
 
 export const getCategories = (): ValueFormatCategory[] => [
   {
@@ -894,7 +895,7 @@ export const getCategories = (): ValueFormatCategory[] => [
           'Decibel-milliwatt (dBm)'
         ),
         id: 'dBm',
-        fn: SIPrefix('dBm'),
+        fn: toFixedUnit('dbm'),
       },
       {
         name: t('grafana-data.valueFormats.categories.energy.formats.name-milliohm', 'Milliohm (mΩ)'),

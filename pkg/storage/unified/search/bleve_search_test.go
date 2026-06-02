@@ -177,6 +177,17 @@ func TestCanSearchByTitle(t *testing.T) {
 		checkSearchQuery(t, index, newTestQuery("A01"), nil)
 	})
 
+	t.Run("title filter ignores empty tokens from split values", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "foo bar",
+			"name2": "baz",
+		})
+
+		checkSearchQuery(t, index, newQueryByTitle("foo "), []string{"name1"})
+		checkSearchQuery(t, index, newQueryByTitle("foo-"), []string{"name1"})
+	})
+
 	t.Run("title search with character will match one document", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, noop)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
@@ -248,10 +259,8 @@ func TestCanSearchByTitle(t *testing.T) {
 }
 
 // TestTitleNgramFieldSearch queries exclusively against the title_ngram field
-// (via explicit QueryFields) to prove the dedicated ngram index mapping works
-// independently of the ngram mapping still present on the title field.
-// Once all instances have this mapping, the ngram mapping on title can be
-// removed and partial/prefix matching will rely entirely on title_ngram.
+// (via explicit QueryFields) to prove partial/prefix matching works without
+// relying on the title field mapping.
 func TestTitleNgramFieldSearch(t *testing.T) {
 	key := resource.NamespacedResource{
 		Namespace: "default",
@@ -335,8 +344,7 @@ func TestWildcardQuery(t *testing.T) {
 		})
 
 		checkSearchQuery(t, index, newTestQuery("hell*"), []string{"name1"})
-		// title field also has a keyword mapping that preserves original case,
-		// so capitalized wildcards also match
+		// Title wildcard search is case-insensitive because title fields are indexed lowercased.
 		checkSearchQuery(t, index, newTestQuery("Hell*"), []string{"name1"})
 	})
 
@@ -391,6 +399,8 @@ func TestWildcardQuery(t *testing.T) {
 		checkSearchQuery(t, index, newTestQuery("*grafana dev overview*"), []string{"name1"})
 		// Partial multi-word match
 		checkSearchQuery(t, index, newTestQuery("*dev overview*"), []string{"name1"})
+		// Wildcard matching is case-insensitive for title_phrase.
+		checkSearchQuery(t, index, newTestQuery("*Dev Overview*"), []string{"name1"})
 	})
 
 	t.Run("default wildcard searches email and login fields", func(t *testing.T) {
@@ -631,7 +641,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, info.Fields, "test", writer, nil, false, time.Time{})
+	}, size, info.Fields, "test", writer, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	return index
@@ -651,7 +661,7 @@ func newTestIndexWithFields(t testing.TB, key resource.NamespacedResource, colum
 	fields, err := resource.NewSearchableDocumentFields(columns)
 	require.NoError(t, err)
 
-	index, err := backend.BuildIndex(ctx, key, 2, fields, "test", noop, nil, false, time.Time{})
+	index, err := backend.BuildIndex(ctx, key, 2, fields, "test", noop, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	return index
 }
@@ -721,7 +731,7 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, 10, nil, "test", noop, nil, false, time.Time{})
+	}, 10, nil, "test", noop, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	err = index.BulkIndex(&resource.BulkIndexRequest{

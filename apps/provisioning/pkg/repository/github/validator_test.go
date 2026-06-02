@@ -16,6 +16,7 @@ func TestValidate(t *testing.T) {
 	tests := []struct {
 		name          string
 		obj           runtime.Object
+		allowInsecure bool
 		expectedError bool
 		errorContains []string
 	}{
@@ -65,7 +66,7 @@ func TestValidate(t *testing.T) {
 			errorContains: []string{"url"},
 		},
 		{
-			name: "valid HTTP URL for local development",
+			name: "http URL with token is rejected by default",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-repo",
@@ -83,7 +84,44 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			expectedError: false,
+			expectedError: true,
+			errorContains: []string{"http:// is not allowed when a token is configured"},
+		},
+		{
+			name: "http URL with token is allowed when insecure is permitted (local development)",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "http://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-token"),
+					},
+				},
+			},
+			allowInsecure: true,
+		},
+		{
+			name: "http URL without token is allowed",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "http://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
 		},
 		{
 			name: "valid github.com repository",
@@ -106,32 +144,11 @@ func TestValidate(t *testing.T) {
 				},
 			},
 		},
-		{
-			name: "valid GitHub Enterprise repository",
-			obj: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-repo-enterprise",
-				},
-				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.mycompany.com/engineering/backend",
-						Branch: "main",
-						Path:   "configs",
-					},
-				},
-				Secure: provisioning.SecureValues{
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
-					},
-				},
-			},
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			list := Validate(context.Background(), tt.obj)
+			list := Validate(context.Background(), tt.obj, tt.allowInsecure)
 			if tt.expectedError {
 				assert.NotEmpty(t, list)
 				if len(tt.errorContains) > 0 {

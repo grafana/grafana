@@ -4508,16 +4508,15 @@ export type PreferencesQueryHistoryPreference = {
 export type PreferencesSpec = {
   /** UID for the home dashboard */
   homeDashboardUID?: string;
-  /** Selected language (beta) */
+  /** Explicit home URL (NOTE: this can only be modified in the system settings) */
+  homeURL?: string;
+  /** Selected language */
   language?: string;
   navbar?: PreferencesNavbarPreference;
   queryHistory?: PreferencesQueryHistoryPreference;
-  /** Selected locale (beta) */
-  regionalFormat?: string;
-  /** light, dark, empty is default */
+  /** user interface theme */
   theme?: string;
-  /** The timezone selection
-    TODO: this should use the timezone defined in common */
+  /** The timezone selection */
   timezone?: string;
   /** day of the week (sunday, monday, etc) */
   weekStart?: string;
@@ -4535,7 +4534,6 @@ export type PatchPrefsCmd = {
   language?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
-  regionalFormat?: string;
   theme?: 'light' | 'dark';
   /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
   timezone?: string;
@@ -4548,7 +4546,6 @@ export type UpdatePrefsCmd = {
   language?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
-  regionalFormat?: string;
   theme?: 'light' | 'dark' | 'system';
   /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
   timezone?: string;
@@ -5255,6 +5252,7 @@ export type TeamGroupDto = {
   orgId?: number;
   teamId?: number;
   teamUid?: string;
+  /** Deprecated: always empty; no per-entry id. */
   uid?: string;
 };
 export type TeamGroupMapping = {

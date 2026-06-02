@@ -23,12 +23,13 @@ import (
 
 func TestCalculateChanges(t *testing.T) {
 	tests := []struct {
-		name           string
-		setupMocks     func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory)
-		changes        []repository.VersionedFileChange
-		expectedInfo   changeInfo
-		expectedError  string
-		grafanaBaseURL string
+		name              string
+		setupMocks        func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory)
+		changes           []repository.VersionedFileChange
+		expectedInfo      changeInfo
+		expectedError     string
+		grafanaBaseURL    string
+		screenshotBaseURL string
 	}{
 		{
 			name: "with screenshot",
@@ -101,6 +102,235 @@ func TestCalculateChanges(t *testing.T) {
 					PreviewURL:           "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
 					GrafanaScreenshotURL: "https://cdn2.thecatapi.com/images/9e2.jpg",
 					PreviewScreenshotURL: "https://cdn2.thecatapi.com/images/9e2.jpg",
+				}},
+			},
+		},
+		{
+			name:              "screenshot uses ProvisioningPublicRootURL when set",
+			screenshotBaseURL: "https://public.example.com",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
+				reader.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							GenerateDashboardPreviews: true,
+						},
+					},
+				})
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: provisioning.ResourceRepositoryInfo{
+						Namespace: "x",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:            obj,
+					Existing:       obj,
+					Meta:           meta,
+					DryRunResponse: obj,
+				}, nil)
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+				renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return("screenshots/abc.png", nil)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					GrafanaURL:           "http://host/d/the-uid/hello-world",
+					PreviewURL:           "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+					GrafanaScreenshotURL: "https://public.example.com/screenshots/abc.png",
+					PreviewScreenshotURL: "https://public.example.com/screenshots/abc.png",
+				}},
+			},
+		},
+		{
+			name: "screenshot falls back to grafana base url when ProvisioningPublicRootURL empty",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
+				reader.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							GenerateDashboardPreviews: true,
+						},
+					},
+				})
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: provisioning.ResourceRepositoryInfo{
+						Namespace: "x",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:            obj,
+					Existing:       obj,
+					Meta:           meta,
+					DryRunResponse: obj,
+				}, nil)
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+				renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return("screenshots/abc.png", nil)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					GrafanaURL:           "http://host/d/the-uid/hello-world",
+					PreviewURL:           "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+					GrafanaScreenshotURL: "http://host/screenshots/abc.png",
+					PreviewScreenshotURL: "http://host/screenshots/abc.png",
+				}},
+			},
+		},
+		{
+			// Proves the screenshot path does not silently inherit spec.webhook.baseUrl.
+			// The repo has webhook.baseUrl set, but ProvisioningPublicRootURL is empty,
+			// so screenshots must use the grafana base URL — not the webhook URL.
+			name: "screenshot ignores spec.webhook.baseUrl when ProvisioningPublicRootURL empty",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
+				reader.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							GenerateDashboardPreviews: true,
+						},
+						Webhook: &provisioning.WebhookConfig{
+							BaseURL: "https://webhook-only.example.com",
+						},
+					},
+				})
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: provisioning.ResourceRepositoryInfo{
+						Namespace: "x",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:            obj,
+					Existing:       obj,
+					Meta:           meta,
+					DryRunResponse: obj,
+				}, nil)
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+				renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return("screenshots/abc.png", nil)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					GrafanaURL:           "http://host/d/the-uid/hello-world",
+					PreviewURL:           "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+					GrafanaScreenshotURL: "http://host/screenshots/abc.png",
+					PreviewScreenshotURL: "http://host/screenshots/abc.png",
 				}},
 			},
 		},
@@ -934,12 +1164,17 @@ func TestCalculateChanges(t *testing.T) {
 
 			tt.setupMocks(parser, reader, progress, renderer, parserFactory)
 
-			evaluator := NewEvaluator(renderer, parserFactory, func(_ context.Context, _ string) string {
-				if tt.grafanaBaseURL != "" {
-					return tt.grafanaBaseURL
-				}
-
-				return "http://host/"
+			screenshotBaseURL := tt.screenshotBaseURL
+			if screenshotBaseURL == "" {
+				screenshotBaseURL = "http://host/"
+			}
+			internalURL := "http://host/"
+			if tt.grafanaBaseURL != "" {
+				internalURL = tt.grafanaBaseURL
+			}
+			evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
+				Internal: func(_ context.Context, _ string) string { return internalURL },
+				Public:   func(_ context.Context, _ string) string { return screenshotBaseURL },
 			}, prometheus.NewPedanticRegistry())
 
 			pullRequest := provisioning.PullRequestJobOptions{

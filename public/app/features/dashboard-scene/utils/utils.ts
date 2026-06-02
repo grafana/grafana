@@ -1,6 +1,7 @@
 import { getDataSourceRef, type IntervalVariableModel, type ScopedVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
+import { useFlagGrafanaScenesFlickeringFix } from '@grafana/runtime/internal';
 import {
   type CancelActivationHandler,
   type CustomVariable,
@@ -9,6 +10,7 @@ import {
   SceneDataTransformer,
   sceneGraph,
   type SceneObject,
+  SceneObjectBase,
   type SceneObjectState,
   SceneQueryRunner,
   SceneVariableSet,
@@ -17,6 +19,9 @@ import {
 } from '@grafana/scenes';
 import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 import { createLogger } from '@grafana/ui';
+import kbn from 'app/core/utils/kbn';
+import { type RowItem } from 'app/features/dashboard-scene/scene/layout-rows/RowItem';
+import { type TabItem } from 'app/features/dashboard-scene/scene/layout-tabs/TabItem';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
@@ -265,9 +270,7 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 }
 
 export function getDefaultPluginId(): string {
-  return config.featureToggles.dashboardNewLayouts || config.featureToggles.newVizSuggestions
-    ? UNCONFIGURED_PANEL_PLUGIN_ID
-    : 'timeseries';
+  return config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
 }
 
 export function getDefaultVizPanel(): VizPanel {
@@ -447,6 +450,25 @@ export function interpolateSectionTitle<T extends RepeatableSectionState>(
   return sceneGraph.interpolate(scene, value, undefined, 'text');
 }
 
+const getSlug = (item: TabItem | RowItem) => interpolateSectionTitle(item, item.state.title || '').replace(/ +/g, '-');
+
+export function getSlugForRowOrTab<T extends TabItem | RowItem>(newItem: T, items: T[]): string {
+  const baseSlug = getSlug(newItem);
+  const sameSlugs = items.filter((item) => getSlug(item) === baseSlug);
+
+  if (sameSlugs.length > 1) {
+    const slugIndex = sameSlugs.findIndex((item) => item === newItem);
+    if (slugIndex > 0) {
+      return `${baseSlug}__${slugIndex + 1}`;
+    }
+  }
+  return baseSlug;
+}
+
+export function getLegacySlugForRowOrTab(tab: TabItem | RowItem): string {
+  return kbn.slugifyForUrl(interpolateSectionTitle(tab, tab.state.title || ''));
+}
+
 function getRepeatLocalScopedVars<T extends RepeatableSectionState>(scene: SceneObject<T>): ScopedVars | undefined {
   const variableSet = scene.state.$variables;
   if (!(variableSet instanceof SceneVariableSet)) {
@@ -533,4 +555,11 @@ export const dashboardLog = createLogger('Dashboard');
 export function hasActualSaveChanges(dashboard: DashboardScene) {
   const changes = dashboard.getDashboardChanges();
   return !!changes.diffCount;
+}
+
+export function useScenesFlickeringFix() {
+  const scenesFlickeringFix = useFlagGrafanaScenesFlickeringFix();
+  if (scenesFlickeringFix) {
+    SceneObjectBase.RENDER_BEFORE_ACTIVATION_DEFAULT = true;
+  }
 }

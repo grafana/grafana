@@ -128,7 +128,7 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 		// Add necessary query params
 		queryParams.Add("select", "categories,solutions,tables,workspaces")
 		req.URL.RawQuery = queryParams.Encode()
-		resp, err := cli.Do(req)
+		resp, err := cli.Do(req) // #nosec G704 -- datasource client targets operator-configured URL
 		if err != nil {
 			statusCode := http.StatusInternalServerError
 			if resp != nil {

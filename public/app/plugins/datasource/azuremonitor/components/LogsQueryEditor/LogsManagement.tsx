@@ -80,7 +80,7 @@ export function LogsManagement({
         onDismiss={() => {
           setPendingTier(null);
         }}
-        confirmButtonVariant="primary"
+        confirmVariant="primary"
       />
       <InlineField label={t('components.logs-management.label-logs', 'Logs')} tooltip={tooltip}>
         <RadioButtonGroup<RadioValue>

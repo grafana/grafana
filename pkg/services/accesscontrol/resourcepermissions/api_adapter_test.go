@@ -111,6 +111,7 @@ func TestBuildResourcePermissionName(t *testing.T) {
 		apiGroup     string
 		resource     string
 		resourceID   string
+		resourceUID  string // when set, overrides resourceID in the name
 		expectedName string
 	}{
 		{
@@ -127,6 +128,14 @@ func TestBuildResourcePermissionName(t *testing.T) {
 			resourceID:   "folder-uid-456",
 			expectedName: "folders.grafana.app-folders-folder-uid-456",
 		},
+		{
+			name:         "resourceUID from request overrides numeric resourceID",
+			apiGroup:     "iam.grafana.app",
+			resource:     "serviceaccounts",
+			resourceID:   "42",
+			resourceUID:  "sa-uid-abc",
+			expectedName: "iam.grafana.app-serviceaccounts-sa-uid-abc",
+		},
 	}
 
 	for _, tt := range tests {
@@ -140,7 +149,11 @@ func TestBuildResourcePermissionName(t *testing.T) {
 				},
 			}
 
-			name := api.buildResourcePermissionName(tt.resourceID)
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			if tt.resourceUID != "" {
+				req = web.SetURLParams(req, map[string]string{":resourceUID": tt.resourceUID})
+			}
+			name := api.buildResourcePermissionName(req, tt.resourceID)
 			assert.Equal(t, tt.expectedName, name)
 		})
 	}
@@ -1466,7 +1479,7 @@ func TestSetTeamMember(t *testing.T) {
 			},
 		},
 		{
-			name:       "does not update external members",
+			name:       "rejects updates to external members",
 			permission: "Admin",
 			userID:     1,
 			userSvc: func() *usertest.MockService {
@@ -1481,12 +1494,13 @@ func TestSetTeamMember(t *testing.T) {
 					},
 				}
 			},
+			expectedErrMsg: "externally-synced",
 			validateCalls: func(t *testing.T, _, updateCalls int) {
 				assert.Equal(t, 0, updateCalls, "should not Update when target member is External")
 			},
 		},
 		{
-			name:       "does not delete external members",
+			name:       "rejects deletes of external members",
 			permission: "",
 			userID:     1,
 			userSvc: func() *usertest.MockService {
@@ -1501,6 +1515,7 @@ func TestSetTeamMember(t *testing.T) {
 					},
 				}
 			},
+			expectedErrMsg: "externally-synced",
 			validateCalls: func(t *testing.T, _, updateCalls int) {
 				assert.Equal(t, 0, updateCalls, "should not Update when deleting an External member")
 			},
