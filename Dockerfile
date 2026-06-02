@@ -240,12 +240,14 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 COPY grafana-clickhouse-datasource-linux-${TARGETARCH}.zip /tmp/grafana-clickhouse-datasource.zip
+COPY victoriametrics-metrics-datasource-linux-${TARGETARCH}.zip /tmp/victoriametrics-metrics-datasource.zip
 
 RUN mkdir -p ${GF_PLUGIN_DIR} && \
     chmod -R 777 ${GF_PLUGIN_DIR} && \
     unzip /tmp/grafana-clickhouse-datasource.zip -d ${GF_PLUGIN_DIR} && \
     rm /tmp/grafana-clickhouse-datasource.zip && \
-    grafana cli plugins install marcusolsson-treemap-panel 2.0.1 && \
-    grafana cli plugins install victoriametrics-metrics-datasource 0.22.0
+    unzip /tmp/victoriametrics-metrics-datasource.zip -d ${GF_PLUGIN_DIR} && \
+    rm /tmp/victoriametrics-metrics-datasource.zip && \
+    grafana cli plugins install marcusolsson-treemap-panel 2.0.1
 
 USER "$GF_UID"
