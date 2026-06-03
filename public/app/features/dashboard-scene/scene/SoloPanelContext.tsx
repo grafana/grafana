@@ -135,8 +135,6 @@ export function SoloPanelNotFound({ singleMatch, dashboard }: SoloPanelNotFoundP
     return () => clearInterval(cancelTimeout);
   }, [context, dashboard]);
 
-  console.log('SoloPanelNotFound');
-
   if (state.matchFound || context.matchFound) {
     return null;
   }

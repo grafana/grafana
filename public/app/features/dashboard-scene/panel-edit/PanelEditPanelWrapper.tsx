@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { type VizPanel } from '@grafana/scenes';
 
 import { type DashboardScene } from '../scene/DashboardScene';
-import { t, SoloPanelContextProvider, SoloPanelContextForPanelEdit } from '../scene/SoloPanelContext';
+import { SoloPanelContextProvider, SoloPanelContextForPanelEdit } from '../scene/SoloPanelContext';
 
 interface PanelEditPanelWrapperProps {
   panel: VizPanel;
