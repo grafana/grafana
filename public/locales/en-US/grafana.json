@@ -6982,6 +6982,26 @@
       "title-hidden-count_one": "Hidden ({{count}})",
       "title-hidden-count_other": "Hidden ({{count}})"
     },
+    "dashboard-config-diff": {
+      "label-added": "Added",
+      "label-changed": "Changed",
+      "label-removed": "Removed",
+      "no-option-changes": "No option changes",
+      "no-variable-changes": "No variable changes",
+      "options-heading": "Dashboard options",
+      "variables-heading": "Variables"
+    },
+    "dashboard-diff-view": {
+      "added-placeholder": "Did not exist",
+      "label-added": "Added",
+      "label-changed": "Changed",
+      "label-removed": "Removed",
+      "no-panel-changes": "No panel changes",
+      "panels-heading": "Panels",
+      "removed-placeholder": "Removed",
+      "v2-unsupported-body": "The visual diff is not yet supported for this dashboard. Use the Changes tab to review the JSON diff.",
+      "v2-unsupported-title": "Visual diff not available"
+    },
     "dashboard-edit-pane-renderer": {
       "title-feedback-dashboard-editing-experience": "Give feedback on the new dashboard editing experience"
     },
@@ -7528,6 +7548,7 @@
       "tabs": {
         "label-changes": "Changes",
         "label-details": "Details",
+        "label-visual-diff": "Visual diff",
         "title": "Save dashboard",
         "title-copy": "Save dashboard copy",
         "title-provisioned": "Provisioned dashboard",
