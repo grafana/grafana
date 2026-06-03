@@ -1,6 +1,11 @@
+import { getNavPersonaConfig } from 'nav/data';
 import { useCallback, useMemo } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 
-import { useGetUserPreferencesQuery, usePatchUserPreferencesMutation } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
+import {
+  useGetUserPreferencesQuery,
+  usePatchUserPreferencesMutation,
+} from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
 import { type NavModelItem } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -9,20 +14,41 @@ import { applyPersonaLayout } from './layoutActions';
 import { resolveLayout } from './migrateLayout';
 import { buildNavIndex } from './navIndex';
 import { projectNavTree, reorderPrimary, togglePin } from './projectNavTree';
-import { type NavLayoutConfig } from './types';
+import { NAV_LAYOUT_VERSION, type NavLayoutConfig } from './types';
+
+/** Query string parameter that pins a predefined persona's nav items, e.g. `?nav-persona=platform-guy`. */
+const NAV_PERSONA_PARAM = 'nav-persona';
 
 export function useNavLayout(canonicalTree: NavModelItem[], pathname: string) {
   const preferences = useGetUserPreferencesQuery(undefined, { skip: !contextSrv.user.isSignedIn });
   const [patchPreferences] = usePatchUserPreferencesMutation();
+  const { search } = useLocation();
+
+  // A `nav-persona` query string parameter overrides the saved layout, pinning only that
+  // persona's items so everything else falls behind the "Show me more" section.
+  const personaOverride = useMemo<NavLayoutConfig | undefined>(() => {
+    const personaId = new URLSearchParams(search).get(NAV_PERSONA_PARAM);
+    const config = getNavPersonaConfig(personaId);
+    if (!config) {
+      return undefined;
+    }
+    return {
+      version: NAV_LAYOUT_VERSION,
+      personaId: personaId ?? undefined,
+      pinnedIds: [...config.orderedPins],
+      order: [...config.orderedPins],
+    };
+  }, [search]);
 
   const layout = useMemo(
     () =>
+      personaOverride ??
       resolveLayout(
         preferences.data?.navbar?.layout as NavLayoutConfig | undefined,
         preferences.data?.navbar?.bookmarkUrls,
         canonicalTree
       ),
-    [preferences.data?.navbar, canonicalTree]
+    [personaOverride, preferences.data?.navbar, canonicalTree]
   );
 
   const projected = useMemo(
