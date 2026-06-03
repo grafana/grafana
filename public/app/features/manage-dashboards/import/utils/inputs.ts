@@ -299,6 +299,7 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
     const dsInfo = getDataSourceSrv().getList({ pluginId: dsType });
     const originalName = dsNames[label];
     const usedByPanels = dsPanels[label];
+    const matchedDatasource = originalName ? dsInfo.find((ds) => ds.name === originalName) : undefined;
     inputs.dataSources.push({
       name: label,
       label: originalName ? `${label} (${originalName})` : label,
@@ -308,6 +309,15 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
       type: InputType.DataSource,
       pluginId: dsType,
       ...(usedByPanels && usedByPanels.length > 0 ? { usedByPanels } : {}),
+      ...(matchedDatasource
+        ? {
+            matchedDatasource: {
+              uid: matchedDatasource.uid,
+              type: matchedDatasource.type,
+              name: matchedDatasource.name,
+            },
+          }
+        : {}),
     });
   }
 

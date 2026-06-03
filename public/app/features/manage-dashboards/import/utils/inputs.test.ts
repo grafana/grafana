@@ -521,6 +521,79 @@ describe('extractV2Inputs', () => {
     expect(result.dataSources[0].usedByPanels).toBeUndefined();
   });
 
+  it('pre-selects the datasource when its name matches an existing one of the same plugin type', async () => {
+    mockGetDataSourceSrv.getList.mockReturnValueOnce([
+      { uid: 'ds-prod', name: 'Production MySQL', type: 'mysql' },
+      { uid: 'ds-stage', name: 'Staging MySQL', type: 'mysql' },
+    ]);
+
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: {
+            name: 'var1',
+            query: {
+              group: 'mysql',
+              labels: { [ExportLabel]: 'mysql-1', [ExportDatasourceName]: 'Production MySQL' },
+            },
+          },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources[0].matchedDatasource).toEqual({
+      uid: 'ds-prod',
+      name: 'Production MySQL',
+      type: 'mysql',
+    });
+  });
+
+  it('does not pre-select a datasource when no name matches', async () => {
+    mockGetDataSourceSrv.getList.mockReturnValueOnce([{ uid: 'ds-stage', name: 'Staging MySQL', type: 'mysql' }]);
+
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: {
+            name: 'var1',
+            query: {
+              group: 'mysql',
+              labels: { [ExportLabel]: 'mysql-1', [ExportDatasourceName]: 'Production MySQL' },
+            },
+          },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources[0].matchedDatasource).toBeUndefined();
+  });
+
+  it('does not pre-select when no original name is present', async () => {
+    mockGetDataSourceSrv.getList.mockReturnValueOnce([{ uid: 'ds-prod', name: 'Production MySQL', type: 'mysql' }]);
+
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'var1', query: { group: 'mysql', labels: { [ExportLabel]: 'mysql-1' } } },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources[0].matchedDatasource).toBeUndefined();
+  });
+
   it('falls back to the export label when no datasource name is present', async () => {
     const dashboard = {
       elements: {},

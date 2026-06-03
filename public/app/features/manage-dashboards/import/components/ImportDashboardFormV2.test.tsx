@@ -191,6 +191,51 @@ describe('ImportDashboardFormV2', () => {
     expect(screen.queryByLabelText('Show panels that use this datasource')).not.toBeInTheDocument();
   });
 
+  it('pre-selects the datasource picker when a matching datasource exists on the instance', () => {
+    const inputs: DashboardInputs = {
+      ...mockInputs,
+      dataSources: [
+        {
+          name: 'mysql-1',
+          label: 'mysql-1 (Production MySQL)',
+          pluginId: 'mysql',
+          type: InputType.DataSource,
+          description: 'mysql data source — originally "Production MySQL"',
+          info: 'Select a mysql data source',
+          value: '',
+          matchedDatasource: { uid: 'ds-prod', name: 'Production MySQL', type: 'mysql' },
+        },
+      ],
+    };
+
+    renderForm(false, inputs);
+
+    const picker = screen.getByTestId('datasource-picker-mysql') as HTMLInputElement;
+    expect(picker.value).toBe('ds-prod');
+  });
+
+  it('leaves the datasource picker empty when no matching datasource exists', () => {
+    const inputs: DashboardInputs = {
+      ...mockInputs,
+      dataSources: [
+        {
+          name: 'mysql-1',
+          label: 'mysql-1 (Production MySQL)',
+          pluginId: 'mysql',
+          type: InputType.DataSource,
+          description: 'mysql data source — originally "Production MySQL"',
+          info: 'Select a mysql data source',
+          value: '',
+        },
+      ],
+    };
+
+    renderForm(false, inputs);
+
+    const picker = screen.getByTestId('datasource-picker-mysql') as HTMLInputElement;
+    expect(picker.value).toBe('');
+  });
+
   it('renders UID field as read-only first and enables editing after clicking change uid', async () => {
     const user = userEvent.setup();
     renderForm(false, mockInputs, 'existing-uid');

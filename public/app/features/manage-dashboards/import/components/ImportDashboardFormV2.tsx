@@ -50,7 +50,14 @@ export const ImportDashboardFormV2 = ({
 }: Props) => {
   const [isSubmitted, setSubmitted] = useState(false);
   const [uidReset, setUidReset] = useState(false);
-  const [selectedDataSources, setSelectedDataSources] = useState<Record<string, DatasourceSelection>>({});
+  const [selectedDataSources, setSelectedDataSources] = useState<Record<string, DatasourceSelection>>(() =>
+    Object.fromEntries(
+      inputs.dataSources
+        .filter((input) => input.matchedDatasource)
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        .map((input) => [`datasource-${input.name}`, input.matchedDatasource!])
+    )
+  );
 
   /*
     This useEffect is needed for overwriting a dashboard. It
@@ -160,6 +167,7 @@ export const ImportDashboardFormV2 = ({
             >
               <Controller<ImportFormDataV2, FieldPath<ImportFormDataV2>>
                 name={dataSourceOption}
+                defaultValue={input.matchedDatasource}
                 render={({ field: { ref, ...field } }) => (
                   <DataSourcePicker
                     {...field}
