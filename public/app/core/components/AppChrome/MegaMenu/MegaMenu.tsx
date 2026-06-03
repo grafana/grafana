@@ -11,6 +11,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { setBookmark } from 'app/core/reducers/navBarTree';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
@@ -36,9 +37,9 @@ export const MegaMenu = memo(
     const [patchPreferences] = usePatchUserPreferencesMutation();
     const pinnedItems = usePinnedItems();
 
-    // Remove profile + help from tree
+    // Remove profile, help, and home from tree — home is reachable via the logo
     const navItems = navTree
-      .filter((item) => item.id !== 'profile' && item.id !== 'help')
+      .filter((item) => item.id !== 'profile' && item.id !== 'help' && item.id !== HOME_NAV_ID)
       .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
 
     const bookmarksItem = navItems.find((item) => item.id === 'bookmarks');

@@ -29,7 +29,7 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
   return (
     <div className={styles.header}>
       <Stack alignItems="center" minWidth={0} gap={1}>
-        <HomeLink homeNav={homeNav} inMegaMenuOverlay={!state.megaMenuDocked} />
+        <HomeLink homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />
         <OrganizationSwitcher />
       </Stack>
       <div className={styles.flexGrow} />
