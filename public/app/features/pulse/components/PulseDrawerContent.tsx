@@ -409,6 +409,9 @@ export function PulseDrawerContent({
                 threadUID: res.thread.uid,
                 parentUID: res.pulse.uid,
                 dashboardUID: resourceUID,
+                // So a #panel chip in the opening pulse names the panel by
+                // its current title in the assistant prompt.
+                panelTitlesById,
               });
             }}
           />

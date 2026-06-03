@@ -103,6 +103,21 @@ describe('useAssistantAutoReply', () => {
     expect(prompt).toContain('explain');
   });
 
+  it('names the panel by its current title from the live title map', async () => {
+    const { result } = renderHook(() => useAssistantAutoReply());
+    await result.current(assistantBody, {
+      threadUID: 't1',
+      dashboardUID: 'dash-uid',
+      panelId: 4,
+      // A stale explicit title is overridden by the live map.
+      panelTitle: 'Old name',
+      panelTitlesById: new Map([[4, 'Tail latency']]),
+    });
+    const prompt = lastGenerateOptions?.prompt ?? '';
+    expect(prompt).toContain('Tail latency');
+    expect(prompt).not.toContain('Old name');
+  });
+
   it('posts a fallback notice when the assistant is unavailable', async () => {
     jest.mocked(useAssistant).mockReturnValue({
       isLoading: false,

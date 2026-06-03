@@ -27,8 +27,13 @@ export interface AssistantReplyContext {
    *  back to the first `#panel` chip in the body so a `#panel`-tagged pulse
    *  still points the assistant at the right panel. */
   panelId?: number;
-  /** Title for `panelId`, when known. */
+  /** Explicit title for `panelId`, when the caller already has it. */
   panelTitle?: string;
+  /** Live panel-id → title map for the dashboard. Preferred source for the
+   *  panel title so the prompt names the panel by its current title (the
+   *  same rename-resilient map the renderer uses), rather than a stale chip
+   *  label. */
+  panelTitlesById?: ReadonlyMap<number, string>;
 }
 
 /** bodyTagsAssistant reports whether a composed body contains an
@@ -130,13 +135,18 @@ function buildContextLine(body: PulseBody, ctx: AssistantReplyContext): string |
   // chip in the pulse so a `#panel`-tagged question still points at it.
   const panelMention = collectMentions(body).find((m) => m.kind === 'panel');
   let panelId = ctx.panelId;
-  let panelTitle = ctx.panelTitle;
   if (panelId === undefined && panelMention) {
     const parsed = Number(panelMention.targetId);
     if (Number.isFinite(parsed)) {
       panelId = parsed;
-      panelTitle = panelTitle ?? panelMention.displayName;
     }
+  }
+  // Resolve the panel's title so the prompt names exactly what the user
+  // means. The live title map wins (current name even after a rename), then
+  // an explicit caller-supplied title, then the chip's stored label.
+  let panelTitle: string | undefined;
+  if (panelId !== undefined) {
+    panelTitle = ctx.panelTitlesById?.get(panelId) ?? ctx.panelTitle ?? panelMention?.displayName;
   }
 
   const link = dashboardLink(ctx.dashboardUID, panelId);

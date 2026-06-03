@@ -121,7 +121,10 @@ export function PulseThreadView({
       dashboardUID: thread.resourceKind === 'dashboard' ? thread.resourceUID : undefined,
       dashboardTitle: thread.resourceTitle || undefined,
       panelId: thread.panelId,
-      panelTitle: thread.panelId !== undefined ? panelTitlesById?.get(thread.panelId) : undefined,
+      // Pass the live id→title map so the prompt names the panel by its
+      // current title — whether it's the thread's anchored panel or a
+      // #panel chip in the reply.
+      panelTitlesById,
     });
   }
 
