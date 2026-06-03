@@ -151,6 +151,7 @@ jobs:
           previous: ${{inputs.previous_version}}
           target: v${{ env.VERSION }}
           output_file: changelog_items.md
+          github_token: ${{  steps.get-github-app-token.outputs.token }}
       - name: Patch CHANGELOG.md
         if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
         run: |
