@@ -1,10 +1,15 @@
+import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Badge, TextLink } from '@grafana/ui';
+import { Alert, Badge, Button, TextLink } from '@grafana/ui';
+import { addDataSource } from 'app/features/datasources/state/actions';
 import { PluginDetailsPage } from 'app/features/plugins/admin/components/PluginDetailsPage';
+import { isDataSourceEditor } from 'app/features/plugins/admin/permissions';
+import { type CatalogPlugin } from 'app/features/plugins/admin/types';
 import { AppNotificationSeverity } from 'app/types/appNotifications';
-import { type StoreState, useSelector } from 'app/types/store';
+import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { ROUTES } from '../constants';
 
@@ -19,6 +24,7 @@ export function DataSourceDetailsPage() {
     <PluginDetailsPage
       pluginId={id}
       navId={navId}
+      actions={(plugin) => <DataSourcePluginAddButton plugin={plugin} />}
       notFoundComponent={<NotFoundDatasource />}
       notFoundNavModel={{
         text: t('connections.data-source-details-page.text.unknown-datasource', 'Unknown datasource'),
@@ -29,6 +35,59 @@ export function DataSourceDetailsPage() {
         active: true,
       }}
     />
+  );
+}
+
+export function DataSourcePluginAddButton({ plugin }: { plugin?: CatalogPlugin }) {
+  const dispatch = useDispatch();
+  const [isAdding, setIsAdding] = useState(false);
+
+  const onAddDataSource = useCallback(async () => {
+    if (!plugin || isAdding) {
+      return;
+    }
+
+    const meta: DataSourcePluginMeta = {
+      id: plugin.id,
+      name: plugin.name,
+      type: PluginType.datasource,
+      module: '',
+      baseUrl: '',
+      enabled: plugin.isInstalled,
+      info: {
+        author: {
+          name: plugin.orgName,
+        },
+        description: plugin.description,
+        links: plugin.details?.links ?? [],
+        logos: plugin.info.logos,
+        screenshots: plugin.details?.screenshots ?? [],
+        updated: plugin.updatedAt,
+        version: plugin.installedVersion ?? plugin.latestVersion ?? '',
+      },
+    };
+
+    setIsAdding(true);
+
+    try {
+      await dispatch(addDataSource(meta, ROUTES.DataSourcesEdit));
+    } catch {
+      setIsAdding(false);
+    }
+  }, [dispatch, isAdding, plugin]);
+
+  if (!plugin || plugin.type !== PluginType.datasource || !isDataSourceEditor()) {
+    return null;
+  }
+
+  return (
+    <Button icon={isAdding ? 'spinner' : 'plus'} disabled={isAdding} onClick={onAddDataSource}>
+      {isAdding
+        ? plugin.isInstalled
+          ? t('connections.data-source-plugin-add-button.adding', 'Adding')
+          : t('connections.data-source-plugin-add-button.installing', 'Installing')
+        : t('connections.data-source-plugin-add-button.add', 'Add')}
+    </Button>
   );
 }
 

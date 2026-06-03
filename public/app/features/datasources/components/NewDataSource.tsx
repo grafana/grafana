@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { type Action } from 'redux';
 
 import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
@@ -24,7 +25,21 @@ export function NewDataSource() {
   const isLoadingDatasourcePlugins = useSelector((s: StoreState) => s.dataSources.isLoadingDataSourcePlugins);
   const dataSourceCategories = useSelector((s: StoreState) => s.dataSources.categories);
   const onAddDataSource = useAddDatasource();
+  const [addingDataSourceId, setAddingDataSourceId] = useState<string>();
   const onSetSearchQuery = (q: string) => dispatch(setDataSourceTypeSearchQuery(q));
+  const onAddDataSourceClick = async (dataSource: DataSourcePluginMeta) => {
+    if (addingDataSourceId) {
+      return;
+    }
+
+    setAddingDataSourceId(dataSource.id);
+
+    try {
+      await onAddDataSource(dataSource);
+    } catch {
+      setAddingDataSourceId(undefined);
+    }
+  };
 
   return (
     <NewDataSourceView
@@ -32,7 +47,8 @@ export function NewDataSource() {
       dataSourceCategories={dataSourceCategories}
       searchQuery={searchQuery}
       isLoading={isLoadingDatasourcePlugins}
-      onAddDataSource={onAddDataSource}
+      addingDataSourceId={addingDataSourceId}
+      onAddDataSource={onAddDataSourceClick}
       onSetSearchQuery={onSetSearchQuery}
     />
   );
@@ -43,7 +59,8 @@ export type ViewProps = {
   dataSourceCategories: DataSourcePluginCategory[];
   searchQuery: string;
   isLoading: boolean;
-  onAddDataSource: (dataSource: DataSourcePluginMeta) => void;
+  addingDataSourceId?: string;
+  onAddDataSource: (dataSource: DataSourcePluginMeta) => Promise<void>;
   onSetSearchQuery: (q: string) => Action;
 };
 
@@ -52,6 +69,7 @@ export function NewDataSourceView({
   dataSourceCategories,
   searchQuery,
   isLoading,
+  addingDataSourceId,
   onAddDataSource,
   onSetSearchQuery,
 }: ViewProps) {
@@ -83,10 +101,18 @@ export function NewDataSourceView({
       {/* Search results */}
       <div>
         {searchQuery && (
-          <DataSourceTypeCardList dataSourcePlugins={dataSources} onClickDataSourceType={onAddDataSource} />
+          <DataSourceTypeCardList
+            dataSourcePlugins={dataSources}
+            addingDataSourceId={addingDataSourceId}
+            onClickDataSourceType={onAddDataSource}
+          />
         )}
         {!searchQuery && (
-          <DataSourceCategories categories={dataSourceCategories} onClickDataSourceType={onAddDataSource} />
+          <DataSourceCategories
+            categories={dataSourceCategories}
+            addingDataSourceId={addingDataSourceId}
+            onClickDataSourceType={onAddDataSource}
+          />
         )}
       </div>
     </>

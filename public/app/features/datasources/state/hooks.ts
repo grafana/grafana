@@ -80,7 +80,7 @@ export const useAddDatasource = () => {
   const dispatch = useDispatch();
 
   return (plugin: DataSourcePluginMeta) => {
-    dispatch(addDataSource(plugin, ROUTES.DataSourcesEdit));
+    return dispatch(addDataSource(plugin, ROUTES.DataSourcesEdit));
   };
 };
 

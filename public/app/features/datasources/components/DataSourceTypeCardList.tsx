@@ -8,11 +8,12 @@ import { DataSourceTypeCard } from './DataSourceTypeCard';
 export type Props = {
   // The list of data-source plugins to display
   dataSourcePlugins: DataSourcePluginMeta[];
+  addingDataSourceId?: string;
   // Called when a data-source plugin is clicked on in the list
-  onClickDataSourceType: (dataSource: DataSourcePluginMeta) => void;
+  onClickDataSourceType: (dataSource: DataSourcePluginMeta) => Promise<void>;
 };
 
-export function DataSourceTypeCardList({ dataSourcePlugins, onClickDataSourceType }: Props) {
+export function DataSourceTypeCardList({ dataSourcePlugins, addingDataSourceId, onClickDataSourceType }: Props) {
   if (!dataSourcePlugins || !dataSourcePlugins.length) {
     return null;
   }
@@ -21,7 +22,14 @@ export function DataSourceTypeCardList({ dataSourcePlugins, onClickDataSourceTyp
     <List
       items={dataSourcePlugins}
       getItemKey={(item) => item.id.toString()}
-      renderItem={(item) => <DataSourceTypeCard dataSourcePlugin={item} onClick={() => onClickDataSourceType(item)} />}
+      renderItem={(item) => (
+        <DataSourceTypeCard
+          dataSourcePlugin={item}
+          isAdding={addingDataSourceId === item.id}
+          isDisabled={Boolean(addingDataSourceId)}
+          onClick={() => onClickDataSourceType(item)}
+        />
+      )}
       className={css({
         '> li': {
           marginBottom: '2px',

@@ -15,11 +15,13 @@ export type Props = {
   // The list of data-source plugin categories to display
   categories: DataSourcePluginCategory[];
 
+  addingDataSourceId?: string;
+
   // Called when a data-source plugin is clicked on in the list
-  onClickDataSourceType: (dataSource: DataSourcePluginMeta) => void;
+  onClickDataSourceType: (dataSource: DataSourcePluginMeta) => Promise<void>;
 };
 
-export function DataSourceCategories({ categories, onClickDataSourceType }: Props) {
+export function DataSourceCategories({ categories, addingDataSourceId, onClickDataSourceType }: Props) {
   const moreDataSourcesLink = `${ROUTES.AddNewConnection}?cat=data-source`;
   const styles = useStyles2(getStyles);
 
@@ -40,7 +42,11 @@ export function DataSourceCategories({ categories, onClickDataSourceType }: Prop
           <div className={styles.header} id={id}>
             {title}
           </div>
-          <DataSourceTypeCardList dataSourcePlugins={plugins} onClickDataSourceType={onClickDataSourceType} />
+          <DataSourceTypeCardList
+            dataSourcePlugins={plugins}
+            addingDataSourceId={addingDataSourceId}
+            onClickDataSourceType={onClickDataSourceType}
+          />
         </div>
       ))}
 

@@ -34,6 +34,7 @@ import { type ThunkDispatch, type ThunkResult } from 'app/types/store';
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
 import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
+import { isDataSourcePluginInstallable } from '../utils';
 
 import { buildCategories } from './buildCategories';
 import { buildNavModel } from './navModel';
@@ -246,6 +247,10 @@ export function addDataSource(
   editRoute = DATASOURCES_ROUTES.Edit
 ): ThunkResult<Promise<void>> {
   return async () => {
+    if (isDataSourcePluginInstallable(plugin)) {
+      await api.installDataSourcePlugin(plugin.id);
+    }
+
     const newInstance = {
       type: plugin.id,
       access: 'proxy',

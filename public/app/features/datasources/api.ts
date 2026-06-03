@@ -264,6 +264,9 @@ export const createDataSourceWithK8sAPI = async (dataSource: Partial<DataSourceS
 export const createDataSource = (dataSource: Partial<DataSourceSettings>) =>
   getBackendSrv().post('/api/datasources', dataSource);
 
+export const installDataSourcePlugin = (pluginId: string) =>
+  getBackendSrv().post(`/api/plugins/${pluginId}/install`, {});
+
 export const getDataSourcePlugins = () => getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
 
 export const updateDataSource = async (dataSource: DataSourceSettings) => {

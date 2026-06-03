@@ -438,6 +438,11 @@ describe('testDataSource', () => {
 });
 
 describe('addDataSource', () => {
+  beforeEach(() => {
+    jest.mocked(api.createDataSource).mockReset();
+    jest.mocked(api.installDataSourcePlugin).mockReset();
+  });
+
   it('it creates a datasource and calls trackDataSourceCreated ', async () => {
     const meta: AppPluginMeta = {
       id: 'azure-monitor',
@@ -453,6 +458,7 @@ describe('addDataSource', () => {
 
     await thunkTester({}).givenThunk(addDataSource).whenThunkIsDispatched(meta);
 
+    expect(api.installDataSourcePlugin).not.toHaveBeenCalled();
     expect(trackDataSourceCreated).toHaveBeenCalledWith({
       plugin_id: 'azure-monitor',
       plugin_version: '1.2.3',
@@ -460,5 +466,31 @@ describe('addDataSource', () => {
       grafana_version: '1.0',
       path: window.location.pathname,
     });
+  });
+
+  it('installs an installable datasource plugin before creating the datasource', async () => {
+    const meta: AppPluginMeta = {
+      id: 'grafana-athena-datasource',
+      module: 'phantom',
+      baseUrl: '',
+      info: {
+        version: '1.2.3',
+        links: [{ name: 'Add', url: '/plugins/add/grafana-athena-datasource' }],
+      } as PluginMetaInfo,
+      type: PluginType.datasource,
+      name: 'Amazon Athena',
+    };
+    const dataSourceMock = { datasource: { uid: 'athena23' }, meta };
+
+    jest.mocked(api.installDataSourcePlugin).mockResolvedValueOnce(undefined);
+    jest.mocked(api.createDataSource).mockResolvedValueOnce(dataSourceMock);
+
+    await thunkTester({}).givenThunk(addDataSource).whenThunkIsDispatched(meta);
+
+    expect(api.installDataSourcePlugin).toHaveBeenCalledWith('grafana-athena-datasource');
+    expect(api.createDataSource).toHaveBeenCalledWith({ type: 'grafana-athena-datasource', access: 'proxy' });
+    expect(jest.mocked(api.installDataSourcePlugin).mock.invocationCallOrder[0]).toBeLessThan(
+      jest.mocked(api.createDataSource).mock.invocationCallOrder[0]
+    );
   });
 });

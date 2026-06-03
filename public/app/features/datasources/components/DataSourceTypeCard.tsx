@@ -1,22 +1,34 @@
 import { css, cx } from '@emotion/css';
+import { type MouseEvent } from 'react';
 
 import { type DataSourcePluginMeta, type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Card, LinkButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
+import { Button, Card, LinkButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
+
+import { isDataSourcePluginInstallable } from '../utils';
 
 export type Props = {
   dataSourcePlugin: DataSourcePluginMeta;
-  onClick: () => void;
+  isAdding?: boolean;
+  isDisabled?: boolean;
+  onClick: () => Promise<void>;
 };
 
-export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
+export function DataSourceTypeCard({ onClick, dataSourcePlugin, isAdding = false, isDisabled = false }: Props) {
   const isPhantom = dataSourcePlugin.module === 'phantom';
-  const isClickable = !isPhantom && !dataSourcePlugin.unlicensed;
+  const needsPluginInstall = isDataSourcePluginInstallable(dataSourcePlugin);
+  const canAdd = (!isPhantom || needsPluginInstall) && !dataSourcePlugin.unlicensed;
+  const isClickable = canAdd && !isDisabled;
   const learnMoreLink = dataSourcePlugin.info?.links?.length > 0 ? dataSourcePlugin.info.links[0] : null;
   const learnMoreLinkTarget = learnMoreLink?.target ?? '_blank';
+  const showLearnMoreLink = learnMoreLink && !needsPluginInstall;
 
   const styles = useStyles2(getStyles);
+  const onAddClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onClick();
+  };
 
   return (
     <Card noMargin className={cx(styles.card, 'card-parent')} onClick={isClickable ? onClick : () => {}}>
@@ -43,8 +55,17 @@ export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
       )}
 
       {/* Learn more */}
-      <Card.Actions className={styles.actions}>
-        {learnMoreLink && (
+      <Card.Actions className={cx(styles.actions, isAdding && styles.actionsVisible)}>
+        {canAdd && (
+          <Button disabled={isDisabled} icon={isAdding ? 'spinner' : 'plus'} onClick={onAddClick} variant="primary">
+            {isAdding
+              ? needsPluginInstall
+                ? t('datasources.data-source-type-card.installing', 'Installing')
+                : t('datasources.data-source-type-card.adding', 'Adding')
+              : t('datasources.data-source-type-card.add', 'Add')}
+          </Button>
+        )}
+        {showLearnMoreLink && (
           <LinkButton
             aria-label={t(
               'datasources.data-source-type-card.aria-label-learn-more',
@@ -91,10 +112,15 @@ function getStyles(theme: GrafanaTheme2) {
       alignSelf: 'center',
       marginTop: '0px',
       opacity: 0,
+      display: 'flex',
+      gap: theme.spacing(1),
 
       '.card-parent:hover &, .card-parent:focus-within &': {
         opacity: 1,
       },
+    }),
+    actionsVisible: css({
+      opacity: 1,
     }),
     card: css({
       gridTemplateAreas: `

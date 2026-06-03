@@ -17,6 +17,7 @@ import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 import { usePluginPageExtensions } from '../hooks/usePluginPageExtensions';
 import { useGetSingle, useFetchStatus, useFetchDetailsStatus, useGetPluginInsights } from '../state/hooks';
+import { type CatalogPlugin } from '../types';
 
 import { PluginDetailsDeprecatedWarning } from './PluginDetailsDeprecatedWarning';
 
@@ -29,6 +30,8 @@ export type Props = {
   notFoundNavModel?: NavModelItem;
   // Can be used to customise the content shown when a plugin with the given ID cannot be found
   notFoundComponent?: React.ReactElement;
+  // Can be used to customise the page actions for specialised plugin detail routes.
+  actions?: (plugin?: CatalogPlugin) => React.ReactNode;
 };
 
 export function PluginDetailsPage({
@@ -36,6 +39,7 @@ export function PluginDetailsPage({
   navId = 'plugins',
   notFoundComponent = <NotFoundPlugin />,
   notFoundNavModel,
+  actions: customActions,
 }: Props) {
   const location = useLocation();
   const notFoundModel = notFoundNavModel ?? {
@@ -53,6 +57,7 @@ export function PluginDetailsPage({
   const isNarrowScreen = useMedia('(max-width: 600px)');
   const { navModel, activePageId } = usePluginDetailsTabs(plugin, queryParams.get('page'), isNarrowScreen);
   const { actions, info, subtitle } = usePluginPageExtensions(plugin);
+  const pageActions = customActions ? customActions(plugin) : actions;
   const { isLoading: isFetchLoading } = useFetchStatus();
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
   const styles = useStyles2(getStyles);
@@ -83,7 +88,7 @@ export function PluginDetailsPage({
   }
 
   return (
-    <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle}>
+    <Page navId={navId} pageNav={navModel} actions={pageActions} subTitle={subtitle}>
       <Stack gap={4} justifyContent="space-between" direction={{ xs: 'column-reverse', sm: 'row' }}>
         <Page.Contents>
           <TabContent className={styles.tabContent}>
