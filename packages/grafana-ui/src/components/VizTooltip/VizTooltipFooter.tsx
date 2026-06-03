@@ -37,7 +37,7 @@ interface VizTooltipFooterProps {
   annotate?: () => void;
 }
 
-export const ADD_ANNOTATION_ID = 'add-annotation-button';
+const ADD_ANNOTATION_ID = 'add-annotation-button';
 
 type RenderOneClickTrans = (title: string) => React.ReactNode;
 type RenderItem<T extends LinkModel | ActionModel> = (

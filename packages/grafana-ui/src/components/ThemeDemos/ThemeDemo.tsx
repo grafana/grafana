@@ -314,7 +314,7 @@ interface VizHuesDemoProps {
   theme: GrafanaTheme2;
 }
 
-export function VizHuesDemo({ theme, color }: VizHuesDemoProps) {
+function VizHuesDemo({ theme, color }: VizHuesDemoProps) {
   return (
     <tr>
       <td>{color.name}</td>
@@ -341,7 +341,7 @@ interface RichColorDemoProps {
   color: ThemeRichColor;
 }
 
-export function RichColorDemo({ theme, color }: RichColorDemoProps) {
+function RichColorDemo({ theme, color }: RichColorDemoProps) {
   return (
     <tr>
       <td>{color.name}</td>
@@ -408,7 +408,7 @@ const colorsTableStyle = (theme: GrafanaTheme2) =>
     },
   });
 
-export function TextColors({ t }: { t: GrafanaTheme2 }) {
+function TextColors({ t }: { t: GrafanaTheme2 }) {
   return (
     <>
       <DemoText color="primary">
@@ -427,7 +427,7 @@ export function TextColors({ t }: { t: GrafanaTheme2 }) {
   );
 }
 
-export function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
+function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
   const t = useTheme2();
   const style = css({
     padding: t.spacing(2),
@@ -437,7 +437,7 @@ export function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
   return <div className={style}>{name}</div>;
 }
 
-export function ActionsDemo() {
+function ActionsDemo() {
   const t = useTheme2();
 
   const item = css({

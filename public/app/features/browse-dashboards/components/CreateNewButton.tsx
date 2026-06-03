@@ -115,6 +115,18 @@ export default function CreateNewButton({
             }
             url={buildUrl('/dashboard/new', parentFolder?.uid)}
           />
+          <Menu.Item
+            label={getImportPhrase()}
+            icon={ITEM_ICONS['dashboards/import']}
+            iconColor={dashboardIconColor}
+            onClick={() =>
+              reportInteraction('grafana_menu_item_clicked', {
+                url: buildUrl('/dashboard/import', parentFolder?.uid),
+                from: location.pathname,
+              })
+            }
+            url={buildUrl('/dashboard/import', parentFolder?.uid)}
+          />
           {renderPreBuiltDashboardAction && (
             <Menu.Item
               label={getNewTemplateDashboardPhrase()}
@@ -132,20 +144,6 @@ export default function CreateNewButton({
                     })
               }
               url={buildUrl('/dashboards?templateDashboards=true&source=createNewButton', parentFolder?.uid)}
-            />
-          )}
-          {!isProvisionedInstance && parentFolder?.managedBy !== ManagerKind.Repo && (
-            <Menu.Item
-              label={getImportPhrase()}
-              icon={ITEM_ICONS['dashboards/import']}
-              iconColor={dashboardIconColor}
-              onClick={() =>
-                reportInteraction('grafana_menu_item_clicked', {
-                  url: buildUrl('/dashboard/import', parentFolder?.uid),
-                  from: location.pathname,
-                })
-              }
-              url={buildUrl('/dashboard/import', parentFolder?.uid)}
             />
           )}
         </Menu.Group>

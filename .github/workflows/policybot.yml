@@ -26,7 +26,7 @@ concurrency:
 jobs:
   check:
     name: Check .policy.yml is valid
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     steps:
