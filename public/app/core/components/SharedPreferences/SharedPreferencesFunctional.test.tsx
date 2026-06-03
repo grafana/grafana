@@ -95,7 +95,7 @@ describe('SharedPreferencesFunctional', () => {
     const jobRoleSelect = await screen.findByRole('combobox', { name: /job role/i });
     expect(jobRoleSelect).toHaveValue('Default');
     await user.click(jobRoleSelect);
-    expect(await screen.findByRole('option', { name: 'Nathan' })).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: 'Nathan Marrs' })).toBeInTheDocument();
   });
 
   it('does not render the job role preference for org preferences', async () => {
