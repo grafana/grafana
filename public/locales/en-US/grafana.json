@@ -6993,14 +6993,11 @@
     },
     "dashboard-diff-view": {
       "added-placeholder": "Did not exist",
-      "label-added": "Added",
-      "label-changed": "Changed",
-      "label-removed": "Removed",
+      "new-heading": "New",
       "no-panel-changes": "No panel changes",
+      "old-heading": "Old",
       "panels-heading": "Panels",
-      "removed-placeholder": "Removed",
-      "v2-unsupported-body": "The visual diff is not yet supported for this dashboard. Use the Changes tab to review the JSON diff.",
-      "v2-unsupported-title": "Visual diff not available"
+      "removed-placeholder": "Removed"
     },
     "dashboard-edit-pane-renderer": {
       "title-feedback-dashboard-editing-experience": "Give feedback on the new dashboard editing experience"

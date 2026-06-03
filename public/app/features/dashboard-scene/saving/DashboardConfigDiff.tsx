@@ -59,6 +59,7 @@ function ConfigSection({ title, emptyText, changes }: ConfigSectionProps) {
               </Stack>
               <div className={styles.row}>
                 <pre className={styles.value}>{change.oldText}</pre>
+                <div className={styles.divider} />
                 <pre className={styles.value}>{change.newText}</pre>
               </div>
             </div>
@@ -87,6 +88,12 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'row',
       gap: theme.spacing(2),
       marginTop: theme.spacing(0.5),
+    }),
+    divider: css({
+      flexShrink: 0,
+      width: 1,
+      alignSelf: 'stretch',
+      background: theme.colors.border.medium,
     }),
     value: css({
       flex: 1,

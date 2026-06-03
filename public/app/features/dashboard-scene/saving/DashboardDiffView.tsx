@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -11,7 +11,7 @@ import { Stack, Text, useStyles2 } from '@grafana/ui';
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import { DashboardConfigDiff } from './DashboardConfigDiff';
-import { buildVisualDiff, type ChangeType, type PanelChangeRow } from './dashboardDiffModel';
+import { buildVisualDiff, type PanelChangeRow } from './dashboardDiffModel';
 
 interface Props {
   dashboard: DashboardScene;
@@ -47,6 +47,20 @@ export function DashboardDiffView({ dashboard, oldValue, newValue }: Props) {
 
   return (
     <Stack direction="column" gap={2}>
+      <div className={styles.header}>
+        <div className={styles.headerCol}>
+          <Text element="h4" color="secondary">
+            <Trans i18nKey="dashboard-scene.dashboard-diff-view.old-heading">Old</Trans>
+          </Text>
+        </div>
+        <div className={styles.divider} />
+        <div className={styles.headerCol}>
+          <Text element="h4" color="secondary">
+            <Trans i18nKey="dashboard-scene.dashboard-diff-view.new-heading">New</Trans>
+          </Text>
+        </div>
+      </div>
+
       <section>
         <Text element="h4">
           <Trans i18nKey="dashboard-scene.dashboard-diff-view.panels-heading">Panels</Trans>
@@ -84,17 +98,10 @@ interface PanelDiffRowProps {
 
 function PanelDiffRow({ row, oldPanel, newPanel, styles }: PanelDiffRowProps) {
   return (
-    <div>
-      <Stack direction="row" gap={1} alignItems="center">
-        <Text element="h5">{row.title}</Text>
-        <Text color="secondary" variant="bodySmall">
-          {getChangeLabel(row.type)}
-        </Text>
-      </Stack>
-      <div className={styles.row}>
-        <PanelColumn panel={oldPanel} height={row.height} styles={styles} kind="old" />
-        <PanelColumn panel={newPanel} height={row.height} styles={styles} kind="new" />
-      </div>
+    <div className={styles.row}>
+      <PanelColumn panel={oldPanel} height={row.height} styles={styles} kind="old" />
+      <div className={styles.divider} />
+      <PanelColumn panel={newPanel} height={row.height} styles={styles} kind="new" />
     </div>
   );
 }
@@ -132,19 +139,29 @@ function PanelColumn({ panel, height, styles, kind }: PanelColumnProps) {
   );
 }
 
-function getChangeLabel(type: ChangeType): string {
-  switch (type) {
-    case 'added':
-      return t('dashboard-scene.dashboard-diff-view.label-added', 'Added');
-    case 'removed':
-      return t('dashboard-scene.dashboard-diff-view.label-removed', 'Removed');
-    case 'changed':
-      return t('dashboard-scene.dashboard-diff-view.label-changed', 'Changed');
-  }
-}
-
 function getStyles(theme: GrafanaTheme2) {
   return {
+    header: css({
+      display: 'flex',
+      flexDirection: 'row',
+      gap: theme.spacing(2),
+      position: 'sticky',
+      top: 0,
+      zIndex: theme.zIndex.navbarFixed,
+      background: theme.colors.background.primary,
+      padding: theme.spacing(1, 0),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    headerCol: css({
+      flex: 1,
+      minWidth: 0,
+    }),
+    divider: css({
+      flexShrink: 0,
+      width: 1,
+      alignSelf: 'stretch',
+      background: theme.colors.border.medium,
+    }),
     row: css({
       display: 'flex',
       flexDirection: 'row',
