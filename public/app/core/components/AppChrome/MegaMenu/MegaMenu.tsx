@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
+import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { type DOMAttributes } from '@react-types/shared';
 import { memo, forwardRef, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocalStorage } from 'react-use';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { buildNavIndex, getEffectivePinnedIds, isPinned as isItemPinned } from 'app/core/navigation';
@@ -16,10 +18,16 @@ import { useSelector } from 'app/types/store';
 
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
-import { MegaMenuPrimaryList } from './MegaMenuPrimaryList';
+import { MegaMenuItem } from './MegaMenuItem';
 import { NavPersonaMenu } from './NavPersonaMenu';
 import { ShowMoreSection } from './ShowMoreSection';
-import { enrichWithInteractionTracking, getActiveItem } from './utils';
+import {
+  applySectionOrder,
+  enrichWithInteractionTracking,
+  getActiveItem,
+  getSectionId,
+  SECTION_ORDER_STORAGE_KEY,
+} from './utils';
 
 export const MENU_WIDTH = '300px';
 
@@ -35,6 +43,7 @@ export const MegaMenu = memo(
     const { chrome } = useGrafana();
     const state = chrome.useState();
     const customizableMenu = config.featureToggles.customizableMegaMenu ?? true;
+    const [sectionOrder, setSectionOrder] = useLocalStorage<string[]>(SECTION_ORDER_STORAGE_KEY, []);
 
     const canonicalItems = useMemo(
       () =>
@@ -44,7 +53,7 @@ export const MegaMenu = memo(
       [navTree, state.megaMenuDocked]
     );
 
-    const { projected, layout, onTogglePin, onReorder, onApplyPersona, onOverflowExpandedChange } = useNavLayout(
+    const { projected, layout, onTogglePin, onApplyPersona, onOverflowExpandedChange } = useNavLayout(
       navTree,
       location.pathname
     );
@@ -52,11 +61,15 @@ export const MegaMenu = memo(
     const navIndex = useMemo(() => buildNavIndex(navTree), [navTree]);
     const pinnedSet = useMemo(() => getEffectivePinnedIds(layout, navIndex), [layout, navIndex]);
 
-    const { primaryItems, overflowItems, expandedOverflow } = useMemo(() => {
+    const { primaryItems, overflowItems, expandedOverflow } = useMemo<{
+      primaryItems: NavModelItem[];
+      overflowItems: NavModelItem[];
+      expandedOverflow: boolean;
+    }>(() => {
       if (!customizableMenu) {
         return {
           primaryItems: canonicalItems,
-          overflowItems: [] as NavModelItem[],
+          overflowItems: [],
           expandedOverflow: false,
         };
       }
@@ -67,8 +80,14 @@ export const MegaMenu = memo(
       };
     }, [customizableMenu, canonicalItems, projected, state.megaMenuDocked]);
 
+    // user-defined section order is persisted to local storage and applied on top of the projected list
+    const orderedPrimaryItems = useMemo(
+      () => applySectionOrder(primaryItems, sectionOrder ?? []),
+      [primaryItems, sectionOrder]
+    );
+
     const activeItem = getActiveItem(
-      customizableMenu ? [...primaryItems, ...overflowItems] : canonicalItems,
+      customizableMenu ? [...orderedPrimaryItems, ...overflowItems] : orderedPrimaryItems,
       state.sectionNav.node,
       location.pathname
     );
@@ -99,6 +118,22 @@ export const MegaMenu = memo(
       [customizableMenu, onTogglePin]
     );
 
+    const onDragEnd = (result: DropResult) => {
+      const { source, destination } = result;
+      if (!destination || destination.index === source.index) {
+        return;
+      }
+      const newOrder = orderedPrimaryItems.map(getSectionId);
+      const [moved] = newOrder.splice(source.index, 1);
+      newOrder.splice(destination.index, 0, moved);
+      setSectionOrder(newOrder);
+      reportInteraction('grafana_navigation_sections_reordered', {
+        itemId: moved,
+        fromIndex: source.index,
+        toIndex: destination.index,
+      });
+    };
+
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
@@ -108,28 +143,51 @@ export const MegaMenu = memo(
               {customizableMenu && contextSrv.isSignedIn && (
                 <NavPersonaMenu currentPersonaId={layout.personaId} onApplyPersona={onApplyPersona} />
               )}
-              <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
-                <MegaMenuPrimaryList
-                  items={primaryItems}
-                  isPinned={isPinned}
-                  onClick={state.megaMenuDocked ? undefined : onClose}
-                  activeItem={activeItem}
-                  onPin={onPinItem}
-                  onReorder={customizableMenu ? onReorder : undefined}
-                  enableDragAndDrop={customizableMenu}
-                />
-                {customizableMenu && (
-                  <ShowMoreSection
-                    items={overflowItems}
-                    activeItem={activeItem}
-                    defaultExpanded={expandedOverflow}
-                    isPinned={isPinned}
-                    onPin={onPinItem}
-                    onClick={state.megaMenuDocked ? undefined : onClose}
-                    onExpandedChange={onOverflowExpandedChange}
-                  />
-                )}
-              </ul>
+              <DragDropContext onDragEnd={onDragEnd}>
+                <Droppable droppableId="mega-menu-sections" direction="vertical">
+                  {(droppableProvided) => (
+                    <ul
+                      className={styles.itemList}
+                      aria-label={t('navigation.megamenu.list-label', 'Navigation')}
+                      ref={droppableProvided.innerRef}
+                      {...droppableProvided.droppableProps}
+                    >
+                      {orderedPrimaryItems.map((link, index) => (
+                        <Draggable
+                          key={getSectionId(link)}
+                          draggableId={getSectionId(link)}
+                          index={index}
+                          disableInteractiveElementBlocking
+                        >
+                          {(draggableProvided, snapshot) => (
+                            <MegaMenuItem
+                              link={link}
+                              isPinned={isPinned}
+                              onClick={state.megaMenuDocked ? undefined : onClose}
+                              activeItem={activeItem}
+                              onPin={onPinItem}
+                              draggableProvided={draggableProvided}
+                              isDragging={snapshot.isDragging}
+                            />
+                          )}
+                        </Draggable>
+                      ))}
+                      {droppableProvided.placeholder}
+                      {customizableMenu && (
+                        <ShowMoreSection
+                          items={overflowItems}
+                          activeItem={activeItem}
+                          defaultExpanded={expandedOverflow}
+                          isPinned={isPinned}
+                          onPin={onPinItem}
+                          onClick={state.megaMenuDocked ? undefined : onClose}
+                          onExpandedChange={onOverflowExpandedChange}
+                        />
+                      )}
+                    </ul>
+                  )}
+                </Droppable>
+              </DragDropContext>
               <MegaMenuExtensionPoint />
             </>
           </ScrollContainer>

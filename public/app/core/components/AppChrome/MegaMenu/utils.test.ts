@@ -4,7 +4,7 @@ import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
-import { getEnrichedHelpItem, getActiveItem, findByUrl } from './utils';
+import { getEnrichedHelpItem, getActiveItem, findByUrl, applySectionOrder, getSectionId } from './utils';
 
 const starredDashboardUid = 'foo';
 const mockNavTree: NavModelItem[] = [
@@ -167,6 +167,41 @@ describe('getActiveItem', () => {
       id: 'not-home',
     };
     expect(getActiveItem(mockNavTree, mockPage, '/')?.id).toEqual('home');
+  });
+});
+
+describe('applySectionOrder', () => {
+  const items: NavModelItem[] = [
+    { text: 'A', id: 'a' },
+    { text: 'B', id: 'b' },
+    { text: 'C', id: 'c' },
+  ];
+
+  it('returns the original array when no order is saved', () => {
+    expect(applySectionOrder(items, [])).toBe(items);
+  });
+
+  it('reorders sections according to the saved order', () => {
+    const result = applySectionOrder(items, ['c', 'a', 'b']);
+    expect(result.map(getSectionId)).toEqual(['c', 'a', 'b']);
+  });
+
+  it('appends unknown/new sections after known ones, preserving their original relative order', () => {
+    const result = applySectionOrder(items, ['b']);
+    expect(result.map(getSectionId)).toEqual(['b', 'a', 'c']);
+  });
+
+  it('preserves object references so reference equality keeps working', () => {
+    const result = applySectionOrder(items, ['b', 'a', 'c']);
+    expect(result[0]).toBe(items[1]);
+    expect(result[1]).toBe(items[0]);
+    expect(result[2]).toBe(items[2]);
+  });
+
+  it('falls back to text when an item has no id', () => {
+    const noIdItems: NavModelItem[] = [{ text: 'First' }, { text: 'Second' }];
+    const result = applySectionOrder(noIdItems, ['Second', 'First']);
+    expect(result.map(getSectionId)).toEqual(['Second', 'First']);
   });
 });
 
