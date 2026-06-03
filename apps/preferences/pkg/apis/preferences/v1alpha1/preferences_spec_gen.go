@@ -19,15 +19,33 @@ func (PreferencesQueryHistoryPreference) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
+type PreferencesNavLayoutPreference struct {
+	Version          int      `json:"version,omitempty"`
+	PersonaId        string   `json:"personaId,omitempty"`
+	PinnedIds        []string `json:"pinnedIds,omitempty"`
+	Order            []string `json:"order,omitempty"`
+	ExpandedOverflow bool     `json:"expandedOverflow,omitempty"`
+}
+
+// NewPreferencesNavLayoutPreference creates a new PreferencesNavLayoutPreference object.
+func NewPreferencesNavLayoutPreference() *PreferencesNavLayoutPreference {
+	return &PreferencesNavLayoutPreference{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for PreferencesNavLayoutPreference.
+func (PreferencesNavLayoutPreference) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesNavLayoutPreference"
+}
+
+// +k8s:openapi-gen=true
 type PreferencesNavbarPreference struct {
-	BookmarkUrls []string `json:"bookmarkUrls"`
+	BookmarkUrls []string                        `json:"bookmarkUrls,omitempty"`
+	Layout       *PreferencesNavLayoutPreference `json:"layout,omitempty"`
 }
 
 // NewPreferencesNavbarPreference creates a new PreferencesNavbarPreference object.
 func NewPreferencesNavbarPreference() *PreferencesNavbarPreference {
-	return &PreferencesNavbarPreference{
-		BookmarkUrls: []string{},
-	}
+	return &PreferencesNavbarPreference{}
 }
 
 // OpenAPIModelName returns the OpenAPI model name for PreferencesNavbarPreference.

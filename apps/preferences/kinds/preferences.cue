@@ -44,7 +44,16 @@ preferencesV1alpha1: {
 		}
 
 		#NavbarPreference: {
-			bookmarkUrls: [...string]
+			bookmarkUrls?: [...string]
+			layout?:      #NavLayoutPreference
+		}
+
+		#NavLayoutPreference: {
+			version?:           int
+			personaId?:         string
+			pinnedIds?:         [...string]
+			order?:             [...string]
+			expandedOverflow?: bool
 		}
 	}
 }

@@ -100,11 +100,19 @@ func GetPreferencesFor(ctx context.Context,
 			dto.Language = &preference.JSONData.Language
 		}
 
-		if preference.JSONData.Navbar.BookmarkUrls != nil {
+		if preference.JSONData.Navbar.BookmarkUrls != nil || preference.JSONData.Navbar.Layout != nil {
 			dto.Navbar = &preferences.PreferencesNavbarPreference{
-				BookmarkUrls: []string{},
+				BookmarkUrls: preference.JSONData.Navbar.BookmarkUrls,
 			}
-			dto.Navbar.BookmarkUrls = preference.JSONData.Navbar.BookmarkUrls
+			if preference.JSONData.Navbar.Layout != nil {
+				dto.Navbar.Layout = &preferences.PreferencesNavLayoutPreference{
+					Version:          preference.JSONData.Navbar.Layout.Version,
+					PersonaId:        preference.JSONData.Navbar.Layout.PersonaId,
+					PinnedIds:        preference.JSONData.Navbar.Layout.PinnedIds,
+					Order:            preference.JSONData.Navbar.Layout.Order,
+					ExpandedOverflow: preference.JSONData.Navbar.Layout.ExpandedOverflow,
+				}
+			}
 		}
 
 		if preference.JSONData.QueryHistory.HomeTab != "" {

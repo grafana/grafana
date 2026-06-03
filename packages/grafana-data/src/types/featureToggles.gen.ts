@@ -1000,6 +1000,11 @@ export interface FeatureToggles {
   */
   unifiedNavbars?: boolean;
   /**
+  * Enables pin/unpin, show-more overflow, and nav layout preferences in the mega menu
+  * @default true
+  */
+  customizableMegaMenu?: boolean;
+  /**
   * Enables creating metrics from profiles and storing them as recording rules
   * @default false
   */

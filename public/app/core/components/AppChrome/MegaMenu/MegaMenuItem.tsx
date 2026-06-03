@@ -21,11 +21,24 @@ interface Props {
   level?: number;
   onPin: (item: NavModelItem) => void;
   isPinned: (id?: string) => boolean;
+  dragHandleProps?: React.HTMLAttributes<HTMLElement> | null;
+  innerRef?: React.Ref<HTMLLIElement>;
+  draggableProps?: React.HTMLAttributes<HTMLLIElement>;
 }
 
 const MAX_DEPTH = 2;
 
-export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPinned }: Props) {
+export function MegaMenuItem({
+  link,
+  activeItem,
+  level = 0,
+  onClick,
+  onPin,
+  isPinned,
+  dragHandleProps,
+  innerRef,
+  draggableProps,
+}: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const menuIsDocked = state.megaMenuDocked;
@@ -78,8 +91,8 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
   }
 
   return (
-    <li ref={item} className={styles.listItem}>
-      <div className={styles.menuItem}>
+    <li ref={innerRef ?? item} className={styles.listItem} {...draggableProps}>
+      <div className={styles.menuItem} {...dragHandleProps}>
         {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
         {level === MAX_DEPTH && <div className={styles.itemConnector} />}
         <div className={styles.collapsibleSectionWrapper}>
@@ -92,7 +105,8 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
             target={link.target}
             url={link.url}
             onPin={() => onPin(link)}
-            isPinned={isPinned(link.url)}
+            isPinned={isPinned(link.id)}
+            navId={link.id}
             itemName={link.text}
           >
             <div

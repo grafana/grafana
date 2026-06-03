@@ -950,11 +950,6 @@
       "count": 1
     }
   },
-  "public/app/core/navigation/types.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/core/reducers/appNotification.ts": {
     "@grafana/no-direct-local-storage-access": {
       "count": 3

@@ -4498,8 +4498,16 @@ export type AddInviteForm = {
   role?: 'None' | 'Viewer' | 'Editor' | 'Admin';
   sendEmail?: boolean;
 };
+export type NavLayoutPreference = {
+  version?: number;
+  personaId?: string;
+  pinnedIds?: string[];
+  order?: string[];
+  expandedOverflow?: boolean;
+};
 export type PreferencesNavbarPreference = {
   bookmarkUrls?: string[];
+  layout?: NavLayoutPreference;
 };
 export type PreferencesQueryHistoryPreference = {
   /** one of: '' | 'query' | 'starred'; */
@@ -4523,6 +4531,7 @@ export type PreferencesSpec = {
 };
 export type NavbarPreference = {
   bookmarkUrls?: string[];
+  layout?: NavLayoutPreference;
 };
 export type QueryHistoryPreference = {
   homeTab?: string;

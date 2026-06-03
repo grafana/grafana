@@ -89,8 +89,17 @@ type QueryHistoryPreference struct {
 	HomeTab string `json:"homeTab"`
 }
 
+type NavLayoutPreference struct {
+	Version          int      `json:"version,omitempty"`
+	PersonaId        string   `json:"personaId,omitempty"`
+	PinnedIds        []string `json:"pinnedIds,omitempty"`
+	Order            []string `json:"order,omitempty"`
+	ExpandedOverflow bool     `json:"expandedOverflow,omitempty"`
+}
+
 type NavbarPreference struct {
-	BookmarkUrls []string `json:"bookmarkUrls"`
+	BookmarkUrls []string             `json:"bookmarkUrls,omitempty"`
+	Layout       *NavLayoutPreference `json:"layout,omitempty"`
 }
 
 func (j *PreferenceJSONData) FromDB(data []byte) error {

@@ -13,6 +13,7 @@ import (
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -121,9 +122,7 @@ func updateCmdToSpec(dto *dtos.UpdatePrefsCmd, homeDashboardUID *string) *prefer
 		}
 	}
 	if dto.Navbar != nil {
-		spec.Navbar = &preferences.PreferencesNavbarPreference{
-			BookmarkUrls: dto.Navbar.BookmarkUrls,
-		}
+		spec.Navbar = navbarPreferenceToSpec(dto.Navbar)
 	}
 	return spec
 }
@@ -145,8 +144,25 @@ func patchCmdToSpec(dto *dtos.PatchPrefsCmd, homeDashboardUID *string) *preferen
 		}
 	}
 	if dto.Navbar != nil {
-		spec.Navbar = &preferences.PreferencesNavbarPreference{
-			BookmarkUrls: dto.Navbar.BookmarkUrls,
+		spec.Navbar = navbarPreferenceToSpec(dto.Navbar)
+	}
+	return spec
+}
+
+func navbarPreferenceToSpec(navbar *pref.NavbarPreference) *preferences.PreferencesNavbarPreference {
+	if navbar == nil {
+		return nil
+	}
+	spec := &preferences.PreferencesNavbarPreference{
+		BookmarkUrls: navbar.BookmarkUrls,
+	}
+	if navbar.Layout != nil {
+		spec.Layout = &preferences.PreferencesNavLayoutPreference{
+			Version:          navbar.Layout.Version,
+			PersonaId:        navbar.Layout.PersonaId,
+			PinnedIds:        navbar.Layout.PinnedIds,
+			Order:            navbar.Layout.Order,
+			ExpandedOverflow: navbar.Layout.ExpandedOverflow,
 		}
 	}
 	return spec
