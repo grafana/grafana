@@ -20,7 +20,12 @@ import {
   NotificationPolicyAction,
 } from '../../hooks/abilities/types';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
-import { getRoutingTree, getRoutingTreeList, resetRoutingTreeMap } from '../../mocks/server/entities/k8s/routingtrees';
+import {
+  getRoutingTree,
+  getRoutingTreeList,
+  resetRoutingTreeMap,
+  setAllRoutingTreePermissions,
+} from '../../mocks/server/entities/k8s/routingtrees';
 import { KnownProvenance } from '../../types/knownProvenance';
 import { DataSourceType } from '../../utils/datasource';
 import { K8sAnnotations } from '../../utils/k8s/constants';
@@ -128,6 +133,9 @@ describe('PoliciesList', () => {
     grantUserPermissions([AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingNotificationsRead]);
 
     resetRoutingTreeMap();
+    // Strip entity-level k8s access annotations so tests start with least-privilege.
+    // Tests that need to open the more-actions menu must opt in via setAllRoutingTreePermissions.
+    setAllRoutingTreePermissions({ canWrite: false, canDelete: false, canAdmin: false });
   });
 
   describe('Route headers and metadata', () => {
@@ -214,6 +222,7 @@ describe('PoliciesList', () => {
     describe('Edit', () => {
       it('shows edit menu item if user has edit permission', async () => {
         grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree, NotificationPolicyAction.UpdateTree]);
+        setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
 
         const user = userEvent.setup();
         renderNotificationPolicies();
@@ -233,6 +242,7 @@ describe('PoliciesList', () => {
       });
       it('shows edit as disabled if policy is provisioned', async () => {
         grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree, NotificationPolicyAction.UpdateTree]);
+        setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
 
         const user = userEvent.setup();
         renderNotificationPolicies();
@@ -249,6 +259,7 @@ describe('PoliciesList', () => {
     describe('Export', () => {
       it('enable if user has permission', async () => {
         grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree, NotificationPolicyAction.Export]);
+        setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
 
         const user = userEvent.setup();
         renderNotificationPolicies();
@@ -271,6 +282,7 @@ describe('PoliciesList', () => {
     describe('Reset', () => {
       it('enable on default policy if user has permission', async () => {
         grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree, NotificationPolicyAction.Delete]);
+        setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
 
         const user = userEvent.setup();
         renderNotificationPolicies();
@@ -294,6 +306,7 @@ describe('PoliciesList', () => {
 
   describe('Analytics', () => {
     beforeEach(() => {
+      setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
       jest.spyOn(analytics, 'trackNotificationPolicyExported');
       jest.spyOn(analytics, 'trackNotificationPoliciesToggledAll');
       // Add a handler for the export API to prevent unhandled request errors
