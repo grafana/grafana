@@ -358,7 +358,7 @@ export async function getAfterSelectorCompletions(
   return [...lineFilters, ...completions];
 }
 
-export async function getLogfmtCompletions(
+async function getLogfmtCompletions(
   logQuery: string,
   flags: boolean,
   trailingComma: boolean | undefined,
