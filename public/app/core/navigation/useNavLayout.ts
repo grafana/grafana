@@ -1,5 +1,5 @@
 import { getNavPersonaConfig } from 'nav/data';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import {
@@ -16,7 +16,7 @@ import { buildNavIndex } from './navIndex';
 import { projectNavTree, reorderPrimary, togglePin } from './projectNavTree';
 import { NAV_LAYOUT_VERSION, type NavLayoutConfig } from './types';
 
-/** Query string parameter that pins a predefined persona's nav items, e.g. `?nav-persona=platform-guy`. */
+/** Query string parameter that pins a predefined persona's nav items, e.g. `?nav-persona=platform`. */
 const NAV_PERSONA_PARAM = 'nav-persona';
 
 export function useNavLayout(canonicalTree: NavModelItem[], pathname: string) {
@@ -24,32 +24,44 @@ export function useNavLayout(canonicalTree: NavModelItem[], pathname: string) {
   const [patchPreferences] = usePatchUserPreferencesMutation();
   const { search } = useLocation();
 
-  // A `nav-persona` query string parameter overrides the saved layout, pinning only that
-  // persona's items so everything else falls behind the "Show me more" section.
+  // In-session working copy of the layout. Once the user edits the nav (pin/unpin/reorder),
+  // their change wins over the URL persona preset until the page is reloaded.
+  const [localLayout, setLocalLayout] = useState<NavLayoutConfig | undefined>(undefined);
+
+  // A `nav-persona` query string parameter provides a preset layout that pins only that
+  // persona's items, so everything else falls behind the "Show me more" section.
   const personaOverride = useMemo<NavLayoutConfig | undefined>(() => {
     const personaId = new URLSearchParams(search).get(NAV_PERSONA_PARAM);
     const config = getNavPersonaConfig(personaId);
-    if (!config) {
+    if (!config || !personaId) {
       return undefined;
     }
     return {
       version: NAV_LAYOUT_VERSION,
-      personaId: personaId ?? undefined,
+      personaId,
       pinnedIds: [...config.orderedPins],
       order: [...config.orderedPins],
     };
   }, [search]);
 
-  const layout = useMemo(
-    () =>
-      personaOverride ??
-      resolveLayout(
-        preferences.data?.navbar?.layout as NavLayoutConfig | undefined,
-        preferences.data?.navbar?.bookmarkUrls,
-        canonicalTree
-      ),
-    [personaOverride, preferences.data?.navbar, canonicalTree]
-  );
+  const layout = useMemo(() => {
+    // An edit made this session is the source of truth (and has been persisted to the user's
+    // single saved layout).
+    if (localLayout) {
+      return localLayout;
+    }
+
+    // On initial load, a URL persona overrides the saved layout as a preset the user can then edit.
+    if (personaOverride) {
+      return personaOverride;
+    }
+
+    return resolveLayout(
+      preferences.data?.navbar?.layout as NavLayoutConfig | undefined,
+      preferences.data?.navbar?.bookmarkUrls,
+      canonicalTree
+    );
+  }, [localLayout, personaOverride, preferences.data?.navbar, canonicalTree]);
 
   const projected = useMemo(
     () =>
@@ -63,6 +75,7 @@ export function useNavLayout(canonicalTree: NavModelItem[], pathname: string) {
 
   const persistLayout = useCallback(
     (nextLayout: NavLayoutConfig) => {
+      setLocalLayout(nextLayout);
       return patchPreferences({
         patchPrefsCmd: {
           navbar: {
