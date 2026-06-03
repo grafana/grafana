@@ -88,7 +88,11 @@ export function useNotificationPolicyAbility(payload: NotificationPolicyAbilityP
 
   return useMemo(() => {
     switch (payload.action) {
+      // Viewing the policy tree is always supported — it is a read-only operation
+      // that works for any alertmanager type (including Prometheus / read-only AMs).
       case NotificationPolicyAction.ViewTree:
+        return makeAbility(true, PERMISSIONS[payload.action]);
+
       case NotificationPolicyAction.Create:
         return makeAbility(hasConfigurationAPI, PERMISSIONS[payload.action]);
 

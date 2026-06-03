@@ -50,6 +50,7 @@ import {
   deleteRoutingTree,
   getRoutingTree,
   resetRoutingTreeMap,
+  setAllRoutingTreePermissions,
   setRoutingTree,
 } from './mocks/server/entities/k8s/routingtrees';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
@@ -291,6 +292,9 @@ describe.each([
         routes: [],
       })
     );
+    // createKubernetesRoutingTreeSpec builds a minimal tree without k8s access annotations.
+    // Set them explicitly so the entity-level canEditEntity / canAdminEntity checks pass.
+    setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
     const { user } = renderPage();
 
     // Sanity check to make sure we actually have an undefined root route.
