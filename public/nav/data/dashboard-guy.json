@@ -1,0 +1,10 @@
+{
+  "profileName": "Dashboard Guy",
+  "orderedPins": [
+    "dashboards/browse",
+    "starred",
+    "explore",
+    "dashboards/library-panels",
+    "dashboards/playlists"
+  ]
+}
