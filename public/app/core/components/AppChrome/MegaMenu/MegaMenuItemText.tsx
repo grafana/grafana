@@ -18,6 +18,7 @@ export interface Props {
   onPin: (id?: string) => void;
   isPinned?: boolean;
   itemName: string;
+  isDraggable?: boolean;
 }
 
 export function MegaMenuItemText({
@@ -30,12 +31,17 @@ export function MegaMenuItemText({
   onPin,
   isPinned,
   itemName,
+  isDraggable,
 }: Props) {
   const theme = useTheme2();
 
-  const styles = getStyles(theme, isActive);
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
   const showPin = contextSrv.isSignedIn && canPinItem(navId);
+  // reserve room on hover for whichever action icons are revealed so they don't overlap the label
+  // (the grip reserves a little extra for its trailing margin)
+  const reservedWidth = (showPin ? 20 : 0) + (isDraggable ? 28 : 0);
+
+  const styles = getStyles(theme, isActive, reservedWidth);
 
   const linkContent = (
     <div className={styles.linkContent}>
@@ -60,6 +66,7 @@ export function MegaMenuItemText({
       >
         {linkContent}
       </LinkComponent>
+      {isDraggable && <Icon name="draggabledots" className="drag-icon" aria-hidden size="lg" />}
       {showPin && (
         <IconButton
           name="gf-pin"
@@ -80,20 +87,30 @@ export function MegaMenuItemText({
 
 MegaMenuItemText.displayName = 'MegaMenuItemText';
 
-const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
+const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], reservedWidth: number) => ({
   wrapper: css({
     display: 'flex',
+    alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
     height: '100%',
     '.pin-icon': {
       visibility: 'hidden',
     },
+    '.drag-icon': {
+      visibility: 'hidden',
+      cursor: 'grab',
+      color: theme.colors.text.disabled,
+      marginRight: theme.spacing(1),
+    },
     '&:hover, &:focus-within': {
       a: {
-        width: 'calc(100% - 20px)',
+        width: `calc(100% - ${reservedWidth}px)`,
       },
       '.pin-icon': {
+        visibility: 'visible',
+      },
+      '.drag-icon': {
         visibility: 'visible',
       },
     },

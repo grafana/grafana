@@ -132,6 +132,7 @@ export function MegaMenuItem({
             isPinned={isPinned(link.id)}
             navId={link.id}
             itemName={link.text}
+            isDraggable={Boolean(draggableProvided)}
           >
             <div
               className={cx(styles.labelWrapper, {
