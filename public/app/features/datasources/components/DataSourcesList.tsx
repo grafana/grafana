@@ -6,7 +6,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, useFavoriteDatasources, type FavoriteDatasources } from '@grafana/runtime';
-import { EmptyState, LinkButton, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
+import { EmptyState, LinkButton, RadioButtonGroup, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -23,12 +23,15 @@ import { trackDataSourcesListViewed } from '../tracking';
 
 import { DataSourcesListCard } from './DataSourcesListCard';
 import { DataSourcesListHeader } from './DataSourcesListHeader';
+import { DataSourcesPluginSections } from './DataSourcesPluginSections';
 
 const ROW_ESTIMATE_HEIGHT = 120;
 const VIRTUAL_LIST_OVERSCAN = 5;
 const VIRTUAL_LIST_KEYBOARD_OVERSCAN = 100;
 const LOADING_SKELETON_COUNT = 20;
 const VIRTUAL_LIST_INITIAL_RECT = { width: 0, height: 500 };
+
+export type DataSourcesViewMode = 'list' | 'byplugin';
 
 export function DataSourcesList() {
   const { isLoading } = useLoadDataSources();
@@ -37,6 +40,12 @@ export function DataSourcesList() {
   const showFavoritesOnly = !!queryParams.starred;
   const handleFavoritesCheckboxChange = (value: boolean) => {
     updateQueryParams({ starred: value ? 'true' : undefined });
+  };
+
+  // Defaults to the new "by plugin" card view; `?view=list` falls back to the classic list.
+  const viewMode: DataSourcesViewMode = queryParams.view === 'list' ? 'list' : 'byplugin';
+  const handleViewModeChange = (value: DataSourcesViewMode) => {
+    updateQueryParams({ view: value === 'list' ? 'list' : undefined });
   };
 
   const dataSources = useSelector((state) => getDataSources(state.dataSources));
@@ -56,6 +65,8 @@ export function DataSourcesList() {
       showFavoritesOnly={showFavoritesOnly}
       handleFavoritesCheckboxChange={handleFavoritesCheckboxChange}
       favoriteDataSources={favoriteDataSources}
+      viewMode={viewMode}
+      handleViewModeChange={handleViewModeChange}
     />
   );
 }
@@ -70,6 +81,8 @@ export type ViewProps = {
   showFavoritesOnly?: boolean;
   handleFavoritesCheckboxChange?: (value: boolean) => void;
   favoriteDataSources?: FavoriteDatasources;
+  viewMode?: DataSourcesViewMode;
+  handleViewModeChange?: (value: DataSourcesViewMode) => void;
 };
 
 export function DataSourcesListView({
@@ -82,6 +95,8 @@ export function DataSourcesListView({
   showFavoritesOnly,
   handleFavoritesCheckboxChange,
   favoriteDataSources,
+  viewMode = 'list',
+  handleViewModeChange,
 }: ViewProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -154,6 +169,21 @@ export function DataSourcesListView({
 
   return (
     <div className={styles.container}>
+      {/* View toggle */}
+      {handleViewModeChange && (
+        <Stack direction="row" justifyContent="flex-end">
+          <RadioButtonGroup<DataSourcesViewMode>
+            options={[
+              { label: t('datasources.list.view-mode.byplugin', 'By plugin'), value: 'byplugin', icon: 'apps' },
+              { label: t('datasources.list.view-mode.list', 'List'), value: 'list', icon: 'list-ul' },
+            ]}
+            value={viewMode}
+            onChange={handleViewModeChange}
+            size="sm"
+          />
+        </Stack>
+      )}
+
       {/* List Header */}
       <DataSourcesListHeader filterCheckbox={favoritesCheckbox} />
 
@@ -162,7 +192,16 @@ export function DataSourcesListView({
         <EmptyState variant="not-found" message={t('data-sources.empty-state.message', 'No data sources found')} />
       )}
       {isLoading && <DataSourcesListLoading hasExploreRights={hasExploreRights} />}
-      {dataSources.length > 0 && !isLoading && (
+      {dataSources.length > 0 && !isLoading && viewMode === 'byplugin' && (
+        <div className={styles.listContainer}>
+          <DataSourcesPluginSections
+            dataSources={dataSources}
+            hasWriteRights={hasWriteRights}
+            hasExploreRights={hasExploreRights}
+          />
+        </div>
+      )}
+      {dataSources.length > 0 && !isLoading && viewMode === 'list' && (
         <DataSourcesListVirtualized
           dataSources={dataSources}
           hasWriteRights={hasWriteRights}

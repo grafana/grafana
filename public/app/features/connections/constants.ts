@@ -6,6 +6,7 @@ export const ROUTES = {
 
   // Data sources
   DataSources: `/${ROUTE_BASE_ID}/datasources`,
+  DataSourcesByType: `/${ROUTE_BASE_ID}/datasources/by-type/:type`,
   DataSourcesNew: `/${ROUTE_BASE_ID}/datasources/new`,
   DataSourcesEdit: `/${ROUTE_BASE_ID}/datasources/edit/:uid`,
   DataSourcesDashboards: `/${ROUTE_BASE_ID}/datasources/edit/:uid/dashboards`,

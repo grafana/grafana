@@ -2,6 +2,7 @@ package dtos
 
 import (
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -48,6 +49,8 @@ type DataSourceListItemDTO struct {
 	IsDefault   bool                 `json:"isDefault"`
 	JsonData    *simplejson.Json     `json:"jsonData,omitempty"`
 	ReadOnly    bool                 `json:"readOnly"`
+	Created     time.Time            `json:"created,omitempty"`
+	Updated     time.Time            `json:"updated,omitempty"`
 }
 
 type DataSourceList []DataSourceListItemDTO

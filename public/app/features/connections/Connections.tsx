@@ -10,6 +10,7 @@ import { CacheFeatureHighlightPage } from './pages/CacheFeatureHighlightPage';
 import ConnectionsHomePage from './pages/ConnectionsHomePage';
 import { DataSourceDashboardsPage } from './pages/DataSourceDashboardsPage';
 import { DataSourceDetailsPage } from './pages/DataSourceDetailsPage';
+import { DataSourcesByTypePage } from './pages/DataSourcesByTypePage';
 import { DataSourcesListPage } from './pages/DataSourcesListPage';
 import { EditDataSourcePage } from './pages/EditDataSourcePage';
 import { InsightsFeatureHighlightPage } from './pages/InsightsFeatureHighlightPage';
@@ -40,6 +41,11 @@ export default function Connections() {
       <Route caseSensitive path={'/'} element={<ConnectionsHomePage />} />
       {/* The route paths need to be relative to the parent path (ROUTES.Base), so we need to remove that part */}
       <Route caseSensitive path={ROUTES.DataSources.replace(ROUTES.Base, '')} element={<DataSourcesListPage />} />
+      <Route
+        caseSensitive
+        path={ROUTES.DataSourcesByType.replace(ROUTES.Base, '')}
+        element={<DataSourcesByTypePage />}
+      />
       <Route caseSensitive path={ROUTES.DataSourcesNew.replace(ROUTES.Base, '')} element={<NewDataSourcePage />} />
       <Route
         caseSensitive

@@ -773,6 +773,10 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   withCredentials: boolean;
   version?: number;
   apiVersion?: string;
+  /** ISO timestamp of when the data source was created. Returned by the list endpoint. */
+  created?: string;
+  /** ISO timestamp of when the data source was last updated. Returned by the list endpoint. */
+  updated?: string;
 }
 
 /**

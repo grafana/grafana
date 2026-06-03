@@ -5077,6 +5077,12 @@
         "unknown-datasource": "Unknown datasource"
       }
     },
+    "datasources-by-type": {
+      "back": "Back",
+      "back-to-list": "Back to all data sources",
+      "empty": "No data sources of this type found",
+      "list-label": "Data sources"
+    },
     "feature-highlight-page": {
       "foot-note": "After creating an account, you can easily <2>migrate this instance to Grafana Cloud</2> with our Migration Assistant.",
       "footer": "Create a Grafana Cloud Free account to start using data source permissions. This feature is also available with a Grafana Enterprise license.",
@@ -8135,7 +8141,10 @@
       "aria-label-learn-more": "{{dataSourcePluginName}}, learn more."
     },
     "data-sources-list-card": {
-      "explore": "Explore"
+      "created": "Created {{date}}",
+      "explore": "Explore",
+      "healthy": "Healthy",
+      "unhealthy": "Unhealthy"
     },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
@@ -8198,11 +8207,20 @@
       "failed-high-tooltip": "This data source has critical failures reported by Grafana Advisor.",
       "failed-low": "warning",
       "failed-low-tooltip": "This data source has non-critical issues reported by Grafana Advisor.",
-      "starred": "Starred"
+      "starred": "Starred",
+      "view-mode": {
+        "byplugin": "By plugin",
+        "list": "List"
+      }
     },
     "new-data-source-view": {
       "cancel": "Cancel",
       "placeholder-filter-by-name-or-type": "Filter by name or type"
+    },
+    "plugin-sections": {
+      "default": "default",
+      "more_one": "View all {{count}} {{name}} data sources",
+      "more_other": "View all {{count}} {{name}} data sources"
     },
     "update-data-source": {
       "error-info": {
