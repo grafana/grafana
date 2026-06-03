@@ -1,5 +1,4 @@
 resource "grafana_rule_group" "rule_group_2b12784d0e1454cd" {
-  org_id           = 1
   name             = "group_simplified_routing"
   folder_uid       = "e4584834-1a87-4dff-8913-8a4748dfca79"
   interval_seconds = 10
