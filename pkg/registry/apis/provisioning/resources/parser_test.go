@@ -154,6 +154,82 @@ spec:
 	})
 }
 
+func TestParseFolderAnnotationGuard(t *testing.T) {
+	// A fabricated org-scoped resource that is NOT contained in folders. Only
+	// dashboards and folders exist in SupportsFolderAnnotation today, so we use
+	// a non-folder GVK to exercise the negative path.
+	orgScopedGVK := schema.GroupVersionKind{Group: "example.grafana.app", Version: "v0alpha1", Kind: "Playlist"}
+	orgScopedGVR := schema.GroupVersionResource{Group: "example.grafana.app", Version: "v0alpha1", Resource: "playlists"}
+
+	clients := NewMockResourceClients(t)
+	// Folder-contained resource (dashboard) resolves to the dashboard GVR.
+	clients.On("ForKind", mock.Anything, dashboardV0.DashboardResourceInfo.GroupVersionKind()).
+		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
+	// Org-scoped resource resolves to a GVR that is not in SupportsFolderAnnotation.
+	clients.On("ForKind", mock.Anything, orgScopedGVK).
+		Return(nil, orgScopedGVR, nil).Maybe()
+
+	parser := &parser{
+		repo: provisioning.ResourceRepositoryInfo{
+			Type:      provisioning.LocalRepositoryType,
+			Namespace: "xxx",
+			Name:      "repo",
+		},
+		clients: clients,
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.LocalRepositoryType,
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		},
+	}
+
+	t.Run("folder-contained resource still gets a folder annotation", func(t *testing.T) {
+		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "team-a/test-dashboard.json",
+			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  name: test-dashboard
+spec:
+  title: Test dashboard
+`),
+		})
+		require.NoError(t, err)
+		require.Equal(t, ParseFolder("team-a/", "repo").ID, parsed.Meta.GetFolder(),
+			"dashboards must continue to get a folder annotation")
+		require.Equal(t, ParseFolder("team-a/", "repo").ID, parsed.Obj.GetAnnotations()["grafana.app/folder"])
+	})
+
+	t.Run("org-scoped resource gets no folder annotation", func(t *testing.T) {
+		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "team-a/my-playlist.json",
+			Data: []byte(`apiVersion: example.grafana.app/v0alpha1
+kind: Playlist
+metadata:
+  name: my-playlist
+spec:
+  title: My playlist
+`),
+		})
+		require.NoError(t, err)
+		require.Empty(t, parsed.Meta.GetFolder(),
+			"org-scoped resources must not have a folder annotation stamped on them")
+		_, hasFolder := parsed.Obj.GetAnnotations()["grafana.app/folder"]
+		require.False(t, hasFolder, "org-scoped resources must not carry the folder annotation")
+	})
+}
+
+func TestSupportsFolderAnnotation(t *testing.T) {
+	require.True(t, supportsFolderAnnotation(DashboardResource.GroupResource()),
+		"dashboards are contained in folders")
+	require.True(t, supportsFolderAnnotation(FolderResource.GroupResource()),
+		"folders are contained in folders")
+	require.False(t, supportsFolderAnnotation(schema.GroupResource{Group: "example.grafana.app", Resource: "playlists"}),
+		"org-scoped resources are not contained in folders")
+}
+
 func TestParser_FolderMetadataRefFallback(t *testing.T) {
 	clients := NewMockResourceClients(t)
 	clients.On("ForKind", mock.Anything, mock.Anything).
