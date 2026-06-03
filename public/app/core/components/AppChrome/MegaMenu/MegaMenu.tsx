@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { type DOMAttributes } from '@react-types/shared';
-import { memo, forwardRef, useCallback, useMemo } from 'react';
+import { memo, forwardRef, useCallback, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
@@ -18,6 +18,7 @@ import { useSelector } from 'app/types/store';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
+import { NavDropCelebration } from './NavDropCelebration';
 import { ShowMoreSection } from './ShowMoreSection';
 import {
   applySectionOrder,
@@ -42,6 +43,9 @@ export const MegaMenu = memo(
     const state = chrome.useState();
     const customizableMenu = config.featureToggles.customizableMegaMenu ?? true;
     const [sectionOrder, setSectionOrder] = useLocalStorage<string[]>(SECTION_ORDER_STORAGE_KEY, []);
+    const navRef = useRef<HTMLElement>(null);
+    const listRef = useRef<HTMLUListElement>(null);
+    const [celebration, setCelebration] = useState<{ top: number; key: number } | null>(null);
 
     const canonicalItems = useMemo(
       () =>
@@ -104,13 +108,51 @@ export const MegaMenu = memo(
       [customizableMenu, pinnedSet]
     );
 
+    const clearCelebration = useCallback(() => setCelebration(null), []);
+
+    const showCelebrationAtElement = useCallback((element: HTMLElement | null | undefined) => {
+      const navEl = navRef.current;
+      if (!navEl || !element) {
+        setCelebration((prev) => ({ top: 48, key: (prev?.key ?? 0) + 1 }));
+        return;
+      }
+      const navRect = navEl.getBoundingClientRect();
+      const rowRect = element.getBoundingClientRect();
+      setCelebration((prev) => ({
+        top: rowRect.top - navRect.top + rowRect.height / 2,
+        key: (prev?.key ?? 0) + 1,
+      }));
+    }, []);
+
+    const showCelebrationForNavId = useCallback(
+      (navId: string) => {
+        const row = navRef.current?.querySelector(`[data-nav-item-id="${CSS.escape(navId)}"]`);
+        showCelebrationAtElement(row as HTMLElement | null);
+      },
+      [showCelebrationAtElement]
+    );
+
+    const showCelebrationAtIndex = useCallback(
+      (destinationIndex: number) => {
+        const listEl = listRef.current;
+        if (!listEl) {
+          showCelebrationAtElement(null);
+          return;
+        }
+        const sectionRows = Array.from(listEl.children).filter((child) => child.tagName === 'LI');
+        showCelebrationAtElement(sectionRows[destinationIndex] as HTMLElement | undefined);
+      },
+      [showCelebrationAtElement]
+    );
+
     const onPinItem = useCallback(
       (item: NavModelItem) => {
         if (item.id && customizableMenu) {
           onTogglePin(item.id);
+          showCelebrationForNavId(item.id);
         }
       },
-      [customizableMenu, onTogglePin]
+      [customizableMenu, onTogglePin, showCelebrationForNavId]
     );
 
     const onDragEnd = (result: DropResult) => {
@@ -122,6 +164,7 @@ export const MegaMenu = memo(
       const [moved] = newOrder.splice(source.index, 1);
       newOrder.splice(destination.index, 0, moved);
       setSectionOrder(newOrder);
+      showCelebrationAtIndex(destination.index);
       reportInteraction('grafana_navigation_sections_reordered', {
         itemId: moved,
         fromIndex: source.index,
@@ -132,7 +175,14 @@ export const MegaMenu = memo(
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
-        <nav className={styles.content}>
+        <nav ref={navRef} className={styles.content}>
+          {celebration !== null && (
+            <NavDropCelebration
+              key={celebration.key}
+              top={celebration.top}
+              onComplete={clearCelebration}
+            />
+          )}
           <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
             <>
               <DragDropContext onDragEnd={onDragEnd}>
@@ -141,7 +191,10 @@ export const MegaMenu = memo(
                     <ul
                       className={styles.itemList}
                       aria-label={t('navigation.megamenu.list-label', 'Navigation')}
-                      ref={droppableProvided.innerRef}
+                      ref={(element) => {
+                        listRef.current = element;
+                        droppableProvided.innerRef(element);
+                      }}
                       {...droppableProvided.droppableProps}
                     >
                       {orderedPrimaryItems.map((link, index) => (
@@ -197,6 +250,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     minHeight: 0,
     position: 'relative',
+    overflow: 'visible',
     whiteSpace: 'nowrap',
     width: MENU_WIDTH,
   }),

@@ -103,6 +103,7 @@ export function MegaMenuItem({
     <li
       ref={setRefs}
       className={cx(styles.listItem, { [styles.dragging]: isDragging })}
+      {...(link.id ? { 'data-nav-item-id': link.id } : {})}
       {...draggableProvided?.draggableProps}
     >
       <div
