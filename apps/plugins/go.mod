@@ -123,8 +123,8 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/alerting v0.0.0-20260601143310-62c199acc7fc // indirect
-	github.com/grafana/authlib v0.0.0-20260427145542-9c256e2dbcb2 // indirect
-	github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2 // indirect
+	github.com/grafana/authlib v0.0.0-20260512161930-98d27554449f // indirect
+	github.com/grafana/authlib/types v0.0.0-20260512161930-98d27554449f // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 // indirect
 	github.com/grafana/grafana-aws-sdk v1.4.4 // indirect

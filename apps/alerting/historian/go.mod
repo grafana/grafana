@@ -68,8 +68,8 @@ require (
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20260427145542-9c256e2dbcb2 // indirect
-	github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2 // indirect
+	github.com/grafana/authlib v0.0.0-20260512161930-98d27554449f // indirect
+	github.com/grafana/authlib/types v0.0.0-20260512161930-98d27554449f // indirect
 	github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
