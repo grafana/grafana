@@ -7,7 +7,7 @@
 // notifications types module, which pins to v1beta1's underlying generated types. See
 // notifications/types.ts for the rationale.
 export * from './grafana/api/notifications/types';
-export { useListContactPoints } from './grafana/contactPoints/hooks/useContactPoints';
+export { useListContactPoints, useCreateContactPoint } from './grafana/contactPoints/hooks/useContactPoints';
 export { ContactPointSelector } from './grafana/contactPoints/components/ContactPointSelector/ContactPointSelector';
 export { getContactPointDescription } from './grafana/contactPoints/utils';
 
