@@ -1,4 +1,14 @@
-import { type PulseBody, type PulseBodyNode, type PulseMention } from '../types';
+import { type MentionKind, type PulseBody, type PulseBodyNode, type PulseMention } from '../types';
+
+/**
+ * isAtMention reports whether a mention kind is rendered/typed with an
+ * `@` trigger (users, time anchors, the assistant) versus a `#` trigger
+ * (panel / dashboard resource chips). Centralized so the markdown token,
+ * the plain-text projection, and the composer all agree on the prefix.
+ */
+function isAtMention(kind: MentionKind): boolean {
+  return kind === 'user' || kind === 'time' || kind === 'assistant';
+}
 
 /**
  * BodyToken is the intermediate representation our composer uses while
@@ -64,10 +74,10 @@ export function bodyToText(body: PulseBody): string {
       return;
     }
     if (n.type === 'mention' && n.mention) {
-      // Resource chips (panel / dashboard) read as `#name`; user and
-      // time chips share `@` because the author typed `@user` or
-      // `@now` / `@time` to insert them.
-      const prefix = n.mention.kind === 'user' || n.mention.kind === 'time' ? '@' : '#';
+      // Resource chips (panel / dashboard) read as `#name`; user, time,
+      // and assistant chips share `@` because the author typed `@user`,
+      // `@now` / `@time`, or `@assistant` to insert them.
+      const prefix = isAtMention(n.mention.kind) ? '@' : '#';
       out.push(prefix + (n.mention.displayName ?? n.mention.targetId));
       return;
     }
@@ -114,11 +124,11 @@ export function isSafeUrl(raw: string): string | undefined {
  * visually distinct from prose without needing a custom React node, and
  * it matches the user's earlier ask for an inline-code mention style.
  *
- * `user` and `time` chips use `@` (the trigger character the author
- * typed); resource chips (`panel`, `dashboard`) use `#`.
+ * `user`, `time`, and `assistant` chips use `@` (the trigger character
+ * the author typed); resource chips (`panel`, `dashboard`) use `#`.
  */
 export function mentionMarkdownToken(m: PulseMention): string {
-  const prefix = m.kind === 'user' || m.kind === 'time' ? '@' : '#';
+  const prefix = isAtMention(m.kind) ? '@' : '#';
   const label = m.displayName ?? m.targetId;
   return '`' + prefix + label + '`';
 }

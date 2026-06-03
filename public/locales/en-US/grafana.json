@@ -14210,6 +14210,9 @@
   },
   "pulse": {
     "composer": {
+      "assistant-display-name": "Grafana Assistant",
+      "assistant-suggestion-label": "Grafana Assistant",
+      "assistant-suggestion-sublabel": "Tag the assistant to reply in this thread",
       "cancel": "Cancel",
       "hint-markdown": "Cmd/Ctrl+Enter to send · @user · #panel · **markdown**",
       "hint-markdown-dashboard": "Cmd/Ctrl+Enter to send · @user · #dashboard · **markdown**",

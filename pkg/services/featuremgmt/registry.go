@@ -657,6 +657,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboardPulseAssistant",
+			Description: "Lets users tag the Grafana Assistant in a Pulse thread (@assistant). When tagged, the assistant posts a reply back into the thread. Requires dashboardPulse to be enabled.",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboardDefaultLayoutSelector",
 			Description: "Enables default layout selector in dashboard settings",
 			Stage:       FeatureStageGeneralAvailability,

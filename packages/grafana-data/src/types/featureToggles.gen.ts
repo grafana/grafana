@@ -344,6 +344,11 @@ export interface FeatureToggles {
   */
   dashboardPulse?: boolean;
   /**
+  * Lets users tag the Grafana Assistant in a Pulse thread (@assistant). When tagged, the assistant posts a reply back into the thread. Requires dashboardPulse to be enabled.
+  * @default false
+  */
+  dashboardPulseAssistant?: boolean;
+  /**
   * Enables default layout selector in dashboard settings
   * @default true
   */

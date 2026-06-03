@@ -51,18 +51,19 @@ type Service interface {
 
 // PulseService is the in-memory implementation backed by SQL.
 type PulseService struct {
-	cfg           PulseConfig
-	store         *store
-	live          Publisher
-	notifier      Notifier
-	accessControl accesscontrol.AccessControl
-	routeRegister routing.RouteRegister
-	features      featuremgmt.FeatureToggles
-	userSvc       user.Service
-	orgSvc        org.Service
-	dashSvc       dashboards.DashboardService
-	folderSvc     folder.Service
-	log           log.Logger
+	cfg                PulseConfig
+	store              *store
+	live               Publisher
+	notifier           Notifier
+	assistantResponder AssistantResponder
+	accessControl      accesscontrol.AccessControl
+	routeRegister      routing.RouteRegister
+	features           featuremgmt.FeatureToggles
+	userSvc            user.Service
+	orgSvc             org.Service
+	dashSvc            dashboards.DashboardService
+	folderSvc          folder.Service
+	log                log.Logger
 }
 
 // PulseConfig holds runtime tunables, mostly for tests.
@@ -91,18 +92,19 @@ func ProvideService(
 	}
 
 	s := &PulseService{
-		cfg:           PulseConfig{MaxBodyBytes: MaxBodyBytes},
-		store:         newStore(sqlStore),
-		live:          NewLivePublisher(channelPub),
-		notifier:      buildNotifier(cfg, features, notificationSvc, userSvc, logger),
-		accessControl: ac,
-		routeRegister: routeRegister,
-		features:      features,
-		userSvc:       userSvc,
-		orgSvc:        orgSvc,
-		dashSvc:       dashSvc,
-		folderSvc:     folderSvc,
-		log:           logger,
+		cfg:                PulseConfig{MaxBodyBytes: MaxBodyBytes},
+		store:              newStore(sqlStore),
+		live:               NewLivePublisher(channelPub),
+		notifier:           buildNotifier(cfg, features, notificationSvc, userSvc, logger),
+		assistantResponder: buildAssistantResponder(logger),
+		accessControl:      ac,
+		routeRegister:      routeRegister,
+		features:           features,
+		userSvc:            userSvc,
+		orgSvc:             orgSvc,
+		dashSvc:            dashSvc,
+		folderSvc:          folderSvc,
+		log:                logger,
 	}
 
 	s.registerAPIEndpoints()
@@ -214,6 +216,7 @@ func (s *PulseService) CreateThread(ctx context.Context, cmd CreateThreadCommand
 		At:           now,
 	})
 	s.fanout(ctx, thread, pulse, mentions)
+	s.maybeRespondAsAssistant(thread, pulse, mentions)
 
 	return CreateThreadResult{Thread: thread, Pulse: pulse}, nil
 }
@@ -271,6 +274,7 @@ func (s *PulseService) AddPulse(ctx context.Context, cmd AddPulseCommand) (Pulse
 		At:           now,
 	})
 	s.fanout(ctx, thread, pulse, mentions)
+	s.maybeRespondAsAssistant(thread, pulse, mentions)
 	return pulse, nil
 }
 

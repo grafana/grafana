@@ -1476,6 +1476,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardPulseAssistant",
+        "resourceVersion": "1780488488319",
+        "creationTimestamp": "2026-06-03T12:08:08Z"
+      },
+      "spec": {
+        "description": "Lets users tag the Grafana Assistant in a Pulse thread (@assistant). When tagged, the assistant posts a reply back into the thread. Requires dashboardPulse to be enabled.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardPulseEmail",
         "resourceVersion": "1779806858857",
         "creationTimestamp": "2026-05-26T14:47:38Z"

@@ -39,6 +39,12 @@ func (k ResourceKind) Valid() bool {
 // viewing. They are NOT fan-out targets (no user/panel/dashboard id
 // to look up) and are intentionally skipped by the denormalized
 // pulse_mention table — see store.insertMentions.
+//
+// `assistant` chips tag the Grafana Assistant. Their TargetID is the
+// fixed sentinel AssistantMentionTarget. They are not user fan-out
+// targets (no user id to notify); instead the service detects them
+// after a user's pulse lands and asks the configured AssistantResponder
+// to post a reply back into the thread — see maybeRespondAsAssistant.
 type MentionKind string
 
 const (
@@ -46,11 +52,12 @@ const (
 	MentionKindPanel     MentionKind = "panel"
 	MentionKindDashboard MentionKind = "dashboard"
 	MentionKindTime      MentionKind = "time"
+	MentionKindAssistant MentionKind = "assistant"
 )
 
 func (k MentionKind) Valid() bool {
 	switch k {
-	case MentionKindUser, MentionKindPanel, MentionKindDashboard, MentionKindTime:
+	case MentionKindUser, MentionKindPanel, MentionKindDashboard, MentionKindTime, MentionKindAssistant:
 		return true
 	}
 	return false
