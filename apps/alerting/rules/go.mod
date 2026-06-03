@@ -5,7 +5,7 @@ go 1.26.3
 require (
 	github.com/grafana/grafana-app-sdk v0.56.0
 	github.com/grafana/grafana-app-sdk/logging v0.55.0
-	github.com/prometheus/common v0.67.5
+	github.com/prometheus/common v0.68.0
 	github.com/stretchr/testify v1.11.1
 	k8s.io/apimachinery v0.36.1
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a
