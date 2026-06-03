@@ -109,6 +109,18 @@ describe('initPreferences', () => {
     expect(document.documentElement.lang).toBe('es-ES');
   });
 
+  it('applies navbar preferences to boot data', async () => {
+    server.use(
+      http.get(PREFERENCES_URL, () =>
+        HttpResponse.json({ spec: { navbar: { bookmarkUrls: ['/admin'], jobRole: 'sre' } } })
+      )
+    );
+
+    await initPreferences();
+
+    expect(window.grafanaBootData.user.navbar).toEqual({ bookmarkUrls: ['/admin'], jobRole: 'sre' });
+  });
+
   it('skips fields that are undefined in the response', async () => {
     server.use(http.get(PREFERENCES_URL, () => HttpResponse.json({ spec: { theme: 'light' } })));
 

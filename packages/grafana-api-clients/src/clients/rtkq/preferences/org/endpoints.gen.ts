@@ -28,6 +28,7 @@ export type UpdateOrgPreferencesApiArg = {
 };
 export type PreferencesNavbarPreference = {
   bookmarkUrls?: string[];
+  jobRole?: 'default' | 'sre' | 'data-analyst' | 'incident-responder' | 'platform-engineer' | 'application-developer' | 'database-engineer';
 };
 export type PreferencesQueryHistoryPreference = {
   /** one of: '' | 'query' | 'starred'; */
@@ -64,6 +65,7 @@ export type SuccessResponseBody = {
 };
 export type NavbarPreference = {
   bookmarkUrls?: string[];
+  jobRole?: 'default' | 'sre' | 'data-analyst' | 'incident-responder' | 'platform-engineer' | 'application-developer' | 'database-engineer';
 };
 export type QueryHistoryPreference = {
   homeTab?: string;

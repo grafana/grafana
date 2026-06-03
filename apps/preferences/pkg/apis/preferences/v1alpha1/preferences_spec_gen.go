@@ -21,6 +21,7 @@ func (PreferencesQueryHistoryPreference) OpenAPIModelName() string {
 // +k8s:openapi-gen=true
 type PreferencesNavbarPreference struct {
 	BookmarkUrls []string `json:"bookmarkUrls"`
+	JobRole      *string  `json:"jobRole,omitempty"`
 }
 
 // NewPreferencesNavbarPreference creates a new PreferencesNavbarPreference object.

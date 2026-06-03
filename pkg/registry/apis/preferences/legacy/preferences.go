@@ -147,6 +147,9 @@ func (s *preferenceStorage) save(ctx context.Context, obj runtime.Object) (runti
 		cmd.Navbar = &pref.NavbarPreference{
 			BookmarkUrls: p.Spec.Navbar.BookmarkUrls,
 		}
+		if p.Spec.Navbar.JobRole != nil {
+			cmd.Navbar.JobRole = *p.Spec.Navbar.JobRole
+		}
 	}
 
 	switch owner.Owner {
@@ -305,9 +308,12 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 			}
 		}
 
-		if len(p.JSONData.Navbar.BookmarkUrls) > 0 {
+		if len(p.JSONData.Navbar.BookmarkUrls) > 0 || p.JSONData.Navbar.JobRole != "" {
 			obj.Spec.Navbar = &preferences.PreferencesNavbarPreference{
 				BookmarkUrls: p.JSONData.Navbar.BookmarkUrls,
+			}
+			if p.JSONData.Navbar.JobRole != "" {
+				obj.Spec.Navbar.JobRole = &p.JSONData.Navbar.JobRole
 			}
 		}
 	}

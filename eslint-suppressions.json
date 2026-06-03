@@ -907,9 +907,6 @@
     }
   },
   "public/app/core/components/SharedPreferences/SharedPreferencesOld.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 5
-    },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     },

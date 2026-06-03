@@ -1000,6 +1000,11 @@ export interface FeatureToggles {
   */
   unifiedNavbars?: boolean;
   /**
+  * Enables user job role navigation presets
+  * @default false
+  */
+  jobRoleNavPresets?: boolean;
+  /**
   * Enables creating metrics from profiles and storing them as recording rules
   * @default false
   */

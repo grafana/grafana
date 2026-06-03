@@ -1793,6 +1793,14 @@ var (
 			Expression:  "false", // enabled by default
 		},
 		{
+			Name:        "jobRoleNavPresets",
+			Description: "Enables user job role navigation presets",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Generate:    Generate{LegacyFrontend: true},
+			Expression:  "false",
+		},
+		{
 			Name:        "metricsFromProfiles",
 			Description: "Enables creating metrics from profiles and storing them as recording rules",
 			Stage:       FeatureStagePrivatePreview,

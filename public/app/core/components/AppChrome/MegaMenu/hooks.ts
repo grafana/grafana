@@ -4,9 +4,22 @@ import { useGetUserPreferencesQuery } from '@grafana/api-clients/internal/rtkq/l
 
 import { contextSrv } from '../../../services/context_srv';
 
-export const usePinnedItems = () => {
-  const preferences = useGetUserPreferencesQuery(undefined, { skip: !contextSrv.user.isSignedIn });
-  const pinnedItems = useMemo(() => preferences.data?.navbar?.bookmarkUrls || [], [preferences]);
+export const useNavbarPreferences = () => {
+  const isSignedIn = contextSrv.user.isSignedIn;
+  const preferences = useGetUserPreferencesQuery(undefined, { skip: !isSignedIn });
+  const navbar = preferences.data?.navbar;
+  const isLoading = isSignedIn && !preferences.data && !preferences.isError;
 
-  return pinnedItems;
+  return useMemo(
+    () => ({
+      pinnedItems: navbar?.bookmarkUrls || [],
+      jobRole: navbar?.jobRole,
+      isLoading,
+    }),
+    [isLoading, navbar?.bookmarkUrls, navbar?.jobRole]
+  );
+};
+
+export const usePinnedItems = () => {
+  return useNavbarPreferences().pinnedItems;
 };

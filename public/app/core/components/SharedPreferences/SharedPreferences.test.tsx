@@ -1,7 +1,7 @@
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { setBackendSrv } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
@@ -89,6 +89,15 @@ describe('SharedPreferences', () => {
     expect(langSelect).toHaveValue('Default');
   });
 
+  it('renders the job role preference for user preferences when job role nav presets are enabled', async () => {
+    config.featureToggles.jobRoleNavPresets = true;
+
+    await setup();
+
+    const jobRoleSelect = await screen.findByRole('combobox', { name: /job role/i });
+    expect(jobRoleSelect).toHaveValue('Default');
+  });
+
   it('does not render the pseudo-locale', async () => {
     const { user } = await setup();
     const langSelect = await screen.findByRole('combobox', { name: /language/i });
@@ -139,6 +148,20 @@ describe('SharedPreferences', () => {
         bookmarkUrls: [],
       },
     });
+  });
+
+  it('saves the selected job role without dropping bookmark URLs', async () => {
+    config.featureToggles.jobRoleNavPresets = true;
+    const capture = captureRequests();
+    const { user } = await setup();
+
+    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /job role/i }), 'Incident responder');
+
+    await user.click(screen.getByText('Save preferences'));
+
+    const requests = await capture;
+    const newPreferences = await getPrefsUpdateRequest(requests);
+    expect(newPreferences.navbar).toEqual({ bookmarkUrls: [], jobRole: 'incident-responder' });
   });
 
   it('saves the users default preferences', async () => {

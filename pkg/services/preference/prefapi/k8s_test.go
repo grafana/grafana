@@ -20,6 +20,7 @@ import (
 	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -127,6 +128,29 @@ func TestK8sHandler_UpdatePreferences(t *testing.T) {
 		})
 
 		require.Equal(t, http.StatusOK, resp.Status())
+	})
+
+	t.Run("forwards navbar job role", func(t *testing.T) {
+		client := NewMockK8sClient(t)
+		var captured *preferences.PreferencesSpec
+		client.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).
+			Run(func(_ context.Context, _ prefutils.OwnerReference, spec *preferences.PreferencesSpec) {
+				captured = spec
+			}).Return(nil)
+
+		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t))
+		resp := h.UpdatePreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.UpdatePrefsCmd{
+			Navbar: &pref.NavbarPreference{
+				BookmarkUrls: []string{"/admin"},
+				JobRole:      "sre",
+			},
+		})
+
+		require.Equal(t, http.StatusOK, resp.Status())
+		require.NotNil(t, captured.Navbar)
+		assert.Equal(t, []string{"/admin"}, captured.Navbar.BookmarkUrls)
+		require.NotNil(t, captured.Navbar.JobRole)
+		assert.Equal(t, "sre", *captured.Navbar.JobRole)
 	})
 
 	t.Run("dashboard not found returns 404", func(t *testing.T) {

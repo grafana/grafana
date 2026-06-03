@@ -2,7 +2,7 @@ import { HttpResponse } from 'msw';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { render, screen, userEvent, waitFor, within, testWithFeatureToggles } from 'test/test-utils';
 
-import { setBackendSrv } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { preferencesHandlers } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -87,6 +87,25 @@ describe('SharedPreferencesFunctional', () => {
     expect(langSelect).toHaveValue('Default');
   });
 
+  it('renders the job role preference for user preferences when job role nav presets are enabled', async () => {
+    config.featureToggles.jobRoleNavPresets = true;
+
+    await setup();
+
+    const jobRoleSelect = await screen.findByRole('combobox', { name: /job role/i });
+    expect(jobRoleSelect).toHaveValue('Default');
+  });
+
+  it('does not render the job role preference for org preferences', async () => {
+    config.featureToggles.jobRoleNavPresets = true;
+
+    render(<SharedPreferencesFunctional resourceUri="org" preferenceType="org" />);
+    const themeSelect = await screen.findByRole('combobox', { name: /Interface theme/ });
+    await waitFor(() => expect(themeSelect).not.toBeDisabled());
+
+    expect(screen.queryByRole('combobox', { name: /job role/i })).not.toBeInTheDocument();
+  });
+
   it('does not render the pseudo-locale', async () => {
     const { user } = await setup();
     const langSelect = await screen.findByRole('combobox', { name: /language/i });
@@ -135,6 +154,42 @@ describe('SharedPreferencesFunctional', () => {
         navbar: { bookmarkUrls: [] },
       },
     });
+  });
+
+  it('saves the selected job role without dropping bookmark URLs', async () => {
+    config.featureToggles.jobRoleNavPresets = true;
+    server.use(
+      preferencesHandlers.listPreferencesHandler(
+        HttpResponse.json({
+          metadata: {},
+          items: [
+            {
+              metadata: { name: 'user' },
+              spec: {
+                theme: 'light',
+                timezone: 'browser',
+                weekStart: 'monday',
+                homeDashboardUID: dashbdD.item.uid,
+                language: '',
+                queryHistory: { homeTab: '' },
+                navbar: { bookmarkUrls: ['/admin'], jobRole: 'default' },
+              },
+            },
+          ],
+        })
+      )
+    );
+    const capture = captureRequests();
+    const { user } = await setup();
+
+    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /job role/i }), 'Application developer');
+
+    await user.click(screen.getByText('Save preferences'));
+
+    const requests = await capture;
+    const newPreferences = await getPrefsUpdateRequest(requests);
+
+    expect(newPreferences.spec.navbar).toEqual({ bookmarkUrls: ['/admin'], jobRole: 'application-developer' });
   });
 
   it('saves an experimental theme preference', async () => {

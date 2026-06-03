@@ -20,17 +20,19 @@ import {
   isWeekStart,
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
+import { type JobRoleNavPreference } from 'app/core/navigation/jobRoleNav';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
 
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
-import { getLanguageOptions, getStyles, getTranslatedThemeName, type Props, type State } from './utils';
+import { getJobRoleOptions, getLanguageOptions, getStyles, getTranslatedThemeName, type Props, type State } from './utils';
 
 export class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
   themeOptions: ComboboxOption[];
   languageOptions: ComboboxOption[];
+  jobRoleOptions = getJobRoleOptions();
 
   constructor(props: Props) {
     super(props);
@@ -145,16 +147,29 @@ export class SharedPreferences extends PureComponent<Props, State> {
     });
   };
 
+  onJobRoleChanged = (jobRole: ComboboxOption<JobRoleNavPreference>) => {
+    this.setState((prev) => ({
+      navbar: {
+        bookmarkUrls: prev.navbar?.bookmarkUrls ?? [],
+        jobRole: jobRole.value,
+      },
+    }));
+  };
+
   render() {
-    const { theme, timezone, weekStart, homeDashboardUID, language, isLoading, isSubmitting } = this.state;
+    const { theme, timezone, weekStart, homeDashboardUID, language, navbar, isLoading, isSubmitting } = this.state;
     const { disabled } = this.props;
     const styles = getStyles();
     const currentThemeOption = this.themeOptions.find((x) => x.value === theme) ?? this.themeOptions[0];
+    const currentJobRoleOption =
+      this.jobRoleOptions.find((option) => option.value === navbar?.jobRole) ?? this.jobRoleOptions[0];
+    const showJobRolePreference = config.featureToggles.jobRoleNavPresets && this.props.preferenceType === 'user';
 
     return (
       <form onSubmit={this.onSubmitForm} className={styles.form}>
         <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={disabled}>
           <Field
+            noMargin
             loading={isLoading}
             disabled={isLoading}
             label={t('shared-preferences.fields.theme-label', 'Interface theme')}
@@ -181,7 +196,24 @@ export class SharedPreferences extends PureComponent<Props, State> {
             />
           </Field>
 
+          {showJobRolePreference && (
+            <Field
+              noMargin
+              loading={isLoading}
+              disabled={isLoading}
+              label={t('shared-preferences.fields.job-role-label', 'Job role')}
+            >
+              <Combobox
+                value={currentJobRoleOption.value}
+                onChange={this.onJobRoleChanged}
+                options={this.jobRoleOptions}
+                id="shared-preferences-job-role-select"
+              />
+            </Field>
+          )}
+
           <Field
+            noMargin
             loading={isLoading}
             disabled={isLoading}
             label={
@@ -204,6 +236,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
           </Field>
 
           <Field
+            noMargin
             loading={isLoading}
             disabled={isLoading}
             label={t('shared-dashboard.fields.timezone-label', 'Timezone')}
@@ -218,6 +251,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
           </Field>
 
           <Field
+            noMargin
             loading={isLoading}
             disabled={isLoading}
             label={t('shared-preferences.fields.week-start-label', 'Week start')}
@@ -231,6 +265,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
           </Field>
 
           <Field
+            noMargin
             loading={isLoading}
             disabled={isLoading}
             label={

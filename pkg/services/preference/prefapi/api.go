@@ -100,11 +100,14 @@ func GetPreferencesFor(ctx context.Context,
 			dto.Language = &preference.JSONData.Language
 		}
 
-		if preference.JSONData.Navbar.BookmarkUrls != nil {
+		if preference.JSONData.Navbar.BookmarkUrls != nil || preference.JSONData.Navbar.JobRole != "" {
 			dto.Navbar = &preferences.PreferencesNavbarPreference{
 				BookmarkUrls: []string{},
 			}
 			dto.Navbar.BookmarkUrls = preference.JSONData.Navbar.BookmarkUrls
+			if preference.JSONData.Navbar.JobRole != "" {
+				dto.Navbar.JobRole = &preference.JSONData.Navbar.JobRole
+			}
 		}
 
 		if preference.JSONData.QueryHistory.HomeTab != "" {

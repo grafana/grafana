@@ -30,7 +30,14 @@ import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
 import { languageChanged, saveButtonClicked, themeChanged } from './analytics/main';
 import { useSharedPreferences } from './useSharedPreferences';
-import { getLanguageOptions, getStyles, getTranslatedThemeName, type PrefsState, type Props } from './utils';
+import {
+  getJobRoleOptions,
+  getLanguageOptions,
+  getStyles,
+  getTranslatedThemeName,
+  type PrefsState,
+  type Props,
+} from './utils';
 
 export const SharedPreferencesFunctional = memo((props: Props) => {
   const { resourceUri } = props;
@@ -60,6 +67,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     group: theme.isExtra ? t('shared-preferences.theme.experimental', 'Experimental') : undefined,
   }));
   const languageOptions: ComboboxOption[] = getLanguageOptions();
+  const jobRoleOptions = getJobRoleOptions();
 
   // Add default option
   themeOptions.unshift({ value: '', label: t('shared-preferences.theme.default-label', 'Default') });
@@ -154,6 +162,9 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
   };
 
   const currentThemeOption = themeOptions.find((x) => x.value === state.theme) ?? themeOptions[0];
+  const currentJobRoleOption =
+    jobRoleOptions.find((option) => option.value === state.navbar?.jobRole) ?? jobRoleOptions[0];
+  const showJobRolePreference = config.featureToggles.jobRoleNavPresets && props.preferenceType === 'user';
 
   return (
     <form onSubmit={handleSubmitForm} className={styles.form}>
@@ -218,6 +229,30 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
               inputId="home-dashboard-select"
             />
           </Field>
+
+          {showJobRolePreference && (
+            <Field
+              noMargin
+              loading={isLoading}
+              disabled={isLoading}
+              label={t('shared-preferences.fields.job-role-label', 'Job role')}
+            >
+              <Combobox
+                value={currentJobRoleOption.value}
+                onChange={(jobRole) => {
+                  setState((prev) => ({
+                    ...prev,
+                    navbar: {
+                      bookmarkUrls: prev.navbar?.bookmarkUrls ?? [],
+                      jobRole: jobRole.value,
+                    },
+                  }));
+                }}
+                options={jobRoleOptions}
+                id="shared-preferences-job-role-select"
+              />
+            </Field>
+          )}
 
           <Field
             noMargin

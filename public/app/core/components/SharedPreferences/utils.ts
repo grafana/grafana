@@ -5,6 +5,7 @@ import { type ThemeRegistryItem } from '@grafana/data';
 import { LANGUAGES, PSEUDO_LOCALE, t } from '@grafana/i18n';
 import { type ComboboxOption } from '@grafana/ui';
 import { type UpdatePrefsCmd } from 'app/api/clients/legacy';
+import { type JobRoleNavPreference } from 'app/core/navigation/jobRoleNav';
 
 export interface Props {
   resourceUri: string;
@@ -72,6 +73,20 @@ export const getLanguageOptions = (): ComboboxOption[] => {
 
   return options;
 };
+
+export const getJobRoleOptions = (): Array<ComboboxOption<JobRoleNavPreference>> => [
+  { value: 'default', label: t('shared-preferences.job-role.default', 'Default') },
+  {
+    value: 'incident-responder',
+    label: t('shared-preferences.job-role.incident-responder', 'Incident responder'),
+  },
+  { value: 'platform-engineer', label: t('shared-preferences.job-role.platform-engineer', 'Platform engineer') },
+  {
+    value: 'application-developer',
+    label: t('shared-preferences.job-role.application-developer', 'Application developer'),
+  },
+  { value: 'database-engineer', label: t('shared-preferences.job-role.database-engineer', 'Database engineer') },
+];
 
 export const getTranslatedThemeName = (theme: ThemeRegistryItem) => {
   switch (theme.id) {

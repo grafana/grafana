@@ -157,6 +157,11 @@ export interface AnalyticsSettings {
   intercomIdentifier?: string;
 }
 
+export interface CurrentUserNavbarPreference {
+  bookmarkUrls?: string[];
+  jobRole?: 'default' | 'sre' | 'data-analyst' | 'incident-responder' | 'platform-engineer' | 'application-developer' | 'database-engineer';
+}
+
 /**
  * Current user info included in bootData.
  * Corresponds to `window.grafanaBootData.user`
@@ -183,6 +188,7 @@ export interface CurrentUserDTO {
   permissions?: Record<string, boolean>;
   analytics: AnalyticsSettings;
   authenticatedBy: string;
+  navbar?: CurrentUserNavbarPreference;
 
   /** @deprecated Use theme instead */
   lightTheme: boolean;

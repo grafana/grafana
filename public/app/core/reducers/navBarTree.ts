@@ -3,9 +3,19 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { filterNavTreeByJobRole } from '../navigation/jobRoleNav';
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
-export const initialState: NavModelItem[] = config.bootData?.navTree ?? [];
+function getInitialNavTree(): NavModelItem[] {
+  const navTree = config.bootData?.navTree ?? [];
+  if (!config.featureToggles.jobRoleNavPresets) {
+    return navTree;
+  }
+
+  return filterNavTreeByJobRole(navTree, config.bootData?.user?.navbar?.jobRole);
+}
+
+export const initialState: NavModelItem[] = getInitialNavTree();
 
 function translateNav(navTree: NavModelItem[]): NavModelItem[] {
   return navTree.map((navItem) => {
@@ -26,7 +36,7 @@ export const ID_PREFIX = 'starred/';
 
 const navTreeSlice = createSlice({
   name: 'navBarTree',
-  initialState: () => translateNav(config.bootData?.navTree ?? []),
+  initialState: () => translateNav(getInitialNavTree()),
   reducers: {
     setStarred: (state, action: PayloadAction<{ id: string; title: string; url: string; isStarred: boolean }>) => {
       const starredItems = state.find((navItem) => navItem.id === 'starred');

@@ -123,6 +123,7 @@ func updateCmdToSpec(dto *dtos.UpdatePrefsCmd, homeDashboardUID *string) *prefer
 	if dto.Navbar != nil {
 		spec.Navbar = &preferences.PreferencesNavbarPreference{
 			BookmarkUrls: dto.Navbar.BookmarkUrls,
+			JobRole:      asNonEmptyPointer(dto.Navbar.JobRole),
 		}
 	}
 	return spec
@@ -147,9 +148,18 @@ func patchCmdToSpec(dto *dtos.PatchPrefsCmd, homeDashboardUID *string) *preferen
 	if dto.Navbar != nil {
 		spec.Navbar = &preferences.PreferencesNavbarPreference{
 			BookmarkUrls: dto.Navbar.BookmarkUrls,
+			JobRole:      asNonEmptyPointer(dto.Navbar.JobRole),
 		}
 	}
 	return spec
+}
+
+func asNonEmptyPointer(value string) *string {
+	if value == "" {
+		return nil
+	}
+
+	return &value
 }
 
 func responseFromError(err error) response.Response {

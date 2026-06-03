@@ -5,7 +5,7 @@ export const initPreferences = async () => {
   if (!preferences) {
     return;
   }
-  const { theme, language, weekStart, timezone } = preferences.spec;
+  const { theme, language, weekStart, timezone, navbar } = preferences.spec;
   if (theme !== undefined) {
     window.grafanaBootData.user.theme = theme;
     applyTheme(theme);
@@ -19,6 +19,9 @@ export const initPreferences = async () => {
   }
   if (timezone !== undefined) {
     window.grafanaBootData.user.timezone = timezone;
+  }
+  if (navbar !== undefined) {
+    window.grafanaBootData.user.navbar = navbar;
   }
 };
 

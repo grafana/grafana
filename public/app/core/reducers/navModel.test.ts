@@ -1,10 +1,45 @@
 import { type NavIndex } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { reducerTester } from '../../../test/core/redux/reducerTester';
 
-import { navIndexReducer, updateNavIndex, updateConfigurationSubtitle } from './navModel';
+import { buildInitialState, navIndexReducer, updateNavIndex, updateConfigurationSubtitle } from './navModel';
 
 describe('navModelReducer', () => {
+  const originalFeatureToggles = config.featureToggles;
+  const originalBootData = config.bootData;
+
+  afterEach(() => {
+    config.featureToggles = originalFeatureToggles;
+    config.bootData = originalBootData;
+  });
+
+  describe('buildInitialState', () => {
+    it('filters the nav index by job role when job role nav presets are enabled', () => {
+      config.featureToggles = { ...originalFeatureToggles, jobRoleNavPresets: true };
+      config.bootData = {
+        ...originalBootData,
+        user: {
+          ...originalBootData.user,
+          navbar: { bookmarkUrls: [], jobRole: 'data-analyst' },
+        },
+        navTree: [
+          { id: 'home', text: 'Home' },
+          { id: 'dashboards/browse', text: 'Dashboards' },
+          { id: 'explore', text: 'Explore' },
+          { id: 'alerting', text: 'Alerting' },
+          { id: 'cfg', text: 'Administration' },
+        ],
+      };
+
+      const navIndex = buildInitialState();
+
+      expect(Object.keys(navIndex)).toContain('explore');
+      expect(Object.keys(navIndex)).not.toContain('alerting');
+      expect(Object.keys(navIndex)).not.toContain('cfg');
+    });
+  });
+
   describe('when updateNavIndex is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<NavIndex>()

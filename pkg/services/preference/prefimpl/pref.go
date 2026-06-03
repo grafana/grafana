@@ -79,6 +79,9 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 			if p.JSONData.Navbar.BookmarkUrls != nil {
 				res.JSONData.Navbar.BookmarkUrls = p.JSONData.Navbar.BookmarkUrls
 			}
+			if p.JSONData.Navbar.JobRole != "" {
+				res.JSONData.Navbar.JobRole = p.JSONData.Navbar.JobRole
+			}
 		}
 	}
 
@@ -184,11 +187,16 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		preference.JSONData.Language = *cmd.Language
 	}
 
-	if cmd.Navbar != nil && cmd.Navbar.BookmarkUrls != nil {
+	if cmd.Navbar != nil && (cmd.Navbar.BookmarkUrls != nil || cmd.Navbar.JobRole != "") {
 		if preference.JSONData == nil {
 			preference.JSONData = &pref.PreferenceJSONData{}
 		}
-		preference.JSONData.Navbar.BookmarkUrls = cmd.Navbar.BookmarkUrls
+		if cmd.Navbar.BookmarkUrls != nil {
+			preference.JSONData.Navbar.BookmarkUrls = cmd.Navbar.BookmarkUrls
+		}
+		if cmd.Navbar.JobRole != "" {
+			preference.JSONData.Navbar.JobRole = cmd.Navbar.JobRole
+		}
 	}
 
 	if cmd.QueryHistory != nil {

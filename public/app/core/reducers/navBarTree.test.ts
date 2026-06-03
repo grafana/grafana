@@ -1,4 +1,5 @@
 import { type NavModelItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { ID_PREFIX, navTreeReducer, setStarred, updateDashboardName } from './navBarTree';
 
@@ -10,6 +11,38 @@ function buildState(starredChildren: NavModelItem[] = []): NavModelItem[] {
 }
 
 describe('navBarTree reducer', () => {
+  const originalFeatureToggles = config.featureToggles;
+  const originalBootData = config.bootData;
+
+  afterEach(() => {
+    config.featureToggles = originalFeatureToggles;
+    config.bootData = originalBootData;
+  });
+
+  describe('initial state', () => {
+    it('filters nav items by job role when job role nav presets are enabled', () => {
+      config.featureToggles = { ...originalFeatureToggles, jobRoleNavPresets: true };
+      config.bootData = {
+        ...originalBootData,
+        user: {
+          ...originalBootData.user,
+          navbar: { bookmarkUrls: [], jobRole: 'data-analyst' },
+        },
+        navTree: [
+          { id: 'home', text: 'Home' },
+          { id: 'dashboards/browse', text: 'Dashboards' },
+          { id: 'explore', text: 'Explore' },
+          { id: 'alerting', text: 'Alerting' },
+          { id: 'cfg', text: 'Administration' },
+        ],
+      };
+
+      const next = navTreeReducer(undefined, { type: '@@INIT' });
+
+      expect(next.map((item) => item.id)).toEqual(['home', 'dashboards/browse', 'explore']);
+    });
+  });
+
   describe('setStarred', () => {
     it('adds a starred item with the ID_PREFIX', () => {
       const state = buildState();

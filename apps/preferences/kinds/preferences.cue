@@ -45,6 +45,7 @@ preferencesV1alpha1: {
 
 		#NavbarPreference: {
 			bookmarkUrls: [...string]
+			jobRole?:     "default" | "sre" | "data-analyst" | "incident-responder" | "platform-engineer" | "application-developer" | "database-engineer"
 		}
 	}
 }

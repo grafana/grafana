@@ -7,16 +7,17 @@ import { usePatchUserPreferencesMutation } from '@grafana/api-clients/internal/r
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { filterNavTreeByJobRole } from 'app/core/navigation/jobRoleNav';
 import { setBookmark } from 'app/core/reducers/navBarTree';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
-import { usePinnedItems } from './hooks';
+import { useNavbarPreferences } from './hooks';
 import { enrichWithInteractionTracking, findByUrl, getActiveItem } from './utils';
 
 export const MENU_WIDTH = '300px';
@@ -34,10 +35,16 @@ export const MegaMenu = memo(
     const dispatch = useDispatch();
     const state = chrome.useState();
     const [patchPreferences] = usePatchUserPreferencesMutation();
-    const pinnedItems = usePinnedItems();
+    const { pinnedItems, jobRole, isLoading } = useNavbarPreferences();
+    const resolvedJobRole = jobRole ?? config.bootData?.user?.navbar?.jobRole;
+    const filteredNavTree = config.featureToggles.jobRoleNavPresets
+      ? isLoading && !resolvedJobRole
+        ? []
+        : filterNavTreeByJobRole(navTree, resolvedJobRole)
+      : navTree;
 
     // Remove profile + help from tree
-    const navItems = navTree
+    const navItems = filteredNavTree
       .filter((item) => item.id !== 'profile' && item.id !== 'help')
       .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
 
