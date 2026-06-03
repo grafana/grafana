@@ -1,4 +1,5 @@
-import { type SyntheticEvent, useState } from 'react';
+import { css } from '@emotion/css';
+import { type SyntheticEvent, useEffect, useState } from 'react';
 
 import {
   type DataSourcePluginOptionsEditorProps,
@@ -17,6 +18,7 @@ import {
   useMigrateDatabaseFields,
 } from '@grafana/sql';
 import {
+  Button,
   Collapse,
   Combobox,
   type ComboboxOption,
@@ -26,11 +28,11 @@ import {
   Label,
   SecretInput,
   SecureSocksProxySettings,
+  Spinner,
   Stack,
   Switch,
   Tooltip,
 } from '@grafana/ui';
-
 import { type PostgresOptions, PostgresTLSMethods, PostgresTLSModes, type SecureJsonData } from '../types';
 
 import { useAutoDetectFeatures } from './useAutoDetectFeatures';
@@ -54,6 +56,30 @@ export const postgresVersions: Array<ComboboxOption<number>> = [
 export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<PostgresOptions, SecureJsonData>) => {
   const [versionOptions, setVersionOptions] = useState(postgresVersions);
   const [isOpen, setIsOpen] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isTestSuccessful, setIsTestSuccessful] = useState(false);
+
+  useEffect(() => {
+    const SUCCESS_ALERT_SELECTOR = '[data-testid="data-testid Alert success"]';
+    const checkForSuccess = () => {
+      setIsTestSuccessful(document.querySelector(SUCCESS_ALERT_SELECTOR) !== null);
+    };
+    checkForSuccess();
+    const observer = new MutationObserver(checkForSuccess);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isGenerating) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      window.location.href =
+        'http://localhost:3000/d/sales-static-snapshot/sales-performance-e28094-static-snapshot';
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [isGenerating]);
 
   useAutoDetectFeatures({ props, setVersionOptions });
   useMigrateDatabaseFields(props);
@@ -449,6 +475,65 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           )}
         </Stack>
       </ConfigSection>
+
+      {isTestSuccessful && (
+        <>
+          <Divider />
+
+          <ConfigSection title="Visualize your data">
+            <Stack direction="column" gap={2}>
+              <div>Let the Grafana AI Assistant build a starter dashboard for this data source.</div>
+              <div>
+                <Button icon="ai-sparkle" onClick={() => setIsGenerating(true)} disabled={isGenerating}>
+                  Generate dashboard with AI Assistant
+                </Button>
+              </div>
+            </Stack>
+          </ConfigSection>
+        </>
+      )}
+
+      {isGenerating && (
+        <div className={overlayStyles.backdrop}>
+          <div className={overlayStyles.card}>
+            <Spinner size="xxl" />
+            <div className={overlayStyles.title}>Generating your dashboard with AI...</div>
+            <div className={overlayStyles.subtitle}>This may take a few seconds</div>
+          </div>
+        </div>
+      )}
     </>
   );
+};
+
+const overlayStyles = {
+  backdrop: css({
+    position: 'fixed',
+    inset: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1100,
+  }),
+  card: css({
+    backgroundColor: '#1f1f20',
+    color: '#fff',
+    borderRadius: 8,
+    padding: '32px 48px',
+    minWidth: 360,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 16,
+    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5)',
+  }),
+  title: css({
+    fontSize: 18,
+    fontWeight: 500,
+  }),
+  subtitle: css({
+    fontSize: 14,
+    opacity: 0.7,
+  }),
 };
