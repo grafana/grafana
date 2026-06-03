@@ -1,8 +1,11 @@
 package contextmodel
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -42,15 +45,66 @@ type ReqContext struct {
 	UseSessionStorageRedirect bool
 }
 
+// errorPageAssets holds the CSS asset URLs needed by the error template.
+type errorPageAssets struct {
+	Dark  string
+	Light string
+}
+
+// readManifestCSS extracts the hashed dark/light CSS paths from
+// public/build/assets-manifest.json. Returns empty strings on any error;
+// the caller should fall back to a static path.
+func readManifestCSS(cfg *setting.Cfg) (dark, light string) {
+	type entryPointAssets struct {
+		Assets struct {
+			CSS []string `json:"css"`
+		} `json:"assets"`
+	}
+	type entryPoints struct {
+		Dark  *entryPointAssets `json:"dark"`
+		Light *entryPointAssets `json:"light"`
+	}
+
+	//nolint:gosec
+	f, err := os.Open(filepath.Join(cfg.StaticRootPath, "build", "assets-manifest.json"))
+	if err != nil {
+		return
+	}
+	defer func() { _ = f.Close() }()
+
+	var manifest map[string]entryPoints
+	if err := json.NewDecoder(f).Decode(&manifest); err != nil {
+		return
+	}
+
+	ep := manifest["entrypoints"]
+	if ep.Dark != nil && len(ep.Dark.Assets.CSS) > 0 {
+		dark = ep.Dark.Assets.CSS[0]
+	}
+	if ep.Light != nil && len(ep.Light.Assets.CSS) > 0 {
+		light = ep.Light.Assets.CSS[0]
+	}
+	return
+}
+
 // Handle handles and logs error by given status.
 func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err error) {
+	dark, light := readManifestCSS(cfg)
+	if dark == "" {
+		dark = cfg.AppSubURL + "/public/build/grafana.dark.css"
+	}
+	if light == "" {
+		light = cfg.AppSubURL + "/public/build/grafana.light.css"
+	}
+
 	data := struct {
 		Title     string
 		AppTitle  string
 		AppSubUrl string
 		ThemeType string
 		ErrorMsg  error
-	}{title, "Grafana", cfg.AppSubURL, "dark", nil}
+		Assets    *errorPageAssets
+	}{title, "Grafana", cfg.AppSubURL, cfg.DefaultTheme, nil, &errorPageAssets{Dark: dark, Light: light}}
 
 	if err != nil {
 		ctx.Logger.Error(title, "error", err)

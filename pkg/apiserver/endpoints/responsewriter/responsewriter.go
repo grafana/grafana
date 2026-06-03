@@ -220,6 +220,7 @@ func (ra *ResponseAdapter) Response() (*http.Response, error) {
 	ctx := ra.req.Context()
 	select {
 	case <-ctx.Done():
+		_ = ra.reader.Close()
 		return nil, ctx.Err()
 
 	case <-ra.ready:
