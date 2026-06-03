@@ -84,11 +84,6 @@ func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, usern
 		})
 		identity.OrgRoles = orgRoles
 		identity.IsGrafanaAdmin = isGrafanaAdmin
-
-		// getRoles keys the role by DefaultOrgID; align OrgID so GetOrgRole() resolves correctly.
-		if identity.OrgID == 0 {
-			identity.OrgID = c.cfg.DefaultOrgID()
-		}
 	}
 
 	if v, ok := additional[proxyFieldGroups]; ok {

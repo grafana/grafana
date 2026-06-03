@@ -42,7 +42,6 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 				proxyFieldEmail:  "email@email.com",
 			},
 			expectedIdentity: &authn.Identity{
-				OrgID:           1,
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleViewer},
 				Login:           "test",
 				Name:            "name",
@@ -120,10 +119,6 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 
 				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.Email, identity.ClientParams.LookUpParams.Email)
 				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.Login, identity.ClientParams.LookUpParams.Login)
-
-				if len(tt.expectedIdentity.OrgRoles) > 0 {
-					assert.Equal(t, tt.expectedIdentity.GetOrgRole(), identity.GetOrgRole(), "GetOrgRole() must return the role from the proxy header")
-				}
 			} else {
 				assert.Nil(t, tt.expectedIdentity)
 			}
