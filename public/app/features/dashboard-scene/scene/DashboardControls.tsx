@@ -42,6 +42,7 @@ import { DashboardControlsButton } from './dashboard-controls-menu/DashboardCont
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
 import { DashboardFiltersOverviewPaneToggle } from './dashboard-filters-overview/DashboardFiltersOverviewPaneToggle';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
+import { EditDatasourceButton } from './new-toolbar/actions/EditDatasourceButton';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
@@ -343,6 +344,7 @@ function DashboardControlActions({
 
   return (
     <>
+      {!isPlaying && <EditDatasourceButton dashboard={dashboard} />}
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
       {showSaveButton && <SaveDashboard dashboard={dashboard} />}
       {showEditButton && <EditDashboardSwitch dashboard={dashboard} />}

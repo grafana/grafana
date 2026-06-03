@@ -41,6 +41,7 @@ import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
 import { Actions } from './new-toolbar/Actions';
 import { BreadcrumbActions } from './new-toolbar/BreadcrumbActions';
+import { EditDatasourceButton } from './new-toolbar/actions/EditDatasourceButton';
 import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
 
 interface Props {
@@ -164,6 +165,12 @@ export function ToolbarActions({ dashboard }: Props) {
     group: 'icon-actions',
     condition: isSnapshot && !isEditing && !isEmbedded,
     render: () => <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={dashboard.getSnapshotUrl()} />,
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isShowingDashboard && !isEditing,
+    render: () => <EditDatasourceButton key="edit-datasource-button" dashboard={dashboard} />,
   });
 
   if (!isEditingPanel && !isEditing) {

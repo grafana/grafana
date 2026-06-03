@@ -48,9 +48,13 @@ export type Props = {
   uid: string;
   // The ID of the custom datasource setting page
   pageId?: string | null;
+  // When provided (e.g. rendered inside a modal), the "Save & test" button turns
+  // into "Done" once the current state is saved and the last test succeeded.
+  // Clicking "Done" calls this callback (typically to close the modal).
+  onDone?: () => void;
 };
 
-export function EditDataSource({ uid, pageId }: Props) {
+export function EditDataSource({ uid, pageId, onDone }: Props) {
   useInitDataSourceSettings(uid);
 
   const dispatch = useDispatch();
@@ -69,6 +73,7 @@ export function EditDataSource({ uid, pageId }: Props) {
   return (
     <EditDataSourceView
       pageId={pageId}
+      onDone={onDone}
       dataSource={dataSource}
       dataSourceMeta={dataSourceMeta}
       dataSourceSettings={dataSourceSettings}
@@ -86,6 +91,7 @@ export function EditDataSource({ uid, pageId }: Props) {
 
 export type ViewProps = {
   pageId?: string | null;
+  onDone?: () => void;
   dataSource: DataSourceSettingsType;
   dataSourceMeta: DataSourcePluginMeta;
   dataSourceSettings: DataSourceSettingsState;
@@ -101,6 +107,7 @@ export type ViewProps = {
 
 export function EditDataSourceView({
   pageId,
+  onDone,
   dataSource,
   dataSourceMeta,
   dataSourceSettings,
@@ -126,6 +133,10 @@ export function EditDataSourceView({
   // local useState — it does not depend on this store for re-renders.
   const validators = useRef(new Set<() => Promise<boolean> | boolean>());
   const validationErrorsRef = useRef<Record<string, string>>({});
+
+  // Snapshot of the datasource as it was after the last successful save. Used in
+  // "done mode" (modal) to decide whether the form is in a clean, saved state.
+  const savedSnapshotRef = useRef<string | null>(null);
 
   const validationRef = useRef<DataSourceConfigValidationAPI | null>(null);
   if (!validationRef.current) {
@@ -193,7 +204,9 @@ export function EditDataSourceView({
       }
 
       try {
-        await onUpdate({ ...dataSource });
+        const saved = await onUpdate({ ...dataSource });
+        // Record the saved state so "done mode" can detect a clean, saved form.
+        savedSnapshotRef.current = JSON.stringify(saved);
         trackDsConfigUpdated({ item: 'success' });
         appEvents.publish(new DataSourceUpdatedSuccessfully());
       } catch (error) {
@@ -298,6 +311,14 @@ export function EditDataSourceView({
         }}
         canDelete={!readOnly && hasDeleteRights}
         canSave={!readOnly && hasWriteRights}
+        // In modal context (onDone provided) deleting the datasource doesn't make sense.
+        hideDelete={Boolean(onDone)}
+        showDone={
+          Boolean(onDone) &&
+          testingStatus?.status === 'success' &&
+          savedSnapshotRef.current === JSON.stringify(dataSource)
+        }
+        onDone={onDone}
       />
     </form>
   );

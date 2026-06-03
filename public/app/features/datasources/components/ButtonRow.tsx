@@ -10,21 +10,33 @@ export interface Props {
   onDelete: (event: React.MouseEvent<HTMLButtonElement>) => void;
   onSubmit: (event: React.MouseEvent<HTMLButtonElement>) => void;
   onTest: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+  // When true, the primary button becomes "Done" (saved state, last test passed).
+  showDone?: boolean;
+  onDone?: () => void;
+  // Hides the Delete button (e.g. when editing inside a modal).
+  hideDelete?: boolean;
 }
 
-export function ButtonRow({ canSave, canDelete, onDelete, onSubmit, onTest }: Props) {
+export function ButtonRow({ canSave, canDelete, onDelete, onSubmit, onTest, showDone, onDone, hideDelete }: Props) {
   return (
     <div className="gf-form-button-row">
-      <Button
-        type="button"
-        variant="destructive"
-        disabled={!canDelete}
-        onClick={onDelete}
-        data-testid={selectors.pages.DataSource.delete}
-      >
-        <Trans i18nKey="datasources.button-row.delete">Delete</Trans>
-      </Button>
-      {canSave && (
+      {!hideDelete && (
+        <Button
+          type="button"
+          variant="destructive"
+          disabled={!canDelete}
+          onClick={onDelete}
+          data-testid={selectors.pages.DataSource.delete}
+        >
+          <Trans i18nKey="datasources.button-row.delete">Delete</Trans>
+        </Button>
+      )}
+      {canSave && showDone && (
+        <Button type="button" variant="success" onClick={() => onDone?.()}>
+          <Trans i18nKey="datasources.button-row.done">Done</Trans>
+        </Button>
+      )}
+      {canSave && !showDone && (
         <Button
           type="submit"
           variant="primary"

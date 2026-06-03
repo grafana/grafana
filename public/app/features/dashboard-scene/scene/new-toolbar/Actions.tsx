@@ -12,6 +12,7 @@ import { type DashboardScene } from '../DashboardScene';
 import { BackToDashboardButton } from './actions/BackToDashboardButton';
 import { DiscardLibraryPanelButton } from './actions/DiscardLibraryPanelButton';
 import { DiscardPanelButton } from './actions/DiscardPanelButton';
+import { EditDatasourceButton } from './actions/EditDatasourceButton';
 import { MakeDashboardEditableButton } from './actions/MakeDashboardEditableButton';
 import { PlayListNextButton } from './actions/PlayListNextButton';
 import { PlayListPreviousButton } from './actions/PlayListPreviousButton';
@@ -100,6 +101,12 @@ export const Actions = ({ dashboard }: { dashboard: DashboardScene }) => {
             component: SaveDashboard,
             group: 'panel',
             condition: isEditingDashboard && !isEditingLibraryPanel && (canSave || canSaveInFolder),
+          },
+          {
+            key: 'edit-datasource-button',
+            component: EditDatasourceButton,
+            group: 'edit-datasource',
+            condition: isShowingDashboard && !isEditingDashboard && !isPlaying,
           },
           {
             key: 'make-dashboard-editable-button',
