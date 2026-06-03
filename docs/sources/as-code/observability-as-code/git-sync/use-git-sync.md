@@ -128,7 +128,7 @@ Each folder in a synced repository contains a `.folder.json` file at its root:
 
 ```json
 {
-  "apiVersion": "folder.grafana.app/v1beta1",
+  "apiVersion": "folder.grafana.app/v1",
   "kind": "Folder",
   "metadata": {
     "name": "<FOLDER_UID>"
