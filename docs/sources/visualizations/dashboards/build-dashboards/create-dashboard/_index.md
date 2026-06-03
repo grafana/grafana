@@ -122,10 +122,6 @@ To create a dashboard, follow these steps:
 
 1. (Optional) If the panel supports it, choose an option from the **Panel styles** section in the panel editor sidebar. Each style shows a live preview of how it changes the visualization. Clicking a style applies it to the panel.
 
-   {{< admonition type="note" >}}
-   Panel styles is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the `vizPresets` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) to use this feature.
-   {{< /admonition >}}
-
    For more information about Panel styles, refer to the [Panel editor documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-editor-overview/#panel-styles).
 
 1. Refer to the following documentation for ways you can adjust panel settings.

@@ -2406,6 +2406,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.panelEditNextFeedbackEvent",
+        "resourceVersion": "1779903372415",
+        "creationTimestamp": "2026-05-27T17:36:12Z"
+      },
+      "spec": {
+        "description": "Replaces the Intercom survey for PanelEditNext feedback with an event that triggers an in-house survey",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.scenesFlickeringFix",
         "resourceVersion": "1778737357419",
         "creationTimestamp": "2026-05-06T09:26:24Z",
@@ -3826,6 +3841,20 @@
     },
     {
       "metadata": {
+        "name": "plugins.initDataSourcesAsync",
+        "resourceVersion": "1779789947610",
+        "creationTimestamp": "2026-05-26T10:05:47Z"
+      },
+      "spec": {
+        "description": "Initializes data source instance settings asynchronously from the API instead of synchronously from boot data",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "plugins.marketplaceLicensing",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -4138,6 +4167,40 @@
         "description": "Enables the query service to fetch the configuration from the settings service",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryHistory.localOnly",
+        "resourceVersion": "1779463558878",
+        "creationTimestamp": "2026-05-21T19:21:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-22 15:25:58.878199 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Store query history in browser IndexedDB instead of server-side",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryHistory.recentQueriesUI",
+        "resourceVersion": "1779463558878",
+        "creationTimestamp": "2026-05-21T19:21:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-22 15:25:58.878199 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Replace the Query History drawer with a new Recent Queries modal UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
         "expression": "false"
       }
     },

@@ -116,6 +116,7 @@ func (hs *HTTPServer) getShortURL(c *contextmodel.ReqContext) response.Response 
 		if shorturls.ErrShortURLNotFound.Is(err) {
 			return response.Err(shorturls.ErrShortURLNotFound.Errorf("shorturl not found: %w", err))
 		}
+		return response.Err(shorturls.ErrShortURLInternal.Errorf("failed to get short URL: %w", err))
 	}
 
 	return response.JSON(http.StatusOK, shortURL)
