@@ -11,8 +11,12 @@ import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles
 import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashScreenModal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
+import { getNodeKey } from 'app/core/navigation/navIndex';
+import { recordRecentNavItem } from 'app/core/navigation/recentNavItems';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
+import { useSelector } from 'app/types/store';
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
@@ -23,7 +27,7 @@ import {
 } from './ExtensionSidebar/ExtensionSidebar';
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
-import { useMegaMenuFocusHelper } from './MegaMenu/utils';
+import { getActiveItem, useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SingleTopBar } from './TopBar/SingleTopBar';
 import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useChromeHeaderHeight';
@@ -82,6 +86,20 @@ export function AppChrome({ children }: Props) {
     const queryParams = locationSearchToObject(search);
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
+
+  // Record the current page as a recently used nav item so the menu can surface it.
+  const navTree = useSelector((reduxState) => reduxState.navBarTree);
+  const currentPageNode = state.sectionNav?.node;
+  useEffect(() => {
+    if (state.chromeless || !currentPageNode) {
+      return;
+    }
+    const activeItem = getActiveItem(navTree, currentPageNode, pathname);
+    const id = activeItem ? getNodeKey(activeItem) : undefined;
+    if (id && id !== HOME_NAV_ID) {
+      recordRecentNavItem(id);
+    }
+  }, [navTree, currentPageNode, pathname, state.chromeless]);
 
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}

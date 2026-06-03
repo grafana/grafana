@@ -11,7 +11,12 @@ import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { buildNavIndex, getEffectivePinnedIds, isPinned as isItemPinned } from 'app/core/navigation';
+import {
+  buildNavIndex,
+  getEffectivePinnedIds,
+  isPinned as isItemPinned,
+  useRecentNavItemIds,
+} from 'app/core/navigation';
 import { useNavLayout } from 'app/core/navigation/useNavLayout';
 import { useSelector } from 'app/types/store';
 
@@ -19,6 +24,7 @@ import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { NavDropCelebration } from './NavDropCelebration';
+import { RecentlyUsedSection } from './RecentlyUsedSection';
 import { ShowMoreSection } from './ShowMoreSection';
 import {
   applySectionOrder,
@@ -84,6 +90,30 @@ export const MegaMenu = memo(
       () => applySectionOrder(primaryItems, sectionOrder ?? []),
       [primaryItems, sectionOrder]
     );
+
+    // Surface the most recently visited items that aren't already pinned into the primary list.
+    const recentIds = useRecentNavItemIds();
+    const recentItems = useMemo(() => {
+      if (!customizableMenu) {
+        return [];
+      }
+      const primaryIdSet = new Set(orderedPrimaryItems.map((item) => item.id));
+      const items: NavModelItem[] = [];
+      for (const id of recentIds) {
+        if (primaryIdSet.has(id)) {
+          continue;
+        }
+        const node = navIndex.get(id)?.node;
+        if (!node?.url) {
+          continue;
+        }
+        items.push(enrichWithInteractionTracking({ ...node, children: undefined }, state.megaMenuDocked));
+        if (items.length >= 3) {
+          break;
+        }
+      }
+      return items;
+    }, [customizableMenu, recentIds, orderedPrimaryItems, navIndex, state.megaMenuDocked]);
 
     const activeItem = getActiveItem(
       customizableMenu ? [...orderedPrimaryItems, ...overflowItems] : orderedPrimaryItems,
@@ -177,11 +207,7 @@ export const MegaMenu = memo(
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
         <nav ref={navRef} className={styles.content}>
           {celebration !== null && (
-            <NavDropCelebration
-              key={celebration.key}
-              top={celebration.top}
-              onComplete={clearCelebration}
-            />
+            <NavDropCelebration key={celebration.key} top={celebration.top} onComplete={clearCelebration} />
           )}
           <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
             <>
@@ -218,6 +244,15 @@ export const MegaMenu = memo(
                         </Draggable>
                       ))}
                       {droppableProvided.placeholder}
+                      {customizableMenu && (
+                        <RecentlyUsedSection
+                          items={recentItems}
+                          activeItem={activeItem}
+                          isPinned={isPinned}
+                          onPin={onPinItem}
+                          onClick={state.megaMenuDocked ? undefined : onClose}
+                        />
+                      )}
                       {customizableMenu && (
                         <ShowMoreSection
                           items={overflowItems}
