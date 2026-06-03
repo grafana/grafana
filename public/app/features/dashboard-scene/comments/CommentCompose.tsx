@@ -1,25 +1,32 @@
 import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 
+import { isAssistantAvailable } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, TextArea, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
+
+import { CommentAssistantButton } from './CommentAssistantButton';
+import { CommentReplyComposer } from './CommentReplyComposer';
+import { type CommentAssistantPinContext } from './commentAssistant';
 
 interface Props {
   x: number;
   y: number;
+  pin: CommentAssistantPinContext;
   onSubmit: (body: string) => void;
   onCancel: () => void;
 }
 
-export function CommentCompose({ x, y, onSubmit, onCancel }: Props) {
+export function CommentCompose({ x, y, pin, onSubmit, onCancel }: Props) {
   const styles = useStyles2(getStyles);
   const [body, setBody] = useState('');
+  const [mentionsEnabled, setMentionsEnabled] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    textAreaRef.current?.focus();
+    const sub = isAssistantAvailable().subscribe(setMentionsEnabled);
+    return () => sub.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -43,28 +50,24 @@ export function CommentCompose({ x, y, onSubmit, onCancel }: Props) {
 
   return (
     <div ref={ref} className={styles.popover} style={{ left: x, top: y }}>
-      <TextArea
-        ref={textAreaRef}
+      <CommentReplyComposer
         value={body}
-        onChange={(e) => setBody(e.currentTarget.value)}
-        placeholder={t('dashboard-scene.comments-compose.placeholder', 'Add a comment…')}
+        onChange={setBody}
+        onSubmit={submit}
+        mentionsEnabled={mentionsEnabled}
         rows={3}
-        onKeyDown={(e) => {
-          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-            e.preventDefault();
-            submit();
-          } else if (e.key === 'Escape') {
-            e.preventDefault();
-            onCancel();
-          }
-        }}
+        placeholder={t('dashboard-scene.comments-compose.placeholder', 'Add a comment…')}
+        submitLabel={t('dashboard-scene.comments-compose.send', 'Comment')}
       />
       <div className={styles.actions}>
+        <CommentAssistantButton
+          pin={pin}
+          origin="grafana/dashboard/comments/compose"
+          className={styles.assistantButton}
+        />
+        <div className={styles.actionsSpacer} />
         <Button size="sm" variant="secondary" fill="text" onClick={onCancel}>
           {t('dashboard-scene.comments-compose.cancel', 'Cancel')}
-        </Button>
-        <Button size="sm" variant="primary" onClick={submit} disabled={!body.trim()}>
-          {t('dashboard-scene.comments-compose.send', 'Comment')}
         </Button>
       </div>
     </div>
@@ -86,8 +89,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   actions: css({
     display: 'flex',
-    justifyContent: 'flex-end',
-    gap: theme.spacing(1),
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
     marginTop: theme.spacing(1.5),
+  }),
+  assistantButton: css({
+    color: theme.colors.text.secondary,
+  }),
+  actionsSpacer: css({
+    flex: 1,
   }),
 });

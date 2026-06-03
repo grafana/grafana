@@ -13,7 +13,7 @@ export interface UseCommentsResult {
   loading: boolean;
   error: string | null;
   addThread: (args: { anchor: PinCoord; context: PinContext; body: string }) => Promise<CommentThread | null>;
-  appendMessage: (threadId: number, args: { body: string }) => Promise<CommentMessage | null>;
+  appendMessage: (threadId: number, args: { body: string; authorType?: 'user' | 'assistant' }) => Promise<CommentMessage | null>;
   setResolved: (threadId: number, resolved: boolean) => Promise<void>;
   deleteThread: (threadId: number) => Promise<void>;
   refresh: () => Promise<void>;
@@ -68,11 +68,11 @@ export function useComments(dashboardUid: string): UseCommentsResult {
   );
 
   const appendMessage = useCallback<UseCommentsResult['appendMessage']>(
-    async (threadId, { body }) => {
+    async (threadId, { body, authorType = 'user' }) => {
       try {
         const msg = await getBackendSrv().post<CommentMessage>(
           `/api/dashboards/comments/threads/${threadId}/messages`,
-          { body }
+          { body, authorType }
         );
         setThreads((prev) =>
           prev.map((t) => (t.id === threadId ? { ...t, messages: [...t.messages, msg] } : t))

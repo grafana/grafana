@@ -20,11 +20,17 @@ type commentUserDTO struct {
 }
 
 type commentMessageDTO struct {
-	ID        int64          `json:"id"`
-	ThreadID  int64          `json:"threadId"`
-	Author    commentUserDTO `json:"author"`
-	Body      string         `json:"body"`
-	CreatedAt string         `json:"createdAt"`
+	ID         int64          `json:"id"`
+	ThreadID   int64          `json:"threadId"`
+	Author     commentUserDTO `json:"author"`
+	AuthorType string         `json:"authorType"`
+	Body       string         `json:"body"`
+	CreatedAt  string         `json:"createdAt"`
+}
+
+var assistantCommentAuthor = commentUserDTO{
+	ID:   0,
+	Name: "Grafana Assistant",
 }
 
 type commentAnchorDTO struct {
@@ -34,8 +40,8 @@ type commentAnchorDTO struct {
 }
 
 type commentContextDTO struct {
-	PanelTitle string              `json:"panelTitle"`
-	TimeRange  map[string]string   `json:"timeRange"`
+	PanelTitle string            `json:"panelTitle"`
+	TimeRange  map[string]string `json:"timeRange"`
 }
 
 type commentThreadDTO struct {
@@ -60,7 +66,8 @@ type updateThreadBody struct {
 }
 
 type addMessageBody struct {
-	Body string `json:"body"`
+	Body       string `json:"body"`
+	AuthorType string `json:"authorType,omitempty"`
 }
 
 func (hs *HTTPServer) getDashboardUIDFromPath(c *contextmodel.ReqContext) (string, response.Response) {
@@ -104,15 +111,27 @@ func firstNonEmpty(values ...string) string {
 	return ""
 }
 
+func (hs *HTTPServer) messageAuthorDTO(c *contextmodel.ReqContext, m *dashboardcomments.Message) commentUserDTO {
+	if m.AuthorType == dashboardcomments.AuthorTypeAssistant {
+		return assistantCommentAuthor
+	}
+	return hs.userDTO(c, m.AuthorUserID)
+}
+
 func (hs *HTTPServer) toThreadDTO(c *contextmodel.ReqContext, t *dashboardcomments.Thread) commentThreadDTO {
 	msgs := make([]commentMessageDTO, 0, len(t.Messages))
 	for _, m := range t.Messages {
+		authorType := m.AuthorType
+		if authorType == "" {
+			authorType = dashboardcomments.AuthorTypeUser
+		}
 		msgs = append(msgs, commentMessageDTO{
-			ID:        m.ID,
-			ThreadID:  m.ThreadID,
-			Author:    hs.userDTO(c, m.AuthorUserID),
-			Body:      m.Body,
-			CreatedAt: m.CreatedAt.UTC().Format("2006-01-02T15:04:05Z"),
+			ID:         m.ID,
+			ThreadID:   m.ThreadID,
+			Author:     hs.messageAuthorDTO(c, &m),
+			AuthorType: authorType,
+			Body:       m.Body,
+			CreatedAt:  m.CreatedAt.UTC().Format("2006-01-02T15:04:05Z"),
 		})
 	}
 	return commentThreadDTO{
@@ -248,21 +267,31 @@ func (hs *HTTPServer) AddDashboardCommentMessage(c *contextmodel.ReqContext) res
 	if err := web.Bind(c.Req, &body); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request", err)
 	}
+	authorType := body.AuthorType
+	if authorType == "" {
+		authorType = dashboardcomments.AuthorTypeUser
+	}
 	msg, err := hs.dashboardCommentsService.AddMessage(c.Req.Context(), &dashboardcomments.AddMessageCommand{
 		OrgID:        c.GetOrgID(),
 		ThreadID:     id,
 		AuthorUserID: c.SignedInUser.UserID,
+		AuthorType:   authorType,
 		Body:         body.Body,
 	})
 	if err != nil {
 		return hs.commentErrorResponse(err)
 	}
+	msgAuthorType := msg.AuthorType
+	if msgAuthorType == "" {
+		msgAuthorType = dashboardcomments.AuthorTypeUser
+	}
 	return response.JSON(http.StatusCreated, commentMessageDTO{
-		ID:        msg.ID,
-		ThreadID:  msg.ThreadID,
-		Author:    hs.userDTO(c, msg.AuthorUserID),
-		Body:      msg.Body,
-		CreatedAt: msg.CreatedAt.UTC().Format("2006-01-02T15:04:05Z"),
+		ID:         msg.ID,
+		ThreadID:   msg.ThreadID,
+		Author:     hs.messageAuthorDTO(c, msg),
+		AuthorType: msgAuthorType,
+		Body:       msg.Body,
+		CreatedAt:  msg.CreatedAt.UTC().Format("2006-01-02T15:04:05Z"),
 	})
 }
 

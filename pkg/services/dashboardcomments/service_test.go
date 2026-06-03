@@ -308,6 +308,21 @@ func TestAddMessage(t *testing.T) {
 		}
 	})
 
+	t.Run("assistant message uses author type", func(t *testing.T) {
+		msg, err := svc.AddMessage(context.Background(), &AddMessageCommand{
+			OrgID: 1, ThreadID: created.ID, AuthorUserID: 99, AuthorType: AuthorTypeAssistant, Body: "Here is my analysis.",
+		})
+		if err != nil {
+			t.Fatalf("unexpected: %v", err)
+		}
+		if msg.AuthorType != AuthorTypeAssistant {
+			t.Errorf("author type = %q, want assistant", msg.AuthorType)
+		}
+		if msg.AuthorUserID != 0 {
+			t.Errorf("author user id = %d, want 0", msg.AuthorUserID)
+		}
+	})
+
 	t.Run("thread not found", func(t *testing.T) {
 		_, err := svc.AddMessage(context.Background(), &AddMessageCommand{
 			OrgID: 1, ThreadID: 99999, AuthorUserID: 42, Body: "hi",
