@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -1613,4 +1614,59 @@ func (f fakeNode) SetInputTo(a string) {
 
 func (f fakeNode) DisabledErr() error {
 	return nil
+}
+
+func TestSanitizeHeaderValue(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "plain value passes through unchanged",
+			input:    "hello-world",
+			expected: "hello-world",
+		},
+		{
+			name:     "CR is stripped",
+			input:    "foo\rbar",
+			expected: "foobar",
+		},
+		{
+			name:     "LF is stripped",
+			input:    "foo\nbar",
+			expected: "foobar",
+		},
+		{
+			name:     "CRLF sequence is stripped",
+			input:    "foo\r\nbar",
+			expected: "foobar",
+		},
+		{
+			name:     "other ASCII control characters are stripped",
+			input:    "foo\x00\x01\x1f\x7fbar",
+			expected: "foobar",
+		},
+		{
+			name:     "value exactly 128 bytes is not truncated",
+			input:    strings.Repeat("a", 128),
+			expected: strings.Repeat("a", 128),
+		},
+		{
+			name:     "value longer than 128 bytes is truncated",
+			input:    strings.Repeat("a", 200),
+			expected: strings.Repeat("a", 128),
+		},
+		{
+			name:     "control chars removed before truncation check",
+			input:    strings.Repeat("a", 100) + "\r\n" + strings.Repeat("b", 100),
+			expected: strings.Repeat("a", 100) + strings.Repeat("b", 28),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, sanitizeHeaderValue(tt.input))
+		})
+	}
 }
