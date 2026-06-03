@@ -123,7 +123,7 @@ Use the following options to refine the value in your visualization.
 | Show | Set how much information to show. Choose from:<ul><li>**Calculate** - Reduces each value to a single value per series.</li><li>**All values** - Displays every value from a single series.</li></ul> |
 | Calculation | If you chose **Calculate** as your **Show** option, select a calculation to reduce each series. For information about available calculations, refer to [Calculation types](ref:calculation-types). |
 | Limit | If you chose **All values** as your **Show** option, enter a value to limit the number of values displayed. |
-| Fields | Select which field or fields to display in the visualization. Each field name is available on the list, or you can select one of the following options:<ul><li>**Numeric fields** - All fields with numerical values.</li><li>**All fields** - All fields that are not removed by transformations.</li><li>**Time** - All fields with time values.</li></ul> |
+| Fields | Select which field or fields to display in the visualization. Each field name is available on the list, or you can select one of the following options:<ul><li>**Numeric Fields** - All fields with numerical values.</li><li>**All Fields** - All fields that are not removed by transformations.</li></ul> |
 
 <!-- prettier-ignore-end -->
 
@@ -183,6 +183,8 @@ Use these settings to define how the legend appears in your visualization. For m
 ### Standard options
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+Thresholds aren't supported for pie chart visualizations.
 
 ### Data links and actions
 

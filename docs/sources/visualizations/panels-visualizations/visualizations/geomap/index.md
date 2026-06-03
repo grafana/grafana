@@ -226,7 +226,7 @@ You can add multiple layers of data to a single geomap in order to create rich, 
 
 #### Layer type
 
-There are eight map layer types to choose from in a geomap.
+Geomap has nine data layer types and five basemap layer types.
 
 - [Markers](#markers-layer) renders a marker at each data point.
 - [Heatmap](#heatmap-layer) visualizes a heatmap of the data.
@@ -241,10 +241,10 @@ There are eight map layer types to choose from in a geomap.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
 - [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
 
-There are also two experimental (or alpha) layer types.
+There are also two experimental, alpha layer types.
 
-- **Icon at last point (alpha)** renders an icon at the last data point.
-- **Dynamic GeoJSON (alpha)** styles a GeoJSON file based on query results.
+- **Icon at last point (Alpha)** renders an icon at the last data point.
+- **Dynamic GeoJSON (Alpha)** styles a GeoJSON file based on query results. It includes options for **GeoJSON URL**, **ID Field**, **Data style**, and **Default style**.
 
 To enable experimental layers. Set `enable_alpha` to `true` in your configuration file:
 
@@ -263,7 +263,7 @@ docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSIO
 
 Geomaps need a source of geographical data gathered from a data source query which can return multiple datasets. By default Grafana picks the first dataset, but this drop-down allows you to pick other datasets if the query returns more than one.
 
-#### Location mode
+#### Location Mode
 
 There are four options to map the data returned by the selected query:
 
@@ -286,11 +286,11 @@ The markers layer allows you to display data points as different marker shapes s
 | Option | Description |
 | ------ | ----------- |
 | Data | Configure the data settings for the layer. For more information, refer to [Data](#data). |
-| Location | Configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
+| Location | Configure the data settings for the layer. For more information, refer to [Location Mode](#location-mode). |
 | Size | Configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
 | Symbol | Allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
-| Symbol Vertical Align | Configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
-| Symbol Horizontal Align | Configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
+| Symbol vertical align | Configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
+| Symbol horizontal align | Configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
 | Color | Configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
 | Fill opacity | Configures the transparency of each marker. |
 | Rotation angle | Configures the rotation angle of each marker in degrees. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
@@ -330,7 +330,7 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
 | Option | Description |
 | ------ | ----------- |
 | GeoJSON URL | Provides a choice of GeoJSON files that are included with Grafana. You can also enter a URL manually, which supports variables. |
-| Default Style | Controls which styles to apply when no rules above match.<ul><li>**Color** - configures the color of the default style</li><li>**Opacity** - configures the default opacity</li></ul> |
+| Default style | Controls which styles to apply when no rules above match.<ul><li>**Color** - configures the color of the default style</li><li>**Opacity** - configures the default opacity</li></ul> |
 | Style Rules | Apply styles based on feature properties <ul><li>**Rule** - allows you to select a _feature_, _condition_, and _value_ from the GeoJSON file in order to define a rule. The trash bin icon can be used to delete the current rule.</li><li>**Color** - configures the color of the style for the current rule</li><li>**Opacity** - configures the transparency level for the current rule</li> |
 | Display tooltip | Allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
@@ -363,7 +363,7 @@ The Night / Day layer displays night and day regions based on the current time r
 | Option | Description |
 | ------ | ----------- |
 | Data | Configures the data set for the layer. For more information, refer to [Data](#data). |
-| Show | Toggles the time source from panel time range. |
+| Show | Selects which panel time range endpoint drives the night and day regions. Choose **From** or **To**. |
 | Night region color | Picks the color for the night region. |
 | Display sun | Toggles the sun icon. |
 | Opacity | Set the opacity from `0` (transparent) to `1` (opaque). |
@@ -524,12 +524,11 @@ The XYZ Tile layer is a map from a generic tile layer.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-xyz-9-1-0.png" max-width="600px" alt="Geomap panel xyz example" >}}
 
-- **URL template** - Set a valid tile server url, with {z}/{x}/{y} for example: https://tile.openstreetmap.org/{z}/{x}/{y}.png
-- **Attribution** sets the reference string for the layer if displayed in [map controls](#show-attribution)
+- **URL template** - Set a valid tile server URL, with {z}/{x}/{y} for example: `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. Dashboard variables are supported, for example, `https://example.com/maps/${version}/{z}/{x}/{y}.png`.
+- **Attribution** sets the reference string for the layer if displayed in [map controls](#show-attribution). Dashboard variables are supported.
 - **Min zoom** - Minimum zoom level. Tiles aren't loaded below this level.
 - **Max zoom** - Maximum zoom level provided by the server. Beyond this level, the map is rendered by scaling up existing tiles.
 - **Opacity** from 0 (transparent) to 1 (opaque)
-- **Dashboard variables** - You can use dashboard variables in both the **URL template** and **Attribution** fields. This allows you to dynamically switch map sources or versions. Example: `https://example.com/maps/${version}/{z}/{x}/{y}.png`.
 
 ##### More information
 
@@ -541,7 +540,7 @@ The XYZ Tile layer is a map from a generic tile layer.
 The MapLibre Style Layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
 
 - **URL template** - Set a valid style URL. For example: `https://demotiles.maplibre.org/style.json`
-- **Access Token** - An API token for mapbox maps. Only works for `mapbox://` URLs. Refer to [mapbox access tokens documentation](https://docs.mapbox.com/help/dive-deeper/access-tokens/) for more information. In other cases, you might have to include the token in the URL. For example: `https://example.com/map/style.json?key=XXX`.
+- **Public access token** - An API token for mapbox maps. Only works for `mapbox://` URLs. Refer to [mapbox access tokens documentation](https://docs.mapbox.com/help/dive-deeper/access-tokens/) for more information. In other cases, you might have to include the token in the URL. For example: `https://example.com/map/style.json?key=XXX`.
 
 ### Basemap layer options
 
@@ -571,7 +570,8 @@ Use the JSON configuration option `default_baselayer_config` to define the defau
 - **carto** loads the CartoDB tile server. You can choose from `auto`, `dark`, and `light` theme for the base map and can be set as shown below. The `showLabels` tag determines whether or not Grafana shows the Country details on top of the map. Here is an example:
 
 ```ini
-geomap_default_baselayer = `{
+[geomap]
+default_baselayer_config = `{
   "type": "carto",
   "config": {
     "theme": "auto",
@@ -586,7 +586,8 @@ geomap_default_baselayer = `{
 {{< tab-content name="World imagery" >}}
 
 ```ini
-geomap_default_baselayer = `{
+[geomap]
+default_baselayer_config = `{
   "type": "esri-xyz",
   "config": {
     "server": "world-imagery"
@@ -598,7 +599,8 @@ geomap_default_baselayer = `{
 {{< tab-content name="Custom" >}}
 
 ```ini
-geomap_default_baselayer = `{
+[geomap]
+default_baselayer_config = `{
   "type": "esri-xyz",
   "config": {
     "server": "custom",
