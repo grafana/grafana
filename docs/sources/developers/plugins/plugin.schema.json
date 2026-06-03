@@ -249,6 +249,10 @@
       "type": "string",
       "description": "Plugin category used on the Add new connection page. Can be one from the list: \"tsdb\", \"logging\", \"cloud\", \"tracing\", \"profiling\", \"sql\", \"enterprise\", \"iot\", \"other\", empty string or custom string"
     },
+    "docsPath": {
+      "type": "string",
+      "description": "Path to the directory containing plugin documentation."
+    },
     "enterpriseFeatures": {
       "type": "object",
       "description": "Grafana Enterprise specific features",
@@ -327,6 +331,10 @@
     "metrics": {
       "type": "boolean",
       "description": "For data source plugins, if the plugin supports metric queries. Used to enable the plugin in the panel editor."
+    },
+    "mixed": {
+      "type": "boolean",
+      "description": "[internal only] For data source plugins, marks the plugin as a 'mixed' data source — one whose queries each carry their own `datasource` reference and are delegated to other data sources. When `true`, Grafana preserves the per-query `datasource` field instead of overwriting it with the plugin's own ref. Used by the built-in `-- Mixed --` data source. Setting this on a regular data source plugin will break query routing."
     },
     "multiValueFilterOperators": {
       "type": "boolean",

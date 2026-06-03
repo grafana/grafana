@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 // mockServerInternal satisfies zanzana.ServerInternal for computeDiffStreaming tests.
@@ -43,13 +42,9 @@ func (m *mockServerInternal) ListAllStores(context.Context) ([]zanzana.StoreInfo
 func (m *mockServerInternal) WriteTuples(context.Context, *zanzana.StoreInfo, []*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition) error {
 	return nil
 }
-func (m *mockServerInternal) GetOpenFGAServer() openfgav1.OpenFGAServiceServer {
-	return nil
-}
-
-func (m *mockServerInternal) Read(_ context.Context, _ *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
+func (m *mockServerInternal) ReadTuples(_ context.Context, _ *zanzana.StoreInfo, _ *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
 	if len(m.pages) == 0 {
-		return &authzextv1.ReadResponse{}, nil
+		return &openfgav1.ReadResponse{}, nil
 	}
 	page := m.pages[0]
 	m.pages = m.pages[1:]
@@ -59,17 +54,13 @@ func (m *mockServerInternal) Read(_ context.Context, _ *authzextv1.ReadRequest) 
 		token = "next"
 	}
 
-	pageTuples := make([]*authzextv1.Tuple, 0)
-	for _, t := range page {
-		pageTuples = append(pageTuples, &authzextv1.Tuple{
-			Key:       common.ToAuthzExtTupleKey(t.GetKey()),
-			Timestamp: t.GetTimestamp(),
-		})
-	}
-	return &authzextv1.ReadResponse{
-		Tuples:            pageTuples,
+	return &openfgav1.ReadResponse{
+		Tuples:            page,
 		ContinuationToken: token,
 	}, nil
+}
+func (m *mockServerInternal) GetOpenFGAServer() openfgav1.OpenFGAServiceServer {
+	return nil
 }
 
 func makeTuple(user, relation, object string) *openfgav1.TupleKey {

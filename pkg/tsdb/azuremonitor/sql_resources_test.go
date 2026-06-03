@@ -58,7 +58,7 @@ func TestDiscoverResourcesForAzureMonitorSQL_ReturnsResources(t *testing.T) {
 func TestDiscoverResourcesForAzureMonitorSQL_TooManyResources(t *testing.T) {
 	n := azureMonitorSQLMaxResourcesPerQuery + 1
 	rows := make([]any, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		rows[i] = []any{fmt.Sprintf("vm%d", i), "rg1"}
 	}
 	payload := map[string]any{

@@ -10,13 +10,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/dskit/concurrency"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/dskit/concurrency"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/buffered"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/querydata"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
@@ -38,7 +38,7 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 	response := backend.NewQueryDataResponse()
 	var err error
 
-	config := backend.GrafanaConfigFromContext(ctx)
+	config := config.GrafanaConfigFromContext(ctx)
 
 	// We are testing running of queries in parallel behind feature flag
 	if config.FeatureToggles().IsEnabled("influxdbRunQueriesInParallel") {

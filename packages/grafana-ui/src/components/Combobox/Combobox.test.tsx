@@ -2,6 +2,8 @@ import { act, render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { mockComboboxRect } from '@grafana/test-utils';
+
 import { Drawer } from '../Drawer/Drawer';
 import { Field } from '../Forms/Field';
 import { Modal } from '../Modal/Modal';
@@ -47,18 +49,7 @@ describe('Combobox', () => {
 
   const onChangeHandler = jest.fn();
   beforeAll(() => {
-    const mockGetBoundingClientRect = jest.fn(() => ({
-      width: 120,
-      height: 120,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-    }));
-
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: mockGetBoundingClientRect,
-    });
+    mockComboboxRect();
   });
 
   afterEach(() => {
@@ -680,6 +671,34 @@ describe('Combobox', () => {
 
         expect(screen.queryByText(loadingMessage)).not.toBeInTheDocument();
       });
+    });
+  });
+
+  describe('onBlur', () => {
+    it('calls onBlur when the input loses focus', async () => {
+      const onBlurHandler = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} onBlur={onBlurHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+      await userEvent.tab();
+
+      expect(onBlurHandler).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls onBlur when tabbing away with the menu open', async () => {
+      const onBlurHandler = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} onBlur={onBlurHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      // Menu should be open
+      expect(await screen.findByRole('listbox')).toBeInTheDocument();
+
+      await userEvent.tab();
+
+      expect(onBlurHandler).toHaveBeenCalledTimes(1);
     });
   });
 

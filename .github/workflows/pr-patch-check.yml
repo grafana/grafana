@@ -1,29 +1,20 @@
 name: Dispatch check for patch conflicts
 on:
-  workflow_call:
-    inputs:
-      head_ref:
-        type: string
-        required: true
-      base_ref:
-        type: string
-        required: true
-      repo:
-        type: string
-        required: true
-      sender_login:
-        type: string
-        required: true
-      sha:
-        type: string
-        required: true
-      pr_commit_sha:
-        type: string
-        required: true
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - "main"
+      - "release-*"
 
-permissions:
-  id-token: write
-  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # If a new commit is applied, just give up.
+  cancel-in-progress: true
+
+permissions: {}
 
 # Since this is run on a pull request, we want to apply the patches intended for the
 # target branch onto the source branch, to verify compatibility before merging.
@@ -34,34 +25,27 @@ jobs:
     # it as a success
     if: ${{ ! github.event.pull_request.head.repo.fork }}
     env:
-      HEAD_REF: ${{ inputs.head_ref }}
+      HEAD_REF: ${{ github.head_ref }}
       BASE_REF: ${{ github.base_ref }}
-      REPO: ${{ inputs.repo }}
-      SENDER: ${{ inputs.sender_login }}
-      SHA: ${{ inputs.sha }}
-      PR_COMMIT_SHA: ${{ inputs.pr_commit_sha }}
+      REPO: ${{ github.repository }}
+      SENDER: ${{ github.event.sender.login }}
+      SHA: ${{ github.sha }}
+      PR_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      statuses: write
     steps:
-      - name: "Get vault secrets"
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: "Generate token"
-        id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        with:
-          # App needs Actions: Read/Write for the grafana/security-patch-actions repo
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          permissions: "{\"actions\": \"write\", \"workflows\": \"write\"}"
-          repositories: "[\"security-patch-actions\"]"
+          github_app: grafana-releases-oss
       - name: "Dispatch job"
         uses: actions/github-script@v8
         with:
-          github-token: ${{ steps.generate_token.outputs.token }}
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             const {HEAD_REF, BASE_REF, REPO, SENDER, SHA, PR_COMMIT_SHA} = process.env;
 
@@ -80,6 +64,69 @@ jobs:
                   triggering_github_handle: SENDER
                 }
             })
+      - name: "Wait for success"
+        # Only run metadata reads (status/conclusion) — never fetch logs or artifacts,
+        # since the security-patch-actions workflow output must not be exposed.
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
+          script: |
+            const {HEAD_REF, REPO} = process.env;
+
+            const maxWaitMs = 10 * 60 * 1000;
+            const pollIntervalMs = 15 * 1000;
+            const startTime = Date.now();
+            // Include a 60s lookback buffer to cover the time spent in the dispatch step.
+            const createdAfter = new Date(startTime - 60 * 1000).toISOString();
+
+            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            let runId = null;
+
+            while (true) {
+              if (Date.now() - startTime >= maxWaitMs) {
+                core.setFailed('Timed out after 10 minutes waiting for patch check to complete');
+                return;
+              }
+
+              if (!runId) {
+                const { data } = await github.rest.actions.listWorkflowRuns({
+                  owner: 'grafana',
+                  repo: 'security-patch-actions',
+                  workflow_id: 'test-patches-event.yml',
+                  branch: 'main',
+                  created: `>${createdAfter}`,
+                  per_page: 5,
+                });
+
+                const matchingRun = data.workflow_runs.find(
+                  run => run.name && run.name.includes(REPO) && run.name.includes(HEAD_REF)
+                );
+                if (matchingRun) {
+                  runId = matchingRun.id;
+                } else {
+                  await sleep(pollIntervalMs);
+                  continue;
+                }
+              }
+
+              const { data: run } = await github.rest.actions.getWorkflowRun({
+                owner: 'grafana',
+                repo: 'security-patch-actions',
+                run_id: runId,
+              });
+
+              if (run.status === 'completed') {
+                if (run.conclusion === 'success') {
+                  return;
+                }
+                core.setFailed(`Patch check failed (conclusion: ${run.conclusion})`);
+                return;
+              }
+
+              await sleep(pollIntervalMs);
+            }
+
   dispatch-job-fork:
     # If the source is from a fork then use the built-in workflow token to create the same status and unconditionally
     # mark it as a success.
@@ -88,12 +135,6 @@ jobs:
       statuses: write
     runs-on: ubuntu-latest
     steps:
-      - name: Create status
-        uses: myrotvorets/set-commit-status-action@6d6905c99cd24a4a2cbccc720b62dc6ca5587141
-        with:
-          token: ${{ github.token }}
-          sha: ${{ inputs.pr_commit_sha }}
-          repo: ${{ inputs.repo }}
-          status: success
-          context: "Test Patches (event)"
-          description: "Test Patches (event) on a fork"
+      - name: All good
+        run: |
+          echo "It is not possible to check patches of a fork, unfortunately. We're working on it :-)"

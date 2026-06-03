@@ -133,7 +133,7 @@ func TestValidation(t *testing.T) {
 		}{{
 			name:   "too long",
 			expect: []string{"group is too long"},
-			input:  []string{strings.Repeat("0", 61)},
+			input:  []string{strings.Repeat("0", 129)},
 		}, {
 			name:   "too short",
 			expect: []string{"group is too short"},
@@ -142,7 +142,7 @@ func TestValidation(t *testing.T) {
 			name: "ok",
 			input: []string{
 				"hello",
-				strings.Repeat("a", 60), // long... alpha
+				strings.Repeat("a", 128), // long... alpha
 				"dashboards.grafana.app",
 				"prometheus-datasource",
 				"1234", // just a numbers

@@ -1,4 +1,4 @@
-# Owned by grafana-release-guild
+# Owned by grafana-backend-services-squad
 # Intended to be dropped into the base repo (Ex: grafana/grafana) for use in the security mirror.
 name: Create security patch
 run-name: create-security-patch

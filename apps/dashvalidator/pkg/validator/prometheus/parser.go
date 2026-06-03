@@ -18,7 +18,7 @@ func NewParser() *Parser {
 // For example: "rate(http_requests_total[5m])" returns ["http_requests_total"]
 func (p *Parser) ExtractMetrics(query string) ([]string, error) {
 	// Parse the PromQL expression
-	expr, err := parser.ParseExpr(query)
+	expr, err := parser.NewParser(parser.Options{}).ParseExpr(query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse PromQL query: %w", err)
 	}

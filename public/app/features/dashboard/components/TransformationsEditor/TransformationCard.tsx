@@ -34,19 +34,18 @@ export function TransformationCard({
   const theme = useTheme2();
   const styles = useStyles2(getCardStyles, fullWidth);
 
-  // Check to see if the transform is applicable to the given data
   let applicabilityScore = TransformationApplicabilityLevels.Applicable;
-  if (data.length > 0 && transform.transformation.isApplicable !== undefined) {
-    applicabilityScore = transform.transformation.isApplicable(data);
+  if (data.length > 0 && transform.isApplicable !== undefined) {
+    applicabilityScore = transform.isApplicable(data);
   }
   const isApplicable = applicabilityScore > 0;
 
   let applicabilityDescription = null;
-  if (data.length > 0 && transform.transformation.isApplicableDescription !== undefined) {
-    if (typeof transform.transformation.isApplicableDescription === 'function') {
-      applicabilityDescription = transform.transformation.isApplicableDescription(data);
+  if (data.length > 0 && transform.isApplicableDescription !== undefined) {
+    if (typeof transform.isApplicableDescription === 'function') {
+      applicabilityDescription = transform.isApplicableDescription(data);
     } else {
-      applicabilityDescription = transform.transformation.isApplicableDescription;
+      applicabilityDescription = transform.isApplicableDescription;
     }
   }
 
@@ -78,7 +77,12 @@ export function TransformationCard({
         <Text variant="bodySmall">{description || ''}</Text>
         {showIllustrations && imageUrl && <img className={styles.image} src={imageUrl} alt={transform.name} />}
         {!isApplicable && applicabilityDescription !== null && (
-          <IconButton className={styles.applicableInfoButton} name="info-circle" tooltip={applicabilityDescription} />
+          <IconButton
+            className={styles.applicableInfoButton}
+            name="info-circle"
+            tooltip={applicabilityDescription}
+            data-testid={selectors.components.Transforms.applicabilityInfo}
+          />
         )}
       </Card.Description>
     </Card>

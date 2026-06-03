@@ -15,6 +15,10 @@ type metrics struct {
 	requestDurationSeconds *prometheus.HistogramVec
 	// batchCheckPhaseDurationSeconds measures the duration of each batch check phase
 	batchCheckPhaseDurationSeconds *prometheus.HistogramVec
+	// inflightRequests tracks current in-flight requests by method
+	inflightRequests *prometheus.GaugeVec
+	// rejectedRequests counts requests rejected by the concurrency limiter
+	rejectedRequests *prometheus.CounterVec
 }
 
 func newZanzanaServerMetrics(reg prometheus.Registerer) *metrics {
@@ -38,6 +42,24 @@ func newZanzanaServerMetrics(reg prometheus.Registerer) *metrics {
 				Buckets:   prometheus.ExponentialBuckets(0.00001, 4, 10),
 			},
 			[]string{"phase"},
+		),
+		inflightRequests: promauto.With(reg).NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name:      "inflight_requests",
+				Help:      "Current number of in-flight requests",
+				Namespace: metricsNamespace,
+				Subsystem: metricsSubSystem,
+			},
+			[]string{"method"},
+		),
+		rejectedRequests: promauto.With(reg).NewCounterVec(
+			prometheus.CounterOpts{
+				Name:      "rejected_requests_total",
+				Help:      "Total requests rejected by the concurrency limiter",
+				Namespace: metricsNamespace,
+				Subsystem: metricsSubSystem,
+			},
+			[]string{"method", "limiter"},
 		),
 	}
 }

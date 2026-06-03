@@ -4,7 +4,6 @@
       "label-advanced": "Gelişmiş"
     },
     "advanced-resource-picker": {
-      "aria-label-add": "Ekle",
       "aria-label-remove": "Kaldır",
       "button-add-resource": "Kaynak ekle",
       "button-add-resource-uri": "Kaynak URI'si ekle",

@@ -2,13 +2,16 @@ package folderimpl
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"slices"
 	"testing"
 
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -221,9 +224,8 @@ func TestGetChildren(t *testing.T) {
 					},
 				},
 			},
-			Limit:  folderSearchLimit, // should default to folderSearchLimit
-			Offset: 0,                 // should be set as limit * (page - 1)
-			Page:   1,                 // should be set to 1 by default
+			Limit:  folderSearchLimit, // q.Limit defaults to folderSearchLimit
+			Offset: 0,                 // q.Limit * (q.Page - 1) with defaulted Page=1
 		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -285,9 +287,8 @@ func TestGetChildren(t *testing.T) {
 					},
 				},
 			},
-			Limit:  folderSearchLimit, // should default to folderSearchLimit
-			Offset: 0,                 // should be set as limit * (page - 1)
-			Page:   1,                 // should be set to 1 by default
+			Limit:  folderSearchLimit, // q.Limit defaults to folderSearchLimit
+			Offset: 0,                 // q.Limit * (q.Page - 1) with defaulted Page=1
 		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -337,8 +338,7 @@ func TestGetChildren(t *testing.T) {
 				},
 			},
 			Limit:  10,
-			Offset: 20, // should be set as limit * (page - 1)
-			Page:   3,
+			Offset: 20, // q.Limit * (q.Page - 1) = 10 * (3 - 1)
 		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -465,9 +465,8 @@ func TestGetChildren(t *testing.T) {
 					},
 				},
 			},
-			Limit:  folderSearchLimit, // should default to folderSearchLimit
-			Offset: 0,                 // should be set as limit * (page - 1)
-			Page:   1,                 // should be set to 1 by default
+			Limit:  folderSearchLimit, // q.Limit defaults to folderSearchLimit
+			Offset: 0,                 // q.Limit * (q.Page - 1) with defaulted Page=1
 		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -685,277 +684,288 @@ func TestGetFolders(t *testing.T) {
 	}
 }
 
+// expectSearchChildren sets up a Search mock that matches a multi-value `In`
+// on the given parents and returns rows for each parent's children. The row
+// Key.Name is the child UID and the first cell is the parent UID (matches
+// the column definition the implementation does not actually inspect, but
+// mirrors the existing TestGetChildren mock shape).
+func expectSearchChildren(mockCli *client.MockK8sHandler, orgID int64, parents []string, byParent map[string][]string) {
+	matcher := func(req *resourcepb.ResourceSearchRequest) bool {
+		// Internal searchChildren applies no visibility filters, so the
+		// request should carry exactly one Fields entry: the folder In.
+		if req == nil || req.Options == nil || len(req.Options.Fields) != 1 {
+			return false
+		}
+		f := req.Options.Fields[0]
+		return f.Key == resource.SEARCH_FIELD_FOLDER &&
+			f.Operator == string(selection.In) &&
+			slices.Equal(f.Values, parents)
+	}
+	var rows []*resourcepb.ResourceTableRow
+	for _, p := range parents {
+		for _, uid := range byParent[p] {
+			rows = append(rows, &resourcepb.ResourceTableRow{
+				Key:   &resourcepb.ResourceKey{Name: uid, Resource: "folder"},
+				Cells: [][]byte{[]byte(p)},
+			})
+		}
+	}
+	mockCli.On("Search", mock.Anything, orgID, mock.MatchedBy(matcher)).Return(&resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: []*resourcepb.ResourceTableColumnDefinition{
+				{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
+			},
+			Rows: rows,
+		},
+		TotalHits: int64(len(rows)),
+	}, nil).Once()
+}
+
+// expectGetFolder sets up a minimal Get mock returning an Unstructured for the
+// given UID. The body is intentionally minimal — the call sites here only need
+// existence, not field fidelity.
+func expectGetFolder(mockCli *client.MockK8sHandler, uid string, orgID int64) {
+	mockCli.On("Get", mock.Anything, uid, orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{"name": uid},
+		},
+	}, nil).Once()
+}
+
 func TestGetDescendants(t *testing.T) {
 	orgID := int64(1)
+	ctx := context.Background()
 
-	type args struct {
-		ctx         context.Context
-		orgID       int64
-		ancestorUID string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		mock    func(mockCli *client.MockK8sHandler)
-		want    []*folder.Folder
-		wantErr bool
-	}{
-		{
-			name: "should return all descendants in a tree structure",
-			args: args{
-				ctx:         context.Background(),
-				orgID:       orgID,
-				ancestorUID: "root",
-			},
-			mock: func(mockCli *client.MockK8sHandler) {
-				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:    folderListLimit,
-					TypeMeta: metav1.TypeMeta{},
-				}).Return(&unstructured.UnstructuredList{
-					Items: []unstructured.Unstructured{
-						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"name": "root",
-									"uid":  "root",
-								},
-								"spec": map[string]interface{}{
-									"title": "Root",
-								},
-							},
-						},
-						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"name":        "child1",
-									"uid":         "child1",
-									"annotations": map[string]interface{}{"grafana.app/folder": "root"},
-								},
-								"spec": map[string]interface{}{
-									"title": "Child1",
-								},
-							},
-						},
-						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"name":        "child2",
-									"uid":         "child2",
-									"annotations": map[string]interface{}{"grafana.app/folder": "child1"},
-								},
-								"spec": map[string]interface{}{
-									"title": "Child2",
-								},
-							},
-						},
-						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"name":        "child3",
-									"uid":         "child3",
-									"annotations": map[string]interface{}{"grafana.app/folder": "root"},
-								},
-								"spec": map[string]interface{}{
-									"title": "Child3",
-								},
-							},
-						},
-					},
-				}, nil).Once()
-			},
-			want: []*folder.Folder{
-				{
-					UID:   "child1",
-					Title: "Child1",
-					OrgID: orgID,
-				},
-				{
-					UID:   "child2",
-					Title: "Child2",
-					OrgID: orgID,
-				},
-				{
-					UID:   "child3",
-					Title: "Child3",
-					OrgID: orgID,
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "should return empty list when ancestor has no descendants",
-			args: args{
-				ctx:         context.Background(),
-				orgID:       orgID,
-				ancestorUID: "leaf",
-			},
-			mock: func(mockCli *client.MockK8sHandler) {
-				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:    folderListLimit,
-					TypeMeta: metav1.TypeMeta{},
-				}).Return(&unstructured.UnstructuredList{
-					Items: []unstructured.Unstructured{
-						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"name": "leaf",
-									"uid":  "leaf",
-								},
-								"spec": map[string]interface{}{
-									"title": "Leaf",
-								},
-							},
-						},
-						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"name":        "other",
-									"uid":         "other",
-									"annotations": map[string]interface{}{"grafana.app/folder": "parent"},
-								},
-								"spec": map[string]interface{}{
-									"title": "Other",
-								},
-							},
-						},
-					},
-				}, nil).Once()
-			},
-			want:    []*folder.Folder{},
-			wantErr: false,
-		},
-		{
-			name: "should detect circular reference and return error",
-			args: args{
-				ctx:         context.Background(),
-				orgID:       orgID,
-				ancestorUID: "a",
-			},
-			mock: func(mockCli *client.MockK8sHandler) {
-				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:    folderListLimit,
-					TypeMeta: metav1.TypeMeta{},
-				}).Return(&unstructured.UnstructuredList{
-					Items: []unstructured.Unstructured{
-						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"name":        "a",
-									"uid":         "a",
-									"annotations": map[string]interface{}{"grafana.app/folder": "c"},
-								},
-								"spec": map[string]interface{}{
-									"title": "A",
-								},
-							},
-						},
-						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"name":        "b",
-									"uid":         "b",
-									"annotations": map[string]interface{}{"grafana.app/folder": "a"},
-								},
-								"spec": map[string]interface{}{
-									"title": "B",
-								},
-							},
-						},
-						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"name":        "c",
-									"uid":         "c",
-									"annotations": map[string]interface{}{"grafana.app/folder": "b"},
-								},
-								"spec": map[string]interface{}{
-									"title": "C",
-								},
-							},
-						},
-					},
-				}, nil).Once()
-			},
-			want:    nil,
-			wantErr: true,
-		},
-		{
-			name: "should detect self-referencing cycle and return error",
-			args: args{
-				ctx:         context.Background(),
-				orgID:       orgID,
-				ancestorUID: "self",
-			},
-			mock: func(mockCli *client.MockK8sHandler) {
-				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:    folderListLimit,
-					TypeMeta: metav1.TypeMeta{},
-				}).Return(&unstructured.UnstructuredList{
-					Items: []unstructured.Unstructured{
-						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"name":        "self",
-									"uid":         "self",
-									"annotations": map[string]interface{}{"grafana.app/folder": "child"},
-								},
-								"spec": map[string]interface{}{
-									"title": "Self",
-								},
-							},
-						},
-						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"name":        "child",
-									"uid":         "child",
-									"annotations": map[string]interface{}{"grafana.app/folder": "self"},
-								},
-								"spec": map[string]interface{}{
-									"title": "Child",
-								},
-							},
-						},
-					},
-				}, nil).Once()
-			},
-			want:    nil,
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockCLI := new(client.MockK8sHandler)
-			tt.mock(mockCLI)
-			tracer := noop.NewTracerProvider().Tracer("TestGetDescendants")
-			ss := &FolderUnifiedStoreImpl{
-				k8sclient:   mockCLI,
-				userService: usertest.NewUserServiceFake(),
-				tracer:      tracer,
-			}
-			got, err := ss.GetDescendants(tt.args.ctx, tt.args.orgID, tt.args.ancestorUID)
-			if tt.wantErr {
-				require.ErrorIs(t, err, folder.ErrCircularReference)
-				return
-			}
-			require.NoError(t, err)
-			require.Len(t, got, len(tt.want))
+	t.Run("returns full subtree via level-by-level search", func(t *testing.T) {
+		mockCli := new(client.MockK8sHandler)
+		expectGetFolder(mockCli, "root", orgID)
+		// One Search per level (parents at that level batched into a single In).
+		expectSearchChildren(mockCli, orgID, []string{"root"}, map[string][]string{"root": {"child1", "child3"}})
+		expectSearchChildren(mockCli, orgID, []string{"child1", "child3"}, map[string][]string{"child1": {"child2"}})
+		expectSearchChildren(mockCli, orgID, []string{"child2"}, nil)
 
-			// Create a map for easier comparison since order may vary
-			gotMap := make(map[string]*folder.Folder)
-			for _, f := range got {
-				gotMap[f.UID] = f
-			}
-			require.Len(t, gotMap, len(tt.want))
+		ss := &FolderUnifiedStoreImpl{
+			k8sclient:   mockCli,
+			userService: usertest.NewUserServiceFake(),
+			tracer:      noop.NewTracerProvider().Tracer("test"),
+			log:         log.New("test"),
+			maxDepth:    8,
+		}
+		got, err := ss.GetDescendants(ctx, orgID, "root")
+		require.NoError(t, err)
 
-			for _, want := range tt.want {
-				gotFolder, exists := gotMap[want.UID]
-				require.True(t, exists, "Expected folder with UID %s not found", want.UID)
-				require.Equal(t, want.Title, gotFolder.Title)
-				require.Equal(t, want.OrgID, gotFolder.OrgID)
+		gotUIDs := make([]string, 0, len(got))
+		for _, f := range got {
+			gotUIDs = append(gotUIDs, f.UID)
+			require.Equal(t, orgID, f.OrgID)
+		}
+		require.ElementsMatch(t, []string{"child1", "child2", "child3"}, gotUIDs)
+		mockCli.AssertExpectations(t)
+	})
+
+	t.Run("returns empty when ancestor is a leaf", func(t *testing.T) {
+		mockCli := new(client.MockK8sHandler)
+		expectGetFolder(mockCli, "leaf", orgID)
+		expectSearchChildren(mockCli, orgID, []string{"leaf"}, nil)
+
+		ss := &FolderUnifiedStoreImpl{
+			k8sclient:   mockCli,
+			userService: usertest.NewUserServiceFake(),
+			tracer:      noop.NewTracerProvider().Tracer("test"),
+			log:         log.New("test"),
+			maxDepth:    8,
+		}
+		got, err := ss.GetDescendants(ctx, orgID, "leaf")
+		require.NoError(t, err)
+		require.Empty(t, got)
+		mockCli.AssertExpectations(t)
+	})
+
+	t.Run("propagates ErrFolderNotFound when ancestor is missing", func(t *testing.T) {
+		mockCli := new(client.MockK8sHandler)
+		mockCli.On("Get", mock.Anything, "missing", orgID, mock.Anything, mock.Anything).
+			Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "folders.folder.grafana.app", Resource: "folder"}, "missing")).Once()
+
+		ss := &FolderUnifiedStoreImpl{
+			k8sclient:   mockCli,
+			userService: usertest.NewUserServiceFake(),
+			tracer:      noop.NewTracerProvider().Tracer("test"),
+			log:         log.New("test"),
+			maxDepth:    8,
+		}
+		_, err := ss.GetDescendants(ctx, orgID, "missing")
+		require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+		mockCli.AssertExpectations(t)
+	})
+
+	t.Run("detects 3-node cycle", func(t *testing.T) {
+		// a -> b -> c -> a
+		mockCli := new(client.MockK8sHandler)
+		expectGetFolder(mockCli, "a", orgID)
+		expectSearchChildren(mockCli, orgID, []string{"a"}, map[string][]string{"a": {"b"}})
+		expectSearchChildren(mockCli, orgID, []string{"b"}, map[string][]string{"b": {"c"}})
+		expectSearchChildren(mockCli, orgID, []string{"c"}, map[string][]string{"c": {"a"}})
+
+		ss := &FolderUnifiedStoreImpl{
+			k8sclient:   mockCli,
+			userService: usertest.NewUserServiceFake(),
+			tracer:      noop.NewTracerProvider().Tracer("test"),
+			log:         log.New("test"),
+			maxDepth:    8,
+		}
+		_, err := ss.GetDescendants(ctx, orgID, "a")
+		require.ErrorIs(t, err, folder.ErrCircularReference)
+	})
+
+	t.Run("detects self-referencing cycle", func(t *testing.T) {
+		// self -> self
+		mockCli := new(client.MockK8sHandler)
+		expectGetFolder(mockCli, "self", orgID)
+		expectSearchChildren(mockCli, orgID, []string{"self"}, map[string][]string{"self": {"self"}})
+
+		ss := &FolderUnifiedStoreImpl{
+			k8sclient:   mockCli,
+			userService: usertest.NewUserServiceFake(),
+			tracer:      noop.NewTracerProvider().Tracer("test"),
+			log:         log.New("test"),
+			maxDepth:    8,
+		}
+		_, err := ss.GetDescendants(ctx, orgID, "self")
+		require.ErrorIs(t, err, folder.ErrCircularReference)
+	})
+
+	t.Run("level with more parents than descendantsBatchSize fires chunked Search calls", func(t *testing.T) {
+		// 150 root children at level 1 — exceeds descendantsBatchSize=100,
+		// so the level-2 walk must split into one Search per chunk-of-100
+		// parents (slices.Chunk).
+		mockCli := new(client.MockK8sHandler)
+		expectGetFolder(mockCli, "root", orgID)
+
+		n := descendantsBatchSize + descendantsBatchSize/2 // 150
+		level1 := make([]string, n)
+		for i := range n {
+			level1[i] = fmt.Sprintf("c%03d", i)
+		}
+		expectSearchChildren(mockCli, orgID, []string{"root"}, map[string][]string{"root": level1})
+		// Two chunked Search calls at level 2; both return no children.
+		expectSearchChildren(mockCli, orgID, level1[:descendantsBatchSize], nil)
+		expectSearchChildren(mockCli, orgID, level1[descendantsBatchSize:], nil)
+
+		ss := &FolderUnifiedStoreImpl{
+			k8sclient:   mockCli,
+			userService: usertest.NewUserServiceFake(),
+			tracer:      noop.NewTracerProvider().Tracer("test"),
+			log:         log.New("test"),
+			maxDepth:    8,
+		}
+		got, err := ss.GetDescendants(ctx, orgID, "root")
+		require.NoError(t, err)
+		require.Len(t, got, n)
+		mockCli.AssertExpectations(t)
+	})
+
+	t.Run("depth cap with descendants still queued returns ErrMaximumDepthReached", func(t *testing.T) {
+		// Tree of height 3 (root -> l1 -> l2 -> l3) with maxDepth=1. The loop
+		// processes levels 0, 1 and 2 (root, l1, l2), then exits with l3
+		// still queued. Returning the partial subtree would let Service.Delete
+		// leave the rest behind, so we surface ErrMaximumDepthReached instead.
+		mockCli := new(client.MockK8sHandler)
+		expectGetFolder(mockCli, "root", orgID)
+		expectSearchChildren(mockCli, orgID, []string{"root"}, map[string][]string{"root": {"l1"}})
+		expectSearchChildren(mockCli, orgID, []string{"l1"}, map[string][]string{"l1": {"l2"}})
+		expectSearchChildren(mockCli, orgID, []string{"l2"}, map[string][]string{"l2": {"l3"}})
+
+		ss := &FolderUnifiedStoreImpl{
+			k8sclient:   mockCli,
+			userService: usertest.NewUserServiceFake(),
+			tracer:      noop.NewTracerProvider().Tracer("test"),
+			log:         log.New("test"),
+			maxDepth:    1,
+		}
+		_, err := ss.GetDescendants(ctx, orgID, "root")
+		require.ErrorIs(t, err, folder.ErrMaximumDepthReached)
+		mockCli.AssertExpectations(t)
+		mockCli.AssertNotCalled(t, "Search", mock.Anything, orgID, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			return req != nil && req.Options != nil && len(req.Options.Fields) > 0 &&
+				req.Options.Fields[0].Key == resource.SEARCH_FIELD_FOLDER &&
+				len(req.Options.Fields[0].Values) == 1 &&
+				req.Options.Fields[0].Values[0] == "l3"
+		}))
+	})
+}
+
+func TestSearchChildren(t *testing.T) {
+	orgID := int64(1)
+	ctx := context.Background()
+
+	t.Run("does not validate parent existence and applies no visibility filters", func(t *testing.T) {
+		mockCli := new(client.MockK8sHandler)
+		// Only Search is expected; Get is NOT called for the parent.
+		expectSearchChildren(mockCli, orgID, []string{"some-parent"}, map[string][]string{"some-parent": {"a", "b"}})
+
+		ss := &FolderUnifiedStoreImpl{
+			k8sclient:   mockCli,
+			userService: usertest.NewUserServiceFake(),
+			tracer:      noop.NewTracerProvider().Tracer("test"),
+		}
+		got, err := ss.searchChildren(ctx, orgID, []string{"some-parent"})
+		require.NoError(t, err)
+		require.Len(t, got, 2)
+		mockCli.AssertExpectations(t)
+		mockCli.AssertNotCalled(t, "Get", mock.Anything, "some-parent", orgID, mock.Anything, mock.Anything)
+	})
+
+	t.Run("paginates when a page returns searchPageSize hits", func(t *testing.T) {
+		mockCli := new(client.MockK8sHandler)
+
+		// Build searchPageSize+1 children so the first Search returns a full
+		// page (triggering the inner page loop) and the second returns the
+		// remaining hit.
+		n := searchPageSize + 1
+		children := make([]string, n)
+		for i := range n {
+			children[i] = fmt.Sprintf("c%05d", i)
+		}
+
+		buildResp := func(uids []string) *resourcepb.ResourceSearchResponse {
+			rows := make([]*resourcepb.ResourceTableRow, len(uids))
+			for i, uid := range uids {
+				rows[i] = &resourcepb.ResourceTableRow{
+					Key:   &resourcepb.ResourceKey{Name: uid, Resource: "folder"},
+					Cells: [][]byte{[]byte("root")},
+				}
 			}
-		})
-	}
+			return &resourcepb.ResourceSearchResponse{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{
+						{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
+					},
+					Rows: rows,
+				},
+				TotalHits: int64(len(rows)),
+			}
+		}
+		pageMatcher := func(offset int64) any {
+			return mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+				return req != nil && req.Limit == int64(searchPageSize) && req.Offset == offset
+			})
+		}
+
+		mockCli.On("Search", mock.Anything, orgID, pageMatcher(0)).
+			Return(buildResp(children[:searchPageSize]), nil).Once()
+		mockCli.On("Search", mock.Anything, orgID, pageMatcher(int64(searchPageSize))).
+			Return(buildResp(children[searchPageSize:]), nil).Once()
+
+		ss := &FolderUnifiedStoreImpl{
+			k8sclient:   mockCli,
+			userService: usertest.NewUserServiceFake(),
+			tracer:      noop.NewTracerProvider().Tracer("test"),
+		}
+		got, err := ss.searchChildren(ctx, orgID, []string{"root"})
+		require.NoError(t, err)
+		require.Len(t, got, n)
+		mockCli.AssertExpectations(t)
+	})
 }
 
 func TestBuildFolderFullPaths(t *testing.T) {

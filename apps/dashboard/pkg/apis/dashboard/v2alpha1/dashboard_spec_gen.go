@@ -816,24 +816,24 @@ func (DashboardFieldColor) OpenAPIModelName() string {
 type DashboardFieldColorModeId string
 
 const (
-	DashboardFieldColorModeIdThresholds           DashboardFieldColorModeId = "thresholds"
-	DashboardFieldColorModeIdPaletteClassic       DashboardFieldColorModeId = "palette-classic"
-	DashboardFieldColorModeIdPaletteClassicByName DashboardFieldColorModeId = "palette-classic-by-name"
-	DashboardFieldColorModeIdContinuousViridis    DashboardFieldColorModeId = "continuous-viridis"
-	DashboardFieldColorModeIdContinuousMagma      DashboardFieldColorModeId = "continuous-magma"
-	DashboardFieldColorModeIdContinuousPlasma     DashboardFieldColorModeId = "continuous-plasma"
-	DashboardFieldColorModeIdContinuousInferno    DashboardFieldColorModeId = "continuous-inferno"
-	DashboardFieldColorModeIdContinuousCividis    DashboardFieldColorModeId = "continuous-cividis"
-	DashboardFieldColorModeIdContinuousGrYlRd     DashboardFieldColorModeId = "continuous-GrYlRd"
-	DashboardFieldColorModeIdContinuousRdYlGr     DashboardFieldColorModeId = "continuous-RdYlGr"
-	DashboardFieldColorModeIdContinuousBlYlRd     DashboardFieldColorModeId = "continuous-BlYlRd"
-	DashboardFieldColorModeIdContinuousYlRd       DashboardFieldColorModeId = "continuous-YlRd"
-	DashboardFieldColorModeIdContinuousBlPu       DashboardFieldColorModeId = "continuous-BlPu"
-	DashboardFieldColorModeIdContinuousYlBl       DashboardFieldColorModeId = "continuous-YlBl"
-	DashboardFieldColorModeIdContinuousBlues      DashboardFieldColorModeId = "continuous-blues"
-	DashboardFieldColorModeIdContinuousReds       DashboardFieldColorModeId = "continuous-reds"
-	DashboardFieldColorModeIdContinuousGreens     DashboardFieldColorModeId = "continuous-greens"
-	DashboardFieldColorModeIdContinuousPurples    DashboardFieldColorModeId = "continuous-purples"
+	DashboardFieldColorModeIdThresholds               DashboardFieldColorModeId = "thresholds"
+	DashboardFieldColorModeIdPaletteClassic           DashboardFieldColorModeId = "palette-classic"
+	DashboardFieldColorModeIdPaletteClassicByName     DashboardFieldColorModeId = "palette-classic-by-name"
+	DashboardFieldColorModeIdContinuousViridis        DashboardFieldColorModeId = "continuous-viridis"
+	DashboardFieldColorModeIdContinuousMagma          DashboardFieldColorModeId = "continuous-magma"
+	DashboardFieldColorModeIdContinuousPlasma         DashboardFieldColorModeId = "continuous-plasma"
+	DashboardFieldColorModeIdContinuousInferno        DashboardFieldColorModeId = "continuous-inferno"
+	DashboardFieldColorModeIdContinuousCividis        DashboardFieldColorModeId = "continuous-cividis"
+	DashboardFieldColorModeIdContinuousGrYlRd         DashboardFieldColorModeId = "continuous-GrYlRd"
+	DashboardFieldColorModeIdContinuousRdYlGr         DashboardFieldColorModeId = "continuous-RdYlGr"
+	DashboardFieldColorModeIdContinuousBlYlRd         DashboardFieldColorModeId = "continuous-BlYlRd"
+	DashboardFieldColorModeIdContinuousYlRd           DashboardFieldColorModeId = "continuous-YlRd"
+	DashboardFieldColorModeIdContinuousBlPu           DashboardFieldColorModeId = "continuous-BlPu"
+	DashboardFieldColorModeIdContinuousYlBl           DashboardFieldColorModeId = "continuous-YlBl"
+	DashboardFieldColorModeIdContinuousBlues          DashboardFieldColorModeId = "continuous-blues"
+	DashboardFieldColorModeIdContinuousReds           DashboardFieldColorModeId = "continuous-reds"
+	DashboardFieldColorModeIdContinuousGreens         DashboardFieldColorModeId = "continuous-greens"
+	DashboardFieldColorModeIdContinuousPurples        DashboardFieldColorModeId = "continuous-purples"
 	DashboardFieldColorModeIdFixed                    DashboardFieldColorModeId = "fixed"
 	DashboardFieldColorModeIdShades                   DashboardFieldColorModeId = "shades"
 	DashboardFieldColorModeIdPaletteAiZeitgeistV2     DashboardFieldColorModeId = "palette-ai-zeitgeist-v2"
@@ -1876,14 +1876,15 @@ func (DashboardVariableOption) OpenAPIModelName() string {
 }
 
 // Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
 // +k8s:openapi-gen=true
 type DashboardVariableHide string
 
 const (
-	DashboardVariableHideDontHide     DashboardVariableHide = "dontHide"
-	DashboardVariableHideHideLabel    DashboardVariableHide = "hideLabel"
-	DashboardVariableHideHideVariable DashboardVariableHide = "hideVariable"
+	DashboardVariableHideDontHide       DashboardVariableHide = "dontHide"
+	DashboardVariableHideHideLabel      DashboardVariableHide = "hideLabel"
+	DashboardVariableHideHideVariable   DashboardVariableHide = "hideVariable"
+	DashboardVariableHideInControlsMenu DashboardVariableHide = "inControlsMenu"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for DashboardVariableHide.

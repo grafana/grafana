@@ -290,7 +290,10 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     const noTransforms = !transformations?.length;
     const hasTransforms = transformations.length > 0;
     let suffix: React.ReactNode = null;
-    let xforms = standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
+    let xforms = standardTransformersRegistry
+      .list()
+      .filter((t) => !t.excludeFromPicker)
+      .sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
 
     if (this.state.selectedFilter !== VIEW_ALL_VALUE) {
       xforms = xforms.filter(
