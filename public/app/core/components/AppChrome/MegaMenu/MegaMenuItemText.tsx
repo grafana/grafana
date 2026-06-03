@@ -5,6 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Icon, IconButton, Link, useTheme2 } from '@grafana/ui';
+import { canPinItem } from 'app/core/navigation/projectNavTree';
 import { contextSrv } from 'app/core/services/context_srv';
 
 export interface Props {
@@ -13,16 +14,28 @@ export interface Props {
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
   url: string;
+  navId?: string;
   onPin: (id?: string) => void;
   isPinned?: boolean;
   itemName: string;
 }
 
-export function MegaMenuItemText({ children, isActive, onClick, target, url, onPin, isPinned, itemName }: Props) {
+export function MegaMenuItemText({
+  children,
+  isActive,
+  onClick,
+  target,
+  url,
+  navId,
+  onPin,
+  isPinned,
+  itemName,
+}: Props) {
   const theme = useTheme2();
 
   const styles = getStyles(theme, isActive);
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
+  const showPin = contextSrv.isSignedIn && canPinItem(navId);
 
   const linkContent = (
     <div className={styles.linkContent}>
@@ -47,14 +60,18 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
       >
         {linkContent}
       </LinkComponent>
-      {contextSrv.isSignedIn && url && url !== '/bookmarks' && (
+      {showPin && (
         <IconButton
-          name="bookmark"
+          name="gf-pin"
           className={'pin-icon'}
           iconType={isPinned ? 'solid' : 'default'}
-          onClick={() => onPin(url)}
+          onClick={() => onPin(navId)}
           aria-pressed={isPinned}
-          tooltip={t('navigation.item.bookmark.tooltip', 'Bookmark {{itemName}}', { itemName })}
+          tooltip={
+            isPinned
+              ? t('navigation.item.unpin.tooltip', 'Unpin {{itemName}} from menu', { itemName })
+              : t('navigation.item.pin.tooltip', 'Pin {{itemName}} to menu', { itemName })
+          }
         />
       )}
     </div>

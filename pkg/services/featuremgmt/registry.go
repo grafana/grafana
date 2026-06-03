@@ -1793,6 +1793,14 @@ var (
 			Expression:  "false", // enabled by default
 		},
 		{
+			Name:        "customizableMegaMenu",
+			Description: "Enables pin/unpin, show-more overflow, and nav layout preferences in the mega menu",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaCatalogSquad,
+			Generate:    Generate{LegacyFrontend: true},
+			Expression:  "true",
+		},
+		{
 			Name:        "metricsFromProfiles",
 			Description: "Enables creating metrics from profiles and storing them as recording rules",
 			Stage:       FeatureStagePrivatePreview,

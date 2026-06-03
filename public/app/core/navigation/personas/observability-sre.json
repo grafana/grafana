@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "personaId": "observability-sre",
+  "pinnedIds": ["home", "explore", "drilldown", "alerting", "infrastructure"],
+  "order": ["home", "explore", "drilldown", "alerting", "infrastructure"]
+}

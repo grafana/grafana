@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "personaId": "kubernetes-platform",
+  "pinnedIds": ["home", "infrastructure", "connections", "apps"],
+  "order": ["home", "infrastructure", "connections", "apps"]
+}

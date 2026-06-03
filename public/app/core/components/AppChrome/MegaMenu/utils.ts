@@ -61,7 +61,7 @@ export const enrichWithInteractionTracking = (
     reportInteraction('grafana_navigation_item_clicked', {
       path: newItem.url ?? newItem.id,
       menuIsDocked: megaMenuDockedState,
-      itemIsBookmarked: newItem?.parentItem?.id === 'bookmarks',
+      itemIsPinned: Boolean(newItem?.id),
       isNew,
     });
     onClick?.();

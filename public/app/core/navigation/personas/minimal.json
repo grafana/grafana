@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "personaId": "minimal",
+  "pinnedIds": ["home", "dashboards/browse", "explore"],
+  "order": ["home", "dashboards/browse", "explore"]
+}

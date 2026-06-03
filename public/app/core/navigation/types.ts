@@ -1,30 +1,20 @@
-import { type Location } from 'history';
-import { type ComponentType } from 'react';
-import { type Params } from 'react-router-dom-v5-compat';
+export const NAV_LAYOUT_VERSION = 1;
 
-import { type UrlQueryMap } from '@grafana/data';
-
-export interface GrafanaRouteComponentProps<T extends {} = {}, Q = UrlQueryMap> {
-  route: RouteDescriptor;
-  queryParams: Q;
-  location: Location;
+export interface NavLayoutConfig {
+  version?: number;
+  personaId?: string;
+  pinnedIds?: string[];
+  order?: string[];
+  expandedOverflow?: boolean;
 }
 
-export type GrafanaRouteComponent<T extends {} = any> = ComponentType<GrafanaRouteComponentProps<T>>;
+export interface NavLayoutPreference {
+  bookmarkUrls?: string[];
+  layout?: NavLayoutConfig;
+}
 
-export interface RouteDescriptor {
-  path: string;
-  component: GrafanaRouteComponent;
-  roles?: () => string[];
-  pageClass?: string;
-  /** Can be used like an id for the route if the same component is used by many routes */
-  routeName?: string;
-  chromeless?: boolean;
-  sensitive?: boolean;
-
-  /**
-   * Allow the route to be access by anonymous users.
-   * Currently only used when using the frontend-service.
-   */
-  allowAnonymous?: boolean | ((params: Readonly<Params<string>>) => boolean);
+export interface ProjectedNavTree {
+  primary: import('@grafana/data').NavModelItem[];
+  overflow: import('@grafana/data').NavModelItem[];
+  expandedOverflow: boolean;
 }

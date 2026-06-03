@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "personaId": "admin",
+  "pinnedIds": ["home", "plugins", "cfg/access", "connections"],
+  "order": ["home", "plugins", "cfg/access", "connections"]
+}

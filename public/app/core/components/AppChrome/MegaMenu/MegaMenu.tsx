@@ -1,23 +1,25 @@
 import { css } from '@emotion/css';
 import { type DOMAttributes } from '@react-types/shared';
-import { memo, forwardRef, useCallback } from 'react';
+import { memo, forwardRef, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { usePatchUserPreferencesMutation } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { setBookmark } from 'app/core/reducers/navBarTree';
-import { useDispatch, useSelector } from 'app/types/store';
+import { buildNavIndex, getEffectivePinnedIds, isPinned as isItemPinned } from 'app/core/navigation';
+import { useNavLayout } from 'app/core/navigation/useNavLayout';
+import { contextSrv } from 'app/core/services/context_srv';
+import { useSelector } from 'app/types/store';
 
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
-import { MegaMenuItem } from './MegaMenuItem';
-import { usePinnedItems } from './hooks';
-import { enrichWithInteractionTracking, findByUrl, getActiveItem } from './utils';
+import { MegaMenuPrimaryList } from './MegaMenuPrimaryList';
+import { NavPersonaMenu } from './NavPersonaMenu';
+import { ShowMoreSection } from './ShowMoreSection';
+import { enrichWithInteractionTracking, getActiveItem } from './utils';
 
 export const MENU_WIDTH = '300px';
 
@@ -31,36 +33,45 @@ export const MegaMenu = memo(
     const styles = useStyles2(getStyles);
     const location = useLocation();
     const { chrome } = useGrafana();
-    const dispatch = useDispatch();
     const state = chrome.useState();
-    const [patchPreferences] = usePatchUserPreferencesMutation();
-    const pinnedItems = usePinnedItems();
+    const customizableMenu = config.featureToggles.customizableMegaMenu ?? true;
 
-    // Remove profile + help from tree
-    const navItems = navTree
-      .filter((item) => item.id !== 'profile' && item.id !== 'help')
-      .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
+    const canonicalItems = useMemo(
+      () =>
+        navTree
+          .filter((item) => item.id !== 'profile' && item.id !== 'help' && item.id !== 'bookmarks')
+          .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked)),
+      [navTree, state.megaMenuDocked]
+    );
 
-    const bookmarksItem = navItems.find((item) => item.id === 'bookmarks');
-    if (bookmarksItem) {
-      // Add children to the bookmarks section
-      bookmarksItem.children = pinnedItems.reduce((acc: NavModelItem[], url) => {
-        const item = findByUrl(navItems, url);
-        if (!item) {
-          return acc;
-        }
-        const newItem = {
-          id: item.id,
-          text: item.text,
-          url: item.url,
-          parentItem: { id: 'bookmarks', text: 'Bookmarks' },
+    const { projected, layout, onTogglePin, onReorder, onApplyPersona, onOverflowExpandedChange } = useNavLayout(
+      navTree,
+      location.pathname
+    );
+
+    const navIndex = useMemo(() => buildNavIndex(navTree), [navTree]);
+    const pinnedSet = useMemo(() => getEffectivePinnedIds(layout, navIndex), [layout, navIndex]);
+
+    const { primaryItems, overflowItems, expandedOverflow } = useMemo(() => {
+      if (!customizableMenu) {
+        return {
+          primaryItems: canonicalItems,
+          overflowItems: [] as NavModelItem[],
+          expandedOverflow: false,
         };
-        acc.push(enrichWithInteractionTracking(newItem, state.megaMenuDocked));
-        return acc;
-      }, []);
-    }
+      }
+      return {
+        primaryItems: projected.primary.map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked)),
+        overflowItems: projected.overflow.map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked)),
+        expandedOverflow: projected.expandedOverflow,
+      };
+    }, [customizableMenu, canonicalItems, projected, state.megaMenuDocked]);
 
-    const activeItem = getActiveItem(navItems, state.sectionNav.node, location.pathname);
+    const activeItem = getActiveItem(
+      customizableMenu ? [...primaryItems, ...overflowItems] : canonicalItems,
+      state.sectionNav.node,
+      location.pathname
+    );
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -70,37 +81,23 @@ export const MegaMenu = memo(
     };
 
     const isPinned = useCallback(
-      (url?: string) => {
-        if (!url || !pinnedItems?.length) {
+      (id?: string) => {
+        if (!customizableMenu || !id) {
           return false;
         }
-        return pinnedItems?.includes(url);
+        return isItemPinned(id, pinnedSet);
       },
-      [pinnedItems]
+      [customizableMenu, pinnedSet]
     );
 
-    const onPinItem = (item: NavModelItem) => {
-      const { url } = item;
-      if (url) {
-        const isSaved = isPinned(url);
-        const newItems = isSaved ? pinnedItems.filter((i) => url !== i) : [...pinnedItems, url];
-        const interactionName = isSaved ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned';
-        reportInteraction(interactionName, {
-          path: url,
-        });
-        patchPreferences({
-          patchPrefsCmd: {
-            navbar: {
-              bookmarkUrls: newItems,
-            },
-          },
-        }).then((data) => {
-          if (!data.error) {
-            dispatch(setBookmark({ item: item, isSaved: !isSaved }));
-          }
-        });
-      }
-    };
+    const onPinItem = useCallback(
+      (item: NavModelItem) => {
+        if (item.id && customizableMenu) {
+          onTogglePin(item.id);
+        }
+      },
+      [customizableMenu, onTogglePin]
+    );
 
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
@@ -108,17 +105,30 @@ export const MegaMenu = memo(
         <nav className={styles.content}>
           <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
             <>
+              {customizableMenu && contextSrv.isSignedIn && (
+                <NavPersonaMenu currentPersonaId={layout.personaId} onApplyPersona={onApplyPersona} />
+              )}
               <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
-                {navItems.map((link, index) => (
-                  <MegaMenuItem
-                    key={link.text}
-                    link={link}
-                    isPinned={isPinned}
-                    onClick={state.megaMenuDocked ? undefined : onClose}
+                <MegaMenuPrimaryList
+                  items={primaryItems}
+                  isPinned={isPinned}
+                  onClick={state.megaMenuDocked ? undefined : onClose}
+                  activeItem={activeItem}
+                  onPin={onPinItem}
+                  onReorder={customizableMenu ? onReorder : undefined}
+                  enableDragAndDrop={customizableMenu}
+                />
+                {customizableMenu && (
+                  <ShowMoreSection
+                    items={overflowItems}
                     activeItem={activeItem}
+                    defaultExpanded={expandedOverflow}
+                    isPinned={isPinned}
                     onPin={onPinItem}
+                    onClick={state.megaMenuDocked ? undefined : onClose}
+                    onExpandedChange={onOverflowExpandedChange}
                   />
-                ))}
+                )}
               </ul>
               <MegaMenuExtensionPoint />
             </>
@@ -131,43 +141,24 @@ export const MegaMenu = memo(
 
 MegaMenu.displayName = 'MegaMenu';
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    content: css({
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: 0,
-      flexGrow: 1,
-      position: 'relative',
-    }),
-    mobileHeader: css({
-      display: 'flex',
-      justifyContent: 'space-between',
-      padding: theme.spacing(1, 1, 1, 2),
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-
-      [theme.breakpoints.up('md')]: {
-        display: 'none',
-      },
-    }),
-    itemList: css({
-      boxSizing: 'border-box',
-      display: 'flex',
-      flexDirection: 'column',
-      listStyleType: 'none',
-      padding: theme.spacing(1, 1, 2, 0.5),
-      [theme.breakpoints.up('md')]: {
-        width: MENU_WIDTH,
-      },
-    }),
-    dockMenuButton: css({
-      display: 'none',
-      position: 'relative',
-      top: theme.spacing(1),
-
-      [theme.breakpoints.up('xl')]: {
-        display: 'inline-flex',
-      },
-    }),
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  content: css({
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: 0,
+    position: 'relative',
+    whiteSpace: 'nowrap',
+    width: MENU_WIDTH,
+  }),
+  itemList: css({
+    boxSizing: 'border-box',
+    display: 'flex',
+    flexDirection: 'column',
+    listStyle: 'none',
+    overflowX: 'hidden',
+    overflowY: 'unset',
+    padding: theme.spacing(1, 1, 0, 0.5),
+    width: MENU_WIDTH,
+    gap: theme.spacing(0.25),
+  }),
+});

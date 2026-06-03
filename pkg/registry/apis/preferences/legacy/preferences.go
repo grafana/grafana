@@ -147,6 +147,15 @@ func (s *preferenceStorage) save(ctx context.Context, obj runtime.Object) (runti
 		cmd.Navbar = &pref.NavbarPreference{
 			BookmarkUrls: p.Spec.Navbar.BookmarkUrls,
 		}
+		if p.Spec.Navbar.Layout != nil {
+			cmd.Navbar.Layout = &pref.NavLayoutPreference{
+				Version:          p.Spec.Navbar.Layout.Version,
+				PersonaId:        p.Spec.Navbar.Layout.PersonaId,
+				PinnedIds:        p.Spec.Navbar.Layout.PinnedIds,
+				Order:            p.Spec.Navbar.Layout.Order,
+				ExpandedOverflow: p.Spec.Navbar.Layout.ExpandedOverflow,
+			}
+		}
 	}
 
 	switch owner.Owner {
@@ -305,9 +314,18 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 			}
 		}
 
-		if len(p.JSONData.Navbar.BookmarkUrls) > 0 {
+		if len(p.JSONData.Navbar.BookmarkUrls) > 0 || p.JSONData.Navbar.Layout != nil {
 			obj.Spec.Navbar = &preferences.PreferencesNavbarPreference{
 				BookmarkUrls: p.JSONData.Navbar.BookmarkUrls,
+			}
+			if p.JSONData.Navbar.Layout != nil {
+				obj.Spec.Navbar.Layout = &preferences.PreferencesNavLayoutPreference{
+					Version:          p.JSONData.Navbar.Layout.Version,
+					PersonaId:        p.JSONData.Navbar.Layout.PersonaId,
+					PinnedIds:        p.JSONData.Navbar.Layout.PinnedIds,
+					Order:            p.JSONData.Navbar.Layout.Order,
+					ExpandedOverflow: p.JSONData.Navbar.Layout.ExpandedOverflow,
+				}
 			}
 		}
 	}

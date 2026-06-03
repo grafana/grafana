@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "personaId": "dashboard-builder",
+  "pinnedIds": ["home", "dashboards/browse", "starred", "explore"],
+  "order": ["home", "dashboards/browse", "starred", "explore"]
+}

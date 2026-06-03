@@ -26,8 +26,16 @@ export type UpdateUserPreferencesApiResponse =
 export type UpdateUserPreferencesApiArg = {
   updatePrefsCmd: UpdatePrefsCmd;
 };
+export type NavLayoutPreference = {
+  version?: number;
+  personaId?: string;
+  pinnedIds?: string[];
+  order?: string[];
+  expandedOverflow?: boolean;
+};
 export type PreferencesNavbarPreference = {
   bookmarkUrls?: string[];
+  layout?: NavLayoutPreference;
 };
 export type PreferencesQueryHistoryPreference = {
   /** one of: '' | 'query' | 'starred'; */
@@ -64,6 +72,7 @@ export type SuccessResponseBody = {
 };
 export type NavbarPreference = {
   bookmarkUrls?: string[];
+  layout?: NavLayoutPreference;
 };
 export type QueryHistoryPreference = {
   homeTab?: string;

@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "personaId": "alerting-owner",
+  "pinnedIds": ["home", "alerting", "alerts-and-incidents"],
+  "order": ["home", "alerting", "alerts-and-incidents"]
+}

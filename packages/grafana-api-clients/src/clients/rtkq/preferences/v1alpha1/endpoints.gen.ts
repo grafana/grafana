@@ -360,8 +360,16 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
+export type NavLayoutPreference = {
+  version?: number;
+  personaId?: string;
+  pinnedIds?: string[];
+  order?: string[];
+  expandedOverflow?: boolean;
+};
 export type PreferencesNavbarPreference = {
-  bookmarkUrls: string[];
+  bookmarkUrls?: string[];
+  layout?: NavLayoutPreference;
 };
 export type PreferencesQueryHistoryPreference = {
   /** one of: '' | 'query' | 'starred'; */

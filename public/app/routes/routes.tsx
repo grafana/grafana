@@ -533,7 +533,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/bookmarks',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "BookmarksPage"*/ 'app/features/bookmarks/BookmarksPage')
+        () => import(/* webpackChunkName: "BookmarksRedirect"*/ 'app/features/bookmarks/BookmarksRedirect')
       ),
     },
     {

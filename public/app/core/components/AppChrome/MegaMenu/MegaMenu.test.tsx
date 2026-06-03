@@ -4,32 +4,35 @@ import { render } from 'test/test-utils';
 
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { MegaMenu } from './MegaMenu';
 
-const setup = () => {
-  const navBarTree: NavModelItem[] = [
-    {
-      text: 'Section name',
-      id: 'section',
-      url: 'section',
-      children: [
-        {
-          text: 'Child1',
-          id: 'child1',
-          url: 'section/child1',
-          children: [{ text: 'Grandchild1', id: 'grandchild1', url: 'section/child1/grandchild1' }],
-        },
-        { text: 'Child2', id: 'child2', url: 'section/child2' },
-      ],
-    },
-    {
-      text: 'Profile',
-      id: 'profile',
-      url: 'profile',
-    },
-  ];
+const navBarTree: NavModelItem[] = [
+  {
+    text: 'Section name',
+    id: 'section',
+    url: 'section',
+    children: [
+      {
+        text: 'Child1',
+        id: 'child1',
+        url: 'section/child1',
+        children: [{ text: 'Grandchild1', id: 'grandchild1', url: 'section/child1/grandchild1' }],
+      },
+      { text: 'Child2', id: 'child2', url: 'section/child2' },
+    ],
+  },
+  {
+    text: 'Profile',
+    id: 'profile',
+    url: 'profile',
+  },
+];
+
+const setup = (customizableMegaMenu = false) => {
+  config.featureToggles.customizableMegaMenu = customizableMegaMenu;
 
   const store = configureStore({ navBarTree });
   return render(<MegaMenu onClose={() => {}} />, { store });
@@ -38,7 +41,9 @@ const setup = () => {
 describe('MegaMenu', () => {
   afterEach(() => {
     window.localStorage.clear();
+    config.featureToggles.customizableMegaMenu = true;
   });
+
   it('should render component', async () => {
     setup();
 
@@ -66,5 +71,10 @@ describe('MegaMenu', () => {
     setup();
 
     expect(screen.queryByLabelText('Profile')).not.toBeInTheDocument();
+  });
+
+  it('should render show me more when customizable menu is enabled', async () => {
+    setup(true);
+    expect(await screen.findByText('Show me more')).toBeInTheDocument();
   });
 });

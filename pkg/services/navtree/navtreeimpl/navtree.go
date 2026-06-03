@@ -181,18 +181,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	// It happens in setIndexViewData (pkg/api/index.go) AFTER RunIndexDataHooks,
 	// so enterprise hooks have a chance to add items before empty sections are pruned.
 
-	if c.IsSignedIn {
-		treeRoot.AddSection(&navtree.NavLink{
-			Text:           "Bookmarks",
-			Id:             navtree.NavIDBookmarks,
-			Icon:           "bookmark",
-			SortWeight:     navtree.WeightBookmarks,
-			Children:       []*navtree.NavLink{},
-			EmptyMessageId: "bookmarks-empty",
-			Url:            s.cfg.AppSubURL + "/bookmarks",
-		})
-	}
-
 	return treeRoot, nil
 }
 
