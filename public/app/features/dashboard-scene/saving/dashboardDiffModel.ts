@@ -1,4 +1,4 @@
-import { sceneGraph, type VizPanel } from '@grafana/scenes';
+import { behaviors, sceneGraph, sceneUtils, type VizPanel } from '@grafana/scenes';
 import { type Dashboard, type Panel, type VariableModel } from '@grafana/schema';
 import {
   type Spec as DashboardV2Spec,
@@ -12,7 +12,8 @@ import { type DashboardDataDTO } from 'app/types/dashboard';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { findVizPanelByKey, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../utils/utils';
 
 export type ChangeType = 'changed' | 'added' | 'removed';
 
@@ -21,6 +22,7 @@ export interface PanelChangeRow {
   type: ChangeType;
   title: string;
   height: number;
+  revert: () => void;
 }
 
 export interface FieldChange {
@@ -28,6 +30,7 @@ export interface FieldChange {
   type: ChangeType;
   oldText: string;
   newText: string;
+  revert: () => void;
 }
 
 export interface VisualDiffModel {
@@ -46,10 +49,34 @@ const DEFAULT_PANEL_HEIGHT = DEFAULT_PANEL_GRID_HEIGHT * ROW_UNIT_HEIGHT;
 
 type SaveModel = Dashboard | DashboardV2Spec;
 
+// Dashboard-level options we surface, keyed so the revert logic can map a change back to the right
+// piece of scene state regardless of which schema produced it.
+type OptionKey = 'title' | 'description' | 'tags' | 'editable' | 'timezone' | 'weekStart' | 'refresh' | 'tooltip';
+
+interface RawPanelRow {
+  id: number;
+  type: ChangeType;
+  title: string;
+  height: number;
+}
+
+interface RawFieldChange {
+  label: string;
+  type: ChangeType;
+  oldText: string;
+  newText: string;
+}
+
+interface RawOptionChange extends RawFieldChange {
+  key: OptionKey;
+}
+
 /**
  * Builds the data backing the visual diff: a throwaway scene per version (so panels render with live
- * data) plus the structured lists of panel/variable/option changes. The scene rendering core is
- * schema agnostic; only the change enumeration branches on the v1/v2 schema shape.
+ * data) plus the structured lists of panel/variable/option changes. Each change carries a `revert`
+ * callback that mutates the live dashboard so the change is excluded on save, by copying the value
+ * from the old-version scene. The scene rendering and revert core are schema agnostic; only the
+ * change enumeration branches on the v1/v2 schema shape.
  */
 export function buildVisualDiff(dashboard: DashboardScene, oldValue: SaveModel, newValue: SaveModel): VisualDiffModel {
   const { from, to, timeZone } = readCurrentTimeRange(dashboard);
@@ -60,21 +87,36 @@ export function buildVisualDiff(dashboard: DashboardScene, oldValue: SaveModel, 
   const oldPanels = mapScenePanelsById(oldScene);
   const newPanels = mapScenePanelsById(newScene);
 
-  let panelRows: PanelChangeRow[] = [];
-  let variableChanges: FieldChange[] = [];
-  let optionChanges: FieldChange[] = [];
+  let rawPanelRows: RawPanelRow[] = [];
+  let rawVariableChanges: RawFieldChange[] = [];
+  let rawOptionChanges: RawOptionChange[] = [];
 
   if (isDashboardV2Spec(oldValue) && isDashboardV2Spec(newValue)) {
-    panelRows = computeV2PanelRows(oldValue, newValue);
-    variableChanges = computeV2VariableChanges(oldValue, newValue);
-    optionChanges = computeV2OptionChanges(oldValue, newValue);
+    rawPanelRows = computeV2PanelRows(oldValue, newValue);
+    rawVariableChanges = computeV2VariableChanges(oldValue, newValue);
+    rawOptionChanges = computeV2OptionChanges(oldValue, newValue);
   } else if (!isDashboardV2Spec(oldValue) && !isDashboardV2Spec(newValue)) {
-    panelRows = computeV1PanelRows(oldValue, newValue);
-    variableChanges = computeV1VariableChanges(oldValue, newValue);
-    optionChanges = computeV1OptionChanges(oldValue, newValue);
+    rawPanelRows = computeV1PanelRows(oldValue, newValue);
+    rawVariableChanges = computeV1VariableChanges(oldValue, newValue);
+    rawOptionChanges = computeV1OptionChanges(oldValue, newValue);
   }
   // The two versions are always the same schema (the change calculation converts both to a common
   // form), so a mixed pair leaves the lists empty rather than guessing.
+
+  const panelRows: PanelChangeRow[] = rawPanelRows.map((row) => ({
+    ...row,
+    revert: () => revertPanel(dashboard, oldScene, row),
+  }));
+
+  const variableChanges: FieldChange[] = rawVariableChanges.map((change) => ({
+    ...change,
+    revert: () => revertVariable(dashboard, oldScene, change.label),
+  }));
+
+  const optionChanges: FieldChange[] = rawOptionChanges.map(({ key, ...change }) => ({
+    ...change,
+    revert: () => revertOption(dashboard, oldScene, key),
+  }));
 
   return { oldScene, newScene, oldPanels, newPanels, panelRows, variableChanges, optionChanges };
 }
@@ -124,20 +166,114 @@ function mapScenePanelsById(scene: DashboardScene): Map<number, VizPanel> {
   return map;
 }
 
+// --- revert (mutates the live dashboard by copying from the old-version scene) ---
+
+function revertPanel(dashboard: DashboardScene, oldScene: DashboardScene, row: RawPanelRow): void {
+  const key = getVizPanelKeyForPanelId(row.id);
+  const livePanel = findVizPanelByKey(dashboard, key);
+  const oldPanel = findVizPanelByKey(oldScene, key);
+
+  if (row.type === 'added') {
+    if (livePanel) {
+      dashboard.removePanel(livePanel);
+    }
+    return;
+  }
+
+  if (row.type === 'removed') {
+    if (oldPanel) {
+      dashboard.addPanel(oldPanel.clone());
+    }
+    return;
+  }
+
+  // changed: replace the live panel's state with the old version (re-runs its queries).
+  if (livePanel && oldPanel) {
+    livePanel.setState(sceneUtils.cloneSceneObjectState(oldPanel.state, { key: livePanel.state.key }));
+  }
+}
+
+function revertVariable(dashboard: DashboardScene, oldScene: DashboardScene, name: string): void {
+  const liveSet = dashboard.state.$variables;
+  if (!liveSet) {
+    return;
+  }
+
+  const current = liveSet.state.variables;
+  const oldVariable = oldScene.state.$variables?.state.variables.find((variable) => variable.state.name === name);
+  const existsLive = current.some((variable) => variable.state.name === name);
+
+  let next = current;
+  if (oldVariable && existsLive) {
+    next = current.map((variable) => (variable.state.name === name ? oldVariable.clone() : variable));
+  } else if (oldVariable) {
+    next = [...current, oldVariable.clone()];
+  } else {
+    next = current.filter((variable) => variable.state.name !== name);
+  }
+
+  liveSet.setState({ variables: next });
+}
+
+function revertOption(dashboard: DashboardScene, oldScene: DashboardScene, key: OptionKey): void {
+  switch (key) {
+    case 'title':
+      dashboard.setState({ title: oldScene.state.title });
+      return;
+    case 'description':
+      dashboard.setState({ description: oldScene.state.description });
+      return;
+    case 'tags':
+      dashboard.setState({ tags: oldScene.state.tags });
+      return;
+    case 'editable':
+      dashboard.setState({ editable: oldScene.state.editable });
+      return;
+    case 'timezone':
+      sceneGraph.getTimeRange(dashboard).setState({ timeZone: sceneGraph.getTimeRange(oldScene).state.timeZone });
+      return;
+    case 'weekStart':
+      sceneGraph.getTimeRange(dashboard).setState({ weekStart: sceneGraph.getTimeRange(oldScene).state.weekStart });
+      return;
+    case 'refresh': {
+      const oldPicker = dashboardSceneGraph.getRefreshPicker(oldScene);
+      const livePicker = dashboardSceneGraph.getRefreshPicker(dashboard);
+      if (oldPicker && livePicker) {
+        livePicker.setState({ refresh: oldPicker.state.refresh });
+      }
+      return;
+    }
+    case 'tooltip': {
+      const oldSync = findCursorSync(oldScene);
+      const liveSync = findCursorSync(dashboard);
+      if (oldSync && liveSync) {
+        liveSync.setState({ sync: oldSync.state.sync });
+      }
+      return;
+    }
+  }
+}
+
+function findCursorSync(scene: DashboardScene): behaviors.CursorSync | undefined {
+  return scene.state.$behaviors?.find((behavior): behavior is behaviors.CursorSync => {
+    return behavior instanceof behaviors.CursorSync;
+  });
+}
+
 // --- v1 (legacy Dashboard schema) adapters ---
 
-const V1_OPTION_FIELDS: Array<{ key: keyof Dashboard; label: string }> = [
-  { key: 'title', label: 'Title' },
-  { key: 'description', label: 'Description' },
-  { key: 'tags', label: 'Tags' },
-  { key: 'timezone', label: 'Timezone' },
-  { key: 'refresh', label: 'Auto refresh' },
-  { key: 'editable', label: 'Editable' },
-  { key: 'graphTooltip', label: 'Panel tooltip' },
-  { key: 'weekStart', label: 'Week start' },
+const V1_OPTION_FIELDS: Array<{ key: OptionKey; label: string; get: (model: Dashboard) => unknown }> = [
+  { key: 'title', label: 'Title', get: (model) => model.title },
+  { key: 'description', label: 'Description', get: (model) => model.description },
+  { key: 'tags', label: 'Tags', get: (model) => model.tags },
+  { key: 'timezone', label: 'Timezone', get: (model) => model.timezone },
+  { key: 'refresh', label: 'Auto refresh', get: (model) => model.refresh },
+  { key: 'editable', label: 'Editable', get: (model) => model.editable },
+  { key: 'tooltip', label: 'Panel tooltip', get: (model) => model.graphTooltip },
+  { key: 'weekStart', label: 'Week start', get: (model) => model.weekStart },
 ];
 
-function computeV1PanelRows(oldValue: Dashboard, newValue: Dashboard): PanelChangeRow[] {
+function computeV1PanelRows(oldValue: Dashboard, newValue: Dashboard): RawPanelRow[] {
   return diffById(mapV1PanelsById(oldValue), mapV1PanelsById(newValue), {
     title: (panel) => panel.title ?? '',
     height: (panel) => (panel.gridPos?.h ?? DEFAULT_PANEL_GRID_HEIGHT) * ROW_UNIT_HEIGHT,
@@ -155,7 +291,7 @@ function mapV1PanelsById(model: Dashboard): Map<number, Panel> {
   return map;
 }
 
-function computeV1VariableChanges(oldValue: Dashboard, newValue: Dashboard): FieldChange[] {
+function computeV1VariableChanges(oldValue: Dashboard, newValue: Dashboard): RawFieldChange[] {
   return diffByName(mapV1VariablesByName(oldValue), mapV1VariablesByName(newValue));
 }
 
@@ -167,9 +303,9 @@ function mapV1VariablesByName(model: Dashboard): Map<string, VariableModel> {
   return map;
 }
 
-function computeV1OptionChanges(oldValue: Dashboard, newValue: Dashboard): FieldChange[] {
+function computeV1OptionChanges(oldValue: Dashboard, newValue: Dashboard): RawOptionChange[] {
   return diffFields(
-    V1_OPTION_FIELDS.map(({ key, label }) => ({ label, get: (model: Dashboard) => model[key] })),
+    V1_OPTION_FIELDS.map(({ key, label, get }) => ({ key, label, get: (model: Dashboard) => get(model) })),
     oldValue,
     newValue
   );
@@ -177,21 +313,18 @@ function computeV1OptionChanges(oldValue: Dashboard, newValue: Dashboard): Field
 
 // --- v2 (DashboardV2Spec) adapters ---
 
-const V2_OPTION_FIELDS: Array<{ label: string; get: (spec: DashboardV2Spec) => unknown }> = [
-  { label: 'Title', get: (spec) => spec.title },
-  { label: 'Description', get: (spec) => spec.description },
-  { label: 'Tags', get: (spec) => spec.tags },
-  { label: 'Editable', get: (spec) => spec.editable },
-  { label: 'Panel tooltip', get: (spec) => spec.cursorSync },
-  { label: 'Timezone', get: (spec) => spec.timeSettings.timezone },
-  { label: 'Auto refresh', get: (spec) => spec.timeSettings.autoRefresh },
-  { label: 'Time from', get: (spec) => spec.timeSettings.from },
-  { label: 'Time to', get: (spec) => spec.timeSettings.to },
-  { label: 'Week start', get: (spec) => spec.timeSettings.weekStart },
-  { label: 'Hide time picker', get: (spec) => spec.timeSettings.hideTimepicker },
+const V2_OPTION_FIELDS: Array<{ key: OptionKey; label: string; get: (spec: DashboardV2Spec) => unknown }> = [
+  { key: 'title', label: 'Title', get: (spec) => spec.title },
+  { key: 'description', label: 'Description', get: (spec) => spec.description },
+  { key: 'tags', label: 'Tags', get: (spec) => spec.tags },
+  { key: 'editable', label: 'Editable', get: (spec) => spec.editable },
+  { key: 'tooltip', label: 'Panel tooltip', get: (spec) => spec.cursorSync },
+  { key: 'timezone', label: 'Timezone', get: (spec) => spec.timeSettings.timezone },
+  { key: 'refresh', label: 'Auto refresh', get: (spec) => spec.timeSettings.autoRefresh },
+  { key: 'weekStart', label: 'Week start', get: (spec) => spec.timeSettings.weekStart },
 ];
 
-function computeV2PanelRows(oldValue: DashboardV2Spec, newValue: DashboardV2Spec): PanelChangeRow[] {
+function computeV2PanelRows(oldValue: DashboardV2Spec, newValue: DashboardV2Spec): RawPanelRow[] {
   return diffById(mapV2ElementsById(oldValue), mapV2ElementsById(newValue), {
     title: (element) => element.spec.title,
     height: () => DEFAULT_PANEL_HEIGHT,
@@ -207,7 +340,7 @@ function mapV2ElementsById(spec: DashboardV2Spec): Map<number, Element> {
   return map;
 }
 
-function computeV2VariableChanges(oldValue: DashboardV2Spec, newValue: DashboardV2Spec): FieldChange[] {
+function computeV2VariableChanges(oldValue: DashboardV2Spec, newValue: DashboardV2Spec): RawFieldChange[] {
   return diffByName(mapV2VariablesByName(oldValue), mapV2VariablesByName(newValue));
 }
 
@@ -219,7 +352,7 @@ function mapV2VariablesByName(spec: DashboardV2Spec): Map<string, VariableKind> 
   return map;
 }
 
-function computeV2OptionChanges(oldValue: DashboardV2Spec, newValue: DashboardV2Spec): FieldChange[] {
+function computeV2OptionChanges(oldValue: DashboardV2Spec, newValue: DashboardV2Spec): RawOptionChange[] {
   return diffFields(V2_OPTION_FIELDS, oldValue, newValue);
 }
 
@@ -230,8 +363,8 @@ interface PanelAccessors<T> {
   height: (item: T) => number;
 }
 
-function diffById<T>(oldItems: Map<number, T>, newItems: Map<number, T>, accessors: PanelAccessors<T>): PanelChangeRow[] {
-  const rows: PanelChangeRow[] = [];
+function diffById<T>(oldItems: Map<number, T>, newItems: Map<number, T>, accessors: PanelAccessors<T>): RawPanelRow[] {
+  const rows: RawPanelRow[] = [];
   const ids = new Set([...oldItems.keys(), ...newItems.keys()]);
 
   for (const id of ids) {
@@ -252,8 +385,8 @@ function diffById<T>(oldItems: Map<number, T>, newItems: Map<number, T>, accesso
   return rows;
 }
 
-function diffByName<T>(oldItems: Map<string, T>, newItems: Map<string, T>): FieldChange[] {
-  const changes: FieldChange[] = [];
+function diffByName<T>(oldItems: Map<string, T>, newItems: Map<string, T>): RawFieldChange[] {
+  const changes: RawFieldChange[] = [];
   const names = new Set([...oldItems.keys(), ...newItems.keys()]);
 
   for (const name of names) {
@@ -277,17 +410,17 @@ function diffByName<T>(oldItems: Map<string, T>, newItems: Map<string, T>): Fiel
 }
 
 function diffFields<T>(
-  fields: Array<{ label: string; get: (model: T) => unknown }>,
+  fields: Array<{ key: OptionKey; label: string; get: (model: T) => unknown }>,
   oldValue: T,
   newValue: T
-): FieldChange[] {
-  const changes: FieldChange[] = [];
+): RawOptionChange[] {
+  const changes: RawOptionChange[] = [];
 
-  for (const { label, get } of fields) {
+  for (const { key, label, get } of fields) {
     const oldText = formatValue(get(oldValue));
     const newText = formatValue(get(newValue));
     if (oldText !== newText) {
-      changes.push({ label, type: 'changed', oldText, newText });
+      changes.push({ key, label, type: 'changed', oldText, newText });
     }
   }
 

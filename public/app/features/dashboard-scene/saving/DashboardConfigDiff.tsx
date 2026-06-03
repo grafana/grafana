@@ -2,32 +2,36 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Stack, Text, useStyles2 } from '@grafana/ui';
+import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { type ChangeType, type FieldChange } from './dashboardDiffModel';
 
 interface Props {
   variableChanges: FieldChange[];
   optionChanges: FieldChange[];
+  onDismissVariable: (change: FieldChange) => void;
+  onDismissOption: (change: FieldChange) => void;
 }
 
 /**
  * Static before/after rendering of the non-panel parts of a dashboard diff (variables and
  * dashboard-level options). These don't need a query runner, so they're rendered as plain values
- * rather than as part of a scene.
+ * rather than as part of a scene. Each row can be dismissed to revert that change in the dashboard.
  */
-export function DashboardConfigDiff({ variableChanges, optionChanges }: Props) {
+export function DashboardConfigDiff({ variableChanges, optionChanges, onDismissVariable, onDismissOption }: Props) {
   return (
     <Stack direction="column" gap={2}>
       <ConfigSection
         title={t('dashboard-scene.dashboard-config-diff.variables-heading', 'Variables')}
         emptyText={t('dashboard-scene.dashboard-config-diff.no-variable-changes', 'No variable changes')}
         changes={variableChanges}
+        onDismiss={onDismissVariable}
       />
       <ConfigSection
         title={t('dashboard-scene.dashboard-config-diff.options-heading', 'Dashboard options')}
         emptyText={t('dashboard-scene.dashboard-config-diff.no-option-changes', 'No option changes')}
         changes={optionChanges}
+        onDismiss={onDismissOption}
       />
     </Stack>
   );
@@ -37,9 +41,10 @@ interface ConfigSectionProps {
   title: string;
   emptyText: string;
   changes: FieldChange[];
+  onDismiss: (change: FieldChange) => void;
 }
 
-function ConfigSection({ title, emptyText, changes }: ConfigSectionProps) {
+function ConfigSection({ title, emptyText, changes, onDismiss }: ConfigSectionProps) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -61,6 +66,13 @@ function ConfigSection({ title, emptyText, changes }: ConfigSectionProps) {
                 <pre className={styles.value}>{change.oldText}</pre>
                 <div className={styles.divider} />
                 <pre className={styles.value}>{change.newText}</pre>
+                <div className={styles.actions}>
+                  <IconButton
+                    name="history"
+                    tooltip={t('dashboard-scene.dashboard-diff-view.dismiss-tooltip', 'Revert this change')}
+                    onClick={() => onDismiss(change)}
+                  />
+                </div>
               </div>
             </div>
           ))}
@@ -94,6 +106,13 @@ function getStyles(theme: GrafanaTheme2) {
       width: 1,
       alignSelf: 'stretch',
       background: theme.colors.border.medium,
+    }),
+    actions: css({
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: theme.spacing(4),
     }),
     value: css({
       flex: 1,

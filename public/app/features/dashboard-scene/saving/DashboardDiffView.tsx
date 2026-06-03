@@ -2,16 +2,16 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Stack, Text, useStyles2 } from '@grafana/ui';
+import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import { DashboardConfigDiff } from './DashboardConfigDiff';
-import { buildVisualDiff, type PanelChangeRow } from './dashboardDiffModel';
+import { buildVisualDiff, type FieldChange, type PanelChangeRow } from './dashboardDiffModel';
 
 interface Props {
   dashboard: DashboardScene;
@@ -22,16 +22,16 @@ interface Props {
 /**
  * Visual, side-by-side diff of a dashboard's changes. Unlike the JSON "Changes" tab this renders
  * the actual panels (old version on the left, new on the right) with live query data, by building a
- * throwaway scene for each version and rendering only the panels that differ.
+ * throwaway scene for each version and rendering only the panels that differ. Each row can be
+ * dismissed, which reverts that single change in the live dashboard so it is excluded on save.
  */
 export function DashboardDiffView({ dashboard, oldValue, newValue }: Props) {
   const styles = useStyles2(getStyles);
 
   // The diff is a snapshot taken when the tab opens. The save model is recomputed (new references)
   // on every render of the drawer, so build the throwaway scenes once rather than on every render.
-  const [{ oldScene, newScene, oldPanels, newPanels, panelRows, variableChanges, optionChanges }] = useState(() =>
-    buildVisualDiff(dashboard, oldValue, newValue)
-  );
+  const [model, setModel] = useState(() => buildVisualDiff(dashboard, oldValue, newValue));
+  const { oldScene, newScene, oldPanels, newPanels, panelRows, variableChanges, optionChanges } = model;
 
   // Activating the scenes activates their variable sets and time ranges, which the rendered panels
   // walk up to when running their queries. Only the panels we actually render get activated and
@@ -44,6 +44,21 @@ export function DashboardDiffView({ dashboard, oldValue, newValue }: Props) {
       deactivateNew();
     };
   }, [oldScene, newScene]);
+
+  const dismissPanel = (row: PanelChangeRow) => {
+    row.revert();
+    setModel((current) => ({ ...current, panelRows: current.panelRows.filter((other) => other !== row) }));
+  };
+
+  const dismissVariable = (change: FieldChange) => {
+    change.revert();
+    setModel((current) => ({ ...current, variableChanges: current.variableChanges.filter((other) => other !== change) }));
+  };
+
+  const dismissOption = (change: FieldChange) => {
+    change.revert();
+    setModel((current) => ({ ...current, optionChanges: current.optionChanges.filter((other) => other !== change) }));
+  };
 
   return (
     <Stack direction="column" gap={2}>
@@ -59,6 +74,7 @@ export function DashboardDiffView({ dashboard, oldValue, newValue }: Props) {
             <Trans i18nKey="dashboard-scene.dashboard-diff-view.new-heading">New</Trans>
           </Text>
         </div>
+        <div className={styles.actions} />
       </div>
 
       <section>
@@ -78,13 +94,19 @@ export function DashboardDiffView({ dashboard, oldValue, newValue }: Props) {
                 oldPanel={oldPanels.get(row.id)}
                 newPanel={newPanels.get(row.id)}
                 styles={styles}
+                onDismiss={dismissPanel}
               />
             ))}
           </Stack>
         )}
       </section>
 
-      <DashboardConfigDiff variableChanges={variableChanges} optionChanges={optionChanges} />
+      <DashboardConfigDiff
+        variableChanges={variableChanges}
+        optionChanges={optionChanges}
+        onDismissVariable={dismissVariable}
+        onDismissOption={dismissOption}
+      />
     </Stack>
   );
 }
@@ -94,14 +116,22 @@ interface PanelDiffRowProps {
   oldPanel?: VizPanel;
   newPanel?: VizPanel;
   styles: ReturnType<typeof getStyles>;
+  onDismiss: (row: PanelChangeRow) => void;
 }
 
-function PanelDiffRow({ row, oldPanel, newPanel, styles }: PanelDiffRowProps) {
+function PanelDiffRow({ row, oldPanel, newPanel, styles, onDismiss }: PanelDiffRowProps) {
   return (
     <div className={styles.row}>
       <PanelColumn panel={oldPanel} height={row.height} styles={styles} kind="old" />
       <div className={styles.divider} />
       <PanelColumn panel={newPanel} height={row.height} styles={styles} kind="new" />
+      <div className={styles.actions}>
+        <IconButton
+          name="history"
+          tooltip={t('dashboard-scene.dashboard-diff-view.dismiss-tooltip', 'Revert this change')}
+          onClick={() => onDismiss(row)}
+        />
+      </div>
     </div>
   );
 }
@@ -161,6 +191,13 @@ function getStyles(theme: GrafanaTheme2) {
       width: 1,
       alignSelf: 'stretch',
       background: theme.colors.border.medium,
+    }),
+    actions: css({
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: theme.spacing(4),
     }),
     row: css({
       display: 'flex',

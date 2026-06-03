@@ -6993,6 +6993,7 @@
     },
     "dashboard-diff-view": {
       "added-placeholder": "Did not exist",
+      "dismiss-tooltip": "Revert this change",
       "new-heading": "New",
       "no-panel-changes": "No panel changes",
       "old-heading": "Old",
