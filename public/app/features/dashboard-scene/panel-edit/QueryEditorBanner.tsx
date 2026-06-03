@@ -4,7 +4,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Icon, IconButton, useStyles2 } from '@grafana/ui';
 
-import { startIntercomSurvey, trackBannerDismiss, trackFeedbackClick } from './PanelEditNext/tracking';
+import { startFeedbackSurvey, trackBannerDismiss, trackFeedbackClick } from './PanelEditNext/tracking';
 
 interface Props {
   useQueryExperienceNext: boolean;
@@ -46,7 +46,7 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
             icon="comment-alt-message"
             onClick={() => {
               trackFeedbackClick();
-              startIntercomSurvey();
+              startFeedbackSurvey();
             }}
           >
             {t('dashboard-scene.query-editor-banner.give-feedback', 'Give feedback')}
@@ -59,7 +59,7 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
             size="sm"
             icon="arrow-left"
             onClick={() => {
-              startIntercomSurvey();
+              startFeedbackSurvey();
               onToggle();
             }}
           >

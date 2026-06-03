@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { type DOMAttributes } from '@react-types/shared';
-import { memo, forwardRef, useCallback } from 'react';
+import { memo, forwardRef, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { usePatchUserPreferencesMutation } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
@@ -13,6 +13,8 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { filterNavTreeByJobRole } from 'app/core/navigation/jobRoleNav';
 import { setBookmark } from 'app/core/reducers/navBarTree';
 import { useDispatch, useSelector } from 'app/types/store';
+
+import { clampMegaMenuWidth } from '../AppChromeService';
 
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
@@ -68,11 +70,44 @@ export const MegaMenu = memo(
     }
 
     const activeItem = getActiveItem(navItems, state.sectionNav.node, location.pathname);
+    const hideNavItems = Boolean(config.featureToggles.simplifiedNavigation);
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
       if (state.megaMenuDocked) {
         chrome.setMegaMenuOpen(false);
+      }
+    };
+
+    // Drag-to-resize the docked menu. During the drag we update the CSS variable
+    // directly (cheap, no re-render) and only commit to chrome state on release.
+    const resizeWidthRef = useRef(state.megaMenuWidth);
+    const onResizeMouseDown = (event: React.MouseEvent) => {
+      event.preventDefault();
+      const onMove = (moveEvent: MouseEvent) => {
+        const width = clampMegaMenuWidth(moveEvent.clientX);
+        resizeWidthRef.current = width;
+        document.documentElement.style.setProperty('--grafana-mega-menu-width', `${width}px`);
+      };
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.body.style.removeProperty('user-select');
+        document.body.style.removeProperty('cursor');
+        chrome.setMegaMenuWidth(resizeWidthRef.current);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'col-resize';
+    };
+    const onResizeKeyDown = (event: React.KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        chrome.setMegaMenuWidth(state.megaMenuWidth - 16);
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        chrome.setMegaMenuWidth(state.megaMenuWidth + 16);
       }
     };
 
@@ -112,25 +147,36 @@ export const MegaMenu = memo(
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
-        <nav className={styles.content}>
-          <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
-            <>
-              <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
-                {navItems.map((link, index) => (
-                  <MegaMenuItem
-                    key={link.text}
-                    link={link}
-                    isPinned={isPinned}
-                    onClick={state.megaMenuDocked ? undefined : onClose}
-                    activeItem={activeItem}
-                    onPin={onPinItem}
-                  />
-                ))}
-              </ul>
-              <MegaMenuExtensionPoint />
-            </>
-          </ScrollContainer>
-        </nav>
+        {!hideNavItems && (
+          <nav className={styles.content}>
+            <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
+              <>
+                <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
+                  {navItems.map((link) => (
+                    <MegaMenuItem
+                      key={link.text}
+                      link={link}
+                      isPinned={isPinned}
+                      onClick={state.megaMenuDocked ? undefined : onClose}
+                      activeItem={activeItem}
+                      onPin={onPinItem}
+                    />
+                  ))}
+                </ul>
+                <MegaMenuExtensionPoint />
+              </>
+            </ScrollContainer>
+          </nav>
+        )}
+        {state.megaMenuDocked && (
+          <button
+            type="button"
+            aria-label={t('navigation.megamenu.resize', 'Resize menu')}
+            className={styles.resizeHandle}
+            onMouseDown={onResizeMouseDown}
+            onKeyDown={onResizeKeyDown}
+          />
+        )}
       </div>
     );
   })
@@ -164,7 +210,26 @@ const getStyles = (theme: GrafanaTheme2) => {
       listStyleType: 'none',
       padding: theme.spacing(1, 1, 2, 0.5),
       [theme.breakpoints.up('md')]: {
-        width: MENU_WIDTH,
+        width: '100%',
+      },
+    }),
+    resizeHandle: css({
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      width: 6,
+      padding: 0,
+      border: 'none',
+      background: 'transparent',
+      cursor: 'col-resize',
+      zIndex: 3,
+      '&:hover': {
+        background: theme.colors.primary.main,
+      },
+      '&:focus-visible': {
+        outline: `2px solid ${theme.colors.primary.main}`,
+        outlineOffset: '-2px',
       },
     }),
     dockMenuButton: css({

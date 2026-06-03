@@ -20,10 +20,7 @@ on:
         required: false
         type: string
 
-permissions:
-  contents: read
-  pull-requests: read
-  id-token: write
+permissions: {}
 
 env:
   STALE_THRESHOLD_DAYS: ${{ inputs.stale_days || 30 }}
@@ -32,6 +29,10 @@ jobs:
   report:
     runs-on: ubuntu-arm64-small
     environment: ${{ github.event_name == 'workflow_dispatch' && 'manual-trigger' || '' }}
+    permissions:
+      contents: read
+      pull-requests: read
+      id-token: write
 
     steps:
       - name: Validate manual trigger

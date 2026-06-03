@@ -1,21 +1,23 @@
 name: Auto-milestone
 on:
-  pull_request_target:
+  pull_request_target:  # zizmor: ignore[dangerous-triggers] action uses GITHUB_TOKEN only, does not check out fork code
     types:
       - opened
       - reopened
       - closed
       - ready_for_review
 
-permissions:
-  pull-requests: write
-  contents: write
+permissions: {}
 
 # Note: this action runs with write permissions on GITHUB_TOKEN even from forks
 # so it must not run untrusted code (such as checking out the pull request)
 jobs:
   main:
-    runs-on: ubuntu-arm64-small
+    runs-on: ubuntu-x64-small
+    permissions:
+      # contents: read is needed to read package.json from the PR's base branch.
+      contents: read
+      pull-requests: write
     if: github.event.pull_request.draft == false
     steps:
       # Note: Github will not trigger other actions from this because it uses

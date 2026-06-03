@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -58,9 +57,8 @@ type DataSourceAPIBuilder struct {
 	client                 PluginClient // will only ever be called with the same plugin id!
 	datasources            PluginDatasourceProvider
 	contextProvider        PluginContextWrapper
-	decrypter              decrypt.DecryptService      // when not reading legacy
-	accessControl          accesscontrol.AccessControl // ST Only
-	accessClient           authlib.AccessClient        // MT+ST
+	decrypter              decrypt.DecryptService // when not reading legacy
+	accessClient           authlib.AccessClient   // MT+ST
 	schemas                map[string]*pluginschema.PluginSchema
 	queryTypes             *datasourceV0.QueryTypeDefinitionList
 	cfg                    DataSourceAPIBuilderConfig
@@ -77,7 +75,6 @@ func RegisterAPIService(
 	datasources ScopedPluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
-	accessControl accesscontrol.AccessControl,
 	accessClient authlib.AccessClient,
 	reg prometheus.Registerer,
 	pluginSources sources.Registry,
@@ -132,7 +129,7 @@ func RegisterAPIService(
 			client,
 			datasources.GetDatasourceProvider(plugin.JSONData),
 			contextProvider,
-			accessControl,
+			accessClient,
 			decrypter,
 			flags,
 		)
@@ -169,7 +166,7 @@ func NewDataSourceAPIBuilder(
 	client PluginClient,
 	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
-	accessControl accesscontrol.AccessControl,
+	accessClient authlib.AccessClient,
 	decrypter decrypt.DecryptService, // when not reading legacy
 	cfg DataSourceAPIBuilderConfig,
 ) (*DataSourceAPIBuilder, error) {
@@ -181,7 +178,7 @@ func NewDataSourceAPIBuilder(
 		client:                 client,
 		datasources:            datasources,
 		contextProvider:        contextProvider,
-		accessControl:          accessControl,
+		accessClient:           accessClient,
 		decrypter:              decrypter,
 		cfg:                    cfg,
 	}
@@ -240,7 +237,10 @@ func (b *DataSourceAPIBuilder) AllowedV0Alpha1Resources() []string {
 func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	if opts.StorageOptsRegister != nil {
 		opts.StorageOptsRegister(b.datasourceResourceInfo.GroupResource(), apistore.StorageOptions{
-			EnableFolderSupport: false,
+			Index: nil, // TODO, required to check that they are unique
+
+			// Keep them for now, but we should get rid of them when possible
+			DeprecatedInternalID: apistore.DeprecatedID_Required,
 
 			// Setting the schema explicitly will force the apistore to explicitly marshal with a matching Group+version
 			// This is required because we map the same go type (DataSourceConfig) across multiple api groups

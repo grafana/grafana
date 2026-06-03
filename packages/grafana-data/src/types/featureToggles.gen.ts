@@ -1090,6 +1090,11 @@ export interface FeatureToggles {
   */
   recentlyViewedDashboards?: boolean;
   /**
+  * Show a minimal left navigation (Home, Dashboards, Explore) with all other sections grouped under 'More'
+  * @default false
+  */
+  simplifiedNavigation?: boolean;
+  /**
   * A/A test for recently viewed dashboards feature
   * @default false
   */

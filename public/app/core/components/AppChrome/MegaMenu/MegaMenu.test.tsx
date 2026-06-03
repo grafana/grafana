@@ -135,3 +135,29 @@ describe('MegaMenu', () => {
     expect(screen.queryByRole('link', { name: 'Administration' })).not.toBeInTheDocument();
   });
 });
+
+describe('MegaMenu simplified navigation', () => {
+  const originalFlag = config.featureToggles.simplifiedNavigation;
+
+  afterEach(() => {
+    config.featureToggles.simplifiedNavigation = originalFlag;
+    window.localStorage.clear();
+  });
+
+  it('hides the nav items when the flag is on', async () => {
+    config.featureToggles.simplifiedNavigation = true;
+    setup();
+
+    expect(await screen.findByTestId(selectors.components.NavMenu.Menu)).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Section name' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('gcx-terminal')).not.toBeInTheDocument();
+  });
+
+  it('renders the normal nav when the flag is off', async () => {
+    config.featureToggles.simplifiedNavigation = false;
+    setup();
+
+    expect(await screen.findByRole('link', { name: 'Section name' })).toBeInTheDocument();
+    expect(screen.queryByTestId('gcx-terminal')).not.toBeInTheDocument();
+  });
+});

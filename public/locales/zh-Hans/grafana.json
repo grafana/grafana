@@ -3291,6 +3291,10 @@
         "tooltip-description": "按匹配器查找静默。精确匹配标签名称、值和运算符。",
         "tooltip-example": "示例：<1>env=~\"prod.*\"</1> 使用匹配器 <4>env=~\"prod.*\"</4> 查找静默。"
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "仅显示处于触发状态的提醒实例。",
       "operator": {
         "equals": "等于",
@@ -5469,9 +5473,6 @@
       "aria-label-dashboard-name": "{{dashboardName}} 数据面板",
       "label-no-dashboards-found": "未找到数据面板"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "取消加载数据面板"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5760,8 +5761,7 @@
         }
       },
       "operator": {
-        "aria-label": "运算符",
-        "placeholder": "选择运算符"
+        "aria-label": "运算符"
       },
       "restore": "恢复默认值",
       "search": {
@@ -5996,13 +5996,6 @@
       },
       "ungroup-nested-text": "这将取消所有嵌套组的分组。",
       "ungroup-nested-title": "取消嵌套组的分组？"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "找不到数据面板"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "数据面板不可编辑",
@@ -6594,8 +6587,8 @@
     "version-history-comparison": {
       "button-restore": "恢复到版本 {{version}}",
       "label-view-json-diff": "查看 JSON 差异",
-      "new-updated-by": "<0>版本 {{version}}</0> 由{{editor}}更新于 {{timeAgo}}",
-      "old-updated-by": "<0>版本 {{version}}</0> 由{{editor}}更新于 {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "切换版本 {{version}} 的选择",
@@ -7822,8 +7815,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "查看 JSON 差异",
-      "new-version-updated": "<0>版本 {{version}}</0> 由{{editor}}更新于 {{timeAgo}}",
-      "old-version-updated": "<0>版本 {{version}}</0> 由{{editor}}更新于 {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "比较 {{baseVersion}} <3></3> {{newVersion}}",
@@ -9012,7 +9005,6 @@
       "copy-button": "复制到剪贴板",
       "download-button": "下载文件",
       "download-successful_toast_message": "您的 JSON 已下载",
-      "export-externally-label": "导出数据面板以便在其他实例中使用",
       "export-format": "格式",
       "export-mode": "模型",
       "info-text": "复制或下载包含数据面板定义的文件",
@@ -9105,6 +9097,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "文件夹已删除",
       "folder-move-error-provisioned": "无法移动已预置的文件夹。要移动它，请在存储库中移动它，然后同步以应用更改。",
@@ -10170,7 +10163,7 @@
     },
     "data-source-http-settings": {
       "access-help": "帮助 <1></1>",
-      "access-help-details": "访问模式控制如何处理对数据源的请求。如果没有其他说明，<1><i>服务器</i></1>应该是首选方式。",
+      "access-help-details": "",
       "access-help-title": "访问帮助",
       "access-label": "访问",
       "allowed-cookies": "允许的 Cookie",
@@ -10856,6 +10849,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -11632,11 +11629,10 @@
       "published-by": "发布者",
       "updated-on": "更新日期"
     },
-    "import-resource-format-error": {
-      "cancel": "取消",
-      "title": "不支持的格式",
-      "v1-message": "此数据面板采用 Kubernetes v1 资源格式，在 Kubernetes 数据面板功能已禁用时无法导入。请启用 kubernetesDashboards 功能切换，以便导入此数据面板。",
-      "v2-message": "此数据面板采用 v2 资源格式，在 Kubernetes 数据面板功能已禁用时无法导入。请启用 kubernetesDashboards 功能切换，以便导入此数据面板。"
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "您确定要删除“{{snapshotToRemove}}”吗？",
@@ -13128,8 +13124,9 @@
       "label-branch": "分支",
       "label-comment": "评论",
       "label-filename": "文件名",
-      "label-folder": "文件夹",
       "label-path": "路径",
+      "label-repository-folder": "",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "选择或输入文件夹路径",
       "suffix-configured-branch": "已同步分支",
@@ -13450,7 +13447,7 @@
       "modal-title-set-up-public-access": "设置公共访问",
       "modal-title-set-up-required-features": "设置所需功能",
       "step-description-copy-url": "从 ngrok 输出中，复制 https:// 转发 URL，如下所示：",
-      "step-description-enable-feature-toggles": "将配置功能切换按钮添加到您的 custom.ini 文件。注意：kubernetesDashboards 默认启用，但如果您已明确禁用，则需要在 Grafana 设置中启用或从配置中删除覆盖。",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "运行此命令以创建指向本地 Grafana 的安全隧道：",
       "step-description-update-grafana-config": "将此添加到您的 custom.ini 文件，并将 URL 替换为您的实际 ngrok URL：",
       "step-title-copy-url": "复制您的公共 URL",
@@ -13524,6 +13521,21 @@
       "authentication-failed": "",
       "request-failed": "",
       "resource-not-found": ""
+    },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
     },
     "instance-sync-deprecation": {
       "message": "实例同步目前尚未得到完全支持，并且会导致库面板和警报功能异常。要使用库面板和警报功能，请断开存储库的连接，然后使用文件夹同步重新连接。",
@@ -13803,7 +13815,8 @@
     "sync-job": {
       "error-no-job-id": "启动作业失败",
       "error-no-repository-name": "未提供存储库名称",
-      "error-starting-job": "启动作业时出错"
+      "error-starting-job": "启动作业时出错",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "拉取资源时出错",
@@ -14625,7 +14638,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "导出为图像",
-      "export-json-title": "导出为 JSON",
       "share-externally-title": "在外部共享",
       "share-internally-title": "在内部共享",
       "share-snapshot-title": "共享快照"
@@ -16515,7 +16527,7 @@
       "message": "找不到用户"
     },
     "token-revoked-modal": {
-      "auto-revoked": "您的会话令牌已自动撤销，因为您已达到您的账户的<2>最大并发会话数 {{numSessions}}</2>。",
+      "auto-revoked": "",
       "resume-message": "<strong>要恢复会话，请重新登录。</strong>如果您多次自动退出登录，请与您的管理员联系或访问许可页面以查看您的配额。",
       "sign-in": "登录",
       "title-you-have-been-automatically-signed-out": "您已自动退出登录"

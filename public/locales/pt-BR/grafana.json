@@ -3312,6 +3312,10 @@
         "tooltip-description": "Encontre silenciamentos usando operadores de correspondência. Identifica correspondências exatas com o nome do rótulo, o valor e o operador.",
         "tooltip-example": "Exemplo: <1>env=~\"prod.*\"</1> encontra silenciamentos com um operador de correspondência <4>env=~\"prod.*\"</4>."
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "São exibidas apenas as instâncias de alerta no estado de acionamento.",
       "operator": {
         "equals": "É igual a",
@@ -5501,9 +5505,6 @@
       "aria-label-dashboard-name": "Painel {{dashboardName}}",
       "label-no-dashboards-found": "Nenhum painel encontrado"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Cancelar carregamento do painel"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5792,8 +5793,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operador",
-        "placeholder": "Selecionar operador"
+        "aria-label": "Operador"
       },
       "restore": "Restaurar valor padrão",
       "search": {
@@ -6028,13 +6028,6 @@
       },
       "ungroup-nested-text": "Essa ação desagrupará todos os grupos inseridos.",
       "ungroup-nested-title": "Desagrupar grupos inseridos?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Painel não encontrado"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Painel não editável",
@@ -6627,8 +6620,8 @@
     "version-history-comparison": {
       "button-restore": "Restaurar para a versão {{version}}",
       "label-view-json-diff": "Visualizar diferença de JSON",
-      "new-updated-by": "<0>Versão {{version}}</0> atualizada por {{editor}} há {{timeAgo}}",
-      "old-updated-by": "<0>Versão {{version}}</0> atualizada por {{editor}} há {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Alternar seleção da versão {{version}}",
@@ -7870,8 +7863,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "Visualizar diferença de JSON",
-      "new-version-updated": "<0>Versão {{version}}</0> atualizada por {{editor}} há {{timeAgo}}",
-      "old-version-updated": "<0>Versão {{version}}</0> atualizada por {{editor}} há {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "Comparando {{baseVersion}} <3></3> {{newVersion}}",
@@ -9062,7 +9055,6 @@
       "copy-button": "Copiar para a área de transferência",
       "download-button": "Baixar arquivo",
       "download-successful_toast_message": "Seu JSON foi baixado",
-      "export-externally-label": "Exporte o painel de controle para usá-lo em outra instância",
       "export-format": "Formato",
       "export-mode": "Modelo",
       "info-text": "Copie ou baixe um arquivo contendo a definição do seu painel",
@@ -9155,6 +9147,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "Não é possível excluir a pasta provisionada. Para removê-la, exclua a pasta do repositório e realize a sincronização para aplicar as alterações.",
       "folder-deleted-success": "Pasta excluída",
       "folder-move-error-provisioned": "Não é possível mover a pasta provisionada. Para movê-la, altere o local da pasta no repositório e realize a sincronização para aplicar as alterações.",
@@ -10230,7 +10223,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Ajuda <1></1>",
-      "access-help-details": "O modo de acesso controla como as solicitações à fonte de dados serão processadas. O <1><i>servidor</i></1> deve ser priorizado se não houver outra opção indicada.",
+      "access-help-details": "",
       "access-help-title": "Ajuda com acesso",
       "access-label": "Acesso",
       "allowed-cookies": "Cookies permitidos",
@@ -10916,6 +10909,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -11700,11 +11697,10 @@
       "published-by": "Publicado por",
       "updated-on": "Atualizado em"
     },
-    "import-resource-format-error": {
-      "cancel": "Cancelar",
-      "title": "Formato incompatível",
-      "v1-message": "Este painel está no formato de recurso Kubernetes v1 e não pode ser importado quando o recurso de painéis do Kubernetes está desativado. Habilite a opção de ativar/desativar o recurso kubernetesDashboards para importar este painel.",
-      "v2-message": "Este painel está no formato de recurso v2 e não pode ser importado quando o recurso de painéis do Kubernetes está desativado. Ative a opção de alternar recursos kubernetesDashboards para importar este painel."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Tem certeza de que deseja excluir \"{{snapshotToRemove}}\"?",
@@ -13199,8 +13195,9 @@
       "label-branch": "Ramificação",
       "label-comment": "Comentário",
       "label-filename": "Nome do arquivo",
-      "label-folder": "Pasta",
       "label-path": "Caminho",
+      "label-repository-folder": "",
+      "path-exists": "",
       "placeholder-branch": "Selecione ou insira o nome da ramificação",
       "placeholder-folder": "Selecione ou insira o caminho da pasta",
       "suffix-configured-branch": "Ramificação sincronizada",
@@ -13527,7 +13524,7 @@
       "modal-title-set-up-public-access": "Configurar acesso público",
       "modal-title-set-up-required-features": "Configurar os recursos necessários",
       "step-description-copy-url": "Na saída do ngrok, copie a URL de encaminhamento https:// semelhante a esta:",
-      "step-description-enable-feature-toggles": "Adicione a opção de ativação do recurso de provisionamento ao seu arquivo custom.ini. Observação: o kubernetesDashboards está ativado por padrão, mas se você optou por desativá-lo, precisará ativá-lo nas configurações da Grafana ou remover a substituição da sua configuração.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Execute este comando para criar um túnel seguro para sua Grafana local:",
       "step-description-update-grafana-config": "Adicione isso ao seu arquivo custom.ini, substituindo a URL por sua URL ngrok real:",
       "step-title-copy-url": "Copie sua URL pública",
@@ -13601,6 +13598,21 @@
       "authentication-failed": "Falha na autenticação. Verifique seu token de acesso.",
       "request-failed": "Falha na solicitação",
       "resource-not-found": "Recurso não encontrado. Verifique a URL ou o repositório."
+    },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
     },
     "instance-sync-deprecation": {
       "message": "Não há suporte total à sincronização de instâncias no momento, o que compromete o funcionamento de painéis e alertas da biblioteca. Para usar painéis e alertas da biblioteca, desconecte seu repositório e reconecte-o usando a sincronização de pastas.",
@@ -13888,7 +13900,8 @@
     "sync-job": {
       "error-no-job-id": "Falha ao iniciar a tarefa",
       "error-no-repository-name": "Nenhum nome de repositório foi informado",
-      "error-starting-job": "Erro ao iniciar a tarefa"
+      "error-starting-job": "Erro ao iniciar a tarefa",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "Erro ao realizar a extração de recursos",
@@ -14719,7 +14732,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Exportar como imagem",
-      "export-json-title": "Exportar como JSON",
       "share-externally-title": "Compartilhar externamente",
       "share-internally-title": "Compartilhar internamente",
       "share-snapshot-title": "Compartilhar captura"
@@ -16610,7 +16622,7 @@
       "message": "Nenhum usuário encontrado"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Seu token de sessão foi revogado automaticamente porque você atingiu <2>o número máximo de {{numSessions}} sessões simultâneas</2> para sua conta.",
+      "auto-revoked": "",
       "resume-message": "<strong>Para retomar sua sessão, faça login novamente.</strong>Caso sua sessão esteja sendo encerrada constante e automaticamente, entre em contato com o administrador ou acesse a página de licença para conferir seu limite.",
       "sign-in": "Iniciar sessão",
       "title-you-have-been-automatically-signed-out": "A sessão foi encerrada automaticamente"

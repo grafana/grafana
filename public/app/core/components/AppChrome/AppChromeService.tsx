@@ -20,6 +20,7 @@ export interface AppChromeState {
   breadcrumbActions?: React.ReactNode;
   megaMenuOpen: boolean;
   megaMenuDocked: boolean;
+  megaMenuWidth: number;
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
   returnToPrevious?: {
@@ -30,6 +31,20 @@ export interface AppChromeState {
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
 export const DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
+export const MEGA_MENU_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.megaMenuWidth';
+
+export const MIN_MEGA_MENU_WIDTH = 200;
+export const MAX_MEGA_MENU_WIDTH = 600;
+export const DEFAULT_MEGA_MENU_WIDTH = 300;
+
+/** Parse + clamp a stored/dragged menu width, falling back to the default. */
+export function clampMegaMenuWidth(value: string | number | null | undefined): number {
+  const num = Number(value);
+  if (value === null || value === undefined || value === '' || !Number.isFinite(num)) {
+    return DEFAULT_MEGA_MENU_WIDTH;
+  }
+  return Math.min(MAX_MEGA_MENU_WIDTH, Math.max(MIN_MEGA_MENU_WIDTH, num));
+}
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
@@ -44,11 +59,14 @@ export class AppChromeService {
   private sessionStorageData = window.sessionStorage.getItem('returnToPrevious');
   private returnToPreviousData = this.sessionStorageData ? JSON.parse(this.sessionStorageData) : undefined;
 
+  private megaMenuWidth = clampMegaMenuWidth(store.get(MEGA_MENU_WIDTH_LOCAL_STORAGE_KEY));
+
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
     megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true),
     megaMenuDocked: this.megaMenuDocked,
+    megaMenuWidth: this.megaMenuWidth,
     kioskMode: null,
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
@@ -157,6 +175,12 @@ export class AppChromeService {
     this.update({
       megaMenuDocked: newDockedState,
     });
+  };
+
+  public setMegaMenuWidth = (width: number) => {
+    const clamped = clampMegaMenuWidth(width);
+    store.set(MEGA_MENU_WIDTH_LOCAL_STORAGE_KEY, clamped);
+    this.update({ megaMenuWidth: clamped });
   };
 
   public onToggleKioskMode = () => {

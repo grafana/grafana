@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import classNames from 'classnames';
 import { Resizable } from 're-resizable';
-import { type PropsWithChildren, useEffect } from 'react';
+import { type PropsWithChildren, useEffect, useLayoutEffect } from 'react';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -53,6 +53,12 @@ export function AppChrome({ children }: Props) {
 
   useResponsiveDockedMegaMenu(chrome);
   useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked);
+
+  // Expose the (resizable) docked mega menu width as a CSS variable so the menu,
+  // top bar and page content all stay in sync. useLayoutEffect avoids a flash.
+  useLayoutEffect(() => {
+    document.documentElement.style.setProperty('--grafana-mega-menu-width', `${state.megaMenuWidth}px`);
+  }, [state.megaMenuWidth]);
 
   const contentClass = cx({
     [styles.content]: true,
@@ -220,7 +226,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       height: '100%',
       position: 'fixed',
       top: 0,
-      width: MENU_WIDTH,
+      width: `var(--grafana-mega-menu-width, ${MENU_WIDTH})`,
       zIndex: 2,
 
       [theme.breakpoints.up('xl')]: {
@@ -234,7 +240,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       zIndex: 1,
     }),
     scopesDashboardsContainerDocked: css({
-      left: MENU_WIDTH,
+      left: `var(--grafana-mega-menu-width, ${MENU_WIDTH})`,
     }),
     topNav: css({
       display: 'flex',
@@ -246,7 +252,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       flexDirection: 'column',
     }),
     topNavMenuDocked: css({
-      left: MENU_WIDTH,
+      left: `var(--grafana-mega-menu-width, ${MENU_WIDTH})`,
     }),
     panes: css({
       display: 'flex',
@@ -260,10 +266,10 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       position: 'relative',
     }),
     pageContainerMenuDocked: css({
-      paddingLeft: MENU_WIDTH,
+      paddingLeft: `var(--grafana-mega-menu-width, ${MENU_WIDTH})`,
     }),
     pageContainerMenuDockedScopes: css({
-      paddingLeft: `calc(${MENU_WIDTH} * 2)`,
+      paddingLeft: `calc(var(--grafana-mega-menu-width, ${MENU_WIDTH}) * 2)`,
     }),
     pageContainer: css({
       label: 'page-container',
