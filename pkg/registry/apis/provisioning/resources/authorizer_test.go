@@ -881,6 +881,64 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 	})
 }
 
+func TestResolveFileGVR(t *testing.T) {
+	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "test-repo"}}
+
+	t.Run("dashboard file resolves to dashboards GVR", func(t *testing.T) {
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "").
+			Return(dashboardFileInfo(), nil)
+
+		a := NewAuthorizer(repo, mockReader, auth.NewMockAccessChecker(t), false).(*ProvisioningAuthorizer)
+		gvr, err := a.resolveFileGVR(context.Background(), "team-a/dashboard.json")
+
+		assert.NoError(t, err)
+		assert.Equal(t, DashboardResource, gvr)
+	})
+
+	t.Run("unsupported kind in a supported group returns error", func(t *testing.T) {
+		// A file declaring a different kind in the dashboard group must NOT resolve to
+		// the dashboards GVR. This guards against Group-only matching: resolution is
+		// keyed on Kind, so an unknown kind sharing the group is unsupported.
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Read", mock.Anything, "team-a/panel.json", "").
+			Return(&repository.FileInfo{
+				Data: []byte(`{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"LibraryPanel","metadata":{"name":"p"},"spec":{}}`),
+			}, nil)
+
+		a := NewAuthorizer(repo, mockReader, auth.NewMockAccessChecker(t), false).(*ProvisioningAuthorizer)
+		_, err := a.resolveFileGVR(context.Background(), "team-a/panel.json")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "unsupported resource type")
+	})
+}
+
+// TestGVRForSupportedKind verifies that GVR resolution is keyed on Group AND Kind,
+// so that distinct kinds sharing an apiserver group resolve independently.
+func TestGVRForSupportedKind(t *testing.T) {
+	t.Run("dashboard kind resolves to dashboards GVR", func(t *testing.T) {
+		gvr, ok := gvrForSupportedKind(DashboardKind.Group, DashboardKind.Kind)
+		assert.True(t, ok)
+		assert.Equal(t, DashboardResource, gvr)
+	})
+
+	t.Run("matching group but different kind does not resolve", func(t *testing.T) {
+		_, ok := gvrForSupportedKind(DashboardKind.Group, "LibraryPanel")
+		assert.False(t, ok)
+	})
+
+	t.Run("matching kind but different group does not resolve", func(t *testing.T) {
+		_, ok := gvrForSupportedKind("other.grafana.app", DashboardKind.Kind)
+		assert.False(t, ok)
+	})
+
+	t.Run("folder is not resolvable as a file resource", func(t *testing.T) {
+		_, ok := gvrForSupportedKind(FolderKind.Group, FolderKind.Kind)
+		assert.False(t, ok)
+	})
+}
+
 func TestAuthorizeMoveByPath(t *testing.T) {
 	t.Run("file path checks update on source and create on target", func(t *testing.T) {
 		repo := &provisioning.Repository{

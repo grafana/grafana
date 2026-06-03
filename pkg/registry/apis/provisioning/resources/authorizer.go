@@ -238,15 +238,15 @@ func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path string
 		return schema.GroupVersionResource{}, fmt.Errorf("parse file %q: %w", path, err)
 	}
 
+	// Resolve by Group AND Kind. Matching by Group alone is incorrect when multiple
+	// kinds share an apiserver group (e.g. dashboards and library panels both live in
+	// dashboard.grafana.app): a Group-only match would resolve every file in the group
+	// to whichever GVR appears first, mis-authorizing files of the other kind.
+	//
 	// Folders are authorized through their own dedicated path (authorizeFolder,
-	// authorizeDeleteFolder, authorizeMoveFolder) — skip them here.
-	for _, gvr := range SupportedProvisioningResources {
-		if gvr == FolderResource {
-			continue
-		}
-		if gvr.Group == gvk.Group {
-			return gvr, nil
-		}
+	// authorizeDeleteFolder, authorizeMoveFolder) and are intentionally not resolvable here.
+	if gvr, ok := gvrForSupportedKind(gvk.Group, gvk.Kind); ok {
+		return gvr, nil
 	}
 
 	return schema.GroupVersionResource{}, fmt.Errorf("unsupported resource type %s/%s at %q", gvk.Group, gvk.Kind, path)

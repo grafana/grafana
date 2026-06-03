@@ -33,9 +33,26 @@ var (
 	// SupportedProvisioningResources is the list of resources that can fully managed from the UI
 	SupportedProvisioningResources = []schema.GroupVersionResource{FolderResource, DashboardResource}
 
+	// supportedResourceGVKToGVR maps a supported resource's Group+Kind to its GVR.
+	// Resolution must be keyed on Kind (not Group alone): multiple kinds can share an
+	// apiserver group (e.g. dashboards and library panels in dashboard.grafana.app), so
+	// matching by Group alone would mis-resolve files of the second kind to the wrong GVR.
+	// Folders are intentionally excluded — they are authorized through dedicated paths.
+	supportedResourceGVKToGVR = map[schema.GroupKind]schema.GroupVersionResource{
+		{Group: DashboardKind.Group, Kind: DashboardKind.Kind}: DashboardResource,
+	}
+
 	// SupportsFolderAnnotation is the list of resources that can be saved in a folder
 	SupportsFolderAnnotation = []schema.GroupResource{FolderResource.GroupResource(), DashboardResource.GroupResource()}
 )
+
+// gvrForSupportedKind returns the GVR for a supported resource identified by its
+// Group and Kind. The second return value is false when the Group+Kind pair is not
+// a supported provisioning resource.
+func gvrForSupportedKind(group, kind string) (schema.GroupVersionResource, bool) {
+	gvr, ok := supportedResourceGVKToGVR[schema.GroupKind{Group: group, Kind: kind}]
+	return gvr, ok
+}
 
 // folderGVR builds the GVR for the folder API at the given version.
 func folderGVR(folderAPIVersion string) schema.GroupVersionResource {
