@@ -20,16 +20,22 @@ import { getRuleDesignStyles } from './gma-design/styles';
 import { useDataSourceLoadingReporter } from './hooks/useDataSourceLoadingReporter';
 import { type DataSourceLoadState } from './hooks/useDataSourceLoadingStates';
 import { useK8sFolderCountsFilter } from './hooks/useK8sFolderCountsFilter';
-import { parseRecordingSplitMode } from './hooks/useK8sFolderRules';
+import { type K8sRuleFilter, parseRecordingSplitMode } from './hooks/useK8sFolderRules';
 import { useK8sFoldersPage } from './hooks/useK8sFoldersPage';
 
 interface LoaderProps {
   groupFilter?: string;
   namespaceFilter?: string;
+  ruleFilter?: K8sRuleFilter;
   onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
 }
 
-export function K8sPaginatedGrafanaLoader({ groupFilter, namespaceFilter, onLoadingStateChange }: LoaderProps) {
+export function K8sPaginatedGrafanaLoader({
+  groupFilter,
+  namespaceFilter,
+  ruleFilter,
+  onLoadingStateChange,
+}: LoaderProps) {
   const styles = useStyles2(getRuleDesignStyles);
   const [searchParams] = useURLSearchParams();
   const recordingSplitMode = parseRecordingSplitMode(searchParams.get('recordingSplitMode'));
@@ -100,11 +106,12 @@ export function K8sPaginatedGrafanaLoader({ groupFilter, namespaceFilter, onLoad
             }
             return (
               <K8sFolderCard
-                key={`${folderUid}-${singleKind ?? recordingSplitMode}`}
+                key={`${folderUid}-${singleKind ?? recordingSplitMode}-${ruleFilter?.ruleType ?? ''}`}
                 folderUid={folderUid}
                 folderTitle={getFolderTitle(folder)}
                 treatment={recordingSplitMode}
                 groupFilter={groupFilter}
+                ruleFilter={ruleFilter}
                 singleKind={singleKind}
               />
             );

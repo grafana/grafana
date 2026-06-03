@@ -4,11 +4,17 @@ import { useState } from 'react';
 import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, IconButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { Spacer } from '../../components/Spacer';
 import { FolderActionsButton } from '../../components/folder-actions/FolderActionsButton';
 import { makeFolderAlertsLink } from '../../utils/misc';
-import { type PaginatedKind, type RecordingSplitMode, useK8sFolderRules } from '../hooks/useK8sFolderRules';
+import {
+  type K8sRuleFilter,
+  type PaginatedKind,
+  type RecordingSplitMode,
+  useK8sFolderRules,
+} from '../hooks/useK8sFolderRules';
 
 import { K8sRuleRow, type RuleKind } from './K8sRuleRow';
 import { getRuleDesignStyles } from './styles';
@@ -18,6 +24,7 @@ interface K8sFolderCardProps {
   folderTitle: string;
   treatment: RecordingSplitMode;
   groupFilter?: string;
+  ruleFilter?: K8sRuleFilter;
   showDesc?: boolean;
   density?: 'compact' | 'comfy';
   /** When set, renders a single rule kind flat (used by the top-level 'tabbed' treatment). */
@@ -25,11 +32,23 @@ interface K8sFolderCardProps {
   defaultOpen?: boolean;
 }
 
+/** Returns the only rule kind a filter can match, or undefined when both kinds are possible. */
+function singleKindForFilter(ruleFilter?: K8sRuleFilter): RuleKind | undefined {
+  if (ruleFilter?.ruleType === PromRuleType.Recording) {
+    return 'recording';
+  }
+  if (ruleFilter?.ruleType === PromRuleType.Alerting || ruleFilter?.dashboardUid || ruleFilter?.contactPoint) {
+    return 'alerting';
+  }
+  return undefined;
+}
+
 export function K8sFolderCard({
   folderUid,
   folderTitle,
   treatment,
   groupFilter,
+  ruleFilter,
   showDesc = true,
   density = 'comfy',
   singleKind,
@@ -40,9 +59,16 @@ export function K8sFolderCard({
   const [tab, setTab] = useState<RuleKind>('alerting');
   const [recOpen, setRecOpen] = useState(false);
 
-  const { alerting, recording, hasRecording, isInitialLoading, error } = useK8sFolderRules(folderUid, groupFilter);
+  const { alerting, recording, hasRecording, isInitialLoading, error } = useK8sFolderRules(
+    folderUid,
+    groupFilter,
+    ruleFilter
+  );
 
-  const showHeaderTabs = !singleKind && hasRecording && treatment === 'header-tabs';
+  // A filter that can only match one kind collapses the card to that kind's flat list.
+  const effectiveSingleKind: RuleKind | undefined = singleKind ?? singleKindForFilter(ruleFilter);
+
+  const showHeaderTabs = !effectiveSingleKind && hasRecording && treatment === 'header-tabs';
 
   return (
     <div className={styles.folder}>
@@ -82,7 +108,7 @@ export function K8sFolderCard({
           <Spacer />
           {!showHeaderTabs && (
             <FolderCountLabel
-              singleKind={singleKind}
+              singleKind={effectiveSingleKind}
               alerting={alerting}
               recording={recording}
               hasRecording={hasRecording}
@@ -96,7 +122,7 @@ export function K8sFolderCard({
       {open && (
         <FolderBody
           treatment={treatment}
-          singleKind={singleKind}
+          singleKind={effectiveSingleKind}
           hasRecording={hasRecording}
           tab={tab}
           recOpen={recOpen}
@@ -149,7 +175,9 @@ function FolderCountLabel({
 
   const only = hasRecording ? recording : alerting;
   return (
-    <span className={styles.frules}>{t('alerting.k8s-folder.rule-count', '{{count}} rules', { count: only.countLabel })}</span>
+    <span className={styles.frules}>
+      {t('alerting.k8s-folder.rule-count', '{{count}} rules', { count: only.countLabel })}
+    </span>
   );
 }
 
@@ -351,10 +379,7 @@ type PaginatedRuleListProps = {
   showDesc: boolean;
   density: 'compact' | 'comfy';
   dim?: boolean;
-} & (
-  | { kind: 'alerting'; page: PaginatedKind<AlertRule> }
-  | { kind: 'recording'; page: PaginatedKind<RecordingRule> }
-);
+} & ({ kind: 'alerting'; page: PaginatedKind<AlertRule> } | { kind: 'recording'; page: PaginatedKind<RecordingRule> });
 
 function PaginatedRuleList(props: PaginatedRuleListProps) {
   const { page, showDesc, density, dim } = props;

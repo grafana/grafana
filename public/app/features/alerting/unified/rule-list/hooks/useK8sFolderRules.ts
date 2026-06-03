@@ -6,6 +6,9 @@ import {
   useLazyListAlertRuleQuery,
   useLazyListRecordingRuleQuery,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { PromRuleType } from 'app/types/unified-alerting-dto';
+
+import { stringifyFieldSelector } from '../../utils/k8s/utils';
 
 const RULE_PAGE_SIZE = 24;
 const GROUP_LABEL = 'grafana.com/group';
@@ -67,10 +70,11 @@ function paginatedCount(loaded: number, hasMore: boolean): string {
  * the folder is expanded). `loadMore` appends the next page.
  */
 function usePaginatedRuleKind<T extends RuleWithMeta>(
-  trigger: (args: { labelSelector: string; limit: number; continue?: string }) => {
+  trigger: (args: { labelSelector: string; fieldSelector?: string; limit: number; continue?: string }) => {
     unwrap: () => Promise<{ items?: T[]; metadata?: { continue?: string } }>;
   },
   labelSelector: string,
+  fieldSelector: string,
   enabled: boolean,
   onError: (err: unknown) => void
 ): PaginatedKind<T> {
@@ -84,7 +88,8 @@ function usePaginatedRuleKind<T extends RuleWithMeta>(
     async (token: string | undefined) => {
       setIsLoading(true);
       try {
-        const response = await trigger({ labelSelector, limit: RULE_PAGE_SIZE, continue: token }).unwrap();
+        const args = { labelSelector, limit: RULE_PAGE_SIZE, continue: token };
+        const response = await trigger(fieldSelector ? { ...args, fieldSelector } : args).unwrap();
         const next = response.metadata?.continue;
         setItems((current) => sortRules([...current, ...(response.items ?? [])]));
         setContinueToken(next);
@@ -95,7 +100,7 @@ function usePaginatedRuleKind<T extends RuleWithMeta>(
         setIsLoading(false);
       }
     },
-    [trigger, labelSelector, onError]
+    [trigger, labelSelector, fieldSelector, onError]
   );
 
   // Reset + eager first page whenever the selector changes.
@@ -115,7 +120,7 @@ function usePaginatedRuleKind<T extends RuleWithMeta>(
     didInit.current = true;
     fetchPage(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [labelSelector, enabled]);
+  }, [labelSelector, fieldSelector, enabled]);
 
   const loadMore = useCallback(() => {
     if (!hasMore || isLoading) {
@@ -134,11 +139,30 @@ function usePaginatedRuleKind<T extends RuleWithMeta>(
   };
 }
 
-export function useK8sFolderRules(folderUid: string, groupFilter?: string): UseK8sFolderRulesResult {
+/** Server-side filters supported by the K8s alertrules/recordingrules endpoints. */
+export interface K8sRuleFilter {
+  ruleType?: PromRuleType;
+  ruleName?: string;
+  dashboardUid?: string;
+  contactPoint?: string | null;
+}
+
+export function useK8sFolderRules(
+  folderUid: string,
+  groupFilter?: string,
+  ruleFilter?: K8sRuleFilter
+): UseK8sFolderRulesResult {
   const [error, setError] = useState<unknown>(undefined);
   const onError = useCallback((err: unknown) => setError(err), []);
 
   const labelSelector = buildLabelSelector(folderUid, groupFilter);
+  const alertingFieldSelector = buildAlertingFieldSelector(ruleFilter);
+  const recordingFieldSelector = buildRecordingFieldSelector(ruleFilter);
+
+  // Alert-only filters can never match recording rules, so we skip that query entirely.
+  const wantsAlertOnly = Boolean(ruleFilter?.dashboardUid) || Boolean(ruleFilter?.contactPoint);
+  const alertingEnabled = ruleFilter?.ruleType !== PromRuleType.Recording;
+  const recordingEnabled = ruleFilter?.ruleType !== PromRuleType.Alerting && !wantsAlertOnly;
 
   const [triggerAlerting] = useLazyListAlertRuleQuery();
   const [triggerRecording] = useLazyListRecordingRuleQuery();
@@ -146,19 +170,20 @@ export function useK8sFolderRules(folderUid: string, groupFilter?: string): UseK
   const alerting = usePaginatedRuleKind<AlertRule>(
     (args) => triggerAlerting(args),
     labelSelector,
-    true,
+    alertingFieldSelector,
+    alertingEnabled,
     onError
   );
   const recording = usePaginatedRuleKind<RecordingRule>(
     (args) => triggerRecording(args),
     labelSelector,
-    true,
+    recordingFieldSelector,
+    recordingEnabled,
     onError
   );
 
   const isInitialLoading =
-    (alerting.isLoading && alerting.loadedCount === 0) ||
-    (recording.isLoading && recording.loadedCount === 0);
+    (alerting.isLoading && alerting.loadedCount === 0) || (recording.isLoading && recording.loadedCount === 0);
 
   return {
     alerting,
@@ -175,6 +200,27 @@ function buildLabelSelector(folderUid: string, groupFilter?: string): string {
     selectors.push(`${GROUP_LABEL}=${groupFilter.trim()}`);
   }
   return selectors.join(',');
+}
+
+function buildAlertingFieldSelector(ruleFilter?: K8sRuleFilter): string {
+  const selectors: Array<[string, string]> = [];
+  if (ruleFilter?.ruleName?.trim()) {
+    selectors.push(['spec.title', ruleFilter.ruleName.trim()]);
+  }
+  if (ruleFilter?.dashboardUid) {
+    selectors.push(['spec.panelRef.dashboardUID', ruleFilter.dashboardUid]);
+  }
+  if (ruleFilter?.contactPoint) {
+    selectors.push(['spec.notificationSettings.receiver', ruleFilter.contactPoint]);
+  }
+  return selectors.length ? stringifyFieldSelector(selectors) : '';
+}
+
+function buildRecordingFieldSelector(ruleFilter?: K8sRuleFilter): string {
+  if (!ruleFilter?.ruleName?.trim()) {
+    return '';
+  }
+  return stringifyFieldSelector([['spec.title', ruleFilter.ruleName.trim()]]);
 }
 
 function sortRules<T extends RuleWithMeta>(rules: T[]): T[] {

@@ -7,21 +7,23 @@ import { type DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { GrafanaRulesSource, getExternalRulesSources } from '../utils/datasource';
 
-import { PaginatedDataSourceLoader } from './PaginatedDataSourceLoader';
 import { K8sPaginatedGrafanaLoader } from './K8sPaginatedGrafanaLoader';
+import { PaginatedDataSourceLoader } from './PaginatedDataSourceLoader';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 import { DataSourceErrorBoundary } from './components/DataSourceErrorBoundary';
 import { DataSourceSection } from './components/DataSourceSection';
 import { type DataSourceLoadState, useDataSourceLoadingStates } from './hooks/useDataSourceLoadingStates';
+import { type K8sRuleFilter } from './hooks/useK8sFolderRules';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
 interface GroupedViewProps {
   groupFilter?: string;
   namespaceFilter?: string;
+  ruleFilter?: K8sRuleFilter;
 }
 
-export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) {
+export function GroupedView({ groupFilter, namespaceFilter, ruleFilter }: GroupedViewProps) {
   const hasFilters = Boolean(groupFilter || namespaceFilter);
   const externalRuleSources = useMemo(() => getExternalRulesSources(), []);
 
@@ -34,6 +36,7 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
         <K8sPaginatedGrafanaLoader
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
+          ruleFilter={ruleFilter}
           onLoadingStateChange={updateState}
           key={`${groupFilter}-${namespaceFilter}`}
         />
