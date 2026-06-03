@@ -1,5 +1,5 @@
-import { type NavLayoutConfig } from './types';
 import { getPersonaLayout } from './personas';
+import { type NavLayoutConfig } from './types';
 
 export function applyPersonaLayout(personaId: string): NavLayoutConfig | undefined {
   return getPersonaLayout(personaId);

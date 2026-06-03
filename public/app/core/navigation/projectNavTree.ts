@@ -6,8 +6,8 @@ import {
   MEGA_MENU_EXCLUDED_IDS,
   UNPINNABLE_IDS,
 } from './constants';
-import { buildNavIndex, getNodeKey, type NavNodeRef } from './navIndex';
 import { resolveLayout } from './migrateLayout';
+import { buildNavIndex, getNodeKey, type NavNodeRef } from './navIndex';
 import { type NavLayoutConfig, type ProjectedNavTree } from './types';
 
 export interface ProjectNavTreeOptions {

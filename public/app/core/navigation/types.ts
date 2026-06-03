@@ -14,7 +14,7 @@ export interface NavLayoutPreference {
 }
 
 export interface ProjectedNavTree {
-  primary: import('@grafana/data').NavModelItem[];
-  overflow: import('@grafana/data').NavModelItem[];
+  primary: Array<import('@grafana/data').NavModelItem>;
+  overflow: Array<import('@grafana/data').NavModelItem>;
   expandedOverflow: boolean;
 }

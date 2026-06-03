@@ -6,8 +6,8 @@ import { reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { applyPersonaLayout } from './layoutActions';
-import { buildNavIndex } from './navIndex';
 import { resolveLayout } from './migrateLayout';
+import { buildNavIndex } from './navIndex';
 import { projectNavTree, reorderPrimary, togglePin } from './projectNavTree';
 import { type NavLayoutConfig } from './types';
 

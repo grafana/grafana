@@ -1,8 +1,8 @@
 import { type NavModelItem } from '@grafana/data';
 
-import { NAV_LAYOUT_VERSION, type NavLayoutConfig } from './types';
-import { findByUrl } from './navIndex';
 import { DEFAULT_PINNED_IDS } from './constants';
+import { findByUrl } from './navIndex';
+import { NAV_LAYOUT_VERSION, type NavLayoutConfig } from './types';
 
 export function migrateBookmarkUrlsToLayout(
   bookmarkUrls: string[] | undefined,
