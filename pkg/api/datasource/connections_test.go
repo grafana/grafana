@@ -189,6 +189,26 @@ func TestGetConnectionByUIDLegacy(t *testing.T) {
 	}
 }
 
+func TestGetConnectionByUIDLegacy_BuiltinGrafana(t *testing.T) {
+	// The built-in "-- Grafana --" datasource has no row in the datasource table, so it must
+	// resolve to its fixed type without a store lookup, even with no org set (global roles).
+	// The mock errors on any store call to prove the lookup is bypassed.
+	client := &legacyConnectionClientImpl{
+		datasourceService: &mockDataSourceService{
+			error: datasources.ErrDataSourceIdentifierNotSet,
+		},
+	}
+
+	conn, err := client.GetConnectionByUID(context.Background(), 0, "grafana")
+
+	require.NoError(t, err)
+	require.NotNil(t, conn)
+	require.Len(t, conn.Items, 1)
+	assert.Equal(t, "grafana", conn.Items[0].Name)
+	assert.Equal(t, "grafana", conn.Items[0].Plugin)
+	assert.Equal(t, "grafana.datasource.grafana.app", conn.Items[0].APIGroup)
+}
+
 // mock the datasource service
 type mockDataSourceService struct {
 	datasources.DataSourceService
