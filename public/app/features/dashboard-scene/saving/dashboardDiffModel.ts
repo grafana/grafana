@@ -1,4 +1,4 @@
-import { behaviors, sceneGraph, sceneUtils, type VizPanel } from '@grafana/scenes';
+import { behaviors, sceneGraph, type SceneVariable, sceneUtils, type VizPanel } from '@grafana/scenes';
 import { type Dashboard, type Panel, type VariableModel } from '@grafana/schema';
 import {
   type Spec as DashboardV2Spec,
@@ -33,13 +33,21 @@ export interface FieldChange {
   revert: () => void;
 }
 
+export interface VariableChangeRow {
+  name: string;
+  type: ChangeType;
+  oldVariable?: SceneVariable;
+  newVariable?: SceneVariable;
+  revert: () => void;
+}
+
 export interface VisualDiffModel {
   oldScene: DashboardScene;
   newScene: DashboardScene;
   oldPanels: Map<number, VizPanel>;
   newPanels: Map<number, VizPanel>;
   panelRows: PanelChangeRow[];
-  variableChanges: FieldChange[];
+  variableRows: VariableChangeRow[];
   optionChanges: FieldChange[];
 }
 
@@ -108,8 +116,13 @@ export function buildVisualDiff(dashboard: DashboardScene, oldValue: SaveModel, 
     revert: () => revertPanel(dashboard, oldScene, row),
   }));
 
-  const variableChanges: FieldChange[] = rawVariableChanges.map((change) => ({
-    ...change,
+  const oldVariables = mapSceneVariablesByName(oldScene);
+  const newVariables = mapSceneVariablesByName(newScene);
+  const variableRows: VariableChangeRow[] = rawVariableChanges.map((change) => ({
+    name: change.label,
+    type: change.type,
+    oldVariable: oldVariables.get(change.label),
+    newVariable: newVariables.get(change.label),
     revert: () => revertVariable(dashboard, oldScene, change.label),
   }));
 
@@ -118,7 +131,15 @@ export function buildVisualDiff(dashboard: DashboardScene, oldValue: SaveModel, 
     revert: () => revertOption(dashboard, oldScene, key),
   }));
 
-  return { oldScene, newScene, oldPanels, newPanels, panelRows, variableChanges, optionChanges };
+  return { oldScene, newScene, oldPanels, newPanels, panelRows, variableRows, optionChanges };
+}
+
+function mapSceneVariablesByName(scene: DashboardScene): Map<string, SceneVariable> {
+  const map = new Map<string, SceneVariable>();
+  for (const variable of scene.state.$variables?.state.variables ?? []) {
+    map.set(variable.state.name, variable);
+  }
+  return map;
 }
 
 function readCurrentTimeRange(dashboard: DashboardScene) {

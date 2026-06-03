@@ -7,44 +7,25 @@ import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type ChangeType, type FieldChange } from './dashboardDiffModel';
 
 interface Props {
-  variableChanges: FieldChange[];
   optionChanges: FieldChange[];
-  onDismissVariable: (change: FieldChange) => void;
-  onDismissOption: (change: FieldChange) => void;
-  variableAnchorId?: (index: number) => string;
-  optionAnchorId?: (index: number) => string;
+  onDismiss: (change: FieldChange) => void;
+  anchorId?: (index: number) => string;
 }
 
 /**
- * Static before/after rendering of the non-panel parts of a dashboard diff (variables and
- * dashboard-level options). These don't need a query runner, so they're rendered as plain values
- * rather than as part of a scene. Each row can be dismissed to revert that change in the dashboard.
+ * Static before/after rendering of the dashboard-level options diff. These don't need a query
+ * runner, so they're rendered as plain values rather than as part of a scene. Each row can be
+ * dismissed to revert that change in the dashboard.
  */
-export function DashboardConfigDiff({
-  variableChanges,
-  optionChanges,
-  onDismissVariable,
-  onDismissOption,
-  variableAnchorId,
-  optionAnchorId,
-}: Props) {
+export function DashboardConfigDiff({ optionChanges, onDismiss, anchorId }: Props) {
   return (
-    <Stack direction="column" gap={2}>
-      <ConfigSection
-        title={t('dashboard-scene.dashboard-config-diff.variables-heading', 'Variables')}
-        emptyText={t('dashboard-scene.dashboard-config-diff.no-variable-changes', 'No variable changes')}
-        changes={variableChanges}
-        onDismiss={onDismissVariable}
-        anchorId={variableAnchorId}
-      />
-      <ConfigSection
-        title={t('dashboard-scene.dashboard-config-diff.options-heading', 'Dashboard options')}
-        emptyText={t('dashboard-scene.dashboard-config-diff.no-option-changes', 'No option changes')}
-        changes={optionChanges}
-        onDismiss={onDismissOption}
-        anchorId={optionAnchorId}
-      />
-    </Stack>
+    <ConfigSection
+      title={t('dashboard-scene.dashboard-config-diff.options-heading', 'Dashboard options')}
+      emptyText={t('dashboard-scene.dashboard-config-diff.no-option-changes', 'No option changes')}
+      changes={optionChanges}
+      onDismiss={onDismiss}
+      anchorId={anchorId}
+    />
   );
 }
 

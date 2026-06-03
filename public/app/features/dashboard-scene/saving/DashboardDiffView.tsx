@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { type VizPanel } from '@grafana/scenes';
+import { ControlsLabel, type SceneVariable, sceneUtils, type VizPanel } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -11,7 +11,13 @@ import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import { DashboardConfigDiff } from './DashboardConfigDiff';
-import { buildVisualDiff, type ChangeType, type FieldChange, type PanelChangeRow } from './dashboardDiffModel';
+import {
+  buildVisualDiff,
+  type ChangeType,
+  type FieldChange,
+  type PanelChangeRow,
+  type VariableChangeRow,
+} from './dashboardDiffModel';
 
 interface Props {
   dashboard: DashboardScene;
@@ -35,7 +41,7 @@ export function DashboardDiffView({ dashboard, oldValue, newValue }: Props) {
   // The diff is a snapshot taken when the tab opens. The save model is recomputed (new references)
   // on every render of the drawer, so build the throwaway scenes once rather than on every render.
   const [model, setModel] = useState(() => buildVisualDiff(dashboard, oldValue, newValue));
-  const { oldScene, newScene, oldPanels, newPanels, panelRows, variableChanges, optionChanges } = model;
+  const { oldScene, newScene, oldPanels, newPanels, panelRows, variableRows, optionChanges } = model;
 
   // Activating the scenes activates their variable sets and time ranges, which the rendered panels
   // walk up to when running their queries. Only the panels we actually render get activated and
@@ -54,9 +60,9 @@ export function DashboardDiffView({ dashboard, oldValue, newValue }: Props) {
     setModel((current) => ({ ...current, panelRows: current.panelRows.filter((other) => other !== row) }));
   };
 
-  const dismissVariable = (change: FieldChange) => {
-    change.revert();
-    setModel((current) => ({ ...current, variableChanges: current.variableChanges.filter((other) => other !== change) }));
+  const dismissVariable = (row: VariableChangeRow) => {
+    row.revert();
+    setModel((current) => ({ ...current, variableRows: current.variableRows.filter((other) => other !== row) }));
   };
 
   const dismissOption = (change: FieldChange) => {
@@ -80,10 +86,10 @@ export function DashboardDiffView({ dashboard, oldValue, newValue }: Props) {
       },
       {
         title: t('dashboard-scene.dashboard-diff-view.outline-variables', 'Variables'),
-        items: variableChanges.map((change, index) => ({
+        items: variableRows.map((row, index) => ({
           id: variableAnchorId(index),
-          label: change.label,
-          type: change.type,
+          label: row.name,
+          type: row.type,
         })),
       },
       {
@@ -95,7 +101,7 @@ export function DashboardDiffView({ dashboard, oldValue, newValue }: Props) {
         })),
       },
     ],
-    [panelRows, variableChanges, optionChanges]
+    [panelRows, variableRows, optionChanges]
   );
 
   return (
@@ -144,14 +150,30 @@ export function DashboardDiffView({ dashboard, oldValue, newValue }: Props) {
             )}
           </section>
 
-          <DashboardConfigDiff
-            variableChanges={variableChanges}
-            optionChanges={optionChanges}
-            onDismissVariable={dismissVariable}
-            onDismissOption={dismissOption}
-            variableAnchorId={variableAnchorId}
-            optionAnchorId={optionAnchorId}
-          />
+          <section>
+            <Text element="h4">
+              <Trans i18nKey="dashboard-scene.dashboard-diff-view.variables-heading">Variables</Trans>
+            </Text>
+            {variableRows.length === 0 ? (
+              <Text color="secondary">
+                <Trans i18nKey="dashboard-scene.dashboard-diff-view.no-variable-changes">No variable changes</Trans>
+              </Text>
+            ) : (
+              <Stack direction="column" gap={2}>
+                {variableRows.map((row, index) => (
+                  <VariableDiffRow
+                    key={row.name}
+                    anchorId={variableAnchorId(index)}
+                    row={row}
+                    styles={styles}
+                    onDismiss={dismissVariable}
+                  />
+                ))}
+              </Stack>
+            )}
+          </section>
+
+          <DashboardConfigDiff optionChanges={optionChanges} onDismiss={dismissOption} anchorId={optionAnchorId} />
         </Stack>
       </div>
     </div>
@@ -287,6 +309,68 @@ function PanelColumn({ panel, height, styles, kind }: PanelColumnProps) {
     <div className={styles.column}>
       <div className={cx(styles.panelBox, kind === 'old' ? styles.panelBoxOld : styles.panelBoxNew)} style={{ height }}>
         <panel.Component model={panel} />
+      </div>
+    </div>
+  );
+}
+
+interface VariableDiffRowProps {
+  anchorId: string;
+  row: VariableChangeRow;
+  styles: ReturnType<typeof getStyles>;
+  onDismiss: (row: VariableChangeRow) => void;
+}
+
+function VariableDiffRow({ anchorId, row, styles, onDismiss }: VariableDiffRowProps) {
+  return (
+    <div id={anchorId} className={styles.row}>
+      <VariableColumn variable={row.oldVariable} styles={styles} kind="old" />
+      <div className={styles.divider} />
+      <VariableColumn variable={row.newVariable} styles={styles} kind="new" />
+      <div className={styles.actions}>
+        <IconButton
+          name="history"
+          tooltip={t('dashboard-scene.dashboard-diff-view.dismiss-tooltip', 'Revert this change')}
+          onClick={() => onDismiss(row)}
+        />
+      </div>
+    </div>
+  );
+}
+
+interface VariableColumnProps {
+  variable?: SceneVariable;
+  styles: ReturnType<typeof getStyles>;
+  kind: 'old' | 'new';
+}
+
+function VariableColumn({ variable, styles, kind }: VariableColumnProps) {
+  if (!variable) {
+    return (
+      <div className={styles.column}>
+        <div className={styles.variablePlaceholder}>
+          <Text color="secondary" variant="bodySmall">
+            {kind === 'old' ? (
+              <Trans i18nKey="dashboard-scene.dashboard-diff-view.added-placeholder">Did not exist</Trans>
+            ) : (
+              <Trans i18nKey="dashboard-scene.dashboard-diff-view.removed-placeholder">Removed</Trans>
+            )}
+          </Text>
+        </div>
+      </div>
+    );
+  }
+
+  const labelOrName = variable.state.label || variable.state.name;
+  const elementId = sceneUtils.getVariableControlId(variable.state.type, variable.state.key);
+
+  return (
+    <div className={styles.column}>
+      <div className={cx(styles.variableBox, kind === 'old' ? styles.variableBoxOld : styles.variableBoxNew)}>
+        <div className={styles.variableControl}>
+          <ControlsLabel htmlFor={elementId} label={labelOrName} layout="horizontal" />
+          <variable.Component model={variable} />
+        </div>
       </div>
     </div>
   );
@@ -436,6 +520,44 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       justifyContent: 'center',
       width: '100%',
+      border: `1px dashed ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.background.secondary,
+    }),
+    variableBox: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: theme.spacing(1),
+      alignItems: 'center',
+      minHeight: theme.spacing(4),
+      padding: theme.spacing(1),
+      border: `2px solid transparent`,
+      borderRadius: theme.shape.radius.default,
+    }),
+    variableBoxOld: css({
+      borderColor: theme.colors.error.border,
+      background: theme.colors.error.transparent,
+    }),
+    variableBoxNew: css({
+      borderColor: theme.colors.success.border,
+      background: theme.colors.success.transparent,
+    }),
+    variableControl: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      // Join the label and the value control by removing the control's left rounding, matching how
+      // variable controls render in the dashboard.
+      '> :nth-child(2)': {
+        borderTopLeftRadius: 'unset',
+        borderBottomLeftRadius: 'unset',
+      },
+    }),
+    variablePlaceholder: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: theme.spacing(4),
+      padding: theme.spacing(1),
       border: `1px dashed ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.secondary,
