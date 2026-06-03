@@ -14208,6 +14208,11 @@
     }
   },
   "pulse": {
+    "assistant": {
+      "empty-prompt": "Please help with this dashboard conversation.",
+      "system-prompt": "You are the Grafana Assistant replying inside a dashboard conversation thread. Answer concisely and helpfully in Markdown.",
+      "unavailable": "I'm the Grafana Assistant, but I'm not available in this Grafana instance right now, so I can't answer here."
+    },
     "composer": {
       "assistant-display-name": "Grafana Assistant",
       "assistant-suggestion-label": "Grafana Assistant",

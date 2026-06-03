@@ -149,6 +149,19 @@ export interface EditPulseRequest {
   body: PulseBody;
 }
 
+/**
+ * AddAssistantReplyRequest carries a Grafana Assistant reply that the
+ * frontend generated (via the Assistant's inline generation API) for a
+ * pulse that tagged `@assistant`. The backend persists `markdown` under
+ * the assistant service account. Mirrors
+ * `pkg/services/pulse/models.go::AddAssistantReplyCommand`.
+ */
+export interface AddAssistantReplyRequest {
+  /** Pulse the assistant is replying to, so the answer threads under it. */
+  parentUID?: string;
+  markdown: string;
+}
+
 export interface MarkReadRequest {
   lastReadPulseUID: string;
 }

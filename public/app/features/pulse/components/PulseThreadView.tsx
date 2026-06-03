@@ -17,6 +17,7 @@ import {
   useMarkReadMutation,
   useReopenThreadMutation,
 } from '../api/pulseApi';
+import { useAssistantAutoReply } from '../hooks/useAssistantAutoReply';
 import { type Pulse, type PulseBody, type PulseMention, type PulseThread } from '../types';
 import { bodyToMarkdown } from '../utils/body';
 import { type PanelSuggestion } from '../utils/lookups';
@@ -89,6 +90,7 @@ export function PulseThreadView({
   const [closeThread] = useCloseThreadMutation();
   const [reopenThread] = useReopenThreadMutation();
   const [markRead] = useMarkReadMutation();
+  const triggerAssistantReply = useAssistantAutoReply();
 
   // Memoize so the empty-array fallback is stable across renders and the
   // mark-read effect's deps don't churn unnecessarily.
@@ -108,7 +110,10 @@ export function PulseThreadView({
   }, [pulses, thread.uid, markRead]);
 
   async function handleSubmit(body: PulseBody) {
-    await addPulse({ threadUID: thread.uid, req: { body } }).unwrap();
+    const posted = await addPulse({ threadUID: thread.uid, req: { body } }).unwrap();
+    // Fire-and-forget: if the reply tagged @assistant, generate and post the
+    // assistant's answer in the background so the composer clears immediately.
+    void triggerAssistantReply(body, { threadUID: thread.uid, parentUID: posted.uid });
   }
 
   function handleMention(m: PulseMention) {

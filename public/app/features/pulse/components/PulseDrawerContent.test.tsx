@@ -22,6 +22,8 @@ jest.mock('../api/pulseApi', () => ({
   useGetResourceVersionQuery: (...args: unknown[]) => useGetResourceVersionQueryMock(...args),
   useGetThreadQuery: (...args: unknown[]) => useGetThreadQueryMock(...args),
   useCreateThreadMutation: () => useCreateThreadMutationMock(),
+  // Used by the @assistant auto-reply hook mounted in the drawer.
+  useAddAssistantReplyMutation: () => [jest.fn(), { isLoading: false }],
 }));
 
 // The live channel hook is fire-and-forget for our purposes; render

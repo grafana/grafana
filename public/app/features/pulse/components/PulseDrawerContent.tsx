@@ -29,6 +29,7 @@ import {
   useListPanelMentionsQuery,
   useListThreadsQuery,
 } from '../api/pulseApi';
+import { useAssistantAutoReply } from '../hooks/useAssistantAutoReply';
 import { useResourcePulseStream } from '../hooks/useResourcePulseStream';
 import { type PulseThread } from '../types';
 import { type PanelSuggestion } from '../utils/lookups';
@@ -308,6 +309,7 @@ export function PulseDrawerContent({
   }, [currentPage, numberOfPages]);
 
   const [createThread, createThreadState] = useCreateThreadMutation();
+  const triggerAssistantReply = useAssistantAutoReply();
 
   // When the user opens a thread that isn't on the current page (e.g.
   // a deep link from the global overview), fall back to fetching the
@@ -399,6 +401,9 @@ export function PulseDrawerContent({
               // a deeper page that no longer makes sense.
               setCurrentPage(1);
               setActiveThreadUID(res.thread.uid);
+              // If the opening pulse tagged @assistant, generate and post
+              // the assistant's reply in the background.
+              void triggerAssistantReply(body, { threadUID: res.thread.uid, parentUID: res.pulse.uid });
             }}
           />
         </Stack>

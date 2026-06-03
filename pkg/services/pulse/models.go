@@ -42,9 +42,10 @@ func (k ResourceKind) Valid() bool {
 //
 // `assistant` chips tag the Grafana Assistant. Their TargetID is the
 // fixed sentinel AssistantMentionTarget. They are not user fan-out
-// targets (no user id to notify); instead the service detects them
-// after a user's pulse lands and asks the configured AssistantResponder
-// to post a reply back into the thread — see maybeRespondAsAssistant.
+// targets (no user id to notify); instead the frontend's Grafana
+// Assistant generates a reply for the tagging pulse and posts it back
+// into the thread via AddAssistantReply, authored by the assistant
+// service account.
 type MentionKind string
 
 const (
@@ -264,6 +265,19 @@ type AddPulseCommand struct {
 	AuthorKind   AuthorKind      `json:"-"`
 	ParentUID    string          `json:"parentUID,omitempty"`
 	Body         json.RawMessage `json:"body"`
+}
+
+// AddAssistantReplyCommand persists a Grafana Assistant reply on a thread.
+// The reply markdown is produced client-side by the Grafana Assistant; the
+// backend stamps it under the assistant service account. OrgID and
+// ThreadUID are set by the API handler from the request context / route.
+//
+// swagger:model
+type AddAssistantReplyCommand struct {
+	OrgID     int64  `json:"-"`
+	ThreadUID string `json:"-"`
+	ParentUID string `json:"parentUID,omitempty"`
+	Markdown  string `json:"markdown"`
 }
 
 // EditPulseCommand updates the body of an existing pulse. Only the original

@@ -10,6 +10,18 @@ export const useAssistant = jest.fn().mockReturnValue({
   toggleAssistant: jest.fn(),
 });
 
+// Inline generation API (used by Pulse's @assistant auto-reply). Defaults to
+// a no-op generate so components that mount the hook don't blow up; tests
+// that exercise generation override this return value.
+export const useInlineAssistant = jest.fn().mockReturnValue({
+  generate: jest.fn().mockResolvedValue(undefined),
+  isGenerating: false,
+  content: '',
+  error: null,
+  cancel: jest.fn(),
+  reset: jest.fn(),
+});
+
 export const createAssistantContextItem = jest.fn();
 export const useProvidePageContext = jest.fn().mockReturnValue(jest.fn());
 

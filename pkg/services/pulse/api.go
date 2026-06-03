@@ -65,6 +65,11 @@ func (s *PulseService) registerAPIEndpoints() {
 		r.Post("/threads/:threadUID/reopen", authorize(admin), routing.Wrap(s.reopenThreadHandler))
 		r.Get("/threads/:threadUID/pulses", authorize(read), routing.Wrap(s.listPulsesHandler))
 		r.Post("/threads/:threadUID/pulses", authorize(write), routing.Wrap(s.addPulseHandler))
+		// The Grafana Assistant reply is generated client-side and posted
+		// back here; the backend stamps it under the assistant service
+		// account. Gated by the same write action plus the
+		// dashboardPulseAssistant toggle (checked in the handler).
+		r.Post("/threads/:threadUID/assistant-reply", authorize(write), routing.Wrap(s.addAssistantReplyHandler))
 		r.Patch("/pulses/:pulseUID", authorize(write), routing.Wrap(s.editPulseHandler))
 		r.Delete("/pulses/:pulseUID", authorize(deleteOrAdmin), routing.Wrap(s.deletePulseHandler))
 		r.Post("/threads/:threadUID/subscribe", authorize(read), routing.Wrap(s.subscribeHandler))
@@ -674,6 +679,51 @@ func (s *PulseService) addPulseHandler(c *contextmodel.ReqContext) response.Resp
 	p, err := s.AddPulse(c.Req.Context(), cmd)
 	if err != nil {
 		return mapPulseError(err, "Failed to add pulse")
+	}
+	one := []Pulse{p}
+	s.populateAuthorDisplay(c.Req.Context(), one)
+	return response.JSON(http.StatusOK, one[0])
+}
+
+// swagger:route POST /pulse/threads/{threadUID}/assistant-reply pulse alpha addAssistantReply
+//
+// Persist a Grafana Assistant reply on a thread.
+//
+// The reply markdown is generated client-side by the Grafana Assistant and
+// posted here; the backend stores it under the assistant service account.
+// Requires the dashboardPulseAssistant feature toggle — when it's off the
+// route 404s so the capability stays invisible.
+//
+// Responses:
+// 200: pulseAddPulseResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 409: conflictError
+// 500: internalServerError
+func (s *PulseService) addAssistantReplyHandler(c *contextmodel.ReqContext) response.Response {
+	if !s.assistantEnabled() {
+		// Match the feature-gate convention: an off toggle is invisible.
+		return response.Error(http.StatusNotFound, "Pulse assistant is not enabled", nil)
+	}
+	uid := web.Params(c.Req)[":threadUID"]
+	t, err := s.GetThread(c.Req.Context(), c.GetOrgID(), uid)
+	if err != nil {
+		return mapPulseError(err, "Failed to get thread")
+	}
+	if err := s.assertCanReadResource(c, t.ResourceKind, t.ResourceUID); err != nil {
+		return err
+	}
+	cmd := AddAssistantReplyCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	cmd.OrgID = c.GetOrgID()
+	cmd.ThreadUID = uid
+	p, err := s.AddAssistantReply(c.Req.Context(), cmd)
+	if err != nil {
+		return mapPulseError(err, "Failed to add assistant reply")
 	}
 	one := []Pulse{p}
 	s.populateAuthorDisplay(c.Req.Context(), one)
