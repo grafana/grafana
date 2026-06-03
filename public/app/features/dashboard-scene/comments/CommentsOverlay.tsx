@@ -2,21 +2,26 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
+import { isAssistantAvailable, useInlineAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { DashboardInteractions } from '../utils/interactions';
 
-import { findPanelAtPoint, fromNormalized, getPanelRect, toNormalized } from './anchor';
 import { CommentCompose } from './CommentCompose';
 import { CommentPin } from './CommentPin';
-import { useComments } from './CommentsStore';
 import { CommentThreadView } from './CommentThread';
+import { useComments } from './CommentsStore';
+import { findPanelAtPoint, fromNormalized, getPanelRect, toNormalized } from './anchor';
+import { recordAssistantChatFromSidebar } from './assistantChatRegistry';
 import { resolveToMs } from './formatTime';
+import { parseCommentMentions } from './mentions';
+import { processCommentMentions } from './useCommentAssistantActions';
 
 interface Props {
   dashboardUid: string;
+  dashboardTitle?: string;
 }
 
 interface Provisional {
@@ -28,7 +33,7 @@ interface Provisional {
   clientY: number;
 }
 
-export function CommentsOverlay({ dashboardUid }: Props) {
+export function CommentsOverlay({ dashboardUid, dashboardTitle }: Props) {
   const location = useLocation();
   const styles = useStyles2(getStyles);
 
@@ -43,6 +48,24 @@ export function CommentsOverlay({ dashboardUid }: Props) {
   const [, setTick] = useState(0);
 
   const { threads, addThread, appendMessage, setResolved, deleteThread } = useComments(dashboardUid);
+  const { generate } = useInlineAssistant();
+  const [assistantAvailable, setAssistantAvailable] = useState(false);
+
+  useEffect(() => {
+    const sub = isAssistantAvailable().subscribe(setAssistantAvailable);
+    return () => sub.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ chatId: string; title?: string; messages: Array<{ role: 'user' | 'assistant'; content: string }> }>).detail;
+      if (detail?.chatId && detail.messages?.length) {
+        recordAssistantChatFromSidebar(detail.chatId, detail.title ?? 'Assistant chat', detail.messages);
+      }
+    };
+    window.addEventListener('grafana-assistant-chat-snapshot', handler);
+    return () => window.removeEventListener('grafana-assistant-chat-snapshot', handler);
+  }, []);
 
   useEffect(() => {
     const parsed = urlThreadId ? Number(urlThreadId) : null;
@@ -104,7 +127,7 @@ export function CommentsOverlay({ dashboardUid }: Props) {
     return null;
   }
 
-  async function submitProvisional(body: string) {
+  async function submitProvisional(rawBody: string) {
     if (!provisional) {
       return;
     }
@@ -112,16 +135,34 @@ export function CommentsOverlay({ dashboardUid }: Props) {
     const toRaw = params.get('to') ?? '';
     const fromMs = resolveToMs(fromRaw);
     const toMs = resolveToMs(toRaw, true);
+    const timeRange = {
+      from: fromMs !== null ? String(fromMs) : fromRaw,
+      to: toMs !== null ? String(toMs) : toRaw,
+    };
+    const parsed = parseCommentMentions(rawBody);
+    let initialBody = parsed.cleanBody;
+    if (!initialBody) {
+      initialBody =
+        parsed.assistantQuestion || parsed.chatId || parsed.chatMentionWithoutId ? rawBody.trim() : '';
+    }
+    if (!initialBody) {
+      return;
+    }
+    const pin = {
+      dashboardUid,
+      dashboardTitle,
+      panelKey: provisional.panelKey,
+      panelTitle: provisional.panelTitle,
+      timeRange,
+    };
+
     const created = await addThread({
       anchor: { panelKey: provisional.panelKey, xNorm: provisional.xNorm, yNorm: provisional.yNorm },
       context: {
         panelTitle: provisional.panelTitle,
-        timeRange: {
-          from: fromMs !== null ? String(fromMs) : fromRaw,
-          to: toMs !== null ? String(toMs) : toRaw,
-        },
+        timeRange,
       },
-      body,
+      body: initialBody,
     });
     if (created) {
       DashboardInteractions.commentCreated({
@@ -129,6 +170,23 @@ export function CommentsOverlay({ dashboardUid }: Props) {
         panel_key: provisional.panelKey,
         thread_count: threads.length + 1,
       });
+
+      const hasMentions =
+        assistantAvailable &&
+        (parsed.assistantQuestion || parsed.chatId || parsed.chatMentionWithoutId);
+      if (hasMentions) {
+        await processCommentMentions({
+          pin,
+          thread: created,
+          rawBody,
+          generate,
+          skipUserMessage: true,
+          appendUserMessage: async () => undefined,
+          appendAssistantMessage: async (body) => {
+            await appendMessage(created.id, { body, authorType: 'assistant' });
+          },
+        });
+      }
     }
     setProvisional(null);
   }
@@ -187,6 +245,16 @@ export function CommentsOverlay({ dashboardUid }: Props) {
           <CommentCompose
             x={provisional.clientX}
             y={provisional.clientY}
+            pin={{
+              dashboardUid,
+              dashboardTitle,
+              panelKey: provisional.panelKey,
+              panelTitle: provisional.panelTitle,
+              timeRange: {
+                from: params.get('from') ?? '',
+                to: params.get('to') ?? '',
+              },
+            }}
             onSubmit={submitProvisional}
             onCancel={() => setProvisional(null)}
           />
@@ -195,10 +263,13 @@ export function CommentsOverlay({ dashboardUid }: Props) {
 
       {activeThread && activePos && (
         <CommentThreadView
+          dashboardUid={dashboardUid}
+          dashboardTitle={dashboardTitle}
           thread={activeThread}
           number={activeIndex + 1}
           x={activePos.x}
           y={activePos.y}
+          appendMessage={appendMessage}
           onReply={async (body) => {
             const msg = await appendMessage(activeThread.id, { body });
             if (msg) {

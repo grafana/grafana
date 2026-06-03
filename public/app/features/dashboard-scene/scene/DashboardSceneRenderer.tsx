@@ -28,6 +28,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     isEditing,
     layoutOrchestrator,
     uid,
+    title,
   } = model.useState();
 
   const scopesServices = useScopesServices();
@@ -119,7 +120,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           />
         )}
         {overlay && <overlay.Component model={overlay} />}
-        {!editPanel && <CommentsOverlay dashboardUid={uid ?? ''} />}
+        {!editPanel && <CommentsOverlay dashboardUid={uid ?? ''} dashboardTitle={title} />}
       </Page>
     </>
   );

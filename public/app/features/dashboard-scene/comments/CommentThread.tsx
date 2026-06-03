@@ -3,16 +3,25 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, IconButton, TextArea, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
+import { CommentAssistantButton } from './CommentAssistantButton';
+import { CommentReplyComposer } from './CommentReplyComposer';
 import { formatRelative, timestampHint } from './formatTime';
-import { type CommentThread, type User } from './types';
+import { type CommentMessage, type CommentThread, type User } from './types';
+import { useCommentAssistantActions } from './useCommentAssistantActions';
 
 interface Props {
+  dashboardUid: string;
+  dashboardTitle?: string;
   thread: CommentThread;
   number: number;
   x: number;
   y: number;
+  appendMessage: (
+    threadId: number,
+    args: { body: string; authorType?: 'user' | 'assistant' }
+  ) => Promise<CommentMessage | null>;
   onReply: (body: string) => void | Promise<unknown>;
   onToggleResolve: () => void | Promise<void>;
   onDelete: () => void | Promise<void>;
@@ -21,10 +30,13 @@ interface Props {
 }
 
 export function CommentThreadView({
+  dashboardUid,
+  dashboardTitle,
   thread,
   number,
   x,
   y,
+  appendMessage,
   onReply,
   onToggleResolve,
   onDelete,
@@ -35,6 +47,26 @@ export function CommentThreadView({
   const [reply, setReply] = useState('');
   const ref = useRef<HTMLDivElement>(null);
   const headerHint = timestampHint(thread.context.timeRange, thread.anchor.xNorm);
+  const title = thread.context.panelTitle || t('dashboard-scene.comments-thread.panel-fallback', 'Panel');
+
+  const pin = {
+    dashboardUid,
+    dashboardTitle,
+    panelKey: thread.anchor.panelKey,
+    panelTitle: title,
+    timeRange: thread.context.timeRange,
+  };
+
+  const { submitWithMentions, isGenerating, mentionsEnabled } = useCommentAssistantActions({
+    pin,
+    thread,
+    appendUserMessage: async (body) => {
+      await onReply(body);
+    },
+    appendAssistantMessage: async (body) => {
+      await appendMessage(thread.id, { body, authorType: 'assistant' });
+    },
+  });
 
   useEffect(() => {
     function onDocMouseDown(e: MouseEvent) {
@@ -60,7 +92,11 @@ export function CommentThreadView({
     if (!trimmed) {
       return;
     }
-    await onReply(trimmed);
+    if (mentionsEnabled) {
+      await submitWithMentions(trimmed);
+    } else {
+      await onReply(trimmed);
+    }
     setReply('');
   }
 
@@ -80,8 +116,6 @@ export function CommentThreadView({
     }
   }
 
-  const title = thread.context.panelTitle || t('dashboard-scene.comments-thread.panel-fallback', 'Panel');
-
   return (
     <div ref={ref} className={styles.popover} data-thread-number={number} style={{ left: x, top: y }}>
       <div className={styles.header}>
@@ -94,6 +128,17 @@ export function CommentThreadView({
           <Trans i18nKey="dashboard-scene.comments-thread.jump-to">Jump to</Trans>
         </button>
         <div className={styles.headerActions}>
+          <CommentAssistantButton
+            pin={{
+              dashboardUid,
+              dashboardTitle,
+              panelKey: thread.anchor.panelKey,
+              panelTitle: title,
+              timeRange: thread.context.timeRange,
+            }}
+            thread={thread}
+            origin="grafana/dashboard/comments/thread"
+          />
           <IconButton
             name={thread.resolved ? 'check-circle' : 'check'}
             size="md"
@@ -135,7 +180,7 @@ export function CommentThreadView({
       <div className={styles.messages}>
         {thread.messages.map((msg) => (
           <div key={msg.id} className={styles.message}>
-            <UserAvatar user={msg.author} className={styles.avatar} />
+            <UserAvatar user={msg.author} authorType={msg.authorType} className={styles.avatar} />
             <div className={styles.messageBody}>
               <div className={styles.messageMeta}>
                 <span className={styles.authorName}>{msg.author.name}</span>
@@ -148,41 +193,42 @@ export function CommentThreadView({
       </div>
 
       <div className={styles.composer}>
-        <TextArea
+        <CommentReplyComposer
           value={reply}
-          onChange={(e) => setReply(e.currentTarget.value)}
-          placeholder={t(
-            'dashboard-scene.comments-thread.reply-placeholder',
-            'Add a comment. Use @ to mention.'
-          )}
-          rows={2}
-          className={styles.composerInput}
-          onKeyDown={(e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-              e.preventDefault();
-              void submitReply();
-            }
-          }}
+          onChange={setReply}
+          onSubmit={submitReply}
+          isGenerating={isGenerating}
+          mentionsEnabled={mentionsEnabled}
         />
-        <div className={styles.composerFooter}>
-          <div className={styles.composerLeftIcons}>
-            <Icon name="at" size="md" className={styles.composerIcon} />
-            <Icon name="camera" size="md" className={styles.composerIcon} />
-            <Icon name="attach" size="md" className={styles.composerIcon} />
-          </div>
-          <span className={styles.kbdHint}>
-            <Trans i18nKey="dashboard-scene.comments-thread.kbd-hint">⌘↵ post · Esc cancel</Trans>
-          </span>
-          <Button size="sm" variant="primary" onClick={() => void submitReply()} disabled={!reply.trim()}>
-            <Trans i18nKey="dashboard-scene.comments-thread.reply">Reply</Trans>
-          </Button>
+        <div className={styles.composerToolbar}>
+          <CommentAssistantButton
+            pin={pin}
+            thread={thread}
+            origin="grafana/dashboard/comments/reply"
+            className={styles.composerAssistantIcon}
+          />
         </div>
       </div>
     </div>
   );
 }
 
-function UserAvatar({ user, className }: { user: User; className: string }) {
+function UserAvatar({
+  user,
+  authorType,
+  className,
+}: {
+  user: User;
+  authorType?: string;
+  className: string;
+}) {
+  if (authorType === 'assistant' || user.name === 'Grafana Assistant') {
+    return (
+      <span className={className} aria-label={user.name}>
+        <Icon name="ai-sparkle" size="lg" />
+      </span>
+    );
+  }
   if (user.avatarUrl) {
     return <img src={user.avatarUrl} alt={user.name} className={className} />;
   }
@@ -194,7 +240,7 @@ function UserAvatar({ user, className }: { user: User; className: string }) {
 }
 
 function renderBodyWithMentions(body: string, mentionClass: string) {
-  const parts = body.split(/(@\w+)/g);
+  const parts = body.split(/(@(?:assistant|chat(?::[a-zA-Z0-9-]+)?|\w+))/gi);
   return parts.map((part, i) =>
     part.startsWith('@') ? (
       <span key={i} className={mentionClass}>
@@ -343,36 +389,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(1.5, 2, 1.5, 2),
     borderTop: `1px solid ${theme.colors.border.weak}`,
     background: theme.colors.background.canvas,
-    gap: theme.spacing(1),
+    gap: theme.spacing(0.5),
   }),
-  composerInput: css({
-    background: theme.colors.background.canvas,
-    border: 'none',
-    padding: 0,
-    resize: 'none',
-    '&:focus': {
-      boxShadow: 'none',
-      border: 'none',
-    },
-  }),
-  composerFooter: css({
+  composerToolbar: css({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
   }),
-  composerLeftIcons: css({
-    display: 'flex',
-    gap: theme.spacing(1),
+  composerAssistantIcon: css({
     color: theme.colors.text.secondary,
-  }),
-  composerIcon: css({
-    cursor: 'not-allowed',
-    opacity: 0.6,
-  }),
-  kbdHint: css({
-    flex: 1,
-    fontSize: theme.typography.bodySmall.fontSize,
-    color: theme.colors.text.secondary,
-    textAlign: 'right',
   }),
 });

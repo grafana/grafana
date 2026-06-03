@@ -52,4 +52,8 @@ func addDashboardCommentsMigrations(mg *Migrator) {
 	for _, idx := range messageV1.Indices {
 		mg.AddMigration("add index dashboard_comment_message "+idx.XName(messageV1.Name), NewAddIndexMigration(messageV1, idx))
 	}
+
+	mg.AddMigration("add author_type to dashboard_comment_message", NewAddColumnMigration(messageV1, &Column{
+		Name: "author_type", Type: DB_NVarchar, Length: 16, Nullable: false, Default: "'user'",
+	}))
 }

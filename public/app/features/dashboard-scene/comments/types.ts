@@ -1,3 +1,5 @@
+export type CommentAuthorType = 'user' | 'assistant';
+
 export interface User {
   id: number;
   name: string;
@@ -20,6 +22,7 @@ export interface CommentMessage {
   id: number;
   threadId: number;
   author: User;
+  authorType?: CommentAuthorType;
   body: string;
   createdAt: string;
 }

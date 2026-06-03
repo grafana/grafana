@@ -47,6 +47,7 @@ func (s *ServiceImpl) CreateThread(ctx context.Context, cmd *CreateThreadCommand
 	}
 	firstMessage := &Message{
 		AuthorUserID: cmd.CreatedByUserID,
+		AuthorType:   AuthorTypeUser,
 		Body:         cmd.InitialBody,
 		CreatedAt:    now,
 		UpdatedAt:    now,
@@ -108,6 +109,7 @@ func (s *ServiceImpl) AddMessage(ctx context.Context, cmd *AddMessageCommand) (*
 	msg := &Message{
 		ThreadID:     cmd.ThreadID,
 		AuthorUserID: cmd.AuthorUserID,
+		AuthorType:   cmd.AuthorType,
 		Body:         cmd.Body,
 		CreatedAt:    now,
 		UpdatedAt:    now,
