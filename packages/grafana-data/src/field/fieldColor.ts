@@ -12,6 +12,7 @@ import tinycolor from 'tinycolor2';
 import { t } from '@grafana/i18n';
 
 import { getContrastRatio } from '../themes/colorManipulator';
+import { aiZeitgeistV2Palette, classicModernizedPalette, modernSlatePalette, vividModernPalette, vividSpectrumPalette } from '../themes/createVisualizationColors';
 import { type GrafanaTheme2 } from '../themes/types';
 import { reduceField } from '../transformations/fieldReducer';
 import { type Field } from '../types/dataFrame';
@@ -126,6 +127,51 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
         );
       },
       group: accessibleGroup,
+    }),
+    new FieldColorSchemeMode({
+      id: FieldColorModeId.PaletteAiZeitgeistV2,
+      name: 'AI Zeitgeist v2',
+      isContinuous: false,
+      isByValue: false,
+      getColors: (_theme: GrafanaTheme2) => {
+        return aiZeitgeistV2Palette();
+      },
+    }),
+    new FieldColorSchemeMode({
+      id: FieldColorModeId.PaletteVividSpectrum,
+      name: 'Vivid spectrum',
+      isContinuous: false,
+      isByValue: false,
+      getColors: (_theme: GrafanaTheme2) => {
+        return vividSpectrumPalette();
+      },
+    }),
+    new FieldColorSchemeMode({
+      id: FieldColorModeId.PaletteClassicModernized,
+      name: 'Classic modernized',
+      isContinuous: false,
+      isByValue: false,
+      getColors: (_theme: GrafanaTheme2) => {
+        return classicModernizedPalette();
+      },
+    }),
+    new FieldColorSchemeMode({
+      id: FieldColorModeId.PaletteModernSlate,
+      name: 'Modern slate',
+      isContinuous: false,
+      isByValue: false,
+      getColors: (_theme: GrafanaTheme2) => {
+        return modernSlatePalette();
+      },
+    }),
+    new FieldColorSchemeMode({
+      id: FieldColorModeId.PaletteVividModern,
+      name: 'Vivid modern',
+      isContinuous: false,
+      isByValue: false,
+      getColors: (_theme: GrafanaTheme2) => {
+        return vividModernPalette();
+      },
     }),
     new FieldColorSchemeMode({
       id: FieldColorModeId.ContinuousViridis,

@@ -8,6 +8,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
+import { CommentsOverlay } from '../comments/CommentsOverlay';
 import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitter';
 
 import { type DashboardScene } from './DashboardScene';
@@ -26,6 +27,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     panelsPerRow,
     isEditing,
     layoutOrchestrator,
+    uid,
   } = model.useState();
 
   const scopesServices = useScopesServices();
@@ -107,6 +109,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           />
         )}
         {overlay && <overlay.Component model={overlay} />}
+        {!editPanel && <CommentsOverlay dashboardUid={uid ?? ''} />}
       </Page>
     </>
   );

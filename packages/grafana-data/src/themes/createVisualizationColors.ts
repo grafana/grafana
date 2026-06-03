@@ -344,6 +344,281 @@ function getClassicPalette() {
   ];
 }
 
+export function aiZeitgeistV2Palette(): string[] {
+  return [
+    '#1b9e86', // digital emerald
+    '#ab6297', // dusty plum
+    '#b09053', // honey leak
+    '#49709c', // structural slate
+    '#c95f5f', // lomo coral
+    '#5e8c68', // muted sage
+    '#8771ab', // foggy iris
+    '#cc7a43', // bright tangerine
+    '#009ebf', // electric cyan
+    '#b37380', // mauve ash
+    '#829c5b', // khaki green
+    '#575f78', // storm gray
+    '#c78363', // sunbaked clay
+    '#2b8577', // deep seaglass
+    '#b5548c', // vivid magenta
+    '#a3977c', // warm greige
+    '#426b85', // iron blue
+    '#cf6944', // washed amber
+    '#548c81', // eucalyptus
+    '#8f76a1', // muted amethyst
+    '#a19661', // olive leak
+    '#0094d1', // sky blue
+    '#c26772', // washed rose
+    '#688f6b', // dried moss
+    '#695a7a', // deep iris
+    '#d17b54', // faded terracotta
+    '#28968f', // mint energy
+    '#ba61a3', // bubblegum
+    '#9c8f82', // putty taupe
+    '#3c7391', // ocean slate
+    '#c48956', // camel
+    '#6b8a7c', // sea glass
+    '#a36b8e', // dusty orchid
+    '#8a9c68', // willow
+    '#5c6382', // faded indigo
+    '#db674d', // acid watermelon
+    '#2699a6', // digital robin egg
+    '#ad5878', // berry wash
+    '#a89d8f', // oat
+    '#4c616b', // pine shadow
+    '#c78961', // brick dust
+    '#528c7b', // faded cyan
+    '#96749c', // foggy lavender
+    '#a69565', // earthy sand
+    '#4375aa', // cerulean depth
+    '#cf6e60', // washed tomato
+    '#638c6b', // lichen
+    '#7b6b91', // muted plum
+    '#ba894a', // light-leaked amber
+    '#1a99b0', // electric teal
+  ];
+}
+
+export function vividSpectrumPalette(): string[] {
+  return [
+    '#3a8ec5', // azure
+    '#d4703a', // tangerine
+    '#2aaa7a', // emerald
+    '#c74a7a', // hot pink
+    '#7a68c8', // electric violet
+    '#a8b030', // acid lime
+    '#d05858', // poppy red
+    '#2a98a8', // turquoise
+    '#b8783a', // copper
+    '#5a80d0', // royal blue
+    '#38a858', // kelly green
+    '#c858a8', // magenta
+    '#9878c0', // purple
+    '#c89830', // marigold
+    '#d06858', // vermillion
+    '#3890a0', // pacific
+    '#88a838', // chartreuse
+    '#b058a0', // fuchsia
+    '#5878b8', // sapphire
+    '#d08838', // amber
+    '#38a088', // jade
+    '#c05068', // raspberry
+    '#7888d0', // periwinkle
+    '#98b048', // pear
+    '#d07848', // burnt orange
+    '#3088b8', // cobalt
+    '#58b868', // spring green
+    '#b848b0', // orchid
+    '#8898c0', // twilight
+    '#b8a028', // gold
+    '#c85848', // cinnabar
+    '#38a8b8', // cyan
+    '#a07830', // bronze
+    '#6870c8', // iris
+    '#48b080', // mint
+    '#d05888', // cerise
+    '#8080d0', // lavender
+    '#c8a838', // saffron
+    '#e07058', // salmon
+    '#2898c0', // cerulean
+    '#78b838', // lawn
+    '#a850a8', // plum
+    '#4880c0', // steel blue
+    '#d89038', // honey
+    '#38b0a0', // seafoam
+    '#c84868', // carmine
+    '#9068c0', // heliotrope
+    '#a8b848', // peridot
+    '#d86848', // flame
+    '#3080c0', // ocean blue
+  ];
+}
+
+export function classicModernizedPalette(): string[] {
+  return [
+    '#4da87a', // fresh green
+    '#c49838', // rich gold
+    '#3e9fb0', // modern cyan
+    '#cc7040', // warm orange
+    '#c45858', // clear red
+    '#3578be', // true blue
+    '#a050a0', // true purple
+    '#7060b0', // true violet
+    '#489650', // forest
+    '#b59028', // saffron
+    '#4080b8', // steel blue
+    '#b86028', // deep sienna
+    '#a84858', // garnet
+    '#2e68a8', // cobalt
+    '#8a4888', // deep magenta
+    '#685898', // twilight
+    '#68b078', // sage
+    '#c0a048', // honey
+    '#4098a8', // aqua
+    '#c88050', // apricot
+    '#c06868', // salmon
+    '#5888b8', // cornflower
+    '#b070ae', // orchid
+    '#8878c0', // periwinkle
+    '#509050', // clover
+    '#b8a020', // mustard
+    '#4a9eb5', // pacific
+    '#c86838', // burnt sienna
+    '#b04848', // brick
+    '#3870b0', // royal blue
+    '#8c3890', // plum
+    '#6e50a0', // grape
+    '#78a870', // fern
+    '#c89848', // marigold
+    '#48a0b0', // teal
+    '#c87848', // terracotta
+    '#c86060', // coral
+    '#4878b8', // cerulean
+    '#b068a8', // pink
+    '#7868b0', // iris
+    '#48884a', // pine
+    '#a88820', // bronze
+    '#3a8890', // deep teal
+    '#b85828', // rust
+    '#984050', // cranberry
+    '#2860a0', // navy
+    '#7a3878', // boysenberry
+    '#584890', // heliotrope
+    '#60b868', // spring
+    '#c0a858', // wheat
+  ];
+}
+
+export function modernSlatePalette(): string[] {
+  return [
+    '#518AC2', // Steel Blue
+    '#CE7386', // Dusty Rose
+    '#60C769', // Sage Green
+    '#7C51C2', // Soft Violet
+    '#CEB073', // Warm Sand
+    '#60C7C3', // Soft Teal
+    '#C251A6', // Soft Magenta
+    '#9DCE73', // Olive Green
+    '#6072C7', // Slate Cobalt
+    '#C25F51', // Terra Cotta
+    '#73CE99', // Seafoam Green
+    '#A960C7', // Soft Purple
+    '#C2C251', // Muted Gold
+    '#73B4CE', // Slate Cyan
+    '#C7608B', // Mauve
+    '#5FC251', // Fern
+    '#8273CE', // Periwinkle
+    '#C79060', // Warm Ochre
+    '#51C2A6', // Jade Mint
+    '#CE73CA', // Soft Orchid
+    '#A5C760', // Moss
+    '#517CC2', // Soft Azure
+    '#CE737B', // Soft Crimson
+    '#60C776', // Medium Mint
+    '#8A51C2', // Lavender
+    '#CEBB73', // Ochre
+    '#60BFC7', // Dusty Aqua
+    '#C25198', // Soft Fuchsia
+    '#92CE73', // Olive Lime
+    '#6065C7', // Slate Blue
+    '#C26E51', // Soft Coral
+    '#73CEA4', // Muted Jade
+    '#B660C7', // Medium Purple
+    '#B4C251', // Artichoke
+    '#73A8CE', // Medium Cerulean
+    '#C7607E', // Deep Mauve
+    '#51C251', // Soft Green
+    '#8E73CE', // Medium Violet
+    '#C79C60', // Dusty Orange
+    '#51C2B4', // Soft Seafoam
+    '#CE73BF', // Muted Fuchsia
+    '#98C760', // Lime Sage
+    '#516EC2', // Medium Sapphire
+    '#CE7773', // Muted Red
+    '#60C783', // Soft Emerald
+    '#9851C2', // Medium Lavender
+    '#C7BF60', // Soft Yellow
+    '#60B2C7', // Soft Cyan
+    '#C2518A', // Medium Pink
+    '#86CE73', // Yellow-Sage
+  ];
+}
+
+export function vividModernPalette(): string[] {
+  return [
+    '#1F7DDB', // Vivid Blue
+    '#E33B5E', // Hot Coral
+    '#29E038', // Vivid Green
+    '#661FDB', // Electric Violet
+    '#E3AB3B', // Solar Orange
+    '#29E0D9', // Vivid Teal
+    '#D425A9', // Vivid Magenta
+    '#88E33B', // Vivid Lime
+    '#2947E0', // Cobalt
+    '#DB371F', // Vivid Red
+    '#3BE381', // Spring Mint
+    '#AB29E0', // Vivid Purple
+    '#CECE2C', // Gold
+    '#3BB2E3', // Sky Cyan
+    '#DA2F76', // Deep Rose
+    '#37DB1F', // Lime Green
+    '#573BE3', // Indigo
+    '#E07D29', // Amber
+    '#1FDBAC', // Sea Mint
+    '#DD40D7', // Orchid
+    '#9BD22D', // Yellow-Green
+    '#1F66DB', // Azure
+    '#E33B49', // Crimson
+    '#29E04F', // Emerald
+    '#7D1FDB', // Violet
+    '#E3C03B', // Tangerine
+    '#29D1E0', // Aquamarine
+    '#D42593', // Hot Pink
+    '#73E33B', // Chartreuse
+    '#2930E0', // Royal Blue
+    '#DB4E1F', // Coral Red
+    '#3BE396', // Jade
+    '#C229E0', // Purple
+    '#BACE2C', // Citron
+    '#3B9DE3', // Cerulean
+    '#E0295E', // Rose
+    '#1FDB1F', // Grass Green
+    '#6C3BE3', // Blue Violet
+    '#E09429', // Burnt Orange
+    '#1FDBC3', // Seafoam
+    '#DD40C3', // Fuchsia
+    '#8CE029', // Olive Lime
+    '#1F4EDB', // Sapphire
+    '#E3423B', // Scarlet
+    '#29E066', // Medium Green
+    '#941FDB', // Medium Purple
+    '#D2C52D', // Muted Yellow
+    '#29BAE0', // Cyan Teal
+    '#D4257D', // Deep Pink
+    '#5EE33B', // Yellow-Lime
+  ];
+}
+
 // Old hues
 // function getDarkHues(): ThemeVizHue[] {
 //     return [

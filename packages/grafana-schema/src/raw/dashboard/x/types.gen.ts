@@ -544,8 +544,13 @@ export enum FieldColorModeId {
   ContinuousYlBl = 'continuous-YlBl',
   ContinuousYlRd = 'continuous-YlRd',
   Fixed = 'fixed',
+  PaletteAiZeitgeistV2 = 'palette-ai-zeitgeist-v2',
   PaletteClassic = 'palette-classic',
   PaletteClassicByName = 'palette-classic-by-name',
+  PaletteClassicModernized = 'palette-classic-modernized',
+  PaletteModernMutedV2 = 'palette-modern-muted-v2',
+  PaletteNewEditor = 'palette-new-editor',
+  PaletteVividSpectrum = 'palette-vivid-spectrum',
   Shades = 'shades',
   Thresholds = 'thresholds',
 }

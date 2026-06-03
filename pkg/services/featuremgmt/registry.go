@@ -742,6 +742,15 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:         "dashboardComments",
+			Description:  "Enables in-dashboard collaborative commenting (Tier 1 pilot)",
+			Stage:        FeatureStageExperimental,
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "panelFilterVariable",
 			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
 			Stage:        FeatureStageExperimental,

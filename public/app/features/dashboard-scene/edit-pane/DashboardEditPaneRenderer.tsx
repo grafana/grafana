@@ -17,6 +17,8 @@ import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overvie
 import { type ToolbarActionProps } from '../scene/new-toolbar/types';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
+import { CommentsSidebarButton } from '../comments/CommentsSidebarButton';
+
 import { DashboardCodePane } from './DashboardCodePane';
 import { type DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
@@ -132,6 +134,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
             active={openPane instanceof DashboardOutline}
           />
+          <CommentsSidebarButton editPane={editPane} openPane={openPane} />
           {config.featureToggles.dashboardNewLayouts &&
             (config.featureToggles.dashboardFiltersOverview ||
               config.featureToggles.dashboardUnifiedDrilldownControls) && (

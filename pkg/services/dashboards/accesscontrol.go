@@ -28,6 +28,14 @@ const (
 	ActionDashboardsDelete           = "dashboards:delete"
 	ActionDashboardsPermissionsRead  = "dashboards.permissions:read"
 	ActionDashboardsPermissionsWrite = "dashboards.permissions:write"
+
+	// Tier 1 pilot actions for the in-dashboard comments feature.
+	// Read is implied by dashboards:read, write by dashboards:read (PLG: viewers can comment),
+	// admin by dashboards:write (editors can resolve or delete any thread). Wired in the
+	// role declarations below.
+	ActionDashboardCommentsRead  = "dashboards.comments:read"
+	ActionDashboardCommentsWrite = "dashboards.comments:write"
+	ActionDashboardCommentsAdmin = "dashboards.comments:admin"
 )
 
 var (

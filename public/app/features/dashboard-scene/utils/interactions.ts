@@ -331,6 +331,35 @@ export const DashboardInteractions = {
     const properties = { item, action, context };
     reportDashboardInteraction('move_item', properties);
   },
+
+  // Comments (Tier 1 pilot)
+  commentsModeEnabled: (properties: { dashboard_uid: string }) => {
+    reportDashboardInteraction('comments_mode_enabled', properties);
+  },
+  commentsModeDisabled: (properties: { dashboard_uid: string }) => {
+    reportDashboardInteraction('comments_mode_disabled', properties);
+  },
+  commentsPaneOpened: (properties: { dashboard_uid: string; thread_count: number }) => {
+    reportDashboardInteraction('comments_pane_opened', properties);
+  },
+  commentCreated: (properties: { dashboard_uid: string; panel_key: string; thread_count: number }) => {
+    reportDashboardInteraction('comment_created', properties);
+  },
+  commentReplied: (properties: { dashboard_uid: string; thread_id: number }) => {
+    reportDashboardInteraction('comment_replied', properties);
+  },
+  commentResolved: (properties: { dashboard_uid: string; thread_id: number }) => {
+    reportDashboardInteraction('comment_resolved', properties);
+  },
+  commentReopened: (properties: { dashboard_uid: string; thread_id: number }) => {
+    reportDashboardInteraction('comment_reopened', properties);
+  },
+  commentDeleted: (properties: { dashboard_uid: string; thread_id: number }) => {
+    reportDashboardInteraction('comment_deleted', properties);
+  },
+  commentJumpTo: (properties: { dashboard_uid: string; thread_id: number }) => {
+    reportDashboardInteraction('comment_jump_to', properties);
+  },
 };
 
 const reportDashboardInteraction = (

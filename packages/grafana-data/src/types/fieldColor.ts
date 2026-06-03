@@ -29,6 +29,11 @@ export enum FieldColorModeId {
   Fixed = 'fixed',
   Shades = 'shades',
   Gradient = 'gradient',
+  PaletteAiZeitgeistV2 = 'palette-ai-zeitgeist-v2',
+  PaletteVividSpectrum = 'palette-vivid-spectrum',
+  PaletteClassicModernized = 'palette-classic-modernized',
+  PaletteVividModern = 'palette-vivid-modern',
+  PaletteModernSlate = 'palette-modern-slate',
 }
 
 /**

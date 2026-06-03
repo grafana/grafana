@@ -25,6 +25,7 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
 import { KioskMode } from 'app/types/dashboard';
 
+import { CollaborateButton } from '../comments/CollaborateButton';
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -273,6 +274,7 @@ function DashboardControlActions({
   return (
     <>
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
+      {showShareButton && <CollaborateButton />}
       {isEditing && (canSave || canSaveAs) && <SaveDashboard dashboard={dashboard} />}
       {!isPlaying && canEditDashboard && isEditable && <EditDashboardSwitch dashboard={dashboard} />}
       {!isPlaying && canEditDashboard && !isEditable && !isEditing && (

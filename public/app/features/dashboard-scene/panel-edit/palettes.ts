@@ -33,18 +33,19 @@ const CLASSIC_MODERNIZED: PaletteDefinition = {
   colors: ['#4da87a', '#c49838', '#3e9fb0', '#cc7040', '#c45858', '#3578be', '#a050a0', '#7060b0'],
 };
 
-/** Modern Muted v2 — soft professional tones */
-const MODERN_MUTED_V2: PaletteDefinition = {
-  id: 'palette-modern-muted-v2',
-  name: 'Modern Muted v2',
-  colors: ['#5c83b4', '#c88b64', '#6ba07d', '#b47996', '#4a9ea6', '#c0aa5e', '#8677bb', '#c46e6e'],
+
+/** Modern Slate — 50-color muted/professional palette, lower saturation, light-mode friendly */
+const MODERN_SLATE: PaletteDefinition = {
+  id: 'palette-modern-slate',
+  name: 'Modern Slate',
+  colors: ['#518AC2', '#CE7386', '#60C769', '#7C51C2', '#CEB073', '#60C7C3', '#C251A6', '#9DCE73'],
 };
 
-/** New Editor — golden-ratio hue distribution */
-const NEW_EDITOR: PaletteDefinition = {
-  id: 'palette-new-editor',
-  name: 'New Editor',
-  colors: ['#6191c2', '#c47384', '#53c15c', '#8c6ebf', '#c7a157', '#78c9c6', '#c157a7', '#96c270'],
+/** Vivid Modern — 50-color golden-angle palette, saturated, dual-background legible */
+const VIVID_MODERN: PaletteDefinition = {
+  id: 'palette-vivid-modern',
+  name: 'Vivid Modern',
+  colors: ['#1F7DDB', '#E33B5E', '#29E038', '#661FDB', '#E3AB3B', '#29E0D9', '#D425A9', '#88E33B'],
 };
 
 /** All custom palettes shown in the Tab editor picker (Classic is added by the UI from theme). */
@@ -52,6 +53,6 @@ export const CUSTOM_PALETTES: PaletteDefinition[] = [
   AI_ZEITGEIST_V2,
   VIVID_SPECTRUM,
   CLASSIC_MODERNIZED,
-  MODERN_MUTED_V2,
-  NEW_EDITOR,
+  MODERN_SLATE,
+  VIVID_MODERN,
 ];

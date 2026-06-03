@@ -490,6 +490,16 @@ func (hs *HTTPServer) registerRoutes() {
 					dashboardPermissionRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsRead, dashUIDScope)), routing.Wrap(hs.GetDashboardPermissionList))
 					dashboardPermissionRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite, dashUIDScope)), routing.Wrap(hs.UpdateDashboardPermissions))
 				})
+
+				dashUidRoute.Get("/comments", authorize(ac.EvalPermission(dashboards.ActionDashboardCommentsRead, dashUIDScope)), routing.Wrap(hs.ListDashboardComments))
+				dashUidRoute.Post("/comments", authorize(ac.EvalPermission(dashboards.ActionDashboardCommentsWrite, dashUIDScope)), routing.Wrap(hs.CreateDashboardComment))
+			})
+
+			dashboardRoute.Group("/comments", func(commentsRoute routing.RouteRegister) {
+				commentsRoute.Patch("/threads/:id", reqSignedIn, routing.Wrap(hs.UpdateDashboardCommentThread))
+				commentsRoute.Delete("/threads/:id", reqSignedIn, routing.Wrap(hs.DeleteDashboardCommentThread))
+				commentsRoute.Post("/threads/:id/messages", reqSignedIn, routing.Wrap(hs.AddDashboardCommentMessage))
+				commentsRoute.Delete("/messages/:id", reqSignedIn, routing.Wrap(hs.DeleteDashboardCommentMessage))
 			})
 
 			dashboardRoute.Post("/db", authorize(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionDashboardsWrite))), routing.Wrap(hs.PostDashboard))

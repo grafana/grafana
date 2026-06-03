@@ -247,6 +247,10 @@ const (
 	// Enables CSV export using scenes dashboard architecture
 	FlagSceneCsvExport = "sceneCsvExport"
 
+	// FlagDashboardComments
+	// Enables in-dashboard collaborative commenting (Tier 1 pilot)
+	FlagDashboardComments = "dashboardComments"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"

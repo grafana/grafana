@@ -429,6 +429,11 @@ export interface FeatureToggles {
   */
   feedbackButton?: boolean;
   /**
+  * Enables in-dashboard collaborative commenting (Tier 1 pilot)
+  * @default false
+  */
+  dashboardComments?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   * @default false
   */

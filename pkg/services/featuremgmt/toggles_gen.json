@@ -1449,6 +1449,21 @@
     },
     {
       "metadata": {
+        "name": "dashboardComments",
+        "resourceVersion": "1776957087898",
+        "creationTimestamp": "2022-02-22T07:47:42Z",
+        "deletionTimestamp": "2023-03-11T12:28:12Z"
+      },
+      "spec": {
+        "description": "Enables in-dashboard collaborative commenting (Tier 1 pilot)",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardDefaultLayoutSelector",
         "resourceVersion": "1775132912690",
         "creationTimestamp": "2026-03-19T12:33:56Z",

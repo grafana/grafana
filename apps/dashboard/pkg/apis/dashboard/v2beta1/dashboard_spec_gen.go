@@ -834,8 +834,13 @@ const (
 	DashboardFieldColorModeIdContinuousReds       DashboardFieldColorModeId = "continuous-reds"
 	DashboardFieldColorModeIdContinuousGreens     DashboardFieldColorModeId = "continuous-greens"
 	DashboardFieldColorModeIdContinuousPurples    DashboardFieldColorModeId = "continuous-purples"
-	DashboardFieldColorModeIdFixed                DashboardFieldColorModeId = "fixed"
-	DashboardFieldColorModeIdShades               DashboardFieldColorModeId = "shades"
+	DashboardFieldColorModeIdFixed                    DashboardFieldColorModeId = "fixed"
+	DashboardFieldColorModeIdShades                   DashboardFieldColorModeId = "shades"
+	DashboardFieldColorModeIdPaletteAiZeitgeistV2     DashboardFieldColorModeId = "palette-ai-zeitgeist-v2"
+	DashboardFieldColorModeIdPaletteVividSpectrum     DashboardFieldColorModeId = "palette-vivid-spectrum"
+	DashboardFieldColorModeIdPaletteClassicModernized DashboardFieldColorModeId = "palette-classic-modernized"
+	DashboardFieldColorModeIdPaletteModernMutedV2     DashboardFieldColorModeId = "palette-modern-muted-v2"
+	DashboardFieldColorModeIdPaletteNewEditor         DashboardFieldColorModeId = "palette-new-editor"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for DashboardFieldColorModeId.

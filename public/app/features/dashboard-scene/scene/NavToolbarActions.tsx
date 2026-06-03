@@ -29,6 +29,7 @@ import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { useSelector } from 'app/types/store';
 
 import { selectFolderRepository } from '../../provisioning/utils/selectors';
+import { CollaborateButton } from '../comments/CollaborateButton';
 import { type PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
@@ -385,6 +386,12 @@ export function ToolbarActions({ dashboard }: Props) {
     group: 'new-share-dashboard-buttons',
     condition: showShareButton,
     render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
+  });
+
+  toolbarActions.push({
+    group: 'new-share-dashboard-buttons',
+    condition: showShareButton,
+    render: () => <CollaborateButton key="collaborate-button" />,
   });
 
   toolbarActions.push({
