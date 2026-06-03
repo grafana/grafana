@@ -47,6 +47,16 @@ var ErrUnexpectedFileExtension = errors.New("unexpected file extension")
 
 const appDynamicsPluginID = "dlopes7-appdynamics-datasource"
 
+const appDynamicsPluginMarkdown = `# AppDynamics data source for Grafana
+
+The AppDynamics data source plugin allows you to query and visualize AppDynamics metrics and analytics from within Grafana.
+
+## See also
+
+* [License](https://grafana.com/legal/enterprise-plugins/)
+* [Technical documentation](https://grafana.com/docs/plugins/dlopes7-appdynamics-datasource/latest/)
+`
+
 func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
@@ -381,6 +391,11 @@ func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.R
 func (hs *HTTPServer) GetPluginMarkdown(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 	name := web.Params(c.Req)[":name"]
+	if pluginID == appDynamicsPluginID {
+		resp := response.Respond(http.StatusOK, appDynamicsPluginMarkdown)
+		resp.SetHeader("Content-Type", "text/plain; charset=utf-8")
+		return resp
+	}
 
 	p, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
