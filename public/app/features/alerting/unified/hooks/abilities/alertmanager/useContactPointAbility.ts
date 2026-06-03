@@ -46,6 +46,14 @@ export const PERMISSIONS_CONTACT_POINTS: AccessControlAction[] = Object.values(P
  *
  * Use this in navigation and any context outside AlertmanagerContext (e.g. nav hooks,
  * rule-list filter). Performs a pure RBAC check with no alertmanager-type gate.
+ *
+ * This intentionally always uses the Grafana-AM `PERMISSIONS` map, not `EXTERNAL_AM_PERMISSIONS`.
+ * Call sites (e.g. `fetchStatuses` in ContactPointsTab) need to know whether the current user
+ * holds *any* relevant permission without being tied to a specific alertmanager type. The Grafana-AM
+ * permission set covers the Grafana-internal APIs (e.g. the receiver status endpoint accepts both
+ * `alert.notifications:read` and `alert.notifications.receivers:read`, confirmed in
+ * pkg/services/ngalert/api/authorization.go). External-AM-only users do not interact with those
+ * APIs, so excluding them from the check is correct.
  */
 export function useGlobalContactPointAbility(action: ContactPointAction): Ability {
   return useMemo(() => makeAbility(true, PERMISSIONS[action]), [action]);
