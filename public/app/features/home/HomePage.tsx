@@ -9,6 +9,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
+import { DashboardPreviewCards } from './DashboardPreviewCards/DashboardPreviewCards';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import useHomeGreeting from './useHomeGreeting';
 
@@ -55,6 +56,10 @@ export default function HomePage() {
               pluginId: SETUPGUIDE_PLUGIN_ID,
             })}
             <DashboardTabs />
+          </Box>
+
+          <Box backgroundColor="canvas" borderRadius="default" padding={4}>
+            <DashboardPreviewCards />
           </Box>
 
           {renderLimitedComponents({
