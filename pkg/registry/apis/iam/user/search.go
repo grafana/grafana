@@ -13,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -42,11 +41,12 @@ import (
 // The RBAC authz server translates Group/Resource/Verb through the mapper
 // to resolve the underlying RBAC action.
 type accessControlCheck struct {
-	action   string // legacy RBAC action name returned to callers
-	group    string
-	resource string
-	verb     string
-	name     string // user UID of the resource being checked
+	action      string // legacy RBAC action name returned to callers
+	group       string
+	resource    string
+	subresource string
+	verb        string
+	name        string // user UID of the resource being checked
 }
 
 var userAccessControlChecks = []accessControlCheck{
@@ -55,7 +55,9 @@ var userAccessControlChecks = []accessControlCheck{
 	{action: "org.users:remove", group: iamv0.GROUP, resource: "users", verb: utils.VerbDelete},
 	{action: "org.users:write", group: iamv0.GROUP, resource: "users", verb: utils.VerbUpdate},
 	{action: "users.permissions:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbGetPermissions},
-	{action: "users.roles:read", group: iamv0.GROUP, resource: "rolebindings", verb: utils.VerbList},
+	// User role-bindings are the "users" subresource of rolebindings so the check
+	// resolves to users.roles:read rather than colliding with team role-bindings.
+	{action: "users.roles:read", group: iamv0.GROUP, resource: "rolebindings", subresource: "users", verb: utils.VerbList},
 }
 
 type SearchHandler struct {
@@ -380,44 +382,63 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *SearchHandler) stampAccessControl(ctx context.Context, requester identity.Requester, hits []iamv0.GetSearchUsersUserHit) error {
+	if len(hits) == 0 {
+		return nil
+	}
+
+	ctx, span := s.tracer.Start(ctx, "user.search.stampAccessControl")
+	defer span.End()
+
 	namespace := requester.GetNamespace()
 
-	items := func(yield func(accessControlCheck) bool) {
-		for _, hit := range hits {
-			for _, c := range userAccessControlChecks {
-				c.name = hit.Name
-				if !yield(c) {
-					return
-				}
+	// Build one batch-check item per (hit, access-control check). We call BatchCheck
+	// directly rather than authz.FilterAuthorized because the latter's convenience item
+	// type cannot carry a subresource, which users.roles:read needs to resolve to the
+	// rolebindings "users" subresource. CorrelationID encodes the hit index and action
+	// so results map back to the originating hit.
+	// Folder is omitted: users are not folder-scoped resources.
+	checks := make([]authlib.BatchCheckItem, 0, len(hits)*len(userAccessControlChecks))
+	for i, hit := range hits {
+		for _, c := range userAccessControlChecks {
+			checks = append(checks, authlib.BatchCheckItem{
+				CorrelationID: fmt.Sprintf("%d|%s", i, c.action),
+				Verb:          c.verb,
+				Group:         c.group,
+				Resource:      c.resource,
+				Subresource:   c.subresource,
+				Name:          hit.Name,
+			})
+		}
+	}
+
+	allowed := make(map[string]bool, len(checks))
+	for start := 0; start < len(checks); start += authlib.MaxBatchCheckItems {
+		end := min(start+authlib.MaxBatchCheckItems, len(checks))
+		resp, err := s.accessClient.BatchCheck(ctx, requester, authlib.BatchCheckRequest{
+			Namespace: namespace,
+			Checks:    checks[start:end],
+		})
+		if err != nil {
+			return fmt.Errorf("access control check failed: %w", err)
+		}
+		for id, res := range resp.Results {
+			if res.Allowed {
+				allowed[id] = true
 			}
 		}
 	}
 
-	extractFn := func(c accessControlCheck) authz.BatchCheckItem {
-		return authz.BatchCheckItem{
-			Verb:      c.verb,
-			Group:     c.group,
-			Resource:  c.resource,
-			Namespace: namespace,
-			Name:      c.name,
-			// Folder is omitted: users are not folder-scoped resources.
-			// TODO: set FreshnessTimestamp once we decide whether cached AC is acceptable here.
-		}
-	}
-
-	acMap := make(map[string]map[string]bool, len(hits))
-	for c, err := range authz.FilterAuthorized(ctx, s.accessClient, items, extractFn, authz.WithTracer(s.tracer)) {
-		if err != nil {
-			return fmt.Errorf("access control check failed: %w", err)
-		}
-		if acMap[c.name] == nil {
-			acMap[c.name] = make(map[string]bool, len(userAccessControlChecks))
-		}
-		acMap[c.name][c.action] = true
-	}
-
 	for i := range hits {
-		hits[i].AccessControl = acMap[hits[i].Name]
+		var acMap map[string]bool
+		for _, c := range userAccessControlChecks {
+			if allowed[fmt.Sprintf("%d|%s", i, c.action)] {
+				if acMap == nil {
+					acMap = make(map[string]bool, len(userAccessControlChecks))
+				}
+				acMap[c.action] = true
+			}
+		}
+		hits[i].AccessControl = acMap
 	}
 
 	return nil

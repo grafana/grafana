@@ -197,6 +197,39 @@ func TestMapperRegistry_SubresourceLookup(t *testing.T) {
 	})
 }
 
+// TestMapperRegistry_RoleBindingsUsersSubresource verifies the real mapper routes the
+// iam.grafana.app rolebindings "users" subresource to users.roles:* actions, and that
+// there is no plain rolebindings entry (role-binding access is always subject-scoped).
+func TestMapperRegistry_RoleBindingsUsersSubresource(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	cases := []struct {
+		verb   string
+		action string
+	}{
+		{utils.VerbGet, "users.roles:read"},
+		{utils.VerbList, "users.roles:read"},
+		{utils.VerbCreate, "users.roles:add"},
+		{utils.VerbUpdate, "users.roles:add"},
+		{utils.VerbDelete, "users.roles:remove"},
+		{utils.VerbDeleteCollection, "users.roles:remove"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.verb, func(t *testing.T) {
+			mapping, ok := reg.Get("iam.grafana.app", "rolebindings", "users")
+			require.True(t, ok)
+			action, ok := mapping.Action(tc.verb)
+			assert.True(t, ok)
+			assert.Equal(t, tc.action, action)
+		})
+	}
+
+	// No plain rolebindings entry: a check without a subresource does not resolve here.
+	_, ok := reg.Get("iam.grafana.app", "rolebindings", "")
+	assert.False(t, ok, "plain rolebindings must not have a mapper entry")
+}
+
 // TestMapper_ServiceAccountTranslation_ActionSets verifies that service account verbs map to the
 // correct action sets. There is no View level — Edit verbs map to both edit+admin, and admin-only
 // verbs (delete, permissions) map to admin only.

@@ -57,9 +57,15 @@ var (
 	roleBindingsResource = iamv0.RoleBindingInfo.GroupResource().Resource
 )
 
+// roleBindingsUsersSubresource addresses user role-bindings (a RoleBinding with a User
+// subject) as a subresource of the shared rolebindings resource, keeping them distinct
+// from team role-bindings (rolebindings/teams). See pkg/services/authz/rbac/mapper.go.
+const roleBindingsUsersSubresource = "users"
+
 type userActionMapping struct {
-	resource  string
-	relations []string
+	resource    string
+	subresource string
+	relations   []string
 	// skipScope marks actions the mapper authorizes without a scope (create verbs).
 	skipScope bool
 }
@@ -73,7 +79,8 @@ type userActionMapping struct {
 // iam admission validators (pkg/registry/apis/iam/user/validate.go) independently of
 // this grant — so the relation only decides "may you attempt this verb".
 //
-// users.roles:* gate rolebindings, not users. Actions with no iam verb
+// users.roles:* gate user role-bindings, addressed as the rolebindings "users"
+// subresource (distinct from team role-bindings). Actions with no iam verb
 // (users:enable/disable/logout, users.authtoken/password/quotas) gate only legacy HTTP
 // endpoints and are omitted.
 var userManagementMappings = map[string]userActionMapping{
@@ -92,9 +99,9 @@ var userManagementMappings = map[string]userActionMapping{
 	actionUsersPermissionsRead:  {resource: usersResource, relations: []string{RelationGetPermissions}},
 	actionUsersPermissionsWrite: {resource: usersResource, relations: []string{RelationSetPermissions}},
 
-	actionUsersRolesRead:   {resource: roleBindingsResource, relations: []string{RelationGet}},
-	actionUsersRolesAdd:    {resource: roleBindingsResource, relations: []string{RelationCreate, RelationUpdate}},
-	actionUsersRolesRemove: {resource: roleBindingsResource, relations: []string{RelationDelete}},
+	actionUsersRolesRead:   {resource: roleBindingsResource, subresource: roleBindingsUsersSubresource, relations: []string{RelationGet}},
+	actionUsersRolesAdd:    {resource: roleBindingsResource, subresource: roleBindingsUsersSubresource, relations: []string{RelationCreate, RelationUpdate}},
+	actionUsersRolesRemove: {resource: roleBindingsResource, subresource: roleBindingsUsersSubresource, relations: []string{RelationDelete}},
 }
 
 // Scope fragments produced by splitScope for the two "all roles" scopes we
@@ -332,7 +339,7 @@ func UserManagementToTuples(subject string, permission RolePermission) []*openfg
 
 	tuples := make([]*openfgav1.TupleKey, 0, len(m.relations))
 	for _, relation := range m.relations {
-		tuples = append(tuples, NewGroupResourceTuple(subject, relation, iamGroup, m.resource, ""))
+		tuples = append(tuples, NewGroupResourceTuple(subject, relation, iamGroup, m.resource, m.subresource))
 	}
 	return tuples
 }

@@ -246,9 +246,10 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 		}), tupleKeyStrings(tuples))
 	})
 
-	t.Run("should reconcile role-assignment permissions to rolebindings", func(t *testing.T) {
-		// users.roles:* gate iam.grafana.app/rolebindings, not users. read is
-		// scoped users:*; add/remove are scoped permissions:type:delegate.
+	t.Run("should reconcile role-assignment permissions to the rolebindings users subresource", func(t *testing.T) {
+		// users.roles:* gate user role-bindings, addressed as the rolebindings "users"
+		// subresource (distinct from team role-bindings). read is scoped users:*;
+		// add/remove are scoped permissions:type:delegate.
 		permissions := []RolePermission{
 			{Action: "users.roles:read", Kind: "users", Identifier: "*"},
 			{Action: "users.roles:add", Kind: "permissions", Identifier: "delegate"},
@@ -259,10 +260,10 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 		require.NoError(t, err)
 
 		require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
-			{User: "role:role-assigner#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/rolebindings"},
-			{User: "role:role-assigner#assignee", Relation: "create", Object: "group_resource:iam.grafana.app/rolebindings"},
-			{User: "role:role-assigner#assignee", Relation: "update", Object: "group_resource:iam.grafana.app/rolebindings"},
-			{User: "role:role-assigner#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/rolebindings"},
+			{User: "role:role-assigner#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/rolebindings/users"},
+			{User: "role:role-assigner#assignee", Relation: "create", Object: "group_resource:iam.grafana.app/rolebindings/users"},
+			{User: "role:role-assigner#assignee", Relation: "update", Object: "group_resource:iam.grafana.app/rolebindings/users"},
+			{User: "role:role-assigner#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/rolebindings/users"},
 		}), tupleKeyStrings(tuples))
 	})
 
@@ -317,7 +318,7 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 func TestUserManagementToTuples(t *testing.T) {
 	const subject = "role:role-1#assignee"
 	const usersObject = "group_resource:iam.grafana.app/users"
-	const roleBindingsObject = "group_resource:iam.grafana.app/rolebindings"
+	const roleBindingsObject = "group_resource:iam.grafana.app/rolebindings/users"
 
 	t.Run("maps each action to its tuples under an all-scope", func(t *testing.T) {
 		cases := []struct {

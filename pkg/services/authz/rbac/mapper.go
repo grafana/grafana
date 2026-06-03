@@ -355,9 +355,13 @@ func NewMapperRegistry() MapperRegistry {
 				// No need to skip scope on create for roles because we translate `permissions:type:delegate` to `roles:*``
 				skipScopeOnVerb: nil,
 			},
-			"rolebindings": translation{
+			// User role-bindings are the rolebindings resource with a User subject,
+			// addressed as the "users" subresource so they map to users.roles:* and stay
+			// distinct from team role-bindings (rolebindings/teams). Role-binding access
+			// is always subject-scoped; there is no plain rolebindings entry.
+			"rolebindings/users": translation{
 				resource: "rolebindings",
-				// rolebidings should only be modifiable by admins with a wildcard access
+				// rolebindings should only be modifiable by admins with a wildcard access
 				useWildcardScope: true,
 				verbMapping: map[string]string{
 					utils.VerbCreate:           "users.roles:add",

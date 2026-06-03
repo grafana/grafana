@@ -14,6 +14,7 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -346,6 +347,48 @@ func TestAccessControl(t *testing.T) {
 			tc.checkHits(t, resp.Hits)
 		})
 	}
+}
+
+// TestAccessControlSubresource verifies that the users.roles:read check is issued
+// against the rolebindings "users" subresource (so it resolves to users.roles:read and
+// stays distinct from team role-bindings), while the core user checks carry no subresource.
+func TestAccessControlSubresource(t *testing.T) {
+	var got []authlib.BatchCheckItem
+	recordingClient := &mockAccessClient{
+		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+			got = append(got, req.Checks...)
+			return authlib.BatchCheckResponse{}, nil
+		},
+	}
+
+	searchHandler := NewSearchHandler(
+		tracing.NewNoopTracerService(),
+		mockClientWithHits(),
+		featuremgmt.WithFeatures(),
+		&setting.Cfg{},
+		recordingClient,
+	)
+
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/searchUsers?accesscontrol=true", nil)
+	req.Header.Add("content-type", "application/json")
+	req = req.WithContext(identity.WithRequester(req.Context(), &legacyuser.SignedInUser{Namespace: "default"}))
+
+	searchHandler.DoSearch(rr, req)
+	require.Equal(t, 200, rr.Code)
+
+	var sawUserRoles bool
+	for _, c := range got {
+		if c.Resource == "rolebindings" {
+			sawUserRoles = true
+			assert.Equal(t, "users", c.Subresource, "user role-bindings must be checked via the users subresource")
+			assert.Equal(t, utils.VerbList, c.Verb)
+		} else {
+			assert.Equal(t, "users", c.Resource)
+			assert.Empty(t, c.Subresource, "core user checks must not carry a subresource")
+		}
+	}
+	assert.True(t, sawUserRoles, "expected a users.roles:read check against rolebindings")
 }
 
 type mockAccessClient struct {
