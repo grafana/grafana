@@ -70,52 +70,27 @@ describe('MegaMenu', () => {
   });
 });
 
-describe('MegaMenu simplified navigation', () => {
+describe('MegaMenu gcx terminal', () => {
   const originalFlag = config.featureToggles.simplifiedNavigation;
-
-  const simplifiedNavBarTree: NavModelItem[] = [
-    { text: 'Home', id: 'home', url: '/' },
-    { text: 'Dashboards', id: 'dashboards/browse', url: '/dashboards' },
-    { text: 'Explore', id: 'explore', url: '/explore' },
-    {
-      text: 'Administration',
-      id: 'cfg',
-      url: '/admin',
-      children: [{ text: 'Users', id: 'users', url: '/admin/users' }],
-    },
-  ];
-
-  beforeEach(() => {
-    config.featureToggles.simplifiedNavigation = true;
-  });
 
   afterEach(() => {
     config.featureToggles.simplifiedNavigation = originalFlag;
     window.localStorage.clear();
   });
 
-  it('shows only primary sections and tucks the rest behind "More"', async () => {
-    setup(simplifiedNavBarTree);
+  it('replaces the nav with the gcx terminal when the flag is on', async () => {
+    config.featureToggles.simplifiedNavigation = true;
+    setup();
 
-    expect(await screen.findByRole('link', { name: 'Dashboards' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Explore' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /more/i })).toBeInTheDocument();
-    // secondary sections stay hidden until "More" is expanded
-    expect(screen.queryByRole('link', { name: 'Administration' })).not.toBeInTheDocument();
+    expect(await screen.findByTestId('gcx-terminal')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Section name' })).not.toBeInTheDocument();
   });
 
-  it('reveals secondary sections when "More" is expanded', async () => {
-    setup(simplifiedNavBarTree);
-
-    await userEvent.click(await screen.findByRole('button', { name: /more/i }));
-    expect(await screen.findByRole('link', { name: 'Administration' })).toBeInTheDocument();
-  });
-
-  it('does not group anything when the flag is off', async () => {
+  it('renders the normal nav when the flag is off', async () => {
     config.featureToggles.simplifiedNavigation = false;
-    setup(simplifiedNavBarTree);
+    setup();
 
-    expect(await screen.findByRole('link', { name: 'Administration' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /more/i })).not.toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Section name' })).toBeInTheDocument();
+    expect(screen.queryByTestId('gcx-terminal')).not.toBeInTheDocument();
   });
 });

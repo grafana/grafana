@@ -12337,6 +12337,11 @@
         "open-all": "Open AI assistants and sidebar apps"
       }
     },
+    "gcx": {
+      "booting": "booting gcx",
+      "input-aria": "gcx command input",
+      "mascot-alt": "Grot"
+    },
     "help": {
       "aria-label": "Help",
       "interactive-learning": {
@@ -12365,8 +12370,8 @@
       "dialog-label": "Navigation",
       "dock": "Dock menu",
       "list-label": "Navigation",
-      "more": "More",
       "open": "Main menu",
+      "resize": "Resize menu",
       "undock": "Undock menu"
     },
     "megamenu-item": {
