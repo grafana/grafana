@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -11,6 +11,8 @@ interface Props {
   optionChanges: FieldChange[];
   onDismissVariable: (change: FieldChange) => void;
   onDismissOption: (change: FieldChange) => void;
+  variableAnchorId?: (index: number) => string;
+  optionAnchorId?: (index: number) => string;
 }
 
 /**
@@ -18,7 +20,14 @@ interface Props {
  * dashboard-level options). These don't need a query runner, so they're rendered as plain values
  * rather than as part of a scene. Each row can be dismissed to revert that change in the dashboard.
  */
-export function DashboardConfigDiff({ variableChanges, optionChanges, onDismissVariable, onDismissOption }: Props) {
+export function DashboardConfigDiff({
+  variableChanges,
+  optionChanges,
+  onDismissVariable,
+  onDismissOption,
+  variableAnchorId,
+  optionAnchorId,
+}: Props) {
   return (
     <Stack direction="column" gap={2}>
       <ConfigSection
@@ -26,12 +35,14 @@ export function DashboardConfigDiff({ variableChanges, optionChanges, onDismissV
         emptyText={t('dashboard-scene.dashboard-config-diff.no-variable-changes', 'No variable changes')}
         changes={variableChanges}
         onDismiss={onDismissVariable}
+        anchorId={variableAnchorId}
       />
       <ConfigSection
         title={t('dashboard-scene.dashboard-config-diff.options-heading', 'Dashboard options')}
         emptyText={t('dashboard-scene.dashboard-config-diff.no-option-changes', 'No option changes')}
         changes={optionChanges}
         onDismiss={onDismissOption}
+        anchorId={optionAnchorId}
       />
     </Stack>
   );
@@ -42,9 +53,10 @@ interface ConfigSectionProps {
   emptyText: string;
   changes: FieldChange[];
   onDismiss: (change: FieldChange) => void;
+  anchorId?: (index: number) => string;
 }
 
-function ConfigSection({ title, emptyText, changes, onDismiss }: ConfigSectionProps) {
+function ConfigSection({ title, emptyText, changes, onDismiss, anchorId }: ConfigSectionProps) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -54,8 +66,8 @@ function ConfigSection({ title, emptyText, changes, onDismiss }: ConfigSectionPr
         <Text color="secondary">{emptyText}</Text>
       ) : (
         <Stack direction="column" gap={1}>
-          {changes.map((change) => (
-            <div key={change.label}>
+          {changes.map((change, index) => (
+            <div key={change.label} id={anchorId?.(index)} className={styles.changeBlock}>
               <Stack direction="row" gap={1} alignItems="center">
                 <Text element="h5">{change.label}</Text>
                 <Text color="secondary" variant="bodySmall">
@@ -63,9 +75,9 @@ function ConfigSection({ title, emptyText, changes, onDismiss }: ConfigSectionPr
                 </Text>
               </Stack>
               <div className={styles.row}>
-                <pre className={styles.value}>{change.oldText}</pre>
+                <pre className={cx(styles.value, change.oldText ? styles.valueOld : undefined)}>{change.oldText}</pre>
                 <div className={styles.divider} />
-                <pre className={styles.value}>{change.newText}</pre>
+                <pre className={cx(styles.value, change.newText ? styles.valueNew : undefined)}>{change.newText}</pre>
                 <div className={styles.actions}>
                   <IconButton
                     name="history"
@@ -95,6 +107,9 @@ function getChangeLabel(type: ChangeType): string {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    changeBlock: css({
+      scrollMarginTop: theme.spacing(6),
+    }),
     row: css({
       display: 'flex',
       flexDirection: 'row',
@@ -126,6 +141,14 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.secondary,
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    valueOld: css({
+      borderColor: theme.colors.error.border,
+      background: theme.colors.error.transparent,
+    }),
+    valueNew: css({
+      borderColor: theme.colors.success.border,
+      background: theme.colors.success.transparent,
     }),
   };
 }

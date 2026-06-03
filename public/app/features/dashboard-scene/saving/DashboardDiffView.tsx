@@ -1,5 +1,5 @@
-import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { css, cx } from '@emotion/css';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -11,13 +11,17 @@ import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import { DashboardConfigDiff } from './DashboardConfigDiff';
-import { buildVisualDiff, type FieldChange, type PanelChangeRow } from './dashboardDiffModel';
+import { buildVisualDiff, type ChangeType, type FieldChange, type PanelChangeRow } from './dashboardDiffModel';
 
 interface Props {
   dashboard: DashboardScene;
   oldValue: Dashboard | DashboardV2Spec;
   newValue: Dashboard | DashboardV2Spec;
 }
+
+const PANEL_ID_PREFIX = 'visual-diff-panel';
+const VARIABLE_ID_PREFIX = 'visual-diff-variable';
+const OPTION_ID_PREFIX = 'visual-diff-option';
 
 /**
  * Visual, side-by-side diff of a dashboard's changes. Unlike the JSON "Changes" tab this renders
@@ -60,58 +64,177 @@ export function DashboardDiffView({ dashboard, oldValue, newValue }: Props) {
     setModel((current) => ({ ...current, optionChanges: current.optionChanges.filter((other) => other !== change) }));
   };
 
+  const scrollTo = useCallback((id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
+  const outlineSections = useMemo<OutlineSectionData[]>(
+    () => [
+      {
+        title: t('dashboard-scene.dashboard-diff-view.outline-panels', 'Panels'),
+        items: panelRows.map((row, index) => ({
+          id: panelAnchorId(index),
+          label: row.title || t('dashboard-scene.dashboard-diff-view.outline-untitled-panel', 'Untitled panel'),
+          type: row.type,
+        })),
+      },
+      {
+        title: t('dashboard-scene.dashboard-diff-view.outline-variables', 'Variables'),
+        items: variableChanges.map((change, index) => ({
+          id: variableAnchorId(index),
+          label: change.label,
+          type: change.type,
+        })),
+      },
+      {
+        title: t('dashboard-scene.dashboard-diff-view.outline-options', 'Dashboard options'),
+        items: optionChanges.map((change, index) => ({
+          id: optionAnchorId(index),
+          label: change.label,
+          type: change.type,
+        })),
+      },
+    ],
+    [panelRows, variableChanges, optionChanges]
+  );
+
   return (
-    <Stack direction="column" gap={2}>
-      <div className={styles.header}>
-        <div className={styles.headerCol}>
-          <Text element="h4" color="secondary">
-            <Trans i18nKey="dashboard-scene.dashboard-diff-view.old-heading">Old</Trans>
-          </Text>
-        </div>
-        <div className={styles.divider} />
-        <div className={styles.headerCol}>
-          <Text element="h4" color="secondary">
-            <Trans i18nKey="dashboard-scene.dashboard-diff-view.new-heading">New</Trans>
-          </Text>
-        </div>
-        <div className={styles.actions} />
+    <div className={styles.layout}>
+      <DiffOutline sections={outlineSections} onItemClick={scrollTo} styles={styles} />
+
+      <div className={styles.main}>
+        <Stack direction="column" gap={2}>
+          <div className={styles.header}>
+            <div className={cx(styles.headerCol, styles.oldHeader)}>
+              <Text element="h4" color="error">
+                <Trans i18nKey="dashboard-scene.dashboard-diff-view.old-heading">Old</Trans>
+              </Text>
+            </div>
+            <div className={styles.divider} />
+            <div className={cx(styles.headerCol, styles.newHeader)}>
+              <Text element="h4" color="success">
+                <Trans i18nKey="dashboard-scene.dashboard-diff-view.new-heading">New</Trans>
+              </Text>
+            </div>
+            <div className={styles.actions} />
+          </div>
+
+          <section>
+            <Text element="h4">
+              <Trans i18nKey="dashboard-scene.dashboard-diff-view.panels-heading">Panels</Trans>
+            </Text>
+            {panelRows.length === 0 ? (
+              <Text color="secondary">
+                <Trans i18nKey="dashboard-scene.dashboard-diff-view.no-panel-changes">No panel changes</Trans>
+              </Text>
+            ) : (
+              <Stack direction="column" gap={2}>
+                {panelRows.map((row, index) => (
+                  <PanelDiffRow
+                    key={row.id}
+                    anchorId={panelAnchorId(index)}
+                    row={row}
+                    oldPanel={oldPanels.get(row.id)}
+                    newPanel={newPanels.get(row.id)}
+                    styles={styles}
+                    onDismiss={dismissPanel}
+                  />
+                ))}
+              </Stack>
+            )}
+          </section>
+
+          <DashboardConfigDiff
+            variableChanges={variableChanges}
+            optionChanges={optionChanges}
+            onDismissVariable={dismissVariable}
+            onDismissOption={dismissOption}
+            variableAnchorId={variableAnchorId}
+            optionAnchorId={optionAnchorId}
+          />
+        </Stack>
       </div>
+    </div>
+  );
+}
 
-      <section>
-        <Text element="h4">
-          <Trans i18nKey="dashboard-scene.dashboard-diff-view.panels-heading">Panels</Trans>
+function panelAnchorId(index: number) {
+  return `${PANEL_ID_PREFIX}-${index}`;
+}
+
+function variableAnchorId(index: number) {
+  return `${VARIABLE_ID_PREFIX}-${index}`;
+}
+
+function optionAnchorId(index: number) {
+  return `${OPTION_ID_PREFIX}-${index}`;
+}
+
+interface OutlineSectionData {
+  title: string;
+  items: OutlineItemData[];
+}
+
+interface OutlineItemData {
+  id: string;
+  label: string;
+  type: ChangeType;
+}
+
+interface DiffOutlineProps {
+  sections: OutlineSectionData[];
+  onItemClick: (id: string) => void;
+  styles: ReturnType<typeof getStyles>;
+}
+
+function DiffOutline({ sections, onItemClick, styles }: DiffOutlineProps) {
+  const hasAnyItem = sections.some((section) => section.items.length > 0);
+
+  return (
+    <aside className={styles.outline} aria-label={t('dashboard-scene.dashboard-diff-view.outline-aria', 'Diff outline')}>
+      <Text element="h4">
+        <Trans i18nKey="dashboard-scene.dashboard-diff-view.outline-heading">Outline</Trans>
+      </Text>
+      {!hasAnyItem ? (
+        <Text color="secondary" variant="bodySmall">
+          <Trans i18nKey="dashboard-scene.dashboard-diff-view.outline-empty">No changes</Trans>
         </Text>
-        {panelRows.length === 0 ? (
-          <Text color="secondary">
-            <Trans i18nKey="dashboard-scene.dashboard-diff-view.no-panel-changes">No panel changes</Trans>
-          </Text>
-        ) : (
-          <Stack direction="column" gap={2}>
-            {panelRows.map((row) => (
-              <PanelDiffRow
-                key={row.id}
-                row={row}
-                oldPanel={oldPanels.get(row.id)}
-                newPanel={newPanels.get(row.id)}
-                styles={styles}
-                onDismiss={dismissPanel}
-              />
-            ))}
-          </Stack>
-        )}
-      </section>
-
-      <DashboardConfigDiff
-        variableChanges={variableChanges}
-        optionChanges={optionChanges}
-        onDismissVariable={dismissVariable}
-        onDismissOption={dismissOption}
-      />
-    </Stack>
+      ) : (
+        <Stack direction="column" gap={2}>
+          {sections.map((section) =>
+            section.items.length === 0 ? null : (
+              <div key={section.title}>
+                <div className={styles.outlineSectionTitle}>
+                  <Text variant="bodySmall" color="secondary">
+                    {section.title}
+                  </Text>
+                </div>
+                <ul className={styles.outlineList}>
+                  {section.items.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        className={styles.outlineItem}
+                        onClick={() => onItemClick(item.id)}
+                        title={item.label}
+                      >
+                        <span className={cx(styles.outlineDot, styles.outlineDotFor[item.type])} aria-hidden />
+                        <span className={styles.outlineLabel}>{item.label}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          )}
+        </Stack>
+      )}
+    </aside>
   );
 }
 
 interface PanelDiffRowProps {
+  anchorId: string;
   row: PanelChangeRow;
   oldPanel?: VizPanel;
   newPanel?: VizPanel;
@@ -119,9 +242,9 @@ interface PanelDiffRowProps {
   onDismiss: (row: PanelChangeRow) => void;
 }
 
-function PanelDiffRow({ row, oldPanel, newPanel, styles, onDismiss }: PanelDiffRowProps) {
+function PanelDiffRow({ anchorId, row, oldPanel, newPanel, styles, onDismiss }: PanelDiffRowProps) {
   return (
-    <div className={styles.row}>
+    <div id={anchorId} className={styles.row}>
       <PanelColumn panel={oldPanel} height={row.height} styles={styles} kind="old" />
       <div className={styles.divider} />
       <PanelColumn panel={newPanel} height={row.height} styles={styles} kind="new" />
@@ -162,7 +285,7 @@ function PanelColumn({ panel, height, styles, kind }: PanelColumnProps) {
 
   return (
     <div className={styles.column}>
-      <div className={styles.panelBox} style={{ height }}>
+      <div className={cx(styles.panelBox, kind === 'old' ? styles.panelBoxOld : styles.panelBoxNew)} style={{ height }}>
         <panel.Component model={panel} />
       </div>
     </div>
@@ -171,6 +294,82 @@ function PanelColumn({ panel, height, styles, kind }: PanelColumnProps) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    layout: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: theme.spacing(3),
+      width: '100%',
+    }),
+    outline: css({
+      flexShrink: 0,
+      width: 240,
+      position: 'sticky',
+      top: 0,
+      alignSelf: 'flex-start',
+      maxHeight: '100vh',
+      overflowY: 'auto',
+      paddingRight: theme.spacing(1),
+      borderRight: `1px solid ${theme.colors.border.weak}`,
+    }),
+    outlineSectionTitle: css({
+      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(0.5),
+      textTransform: 'uppercase',
+      letterSpacing: '0.04em',
+    }),
+    outlineList: css({
+      listStyle: 'none',
+      margin: 0,
+      padding: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.25),
+    }),
+    outlineItem: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      width: '100%',
+      textAlign: 'left',
+      background: 'transparent',
+      border: 'none',
+      padding: theme.spacing(0.5, 1),
+      borderRadius: theme.shape.radius.default,
+      color: theme.colors.text.primary,
+      cursor: 'pointer',
+      '&:hover': {
+        background: theme.colors.action.hover,
+      },
+      '&:focus-visible': {
+        outline: `2px solid ${theme.colors.primary.border}`,
+        outlineOffset: 1,
+      },
+    }),
+    outlineDot: css({
+      flexShrink: 0,
+      display: 'inline-block',
+      width: 8,
+      height: 8,
+      borderRadius: theme.shape.radius.circle,
+    }),
+    outlineDotFor: {
+      added: css({ background: theme.colors.success.main }),
+      removed: css({ background: theme.colors.error.main }),
+      changed: css({ background: theme.colors.warning.main }),
+    } satisfies Record<ChangeType, string>,
+    outlineLabel: css({
+      flex: 1,
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    main: css({
+      flex: 1,
+      minWidth: 0,
+    }),
     header: css({
       display: 'flex',
       flexDirection: 'row',
@@ -185,6 +384,14 @@ function getStyles(theme: GrafanaTheme2) {
     headerCol: css({
       flex: 1,
       minWidth: 0,
+      padding: theme.spacing(0.5, 1),
+      borderRadius: theme.shape.radius.default,
+    }),
+    oldHeader: css({
+      background: theme.colors.error.transparent,
+    }),
+    newHeader: css({
+      background: theme.colors.success.transparent,
     }),
     divider: css({
       flexShrink: 0,
@@ -204,6 +411,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'row',
       gap: theme.spacing(2),
       marginTop: theme.spacing(1),
+      scrollMarginTop: theme.spacing(6),
     }),
     column: css({
       flex: 1,
@@ -212,6 +420,16 @@ function getStyles(theme: GrafanaTheme2) {
     panelBox: css({
       position: 'relative',
       width: '100%',
+      border: `2px solid transparent`,
+      borderRadius: theme.shape.radius.default,
+    }),
+    panelBoxOld: css({
+      borderColor: theme.colors.error.border,
+      background: theme.colors.error.transparent,
+    }),
+    panelBoxNew: css({
+      borderColor: theme.colors.success.border,
+      background: theme.colors.success.transparent,
     }),
     placeholder: css({
       display: 'flex',
