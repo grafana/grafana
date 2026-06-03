@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState, type KeyboardEvent } from 'react';
 
 import { useAssistant } from '@grafana/assistant';
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Badge, Icon, IconButton, LinkButton, Stack, TextArea, useStyles2 } from '@grafana/ui';
@@ -93,6 +93,7 @@ export default function DashboardCreatorPage() {
   return (
     <Page
       navId="dashboards/browse"
+      layout={PageLayoutType.Canvas}
       pageNav={{
         text: t('dashboard-creator.page-nav.text', 'Dashboard Creator'),
       }}
@@ -225,6 +226,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
     flex: 1,
     minHeight: '100%',
+    // Bleed past the Canvas layout's padding so the spotlight reaches the very top/edges.
+    margin: theme.spacing(-2),
     overflowX: 'hidden',
     backgroundImage: [
       // Soft orange spotlight halo at top-center
