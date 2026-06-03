@@ -7,14 +7,25 @@ describe('getResourceDimension', () => {
   const publicPath = 'https://grafana.fake/public/';
   beforeAll(() => {
     window.__grafana_public_path__ = publicPath;
+    window.public_cdn_path = '';
   });
 
-  it('fixed relative path', () => {
+  it('fixed relative path (standard deployment)', () => {
+    const frame = undefined;
+    const fixedValue = 'img/icons/unicons/question-circle.svg';
+    const config = { mode: ResourceDimensionMode.Fixed, fixed: fixedValue };
+
+    expect(getResourceDimension(frame, config).value()).toEqual(`${publicPath}${fixedValue}`);
+  });
+
+  it('fixed relative path (CDN deployment)', () => {
+    window.public_cdn_path = 'https://cdn.fake/public/build/';
     const frame = undefined;
     const fixedValue = 'img/icons/unicons/question-circle.svg';
     const config = { mode: ResourceDimensionMode.Fixed, fixed: fixedValue };
 
     expect(getResourceDimension(frame, config).value()).toEqual(`${publicPath}build/${fixedValue}`);
+    window.public_cdn_path = '';
   });
 
   it('fixed full URL path', () => {
@@ -110,11 +121,19 @@ describe('getPublicOrAbsoluteUrl', () => {
   const publicPath = 'https://grafana.fake/public/';
   beforeAll(() => {
     window.__grafana_public_path__ = publicPath;
+    window.public_cdn_path = '';
   });
 
-  it('should handle string paths correctly', () => {
+  it('should handle string paths correctly (standard deployment)', () => {
+    expect(getPublicOrAbsoluteUrl('icon.png')).toEqual(`${publicPath}icon.png`);
+    expect(getPublicOrAbsoluteUrl('https://example.com/icon.png')).toEqual('https://example.com/icon.png');
+  });
+
+  it('should handle string paths correctly (CDN deployment)', () => {
+    window.public_cdn_path = 'https://cdn.fake/public/build/';
     expect(getPublicOrAbsoluteUrl('icon.png')).toEqual(`${publicPath}build/icon.png`);
     expect(getPublicOrAbsoluteUrl('https://example.com/icon.png')).toEqual('https://example.com/icon.png');
+    window.public_cdn_path = '';
   });
 
   it('should return empty string for non-string values', () => {

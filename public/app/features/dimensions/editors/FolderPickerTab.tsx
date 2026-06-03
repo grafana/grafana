@@ -83,11 +83,14 @@ export const FolderPickerTab = (props: Props) => {
               frame.forEach((item) => {
                 if (filter(item)) {
                   const idx = item.name.lastIndexOf('.');
+                  const assetBase = window.public_cdn_path
+                    ? `${window.__grafana_public_path__}build/`
+                    : window.__grafana_public_path__;
                   cards.push({
                     value: `${folder}/${item.name}`,
                     label: item.name,
                     search: (idx ? item.name.substring(0, idx) : item.name).toLowerCase(),
-                    imgUrl: `${window.__grafana_public_path__}build/${folder}/${item.name}`,
+                    imgUrl: `${assetBase}${folder}/${item.name}`,
                   });
                 }
               });

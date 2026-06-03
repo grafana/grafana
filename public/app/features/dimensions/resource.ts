@@ -15,8 +15,19 @@ export function getPublicOrAbsoluteUrl(path: unknown): string {
   // NOTE: The value of `path` could be either an URL string or a relative
   //       path to a Grafana CDN asset served from the CDN.
   const isUrl = path.indexOf(':/') > 0;
+  if (isUrl) {
+    return path;
+  }
 
-  return isUrl ? path : `${window.__grafana_public_path__}build/${path}`;
+  // CDN deployments (public_cdn_path is set) copy assets into build/ and serve
+  // them from there. Standard deployments serve assets directly from the public
+  // path root. Using build/ unconditionally breaks old relative paths stored in
+  // dashboards for non-CDN environments.
+  const base = window.public_cdn_path
+    ? `${window.__grafana_public_path__}build/`
+    : window.__grafana_public_path__;
+
+  return `${base}${path}`;
 }
 
 export function getResourceDimension(
