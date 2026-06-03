@@ -57,16 +57,20 @@ func IntegrationToIntegrationConfig(i models.Integration) (alertingModels.Integr
 	}, nil
 }
 
-func PostableAPIConfigToNotificationsConfiguration(c *v1.AMConfigV1, limits alertingNotify.DynamicLimits) (alertingNotify.NotificationsConfiguration, error) {
-	receivers, err := ModelToAPIReceivers(c.AlertmanagerConfig.Receivers)
+func PostableAPIConfigToNotificationsConfiguration(
+	cfg v1.PostableApiAlertingConfig,
+	tmpls []v1.TemplateGroup,
+	limits alertingNotify.DynamicLimits,
+) (alertingNotify.NotificationsConfiguration, error) {
+	receivers, err := ModelToAPIReceivers(cfg.Receivers)
 	if err != nil {
 		return alertingNotify.NotificationsConfiguration{}, err
 	}
 	return alertingNotify.NotificationsConfiguration{
-		RoutingTree:   RouteToAPI(c.AlertmanagerConfig.Route),
-		InhibitRules:  c.AlertmanagerConfig.InhibitRules,
-		TimeIntervals: ModelToTimeIntervals(c.AlertmanagerConfig.TimeIntervals, c.AlertmanagerConfig.MuteTimeIntervals),
-		Templates:     ModelToTemplateDefinitions(c.SortedTemplates(true)),
+		RoutingTree:   RouteToAPI(cfg.Route),
+		InhibitRules:  cfg.InhibitRules,
+		TimeIntervals: ModelToTimeIntervals(cfg.TimeIntervals, cfg.MuteTimeIntervals),
+		Templates:     ModelToTemplateDefinitions(tmpls),
 		Receivers:     receivers,
 		Limits:        limits,
 	}, nil
