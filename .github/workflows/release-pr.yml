@@ -108,11 +108,17 @@ jobs:
         with:
           github_app: grafana-pr-automation
           permission_set: ${{ startsWith(github.ref_name, 'release-') && 'release' || 'main' }}
+      - name: Get GitHub App token
+        id: get-writer-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-pr-automation
+          permission_set: ${{ startsWith(github.ref_name, 'release-') && 'release-writer' || 'release-writer-main' }}
       - run: echo "RELEASE_BRANCH=release-${VERSION}" >> "$GITHUB_ENV"
-      - name: Checkout Grafana
+      - name: Checkout Grafana target branch #checkout the target branch to base the release branch on
         uses: actions/checkout@v5
         with:
-          token: ${{ github.token }}
+          token: ${{ steps.get-writer-app-token.outputs.token }} # use the writer token which can push
           ref: ${{ env.RELEASE_BRANCH }}
           fetch-tags: true
           fetch-depth: 0
