@@ -17,6 +17,32 @@ const emitOpenShortcutsModal = () => {
   appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
 };
 
+export const SECTION_ORDER_STORAGE_KEY = 'grafana.navigation.sectionOrder';
+
+// id is optional on NavModelItem, so fall back to text (unique among top-level sections)
+export const getSectionId = (item: NavModelItem): string => item.id ?? item.text;
+
+/**
+ * Reorders top-level nav sections according to a saved list of section ids.
+ * Sections present in `savedOrder` are placed in that order; sections not in it (new or unknown)
+ * keep their original relative order and are appended after the known ones. Object references from
+ * `items` are reused so reference-equality checks elsewhere (active item, child match) keep working.
+ */
+export const applySectionOrder = (items: NavModelItem[], savedOrder: string[]): NavModelItem[] => {
+  if (!Array.isArray(savedOrder) || savedOrder.length === 0) {
+    return items;
+  }
+  const rank = new Map(savedOrder.map((id, i) => [id, i]));
+  return items
+    .map((item, originalIndex) => ({
+      item,
+      originalIndex,
+      rank: rank.get(getSectionId(item)) ?? Number.POSITIVE_INFINITY,
+    }))
+    .sort((a, b) => a.rank - b.rank || a.originalIndex - b.originalIndex)
+    .map((entry) => entry.item);
+};
+
 export const getEnrichedHelpItem = (helpItem: NavModelItem): NavModelItem => {
   let menuItems = helpItem.children || [];
 

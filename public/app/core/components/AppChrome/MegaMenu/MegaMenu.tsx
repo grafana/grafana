@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
+import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { type DOMAttributes } from '@react-types/shared';
 import { memo, forwardRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocalStorage } from 'react-use';
 
 import { usePatchUserPreferencesMutation } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
@@ -17,7 +19,14 @@ import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { usePinnedItems } from './hooks';
-import { enrichWithInteractionTracking, findByUrl, getActiveItem } from './utils';
+import {
+  applySectionOrder,
+  enrichWithInteractionTracking,
+  findByUrl,
+  getActiveItem,
+  getSectionId,
+  SECTION_ORDER_STORAGE_KEY,
+} from './utils';
 
 export const MENU_WIDTH = '300px';
 
@@ -35,6 +44,7 @@ export const MegaMenu = memo(
     const state = chrome.useState();
     const [patchPreferences] = usePatchUserPreferencesMutation();
     const pinnedItems = usePinnedItems();
+    const [sectionOrder, setSectionOrder] = useLocalStorage<string[]>(SECTION_ORDER_STORAGE_KEY, []);
 
     // Remove profile + help from tree
     const navItems = navTree
@@ -60,7 +70,9 @@ export const MegaMenu = memo(
       }, []);
     }
 
-    const activeItem = getActiveItem(navItems, state.sectionNav.node, location.pathname);
+    const orderedNavItems = applySectionOrder(navItems, sectionOrder ?? []);
+
+    const activeItem = getActiveItem(orderedNavItems, state.sectionNav.node, location.pathname);
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -102,24 +114,62 @@ export const MegaMenu = memo(
       }
     };
 
+    const onDragEnd = (result: DropResult) => {
+      const { source, destination } = result;
+      if (!destination || destination.index === source.index) {
+        return;
+      }
+      const newOrder = orderedNavItems.map(getSectionId);
+      const [moved] = newOrder.splice(source.index, 1);
+      newOrder.splice(destination.index, 0, moved);
+      setSectionOrder(newOrder);
+      reportInteraction('grafana_navigation_sections_reordered', {
+        itemId: moved,
+        fromIndex: source.index,
+        toIndex: destination.index,
+      });
+    };
+
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
         <nav className={styles.content}>
           <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
             <>
-              <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
-                {navItems.map((link, index) => (
-                  <MegaMenuItem
-                    key={link.text}
-                    link={link}
-                    isPinned={isPinned}
-                    onClick={state.megaMenuDocked ? undefined : onClose}
-                    activeItem={activeItem}
-                    onPin={onPinItem}
-                  />
-                ))}
-              </ul>
+              <DragDropContext onDragEnd={onDragEnd}>
+                <Droppable droppableId="mega-menu-sections" direction="vertical">
+                  {(droppableProvided) => (
+                    <ul
+                      className={styles.itemList}
+                      aria-label={t('navigation.megamenu.list-label', 'Navigation')}
+                      ref={droppableProvided.innerRef}
+                      {...droppableProvided.droppableProps}
+                    >
+                      {orderedNavItems.map((link, index) => (
+                        <Draggable
+                          key={link.text}
+                          draggableId={getSectionId(link)}
+                          index={index}
+                          disableInteractiveElementBlocking
+                        >
+                          {(draggableProvided, snapshot) => (
+                            <MegaMenuItem
+                              link={link}
+                              isPinned={isPinned}
+                              onClick={state.megaMenuDocked ? undefined : onClose}
+                              activeItem={activeItem}
+                              onPin={onPinItem}
+                              draggableProvided={draggableProvided}
+                              isDragging={snapshot.isDragging}
+                            />
+                          )}
+                        </Draggable>
+                      ))}
+                      {droppableProvided.placeholder}
+                    </ul>
+                  )}
+                </Droppable>
+              </DragDropContext>
               <MegaMenuExtensionPoint />
             </>
           </ScrollContainer>

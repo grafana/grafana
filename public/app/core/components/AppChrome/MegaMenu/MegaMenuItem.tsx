@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useRef } from 'react';
+import { type DraggableProvided } from '@hello-pangea/dnd';
+import { useCallback, useEffect, useRef } from 'react';
 import * as React from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
@@ -21,11 +22,23 @@ interface Props {
   level?: number;
   onPin: (item: NavModelItem) => void;
   isPinned: (id?: string) => boolean;
+  // Only provided for top-level (level 0) sections, which are the only draggable items.
+  draggableProvided?: DraggableProvided;
+  isDragging?: boolean;
 }
 
 const MAX_DEPTH = 2;
 
-export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPinned }: Props) {
+export function MegaMenuItem({
+  link,
+  activeItem,
+  level = 0,
+  onClick,
+  onPin,
+  isPinned,
+  draggableProvided,
+  isDragging,
+}: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const menuIsDocked = state.megaMenuDocked;
@@ -37,9 +50,18 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
     Boolean(hasActiveChild)
   );
   const showExpandButton = level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage);
-  const item = useRef<HTMLLIElement>(null);
+  const item = useRef<HTMLLIElement | null>(null);
 
   const styles = useStyles2(getStyles);
+
+  // keep the imperative ref (used for scrollIntoView) while also wiring the drag-and-drop ref
+  const setRefs = useCallback(
+    (node: HTMLLIElement | null) => {
+      item.current = node;
+      draggableProvided?.innerRef(node);
+    },
+    [draggableProvided]
+  );
 
   // expand parent sections if child is active
   useEffect(() => {
@@ -78,8 +100,22 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
   }
 
   return (
-    <li ref={item} className={styles.listItem}>
-      <div className={styles.menuItem}>
+    <li
+      ref={setRefs}
+      className={cx(styles.listItem, { [styles.dragging]: isDragging })}
+      {...draggableProvided?.draggableProps}
+    >
+      <div
+        className={cx(styles.menuItem, { [styles.draggable]: Boolean(draggableProvided) })}
+        {...draggableProvided?.dragHandleProps}
+        aria-label={
+          draggableProvided
+            ? t('navigation.megamenu-item.drag-handle-aria-label', 'Reorder section: {{sectionName}}', {
+                sectionName: link.text,
+              })
+            : undefined
+        }
+      >
         {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
         {level === MAX_DEPTH && <div className={styles.itemConnector} />}
         <div className={styles.collapsibleSectionWrapper}>
@@ -170,12 +206,24 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1,
     maxWidth: '100%',
   }),
+  dragging: css({
+    background: theme.colors.background.secondary,
+    borderRadius: theme.shape.radius.default,
+    boxShadow: theme.shadows.z2,
+    zIndex: theme.zIndex.dropdown,
+  }),
   menuItem: css({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1.5),
     height: theme.spacing(4),
     position: 'relative',
+  }),
+  draggable: css({
+    cursor: 'grab',
+    '&:active': {
+      cursor: 'grabbing',
+    },
   }),
   collapseButtonWrapper: css({
     display: 'flex',

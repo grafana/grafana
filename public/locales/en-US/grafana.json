@@ -12370,6 +12370,7 @@
     },
     "megamenu-item": {
       "collapse-aria-label": "Collapse section: {{sectionName}}",
+      "drag-handle-aria-label": "Reorder section: {{sectionName}}",
       "expand-aria-label": "Expand section: {{sectionName}}"
     },
     "org-switcher": {
