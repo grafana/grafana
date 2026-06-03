@@ -56,7 +56,11 @@ import {
 
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
+import {
+  buildFromExistingDashboardSaveModelV2,
+  buildNewDashboardSaveModel,
+  buildNewDashboardSaveModelV2,
+} from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import {
   createV2RowsLayout,
@@ -108,6 +112,8 @@ export interface LoadDashboardOptions {
   slug?: string;
   type?: string;
   urlFolderUid?: string;
+  // UID of an existing dashboard to clone from when route is NewFromExisting
+  sourceUid?: string;
   dashboardTemplateUid?: string;
   editTemplate?: boolean;
   defaultVariables?: VariableKind[];
@@ -1040,6 +1046,13 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         }
       }
 
+      // Create-from-existing: land in edit mode as an unsaved, dirty draft so the
+      // user must explicitly save it as a brand-new dashboard.
+      if (options.route === DashboardRoutes.NewFromExisting) {
+        scene.onEnterEditMode();
+        scene.setState({ isDirty: true });
+      }
+
       // We don't want to cache temporary dashboards (e.g from Explore) or public dashboards
       if (options.uid && !skipSceneCache) {
         this.setSceneCache(options.uid, scene);
@@ -1057,6 +1070,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     uid,
     route,
     urlFolderUid,
+    sourceUid,
     dashboardTemplateUid,
     editTemplate,
   }: LoadDashboardOptions): Promise<DashboardWithAccessInfo<DashboardV2Spec> | null> {
@@ -1072,6 +1086,12 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       switch (route) {
         case DashboardRoutes.New:
           rsp = await buildNewDashboardSaveModelV2(urlFolderUid);
+          break;
+        case DashboardRoutes.NewFromExisting:
+          if (!sourceUid) {
+            throw new Error('sourceUid is required to create a dashboard from an existing one');
+          }
+          rsp = await buildFromExistingDashboardSaveModelV2(sourceUid, urlFolderUid);
           break;
         case DashboardRoutes.Provisioning: {
           return await this.loadProvisioningDashboard(slug || '', uid);
@@ -1409,6 +1429,11 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     if (options.route === DashboardRoutes.New) {
       const newDashboardVersion = shouldForceV2API() ? 'v2' : 'v1';
       this.setActiveManager(newDashboardVersion);
+    }
+
+    // Create-from-existing is currently a V2-only flow.
+    if (options.route === DashboardRoutes.NewFromExisting) {
+      this.setActiveManager('v2');
     }
 
     // Dashboard templates: Grafana templates use V1, Custom templates use V2
