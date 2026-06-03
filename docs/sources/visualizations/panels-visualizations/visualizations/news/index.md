@@ -21,7 +21,7 @@ weight: 100
 
 # News
 
-The news visualization displays an RSS feed. By default, it displays articles from the Grafana Labs blog, but you can change this by entering a different RSS feed URL.
+The news visualization displays an RSS feed. By default, it displays articles from the Grafana Labs blog at `https://grafana.com/blog/news.xml`, but you can change this by entering a different RSS feed URL.
 
 {{< figure src="/static/img/docs/news/news-visualization.png" max-width="1025px" alt="A news visualization showing the latest Grafana news feed" >}}
 
@@ -57,5 +57,5 @@ The news visualization supports RSS and Atom feeds.
 
 Use the following options to refine your news visualization:
 
-- **URL** - The URL of the RSS or Atom feed.
-- **Show image** - Controls if the news social image is displayed beside the text content.
+- **URL** - The URL of the RSS or Atom feed. If you leave this empty, Grafana uses `https://grafana.com/blog/news.xml`.
+- **Show image** - Controls whether the feed item's social image is displayed. On narrow panels, the image appears above the text. On wider panels, the image appears beside the text.

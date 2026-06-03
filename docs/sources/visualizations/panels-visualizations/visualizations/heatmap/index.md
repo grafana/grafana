@@ -103,11 +103,8 @@ The following options control how data in the heatmap is calculated and grouped.
 | X Bucket | This setting determines how the x-axis is split into buckets. You can specify a time interval in the **Size** input. For example, a time range of `1h` makes the cells 1-hour wide on the x-axis. You can also set an interval based on **Count**.  |
 | Y Bucket | This setting determines how the y-axis is split into buckets. Choose from **Size** or **Count**. |
 | Y Bucket scale | When **Calculate from data** is **Yes**. Select one of the following y-axis value scales:<ul><li>**Linear** - Linear scale.</li><li>**Logarithmic** - Choose a **Log base** of **2** or **10**.</li><li>**Symlog** - Symlog scale. Choose a **Log base** of **2** or **10** and enter a value for the **Linear threshold**.</li></ul> |
-| Y Bucket scale | When **Calculate from data** is **No**. Set the y-axis scale for pre-bucketed data in the wide, one-field-per-bucket data structure (not available when the response uses the heatmap-cells data frame type). Choose from:<ul><li>**Auto** - Uses the default scale behavior.</li><li>**Linear** - Linear scale.</li><li>**Log** - Logarithmic scale. Choose a **Log base** of **2** or **10**.</li><li>**Symlog** - Symmetrical logarithmic scale. Choose a **Log base** of **2** or **10** and enter a value for the **Linear threshold**.</li></ul> |
 
 <!-- prettier-ignore-end -->
-
-{{< docs/public-preview product="The **Y Bucket scale** option for pre-bucketed data" featureFlag="`heatmapRowsAxisOptions`" >}}
 
 ### Y-Axis options
 
@@ -123,12 +120,9 @@ The following options define the display of the y-axis.
 | Min/Max value | These settings configure the axis range. |
 | Axis width | This setting configures the width for the axis. |
 | Axis label | This setting configures the axis value. |
-| Tick alignment | Sets the alignment of the tick marks on the visualization. Choose from: **Auto**, **Top (LE)**, **Middle**, and **Bottom (GE)**. This option is only displayed when your **Calculate from data** setting is **No** and **Y Bucket scale** is set to **Auto**. |
 | Reverse| When selected, the axis appears in reverse order. |
 
 <!-- prettier-ignore-end -->
-
-{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+3" >}}
 
 ### Colors options
 
@@ -159,10 +153,10 @@ Toggle the switch to reverse the color scheme. This option only applies the **Sc
 
 #### Start/end color scale from value
 
-By default, Grafana calculates cell colors based on minimum and maximum bucket values. With Min and Max you can overwrite those values. Consider a bucket value as a Z-axis and Min and Max as Z-Min and Z-Max, respectively.
+By default, Grafana calculates cell colors based on minimum and maximum bucket values. With **Start color scale from value** and **End color scale at value**, you can overwrite those values. Consider a bucket value as a z-axis, with the start and end values as z-min and z-max.
 
-- **Start** - Minimum value using for cell color calculation. If the bucket value is less than Min, then it is mapped to the "minimum" color. The series min value is the default value.
-- **End** - Maximum value using for cell color calculation. If the bucket value is greater than Max, then it is mapped to the "maximum" color. The series max value is the default value.
+- **Start color scale from value** - Minimum value used for cell color calculation. The placeholder **Auto (min)** uses the series minimum value. If the bucket value is less than this value, then it's mapped to the minimum color.
+- **End color scale at value** - Maximum value used for cell color calculation. The placeholder **Auto (max)** uses the series maximum value. If the bucket value is greater than this value, then it's mapped to the maximum color.
 
 ### Cell display options
 
@@ -174,6 +168,7 @@ Use these settings to control the display of heatmap cells.
 | ------ | ----------- |
 | Unit | Unit configuration. |
 | Decimals | This setting determines decimal configuration. |
+| Value name | Sets the label for the cell value column when **Calculate from data** is **No**. |
 | Cell gap | Set how much space there is between cells. |
 | Hide cells with values <= | Enter a value. |
 | Hide cells with values >= | Enter a value. |
@@ -184,13 +179,13 @@ Use these settings to control the display of heatmap cells.
 
 Tooltip options control the information overlay that appears when you hover over data points in the visualization.
 
-| Option                                | Description                                                                                                                                                              |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [Tooltip mode](#tooltip-mode)         | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                                                             |
-| Show histogram (Y axis)               | When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis. |
-| [Show color scale](#show-color-scale) | This option controls whether or not the tooltip includes the color scale that's also represented in the legend.                                                          |
-| Max width                             | Set the maximum width of the tooltip box.                                                                                                                                |
-| Max height                            | Set the maximum height of the tooltip box. The default is 600 pixels.                                                                                                    |
+| Option                                | Description                                                                                                                                                                     |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Tooltip mode](#tooltip-mode)         | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                                                                    |
+| Show histogram (Y axis)               | When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.        |
+| [Show color scale](#show-color-scale) | This option controls whether or not the tooltip includes the color scale that's also represented in the legend.                                                                 |
+| Max width                             | Set the maximum width of the tooltip box.                                                                                                                                       |
+| Max height                            | Set the maximum height of the tooltip box. This option is shown when **Tooltip mode** is **All**, or when exemplar data is present. If unset, the tooltip isn't scroll-limited. |
 
 #### Tooltip mode
 
