@@ -86,6 +86,7 @@ export const getJobRoleOptions = (): Array<ComboboxOption<JobRoleNavPreference>>
     label: t('shared-preferences.job-role.application-developer', 'Application developer'),
   },
   { value: 'database-engineer', label: t('shared-preferences.job-role.database-engineer', 'Database engineer') },
+  { value: 'nathan', label: t('shared-preferences.job-role.nathan', 'Nathan') },
 ];
 
 export const getTranslatedThemeName = (theme: ThemeRegistryItem) => {

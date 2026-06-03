@@ -362,7 +362,7 @@ export type ObjectMeta = {
 };
 export type PreferencesNavbarPreference = {
   bookmarkUrls: string[];
-  jobRole?: 'default' | 'sre' | 'data-analyst' | 'incident-responder' | 'platform-engineer' | 'application-developer' | 'database-engineer';
+  jobRole?: 'default' | 'sre' | 'data-analyst' | 'incident-responder' | 'platform-engineer' | 'application-developer' | 'database-engineer' | 'nathan';
 };
 export type PreferencesQueryHistoryPreference = {
   /** one of: '' | 'query' | 'starred'; */

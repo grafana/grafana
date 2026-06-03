@@ -16,6 +16,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 
 import { clampMegaMenuWidth } from '../AppChromeService';
 
+import { GcxTerminal } from './GcxTerminal';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
@@ -70,7 +71,7 @@ export const MegaMenu = memo(
     }
 
     const activeItem = getActiveItem(navItems, state.sectionNav.node, location.pathname);
-    const hideNavItems = Boolean(config.featureToggles.simplifiedNavigation);
+    const hideNavItems = Boolean(config.featureToggles.simplifiedNavigation) || resolvedJobRole === 'nathan';
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -147,7 +148,9 @@ export const MegaMenu = memo(
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
-        {!hideNavItems && (
+        {hideNavItems ? (
+          <GcxTerminal onClose={state.megaMenuDocked ? undefined : onClose} />
+        ) : (
           <nav className={styles.content}>
             <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
               <>

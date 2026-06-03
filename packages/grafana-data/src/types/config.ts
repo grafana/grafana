@@ -159,7 +159,15 @@ export interface AnalyticsSettings {
 
 export interface CurrentUserNavbarPreference {
   bookmarkUrls?: string[];
-  jobRole?: 'default' | 'sre' | 'data-analyst' | 'incident-responder' | 'platform-engineer' | 'application-developer' | 'database-engineer';
+  jobRole?:
+    | 'default'
+    | 'sre'
+    | 'data-analyst'
+    | 'incident-responder'
+    | 'platform-engineer'
+    | 'application-developer'
+    | 'database-engineer'
+    | 'nathan';
 }
 
 /**

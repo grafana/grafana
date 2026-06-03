@@ -134,6 +134,30 @@ describe('MegaMenu', () => {
     expect(screen.queryByRole('link', { name: 'Alerting' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Administration' })).not.toBeInTheDocument();
   });
+
+  it('hides the nav items for Nathan mode', async () => {
+    config.featureToggles.jobRoleNavPresets = true;
+    contextSrv.user.isSignedIn = true;
+    contextSrv.isSignedIn = true;
+    server.use(
+      http.get('/api/user/preferences', () =>
+        HttpResponse.json({
+          navbar: {
+            bookmarkUrls: [],
+            jobRole: 'nathan',
+          },
+        })
+      ),
+      http.get('/api/user/orgs', () => HttpResponse.json([]))
+    );
+
+    setup();
+
+    expect(await screen.findByTestId('gcx-terminal')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('link', { name: 'Section name' })).not.toBeInTheDocument();
+    });
+  });
 });
 
 describe('MegaMenu simplified navigation', () => {
@@ -144,13 +168,12 @@ describe('MegaMenu simplified navigation', () => {
     window.localStorage.clear();
   });
 
-  it('hides the nav items when the flag is on', async () => {
+  it('replaces the nav items with the gcx terminal when the flag is on', async () => {
     config.featureToggles.simplifiedNavigation = true;
     setup();
 
-    expect(await screen.findByTestId(selectors.components.NavMenu.Menu)).toBeInTheDocument();
+    expect(await screen.findByTestId('gcx-terminal')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Section name' })).not.toBeInTheDocument();
-    expect(screen.queryByTestId('gcx-terminal')).not.toBeInTheDocument();
   });
 
   it('renders the normal nav when the flag is off', async () => {

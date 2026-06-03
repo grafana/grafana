@@ -7,9 +7,10 @@ export type JobRoleNavPreference =
   | 'incident-responder'
   | 'platform-engineer'
   | 'application-developer'
-  | 'database-engineer';
+  | 'database-engineer'
+  | 'nathan';
 
-type FilteredJobRoleNavPreference = Exclude<JobRoleNavPreference, 'default'>;
+type FilteredJobRoleNavPreference = Exclude<JobRoleNavPreference, 'default' | 'nathan'>;
 
 const sharedNavIds = new Set(['home', 'bookmarks', 'starred', 'profile', 'help']);
 

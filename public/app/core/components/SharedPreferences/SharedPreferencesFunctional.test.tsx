@@ -90,10 +90,12 @@ describe('SharedPreferencesFunctional', () => {
   it('renders the job role preference for user preferences when job role nav presets are enabled', async () => {
     config.featureToggles.jobRoleNavPresets = true;
 
-    await setup();
+    const { user } = await setup();
 
     const jobRoleSelect = await screen.findByRole('combobox', { name: /job role/i });
     expect(jobRoleSelect).toHaveValue('Default');
+    await user.click(jobRoleSelect);
+    expect(await screen.findByRole('option', { name: 'Nathan' })).toBeInTheDocument();
   });
 
   it('does not render the job role preference for org preferences', async () => {
