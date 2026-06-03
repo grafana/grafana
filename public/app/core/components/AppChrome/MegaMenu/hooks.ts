@@ -127,7 +127,7 @@ export const useNavCustomization = () => {
   // Base tree without the items the mega menu never lists directly. When customisation is on, the
   // dedicated Bookmarks section is also dropped — pinned items are re-presented at the top.
   const baseItems = navTree.filter(
-    (item) => !NON_MENU_NAV_IDS.has(item.id ?? '') && !(canCustomise && item.id === 'bookmarks')
+    (item) => !NON_MENU_NAV_IDS[item.id ?? ''] && !(canCustomise && item.id === 'bookmarks')
   );
 
   const pinnedSet = new Set(pinnedUrls);
@@ -159,9 +159,6 @@ export const useNavCustomization = () => {
       }, []);
     }
   }
-
-  const homeItem = navItems.find((item) => item.id === 'home');
-  const unpinnedItems = navItems.filter((item) => item.id !== 'home');
 
   // The non-pinned items become collapsible once something is pinned.
   const unpinnedCollapsible = canCustomise && pinnedNavItems.length > 0;
@@ -214,8 +211,6 @@ export const useNavCustomization = () => {
     canCustomise,
     isLoading,
     navItems,
-    homeItem,
-    unpinnedItems,
     pinnedNavItems,
     activeItem,
     isPinned,

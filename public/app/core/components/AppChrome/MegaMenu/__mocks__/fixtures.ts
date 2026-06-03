@@ -2,7 +2,7 @@ import { type NavModelItem } from '@grafana/data';
 
 // Shared nav-tree fixtures for the mega menu tests.
 
-/** A small nested tree (with a profile item to assert filtering) for the non-customisation tests. */
+/** A small nested tree (with profile and home items to assert filtering) for the non-customisation tests. */
 export const nestedNavTree: NavModelItem[] = [
   {
     text: 'Section name',
@@ -23,6 +23,7 @@ export const nestedNavTree: NavModelItem[] = [
     id: 'profile',
     url: 'profile',
   },
+  { text: 'Home', id: 'home', url: '/' },
 ];
 
 /** The full tree the customisation tests render: pinnable sections, Starred, and the Bookmarks section. */
