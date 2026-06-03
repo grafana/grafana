@@ -112,14 +112,14 @@ jobs:
       - name: Checkout Grafana
         uses: actions/checkout@v5
         with:
-          token: ${{ steps.get-github-app-token.outputs.token }}
+          token: ${{ github.token }}
           ref: ${{ env.RELEASE_BRANCH }}
           fetch-tags: true
           fetch-depth: 0
       - name: Checkout Grafana (main)
         uses: actions/checkout@v5
         with:
-          token: ${{ steps.get-github-app-token.outputs.token }}
+          token: ${{ github.token }}
           ref: main
           fetch-depth: '0'
           path: .grafana-main
@@ -138,8 +138,8 @@ jobs:
           cache: false
       - name: Configure git user
         run: |
-          git config --local user.name "grafana-releases-oss[bot]"
-          git config --local user.email "grafana-releases-oss[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local --add --bool push.autoSetupRemote true
 
       - name: Create branch
@@ -215,7 +215,7 @@ jobs:
         run: git push
       - name: Create PR
         env:
-          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          GH_TOKEN: ${{ github.token }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           LATEST_FLAG=()
@@ -225,6 +225,7 @@ jobs:
           gh pr create \
             "${LATEST_FLAG[@]}" \
             -l "no-changelog" \
+            --draft \
             --dry-run="$DRY_RUN" \
             -B "${RELEASE_BRANCH}" \
             --title "Release: $VERSION" \
