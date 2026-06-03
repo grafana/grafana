@@ -3,6 +3,7 @@ import {
   type GrafanaConfig,
   LiveChannelEventType,
   LoadingState,
+  type NavIndex,
   getDefaultTimeRange,
   locationUtil,
   store,
@@ -37,6 +38,7 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
@@ -1838,6 +1840,59 @@ describe('DashboardScene', () => {
     });
   });
 
+  describe('When restoring a template dashboard', () => {
+    it('delegates to the DashboardTemplateExtension instead of the dashboard API', async () => {
+      const scene = buildTestScene({ meta: { isDashboardTemplate: true } });
+      scene.onEnterEditMode();
+
+      const restoreSpy = jest.fn().mockResolvedValue(true);
+      jest.spyOn(DashboardTemplateExtensionModule, 'getDashboardTemplateExtension').mockReturnValue({
+        loadTemplate: jest.fn(),
+        listHistory: jest.fn(),
+        restore: restoreSpy,
+      });
+
+      const version = getVersionMock();
+      const result = await scene.onRestore(version);
+
+      expect(restoreSpy).toHaveBeenCalledWith(scene, version);
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('openSaveDrawer with template flags', () => {
+    it('opens the drawer in saveAsDashboardTemplate mode', () => {
+      const scene = buildTestScene();
+      scene.onEnterEditMode();
+
+      scene.openSaveDrawer({ saveAsDashboardTemplate: true });
+
+      const overlay = scene.state.overlay;
+      expect(overlay).toBeInstanceOf(SaveDashboardDrawer);
+      expect((overlay as SaveDashboardDrawer).state.saveAsDashboardTemplate).toBe(true);
+      expect((overlay as SaveDashboardDrawer).state.saveDashboardTemplate).toBeUndefined();
+    });
+
+    it('opens the drawer in saveDashboardTemplate mode', () => {
+      const scene = buildTestScene();
+      scene.onEnterEditMode();
+
+      scene.openSaveDrawer({ saveDashboardTemplate: true });
+
+      const overlay = scene.state.overlay;
+      expect(overlay).toBeInstanceOf(SaveDashboardDrawer);
+      expect((overlay as SaveDashboardDrawer).state.saveDashboardTemplate).toBe(true);
+      expect((overlay as SaveDashboardDrawer).state.saveAsDashboardTemplate).toBeUndefined();
+    });
+
+    it('does nothing when the scene is not in edit mode', () => {
+      const scene = buildTestScene();
+      // Not entering edit mode
+      scene.openSaveDrawer({ saveAsDashboardTemplate: true });
+      expect(scene.state.overlay).toBeUndefined();
+    });
+  });
+
   describe('When checking dashboard managed by an external system', () => {
     beforeEach(() => {
       config.featureToggles.provisioning = true;
@@ -2639,6 +2694,48 @@ describe('DashboardScene', () => {
 
       expect(sceneGraph.getVariables(scene).state.variables.length).toBe(existingVarCount + 1);
       expect(scene.state.links.length).toBe(existingLinkCount + 1);
+    });
+  });
+
+  describe('getPageNav', () => {
+    describe('provisioning preview', () => {
+      // Regression test: when previewing a provisioned dashboard, meta.url and meta.slug are unset,
+      // which makes getDashboardUrl treat the dashboard as the home dashboard and return "/".
+      // buildBreadcrumbs then suppresses both the title and the "Dashboards" section crumb
+      // (only "View panel" was rendered). The parent crumb must point back to the preview path instead.
+      it('uses the preview pathname as the parent crumb url when viewing a panel, preserving the ref query param', () => {
+        const scene = buildTestScene({ meta: {}, viewPanel: '2' });
+        const location = {
+          pathname: '/dashboard/provisioning/my-repo/preview/path/to/dash.json',
+          search: '?ref=feature&viewPanel=2',
+          hash: '',
+          state: null,
+          key: '',
+        };
+
+        const pageNav = scene.getPageNav(location, {} as NavIndex);
+
+        expect(pageNav.text).toBe('View panel');
+        expect(pageNav.parentItem?.text).toBe('hello');
+        expect(pageNav.parentItem?.url).toBe(
+          '/subUrl/dashboard/provisioning/my-repo/preview/path/to/dash.json?ref=feature'
+        );
+      });
+
+      it('does not fabricate a ref query param when none is present', () => {
+        const scene = buildTestScene({ meta: {}, viewPanel: '2' });
+        const location = {
+          pathname: '/dashboard/provisioning/my-repo/preview/path/to/dash.json',
+          search: '?viewPanel=2',
+          hash: '',
+          state: null,
+          key: '',
+        };
+
+        const pageNav = scene.getPageNav(location, {} as NavIndex);
+
+        expect(pageNav.parentItem?.url).toBe('/subUrl/dashboard/provisioning/my-repo/preview/path/to/dash.json');
+      });
     });
   });
 });
