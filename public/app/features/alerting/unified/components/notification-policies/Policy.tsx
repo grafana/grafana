@@ -171,7 +171,7 @@ const Policy = (props: PolicyComponentProps) => {
   const k8sMeta = getRoutePolicyMeta(currentRoute);
   const showManagePermissions = canAdminEntity({ metadata: k8sMeta });
   // When K8s metadata is present use the entity-level write annotation; fall back to true
-  // (global RBAC is already checked by the <Authorize> wrapper around the button).
+  // since global RBAC is enforced at the API level.
   const canWriteToCurrentRoute = k8sMeta ? canEditEntity({ metadata: k8sMeta }) : true;
   const matchingAlertGroups = matchingInstancesPreview?.groupsMap?.get(currentRoute.id);
 
