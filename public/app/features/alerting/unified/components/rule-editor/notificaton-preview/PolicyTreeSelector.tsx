@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useController, useFormContext } from 'react-hook-form';
 
 import { type SelectableValue } from '@grafana/data';
@@ -52,10 +52,11 @@ export function PolicyTreeSelector() {
 
   // A rule routed via notification_settings.policy carries a selectedPolicy value but no legacy label.
   // They must keep editing through the policy field even when the toggle is OFF, so the two routing mechanisms never coexist.
-  const isPolicyFieldRule = useRef(
-    usePolicyRoutingSettings ||
+  const [isPolicyFieldRule] = useState(
+    () =>
+      usePolicyRoutingSettings ||
       (Boolean(selectedPolicyField.value) && !labels.some((label) => label.key === NAMED_ROOT_LABEL_NAME))
-  ).current;
+  );
 
   // Resolve the current value from the routing mechanism this rule actually uses. Policy-field rules
   // must read selectedPolicy only: the legacy label can linger in form state (it is stripped at DTO
