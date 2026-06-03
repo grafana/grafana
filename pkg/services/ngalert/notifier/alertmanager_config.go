@@ -102,8 +102,6 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
 		prepared.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(prepared.AlertmanagerConfig.Route, prepared.ManagedRoutes)
-	} else {
-		prepared.InhibitionRules = nil // Legacy behaviour doesn't use the managed inhibition rules if FlagAlertingMultiplePolicies is disabled.
 	}
 
 	if err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, &prepared.AlertmanagerConfig, onInvalid, moa.featureManager); err != nil {
