@@ -13,13 +13,11 @@ import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { buildNavIndex, getEffectivePinnedIds, isPinned as isItemPinned } from 'app/core/navigation';
 import { useNavLayout } from 'app/core/navigation/useNavLayout';
-import { contextSrv } from 'app/core/services/context_srv';
 import { useSelector } from 'app/types/store';
 
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
-import { NavPersonaMenu } from './NavPersonaMenu';
 import { ShowMoreSection } from './ShowMoreSection';
 import {
   applySectionOrder,
@@ -53,10 +51,7 @@ export const MegaMenu = memo(
       [navTree, state.megaMenuDocked]
     );
 
-    const { projected, layout, onTogglePin, onApplyPersona, onOverflowExpandedChange } = useNavLayout(
-      navTree,
-      location.pathname
-    );
+    const { projected, layout, onTogglePin, onOverflowExpandedChange } = useNavLayout(navTree, location.pathname);
 
     const navIndex = useMemo(() => buildNavIndex(navTree), [navTree]);
     const pinnedSet = useMemo(() => getEffectivePinnedIds(layout, navIndex), [layout, navIndex]);
@@ -140,9 +135,6 @@ export const MegaMenu = memo(
         <nav className={styles.content}>
           <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
             <>
-              {customizableMenu && contextSrv.isSignedIn && (
-                <NavPersonaMenu currentPersonaId={layout.personaId} onApplyPersona={onApplyPersona} />
-              )}
               <DragDropContext onDragEnd={onDragEnd}>
                 <Droppable droppableId="mega-menu-sections" direction="vertical">
                   {(droppableProvided) => (
