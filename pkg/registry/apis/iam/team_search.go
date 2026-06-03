@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
@@ -44,11 +43,12 @@ const maxIDFilterValues = 100
 // The RBAC authz server translates Group/Resource/Verb through the mapper
 // to resolve the underlying RBAC action.
 type teamAccessControlCheck struct {
-	action   string // legacy RBAC action name returned to callers
-	group    string
-	resource string
-	verb     string
-	name     string // team UID of the resource being checked
+	action      string // legacy RBAC action name returned to callers
+	group       string
+	resource    string
+	subresource string
+	verb        string
+	name        string // team UID of the resource being checked
 }
 
 var teamAccessControlChecks = []teamAccessControlCheck{
@@ -57,7 +57,9 @@ var teamAccessControlChecks = []teamAccessControlCheck{
 	{action: "teams:delete", group: iamv0alpha1.GROUP, resource: "teams", verb: utils.VerbDelete},
 	{action: "teams.permissions:read", group: iamv0alpha1.GROUP, resource: "teams", verb: utils.VerbGetPermissions},
 	{action: "teams.permissions:write", group: iamv0alpha1.GROUP, resource: "teams", verb: utils.VerbSetPermissions},
-	{action: "teams.roles:read", group: iamv0alpha1.GROUP, resource: "rolebindings", verb: utils.VerbList},
+	// Team role-bindings are the "teams" subresource of rolebindings so the check
+	// resolves to teams.roles:read rather than users.roles:read.
+	{action: "teams.roles:read", group: iamv0alpha1.GROUP, resource: "rolebindings", subresource: "teams", verb: utils.VerbList},
 }
 
 type TeamSearchHandler struct {
@@ -428,42 +430,62 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *TeamSearchHandler) stampAccessControl(ctx context.Context, requester identity.Requester, hits []iamv0alpha1.GetSearchTeamsTeamHit) error {
+	if len(hits) == 0 {
+		return nil
+	}
+
+	ctx, span := s.tracer.Start(ctx, "team.search.stampAccessControl")
+	defer span.End()
+
 	namespace := requester.GetNamespace()
 
-	items := func(yield func(teamAccessControlCheck) bool) {
-		for _, hit := range hits {
-			for _, c := range teamAccessControlChecks {
-				c.name = hit.Name
-				if !yield(c) {
-					return
-				}
+	// Build one batch-check item per (hit, access-control check). We call BatchCheck
+	// directly rather than authz.FilterAuthorized because the latter's convenience item
+	// type cannot carry a subresource, which teams.roles:read needs to resolve to the
+	// rolebindings "teams" subresource. CorrelationID encodes the hit index and action
+	// so results map back to the originating hit.
+	checks := make([]authlib.BatchCheckItem, 0, len(hits)*len(teamAccessControlChecks))
+	for i, hit := range hits {
+		for _, c := range teamAccessControlChecks {
+			checks = append(checks, authlib.BatchCheckItem{
+				CorrelationID: fmt.Sprintf("%d|%s", i, c.action),
+				Verb:          c.verb,
+				Group:         c.group,
+				Resource:      c.resource,
+				Subresource:   c.subresource,
+				Name:          hit.Name,
+			})
+		}
+	}
+
+	allowed := make(map[string]bool, len(checks))
+	for start := 0; start < len(checks); start += authlib.MaxBatchCheckItems {
+		end := min(start+authlib.MaxBatchCheckItems, len(checks))
+		resp, err := s.accessClient.BatchCheck(ctx, requester, authlib.BatchCheckRequest{
+			Namespace: namespace,
+			Checks:    checks[start:end],
+		})
+		if err != nil {
+			return fmt.Errorf("access control check failed: %w", err)
+		}
+		for id, res := range resp.Results {
+			if res.Allowed {
+				allowed[id] = true
 			}
 		}
 	}
 
-	extractFn := func(c teamAccessControlCheck) authz.BatchCheckItem {
-		return authz.BatchCheckItem{
-			Verb:      c.verb,
-			Group:     c.group,
-			Resource:  c.resource,
-			Namespace: namespace,
-			Name:      c.name,
-		}
-	}
-
-	acMap := make(map[string]map[string]bool, len(hits))
-	for c, err := range authz.FilterAuthorized(ctx, s.accessClient, items, extractFn, authz.WithTracer(s.tracer)) {
-		if err != nil {
-			return fmt.Errorf("access control check failed: %w", err)
-		}
-		if acMap[c.name] == nil {
-			acMap[c.name] = make(map[string]bool, len(teamAccessControlChecks))
-		}
-		acMap[c.name][c.action] = true
-	}
-
 	for i := range hits {
-		hits[i].AccessControl = acMap[hits[i].Name]
+		var acMap map[string]bool
+		for _, c := range teamAccessControlChecks {
+			if allowed[fmt.Sprintf("%d|%s", i, c.action)] {
+				if acMap == nil {
+					acMap = make(map[string]bool, len(teamAccessControlChecks))
+				}
+				acMap[c.action] = true
+			}
+		}
+		hits[i].AccessControl = acMap
 	}
 
 	return nil

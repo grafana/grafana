@@ -371,6 +371,26 @@ func NewMapperRegistry() MapperRegistry {
 				},
 				folderSupport: false,
 			},
+			// Team role-bindings are the same rolebindings resource with a Team
+			// subject. They are addressed as the "teams" subresource so they map to
+			// the teams.roles:* actions instead of users.roles:*, keeping team and
+			// user role-binding access distinct.
+			"rolebindings/teams": translation{
+				resource: "rolebindings",
+				// rolebindings should only be modifiable by admins with a wildcard access
+				useWildcardScope: true,
+				verbMapping: map[string]string{
+					utils.VerbCreate:           "teams.roles:add",
+					utils.VerbGet:              "teams.roles:read",
+					utils.VerbUpdate:           "teams.roles:add",
+					utils.VerbPatch:            "teams.roles:add",
+					utils.VerbDelete:           "teams.roles:remove",
+					utils.VerbDeleteCollection: "teams.roles:remove",
+					utils.VerbList:             "teams.roles:read",
+					utils.VerbWatch:            "teams.roles:read",
+				},
+				folderSupport: false,
+			},
 		},
 		"provisioning.grafana.app": {
 			"repositories": newResourceTranslation("provisioning.repositories", "uid", false, skipScopeOnAllVerbs),

@@ -197,6 +197,42 @@ func TestMapperRegistry_SubresourceLookup(t *testing.T) {
 	})
 }
 
+// TestMapperRegistry_RoleBindingsTeamsSubresource verifies the real mapper routes the
+// iam.grafana.app rolebindings "teams" subresource to teams.roles:* actions, while the
+// plain rolebindings resource stays on the users.roles:* family.
+func TestMapperRegistry_RoleBindingsTeamsSubresource(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	cases := []struct {
+		verb        string
+		teamsAction string
+		usersAction string
+	}{
+		{utils.VerbGet, "teams.roles:read", "users.roles:read"},
+		{utils.VerbList, "teams.roles:read", "users.roles:read"},
+		{utils.VerbCreate, "teams.roles:add", "users.roles:add"},
+		{utils.VerbUpdate, "teams.roles:add", "users.roles:add"},
+		{utils.VerbDelete, "teams.roles:remove", "users.roles:remove"},
+		{utils.VerbDeleteCollection, "teams.roles:remove", "users.roles:remove"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.verb, func(t *testing.T) {
+			teamsMapping, ok := reg.Get("iam.grafana.app", "rolebindings", "teams")
+			require.True(t, ok)
+			action, ok := teamsMapping.Action(tc.verb)
+			assert.True(t, ok)
+			assert.Equal(t, tc.teamsAction, action)
+
+			usersMapping, ok := reg.Get("iam.grafana.app", "rolebindings", "")
+			require.True(t, ok)
+			action, ok = usersMapping.Action(tc.verb)
+			assert.True(t, ok)
+			assert.Equal(t, tc.usersAction, action)
+		})
+	}
+}
+
 // TestMapper_ServiceAccountTranslation_ActionSets verifies that service account verbs map to the
 // correct action sets. There is no View level — Edit verbs map to both edit+admin, and admin-only
 // verbs (delete, permissions) map to admin only.

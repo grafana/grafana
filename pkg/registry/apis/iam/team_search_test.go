@@ -20,6 +20,7 @@ import (
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -442,6 +443,48 @@ func TestTeamAccessControl(t *testing.T) {
 			tc.checkHits(t, resp.Hits)
 		})
 	}
+}
+
+// TestTeamAccessControlSubresource verifies that the teams.roles:read check is issued
+// against the rolebindings "teams" subresource (so it resolves to teams.roles:read, not
+// users.roles:read), while the core team checks carry no subresource.
+func TestTeamAccessControlSubresource(t *testing.T) {
+	var got []authlib.BatchCheckItem
+	recordingClient := &mockTeamAccessClient{
+		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+			got = append(got, req.Checks...)
+			return authlib.BatchCheckResponse{}, nil
+		},
+	}
+
+	searchHandler := &TeamSearchHandler{
+		log:          log.New("grafana-apiserver.teams.search"),
+		client:       mockTeamClientWithHits(),
+		tracer:       tracing.NewNoopTracerService(),
+		features:     featuremgmt.WithFeatures(),
+		accessClient: recordingClient,
+	}
+
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/teams/search?accesscontrol=true", nil)
+	req.Header.Add("content-type", "application/json")
+	req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "default"}))
+
+	searchHandler.DoTeamSearch(rr, req)
+	require.Equal(t, 200, rr.Code)
+
+	var sawTeamRoles bool
+	for _, c := range got {
+		if c.Resource == "rolebindings" {
+			sawTeamRoles = true
+			assert.Equal(t, "teams", c.Subresource, "team role-bindings must be checked via the teams subresource")
+			assert.Equal(t, utils.VerbList, c.Verb)
+		} else {
+			assert.Equal(t, "teams", c.Resource)
+			assert.Empty(t, c.Subresource, "core team checks must not carry a subresource")
+		}
+	}
+	assert.True(t, sawTeamRoles, "expected a teams.roles:read check against rolebindings")
 }
 
 func TestTeamSearchMemberCount(t *testing.T) {
