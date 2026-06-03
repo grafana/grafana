@@ -16,7 +16,7 @@ import {
 } from 'app/core/reducers/appNotification';
 import { useDispatch, useSelector } from 'app/types/store';
 
-export function StoredNotifications() {
+export function LocalAppNotifications() {
   const dispatch = useDispatch();
   const notifications = useSelector((state) => selectWarningsAndErrors(state.appNotifications));
   const [selectedNotificationIds, setSelectedNotificationIds] = useState<string[]>([]);

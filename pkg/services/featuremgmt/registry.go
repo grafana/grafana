@@ -3164,6 +3164,14 @@ var (
 			Expression:   "false",
 			Generate:     Generate{Go: true},
 		},
+		{
+			Name:        "grafana.dashboardCommentNotifications",
+			Description: "Enable in-app notifications for dashboard comment mentions and replies",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true, React: true},
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

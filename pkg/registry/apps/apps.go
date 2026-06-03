@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
+	"github.com/grafana/grafana/pkg/registry/apps/dashnotifications"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/live"
@@ -42,6 +43,7 @@ func ProvideAppInstallers(
 	rulesAppInstaller *rules.AppInstaller,
 	correlationsAppInstaller *correlations.AppInstaller,
 	alertingNotificationAppInstaller *notifications.AppInstaller,
+	dashNotificationsAppInstaller *dashnotifications.AppInstaller,
 	logsdrilldownAppInstaller *logsdrilldown.LogsDrilldownAppInstaller,
 	annotationAppInstaller *annotation.AppInstaller,
 	exampleAppInstaller *example.AppInstaller,
@@ -69,6 +71,9 @@ func ProvideAppInstallers(
 	}
 	if alertingNotificationAppInstaller != nil {
 		installers = append(installers, alertingNotificationAppInstaller)
+	}
+	if dashNotificationsAppInstaller != nil {
+		installers = append(installers, dashNotificationsAppInstaller)
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesLogsDrilldown) {

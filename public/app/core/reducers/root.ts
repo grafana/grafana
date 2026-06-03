@@ -12,6 +12,7 @@ import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
 import authConfigReducers from 'app/features/auth-config/state/reducers';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { notificationsApi } from 'app/features/notifications/api/notificationsApi';
 import browseDashboardsReducers from 'app/features/browse-dashboards/state/slice';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import panelEditorReducers from 'app/features/dashboard/components/PanelEditor/state/reducers';
@@ -59,6 +60,7 @@ const rootReducers = {
   [alertingApi.reducerPath]: alertingApi.reducer,
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
+  [notificationsApi.reducerPath]: notificationsApi.reducer,
   [scopeAPIv0alpha1.reducerPath]: scopeAPIv0alpha1.reducer,
   ...allApiClientReducers,
 };

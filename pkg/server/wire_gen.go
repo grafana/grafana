@@ -91,6 +91,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	correlations2 "github.com/grafana/grafana/pkg/registry/apps/correlations"
+	"github.com/grafana/grafana/pkg/registry/apps/dashnotifications"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	live2 "github.com/grafana/grafana/pkg/registry/apps/live"
@@ -134,6 +135,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboardcomments"
+	notificationsclient "github.com/grafana/grafana/apps/notifications/pkg/client"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	service10 "github.com/grafana/grafana/pkg/services/dashboardimport/service"
 	dashboards2 "github.com/grafana/grafana/pkg/services/dashboards"
@@ -788,7 +790,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	idimplService := idimpl.ProvideService(cfg, localSigner, remoteCache, authnService, registerer, tracer)
 	verifier := userimpl.ProvideVerifier(cfg, userimplService, tempuserService, notificationService, idimplService)
-	dashboardcommentsService := dashboardcomments.ProvideService(sqlStore)
+	dashNotifier, err := notificationsclient.NewAppSDKNotifierFromGenerator(clientGenerator)
+	if err != nil {
+		return nil, err
+	}
+	dashboardcommentsService := dashboardcomments.ProvideService(sqlStore, userimplService, dashNotifier)
 	httpServer, err := api.ProvideHTTPServer(apiOpts, cfg, routeRegisterImpl, inProcBus, renderingService, ossLicensingService, hooksService, cacheService, sqlStore, ossDataSourceRequestValidator, pluginstoreService, service14, pluginstoreService, middlewareHandler, pluginerrsStore, pluginInstaller, ossImpl, cacheServiceImpl, userAuthTokenService, cleanUpService, shortURLService, queryHistoryService, correlationsService, remoteCache, provisioningServiceImpl, accessControl, dataSourceProxyService, searchService, grafanaLive, gateway, plugincontextProvider, contexthandlerContextHandler, logger, featureToggles, alertNG, libraryPanelService, libraryElementService, quotaService, socialService, tracingService, serviceService, grafanaService, pluginsService, ossService, service13, queryServiceImpl, filestoreService, serviceAccountsProxy, pluginassetsService, authinfoimplService, notificationService, dashboardService, dashboardProvisioningService, folderimplService, ossProvider, serviceImpl, service12, avatarCacheServer, prefService, k8sHandler, folderPermissionsService, dashboardPermissionsService, dashverService, starService, csrfCSRF, managedpluginsNoop, apikeyService, kvStore, secretsMigrator, secretsService, secretMigrationProviderImpl, secretsKVStore, v6, userimplService, tempuserService, loginattemptimplService, orgService, deletionService, teamimplService, acimplService, navtreeService, repositoryImpl, tagimplService, oauthtokenService, statsService, authnService, pluginscdnService, gatherer, apiAPI, registerer, anonDeviceService, eventualRestConfigProvider, clientGenerator, verifier, preinstallImpl, v4, dashboardcommentsService)
 	if err != nil {
 		return nil, err
@@ -846,6 +852,10 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
+	dashnotificationsAppInstaller, err := dashnotifications.RegisterAppInstaller(cfg, featureToggles, grafanaLive)
+	if err != nil {
+		return nil, err
+	}
 	logsDrilldownAppInstaller, err := logsdrilldown.RegisterAppInstaller(cfg, featureToggles)
 	if err != nil {
 		return nil, err
@@ -875,7 +885,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	v9 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
+	v9 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, dashnotificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
@@ -1508,7 +1518,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	idimplService := idimpl.ProvideService(cfg, localSigner, remoteCache, authnService, registerer, tracer)
 	verifier := userimpl.ProvideVerifier(cfg, userimplService, tempuserService, notificationServiceMock, idimplService)
-	dashboardcommentsService := dashboardcomments.ProvideService(sqlStore)
+	dashNotifierTest, err := notificationsclient.NewAppSDKNotifierFromGenerator(clientGenerator)
+	if err != nil {
+		return nil, err
+	}
+	dashboardcommentsService := dashboardcomments.ProvideService(sqlStore, userimplService, dashNotifierTest)
 	httpServer, err := api.ProvideHTTPServer(apiOpts, cfg, routeRegisterImpl, inProcBus, renderingService, ossLicensingService, hooksService, cacheService, sqlStore, ossDataSourceRequestValidator, pluginstoreService, service14, pluginstoreService, middlewareHandler, pluginerrsStore, pluginInstaller, ossImpl, cacheServiceImpl, userAuthTokenService, cleanUpService, shortURLService, queryHistoryService, correlationsService, remoteCache, provisioningServiceImpl, accessControl, dataSourceProxyService, searchService, grafanaLive, gateway, plugincontextProvider, contexthandlerContextHandler, logger, featureToggles, alertNG, libraryPanelService, libraryElementService, quotaService, socialService, tracingService, serviceService, grafanaService, pluginsService, ossService, service13, queryServiceImpl, filestoreService, serviceAccountsProxy, pluginassetsService, authinfoimplService, notificationServiceMock, dashboardService, dashboardProvisioningService, folderimplService, ossProvider, serviceImpl, service12, avatarCacheServer, prefService, k8sHandler, folderPermissionsService, dashboardPermissionsService, dashverService, starService, csrfCSRF, managedpluginsNoop, apikeyService, kvStore, secretsMigrator, secretsService, secretMigrationProviderImpl, secretsKVStore, v6, userimplService, tempuserService, loginattemptimplService, orgService, deletionService, teamimplService, acimplService, navtreeService, repositoryImpl, tagimplService, oauthtokentestService, statsService, authnService, pluginscdnService, gatherer, apiAPI, registerer, anonDeviceService, eventualRestConfigProvider, clientGenerator, verifier, preinstallImpl, v4, dashboardcommentsService)
 	if err != nil {
 		return nil, err
@@ -1566,6 +1580,10 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	dashnotificationsAppInstaller, err := dashnotifications.RegisterAppInstaller(cfg, featureToggles, grafanaLive)
+	if err != nil {
+		return nil, err
+	}
 	logsDrilldownAppInstaller, err := logsdrilldown.RegisterAppInstaller(cfg, featureToggles)
 	if err != nil {
 		return nil, err
@@ -1595,7 +1613,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	v9 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
+	v9 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, dashnotificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()

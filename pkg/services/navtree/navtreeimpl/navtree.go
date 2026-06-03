@@ -294,9 +294,13 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 		},
 	}
 
-	children = append(children, &navtree.NavLink{
+	notifNode := &navtree.NavLink{
 		Text: "Notification history", Id: "profile/notifications", Url: s.cfg.AppSubURL + "/profile/notifications", Icon: "bell",
-	})
+	}
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagGrafanaDashboardCommentNotifications) {
+		notifNode.SubTitle = "Mentions and replies"
+	}
+	children = append(children, notifNode)
 
 	if s.cfg.AddChangePasswordLink() {
 		children = append(children, &navtree.NavLink{

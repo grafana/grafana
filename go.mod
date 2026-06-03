@@ -256,6 +256,7 @@ require (
 	github.com/grafana/grafana/apps/iam v0.0.0 // @grafana/access-squad
 	github.com/grafana/grafana/apps/live v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/logsdrilldown v0.0.0 // @grafana/observability-logs
+	github.com/grafana/grafana/apps/notifications v0.0.0 // @grafana/dashboards-squad
 	github.com/grafana/grafana/apps/playlist v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/plugins v0.0.0 // @grafana/grafana-catalog
 	github.com/grafana/grafana/apps/preferences v0.0.0 // @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
@@ -292,6 +293,7 @@ replace (
 	github.com/grafana/grafana/apps/iam => ./apps/iam
 	github.com/grafana/grafana/apps/live => ./apps/live
 	github.com/grafana/grafana/apps/logsdrilldown => ./apps/logsdrilldown
+	github.com/grafana/grafana/apps/notifications => ./apps/notifications
 	github.com/grafana/grafana/apps/playlist => ./apps/playlist
 	github.com/grafana/grafana/apps/plugins => ./apps/plugins
 	github.com/grafana/grafana/apps/preferences => ./apps/preferences

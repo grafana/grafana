@@ -816,24 +816,24 @@ func (DashboardFieldColor) OpenAPIModelName() string {
 type DashboardFieldColorModeId string
 
 const (
-	DashboardFieldColorModeIdThresholds           DashboardFieldColorModeId = "thresholds"
-	DashboardFieldColorModeIdPaletteClassic       DashboardFieldColorModeId = "palette-classic"
-	DashboardFieldColorModeIdPaletteClassicByName DashboardFieldColorModeId = "palette-classic-by-name"
-	DashboardFieldColorModeIdContinuousViridis    DashboardFieldColorModeId = "continuous-viridis"
-	DashboardFieldColorModeIdContinuousMagma      DashboardFieldColorModeId = "continuous-magma"
-	DashboardFieldColorModeIdContinuousPlasma     DashboardFieldColorModeId = "continuous-plasma"
-	DashboardFieldColorModeIdContinuousInferno    DashboardFieldColorModeId = "continuous-inferno"
-	DashboardFieldColorModeIdContinuousCividis    DashboardFieldColorModeId = "continuous-cividis"
-	DashboardFieldColorModeIdContinuousGrYlRd     DashboardFieldColorModeId = "continuous-GrYlRd"
-	DashboardFieldColorModeIdContinuousRdYlGr     DashboardFieldColorModeId = "continuous-RdYlGr"
-	DashboardFieldColorModeIdContinuousBlYlRd     DashboardFieldColorModeId = "continuous-BlYlRd"
-	DashboardFieldColorModeIdContinuousYlRd       DashboardFieldColorModeId = "continuous-YlRd"
-	DashboardFieldColorModeIdContinuousBlPu       DashboardFieldColorModeId = "continuous-BlPu"
-	DashboardFieldColorModeIdContinuousYlBl       DashboardFieldColorModeId = "continuous-YlBl"
-	DashboardFieldColorModeIdContinuousBlues      DashboardFieldColorModeId = "continuous-blues"
-	DashboardFieldColorModeIdContinuousReds       DashboardFieldColorModeId = "continuous-reds"
-	DashboardFieldColorModeIdContinuousGreens     DashboardFieldColorModeId = "continuous-greens"
-	DashboardFieldColorModeIdContinuousPurples    DashboardFieldColorModeId = "continuous-purples"
+	DashboardFieldColorModeIdThresholds               DashboardFieldColorModeId = "thresholds"
+	DashboardFieldColorModeIdPaletteClassic           DashboardFieldColorModeId = "palette-classic"
+	DashboardFieldColorModeIdPaletteClassicByName     DashboardFieldColorModeId = "palette-classic-by-name"
+	DashboardFieldColorModeIdContinuousViridis        DashboardFieldColorModeId = "continuous-viridis"
+	DashboardFieldColorModeIdContinuousMagma          DashboardFieldColorModeId = "continuous-magma"
+	DashboardFieldColorModeIdContinuousPlasma         DashboardFieldColorModeId = "continuous-plasma"
+	DashboardFieldColorModeIdContinuousInferno        DashboardFieldColorModeId = "continuous-inferno"
+	DashboardFieldColorModeIdContinuousCividis        DashboardFieldColorModeId = "continuous-cividis"
+	DashboardFieldColorModeIdContinuousGrYlRd         DashboardFieldColorModeId = "continuous-GrYlRd"
+	DashboardFieldColorModeIdContinuousRdYlGr         DashboardFieldColorModeId = "continuous-RdYlGr"
+	DashboardFieldColorModeIdContinuousBlYlRd         DashboardFieldColorModeId = "continuous-BlYlRd"
+	DashboardFieldColorModeIdContinuousYlRd           DashboardFieldColorModeId = "continuous-YlRd"
+	DashboardFieldColorModeIdContinuousBlPu           DashboardFieldColorModeId = "continuous-BlPu"
+	DashboardFieldColorModeIdContinuousYlBl           DashboardFieldColorModeId = "continuous-YlBl"
+	DashboardFieldColorModeIdContinuousBlues          DashboardFieldColorModeId = "continuous-blues"
+	DashboardFieldColorModeIdContinuousReds           DashboardFieldColorModeId = "continuous-reds"
+	DashboardFieldColorModeIdContinuousGreens         DashboardFieldColorModeId = "continuous-greens"
+	DashboardFieldColorModeIdContinuousPurples        DashboardFieldColorModeId = "continuous-purples"
 	DashboardFieldColorModeIdFixed                    DashboardFieldColorModeId = "fixed"
 	DashboardFieldColorModeIdShades                   DashboardFieldColorModeId = "shades"
 	DashboardFieldColorModeIdPaletteAiZeitgeistV2     DashboardFieldColorModeId = "palette-ai-zeitgeist-v2"
@@ -1140,6 +1140,9 @@ type DashboardGridLayoutItemSpec struct {
 	// reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
 	Element DashboardElementReference `json:"element"`
 	Repeat  *DashboardRepeatOptions   `json:"repeat,omitempty"`
+	// When true, the panel's color mode has been explicitly set by the user and
+	// will not be overwritten by a parent tab/row color palette.
+	ColorPaletteOverride *bool `json:"colorPaletteOverride,omitempty"`
 }
 
 // NewDashboardGridLayoutItemSpec creates a new DashboardGridLayoutItemSpec object.
@@ -1261,6 +1264,8 @@ type DashboardRowsLayoutRowSpec struct {
 	Repeat               *DashboardRowRepeatOptions                                                  `json:"repeat,omitempty"`
 	Layout               DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`
 	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
+	// ID of a color palette applied to all panels in this row that do not have colorPaletteOverride set.
+	ColorPalette *string `json:"colorPalette,omitempty"`
 }
 
 // NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
@@ -1505,6 +1510,9 @@ type DashboardAutoGridLayoutItemSpec struct {
 	Element              DashboardElementReference               `json:"element"`
 	Repeat               *DashboardAutoGridRepeatOptions         `json:"repeat,omitempty"`
 	ConditionalRendering *DashboardConditionalRenderingGroupKind `json:"conditionalRendering,omitempty"`
+	// When true, the panel's color mode has been explicitly set by the user and
+	// will not be overwritten by a parent tab/row color palette.
+	ColorPaletteOverride *bool `json:"colorPaletteOverride,omitempty"`
 }
 
 // NewDashboardAutoGridLayoutItemSpec creates a new DashboardAutoGridLayoutItemSpec object.
@@ -1599,6 +1607,8 @@ type DashboardTabsLayoutTabSpec struct {
 	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
 	Repeat               *DashboardTabRepeatOptions                                                  `json:"repeat,omitempty"`
 	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
+	// ID of a color palette applied to all panels in this tab that do not have colorPaletteOverride set.
+	ColorPalette *string `json:"colorPalette,omitempty"`
 }
 
 // NewDashboardTabsLayoutTabSpec creates a new DashboardTabsLayoutTabSpec object.

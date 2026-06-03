@@ -41,6 +41,8 @@ export const FlagKeys = {
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
+  /** Enable in-app notifications for dashboard comment mentions and replies */
+  GrafanaDashboardCommentNotifications: "grafana.dashboardCommentNotifications",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
@@ -245,6 +247,17 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
  */
 export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("globalDashboardVariables", false, options).value;
+};
+
+/**
+ * Enable in-app notifications for dashboard comment mentions and replies
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardCommentNotifications`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardCommentNotifications = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardCommentNotifications", false, options).value;
 };
 
 /**

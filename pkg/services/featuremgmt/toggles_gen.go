@@ -985,4 +985,8 @@ const (
 	// FlagFrontendServiceReducedBootDataAPI
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
+
+	// FlagGrafanaDashboardCommentNotifications
+	// Enable in-app notifications for dashboard comment mentions and replies
+	FlagGrafanaDashboardCommentNotifications = "grafana.dashboardCommentNotifications"
 )

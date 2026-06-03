@@ -649,7 +649,7 @@ RowsLayoutRowSpec: {
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               RowRepeatOptions
 	layout:                GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
-	variables?:            [...VariableKind]
+	variables?: [...VariableKind]
 	// ID of a color palette applied to all panels in this row that do not have colorPaletteOverride set.
 	colorPalette?: string
 }
@@ -702,7 +702,7 @@ TabsLayoutTabSpec: {
 	layout:                GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               TabRepeatOptions
-	variables?:            [...VariableKind]
+	variables?: [...VariableKind]
 	// ID of a color palette applied to all panels in this tab that do not have colorPaletteOverride set.
 	colorPalette?: string
 }

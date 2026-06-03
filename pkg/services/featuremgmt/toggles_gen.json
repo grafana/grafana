@@ -1598,6 +1598,20 @@
     },
     {
       "metadata": {
+        "name": "dashboardCommentNotifications",
+        "resourceVersion": "1780482639972",
+        "creationTimestamp": "2026-06-03T10:30:39Z",
+        "deletionTimestamp": "2026-06-03T11:17:01Z"
+      },
+      "spec": {
+        "description": "Enable in-app notifications for dashboard comment mentions and replies",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardComments",
         "resourceVersion": "1780482033936",
         "creationTimestamp": "2022-02-22T07:47:42Z",
@@ -2795,6 +2809,19 @@
         "description": "Route any calls to legacy correlations endpoints to call through to app platform",
         "stage": "experimental",
         "codeowner": "@grafana/datapro",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.dashboardCommentNotifications",
+        "resourceVersion": "1780485421373",
+        "creationTimestamp": "2026-06-03T11:17:01Z"
+      },
+      "spec": {
+        "description": "Enable in-app notifications for dashboard comment mentions and replies",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
         "expression": "false"
       }
     },
