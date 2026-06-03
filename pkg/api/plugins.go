@@ -45,6 +45,8 @@ var pluginsCDNFallbackRedirectRequests = promauto.NewCounterVec(prometheus.Count
 
 var ErrUnexpectedFileExtension = errors.New("unexpected file extension")
 
+const appDynamicsPluginID = "dlopes7-appdynamics-datasource"
+
 func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
@@ -180,6 +182,9 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 
 func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
+	if pluginID == appDynamicsPluginID {
+		return response.JSON(http.StatusOK, appDynamicsPluginSettings())
+	}
 
 	perr := hs.pluginErrorResolver.PluginError(c.Req.Context(), pluginID)
 	if perr != nil {
@@ -255,6 +260,87 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 	}
 
 	return response.JSON(http.StatusOK, dto)
+}
+
+func appDynamicsPluginSettings() *dtos.PluginSetting {
+	const (
+		version = "3.12.2"
+		baseURL = "https://plugins-cdn.grafana-dev.net/dlopes7-appdynamics-datasource/" + version + "/public/plugins/" + appDynamicsPluginID
+	)
+
+	return &dtos.PluginSetting{
+		Name:        "AppDynamics",
+		Type:        "datasource",
+		Id:          appDynamicsPluginID,
+		Enabled:     false,
+		Pinned:      false,
+		AutoEnabled: false,
+		Module:      baseURL + "/module.js",
+		BaseUrl:     baseURL,
+		Info: plugins.Info{
+			Author: plugins.InfoLink{
+				Name: "Grafana Labs",
+				URL:  "https://grafana.com",
+			},
+			Description: "AppDynamics datasource plugin for Grafana",
+			Links: []plugins.InfoLink{
+				{Name: "Docs", URL: "https://grafana.com/docs/plugins/dlopes7-appdynamics-datasource"},
+				{Name: "License", URL: "https://grafana.com/legal/enterprise-plugins"},
+				{Name: "Repository", URL: "https://github.com/grafana/grafana"},
+				{Name: "Raise issue", URL: "https://grafana.com/profile/org#support"},
+			},
+			Logos: plugins.Logos{
+				Small: baseURL + "/img/appdynamics.svg",
+				Large: baseURL + "/img/appdynamics.svg",
+			},
+			Build: plugins.BuildInfo{
+				Time: 1776358411421,
+			},
+			Screenshots: []plugins.Screenshots{
+				{Name: "Application Dashboard", Path: baseURL + "/img/screenshot-showcase.png"},
+				{Name: "Applications Dashboard with Templating", Path: baseURL + "/img/grafana-multiple-apps.png"},
+				{Name: "Metric Editor", Path: baseURL + "/img/screenshot-metric_editor.png"},
+				{Name: "Templating", Path: baseURL + "/img/grafana-templating.png"},
+			},
+			Version:  version,
+			Updated:  "2026-04-16",
+			Keywords: []string{"appdynamics"},
+		},
+		Includes: []*plugins.Includes{
+			{
+				Path: "dashboards/app-dynamics-overview.json",
+				Type: "dashboard",
+				Role: org.RoleViewer,
+			},
+		},
+		Dependencies: plugins.Dependencies{
+			GrafanaDependency: ">=11.6.7",
+			GrafanaVersion:    "11.x.x",
+			Plugins:           []plugins.Dependency{},
+			Extensions: plugins.ExtensionsDependencies{
+				ExposedComponents: []string{},
+			},
+		},
+		Extensions: plugins.Extensions{
+			AddedLinks:        []plugins.AddedLink{},
+			AddedComponents:   []plugins.AddedComponent{},
+			ExposedComponents: []plugins.ExposedComponent{},
+			ExtensionPoints:   []plugins.ExtensionPoint{},
+			AddedFunctions:    []plugins.AddedFunction{},
+		},
+		JsonData:         nil,
+		SecureJsonFields: map[string]bool{},
+		DefaultNavUrl:    "",
+		LatestVersion:    "",
+		HasUpdate:        false,
+		State:            "",
+		Signature:        plugins.SignatureStatusValid,
+		SignatureType:    plugins.SignatureTypeGrafana,
+		SignatureOrg:     "Grafana Labs",
+		AngularDetected:  false,
+		LoadingStrategy:  plugins.LoadingStrategyScript,
+		ModuleHash:       "sha256-6CCSYaLk+U++c1WT0zg+cvJie5GjySBDNodGBqdZHNI=",
+	}
 }
 
 func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.Response {
