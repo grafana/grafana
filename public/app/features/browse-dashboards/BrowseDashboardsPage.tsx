@@ -15,6 +15,7 @@ import { useDispatch } from 'app/types/store';
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
 import { ManagerKind } from '../apiserver/types';
 import { TemplateDashboardModal } from '../dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
+import { DashboardPreviewCards } from '../home/DashboardPreviewCards/DashboardPreviewCards';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
 import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
@@ -188,6 +189,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
         <QuotaLimitBanner />
         {/* only show recently viewed dashboards when in root and flag is enabled */}
         {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
+        {!folderUID && <DashboardPreviewCards />}
         <div>
           <FilterInput
             placeholder={getSearchPlaceholder(searchState.includePanels)}
