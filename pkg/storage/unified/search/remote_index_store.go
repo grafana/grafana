@@ -22,6 +22,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
 const (
@@ -122,20 +123,33 @@ type RemoteIndexStore interface {
 	// in-flight upload for any resource in the namespace.
 	LockNamespaceForCleanup(ctx context.Context, namespace string) (IndexStoreLock, error)
 
-	// WriteSnapshotFile writes one file at relPath under the snapshot
-	// identified by (nsResource, indexKey).
-	//
-	// Backends treat relPath as opaque: they do not know which file is the
-	// snapshot manifest, and never introspect IndexMeta or JSON. The
-	// snapshot manifest is the completion signal: a snapshot is considered
-	// complete once a file at snapshotManifestFile exists at the prefix.
-	WriteSnapshotFile(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, relPath string, in io.Reader) error
+	// WriteSnapshotFile writes one data file at relPath under the snapshot
+	// identified by (nsResource, indexKey). Backends that need the file size
+	// (e.g. to plan chunked writes) can obtain it via src.Stat(). The
+	// manifest is not written through this method — use
+	// WriteSnapshotManifest, whose presence is the completion signal.
+	WriteSnapshotFile(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, relPath string, src *os.File) error
 
-	// ReadSnapshotFile streams the contents of one file in the snapshot at
-	// (nsResource, indexKey) into out, including the manifest at the
-	// well-known path. Returns ErrSnapshotNotFound if the snapshot or file
-	// does not exist.
-	ReadSnapshotFile(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, relPath string, out io.Writer) error
+	// ReadSnapshotFile streams the contents of one data file in the snapshot
+	// at (nsResource, indexKey) into dst. expectedSize is the size declared
+	// in the manifest; backends must fail if the stored object exceeds it,
+	// so a misadvertised or grown-out-of-band object cannot transfer
+	// unbounded data to disk. Returns ErrSnapshotNotFound if the snapshot
+	// or file does not exist.
+	ReadSnapshotFile(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, relPath string, dst *os.File, expectedSize int64) error
+
+	// WriteSnapshotManifest writes the snapshot manifest for
+	// (nsResource, indexKey). It is written last during upload and serves as
+	// the completion signal: a snapshot is considered complete once its
+	// manifest exists. The well-known filename used for storage is a backend
+	// detail and callers never name it.
+	WriteSnapshotManifest(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, manifest []byte) error
+
+	// ReadSnapshotManifest returns the raw manifest bytes for
+	// (nsResource, indexKey). Returns ErrSnapshotNotFound if the manifest
+	// does not exist, or an error wrapping ErrInvalidManifest if the stored
+	// manifest exceeds the backend's enforced size cap.
+	ReadSnapshotManifest(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) ([]byte, error)
 
 	// ListNamespaces returns the namespaces currently known to the store.
 	ListNamespaces(ctx context.Context) ([]string, error)
@@ -250,6 +264,12 @@ func isRetryableSnapshotStoreError(ctx context.Context, err error) bool {
 		return false
 	}
 
+	// kv.ErrRetryable marks transient errors from KV backends (e.g. gRPC
+	// status codes, retryable filesystem errors) wrapped by KVRemoteIndexStore.
+	if errors.Is(err, kv.ErrRetryable) {
+		return true
+	}
+
 	switch gcerrors.Code(err) {
 	case gcerrors.Internal, gcerrors.ResourceExhausted, gcerrors.DeadlineExceeded:
 		return true
@@ -331,28 +351,65 @@ func (s *BucketRemoteIndexStore) lockConfig(key string, opts LockOptions) object
 	}
 }
 
-// WriteSnapshotFile streams in into the object at relPath under the
-// snapshot (nsResource, indexKey) prefix.
-func (s *BucketRemoteIndexStore) WriteSnapshotFile(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, relPath string, in io.Reader) error {
+// WriteSnapshotFile streams src into the object at relPath under the
+// snapshot (nsResource, indexKey) prefix. The bucket backend streams to
+// EOF and ignores size.
+func (s *BucketRemoteIndexStore) WriteSnapshotFile(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, relPath string, src *os.File) error {
 	objectKey := indexPrefix(nsResource, indexKey.String()) + relPath
-	return s.bucket.Upload(ctx, objectKey, in, &blob.WriterOptions{
+	return s.bucket.Upload(ctx, objectKey, src, &blob.WriterOptions{
 		ContentType: "application/octet-stream",
 	})
 }
 
 // ReadSnapshotFile streams the contents of the object at relPath under the
-// snapshot (nsResource, indexKey) prefix into out. Translates bucket
-// not-found errors into ErrSnapshotNotFound so callers can branch on a
-// stable sentinel without depending on gocloud's gcerrors codes.
-func (s *BucketRemoteIndexStore) ReadSnapshotFile(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, relPath string, out io.Writer) error {
+// snapshot (nsResource, indexKey) prefix into dst, capping the transfer at
+// expectedSize+1 bytes so a misadvertised size or an object that's grown
+// out of band fails fast. Translates bucket not-found errors into
+// ErrSnapshotNotFound so callers can branch on a stable sentinel without
+// depending on gocloud's gcerrors codes.
+func (s *BucketRemoteIndexStore) ReadSnapshotFile(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
 	objectKey := indexPrefix(nsResource, indexKey.String()) + relPath
-	if err := s.bucket.Download(ctx, objectKey, out, nil); err != nil {
+	lw := &resource.LimitedWriter{W: dst, N: expectedSize + 1}
+	if err := s.bucket.Download(ctx, objectKey, lw, nil); err != nil {
+		if errors.Is(err, resource.ErrWriteLimitExceeded) {
+			return fmt.Errorf("remote object exceeds expected size %d: %w", expectedSize, err)
+		}
 		if gcerrors.Code(err) == gcerrors.NotFound {
 			return ErrSnapshotNotFound
 		}
 		return err
 	}
 	return nil
+}
+
+// WriteSnapshotManifest writes the snapshot manifest for (nsResource,
+// indexKey). The manifest is small and fits in memory; the backend writes
+// it as a single object at the well-known path.
+func (s *BucketRemoteIndexStore) WriteSnapshotManifest(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, manifest []byte) error {
+	objectKey := indexPrefix(nsResource, indexKey.String()) + snapshotManifestFile
+	return s.bucket.Upload(ctx, objectKey, bytes.NewReader(manifest), &blob.WriterOptions{
+		ContentType: "application/json",
+	})
+}
+
+// ReadSnapshotManifest reads the snapshot manifest for (nsResource,
+// indexKey) from the well-known path and returns its raw bytes. Enforces
+// maxSnapshotManifestSize so a corrupt or oversized object cannot transfer
+// unbounded data. Translates bucket not-found into ErrSnapshotNotFound.
+func (s *BucketRemoteIndexStore) ReadSnapshotManifest(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) ([]byte, error) {
+	objectKey := indexPrefix(nsResource, indexKey.String()) + snapshotManifestFile
+	var buf bytes.Buffer
+	lw := &resource.LimitedWriter{W: &buf, N: maxSnapshotManifestSize}
+	if err := s.bucket.Download(ctx, objectKey, lw, nil); err != nil {
+		if gcerrors.Code(err) == gcerrors.NotFound {
+			return nil, ErrSnapshotNotFound
+		}
+		if errors.Is(err, resource.ErrWriteLimitExceeded) {
+			return nil, fmt.Errorf("%w: oversized snapshot manifest: %v", ErrInvalidManifest, err)
+		}
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 // listSubdirs runs a delimited bucket list at prefix and returns the parsed
@@ -540,7 +597,7 @@ func UploadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResource
 		return ulid.ULID{}, fmt.Errorf("marshaling snapshot manifest: %w", err)
 	}
 	if err := retryRemoteIndexStore(ctx, snapshotStoreOpUploadManifest, logger, func() error {
-		return store.WriteSnapshotFile(ctx, nsResource, indexKey, snapshotManifestFile, bytes.NewReader(metaBytes))
+		return store.WriteSnapshotManifest(ctx, nsResource, indexKey, metaBytes)
 	}); err != nil {
 		return ulid.ULID{}, fmt.Errorf("uploading snapshot manifest: %w", err)
 	}
@@ -630,21 +687,18 @@ func DownloadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResour
 }
 
 // downloadSnapshotFileToDisk creates relPath under root and streams the remote
-// object into it, capping the transfer at expectedSize+1 bytes so a
-// misadvertised size or a bucket object that's grown out of band fails fast
-// before we transfer unbounded data.
+// object into it. The size cap is the backend's responsibility (it gets
+// expectedSize and must refuse to transfer more than that). The post-write
+// Stat check in DownloadIndexSnapshot still verifies the final on-disk size
+// as belt-and-braces.
 func downloadSnapshotFileToDisk(ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, root *os.Root, expectedSize int64) error {
 	return retryRemoteIndexStore(ctx, snapshotStoreOpDownloadFile, nil, func() error {
 		f, err := root.Create(filepath.FromSlash(relPath))
 		if err != nil {
 			return err
 		}
-		lw := &resource.LimitedWriter{W: f, N: expectedSize + 1}
-		if err := store.ReadSnapshotFile(ctx, ns, indexKey, relPath, lw); err != nil {
+		if err := store.ReadSnapshotFile(ctx, ns, indexKey, relPath, f, expectedSize); err != nil {
 			_ = f.Close()
-			if errors.Is(err, resource.ErrWriteLimitExceeded) {
-				return fmt.Errorf("remote object exceeds expected size %d: %w", expectedSize, err)
-			}
 			return err
 		}
 		return f.Close()
@@ -656,23 +710,14 @@ func downloadSnapshotFileToDisk(ctx context.Context, store RemoteIndexStore, ns 
 // wrapping ErrInvalidManifest if the manifest is structurally invalid
 // (oversized, unparseable, empty file list, or non-canonical paths).
 func ReadIndexSnapshotManifest(ctx context.Context, store RemoteIndexStore, nsResource resource.NamespacedResource, indexKey ulid.ULID) (*IndexMeta, error) {
-	var manifest []byte
-	if err := retryRemoteIndexStore(ctx, snapshotStoreOpReadManifest, nil, func() error {
-		var buf bytes.Buffer
-		lw := &resource.LimitedWriter{W: &buf, N: maxSnapshotManifestSize}
-		if err := store.ReadSnapshotFile(ctx, nsResource, indexKey, snapshotManifestFile, lw); err != nil {
-			if errors.Is(err, ErrSnapshotNotFound) {
-				return err
-			}
-			if errors.Is(err, resource.ErrWriteLimitExceeded) {
-				return fmt.Errorf("%w: oversized snapshot manifest: %v", ErrInvalidManifest, err)
-			}
-			return fmt.Errorf("reading snapshot manifest: %w", err)
+	manifest, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpReadManifest, nil, func() ([]byte, error) {
+		return store.ReadSnapshotManifest(ctx, nsResource, indexKey)
+	})
+	if err != nil {
+		if errors.Is(err, ErrSnapshotNotFound) || errors.Is(err, ErrInvalidManifest) {
+			return nil, err
 		}
-		manifest = append(manifest[:0], buf.Bytes()...)
-		return nil
-	}); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("reading snapshot manifest: %w", err)
 	}
 	var meta IndexMeta
 	if err := json.Unmarshal(manifest, &meta); err != nil {

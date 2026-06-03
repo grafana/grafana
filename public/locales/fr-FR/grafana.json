@@ -3312,6 +3312,10 @@
         "tooltip-description": "Rechercher des mises en sourdine par correspondance. Correspond exactement au nom de l’étiquette, à la valeur et à l’opérateur.",
         "tooltip-example": "Exemple : <1>env=~\"prod.*\"</1> recherche les mises en sourdine avec une correspondance <4>env=~\"prod.*\"</4>."
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "Seules les instances d'alerte en état de déclenchement sont affichées.",
       "operator": {
         "equals": "Égal à",
@@ -5501,9 +5505,6 @@
       "aria-label-dashboard-name": "Tableau de bord {{dashboardName}}",
       "label-no-dashboards-found": "Aucun tableau de bord trouvé"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Annuler le chargement du tableau de bord"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5792,8 +5793,7 @@
         }
       },
       "operator": {
-        "aria-label": "Opérateur",
-        "placeholder": "Sélectionner un opérateur"
+        "aria-label": "Opérateur"
       },
       "restore": "Restaurer la valeur par défaut",
       "search": {
@@ -6028,13 +6028,6 @@
       },
       "ungroup-nested-text": "Cette action dissociera tous les groupes imbriqués.",
       "ungroup-nested-title": "Dissocier les groupes imbriqués ?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Tableau de bord introuvable"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Tableau de bord non modifiable",
@@ -6627,8 +6620,8 @@
     "version-history-comparison": {
       "button-restore": "Restaurer la version {{version}}",
       "label-view-json-diff": "Afficher les différences du JSON",
-      "new-updated-by": "<0>Version {{version}}</0> mise à jour par {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Version {{version}}</0> mise à jour par {{editor}} {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Basculer la sélection de la version {{version}}",
@@ -7870,8 +7863,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "Afficher les différences du JSON",
-      "new-version-updated": "<0>Version {{version}}</0> mise à jour par {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Version {{version}}</0> mise à jour par {{editor}} {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "Comparaison {{baseVersion}} <3></3> {{newVersion}}",
@@ -9062,7 +9055,6 @@
       "copy-button": "Copier dans le presse-papiers",
       "download-button": "Télécharger le fichier",
       "download-successful_toast_message": "Votre JSON a été téléchargé",
-      "export-externally-label": "Exporter le tableau de bord pour l'utiliser dans une autre instance",
       "export-format": "Format",
       "export-mode": "Modèle",
       "info-text": "Copier ou télécharger un fichier contenant la définition de votre tableau de bord",
@@ -9155,6 +9147,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "Dossier supprimé",
       "folder-move-error-provisioned": "Impossible de déplacer le dossier provisionné. Pour le déplacer, effectuez l’opération dans le référentiel puis synchronisez afin d’appliquer les modifications.",
@@ -10230,7 +10223,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Aide <1></1>",
-      "access-help-details": "Le mode d’accès contrôle la façon dont les requêtes à la source de données seront traitées. Le <1><i>Serveur</i></1> doit être la méthode privilégiée si rien d’autre n’est indiqué.",
+      "access-help-details": "",
       "access-help-title": "Aide d'accès",
       "access-label": "Accès",
       "allowed-cookies": "Cookies autorisés",
@@ -10916,6 +10909,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -11700,11 +11697,10 @@
       "published-by": "Publié par",
       "updated-on": "Mise à niveau le"
     },
-    "import-resource-format-error": {
-      "cancel": "Annuler",
-      "title": "Format non pris en charge",
-      "v1-message": "Ce tableau de bord est au format de ressource Kubernetes v1 et ne peut pas être importé lorsque la fonctionnalité des tableaux de bord Kubernetes est désactivée. Veuillez activer le basculement de la fonctionnalité kubernetesDashboards pour importer ce tableau de bord.",
-      "v2-message": "Ce tableau de bord est au format de ressource v2 et ne peut pas être importé lorsque la fonctionnalité des tableaux de bord Kubernetes est désactivée. Veuillez activer le basculement de la fonctionnalité kubernetesDashboards pour importer ce tableau de bord."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Voulez-vous vraiment supprimer « {{snapshotToRemove}} » ?",
@@ -13199,8 +13195,9 @@
       "label-branch": "Branche",
       "label-comment": "Commentaire",
       "label-filename": "Nom de fichier",
-      "label-folder": "Dossier",
       "label-path": "Chemin d’accès",
+      "label-repository-folder": "",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Sélectionner ou saisir le chemin du dossier",
       "suffix-configured-branch": "Branche synchronisée",
@@ -13527,7 +13524,7 @@
       "modal-title-set-up-public-access": "Configurer l’accès public",
       "modal-title-set-up-required-features": "Configurer les fonctionnalités requises",
       "step-description-copy-url": "À partir de la sortie ngrok, copiez l’URL de redirection https:// qui ressemble à ceci :",
-      "step-description-enable-feature-toggles": "Ajoutez l’option de fonctionnalité de provisionnement à votre fichier custom.ini. Remarque : kubernetesDashboards est activé par défaut, mais si vous l’avez explicitement désactivé, vous devrez l’activer dans les paramètres Grafana ou supprimer la surcharge de votre configuration.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Exécutez cette commande pour créer un tunnel sécurisé vers votre Grafana local :",
       "step-description-update-grafana-config": "Ajoutez ceci à votre fichier custom.ini, en remplaçant l’URL par votre URL ngrok réelle :",
       "step-title-copy-url": "Copier l’URL publique",
@@ -13601,6 +13598,21 @@
       "authentication-failed": "",
       "request-failed": "",
       "resource-not-found": ""
+    },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
     },
     "instance-sync-deprecation": {
       "message": "La synchronisation de l’instance n’est actuellement pas entièrement prise en charge et perturbe les panneaux de bibliothèque et les alertes. Pour utiliser les panneaux de bibliothèque et les alertes, déconnectez votre référentiel puis reconnectez-le en utilisant la synchronisation par dossier.",
@@ -13888,7 +13900,8 @@
     "sync-job": {
       "error-no-job-id": "Échec du démarrage de la tâche",
       "error-no-repository-name": "Nom du dépôt non fourni",
-      "error-starting-job": "Erreur lors du démarrage de la tâche"
+      "error-starting-job": "Erreur lors du démarrage de la tâche",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "Erreur lors de la fusion des ressources",
@@ -14719,7 +14732,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Exporter au format image",
-      "export-json-title": "Exporter en tant que JSON",
       "share-externally-title": "Partager en externe",
       "share-internally-title": "Partager en interne",
       "share-snapshot-title": "Partager l'instantané"
@@ -16610,7 +16622,7 @@
       "message": "Aucun utilisateur trouvé"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Votre jeton de session a été automatiquement révoqué, car vous avez atteint <2>le nombre maximum de {{numSessions}} sessions simultanées</2> pour votre compte.",
+      "auto-revoked": "",
       "resume-message": "<strong>Pour reprendre votre session, reconnectez-vous.</strong>Contactez votre administrateur ou consultez la page de licence pour vérifier votre quota si vous êtes fréquemment déconnecté automatiquement.",
       "sign-in": "Se connecter",
       "title-you-have-been-automatically-signed-out": "Vous avez été automatiquement déconnecté"

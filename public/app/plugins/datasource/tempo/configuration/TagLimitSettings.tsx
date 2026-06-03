@@ -15,7 +15,7 @@ export interface TagLimitOptions extends DataSourceJsonData {
 
 interface Props extends DataSourcePluginOptionsEditorProps<TagLimitOptions> {}
 
-export default function TagLimitSettings({ options, onOptionsChange }: Props) {
+function TagLimitSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
 
   return (

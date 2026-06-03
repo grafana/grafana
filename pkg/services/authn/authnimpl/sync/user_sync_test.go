@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/scimutil"
@@ -2252,6 +2253,83 @@ func TestUserSync_SyncUserHook_SCIMUserAllowsGCOMLogin(t *testing.T) {
 	}, nil)
 
 	require.NoError(t, err)
+}
+
+func TestUserSync_createUser_PassesOrgRoleAsDefaultOrgRole(t *testing.T) {
+	tests := []struct {
+		name           string
+		id             *authn.Identity
+		wantOrgRole    string
+		wantSkipOrgSet bool
+	}{
+		{
+			name: "identity role for active org propagates to DefaultOrgRole",
+			id: &authn.Identity{
+				Login:    "identityeditor",
+				Email:    "identityeditor@example.com",
+				Name:     "Identity Editor",
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
+			},
+			wantOrgRole:    "Editor",
+			wantSkipOrgSet: true,
+		},
+		{
+			name: "no OrgRoles leaves DefaultOrgRole empty so k8s falls back to AutoAssignOrgRole",
+			id: &authn.Identity{
+				Login: "newbie",
+				Email: "newbie@example.com",
+				Name:  "Newbie",
+				OrgID: 1,
+			},
+			wantOrgRole:    "",
+			wantSkipOrgSet: false,
+		},
+		{
+			name: "OrgRoles present but no match for active org propagates RoleNone",
+			id: &authn.Identity{
+				Login:    "mismatched",
+				Email:    "mismatched@example.com",
+				Name:     "Mismatched",
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{2: org.RoleEditor},
+			},
+			wantOrgRole:    "None",
+			wantSkipOrgSet: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var captured *user.CreateUserCommand
+			fakeUserSvc := &usertest.FakeUserService{
+				CreateFn: func(_ context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+					captured = cmd
+					return &user.User{ID: 99, UID: "99", Login: cmd.Login, Email: cmd.Email, Name: cmd.Name}, nil
+				},
+			}
+
+			s := ProvideUserSync(
+				fakeUserSvc,
+				&authinfoimpl.OSSUserProtectionImpl{},
+				&authinfotest.FakeService{
+					SetAuthInfoFn:    func(_ context.Context, _ *login.SetAuthInfoCommand) error { return nil },
+					UpdateAuthInfoFn: func(_ context.Context, _ *login.UpdateAuthInfoCommand) error { return nil },
+				},
+				&quotatest.FakeQuotaService{},
+				tracing.InitializeTracerForTest(),
+				featuremgmt.WithFeatures(),
+				setting.NewCfg(),
+				nil,
+			)
+
+			_, err := s.createUser(context.Background(), tt.id)
+			require.NoError(t, err)
+			require.NotNil(t, captured)
+			assert.Equal(t, tt.wantOrgRole, captured.DefaultOrgRole, "DefaultOrgRole should match identity role mapping for the active org")
+			assert.Equal(t, tt.wantSkipOrgSet, captured.SkipOrgSetup, "SkipOrgSetup should still reflect whether OrgRoles are present")
+		})
+	}
 }
 
 // Pins: id.Groups ← usr.TeamUIDs; id.ExternalGroups preserved.
