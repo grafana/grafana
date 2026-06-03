@@ -4,7 +4,7 @@ import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
-import { getEnrichedHelpItem, getActiveItem, findByUrl } from './utils';
+import { getEnrichedHelpItem, getActiveItem, findByUrl, partitionNavItems, PRIMARY_NAV_IDS } from './utils';
 
 const starredDashboardUid = 'foo';
 const mockNavTree: NavModelItem[] = [
@@ -189,5 +189,40 @@ describe('findByUrl', () => {
 
   it('returns null if no item found', () => {
     expect(findByUrl(mockNavTree, '/no-item')).toBeNull();
+  });
+});
+
+describe('partitionNavItems', () => {
+  const home: NavModelItem = { text: 'Home', id: 'home', url: '/' };
+  const dashboards: NavModelItem = { text: 'Dashboards', id: 'dashboards/browse', url: '/dashboards' };
+  const explore: NavModelItem = { text: 'Explore', id: 'explore', url: '/explore' };
+  const alerting: NavModelItem = { text: 'Alerting', id: 'alerting', url: '/alerting' };
+  const connections: NavModelItem = { text: 'Connections', id: 'connections', url: '/connections' };
+  const unknown: NavModelItem = { text: 'Some plugin', id: 'plugin-page', url: '/a/plugin' };
+
+  it('keeps PRIMARY_NAV_IDS in the documented order', () => {
+    expect(PRIMARY_NAV_IDS).toEqual(['home', 'dashboards/browse', 'explore']);
+  });
+
+  it('returns primary items ordered to match PRIMARY_NAV_IDS regardless of input order', () => {
+    const { primary } = partitionNavItems([explore, alerting, dashboards, home]);
+    expect(primary.map((item) => item.id)).toEqual(['home', 'dashboards/browse', 'explore']);
+  });
+
+  it('puts everything that is not primary into secondary, preserving order', () => {
+    const { secondary } = partitionNavItems([home, alerting, dashboards, connections, explore]);
+    expect(secondary.map((item) => item.id)).toEqual(['alerting', 'connections']);
+  });
+
+  it('treats unknown ids as secondary', () => {
+    const { primary, secondary } = partitionNavItems([home, unknown]);
+    expect(primary.map((item) => item.id)).toEqual(['home']);
+    expect(secondary.map((item) => item.id)).toEqual(['plugin-page']);
+  });
+
+  it('omits primary ids that are not present without error', () => {
+    const { primary, secondary } = partitionNavItems([dashboards, alerting]);
+    expect(primary.map((item) => item.id)).toEqual(['dashboards/browse']);
+    expect(secondary.map((item) => item.id)).toEqual(['alerting']);
   });
 });

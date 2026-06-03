@@ -1956,6 +1956,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "simplifiedNavigation",
+			Description: "Show a minimal left navigation (Home, Dashboards, Explore) with all other sections grouped under 'More'",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{LegacyFrontend: true},
+		},
+		{
 			Name:         "experimentRecentlyViewedDashboards",
 			Description:  "A/A test for recently viewed dashboards feature",
 			Stage:        FeatureStageExperimental,

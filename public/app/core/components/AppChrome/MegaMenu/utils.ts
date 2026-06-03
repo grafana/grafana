@@ -132,6 +132,36 @@ export const getActiveItem = (
   return undefined;
 };
 
+/**
+ * Top-level nav section ids that stay visible in the simplified navigation.
+ * Order here defines the render order; everything else is grouped under "More".
+ */
+export const PRIMARY_NAV_IDS = ['home', 'dashboards/browse', 'explore'];
+
+export interface PartitionedNavItems {
+  primary: NavModelItem[];
+  secondary: NavModelItem[];
+}
+
+/**
+ * Splits the top-level nav items into the always-visible "primary" sections
+ * (ordered to match PRIMARY_NAV_IDS) and everything else ("secondary"), which
+ * the simplified navigation tucks away under a single "More" group.
+ */
+export function partitionNavItems(navItems: NavModelItem[]): PartitionedNavItems {
+  const primary = PRIMARY_NAV_IDS.reduce<NavModelItem[]>((acc, id) => {
+    const item = navItems.find((navItem) => navItem.id === id);
+    if (item) {
+      acc.push(item);
+    }
+    return acc;
+  }, []);
+
+  const secondary = navItems.filter((item) => !PRIMARY_NAV_IDS.includes(item.id ?? ''));
+
+  return { primary, secondary };
+}
+
 export function getEditionAndUpdateLinks(): NavModelItem[] {
   const { buildInfo, licenseInfo } = config;
   const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';

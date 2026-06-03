@@ -4659,6 +4659,20 @@
     },
     {
       "metadata": {
+        "name": "simplifiedNavigation",
+        "resourceVersion": "1780481452205",
+        "creationTimestamp": "2026-06-03T10:10:52Z"
+      },
+      "spec": {
+        "description": "Show a minimal left navigation (Home, Dashboards, Explore) with all other sections grouped under 'More'",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "smoothingTransformation",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-01-05T16:53:45Z"

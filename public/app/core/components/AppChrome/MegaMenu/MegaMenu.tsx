@@ -7,7 +7,7 @@ import { usePatchUserPreferencesMutation } from '@grafana/api-clients/internal/r
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { setBookmark } from 'app/core/reducers/navBarTree';
@@ -16,8 +16,9 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
+import { MegaMenuMore } from './MegaMenuMore';
 import { usePinnedItems } from './hooks';
-import { enrichWithInteractionTracking, findByUrl, getActiveItem } from './utils';
+import { enrichWithInteractionTracking, findByUrl, getActiveItem, partitionNavItems } from './utils';
 
 export const MENU_WIDTH = '300px';
 
@@ -61,6 +62,11 @@ export const MegaMenu = memo(
     }
 
     const activeItem = getActiveItem(navItems, state.sectionNav.node, location.pathname);
+
+    // In simplified navigation, only a few primary sections stay at the top
+    // level and everything else collapses into a single "More" group.
+    const simplified = Boolean(config.featureToggles.simplifiedNavigation);
+    const { primary, secondary } = simplified ? partitionNavItems(navItems) : { primary: navItems, secondary: [] };
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -109,7 +115,7 @@ export const MegaMenu = memo(
           <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
             <>
               <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
-                {navItems.map((link, index) => (
+                {primary.map((link) => (
                   <MegaMenuItem
                     key={link.text}
                     link={link}
@@ -119,6 +125,15 @@ export const MegaMenu = memo(
                     onPin={onPinItem}
                   />
                 ))}
+                {simplified && (
+                  <MegaMenuMore
+                    items={secondary}
+                    activeItem={activeItem}
+                    isPinned={isPinned}
+                    onClick={state.megaMenuDocked ? undefined : onClose}
+                    onPin={onPinItem}
+                  />
+                )}
               </ul>
               <MegaMenuExtensionPoint />
             </>
