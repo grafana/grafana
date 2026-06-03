@@ -784,5 +784,29 @@ describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
       expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
       expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
     });
+
+    it('clears the policy on reset (re-opening the selector shows default, not the stale label)', async () => {
+      const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+
+      // Loads expanded with the migrated policy selected.
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeEnabled();
+      });
+      expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
+
+      // Reset to default, then re-open the selector.
+      await user.click(policyTreeUi.resetButton.get());
+      await waitFor(() => {
+        expect(policyTreeUi.changeButton.get()).toBeInTheDocument();
+      });
+      await user.click(policyTreeUi.changeButton.get());
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeInTheDocument();
+      });
+
+      // The selector must reflect the default policy, not the stale legacy label.
+      expect(policyTreeUi.resetButton.query()).not.toBeInTheDocument();
+      expect(within(policyTreeUi.policySelector.get()).queryByText(CUSTOM_POLICY_NAME)).not.toBeInTheDocument();
+    });
   });
 });

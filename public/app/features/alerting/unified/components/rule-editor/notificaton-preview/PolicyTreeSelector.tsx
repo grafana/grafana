@@ -57,13 +57,16 @@ export function PolicyTreeSelector() {
       (Boolean(selectedPolicyField.value) && !labels.some((label) => label.key === NAMED_ROOT_LABEL_NAME))
   ).current;
 
-  // Resolve the current value, preferring the policy field (canonical, matches the save path)
-  // and falling back to the legacy label. selectedPolicy defaults to '' (falsy), so an empty
-  // value correctly falls through to the legacy label rather than masking it.
+  // Resolve the current value from the routing mechanism this rule actually uses. Policy-field rules
+  // must read selectedPolicy only: the legacy label can linger in form state (it is stripped at DTO
+  // time, not on edit), so falling back to it would mask a reset-to-default with the stale value.
   const currentPolicyValue = useMemo(() => {
+    if (isPolicyFieldRule) {
+      return selectedPolicyField.value || '';
+    }
     const legacyLabelValue = labels.find((label) => label.key === NAMED_ROOT_LABEL_NAME)?.value;
-    return selectedPolicyField.value || legacyLabelValue || '';
-  }, [selectedPolicyField.value, labels]);
+    return legacyLabelValue || '';
+  }, [isPolicyFieldRule, selectedPolicyField.value, labels]);
 
   const isUsingDefaultPolicy = currentPolicyValue === '';
 
@@ -147,7 +150,9 @@ export function PolicyTreeSelector() {
   const updatePolicyValue = useCallback(
     (newValue: string) => {
       if (isPolicyFieldRule) {
-        selectedPolicyField.onChange(newValue || undefined);
+        // Pass '' (not undefined) on reset: react-hook-form's controller onChange ignores undefined,
+        // leaving the previous policy in place. '' is the field's default and reads as the default policy.
+        selectedPolicyField.onChange(newValue);
         return;
       }
 
