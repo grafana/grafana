@@ -328,6 +328,11 @@ describe.each([
       AccessControlAction.AlertingNotificationsRead,
       AccessControlAction.AlertingNotificationsExternalRead,
     ]);
+    // Entity annotations must reflect RBAC: a user without write permission gets canWrite: false
+    // from the backend. Without this the mock is in an impossible state (entity canWrite: true
+    // for a user who has no write RBAC), which previously only happened to hide the button
+    // because of a now-removed redundant global-RBAC double-gate.
+    setAllRoutingTreePermissions({ canWrite: false, canDelete: false, canAdmin: false });
 
     const { user } = renderPage();
 
