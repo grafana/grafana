@@ -133,7 +133,7 @@ refs:
 
 # Configure data links and actions
 
-_Data links_ allow you to link to other panels, dashboards, and external resources and _actions_ let you trigger basic, unauthenticated, API calls.
+_Data links_ allow you to link to other panels, dashboards, and external resources, and _actions_ let you trigger API calls through Grafana.
 In both cases, you can carry out these tasks while maintaining the context of the source panel.
 
 ## Data links
@@ -340,7 +340,7 @@ To add a data link, follow these steps:
    | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
    | Title                | A human-readable label for the action that's displayed in the UI.                                                                                                                                                                           |
    | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                                                                                                       |
-   | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                                                                                                  |
+   | Method               | Select from **POST** or **GET**.                                                                                                                                                                                                            |
    | URL                  | The request URL.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.                                                                                   |
    | Variables            | **Key** and **Name** pairs with a type selection. Click the **+** icon to add as many variables as you need. To add a variable to the request, prefix the key with `$`. You can set the values for the variables when performing an action. |
    | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                                                                                                               |

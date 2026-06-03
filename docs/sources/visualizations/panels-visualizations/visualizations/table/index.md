@@ -285,7 +285,7 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 | [Pill](#pill)                             | Displays each item in a comma-separated string in a colored block. |
 | [Markdown + HTML](#markdown--html)        | Displays rich markdown or HTML content. |
 | [Image](#image)                           | Displays an image when the value is a URL or a base64 encoded image. |
-| [Actions](#actions)                       | The cell displays a button that triggers a basic, unauthenticated API call when clicked. |
+| [Actions](#actions)                       | The cell displays one or more action buttons configured for the field under **Data links and actions**. |
 <!-- prettier-ignore-end -->
 
 #### Auto
@@ -473,19 +473,11 @@ It has the following options:
 
 #### Actions
 
-Actions add a button to a cell that triggers a basic, unauthenticated API call when clicked. Configure actions from **Data links and actions** or with field overrides.
+The cell displays one or more action buttons configured for the field under **Data links and actions**. Select **Actions** as the cell type to show those buttons in the cell instead of the raw value.
 
-<!-- prettier-ignore-start -->
-| Option             | Description  |
-| ------------------ | ------------ |
-| URL                | Enter the request URL. |
-| Method             | Choose from **GET** and **POST**. |
-| Content-Type       | Select an option in the header editor. Choose from **application/json**, **text/plain**, **application/xml**, and **application/x-www-form-urlencoded**. |
-| Query parameters   | Enter as many **Key**, **Value** pairs as you need. |
-| Headers            | Enter as many **Key**, **Value** pairs as you need. |
-| Body               | Enter the body of the API call. |
-| Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
-<!-- prettier-ignore-end -->
+Configure each action with **Title**, **URL**, **Method** (**GET** or **POST**), **Query parameters**, **Headers**, and **Body** for non-GET requests. Actions are executed through the Grafana backend and require appropriate permissions.
+
+For more information, refer to [Data links and actions](#data-links-and-actions).
 
 #### Tooltip from field
 

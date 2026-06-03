@@ -129,7 +129,7 @@ The server element lets you easily represent a single server, a stack of servers
 
 #### Button
 
-The button element lets you add a basic button to the canvas. Button elements are available when **Experimental element types** is enabled. They support triggering basic, unauthenticated API calls. [API settings](#button-api-options) are found in the button element editor. You can also pass template variables in the API editor.
+The button element lets you add a basic button to the canvas. Button elements are available when **Experimental element types** is enabled. They support triggering basic API calls. [API settings](#button-api-options) are found in the button element editor. You can also pass template variables in the API editor.
 
 {{< admonition type="note" >}}
 A button click will only trigger an API call when [inline editing](#inline-editing) is disabled.
@@ -141,7 +141,7 @@ A button click will only trigger an API call when [inline editing](#inline-editi
 
 ##### Button API options
 
-The following options let you configure basic, unauthenticated API calls:
+The following options let you configure basic API calls through Grafana:
 
 <!-- prettier-ignore-start -->
 | Option  | Description  |
@@ -437,7 +437,7 @@ To add a data link, follow these steps:
    | Title                | A human-readable label for the action that's displayed in the UI.                                                                                                                                                                           |
    | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                                                                                                       |
    | One click            | If you want the action to be triggered by a single click on the element, toggle the switch.</p><p>Only one data link or action can have **One click** enabled at a time.                                                                    |
-   | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                                                                                                  |
+   | Method               | Select from **POST** or **GET**.                                                                                                                                                                                                            |
    | URL                  | The request URL or variable to which you want to link.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.                                             |
    | Variables            | **Key** and **Name** pairs with a type selection. Click the **+** icon to add as many variables as you need. To add a variable to the request, prefix the key with `$`. You can set the values for the variables when performing an action. |
    | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                                                                                                               |
