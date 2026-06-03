@@ -28,13 +28,26 @@ const (
 var (
 	ErrInvalidDatasourceType = errutil.ValidationFailed(
 		"alerting.invalidDatasourceType",
-		errutil.WithPublicMessage("Datasource type must be Prometheus or Loki to import rules."),
+		errutil.WithPublicMessage("Datasource type must be Prometheus (including Amazon Managed Prometheus and Azure Managed Prometheus) or Loki to import rules."),
 	)
 	ErrInvalidTargetDatasourceType = errutil.ValidationFailed(
 		"alerting.invalidTargetDatasourceType",
-		errutil.WithPublicMessage("Target datasource type must be Prometheus for recording rules."),
+		errutil.WithPublicMessage("Target datasource type must be Prometheus (including Amazon Managed Prometheus and Azure Managed Prometheus) for recording rules."),
 	)
 )
+
+// isPrometheusCompatible reports whether dsType is a Prometheus datasource
+// or one of the managed Prometheus variants (AWS / Azure) that expose the
+// same wire and rule format as native Prometheus.
+func isPrometheusCompatible(dsType string) bool {
+	switch dsType {
+	case datasources.DS_PROMETHEUS,
+		datasources.DS_AMAZON_PROMETHEUS,
+		datasources.DS_AZURE_PROMETHEUS:
+		return true
+	}
+	return false
+}
 
 // Config defines the configuration options for the Prometheus to Grafana rules converter.
 type Config struct {
@@ -118,8 +131,8 @@ func NewConverter(cfg Config) (*Converter, error) {
 	if cfg.KeepOriginalRuleDefinition == nil {
 		cfg.KeepOriginalRuleDefinition = defaultConfig.KeepOriginalRuleDefinition
 	}
-	if cfg.DatasourceType != datasources.DS_PROMETHEUS && cfg.DatasourceType != datasources.DS_LOKI {
-		return nil, ErrInvalidDatasourceType.Errorf("invalid datasource type: %s, must be prometheus or loki", cfg.DatasourceType)
+	if !isPrometheusCompatible(cfg.DatasourceType) && cfg.DatasourceType != datasources.DS_LOKI {
+		return nil, ErrInvalidDatasourceType.Errorf("invalid datasource type: %s, must be prometheus, a Prometheus-compatible type (Amazon/Azure Managed Prometheus), or loki", cfg.DatasourceType)
 	}
 
 	return &Converter{
@@ -218,8 +231,8 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	}
 
 	if isRecordingRule {
-		if p.cfg.TargetDatasourceType != datasources.DS_PROMETHEUS {
-			return models.AlertRule{}, ErrInvalidTargetDatasourceType.Errorf("invalid target datasource type: %s, must be prometheus", p.cfg.TargetDatasourceType)
+		if !isPrometheusCompatible(p.cfg.TargetDatasourceType) {
+			return models.AlertRule{}, ErrInvalidTargetDatasourceType.Errorf("invalid target datasource type: %s, must be prometheus or a Prometheus-compatible type (Amazon/Azure Managed Prometheus)", p.cfg.TargetDatasourceType)
 		}
 
 		record = &models.Record{
