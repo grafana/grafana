@@ -150,7 +150,6 @@ jobs:
         uses: ./.grafana-main/.github/actions/changelog
         with:
           previous: ${{inputs.previous_version}}
-          github_token: ${{ steps.get-github-app-token.outputs.token }}
           target: v${{ env.VERSION }}
           output_file: changelog_items.md
       - name: Patch CHANGELOG.md
