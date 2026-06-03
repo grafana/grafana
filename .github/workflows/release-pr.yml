@@ -116,13 +116,15 @@ jobs:
           ref: ${{ env.RELEASE_BRANCH }}
           fetch-tags: true
           fetch-depth: 0
+      # Checkout main outside the workspace so lerna/nx doesn't walk it as part of the
+      # release-branch project graph and report duplicate plugin names.
       - name: Checkout Grafana (main)
-        uses: actions/checkout@v5
-        with:
-          token: ${{ github.token }}
-          ref: main
-          fetch-depth: '0'
-          path: .grafana-main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git clone --filter=blob:none --branch=main \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "${RUNNER_TEMP}/grafana-main"
 
       - name: Setup Node.js
         if: ${{ !contains(inputs.version, '+security') }}
@@ -134,7 +136,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version-file: .grafana-main/go.mod
+          go-version-file: ${{ runner.temp }}/grafana-main/go.mod
           cache: false
       - name: Configure git user
         run: |
@@ -147,7 +149,7 @@ jobs:
       - name: Generate changelog
         id: changelog
         if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
-        uses: ./.grafana-main/.github/actions/changelog
+        uses: grafana/grafana/.github/actions/changelog@main
         with:
           previous: ${{inputs.previous_version}}
           github_token: ${{ steps.get-github-app-token.outputs.token }}
