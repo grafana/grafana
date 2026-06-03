@@ -140,11 +140,6 @@ export function CommentsOverlay({ dashboardUid }: Props) {
     }
   }
 
-  function jumpTo(threadId: number, range: { from: string; to: string }) {
-    DashboardInteractions.commentJumpTo({ dashboard_uid: dashboardUid, thread_id: threadId });
-    locationService.partial({ from: range.from, to: range.to });
-  }
-
   const activeThread = activeThreadId ? threads.find((t) => t.id === activeThreadId) ?? null : null;
   const activeIndex = activeThread ? threads.findIndex((t) => t.id === activeThread.id) : -1;
   let activePos: { x: number; y: number } | null = null;
@@ -172,7 +167,7 @@ export function CommentsOverlay({ dashboardUid }: Props) {
             number={displayNumber}
             x={pos.x}
             y={pos.y}
-            resolved={thread.resolved}
+            selected={activeThreadId === thread.id}
             onClick={() => {
               setProvisional(null);
               setActiveThreadId(thread.id);
@@ -219,7 +214,6 @@ export function CommentsOverlay({ dashboardUid }: Props) {
             DashboardInteractions.commentDeleted({ dashboard_uid: dashboardUid, thread_id: activeThread.id });
             closeActiveThread();
           }}
-          onJumpTo={() => jumpTo(activeThread.id, activeThread.context.timeRange)}
           onClose={closeActiveThread}
         />
       )}

@@ -1,6 +1,6 @@
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { ToolbarButton } from '@grafana/ui';
 
@@ -15,18 +15,38 @@ export function CollaborateButton() {
     return null;
   }
 
-  function toggle() {
-    if (active) {
-      DashboardInteractions.commentsModeDisabled({ dashboard_uid: uid });
-      locationService.partial({ comments: null });
-    } else {
-      DashboardInteractions.commentsModeEnabled({ dashboard_uid: uid });
-      locationService.partial({ comments: '1' });
-    }
+  function enterCollaborateMode() {
+    DashboardInteractions.commentsModeEnabled({ dashboard_uid: uid });
+    locationService.partial({ comments: '1' });
+  }
+
+  function exitCollaborateMode() {
+    DashboardInteractions.commentsModeDisabled({ dashboard_uid: uid });
+    locationService.partial({ comments: null });
+  }
+
+  if (active) {
+    return (
+      <ToolbarButton
+        key="exit-collaborate"
+        icon="comment-alt"
+        variant="active"
+        onClick={exitCollaborateMode}
+        tooltip={t('dashboard-scene.comments.exit-collaborate-tooltip', 'Exit collaborate mode')}
+      >
+        <Trans i18nKey="dashboard-scene.comments.exit-collaborate">Exit collaborate</Trans>
+      </ToolbarButton>
+    );
   }
 
   return (
-    <ToolbarButton icon="comment-alt" variant={active ? 'active' : 'default'} onClick={toggle}>
+    <ToolbarButton
+      key="collaborate"
+      icon="comment-alt"
+      variant="canvas"
+      onClick={enterCollaborateMode}
+      tooltip={t('dashboard-scene.comments.collaborate-tooltip', 'Comment and collaborate on this dashboard')}
+    >
       <Trans i18nKey="dashboard-scene.comments.collaborate">Collaborate</Trans>
     </ToolbarButton>
   );

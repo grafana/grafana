@@ -75,8 +75,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   popover: css({
     position: 'fixed',
     transform: 'translate(0, 8px)',
-    width: 300,
-    padding: theme.spacing(1),
+    width: 320,
+    padding: theme.spacing(2),
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.medium}`,
     borderRadius: theme.shape.radius.default,
@@ -87,7 +87,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   actions: css({
     display: 'flex',
     justifyContent: 'flex-end',
-    gap: theme.spacing(0.5),
-    marginTop: theme.spacing(0.5),
+    gap: theme.spacing(1),
+    marginTop: theme.spacing(1.5),
   }),
 });

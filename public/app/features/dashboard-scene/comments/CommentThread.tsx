@@ -16,7 +16,6 @@ interface Props {
   onReply: (body: string) => void | Promise<unknown>;
   onToggleResolve: () => void | Promise<void>;
   onDelete: () => void | Promise<void>;
-  onJumpTo: () => void;
   onClose: () => void;
 }
 
@@ -28,7 +27,6 @@ export function CommentThreadView({
   onReply,
   onToggleResolve,
   onDelete,
-  onJumpTo,
   onClose,
 }: Props) {
   const styles = useStyles2(getStyles);
@@ -90,9 +88,6 @@ export function CommentThreadView({
           {title}
           {headerHint && <span className={styles.headerHint}> • {headerHint}</span>}
         </span>
-        <button type="button" className={styles.jumpButton} onClick={onJumpTo}>
-          <Trans i18nKey="dashboard-scene.comments-thread.jump-to">Jump to</Trans>
-        </button>
         <div className={styles.headerActions}>
           <IconButton
             name={thread.resolved ? 'check-circle' : 'check'}
@@ -148,34 +143,38 @@ export function CommentThreadView({
       </div>
 
       <div className={styles.composer}>
-        <TextArea
-          value={reply}
-          onChange={(e) => setReply(e.currentTarget.value)}
-          placeholder={t(
-            'dashboard-scene.comments-thread.reply-placeholder',
-            'Add a comment. Use @ to mention.'
-          )}
-          rows={2}
-          className={styles.composerInput}
-          onKeyDown={(e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-              e.preventDefault();
-              void submitReply();
-            }
-          }}
-        />
-        <div className={styles.composerFooter}>
-          <div className={styles.composerLeftIcons}>
-            <Icon name="at" size="md" className={styles.composerIcon} />
-            <Icon name="camera" size="md" className={styles.composerIcon} />
-            <Icon name="attach" size="md" className={styles.composerIcon} />
+        <div className={styles.composerBox}>
+          <TextArea
+            value={reply}
+            onChange={(e) => setReply(e.currentTarget.value)}
+            placeholder={t(
+              'dashboard-scene.comments-thread.reply-placeholder',
+              'Add a comment. Use @ to mention.'
+            )}
+            rows={2}
+            className={styles.composerInput}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault();
+                void submitReply();
+              }
+            }}
+          />
+          <div className={styles.composerFooter}>
+            <div className={styles.composerLeftIcons}>
+              <Icon name="at" size="xs" className={styles.composerIcon} />
+              <Icon name="camera" size="xs" className={styles.composerIcon} />
+              <Icon name="attach" size="xs" className={styles.composerIcon} />
+            </div>
+            <div className={styles.composerActions}>
+              <span className={styles.kbdHint}>
+                <Trans i18nKey="dashboard-scene.comments-thread.kbd-hint">⌘↵ post · Esc cancel</Trans>
+              </span>
+              <Button size="sm" variant="primary" onClick={() => void submitReply()} disabled={!reply.trim()}>
+                <Trans i18nKey="dashboard-scene.comments-thread.reply">Reply</Trans>
+              </Button>
+            </div>
           </div>
-          <span className={styles.kbdHint}>
-            <Trans i18nKey="dashboard-scene.comments-thread.kbd-hint">⌘↵ post · Esc cancel</Trans>
-          </span>
-          <Button size="sm" variant="primary" onClick={() => void submitReply()} disabled={!reply.trim()}>
-            <Trans i18nKey="dashboard-scene.comments-thread.reply">Reply</Trans>
-          </Button>
         </div>
       </div>
     </div>
@@ -210,7 +209,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   popover: css({
     position: 'fixed',
     transform: 'translate(12px, 12px)',
-    width: 360,
+    width: 380,
     maxHeight: '75vh',
     display: 'flex',
     flexDirection: 'column',
@@ -225,8 +224,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   header: css({
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1, 1, 1, 1.5),
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(1.5, 1.5, 1.5, 2),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     background: theme.colors.background.canvas,
   }),
@@ -250,20 +249,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
     fontWeight: theme.typography.fontWeightRegular,
   }),
-  jumpButton: css({
-    padding: theme.spacing(0.5, 1.25),
-    background: theme.colors.info.main,
-    color: theme.colors.info.contrastText,
-    border: 'none',
-    borderRadius: theme.shape.radius.pill,
-    fontSize: theme.typography.bodySmall.fontSize,
-    fontWeight: theme.typography.fontWeightBold,
-    cursor: 'pointer',
-    flexShrink: 0,
-    '&:hover': {
-      background: theme.colors.info.shade,
-    },
-  }),
   headerActions: css({
     display: 'flex',
     gap: theme.spacing(0.25),
@@ -273,11 +258,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   resolvedBanner: css({
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(0.5),
-    padding: theme.spacing(0.5, 2),
+    gap: theme.spacing(0.75),
+    padding: theme.spacing(1, 2),
     background: theme.colors.success.transparent,
     color: theme.colors.success.text,
     fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightMedium,
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
   }),
   messages: css({
     flex: 1,
@@ -340,13 +327,30 @@ const getStyles = (theme: GrafanaTheme2) => ({
   composer: css({
     display: 'flex',
     flexDirection: 'column',
-    padding: theme.spacing(1.5, 2, 1.5, 2),
+    padding: theme.spacing(1.5, 2, 2, 2),
     borderTop: `1px solid ${theme.colors.border.weak}`,
     background: theme.colors.background.canvas,
+  }),
+  composerBox: css({
+    display: 'flex',
+    flexDirection: 'column',
     gap: theme.spacing(1),
+    padding: theme.spacing(1.5),
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.colors.border.medium}`,
+    background: theme.colors.background.primary,
+    [theme.transitions.handleMotion('no-preference')]: {
+      transition: theme.transitions.create(['border-color', 'box-shadow'], {
+        duration: theme.transitions.duration.shortest,
+      }),
+    },
+    '&:focus-within': {
+      borderColor: theme.colors.primary.border,
+      boxShadow: `0 0 0 1px ${theme.colors.primary.border}`,
+    },
   }),
   composerInput: css({
-    background: theme.colors.background.canvas,
+    background: 'transparent',
     border: 'none',
     padding: 0,
     resize: 'none',
@@ -358,21 +362,35 @@ const getStyles = (theme: GrafanaTheme2) => ({
   composerFooter: css({
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: theme.spacing(1),
+    paddingTop: theme.spacing(1),
+    borderTop: `1px solid ${theme.colors.border.weak}`,
   }),
   composerLeftIcons: css({
     display: 'flex',
-    gap: theme.spacing(1),
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
     color: theme.colors.text.secondary,
   }),
   composerIcon: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 18,
+    height: 18,
+    borderRadius: theme.shape.radius.default,
     cursor: 'not-allowed',
     opacity: 0.6,
   }),
+  composerActions: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1.5),
+  }),
   kbdHint: css({
-    flex: 1,
     fontSize: theme.typography.bodySmall.fontSize,
     color: theme.colors.text.secondary,
-    textAlign: 'right',
+    whiteSpace: 'nowrap',
   }),
 });
