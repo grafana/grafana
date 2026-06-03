@@ -640,9 +640,7 @@ export const useCreateDropdownMenuActions = (
 
   // When k8s metadata is available, use entity-level annotations for edit/delete permissions
   const k8sMeta = getRoutePolicyMeta(currentRoute);
-  const hasAbilityToEdit = routeHasK8sMeta(currentRoute)
-    ? canEditEntity({ metadata: k8sMeta })
-    : updateAbility.granted;
+  const hasAbilityToEdit = routeHasK8sMeta(currentRoute) ? canEditEntity({ metadata: k8sMeta }) : updateAbility.granted;
   const hasAbilityToDelete = routeHasK8sMeta(currentRoute)
     ? canDeleteEntity({ metadata: k8sMeta })
     : deleteAbility.granted;
