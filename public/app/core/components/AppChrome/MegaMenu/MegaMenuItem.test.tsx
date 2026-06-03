@@ -17,7 +17,7 @@ const setup = () => {
   const navBarTree: NavModelItem[] = [
     {
       text: 'Dashboards',
-      id: 'dashboards',
+      id: 'dashboards/browse',
       url: '/dashboards',
       children: [
         { text: 'Playlists', id: 'dashboards/playlists', url: '/playlists' },

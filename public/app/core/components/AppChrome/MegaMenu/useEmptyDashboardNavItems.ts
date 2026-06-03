@@ -7,7 +7,8 @@ import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/Snapsho
 import { getLibraryPanels } from 'app/features/library-panels/state/api';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
-export const DASHBOARDS_NAV_ID = 'dashboards';
+// The Dashboards section's nav id is "dashboards/browse" (navtree.NavIDDashboards), not "dashboards".
+export const DASHBOARDS_NAV_ID = 'dashboards/browse';
 export const SNAPSHOTS_NAV_ID = 'dashboards/snapshots';
 export const LIBRARY_PANELS_NAV_ID = 'dashboards/library-panels';
 export const SHARED_DASHBOARDS_NAV_ID = 'dashboards/public';
