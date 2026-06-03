@@ -15,6 +15,7 @@ import (
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // Dashboard GVR/GVK values are re-exported from apps/provisioning/pkg/resources
@@ -36,6 +37,26 @@ var (
 	// SupportsFolderAnnotation is the list of resources that can be saved in a folder
 	SupportsFolderAnnotation = []schema.GroupResource{FolderResource.GroupResource(), DashboardResource.GroupResource()}
 )
+
+// SupportedResources returns the resources that can be fully managed from the UI.
+//
+// It is the single seam through which the effective supported set is resolved.
+// Today it always returns the static SupportedProvisioningResources set. Resources
+// that should only be provisionable behind a feature flag (e.g. playlists, library
+// panels) will be appended here once the checker is consulted; passing the features
+// toggles now establishes that gating point without changing current behaviour.
+func SupportedResources(features featuremgmt.FeatureToggles) []schema.GroupVersionResource {
+	return SupportedProvisioningResources
+}
+
+// SupportsFolderAnnotationResources returns the resources that can be saved in a folder.
+//
+// Like SupportedResources, this is the single seam for the folder-annotation set.
+// Today it always returns the static SupportsFolderAnnotation set; flag-gated
+// resources will be appended here once the checker is consulted.
+func SupportsFolderAnnotationResources(features featuremgmt.FeatureToggles) []schema.GroupResource {
+	return SupportsFolderAnnotation
+}
 
 // folderGVR builds the GVR for the folder API at the given version.
 func folderGVR(folderAPIVersion string) schema.GroupVersionResource {

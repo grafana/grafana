@@ -193,7 +193,7 @@ func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, lister 
 func countSupportedResources(stats []provisioning.ResourceCount) int64 {
 	var total int64
 	for _, stat := range stats {
-		for _, kind := range resources.SupportedProvisioningResources {
+		for _, kind := range resources.SupportedResources(nil) {
 			if stat.Group == kind.Group && stat.Resource == kind.Resource {
 				total += stat.Count
 				break

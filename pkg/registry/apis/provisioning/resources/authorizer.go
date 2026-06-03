@@ -240,7 +240,7 @@ func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path string
 
 	// Folders are authorized through their own dedicated path (authorizeFolder,
 	// authorizeDeleteFolder, authorizeMoveFolder) — skip them here.
-	for _, gvr := range SupportedProvisioningResources {
+	for _, gvr := range SupportedResources(nil) {
 		if gvr == FolderResource {
 			continue
 		}
@@ -491,7 +491,7 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveByPath(ctx context.Context, source
 // AuthorizeReadAllSupported checks if the current user has read (get) permission
 // on every supported provisioning resource type at the root level.
 func (a *ProvisioningAuthorizer) AuthorizeReadAllSupported(ctx context.Context) error {
-	for _, kind := range SupportedProvisioningResources {
+	for _, kind := range SupportedResources(nil) {
 		if err := a.access.Check(ctx, authlib.CheckRequest{
 			Group:    kind.Group,
 			Resource: kind.Resource,
@@ -509,7 +509,7 @@ func (a *ProvisioningAuthorizer) AuthorizeReadAllSupported(ctx context.Context) 
 func (a *ProvisioningAuthorizer) AuthorizeCreateAllSupported(ctx context.Context) error {
 	targetFolder := RootFolder(a.repo)
 
-	for _, kind := range SupportedProvisioningResources {
+	for _, kind := range SupportedResources(nil) {
 		if err := a.access.Check(ctx, authlib.CheckRequest{
 			Group:    kind.Group,
 			Resource: kind.Resource,
