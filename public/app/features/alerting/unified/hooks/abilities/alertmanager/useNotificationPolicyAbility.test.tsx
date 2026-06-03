@@ -204,9 +204,35 @@ describe('useNotificationPolicyAbility', () => {
   });
 
   describe('Export', () => {
-    it('should grant Export when read permission is held and policy is not provisioned', () => {
+    it('should grant Export when AlertingNotificationsRead is held and policy is not provisioned', () => {
       const amSource = setupGrafanaAlertmanager();
       grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION]);
+
+      const { result } = renderHook(
+        () => useNotificationPolicyAbility({ action: NotificationPolicyAction.Export, context: notProvisionedContext }),
+        { wrapper: createAlertmanagerWrapper(amSource) }
+      );
+
+      expect(result.current.granted).toBe(true);
+    });
+
+    it('should grant Export when only AlertingRoutesRead is held (legacy read permission)', () => {
+      const amSource = setupGrafanaAlertmanager();
+      // Grant only the legacy routes:read permission, not AlertingNotificationsRead.
+      // The backend accepts this permission for export — the frontend must too.
+      grantUserPermissions([AccessControlAction.AlertingRoutesRead]);
+
+      const { result } = renderHook(
+        () => useNotificationPolicyAbility({ action: NotificationPolicyAction.Export, context: notProvisionedContext }),
+        { wrapper: createAlertmanagerWrapper(amSource) }
+      );
+
+      expect(result.current.granted).toBe(true);
+    });
+
+    it('should grant Export when only ActionAlertingManagedRoutesRead is held (k8s read permission)', () => {
+      const amSource = setupGrafanaAlertmanager();
+      grantUserPermissions([AccessControlAction.ActionAlertingManagedRoutesRead]);
 
       const { result } = renderHook(
         () => useNotificationPolicyAbility({ action: NotificationPolicyAction.Export, context: notProvisionedContext }),
