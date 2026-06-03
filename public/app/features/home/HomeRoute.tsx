@@ -1,11 +1,10 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { useAsync } from 'react-use';
 
+import { useMergedPreferencesQuery } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 import { locationUtil } from '@grafana/data';
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaUnifiedHomepage } from '@grafana/runtime/internal';
 import { LoadingPlaceholder } from '@grafana/ui';
-import { type DashboardDTO, isRedirectResponse } from 'app/types/dashboard';
 
 import { type DashboardPageProxyProps } from '../dashboard/containers/DashboardPageProxy';
 
@@ -14,31 +13,35 @@ const DashboardPageProxy = lazy(
 );
 const HomePage = lazy(() => import(/* webpackChunkName: "HomePage" */ './HomePage'));
 
-function isBundledDefaultHome(dto: DashboardDTO): boolean {
-  return dto.meta?.isDefaultHome === true;
-}
-
 function HomeRouteInner(props: DashboardPageProxyProps) {
   const flagOn = useFlagGrafanaUnifiedHomepage({ suspend: true });
   return flagOn ? <UnifiedHomeRoute {...props} /> : <DashboardPageProxy {...props} />;
 }
 
 function UnifiedHomeRoute(props: DashboardPageProxyProps) {
-  const { loading, value, error } = useAsync(() => getBackendSrv().get('/api/dashboards/home'), []);
+  const { data, isLoading, isError } = useMergedPreferencesQuery();
+  const redirectUri = data?.spec?.homeURL;
 
   useEffect(() => {
-    if (!value || !isRedirectResponse(value)) {
+    if (!redirectUri) {
       return;
     }
-    const newUrl = locationUtil.processRedirectUri(value.redirectUri, locationService.getLocation());
+    const newUrl = locationUtil.processRedirectUri(redirectUri, locationService.getLocation());
     locationService.replace(newUrl);
-  }, [value]);
+  }, [redirectUri]);
 
-  if (loading || (value && isRedirectResponse(value))) {
+  if (isLoading || redirectUri) {
     return <LoadingPlaceholder text="" />;
   }
 
-  if (error || !value || !isBundledDefaultHome(value)) {
+  // Probe failed: we cannot tell whether a home dashboard is configured.
+  // Fall back to the dashboard proxy so existing on-prem setups still work.
+  if (isError || !data) {
+    return <DashboardPageProxy {...props} />;
+  }
+
+  const homeDashboardUID = data.spec?.homeDashboardUID;
+  if (homeDashboardUID) {
     return <DashboardPageProxy {...props} />;
   }
 

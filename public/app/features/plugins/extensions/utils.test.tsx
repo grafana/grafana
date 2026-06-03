@@ -24,8 +24,8 @@ import {
   isMutationObserverProxy,
 } from './utils';
 
-jest.mock('app/features/plugins/pluginSettings', () => ({
-  ...jest.requireActual('app/features/plugins/pluginSettings'),
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
   getPluginSettings: () => Promise.resolve({ info: { version: '1.0.0' }, id: 'test-plugin' }),
 }));
 

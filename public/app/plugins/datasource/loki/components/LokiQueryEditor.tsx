@@ -32,7 +32,7 @@ export const testIds = {
   editor: 'loki-editor',
 };
 
-export const lokiQueryEditorExplainKey = 'LokiQueryEditorExplainDefault';
+const lokiQueryEditorExplainKey = 'LokiQueryEditorExplainDefault';
 
 export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
   const id = useId();

@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log/slogadapter"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -419,6 +420,8 @@ var wireBasicSet = wire.NewSet(
 	acimpl.ProvideAccessControl,
 	accesscontrol.ProvideFixedRolesLoader,
 	accesscontrol.ProvideNoopIAMRolesSyncer,
+	accesscontrol.ProvideNoopGlobalRoleSeeder,
+	accesscontrol.ProvideNoopBasicRoleAggregator,
 	dualwrite.ProvideZanzanaReconciler,
 	navtreeimpl.ProvideService,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
@@ -479,6 +482,7 @@ var wireBasicSet = wire.NewSet(
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
+	resource.ProvideVectorMetrics,
 	unifiedmigrations.ProvideUnifiedStorageMigrationService,
 	unifiedmigrations.ProvideMigrationStatusReader,
 	// Kubernetes API server
@@ -502,6 +506,10 @@ var wireSet = wire.NewSet(
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
+	// Server only — builds the kvlease-backed Elector for the embedded zanzana
+	// reconciler. CLI/test sets bind Elector to NewDefaultElector instead, so
+	// the unified-storage KV is never opened from grafana-cli.
+	authz.ProvideEmbeddedZanzanaElector,
 )
 
 var wireCLISet = wire.NewSet(
@@ -517,6 +525,10 @@ var wireCLISet = wire.NewSet(
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
+	// CLI never participates in leader election; binding directly to the
+	// default elector keeps grafana-cli from pulling in the KV store.
+	leaderelection.NewDefaultElector,
+	wire.Bind(new(leaderelection.Elector), new(*leaderelection.DefaultElector)),
 )
 
 var wireTestSet = wire.NewSet(
@@ -535,6 +547,10 @@ var wireTestSet = wire.NewSet(
 	oauthtokentest.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
 	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
+	// Tests get a default elector — none of the integration tests today need to
+	// exercise real leader election.
+	leaderelection.NewDefaultElector,
+	wire.Bind(new(leaderelection.Elector), new(*leaderelection.DefaultElector)),
 )
 
 func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {

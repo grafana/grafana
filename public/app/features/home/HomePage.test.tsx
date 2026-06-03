@@ -1,9 +1,11 @@
 import { render, screen } from 'test/test-utils';
 
+import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
 import HomePage from './HomePage';
 
@@ -13,6 +15,20 @@ setupMockServer();
 beforeEach(() => {
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 });
+
+const createHomepageExtensionComponent = (
+  pluginId: string,
+  content: string,
+  extensionPointId: PluginExtensionPoints
+): ComponentTypeWithExtensionMeta<{}> =>
+  createComponentWithMeta(
+    {
+      pluginId,
+      title: content,
+      component: () => <div>{content}</div>,
+    },
+    extensionPointId
+  );
 
 describe('HomePage', () => {
   const originalBuildInfo = { ...config.buildInfo };
@@ -57,5 +73,63 @@ describe('HomePage', () => {
 
     render(<HomePage />);
     expect(await screen.findByText('Welcome to Grafana Cloud.')).toBeInTheDocument();
+  });
+
+  it('renders homepage pre extension components', async () => {
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: false,
+      components:
+        extensionPointId === PluginExtensionPoints.HomepagePre
+          ? [
+              createHomepageExtensionComponent(
+                'grafana-setupguide-app',
+                'Homepage pre extension',
+                PluginExtensionPoints.HomepagePre
+              ),
+              createHomepageExtensionComponent(
+                'grafana-untrusted-app',
+                'Untrusted homepage pre extension',
+                PluginExtensionPoints.HomepagePre
+              ),
+            ]
+          : [],
+    }));
+
+    render(<HomePage />);
+
+    expect(await screen.findByText('Homepage pre extension')).toBeInTheDocument();
+    expect(screen.queryByText('Untrusted homepage pre extension')).not.toBeInTheDocument();
+  });
+
+  it('renders homepage extra extension components', async () => {
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: false,
+      components:
+        extensionPointId === PluginExtensionPoints.HomepageExtra
+          ? [
+              createHomepageExtensionComponent(
+                'grafana-setupguide-app',
+                'Homepage extra extension 1',
+                PluginExtensionPoints.HomepageExtra
+              ),
+              createHomepageExtensionComponent(
+                'grafana-setupguide-app',
+                'Homepage extra extension 2',
+                PluginExtensionPoints.HomepageExtra
+              ),
+              createHomepageExtensionComponent(
+                'grafana-untrusted-app',
+                'Untrusted homepage extra extension',
+                PluginExtensionPoints.HomepageExtra
+              ),
+            ]
+          : [],
+    }));
+
+    render(<HomePage />);
+
+    expect(await screen.findByText('Homepage extra extension 1')).toBeInTheDocument();
+    expect(await screen.findByText('Homepage extra extension 2')).toBeInTheDocument();
+    expect(screen.queryByText('Untrusted homepage extra extension')).not.toBeInTheDocument();
   });
 });

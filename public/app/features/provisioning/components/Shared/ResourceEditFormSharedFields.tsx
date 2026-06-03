@@ -1,10 +1,14 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { Combobox, Field, Input, TextArea } from '@grafana/ui';
-import { type RepositoryView, useGetRepositoryRefsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  type RepositoryView,
+  useGetRepositoryRefsQuery,
+  useLazyGetRepositoryFilesWithPathQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
 import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
@@ -13,6 +17,7 @@ import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
 import { useGetRepositoryFolders } from '../../hooks/useGetRepositoryFolders';
 import { useLastBranch } from '../../hooks/useLastBranch';
 import { usePRBranch } from '../../hooks/usePRBranch';
+import { type BaseProvisionedFormData } from '../../types/form';
 import { joinPath, splitPath } from '../utils/path';
 
 type SharedFieldName = 'path' | 'comment';
@@ -35,7 +40,30 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       formState: { errors },
       setValue,
       watch,
-    } = useFormContext();
+    } = useFormContext<BaseProvisionedFormData>();
+
+    const [checkFile] = useLazyGetRepositoryFilesWithPathQuery();
+
+    const validatePath = useCallback(
+      async (path: string) => {
+        if (!path || !repository?.name) {
+          return true;
+        }
+        const ref = watch('ref');
+        try {
+          await checkFile({ name: repository.name, path, ref: ref || undefined }).unwrap();
+          return t(
+            'provisioned-resource-form.save-or-delete-resource-shared-fields.path-exists',
+            'A file with this name already exists at this path'
+          );
+        } catch {
+          return true;
+        }
+      },
+      [checkFile, repository?.name, watch]
+    );
+
+    const shouldValidatePath = isNew && resourceType === 'dashboard';
 
     const canPushToNonConfiguredBranch = repository?.workflows?.includes('branch');
     const canOnlyPushToConfiguredBranch = canPushToConfiguredBranch && !canPushToNonConfiguredBranch;
@@ -114,7 +142,12 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
               <Controller
                 name="ref"
                 control={control}
-                rules={{ validate: validateBranchName }}
+                rules={{
+                  validate: validateBranchName,
+                  // When the branch changes, re-run path validation: a file may exist on one
+                  // branch but not another, so the previous result is stale on the new ref.
+                  deps: shouldValidatePath ? ['path'] : undefined,
+                }}
                 render={({ field: { ref, onChange, ...field } }) => (
                   <>
                     {canOnlyPushToConfiguredBranch ? (
@@ -157,14 +190,18 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
           <Controller
             name="path"
             control={control}
-            render={({ field: { ref, onChange, value } }) => {
+            rules={shouldValidatePath ? { validate: validatePath } : undefined}
+            render={({ field: { ref: _ref, onChange, value } }) => {
               const { directory: dir, filename: file } = splitPath(value || '');
               return (
                 <>
                   <Field
                     noMargin
                     htmlFor="folder-path"
-                    label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-folder', 'Folder')}
+                    label={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.label-repository-folder',
+                      'Repository folder'
+                    )}
                     description={t(
                       'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder',
                       'Folder inside the repository. Leave empty for the repository root.'
@@ -174,9 +211,10 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                       id="folder-path"
                       value={dir}
                       onChange={(option) => {
-                        // setValue (not onChange) so folder picks don't dirty the path field,
-                        // preserving title→filename auto-sync until the filename is edited.
-                        setValue('path', joinPath(option?.value ?? '', file), { shouldDirty: !isNew });
+                        setValue('path', joinPath(option?.value ?? '', file), {
+                          shouldDirty: !isNew,
+                          shouldValidate: true,
+                        });
                       }}
                       options={folderOptions}
                       loading={isFoldersLoading}
@@ -199,6 +237,8 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                       'provisioned-resource-form.save-or-delete-resource-shared-fields.description-filename',
                       'File name for the dashboard (.json or .yaml)'
                     )}
+                    invalid={!!errors.path}
+                    error={errors?.path?.message}
                   >
                     <Input
                       id="dashboard-filename"

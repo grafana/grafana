@@ -64,7 +64,7 @@ jobs:
       PREVIOUS_VERISON: ${{ inputs.previous_version }}
       TARGET: ${{ inputs.target }}
       DRY_RUN: ${{ inputs.dry_run }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       id-token: write
       contents: write
@@ -72,9 +72,10 @@ jobs:
     steps:
       - name: Get GitHub App token
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          github_app: grafana-delivery-bot
+          github_app: grafana-pr-automation
+          permission_set: ${{ startsWith(github.ref_name, 'release-') && 'release' || 'main' }}
       - name: "Checkout Grafana repo"
         uses: "actions/checkout@v5"
         with:

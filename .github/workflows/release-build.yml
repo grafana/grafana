@@ -59,6 +59,7 @@ jobs:
         run: |
           echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
           echo "grafana_commit=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
+
   # Triggers the same workflow in `grafana-enterprise` on the same ref
   downstream:
     runs-on: ubuntu-x64-small
@@ -70,9 +71,10 @@ jobs:
     steps:
       - name: Get GitHub App token
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          github_app: grafana-delivery-bot
+          github_app: grafana-releases-oss
+          permission_set: ${{ github.ref_name == 'main' && 'dispatch-downstream-main' || 'dispatch-downstream-release' }} # different branches require different permission sets
       - uses: actions/github-script@v8
         env:
           REF: ${{ github.ref_name }}
@@ -1004,9 +1006,10 @@ jobs:
     steps:
       - name: Get GitHub App token
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          github_app: grafana-delivery-bot
+          github_app: grafana-releases-oss
+          permission_set: notify-pr
       - name: Find PR
         continue-on-error: true
         id: find-pr
@@ -1025,7 +1028,7 @@ jobs:
         continue-on-error: true
         with:
           issue-number: ${{ env.ISSUE_NUMBER }}
-          comment-author: 'grafana-delivery-bot[bot]'
+          comment-author: 'grafana-releases-oss[bot]'
           body-includes: GitHub Actions Build
           token: ${{ steps.get-github-app-token.outputs.token }}
       - name: Create or update comment # zizmor: ignore[superfluous-actions]
