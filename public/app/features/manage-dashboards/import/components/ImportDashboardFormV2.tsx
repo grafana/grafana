@@ -4,7 +4,17 @@ import { Controller, type FieldErrors, type FieldPath, type UseFormReturn } from
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { Button, Field, type FormFieldErrors, type FormsOnSubmit, Stack, Input, Alert } from '@grafana/ui';
+import {
+  Button,
+  Field,
+  type FormFieldErrors,
+  type FormsOnSubmit,
+  Icon,
+  Stack,
+  Input,
+  Alert,
+  Tooltip,
+} from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
@@ -137,10 +147,11 @@ export const ImportDashboardFormV2 = ({
           }
 
           const dataSourceOption = `datasource-${input.name}`;
+          const fieldLabel = renderDatasourceFieldLabel(input);
 
           return (
             <Field
-              label={input.label || input.name}
+              label={fieldLabel}
               description={input.description}
               key={dataSourceOption}
               invalid={!!errors[dataSourceOption]}
@@ -223,6 +234,42 @@ export const ImportDashboardFormV2 = ({
     </Stack>
   );
 };
+
+function renderDatasourceFieldLabel(input: DataSourceInput) {
+  const labelText = input.label || input.name;
+  const panels = input.usedByPanels;
+
+  if (!panels || panels.length === 0) {
+    return labelText;
+  }
+
+  const tooltipContent = (
+    <div>
+      <Trans i18nKey="manage-dashboards.import-dashboard-form.datasource-used-by-panels">Used by panels:</Trans>
+      <ul style={{ margin: 0, paddingInlineStart: '1.25em' }}>
+        {panels.map((title) => (
+          <li key={title}>{title}</li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  return (
+    <Stack direction="row" alignItems="center" gap={0.5}>
+      <span>{labelText}</span>
+      <Tooltip content={tooltipContent} placement="top" interactive>
+        <Icon
+          name="info-circle"
+          size="sm"
+          aria-label={t(
+            'manage-dashboards.import-dashboard-form.datasource-usage-aria-label',
+            'Show panels that use this datasource'
+          )}
+        />
+      </Tooltip>
+    </Stack>
+  );
+}
 
 function getButtonVariant(errors: FormFieldErrors<ImportFormDataV2>) {
   return errors && (errors.dashboard?.title || errors.k8s?.name) ? 'destructive' : 'primary';

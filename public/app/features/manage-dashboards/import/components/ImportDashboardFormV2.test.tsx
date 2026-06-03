@@ -155,6 +155,42 @@ describe('ImportDashboardFormV2', () => {
     expect(screen.getByText('mysql-2 (Reports MySQL)')).toBeInTheDocument();
   });
 
+  it('renders a tooltip listing panels that reference the datasource', async () => {
+    const user = userEvent.setup();
+    const inputs: DashboardInputs = {
+      ...mockInputs,
+      dataSources: [
+        {
+          name: 'mysql-1',
+          label: 'mysql-1 (Production MySQL)',
+          pluginId: 'mysql',
+          type: InputType.DataSource,
+          description: 'mysql data source — originally "Production MySQL"',
+          info: 'Select a mysql data source',
+          value: '',
+          usedByPanels: ['CPU usage', 'Memory usage'],
+        },
+      ],
+    };
+
+    renderForm(false, inputs);
+
+    const infoIcon = screen.getByLabelText('Show panels that use this datasource');
+    expect(infoIcon).toBeInTheDocument();
+
+    await user.hover(infoIcon);
+
+    expect(await screen.findByText('Used by panels:')).toBeInTheDocument();
+    expect(screen.getByText('CPU usage')).toBeInTheDocument();
+    expect(screen.getByText('Memory usage')).toBeInTheDocument();
+  });
+
+  it('does not render the tooltip when no panels reference the datasource', () => {
+    renderForm(false);
+
+    expect(screen.queryByLabelText('Show panels that use this datasource')).not.toBeInTheDocument();
+  });
+
   it('renders UID field as read-only first and enables editing after clicking change uid', async () => {
     const user = userEvent.setup();
     renderForm(false, mockInputs, 'existing-uid');

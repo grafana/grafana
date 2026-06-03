@@ -386,6 +386,141 @@ describe('extractV2Inputs', () => {
     expect(result.dataSources[1].label).toBe('mysql-2 (Reports MySQL)');
   });
 
+  it('collects panel titles that reference each datasource', async () => {
+    const dashboard = {
+      elements: {
+        'panel-1': {
+          kind: 'Panel',
+          spec: {
+            title: 'CPU usage',
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      query: {
+                        group: 'mysql',
+                        labels: { [ExportLabel]: 'mysql-1' },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+        'panel-2': {
+          kind: 'Panel',
+          spec: {
+            title: 'Memory usage',
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      query: {
+                        group: 'mysql',
+                        labels: { [ExportLabel]: 'mysql-1' },
+                      },
+                    },
+                  },
+                  // duplicate query against the same datasource — title should only appear once
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      query: {
+                        group: 'mysql',
+                        labels: { [ExportLabel]: 'mysql-1' },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+        'panel-3': {
+          kind: 'Panel',
+          spec: {
+            title: 'Errors',
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      query: {
+                        group: 'mysql',
+                        labels: { [ExportLabel]: 'mysql-2' },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources).toHaveLength(2);
+    expect(result.dataSources[0].name).toBe('mysql-1');
+    expect(result.dataSources[0].usedByPanels).toEqual(['CPU usage', 'Memory usage']);
+    expect(result.dataSources[1].name).toBe('mysql-2');
+    expect(result.dataSources[1].usedByPanels).toEqual(['Errors']);
+  });
+
+  it('falls back to the element key when a panel has no title', async () => {
+    const dashboard = {
+      elements: {
+        'panel-1': {
+          kind: 'Panel',
+          spec: {
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [
+                  {
+                    kind: 'PanelQuery',
+                    spec: { query: { group: 'mysql', labels: { [ExportLabel]: 'mysql-1' } } },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources[0].usedByPanels).toEqual(['panel-1']);
+  });
+
+  it('omits usedByPanels when only variables or annotations reference the datasource', async () => {
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'var1', query: { group: 'mysql', labels: { [ExportLabel]: 'mysql-1' } } },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources).toHaveLength(1);
+    expect(result.dataSources[0].usedByPanels).toBeUndefined();
+  });
+
   it('falls back to the export label when no datasource name is present', async () => {
     const dashboard = {
       elements: {},

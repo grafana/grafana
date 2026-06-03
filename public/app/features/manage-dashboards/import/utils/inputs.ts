@@ -216,6 +216,7 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
 
   const dsTypes: { [label: string]: string } = {};
   const dsNames: { [label: string]: string } = {};
+  const dsPanels: { [label: string]: string[] } = {};
 
   const recordDatasource = (
     exportLabel: string | undefined,
@@ -228,6 +229,16 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
     dsTypes[exportLabel] = dsType;
     if (dsName && !dsNames[exportLabel]) {
       dsNames[exportLabel] = dsName;
+    }
+  };
+
+  const recordPanelUsage = (exportLabel: string | undefined, panelTitle: string) => {
+    if (!exportLabel || !panelTitle) {
+      return;
+    }
+    const list = dsPanels[exportLabel] ?? (dsPanels[exportLabel] = []);
+    if (!list.includes(panelTitle)) {
+      list.push(panelTitle);
     }
   };
 
@@ -261,15 +272,14 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
   }
 
   if (dashboard.elements) {
-    for (const element of Object.values(dashboard.elements)) {
+    for (const [elementKey, element] of Object.entries(dashboard.elements)) {
       if (element.kind === 'Panel' && element.spec.data?.kind === 'QueryGroup') {
+        const panelTitle = element.spec.title?.trim() || elementKey;
         for (const query of element.spec.data.spec.queries) {
           if (query.kind === 'PanelQuery') {
-            recordDatasource(
-              getExportLabel(query.spec.query.labels),
-              query.spec.query?.group,
-              getExportDatasourceName(query.spec.query.labels)
-            );
+            const exportLabel = getExportLabel(query.spec.query.labels);
+            recordDatasource(exportLabel, query.spec.query?.group, getExportDatasourceName(query.spec.query.labels));
+            recordPanelUsage(exportLabel, panelTitle);
           }
         }
       }
@@ -288,6 +298,7 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
 
     const dsInfo = getDataSourceSrv().getList({ pluginId: dsType });
     const originalName = dsNames[label];
+    const usedByPanels = dsPanels[label];
     inputs.dataSources.push({
       name: label,
       label: originalName ? `${label} (${originalName})` : label,
@@ -296,6 +307,7 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
       value: '',
       type: InputType.DataSource,
       pluginId: dsType,
+      ...(usedByPanels && usedByPanels.length > 0 ? { usedByPanels } : {}),
     });
   }
 

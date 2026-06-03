@@ -74,6 +74,9 @@ export interface DashboardInput {
 
 export interface DataSourceInput extends DashboardInput {
   pluginId: string;
+  // Titles of panels that reference this datasource in the exported dashboard.
+  // Surfaced as a tooltip on the import form so users can map inputs to panels.
+  usedByPanels?: string[];
 }
 
 export interface LibraryPanelInput {
