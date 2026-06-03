@@ -12,6 +12,14 @@ jest.mock('../api/pulseApi', () => ({
   useAddAssistantReplyMutation: () => [mockTrigger, { isLoading: false }],
 }));
 
+// Captures the options passed to the inline assistant's generate(), so tests
+// can assert on the prompt (context link + stripped question) it builds.
+let lastGenerateOptions: { prompt: string } | undefined;
+const mockGenerate = jest.fn(async (opts: { prompt: string; onComplete?: (text: string) => void }) => {
+  lastGenerateOptions = opts;
+  opts.onComplete?.('Generated answer');
+});
+
 const assistantBody: PulseBody = {
   root: {
     type: 'root',
@@ -43,6 +51,8 @@ describe('useAssistantAutoReply', () => {
   beforeEach(() => {
     mockTrigger.mockClear();
     mockUnwrap.mockClear();
+    mockGenerate.mockClear();
+    lastGenerateOptions = undefined;
     jest.mocked(useAssistant).mockReturnValue({
       isLoading: false,
       isAvailable: true,
@@ -51,9 +61,7 @@ describe('useAssistantAutoReply', () => {
       toggleAssistant: jest.fn(),
     });
     jest.mocked(useInlineAssistant).mockReturnValue({
-      generate: jest.fn(async (opts) => {
-        opts.onComplete?.('Generated answer');
-      }),
+      generate: mockGenerate,
       isGenerating: false,
       content: '',
       error: null,
@@ -75,6 +83,24 @@ describe('useAssistantAutoReply', () => {
       threadUID: 't1',
       req: { parentUID: 'p1', markdown: 'Generated answer' },
     });
+  });
+
+  it('includes a dashboard/panel link in the prompt so the assistant can inspect it', async () => {
+    const { result } = renderHook(() => useAssistantAutoReply());
+    await result.current(assistantBody, {
+      threadUID: 't1',
+      dashboardUID: 'dash-uid',
+      dashboardTitle: 'My dashboard',
+      panelId: 4,
+      panelTitle: 'Latency',
+    });
+    expect(mockGenerate).toHaveBeenCalledTimes(1);
+    const prompt = lastGenerateOptions?.prompt ?? '';
+    expect(prompt).toContain('d/dash-uid?viewPanel=4');
+    expect(prompt).toContain('Latency');
+    // The @assistant chip text is stripped from the question.
+    expect(prompt).not.toContain('@Grafana Assistant');
+    expect(prompt).toContain('explain');
   });
 
   it('posts a fallback notice when the assistant is unavailable', async () => {

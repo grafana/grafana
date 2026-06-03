@@ -402,8 +402,14 @@ export function PulseDrawerContent({
               setCurrentPage(1);
               setActiveThreadUID(res.thread.uid);
               // If the opening pulse tagged @assistant, generate and post
-              // the assistant's reply in the background.
-              void triggerAssistantReply(body, { threadUID: res.thread.uid, parentUID: res.pulse.uid });
+              // the assistant's reply in the background. Pass the dashboard
+              // so the assistant gets a link it can open; the panel (if any)
+              // is derived from a `#panel` chip in the body by the hook.
+              void triggerAssistantReply(body, {
+                threadUID: res.thread.uid,
+                parentUID: res.pulse.uid,
+                dashboardUID: resourceUID,
+              });
             }}
           />
         </Stack>

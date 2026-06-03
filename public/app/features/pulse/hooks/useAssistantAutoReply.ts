@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { useAssistant, useInlineAssistant } from '@grafana/assistant';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 
 import { useAddAssistantReplyMutation } from '../api/pulseApi';
 import { type PulseBody } from '../types';
@@ -15,6 +16,19 @@ export interface AssistantReplyContext {
   threadUID: string;
   /** The pulse that tagged the assistant; the reply threads under it. */
   parentUID?: string;
+  /** Dashboard the thread is attached to. Surfaced to the assistant as a
+   *  link + UID so it can fetch and inspect the dashboard with its own
+   *  tools. Omit on non-dashboard resources. */
+  dashboardUID?: string;
+  /** Human-readable dashboard title, when the surface knows it. Falls back
+   *  to the UID in the prompt when absent. */
+  dashboardTitle?: string;
+  /** Panel the thread is anchored to, if any. When absent, the hook falls
+   *  back to the first `#panel` chip in the body so a `#panel`-tagged pulse
+   *  still points the assistant at the right panel. */
+  panelId?: number;
+  /** Title for `panelId`, when known. */
+  panelTitle?: string;
 }
 
 /** bodyTagsAssistant reports whether a composed body contains an
@@ -70,7 +84,7 @@ export function useAssistantAutoReply(): (body: PulseBody, ctx: AssistantReplyCo
 
       try {
         await generate({
-          prompt: buildPrompt(body),
+          prompt: buildPrompt(body, ctx),
           origin: ASSISTANT_REPLY_ORIGIN,
           systemPrompt: assistantSystemPrompt(),
           onComplete: (text) => postOnce(text),
@@ -84,17 +98,71 @@ export function useAssistantAutoReply(): (body: PulseBody, ctx: AssistantReplyCo
   );
 }
 
-/** buildPrompt turns the tagging pulse into the assistant prompt, stripping
- *  the `@assistant` chip text so the model sees just the question. */
-function buildPrompt(body: PulseBody): string {
-  let text = bodyToText(body);
+/** buildPrompt turns the tagging pulse into the assistant prompt: a context
+ *  preamble that points the assistant at the dashboard/panel under
+ *  discussion (so it can open and inspect it with its own tools), followed
+ *  by the user's question with the `@assistant` chip text stripped out. */
+function buildPrompt(body: PulseBody, ctx: AssistantReplyContext): string {
+  let question = bodyToText(body);
   for (const m of collectMentions(body)) {
     if (m.kind === 'assistant') {
-      text = text.split('@' + (m.displayName ?? m.targetId)).join(' ');
+      question = question.split('@' + (m.displayName ?? m.targetId)).join(' ');
     }
   }
-  text = text.trim();
-  return text.length > 0 ? text : t('pulse.assistant.empty-prompt', 'Please help with this dashboard conversation.');
+  question = question.trim();
+  if (question.length === 0) {
+    question = t('pulse.assistant.empty-prompt', 'Please help with this dashboard conversation.');
+  }
+
+  const contextLine = buildContextLine(body, ctx);
+  return contextLine ? `${contextLine}\n\n${question}` : question;
+}
+
+/** buildContextLine describes the dashboard (and panel, when known) the
+ *  thread is about, with a navigable link so the assistant can fetch it. */
+function buildContextLine(body: PulseBody, ctx: AssistantReplyContext): string | undefined {
+  if (!ctx.dashboardUID) {
+    return undefined;
+  }
+  const dashboardTitle = ctx.dashboardTitle?.trim() || ctx.dashboardUID;
+
+  // Prefer the thread's anchored panel; otherwise borrow the first `#panel`
+  // chip in the pulse so a `#panel`-tagged question still points at it.
+  const panelMention = collectMentions(body).find((m) => m.kind === 'panel');
+  let panelId = ctx.panelId;
+  let panelTitle = ctx.panelTitle;
+  if (panelId === undefined && panelMention) {
+    const parsed = Number(panelMention.targetId);
+    if (Number.isFinite(parsed)) {
+      panelId = parsed;
+      panelTitle = panelTitle ?? panelMention.displayName;
+    }
+  }
+
+  const link = dashboardLink(ctx.dashboardUID, panelId);
+  // escapeValue:false keeps the URL (and any "/" or "&" in titles) intact —
+  // this string is an LLM prompt, not HTML, so i18next's default
+  // entity-escaping would corrupt the link it's meant to follow.
+  if (panelId !== undefined) {
+    return t(
+      'pulse.assistant.context-panel',
+      'This question is from a Grafana Pulse conversation about the panel "{{panelTitle}}" (panel id {{panelId}}) on the dashboard "{{dashboardTitle}}". Open it here and use your dashboard tools to inspect it: {{link}}',
+      { panelTitle: panelTitle || `#${panelId}`, panelId, dashboardTitle, link, interpolation: { escapeValue: false } }
+    );
+  }
+  return t(
+    'pulse.assistant.context-dashboard',
+    'This question is from a Grafana Pulse conversation on the dashboard "{{dashboardTitle}}". Open it here and use your dashboard tools to inspect it: {{link}}',
+    { dashboardTitle, link, interpolation: { escapeValue: false } }
+  );
+}
+
+/** dashboardLink builds an absolute dashboard URL (optionally focused on a
+ *  panel via `viewPanel`) so the link resolves regardless of where the
+ *  assistant renders it. config.appUrl carries a trailing slash. */
+function dashboardLink(dashboardUID: string, panelId?: number): string {
+  const base = `${config.appUrl}d/${encodeURIComponent(dashboardUID)}`;
+  return panelId !== undefined ? `${base}?viewPanel=${panelId}` : base;
 }
 
 function assistantSystemPrompt(): string {

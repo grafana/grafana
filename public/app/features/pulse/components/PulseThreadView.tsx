@@ -113,7 +113,16 @@ export function PulseThreadView({
     const posted = await addPulse({ threadUID: thread.uid, req: { body } }).unwrap();
     // Fire-and-forget: if the reply tagged @assistant, generate and post the
     // assistant's answer in the background so the composer clears immediately.
-    void triggerAssistantReply(body, { threadUID: thread.uid, parentUID: posted.uid });
+    // Pass the dashboard/panel the thread is on so the assistant gets a link
+    // it can open and inspect.
+    void triggerAssistantReply(body, {
+      threadUID: thread.uid,
+      parentUID: posted.uid,
+      dashboardUID: thread.resourceKind === 'dashboard' ? thread.resourceUID : undefined,
+      dashboardTitle: thread.resourceTitle || undefined,
+      panelId: thread.panelId,
+      panelTitle: thread.panelId !== undefined ? panelTitlesById?.get(thread.panelId) : undefined,
+    });
   }
 
   function handleMention(m: PulseMention) {
