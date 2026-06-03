@@ -140,6 +140,43 @@ func TestService_resolveScopeMap(t *testing.T) {
 				"teams:id:1": true,
 			},
 		},
+		{
+			// delegate resolved to "*" (roles resource) and scope retained for SkipWildcard exact-match on permissions resource.
+			name: "permissions:type:delegate resolves to wildcard and retains literal scope",
+			ns:   types.NamespaceInfo{Value: "org-1", OrgID: 1},
+			scopeMap: map[string]bool{
+				"permissions:type:delegate": true,
+			},
+			want: map[string]bool{
+				"*":                         true,
+				"permissions:type:delegate": true,
+			},
+		},
+		{
+			// escalate resolves to "" (no expansion), stays literal; "*" from a delegate holder is ignored by SkipWildcard.
+			name: "permissions:type:escalate stays as literal scope",
+			ns:   types.NamespaceInfo{Value: "org-1", OrgID: 1},
+			scopeMap: map[string]bool{
+				"permissions:type:escalate": true,
+			},
+			want: map[string]bool{
+				"permissions:type:escalate": true,
+			},
+		},
+		{
+			// delegate resolution to "*" cannot satisfy the escalate exact-scope check (SkipWildcard).
+			name: "delegate cannot satisfy escalate check — no privilege escalation",
+			ns:   types.NamespaceInfo{Value: "org-1", OrgID: 1},
+			scopeMap: map[string]bool{
+				"permissions:type:delegate": true,
+				"permissions:type:escalate": true,
+			},
+			want: map[string]bool{
+				"*":                         true,
+				"permissions:type:delegate": true,
+				"permissions:type:escalate": true,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
