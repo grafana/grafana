@@ -104,18 +104,18 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 // It converts old and new permissions to tuples and performs the zanzana write after K8s update succeeds
 func (b *IdentityAccessManagementAPIBuilder) BeginResourcePermissionUpdate(ctx context.Context, obj, oldObj runtime.Object, options *metav1.UpdateOptions) (registry.FinishFunc, error) {
 	if b.zClient == nil {
-		return nil, nil
+		return noopFinishUpdate, nil
 	}
 
 	// Extract permissions from both old and new objects
 	oldRP, ok := oldObj.(*iamv0.ResourcePermission)
 	if !ok {
-		return nil, nil
+		return noopFinishUpdate, nil
 	}
 
 	newRP, ok := obj.(*iamv0.ResourcePermission)
 	if !ok {
-		return nil, nil
+		return noopFinishUpdate, nil
 	}
 
 	// Convert old permissions to delete operations
