@@ -1259,6 +1259,11 @@ func (in *RepositoryViewList) DeepCopyInto(out *RepositoryViewList) {
 		*out = make([]RepositoryType, len(*in))
 		copy(*out, *in)
 	}
+	if in.AvailableResources != nil {
+		in, out := &in.AvailableResources, &out.AvailableResources
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]RepositoryView, len(*in))

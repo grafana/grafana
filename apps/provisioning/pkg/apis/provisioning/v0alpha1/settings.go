@@ -21,6 +21,10 @@ type RepositoryViewList struct {
 	// AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)
 	AvailableRepositoryTypes []RepositoryType `json:"availableRepositoryTypes,omitempty"`
 
+	// AvailableResources is the list of resource types that can be managed from the UI in this
+	// instance, as "<resource>.<group>" identifiers (e.g. "dashboards.dashboard.grafana.app").
+	AvailableResources []string `json:"availableResources,omitempty"`
+
 	// +mapType=atomic
 	Items []RepositoryView `json:"items"`
 }

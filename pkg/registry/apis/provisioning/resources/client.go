@@ -62,14 +62,37 @@ func supportsFolderAnnotation(supported []SupportedResource, gvr schema.GroupVer
 	return false
 }
 
-// mergeSupportedResources returns the static SupportedProvisioningResources set followed
-// by any extra registered resources, preserving registration order. It is called once
-// per factory so the merged set can be reused across all the clients it produces.
-func mergeSupportedResources(extra []SupportedResource) []SupportedResource {
-	out := make([]SupportedResource, 0, len(SupportedProvisioningResources)+len(extra))
-	out = append(out, SupportedProvisioningResources...)
-	out = append(out, extra...)
-	return out
+// provisioningResourcesByName maps the short names accepted in the [provisioning]
+// resources / folder_resources config to their GroupVersionResource. The version is
+// resolved at runtime by the discovery client when a resource client is requested, so
+// the value here only needs to identify the group and resource.
+var provisioningResourcesByName = map[string]schema.GroupVersionResource{
+	"dashboards": DashboardResource,
+	"folders":    FolderResource,
+}
+
+// BuildSupportedResources builds the effective supported set from the configured
+// resource names. folderResourceNames is the subset of resourceNames that is
+// folder-contained (carries the folder header annotation). Unknown names are rejected
+// so a misconfiguration fails fast at startup rather than silently dropping a resource.
+func BuildSupportedResources(resourceNames, folderResourceNames []string) ([]SupportedResource, error) {
+	supportsFolder := make(map[string]bool, len(folderResourceNames))
+	for _, name := range folderResourceNames {
+		if _, ok := provisioningResourcesByName[name]; !ok {
+			return nil, fmt.Errorf("unknown provisioning folder resource %q", name)
+		}
+		supportsFolder[name] = true
+	}
+
+	out := make([]SupportedResource, 0, len(resourceNames))
+	for _, name := range resourceNames {
+		gvr, ok := provisioningResourcesByName[name]
+		if !ok {
+			return nil, fmt.Errorf("unknown provisioning resource %q", name)
+		}
+		out = append(out, SupportedResource{GVR: gvr, SupportsFolderAnnotation: supportsFolder[name]})
+	}
+	return out, nil
 }
 
 // folderGVR builds the GVR for the folder API at the given version.
@@ -179,28 +202,36 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 	return p.dynamic, p.discovery, nil
 }
 
-// NewClientFactory creates a ClientFactory. Any extraResources are registered into
-// the supported set returned by the ResourceClients it produces, on top of the static
+// NewClientFactory creates a ClientFactory. The supported set is the effective list of
+// resources that can be managed from the UI, built from configuration (see
+// BuildSupportedResources). When none is provided it falls back to the static
 // SupportedProvisioningResources base set.
-func NewClientFactory(configProvider apiserver.RestConfigProvider, extraResources ...SupportedResource) ClientFactory {
+func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
 	return &clientFactory{
 		clientsProvider:    newSingleAPIClients(configProvider),
-		supportedResources: mergeSupportedResources(extraResources),
+		supportedResources: defaultSupportedResources(supported),
 	}
 }
 
 // NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers.
-// Any extraResources are registered into the supported set returned by the ResourceClients
-// it produces, on top of the static SupportedProvisioningResources base set.
-func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, extraResources ...SupportedResource) ClientFactory {
+// The supported set behaves as described on NewClientFactory.
+func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
 	clientFactories := make(map[string]ClientFactory)
 
 	for api, configProvider := range configProviders {
-		clientFactory := NewClientFactory(configProvider, extraResources...)
+		clientFactory := NewClientFactory(configProvider, supported...)
 		clientFactories[api] = clientFactory
 	}
 
-	return &multiClientFactory{clientFactories: clientFactories, supportedResources: mergeSupportedResources(extraResources)}
+	return &multiClientFactory{clientFactories: clientFactories, supportedResources: defaultSupportedResources(supported)}
+}
+
+// defaultSupportedResources returns supported when non-empty, otherwise the static base set.
+func defaultSupportedResources(supported []SupportedResource) []SupportedResource {
+	if len(supported) == 0 {
+		return SupportedProvisioningResources
+	}
+	return supported
 }
 
 type multiClientFactory struct {

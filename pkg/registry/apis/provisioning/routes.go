@@ -170,10 +170,16 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	availableResources := make([]string, 0, len(b.supportedResources))
+	for _, r := range b.supportedResources {
+		availableResources = append(availableResources, r.GVR.GroupResource().String())
+	}
+
 	settings := provisioning.RepositoryViewList{
 		Items:                    make([]provisioning.RepositoryView, len(all)),
 		AllowedTargets:           b.allowedTargets,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
+		AvailableResources:       availableResources,
 		AllowImageRendering:      b.allowImageRendering,
 		MaxRepositories:          quotaStatus.MaxRepositories,
 	}

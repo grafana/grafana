@@ -157,6 +157,8 @@ type Cfg struct {
 	DisableControllers bool
 	// Provisioning config
 	ProvisioningAllowedTargets                []string
+	ProvisioningResources                     []string // resource types that can be managed from the UI (default: dashboards, folders)
+	ProvisioningFolderResources               []string // subset of ProvisioningResources that is folder-contained (default: dashboards, folders)
 	ProvisioningAllowImageRendering           bool
 	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
 	ProvisioningMinSyncInterval               time.Duration
@@ -2484,6 +2486,14 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
 		cfg.ProvisioningAllowedTargets = []string{"folder"}
+	}
+	cfg.ProvisioningResources = iniFile.Section("provisioning").Key("resources").Strings("|")
+	if len(cfg.ProvisioningResources) == 0 {
+		cfg.ProvisioningResources = []string{"dashboards", "folders"}
+	}
+	cfg.ProvisioningFolderResources = iniFile.Section("provisioning").Key("folder_resources").Strings("|")
+	if len(cfg.ProvisioningFolderResources) == 0 {
+		cfg.ProvisioningFolderResources = []string{"dashboards", "folders"}
 	}
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 	cfg.ProvisioningAllowInsecure = iniFile.Section("provisioning").Key("allow_insecure").MustBool(false)
