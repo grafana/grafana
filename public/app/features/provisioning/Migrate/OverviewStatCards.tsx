@@ -6,24 +6,23 @@ import { useStyles2 } from '@grafana/ui';
 
 import { FolderProgressCard } from './FolderProgressCard';
 import { StatCard } from './StatCard';
-import { type aggregateFolderCounts, type aggregateTotals, percent } from './stats';
+import { type FolderCounts, type MigrationTotals, percent } from './stats';
 
-export function OverviewStatCards({
-  totals,
-  folderCounts,
-}: {
-  totals: ReturnType<typeof aggregateTotals>;
-  folderCounts: ReturnType<typeof aggregateFolderCounts>;
-}) {
+interface OverviewStatCardsProps {
+  totals: MigrationTotals;
+  folderCounts: FolderCounts;
+}
+
+export function OverviewStatCards({ totals, folderCounts }: OverviewStatCardsProps) {
   const styles = useStyles2(getStyles);
   const progressSubLabel =
     totals.gitSync > 0
       ? t('provisioning.migrate.progress-gitops-sub', '{{count}} via Git Sync', { count: totals.gitSync })
       : t('provisioning.migrate.progress-gitops-sub-empty', 'Start your migration');
   const dashboardsOf = (value: number) =>
-    t('provisioning.migrate.n-of-m-dashboards', '{{value}} of {{total}} dashboards', {
+    t('provisioning.migrate.n-of-m-dashboards', '{{value}} of {{count}} dashboards', {
       value,
-      total: totals.instanceTotal,
+      count: totals.instanceTotal,
     });
   return (
     <div className={styles.statCardsRow}>

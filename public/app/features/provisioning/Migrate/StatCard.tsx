@@ -3,6 +3,8 @@ import { css, cx } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, type IconName, Text, useStyles2 } from '@grafana/ui';
 
+import { getSharedCardStyles } from './statCardStyles';
+
 export type StatTone = 'neutral' | 'success' | 'info' | 'warning' | 'primary';
 
 interface StatCardProps {
@@ -14,22 +16,28 @@ interface StatCardProps {
   emphasized?: boolean;
 }
 
+// Maps each tone to a semantic <Text> color so labels pick up the design
+// system's text roles rather than hand-rolled colors.
+const toneToTextColor: Record<StatTone, 'primary' | 'success' | 'info' | 'warning'> = {
+  neutral: 'primary',
+  success: 'success',
+  info: 'info',
+  warning: 'warning',
+  primary: 'primary',
+};
+
 export function StatCard({ icon, tone, big, subLabel, label, emphasized }: StatCardProps) {
   const styles = useStyles2(getStyles);
   return (
-    <div
-      className={cx(
-        styles.statCard,
-        styles[`statCardSurface_${tone}` as const],
-        emphasized && styles.statCardEmphasized
-      )}
-    >
-      <div className={cx(styles.statCardIcon, styles[`statIconTone_${tone}` as const])}>
+    <div className={cx(styles.card, styles[`statCardSurface_${tone}`], emphasized && styles.statCardEmphasized)}>
+      <div className={cx(styles.statCardIcon, styles[`statIconTone_${tone}`])}>
         <Icon name={icon} size="xl" />
       </div>
       <div className={styles.statCardBody}>
-        <span className={cx(styles.statCardLabel, styles[`statCardTone_${tone}` as const])}>{label}</span>
-        <span className={styles.statCardValue}>{big}</span>
+        <Text variant="body" weight="medium" color={toneToTextColor[tone]}>
+          {label}
+        </Text>
+        <span className={styles.value}>{big}</span>
         {subLabel && (
           <Text color="secondary" variant="body">
             {subLabel}
@@ -41,17 +49,7 @@ export function StatCard({ icon, tone, big, subLabel, label, emphasized }: StatC
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  statCard: css({
-    display: 'flex',
-    flexDirection: 'row',
-    gap: theme.spacing(2),
-    padding: theme.spacing(2),
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.medium}`,
-    background: theme.colors.background.secondary,
-    alignItems: 'center',
-    boxShadow: theme.shadows.z1,
-  }),
+  ...getSharedCardStyles(theme),
   statCardSurface_neutral: css({}),
   statCardSurface_success: css({
     background: theme.colors.success.transparent,
@@ -66,8 +64,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderColor: theme.colors.warning.borderTransparent,
   }),
   statCardSurface_primary: css({
-    background: `color-mix(in srgb, ${theme.visualization.getColorByName('purple')} 12%, ${theme.colors.background.secondary})`,
-    borderColor: `color-mix(in srgb, ${theme.visualization.getColorByName('purple')} 35%, transparent)`,
+    background: theme.colors.primary.transparent,
+    borderColor: theme.colors.primary.borderTransparent,
   }),
   statCardEmphasized: css({
     borderColor: theme.colors.warning.border,
@@ -105,33 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.warning.text,
   }),
   statIconTone_primary: css({
-    background: `color-mix(in srgb, ${theme.visualization.getColorByName('purple')} 20%, transparent)`,
-    color: theme.visualization.getColorByName('purple'),
-  }),
-  statCardLabel: css({
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: theme.typography.fontWeightMedium,
-  }),
-  statCardValue: css({
-    fontSize: '44px',
-    lineHeight: 1.1,
-    fontWeight: theme.typography.fontWeightBold,
-    color: theme.colors.text.primary,
-    letterSpacing: '-0.5px',
-  }),
-  statCardTone_neutral: css({
-    color: theme.colors.text.primary,
-  }),
-  statCardTone_success: css({
-    color: theme.colors.success.text,
-  }),
-  statCardTone_info: css({
-    color: theme.colors.info.text,
-  }),
-  statCardTone_warning: css({
-    color: theme.colors.warning.text,
-  }),
-  statCardTone_primary: css({
-    color: theme.visualization.getColorByName('purple'),
+    background: theme.colors.primary.transparent,
+    color: theme.colors.primary.text,
   }),
 });

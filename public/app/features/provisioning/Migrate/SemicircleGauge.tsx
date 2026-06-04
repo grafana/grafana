@@ -3,7 +3,12 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-export function SemicircleGauge({ pct }: { pct: number }) {
+interface SemicircleGaugeProps {
+  /** Fraction filled, 0–1. Values outside the range are clamped. */
+  pct: number;
+}
+
+export function SemicircleGauge({ pct }: SemicircleGaugeProps) {
   const styles = useStyles2(getStyles);
   // Half-circle with radius 40 centered at (50, 50). Path goes from (10,50)
   // along the top arc to (90,50). Length = π * r = π * 40 ≈ 125.66.

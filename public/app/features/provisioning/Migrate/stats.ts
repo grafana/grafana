@@ -17,6 +17,20 @@ export interface GroupBreakdown {
   unmanagedCount: number;
 }
 
+/** Dashboard-level totals shown in the KPI cards. */
+export interface MigrationTotals {
+  instanceTotal: number;
+  managed: number;
+  unmanaged: number;
+  gitSync: number;
+}
+
+/** Managed vs total folder counts shown in the "Folders managed" gauge. */
+export interface FolderCounts {
+  managed: number;
+  total: number;
+}
+
 export function resourceLabel(group: string): string {
   if (FOLDER_GROUPS.includes(group)) {
     return t('provisioning.migrate.folders', 'Folders');
@@ -87,7 +101,7 @@ export function computeBreakdowns(data?: ResourceStats): GroupBreakdown[] {
   return Array.from(map.values());
 }
 
-export function aggregateTotals(breakdowns: GroupBreakdown[]) {
+export function aggregateTotals(breakdowns: GroupBreakdown[]): MigrationTotals {
   // The Migrate to GitOps page is dashboard-centric: the KPI row reports
   // dashboard counts (folders are tracked separately by the gauge card). Skip
   // non-dashboard groups so totals don't double-count.
@@ -106,7 +120,7 @@ export function aggregateTotals(breakdowns: GroupBreakdown[]) {
 }
 
 /** Managed and total folder counts, derived from the folder breakdown. */
-export function aggregateFolderCounts(breakdowns: GroupBreakdown[]) {
+export function aggregateFolderCounts(breakdowns: GroupBreakdown[]): FolderCounts {
   const folderBreakdowns = breakdowns.filter((b) => FOLDER_GROUPS.includes(b.group));
   let total = 0;
   let managed = 0;
