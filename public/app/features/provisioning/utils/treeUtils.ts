@@ -4,7 +4,7 @@ import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 import { type FileDetails, type FlatTreeItem, type ItemType, type SyncStatus, type TreeItem } from '../types';
 
 import { getFolderMetadataPath, getParentFolderResourceHash, isFolderMetadataPath } from './folderMetadata';
-import { findResourceKind, RESOURCE_KINDS } from './resourceKinds';
+import { findResourceKind, isResourceItemType, RESOURCE_KINDS } from './resourceKinds';
 
 const collator = new Intl.Collator();
 
@@ -125,7 +125,9 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   for (const item of mergedItems) {
     const type = getItemType(item.path, item.resource);
     const isFolderMetadata = isFolderMetadataPath(item.path);
-    const showStatus = type === 'Dashboard' || type === 'Folder' || item.path.endsWith('.json');
+    // Resource-backed tree kinds (folders, dashboards, library panels, ...) and
+    // unsynced .json files carry a sync status; plain files do not.
+    const showStatus = isResourceItemType(type) || item.path.endsWith('.json');
     const resourceHash = isFolderMetadata
       ? getParentFolderResourceHash(item.path, lookupResourceHash)
       : item.resource?.hash;

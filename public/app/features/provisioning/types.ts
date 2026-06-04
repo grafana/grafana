@@ -85,8 +85,10 @@ export interface StatusInfo {
   message?: string | string[];
 }
 
-// Tree view types for combined Resources/Files view
-export type ItemType = 'Folder' | 'File' | 'Dashboard';
+// Tree view types for combined Resources/Files view.
+// 'Folder' and 'File' are structural; the rest map 1:1 to resource kinds in
+// resourceKinds.ts (a new tree kind adds a member here and a descriptor there).
+export type ItemType = 'Folder' | 'File' | 'Dashboard' | 'LibraryPanel';
 export type SyncStatus = 'synced' | 'pending';
 
 export interface TreeItem {

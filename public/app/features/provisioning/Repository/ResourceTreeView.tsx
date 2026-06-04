@@ -25,6 +25,7 @@ import {
 
 import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl } from '../utils/git';
+import { getResourceViewUrl } from '../utils/resourceKinds';
 import { buildTree, filterTree, flattenTree, getIconName, mergeFilesAndResources } from '../utils/treeUtils';
 
 interface ResourceTreeViewProps {
@@ -34,15 +35,10 @@ interface ResourceTreeViewProps {
 type TreeCell<T extends keyof FlatTreeItem = keyof FlatTreeItem> = CellProps<FlatTreeItem, FlatTreeItem[T]>;
 
 function getGrafanaLink(item: TreeItem) {
-  if (item.resourceName) {
-    if (item.type === 'Dashboard') {
-      return `/d/${item.resourceName}`;
-    }
-    if (item.type === 'Folder') {
-      return `/dashboards/f/${item.resourceName}`;
-    }
+  if (!item.resourceName) {
+    return undefined;
   }
-  return undefined;
+  return getResourceViewUrl(item.type, item.resourceName);
 }
 
 export function ResourceTreeView({ repo }: ResourceTreeViewProps) {

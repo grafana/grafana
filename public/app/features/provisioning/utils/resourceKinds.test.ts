@@ -2,11 +2,14 @@ import { config } from '@grafana/runtime';
 
 import {
   findResourceKind,
+  findResourceKindByItemType,
   getEnabledResourceKinds,
   getResourceIcon,
   getResourceKindByKind,
   getResourceLabel,
   getResourceListUrl,
+  getResourceViewUrl,
+  isResourceItemType,
   isResourceKindEnabled,
   resolveResourceKind,
 } from './resourceKinds';
@@ -17,6 +20,12 @@ describe('findResourceKind', () => {
     expect(findResourceKind('folder.grafana.app', 'folders')?.kind).toBe('Folder');
   });
 
+  it('distinguishes kinds that share an API group by resource', () => {
+    // dashboards and library panels both live under dashboard.grafana.app.
+    expect(findResourceKind('dashboard.grafana.app', 'dashboards')?.kind).toBe('Dashboard');
+    expect(findResourceKind('dashboard.grafana.app', 'librarypanels')?.kind).toBe('LibraryPanel');
+  });
+
   it('does not match an unknown resource within a known group', () => {
     expect(findResourceKind('dashboard.grafana.app', 'unknown-type')).toBeUndefined();
   });
@@ -24,6 +33,39 @@ describe('findResourceKind', () => {
   it('returns undefined when group or resource is missing', () => {
     expect(findResourceKind('dashboard.grafana.app')).toBeUndefined();
     expect(findResourceKind(undefined, 'dashboards')).toBeUndefined();
+  });
+});
+
+describe('findResourceKindByItemType', () => {
+  it('looks up the descriptor for a tree item type', () => {
+    expect(findResourceKindByItemType('Dashboard')?.resource).toBe('dashboards');
+    expect(findResourceKindByItemType('Folder')?.resource).toBe('folders');
+    expect(findResourceKindByItemType('LibraryPanel')?.resource).toBe('librarypanels');
+  });
+
+  it('returns undefined for the structural File type', () => {
+    expect(findResourceKindByItemType('File')).toBeUndefined();
+  });
+});
+
+describe('isResourceItemType', () => {
+  it('is true for resource-backed tree kinds and false for plain files', () => {
+    expect(isResourceItemType('Folder')).toBe(true);
+    expect(isResourceItemType('Dashboard')).toBe(true);
+    expect(isResourceItemType('LibraryPanel')).toBe(true);
+    expect(isResourceItemType('File')).toBe(false);
+  });
+});
+
+describe('getResourceViewUrl', () => {
+  it('routes to a single resource for kinds with a detail page', () => {
+    expect(getResourceViewUrl('Dashboard', 'abc')).toBe('/d/abc');
+    expect(getResourceViewUrl('Folder', 'abc')).toBe('/dashboards/f/abc');
+  });
+
+  it('returns undefined for kinds without a per-resource detail page', () => {
+    expect(getResourceViewUrl('LibraryPanel', 'abc')).toBeUndefined();
+    expect(getResourceViewUrl('File', 'abc')).toBeUndefined();
   });
 });
 
@@ -38,6 +80,15 @@ describe('resolveResourceKind', () => {
 
   it('resolves legacy stats where the plural resource is reported as the group', () => {
     expect(resolveResourceKind('folders')?.kind).toBe('Folder');
+  });
+
+  it('distinguishes shared-group kinds when the resource is provided', () => {
+    expect(resolveResourceKind('dashboard.grafana.app', 'librarypanels')?.kind).toBe('LibraryPanel');
+  });
+
+  it('resolves a group-only token to that group primary (first-declared) kind', () => {
+    // The group alone is ambiguous (dashboards + library panels); the primary wins.
+    expect(resolveResourceKind('dashboard.grafana.app')?.kind).toBe('Dashboard');
   });
 
   it('returns undefined for unknown kinds', () => {
@@ -72,6 +123,12 @@ describe('getResourceListUrl', () => {
     expect(getResourceListUrl('playlist.grafana.app', 'playlists', { repoName: 'my-repo', syncTarget: 'folder' })).toBe(
       '/playlists'
     );
+  });
+
+  it('routes library panels to their own listing', () => {
+    expect(
+      getResourceListUrl('dashboard.grafana.app', 'librarypanels', { repoName: 'my-repo', syncTarget: 'folder' })
+    ).toBe('/library-panels');
   });
 
   it('falls back gracefully for unknown kinds', () => {
@@ -124,5 +181,15 @@ describe('feature toggle gating', () => {
     config.featureToggles.playlistsReconciler = true;
     expect(isResourceKindEnabled(playlists)).toBe(true);
     expect(getEnabledResourceKinds()).toContain(playlists);
+  });
+
+  it('gates library panels on kubernetesLibraryPanels', () => {
+    const libraryPanels = findResourceKind('dashboard.grafana.app', 'librarypanels')!;
+
+    config.featureToggles.kubernetesLibraryPanels = false;
+    expect(isResourceKindEnabled(libraryPanels)).toBe(false);
+
+    config.featureToggles.kubernetesLibraryPanels = true;
+    expect(isResourceKindEnabled(libraryPanels)).toBe(true);
   });
 });

@@ -13243,6 +13243,8 @@
       "folders-count_one": "{{count}} folder",
       "folders-count_other": "{{count}} folder",
       "label-display-name": "Display name",
+      "library-panels-count_one": "{{count}} library panel",
+      "library-panels-count_other": "{{count}} library panel",
       "placeholder-my-repository-connection": "My repository connection",
       "playlists-count_one": "{{count}} playlist",
       "playlists-count_other": "{{count}} playlist",
@@ -13833,6 +13835,7 @@
     "resource-kind": {
       "dashboards": "Dashboards",
       "folders": "Folders",
+      "library-panels": "Library panels",
       "playlists": "Playlists"
     },
     "resource-tree": {
