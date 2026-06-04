@@ -68,7 +68,7 @@ For example:
 
 You can combine multiple filters in a single search. Any text entered without a `key:` prefix is treated as a query that filters alert rules by name.
 
-Regex matching is supported in search values. However, Go templates used for dynamic labels are not evaluated when searching, so you can't match against the rendered value of a templated label.
+Regex matching is supported in search values. For labels whose values are set by Go templates, search matches against the rendered static value, not the template expression, so you can't use a template query to find a match.
 
 The search input and the **Filter** popup are kept in sync, so changes made in either place are reflected in the other.
 
