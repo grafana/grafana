@@ -61,6 +61,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 				exampleAppInstaller,
 				advisorAppInstaller,
 				historianAppInstaller,
+				nil, // admin
 				quotasAppInstaller,
 				dashvalidatorAppInstaller,
 			)
