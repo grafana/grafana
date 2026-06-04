@@ -122,6 +122,7 @@ describe('AlertRuleDrawerForm', () => {
         expect(onContinueInAlerting).toHaveBeenCalledWith(
           expect.objectContaining({
             name: 'Test Rule',
+            evaluateFor: '0s',
           })
         );
       });
@@ -405,7 +406,24 @@ describe('AlertRuleDrawerForm', () => {
         await waitFor(() => {
           expect(mockUpsertUngroupedGrafanaRule).toHaveBeenCalledWith(
             expect.objectContaining({
-              values: expect.objectContaining({ evaluateEvery: '5m' }),
+              values: expect.objectContaining({ evaluateEvery: '5m', evaluateFor: '0s' }),
+            })
+          );
+        });
+      });
+
+      it('submits pending period as 0s because the drawer does not expose that field', async () => {
+        mockUpsertUngroupedGrafanaRule.mockResolvedValue('new-rule-uid');
+
+        const { user } = renderDrawer({
+          prefill: { ...submittablePrefill, evaluateFor: '1m' },
+        });
+        await user.click(screen.getByRole('button', { name: /Create/i }));
+
+        await waitFor(() => {
+          expect(mockUpsertUngroupedGrafanaRule).toHaveBeenCalledWith(
+            expect.objectContaining({
+              values: expect.objectContaining({ evaluateFor: '0s' }),
             })
           );
         });

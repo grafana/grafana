@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -27,6 +27,13 @@ import { getRuleGroupLocationFromFormValues } from '../utils/rules';
 import { RuleConditionSection } from './RuleConditionSection';
 import { RuleNotificationSection } from './RuleNotificationSection';
 
+function getDrawerDefaultValues(prefill?: Partial<RuleFormValues>): RuleFormValues {
+  // The drawer never exposes a pending period input, so we pin it to 0s (immediate firing).
+  // Otherwise the inherited 1m default fails validation on the edit page whenever the user
+  // picks an evaluation interval longer than 1m.
+  return { ...getDefaultFormValues(RuleFormType.grafana), ...prefill, evaluateFor: '0s' };
+}
+
 export interface AlertRuleDrawerFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -42,9 +49,8 @@ export function AlertRuleDrawerForm({
   onContinueInAlerting,
   prefill,
 }: AlertRuleDrawerFormProps) {
-  const baseDefaults = useMemo(() => getDefaultFormValues(RuleFormType.grafana), []);
   const methods = useForm<RuleFormValues>({
-    defaultValues: prefill ? { ...baseDefaults, ...prefill } : baseDefaults,
+    defaultValues: getDrawerDefaultValues(prefill),
   });
   const styles = useStyles2(getStyles);
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
@@ -59,9 +65,9 @@ export function AlertRuleDrawerForm({
   useEffect(() => {
     if (isOpen) {
       ruleCreatedRef.current = false;
-      methods.reset(prefill ? { ...baseDefaults, ...prefill } : baseDefaults);
+      methods.reset(getDrawerDefaultValues(prefill));
     }
-  }, [isOpen, prefill, methods, baseDefaults]);
+  }, [isOpen, prefill, methods]);
 
   if (!isOpen) {
     return null;
@@ -160,7 +166,7 @@ export function AlertRuleDrawerForm({
                 variant="secondary"
                 type="button"
                 onClick={() => {
-                  methods.reset(prefill ? { ...baseDefaults, ...prefill } : baseDefaults);
+                  methods.reset(getDrawerDefaultValues(prefill));
                   handleClose();
                 }}
               >
