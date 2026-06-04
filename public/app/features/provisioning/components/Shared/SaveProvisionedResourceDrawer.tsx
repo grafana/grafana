@@ -3,7 +3,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Stack } from '@grafana/ui';
+import { Button, Drawer, Stack, Text } from '@grafana/ui';
 import { type RepositoryView, useReplaceRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -12,9 +12,10 @@ import { useDispatch } from 'app/types/store';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { PushSuccessMessage } from '../../hooks/PushSuccessMessage';
-import { type ResourceType, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { useProvisionedResourceData } from '../../hooks/useProvisionedResourceData';
 import { type BaseProvisionedFormData } from '../../types/form';
+import { type ProvisionedResourceType } from '../../types/resource';
 import { type CommitAction, getSingleResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getProvisionedRequestError } from '../utils/errors';
@@ -22,17 +23,19 @@ import { getProvisionedRequestError } from '../utils/errors';
 import { RepoInvalidStateBanner } from './RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 
-export interface SaveProvisionedResourceFormProps {
+export interface SaveProvisionedResourceDrawerProps {
   /** Any k8s-style resource exposing `metadata.annotations`; resolves the managing repository and source path. */
   resource: ManagedResource;
   /** Resource type used for shared fields, request handling, commit messages and error copy. */
-  resourceType: ResourceType;
+  resourceType: ProvisionedResourceType;
   /** Stable resource identifier (metadata.name) recorded in the commit message. */
   resourceName: string;
-  /** Human-readable title used in the commit message and success banner. */
+  /** Human-readable title used in the commit message and as the drawer subtitle. */
   title: string;
   /** The file content committed to the repository. */
   body: Record<string, unknown>;
+  /** Header shown at the top of the drawer (e.g. "Save provisioned playlist"). */
+  drawerTitle: string;
   /** Commit action recorded in the commit message. Defaults to `update`. */
   action?: CommitAction;
   branchPrefix?: string;
@@ -49,14 +52,13 @@ export interface SaveProvisionedResourceFormProps {
   onBranchSuccess?: (data: { ref: string; urls?: Record<string, string> }) => void;
 }
 
-interface FormContentProps extends SaveProvisionedResourceFormProps {
+interface FormContentProps extends SaveProvisionedResourceDrawerProps {
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
   canPushToConfiguredBranch: boolean;
 }
 
 function FormContent({
-  resource,
   resourceType,
   resourceName,
   title,
@@ -191,42 +193,52 @@ function FormContent({
 }
 
 /**
- * Generic save drawer form for committing a repository-managed resource to git.
+ * Generic save drawer for committing a repository-managed resource to git.
  *
- * It owns the shared provisioning workflow (branch / path / comment fields, the replace-file
- * mutation and request handling) and is resource-agnostic: callers supply the resource type,
- * the file `body` to commit and success handlers (navigation / cache invalidation). Used by
- * playlists today; library panels and other k8s-style resources can reuse it as-is.
+ * It owns the complete drawer (header + the shared provisioning workflow: branch / path / comment
+ * fields, the replace-file mutation and request handling) and is resource-agnostic: callers supply
+ * the resource type, the file `body` to commit and success handlers (navigation / cache
+ * invalidation). Used by playlists today; library panels and other k8s-style resources can reuse
+ * it as-is.
  */
-export function SaveProvisionedResourceForm(props: SaveProvisionedResourceFormProps) {
+export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
+  const { drawerTitle, title, onDismiss } = props;
   const { repository, initialValues, isReadOnlyRepo, canPushToConfiguredBranch } = useProvisionedResourceData({
     resource: props.resource,
-    title: props.title,
+    title,
     branchPrefix: props.branchPrefix,
   });
 
-  if (isReadOnlyRepo || !initialValues) {
-    return (
-      <RepoInvalidStateBanner
-        noRepository={!initialValues}
-        isReadOnlyRepo={isReadOnlyRepo}
-        readOnlyMessage={
-          props.readOnlyMessage ??
-          t(
-            'provisioning.save-resource.read-only-message',
-            'To edit this resource, please update it in your repository directly.'
-          )
-        }
-      />
-    );
-  }
-
   return (
-    <FormContent
-      {...props}
-      initialValues={initialValues}
-      repository={repository}
-      canPushToConfiguredBranch={canPushToConfiguredBranch}
-    />
+    <Drawer
+      title={
+        <Text variant="h3" element="h2">
+          {drawerTitle}
+        </Text>
+      }
+      subtitle={title}
+      onClose={() => onDismiss?.()}
+    >
+      {isReadOnlyRepo || !initialValues ? (
+        <RepoInvalidStateBanner
+          noRepository={!initialValues}
+          isReadOnlyRepo={isReadOnlyRepo}
+          readOnlyMessage={
+            props.readOnlyMessage ??
+            t(
+              'provisioning.save-resource.read-only-message',
+              'To edit this resource, please update it in your repository directly.'
+            )
+          }
+        />
+      ) : (
+        <FormContent
+          {...props}
+          initialValues={initialValues}
+          repository={repository}
+          canPushToConfiguredBranch={canPushToConfiguredBranch}
+        />
+      )}
+    </Drawer>
   );
 }

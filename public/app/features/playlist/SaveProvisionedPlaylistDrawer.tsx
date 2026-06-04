@@ -1,18 +1,18 @@
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
-import { type Playlist, playlistAPIv1 } from 'app/api/clients/playlist/v1';
+import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { useDispatch } from 'app/types/store';
 
-import { SaveProvisionedResourceForm } from '../Shared/SaveProvisionedResourceForm';
+import { type Playlist, playlistAPIv1 } from '../../api/clients/playlist/v1';
 
-interface SaveProvisionedPlaylistFormProps {
+interface SaveProvisionedPlaylistDrawerProps {
   /** The playlist with the edited spec that should be committed to the repository. */
   playlist: Playlist;
   onDismiss?: () => void;
 }
 
-export function SaveProvisionedPlaylistForm({ playlist, onDismiss }: SaveProvisionedPlaylistFormProps) {
+export function SaveProvisionedPlaylistDrawer({ playlist, onDismiss }: SaveProvisionedPlaylistDrawerProps) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -24,11 +24,12 @@ export function SaveProvisionedPlaylistForm({ playlist, onDismiss }: SaveProvisi
   };
 
   return (
-    <SaveProvisionedResourceForm
+    <SaveProvisionedResourceDrawer
       resource={playlist}
       resourceType="playlist"
       resourceName={playlist.metadata?.name ?? ''}
       title={playlist.spec?.title ?? ''}
+      drawerTitle={t('playlist-edit.save-provisioned.drawer-title', 'Save provisioned playlist')}
       branchPrefix="playlist"
       body={{
         apiVersion: playlist.apiVersion,

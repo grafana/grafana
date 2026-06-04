@@ -18,12 +18,13 @@ import { useGetRepositoryFolders } from '../../hooks/useGetRepositoryFolders';
 import { useLastBranch } from '../../hooks/useLastBranch';
 import { usePRBranch } from '../../hooks/usePRBranch';
 import { type BaseProvisionedFormData } from '../../types/form';
+import { type ProvisionedResourceType } from '../../types/resource';
 import { joinPath, splitPath } from '../utils/path';
 
 type SharedFieldName = 'path' | 'comment';
 
 interface DashboardEditFormSharedFieldsProps {
-  resourceType: 'dashboard' | 'folder' | 'playlist';
+  resourceType: ProvisionedResourceType;
   canPushToConfiguredBranch: boolean;
   isNew?: boolean;
   readOnly?: boolean;

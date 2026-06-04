@@ -9,7 +9,10 @@ import { type ProvisionedResourceDataResult, useProvisionedResourceData } from '
 import { setupProvisioningMswServer } from '../../mocks/server';
 import { type ManagedResource } from '../../utils/managedResource';
 
-import { SaveProvisionedResourceForm, type SaveProvisionedResourceFormProps } from './SaveProvisionedResourceForm';
+import {
+  SaveProvisionedResourceDrawer,
+  type SaveProvisionedResourceDrawerProps,
+} from './SaveProvisionedResourceDrawer';
 
 setupProvisioningMswServer();
 
@@ -76,21 +79,22 @@ const defaultHookData: ProvisionedResourceDataResult = {
 
 const mockBody = { apiVersion: 'v1', kind: 'Thing', metadata: { name: 'thing-uid' }, spec: { title: 'Test Thing' } };
 
-function setup(props: Partial<SaveProvisionedResourceFormProps> = {}, hookData = defaultHookData) {
+function setup(props: Partial<SaveProvisionedResourceDrawerProps> = {}, hookData = defaultHookData) {
   (useProvisionedResourceData as jest.Mock).mockReturnValue(hookData);
 
   const onDismiss = jest.fn();
-  const defaultProps: SaveProvisionedResourceFormProps = {
+  const defaultProps: SaveProvisionedResourceDrawerProps = {
     resource: mockResource,
     resourceType: 'playlist',
     resourceName: 'thing-uid',
     title: 'Test Thing',
+    drawerTitle: 'Save provisioned thing',
     body: mockBody,
     onDismiss,
   };
 
   return {
-    ...render(<SaveProvisionedResourceForm {...defaultProps} {...props} />),
+    ...render(<SaveProvisionedResourceDrawer {...defaultProps} {...props} />),
     onDismiss,
   };
 }
@@ -100,7 +104,7 @@ function requireCapturedRequest(req: { url: URL; body: unknown } | null): { url:
   return req as { url: URL; body: unknown };
 }
 
-describe('SaveProvisionedResourceForm', () => {
+describe('SaveProvisionedResourceDrawer', () => {
   let capturedRequest: { url: URL; body: unknown } | null = null;
 
   beforeEach(() => {
@@ -110,21 +114,22 @@ describe('SaveProvisionedResourceForm', () => {
   });
 
   describe('rendering', () => {
-    it('should render the shared fields and save/cancel buttons', async () => {
+    it('renders the drawer header, shared fields and save/cancel buttons', async () => {
       setup();
 
-      expect(await screen.findByRole('button', { name: /^save$/i })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: /save provisioned thing/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
     });
 
-    it('should show read-only banner when repository is read-only', () => {
+    it('shows the read-only banner when the repository is read-only', () => {
       setup({}, { ...defaultHookData, isReadOnlyRepo: true });
 
       expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
     });
 
-    it('should show banner when initialValues is undefined', () => {
+    it('shows the banner when initialValues is undefined', () => {
       setup({}, { ...defaultHookData, initialValues: undefined });
 
       expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
@@ -132,7 +137,7 @@ describe('SaveProvisionedResourceForm', () => {
   });
 
   describe('form submission', () => {
-    it('should commit the provided body for the write workflow without a ref', async () => {
+    it('commits the provided body for the write workflow without a ref', async () => {
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           const url = new URL(request.url);
@@ -158,7 +163,7 @@ describe('SaveProvisionedResourceForm', () => {
       expect(req.body).toEqual(mockBody);
     });
 
-    it('should send the selected branch as a ref for the branch workflow', async () => {
+    it('sends the selected branch as a ref for the branch workflow', async () => {
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           const url = new URL(request.url);
@@ -182,7 +187,7 @@ describe('SaveProvisionedResourceForm', () => {
       expect(req.url.searchParams.get('ref')).toBe('my-branch');
     });
 
-    it('should respect a custom commit action', async () => {
+    it('respects a custom commit action via the generic fallback message', async () => {
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           const url = new URL(request.url);
@@ -200,10 +205,10 @@ describe('SaveProvisionedResourceForm', () => {
       });
 
       const req = requireCapturedRequest(capturedRequest);
-      expect(req.url.searchParams.get('message')).toBe('New playlist: Test Thing');
+      expect(req.url.searchParams.get('message')).toBe('Create playlist: Test Thing');
     });
 
-    it('should use a custom commit message when a comment is provided', async () => {
+    it('uses a custom commit message when a comment is provided', async () => {
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           const url = new URL(request.url);
@@ -224,7 +229,7 @@ describe('SaveProvisionedResourceForm', () => {
       expect(req.url.searchParams.get('message')).toBe('My change');
     });
 
-    it('should not submit when the repository is missing', async () => {
+    it('does not submit when the repository is missing', async () => {
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           const url = new URL(request.url);

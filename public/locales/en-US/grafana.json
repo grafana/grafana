@@ -13263,6 +13263,11 @@
       "aria-label-copy": "Copy code to clipboard"
     },
     "commit-message": {
+      "action-create": "Create",
+      "action-delete": "Delete",
+      "action-move": "Move",
+      "action-rename": "Rename",
+      "action-update": "Save",
       "dashboard-create-default": "New dashboard: {{title}}",
       "dashboard-delete-default": "Delete dashboard: {{title}}",
       "dashboard-move-default": "Move dashboard: {{title}}",
@@ -13273,11 +13278,7 @@
       "folder-move-default": "Move folder: {{title}}",
       "folder-rename-default": "Rename folder: {{title}}",
       "folder-update-default": "Save folder: {{title}}",
-      "playlist-create-default": "New playlist: {{title}}",
-      "playlist-delete-default": "Delete playlist: {{title}}",
-      "playlist-move-default": "Move playlist: {{title}}",
-      "playlist-rename-default": "Rename playlist: {{title}}",
-      "playlist-update-default": "Save playlist: {{title}}"
+      "generic-default": "{{verb}} {{resourceKind}}: {{title}}"
     },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
@@ -13433,9 +13434,7 @@
       "title-visual-previews-in-pull-requests": "Visual previews in pull requests with image rendering"
     },
     "error": {
-      "branch-not-found-dashboard": "You have selected a branch that does not contain this dashboard. Select another branch.",
-      "branch-not-found-folder": "You have selected a branch that does not contain this folder. Select another branch.",
-      "branch-not-found-playlist": "You have selected a branch that does not contain this playlist. Select another branch."
+      "branch-not-found": "You have selected a branch that does not contain this {{resourceType}}. Select another branch."
     },
     "error-title-default": "Error",
     "expanded-row": {

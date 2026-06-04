@@ -1,8 +1,10 @@
 import { t } from '@grafana/i18n';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
+import { type ProvisionedResourceType } from '../types/resource';
+
 export type CommitAction = 'create' | 'update' | 'delete' | 'move' | 'rename';
-export type CommitResourceKind = 'dashboard' | 'folder' | 'playlist';
+export type CommitResourceKind = ProvisionedResourceType;
 export type CommitResourceID = string;
 
 export interface CommitTemplateVars {
@@ -49,10 +51,10 @@ function sanitizeLine(value: string | undefined): string {
 }
 
 function defaultMessage({ action, resourceKind, title }: CommitTemplateVars): string {
-  // Full Record forces every (resourceKind, action) pair to be mapped, so any
-  // future widening of either union is caught at compile time. Pairs that aren't
-  // reachable today get sensible defaults rather than a runtime fallback.
-  const defaults: Record<`${CommitResourceKind}:${CommitAction}`, string> = {
+  // Known (resourceKind, action) pairs keep their own fully-translated copy. Anything not listed —
+  // including new resource types added to ProvisionedResourceType — falls through to the generic
+  // message below, so adding a type doesn't require touching this map.
+  const defaults: Partial<Record<`${CommitResourceKind}:${CommitAction}`, string>> = {
     'dashboard:create': t('provisioning.commit-message.dashboard-create-default', 'New dashboard: {{title}}', {
       title,
     }),
@@ -71,17 +73,31 @@ function defaultMessage({ action, resourceKind, title }: CommitTemplateVars): st
     'folder:delete': t('provisioning.commit-message.folder-delete-default', 'Delete folder: {{title}}', { title }),
     'folder:rename': t('provisioning.commit-message.folder-rename-default', 'Rename folder: {{title}}', { title }),
     'folder:move': t('provisioning.commit-message.folder-move-default', 'Move folder: {{title}}', { title }),
-    'playlist:create': t('provisioning.commit-message.playlist-create-default', 'New playlist: {{title}}', { title }),
-    'playlist:update': t('provisioning.commit-message.playlist-update-default', 'Save playlist: {{title}}', { title }),
-    'playlist:delete': t('provisioning.commit-message.playlist-delete-default', 'Delete playlist: {{title}}', {
-      title,
-    }),
-    'playlist:move': t('provisioning.commit-message.playlist-move-default', 'Move playlist: {{title}}', { title }),
-    'playlist:rename': t('provisioning.commit-message.playlist-rename-default', 'Rename playlist: {{title}}', {
-      title,
-    }),
   };
-  return defaults[`${resourceKind}:${action}`];
+  return defaults[`${resourceKind}:${action}`] ?? genericDefaultMessage({ action, resourceKind, title });
+}
+
+/**
+ * Resource-agnostic commit message used for any (resourceKind, action) pair without bespoke copy.
+ * The action verb is translated; the resource kind is interpolated so new types work automatically.
+ */
+function genericDefaultMessage({
+  action,
+  resourceKind,
+  title,
+}: Pick<CommitTemplateVars, 'action' | 'resourceKind' | 'title'>): string {
+  const verbs: Record<CommitAction, string> = {
+    create: t('provisioning.commit-message.action-create', 'Create'),
+    update: t('provisioning.commit-message.action-update', 'Save'),
+    delete: t('provisioning.commit-message.action-delete', 'Delete'),
+    move: t('provisioning.commit-message.action-move', 'Move'),
+    rename: t('provisioning.commit-message.action-rename', 'Rename'),
+  };
+  return t('provisioning.commit-message.generic-default', '{{verb}} {{resourceKind}}: {{title}}', {
+    verb: verbs[action],
+    resourceKind,
+    title,
+  });
 }
 
 export function renderCommitMessage(template: string | undefined | null, vars: CommitTemplateVars): string {

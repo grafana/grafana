@@ -4,10 +4,9 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Drawer, Stack, Text } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
-import { SaveProvisionedPlaylistForm } from 'app/features/provisioning/components/Playlists/SaveProvisionedPlaylistForm';
 import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
 import { SourceLink } from 'app/features/provisioning/components/SourceLink';
 import {
@@ -22,6 +21,7 @@ import {
 import { type Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
 
 import { PlaylistForm } from './PlaylistForm';
+import { SaveProvisionedPlaylistDrawer } from './SaveProvisionedPlaylistDrawer';
 
 export interface RouteParams {
   uid: string;
@@ -76,20 +76,10 @@ export const PlaylistEditPage = () => {
         {data && <PlaylistForm onSubmit={onSubmit} playlist={data} />}
       </Page.Contents>
       {provisionedPlaylist && (
-        <Drawer
-          title={
-            <Text variant="h3" element="h2">
-              {t('playlist-edit.save-provisioned.drawer-title', 'Save provisioned playlist')}
-            </Text>
-          }
-          subtitle={provisionedPlaylist.spec?.title}
-          onClose={() => setProvisionedPlaylist(undefined)}
-        >
-          <SaveProvisionedPlaylistForm
-            playlist={provisionedPlaylist}
-            onDismiss={() => setProvisionedPlaylist(undefined)}
-          />
-        </Drawer>
+        <SaveProvisionedPlaylistDrawer
+          playlist={provisionedPlaylist}
+          onDismiss={() => setProvisionedPlaylist(undefined)}
+        />
       )}
     </Page>
   );

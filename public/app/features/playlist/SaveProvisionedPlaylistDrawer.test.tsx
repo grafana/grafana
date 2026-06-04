@@ -5,30 +5,32 @@ import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type Playlist } from 'app/api/clients/playlist/v1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  type ProvisionedResourceDataResult,
+  useProvisionedResourceData,
+} from 'app/features/provisioning/hooks/useProvisionedResourceData';
+import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 
-import { type ProvisionedResourceDataResult, useProvisionedResourceData } from '../../hooks/useProvisionedResourceData';
-import { setupProvisioningMswServer } from '../../mocks/server';
-
-import { SaveProvisionedPlaylistForm } from './SaveProvisionedPlaylistForm';
+import { SaveProvisionedPlaylistDrawer } from './SaveProvisionedPlaylistDrawer';
 
 setupProvisioningMswServer();
 
-jest.mock('../../hooks/useProvisionedRequestHandler', () => ({
+jest.mock('app/features/provisioning/hooks/useProvisionedRequestHandler', () => ({
   useProvisionedRequestHandler: jest.fn(),
 }));
 
-jest.mock('../../hooks/usePRBranch', () => ({
+jest.mock('app/features/provisioning/hooks/usePRBranch', () => ({
   usePRBranch: jest.fn().mockReturnValue(undefined),
 }));
 
-jest.mock('../../hooks/useLastBranch', () => ({
+jest.mock('app/features/provisioning/hooks/useLastBranch', () => ({
   useLastBranch: jest.fn().mockReturnValue({
     getLastBranch: jest.fn().mockReturnValue(undefined),
     setLastBranch: jest.fn(),
   }),
 }));
 
-jest.mock('../../hooks/useProvisionedResourceData', () => ({
+jest.mock('app/features/provisioning/hooks/useProvisionedResourceData', () => ({
   useProvisionedResourceData: jest.fn(),
 }));
 
@@ -85,18 +87,24 @@ function setup(hookData = defaultHookData) {
 
   const onDismiss = jest.fn();
   return {
-    ...render(<SaveProvisionedPlaylistForm playlist={mockPlaylist} onDismiss={onDismiss} />),
+    ...render(<SaveProvisionedPlaylistDrawer playlist={mockPlaylist} onDismiss={onDismiss} />),
     onDismiss,
   };
 }
 
-describe('SaveProvisionedPlaylistForm', () => {
+describe('SaveProvisionedPlaylistDrawer', () => {
   let capturedRequest: { url: URL; body: unknown } | null = null;
 
   beforeEach(() => {
     capturedRequest = null;
     jest.clearAllMocks();
     jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  it('renders inside a drawer titled for a provisioned playlist', async () => {
+    setup();
+
+    expect(await screen.findByRole('heading', { name: /save provisioned playlist/i })).toBeInTheDocument();
   });
 
   it('commits the full playlist resource with a playlist commit message', async () => {
