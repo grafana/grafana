@@ -10,6 +10,7 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 
+	datasourcev0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
@@ -66,6 +67,20 @@ const (
 	actionTeamsRolesRemove = "teams.roles:remove"
 )
 
+// Datasource-management actions. Hardcoded for the same reason as the actions
+// above: the enterprise-only datasources.* actions (caching, insights) live in
+// pkg/extensions and these shared helpers must not depend on it.
+const (
+	actionDatasourcesRead   = "datasources:read"
+	actionDatasourcesQuery  = "datasources:query"
+	actionDatasourcesCreate = "datasources:create"
+	actionDatasourcesWrite  = "datasources:write"
+	actionDatasourcesDelete = "datasources:delete"
+
+	actionDatasourcesPermissionsRead  = "datasources.permissions:read"
+	actionDatasourcesPermissionsWrite = "datasources.permissions:write"
+)
+
 // iam.grafana.app group and the resources user- and team-management actions gate.
 var (
 	iamGroup             = iamv0.UserResourceInfo.GroupResource().Group
@@ -74,11 +89,21 @@ var (
 	roleBindingsResource = iamv0.RoleBindingInfo.GroupResource().Resource
 )
 
+// Canonical datasource group/resource. Instances are exposed under per-plugin groups
+// (e.g. loki.datasource.grafana.app), but the wildcard datasources:* grants translated
+// here are plugin-agnostic and written against this canonical group.
+var (
+	datasourceGroup    = datasourcev0.DataSourceResourceInfo.GroupResource().Group
+	datasourceResource = datasourcev0.DataSourceResourceInfo.GroupResource().Resource
+)
+
 // iamActionMapping describes the group_resource (within iamGroup) and relation(s) an
 // iam-management action grants. Shared by the user- and team-management mappings.
 type iamActionMapping struct {
 	resource  string
 	relations []string
+	// subresource, when set, scopes the grant to a subresource (e.g. "query").
+	subresource string
 	// skipScope marks actions the mapper authorizes without a scope (create verbs).
 	skipScope bool
 }
@@ -134,6 +159,25 @@ var teamManagementMappings = map[string]iamActionMapping{
 	actionTeamsRolesRead:   {resource: roleBindingsResource, relations: []string{RelationGet}},
 	actionTeamsRolesAdd:    {resource: roleBindingsResource, relations: []string{RelationCreate, RelationUpdate}},
 	actionTeamsRolesRemove: {resource: roleBindingsResource, relations: []string{RelationDelete}},
+}
+
+// datasourceManagementMappings maps each datasource-management action to the relation
+// it grants on the canonical datasource.grafana.app group_resource.
+//
+// datasources:query maps to `create` on the datasources/query subresource because
+// querying is authorized there (the authorizer issues verb=create, subresource=query —
+// see pkg/registry/apis/datasource/authorizer.go). datasources:write maps to `update`
+// only, since create and delete are distinct actions.
+var datasourceManagementMappings = map[string]iamActionMapping{
+	actionDatasourcesRead:  {resource: datasourceResource, relations: []string{RelationGet}},
+	actionDatasourcesQuery: {resource: datasourceResource, relations: []string{RelationCreate}, subresource: "query"},
+
+	actionDatasourcesWrite:  {resource: datasourceResource, relations: []string{RelationUpdate}},
+	actionDatasourcesCreate: {resource: datasourceResource, relations: []string{RelationCreate}, skipScope: true},
+	actionDatasourcesDelete: {resource: datasourceResource, relations: []string{RelationDelete}},
+
+	actionDatasourcesPermissionsRead:  {resource: datasourceResource, relations: []string{RelationGetPermissions}},
+	actionDatasourcesPermissionsWrite: {resource: datasourceResource, relations: []string{RelationSetPermissions}},
 }
 
 // Scope fragments produced by splitScope for the two "all roles" scopes we
@@ -215,6 +259,16 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 		// like the user-management actions above (see TeamManagementToTuples).
 		if isTeamManagementAction(perm.Action) {
 			for _, t := range TeamManagementToTuples(subject, perm) {
+				tupleMap[t.String()] = t
+			}
+			continue
+		}
+
+		// Datasource-management actions map onto the canonical datasource
+		// group_resource via a dedicated path, like the user/team-management
+		// actions above (see DatasourceManagementToTuples).
+		if isDatasourceManagementAction(perm.Action) {
+			for _, t := range DatasourceManagementToTuples(subject, perm) {
 				tupleMap[t.String()] = t
 			}
 			continue
@@ -440,6 +494,45 @@ func isTeamManagementAction(action string) bool {
 //
 // Specific instance scopes (e.g. teams:id:5) match none of these and are dropped.
 func isAllTeamsScope(kind, identifier string) bool {
+	if identifier == scopeIdentifierWildcard {
+		return true
+	}
+	return kind == scopeKindPermissions && identifier == scopeIdentifierDelegate
+}
+
+// DatasourceManagementToTuples translates a datasource-management permission into
+// canonical datasource.grafana.app group_resource tuples. Only "all" scopes translate
+// (see isAllDatasourcesScope); instance scopes (datasources:uid:<uid>) are dropped, as
+// they can't be expressed against the plugin-agnostic canonical group. datasources:create
+// is unscoped and always translates.
+func DatasourceManagementToTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
+	m, ok := datasourceManagementMappings[permission.Action]
+	if !ok {
+		return nil
+	}
+
+	if !m.skipScope && !isAllDatasourcesScope(permission.Kind, permission.Identifier) {
+		return nil
+	}
+
+	tuples := make([]*openfgav1.TupleKey, 0, len(m.relations))
+	for _, relation := range m.relations {
+		tuples = append(tuples, NewGroupResourceTuple(subject, relation, datasourceGroup, m.resource, m.subresource))
+	}
+	return tuples
+}
+
+// isDatasourceManagementAction reports whether the action is one of the
+// datasource-management actions handled by DatasourceManagementToTuples.
+func isDatasourceManagementAction(action string) bool {
+	_, ok := datasourceManagementMappings[action]
+	return ok
+}
+
+// isAllDatasourcesScope reports whether the (kind, identifier) pair is an "all" scope:
+// datasources:* (identifier="*") or the permissions:type:delegate form. Instance scopes
+// (e.g. datasources:uid:abc) are dropped.
+func isAllDatasourcesScope(kind, identifier string) bool {
 	if identifier == scopeIdentifierWildcard {
 		return true
 	}

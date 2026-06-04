@@ -1,6 +1,8 @@
 package common
 
 import (
+	"strings"
+
 	"google.golang.org/protobuf/types/known/structpb"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -161,6 +163,37 @@ func (r ResourceInfo) GroupResource() string {
 
 func (r ResourceInfo) GroupResourceIdent() string {
 	return NewGroupResourceIdent(r.group, r.resource, r.subresource)
+}
+
+// WildcardGroupResourceIdents returns the group_resource objects to check at the
+// wildcard tier, allow-if-any. Most resources yield one object; a per-plugin datasource
+// group also yields the canonical datasource.grafana.app object, where `datasources:*`
+// grants live (instances are per-plugin, but that wildcard grant is plugin-agnostic).
+func (r ResourceInfo) WildcardGroupResourceIdents() []string {
+	perPlugin := NewGroupResourceIdent(r.group, r.resource, r.subresource)
+
+	canonical := canonicalDatasourceGroup(r.group)
+	if canonical == r.group {
+		return []string{perPlugin}
+	}
+
+	return []string{perPlugin, NewGroupResourceIdent(canonical, r.resource, r.subresource)}
+}
+
+const (
+	datasourceGroupSuffix    = ".datasource.grafana.app"
+	datasourceCanonicalGroup = "datasource.grafana.app"
+)
+
+// canonicalDatasourceGroup maps a per-plugin datasource API group
+// (<plugin>.datasource.grafana.app) to the canonical datasource.grafana.app group.
+// Anything else (including the *.datasource.grafana.app key and nested groups) is unchanged.
+func canonicalDatasourceGroup(group string) string {
+	prefix, ok := strings.CutSuffix(group, datasourceGroupSuffix)
+	if !ok || prefix == "" || strings.Contains(prefix, ".") || strings.HasPrefix(prefix, "*") {
+		return group
+	}
+	return datasourceCanonicalGroup
 }
 
 func (r ResourceInfo) ResourceIdent() string {
