@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Stack } from '@grafana/ui';
+import { Drawer, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { SaveProvisionedPlaylistForm } from 'app/features/provisioning/components/Playlists/SaveProvisionedPlaylistForm';
 import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
 import { SourceLink } from 'app/features/provisioning/components/SourceLink';
 import {
@@ -13,6 +15,7 @@ import {
   getManagerKind,
   getSourcePath,
   isManaged,
+  isManagedByRepository,
   isManagedResourceReadOnly,
 } from 'app/features/provisioning/utils/managedResource';
 
@@ -28,8 +31,17 @@ export const PlaylistEditPage = () => {
   const { uid = '' } = useParams();
   const { data, isLoading, isError, error } = useGetPlaylistQuery({ name: uid });
   const [replacePlaylist] = useReplacePlaylistMutation();
+  // Holds the edited playlist while the provisioning save drawer is open.
+  const [provisionedPlaylist, setProvisionedPlaylist] = useState<Playlist | undefined>();
 
   const onSubmit = async (playlist: Playlist) => {
+    // Repository-managed playlists are committed to git via the save drawer instead of
+    // being written directly through the playlist API.
+    if (isManagedByRepository(playlist)) {
+      setProvisionedPlaylist(playlist);
+      return;
+    }
+
     replacePlaylist({
       name: playlist.metadata?.name ?? '',
       playlist,
@@ -63,6 +75,22 @@ export const PlaylistEditPage = () => {
         )}
         {data && <PlaylistForm onSubmit={onSubmit} playlist={data} />}
       </Page.Contents>
+      {provisionedPlaylist && (
+        <Drawer
+          title={
+            <Text variant="h3" element="h2">
+              {t('playlist-edit.save-provisioned.drawer-title', 'Save provisioned playlist')}
+            </Text>
+          }
+          subtitle={provisionedPlaylist.spec?.title}
+          onClose={() => setProvisionedPlaylist(undefined)}
+        >
+          <SaveProvisionedPlaylistForm
+            playlist={provisionedPlaylist}
+            onDismiss={() => setProvisionedPlaylist(undefined)}
+          />
+        </Drawer>
+      )}
     </Page>
   );
 };
