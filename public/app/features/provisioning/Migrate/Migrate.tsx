@@ -1,32 +1,13 @@
 import { useMemo } from 'react';
 
-import { FeatureState } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, EmptyState, FeatureBadge, Spinner, Stack, Text } from '@grafana/ui';
+import { Alert, EmptyState, Spinner, Stack } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { MigrateToGitopsHeader } from './MigrateToGitopsHeader';
 import { OverviewStatCards } from './OverviewStatCards';
 import { aggregateFolderCounts, aggregateTotals, computeBreakdowns } from './stats';
-
-function MigrateToGitopsHeader() {
-  return (
-    <Stack direction="column" gap={1}>
-      <Stack direction="row" gap={1} alignItems="center">
-        <Text element="h2" variant="h2">
-          <Trans i18nKey="provisioning.migrate.header-title">Migrate to GitOps</Trans>
-        </Text>
-        <FeatureBadge featureState={FeatureState.experimental} />
-      </Stack>
-      <Text color="secondary">
-        <Trans i18nKey="provisioning.migrate.header-subtitle">
-          Manage your dashboards and folders like code — every change tracked, every update reviewed, every environment
-          reproducible. Connect a Git repository to get started.
-        </Trans>
-      </Text>
-    </Stack>
-  );
-}
 
 /**
  * Migrate to GitOps tab. Shows an overview of how much of the instance is
