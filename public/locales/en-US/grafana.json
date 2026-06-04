@@ -12805,9 +12805,7 @@
       "table-heading": "Dashboards"
     },
     "save-provisioned": {
-      "drawer-title": "Save provisioned playlist",
-      "error-saving": "Failed to save playlist",
-      "read-only-message": "To edit this playlist, please update the file in your repository directly."
+      "drawer-title": "Save provisioned playlist"
     },
     "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
     "title": "Edit playlist"
@@ -13423,7 +13421,7 @@
       "title-visual-previews-in-pull-requests": "Visual previews in pull requests with image rendering"
     },
     "error": {
-      "branch-not-found": "You have selected a branch that does not contain this {{resourceType}}. Select another branch."
+      "branch-not-found": "You have selected a branch that does not contain this resource. Select another branch."
     },
     "error-title-default": "Error",
     "expanded-row": {

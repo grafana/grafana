@@ -37,11 +37,6 @@ export function SaveProvisionedPlaylistDrawer({ playlist, onDismiss }: SaveProvi
         metadata: { name: playlist.metadata?.name },
         spec: playlist.spec,
       }}
-      errorMessage={t('playlist-edit.save-provisioned.error-saving', 'Failed to save playlist')}
-      readOnlyMessage={t(
-        'playlist-edit.save-provisioned.read-only-message',
-        'To edit this playlist, please update the file in your repository directly.'
-      )}
       onDismiss={onDismiss}
       onWriteSuccess={goToPlaylists}
       onBranchSuccess={goToPlaylists}

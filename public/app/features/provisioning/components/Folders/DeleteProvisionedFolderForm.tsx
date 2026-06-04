@@ -58,7 +58,6 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     setError(
       getProvisionedRequestError(
         error,
-        'folder',
         t('browse-dashboards.delete-provisioned-folder-form.api-error', 'Failed to delete folder')
       )
     );

@@ -86,7 +86,6 @@ function FormContent({
     setError(
       getProvisionedRequestError(
         err,
-        resourceType,
         errorMessage ?? t('provisioning.save-resource.error-saving', 'Failed to save changes')
       )
     );

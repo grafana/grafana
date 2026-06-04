@@ -116,7 +116,6 @@ export function SaveProvisionedDashboardForm({
     setError(
       getProvisionedRequestError(
         error,
-        'dashboard',
         t('dashboard-scene.save-provisioned-dashboard-form.error-saving', 'An error occurred while saving.')
       )
     );

@@ -201,7 +201,7 @@ describe('DeleteProvisionedDashboardForm', () => {
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toHaveTextContent(
-          'You have selected a branch that does not contain this dashboard'
+          'You have selected a branch that does not contain this resource'
         );
       });
     });

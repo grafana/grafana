@@ -110,7 +110,6 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
         setError(
           getProvisionedRequestError(
             err,
-            'dashboard',
             t('provisioning.import.error', 'An error occurred while importing the dashboard.')
           )
         );
