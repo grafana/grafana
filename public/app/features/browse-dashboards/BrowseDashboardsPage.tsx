@@ -19,7 +19,9 @@ import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
 import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
 import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
+import { SourceLink } from '../provisioning/components/SourceLink';
 import { RepoViewStatus, useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
+import { getSourcePath } from '../provisioning/utils/managedResource';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
@@ -49,6 +51,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     status: repoViewStatus,
     orphanedRepoName,
     repository,
+    folder: repoFolderResource,
   } = useGetResourceRepositoryView({ folderName: folderUID });
   const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
   const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
@@ -166,6 +169,10 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
           />
         )}
         <FolderRepo folder={folder} />
+        <SourceLink
+          repositoryName={repository?.name}
+          sourcePath={repoFolderResource ? getSourcePath(repoFolderResource) : undefined}
+        />
       </Stack>
     );
   };

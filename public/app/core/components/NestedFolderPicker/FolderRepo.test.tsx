@@ -152,6 +152,15 @@ describe('FolderRepo', () => {
     expect(tooltip).toHaveTextContent('Managed by: Repository');
   });
 
+  it('renders a managed badge for non-repository managers (terraform)', async () => {
+    const user = userEvent.setup();
+    setup({ folder: { ...MOCK_FOLDER, managedBy: ManagerKind.Terraform } });
+
+    const badge = screen.getByTestId('icon-exchange-alt');
+    await user.hover(badge);
+    expect(await screen.findByText('Managed by: Terraform')).toBeInTheDocument();
+  });
+
   it('renders orphaned badge when repository status is orphaned and query is settled', async () => {
     const user = userEvent.setup();
     setup({

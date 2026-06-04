@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Badge, useStyles2 } from '@grafana/ui';
-import { ManagerKind } from 'app/features/apiserver/types';
+import { type ManagerKind } from 'app/features/apiserver/types';
 
 export const ResultItem = React.forwardRef(
   (
@@ -41,7 +41,7 @@ export const ResultItem = React.forwardRef(
     // See the same pattern for `url` in KBarResults.tsx and below command url
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const managedBy = (action as ActionImpl & { managedBy?: ManagerKind }).managedBy;
-    const showProvisionedBadge = config.featureToggles.provisioning && managedBy === ManagerKind.Repo;
+    const showProvisionedBadge = config.featureToggles.provisioning && Boolean(managedBy);
 
     let name = action.name;
 
