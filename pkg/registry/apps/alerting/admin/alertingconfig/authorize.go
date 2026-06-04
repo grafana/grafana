@@ -9,24 +9,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-// Authorize gates k8s API verbs on AlertingConfig with three RBAC actions:
-//
-//   - alert.admin-config:read         — get/list/watch on the resource and
-//     its /status subresource. Granted to
-//     Viewer so the UI can render
-//     consistent state for all roles.
-//   - alert.admin-config:write        — create/update/patch/delete on the
-//     resource (spec). Granted to Admin
-//     only, matching the legacy
-//     /api/v1/ngalert/admin_config HTTP API.
-//   - alert.admin-config.status:write — write to the /status subresource.
-//     Granted only to the in-process service
-//     identity (see serviceIdentityPermissions
-//     in pkg/apimachinery/identity/context.go);
-//     not assigned to any human role. The
-//     sync worker owns status writes — an
-//     Admin PATCHing /status would corrupt
-//     observed state until the next sync tick.
+// Authorize maps k8s verbs on AlertingConfig (and its /status subresource)
+// to three RBAC actions: read → Viewer, spec write → Admin (matches the
+// legacy /api/v1/ngalert/admin_config HTTP API), status write → service
+// identity only (sync worker owns it; see serviceIdentityPermissions in
+// pkg/apimachinery/identity/context.go).
 func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 	if attr.GetResource() != ResourceInfo.GroupResource().Resource {
 		return authorizer.DecisionNoOpinion, "", nil

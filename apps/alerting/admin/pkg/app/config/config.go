@@ -9,19 +9,10 @@ import (
 // at registration time so the admin app's submodule stays free of
 // grafana-parent imports.
 type RuntimeConfig struct {
-	// ValidateExternalSyncDatasource validates that the given datasource UID
-	// is acceptable as spec.externalAlertmanagerSync.datasourceUid for the
-	// org carried in ctx. Called from the AlertingConfig admission validator
-	// on every create/update.
-	//
-	// Implementations should check:
-	//   - the sync feature flag is enabled (otherwise reject writes that
-	//     introduce a UID — the value would have no effect),
-	//   - the datasource exists in the request's org,
-	//   - the datasource type is alertmanager,
-	//   - its JsonData.implementation is in the syncable allow-list.
-	//
-	// Return nil on success; return an error to reject the admission
-	// request. Nil function means validation is skipped (e.g. test paths).
+	// ValidateExternalSyncDatasource is the admission check for
+	// spec.externalAlertmanagerSync.datasourceUid. Implementation lives in
+	// the parent process where the datasource service is in scope. Return
+	// nil to allow; non-nil error rejects with the error's message. Nil
+	// function skips validation (test paths).
 	ValidateExternalSyncDatasource func(ctx context.Context, uid string) error
 }
