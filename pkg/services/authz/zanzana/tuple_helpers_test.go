@@ -225,7 +225,6 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 		require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
 			{User: "role:role-org-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/users"},
 			{User: "role:role-org-admin#assignee", Relation: "update", Object: "group_resource:iam.grafana.app/users"},
-			{User: "role:role-org-admin#assignee", Relation: "create", Object: "group_resource:iam.grafana.app/users"},
 			{User: "role:role-org-admin#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/users"},
 			{User: "role:role-org-admin#assignee", Relation: "get_permissions", Object: "group_resource:iam.grafana.app/users"},
 		}), tupleKeyStrings(tuples))
@@ -406,9 +405,6 @@ func TestUserManagementToTuples(t *testing.T) {
 			}},
 			{"org.users:write", "users", "*", []*openfgav1.TupleKey{
 				{User: subject, Relation: "update", Object: usersObject},
-			}},
-			{"org.users:add", "users", "*", []*openfgav1.TupleKey{
-				{User: subject, Relation: "create", Object: usersObject},
 			}},
 			{"users:delete", "global.users", "*", []*openfgav1.TupleKey{
 				{User: subject, Relation: "delete", Object: usersObject},
