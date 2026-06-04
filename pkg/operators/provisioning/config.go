@@ -231,12 +231,17 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		})
 	}
 
-	// Every enabled resource must resolve to an API server. Groups without a dedicated URL
-	// fall back to the aggregated server; if a resource needs it and it is unset, fail loudly
-	// rather than hitting "no clients provider for group" at request time.
+	// Dashboards and folders have dedicated server URLs; everything else is served by the
+	// aggregated API server. Skip the built-in groups, then ensure every other enabled
+	// resource's group resolves to the aggregated server — failing loudly if a resource needs
+	// it and it is unset, rather than hitting "no clients provider for group" at request time.
 	for _, r := range supportedResources {
 		if !r.Enabled {
 			continue
+		}
+		switch r.Group {
+		case resources.DashboardResource.Group, resources.FolderResource.Group, provisioning.GROUP:
+			continue // built-in groups with dedicated server URLs
 		}
 		if _, ok := apiServerURLs[r.Group]; ok {
 			continue
