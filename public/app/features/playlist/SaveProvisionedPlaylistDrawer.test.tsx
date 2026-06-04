@@ -107,7 +107,7 @@ describe('SaveProvisionedPlaylistDrawer', () => {
     expect(await screen.findByRole('heading', { name: /save provisioned playlist/i })).toBeInTheDocument();
   });
 
-  it('commits the full playlist resource with a playlist commit message', async () => {
+  it('commits the full playlist resource with the default commit message', async () => {
     server.use(
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
@@ -126,7 +126,7 @@ describe('SaveProvisionedPlaylistDrawer', () => {
 
     const req = capturedRequest!;
     expect(req.url.pathname).toContain('/repositories/test-repo/files/playlists/test-playlist.json');
-    expect(req.url.searchParams.get('message')).toBe('Save playlist: Test Playlist');
+    expect(req.url.searchParams.get('message')).toBe('Save resource: Test Playlist');
     expect(req.body).toEqual({
       apiVersion: 'playlist.grafana.app/v0alpha1',
       kind: 'Playlist',

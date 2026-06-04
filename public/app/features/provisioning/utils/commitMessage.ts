@@ -50,54 +50,20 @@ function sanitizeLine(value: string | undefined): string {
   return (value ?? '').replace(/[\r\n]+/g, ' ').trim();
 }
 
-function defaultMessage({ action, resourceKind, title }: CommitTemplateVars): string {
-  // Known (resourceKind, action) pairs keep their own fully-translated copy. Anything not listed —
-  // including new resource types added to ProvisionedResourceType — falls through to the generic
-  // message below, so adding a type doesn't require touching this map.
-  const defaults: Partial<Record<`${CommitResourceKind}:${CommitAction}`, string>> = {
-    'dashboard:create': t('provisioning.commit-message.dashboard-create-default', 'New dashboard: {{title}}', {
-      title,
-    }),
-    'dashboard:update': t('provisioning.commit-message.dashboard-update-default', 'Save dashboard: {{title}}', {
-      title,
-    }),
-    'dashboard:delete': t('provisioning.commit-message.dashboard-delete-default', 'Delete dashboard: {{title}}', {
-      title,
-    }),
-    'dashboard:move': t('provisioning.commit-message.dashboard-move-default', 'Move dashboard: {{title}}', { title }),
-    'dashboard:rename': t('provisioning.commit-message.dashboard-rename-default', 'Rename dashboard: {{title}}', {
-      title,
-    }),
-    'folder:create': t('provisioning.commit-message.folder-create-default', 'Create folder: {{title}}', { title }),
-    'folder:update': t('provisioning.commit-message.folder-update-default', 'Save folder: {{title}}', { title }),
-    'folder:delete': t('provisioning.commit-message.folder-delete-default', 'Delete folder: {{title}}', { title }),
-    'folder:rename': t('provisioning.commit-message.folder-rename-default', 'Rename folder: {{title}}', { title }),
-    'folder:move': t('provisioning.commit-message.folder-move-default', 'Move folder: {{title}}', { title }),
+function defaultMessage({ action, title }: Pick<CommitTemplateVars, 'action' | 'title'>): string {
+  // Resource-agnostic by design: the verb and the noun ("resource") are part of each translatable
+  // string rather than interpolated, so the messages localise cleanly (no fixed word order, no raw
+  // English nouns) and every resource type — dashboards, folders, playlists and any new type —
+  // shares the same copy. A repo can override this via singleResourceMessageTemplate (which can
+  // reference {{resourceKind}}) when resource-specific phrasing is wanted.
+  const defaults: Record<CommitAction, string> = {
+    create: t('provisioning.commit-message.create-default', 'Create resource: {{title}}', { title }),
+    update: t('provisioning.commit-message.update-default', 'Save resource: {{title}}', { title }),
+    delete: t('provisioning.commit-message.delete-default', 'Delete resource: {{title}}', { title }),
+    move: t('provisioning.commit-message.move-default', 'Move resource: {{title}}', { title }),
+    rename: t('provisioning.commit-message.rename-default', 'Rename resource: {{title}}', { title }),
   };
-  return defaults[`${resourceKind}:${action}`] ?? genericDefaultMessage({ action, resourceKind, title });
-}
-
-/**
- * Resource-agnostic commit message used for any (resourceKind, action) pair without bespoke copy.
- * The action verb is translated; the resource kind is interpolated so new types work automatically.
- */
-function genericDefaultMessage({
-  action,
-  resourceKind,
-  title,
-}: Pick<CommitTemplateVars, 'action' | 'resourceKind' | 'title'>): string {
-  const verbs: Record<CommitAction, string> = {
-    create: t('provisioning.commit-message.action-create', 'Create'),
-    update: t('provisioning.commit-message.action-update', 'Save'),
-    delete: t('provisioning.commit-message.action-delete', 'Delete'),
-    move: t('provisioning.commit-message.action-move', 'Move'),
-    rename: t('provisioning.commit-message.action-rename', 'Rename'),
-  };
-  return t('provisioning.commit-message.generic-default', '{{verb}} {{resourceKind}}: {{title}}', {
-    verb: verbs[action],
-    resourceKind,
-    title,
-  });
+  return defaults[action];
 }
 
 export function renderCommitMessage(template: string | undefined | null, vars: CommitTemplateVars): string {
