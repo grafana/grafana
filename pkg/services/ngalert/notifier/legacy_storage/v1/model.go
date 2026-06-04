@@ -63,6 +63,30 @@ func (c *AMConfigV1) GetGrafanaReceiverMap() map[string]*PostableGrafanaReceiver
 	return UIDs
 }
 
+func (c *AMConfigV1) Validate() error {
+	for _, r := range c.Templates {
+		if err := r.Validate(); err != nil {
+			return err
+		}
+	}
+	for _, r := range c.InhibitionRules {
+		if err := r.Validate(); err != nil {
+			return err
+		}
+	}
+	for _, r := range c.ExtraConfigs {
+		if err := r.Validate(); err != nil {
+			return err
+		}
+	}
+	for _, r := range c.ManagedRoutes {
+		if err := r.Validate(); err != nil {
+			return err
+		}
+	}
+	return c.AlertmanagerConfig.Validate()
+}
+
 type ManagedRoutes map[string]*Route
 
 type ExtraConfiguration struct {

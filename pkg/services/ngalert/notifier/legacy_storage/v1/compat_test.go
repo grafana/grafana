@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -16,7 +17,31 @@ import (
 )
 
 func TestRoundTripConversion(t *testing.T) {
-	configJSON := `{
+	extraConfig := `
+route:
+  receiver: imported-receiver-1
+receivers:
+  - name: imported-receiver-1
+    webhook_configs:
+      - url: "http://localhost/"
+  - name: imported-receiver-2
+    webhook_configs:
+      - url: "http://localhost/"
+inhibit_rules:
+  - source_matchers:
+      - alertname = SourceAlert
+    target_matchers:
+      - alertname = TargetAlert
+    equal:
+      - cluster
+  - source_matchers:
+      - severity = critical
+    target_matchers:
+      - severity = warning
+    equal:
+      - instance
+`
+	configJSON := fmt.Sprintf(`{
 		"template_files": {
 			"template1.tmpl": "{{ define \"test\" }}Hello {{ .CommonLabels.alertname }}{{ end }}",
 			"template2.tmpl": "{{ define \"test2\" }}Alert: {{ .Status }}{{ end }}"
@@ -102,8 +127,13 @@ func TestRoundTripConversion(t *testing.T) {
 			],
 			"inhibit_rules": [
 				{
-					"source_matchers": ["severity=\"critical\""],
+					"source_matchers": ["severity=\"warning\""],
 					"target_matchers": ["alertname=~\".*\"", "severity=\"warning\""],
+					"equal": ["namespace", "alertname"]
+				},
+				{
+					"source_matchers": ["severity=\"critical\""],
+					"target_matchers": ["alertname=~\".*\"", "severity=\"critical\""],
 					"equal": ["namespace", "alertname"]
 				}
 			],
@@ -139,18 +169,28 @@ func TestRoundTripConversion(t *testing.T) {
 			"managed-route-1": {
 				"receiver": "critical-receiver",
 				"group_by": ["alertname"],
-				"matchers": ["team=\"platform\""],
 				"group_wait": "15s",
 				"repeat_interval": "2h",
-				"provenance": "file"
+				"provenance": "file",
+				"routes": [
+					{
+						"receiver": "warning-receiver",
+						"matchers": ["team=\"platform\""]
+					}
+				]
 			},
 			"managed-route-2": {
 				"receiver": "warning-receiver",
 				"group_by": ["namespace"],
-				"matchers": ["environment=~\"prod|staging\""],
 				"continue": true,
-				"active_time_intervals": ["business-hours"],
-				"provenance": "api"
+				"provenance": "api",
+				"routes": [
+					{
+						"receiver": "critical-receiver",
+						"matchers": ["environment=~\"prod|staging\""],
+						"active_time_intervals": ["business-hours"]
+					}
+				]
 			}
 		},
 		"managed_inhibition_rules": {
@@ -175,10 +215,10 @@ func TestRoundTripConversion(t *testing.T) {
 				"template_files": {
 					"remote-template.tmpl": "{{ define \"remote\" }}Remote alert{{ end }}"
 				},
-				"alertmanager_config": "route:\n  receiver: remote-default\nreceivers:\n  - name: remote-default\n"
+				"alertmanager_config": %q
 			}
 		]
-	}`
+	}`, extraConfig)
 
 	originalDB := &AMConfigDB{}
 	err := json.Unmarshal([]byte(configJSON), originalDB)
@@ -187,6 +227,9 @@ func TestRoundTripConversion(t *testing.T) {
 	// Convert DB -> Model
 	model := ToModel(originalDB)
 	require.NotNil(t, model)
+
+	// Ensure passes validation.
+	require.NoError(t, model.Validate())
 
 	// Convert Model -> DB
 	convertedDB, err := ToDBModel(model)
