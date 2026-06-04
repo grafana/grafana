@@ -84,6 +84,12 @@ const (
 	ReasonValidate           SyncReason = "validate"
 	ReasonSave               SyncReason = "save"
 	ReasonIdentifierMismatch SyncReason = "identifier_mismatch"
+	// ReasonNoUpstreamConfig is for the case where Mimir/Cortex returned a
+	// response but its alertmanager_config field is empty. Distinct from
+	// ReasonSave: we didn't try to persist anything; there was nothing valid
+	// to persist. Surfacing this separately lets clients (and operators)
+	// distinguish "Grafana persistence broke" from "upstream has no config".
+	ReasonNoUpstreamConfig SyncReason = "no_upstream_config"
 
 	// ReasonUnclassified is the sentinel returned by reasonOf when err is not
 	// a *SyncError. Keeps Prometheus label cardinality bounded — raw error
@@ -113,6 +119,8 @@ func (r SyncReason) ConditionReason() string {
 		return "SaveFailed"
 	case ReasonIdentifierMismatch:
 		return "IdentifierMismatch"
+	case ReasonNoUpstreamConfig:
+		return "NoUpstreamConfig"
 	default:
 		return "SyncFailed"
 	}
@@ -583,6 +591,10 @@ func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, ui
 	mimirCfg, hash, err := s.fetchMimirConfig(fetchCtx, ds)
 	if err != nil {
 		return v1.ExtraConfiguration{}, 0, &SyncError{Reason: ReasonMimirFetch, Cause: fmt.Errorf("fetch upstream config: %w", err)}
+	}
+
+	if mimirCfg.AlertmanagerConfig == "" {
+		return v1.ExtraConfiguration{}, 0, &SyncError{Reason: ReasonNoUpstreamConfig, Cause: fmt.Errorf("upstream Mimir has no alertmanager configuration to import")}
 	}
 
 	return v1.ExtraConfiguration{
