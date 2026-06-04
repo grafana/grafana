@@ -8,6 +8,7 @@ replace (
 	github.com/grafana/grafana => ../..
 
 	github.com/grafana/grafana/apps/advisor => ../advisor
+	github.com/grafana/grafana/apps/alerting/admin => ../alerting/admin
 	github.com/grafana/grafana/apps/alerting/alertenrichment => ../alerting/alertenrichment
 	github.com/grafana/grafana/apps/alerting/historian => ../alerting/historian
 	github.com/grafana/grafana/apps/alerting/notifications => ../alerting/notifications
@@ -206,6 +207,7 @@ require (
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.292.0 // indirect
 	github.com/grafana/grafana/apps/advisor v0.0.0 // indirect
+	github.com/grafana/grafana/apps/alerting/admin v0.0.0 // indirect
 	github.com/grafana/grafana/apps/alerting/historian v0.0.0 // indirect
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0 // indirect
 	github.com/grafana/grafana/apps/alerting/rules v0.0.0 // indirect
