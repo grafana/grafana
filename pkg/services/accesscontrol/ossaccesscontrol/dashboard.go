@@ -93,11 +93,11 @@ func registerDashboardRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, serv
 // Options passed there.
 func DashboardPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
-		Resource:       "dashboards",
+		Resource:       dashboardPermissionsResource,
 		APIGroup:       dashboardv1.APIGroup,
-		ReaderRoleName: "Permission reader",
-		WriterRoleName: "Permission writer",
-		RoleGroup:      "Dashboards",
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      dashboardPermissionsRoleGroup,
 	})
 }
 
@@ -121,7 +121,7 @@ func ProvideDashboardPermissions(
 	}
 
 	options := resourcepermissions.Options{
-		Resource:          "dashboards",
+		Resource:          dashboardPermissionsResource,
 		ResourceAttribute: "uid",
 		APIGroup:          dashboardv1.APIGroup,
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
@@ -173,9 +173,9 @@ func ProvideDashboardPermissions(
 			"Edit":  DashboardEditActions,
 			"Admin": DashboardAdminActions,
 		},
-		ReaderRoleName: "Permission reader",
-		WriterRoleName: "Permission writer",
-		RoleGroup:      "Dashboards",
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      dashboardPermissionsRoleGroup,
 		GetParentFolder: func(ctx context.Context, namespace string, dashboardUID string, dynamicClient dynamic.Interface) (string, error) {
 			dashboardsGVR := schema.GroupVersionResource{
 				Group:    dashboardv1.APIGroup,

@@ -40,9 +40,9 @@ func defaultPermissions() []accesscontrol.SetResourcePermissionCommand {
 // the identity fields below must match the Options passed there.
 func ReceiverPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
-		Resource:       "receivers",
-		ReaderRoleName: "Alerting receiver permission reader",
-		WriterRoleName: "Alerting receiver permission writer",
+		Resource:       receiverPermissionsResource,
+		ReaderRoleName: receiverPermissionsReaderRoleName,
+		WriterRoleName: receiverPermissionsWriterRoleName,
 		RoleGroup:      models.AlertRolesGroup,
 	})
 }
@@ -53,7 +53,7 @@ func ProvideReceiverPermissionsService(
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*ReceiverPermissionsService, error) {
 	options := resourcepermissions.Options{
-		Resource:          "receivers",
+		Resource:          receiverPermissionsResource,
 		ResourceAttribute: "uid",
 		ResourceTranslator: func(ctx context.Context, orgID int64, resourceID string) (string, error) {
 			return models.ScopeReceiversProvider.GetResourceIDFromUID(resourceID), nil
@@ -69,8 +69,8 @@ func ProvideReceiverPermissionsService(
 			string(models.PermissionEdit):  append([]string{}, ReceiversEditActions...),
 			string(models.PermissionAdmin): append([]string{}, ReceiversAdminActions...),
 		},
-		ReaderRoleName: "Alerting receiver permission reader",
-		WriterRoleName: "Alerting receiver permission writer",
+		ReaderRoleName: receiverPermissionsReaderRoleName,
+		WriterRoleName: receiverPermissionsWriterRoleName,
 		RoleGroup:      models.AlertRolesGroup,
 	}
 

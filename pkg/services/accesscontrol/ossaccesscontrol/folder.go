@@ -102,11 +102,11 @@ func registerFolderRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service
 // passed there.
 func FolderPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
-		Resource:       "folders",
+		Resource:       folderPermissionsResource,
 		APIGroup:       folderv1.APIGroup,
-		ReaderRoleName: "Permission reader",
-		WriterRoleName: "Permission writer",
-		RoleGroup:      "Folders",
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      folderPermissionsRoleGroup,
 	})
 }
 
@@ -121,7 +121,7 @@ func ProvideFolderPermissions(
 	}
 
 	options := resourcepermissions.Options{
-		Resource:          "folders",
+		Resource:          folderPermissionsResource,
 		ResourceAttribute: "uid",
 		APIGroup:          folderv1.APIGroup,
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
@@ -165,9 +165,9 @@ func ProvideFolderPermissions(
 			"Edit":  append(DashboardEditActions, FolderEditActions...),
 			"Admin": append(DashboardAdminActions, FolderAdminActions...),
 		},
-		ReaderRoleName:     "Permission reader",
-		WriterRoleName:     "Permission writer",
-		RoleGroup:          "Folders",
+		ReaderRoleName:     permissionReaderRoleName,
+		WriterRoleName:     permissionWriterRoleName,
+		RoleGroup:          folderPermissionsRoleGroup,
 		RestConfigProvider: restConfigProvider,
 	}
 	srv, err := resourcepermissions.New(cfg, options, features, router, license, accesscontrol, service, sql, teamService, userService, actionSetService)

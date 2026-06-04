@@ -58,8 +58,8 @@ func RoutePermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 		APIGroup:        accesscontrol.AlertingNotificationsApiGroup,
 		Resource:        accesscontrol.AlertingRoutesResource,
 		K8sActionFormat: true,
-		ReaderRoleName:  "Alerting route permission reader",
-		WriterRoleName:  "Alerting route permission writer",
+		ReaderRoleName:  routePermissionsReaderRoleName,
+		WriterRoleName:  routePermissionsWriterRoleName,
 		RoleGroup:       models.AlertRolesGroup,
 	})
 }
@@ -88,8 +88,8 @@ func ProvideRoutePermissionsService(
 			PermissionEdit:  append([]string{}, RoutesEditActions...),
 			PermissionAdmin: append([]string{}, RoutesAdminActions...),
 		},
-		ReaderRoleName: "Alerting route permission reader",
-		WriterRoleName: "Alerting route permission writer",
+		ReaderRoleName: routePermissionsReaderRoleName,
+		WriterRoleName: routePermissionsWriterRoleName,
 		RoleGroup:      models.AlertRolesGroup,
 	}
 

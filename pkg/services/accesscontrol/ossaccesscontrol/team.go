@@ -43,10 +43,10 @@ var (
 // passed there.
 func TeamPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
-		Resource:       "teams",
-		ReaderRoleName: "Permission reader",
-		WriterRoleName: "Permission writer",
-		RoleGroup:      "Teams",
+		Resource:       teamPermissionsResource,
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      teamPermissionsRoleGroup,
 	})
 }
 
@@ -57,7 +57,7 @@ func ProvideTeamPermissions(
 	directRestConfigProvider apiserver.DirectRestConfigProvider,
 ) (*TeamPermissionsService, error) {
 	options := resourcepermissions.Options{
-		Resource:           "teams",
+		Resource:           teamPermissionsResource,
 		ResourceAttribute:  "id",
 		OnlyManaged:        true,
 		ResourceTranslator: team.UIDToIDHandler(teamService),
@@ -89,9 +89,9 @@ func ProvideTeamPermissions(
 			"Member": TeamMemberActions,
 			"Admin":  TeamAdminActions,
 		},
-		ReaderRoleName: "Permission reader",
-		WriterRoleName: "Permission writer",
-		RoleGroup:      "Teams",
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      teamPermissionsRoleGroup,
 		OnSetUser: func(session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error {
 			teamId, err := strconv.ParseInt(resourceID, 10, 64)
 			if err != nil {

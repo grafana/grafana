@@ -43,11 +43,11 @@ type ServiceAccountPermissionsService struct {
 // the identity fields below must match the Options passed there.
 func ServiceAccountPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
-		Resource:       "serviceaccounts",
-		APIGroup:       "iam.grafana.app",
-		ReaderRoleName: "Permission reader",
-		WriterRoleName: "Permission writer",
-		RoleGroup:      "Service accounts",
+		Resource:       serviceAccountPermissionsResource,
+		APIGroup:       serviceAccountPermissionsAPIGroup,
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      serviceAccountPermissionsRoleGroup,
 	})
 }
 
@@ -58,9 +58,9 @@ func ProvideServiceAccountPermissions(
 	restConfigProvider apiserver.DirectRestConfigProvider,
 ) (*ServiceAccountPermissionsService, error) {
 	options := resourcepermissions.Options{
-		Resource:           "serviceaccounts",
+		Resource:           serviceAccountPermissionsResource,
 		ResourceAttribute:  "id",
-		APIGroup:           "iam.grafana.app",
+		APIGroup:           serviceAccountPermissionsAPIGroup,
 		ResourceTranslator: serviceaccounts.UIDToIDHandler(serviceAccountRetrieverService),
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideServiceAccountPermissions.ResourceValidator")
@@ -85,9 +85,9 @@ func ProvideServiceAccountPermissions(
 			"Edit":  ServiceAccountEditActions,
 			"Admin": ServiceAccountAdminActions,
 		},
-		ReaderRoleName:     "Permission reader",
-		WriterRoleName:     "Permission writer",
-		RoleGroup:          "Service accounts",
+		ReaderRoleName:     permissionReaderRoleName,
+		WriterRoleName:     permissionWriterRoleName,
+		RoleGroup:          serviceAccountPermissionsRoleGroup,
 		RestConfigProvider: restConfigProvider,
 	}
 
