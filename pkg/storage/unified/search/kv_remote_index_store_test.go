@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -819,25 +820,36 @@ func newChunkSizedTestStoreOn(t *testing.T, store kv.KV, chunkSize int64) *KVRem
 // newTempFileWithContent writes size bytes of a deterministic pattern to a
 // fresh temp file and returns both the open file (positioned at 0) and the
 // bytes it contains, so callers can use the file as a snapshot source and
-// compare the round-tripped output against the original bytes.
+// compare the round-tripped output against the original bytes. File ops go
+// through an os.Root so gosec recognises them as path-traversal-safe.
 func newTempFileWithContent(t *testing.T, size int64) (*os.File, []byte) {
 	t.Helper()
 	buf := make([]byte, size)
 	for i := range buf {
 		buf[i] = byte(i)
 	}
-	path := filepath.Join(t.TempDir(), "src")
-	require.NoError(t, os.WriteFile(path, buf, 0o600))
-	f, err := os.Open(path)
+	root, err := os.OpenRoot(t.TempDir())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = root.Close() })
+
+	f, err := root.Create("src")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = f.Close() })
+	_, err = f.Write(buf)
+	require.NoError(t, err)
+	_, err = f.Seek(0, io.SeekStart)
+	require.NoError(t, err)
 	return f, buf
 }
 
-// readAllFromFile reads the entire content of f from offset 0.
+// readAllFromFile reads the entire content of f. Uses Seek + io.ReadAll on
+// the already-open handle so we don't hand a variable path to os.ReadFile
+// (gosec G304).
 func readAllFromFile(t *testing.T, f *os.File) []byte {
 	t.Helper()
-	b, err := os.ReadFile(f.Name())
+	_, err := f.Seek(0, io.SeekStart)
+	require.NoError(t, err)
+	b, err := io.ReadAll(f)
 	require.NoError(t, err)
 	return b
 }
