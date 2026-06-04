@@ -120,24 +120,55 @@ import { getManagerIdentity, getSourcePath } from 'app/features/provisioning/uti
 
 On the folder page it is shown when the folder has a metadata file (its `sourcePath`).
 
+## Per-kind UI metadata
+
+Per-kind UI knowledge (group, plural resource, k8s kind, tree item type, icon, listing route,
+labels, and the feature toggle that gates the kind) lives in a single descriptor registry,
+[`utils/resourceKinds.ts`](./utils/resourceKinds.ts). Call sites read from it instead of carrying
+their own `switch`/`if` chains, so **adding a new kind is one entry** in `RESOURCE_KINDS`.
+
+```ts
+import {
+  getResourceIcon,
+  getResourceLabel,
+  getResourceListUrl,
+  resolveResourceKind,
+} from 'app/features/provisioning/utils/resourceKinds';
+
+// Drive listing/label/icon from the descriptor (graceful fallback for unknown kinds):
+const href = getResourceListUrl(stat.group, stat.resource, { repoName, syncTarget });
+const label = getResourceLabel(stat.group, stat.resource);
+const icon = getResourceIcon(stat.group, stat.resource);
+```
+
+Use `findResourceKind(group, resource)` for a strict group+resource match (e.g. classifying a tree
+node) and `resolveResourceKind(group, resource)` for the lenient match stats need (full group, group
+alone, or a legacy plural-as-group value). Kinds gated by a feature toggle are filtered with
+`isResourceKindEnabled` / `getEnabledResourceKinds`.
+
 ## Adding provisioning awareness to a new resource — checklist
 
 1. **Confirm the resource is served from the app platform API** so its `metadata.annotations` carry
    the manager annotations (most `*.grafana.app` resources do).
-2. **Detect state** with the helpers above — never compare annotation strings inline.
-3. **Show the badge** in listing and edit views with `ManagedBadge`.
-4. **Gate edits** for managed resources that are read-only (disable the form / show a banner). Repo-
+2. **Add a descriptor entry** to [`RESOURCE_KINDS`](./utils/resourceKinds.ts) (group, resource, kind,
+   icon, route, labels, and its feature toggle). Listings, the resource tree, the migration wizard
+   and bulk actions pick it up automatically.
+3. **Detect state** with the helpers above — never compare annotation strings inline.
+4. **Show the badge** in listing and edit views with `ManagedBadge`.
+5. **Gate edits** for managed resources that are read-only (disable the form / show a banner). Repo-
    managed resources should route through the provisioning edit flow; for richer repository context
    (read-only repo, orphaned repo, source link) use
    [`useGetResourceRepositoryView`](./hooks/useGetResourceRepositoryView.ts).
-5. **Respect the feature toggle** — repository provisioning UI is behind
-   `config.featureToggles.provisioning`. Guard repository-specific UI with it.
-6. **Test** the managed/provisioned/unmanaged cases. See
+6. **Respect the feature toggle** — repository provisioning UI is behind
+   `config.featureToggles.provisioning`, and per-kind support is gated by the kind's own toggle
+   (`ResourceKindDescriptor.toggle`).
+7. **Test** the managed/provisioned/unmanaged cases. See
    [`utils/managedResource.test.ts`](./utils/managedResource.test.ts) for the helper contract.
 
 ## Reference
 
 - `app/features/apiserver/types.ts` — annotation constants and `ManagerKind`.
+- `utils/resourceKinds.ts` — per-kind UI metadata registry (label, icon, route, toggle).
 - `utils/managedResource.ts` — generic managed/provisioned helpers.
 - `components/ManagedBadge.tsx` — shared managed/provisioned badge.
 - `components/ReadOnlyBadge.tsx` — shared read-only badge.

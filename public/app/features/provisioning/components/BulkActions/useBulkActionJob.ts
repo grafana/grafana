@@ -2,10 +2,12 @@ import { t } from '@grafana/i18n';
 import { useCreateRepositoryJobsMutation, type RepositoryView, type Job } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
+// group/kind are open strings so new provisioned resource kinds work without
+// editing this union — values come from the per-kind descriptors in resourceKinds.ts.
 export interface ResourceRef {
   name: string;
-  group: 'dashboard.grafana.app' | 'folder.grafana.app';
-  kind: 'Dashboard' | 'Folder';
+  group: string;
+  kind: string;
 }
 
 export interface DeleteJobSpec {

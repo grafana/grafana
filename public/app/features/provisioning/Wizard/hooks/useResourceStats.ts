@@ -13,10 +13,19 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
+import { isResourceKindEnabled, resolveResourceKind } from '../../utils/resourceKinds';
+
 export type UseResourceStatsOptions = {
   isHealthy?: boolean; // true only when healthy AND reconciled
   healthStatusNotReady?: boolean; // true when waiting for reconciliation
 };
+
+// Resolves a stat to a countable resource kind. Stats carry the kind in their
+// `group` field (the full API group or, for legacy payloads, the plural name).
+function getCountableKind(stat: ResourceCount) {
+  const kind = resolveResourceKind(stat.group, stat.resource);
+  return kind && isResourceKindEnabled(kind) ? kind : undefined;
+}
 
 function getManagedCount(managed?: ManagerStats[]) {
   let totalCount = 0;
@@ -26,7 +35,7 @@ function getManagedCount(managed?: ManagerStats[]) {
     if (manager.kind === ManagerKind.Repo) {
       // Loop through stats inside each manager and sum up the counts
       manager.stats.forEach((stat) => {
-        if (stat.group === 'folder.grafana.app' || stat.group === 'dashboard.grafana.app') {
+        if (getCountableKind(stat)) {
           totalCount += stat.count;
         }
       });
@@ -40,59 +49,19 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
   let counts: string[] = [];
   let resourceCount = 0;
 
-  stats?.forEach((stat) => {
-    switch (stat.group) {
-      case 'folders':
-      case 'folder.grafana.app':
-        resourceCount += stat.count;
-        counts.push(
-          t('provisioning.bootstrap-step.folders-count', '', {
-            count: stat.count,
-            defaultValue_one: '{{count}} folder',
-            defaultValue_other: '{{count}} folder',
-          })
-        );
-        break;
-      case 'dashboard.grafana.app':
-        resourceCount += stat.count;
-        counts.push(
-          t('provisioning.bootstrap-step.dashboards-count', '', {
-            count: stat.count,
-            defaultValue_one: '{{count}} dashboard',
-            defaultValue_other: '{{count}} dashboard',
-          })
-        );
-        break;
+  const addStat = (stat: ResourceCount) => {
+    const kind = getCountableKind(stat);
+    if (kind) {
+      resourceCount += stat.count;
+      counts.push(kind.getCountLabel(stat.count));
     }
-  });
+  };
+
+  stats?.forEach(addStat);
 
   managed?.forEach((manager) => {
     if (manager.kind !== ManagerKind.Repo) {
-      manager.stats.forEach((stat) => {
-        switch (stat.group) {
-          case 'folders':
-          case 'folder.grafana.app':
-            resourceCount += stat.count;
-            counts.push(
-              t('provisioning.bootstrap-step.folders-count', '', {
-                count: stat.count,
-                defaultValue_one: '{{count}} folder',
-                defaultValue_other: '{{count}} folder',
-              })
-            );
-            break;
-          case 'dashboard.grafana.app':
-            resourceCount += stat.count;
-            counts.push(
-              t('provisioning.bootstrap-step.dashboards-count', '', {
-                count: stat.count,
-                defaultValue_one: '{{count}} dashboard',
-                defaultValue_other: '{{count}} dashboard',
-              })
-            );
-            break;
-        }
-      });
+      manager.stats.forEach(addStat);
     }
   });
 

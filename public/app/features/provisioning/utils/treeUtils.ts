@@ -4,6 +4,7 @@ import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 import { type FileDetails, type FlatTreeItem, type ItemType, type SyncStatus, type TreeItem } from '../types';
 
 import { getFolderMetadataPath, getParentFolderResourceHash, isFolderMetadataPath } from './folderMetadata';
+import { findResourceKind, RESOURCE_KINDS } from './resourceKinds';
 
 const collator = new Intl.Collator();
 
@@ -57,14 +58,13 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
 }
 
 export function getItemType(path: string, resource?: ResourceListItem): ItemType {
-  if (resource?.resource === 'dashboards') {
-    return 'Dashboard';
-  }
-  if (resource?.resource === 'folders') {
-    return 'Folder';
+  if (resource) {
+    // Known tree kinds (dashboards, folders) map to their item type; anything
+    // else backed by a resource is shown as a file.
+    return findResourceKind(resource.group, resource.resource)?.itemType ?? 'File';
   }
   // Inferred folder (no extension means it's a folder from file paths)
-  if (!resource && !path.includes('.')) {
+  if (!path.includes('.')) {
     return 'Folder';
   }
   // Unsynced files are "File" - don't infer Dashboard from .json
@@ -78,16 +78,17 @@ export function getDisplayTitle(path: string, resource?: ResourceListItem): stri
   return path.split('/').pop() ?? path;
 }
 
-export function getIconName(type: ItemType): IconName {
-  switch (type) {
-    case 'Folder':
-      return 'folder';
-    case 'Dashboard':
-      return 'apps';
-    case 'File':
-    default:
-      return 'file-alt';
+// Icons for tree item types, derived from the per-kind descriptors so a new
+// tree kind only needs an entry in RESOURCE_KINDS.
+const ITEM_TYPE_ICONS: Partial<Record<ItemType, IconName>> = {};
+for (const kind of RESOURCE_KINDS) {
+  if (kind.itemType) {
+    ITEM_TYPE_ICONS[kind.itemType] = kind.icon;
   }
+}
+
+export function getIconName(type: ItemType): IconName {
+  return ITEM_TYPE_ICONS[type] ?? 'file-alt';
 }
 
 export function getStatus(fileHash?: string, resourceHash?: string): SyncStatus {

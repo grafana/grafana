@@ -1,6 +1,7 @@
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type ResourceRef } from 'app/features/provisioning/components/BulkActions/useBulkActionJob';
+import { getResourceKindByKind } from 'app/features/provisioning/utils/resourceKinds';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 
 import { type DashboardTreeSelection, type DashboardViewItemWithUIItems } from '../types';
@@ -70,19 +71,20 @@ export function parseOwnerRef(ref: string): { kind: string; uid: string } | unde
 export function collectSelectedItems(selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>) {
   const resources: ResourceRef[] = [];
 
-  // folders
-  for (const [uid, selected] of Object.entries(selectedItems.folder)) {
-    if (selected) {
-      resources.push({ name: uid, group: 'folder.grafana.app', kind: 'Folder' });
+  const pushSelected = (selection: Record<string, boolean | undefined>, kind: string) => {
+    const descriptor = getResourceKindByKind(kind);
+    if (!descriptor) {
+      return;
     }
-  }
+    for (const [uid, selected] of Object.entries(selection)) {
+      if (selected) {
+        resources.push({ name: uid, group: descriptor.group, kind: descriptor.kind });
+      }
+    }
+  };
 
-  // dashboards
-  for (const [uid, selected] of Object.entries(selectedItems.dashboard)) {
-    if (selected) {
-      resources.push({ name: uid, group: 'dashboard.grafana.app', kind: 'Dashboard' });
-    }
-  }
+  pushSelected(selectedItems.folder, 'Folder');
+  pushSelected(selectedItems.dashboard, 'Dashboard');
 
   return resources;
 }

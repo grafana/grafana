@@ -13244,6 +13244,8 @@
       "folders-count_other": "{{count}} folder",
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
+      "playlists-count_one": "{{count}} playlist",
+      "playlists-count_other": "{{count}} playlist",
       "retry-action": "Retry",
       "text-loading-resource-information": "Loading resource information...",
       "unmanaged-resources-label": "Unmanaged resources",
@@ -13782,6 +13784,7 @@
       "status": "Status:",
       "unhealthy": "Unhealthy",
       "view-folder": "View Folder",
+      "view-resource": "View {{resource}}",
       "webhook": "Webhook",
       "webhook-events": "Events:",
       "webhook-id": "ID:",
@@ -13826,6 +13829,11 @@
       "pure-git": "Pure Git",
       "pure-git-description": "Connect to any Git repository",
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
+    },
+    "resource-kind": {
+      "dashboards": "Dashboards",
+      "folders": "Folders",
+      "playlists": "Playlists"
     },
     "resource-tree": {
       "header-hash": "Hash",
