@@ -36,6 +36,17 @@ import (
 func newJobAuthClients(t *testing.T) *resources.MockClientFactory {
 	rc := resources.NewMockResourceClients(t)
 	rc.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
+	rc.EXPECT().ForKind(mock.Anything, mock.Anything).RunAndReturn(
+		func(_ context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
+			switch gvk.GroupKind() {
+			case resources.DashboardKind.GroupKind():
+				return nil, resources.DashboardResource, nil
+			case resources.FolderKind.GroupKind():
+				return nil, resources.FolderResource, nil
+			default:
+				return nil, schema.GroupVersionResource{}, fmt.Errorf("unexpected kind %v", gvk)
+			}
+		}).Maybe()
 	cf := resources.NewMockClientFactory(t)
 	cf.EXPECT().Clients(mock.Anything, mock.Anything).Return(rc, nil).Maybe()
 	return cf
@@ -318,17 +329,17 @@ func TestAuthorizeResourceJob(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		rootFolder := resources.RootFolder(cfg)
 
-		for _, kind := range resources.SupportedProvisioningResources {
+		for _, kind := range []schema.GroupVersionResource{resources.DashboardResource, resources.FolderResource} {
 			accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
-				return req.Group == kind.GVR.Group &&
-					req.Resource == kind.GVR.Resource &&
+				return req.Group == kind.Group &&
+					req.Resource == kind.Resource &&
 					req.Verb == utils.VerbGet
 			}), "").Return(nil).Once()
 		}
-		for _, kind := range resources.SupportedProvisioningResources {
+		for _, kind := range []schema.GroupVersionResource{resources.DashboardResource, resources.FolderResource} {
 			accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
-				return req.Group == kind.GVR.Group &&
-					req.Resource == kind.GVR.Resource &&
+				return req.Group == kind.Group &&
+					req.Resource == kind.Resource &&
 					req.Verb == utils.VerbCreate
 			}), rootFolder).Return(nil).Once()
 		}

@@ -30,69 +30,37 @@ var (
 	DashboardResourceV2alpha1 = provisioningresources.DashboardResourceV2alpha1
 	DashboardResourceV2beta1  = provisioningresources.DashboardResourceV2beta1
 
-	// SupportedProvisioningResources is the static set of resources that can be fully
-	// managed from the UI. Extra resources (e.g. flag-gated ones) are registered with
-	// the client factory and appended to this base set.
+	// SupportedProvisioningResources is the static fallback set of resources that can be
+	// managed from the UI, used when the client factory is created without an explicit
+	// (configured) set. The effective set is normally built from configuration; see
+	// pkg/setting [provisioning.resources.<kind>.<group>] sections.
 	SupportedProvisioningResources = []SupportedResource{
-		{GVR: FolderResource, SupportsFolderAnnotation: true},
-		{GVR: DashboardResource, SupportsFolderAnnotation: true},
+		{GroupKind: FolderKind.GroupKind(), SupportsFolderAnnotation: true},
+		{GroupKind: DashboardKind.GroupKind(), SupportsFolderAnnotation: true},
 	}
 )
 
-// SupportedResource describes a resource that can be managed through provisioning.
-// It is the unit of registration: extra resources (e.g. ones gated behind a feature
-// flag) are registered with the client factory and merged into the static base set.
+// SupportedResource describes a resource that can be managed through provisioning. It is
+// identified by its group and kind; the API version and plural resource are resolved at
+// runtime through the discovery client (ForKind), so they are not part of the config.
 type SupportedResource struct {
-	// GVR is the resource added to the supported set.
-	GVR schema.GroupVersionResource
-	// SupportsFolderAnnotation reports whether the resource can be saved in a folder,
+	// GroupKind identifies the resource group and kind.
+	schema.GroupKind
+	// SupportsFolderAnnotation reports whether the resource is saved inside a folder,
 	// i.e. whether it should carry the folder header annotation when written.
 	SupportsFolderAnnotation bool
 }
 
-// supportsFolderAnnotation reports whether gvr is a supported resource that carries the
+// supportsFolderAnnotation reports whether gvk is a supported resource that carries the
 // folder header annotation when written.
-func supportsFolderAnnotation(supported []SupportedResource, gvr schema.GroupVersionResource) bool {
-	gr := gvr.GroupResource()
+func supportsFolderAnnotation(supported []SupportedResource, gvk schema.GroupVersionKind) bool {
+	gk := gvk.GroupKind()
 	for _, r := range supported {
-		if r.SupportsFolderAnnotation && r.GVR.GroupResource() == gr {
+		if r.SupportsFolderAnnotation && r.GroupKind == gk {
 			return true
 		}
 	}
 	return false
-}
-
-// provisioningResourcesByName maps the short names accepted in the [provisioning]
-// resources / folder_resources config to their GroupVersionResource. The version is
-// resolved at runtime by the discovery client when a resource client is requested, so
-// the value here only needs to identify the group and resource.
-var provisioningResourcesByName = map[string]schema.GroupVersionResource{
-	"dashboards": DashboardResource,
-	"folders":    FolderResource,
-}
-
-// BuildSupportedResources builds the effective supported set from the configured
-// resource names. folderResourceNames is the subset of resourceNames that is
-// folder-contained (carries the folder header annotation). Unknown names are rejected
-// so a misconfiguration fails fast at startup rather than silently dropping a resource.
-func BuildSupportedResources(resourceNames, folderResourceNames []string) ([]SupportedResource, error) {
-	supportsFolder := make(map[string]bool, len(folderResourceNames))
-	for _, name := range folderResourceNames {
-		if _, ok := provisioningResourcesByName[name]; !ok {
-			return nil, fmt.Errorf("unknown provisioning folder resource %q", name)
-		}
-		supportsFolder[name] = true
-	}
-
-	out := make([]SupportedResource, 0, len(resourceNames))
-	for _, name := range resourceNames {
-		gvr, ok := provisioningResourcesByName[name]
-		if !ok {
-			return nil, fmt.Errorf("unknown provisioning resource %q", name)
-		}
-		out = append(out, SupportedResource{GVR: gvr, SupportsFolderAnnotation: supportsFolder[name]})
-	}
-	return out, nil
 }
 
 // folderGVR builds the GVR for the folder API at the given version.

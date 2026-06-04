@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -177,7 +178,10 @@ func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, lister 
 		return fmt.Errorf("get resource stats for quota check: %w", err)
 	}
 
-	netChange := countSupportedResources(stats.Unmanaged, clients.SupportedResources())
+	netChange, err := countSupportedResources(ctx, stats.Unmanaged, clients)
+	if err != nil {
+		return err
+	}
 
 	if !quotas.WouldStayWithinQuota(quota, usage, netChange) {
 		total := usage.TotalResources + netChange
@@ -189,15 +193,23 @@ func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, lister 
 }
 
 // countSupportedResources sums counts for resource types that support provisioning.
-func countSupportedResources(stats []provisioning.ResourceCount, supported []resources.SupportedResource) int64 {
+// The supported set is identified by group+kind; the plural resource used to match the
+// stats is resolved via discovery.
+func countSupportedResources(ctx context.Context, stats []provisioning.ResourceCount, clients resources.ResourceClients) (int64, error) {
+	supported := make(map[schema.GroupResource]bool)
+	for _, kind := range clients.SupportedResources() {
+		_, gvr, err := clients.ForKind(ctx, schema.GroupVersionKind{Group: kind.Group, Kind: kind.Kind})
+		if err != nil {
+			return 0, fmt.Errorf("resolve client for %s/%s: %w", kind.Group, kind.Kind, err)
+		}
+		supported[gvr.GroupResource()] = true
+	}
+
 	var total int64
 	for _, stat := range stats {
-		for _, kind := range supported {
-			if stat.Group == kind.GVR.Group && stat.Resource == kind.GVR.Resource {
-				total += stat.Count
-				break
-			}
+		if supported[schema.GroupResource{Group: stat.Group, Resource: stat.Resource}] {
+			total += stat.Count
 		}
 	}
-	return total
+	return total, nil
 }

@@ -106,6 +106,25 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 		// Should return the configured value
 		require.Equal(t, int64(1000), settings.MaxRepositories, "MaxRepositories should be 1000 when configured")
 	})
+
+	t.Run("settings endpoint surfaces the default supported resources", func(t *testing.T) {
+		settings := &provisioning.RepositoryViewList{}
+		result := helper.AdminREST.Get().
+			Namespace("default").
+			Resource("settings").
+			Do(ctx)
+
+		require.NoError(t, result.Error(), "should be able to GET settings")
+		require.NoError(t, result.Into(settings), "should be able to unmarshal settings response")
+
+		// With the default configuration, folders and dashboards are provisionable. They are
+		// surfaced as "<kind>.<group>" identifiers (the version is resolved at runtime).
+		require.ElementsMatch(t,
+			[]string{"Folder.folder.grafana.app", "Dashboard.dashboard.grafana.app"},
+			settings.AvailableResources,
+			"settings should surface the default supported resources",
+		)
+	})
 }
 
 func TestIntegrationProvisioning_StatsAuthorization(t *testing.T) {

@@ -80,7 +80,7 @@ func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
 
 		clients := NewMockResourceClients(t)
 		clients.EXPECT().SupportedResources().Return([]SupportedResource{
-			{GVR: replaceTestGVR, SupportsFolderAnnotation: false},
+			{GroupKind: replaceTestGVK.GroupKind(), SupportsFolderAnnotation: false},
 		})
 
 		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
@@ -110,7 +110,7 @@ func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
 
 		clients := NewMockResourceClients(t)
 		clients.EXPECT().SupportedResources().Return([]SupportedResource{
-			{GVR: replaceTestGVR, SupportsFolderAnnotation: true},
+			{GroupKind: replaceTestGVK.GroupKind(), SupportsFolderAnnotation: true},
 		})
 
 		// Root-level file: EnsureFolderPathExist resolves to the repository root
@@ -139,7 +139,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		parsed, _ := newWritableParsedResource("same-uid")
 		mockParser.On("Parse", mock.Anything, fileInfo).Return(parsed, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, authTestClients())
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, gvk, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "same-uid", replaceTestGVR)
 
 		require.NoError(t, err)
@@ -156,7 +156,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		parsed, _ := newWritableParsedResource("new-uid")
 		mockParser.On("Parse", mock.Anything, fileInfo).Return(parsed, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, authTestClients())
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, gvk, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "", replaceTestGVR)
 
 		require.NoError(t, err)
@@ -198,7 +198,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		repo.On("Read", mock.Anything, "alerts/rule.json", "").
 			Return((*repository.FileInfo)(nil), fmt.Errorf("file not found"))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, authTestClients())
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "old-uid", replaceTestGVR)
 
 		require.Error(t, err)
@@ -270,7 +270,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(oldParsed, nil)
 		mockParser.On("Parse", mock.Anything, newFileInfo).Return(newParsed, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, authTestClients())
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, gvk, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)
@@ -317,7 +317,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		repo.On("Read", mock.Anything, "alerts/rule.json", "old-ref").
 			Return((*repository.FileInfo)(nil), fmt.Errorf("ref not found"))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, authTestClients())
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.Error(t, err)
@@ -333,7 +333,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, oldFileInfo).
 			Return(nil, fmt.Errorf("invalid JSON"))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, authTestClients())
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.Error(t, err)
@@ -352,7 +352,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		oldParsed := mustBuildParsedResource("old-uid", nil)
 		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(oldParsed, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, authTestClients())
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.Error(t, err)
@@ -406,7 +406,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(oldParsed, nil)
 		mockParser.On("Parse", mock.Anything, newFileInfo).Return(newParsed, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, authTestClients())
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)

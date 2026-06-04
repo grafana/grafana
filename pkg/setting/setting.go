@@ -157,8 +157,7 @@ type Cfg struct {
 	DisableControllers bool
 	// Provisioning config
 	ProvisioningAllowedTargets                []string
-	ProvisioningResources                     []string // resource types that can be managed from the UI (default: dashboards, folders)
-	ProvisioningFolderResources               []string // subset of ProvisioningResources that is folder-contained (default: dashboards, folders)
+	ProvisioningResources                     []ProvisioningResource // resources that can be managed from the UI (default: dashboards, folders)
 	ProvisioningAllowImageRendering           bool
 	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
 	ProvisioningMinSyncInterval               time.Duration
@@ -2487,13 +2486,8 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
 		cfg.ProvisioningAllowedTargets = []string{"folder"}
 	}
-	cfg.ProvisioningResources = iniFile.Section("provisioning").Key("resources").Strings("|")
-	if len(cfg.ProvisioningResources) == 0 {
-		cfg.ProvisioningResources = []string{"dashboards", "folders"}
-	}
-	cfg.ProvisioningFolderResources = iniFile.Section("provisioning").Key("folder_resources").Strings("|")
-	if len(cfg.ProvisioningFolderResources) == 0 {
-		cfg.ProvisioningFolderResources = []string{"dashboards", "folders"}
+	if err := cfg.readProvisioningResources(iniFile); err != nil {
+		return err
 	}
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 	cfg.ProvisioningAllowInsecure = iniFile.Section("provisioning").Key("allow_insecure").MustBool(false)
@@ -2512,6 +2506,59 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningLokiPassword = valueAsString(iniFile.Section("provisioning"), "loki_password", "")
 	cfg.ProvisioningLokiTenantID = valueAsString(iniFile.Section("provisioning"), "loki_tenant_id", "")
 
+	return nil
+}
+
+// ProvisioningResource describes one resource type that can be managed from the UI
+// through provisioning. It is identified by group + kind; the API version and plural
+// resource are resolved at runtime via discovery, so they are not configured here.
+type ProvisioningResource struct {
+	Group string
+	Kind  string
+	// SupportsFolderAnnotation reports whether the resource is saved inside a folder
+	// (carries the folder header annotation), as opposed to being org-scoped.
+	SupportsFolderAnnotation bool
+}
+
+// readProvisioningResources reads the set of provisionable resources from
+// [provisioning.resources.<kind>.<group>] sections, mirroring the per-resource
+// [unified_storage.<resource>.<group>] convention. Each section declares one resource:
+//
+//	[provisioning.resources.Dashboard.dashboard.grafana.app]
+//	folder = true
+//
+// When no sections are configured it falls back to dashboards + folders.
+func (cfg *Cfg) readProvisioningResources(iniFile *ini.File) error {
+	const prefix = "provisioning.resources."
+
+	var out []ProvisioningResource
+	for _, section := range iniFile.Sections() {
+		name := section.Name()
+		if !strings.HasPrefix(name, prefix) {
+			continue
+		}
+
+		// The remainder is "<kind>.<group>"; the kind has no dots, the group does.
+		kindAndGroup := strings.SplitN(name[len(prefix):], ".", 2)
+		if len(kindAndGroup) != 2 || kindAndGroup[0] == "" || kindAndGroup[1] == "" {
+			return fmt.Errorf("invalid provisioning resource section %q: expected [%s<kind>.<group>]", name, prefix)
+		}
+
+		out = append(out, ProvisioningResource{
+			Kind:                     kindAndGroup[0],
+			Group:                    kindAndGroup[1],
+			SupportsFolderAnnotation: section.Key("folder").MustBool(false),
+		})
+	}
+
+	if len(out) == 0 {
+		out = []ProvisioningResource{
+			{Group: "folder.grafana.app", Kind: "Folder", SupportsFolderAnnotation: true},
+			{Group: "dashboard.grafana.app", Kind: "Dashboard", SupportsFolderAnnotation: true},
+		}
+	}
+
+	cfg.ProvisioningResources = out
 	return nil
 }
 

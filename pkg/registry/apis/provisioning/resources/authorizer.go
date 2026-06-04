@@ -243,12 +243,18 @@ func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path string
 
 	// Folders are authorized through their own dedicated path (authorizeFolder,
 	// authorizeDeleteFolder, authorizeMoveFolder) — skip them here.
+	// Match on group AND kind: resources can share a group (e.g. dashboards and library
+	// panels both live in dashboard.grafana.app), so matching on group alone would
+	// mis-authorize one as the other. The plural resource is resolved via discovery.
 	for _, supported := range a.clients.SupportedResources() {
-		gvr := supported.GVR
-		if gvr == FolderResource {
+		if supported.GroupKind == FolderKind.GroupKind() {
 			continue
 		}
-		if gvr.Group == gvk.Group {
+		if supported.Group == gvk.Group && supported.Kind == gvk.Kind {
+			_, gvr, err := a.clients.ForKind(ctx, schema.GroupVersionKind{Group: supported.Group, Kind: supported.Kind})
+			if err != nil {
+				return schema.GroupVersionResource{}, fmt.Errorf("resolve client for %s/%s: %w", supported.Group, supported.Kind, err)
+			}
 			return gvr, nil
 		}
 	}
@@ -496,9 +502,13 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveByPath(ctx context.Context, source
 // on every supported provisioning resource type at the root level.
 func (a *ProvisioningAuthorizer) AuthorizeReadAllSupported(ctx context.Context) error {
 	for _, kind := range a.clients.SupportedResources() {
+		_, gvr, err := a.clients.ForKind(ctx, schema.GroupVersionKind{Group: kind.Group, Kind: kind.Kind})
+		if err != nil {
+			return fmt.Errorf("resolve client for %s/%s: %w", kind.Group, kind.Kind, err)
+		}
 		if err := a.access.Check(ctx, authlib.CheckRequest{
-			Group:    kind.GVR.Group,
-			Resource: kind.GVR.Resource,
+			Group:    gvr.Group,
+			Resource: gvr.Resource,
 			Verb:     utils.VerbGet,
 		}, ""); err != nil {
 			return err
@@ -514,9 +524,13 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateAllSupported(ctx context.Context
 	targetFolder := RootFolder(a.repo)
 
 	for _, kind := range a.clients.SupportedResources() {
+		_, gvr, err := a.clients.ForKind(ctx, schema.GroupVersionKind{Group: kind.Group, Kind: kind.Kind})
+		if err != nil {
+			return fmt.Errorf("resolve client for %s/%s: %w", kind.Group, kind.Kind, err)
+		}
 		if err := a.access.Check(ctx, authlib.CheckRequest{
-			Group:    kind.GVR.Group,
-			Resource: kind.GVR.Resource,
+			Group:    gvr.Group,
+			Resource: gvr.Resource,
 			Verb:     utils.VerbCreate,
 		}, targetFolder); err != nil {
 			return err

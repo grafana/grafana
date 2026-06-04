@@ -12,6 +12,8 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
@@ -19,6 +21,26 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
+
+// newSupportedResourceClients returns a MockResourceClients exposing dashboards + folders
+// as the supported set and resolving them to their GVR via ForKind, as the export pipeline
+// and quota counter expect.
+func newSupportedResourceClients(t *testing.T) *resources.MockResourceClients {
+	c := resources.NewMockResourceClients(t)
+	c.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
+	c.EXPECT().ForKind(mock.Anything, mock.Anything).RunAndReturn(
+		func(_ context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
+			switch gvk.GroupKind() {
+			case resources.DashboardKind.GroupKind():
+				return nil, resources.DashboardResource, nil
+			case resources.FolderKind.GroupKind():
+				return nil, resources.FolderResource, nil
+			default:
+				return nil, schema.GroupVersionResource{}, fmt.Errorf("unexpected kind %v", gvk)
+			}
+		}).Maybe()
+	return c
+}
 
 func TestExportWorker_IsSupported(t *testing.T) {
 	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
@@ -795,7 +817,8 @@ func TestCountSupportedResources(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := countSupportedResources(tt.stats, resources.SupportedProvisioningResources)
+			got, err := countSupportedResources(context.Background(), tt.stats, newSupportedResourceClients(t))
+			require.NoError(t, err)
 			assert.Equal(t, tt.expected, got)
 		})
 	}
@@ -938,8 +961,7 @@ func TestCheckExportQuota(t *testing.T) {
 				lister = mockLister
 			}
 
-			mockClients := resources.NewMockResourceClients(t)
-			mockClients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
+			mockClients := newSupportedResourceClients(t)
 
 			err := checkExportQuota(context.Background(), cfg, lister, mockClients)
 			if tt.expectError {
@@ -991,8 +1013,7 @@ func TestExportWorker_ProcessQuotaExceeded(t *testing.T) {
 		return errors.As(err, &quotaErr)
 	})).Return(v0alpha1.JobStatus{})
 
-	mockResourceClients := resources.NewMockResourceClients(t)
-	mockResourceClients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources)
+	mockResourceClients := newSupportedResourceClients(t)
 	mockClients := resources.NewMockClientFactory(t)
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
 
@@ -1042,8 +1063,7 @@ func TestExportWorker_ProcessQuotaNotExceeded(t *testing.T) {
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
 
 	mockClients := resources.NewMockClientFactory(t)
-	mockResourceClients := resources.NewMockResourceClients(t)
-	mockResourceClients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources)
+	mockResourceClients := newSupportedResourceClients(t)
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
 
 	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)

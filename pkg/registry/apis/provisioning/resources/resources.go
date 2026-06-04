@@ -288,7 +288,7 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 	r.addResource(id, path)
 
 	// For resources that exist in folders, set the header annotation
-	if supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVR) {
+	if supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK) {
 		// Make sure the parent folders exist.
 		// For _folder.json the resource IS the folder, so its parent is one level above.
 		folderPath := path

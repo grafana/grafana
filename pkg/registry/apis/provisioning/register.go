@@ -319,9 +319,12 @@ func RegisterAPIService(
 		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
 	}
 
-	supportedResources, err := resources.BuildSupportedResources(cfg.ProvisioningResources, cfg.ProvisioningFolderResources)
-	if err != nil {
-		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
+	supportedResources := make([]resources.SupportedResource, 0, len(cfg.ProvisioningResources))
+	for _, r := range cfg.ProvisioningResources {
+		supportedResources = append(supportedResources, resources.SupportedResource{
+			GroupKind:                schema.GroupKind{Group: r.Group, Kind: r.Kind},
+			SupportsFolderAnnotation: r.SupportsFolderAnnotation,
+		})
 	}
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)

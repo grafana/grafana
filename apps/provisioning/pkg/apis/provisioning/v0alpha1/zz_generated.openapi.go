@@ -2696,7 +2696,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 					},
 					"availableResources": {
 						SchemaProps: spec.SchemaProps{
-							Description: "AvailableResources is the list of resource types that can be managed from the UI in this instance, as \"<resource>.<group>\" identifiers (e.g. \"dashboards.dashboard.grafana.app\").",
+							Description: "AvailableResources is the list of resource types that can be managed from the UI in this instance, as \"<kind>.<group>\" identifiers (e.g. \"Dashboard.dashboard.grafana.app\").",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{

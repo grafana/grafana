@@ -79,8 +79,8 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 
 	t.Run("should fail when getting resource client fails", func(t *testing.T) {
 		clients := &mockClients{}
-		clients.On("ForResource", mock.Anything, resources.SupportedProvisioningResources[0].GVR).
-			Return(nil, schema.GroupVersionKind{}, errors.New("failed to get resource client"))
+		clients.On("ForKind", mock.Anything, mock.Anything).
+			Return(nil, schema.GroupVersionResource{}, errors.New("failed to get resource client"))
 
 		mockClientFactory := resources.NewMockClientFactory(t)
 		mockClientFactory.On("Clients", mock.Anything, "test-namespace").
@@ -88,7 +88,8 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 
 		cleaner := NewNamespaceCleaner(mockClientFactory)
 		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+		// SetMessage now runs only after the client resolves, so it is not called on this path.
+		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
 
 		err := cleaner.Clean(context.Background(), "test-namespace", progress)
 		require.Error(t, err)
@@ -117,8 +118,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		}
 
 		clients := &mockClients{}
-		clients.On("ForResource", mock.Anything, mock.Anything).
-			Return(mockDynamicClient, schema.GroupVersionKind{}, nil)
+		clients.On("ForKind", mock.Anything, mock.Anything).Return(mockDynamicClient, schema.GroupVersionResource{}, nil)
 
 		mockClientFactory := resources.NewMockClientFactory(t)
 		mockClientFactory.On("Clients", mock.Anything, "test-namespace").
@@ -184,8 +184,10 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		}
 
 		clients := &mockClients{}
-		clients.On("ForResource", mock.Anything, mock.Anything).
-			Return(mockDynamicClient, schema.GroupVersionKind{}, nil)
+		clients.On("ForKind", mock.Anything, schema.GroupVersionKind{Group: resources.DashboardResource.Group, Kind: resources.DashboardKind.Kind}).
+			Return(mockDynamicClient, resources.DashboardResource, nil)
+		clients.On("ForKind", mock.Anything, schema.GroupVersionKind{Group: resources.FolderResource.Group, Kind: resources.FolderKind.Kind}).
+			Return(mockDynamicClient, resources.FolderResource, nil)
 
 		mockClientFactory := resources.NewMockClientFactory(t)
 		mockClientFactory.On("Clients", mock.Anything, "test-namespace").
@@ -257,8 +259,10 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		}
 
 		clients := &mockClients{}
-		clients.On("ForResource", mock.Anything, mock.Anything).
-			Return(mockDynamicClient, schema.GroupVersionKind{}, nil)
+		clients.On("ForKind", mock.Anything, schema.GroupVersionKind{Group: resources.DashboardResource.Group, Kind: resources.DashboardKind.Kind}).
+			Return(mockDynamicClient, resources.DashboardResource, nil)
+		clients.On("ForKind", mock.Anything, schema.GroupVersionKind{Group: resources.FolderResource.Group, Kind: resources.FolderKind.Kind}).
+			Return(mockDynamicClient, resources.FolderResource, nil)
 
 		mockClientFactory := resources.NewMockClientFactory(t)
 		mockClientFactory.On("Clients", mock.Anything, "test-namespace").

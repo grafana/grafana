@@ -5629,7 +5629,7 @@
             }
           },
           "availableResources": {
-            "description": "AvailableResources is the list of resource types that can be managed from the UI in this instance, as \"<resource>.<group>\" identifiers (e.g. \"dashboards.dashboard.grafana.app\").",
+            "description": "AvailableResources is the list of resource types that can be managed from the UI in this instance, as \"<kind>.<group>\" identifiers (e.g. \"Dashboard.dashboard.grafana.app\").",
             "type": "array",
             "items": {
               "type": "string",

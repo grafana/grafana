@@ -7,25 +7,42 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestReadProvisioningSettings_Resources(t *testing.T) {
-	t.Run("defaults to dashboards and folders when unset", func(t *testing.T) {
+func TestReadProvisioningResources(t *testing.T) {
+	t.Run("defaults to dashboards and folders when no sections are configured", func(t *testing.T) {
 		cfg, err := NewCfgFromBytes([]byte(``))
 		require.NoError(t, err)
 
-		assert.Equal(t, []string{"dashboards", "folders"}, cfg.ProvisioningResources)
-		assert.Equal(t, []string{"dashboards", "folders"}, cfg.ProvisioningFolderResources)
+		assert.ElementsMatch(t, []ProvisioningResource{
+			{Group: "dashboard.grafana.app", Kind: "Dashboard", SupportsFolderAnnotation: true},
+			{Group: "folder.grafana.app", Kind: "Folder", SupportsFolderAnnotation: true},
+		}, cfg.ProvisioningResources)
 	})
 
-	t.Run("parses the configured resource lists", func(t *testing.T) {
+	t.Run("parses [provisioning.resources.<kind>.<group>] sections", func(t *testing.T) {
 		iniContent := `
-[provisioning]
-resources = dashboards | folders | playlists
-folder_resources = dashboards | folders
+[provisioning.resources.Dashboard.dashboard.grafana.app]
+folder = true
+
+[provisioning.resources.Playlist.playlist.grafana.app]
+folder = false
 `
 		cfg, err := NewCfgFromBytes([]byte(iniContent))
 		require.NoError(t, err)
 
-		assert.Equal(t, []string{"dashboards", "folders", "playlists"}, cfg.ProvisioningResources)
-		assert.Equal(t, []string{"dashboards", "folders"}, cfg.ProvisioningFolderResources)
+		assert.ElementsMatch(t, []ProvisioningResource{
+			{Group: "dashboard.grafana.app", Kind: "Dashboard", SupportsFolderAnnotation: true},
+			{Group: "playlist.grafana.app", Kind: "Playlist", SupportsFolderAnnotation: false},
+		}, cfg.ProvisioningResources)
+	})
+
+	t.Run("folder defaults to false when the key is omitted", func(t *testing.T) {
+		iniContent := `
+[provisioning.resources.Playlist.playlist.grafana.app]
+`
+		cfg, err := NewCfgFromBytes([]byte(iniContent))
+		require.NoError(t, err)
+
+		require.Len(t, cfg.ProvisioningResources, 1)
+		assert.Equal(t, ProvisioningResource{Group: "playlist.grafana.app", Kind: "Playlist", SupportsFolderAnnotation: false}, cfg.ProvisioningResources[0])
 	})
 }
