@@ -5742,11 +5742,6 @@
         "label": "대시보드 메뉴 내보내기"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "대시보드 가져오기 실패"
-      }
-    },
     "filters-overview": {
       "apply": "적용",
       "apply-close": "적용 및 닫기",
@@ -5902,11 +5897,6 @@
       "title-complete-git-hub-comment-clipboard": "GitHub 코멘트 전체를 클립보드에 복사",
       "title-get-help-with-this-panel": "이 패널에 대한 도움말 확인",
       "troubleshooting-docs": "문제 해결 문서"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "대시보드 모델 생성 실패"
-      }
     },
     "inspect": {
       "data-tab": "데이터",
@@ -6313,10 +6303,6 @@
         "tooltip": "원래 대시보드 열기"
       },
       "undo": "실행 취소"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "대시보드 로딩 및 초기화",
-      "title-not-found": "ID가 {{panelId}}인 패널을 찾을 수 없음"
     },
     "source-link": {
       "title": "소스({{provider}})",
