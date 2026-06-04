@@ -46,18 +46,18 @@ describe('ResultItem', () => {
     expect(screen.queryByLabelText('Provisioned')).not.toBeInTheDocument();
   });
 
-  it('does not render provisioned badge when managedBy is a non-Repo kind', () => {
+  it('renders provisioned badge when managedBy is a non-Repo kind', () => {
     config.featureToggles.provisioning = true;
     const action = createActionImpl({ managedBy: ManagerKind.Terraform });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    expect(screen.queryByLabelText('Provisioned')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Provisioned')).toBeInTheDocument();
   });
 
-  it('does not render provisioned badge for classic provisioning (Plugin)', () => {
+  it('renders provisioned badge for plugin-managed resources', () => {
     config.featureToggles.provisioning = true;
     const action = createActionImpl({ managedBy: ManagerKind.Plugin });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    expect(screen.queryByLabelText('Provisioned')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Provisioned')).toBeInTheDocument();
   });
 
   it('does not render provisioned badge when provisioning toggle is off', () => {
