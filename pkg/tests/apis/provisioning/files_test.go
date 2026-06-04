@@ -50,6 +50,39 @@ func TestIntegrationProvisioning_EmptyRepositoryFileList(t *testing.T) {
 	require.Empty(t, fileList.Items, "items should be empty for a repository with no files")
 }
 
+func TestIntegrationProvisioning_RejectsDisabledResource(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "disabled-resource-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:                   repo,
+		LocalPath:              helper.ProvisioningPath,
+		SyncTarget:             "instance",
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	})
+
+	// Playlists are declared but disabled by default (see conf/defaults.ini), so writing one
+	// through the files API must be rejected — the resource is not enabled for provisioning.
+	body := `{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"test-playlist"},"spec":{"title":"Test","interval":"5m"}}`
+	resp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
+		TargetPath: "test-playlist.json",
+		Message:    "add disabled resource",
+		Body:       body,
+	})
+	defer func() { _ = resp.Body.Close() }()
+	b, _ := io.ReadAll(resp.Body)
+
+	require.GreaterOrEqual(t, resp.StatusCode, http.StatusBadRequest, "writing a disabled resource should be rejected; body: %s", string(b))
+	require.Less(t, resp.StatusCode, http.StatusInternalServerError, "rejection should be a client error; body: %s", string(b))
+	// Rejected because the kind is not in the enabled supported set (message comes from the
+	// parser's support gate, or the authorizer if it resolves the kind first).
+	require.True(t,
+		bytes.Contains(b, []byte("enabled")) || bytes.Contains(b, []byte("supported")),
+		"rejection should reference resource enablement/support; body: %s", string(b),
+	)
+}
+
 func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()
