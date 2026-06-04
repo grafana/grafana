@@ -1139,5 +1139,12 @@ const setupWithStore = (propsOverrides?: Partial<LogsPanelProps>) => {
   };
 
   const store = configureStore();
-  return { ...render(<Provider store={store}><LogsPanel {...props} /></Provider>), props };
+  return {
+    ...render(
+      <Provider store={store}>
+        <LogsPanel {...props} />
+      </Provider>
+    ),
+    props,
+  };
 };
