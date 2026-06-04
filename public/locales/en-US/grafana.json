@@ -13254,16 +13254,11 @@
       "aria-label-copy": "Copy code to clipboard"
     },
     "commit-message": {
-      "dashboard-create-default": "New dashboard: {{title}}",
-      "dashboard-delete-default": "Delete dashboard: {{title}}",
-      "dashboard-move-default": "Move dashboard: {{title}}",
-      "dashboard-rename-default": "Rename dashboard: {{title}}",
-      "dashboard-update-default": "Save dashboard: {{title}}",
-      "folder-create-default": "Create folder: {{title}}",
-      "folder-delete-default": "Delete folder: {{title}}",
-      "folder-move-default": "Move folder: {{title}}",
-      "folder-rename-default": "Rename folder: {{title}}",
-      "folder-update-default": "Save folder: {{title}}"
+      "create-default": "Create resource: {{title}}",
+      "delete-default": "Delete resource: {{title}}",
+      "move-default": "Move resource: {{title}}",
+      "rename-default": "Rename resource: {{title}}",
+      "update-default": "Update resource: {{title}}"
     },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
@@ -13778,7 +13773,6 @@
       "status": "Status:",
       "unhealthy": "Unhealthy",
       "view-folder": "View Folder",
-      "view-resource": "View {{resource}}",
       "webhook": "Webhook",
       "webhook-events": "Events:",
       "webhook-id": "ID:",
@@ -13825,8 +13819,6 @@
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
     },
     "resource-kind": {
-      "count_one": "{{count}} {{kind}}",
-      "count_other": "{{count}} {{kind}}",
       "dashboards": "Dashboards",
       "folders": "Folders",
       "library-panels": "Library panels",

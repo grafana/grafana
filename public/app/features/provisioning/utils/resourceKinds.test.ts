@@ -1,9 +1,5 @@
-import { config } from '@grafana/runtime';
-
 import {
   findResourceKind,
-  findResourceKindByItemType,
-  getEnabledResourceKinds,
   getResourceCountLabel,
   getResourceIcon,
   getResourceKindByKind,
@@ -11,7 +7,6 @@ import {
   getResourceListUrl,
   getResourceViewUrl,
   isResourceItemType,
-  isResourceKindEnabled,
   resolveResourceKind,
 } from './resourceKinds';
 
@@ -34,18 +29,6 @@ describe('findResourceKind', () => {
   it('returns undefined when group or resource is missing', () => {
     expect(findResourceKind('dashboard.grafana.app')).toBeUndefined();
     expect(findResourceKind(undefined, 'dashboards')).toBeUndefined();
-  });
-});
-
-describe('findResourceKindByItemType', () => {
-  it('looks up the descriptor for a tree item type', () => {
-    expect(findResourceKindByItemType('Dashboard')?.resource).toBe('dashboards');
-    expect(findResourceKindByItemType('Folder')?.resource).toBe('folders');
-    expect(findResourceKindByItemType('LibraryPanel')?.resource).toBe('librarypanels');
-  });
-
-  it('returns undefined for the structural File type', () => {
-    expect(findResourceKindByItemType('File')).toBeUndefined();
   });
 });
 
@@ -167,40 +150,5 @@ describe('getResourceIcon', () => {
 
   it('falls back to a generic file icon for unknown kinds', () => {
     expect(getResourceIcon('widget.grafana.app', 'widgets')).toBe('file-alt');
-  });
-});
-
-describe('feature toggle gating', () => {
-  const originalToggles = { ...config.featureToggles };
-
-  afterEach(() => {
-    config.featureToggles = { ...originalToggles };
-  });
-
-  it('treats core kinds without a toggle as always enabled', () => {
-    const folders = findResourceKind('folder.grafana.app', 'folders')!;
-    expect(isResourceKindEnabled(folders)).toBe(true);
-  });
-
-  it('gates toggled kinds on their feature toggle', () => {
-    const playlists = findResourceKind('playlist.grafana.app', 'playlists')!;
-
-    config.featureToggles.playlistsReconciler = false;
-    expect(isResourceKindEnabled(playlists)).toBe(false);
-    expect(getEnabledResourceKinds()).not.toContain(playlists);
-
-    config.featureToggles.playlistsReconciler = true;
-    expect(isResourceKindEnabled(playlists)).toBe(true);
-    expect(getEnabledResourceKinds()).toContain(playlists);
-  });
-
-  it('gates library panels on kubernetesLibraryPanels', () => {
-    const libraryPanels = findResourceKind('dashboard.grafana.app', 'librarypanels')!;
-
-    config.featureToggles.kubernetesLibraryPanels = false;
-    expect(isResourceKindEnabled(libraryPanels)).toBe(false);
-
-    config.featureToggles.kubernetesLibraryPanels = true;
-    expect(isResourceKindEnabled(libraryPanels)).toBe(true);
   });
 });

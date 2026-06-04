@@ -93,11 +93,11 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
       links.set(href, {
         href,
         icon: isRepoFolder ? 'folder-open' : getResourceIcon(stat.group, stat.resource),
+        // Use the kind's already-localized label as the button text (e.g. "Dashboards",
+        // "Playlists") rather than interpolating it into a "View {{resource}}" string.
         label: isRepoFolder
           ? t('provisioning.repository-overview.view-folder', 'View Folder')
-          : t('provisioning.repository-overview.view-resource', 'View {{resource}}', {
-              resource: getResourceLabel(stat.group, stat.resource),
-            }),
+          : getResourceLabel(stat.group, stat.resource),
       });
     }
 

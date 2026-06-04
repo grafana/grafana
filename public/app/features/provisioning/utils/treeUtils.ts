@@ -59,9 +59,9 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
 
 export function getItemType(path: string, resource?: ResourceListItem): ItemType {
   if (resource) {
-    // Known tree kinds (dashboards, folders) map to their item type; anything
-    // else backed by a resource is shown as a file.
-    return findResourceKind(resource.group, resource.resource)?.itemType ?? 'File';
+    // A resource node's type is its kind (e.g. 'Dashboard', 'Folder', 'LibraryPanel');
+    // a resource of an unknown kind is shown as a plain file.
+    return findResourceKind(resource.group, resource.resource)?.kind ?? 'File';
   }
   // Inferred folder (no extension means it's a folder from file paths)
   if (!path.includes('.')) {
@@ -78,13 +78,11 @@ export function getDisplayTitle(path: string, resource?: ResourceListItem): stri
   return path.split('/').pop() ?? path;
 }
 
-// Icons for tree item types, derived from the per-kind descriptors so a new
-// tree kind only needs an entry in RESOURCE_KINDS.
-const ITEM_TYPE_ICONS: Partial<Record<ItemType, IconName>> = {};
-for (const kind of RESOURCE_KINDS) {
-  if (kind.itemType) {
-    ITEM_TYPE_ICONS[kind.itemType] = kind.icon;
-  }
+// Icons keyed by tree item type (resource kind), derived from the per-kind
+// descriptors so a new tree kind only needs an entry in RESOURCE_KINDS.
+const ITEM_TYPE_ICONS: Record<string, IconName> = {};
+for (const descriptor of RESOURCE_KINDS) {
+  ITEM_TYPE_ICONS[descriptor.kind] = descriptor.icon;
 }
 
 export function getIconName(type: ItemType): IconName {

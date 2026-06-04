@@ -86,9 +86,11 @@ export interface StatusInfo {
 }
 
 // Tree view types for combined Resources/Files view.
-// 'Folder' and 'File' are structural; the rest map 1:1 to resource kinds in
-// resourceKinds.ts (a new tree kind adds a member here and a descriptor there).
-export type ItemType = 'Folder' | 'File' | 'Dashboard' | 'LibraryPanel';
+// A tree node's type is either a resource kind from RESOURCE_KINDS (e.g. 'Folder',
+// 'Dashboard', 'LibraryPanel', 'Playlist') or the structural 'File' for a plain,
+// non-resource file. It's a plain string (not a hand-maintained union) so the
+// descriptor registry stays the single source of kinds — see utils/resourceKinds.ts.
+export type ItemType = string;
 export type SyncStatus = 'synced' | 'pending';
 
 export interface TreeItem {

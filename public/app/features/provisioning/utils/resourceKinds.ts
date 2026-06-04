@@ -1,6 +1,4 @@
-import { type FeatureToggles } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type IconName } from '@grafana/ui';
 
 import { type ItemType } from '../types';
@@ -19,29 +17,25 @@ export interface ResourceRouteContext {
  * Per-kind UI metadata. This is the single source of truth the provisioning UI
  * reads from when it needs to know how to label, route to, count or icon a
  * resource kind. Adding support for a new provisioned resource type should only
- * require appending one entry to {@link RESOURCE_KINDS} (plus its feature toggle,
- * and — if it appears in the file tree — a member on {@link ItemType}).
+ * require appending one entry to {@link RESOURCE_KINDS} (and — if it appears in
+ * the file tree — a member on {@link ItemType}).
+ *
+ * There is intentionally no feature-toggle field: the backend is the source of
+ * truth for which kinds are provisioned, so the UI simply renders whatever the
+ * stats/resources APIs report and resolves it through this registry.
  */
 export interface ResourceKindDescriptor {
   /** API group, e.g. 'dashboard.grafana.app'. Not unique — dashboards and library panels share one. */
   group: string;
   /** Plural resource name as used by the API, e.g. 'dashboards'. Unique across kinds. */
   resource: string;
-  /** Singular k8s Kind, used in bulk-action resource references */
-  kind: string;
   /**
-   * Item type rendered in the resource tree. Only set for kinds that can appear
-   * in a repository's file tree (folders, dashboards, library panels). Listing-only
-   * kinds (e.g. playlists) leave this undefined.
+   * Singular k8s Kind. Used in bulk-action resource references and as the resource
+   * tree node's {@link ItemType} (e.g. 'Folder', 'Dashboard', 'LibraryPanel').
    */
-  itemType?: ItemType;
+  kind: string;
   /** Icon used in listings and the resource tree */
   icon: IconName;
-  /**
-   * Feature toggle gating this kind. Omitted for core kinds that are always
-   * available whenever provisioning is enabled.
-   */
-  toggle?: keyof FeatureToggles;
   /** Localized plural label, e.g. "Dashboards". */
   getLabel: () => string;
   /** Builds the in-app listing URL for this kind. */
@@ -66,7 +60,6 @@ export const RESOURCE_KINDS: ResourceKindDescriptor[] = [
     group: 'folder.grafana.app',
     resource: 'folders',
     kind: 'Folder',
-    itemType: 'Folder',
     icon: 'folder',
     getLabel: () => t('provisioning.resource-kind.folders', 'Folders'),
     getListUrl: folderContainedListUrl,
@@ -76,7 +69,6 @@ export const RESOURCE_KINDS: ResourceKindDescriptor[] = [
     group: 'dashboard.grafana.app',
     resource: 'dashboards',
     kind: 'Dashboard',
-    itemType: 'Dashboard',
     icon: 'apps',
     getLabel: () => t('provisioning.resource-kind.dashboards', 'Dashboards'),
     getListUrl: folderContainedListUrl,
@@ -87,9 +79,7 @@ export const RESOURCE_KINDS: ResourceKindDescriptor[] = [
     group: 'dashboard.grafana.app',
     resource: 'librarypanels',
     kind: 'LibraryPanel',
-    itemType: 'LibraryPanel',
     icon: 'library-panel',
-    toggle: 'kubernetesLibraryPanels',
     getLabel: () => t('provisioning.resource-kind.library-panels', 'Library panels'),
     getListUrl: () => '/library-panels',
   },
@@ -98,24 +88,10 @@ export const RESOURCE_KINDS: ResourceKindDescriptor[] = [
     resource: 'playlists',
     kind: 'Playlist',
     icon: 'presentation-play',
-    toggle: 'playlistsReconciler',
     getLabel: () => t('provisioning.resource-kind.playlists', 'Playlists'),
     getListUrl: () => '/playlists',
   },
 ];
-
-/**
- * Returns true when the kind is available given the current feature toggles.
- * Core kinds without a toggle are always available.
- */
-export function isResourceKindEnabled(descriptor: ResourceKindDescriptor): boolean {
-  return !descriptor.toggle || Boolean(config.featureToggles[descriptor.toggle]);
-}
-
-/** All resource kinds enabled by the current feature toggles. */
-export function getEnabledResourceKinds(): ResourceKindDescriptor[] {
-  return RESOURCE_KINDS.filter(isResourceKindEnabled);
-}
 
 /**
  * Strict lookup by both API group and plural resource. Use this when the caller
@@ -127,11 +103,6 @@ export function findResourceKind(group?: string, resource?: string): ResourceKin
     return undefined;
   }
   return RESOURCE_KINDS.find((kind) => kind.group === group && kind.resource === resource);
-}
-
-/** Lookup by the UI tree item type. */
-export function findResourceKindByItemType(itemType: ItemType): ResourceKindDescriptor | undefined {
-  return RESOURCE_KINDS.find((kind) => kind.itemType === itemType);
 }
 
 /**
@@ -154,9 +125,9 @@ export function getResourceKindByKind(kind: string): ResourceKindDescriptor | un
   return RESOURCE_KINDS.find((descriptor) => descriptor.kind === kind);
 }
 
-/** True when the tree item type is backed by a resource kind (not a plain file). */
+/** True when the tree item type is a resource kind (not the structural 'File'). */
 export function isResourceItemType(itemType: ItemType): boolean {
-  return RESOURCE_KINDS.some((kind) => kind.itemType === itemType);
+  return RESOURCE_KINDS.some((descriptor) => descriptor.kind === itemType);
 }
 
 /** Listing URL for a stat's kind, with a graceful fallback for unknown kinds. */
@@ -168,9 +139,9 @@ export function getResourceListUrl(
   return (resolveResourceKind(group, resource) ?? FALLBACK_KIND).getListUrl(ctx);
 }
 
-/** In-app URL to view a single resource by its tree item type, or undefined when there is no detail page. */
+/** In-app URL to view a single resource by its tree item type (kind), or undefined when there is no detail page. */
 export function getResourceViewUrl(itemType: ItemType, name: string): string | undefined {
-  return findResourceKindByItemType(itemType)?.getViewUrl?.(name);
+  return getResourceKindByKind(itemType)?.getViewUrl?.(name);
 }
 
 /** Localized plural label for a stat's kind, falling back to the raw resource string. */
@@ -180,12 +151,12 @@ export function getResourceLabel(group?: string, resource?: string): string {
 }
 
 /**
- * Localized "{{count}} {{kind}}" label for migration stats. The kind noun is
- * interpolated from the descriptor's label, so there is one template for every
- * kind instead of one string per kind.
+ * "{count} {label}" label for migration stats (e.g. "5 Dashboards"). Composed in
+ * code from the count and the descriptor's already-localized label, so no kind
+ * noun is interpolated into a translation string.
  */
 export function getResourceCountLabel(descriptor: ResourceKindDescriptor, count: number): string {
-  return t('provisioning.resource-kind.count', '{{count}} {{kind}}', { count, kind: descriptor.getLabel() });
+  return `${count} ${descriptor.getLabel()}`;
 }
 
 /** Icon for a stat's kind, falling back to a generic file icon. */

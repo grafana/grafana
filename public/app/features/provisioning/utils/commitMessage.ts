@@ -2,7 +2,10 @@ import { t } from '@grafana/i18n';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 export type CommitAction = 'create' | 'update' | 'delete' | 'move' | 'rename';
-export type CommitResourceKind = 'dashboard' | 'folder';
+// Open string (any resource kind), not a maintained union: the resource kind is
+// only substituted into custom templates via {{resourceKind}} — the built-in
+// default messages are kind-agnostic ("resource"), so a new kind needs no entry here.
+export type CommitResourceKind = string;
 export type CommitResourceID = string;
 
 export interface CommitTemplateVars {
@@ -48,32 +51,19 @@ function sanitizeLine(value: string | undefined): string {
   return (value ?? '').replace(/[\r\n]+/g, ' ').trim();
 }
 
-function defaultMessage({ action, resourceKind, title }: CommitTemplateVars): string {
-  // Full Record forces every (resourceKind, action) pair to be mapped, so any
-  // future widening of either union is caught at compile time. The three pairs
-  // that aren't reachable today (dashboard:rename, folder:update, folder:move)
-  // get sensible defaults rather than a runtime fallback.
-  const defaults: Record<`${CommitResourceKind}:${CommitAction}`, string> = {
-    'dashboard:create': t('provisioning.commit-message.dashboard-create-default', 'New dashboard: {{title}}', {
-      title,
-    }),
-    'dashboard:update': t('provisioning.commit-message.dashboard-update-default', 'Save dashboard: {{title}}', {
-      title,
-    }),
-    'dashboard:delete': t('provisioning.commit-message.dashboard-delete-default', 'Delete dashboard: {{title}}', {
-      title,
-    }),
-    'dashboard:move': t('provisioning.commit-message.dashboard-move-default', 'Move dashboard: {{title}}', { title }),
-    'dashboard:rename': t('provisioning.commit-message.dashboard-rename-default', 'Rename dashboard: {{title}}', {
-      title,
-    }),
-    'folder:create': t('provisioning.commit-message.folder-create-default', 'Create folder: {{title}}', { title }),
-    'folder:update': t('provisioning.commit-message.folder-update-default', 'Save folder: {{title}}', { title }),
-    'folder:delete': t('provisioning.commit-message.folder-delete-default', 'Delete folder: {{title}}', { title }),
-    'folder:rename': t('provisioning.commit-message.folder-rename-default', 'Rename folder: {{title}}', { title }),
-    'folder:move': t('provisioning.commit-message.folder-move-default', 'Move folder: {{title}}', { title }),
+function defaultMessage({ action, title }: CommitTemplateVars): string {
+  // Kind-agnostic defaults: the message says "resource" rather than the specific
+  // type, so there is one template per action instead of one per (kind, action).
+  // Adding a new resource kind needs no change here. Callers that want the type
+  // named can supply a repo commit template using the {{resourceKind}} placeholder.
+  const defaults: Record<CommitAction, string> = {
+    create: t('provisioning.commit-message.create-default', 'Create resource: {{title}}', { title }),
+    update: t('provisioning.commit-message.update-default', 'Update resource: {{title}}', { title }),
+    delete: t('provisioning.commit-message.delete-default', 'Delete resource: {{title}}', { title }),
+    move: t('provisioning.commit-message.move-default', 'Move resource: {{title}}', { title }),
+    rename: t('provisioning.commit-message.rename-default', 'Rename resource: {{title}}', { title }),
   };
-  return defaults[`${resourceKind}:${action}`];
+  return defaults[action];
 }
 
 export function renderCommitMessage(template: string | undefined | null, vars: CommitTemplateVars): string {

@@ -122,10 +122,15 @@ On the folder page it is shown when the folder has a metadata file (its `sourceP
 
 ## Per-kind UI metadata
 
-Per-kind UI knowledge (group, plural resource, k8s kind, tree item type, icon, listing route,
-labels, and the feature toggle that gates the kind) lives in a single descriptor registry,
-[`utils/resourceKinds.ts`](./utils/resourceKinds.ts). Call sites read from it instead of carrying
-their own `switch`/`if` chains, so **adding a new kind is one entry** in `RESOURCE_KINDS`.
+Per-kind UI knowledge (group, plural resource, k8s kind, icon, listing route, per-resource view route
+and label) lives in a single descriptor registry, [`utils/resourceKinds.ts`](./utils/resourceKinds.ts).
+Call sites read from it instead of carrying their own `switch`/`if` chains, so **adding a new kind is
+one entry** in `RESOURCE_KINDS`. The resource tree node's [`ItemType`](./types.ts) is just the
+descriptor's `kind` (or the structural `'File'`), so there is no separate per-kind list to maintain.
+
+There is intentionally **no feature-toggle field**: the backend is the source of truth for which
+kinds are provisioned, so the stats/resources APIs only ever return kinds the server manages. The UI
+just renders whatever they report, resolved through this registry (unknown kinds degrade gracefully).
 
 ```ts
 import {
@@ -146,36 +151,33 @@ Lookups, in order of specificity:
 - `findResourceKind(group, resource)` — **strict** group+resource match. Use it whenever both are
   known (e.g. classifying a tree node). The API group is **not** unique — dashboards and library
   panels both live under `dashboard.grafana.app` — so `resource` is the discriminator.
-- `findResourceKindByItemType(itemType)` — by the tree `ItemType` (drives `getResourceViewUrl`).
+- `getResourceKindByKind(kind)` — by the singular kind (drives `getResourceViewUrl`, bulk-action refs).
 - `resolveResourceKind(group, resource)` — **lenient** match for stats, which may carry the full
   group, only the group, or a legacy plural-as-group value. A bare group resolves to that group's
   primary (first-declared) kind.
 
-Kinds gated by a feature toggle are filtered with `isResourceKindEnabled` / `getEnabledResourceKinds`.
-`getResourceViewUrl(itemType, name)` builds the in-app link to a single resource (undefined for kinds
-without a detail page). Count strings come from one interpolated template
-(`getResourceCountLabel(descriptor, count)` → `"{{count}} {{kind}}"`), so each kind only supplies its
-localized label — there is no per-kind count string.
+`getResourceViewUrl(kind, name)` builds the in-app link to a single resource (undefined for kinds
+without a detail page). Labels and counts avoid interpolating the kind into a translation: the kind's
+own localized label comes from `getLabel()`, and count strings are composed in code
+(`getResourceCountLabel(descriptor, count)` → `` `${count} ${label}` ``).
 
 ### Worked example — library panels
 
 Library panels are already wired as a descriptor entry: group `dashboard.grafana.app`, resource
-`librarypanels`, kind `LibraryPanel`, icon `library-panel`, listing route `/library-panels`, gated on
-`kubernetesLibraryPanels`, and `itemType: 'LibraryPanel'` so they render in the resource tree. They
-have no per-resource detail page, so `getViewUrl` is omitted (no "View" link, "Source" still shows).
-Once the backend reports `dashboard.grafana.app/librarypanels` in repository stats and the toggle is
-on, listings, the overview, the tree and the migration wizard pick them up with no further UI edits.
-Alert rules (`rules.alerting.grafana.app/alertrules`) are the next obvious entry.
+`librarypanels`, kind `LibraryPanel`, icon `library-panel`, listing route `/library-panels`. The
+`kind` doubles as the tree item type, so they render in the resource tree automatically. They have no
+per-resource detail page, so `getViewUrl` is omitted (no "View" link, "Source" still shows). Once the
+backend reports `dashboard.grafana.app/librarypanels` in repository stats, listings, the overview, the
+tree and the migration wizard pick them up with no further UI edits. Alert rules
+(`rules.alerting.grafana.app/alertrules`) are the next obvious entry.
 
 ## Adding provisioning awareness to a new resource — checklist
 
 1. **Confirm the resource is served from the app platform API** so its `metadata.annotations` carry
    the manager annotations (most `*.grafana.app` resources do).
 2. **Add a descriptor entry** to [`RESOURCE_KINDS`](./utils/resourceKinds.ts) (group, resource, kind,
-   icon, listing route, optional per-resource `getViewUrl`, labels, and its feature toggle). If the
-   kind appears in the repository file tree, also add an [`ItemType`](./types.ts) member and set
-   `itemType`. Listings, the resource tree, the overview, the migration wizard and bulk actions pick
-   it up automatically.
+   icon, listing route, optional per-resource `getViewUrl`, and label). Listings, the resource tree
+   (keyed on `kind`), the overview, the migration wizard and bulk actions pick it up automatically.
 3. **Detect state** with the helpers above — never compare annotation strings inline.
 4. **Show the badge** in listing and edit views with `ManagedBadge`.
 5. **Gate edits** for managed resources that are read-only (disable the form / show a banner). Repo-

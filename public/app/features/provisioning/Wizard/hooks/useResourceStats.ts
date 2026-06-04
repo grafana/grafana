@@ -13,18 +13,17 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
-import { getResourceCountLabel, isResourceKindEnabled, resolveResourceKind } from '../../utils/resourceKinds';
+import { getResourceCountLabel, resolveResourceKind } from '../../utils/resourceKinds';
 
 export type UseResourceStatsOptions = {
   isHealthy?: boolean; // true only when healthy AND reconciled
   healthStatusNotReady?: boolean; // true when waiting for reconciliation
 };
 
-// Resolves a stat to a countable resource kind. Stats carry the kind in their
-// `group` field (the full API group or, for legacy payloads, the plural name).
+// Resolves a stat to a known resource kind. Stats carry the kind in their
+// `group`/`resource` fields (or, for legacy payloads, the plural in `group`).
 function getCountableKind(stat: ResourceCount) {
-  const kind = resolveResourceKind(stat.group, stat.resource);
-  return kind && isResourceKindEnabled(kind) ? kind : undefined;
+  return resolveResourceKind(stat.group, stat.resource);
 }
 
 function getManagedCount(managed?: ManagerStats[]) {
