@@ -243,6 +243,8 @@ it('does not select the panel when clicking interactive content', async () => {
         {() => (
           <div>
             <button type="button">Button text</button>
+            <input role="combobox" />
+            {/* eslint-disable-next-line @grafana/no-plain-links */}
             <a href="#">Anchor text</a>
             <canvas />
             <svg />
@@ -259,6 +261,9 @@ it('does not select the panel when clicking interactive content', async () => {
       </div>
     </ElementSelectionContext.Provider>
   );
+
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByRole('combobox') });
+  expect(onSelect).not.toHaveBeenCalled();
 
   await user.pointer({ keys: '[MouseLeft>]', target: screen.getByRole('button', { name: 'Button text' }) });
   expect(onSelect).not.toHaveBeenCalled();

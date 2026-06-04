@@ -133,6 +133,41 @@ func TestService_SignIdentity(t *testing.T) {
 		assert.Equal(t, "edpu3nnt61se8e", gotClaims.Rest.Identifier)
 	})
 
+	t.Run("groups claim source", func(t *testing.T) {
+		ident := &authn.Identity{
+			ID:             "1",
+			Type:           claims.TypeUser,
+			Login:          "U1",
+			UID:            "edpu3nnt61se8e",
+			Groups:         []string{"team-uid-1", "team-uid-2"},
+			ExternalGroups: []string{"team-uid-1", "team-uid-3"},
+		}
+
+		t.Run("uses Grafana-stored groups by default", func(t *testing.T) {
+			s := ProvideService(
+				setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
+				&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
+			)
+
+			_, gotClaims, err := s.SignIdentity(context.Background(), ident)
+			require.NoError(t, err)
+			assert.Equal(t, ident.Groups, gotClaims.Rest.Groups)
+		})
+
+		t.Run("uses external groups when IDUseExternalGroupsForGroupsClaim is enabled", func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.IDUseExternalGroupsForGroupsClaim = true
+			s := ProvideService(
+				cfg, signer, remotecache.NewFakeCacheStorage(),
+				&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
+			)
+
+			_, gotClaims, err := s.SignIdentity(context.Background(), ident)
+			require.NoError(t, err)
+			assert.Equal(t, ident.ExternalGroups, gotClaims.Rest.Groups)
+		})
+	})
+
 	t.Run("should sign new token if org role has changed", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),

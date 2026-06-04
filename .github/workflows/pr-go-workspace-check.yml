@@ -10,7 +10,7 @@ permissions: {}
 jobs:
   detect-changes:
     name: Detect whether code changed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:
@@ -31,7 +31,7 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
     name: Go Workspace Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
 
     permissions:
       contents: read
@@ -43,9 +43,17 @@ jobs:
       with:
         persist-credentials: false
 
+    - name: Get GitHub App token
+      if: github.event.pull_request.head.repo.fork == false
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      with:
+        github_app: grafana-ci-bot
     - name: Setup Enterprise
       if: github.event.pull_request.head.repo.fork == false
       uses: ./.github/actions/setup-enterprise
+      with:
+        token: ${{ steps.get-github-app-token.outputs.token }}
 
     # Enterprise must be cloned before setup-go so that enterprise
     # modules are visible when the Go cache key is computed.
@@ -71,7 +79,7 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
     name: Check Wire Changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
 
     permissions:
       contents: read
@@ -83,9 +91,17 @@ jobs:
       with:
         persist-credentials: false
 
+    - name: Get GitHub App token
+      if: github.event.pull_request.head.repo.fork == false
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      with:
+        github_app: grafana-ci-bot
     - name: Setup Enterprise
       if: github.event.pull_request.head.repo.fork == false
       uses: ./.github/actions/setup-enterprise
+      with:
+        token: ${{ steps.get-github-app-token.outputs.token }}
 
     # Enterprise must be cloned before setup-go so that enterprise
     # modules are visible when the Go cache key is computed.
@@ -162,7 +178,7 @@ jobs:
     if: always()
 
     name: All Go Workspace Checks complete
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     steps:
       - name: Check the checks
         env:

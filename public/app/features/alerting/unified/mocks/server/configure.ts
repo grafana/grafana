@@ -1,7 +1,7 @@
 import { type DefaultBodyType, HttpResponse, type HttpResponseResolver, type PathParams, http } from 'msw';
 
 import { type PluginMeta } from '@grafana/data';
-import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
+import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 import server from '@grafana/test-utils/server';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
@@ -22,7 +22,6 @@ import {
   paginatedHandlerFor,
 } from 'app/features/alerting/unified/mocks/server/utils';
 import { type SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
-import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import {
   type AlertmanagerAlert,
   type AlertmanagerChoice,
@@ -109,7 +108,6 @@ export const setReplaceGrafanaRuleResolver = (
     )
   );
 };
-
 export const setUpdateRulerRuleNamespaceResolver = (
   resolver: HttpResponseResolver<{ dataSourceUid: string; namespace: string }, RulerRuleGroupDTO, undefined>
 ) => {
@@ -183,7 +181,6 @@ export const echoBodyResolver = async ({
   const name = typeof rawName === 'string' ? rawName : 'new-uid';
   return HttpResponse.json({ ...body, metadata: { name } });
 };
-
 export const setRulerRuleGroupResolver = (
   resolver: HttpResponseResolver<
     { dataSourceUid: string; namespace: string; groupName: string },
@@ -340,28 +337,24 @@ export const setAlertmanagerAlertsHandler = (alerts: AlertmanagerAlert[]) => {
 
 /** Make a plugin respond with `enabled: false`, as if its installed but disabled */
 export const disablePlugin = (pluginId: SupportedPlugin) => {
-  clearPluginSettingsCache(pluginId);
-  invalidateCachedPromisesCache();
+  invalidatePluginSettingsCache(pluginId);
   server.use(getDisabledPluginHandler(pluginId));
 };
 
 /** Make a plugin respond with a 404, as if it is not installed */
 export const removePlugin = (pluginId: SupportedPlugin) => {
-  clearPluginSettingsCache(pluginId);
-  invalidateCachedPromisesCache();
+  invalidatePluginSettingsCache(pluginId);
   server.use(getPluginMissingHandler(pluginId));
 };
 
 /** Make an additional plugin respond as installed and enabled */
 export const addPlugin = (pluginMeta: PluginMeta) => {
-  invalidateCachedPromisesCache();
   server.use(getSpecificPluginHandler(pluginMeta));
 };
 
 /** Make a plugin settings request fail with a given HTTP status code (default 500) */
 export const failPlugin = (pluginId: SupportedPlugin, status = 500) => {
-  clearPluginSettingsCache(pluginId);
-  invalidateCachedPromisesCache();
+  invalidatePluginSettingsCache(pluginId);
   server.use(
     http.get(`/api/plugins/${pluginId}/settings`, () =>
       HttpResponse.json({ message: 'Internal server error' }, { status })

@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
-import { startIntercomSurvey } from '../../tracking';
+import { startFeedbackSurvey } from '../../tracking';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 export function ExperimentalFeedbackButton() {
@@ -28,13 +28,13 @@ export function ExperimentalFeedbackButton() {
       <Menu.Item
         label={t('query-editor-next.experimental-button.give-feedback', 'Give feedback')}
         icon="comment-alt-message"
-        onClick={() => startIntercomSurvey()}
+        onClick={() => startFeedbackSurvey()}
       />
       <Menu.Item
         label={t('query-editor-next.experimental-button.back-to-classic', 'Go back to classic editor')}
         icon="arrow-left"
         onClick={() => {
-          startIntercomSurvey();
+          startFeedbackSurvey();
           onSwitchToClassic?.();
         }}
       />

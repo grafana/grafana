@@ -9,6 +9,22 @@ import (
 // it does not cover all cases as positive lookaheads are not supported in Go's regexp
 var basicGitBranchNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\/\.]+$`)
 
+// commitHashRegex matches a 7–40 character hex string covering short and full git SHAs.
+var commitHashRegex = regexp.MustCompile(`^[0-9a-fA-F]{7,40}$`)
+
+// IsValidRef reports whether ref is a valid git ref to forward to a backend.
+// An empty ref is considered valid: callers default it to the configured branch.
+// A non-empty ref must be either a valid git branch name or a 7–40 char commit SHA.
+func IsValidRef(ref string) bool {
+	if ref == "" {
+		return true
+	}
+	if commitHashRegex.MatchString(ref) {
+		return true
+	}
+	return IsValidGitBranchName(ref)
+}
+
 // IsValidGitBranchName checks if a branch name is valid.
 // It uses the following regexp `^[a-zA-Z0-9\-\_\/\.]+$` to validate the branch name with some additional checks that must satisfy the following rules:
 // 1. The branch name must have at least one character and must not be empty.
