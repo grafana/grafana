@@ -1,5 +1,22 @@
 [
   {
+    "action": "alert.admin-config.status:write",
+    "roles": null
+  },
+  {
+    "action": "alert.admin-config:read",
+    "roles": [
+      "fixed:alerting.admin-config:reader",
+      "fixed:alerting.admin-config:writer"
+    ]
+  },
+  {
+    "action": "alert.admin-config:write",
+    "roles": [
+      "fixed:alerting.admin-config:writer"
+    ]
+  },
+  {
     "action": "alert.instances.external:read",
     "roles": [
       "fixed:alerting.instances:reader",

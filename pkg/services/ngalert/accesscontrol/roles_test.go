@@ -168,11 +168,23 @@ func TestAllAlertingActions_BoundToFixedRoles(t *testing.T) {
 	allActions := allAlertingActions()
 	require.NotEmpty(t, allActions, "should find ActionAlerting* constants")
 
+	// intentionallyUnboundActions enumerates actions that are deliberately
+	// not granted to any fixed role — typically system-only actions that the
+	// in-process service identity holds (see serviceIdentityPermissions in
+	// pkg/apimachinery/identity/context.go) but no human role should.
+	intentionallyUnboundActions := map[string]bool{
+		accesscontrol.ActionAlertingAdminConfigStatusWrite: true,
+	}
+
 	var unbound []string
 	for _, action := range allActions {
-		if _, ok := boundActions[action]; !ok {
-			unbound = append(unbound, action)
+		if _, ok := boundActions[action]; ok {
+			continue
 		}
+		if intentionallyUnboundActions[action] {
+			continue
+		}
+		unbound = append(unbound, action)
 	}
 	sort.Strings(unbound)
 
@@ -256,6 +268,9 @@ func allAlertingActions() []string {
 		accesscontrol.ActionAlertingAlertmanagerImportsRead,
 		accesscontrol.ActionAlertingAlertmanagerImportsWrite,
 		accesscontrol.ActionAlertingAlertmanagerImportsDelete,
+		accesscontrol.ActionAlertingAdminConfigRead,
+		accesscontrol.ActionAlertingAdminConfigWrite,
+		accesscontrol.ActionAlertingAdminConfigStatusWrite,
 	}
 	sort.Strings(actions)
 	return actions
