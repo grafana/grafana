@@ -501,7 +501,7 @@ func TestResolveAllGlobalRolePermissions(t *testing.T) {
 
 // TestUnlinkedGlobalRoleInjection verifies the per-namespace injection logic:
 // GlobalRoles referenced by a namespace Role are NOT injected as standalone tuples
-// (their permissions are already inlined via translateRoleToTuples composition).
+// (their permissions are already inlined via TranslateRoleToTuples composition).
 // GlobalRoles NOT referenced by any namespace Role ARE injected as standalone tuples.
 func TestUnlinkedGlobalRoleInjection(t *testing.T) {
 	globalRolePerms := map[string][]*authzextv1.RolePermission{
@@ -569,7 +569,7 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 			},
 		}
 
-		tuples, err := translateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+		tuples, err := TranslateRoleToTuples(toUnstructured(t, role), globalRolePerms)
 		require.NoError(t, err)
 		// Expects: dashboards:read/d1 (inherited) + dashboards:read/d2 (own addition),
 		// dashboards:write/d1 is omitted.
@@ -586,12 +586,12 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 			},
 		}
 
-		tuples, err := translateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+		tuples, err := TranslateRoleToTuples(toUnstructured(t, role), globalRolePerms)
 		require.NoError(t, err)
 		require.NotEmpty(t, tuples)
 	})
 
-	t.Run("public TranslateRoleToTuples — no composition even with RoleRefs", func(t *testing.T) {
+	t.Run("nil globalRolePerms — no composition even with RoleRefs", func(t *testing.T) {
 		role := &iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{Name: "wrapper-role"},
 			Spec: iamv0.RoleSpec{
@@ -605,12 +605,12 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 			},
 		}
 
-		// Public wrapper passes nil globalRolePerms — no composition.
-		tuplesNoComposition, err := TranslateRoleToTuples(toUnstructured(t, role))
+		// nil globalRolePerms — no composition.
+		tuplesNoComposition, err := TranslateRoleToTuples(toUnstructured(t, role), nil)
 		require.NoError(t, err)
 
 		// With composition, the same role also inherits dashboards:write from global-role-a.
-		tuplesWithComposition, err := translateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+		tuplesWithComposition, err := TranslateRoleToTuples(toUnstructured(t, role), globalRolePerms)
 		require.NoError(t, err)
 
 		// Composition produces more (or equal if deduped) tuples than no-composition.
@@ -630,7 +630,7 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 			},
 		}
 
-		tuples, err := translateRoleToTuples(toUnstructured(t, role), nil)
+		tuples, err := TranslateRoleToTuples(toUnstructured(t, role), nil)
 		require.NoError(t, err)
 		// Only own Permissions are used — global role not inherited.
 		require.NotEmpty(t, tuples)
@@ -659,7 +659,7 @@ func TestTranslateRoleToTuples_RoleManagementPermissions(t *testing.T) {
 		},
 	}
 
-	tuples, err := TranslateRoleToTuples(toUnstructured(t, role))
+	tuples, err := TranslateRoleToTuples(toUnstructured(t, role), nil)
 	require.NoError(t, err)
 
 	require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{

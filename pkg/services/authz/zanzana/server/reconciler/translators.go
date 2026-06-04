@@ -43,14 +43,8 @@ func TranslateFolderToTuples(obj *unstructured.Unstructured) ([]*openfgav1.Tuple
 }
 
 // TranslateRoleToTuples converts a Role CRD to permission tuples.
-// For backward compatibility and test use — no RoleRef resolution.
-func TranslateRoleToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
-	return translateRoleToTuples(obj, nil)
-}
-
-// translateRoleToTuples is the implementation of TranslateRoleToTuples.
 // globalRolePerms, if non-nil, is used to resolve RoleRefs + PermissionsOmitted via the shared resolver.
-func translateRoleToTuples(
+func TranslateRoleToTuples(
 	obj *unstructured.Unstructured,
 	globalRolePerms map[string][]*authzextv1.RolePermission,
 ) ([]*openfgav1.TupleKey, error) {
