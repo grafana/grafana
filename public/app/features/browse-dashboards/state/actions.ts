@@ -1,4 +1,4 @@
-import { GENERAL_FOLDER_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
+import { TEAM_FOLDERS_UID, isRootFolderUID } from 'app/features/search/constants';
 import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 import { createAsyncThunk } from 'app/types/store';
 
@@ -80,7 +80,7 @@ export const refetchChildren = createAsyncThunk(
     }
 
     const strippedUID = parentUID ? removeTeamFolderPrefix(parentUID) : parentUID;
-    const uid = strippedUID === GENERAL_FOLDER_UID ? undefined : strippedUID;
+    const uid = isRootFolderUID(strippedUID) ? undefined : strippedUID;
 
     // At the moment this will just clear out all loaded children and refetch the first page.
     // If user has scrolled beyond the first page, then InfiniteLoader will probably trigger
@@ -141,10 +141,10 @@ export const fetchNextChildrenPage = createAsyncThunk(
     const loadDashboards = !excludeKinds.includes('dashboard');
 
     const strippedUID = parentUID ? removeTeamFolderPrefix(parentUID) : parentUID;
-    const uid = strippedUID === GENERAL_FOLDER_UID ? undefined : strippedUID;
+    const uid = isRootFolderUID(strippedUID) ? undefined : strippedUID;
 
     const state = thunkAPI.getState().browseDashboards;
-    const collectionKey = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
+    const collectionKey = isRootFolderUID(parentUID) ? undefined : parentUID;
     const collection = collectionKey ? state.childrenByParentUID[collectionKey] : state.rootItems;
 
     let page = 1;

@@ -118,7 +118,13 @@ func (b *bleveBackend) snapshotCopyAndUpload(ctx context.Context, key resource.N
 	if err != nil {
 		return ulid.ULID{}, 0, fmt.Errorf("creating snapshot staging dir: %w", err)
 	}
-	defer func() { _ = os.RemoveAll(stagingDir) }()
+	// Pair the on-disk cleanup with the in-flight unregister installed by
+	// newSnapshotStagingDir. RemoveAll first so the disk cleanup loop can
+	// never observe the directory unregistered but still present.
+	defer func() {
+		_ = os.RemoveAll(stagingDir)
+		b.unregisterInFlightBuildDir(stagingDir)
+	}()
 
 	if err := b.snapshotIndex(idx.index, stagingDir); err != nil {
 		return ulid.ULID{}, 0, err
@@ -231,15 +237,33 @@ func readSnapshotIndexFormat(indexDir string) (string, error) {
 	return format, nil
 }
 
+// newSnapshotStagingDir creates the upload-* staging directory for one
+// snapshotCopyAndUpload call and registers it with inFlightBuildDirs so the
+// disk cleanup loop's in-flight check (see sweepSnapshotResource) protects an
+// in-progress CopyTo even if the mtime gate would otherwise let it through
+// — e.g. on a filesystem where mtime updates are unreliable, or on a sweep
+// triggered shortly after CopyTo began but before any segment file landed.
+// The matching unregister is owned by snapshotCopyAndUpload, paired with the
+// RemoveAll that tears the staging dir down.
+// snapshotsDirName is the top-level child of the bleve root that holds
+// snapshot upload staging directories. Shared with disk_cleanup.go so a
+// rename of one side can't drift from the other.
+const snapshotsDirName = "snapshots"
+
 func (b *bleveBackend) newSnapshotStagingDir(key resource.NamespacedResource) (string, error) {
-	parent := filepath.Join(b.opts.Root, "snapshots", resourceSubPath(key))
+	parent := filepath.Join(b.opts.Root, snapshotsDirName, resourceSubPath(key))
 	if !isPathWithinRoot(parent, b.opts.Root) {
 		return "", fmt.Errorf("invalid path %s", parent)
 	}
 	if err := os.MkdirAll(parent, 0o700); err != nil {
 		return "", err
 	}
-	return os.MkdirTemp(parent, "upload-*")
+	dir, err := os.MkdirTemp(parent, "upload-*")
+	if err != nil {
+		return "", err
+	}
+	b.registerInFlightBuildDir(dir)
+	return dir, nil
 }
 
 func checkSnapshotLock(lock IndexStoreLock) error {

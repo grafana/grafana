@@ -24,6 +24,7 @@ interface Props extends Pick<UseFormReturn<ImportFormDataV2>, 'register' | 'cont
   onCancel: () => void;
   onSubmit: FormsOnSubmit<ImportFormDataV2>;
   hasFloatGridItems: boolean;
+  onFolderChange?: (uid: string) => void;
 }
 
 export const ImportDashboardFormV2 = ({
@@ -35,6 +36,7 @@ export const ImportDashboardFormV2 = ({
   onCancel,
   onSubmit,
   hasFloatGridItems,
+  onFolderChange,
 }: Props) => {
   const [isSubmitted, setSubmitted] = useState(false);
   const [uidReset, setUidReset] = useState(false);
@@ -82,6 +84,9 @@ export const ImportDashboardFormV2 = ({
               {...field}
               onChange={(uid, title) => {
                 onChange(uid, title);
+                if (uid) {
+                  onFolderChange?.(uid);
+                }
               }}
               value={value}
             />
