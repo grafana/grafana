@@ -36,6 +36,20 @@ var (
 	}
 )
 
+// TeamPermissionsRoleRegistrations returns the templated reader/writer fixed
+// roles for team resource permissions (fixed:teams.permissions:reader and
+// :writer). These mirror the roles declared by ProvideTeamPermissions through
+// resourcepermissions.New; the identity fields below must match the Options
+// passed there.
+func TeamPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
+	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
+		Resource:       "teams",
+		ReaderRoleName: "Permission reader",
+		WriterRoleName: "Permission writer",
+		RoleGroup:      "Teams",
+	})
+}
+
 func ProvideTeamPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB,
 	ac accesscontrol.AccessControl, license licensing.Licensing, service accesscontrol.Service,

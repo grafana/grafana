@@ -33,6 +33,20 @@ func defaultPermissions() []accesscontrol.SetResourcePermissionCommand {
 	}
 }
 
+// ReceiverPermissionsRoleRegistrations returns the templated reader/writer fixed
+// roles for alerting receiver resource permissions
+// (fixed:receivers.permissions:reader and :writer). These mirror the roles
+// declared by ProvideReceiverPermissionsService through resourcepermissions.New;
+// the identity fields below must match the Options passed there.
+func ReceiverPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
+	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
+		Resource:       "receivers",
+		ReaderRoleName: "Alerting receiver permission reader",
+		WriterRoleName: "Alerting receiver permission writer",
+		RoleGroup:      models.AlertRolesGroup,
+	})
+}
+
 func ProvideReceiverPermissionsService(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, service accesscontrol.Service,

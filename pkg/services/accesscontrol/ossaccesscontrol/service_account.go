@@ -36,6 +36,21 @@ type ServiceAccountPermissionsService struct {
 	*resourcepermissions.Service
 }
 
+// ServiceAccountPermissionsRoleRegistrations returns the templated reader/writer
+// fixed roles for service account resource permissions
+// (fixed:serviceaccounts.permissions:reader and :writer). These mirror the roles
+// declared by ProvideServiceAccountPermissions through resourcepermissions.New;
+// the identity fields below must match the Options passed there.
+func ServiceAccountPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
+	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
+		Resource:       "serviceaccounts",
+		APIGroup:       "iam.grafana.app",
+		ReaderRoleName: "Permission reader",
+		WriterRoleName: "Permission writer",
+		RoleGroup:      "Service accounts",
+	})
+}
+
 func ProvideServiceAccountPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, serviceAccountRetrieverService *retriever.Service, service accesscontrol.Service,

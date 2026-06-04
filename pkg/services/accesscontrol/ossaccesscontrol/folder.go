@@ -95,6 +95,21 @@ func registerFolderRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service
 	return service.DeclareFixedRoles(FolderFixedRoleRegistrations(cfg.RBAC.PermissionsWildcardSeed("folder"))...)
 }
 
+// FolderPermissionsRoleRegistrations returns the templated reader/writer fixed
+// roles for folder resource permissions (fixed:folders.permissions:reader and
+// :writer). These mirror the roles declared by ProvideFolderPermissions through
+// resourcepermissions.New; the identity fields below must match the Options
+// passed there.
+func FolderPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
+	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
+		Resource:       "folders",
+		APIGroup:       folderv1.APIGroup,
+		ReaderRoleName: "Permission reader",
+		WriterRoleName: "Permission writer",
+		RoleGroup:      "Folders",
+	})
+}
+
 func ProvideFolderPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
 	license licensing.Licensing, folderService folder.Service, service accesscontrol.Service,

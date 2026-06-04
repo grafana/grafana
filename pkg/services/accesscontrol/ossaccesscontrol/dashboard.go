@@ -86,6 +86,21 @@ func registerDashboardRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, serv
 	return service.DeclareFixedRoles(DashboardFixedRoleRegistrations(cfg.RBAC.PermissionsWildcardSeed("dashboard"))...)
 }
 
+// DashboardPermissionsRoleRegistrations returns the templated reader/writer fixed
+// roles for dashboard resource permissions (fixed:dashboards.permissions:reader
+// and :writer). These mirror the roles declared by ProvideDashboardPermissions
+// through resourcepermissions.New; the identity fields below must match the
+// Options passed there.
+func DashboardPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
+	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
+		Resource:       "dashboards",
+		APIGroup:       dashboardv1.APIGroup,
+		ReaderRoleName: "Permission reader",
+		WriterRoleName: "Permission writer",
+		RoleGroup:      "Dashboards",
+	})
+}
+
 func ProvideDashboardPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, dashboardService dashboards.DashboardService, folderService folder.Service, service accesscontrol.Service,
