@@ -79,6 +79,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		SecureValues{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref),
 		SyncJobOptions{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref),
 		SyncOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref),
+		SupportedResource{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref),
 		SyncStatus{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref),
 		TestResults{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_TestResults(ref),
 		TokenStatus{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_TokenStatus(ref),
@@ -2696,14 +2697,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 					},
 					"availableResources": {
 						SchemaProps: spec.SchemaProps{
-							Description: "AvailableResources is the list of resource types that can be managed from the UI in this instance, as \"<kind>.<group>\" identifiers (e.g. \"Dashboard.dashboard.grafana.app\").",
+							Description: "AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Enabled).",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Default: map[string]interface{}{},
+										Ref:     ref(SupportedResource{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2732,7 +2732,52 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			RepositoryView{}.OpenAPIModelName()},
+			RepositoryView{}.OpenAPIModelName(), SupportedResource{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "SupportedResource describes a resource type declared for provisioning. A resource is identified by its group and kind; the API version and plural resource are resolved at runtime via discovery, so they are not part of this descriptor.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Group is the API group of the resource (e.g. \"dashboard.grafana.app\").",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is the kind of the resource (e.g. \"Dashboard\").",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"supportsFolderAnnotation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "SupportsFolderAnnotation reports whether the resource is saved inside a folder (as opposed to being org-scoped).",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"enabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Enabled reports whether the resource can currently be managed through provisioning.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"group", "kind", "enabled"},
+			},
+		},
 	}
 }
 

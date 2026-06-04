@@ -8,13 +8,13 @@ import (
 )
 
 func TestReadProvisioningResources(t *testing.T) {
-	t.Run("defaults to dashboards and folders when no sections are configured", func(t *testing.T) {
+	t.Run("defaults to dashboards and folders (enabled) when no sections are configured", func(t *testing.T) {
 		cfg, err := NewCfgFromBytes([]byte(``))
 		require.NoError(t, err)
 
 		assert.ElementsMatch(t, []ProvisioningResource{
-			{Group: "dashboard.grafana.app", Kind: "Dashboard", SupportsFolderAnnotation: true},
-			{Group: "folder.grafana.app", Kind: "Folder", SupportsFolderAnnotation: true},
+			{Group: "dashboard.grafana.app", Kind: "Dashboard", SupportsFolderAnnotation: true, Enabled: true},
+			{Group: "folder.grafana.app", Kind: "Folder", SupportsFolderAnnotation: true, Enabled: true},
 		}, cfg.ProvisioningResources)
 	})
 
@@ -22,20 +22,22 @@ func TestReadProvisioningResources(t *testing.T) {
 		iniContent := `
 [provisioning.resources.Dashboard.dashboard.grafana.app]
 folder = true
+enabled = true
 
 [provisioning.resources.Playlist.playlist.grafana.app]
 folder = false
+enabled = false
 `
 		cfg, err := NewCfgFromBytes([]byte(iniContent))
 		require.NoError(t, err)
 
 		assert.ElementsMatch(t, []ProvisioningResource{
-			{Group: "dashboard.grafana.app", Kind: "Dashboard", SupportsFolderAnnotation: true},
-			{Group: "playlist.grafana.app", Kind: "Playlist", SupportsFolderAnnotation: false},
+			{Group: "dashboard.grafana.app", Kind: "Dashboard", SupportsFolderAnnotation: true, Enabled: true},
+			{Group: "playlist.grafana.app", Kind: "Playlist", SupportsFolderAnnotation: false, Enabled: false},
 		}, cfg.ProvisioningResources)
 	})
 
-	t.Run("folder defaults to false when the key is omitted", func(t *testing.T) {
+	t.Run("folder and enabled default when the keys are omitted", func(t *testing.T) {
 		iniContent := `
 [provisioning.resources.Playlist.playlist.grafana.app]
 `
@@ -43,6 +45,7 @@ folder = false
 		require.NoError(t, err)
 
 		require.Len(t, cfg.ProvisioningResources, 1)
-		assert.Equal(t, ProvisioningResource{Group: "playlist.grafana.app", Kind: "Playlist", SupportsFolderAnnotation: false}, cfg.ProvisioningResources[0])
+		// folder defaults to false; enabled defaults to true.
+		assert.Equal(t, ProvisioningResource{Group: "playlist.grafana.app", Kind: "Playlist", SupportsFolderAnnotation: false, Enabled: true}, cfg.ProvisioningResources[0])
 	})
 }

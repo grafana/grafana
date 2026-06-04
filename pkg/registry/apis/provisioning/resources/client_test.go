@@ -25,15 +25,15 @@ func TestResourceClients_SupportedResources(t *testing.T) {
 		assert.Equal(t, SupportedProvisioningResources, clients.SupportedResources())
 	})
 
-	t.Run("returns exactly the configured set", func(t *testing.T) {
-		configured := []SupportedResource{
-			{GroupKind: DashboardKind.GroupKind(), SupportsFolderAnnotation: true},
-			{GroupKind: playlistKind, SupportsFolderAnnotation: false},
-		}
-		clients, err := NewClientFactory(nil, configured...).Clients(context.Background(), "default")
+	t.Run("returns only the enabled configured resources", func(t *testing.T) {
+		enabled := SupportedResource{GroupKind: DashboardKind.GroupKind(), SupportsFolderAnnotation: true, Enabled: true}
+		disabled := SupportedResource{GroupKind: playlistKind, SupportsFolderAnnotation: false, Enabled: false}
+
+		clients, err := NewClientFactory(nil, enabled, disabled).Clients(context.Background(), "default")
 		require.NoError(t, err)
 
-		assert.Equal(t, configured, clients.SupportedResources())
+		// Disabled resources are not acted on, so they are excluded from the supported set.
+		assert.Equal(t, []SupportedResource{enabled}, clients.SupportedResources())
 	})
 }
 

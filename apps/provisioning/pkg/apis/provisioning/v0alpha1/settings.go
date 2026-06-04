@@ -21,12 +21,34 @@ type RepositoryViewList struct {
 	// AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)
 	AvailableRepositoryTypes []RepositoryType `json:"availableRepositoryTypes,omitempty"`
 
-	// AvailableResources is the list of resource types that can be managed from the UI in this
-	// instance, as "<kind>.<group>" identifiers (e.g. "Dashboard.dashboard.grafana.app").
-	AvailableResources []string `json:"availableResources,omitempty"`
+	// AvailableResources is the list of resource types declared for provisioning in this
+	// instance, including disabled ones (see SupportedResource.Enabled).
+	AvailableResources []SupportedResource `json:"availableResources,omitempty"`
 
 	// +mapType=atomic
 	Items []RepositoryView `json:"items"`
+}
+
+// SupportedResource describes a resource type declared for provisioning. A resource is
+// identified by its group and kind; the API version and plural resource are resolved at
+// runtime via discovery, so they are not part of this descriptor.
+type SupportedResource struct {
+	// Group is the API group of the resource (e.g. "dashboard.grafana.app").
+	Group string `json:"group"`
+
+	// Kind is the kind of the resource (e.g. "Dashboard").
+	Kind string `json:"kind"`
+
+	// SupportsFolderAnnotation reports whether the resource is saved inside a folder
+	// (as opposed to being org-scoped).
+	SupportsFolderAnnotation bool `json:"supportsFolderAnnotation,omitempty"`
+
+	// Enabled reports whether the resource can currently be managed through provisioning.
+	Enabled bool `json:"enabled"`
+}
+
+func (SupportedResource) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SupportedResource"
 }
 
 func (RepositoryViewList) OpenAPIModelName() string {

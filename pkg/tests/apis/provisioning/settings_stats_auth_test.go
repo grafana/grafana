@@ -109,7 +109,7 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 		require.Equal(t, int64(1000), settings.MaxRepositories, "MaxRepositories should be 1000 when configured")
 	})
 
-	t.Run("settings endpoint surfaces the default supported resources", func(t *testing.T) {
+	t.Run("settings endpoint surfaces the default supported resources, enabled and disabled", func(t *testing.T) {
 		settings := &provisioning.RepositoryViewList{}
 		result := helper.AdminREST.Get().
 			Namespace("default").
@@ -119,26 +119,26 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 		require.NoError(t, result.Error(), "should be able to GET settings")
 		require.NoError(t, result.Into(settings), "should be able to unmarshal settings response")
 
-		// With the default configuration, folders and dashboards are provisionable. They are
-		// surfaced as "<kind>.<group>" identifiers (the version is resolved at runtime).
-		require.ElementsMatch(t,
-			[]string{"Folder.folder.grafana.app", "Dashboard.dashboard.grafana.app"},
-			settings.AvailableResources,
-			"settings should surface the default supported resources",
-		)
+		// The default config (conf/defaults.ini) declares folders + dashboards (enabled) and
+		// library panels + playlists (disabled). All are surfaced with their full descriptor.
+		require.ElementsMatch(t, []provisioning.SupportedResource{
+			{Group: "folder.grafana.app", Kind: "Folder", SupportsFolderAnnotation: true, Enabled: true},
+			{Group: "dashboard.grafana.app", Kind: "Dashboard", SupportsFolderAnnotation: true, Enabled: true},
+			{Group: "dashboard.grafana.app", Kind: "LibraryPanel", SupportsFolderAnnotation: true, Enabled: false},
+			{Group: "playlist.grafana.app", Kind: "Playlist", SupportsFolderAnnotation: false, Enabled: false},
+		}, settings.AvailableResources, "settings should surface the default supported resources")
 	})
 }
 
-// TestIntegrationProvisioning_SettingsExtraResources verifies that a resource added through
-// configuration ([provisioning.resources.<kind>.<group>] sections) is surfaced on the
-// settings endpoint, i.e. adding a provisionable resource is a config change.
+// TestIntegrationProvisioning_SettingsExtraResources verifies that a resource added (and
+// enabled) purely through configuration ([provisioning.resources.<kind>.<group>] sections)
+// is surfaced on the settings endpoint, i.e. adding a provisionable resource is a config change.
 func TestIntegrationProvisioning_SettingsExtraResources(t *testing.T) {
 	helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		// Added on top of the defaults from conf/defaults.ini. The kind need not be served:
+		// the settings endpoint surfaces the configured descriptor without discovery.
 		opts.ProvisioningResources = []setting.ProvisioningResource{
-			{Group: "folder.grafana.app", Kind: "Folder", SupportsFolderAnnotation: true},
-			{Group: "dashboard.grafana.app", Kind: "Dashboard", SupportsFolderAnnotation: true},
-			// An extra, org-scoped resource registered purely through config.
-			{Group: "playlist.grafana.app", Kind: "Playlist", SupportsFolderAnnotation: false},
+			{Group: "example.grafana.app", Kind: "Example", SupportsFolderAnnotation: false, Enabled: true},
 		}
 	})
 	ctx := context.Background()
@@ -152,15 +152,9 @@ func TestIntegrationProvisioning_SettingsExtraResources(t *testing.T) {
 	require.NoError(t, result.Error(), "should be able to GET settings")
 	require.NoError(t, result.Into(settings), "should be able to unmarshal settings response")
 
-	require.ElementsMatch(t,
-		[]string{
-			"Folder.folder.grafana.app",
-			"Dashboard.dashboard.grafana.app",
-			"Playlist.playlist.grafana.app",
-		},
-		settings.AvailableResources,
-		"settings should surface the configured supported resources, including the extra one",
-	)
+	require.Contains(t, settings.AvailableResources, provisioning.SupportedResource{
+		Group: "example.grafana.app", Kind: "Example", SupportsFolderAnnotation: false, Enabled: true,
+	}, "a resource added through config should be surfaced on the settings endpoint")
 }
 
 func TestIntegrationProvisioning_StatsAuthorization(t *testing.T) {

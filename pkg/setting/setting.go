@@ -2518,6 +2518,9 @@ type ProvisioningResource struct {
 	// SupportsFolderAnnotation reports whether the resource is saved inside a folder
 	// (carries the folder header annotation), as opposed to being org-scoped.
 	SupportsFolderAnnotation bool
+	// Enabled reports whether the resource can currently be managed through provisioning.
+	// Disabled resources are still declared (and surfaced) but are not acted on.
+	Enabled bool
 }
 
 // readProvisioningResources reads the set of provisionable resources from
@@ -2548,13 +2551,14 @@ func (cfg *Cfg) readProvisioningResources(iniFile *ini.File) error {
 			Kind:                     kindAndGroup[0],
 			Group:                    kindAndGroup[1],
 			SupportsFolderAnnotation: section.Key("folder").MustBool(false),
+			Enabled:                  section.Key("enabled").MustBool(true),
 		})
 	}
 
 	if len(out) == 0 {
 		out = []ProvisioningResource{
-			{Group: "folder.grafana.app", Kind: "Folder", SupportsFolderAnnotation: true},
-			{Group: "dashboard.grafana.app", Kind: "Dashboard", SupportsFolderAnnotation: true},
+			{Group: "folder.grafana.app", Kind: "Folder", SupportsFolderAnnotation: true, Enabled: true},
+			{Group: "dashboard.grafana.app", Kind: "Dashboard", SupportsFolderAnnotation: true, Enabled: true},
 		}
 	}
 

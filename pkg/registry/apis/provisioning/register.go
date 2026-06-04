@@ -324,6 +324,7 @@ func RegisterAPIService(
 		supportedResources = append(supportedResources, resources.SupportedResource{
 			GroupKind:                schema.GroupKind{Group: r.Group, Kind: r.Kind},
 			SupportsFolderAnnotation: r.SupportsFolderAnnotation,
+			Enabled:                  r.Enabled,
 		})
 	}
 

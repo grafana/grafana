@@ -35,8 +35,8 @@ var (
 	// (configured) set. The effective set is normally built from configuration; see
 	// pkg/setting [provisioning.resources.<kind>.<group>] sections.
 	SupportedProvisioningResources = []SupportedResource{
-		{GroupKind: FolderKind.GroupKind(), SupportsFolderAnnotation: true},
-		{GroupKind: DashboardKind.GroupKind(), SupportsFolderAnnotation: true},
+		{GroupKind: FolderKind.GroupKind(), SupportsFolderAnnotation: true, Enabled: true},
+		{GroupKind: DashboardKind.GroupKind(), SupportsFolderAnnotation: true, Enabled: true},
 	}
 )
 
@@ -49,6 +49,9 @@ type SupportedResource struct {
 	// SupportsFolderAnnotation reports whether the resource is saved inside a folder,
 	// i.e. whether it should carry the folder header annotation when written.
 	SupportsFolderAnnotation bool
+	// Enabled reports whether the resource can currently be managed through provisioning.
+	// Disabled resources are still declared (and surfaced) but are not acted on.
+	Enabled bool
 }
 
 // supportsFolderAnnotation reports whether gvk is a supported resource that carries the
@@ -170,14 +173,14 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 	return p.dynamic, p.discovery, nil
 }
 
-// NewClientFactory creates a ClientFactory. The supported set is the effective list of
-// resources that can be managed from the UI, built from configuration (see
-// BuildSupportedResources). When none is provided it falls back to the static
-// SupportedProvisioningResources base set.
+// NewClientFactory creates a ClientFactory. The supported set is the configured list of
+// resources that can be managed from the UI; the ResourceClients it produces expose only
+// the enabled subset via SupportedResources(). When none is provided it falls back to the
+// static SupportedProvisioningResources base set.
 func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
 	return &clientFactory{
 		clientsProvider:    newSingleAPIClients(configProvider),
-		supportedResources: defaultSupportedResources(supported),
+		supportedResources: enabledResources(defaultSupportedResources(supported)),
 	}
 }
 
@@ -191,7 +194,19 @@ func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.
 		clientFactories[api] = clientFactory
 	}
 
-	return &multiClientFactory{clientFactories: clientFactories, supportedResources: defaultSupportedResources(supported)}
+	return &multiClientFactory{clientFactories: clientFactories, supportedResources: enabledResources(defaultSupportedResources(supported))}
+}
+
+// enabledResources returns only the resources flagged as enabled. Disabled resources are
+// declared (and surfaced on the settings endpoint) but are not acted on by the pipeline.
+func enabledResources(all []SupportedResource) []SupportedResource {
+	out := make([]SupportedResource, 0, len(all))
+	for _, r := range all {
+		if r.Enabled {
+			out = append(out, r)
+		}
+	}
+	return out
 }
 
 // defaultSupportedResources returns supported when non-empty, otherwise the static base set.
