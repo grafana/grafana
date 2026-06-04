@@ -34,6 +34,9 @@ const (
 	RelationCreate = common.RelationCreate
 	RelationDelete = common.RelationDelete
 
+	RelationGetPermissions = common.RelationGetPermissions
+	RelationSetPermissions = common.RelationSetPermissions
+
 	RelationSubresourceSetView  = common.RelationSubresourceSetView
 	RelationSubresourceSetEdit  = common.RelationSubresourceSetEdit
 	RelationSubresourceSetAdmin = common.RelationSubresourceSetAdmin
