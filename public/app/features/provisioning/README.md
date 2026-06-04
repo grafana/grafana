@@ -91,6 +91,17 @@ Pass `isLocal` to switch the tooltip copy between git and local file provisionin
 dashboard pages the read-only state also reflects a read-only repository (`isReadOnlyRepo`) resolved
 via [`useGetResourceRepositoryView`](./hooks/useGetResourceRepositoryView.ts).
 
+Gate edit/delete actions on the same check so a read-only resource cannot be mutated from the UI —
+e.g. playlists disable their **Edit** and **Delete** buttons when `isManagedResourceReadOnly` is
+true:
+
+```tsx
+const isReadOnly = isManagedResourceReadOnly(resource);
+
+<LinkButton href={editHref} disabled={isReadOnly}>Edit</LinkButton>
+<Button variant="destructive" disabled={isReadOnly} onClick={onDelete}>Delete</Button>
+```
+
 ## Linking to the source file
 
 [`SourceLink`](./components/SourceLink.tsx) renders a button — styled like the external links on

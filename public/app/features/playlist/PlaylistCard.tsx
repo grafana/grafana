@@ -27,6 +27,7 @@ interface Props {
 }
 
 const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete }: Props) => {
+  const isReadOnly = isManagedResourceReadOnly(playlist);
   return (
     <Card noMargin>
       <Card.Heading>
@@ -61,11 +62,17 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
         </Button>
         {canWritePlaylists() && (
           <>
-            <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.metadata?.name}`} icon="cog">
+            <LinkButton
+              key="edit"
+              variant="secondary"
+              href={`/playlists/edit/${playlist.metadata?.name}`}
+              icon="cog"
+              disabled={isReadOnly}
+            >
               <Trans i18nKey="playlist-page.card.edit">Edit playlist</Trans>
             </LinkButton>
             <Button
-              disabled={false}
+              disabled={isReadOnly}
               onClick={() => setPlaylistToDelete(playlist)}
               icon="trash-alt"
               variant="destructive"
