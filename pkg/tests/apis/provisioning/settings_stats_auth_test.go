@@ -9,7 +9,9 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
@@ -125,6 +127,40 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 			"settings should surface the default supported resources",
 		)
 	})
+}
+
+// TestIntegrationProvisioning_SettingsExtraResources verifies that a resource added through
+// configuration ([provisioning.resources.<kind>.<group>] sections) is surfaced on the
+// settings endpoint, i.e. adding a provisionable resource is a config change.
+func TestIntegrationProvisioning_SettingsExtraResources(t *testing.T) {
+	helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningResources = []setting.ProvisioningResource{
+			{Group: "folder.grafana.app", Kind: "Folder", SupportsFolderAnnotation: true},
+			{Group: "dashboard.grafana.app", Kind: "Dashboard", SupportsFolderAnnotation: true},
+			// An extra, org-scoped resource registered purely through config.
+			{Group: "playlist.grafana.app", Kind: "Playlist", SupportsFolderAnnotation: false},
+		}
+	})
+	ctx := context.Background()
+
+	settings := &provisioning.RepositoryViewList{}
+	result := helper.AdminREST.Get().
+		Namespace("default").
+		Resource("settings").
+		Do(ctx)
+
+	require.NoError(t, result.Error(), "should be able to GET settings")
+	require.NoError(t, result.Into(settings), "should be able to unmarshal settings response")
+
+	require.ElementsMatch(t,
+		[]string{
+			"Folder.folder.grafana.app",
+			"Dashboard.dashboard.grafana.app",
+			"Playlist.playlist.grafana.app",
+		},
+		settings.AvailableResources,
+		"settings should surface the configured supported resources, including the extra one",
+	)
 }
 
 func TestIntegrationProvisioning_StatsAuthorization(t *testing.T) {

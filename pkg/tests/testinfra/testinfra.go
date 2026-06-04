@@ -802,6 +802,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("allowed_targets", strings.Join(opts.ProvisioningAllowedTargets, "|"))
 		require.NoError(t, err)
 	}
+	for _, r := range opts.ProvisioningResources {
+		section, err := getOrCreateSection(fmt.Sprintf("provisioning.resources.%s.%s", r.Kind, r.Group))
+		require.NoError(t, err)
+		_, err = section.NewKey("folder", fmt.Sprintf("%t", r.SupportsFolderAnnotation))
+		require.NoError(t, err)
+	}
 	if opts.ProvisioningAllowInsecure {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
@@ -1009,6 +1015,7 @@ type GrafanaOpts struct {
 	ProvisioningAllowedTargets                           []string
 	ProvisioningAllowInsecure                            bool
 	ProvisioningRepositoryTypes                          []string
+	ProvisioningResources                                []setting.ProvisioningResource
 	ProvisioningMaxResourcesPerRepository                int64
 	ProvisioningMaxRepositories                          int64
 	ProvisioningFolderAPIVersion                         string

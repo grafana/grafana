@@ -172,7 +172,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 
 	availableResources := make([]string, 0, len(b.supportedResources))
 	for _, r := range b.supportedResources {
-		availableResources = append(availableResources, r.GroupKind.String())
+		availableResources = append(availableResources, r.String())
 	}
 
 	settings := provisioning.RepositoryViewList{
