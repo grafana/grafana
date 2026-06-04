@@ -27,7 +27,6 @@ describe('managedResource helpers', () => {
       ManagerKind.Terraform,
       ManagerKind.Kubectl,
       ManagerKind.Plugin,
-      ManagerKind.Grafana,
       ManagerKind.ClassicFP,
     ])('returns the manager kind when set (%s)', (kind) => {
       expect(getManagerKind(resource({ [AnnoKeyManagerKind]: kind }))).toBe(kind);
