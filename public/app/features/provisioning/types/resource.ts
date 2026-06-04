@@ -1,9 +1,10 @@
 /**
- * The kinds of Grafana resource that can be committed through the provisioning save flow.
+ * The kind of Grafana resource being committed through the provisioning save flow.
  *
- * This is the single source of truth for the provisioning UI. To support a new k8s-style
- * resource (e.g. a library panel), add it here — the shared helpers (commit messages, request
- * errors, the edit form fields and request handler) all derive from this type and degrade to
- * generic behaviour for any value they don't special-case, so no parallel lists need updating.
+ * This is an open string type: the listed values are the ones with bespoke behaviour today (and
+ * power editor autocomplete), but any other value is accepted. The shared helpers (commit messages,
+ * request errors, the edit form fields and request handler) all degrade to generic behaviour for
+ * values they don't special-case, so a new k8s-style resource (e.g. a library panel) can pass its
+ * own type without this list — or any other shared code — needing to change.
  */
-export type ProvisionedResourceType = 'dashboard' | 'folder' | 'playlist';
+export type ProvisionedResourceType = 'dashboard' | 'folder' | 'playlist' | (string & {});
