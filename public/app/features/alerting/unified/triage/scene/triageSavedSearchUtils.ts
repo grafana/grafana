@@ -12,7 +12,7 @@ import { type AdHocVariableFilter, type RawTimeRange, dateMath, makeTimeRange } 
 import { locationService } from '@grafana/runtime';
 import { AdHocFiltersVariable, GROUP_BY_OPERATOR, type SceneObject, sceneGraph } from '@grafana/scenes';
 
-import { toUrl } from '../../../../variables/adhoc/urlParser';
+import { toFilter, toUrl } from '../../../../variables/adhoc/urlParser';
 import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { TRIAGE_STATE_URL_PARAMS, URL_PARAMS, VARIABLES } from '../constants';
 
@@ -202,33 +202,15 @@ export function extractFilterObjects(query: string): AdHocVariableFilter[] {
   return [...filterEntries, ...legacyGroupByFilters];
 }
 
-/**
- * Parses a single URL filter entry string into an AdHocVariableFilter.
- * Handles both 3-part regular filters (`key|operator|value`) and 2-part groupBy
- * entries (`key|groupBy`) — the latter have no value segment.
- */
 function parseFilterEntry(raw: string): AdHocVariableFilter | null {
-  if (!raw) {
+  if (!raw || raw.split('|').length < 2) {
     return null;
   }
 
-  const parts = raw.split('|').map(unescapeDelimiter);
-
-  if (parts.length === 2 && parts[1] === GROUP_BY_OPERATOR) {
-    // GroupBy entry: key|groupBy
-    return { key: parts[0], operator: GROUP_BY_OPERATOR, value: '' };
-  }
-
-  if (parts.length >= 3) {
-    // Regular filter: key|operator|value
-    return { key: parts[0], operator: parts[1], value: parts[2] };
-  }
-
-  return null;
-}
-
-function unescapeDelimiter(value: string): string {
-  return value.replace(/__gfp__/g, '|');
+  // Normalize 2-part entries (e.g. key|groupBy) to 3-part (key|groupBy|)
+  // so toFilter can parse all formats uniformly.
+  const normalized = raw.split('|').length === 2 ? raw + '|' : raw;
+  return toFilter(normalized);
 }
 
 /**
