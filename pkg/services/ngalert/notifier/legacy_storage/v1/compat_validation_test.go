@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/definition/compat"
+	"github.com/grafana/alerting/http/v0mimir/v0mimirtest"
 	"github.com/grafana/alerting/notify/notifytest"
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
@@ -98,16 +99,22 @@ func TestFindUnsupportedReceiverFields_FlagsRemovedFields(t *testing.T) {
 }
 
 // TestFindUnsupportedReceiverFields_NoFalsePositives: every supported field must
-// survive the round-trip, so a fully-populated receiver reports nothing.
+// survive the round-trip. We build a receiver with all integration types for each
+// available HTTP-config variant (basic_auth, oauth2, tls, headers, proxy, ...) so
+// the shared http_config sub-struct is exercised too, and assert nothing is
+// reported.
 func TestFindUnsupportedReceiverFields_NoFalsePositives(t *testing.T) {
-	def, err := notifytest.GetMimirReceiverWithAllIntegrations()
-	require.NoError(t, err)
+	for opt := range v0mimirtest.ValidMimirHTTPConfigs {
+		t.Run(string(opt), func(t *testing.T) {
+			def, err := notifytest.GetMimirReceiverWithAllIntegrations(opt)
+			require.NoError(t, err)
 
-	upstream := compat.DefinitionReceiverToUpstreamReceiver(def)
-
-	fields, err := findUnsupportedReceiverFields(upstream, compat.UpstreamReceiverToDefinitionReceiver(upstream))
-	require.NoError(t, err)
-	require.Empty(t, fields, "supported fields must not be reported as unsupported")
+			upstream := compat.DefinitionReceiverToUpstreamReceiver(def)
+			fields, err := findUnsupportedReceiverFields(upstream, compat.UpstreamReceiverToDefinitionReceiver(upstream))
+			require.NoError(t, err)
+			require.Empty(t, fields, "supported fields must not be reported as unsupported")
+		})
+	}
 }
 
 func TestExtraConfiguration_Validate_RejectsUnsupportedFields(t *testing.T) {
