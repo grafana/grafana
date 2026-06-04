@@ -22,15 +22,12 @@ const resource = (annotations?: Record<string, string>): ManagedResource => ({
 
 describe('managedResource helpers', () => {
   describe('getManagerKind', () => {
-    it.each([
-      ManagerKind.Repo,
-      ManagerKind.Terraform,
-      ManagerKind.Kubectl,
-      ManagerKind.Plugin,
-      ManagerKind.ClassicFP,
-    ])('returns the manager kind when set (%s)', (kind) => {
-      expect(getManagerKind(resource({ [AnnoKeyManagerKind]: kind }))).toBe(kind);
-    });
+    it.each([ManagerKind.Repo, ManagerKind.Terraform, ManagerKind.Kubectl, ManagerKind.Plugin, ManagerKind.ClassicFP])(
+      'returns the manager kind when set (%s)',
+      (kind) => {
+        expect(getManagerKind(resource({ [AnnoKeyManagerKind]: kind }))).toBe(kind);
+      }
+    );
 
     it('returns undefined for an unknown manager kind', () => {
       expect(getManagerKind(resource({ [AnnoKeyManagerKind]: 'some-future-manager' }))).toBeUndefined();

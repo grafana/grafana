@@ -21,7 +21,11 @@ import { FolderActionsButton } from '../FolderActionsButton';
 export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder }) => {
   // Fetch the root (aka general) folder if we're not in a specific folder
   const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
-  const { isReadOnlyRepo, repoType, folder: repoFolderResource } = useGetResourceRepositoryView({
+  const {
+    isReadOnlyRepo,
+    repoType,
+    folder: repoFolderResource,
+  } = useGetResourceRepositoryView({
     folderName: folderDTO?.uid,
   });
   const isReadOnly = repoFolderResource ? isManagedResourceReadOnly(repoFolderResource) : false;

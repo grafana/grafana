@@ -12,19 +12,19 @@ supports it (see `pkg/registry/apis/provisioning`).
 
 Provisioning state lives in the resource's Kubernetes-style `metadata.annotations`:
 
-| Annotation                       | Constant                    | Meaning                                              |
+| Annotation                       | Constant                    | Meaning                                             |
 | -------------------------------- | --------------------------- | --------------------------------------------------- |
-| `grafana.app/managedBy`          | `AnnoKeyManagerKind`         | Which system owns the resource (the `ManagerKind`). |
-| `grafana.app/managerId`          | `AnnoKeyManagerIdentity`     | Identity of the manager (e.g. the repository name). |
-| `grafana.app/managerAllowsEdits` | `AnnoKeyManagerAllowsEdits`  | Whether the manager permits UI edits.               |
+| `grafana.app/managedBy`          | `AnnoKeyManagerKind`        | Which system owns the resource (the `ManagerKind`). |
+| `grafana.app/managerId`          | `AnnoKeyManagerIdentity`    | Identity of the manager (e.g. the repository name). |
+| `grafana.app/managerAllowsEdits` | `AnnoKeyManagerAllowsEdits` | Whether the manager permits UI edits.               |
 
 `ManagerKind` (`app/features/apiserver/types`) can be `repo`, `terraform`, `kubectl` or `plugin`.
 The annotation may also hold values not in the enum (e.g. classic file provisioning), so treat
-"managed" as *any* value being present.
+"managed" as _any_ value being present.
 
 Two distinct ideas matter:
 
-- **Managed** — the resource is owned by *any* external manager. It may be read-only.
+- **Managed** — the resource is owned by _any_ external manager. It may be read-only.
 - **Managed by a repository** — specifically managed by the repository (git) provisioning feature
   (`managedBy === repo`). This is the only kind with a first-class editing workflow in the UI and
   the only one that drives the "Provisioned" badge.
@@ -67,9 +67,9 @@ repository) by gating on `isManaged` and passing the kind:
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 import { getManagerIdentity, getManagerKind, isManaged } from 'app/features/provisioning/utils/managedResource';
 
-{isManaged(resource) && (
-  <ManagedBadge managerKind={getManagerKind(resource)} name={getManagerIdentity(resource)} />
-)}
+{
+  isManaged(resource) && <ManagedBadge managerKind={getManagerKind(resource)} name={getManagerIdentity(resource)} />;
+}
 ```
 
 `ManagedBadge` renders the repository, terraform, kubectl and plugin variants, the orphaned state
@@ -84,7 +84,9 @@ resources that don't allow UI edits. Gate it on `isManagedResourceReadOnly`:
 import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
 import { isManagedResourceReadOnly } from 'app/features/provisioning/utils/managedResource';
 
-{isManagedResourceReadOnly(resource) && <ReadOnlyBadge />}
+{
+  isManagedResourceReadOnly(resource) && <ReadOnlyBadge />;
+}
 ```
 
 Pass `isLocal` to switch the tooltip copy between git and local file provisioning. On folder and
@@ -113,7 +115,7 @@ resolvable git source (not repository-managed, local/generic-git provisioning, o
 import { SourceLink } from 'app/features/provisioning/components/SourceLink';
 import { getManagerIdentity, getSourcePath } from 'app/features/provisioning/utils/managedResource';
 
-<SourceLink repositoryName={getManagerIdentity(resource)} sourcePath={getSourcePath(resource)} />
+<SourceLink repositoryName={getManagerIdentity(resource)} sourcePath={getSourcePath(resource)} />;
 ```
 
 On the folder page it is shown when the folder has a metadata file (its `sourcePath`).
