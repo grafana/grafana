@@ -234,9 +234,6 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 	})
 
 	t.Run("should reconcile org-admin (org.users) permissions", func(t *testing.T) {
-		// basic_admin (Org Admin) carries the org.users:* family plus
-		// users.permissions:read. org.users:add is intentionally not translated yet
-		// (pending the broader org-permissions picture), so it produces no create tuple.
 		permissions := []RolePermission{
 			{Action: "org.users:read", Kind: "users", Identifier: "*"},
 			{Action: "org.users:write", Kind: "users", Identifier: "*"},
