@@ -13623,6 +13623,8 @@
       "path-required": "Repository path is required"
     },
     "managed-badge": {
+      "classic-file-provisioning": "Managed by: File provisioning",
+      "grafana": "Managed by: Grafana",
       "kubectl": "Managed by: Kubectl",
       "plugin": "Managed by: Plugin {{id}}",
       "provisioned": "Provisioned",

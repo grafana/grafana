@@ -92,8 +92,8 @@ dashboard pages the read-only state also reflects a read-only repository (`isRea
 via [`useGetResourceRepositoryView`](./hooks/useGetResourceRepositoryView.ts).
 
 Gate edit/delete actions on the same check so a read-only resource cannot be mutated from the UI —
-e.g. playlists disable their **Edit** and **Delete** buttons when `isManagedResourceReadOnly` is
-true:
+playlists disable their **Edit** and **Delete** buttons, and the folder page disables inline title
+editing plus the **Move**/**Delete** folder actions, when `isManagedResourceReadOnly` is true:
 
 ```tsx
 const isReadOnly = isManagedResourceReadOnly(resource);

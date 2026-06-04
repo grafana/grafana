@@ -22,8 +22,19 @@ const resource = (annotations?: Record<string, string>): ManagedResource => ({
 
 describe('managedResource helpers', () => {
   describe('getManagerKind', () => {
-    it('returns the manager kind when set', () => {
-      expect(getManagerKind(resource({ [AnnoKeyManagerKind]: ManagerKind.Terraform }))).toBe(ManagerKind.Terraform);
+    it.each([
+      ManagerKind.Repo,
+      ManagerKind.Terraform,
+      ManagerKind.Kubectl,
+      ManagerKind.Plugin,
+      ManagerKind.Grafana,
+      ManagerKind.ClassicFP,
+    ])('returns the manager kind when set (%s)', (kind) => {
+      expect(getManagerKind(resource({ [AnnoKeyManagerKind]: kind }))).toBe(kind);
+    });
+
+    it('returns undefined for an unknown manager kind', () => {
+      expect(getManagerKind(resource({ [AnnoKeyManagerKind]: 'some-future-manager' }))).toBeUndefined();
     });
 
     it('returns undefined when not managed', () => {
@@ -56,8 +67,8 @@ describe('managedResource helpers', () => {
       }
     );
 
-    it('returns true for managers not represented by ManagerKind (e.g. classic file provisioning)', () => {
-      expect(isManaged(resource({ [AnnoKeyManagerKind]: 'classic-file-provisioning' }))).toBe(true);
+    it('returns true for managers not represented by ManagerKind (unknown future kind)', () => {
+      expect(isManaged(resource({ [AnnoKeyManagerKind]: 'some-future-manager' }))).toBe(true);
     });
 
     it('returns false when not managed', () => {

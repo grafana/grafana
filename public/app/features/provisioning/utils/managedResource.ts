@@ -22,13 +22,12 @@ export interface ManagedResource {
   };
 }
 
+// Derived from the enum so any manager kind (repo, terraform, kubectl, plugin, grafana,
+// classic-file-provisioning, ...) is recognised without maintaining a parallel list here.
+const MANAGER_KINDS = new Set<string>(Object.values(ManagerKind));
+
 function isManagerKind(value: string | undefined): value is ManagerKind {
-  return (
-    value === ManagerKind.Repo ||
-    value === ManagerKind.Terraform ||
-    value === ManagerKind.Kubectl ||
-    value === ManagerKind.Plugin
-  );
+  return value !== undefined && MANAGER_KINDS.has(value);
 }
 
 /** Returns which system manages the resource, or undefined when it is not managed. */

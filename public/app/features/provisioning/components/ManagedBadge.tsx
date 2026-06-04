@@ -35,6 +35,12 @@ export function ManagedBadge({ managerKind, name, isOrphaned = false }: ManagedB
     case ManagerKind.Plugin:
       tooltip = t('provisioning.managed-badge.plugin', 'Managed by: Plugin {{id}}', { id: name });
       break;
+    case ManagerKind.Grafana:
+      tooltip = t('provisioning.managed-badge.grafana', 'Managed by: Grafana');
+      break;
+    case ManagerKind.ClassicFP:
+      tooltip = t('provisioning.managed-badge.classic-file-provisioning', 'Managed by: File provisioning');
+      break;
     case ManagerKind.Repo:
       if (isOrphaned) {
         color = 'orange';

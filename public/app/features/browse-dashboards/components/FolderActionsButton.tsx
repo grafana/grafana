@@ -29,10 +29,12 @@ interface Props {
   folder: FolderDTO;
   /* If the folder is managed by a provisioned repo and is read-only */
   isReadOnlyRepo?: boolean;
+  /* If the folder is managed by any other system (terraform, kubectl, plugin, ...) and is read-only */
+  isReadOnly?: boolean;
   repoType?: RepoType;
 }
 
-export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props) {
+export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, isReadOnly }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [showManageOwnersModal, setShowManageOwnersModal] = useState(false);
@@ -52,10 +54,10 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
 
   const isProvisionedFolder = folder.managedBy === ManagerKind.Repo;
   const isProvisionedRootFolder = isProvisionedFolder && !isProvisionedInstance && folder.parentUid === undefined;
-  // Can only move folders when the folder is not provisioned
-  const canMoveFolder = canEditFolders && !isProvisionedRootFolder && !isReadOnlyRepo;
-  // Can only delete folders when the folder has the right permission and is not provisioned root folder
-  const canDeleteFolders = canDeleteFoldersPermissions && !isProvisionedRootFolder && !isReadOnlyRepo;
+  // Can only move folders when the folder is not provisioned and not otherwise read-only
+  const canMoveFolder = canEditFolders && !isProvisionedRootFolder && !isReadOnlyRepo && !isReadOnly;
+  // Can only delete folders when the folder has the right permission, is not a provisioned root folder and not read-only
+  const canDeleteFolders = canDeleteFoldersPermissions && !isProvisionedRootFolder && !isReadOnlyRepo && !isReadOnly;
   // Show permissions only if the folder is not provisioned, or if the provisioningFolderMetadata flag is enabled
   const canShowPermissions = canViewPermissions && (!isProvisionedFolder || provisioningFolderMetadataEnabled);
 

@@ -18,10 +18,11 @@ import { TemplateDashboardModal } from '../dashboard/dashgrid/DashboardLibrary/T
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
 import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
+import { ReadOnlyBadge } from '../provisioning/components/ReadOnlyBadge';
 import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
 import { SourceLink } from '../provisioning/components/SourceLink';
 import { RepoViewStatus, useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
-import { getSourcePath } from '../provisioning/utils/managedResource';
+import { getSourcePath, isManagedResourceReadOnly } from '../provisioning/utils/managedResource';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
@@ -128,6 +129,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const { canEditFolders, canDeleteFolders, canDeleteDashboards, canEditDashboards } = getFolderPermissions(folder);
   const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
   const isRepoRootFolder = isProvisionedFolder && folderUID === repository?.name;
+  // Read-only when managed by a non-repository system that doesn't allow edits (terraform, kubectl, ...)
+  const isManagedReadOnly = repoFolderResource ? isManagedResourceReadOnly(repoFolderResource) : false;
   const [showRenameDrawer, setShowRenameDrawer] = useState(false);
   const showEditTitle = canEditFolders && !!folderUID;
   const permissions = {
@@ -168,6 +171,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
             onClick={() => setShowRenameDrawer(true)}
           />
         )}
+        {isManagedReadOnly && <ReadOnlyBadge />}
         <FolderRepo folder={folder} />
         <SourceLink
           repositoryName={repository?.name}
@@ -181,7 +185,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     <Page
       navId="dashboards/browse"
       pageNav={navModel}
-      onEditTitle={showEditTitle && !isProvisionedFolder ? onEditTitle : undefined}
+      onEditTitle={showEditTitle && !isProvisionedFolder && !isManagedReadOnly ? onEditTitle : undefined}
       renderTitle={renderTitle}
       actions={<FolderDetailsActions folderDTO={folderDTO} />}
     >
