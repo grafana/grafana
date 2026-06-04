@@ -809,6 +809,8 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 		_, err = section.NewKey("enabled", fmt.Sprintf("%t", r.Enabled))
 		require.NoError(t, err)
+		_, err = section.NewKey("skipStrictValidation", fmt.Sprintf("%t", r.SkipStrictValidation))
+		require.NoError(t, err)
 	}
 	if opts.ProvisioningAllowInsecure {
 		provisioningSect, err := getOrCreateSection("provisioning")

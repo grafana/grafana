@@ -93,6 +93,7 @@ type ControllerConfig struct {
 // provisioning_server_public_url =
 // dashboards_server_url =
 // folders_server_url =
+// aggregated_server_url =
 // folders_api_version =
 // tls_insecure =
 // tls_cert_file =
@@ -210,11 +211,42 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		return nil, fmt.Errorf("folders_server_url is required in [operator] section")
 	}
 	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
+	// aggregated_server_url serves resource groups that do not have a dedicated server URL
+	// (e.g. newly provisionable kinds in their own API group). Dashboards and folders keep
+	// their dedicated URLs for backwards compatibility.
+	aggregatedServerURL := operatorSec.Key("aggregated_server_url").String()
 	apiServerURLs := map[string]string{
 		resources.DashboardResource.Group: dashboardsServerURL,
 		resources.FolderResource.Group:    foldersServerURL,
 		provisioning.GROUP:                provisioningServerURL,
 	}
+
+	supportedResources := make([]resources.SupportedResource, 0, len(c.Settings.ProvisioningResources))
+	for _, r := range c.Settings.ProvisioningResources {
+		supportedResources = append(supportedResources, resources.SupportedResource{
+			GroupKind:            schema.GroupKind{Group: r.Group, Kind: r.Kind},
+			EnableFolderSupport:  r.EnableFolderSupport,
+			Enabled:              r.Enabled,
+			SkipStrictValidation: r.SkipStrictValidation,
+		})
+	}
+
+	// Every enabled resource must resolve to an API server. Groups without a dedicated URL
+	// fall back to the aggregated server; if a resource needs it and it is unset, fail loudly
+	// rather than hitting "no clients provider for group" at request time.
+	for _, r := range supportedResources {
+		if !r.Enabled {
+			continue
+		}
+		if _, ok := apiServerURLs[r.Group]; ok {
+			continue
+		}
+		if aggregatedServerURL == "" {
+			return nil, fmt.Errorf("aggregated_server_url is required in [operator] section to serve resource %s/%s", r.Group, r.Kind)
+		}
+		apiServerURLs[r.Group] = aggregatedServerURL
+	}
+
 	configProviders := make(map[string]apiserver.RestConfigProvider)
 
 	tlsConfigForTransport, err := rest.TLSConfigFor(&rest.Config{TLSClientConfig: tlsConfig})
@@ -246,15 +278,6 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 			RateLimiter: flowcontrol.NewFakeAlwaysRateLimiter(),
 		}
 		configProviders[group] = NewDirectConfigProvider(config)
-	}
-
-	supportedResources := make([]resources.SupportedResource, 0, len(c.Settings.ProvisioningResources))
-	for _, r := range c.Settings.ProvisioningResources {
-		supportedResources = append(supportedResources, resources.SupportedResource{
-			GroupKind:           schema.GroupKind{Group: r.Group, Kind: r.Kind},
-			EnableFolderSupport: r.EnableFolderSupport,
-			Enabled:             r.Enabled,
-		})
 	}
 
 	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResources...)

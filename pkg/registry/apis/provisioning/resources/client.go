@@ -36,7 +36,8 @@ var (
 	// pkg/setting [provisioning.resources.<kind>.<group>] sections.
 	SupportedProvisioningResources = []SupportedResource{
 		{GroupKind: FolderKind.GroupKind(), EnableFolderSupport: true, Enabled: true},
-		{GroupKind: DashboardKind.GroupKind(), EnableFolderSupport: true, Enabled: true},
+		// Dashboards are temporarily exempt from strict field validation (see defaults.ini).
+		{GroupKind: DashboardKind.GroupKind(), EnableFolderSupport: true, Enabled: true, SkipStrictValidation: true},
 	}
 )
 
@@ -52,6 +53,9 @@ type SupportedResource struct {
 	// Enabled reports whether the resource can currently be managed through provisioning.
 	// Disabled resources are still declared (and surfaced) but are not acted on.
 	Enabled bool
+	// SkipStrictValidation requests FieldValidation=Ignore when writing the resource,
+	// exempting it from strict field validation on the apiserver. Opt-in per resource.
+	SkipStrictValidation bool
 }
 
 // supportsFolderAnnotation reports whether gvk is a supported resource that carries the
@@ -60,6 +64,31 @@ func supportsFolderAnnotation(supported []SupportedResource, gvk schema.GroupVer
 	gk := gvk.GroupKind()
 	for _, r := range supported {
 		if r.EnableFolderSupport && r.GroupKind == gk {
+			return true
+		}
+	}
+	return false
+}
+
+// isSupportedResource reports whether gvk's group+kind is in the supported set. Since
+// SupportedResources() already returns only the enabled set, a match means the resource
+// is both supported and enabled for provisioning.
+func isSupportedResource(supported []SupportedResource, gvk schema.GroupVersionKind) bool {
+	gk := gvk.GroupKind()
+	for _, r := range supported {
+		if r.GroupKind == gk {
+			return true
+		}
+	}
+	return false
+}
+
+// skipsStrictValidation reports whether gvk is a supported resource configured to skip
+// strict field validation (FieldValidation=Ignore) when written.
+func skipsStrictValidation(supported []SupportedResource, gvk schema.GroupVersionKind) bool {
+	gk := gvk.GroupKind()
+	for _, r := range supported {
+		if r.SkipStrictValidation && r.GroupKind == gk {
 			return true
 		}
 	}

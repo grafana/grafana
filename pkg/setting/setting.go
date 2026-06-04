@@ -2521,6 +2521,9 @@ type ProvisioningResource struct {
 	// Enabled reports whether the resource can currently be managed through provisioning.
 	// Disabled resources are still declared (and surfaced) but are not acted on.
 	Enabled bool
+	// SkipStrictValidation requests FieldValidation=Ignore when writing the resource,
+	// exempting it from strict field validation on the apiserver. Opt-in per resource.
+	SkipStrictValidation bool
 }
 
 // readProvisioningResources reads the set of provisionable resources from
@@ -2549,10 +2552,11 @@ func (cfg *Cfg) readProvisioningResources(iniFile *ini.File) error {
 		}
 
 		out = append(out, ProvisioningResource{
-			Kind:                kindAndGroup[0],
-			Group:               kindAndGroup[1],
-			EnableFolderSupport: section.Key("enableFolderSupport").MustBool(false),
-			Enabled:             section.Key("enabled").MustBool(true),
+			Kind:                 kindAndGroup[0],
+			Group:                kindAndGroup[1],
+			EnableFolderSupport:  section.Key("enableFolderSupport").MustBool(false),
+			Enabled:              section.Key("enabled").MustBool(true),
+			SkipStrictValidation: section.Key("skipStrictValidation").MustBool(false),
 		})
 	}
 
