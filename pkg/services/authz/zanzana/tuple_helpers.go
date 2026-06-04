@@ -103,7 +103,8 @@ var userManagementMappings = map[string]iamActionMapping{
 	actionOrgUsersWrite: {resource: usersResource, relations: []string{RelationUpdate}},
 
 	actionUsersCreate: {resource: usersResource, relations: []string{RelationCreate}, skipScope: true},
-	actionOrgUsersAdd: {resource: usersResource, relations: []string{RelationCreate}},
+	// Skipping this one until we have a better picture of the whole org permissions
+	// actionOrgUsersAdd: {resource: usersResource, relations: []string{RelationCreate}},
 
 	actionUsersDelete:    {resource: usersResource, relations: []string{RelationDelete}},
 	actionOrgUsersRemove: {resource: usersResource, relations: []string{RelationDelete}},
