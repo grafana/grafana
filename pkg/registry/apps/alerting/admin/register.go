@@ -28,11 +28,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// syncableAMImplementations lists the Mimir/Cortex alertmanager
-// implementations whose datasource configuration the sync worker knows
-// how to consume. Kept in sync with the matching constant in the legacy
-// admin_config API (pkg/services/ngalert/api/api_configuration.go) — both
-// validation paths must accept the same set.
+// syncableAMImplementations must stay in sync with the matching constant in
+// the legacy admin_config HTTP API (pkg/services/ngalert/api/api_configuration.go)
+// so both validation paths accept the same set.
 var syncableAMImplementations = []string{"mimir", "cortex"}
 
 var (
@@ -45,10 +43,8 @@ type AppInstaller struct {
 	ng *ngalert.AlertNG
 }
 
-// GetAuthorizer routes incoming k8s requests through the per-resource
-// authorizer. Reads are exposed to viewers so the UI can render consistent
-// state for all roles (e.g. the import-to-GMA button); writes are admin-only,
-// matching the legacy /api/v1/ngalert/admin_config HTTP API.
+// GetAuthorizer routes per-resource. See alertingconfig.Authorize for the
+// RBAC action model.
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	authz := a.ng.Api.AccessControl
 	return authorizer.AuthorizerFunc(
@@ -62,24 +58,10 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	)
 }
 
-// newExternalSyncDatasourceValidator returns the AlertingConfig admission
-// validator function for spec.externalAlertmanagerSync.datasourceUid.
-//
-// Mirrors the four checks the legacy admin_config HTTP API performs (see
-// pkg/services/ngalert/api/api_configuration.go:165). Keeping the two
-// paths in step is important during the transition window so admins get
-// the same UX regardless of which API they hit:
-//   - The sync feature flag must be on. Without it the UID would be
-//     stored but never read, so accepting the write would be confusing.
-//   - The datasource must exist in the request's org.
-//   - The datasource type must be alertmanager.
-//   - Its JsonData.implementation must be in syncableAMImplementations
-//     (Mimir/Cortex — others have no compatible sync protocol).
-//
-// Lives in this package (the parent process side of the admin app) rather
-// than in the admin app's submodule so the submodule stays free of
-// grafana-parent imports (datasource service, request package, openfeature
-// flag client).
+// newExternalSyncDatasourceValidator builds the admission check for
+// spec.externalAlertmanagerSync.datasourceUid. Mirrors the legacy
+// admin_config HTTP API (pkg/services/ngalert/api/api_configuration.go:165)
+// so both surfaces accept the same inputs during the transition window.
 func newExternalSyncDatasourceValidator(ds datasources.DataSourceService) func(ctx context.Context, uid string) error {
 	return func(ctx context.Context, uid string) error {
 		ofClient := openfeature.NewDefaultClient()
