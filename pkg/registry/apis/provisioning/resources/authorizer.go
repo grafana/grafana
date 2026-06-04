@@ -243,7 +243,8 @@ func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path string
 
 	// Folders are authorized through their own dedicated path (authorizeFolder,
 	// authorizeDeleteFolder, authorizeMoveFolder) — skip them here.
-	for _, gvr := range a.clients.SupportedResources() {
+	for _, supported := range a.clients.SupportedResources() {
+		gvr := supported.GVR
 		if gvr == FolderResource {
 			continue
 		}
@@ -496,8 +497,8 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveByPath(ctx context.Context, source
 func (a *ProvisioningAuthorizer) AuthorizeReadAllSupported(ctx context.Context) error {
 	for _, kind := range a.clients.SupportedResources() {
 		if err := a.access.Check(ctx, authlib.CheckRequest{
-			Group:    kind.Group,
-			Resource: kind.Resource,
+			Group:    kind.GVR.Group,
+			Resource: kind.GVR.Resource,
 			Verb:     utils.VerbGet,
 		}, ""); err != nil {
 			return err
@@ -514,8 +515,8 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateAllSupported(ctx context.Context
 
 	for _, kind := range a.clients.SupportedResources() {
 		if err := a.access.Check(ctx, authlib.CheckRequest{
-			Group:    kind.Group,
-			Resource: kind.Resource,
+			Group:    kind.GVR.Group,
+			Resource: kind.GVR.Resource,
 			Verb:     utils.VerbCreate,
 		}, targetFolder); err != nil {
 			return err

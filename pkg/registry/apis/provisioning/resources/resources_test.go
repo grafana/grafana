@@ -69,6 +69,66 @@ func newWritableParsedResource(name string) (*ParsedResource, *MockDynamicResour
 	return mustBuildParsedResource(name, client), client
 }
 
+func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
+	// replaceTestGVR (alertrules) is used as the resource under test; whether it
+	// carries the folder annotation is driven entirely by what the clients report
+	// as supported, so the same resource exercises both branches.
+
+	t.Run("does not set the folder annotation for resources that do not support folders", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+
+		clients := NewMockResourceClients(t)
+		clients.EXPECT().SupportedResources().Return([]SupportedResource{
+			{GVR: replaceTestGVR, SupportsFolderAnnotation: false},
+		})
+
+		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
+		repo.On("Read", mock.Anything, "alerts/rule.json", "").Return(fileInfo, nil)
+		parsed, _ := newWritableParsedResource("rule-1")
+		mockParser.On("Parse", mock.Anything, fileInfo).Return(parsed, nil)
+
+		// folders is nil on purpose: if the folder-annotation branch were taken it
+		// would dereference the nil FolderManager and panic, so a clean run proves
+		// the branch was skipped.
+		mgr := NewResourcesManager(repo, nil, mockParser, clients)
+		_, _, err := mgr.WriteResourceFromFile(context.Background(), "alerts/rule.json", "")
+
+		require.NoError(t, err)
+		require.Empty(t, parsed.Meta.GetFolder(), "no folder annotation should be written for a resource that does not support folders")
+	})
+
+	t.Run("sets the folder annotation for resources that support folders", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+
+		config := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: testRepoName, Namespace: "default"},
+			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
+		}
+		repo.On("Config").Return(config)
+
+		clients := NewMockResourceClients(t)
+		clients.EXPECT().SupportedResources().Return([]SupportedResource{
+			{GVR: replaceTestGVR, SupportsFolderAnnotation: true},
+		})
+
+		// Root-level file: EnsureFolderPathExist resolves to the repository root
+		// folder without needing a folder client or pre-populated tree.
+		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "rule.json"}
+		repo.On("Read", mock.Anything, "rule.json", "").Return(fileInfo, nil)
+		parsed, _ := newWritableParsedResource("rule-1")
+		mockParser.On("Parse", mock.Anything, fileInfo).Return(parsed, nil)
+
+		folderMgr := NewFolderManager(repo, nil, NewEmptyFolderTree(), FolderKind)
+		mgr := NewResourcesManager(repo, folderMgr, mockParser, clients)
+		_, _, err := mgr.WriteResourceFromFile(context.Background(), "rule.json", "")
+
+		require.NoError(t, err)
+		require.Equal(t, RootFolder(config), parsed.Meta.GetFolder(), "the resource should be annotated with the resolved folder")
+	})
+}
+
 func TestReplaceResourceFromFile(t *testing.T) {
 	t.Run("name unchanged skips delete", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
@@ -108,7 +168,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClients := NewMockResourceClients(t)
-		mockClients.EXPECT().SupportsFolderAnnotationResources().Return(SupportsFolderAnnotation).Maybe()
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		deleteClient := &MockDynamicResourceInterface{}
 
 		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
@@ -149,7 +209,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClients := NewMockResourceClients(t)
-		mockClients.EXPECT().SupportsFolderAnnotationResources().Return(SupportsFolderAnnotation).Maybe()
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		deleteClient := &MockDynamicResourceInterface{}
 
 		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
@@ -177,7 +237,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClients := NewMockResourceClients(t)
-		mockClients.EXPECT().SupportsFolderAnnotationResources().Return(SupportsFolderAnnotation).Maybe()
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 
 		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
 		repo.On("Read", mock.Anything, "alerts/rule.json", "").Return(fileInfo, nil)
@@ -222,7 +282,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClients := NewMockResourceClients(t)
-		mockClients.EXPECT().SupportsFolderAnnotationResources().Return(SupportsFolderAnnotation).Maybe()
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		deleteClient := &MockDynamicResourceInterface{}
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{"old": true}`), Path: "alerts/rule.json"}
@@ -303,7 +363,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClients := NewMockResourceClients(t)
-		mockClients.EXPECT().SupportsFolderAnnotationResources().Return(SupportsFolderAnnotation).Maybe()
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		deleteClient := &MockDynamicResourceInterface{}
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{"old": true}`), Path: "alerts/rule.json"}
@@ -358,7 +418,7 @@ func TestDeleteOldResource(t *testing.T) {
 	t.Run("successful delete", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
-		mockClients.EXPECT().SupportsFolderAnnotationResources().Return(SupportsFolderAnnotation).Maybe()
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		mockClient := &MockDynamicResourceInterface{}
 
 		repo.On("Config").Return(replaceRepoConfig())
@@ -380,7 +440,7 @@ func TestDeleteOldResource(t *testing.T) {
 	t.Run("ForResource error is propagated", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
-		mockClients.EXPECT().SupportsFolderAnnotationResources().Return(SupportsFolderAnnotation).Maybe()
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 
 		mockClients.On("ForResource", mock.Anything, replaceTestGVR).
 			Return(nil, schema.GroupVersionKind{}, fmt.Errorf("unknown resource"))
@@ -396,7 +456,7 @@ func TestDeleteOldResource(t *testing.T) {
 	t.Run("sets correct namespace from repo config", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
-		mockClients.EXPECT().SupportsFolderAnnotationResources().Return(SupportsFolderAnnotation).Maybe()
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		mockClient := &MockDynamicResourceInterface{}
 
 		cfg := &provisioning.Repository{
@@ -420,7 +480,7 @@ func TestDeleteOldResource(t *testing.T) {
 	t.Run("ownership check failure wraps error", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
-		mockClients.EXPECT().SupportsFolderAnnotationResources().Return(SupportsFolderAnnotation).Maybe()
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		mockClient := &MockDynamicResourceInterface{}
 
 		repo.On("Config").Return(replaceRepoConfig())
@@ -449,7 +509,7 @@ func TestDeleteOldResource(t *testing.T) {
 	t.Run("skips delete when sourcePath points to a different file", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
-		mockClients.EXPECT().SupportsFolderAnnotationResources().Return(SupportsFolderAnnotation).Maybe()
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		mockClient := &MockDynamicResourceInterface{}
 
 		repo.On("Config").Return(replaceRepoConfig())
@@ -472,7 +532,7 @@ func TestDeleteOldResource(t *testing.T) {
 	t.Run("proceeds with delete when sourcePath is empty", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
-		mockClients.EXPECT().SupportsFolderAnnotationResources().Return(SupportsFolderAnnotation).Maybe()
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		mockClient := &MockDynamicResourceInterface{}
 
 		repo.On("Config").Return(replaceRepoConfig())

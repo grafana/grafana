@@ -20,7 +20,7 @@ import (
 // authTestClients returns a ResourceClients exposing the static supported set,
 // which is all the authorizer consults.
 func authTestClients() ResourceClients {
-	return &resourceClients{}
+	return &resourceClients{supportedResources: SupportedProvisioningResources}
 }
 
 func makeAuthorizeResourceParsed(t *testing.T, fileFolderID, existingFolder string, hasExisting bool) *ParsedResource {
@@ -602,8 +602,8 @@ func TestAuthorizeReadAllSupported(t *testing.T) {
 
 		for _, kind := range SupportedProvisioningResources {
 			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
-				return req.Group == kind.Group &&
-					req.Resource == kind.Resource &&
+				return req.Group == kind.GVR.Group &&
+					req.Resource == kind.GVR.Resource &&
 					req.Verb == utils.VerbGet
 			}), "").Return(nil).Once()
 		}
@@ -641,8 +641,8 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 
 		for _, kind := range SupportedProvisioningResources {
 			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
-				return req.Group == kind.Group &&
-					req.Resource == kind.Resource &&
+				return req.Group == kind.GVR.Group &&
+					req.Resource == kind.GVR.Resource &&
 					req.Verb == utils.VerbCreate
 			}), "my-repo").Return(nil).Once()
 		}
@@ -665,8 +665,8 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 
 		for _, kind := range SupportedProvisioningResources {
 			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
-				return req.Group == kind.Group &&
-					req.Resource == kind.Resource &&
+				return req.Group == kind.GVR.Group &&
+					req.Resource == kind.GVR.Resource &&
 					req.Verb == utils.VerbCreate
 			}), "").Return(nil).Once()
 		}

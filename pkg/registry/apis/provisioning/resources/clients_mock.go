@@ -281,19 +281,19 @@ func (_c *MockResourceClients_User_Call) RunAndReturn(run func(context.Context) 
 }
 
 // SupportedResources provides a mock function with given fields:
-func (_m *MockResourceClients) SupportedResources() []schema.GroupVersionResource {
+func (_m *MockResourceClients) SupportedResources() []SupportedResource {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for SupportedResources")
 	}
 
-	var r0 []schema.GroupVersionResource
-	if rf, ok := ret.Get(0).(func() []schema.GroupVersionResource); ok {
+	var r0 []SupportedResource
+	if rf, ok := ret.Get(0).(func() []SupportedResource); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]schema.GroupVersionResource)
+			r0 = ret.Get(0).([]SupportedResource)
 		}
 	}
 
@@ -317,59 +317,12 @@ func (_c *MockResourceClients_SupportedResources_Call) Run(run func()) *MockReso
 	return _c
 }
 
-func (_c *MockResourceClients_SupportedResources_Call) Return(_a0 []schema.GroupVersionResource) *MockResourceClients_SupportedResources_Call {
+func (_c *MockResourceClients_SupportedResources_Call) Return(_a0 []SupportedResource) *MockResourceClients_SupportedResources_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockResourceClients_SupportedResources_Call) RunAndReturn(run func() []schema.GroupVersionResource) *MockResourceClients_SupportedResources_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// SupportsFolderAnnotationResources provides a mock function with given fields:
-func (_m *MockResourceClients) SupportsFolderAnnotationResources() []schema.GroupResource {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for SupportsFolderAnnotationResources")
-	}
-
-	var r0 []schema.GroupResource
-	if rf, ok := ret.Get(0).(func() []schema.GroupResource); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]schema.GroupResource)
-		}
-	}
-
-	return r0
-}
-
-// MockResourceClients_SupportsFolderAnnotationResources_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SupportsFolderAnnotationResources'
-type MockResourceClients_SupportsFolderAnnotationResources_Call struct {
-	*mock.Call
-}
-
-// SupportsFolderAnnotationResources is a helper method to define mock.On call
-func (_e *MockResourceClients_Expecter) SupportsFolderAnnotationResources() *MockResourceClients_SupportsFolderAnnotationResources_Call {
-	return &MockResourceClients_SupportsFolderAnnotationResources_Call{Call: _e.mock.On("SupportsFolderAnnotationResources")}
-}
-
-func (_c *MockResourceClients_SupportsFolderAnnotationResources_Call) Run(run func()) *MockResourceClients_SupportsFolderAnnotationResources_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockResourceClients_SupportsFolderAnnotationResources_Call) Return(_a0 []schema.GroupResource) *MockResourceClients_SupportsFolderAnnotationResources_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockResourceClients_SupportsFolderAnnotationResources_Call) RunAndReturn(run func() []schema.GroupResource) *MockResourceClients_SupportsFolderAnnotationResources_Call {
+func (_c *MockResourceClients_SupportedResources_Call) RunAndReturn(run func() []SupportedResource) *MockResourceClients_SupportedResources_Call {
 	_c.Call.Return(run)
 	return _c
 }

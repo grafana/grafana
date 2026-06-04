@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -190,11 +189,11 @@ func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, lister 
 }
 
 // countSupportedResources sums counts for resource types that support provisioning.
-func countSupportedResources(stats []provisioning.ResourceCount, supported []schema.GroupVersionResource) int64 {
+func countSupportedResources(stats []provisioning.ResourceCount, supported []resources.SupportedResource) int64 {
 	var total int64
 	for _, stat := range stats {
 		for _, kind := range supported {
-			if stat.Group == kind.Group && stat.Resource == kind.Resource {
+			if stat.Group == kind.GVR.Group && stat.Resource == kind.GVR.Resource {
 				total += stat.Count
 				break
 			}

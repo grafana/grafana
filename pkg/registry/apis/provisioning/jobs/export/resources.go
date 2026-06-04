@@ -27,7 +27,8 @@ type conversionShim = func(ctx context.Context, item *unstructured.Unstructured)
 
 func ExportResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
 	progress.SetMessage(ctx, "start resource export")
-	for _, kind := range clients.SupportedResources() {
+	for _, supported := range clients.SupportedResources() {
+		kind := supported.GVR
 		// skip from folders as we do them first... so only dashboards
 		if kind == resources.FolderResource {
 			continue

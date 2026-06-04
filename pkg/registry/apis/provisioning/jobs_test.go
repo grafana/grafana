@@ -36,7 +36,6 @@ import (
 func newJobAuthClients(t *testing.T) *resources.MockClientFactory {
 	rc := resources.NewMockResourceClients(t)
 	rc.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
-	rc.EXPECT().SupportsFolderAnnotationResources().Return(resources.SupportsFolderAnnotation).Maybe()
 	cf := resources.NewMockClientFactory(t)
 	cf.EXPECT().Clients(mock.Anything, mock.Anything).Return(rc, nil).Maybe()
 	return cf
@@ -321,15 +320,15 @@ func TestAuthorizeResourceJob(t *testing.T) {
 
 		for _, kind := range resources.SupportedProvisioningResources {
 			accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
-				return req.Group == kind.Group &&
-					req.Resource == kind.Resource &&
+				return req.Group == kind.GVR.Group &&
+					req.Resource == kind.GVR.Resource &&
 					req.Verb == utils.VerbGet
 			}), "").Return(nil).Once()
 		}
 		for _, kind := range resources.SupportedProvisioningResources {
 			accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
-				return req.Group == kind.Group &&
-					req.Resource == kind.Resource &&
+				return req.Group == kind.GVR.Group &&
+					req.Resource == kind.GVR.Resource &&
 					req.Verb == utils.VerbCreate
 			}), rootFolder).Return(nil).Once()
 		}

@@ -33,10 +33,10 @@ var (
 	// SupportedProvisioningResources is the static set of resources that can be fully
 	// managed from the UI. Extra resources (e.g. flag-gated ones) are registered with
 	// the client factory and appended to this base set.
-	SupportedProvisioningResources = []schema.GroupVersionResource{FolderResource, DashboardResource}
-
-	// SupportsFolderAnnotation is the static set of resources that can be saved in a folder.
-	SupportsFolderAnnotation = []schema.GroupResource{FolderResource.GroupResource(), DashboardResource.GroupResource()}
+	SupportedProvisioningResources = []SupportedResource{
+		{GVR: FolderResource, SupportsFolderAnnotation: true},
+		{GVR: DashboardResource, SupportsFolderAnnotation: true},
+	}
 )
 
 // SupportedResource describes a resource that can be managed through provisioning.
@@ -46,31 +46,29 @@ type SupportedResource struct {
 	// GVR is the resource added to the supported set.
 	GVR schema.GroupVersionResource
 	// SupportsFolderAnnotation reports whether the resource can be saved in a folder,
-	// i.e. whether it is also added to the folder-annotation set.
+	// i.e. whether it should carry the folder header annotation when written.
 	SupportsFolderAnnotation bool
 }
 
-// mergeSupportedResources returns the static SupportedProvisioningResources set followed
-// by the GVRs of any extra registered resources, preserving registration order.
-func mergeSupportedResources(extra []SupportedResource) []schema.GroupVersionResource {
-	out := make([]schema.GroupVersionResource, 0, len(SupportedProvisioningResources)+len(extra))
-	out = append(out, SupportedProvisioningResources...)
-	for _, r := range extra {
-		out = append(out, r.GVR)
-	}
-	return out
-}
-
-// mergeSupportsFolderAnnotationResources returns the static SupportsFolderAnnotation set
-// followed by the extra registered resources that support folder annotations.
-func mergeSupportsFolderAnnotationResources(extra []SupportedResource) []schema.GroupResource {
-	out := make([]schema.GroupResource, 0, len(SupportsFolderAnnotation)+len(extra))
-	out = append(out, SupportsFolderAnnotation...)
-	for _, r := range extra {
-		if r.SupportsFolderAnnotation {
-			out = append(out, r.GVR.GroupResource())
+// supportsFolderAnnotation reports whether gvr is a supported resource that carries the
+// folder header annotation when written.
+func supportsFolderAnnotation(supported []SupportedResource, gvr schema.GroupVersionResource) bool {
+	gr := gvr.GroupResource()
+	for _, r := range supported {
+		if r.SupportsFolderAnnotation && r.GVR.GroupResource() == gr {
+			return true
 		}
 	}
+	return false
+}
+
+// mergeSupportedResources returns the static SupportedProvisioningResources set followed
+// by any extra registered resources, preserving registration order. It is called once
+// per factory so the merged set can be reused across all the clients it produces.
+func mergeSupportedResources(extra []SupportedResource) []SupportedResource {
+	out := make([]SupportedResource, 0, len(SupportedProvisioningResources)+len(extra))
+	out = append(out, SupportedProvisioningResources...)
+	out = append(out, extra...)
 	return out
 }
 
@@ -101,7 +99,8 @@ type ClientFactory interface {
 
 type clientFactory struct {
 	clientsProvider clientsProvider
-	extraResources  []SupportedResource
+	// supportedResources is the merged base + registered set, computed once.
+	supportedResources []SupportedResource
 }
 
 // TODO: Rename to NamespacedClients
@@ -116,10 +115,8 @@ type ResourceClients interface {
 	User(ctx context.Context) (dynamic.ResourceInterface, error)
 	// SupportedResources returns the resources that can be fully managed from the UI:
 	// the static base set plus any extra resources registered with the client factory.
-	SupportedResources() []schema.GroupVersionResource
-	// SupportsFolderAnnotationResources returns the resources that can be saved in a folder:
-	// the static base set plus any extra registered resources that support folder annotations.
-	SupportsFolderAnnotationResources() []schema.GroupResource
+	// Each entry carries whether the resource supports the folder header annotation.
+	SupportedResources() []SupportedResource
 }
 
 type clientsProvider interface {
@@ -187,8 +184,8 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 // SupportedProvisioningResources base set.
 func NewClientFactory(configProvider apiserver.RestConfigProvider, extraResources ...SupportedResource) ClientFactory {
 	return &clientFactory{
-		clientsProvider: newSingleAPIClients(configProvider),
-		extraResources:  extraResources,
+		clientsProvider:    newSingleAPIClients(configProvider),
+		supportedResources: mergeSupportedResources(extraResources),
 	}
 }
 
@@ -203,12 +200,13 @@ func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.
 		clientFactories[api] = clientFactory
 	}
 
-	return &multiClientFactory{clientFactories: clientFactories, extraResources: extraResources}
+	return &multiClientFactory{clientFactories: clientFactories, supportedResources: mergeSupportedResources(extraResources)}
 }
 
 type multiClientFactory struct {
 	clientFactories map[string]ClientFactory
-	extraResources  []SupportedResource
+	// supportedResources is the merged base + registered set, computed once.
+	supportedResources []SupportedResource
 }
 
 func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
@@ -228,24 +226,24 @@ func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (Res
 	return &multiResourceClients{
 		namespace:                 namespace,
 		resourceClientsByAPIGroup: clients,
-		extraResources:            m.extraResources,
+		supportedResources:        m.supportedResources,
 	}, nil
 }
 
 func (f *clientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
 	return &resourceClients{
-		namespace:       namespace,
-		clientsProvider: f.clientsProvider,
-		extraResources:  f.extraResources,
-		byKind:          make(map[schema.GroupVersionKind]*clientInfo),
-		byResource:      make(map[schema.GroupVersionResource]*clientInfo),
+		namespace:          namespace,
+		clientsProvider:    f.clientsProvider,
+		supportedResources: f.supportedResources,
+		byKind:             make(map[schema.GroupVersionKind]*clientInfo),
+		byResource:         make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil
 }
 
 type resourceClients struct {
-	namespace       string
-	clientsProvider clientsProvider
-	extraResources  []SupportedResource
+	namespace          string
+	clientsProvider    clientsProvider
+	supportedResources []SupportedResource
 
 	// ResourceInterface cache for this context + namespace
 	mutex      sync.Mutex
@@ -376,19 +374,15 @@ func (c *resourceClients) User(ctx context.Context) (dynamic.ResourceInterface, 
 	return v, err
 }
 
-func (c *resourceClients) SupportedResources() []schema.GroupVersionResource {
-	return mergeSupportedResources(c.extraResources)
-}
-
-func (c *resourceClients) SupportsFolderAnnotationResources() []schema.GroupResource {
-	return mergeSupportsFolderAnnotationResources(c.extraResources)
+func (c *resourceClients) SupportedResources() []SupportedResource {
+	return c.supportedResources
 }
 
 type multiResourceClients struct {
 	namespace                 string
 	mutex                     sync.Mutex
 	resourceClientsByAPIGroup map[string]ResourceClients
-	extraResources            []SupportedResource
+	supportedResources        []SupportedResource
 }
 
 // ForKind returns a client for a kind.
@@ -430,12 +424,8 @@ func (c *multiResourceClients) User(ctx context.Context) (dynamic.ResourceInterf
 	return v, err
 }
 
-func (c *multiResourceClients) SupportedResources() []schema.GroupVersionResource {
-	return mergeSupportedResources(c.extraResources)
-}
-
-func (c *multiResourceClients) SupportsFolderAnnotationResources() []schema.GroupResource {
-	return mergeSupportsFolderAnnotationResources(c.extraResources)
+func (c *multiResourceClients) SupportedResources() []SupportedResource {
+	return c.supportedResources
 }
 
 // ForEach applies the function to each resource returned from the list operation

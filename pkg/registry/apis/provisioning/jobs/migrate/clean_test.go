@@ -57,12 +57,8 @@ func (m *mockClients) User(ctx context.Context) (dynamic.ResourceInterface, erro
 	return ri, args.Error(1)
 }
 
-func (m *mockClients) SupportedResources() []schema.GroupVersionResource {
+func (m *mockClients) SupportedResources() []resources.SupportedResource {
 	return resources.SupportedProvisioningResources
-}
-
-func (m *mockClients) SupportsFolderAnnotationResources() []schema.GroupResource {
-	return resources.SupportsFolderAnnotation
 }
 
 func TestNamespaceCleaner_Clean(t *testing.T) {
@@ -83,7 +79,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 
 	t.Run("should fail when getting resource client fails", func(t *testing.T) {
 		clients := &mockClients{}
-		clients.On("ForResource", mock.Anything, resources.SupportedProvisioningResources[0]).
+		clients.On("ForResource", mock.Anything, resources.SupportedProvisioningResources[0].GVR).
 			Return(nil, schema.GroupVersionKind{}, errors.New("failed to get resource client"))
 
 		mockClientFactory := resources.NewMockClientFactory(t)
