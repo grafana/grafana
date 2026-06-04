@@ -13227,8 +13227,6 @@
       "url-required": "Repository URL is required"
     },
     "bootstrap-step": {
-      "dashboards-count_one": "{{count}} dashboard",
-      "dashboards-count_other": "{{count}} dashboard",
       "description-clear-repository-connection": "This name will be used for the repository connection and the folder displayed in the UI",
       "empty": "Empty",
       "error-field-required": "This field is required.",
@@ -13240,14 +13238,8 @@
       "external-storage-label": "External storage",
       "files-count_one": "{{count}} files",
       "files-count_other": "{{count}} files",
-      "folders-count_one": "{{count}} folder",
-      "folders-count_other": "{{count}} folder",
       "label-display-name": "Display name",
-      "library-panels-count_one": "{{count}} library panel",
-      "library-panels-count_other": "{{count}} library panel",
       "placeholder-my-repository-connection": "My repository connection",
-      "playlists-count_one": "{{count}} playlist",
-      "playlists-count_other": "{{count}} playlist",
       "retry-action": "Retry",
       "text-loading-resource-information": "Loading resource information...",
       "unmanaged-resources-label": "Unmanaged resources",
@@ -13833,6 +13825,8 @@
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
     },
     "resource-kind": {
+      "count_one": "{{count}} {{kind}}",
+      "count_other": "{{count}} {{kind}}",
       "dashboards": "Dashboards",
       "folders": "Folders",
       "library-panels": "Library panels",

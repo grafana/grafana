@@ -13,7 +13,7 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
-import { isResourceKindEnabled, resolveResourceKind } from '../../utils/resourceKinds';
+import { getResourceCountLabel, isResourceKindEnabled, resolveResourceKind } from '../../utils/resourceKinds';
 
 export type UseResourceStatsOptions = {
   isHealthy?: boolean; // true only when healthy AND reconciled
@@ -53,7 +53,7 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
     const kind = getCountableKind(stat);
     if (kind) {
       resourceCount += stat.count;
-      counts.push(kind.getCountLabel(stat.count));
+      counts.push(getResourceCountLabel(kind, stat.count));
     }
   };
 

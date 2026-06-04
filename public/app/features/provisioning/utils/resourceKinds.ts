@@ -44,8 +44,6 @@ export interface ResourceKindDescriptor {
   toggle?: keyof FeatureToggles;
   /** Localized plural label, e.g. "Dashboards". */
   getLabel: () => string;
-  /** Localized "{{count}} dashboards"-style label used by the migration wizard. */
-  getCountLabel: (count: number) => string;
   /** Builds the in-app listing URL for this kind. */
   getListUrl: (ctx: ResourceRouteContext) => string;
   /**
@@ -71,12 +69,6 @@ export const RESOURCE_KINDS: ResourceKindDescriptor[] = [
     itemType: 'Folder',
     icon: 'folder',
     getLabel: () => t('provisioning.resource-kind.folders', 'Folders'),
-    getCountLabel: (count) =>
-      t('provisioning.bootstrap-step.folders-count', '', {
-        count,
-        defaultValue_one: '{{count}} folder',
-        defaultValue_other: '{{count}} folder',
-      }),
     getListUrl: folderContainedListUrl,
     getViewUrl: (name) => `/dashboards/f/${name}`,
   },
@@ -87,12 +79,6 @@ export const RESOURCE_KINDS: ResourceKindDescriptor[] = [
     itemType: 'Dashboard',
     icon: 'apps',
     getLabel: () => t('provisioning.resource-kind.dashboards', 'Dashboards'),
-    getCountLabel: (count) =>
-      t('provisioning.bootstrap-step.dashboards-count', '', {
-        count,
-        defaultValue_one: '{{count}} dashboard',
-        defaultValue_other: '{{count}} dashboard',
-      }),
     getListUrl: folderContainedListUrl,
     getViewUrl: (name) => `/d/${name}`,
   },
@@ -105,12 +91,6 @@ export const RESOURCE_KINDS: ResourceKindDescriptor[] = [
     icon: 'library-panel',
     toggle: 'kubernetesLibraryPanels',
     getLabel: () => t('provisioning.resource-kind.library-panels', 'Library panels'),
-    getCountLabel: (count) =>
-      t('provisioning.bootstrap-step.library-panels-count', '', {
-        count,
-        defaultValue_one: '{{count}} library panel',
-        defaultValue_other: '{{count}} library panel',
-      }),
     getListUrl: () => '/library-panels',
   },
   {
@@ -120,12 +100,6 @@ export const RESOURCE_KINDS: ResourceKindDescriptor[] = [
     icon: 'presentation-play',
     toggle: 'playlistsReconciler',
     getLabel: () => t('provisioning.resource-kind.playlists', 'Playlists'),
-    getCountLabel: (count) =>
-      t('provisioning.bootstrap-step.playlists-count', '', {
-        count,
-        defaultValue_one: '{{count}} playlist',
-        defaultValue_other: '{{count}} playlist',
-      }),
     getListUrl: () => '/playlists',
   },
 ];
@@ -203,6 +177,15 @@ export function getResourceViewUrl(itemType: ItemType, name: string): string | u
 export function getResourceLabel(group?: string, resource?: string): string {
   const descriptor = resolveResourceKind(group, resource);
   return descriptor ? descriptor.getLabel() : (resource ?? group ?? '');
+}
+
+/**
+ * Localized "{{count}} {{kind}}" label for migration stats. The kind noun is
+ * interpolated from the descriptor's label, so there is one template for every
+ * kind instead of one string per kind.
+ */
+export function getResourceCountLabel(descriptor: ResourceKindDescriptor, count: number): string {
+  return t('provisioning.resource-kind.count', '{{count}} {{kind}}', { count, kind: descriptor.getLabel() });
 }
 
 /** Icon for a stat's kind, falling back to a generic file icon. */

@@ -4,6 +4,7 @@ import {
   findResourceKind,
   findResourceKindByItemType,
   getEnabledResourceKinds,
+  getResourceCountLabel,
   getResourceIcon,
   getResourceKindByKind,
   getResourceLabel,
@@ -145,6 +146,16 @@ describe('getResourceLabel', () => {
 
   it('falls back to the raw resource string for unknown kinds', () => {
     expect(getResourceLabel('widget.grafana.app', 'widgets')).toBe('widgets');
+  });
+});
+
+describe('getResourceCountLabel', () => {
+  it('interpolates count and the kind label from a single template', () => {
+    expect(getResourceCountLabel(findResourceKind('dashboard.grafana.app', 'dashboards')!, 3)).toBe('3 Dashboards');
+    expect(getResourceCountLabel(findResourceKind('folder.grafana.app', 'folders')!, 1)).toBe('1 Folders');
+    expect(getResourceCountLabel(findResourceKind('dashboard.grafana.app', 'librarypanels')!, 2)).toBe(
+      '2 Library panels'
+    );
   });
 });
 

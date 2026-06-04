@@ -153,7 +153,9 @@ Lookups, in order of specificity:
 
 Kinds gated by a feature toggle are filtered with `isResourceKindEnabled` / `getEnabledResourceKinds`.
 `getResourceViewUrl(itemType, name)` builds the in-app link to a single resource (undefined for kinds
-without a detail page).
+without a detail page). Count strings come from one interpolated template
+(`getResourceCountLabel(descriptor, count)` → `"{{count}} {{kind}}"`), so each kind only supplies its
+localized label — there is no per-kind count string.
 
 ### Worked example — library panels
 
