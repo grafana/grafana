@@ -5774,11 +5774,6 @@
         "label": "Dashboardmenu exporteren"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Kan dashboard niet ophalen"
-      }
-    },
     "filters-overview": {
       "apply": "Toepassen",
       "apply-close": "Toepassen en sluiten",
@@ -5934,11 +5929,6 @@
       "title-complete-git-hub-comment-clipboard": "Een volledige GitHub-opmerking naar het klembord kopiëren",
       "title-get-help-with-this-panel": "Hulp inschakelen bij dit paneel",
       "troubleshooting-docs": "Problemen met documenten oplossen"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Kan dashboardmodel niet maken"
-      }
     },
     "inspect": {
       "data-tab": "Gegevens",
@@ -6346,10 +6336,6 @@
         "tooltip": "Origineel dashboard openen"
       },
       "undo": "Ongedaan maken"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Dashboard laden en initialiseren",
-      "title-not-found": "Paneel met id {{panelId}} niet gevonden"
     },
     "source-link": {
       "title": "Bron ({{provider}})",

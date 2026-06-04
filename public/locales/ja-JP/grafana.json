@@ -5742,11 +5742,6 @@
         "label": "ダッシュボードをエクスポート"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "ダッシュボードの取得に失敗しました"
-      }
-    },
     "filters-overview": {
       "apply": "適用",
       "apply-close": "適用して閉じる",
@@ -5902,11 +5897,6 @@
       "title-complete-git-hub-comment-clipboard": "GitHubコメント全体をクリップボードにコピー",
       "title-get-help-with-this-panel": "このパネルのヘルプを取得",
       "troubleshooting-docs": "トラブルシューティングドキュメント"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "ダッシュボードモデルの作成に失敗しました"
-      }
     },
     "inspect": {
       "data-tab": "データ",
@@ -6313,10 +6303,6 @@
         "tooltip": "元のダッシュボードを開く"
       },
       "undo": "元に戻す"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "ダッシュボードの読み込みと初期化",
-      "title-not-found": "ID{{panelId}}のパネルが見つかりません"
     },
     "source-link": {
       "title": "ソース（{{provider}}）",

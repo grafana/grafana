@@ -234,6 +234,9 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 	})
 
 	t.Run("should reconcile org-admin (org.users) permissions", func(t *testing.T) {
+		// basic_admin (Org Admin) carries only the org.users:* family plus
+		// users.permissions:read. Under the union model these reach the same users
+		// relations as the global family, so the Org Admin is functional.
 		permissions := []RolePermission{
 			{Action: "org.users:read", Kind: "users", Identifier: "*"},
 			{Action: "org.users:write", Kind: "users", Identifier: "*"},
