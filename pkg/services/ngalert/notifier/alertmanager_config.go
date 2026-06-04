@@ -154,7 +154,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 
 	prepared.AlertmanagerConfig = preparedConfig
 
-	return PostableAPIConfigToNotificationsConfiguration(prepared, moa.limits)
+	return PostableAPIConfigToNotificationsConfiguration(prepared.AlertmanagerConfig, prepared.SortedTemplates(true), moa.limits)
 }
 
 func (moa *MultiOrgAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context, orgId int64) error {

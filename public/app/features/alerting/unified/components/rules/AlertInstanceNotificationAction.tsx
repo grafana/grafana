@@ -170,7 +170,13 @@ export const AlertInstanceNotificationAction = ({
             </Button>
           </PopupCard>
         )}
-        <Button fill="outline" variant="secondary" size="sm" onClick={() => setIsOpen(true)}>
+        <Button
+          fill="outline"
+          variant="secondary"
+          size="sm"
+          disabled={!isFresh || journeys.length === 0}
+          onClick={() => setIsOpen(true)}
+        >
           <Trans
             i18nKey="alerting.alert-instance-extension-point.view-route"
             count={journeys.length}
