@@ -5774,11 +5774,6 @@
         "label": "Irányítópult menüjének exportálása"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Az irányítópult lekérése nem sikerült"
-      }
-    },
     "filters-overview": {
       "apply": "Alkalmaz",
       "apply-close": "Alkalmazás és bezárás",
@@ -5934,11 +5929,6 @@
       "title-complete-git-hub-comment-clipboard": "Teljes GitHub-megjegyzés másolása a vágólapra",
       "title-get-help-with-this-panel": "Segítség kérése ezzel a panellel kapcsolatban",
       "troubleshooting-docs": "Hibaelhárítási dokumentáció"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Az irányítópult-modell létrehozása nem sikerült"
-      }
     },
     "inspect": {
       "data-tab": "Adatok",
@@ -6346,10 +6336,6 @@
         "tooltip": "Eredeti irányítópult megnyitása"
       },
       "undo": "Visszavonás"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Irányítópult betöltése és inicializálása",
-      "title-not-found": "A(z) {{panelId}} azonosítójú panel nem található"
     },
     "source-link": {
       "title": "Forrás ({{provider}})",
