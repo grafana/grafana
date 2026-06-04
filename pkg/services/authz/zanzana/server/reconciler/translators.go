@@ -119,29 +119,6 @@ func TranslateRoleBindingToTuples(obj *unstructured.Unstructured) ([]*openfgav1.
 	return tuples, nil
 }
 
-// TranslateGlobalRoleBindingToTuples converts a GlobalRoleBinding CRD to assignee tuples.
-// Subject kinds are the same as RoleBinding, so GetRoleBindingTuple is reused directly.
-func TranslateGlobalRoleBindingToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
-	var grb iamv0.GlobalRoleBinding
-	if err := convertUnstructured(obj, &grb); err != nil {
-		return nil, err
-	}
-
-	subjectKind := string(grb.Spec.Subject.Kind)
-	subjectName := grb.Spec.Subject.Name
-
-	tuples := make([]*openfgav1.TupleKey, 0, len(grb.Spec.RoleRefs))
-	for _, roleRef := range grb.Spec.RoleRefs {
-		tuple, err := zanzana.GetRoleBindingTuple(subjectKind, subjectName, roleRef.Name)
-		if err != nil {
-			return nil, err
-		}
-		tuples = append(tuples, tuple)
-	}
-
-	return tuples, nil
-}
-
 // TranslateResourcePermissionToTuples converts a ResourcePermission CRD to permission tuples.
 func TranslateResourcePermissionToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
 	var rp iamv0.ResourcePermission
@@ -187,7 +164,7 @@ func TranslateTeamToMemberTuples(obj *unstructured.Unstructured) ([]*openfgav1.T
 		if m.Name == "" {
 			continue
 		}
-		tuple, err := zanzana.GetTeamBindingTuple(m.Name, team.Name, string(m.Permission))
+		tuple, err := zanzana.GetTeamMemberTuple(m.Name, team.Name, string(m.Permission))
 		if err != nil {
 			return nil, err
 		}
