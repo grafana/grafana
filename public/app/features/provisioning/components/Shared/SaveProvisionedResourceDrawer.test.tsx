@@ -1,9 +1,4 @@
-import { HttpResponse, http } from 'msw';
-import { render, screen, waitFor } from 'test/test-utils';
-
-import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
-import server from '@grafana/test-utils/server';
-import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { render, screen } from 'test/test-utils';
 
 import { type ProvisionedResourceDataResult, useProvisionedResourceData } from '../../hooks/useProvisionedResourceData';
 import { setupProvisioningMswServer } from '../../mocks/server';
@@ -53,43 +48,37 @@ const mockResource: ManagedResource = {
   },
 };
 
-const mockRepository: RepositoryView = {
-  name: 'test-repo',
-  target: 'instance' as const,
-  title: 'Test Repository',
-  type: 'git' as const,
-  workflows: ['write', 'branch'],
-};
-
-const mockFormData = {
-  repo: 'test-repo',
-  path: 'resources/thing.json',
-  ref: 'main',
-  workflow: 'write' as const,
-  comment: '',
-  title: 'Test Thing',
-};
-
 const defaultHookData: ProvisionedResourceDataResult = {
-  repository: mockRepository,
-  initialValues: mockFormData,
+  repository: {
+    name: 'test-repo',
+    target: 'instance' as const,
+    title: 'Test Repository',
+    type: 'git' as const,
+    workflows: ['write', 'branch'],
+  },
+  initialValues: {
+    repo: 'test-repo',
+    path: 'resources/thing.json',
+    ref: 'main',
+    workflow: 'write' as const,
+    comment: '',
+    title: 'Test Thing',
+  },
   isReadOnlyRepo: false,
   canPushToConfiguredBranch: true,
 };
 
-const mockBody = { apiVersion: 'v1', kind: 'Thing', metadata: { name: 'thing-uid' }, spec: { title: 'Test Thing' } };
-
-function setup(props: Partial<SaveProvisionedResourceDrawerProps> = {}, hookData = defaultHookData) {
-  (useProvisionedResourceData as jest.Mock).mockReturnValue(hookData);
+function setup(props: Partial<SaveProvisionedResourceDrawerProps> = {}) {
+  (useProvisionedResourceData as jest.Mock).mockReturnValue(defaultHookData);
 
   const onDismiss = jest.fn();
   const defaultProps: SaveProvisionedResourceDrawerProps = {
     resource: mockResource,
-    resourceType: 'playlist',
+    resourceType: 'resource',
     resourceName: 'thing-uid',
     title: 'Test Thing',
     drawerTitle: 'Save provisioned thing',
-    body: mockBody,
+    body: { apiVersion: 'v1', kind: 'Thing', metadata: { name: 'thing-uid' }, spec: {} },
     onDismiss,
   };
 
@@ -99,152 +88,26 @@ function setup(props: Partial<SaveProvisionedResourceDrawerProps> = {}, hookData
   };
 }
 
-function requireCapturedRequest(req: { url: URL; body: unknown } | null): { url: URL; body: unknown } {
-  expect(req).not.toBeNull();
-  return req as { url: URL; body: unknown };
-}
-
 describe('SaveProvisionedResourceDrawer', () => {
-  let capturedRequest: { url: URL; body: unknown } | null = null;
-
   beforeEach(() => {
-    capturedRequest = null;
     jest.clearAllMocks();
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
-  describe('rendering', () => {
-    it('renders the drawer header, shared fields and save/cancel buttons', async () => {
-      setup();
+  // Submit behaviour lives in SaveProvisionedResourceForm.test; this only covers the drawer chrome.
+  it('renders the drawer header and embeds the resource form', async () => {
+    setup();
 
-      expect(await screen.findByRole('heading', { name: /save provisioned thing/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
-    });
-
-    it('shows the read-only banner when the repository is read-only', () => {
-      setup({}, { ...defaultHookData, isReadOnlyRepo: true });
-
-      expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
-    });
-
-    it('shows the banner when initialValues is undefined', () => {
-      setup({}, { ...defaultHookData, initialValues: undefined });
-
-      expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
-    });
+    expect(await screen.findByRole('heading', { name: /save provisioned thing/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
   });
 
-  describe('form submission', () => {
-    it('commits the provided body for the write workflow without a ref', async () => {
-      server.use(
-        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
-          const url = new URL(request.url);
-          capturedRequest = { url, body: await request.json() };
-          return HttpResponse.json({ resource: { upsert: {} } });
-        })
-      );
+  it('calls onDismiss when the drawer is closed', async () => {
+    const { user, onDismiss } = setup();
 
-      const { user } = setup();
+    await user.click(await screen.findByRole('button', { name: /close/i }));
 
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
-
-      await waitFor(() => {
-        expect(capturedRequest).not.toBeNull();
-      });
-
-      const req = requireCapturedRequest(capturedRequest);
-      expect(req.url.pathname).toContain('/repositories/test-repo/files/resources/thing.json');
-      expect(req.url.searchParams.get('ref')).toBeNull();
-      // resourceType drives the default commit message
-      expect(req.url.searchParams.get('message')).toBe('Save playlist: Test Thing');
-      // body is passed through verbatim
-      expect(req.body).toEqual(mockBody);
-    });
-
-    it('sends the selected branch as a ref for the branch workflow', async () => {
-      server.use(
-        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
-          const url = new URL(request.url);
-          capturedRequest = { url, body: await request.json() };
-          return HttpResponse.json({ resource: { upsert: {} } });
-        })
-      );
-
-      const { user } = setup(
-        {},
-        { ...defaultHookData, initialValues: { ...mockFormData, workflow: 'branch' as const, ref: 'my-branch' } }
-      );
-
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
-
-      await waitFor(() => {
-        expect(capturedRequest).not.toBeNull();
-      });
-
-      const req = requireCapturedRequest(capturedRequest);
-      expect(req.url.searchParams.get('ref')).toBe('my-branch');
-    });
-
-    it('respects a custom commit action via the generic fallback message', async () => {
-      server.use(
-        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
-          const url = new URL(request.url);
-          capturedRequest = { url, body: await request.json() };
-          return HttpResponse.json({ resource: { upsert: {} } });
-        })
-      );
-
-      const { user } = setup({ action: 'create' });
-
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
-
-      await waitFor(() => {
-        expect(capturedRequest).not.toBeNull();
-      });
-
-      const req = requireCapturedRequest(capturedRequest);
-      expect(req.url.searchParams.get('message')).toBe('Create playlist: Test Thing');
-    });
-
-    it('uses a custom commit message when a comment is provided', async () => {
-      server.use(
-        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
-          const url = new URL(request.url);
-          capturedRequest = { url, body: await request.json() };
-          return HttpResponse.json({ resource: { upsert: {} } });
-        })
-      );
-
-      const { user } = setup({}, { ...defaultHookData, initialValues: { ...mockFormData, comment: 'My change' } });
-
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
-
-      await waitFor(() => {
-        expect(capturedRequest).not.toBeNull();
-      });
-
-      const req = requireCapturedRequest(capturedRequest);
-      expect(req.url.searchParams.get('message')).toBe('My change');
-    });
-
-    it('does not submit when the repository is missing', async () => {
-      server.use(
-        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
-          const url = new URL(request.url);
-          capturedRequest = { url, body: await request.json() };
-          return HttpResponse.json({ resource: { upsert: {} } });
-        })
-      );
-
-      const { user } = setup({}, { ...defaultHookData, repository: undefined });
-
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
-
-      await waitFor(() => {
-        expect(capturedRequest).toBeNull();
-      });
-    });
+    expect(onDismiss).toHaveBeenCalled();
   });
 });
