@@ -32,7 +32,7 @@ func (c *namespaceCleaner) Clean(ctx context.Context, namespace string, progress
 		return fmt.Errorf("get clients: %w", err)
 	}
 
-	for _, kind := range resources.SupportedResources(nil) {
+	for _, kind := range clients.SupportedResources() {
 		progress.SetMessage(ctx, fmt.Sprintf("remove unprovisioned %s", kind.Resource))
 		client, _, err := clients.ForResource(ctx, kind)
 		if err != nil {

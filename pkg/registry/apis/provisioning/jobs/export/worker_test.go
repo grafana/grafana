@@ -146,12 +146,8 @@ func TestExportWorker_ProcessFailedToCreateClients(t *testing.T) {
 	mockClients := resources.NewMockClientFactory(t)
 
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(nil, errors.New("failed to create clients"))
-	mockStageFn := NewMockWrapWithStageFn(t)
-	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
-		return fn(repo, true)
-	})
 
-	r := NewExportWorker(mockClients, nil, nil, nil, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true, "v1beta1")
+	r := NewExportWorker(mockClients, nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true, "v1beta1")
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
@@ -428,7 +424,10 @@ func TestExportWorker_ProcessWrapWithStageFnError(t *testing.T) {
 	mockStageFn := NewMockWrapWithStageFn(t)
 	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(errors.New("stage failed"))
 
-	r := NewExportWorker(nil, nil, nil, nil, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true, "v1beta1")
+	mockClients := resources.NewMockClientFactory(t)
+	mockClients.On("Clients", mock.Anything, "test-namespace").Return(resources.NewMockResourceClients(t), nil)
+
+	r := NewExportWorker(mockClients, nil, nil, nil, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true, "v1beta1")
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "stage failed")
 }
@@ -796,7 +795,7 @@ func TestCountSupportedResources(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := countSupportedResources(tt.stats)
+			got := countSupportedResources(tt.stats, resources.SupportedProvisioningResources)
 			assert.Equal(t, tt.expected, got)
 		})
 	}
@@ -939,7 +938,10 @@ func TestCheckExportQuota(t *testing.T) {
 				lister = mockLister
 			}
 
-			err := checkExportQuota(context.Background(), cfg, lister)
+			mockClients := resources.NewMockResourceClients(t)
+			mockClients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
+
+			err := checkExportQuota(context.Background(), cfg, lister, mockClients)
 			if tt.expectError {
 				require.Error(t, err)
 				var quotaErr *quotas.QuotaExceededError
@@ -989,7 +991,12 @@ func TestExportWorker_ProcessQuotaExceeded(t *testing.T) {
 		return errors.As(err, &quotaErr)
 	})).Return(v0alpha1.JobStatus{})
 
-	r := NewExportWorker(nil, nil, mockLister, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true, "v1beta1")
+	mockResourceClients := resources.NewMockResourceClients(t)
+	mockResourceClients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources)
+	mockClients := resources.NewMockClientFactory(t)
+	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
+
+	r := NewExportWorker(mockClients, nil, mockLister, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true, "v1beta1")
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 
 	require.Error(t, err)
@@ -1036,6 +1043,7 @@ func TestExportWorker_ProcessQuotaNotExceeded(t *testing.T) {
 
 	mockClients := resources.NewMockClientFactory(t)
 	mockResourceClients := resources.NewMockResourceClients(t)
+	mockResourceClients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources)
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
 
 	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)

@@ -57,6 +57,14 @@ func (m *mockClients) User(ctx context.Context) (dynamic.ResourceInterface, erro
 	return ri, args.Error(1)
 }
 
+func (m *mockClients) SupportedResources() []schema.GroupVersionResource {
+	return resources.SupportedProvisioningResources
+}
+
+func (m *mockClients) SupportsFolderAnnotationResources() []schema.GroupResource {
+	return resources.SupportsFolderAnnotation
+}
+
 func TestNamespaceCleaner_Clean(t *testing.T) {
 	t.Run("should fail when getting clients fails", func(t *testing.T) {
 		mockClientFactory := resources.NewMockClientFactory(t)

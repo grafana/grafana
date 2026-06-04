@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -100,7 +101,12 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return err
 	}
 
-	if err := checkExportQuota(ctx, cfg, r.resourceLister); err != nil {
+	clients, err := r.clientFactory.Clients(ctx, cfg.Namespace)
+	if err != nil {
+		return fmt.Errorf("create clients: %w", err)
+	}
+
+	if err := checkExportQuota(ctx, cfg, r.resourceLister, clients); err != nil {
 		progress.Complete(ctx, err)
 		return err
 	}
@@ -119,12 +125,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	fn := func(repo repository.Repository, _ bool) error {
-		clients, err := r.clientFactory.Clients(ctx, cfg.Namespace)
-		if err != nil {
-			logger.Error("failed to create clients", "error", err)
-			return fmt.Errorf("create clients: %w", err)
-		}
-
 		rw, ok := repo.(repository.ReaderWriter)
 		if !ok {
 			logger.Error("export job submitted targeting repository that is not a ReaderWriter")
@@ -140,7 +140,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return r.exportFn(ctx, cfg.Name, *options, clients, repositoryResources, progress, r.folderAPIVersion)
 	}
 
-	err := r.wrapWithStageFn(ctx, repo, cloneOptions, fn)
+	err = r.wrapWithStageFn(ctx, repo, cloneOptions, fn)
 
 	// Set RefURLs if the repository supports it and we have a target branch
 	if options.Branch != "" {
@@ -165,7 +165,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	return nil
 }
 
-func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, lister resources.ResourceLister) error {
+func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, lister resources.ResourceLister, clients resources.ResourceClients) error {
 	quota := cfg.Status.Quota
 	if quota.MaxResourcesPerRepository == 0 {
 		return nil
@@ -178,7 +178,7 @@ func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, lister 
 		return fmt.Errorf("get resource stats for quota check: %w", err)
 	}
 
-	netChange := countSupportedResources(stats.Unmanaged)
+	netChange := countSupportedResources(stats.Unmanaged, clients.SupportedResources())
 
 	if !quotas.WouldStayWithinQuota(quota, usage, netChange) {
 		total := usage.TotalResources + netChange
@@ -190,10 +190,10 @@ func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, lister 
 }
 
 // countSupportedResources sums counts for resource types that support provisioning.
-func countSupportedResources(stats []provisioning.ResourceCount) int64 {
+func countSupportedResources(stats []provisioning.ResourceCount, supported []schema.GroupVersionResource) int64 {
 	var total int64
 	for _, stat := range stats {
-		for _, kind := range resources.SupportedResources(nil) {
+		for _, kind := range supported {
 			if stat.Group == kind.Group && stat.Resource == kind.Resource {
 				total += stat.Count
 				break

@@ -134,15 +134,18 @@ type ProvisioningAuthorizer struct {
 	repo                  *provisioning.Repository
 	reader                repository.Reader
 	access                auth.AccessChecker
+	clients               ResourceClients
 	folderMetadataEnabled bool
 }
 
-// NewAuthorizer creates a new ProvisioningAuthorizer.
-func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, access auth.AccessChecker, folderMetadataEnabled bool) Authorizer {
+// NewAuthorizer creates a new ProvisioningAuthorizer. The clients provide the set of
+// supported resources to authorize against.
+func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, access auth.AccessChecker, clients ResourceClients, folderMetadataEnabled bool) Authorizer {
 	return &ProvisioningAuthorizer{
 		repo:                  repo,
 		reader:                reader,
 		access:                access,
+		clients:               clients,
 		folderMetadataEnabled: folderMetadataEnabled,
 	}
 }
@@ -240,7 +243,7 @@ func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path string
 
 	// Folders are authorized through their own dedicated path (authorizeFolder,
 	// authorizeDeleteFolder, authorizeMoveFolder) — skip them here.
-	for _, gvr := range SupportedResources(nil) {
+	for _, gvr := range a.clients.SupportedResources() {
 		if gvr == FolderResource {
 			continue
 		}
@@ -491,7 +494,7 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveByPath(ctx context.Context, source
 // AuthorizeReadAllSupported checks if the current user has read (get) permission
 // on every supported provisioning resource type at the root level.
 func (a *ProvisioningAuthorizer) AuthorizeReadAllSupported(ctx context.Context) error {
-	for _, kind := range SupportedResources(nil) {
+	for _, kind := range a.clients.SupportedResources() {
 		if err := a.access.Check(ctx, authlib.CheckRequest{
 			Group:    kind.Group,
 			Resource: kind.Resource,
@@ -509,7 +512,7 @@ func (a *ProvisioningAuthorizer) AuthorizeReadAllSupported(ctx context.Context) 
 func (a *ProvisioningAuthorizer) AuthorizeCreateAllSupported(ctx context.Context) error {
 	targetFolder := RootFolder(a.repo)
 
-	for _, kind := range SupportedResources(nil) {
+	for _, kind := range a.clients.SupportedResources() {
 		if err := a.access.Check(ctx, authlib.CheckRequest{
 			Group:    kind.Group,
 			Resource: kind.Resource,

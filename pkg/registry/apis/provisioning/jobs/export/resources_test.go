@@ -54,6 +54,7 @@ func runExportTest(t *testing.T, mockItems []unstructured.Unstructured, setupPro
 	}
 
 	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 	setupProgress(mockProgress)
 
@@ -562,6 +563,7 @@ func TestExportResources_GenerateNewUIDs(t *testing.T) {
 
 	mockClient := &mockDynamicInterface{items: mockItems}
 	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 	repoResources := resources.NewMockRepositoryResources(t)
 
@@ -610,6 +612,7 @@ func TestExportResources_GenerateNewUIDs_UniquePerResource(t *testing.T) {
 
 	mockClient := &mockDynamicInterface{items: mockItems}
 	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 	repoResources := resources.NewMockRepositoryResources(t)
 

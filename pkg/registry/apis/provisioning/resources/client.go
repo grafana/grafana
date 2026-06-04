@@ -15,7 +15,6 @@ import (
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // Dashboard GVR/GVK values are re-exported from apps/provisioning/pkg/resources
@@ -31,31 +30,48 @@ var (
 	DashboardResourceV2alpha1 = provisioningresources.DashboardResourceV2alpha1
 	DashboardResourceV2beta1  = provisioningresources.DashboardResourceV2beta1
 
-	// SupportedProvisioningResources is the list of resources that can fully managed from the UI
+	// SupportedProvisioningResources is the static set of resources that can be fully
+	// managed from the UI. Extra resources (e.g. flag-gated ones) are registered with
+	// the client factory and appended to this base set.
 	SupportedProvisioningResources = []schema.GroupVersionResource{FolderResource, DashboardResource}
 
-	// SupportsFolderAnnotation is the list of resources that can be saved in a folder
+	// SupportsFolderAnnotation is the static set of resources that can be saved in a folder.
 	SupportsFolderAnnotation = []schema.GroupResource{FolderResource.GroupResource(), DashboardResource.GroupResource()}
 )
 
-// SupportedResources returns the resources that can be fully managed from the UI.
-//
-// It is the single seam through which the effective supported set is resolved.
-// Today it always returns the static SupportedProvisioningResources set. Resources
-// that should only be provisionable behind a feature flag (e.g. playlists, library
-// panels) will be appended here once the checker is consulted; passing the features
-// toggles now establishes that gating point without changing current behaviour.
-func SupportedResources(features featuremgmt.FeatureToggles) []schema.GroupVersionResource {
-	return SupportedProvisioningResources
+// SupportedResource describes a resource that can be managed through provisioning.
+// It is the unit of registration: extra resources (e.g. ones gated behind a feature
+// flag) are registered with the client factory and merged into the static base set.
+type SupportedResource struct {
+	// GVR is the resource added to the supported set.
+	GVR schema.GroupVersionResource
+	// SupportsFolderAnnotation reports whether the resource can be saved in a folder,
+	// i.e. whether it is also added to the folder-annotation set.
+	SupportsFolderAnnotation bool
 }
 
-// SupportsFolderAnnotationResources returns the resources that can be saved in a folder.
-//
-// Like SupportedResources, this is the single seam for the folder-annotation set.
-// Today it always returns the static SupportsFolderAnnotation set; flag-gated
-// resources will be appended here once the checker is consulted.
-func SupportsFolderAnnotationResources(features featuremgmt.FeatureToggles) []schema.GroupResource {
-	return SupportsFolderAnnotation
+// mergeSupportedResources returns the static SupportedProvisioningResources set followed
+// by the GVRs of any extra registered resources, preserving registration order.
+func mergeSupportedResources(extra []SupportedResource) []schema.GroupVersionResource {
+	out := make([]schema.GroupVersionResource, 0, len(SupportedProvisioningResources)+len(extra))
+	out = append(out, SupportedProvisioningResources...)
+	for _, r := range extra {
+		out = append(out, r.GVR)
+	}
+	return out
+}
+
+// mergeSupportsFolderAnnotationResources returns the static SupportsFolderAnnotation set
+// followed by the extra registered resources that support folder annotations.
+func mergeSupportsFolderAnnotationResources(extra []SupportedResource) []schema.GroupResource {
+	out := make([]schema.GroupResource, 0, len(SupportsFolderAnnotation)+len(extra))
+	out = append(out, SupportsFolderAnnotation...)
+	for _, r := range extra {
+		if r.SupportsFolderAnnotation {
+			out = append(out, r.GVR.GroupResource())
+		}
+	}
+	return out
 }
 
 // folderGVR builds the GVR for the folder API at the given version.
@@ -85,6 +101,7 @@ type ClientFactory interface {
 
 type clientFactory struct {
 	clientsProvider clientsProvider
+	extraResources  []SupportedResource
 }
 
 // TODO: Rename to NamespacedClients
@@ -97,6 +114,12 @@ type ResourceClients interface {
 	// Folder returns a dynamic client for the folder API at the given version.
 	Folder(ctx context.Context, folderAPIVersion string) (dynamic.ResourceInterface, schema.GroupVersionKind, error)
 	User(ctx context.Context) (dynamic.ResourceInterface, error)
+	// SupportedResources returns the resources that can be fully managed from the UI:
+	// the static base set plus any extra resources registered with the client factory.
+	SupportedResources() []schema.GroupVersionResource
+	// SupportsFolderAnnotationResources returns the resources that can be saved in a folder:
+	// the static base set plus any extra registered resources that support folder annotations.
+	SupportsFolderAnnotationResources() []schema.GroupResource
 }
 
 type clientsProvider interface {
@@ -159,24 +182,33 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 	return p.dynamic, p.discovery, nil
 }
 
-func NewClientFactory(configProvider apiserver.RestConfigProvider) ClientFactory {
-	return &clientFactory{newSingleAPIClients(configProvider)}
+// NewClientFactory creates a ClientFactory. Any extraResources are registered into
+// the supported set returned by the ResourceClients it produces, on top of the static
+// SupportedProvisioningResources base set.
+func NewClientFactory(configProvider apiserver.RestConfigProvider, extraResources ...SupportedResource) ClientFactory {
+	return &clientFactory{
+		clientsProvider: newSingleAPIClients(configProvider),
+		extraResources:  extraResources,
+	}
 }
 
-// NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers
-func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider) ClientFactory {
+// NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers.
+// Any extraResources are registered into the supported set returned by the ResourceClients
+// it produces, on top of the static SupportedProvisioningResources base set.
+func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, extraResources ...SupportedResource) ClientFactory {
 	clientFactories := make(map[string]ClientFactory)
 
 	for api, configProvider := range configProviders {
-		clientFactory := NewClientFactory(configProvider)
+		clientFactory := NewClientFactory(configProvider, extraResources...)
 		clientFactories[api] = clientFactory
 	}
 
-	return &multiClientFactory{clientFactories: clientFactories}
+	return &multiClientFactory{clientFactories: clientFactories, extraResources: extraResources}
 }
 
 type multiClientFactory struct {
 	clientFactories map[string]ClientFactory
+	extraResources  []SupportedResource
 }
 
 func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
@@ -196,6 +228,7 @@ func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (Res
 	return &multiResourceClients{
 		namespace:                 namespace,
 		resourceClientsByAPIGroup: clients,
+		extraResources:            m.extraResources,
 	}, nil
 }
 
@@ -203,6 +236,7 @@ func (f *clientFactory) Clients(ctx context.Context, namespace string) (Resource
 	return &resourceClients{
 		namespace:       namespace,
 		clientsProvider: f.clientsProvider,
+		extraResources:  f.extraResources,
 		byKind:          make(map[schema.GroupVersionKind]*clientInfo),
 		byResource:      make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil
@@ -211,6 +245,7 @@ func (f *clientFactory) Clients(ctx context.Context, namespace string) (Resource
 type resourceClients struct {
 	namespace       string
 	clientsProvider clientsProvider
+	extraResources  []SupportedResource
 
 	// ResourceInterface cache for this context + namespace
 	mutex      sync.Mutex
@@ -341,10 +376,19 @@ func (c *resourceClients) User(ctx context.Context) (dynamic.ResourceInterface, 
 	return v, err
 }
 
+func (c *resourceClients) SupportedResources() []schema.GroupVersionResource {
+	return mergeSupportedResources(c.extraResources)
+}
+
+func (c *resourceClients) SupportsFolderAnnotationResources() []schema.GroupResource {
+	return mergeSupportsFolderAnnotationResources(c.extraResources)
+}
+
 type multiResourceClients struct {
 	namespace                 string
 	mutex                     sync.Mutex
 	resourceClientsByAPIGroup map[string]ResourceClients
+	extraResources            []SupportedResource
 }
 
 // ForKind returns a client for a kind.
@@ -384,6 +428,14 @@ func (c *multiResourceClients) Folder(ctx context.Context, folderAPIVersion stri
 func (c *multiResourceClients) User(ctx context.Context) (dynamic.ResourceInterface, error) {
 	v, _, err := c.ForResource(ctx, UserResource)
 	return v, err
+}
+
+func (c *multiResourceClients) SupportedResources() []schema.GroupVersionResource {
+	return mergeSupportedResources(c.extraResources)
+}
+
+func (c *multiResourceClients) SupportsFolderAnnotationResources() []schema.GroupResource {
+	return mergeSupportsFolderAnnotationResources(c.extraResources)
 }
 
 // ForEach applies the function to each resource returned from the list operation
