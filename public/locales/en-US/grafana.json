@@ -12805,12 +12805,8 @@
       "table-heading": "Dashboards"
     },
     "save-provisioned": {
-      "button-cancel": "Cancel",
-      "button-save": "Save",
-      "button-saving": "Saving...",
       "drawer-title": "Save provisioned playlist",
       "error-saving": "Failed to save playlist",
-      "missing-info": "Missing required fields for saving",
       "read-only-message": "To edit this playlist, please update the file in your repository directly."
     },
     "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
@@ -13873,6 +13869,14 @@
         }
       },
       "title-error-saving-file": "Error saving file"
+    },
+    "save-resource": {
+      "button-cancel": "Cancel",
+      "button-save": "Save",
+      "button-saving": "Saving...",
+      "error-saving": "Failed to save changes",
+      "missing-info": "Missing required fields for saving",
+      "read-only-message": "To edit this resource, please update it in your repository directly."
     },
     "setup-modal": {
       "done": "Done",
