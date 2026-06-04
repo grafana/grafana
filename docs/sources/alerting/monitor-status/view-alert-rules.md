@@ -45,6 +45,33 @@ Click the **Saved searches** button to open the list of previously saved searche
 
 {{< figure src="/media/docs/alerting/alerting-saved-searches.png" max-width="750px" alt="Alert rule filter options" >}}
 
+### Search syntax
+
+The search input accepts a structured `key:value` syntax. The key on the left of the colon is the filter type, and the value on the right is what you want to match. Use quotation marks around values that contain spaces, for example `rule:"High CPU usage"`.
+
+The following filter types are supported:
+
+- `datasource`
+- `namespace`
+- `label`
+- `group`
+- `rule`
+- `state`
+- `type`
+- `health`
+
+For example:
+
+- `label:severity` filters rules by the `severity` label.
+- `health:error` filters rules whose health is in an error state.
+- `rule:"High CPU usage"` filters rules by name.
+
+You can combine multiple filters in a single search. Any text entered without a `key:` prefix is treated as a query that filters alert rules by name.
+
+Regex matching is supported in search values. However, Go templates used for dynamic labels are not evaluated when searching, so you can't match against the rendered value of a templated label.
+
+The search input and the **Filter** popup are kept in sync, so changes made in either place are reflected in the other.
+
 ## Change alert rules list view
 
 You can also change how the rule list is displayed using the **View as** option.
