@@ -889,7 +889,6 @@ github.com/go-openapi/swag/typeutils v0.25.4/go.mod h1:Ou7g//Wx8tTLS9vG0UmzfCsjZ
 github.com/go-openapi/swag/typeutils v0.25.5/go.mod h1:itmFmScAYE1bSD8C4rS0W+0InZUBrB2xSPbWt6DLGuc=
 github.com/go-openapi/swag/yamlutils v0.25.4/go.mod h1:MNzq1ulQu+yd8Kl7wPOut/YHAAU/H6hL91fF+E2RFwc=
 github.com/go-openapi/swag/yamlutils v0.25.5/go.mod h1:Gek1/SjjfbYvM+Iq4QGwa/2lEXde9n2j4a3wI3pNuOQ=
-github.com/go-openapi/testify/enable/yaml/v2 v2.4.0/go.mod h1:14iV8jyyQlinc9StD7w1xVPW3CO3q1Gj04Jy//Kw4VM=
 github.com/go-openapi/testify/enable/yaml/v2 v2.4.1/go.mod h1:r7dwsujEHawapMsxA69i+XMGZrQ5tRauhLAjV/sxg3Q=
 github.com/go-openapi/testify/enable/yaml/v2 v2.4.2/go.mod h1:XVevPw5hUXuV+5AkI1u1PeAm27EQVrhXTTCPAF85LmE=
 github.com/go-openapi/testify/v2 v2.4.0/go.mod h1:HCPmvFFnheKK2BuwSA0TbbdxJ3I16pjwMkYkP4Ywn54=
@@ -1028,7 +1027,6 @@ github.com/grafana/go-mysql-server v0.20.2-grafana-3/go.mod h1:Oy0XD/nfIkwVBMud5
 github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d h1:oXRJlb9UjVsl6LhqBdbyAQ9YFhExwsj4bjh5vwMNRZY=
 github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d/go.mod h1:j/s0jkda4UXTemDs7Pgw/vMT06alWc42CHisvYac0qw=
 github.com/grafana/grafana-app-sdk v0.53.1/go.mod h1:wR7nY/6FbkSjLgSyzE4buEy4JF0poSG6HCZ4MRQrFb4=
-github.com/grafana/grafana-app-sdk v0.55.0/go.mod h1:JV9ExtfujB3Wz832J3MOZQDdmxelAPXg+f+FmYoRDSQ=
 github.com/grafana/grafana-app-sdk/logging v0.53.2/go.mod h1:f0r/XriExa4jpUMHnI9aTRYzbbMHiDV+MXSpaSRGqIE=
 github.com/grafana/grafana-app-sdk/logging v0.54.1/go.mod h1:t0rXNkTz3R6PLpjxk4BIl2erHYkMBX+rd+UHSL0k5nw=
 github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.10/go.mod h1:S6d7Ck6J8UDOkQj9xfTp8pM9uAmslU5PXr+/h7ixYfY=
@@ -2237,7 +2235,6 @@ howett.net/plist v1.0.1 h1:37GdZ8tP09Q35o9ych3ehygcsL+HqKSwzctveSlarvM=
 howett.net/plist v1.0.1/go.mod h1:lqaXoTrLY4hg8tnEzNru53gicrbv7rrk+2xJA/7hw9g=
 k8s.io/api v0.35.1/go.mod h1:28uR9xlXWml9eT0uaGo6y71xK86JBELShLy4wR1XtxM=
 k8s.io/api v0.35.3/go.mod h1:9Y9tkBcFwKNq2sxwZTQh1Njh9qHl81D0As56tu42GA4=
-k8s.io/api v0.36.0/go.mod h1:m1LVrGPNYax5NBHdO+QuAedXyuzTt4RryI/qnmNvs34=
 k8s.io/apiextensions-apiserver v0.35.1/go.mod h1:2CN4fe1GZ3HMe4wBr25qXyJnJyZaquy4nNlNmb3R7AQ=
 k8s.io/apimachinery v0.35.3/go.mod h1:jQCgFZFR1F4Ik7hvr2g84RTJSZegBc8yHgFWKn//hns=
 k8s.io/apimachinery v0.35.4/go.mod h1:NNi1taPOpep0jOj+oRha3mBJPqvi0hGdaV8TCqGQ+cc=
@@ -2245,7 +2242,6 @@ k8s.io/apimachinery v0.36.0/go.mod h1:FklypaRJt6n5wUIwWXIP6GJlIpUizTgfo1T/As+Tyx
 k8s.io/apiserver v0.35.1/go.mod h1:BiL6Dd3A2I/0lBnteXfWmCFobHM39vt5+hJQd7Lbpi4=
 k8s.io/client-go v0.35.1/go.mod h1:1p1KxDt3a0ruRfc/pG4qT/3oHmUj1AhSHEcxNSGg+OA=
 k8s.io/client-go v0.35.3/go.mod h1:RzoXkc0mzpWIDvBrRnD+VlfXP+lRzqQjCmKtiwZ8Q9c=
-k8s.io/client-go v0.36.0/go.mod h1:ZKKcpwF0aLYfkHFCjillCKaTK/yBkEDHTDXCFY6AS9Y=
 k8s.io/code-generator v0.36.0 h1:XWAkrhnArm0VWMmSFO7kyB+wE2LROwep7hEH0GPGkqA=
 k8s.io/code-generator v0.36.0/go.mod h1:Tr2UhfBRdlyRoadfob9aPCmmGe8PUs5XPK9MEJ2nx+w=
 k8s.io/component-base v0.35.1/go.mod h1:HI/6jXlwkiOL5zL9bqA3en1Ygv60F03oEpnuU1G56Bs=
@@ -2257,10 +2253,12 @@ k8s.io/gengo/v2 v2.0.0-20251215205346-5ee0d033ba5b/go.mod h1:yvyl3l9E+UxlqOMUULd
 k8s.io/klog v1.0.0 h1:Pt+yjF5aB1xDSVbau4VsWe+dQNzA0qv1LlXdC2dF6Q8=
 k8s.io/klog v1.0.0/go.mod h1:4Bi6QPql/J/LkTDqv7R/cd3hPo4k2DG6Ptcz060Ez5I=
 k8s.io/klog/v2 v2.80.1/go.mod h1:y1WjHnz7Dj687irZUWR/WLkLc5N1YHtjLdmgWjndZn0=
+k8s.io/klog/v2 v2.130.1/go.mod h1:3Jpz1GvMt720eyJH1ckRHK1EDfpxISzJ7I9OYgaDtPE=
 k8s.io/kms v0.35.1/go.mod h1:VT+4ekZAdrZDMgShK37vvlyHUVhwI9t/9tvh0AyCWmQ=
 k8s.io/kube-aggregator v0.35.0/go.mod h1:vKBRpQUfDryb7udwUwF3eCSvv3AJNgHtL4PGl6PqAg8=
 k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912/go.mod h1:kdmbQkyfwUagLfXIad1y2TdrjPFWp2Q89B3qkRwf/pQ=
 k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4/go.mod h1:kdmbQkyfwUagLfXIad1y2TdrjPFWp2Q89B3qkRwf/pQ=
+k8s.io/streaming v0.36.0/go.mod h1:z6fV3D+NVkoeqRMtWwlUZK6U17SY/LqNzOxWL6GyR/s=
 k8s.io/utils v0.0.0-20240711033017-18e509b52bc8/go.mod h1:OLgZIPagt7ERELqWJFomSt595RzquPNLL48iOWgYOg0=
 k8s.io/utils v0.0.0-20251002143259-bc988d571ff4/go.mod h1:OLgZIPagt7ERELqWJFomSt595RzquPNLL48iOWgYOg0=
 k8s.io/utils v0.0.0-20251218160917-61b37f7a4624/go.mod h1:xDxuJ0whA3d0I4mf/C4ppKHxXynQ+fxnkmQH0vTHnuk=

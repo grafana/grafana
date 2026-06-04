@@ -279,6 +279,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/registry/apis/userstorage"
 	_ "github.com/grafana/grafana/pkg/registry/apps"
 	_ "github.com/grafana/grafana/pkg/registry/apps/advisor"
+	_ "github.com/grafana/grafana/pkg/registry/apps/alerting/admin"
 	_ "github.com/grafana/grafana/pkg/registry/apps/alerting/historian"
 	_ "github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	_ "github.com/grafana/grafana/pkg/registry/apps/alerting/rules"

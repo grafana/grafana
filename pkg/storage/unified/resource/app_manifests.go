@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis"
+	alerting_admin "github.com/grafana/grafana/apps/alerting/admin/pkg/apis/manifestdata"
 	alerting_historian "github.com/grafana/grafana/apps/alerting/historian/pkg/apis"
 	alerting_notifications "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
 	alerting_rules "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
@@ -33,6 +34,7 @@ func AppManifests() []app.Manifest {
 	// TODO: don't use hardcoded list of manifests when possible.
 	return []app.Manifest{
 		advisor.LocalManifest(),
+		alerting_admin.LocalManifest(),
 		alerting_historian.LocalManifest(),
 		alerting_notifications.LocalManifest(),
 		alerting_rules.LocalManifest(),
