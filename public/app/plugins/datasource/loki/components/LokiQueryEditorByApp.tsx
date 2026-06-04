@@ -18,7 +18,3 @@ export function LokiQueryEditorByApp(props: LokiQueryEditorProps) {
 }
 
 export default memo(LokiQueryEditorByApp);
-
-export const testIds = {
-  editor: 'loki-editor',
-};

@@ -229,6 +229,11 @@ var adminCommands = []*cli.Command{
 		Usage:  "Clears RBAC seeding to force re-seeding on next startup. Use after running an Enterprise build, then an OSS build, then an Enterprise build again.",
 		Action: runDbCommand(flushSeedAssignment),
 	},
+	{
+		Name:   "db-migrate",
+		Usage:  "Run schema migrations against the database configured in --config.",
+		Action: runDbCommand(logLastMigration),
+	},
 }
 
 var Commands = []*cli.Command{

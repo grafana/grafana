@@ -79,6 +79,8 @@ Time series visualizations require time-series data—a sequence of measurements
 
 The dataset must contain at least one numeric field, and in the case of multiple numeric fields, each one is plotted as a new line, point, or bar labeled with the field name in the tooltip.
 
+Time series data is expected to contain unique timestamps for each data point within a series. If multiple points in the same series share the same timestamp, the visualization might not render or behave as expected.
+
 ### Example 1
 
 In the following example, there are three numeric fields represented by three lines in the chart:
@@ -186,6 +188,35 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 ### Legend options
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+
+#### Series visibility
+
+Toggle the **Series visibility** switch on to add the control next to or above the legend.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-series-visibility-v13.1.png" max-width="400px" alt="Series visibility filter switch" >}}
+
+This lets you narrow the visible series by name or by label.
+Use the series visibility filter when a panel renders many series and you want to focus on a subset without editing the query.
+
+After you've toggled the switch on, click the **Series visibility** icon to open a tooltip with one or two sections depending on your dataset:
+
+- **By name**: Lists each unique series name. Select one or more names to limit the visualization to those series.
+- **By labels**: Lists each label key with its values. Select label values to filter series that match.
+
+The tooltip also provides the following options:
+
+- **Select all** and **Deselect all**: Toggle every value in a section.
+- **Clear all**: Reset the filter.
+  Toggle the **Series visibility** switch on to add the corresponding filter control next to or above the legend.
+  Use it to narrow the visible series by name or by label without editing the query, which is useful when a panel renders many series and you want to focus on a subset.
+
+After toggling the switch on, click the **Series visibility** icon to open a tooltip.
+Depending on your dataset, you can filter:
+
+- **By name**: Lists each unique series name. Select one or more names to limit the visualization to those series.
+- **By labels**: Lists each label key with its values. Select label values to filter series that match.
+
+For more information, refer to the [Configure legend documentation] (https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-legend/#series-visibility).
 
 ### Axis options
 
