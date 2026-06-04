@@ -549,7 +549,7 @@ func TestRenameResourceFile(t *testing.T) {
 	// Pure path-only renames (git blob hash unchanged) skip strict server-side
 	// validation: the spec already lives in the cluster and may legitimately
 	// fail rules introduced after it was first persisted. A synthetic GVR is
-	// used so the SupportsFolderAnnotation path and the v1-dashboard exemption
+	// used so the EnableFolderSupport path and the v1-dashboard exemption
 	// do not interfere with the assertion.
 	fakeGVK := schema.GroupVersionKind{Group: "fake.grafana.app", Version: "v1", Kind: "Fake"}
 	fakeGVR := schema.GroupVersionResource{Group: "fake.grafana.app", Version: "v1", Resource: "fakes"}

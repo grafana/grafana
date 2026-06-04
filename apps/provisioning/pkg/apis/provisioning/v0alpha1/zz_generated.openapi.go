@@ -2759,9 +2759,9 @@ func schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref common.Referenc
 							Format:      "",
 						},
 					},
-					"supportsFolderAnnotation": {
+					"enableFolderSupport": {
 						SchemaProps: spec.SchemaProps{
-							Description: "SupportsFolderAnnotation reports whether the resource is saved inside a folder (as opposed to being org-scoped).",
+							Description: "EnableFolderSupport reports whether the resource is saved inside a folder (as opposed to being org-scoped).",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},

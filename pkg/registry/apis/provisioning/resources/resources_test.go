@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 )
 
-// Use a GVR not in SupportsFolderAnnotation to avoid FolderManager dependency
+// Use a GVR not in EnableFolderSupport to avoid FolderManager dependency
 // in tests that go through WriteResourceFromFile.
 var (
 	replaceTestGVK = schema.GroupVersionKind{Group: "alerting.grafana.app", Version: "v0alpha1", Kind: "AlertRule"}
@@ -80,7 +80,7 @@ func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
 
 		clients := NewMockResourceClients(t)
 		clients.EXPECT().SupportedResources().Return([]SupportedResource{
-			{GroupKind: replaceTestGVK.GroupKind(), SupportsFolderAnnotation: false},
+			{GroupKind: replaceTestGVK.GroupKind(), EnableFolderSupport: false},
 		})
 
 		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
@@ -110,7 +110,7 @@ func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
 
 		clients := NewMockResourceClients(t)
 		clients.EXPECT().SupportedResources().Return([]SupportedResource{
-			{GroupKind: replaceTestGVK.GroupKind(), SupportsFolderAnnotation: true},
+			{GroupKind: replaceTestGVK.GroupKind(), EnableFolderSupport: true},
 		})
 
 		// Root-level file: EnsureFolderPathExist resolves to the repository root

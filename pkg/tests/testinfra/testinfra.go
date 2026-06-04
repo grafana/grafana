@@ -805,7 +805,7 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	for _, r := range opts.ProvisioningResources {
 		section, err := getOrCreateSection(fmt.Sprintf("provisioning.resources.%s.%s", r.Kind, r.Group))
 		require.NoError(t, err)
-		_, err = section.NewKey("folder", fmt.Sprintf("%t", r.SupportsFolderAnnotation))
+		_, err = section.NewKey("enableFolderSupport", fmt.Sprintf("%t", r.EnableFolderSupport))
 		require.NoError(t, err)
 		_, err = section.NewKey("enabled", fmt.Sprintf("%t", r.Enabled))
 		require.NoError(t, err)

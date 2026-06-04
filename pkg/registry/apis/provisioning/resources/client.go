@@ -35,8 +35,8 @@ var (
 	// (configured) set. The effective set is normally built from configuration; see
 	// pkg/setting [provisioning.resources.<kind>.<group>] sections.
 	SupportedProvisioningResources = []SupportedResource{
-		{GroupKind: FolderKind.GroupKind(), SupportsFolderAnnotation: true, Enabled: true},
-		{GroupKind: DashboardKind.GroupKind(), SupportsFolderAnnotation: true, Enabled: true},
+		{GroupKind: FolderKind.GroupKind(), EnableFolderSupport: true, Enabled: true},
+		{GroupKind: DashboardKind.GroupKind(), EnableFolderSupport: true, Enabled: true},
 	}
 )
 
@@ -46,9 +46,9 @@ var (
 type SupportedResource struct {
 	// GroupKind identifies the resource group and kind.
 	schema.GroupKind
-	// SupportsFolderAnnotation reports whether the resource is saved inside a folder,
+	// EnableFolderSupport reports whether the resource is saved inside a folder,
 	// i.e. whether it should carry the folder header annotation when written.
-	SupportsFolderAnnotation bool
+	EnableFolderSupport bool
 	// Enabled reports whether the resource can currently be managed through provisioning.
 	// Disabled resources are still declared (and surfaced) but are not acted on.
 	Enabled bool
@@ -59,7 +59,7 @@ type SupportedResource struct {
 func supportsFolderAnnotation(supported []SupportedResource, gvk schema.GroupVersionKind) bool {
 	gk := gvk.GroupKind()
 	for _, r := range supported {
-		if r.SupportsFolderAnnotation && r.GroupKind == gk {
+		if r.EnableFolderSupport && r.GroupKind == gk {
 			return true
 		}
 	}

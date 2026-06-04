@@ -39,9 +39,9 @@ type SupportedResource struct {
 	// Kind is the kind of the resource (e.g. "Dashboard").
 	Kind string `json:"kind"`
 
-	// SupportsFolderAnnotation reports whether the resource is saved inside a folder
+	// EnableFolderSupport reports whether the resource is saved inside a folder
 	// (as opposed to being org-scoped).
-	SupportsFolderAnnotation bool `json:"supportsFolderAnnotation,omitempty"`
+	EnableFolderSupport bool `json:"enableFolderSupport,omitempty"`
 
 	// Enabled reports whether the resource can currently be managed through provisioning.
 	Enabled bool `json:"enabled"`

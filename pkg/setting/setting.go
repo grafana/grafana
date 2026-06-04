@@ -2515,9 +2515,9 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 type ProvisioningResource struct {
 	Group string
 	Kind  string
-	// SupportsFolderAnnotation reports whether the resource is saved inside a folder
+	// EnableFolderSupport reports whether the resource is saved inside a folder
 	// (carries the folder header annotation), as opposed to being org-scoped.
-	SupportsFolderAnnotation bool
+	EnableFolderSupport bool
 	// Enabled reports whether the resource can currently be managed through provisioning.
 	// Disabled resources are still declared (and surfaced) but are not acted on.
 	Enabled bool
@@ -2528,7 +2528,8 @@ type ProvisioningResource struct {
 // [unified_storage.<resource>.<group>] convention. Each section declares one resource:
 //
 //	[provisioning.resources.Dashboard.dashboard.grafana.app]
-//	folder = true
+//	enableFolderSupport = true
+//	enabled = true
 //
 // When no sections are configured it falls back to dashboards + folders.
 func (cfg *Cfg) readProvisioningResources(iniFile *ini.File) error {
@@ -2548,17 +2549,17 @@ func (cfg *Cfg) readProvisioningResources(iniFile *ini.File) error {
 		}
 
 		out = append(out, ProvisioningResource{
-			Kind:                     kindAndGroup[0],
-			Group:                    kindAndGroup[1],
-			SupportsFolderAnnotation: section.Key("folder").MustBool(false),
-			Enabled:                  section.Key("enabled").MustBool(true),
+			Kind:                kindAndGroup[0],
+			Group:               kindAndGroup[1],
+			EnableFolderSupport: section.Key("enableFolderSupport").MustBool(false),
+			Enabled:             section.Key("enabled").MustBool(true),
 		})
 	}
 
 	if len(out) == 0 {
 		out = []ProvisioningResource{
-			{Group: "folder.grafana.app", Kind: "Folder", SupportsFolderAnnotation: true, Enabled: true},
-			{Group: "dashboard.grafana.app", Kind: "Dashboard", SupportsFolderAnnotation: true, Enabled: true},
+			{Group: "folder.grafana.app", Kind: "Folder", EnableFolderSupport: true, Enabled: true},
+			{Group: "dashboard.grafana.app", Kind: "Dashboard", EnableFolderSupport: true, Enabled: true},
 		}
 	}
 

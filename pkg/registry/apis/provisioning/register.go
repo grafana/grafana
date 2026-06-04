@@ -322,9 +322,9 @@ func RegisterAPIService(
 	supportedResources := make([]resources.SupportedResource, 0, len(cfg.ProvisioningResources))
 	for _, r := range cfg.ProvisioningResources {
 		supportedResources = append(supportedResources, resources.SupportedResource{
-			GroupKind:                schema.GroupKind{Group: r.Group, Kind: r.Kind},
-			SupportsFolderAnnotation: r.SupportsFolderAnnotation,
-			Enabled:                  r.Enabled,
+			GroupKind:           schema.GroupKind{Group: r.Group, Kind: r.Kind},
+			EnableFolderSupport: r.EnableFolderSupport,
+			Enabled:             r.Enabled,
 		})
 	}
 

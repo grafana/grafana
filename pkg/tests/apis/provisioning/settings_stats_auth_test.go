@@ -122,10 +122,10 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 		// The default config (conf/defaults.ini) declares folders + dashboards (enabled) and
 		// library panels + playlists (disabled). All are surfaced with their full descriptor.
 		require.ElementsMatch(t, []provisioning.SupportedResource{
-			{Group: "folder.grafana.app", Kind: "Folder", SupportsFolderAnnotation: true, Enabled: true},
-			{Group: "dashboard.grafana.app", Kind: "Dashboard", SupportsFolderAnnotation: true, Enabled: true},
-			{Group: "dashboard.grafana.app", Kind: "LibraryPanel", SupportsFolderAnnotation: true, Enabled: false},
-			{Group: "playlist.grafana.app", Kind: "Playlist", SupportsFolderAnnotation: false, Enabled: false},
+			{Group: "folder.grafana.app", Kind: "Folder", EnableFolderSupport: true, Enabled: true},
+			{Group: "dashboard.grafana.app", Kind: "Dashboard", EnableFolderSupport: true, Enabled: true},
+			{Group: "dashboard.grafana.app", Kind: "LibraryPanel", EnableFolderSupport: true, Enabled: false},
+			{Group: "playlist.grafana.app", Kind: "Playlist", EnableFolderSupport: false, Enabled: false},
 		}, settings.AvailableResources, "settings should surface the default supported resources")
 	})
 }
@@ -138,7 +138,7 @@ func TestIntegrationProvisioning_SettingsExtraResources(t *testing.T) {
 		// Added on top of the defaults from conf/defaults.ini. The kind need not be served:
 		// the settings endpoint surfaces the configured descriptor without discovery.
 		opts.ProvisioningResources = []setting.ProvisioningResource{
-			{Group: "example.grafana.app", Kind: "Example", SupportsFolderAnnotation: false, Enabled: true},
+			{Group: "example.grafana.app", Kind: "Example", EnableFolderSupport: false, Enabled: true},
 		}
 	})
 	ctx := context.Background()
@@ -153,7 +153,7 @@ func TestIntegrationProvisioning_SettingsExtraResources(t *testing.T) {
 	require.NoError(t, result.Into(settings), "should be able to unmarshal settings response")
 
 	require.Contains(t, settings.AvailableResources, provisioning.SupportedResource{
-		Group: "example.grafana.app", Kind: "Example", SupportsFolderAnnotation: false, Enabled: true,
+		Group: "example.grafana.app", Kind: "Example", EnableFolderSupport: false, Enabled: true,
 	}, "a resource added through config should be surfaced on the settings endpoint")
 }
 

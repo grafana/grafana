@@ -26,8 +26,8 @@ func TestResourceClients_SupportedResources(t *testing.T) {
 	})
 
 	t.Run("returns only the enabled configured resources", func(t *testing.T) {
-		enabled := SupportedResource{GroupKind: DashboardKind.GroupKind(), SupportsFolderAnnotation: true, Enabled: true}
-		disabled := SupportedResource{GroupKind: playlistKind, SupportsFolderAnnotation: false, Enabled: false}
+		enabled := SupportedResource{GroupKind: DashboardKind.GroupKind(), EnableFolderSupport: true, Enabled: true}
+		disabled := SupportedResource{GroupKind: playlistKind, EnableFolderSupport: false, Enabled: false}
 
 		clients, err := NewClientFactory(nil, enabled, disabled).Clients(context.Background(), "default")
 		require.NoError(t, err)
@@ -37,10 +37,10 @@ func TestResourceClients_SupportedResources(t *testing.T) {
 	})
 }
 
-func TestSupportsFolderAnnotation(t *testing.T) {
+func TestEnableFolderSupport(t *testing.T) {
 	supported := []SupportedResource{
-		{GroupKind: dashboardTestGVK.GroupKind(), SupportsFolderAnnotation: true},
-		{GroupKind: playlistKind, SupportsFolderAnnotation: false},
+		{GroupKind: dashboardTestGVK.GroupKind(), EnableFolderSupport: true},
+		{GroupKind: playlistKind, EnableFolderSupport: false},
 	}
 
 	t.Run("true for a folder-contained kind", func(t *testing.T) {

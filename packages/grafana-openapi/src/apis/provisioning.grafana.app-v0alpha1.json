@@ -6009,8 +6009,8 @@
             "type": "string",
             "default": ""
           },
-          "supportsFolderAnnotation": {
-            "description": "SupportsFolderAnnotation reports whether the resource is saved inside a folder (as opposed to being org-scoped).",
+          "enableFolderSupport": {
+            "description": "EnableFolderSupport reports whether the resource is saved inside a folder (as opposed to being org-scoped).",
             "type": "boolean"
           }
         }

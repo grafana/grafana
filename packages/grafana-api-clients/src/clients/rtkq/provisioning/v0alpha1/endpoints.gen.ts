@@ -2291,8 +2291,8 @@ export type SupportedResource = {
   group: string;
   /** Kind is the kind of the resource (e.g. "Dashboard"). */
   kind: string;
-  /** SupportsFolderAnnotation reports whether the resource is saved inside a folder (as opposed to being org-scoped). */
-  supportsFolderAnnotation?: boolean;
+  /** EnableFolderSupport reports whether the resource is saved inside a folder (as opposed to being org-scoped). */
+  enableFolderSupport?: boolean;
 };
 export type RepositoryView = {
   /** For git, this is the target branch */

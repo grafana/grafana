@@ -13,27 +13,27 @@ func TestReadProvisioningResources(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.ElementsMatch(t, []ProvisioningResource{
-			{Group: "dashboard.grafana.app", Kind: "Dashboard", SupportsFolderAnnotation: true, Enabled: true},
-			{Group: "folder.grafana.app", Kind: "Folder", SupportsFolderAnnotation: true, Enabled: true},
+			{Group: "dashboard.grafana.app", Kind: "Dashboard", EnableFolderSupport: true, Enabled: true},
+			{Group: "folder.grafana.app", Kind: "Folder", EnableFolderSupport: true, Enabled: true},
 		}, cfg.ProvisioningResources)
 	})
 
 	t.Run("parses [provisioning.resources.<kind>.<group>] sections", func(t *testing.T) {
 		iniContent := `
 [provisioning.resources.Dashboard.dashboard.grafana.app]
-folder = true
+enableFolderSupport = true
 enabled = true
 
 [provisioning.resources.Playlist.playlist.grafana.app]
-folder = false
+enableFolderSupport = false
 enabled = false
 `
 		cfg, err := NewCfgFromBytes([]byte(iniContent))
 		require.NoError(t, err)
 
 		assert.ElementsMatch(t, []ProvisioningResource{
-			{Group: "dashboard.grafana.app", Kind: "Dashboard", SupportsFolderAnnotation: true, Enabled: true},
-			{Group: "playlist.grafana.app", Kind: "Playlist", SupportsFolderAnnotation: false, Enabled: false},
+			{Group: "dashboard.grafana.app", Kind: "Dashboard", EnableFolderSupport: true, Enabled: true},
+			{Group: "playlist.grafana.app", Kind: "Playlist", EnableFolderSupport: false, Enabled: false},
 		}, cfg.ProvisioningResources)
 	})
 
@@ -46,6 +46,6 @@ enabled = false
 
 		require.Len(t, cfg.ProvisioningResources, 1)
 		// folder defaults to false; enabled defaults to true.
-		assert.Equal(t, ProvisioningResource{Group: "playlist.grafana.app", Kind: "Playlist", SupportsFolderAnnotation: false, Enabled: true}, cfg.ProvisioningResources[0])
+		assert.Equal(t, ProvisioningResource{Group: "playlist.grafana.app", Kind: "Playlist", EnableFolderSupport: false, Enabled: true}, cfg.ProvisioningResources[0])
 	})
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
 
@@ -247,7 +248,16 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
-	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders)
+	supportedResources := make([]resources.SupportedResource, 0, len(c.Settings.ProvisioningResources))
+	for _, r := range c.Settings.ProvisioningResources {
+		supportedResources = append(supportedResources, resources.SupportedResource{
+			GroupKind:           schema.GroupKind{Group: r.Group, Kind: r.Kind},
+			EnableFolderSupport: r.EnableFolderSupport,
+			Enabled:             r.Enabled,
+		})
+	}
+
+	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResources...)
 	c.clients = clients
 	return clients, nil
 }
