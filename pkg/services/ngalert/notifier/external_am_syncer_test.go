@@ -489,6 +489,33 @@ func TestSyncExternalAMs_IdentifierMismatchClassifiedOnMetric(t *testing.T) {
 	assert.Equal(t, float64(0), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "save")))
 }
 
+func TestSyncExternalAMs_NoUpstreamConfigClassifiedOnMetric(t *testing.T) {
+	// Mimir responds with an empty alertmanager_config field. The syncer
+	// short-circuits in fetchExtraConfig with ReasonNoUpstreamConfig instead
+	// of letting the conversion path surface a generic "SaveFailed".
+	mimirSrv := startMimirServer(t, "")
+
+	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
+	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
+
+	adminCfg := &mockAdminConfigStore{}
+	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")}, nil)
+
+	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
+	rowsBefore := len(cs.historicConfigs[1])
+
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+
+	// No new history row — the syncer didn't attempt to persist anything.
+	assert.Equal(t, rowsBefore, len(cs.historicConfigs[1]), "empty upstream config must not write history")
+
+	// Failure metric tagged with the dedicated reason so operators can alert
+	// on a degenerate-but-valid upstream state distinctly from real save errors.
+	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "no_upstream_config")))
+	// Generic save reason should NOT be incremented.
+	assert.Equal(t, float64(0), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "save")))
+}
+
 // rejectingValidator is a DataSourceRequestValidator that always errors.
 type rejectingValidator struct{ err error }
 
