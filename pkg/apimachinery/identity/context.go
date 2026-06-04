@@ -175,10 +175,13 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"library.panels:delete", // ActionLibraryPanelsDelete
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
-	"users:read",           // accesscontrol.ActionUsersRead,
-	"org.users:read",       // accesscontrol.ActionOrgUsersRead,
-	"teams:read",           // accesscontrol.ActionTeamsRead,
-	"serviceaccounts:read", // serviceaccounts.ActionRead,
+	"alert.admin-config:read",         // accesscontrol.ActionAlertingAdminConfigRead — ExternalAMSyncer reads spec.externalAlertmanagerSync.datasourceUid.
+	"alert.admin-config:write",        // accesscontrol.ActionAlertingAdminConfigWrite — ExternalAMSyncer creates the AlertingConfig singleton on first sync.
+	"alert.admin-config.status:write", // accesscontrol.ActionAlertingAdminConfigStatusWrite — service-only; humans never write status directly.
+	"users:read",                      // accesscontrol.ActionUsersRead,
+	"org.users:read",                  // accesscontrol.ActionOrgUsersRead,
+	"teams:read",                      // accesscontrol.ActionTeamsRead,
+	"serviceaccounts:read",            // serviceaccounts.ActionRead,
 )
 
 // Note: Any wildcard permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go

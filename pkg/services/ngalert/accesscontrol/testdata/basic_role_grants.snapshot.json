@@ -2,6 +2,7 @@
   {
     "grant": "Admin",
     "roles": [
+      "fixed:alerting.admin-config:writer",
       "fixed:alerting.alertmanager-imports:writer",
       "fixed:alerting.legacy:writer",
       "fixed:alerting.provisioning.provenance:writer",
@@ -12,6 +13,12 @@
       "fixed:alerting:admin"
     ],
     "permissions": [
+      {
+        "action": "alert.admin-config:read"
+      },
+      {
+        "action": "alert.admin-config:write"
+      },
       {
         "action": "alert.instances.external:read",
         "scope": "datasources:*"
@@ -389,6 +396,7 @@
   {
     "grant": "Viewer",
     "roles": [
+      "fixed:alerting.admin-config:reader",
       "fixed:alerting.inhibition-rules:reader",
       "fixed:alerting.instances:reader",
       "fixed:alerting.notifications.external:reader",
@@ -398,6 +406,9 @@
       "fixed:alerting.time-intervals:reader"
     ],
     "permissions": [
+      {
+        "action": "alert.admin-config:read"
+      },
       {
         "action": "alert.instances.external:read",
         "scope": "datasources:*"
