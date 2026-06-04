@@ -98,15 +98,17 @@ func buildSyncTestMOA(
 		v = validator[0]
 	}
 
-	moa, err := NewMultiOrgAlertmanager(
-		&setting.Cfg{
-			DataPath: t.TempDir(),
-			UnifiedAlerting: setting.UnifiedAlertingSettings{
-				AlertmanagerConfigPollInterval: 3 * time.Minute,
-				DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
-				ExternalAlertmanagerUID:        operatorUID,
-			},
+	cfg := &setting.Cfg{
+		DataPath: t.TempDir(),
+		UnifiedAlerting: setting.UnifiedAlertingSettings{
+			AlertmanagerConfigPollInterval: 3 * time.Minute,
+			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
+			ExternalAlertmanagerUID:        operatorUID,
 		},
+	}
+	syncer := NewExternalAMSyncer(adminCfgStore, dsService, httpclient.NewProvider(), v, cfg, m.GetMultiOrgAlertmanagerMetrics(), log.New("test.external_am_sync"), nil, nil)
+	moa, err := NewMultiOrgAlertmanager(
+		cfg,
 		cs,
 		NewFakeOrgStore(t, orgIDs),
 		kvStore,
@@ -121,10 +123,7 @@ func buildSyncTestMOA(
 		featuremgmt.WithFeatures(),
 		nil,
 		false,
-		adminCfgStore,
-		dsService,
-		httpclient.NewProvider(),
-		v,
+		syncer,
 	)
 	require.NoError(t, err)
 
