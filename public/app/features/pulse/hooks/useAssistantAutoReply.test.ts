@@ -103,6 +103,19 @@ describe('useAssistantAutoReply', () => {
     expect(prompt).toContain('explain');
   });
 
+  it('uses the drawer panel scope (fallbackPanelId) when nothing more explicit is present', async () => {
+    const { result } = renderHook(() => useAssistantAutoReply());
+    await result.current(assistantBody, {
+      threadUID: 't1',
+      dashboardUID: 'dash-uid',
+      fallbackPanelId: 9,
+      panelTitlesById: new Map([[9, 'Error rate']]),
+    });
+    const prompt = lastGenerateOptions?.prompt ?? '';
+    expect(prompt).toContain('viewPanel=9');
+    expect(prompt).toContain('Error rate');
+  });
+
   it('names the panel by its current title from the live title map', async () => {
     const { result } = renderHook(() => useAssistantAutoReply());
     await result.current(assistantBody, {

@@ -352,6 +352,7 @@ export function PulseDrawerContent({
           resourceMentions={resourceMentions}
           currentUserId={currentUserId}
           isAdmin={isAdmin}
+          panelFilter={panelFilter}
           currentTimeRange={currentTimeRange}
           onTimeChipClick={onTimeChipClick}
           onMentionPanel={onMentionPanel}
@@ -412,6 +413,10 @@ export function PulseDrawerContent({
                 // So a #panel chip in the opening pulse names the panel by
                 // its current title in the assistant prompt.
                 panelTitlesById,
+                // When Pulse was opened scoped to a panel, tell the assistant
+                // which panel — even without an explicit #panel chip. This
+                // informs the prompt only; it does not anchor the thread.
+                fallbackPanelId: panelFilter,
               });
             }}
           />

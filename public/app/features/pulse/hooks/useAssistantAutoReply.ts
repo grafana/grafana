@@ -27,6 +27,13 @@ export interface AssistantReplyContext {
    *  back to the first `#panel` chip in the body so a `#panel`-tagged pulse
    *  still points the assistant at the right panel. */
   panelId?: number;
+  /** The panel the Pulse drawer is currently scoped to (e.g. the user
+   *  opened "Pulse on this panel" or the panel's title-bar icon). Used as a
+   *  last-resort panel signal — lower priority than an explicit anchor or a
+   *  `#panel` chip — so "open Pulse on a panel, ask @assistant" tells the
+   *  assistant which panel even when the user didn't add a chip. This only
+   *  informs the prompt; it does not anchor the thread. */
+  fallbackPanelId?: number;
   /** Explicit title for `panelId`, when the caller already has it. */
   panelTitle?: string;
   /** Live panel-id → title map for the dashboard. Preferred source for the
@@ -131,8 +138,10 @@ function buildContextLine(body: PulseBody, ctx: AssistantReplyContext): string |
   }
   const dashboardTitle = ctx.dashboardTitle?.trim() || ctx.dashboardUID;
 
-  // Prefer the thread's anchored panel; otherwise borrow the first `#panel`
-  // chip in the pulse so a `#panel`-tagged question still points at it.
+  // Panel signal, most-to-least explicit: the thread's anchored panel, then
+  // a `#panel` chip in the pulse, then the panel the drawer is scoped to
+  // (the user opened Pulse on it). The drawer scope is the catch-all so
+  // "open Pulse on a panel and ask @assistant" still names that panel.
   const panelMention = collectMentions(body).find((m) => m.kind === 'panel');
   let panelId = ctx.panelId;
   if (panelId === undefined && panelMention) {
@@ -140,6 +149,9 @@ function buildContextLine(body: PulseBody, ctx: AssistantReplyContext): string |
     if (Number.isFinite(parsed)) {
       panelId = parsed;
     }
+  }
+  if (panelId === undefined) {
+    panelId = ctx.fallbackPanelId;
   }
   // Resolve the panel's title so the prompt names exactly what the user
   // means. The live title map wins (current name even after a rename), then

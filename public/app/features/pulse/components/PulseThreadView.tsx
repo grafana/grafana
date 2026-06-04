@@ -45,6 +45,10 @@ interface Props {
   resourceMentions?: ResourceMentionSource[];
   currentUserId?: number;
   isAdmin?: boolean;
+  /** Panel the surrounding Pulse drawer is scoped to, when any. Forwarded
+   *  to the assistant auto-reply as a last-resort panel hint so a reply
+   *  tagging @assistant from a panel-scoped drawer still names that panel. */
+  panelFilter?: number;
   /** Dashboard's current time range, threaded to the reply / edit
    *  composer so `@now` / `@time` insertions can pre-fill a chip
    *  with the live window. Omit on surfaces (folder Pulse tab) that
@@ -75,6 +79,7 @@ export function PulseThreadView({
   resourceMentions,
   currentUserId,
   isAdmin = false,
+  panelFilter,
   currentTimeRange,
   onTimeChipClick,
   onMentionPanel,
@@ -125,6 +130,9 @@ export function PulseThreadView({
       // current title — whether it's the thread's anchored panel or a
       // #panel chip in the reply.
       panelTitlesById,
+      // Fall back to the drawer's panel scope so a reply from "Pulse on this
+      // panel" still tells the assistant which panel, chip or not.
+      fallbackPanelId: panelFilter,
     });
   }
 
