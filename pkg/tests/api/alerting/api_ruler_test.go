@@ -1660,11 +1660,25 @@ func TestIntegrationRuleCreate(t *testing.T) {
 func TestIntegrationRuleUpdate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	// Setup Grafana and its Database
+
 	testinfra.SQLiteIntegrationTest(t)
 
-	grafanaListedAddr, env := getStandardSharedEnv(t)
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
-	userID := standardGrafanaUserID
+
+	// Create a user to make authenticated requests
+	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "password",
+		Login:          "grafana",
+	})
 
 	if setting.IsEnterprise {
 		// add blanket access to data sources.
@@ -1687,7 +1701,6 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 	client := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 	folderUID := util.GenerateShortUID()
 	client.CreateFolder(t, folderUID, "folder1")
-	t.Cleanup(func() { deleteFolder(t, grafanaListedAddr, folderUID) })
 
 	t.Run("should be able to reset 'for' to 0", func(t *testing.T) {
 		group := generateAlertRuleGroup(1, alertRuleGen())
