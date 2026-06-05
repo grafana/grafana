@@ -697,6 +697,9 @@ export const getStyles = (
       '&.level-debug': {
         color: colors.debug,
       },
+      '&.level-trace': {
+        color: colors.trace,
+      },
     }),
     loadMoreButton: css({
       background: 'transparent',
