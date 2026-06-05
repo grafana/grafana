@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"strconv"
+	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -36,6 +37,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/conversion"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
@@ -69,7 +71,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -132,6 +133,12 @@ type DashboardsAPIBuilder struct {
 	dashboardActivityChannel live.DashboardActivityChannel
 	dashboardK8sClient       client.K8sHandler // for provisioning checks during delete validation
 	isStandalone             bool              // skips any handling including anything to do with legacy storage
+
+	// In embedded mode, resourcePermissionsSvc is built lazily from restConfigProvider on first use:
+	// the loopback rest config is not ready at registration time. Mirrors the standalone path, where
+	// resourcePermissionsSvc is injected directly (and restConfigProvider stays nil).
+	restConfigProvider       apiserver.RestConfigProvider
+	resourcePermissionsSvcMu sync.Mutex
 }
 
 func RegisterAPIService(
@@ -202,6 +209,14 @@ func RegisterAPIService(
 		dashboardActivityChannel: dashboardActivityChannel,
 		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
 		homeDashboard:            home.NewHomeDashboardSupport(cfg),
+	}
+
+	// When the AuthZ resource-permission /apis are enabled, default dashboard permissions are set
+	// via the App Platform path (grant-permissions annotation -> ResourcePermission resource), which
+	// writes to unified storage and syncs to Zanzana. Storing the provider opts the embedded build
+	// into the lazily-constructed ResourcePermission client; otherwise the legacy path stays active.
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+		builder.restConfigProvider = restConfigProvider
 	}
 
 	migration.RegisterMetrics(reg)
@@ -776,7 +791,9 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		EnableFolderSupport:  true,
 	}
 
-	if b.isStandalone {
+	// Standalone always uses the App Platform path. In embedded mode the same path is used once the
+	// AuthZ resource-permission /apis are enabled; otherwise the legacy permission setter is kept.
+	if b.isStandalone || b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
 		storageOpts.Permissions = b.setDefaultDashboardPermissions
 	} else {
 		storageOpts.Permissions = b.dashboardPermissions.SetDefaultPermissionsAfterCreate
@@ -1037,13 +1054,53 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	return nil
 }
 
+// resourcePermissionsClient returns the ResourcePermission dynamic client, building it lazily
+// from restConfigProvider on first use in embedded mode. Returns nil when neither a directly
+// injected client (standalone) nor a restConfigProvider (embedded, flag enabled) is available.
+func (b *DashboardsAPIBuilder) resourcePermissionsClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+	// Standalone path: the client is injected at construction and never mutated, and
+	// restConfigProvider is nil, so this read is unsynchronized but safe (no concurrent writer).
+	if b.restConfigProvider == nil {
+		return b.resourcePermissionsSvc, nil
+	}
+
+	// Embedded path: build the client lazily on first use, since the loopback rest config isn't
+	// ready at registration time. The mutex serialises concurrent first-time creates (guarding the
+	// data race between the read below and the write). We deliberately do not cache failures: a
+	// transient error (e.g. a cancelled request context) must not permanently poison later creates.
+	b.resourcePermissionsSvcMu.Lock()
+	defer b.resourcePermissionsSvcMu.Unlock()
+
+	if b.resourcePermissionsSvc != nil {
+		return b.resourcePermissionsSvc, nil
+	}
+
+	cfg, err := b.restConfigProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get rest config: %w", err)
+	}
+	dyn, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+	client := dyn.Resource(iamv0alpha1.ResourcePermissionInfo.GroupVersionResource())
+	b.resourcePermissionsSvc = &client
+	return b.resourcePermissionsSvc, nil
+}
+
 func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptions) {
-	if util.IsInterfaceNil(b.resourcePermissionsSvc) {
+	ctx := context.Background()
+	log := logging.DefaultLogger
+
+	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
+	if err != nil {
+		log.Error("failed to build resource permissions client", "error", err)
+		return
+	}
+	if resourcePermissionsSvc == nil {
 		return
 	}
 
-	ctx := context.Background()
-	log := logging.DefaultLogger
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
 		log.Error("Failed to access deleted dashboard object metadata", "error", err)
@@ -1051,7 +1108,7 @@ func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteO
 	}
 
 	log.Debug("deleting dashboard permissions", "uid", meta.GetName(), "namespace", meta.GetNamespace())
-	client := (*b.resourcePermissionsSvc).Namespace(meta.GetNamespace())
+	client := (*resourcePermissionsSvc).Namespace(meta.GetNamespace())
 	name := fmt.Sprintf("%s-%s-%s", dashv1.DashboardResourceInfo.GroupVersionResource().Group, dashv1.DashboardResourceInfo.GroupVersionResource().Resource, meta.GetName())
 	err = client.Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil && !apierrors.IsNotFound(err) {
@@ -1073,7 +1130,11 @@ var defaultDashboardPermissions = []map[string]any{
 }
 
 func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Context, key *resourcepb.ResourceKey, id authlib.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	if b.resourcePermissionsSvc == nil {
+	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
+	if err != nil {
+		return err
+	}
+	if resourcePermissionsSvc == nil {
 		return nil
 	}
 
@@ -1084,7 +1145,7 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 	log := logging.FromContext(ctx)
 	log.Debug("setting default dashboard permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
 
-	client := (*b.resourcePermissionsSvc).Namespace(obj.GetNamespace())
+	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
 	name := fmt.Sprintf("%s-%s-%s", dashv1.DashboardResourceInfo.GroupVersionResource().Group, dashv1.DashboardResourceInfo.GroupVersionResource().Resource, obj.GetName())
 
 	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
@@ -1112,7 +1173,7 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 		return nil
 	}
 
-	_, err := client.Create(ctx, &unstructured.Unstructured{
+	_, err = client.Create(ctx, &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]any{
 				"name":      name,
