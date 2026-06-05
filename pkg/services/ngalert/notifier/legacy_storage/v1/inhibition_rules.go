@@ -105,14 +105,14 @@ func InhibitionRuleFingerprint(ir InhibitionRule) string {
 		_, _ = sum.Write(separator)
 	}
 
-	sourceMatchers := sortMatchers(ir.SourceMatchers)
+	sourceMatchers := sortedMatchers(ir.SourceMatchers)
 	for _, m := range sourceMatchers {
 		writeBytes([]byte(m.Type))
 		writeBytes([]byte(m.Label))
 		writeBytes([]byte(m.Value))
 	}
 
-	targetMatchers := sortMatchers(ir.TargetMatchers)
+	targetMatchers := sortedMatchers(ir.TargetMatchers)
 	for _, m := range targetMatchers {
 		writeBytes([]byte(m.Type))
 		writeBytes([]byte(m.Label))
@@ -128,17 +128,12 @@ func InhibitionRuleFingerprint(ir InhibitionRule) string {
 	return fmt.Sprintf("%016x", sum.Sum64())
 }
 
-func sortMatchers(matchers []Matcher) []Matcher {
-	result := make([]Matcher, 0, len(matchers))
-	for _, m := range matchers {
-		result = append(result, m)
-	}
-	slices.SortFunc(result, func(a, b Matcher) int {
+func sortedMatchers(matchers []Matcher) []Matcher {
+	return slices.SortedFunc(slices.Values(matchers), func(a, b Matcher) int {
 		return cmp.Or(
 			cmp.Compare(a.Type, b.Type),
 			cmp.Compare(a.Label, b.Label),
 			cmp.Compare(a.Value, b.Value),
 		)
 	})
-	return result
 }
