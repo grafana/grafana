@@ -4,7 +4,6 @@ import { usePendingPickerSetters } from './usePendingPickerSetters';
 
 function setup() {
   const args = {
-    exitStackedMode: jest.fn(),
     setPendingExpression: jest.fn(),
     setPendingTransformation: jest.fn(),
     setPendingSavedQuery: jest.fn(),
@@ -20,8 +19,8 @@ const PENDING = { insertAfter: 'A' };
 type RawSetter = 'setPendingExpression' | 'setPendingTransformation' | 'setPendingSavedQuery';
 type Wrapped = ReturnType<typeof setup>['result']['current'];
 
-// Each row exercises one picker; the symmetric invariant (exit stacked + clear the other two)
-// is expressed once in the test bodies below.
+// Each row exercises one picker; the symmetric invariant (clear the other two) is expressed
+// once in the test bodies below.
 const PICKERS: Array<{
   kind: string;
   target: RawSetter;
@@ -53,35 +52,27 @@ const PICKERS: Array<{
 ];
 
 describe('usePendingPickerSetters', () => {
-  it.each(PICKERS)(
-    'opening the $kind picker exits stacked mode and clears the other two',
-    ({ open, target, others }) => {
-      const { result, args } = setup();
+  it.each(PICKERS)('opening the $kind picker clears the other two', ({ open, target, others }) => {
+    const { result, args } = setup();
 
-      act(() => open(result.current));
+    act(() => open(result.current));
 
-      expect(args.exitStackedMode).toHaveBeenCalledTimes(1);
-      expect(args[target]).toHaveBeenCalledWith(PENDING);
-      for (const other of others) {
-        expect(args[other]).toHaveBeenCalledWith(null);
-      }
+    expect(args[target]).toHaveBeenCalledWith(PENDING);
+    for (const other of others) {
+      expect(args[other]).toHaveBeenCalledWith(null);
     }
-  );
+  });
 
-  it.each(PICKERS)(
-    'closing the $kind picker does not exit stacked mode or touch other pickers',
-    ({ close, target, others }) => {
-      const { result, args } = setup();
+  it.each(PICKERS)('closing the $kind picker does not touch other pickers', ({ close, target, others }) => {
+    const { result, args } = setup();
 
-      act(() => close(result.current));
+    act(() => close(result.current));
 
-      expect(args.exitStackedMode).not.toHaveBeenCalled();
-      expect(args[target]).toHaveBeenCalledWith(null);
-      for (const other of others) {
-        expect(args[other]).not.toHaveBeenCalled();
-      }
+    expect(args[target]).toHaveBeenCalledWith(null);
+    for (const other of others) {
+      expect(args[other]).not.toHaveBeenCalled();
     }
-  );
+  });
 
   it('returned setters keep stable identities across re-renders', () => {
     const { result, rerender } = setup();

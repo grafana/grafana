@@ -8,6 +8,7 @@ import { Icon, useStyles2 } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 
 import { QueryEditorType } from '../../constants';
+import { EditableQueryName } from '../Header/EditableQueryName';
 import {
   useActionsContext,
   useDatasourceContext,
@@ -47,14 +48,9 @@ function StackedItemHeader({ icon, label, identifier, headingId, isHidden = fals
           <span className={styles.headerSeparator} />
         </>
       )}
-      <span className={cx(styles.headerRefId, { [styles.headerRefIdHidden]: isHidden })}>{identifier}</span>
+      <span className={styles.headerRefId}>{identifier}</span>
       {isHidden && (
-        <Icon
-          name="eye-slash"
-          size="sm"
-          className={styles.hiddenIndicator}
-          aria-label={t('query-editor-next.stacked.hidden-aria-label', 'Hidden')}
-        />
+        <Icon name="eye-slash" size="sm" aria-label={t('query-editor-next.stacked.hidden-aria-label', 'Hidden')} />
       )}
     </div>
   );
@@ -90,7 +86,9 @@ export function StackedQueryItem({ query, headingId }: StackedQueryItemProps) {
       <StackedItemHeader
         icon={icon}
         label={label}
-        identifier={query.refId}
+        identifier={
+          <EditableQueryName key={query.refId} query={query} queries={queries} onQueryUpdate={updateSelectedQuery} />
+        }
         headingId={headingId}
         isHidden={Boolean(query.hide)}
       />
@@ -169,28 +167,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: theme.spacing(2.25),
   }),
   headerLabel: css({
-    ...theme.typography.bodySmall,
+    ...theme.typography.body,
     color: theme.colors.text.secondary,
-    fontWeight: theme.typography.fontWeightMedium,
     minWidth: 0,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
   }),
   headerRefId: css({
-    ...theme.typography.bodySmall,
-    color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeightMedium,
-  }),
-  headerRefIdHidden: css({
-    textDecoration: 'line-through',
-    color: theme.colors.text.secondary,
-  }),
-  hiddenIndicator: css({
-    color: theme.colors.text.secondary,
-    // Pushes the indicator to the trailing edge of the header, matching the sidebar's hidden-icon
-    // placement.
-    marginLeft: 'auto',
+    ...theme.typography.code,
   }),
   itemBody: css({
     padding: theme.spacing(2),

@@ -220,7 +220,6 @@ export function QueryEditorContextWrapper({
   });
 
   const { setPendingExpression, setPendingTransformation, setPendingSavedQuery } = usePendingPickerSetters({
-    exitStackedMode,
     setPendingExpression: setPendingExpressionRaw,
     setPendingTransformation: setPendingTransformationRaw,
     setPendingSavedQuery: setPendingSavedQueryRaw,

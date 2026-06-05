@@ -325,6 +325,11 @@ describe('QueryEditorContextWrapper - delete actions', () => {
   });
 });
 
+type PickerResult = Pick<
+  ReturnType<typeof useQueryEditorUIContext>,
+  'setPendingExpression' | 'setPendingTransformation' | 'setPendingSavedQuery'
+>;
+
 describe('QueryEditorContextWrapper - stacked mode', () => {
   beforeEach(() => {
     mockUseAlertRulesForPanel.mockReturnValue({
@@ -419,5 +424,22 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
 
     expect(result.current.multiSelectMode).toBe(true);
     expect(result.current.stackedMode.enabled).toBe(false);
+  });
+
+  // Opening a picker temporarily swaps to the single pane (expression/transformation) or a
+  // drawer (saved query); stacked mode must survive so the stack resumes once it resolves.
+  it.each([
+    { kind: 'expression', open: (r: PickerResult) => r.setPendingExpression({ insertAfter: 'A' }) },
+    { kind: 'transformation', open: (r: PickerResult) => r.setPendingTransformation({ insertAfter: 'A' }) },
+    { kind: 'saved query', open: (r: PickerResult) => r.setPendingSavedQuery({ insertAfter: 'A' }) },
+  ])('keeps stacked mode on when the $kind picker opens', ({ open }) => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.stackedMode.enter());
+    expect(result.current.stackedMode.enabled).toBe(true);
+
+    act(() => open(result.current));
+
+    expect(result.current.stackedMode.enabled).toBe(true);
   });
 });
