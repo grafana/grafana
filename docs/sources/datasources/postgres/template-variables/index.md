@@ -112,7 +112,7 @@ You can use a **Regex** type variable to filter or transform values from another
 1. Set the query to return the raw values.
 1. In the **Regex** field, enter a pattern to extract or filter. For example, `/^web-(.+)-\d+$/` extracts `prod` and `staging` from web server names.
 
-You can also use regex to filter a variable's options. For example, setting the **Regex** field to `/prod/` on a variable that returns all server names limits the drop-down to only production servers.
+You can also use regular expression to filter a variable's options. For example, setting the **Regex** field to `/prod/` on a variable that returns all server names limits the drop-down to only production servers.
 
 ## Multi-property variables
 
