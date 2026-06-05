@@ -5,9 +5,9 @@ package v0alpha1
 // +k8s:openapi-gen=true
 type AlertingConfigSpec struct {
 	// externalAlertmanagerSync configures the per-org external Alertmanager
-	// configuration sync worker. The worker fetches the alertmanager
-	// configuration from a Mimir/Cortex datasource and merges it into the
-	// org's local alertmanager configuration on each MAM sync tick.
+	// configuration sync worker. The worker periodically fetches the
+	// alertmanager configuration from a Mimir/Cortex datasource and merges
+	// it into the org's local alertmanager configuration.
 	ExternalAlertmanagerSync *AlertingConfigV0alpha1SpecExternalAlertmanagerSync `json:"externalAlertmanagerSync,omitempty"`
 }
 
@@ -24,11 +24,9 @@ func (AlertingConfigSpec) OpenAPIModelName() string {
 // +k8s:openapi-gen=true
 type AlertingConfigV0alpha1SpecExternalAlertmanagerSync struct {
 	// datasourceUid is the UID of the Mimir/Cortex Alertmanager
-	// datasource to sync configuration from. Empty (omitted) means
-	// no per-org sync is configured. The operator-level
-	// unified_alerting.external_alertmanager_uid ini setting still
-	// wins over this when set — runtime observation of which source
-	// is active lives on the status sub-object (origin field).
+	// datasource to sync from. Empty means no per-org sync configured.
+	// The operator ini setting `unified_alerting.external_alertmanager_uid`
+	// overrides this when set; see status.externalAlertmanagerSync.origin.
 	DatasourceUid *string `json:"datasourceUid,omitempty"`
 }
 
