@@ -1479,6 +1479,25 @@ spec:
 	}
 	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"] = schema
 
+	// availableResources is an array of SupportedResource; its $ref is stripped by the
+	// defs loop above (empty ReferenceCallback) and has to be re-attached (same pattern
+	// as RepositoryViewList.items).
+	availableResources := oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["availableResources"]
+	availableResources.Items = &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AllOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "SupportedResource"),
+						},
+					},
+				},
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["availableResources"] = availableResources
+
 	// Fix up the RepositoryView.commit ref. Schemas added via the defs loop above
 	// use an empty ReferenceCallback, so non-primitive fields like commit lose
 	// their $ref and have to be re-attached here (same pattern as RepositoryViewList.items).
