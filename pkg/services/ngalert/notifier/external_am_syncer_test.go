@@ -516,6 +516,33 @@ func TestSyncExternalAMs_NoUpstreamConfigClassifiedOnMetric(t *testing.T) {
 	assert.Equal(t, float64(0), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "save")))
 }
 
+func TestSyncExternalAMs_Mimir404ClassifiedAsNoUpstreamConfig(t *testing.T) {
+	// Real Mimir returns HTTP 404 (not 200/empty) when no alertmanager_config
+	// has ever been stored for the tenant. fetchMimirConfig translates 404 to
+	// an empty config so the syncer classifies this as no_upstream_config —
+	// not mimir_fetch — matching the design intent that "nothing to import"
+	// is a distinct, non-failure outcome from a real fetch error.
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "alertmanager storage object not found", http.StatusNotFound)
+	}))
+	t.Cleanup(srv.Close)
+
+	ds := makeMimirDS("mimir-uid", 1, srv.URL)
+	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
+
+	adminCfg := &mockAdminConfigStore{}
+	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")}, nil)
+
+	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
+	rowsBefore := len(cs.historicConfigs[1])
+
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+
+	assert.Equal(t, rowsBefore, len(cs.historicConfigs[1]), "404 upstream must not write history")
+	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "no_upstream_config")))
+	assert.Equal(t, float64(0), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "mimir_fetch")))
+}
+
 // rejectingValidator is a DataSourceRequestValidator that always errors.
 type rejectingValidator struct{ err error }
 
