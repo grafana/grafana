@@ -65,5 +65,15 @@ export const getPluginMissingHandler = (pluginIdToRemove: string) =>
     HttpResponse.json(PLUGIN_NOT_FOUND_RESPONSE, { status: 404 })
   );
 
+/**
+ * Returns a handler that responds to a specific plugin ID with the given PluginMeta.
+ * Useful for adding a single plugin without replacing the global handler.
+ */
+export const getSpecificPluginHandler = (pluginMeta: PluginMeta) => {
+  return http.get(`/api/plugins/${pluginMeta.id}/settings`, () => {
+    return HttpResponse.json<PluginMeta>(pluginMeta);
+  });
+};
+
 const handlers = [getPluginsHandler()];
 export default handlers;
