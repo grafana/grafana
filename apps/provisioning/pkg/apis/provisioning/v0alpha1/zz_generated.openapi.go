@@ -2697,7 +2697,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 					},
 					"availableResources": {
 						SchemaProps: spec.SchemaProps{
-							Description: "AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Enabled).",
+							Description: "AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Disabled).",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -2759,19 +2759,11 @@ func schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref common.Referenc
 							Format:      "",
 						},
 					},
-					"capabilities": {
+					"disabled": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Capabilities is the set of declared capabilities. Known values: \"folder\" (folder-scoped), \"skipvalidation\" (skip validation on write), \"disabled\" (declared but not acted on). A resource is active unless \"disabled\" is present.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
+							Description: "Disabled reports whether the resource is declared but not acted on by provisioning. Active resources omit this field.",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 				},

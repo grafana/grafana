@@ -79,9 +79,6 @@ func (r SupportedResource) IsValidated() bool { return !r.Capabilities.Has(Capab
 // IsFolderScoped reports whether the resource carries the folder annotation on write.
 func (r SupportedResource) IsFolderScoped() bool { return r.Capabilities.Has(CapabilityFolder) }
 
-// CapabilityList returns the declared capabilities as a sorted slice, for stable surfacing.
-func (r SupportedResource) CapabilityList() []string { return sets.List(r.Capabilities) }
-
 // ParseSupportedResources parses the shared resource grammar — one entry per resource:
 //
 //	<group>/<Kind>[:cap[:cap...]]

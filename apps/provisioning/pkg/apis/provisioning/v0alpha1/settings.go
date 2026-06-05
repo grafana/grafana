@@ -22,7 +22,7 @@ type RepositoryViewList struct {
 	AvailableRepositoryTypes []RepositoryType `json:"availableRepositoryTypes,omitempty"`
 
 	// AvailableResources is the list of resource types declared for provisioning in this
-	// instance, including disabled ones (see SupportedResource.Enabled).
+	// instance, including disabled ones (see SupportedResource.Disabled).
 	AvailableResources []SupportedResource `json:"availableResources,omitempty"`
 
 	// +mapType=atomic
@@ -39,10 +39,9 @@ type SupportedResource struct {
 	// Kind is the kind of the resource (e.g. "Dashboard").
 	Kind string `json:"kind"`
 
-	// Capabilities is the set of declared capabilities. Known values: "folder" (folder-scoped),
-	// "skipvalidation" (skip validation on write), "disabled" (declared but not acted on).
-	// A resource is active unless "disabled" is present.
-	Capabilities []string `json:"capabilities,omitempty"`
+	// Disabled reports whether the resource is declared but not acted on by provisioning.
+	// Active resources omit this field.
+	Disabled bool `json:"disabled,omitempty"`
 }
 
 func (SupportedResource) OpenAPIModelName() string {
