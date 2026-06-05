@@ -134,9 +134,8 @@ type DashboardsAPIBuilder struct {
 	dashboardK8sClient       client.K8sHandler // for provisioning checks during delete validation
 	isStandalone             bool              // skips any handling including anything to do with legacy storage
 
-	// In embedded mode, resourcePermissionsSvc is built lazily from restConfigProvider on first use:
-	// the loopback rest config is not ready at registration time. Mirrors the standalone path, where
-	// resourcePermissionsSvc is injected directly (and restConfigProvider stays nil).
+	// Embedded mode builds resourcePermissionsSvc lazily from restConfigProvider; standalone
+	// injects resourcePermissionsSvc directly and leaves restConfigProvider nil.
 	restConfigProvider       apiserver.RestConfigProvider
 	resourcePermissionsSvcMu sync.Mutex
 }
@@ -211,10 +210,7 @@ func RegisterAPIService(
 		homeDashboard:            home.NewHomeDashboardSupport(cfg),
 	}
 
-	// When the AuthZ resource-permission /apis are enabled, default dashboard permissions are set
-	// via the App Platform path (grant-permissions annotation -> ResourcePermission resource), which
-	// writes to unified storage and syncs to Zanzana. Storing the provider opts the embedded build
-	// into the lazily-constructed ResourcePermission client; otherwise the legacy path stays active.
+	// Opt into the App Platform permission path (lazy ResourcePermission client) when the flag is on.
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
 		builder.restConfigProvider = restConfigProvider
 	}
@@ -791,8 +787,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		EnableFolderSupport:  true,
 	}
 
-	// Standalone always uses the App Platform path. In embedded mode the same path is used once the
-	// AuthZ resource-permission /apis are enabled; otherwise the legacy permission setter is kept.
+	// Standalone, or embedded with the flag on, uses the App Platform setter; else the legacy one.
 	if b.isStandalone || b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
 		storageOpts.Permissions = b.setDefaultDashboardPermissions
 	} else {
@@ -1054,20 +1049,16 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	return nil
 }
 
-// resourcePermissionsClient returns the ResourcePermission dynamic client, building it lazily
-// from restConfigProvider on first use in embedded mode. Returns nil when neither a directly
-// injected client (standalone) nor a restConfigProvider (embedded, flag enabled) is available.
+// resourcePermissionsClient returns the ResourcePermission dynamic client, building it lazily from
+// restConfigProvider in embedded mode. Returns nil when no client is configured (e.g. flag off).
 func (b *DashboardsAPIBuilder) resourcePermissionsClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
-	// Standalone path: the client is injected at construction and never mutated, and
-	// restConfigProvider is nil, so this read is unsynchronized but safe (no concurrent writer).
+	// Standalone: injected directly, never mutated, restConfigProvider nil.
 	if b.restConfigProvider == nil {
 		return b.resourcePermissionsSvc, nil
 	}
 
-	// Embedded path: build the client lazily on first use, since the loopback rest config isn't
-	// ready at registration time. The mutex serialises concurrent first-time creates (guarding the
-	// data race between the read below and the write). We deliberately do not cache failures: a
-	// transient error (e.g. a cancelled request context) must not permanently poison later creates.
+	// Embedded: build lazily (loopback config isn't ready at registration). The mutex avoids a
+	// data race; failures aren't cached so a transient error doesn't poison later creates.
 	b.resourcePermissionsSvcMu.Lock()
 	defer b.resourcePermissionsSvcMu.Unlock()
 

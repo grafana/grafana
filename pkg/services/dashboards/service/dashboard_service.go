@@ -1270,10 +1270,8 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *
 		resource = "folder"
 	}
 
-	// When the AuthZ resource-permission /apis are enabled, default dashboard permissions are set
-	// via the App Platform path (grant-permissions annotation -> ResourcePermission, written to
-	// unified storage and synced to Zanzana) by the dashboard API server, so skip the legacy SQL
-	// path here. Folders keep their own handling.
+	// With the flag on, dashboard default permissions are set via the App Platform path, so skip the
+	// legacy SQL path here. Folders keep their own handling.
 	if !dash.IsFolder && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
 		return
 	}
@@ -1844,12 +1842,9 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 	}
 	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
 
-	// When the AuthZ resource-permission /apis are enabled, request default permissions for new
-	// root dashboards via the App Platform path. The dashboard API server's permission setter
-	// (StorageOptions.Permissions) acts on this annotation, writing the Editor/Viewer
-	// ResourcePermission to unified storage (which syncs to Zanzana). Root-only, mirroring the
-	// legacy default-permission behaviour; dashboards in a folder inherit from the parent. The
-	// annotation is ignored on update, so it's safe to set before the create-or-update call below.
+	// Request default permissions for new root dashboards via the App Platform path; the dashboard
+	// API server's permission setter acts on this annotation. Root-only (nested inherit from the
+	// parent) and ignored on update, so it's safe before the create-or-update below.
 	if cmd.FolderUID == "" && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
 		meta, err := utils.MetaAccessor(obj)
 		if err != nil {
