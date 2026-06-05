@@ -106,7 +106,7 @@ LIMIT 100
 
 ### Regex variable
 
-You can use a **Regex** type variable to filter or transform values from another variable. For example, if you have a variable named `server` that returns values like `web-prod-01`, `web-staging-01`, and `db-prod-01`, you can create a regex variable to extract only the environment:
+You can use a **Regex** type variable to filter or transform values from another variable. For example, if you have a variable named `server` that returns values like `web-prod-01`, `web-staging-01`, and `db-prod-01`, you can create a regular expression variable to extract only the environment:
 
 1. Create a new variable with **Type: Query**.
 1. Set the query to return the raw values.
