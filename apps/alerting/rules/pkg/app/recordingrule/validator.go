@@ -27,7 +27,11 @@ func validateGroupLabels(r *model.RecordingRule, oldObject resource.Object, acti
 	return util.ValidateGroupLabels(r.Labels, oldLabels, action)
 }
 
-func validateDelete(ctx context.Context, oldRule *model.RecordingRule, cfg config.RuntimeConfig) error {
+func validateDelete(ctx context.Context, req *app.AdmissionRequest, cfg config.RuntimeConfig) error {
+	oldRule, ok := req.OldObject.(*model.RecordingRule)
+	if !ok {
+		return fmt.Errorf("old object is not of type *v0alpha1.RecordingRule")
+	}
 	if cfg.MembershipResolver != nil {
 		memberships, err := cfg.MembershipResolver.Resolve(ctx, []string{oldRule.Name})
 		if err != nil {
@@ -93,6 +97,12 @@ func validateMetric(r *model.RecordingRule) error {
 func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 	return &simple.Validator{
 		ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
+			// req.Object will not cast to *RecordingRule for delete requests,
+			// so handle deletes before we attempt to cast it.
+			if req.Action == resource.AdmissionActionDelete {
+				return validateDelete(ctx, req, cfg)
+			}
+
 			r, ok := req.Object.(*model.RecordingRule)
 			if !ok {
 				return fmt.Errorf("object is not of type *v0alpha1.RecordingRule")
@@ -100,10 +110,6 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 			var oldRule *model.RecordingRule
 			if req.OldObject != nil {
 				oldRule, _ = req.OldObject.(*model.RecordingRule)
-			}
-
-			if req.Action == resource.AdmissionActionDelete {
-				return validateDelete(ctx, oldRule, cfg)
 			}
 
 			sourceProv := r.GetProvenanceStatus()

@@ -28,7 +28,11 @@ func validateGroupLabels(r *model.AlertRule, oldObject resource.Object, action r
 	return util.ValidateGroupLabels(r.Labels, oldLabels, action)
 }
 
-func validateDelete(ctx context.Context, oldRule *model.AlertRule, cfg config.RuntimeConfig) error {
+func validateDelete(ctx context.Context, req *app.AdmissionRequest, cfg config.RuntimeConfig) error {
+	oldRule, ok := req.OldObject.(*model.AlertRule)
+	if !ok {
+		return fmt.Errorf("old object is not of type *v0alpha1.AlertRule")
+	}
 	if cfg.MembershipResolver != nil {
 		memberships, err := cfg.MembershipResolver.Resolve(ctx, []string{oldRule.Name})
 		if err != nil {
@@ -102,6 +106,12 @@ func validateDurations(r *model.AlertRule) error {
 func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 	return &simple.Validator{
 		ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
+			// req.Object will not cast to *AlertRule for delete requests,
+			// so handle deletes before we attempt to cast it.
+			if req.Action == resource.AdmissionActionDelete {
+				return validateDelete(ctx, req, cfg)
+			}
+
 			r, ok := req.Object.(*model.AlertRule)
 			if !ok {
 				return fmt.Errorf("object is not of type *v0alpha1.AlertRule")
@@ -109,10 +119,6 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 			var oldRule *model.AlertRule
 			if req.OldObject != nil {
 				oldRule, _ = req.OldObject.(*model.AlertRule)
-			}
-
-			if req.Action == resource.AdmissionActionDelete {
-				return validateDelete(ctx, oldRule, cfg)
 			}
 
 			sourceProv := r.GetProvenanceStatus()
