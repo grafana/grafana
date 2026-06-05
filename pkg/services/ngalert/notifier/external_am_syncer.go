@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 
-	alertingadminv0alpha1 "github.com/grafana/grafana/apps/alerting/admin/pkg/apis/alertingadmin/v0alpha1"
+	alertingnotifv0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -34,19 +34,19 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// AlertingConfig is singleton-per-org. Per-org namespacing means each org
+// AdminConfig is singleton-per-org. Per-org namespacing means each org
 // has exactly one resource at this fixed name.
 const configSingletonName = "default"
 
 // externalSyncOrigin aliases the codegen-emitted enum for the auxiliary
-// origin field on AlertingConfig.status.externalAlertmanagerSync. The
+// origin field on AdminConfig.status.externalAlertmanagerSync. The
 // generated name is unwieldy in expressions; the alias keeps call sites
 // readable without obscuring the underlying type.
-type externalSyncOrigin = alertingadminv0alpha1.AlertingConfigV0alpha1StatusExternalAlertmanagerSyncOrigin
+type externalSyncOrigin = alertingnotifv0alpha1.AdminConfigV0alpha1StatusExternalAlertmanagerSyncOrigin
 
 const (
-	originAPI = alertingadminv0alpha1.AlertingConfigV0alpha1StatusExternalAlertmanagerSyncOriginApi
-	originIni = alertingadminv0alpha1.AlertingConfigV0alpha1StatusExternalAlertmanagerSyncOriginIni
+	originAPI = alertingnotifv0alpha1.AdminConfigV0alpha1StatusExternalAlertmanagerSyncOriginApi
+	originIni = alertingnotifv0alpha1.AdminConfigV0alpha1StatusExternalAlertmanagerSyncOriginIni
 )
 
 // mimirConfigResponse is the Mimir/Cortex alertmanager configuration API response.
@@ -187,7 +187,7 @@ type ExternalAMSyncer struct {
 	namespaceMapper request.NamespaceMapper
 
 	cfgClientOnce sync.Once
-	cfgClient     *alertingadminv0alpha1.AlertingConfigClient
+	cfgClient     *alertingnotifv0alpha1.AdminConfigClient
 }
 
 // NewExternalAMSyncer constructs an ExternalAMSyncer. requestValidator may
@@ -219,15 +219,15 @@ func NewExternalAMSyncer(
 	}
 }
 
-// resolveCfgClient lazily builds the AlertingConfig client. Caches both
+// resolveCfgClient lazily builds the AdminConfig client. Caches both
 // success and failure via sync.Once — apiserver-not-ready failure mode
 // doesn't get retried on every sync tick.
-func (s *ExternalAMSyncer) resolveCfgClient() *alertingadminv0alpha1.AlertingConfigClient {
+func (s *ExternalAMSyncer) resolveCfgClient() *alertingnotifv0alpha1.AdminConfigClient {
 	if s.clientGenerator == nil {
 		return nil
 	}
 	s.cfgClientOnce.Do(func() {
-		c, err := alertingadminv0alpha1.NewAlertingConfigClientFromGenerator(s.clientGenerator)
+		c, err := alertingnotifv0alpha1.NewAdminConfigClientFromGenerator(s.clientGenerator)
 		if err != nil {
 			s.logger.Warn("Failed to construct admin Config client, falling back to legacy admin_config", "error", err)
 			return
@@ -325,7 +325,7 @@ func (s *ExternalAMSyncer) FetchExtraConfig(ctx context.Context, orgID int64) (*
 // inside FetchExtraConfig) so the metric value always reflects the last persisted
 // config rather than the last fetched one.
 //
-// Also writes a success state to AlertingConfig.status. Status writes are
+// Also writes a success state to AdminConfig.status. Status writes are
 // best-effort and do not affect save-side bookkeeping.
 func (s *ExternalAMSyncer) MarkSaved(ctx context.Context, orgID int64, hash uint64) {
 	s.lastSyncHashMu.Lock()
@@ -335,7 +335,7 @@ func (s *ExternalAMSyncer) MarkSaved(ctx context.Context, orgID int64, hash uint
 	s.writeSyncStatusFor(ctx, orgID, nil)
 }
 
-// MarkFailed records a save-side failure to AlertingConfig.status. Caller
+// MarkFailed records a save-side failure to AdminConfig.status. Caller
 // (MAM) passes an already-classified *SyncError (via ClassifySaveError) so
 // the reason matches the metric label. Bare errors fall through to
 // ReasonUnclassified.
@@ -359,7 +359,7 @@ func (s *ExternalAMSyncer) writeSyncStatusFor(ctx context.Context, orgID int64, 
 }
 
 // recordSyncResult writes the latest sync outcome onto the org's
-// AlertingConfig.status, upserting an empty-spec resource if none exists
+// AdminConfig.status, upserting an empty-spec resource if none exists
 // (lets operator-ini-driven sync surface status before any admin write).
 // Concurrency: optimistic via RetryOnConflict; each retry re-reads and
 // touches only fields we own, so concurrent spec/status edits coexist.
@@ -384,7 +384,7 @@ func (s *ExternalAMSyncer) recordSyncResult(ctx context.Context, orgID int64, ui
 			// on Create today; a future migration to a real /status subresource
 			// would silently drop this — at that point swap to UpdateStatus.
 			newStatus := computeSyncStatus(nil, uid, origin, syncErr, now)
-			r := &alertingadminv0alpha1.AlertingConfig{
+			r := &alertingnotifv0alpha1.AdminConfig{
 				ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: configSingletonName},
 				Status:     newStatus,
 			}
@@ -392,7 +392,7 @@ func (s *ExternalAMSyncer) recordSyncResult(ctx context.Context, orgID int64, ui
 				// AlreadyExists → another writer raced us. Surface as a conflict
 				// so RetryOnConflict re-enters and sees the existing object.
 				if k8serrors.IsAlreadyExists(createErr) {
-					return k8serrors.NewConflict(alertingadminv0alpha1.AlertingConfigKind().GroupVersionResource().GroupResource(), id.Name, createErr)
+					return k8serrors.NewConflict(alertingnotifv0alpha1.AdminConfigKind().GroupVersionResource().GroupResource(), id.Name, createErr)
 				}
 				return createErr
 			}
@@ -406,34 +406,34 @@ func (s *ExternalAMSyncer) recordSyncResult(ctx context.Context, orgID int64, ui
 		return updateErr
 	})
 	if err != nil {
-		s.logger.Warn("Failed to write AlertingConfig status", "org_id", orgID, "error", err)
+		s.logger.Warn("Failed to write AdminConfig status", "org_id", orgID, "error", err)
 	}
 }
 
 // computeSyncStatus folds the current sync outcome into prev and returns
 // the new status. Implements the standard k8s condition FSM (lastTransitionTime
 // advances only on status flip); hand-rolled because the codegen'd
-// AlertingConfigCondition isn't metav1.Condition. Preserves other condition
+// AdminConfigCondition isn't metav1.Condition. Preserves other condition
 // types so future controllers don't get clobbered. Heartbeat data
 // (lastSuccessAt) lives on metrics, not the resource, to keep the per-
 // resource history budget meaningful.
-func computeSyncStatus(prev *alertingadminv0alpha1.AlertingConfigStatus, uid string, origin externalSyncOrigin, syncErr error, now time.Time) alertingadminv0alpha1.AlertingConfigStatus {
+func computeSyncStatus(prev *alertingnotifv0alpha1.AdminConfigStatus, uid string, origin externalSyncOrigin, syncErr error, now time.Time) alertingnotifv0alpha1.AdminConfigStatus {
 	uidCopy := uid
 	originCopy := origin
-	st := alertingadminv0alpha1.AlertingConfigStatus{
-		ExternalAlertmanagerSync: &alertingadminv0alpha1.AlertingConfigV0alpha1StatusExternalAlertmanagerSync{
+	st := alertingnotifv0alpha1.AdminConfigStatus{
+		ExternalAlertmanagerSync: &alertingnotifv0alpha1.AdminConfigV0alpha1StatusExternalAlertmanagerSync{
 			DatasourceUid: &uidCopy,
 			Origin:        &originCopy,
 		},
 	}
 
-	var newStatus alertingadminv0alpha1.AlertingConfigConditionStatus
+	var newStatus alertingnotifv0alpha1.AdminConfigConditionStatus
 	var newReason, newMessage string
 	if syncErr == nil {
-		newStatus = alertingadminv0alpha1.AlertingConfigConditionStatusTrue
+		newStatus = alertingnotifv0alpha1.AdminConfigConditionStatusTrue
 		newReason = conditionReasonSyncSucceeded
 	} else {
-		newStatus = alertingadminv0alpha1.AlertingConfigConditionStatusFalse
+		newStatus = alertingnotifv0alpha1.AdminConfigConditionStatusFalse
 		newReason = reasonOf(syncErr).ConditionReason()
 		newMessage = syncErr.Error()
 	}
@@ -449,7 +449,7 @@ func computeSyncStatus(prev *alertingadminv0alpha1.AlertingConfigStatus, uid str
 		}
 	}
 
-	synced := alertingadminv0alpha1.AlertingConfigCondition{
+	synced := alertingnotifv0alpha1.AdminConfigCondition{
 		Type:               conditionTypeExternalAlertmanagerSynced,
 		Status:             newStatus,
 		LastTransitionTime: transitionTime,
@@ -470,7 +470,7 @@ func computeSyncStatus(prev *alertingadminv0alpha1.AlertingConfigStatus, uid str
 	return st
 }
 
-func prevConditions(prev *alertingadminv0alpha1.AlertingConfigStatus) []alertingadminv0alpha1.AlertingConfigCondition {
+func prevConditions(prev *alertingnotifv0alpha1.AdminConfigStatus) []alertingnotifv0alpha1.AdminConfigCondition {
 	if prev == nil {
 		return nil
 	}
@@ -517,7 +517,7 @@ func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, ui
 
 // externalSyncDatasourceUIDFromConfig returns the configured UID or ""
 // when any level in the nested optional chain is unset.
-func externalSyncDatasourceUIDFromConfig(c *alertingadminv0alpha1.AlertingConfig) string {
+func externalSyncDatasourceUIDFromConfig(c *alertingnotifv0alpha1.AdminConfig) string {
 	if c == nil ||
 		c.Spec.ExternalAlertmanagerSync == nil ||
 		c.Spec.ExternalAlertmanagerSync.DatasourceUid == nil {
@@ -529,7 +529,7 @@ func externalSyncDatasourceUIDFromConfig(c *alertingadminv0alpha1.AlertingConfig
 // resolveExternalAMUIDForOrg returns the datasource UID to use for external AM
 // sync for the given org and where it came from. The operator-level
 // ExternalAlertmanagerUID setting takes precedence over the per-org value.
-// Per-org reads from the AlertingConfig k8s resource when the client is wired,
+// Per-org reads from the AdminConfig k8s resource when the client is wired,
 // otherwise falls back to the legacy admin_config table. Returns "" when
 // neither is set (sync should be skipped). Returns an error only on storage
 // failure looking up the per-org config.

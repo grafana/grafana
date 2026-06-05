@@ -6,7 +6,6 @@ go 1.26.4
 use (
 	. // skip:golangci-lint
 	./apps/advisor
-	./apps/alerting/admin
 	./apps/alerting/alertenrichment
 	./apps/alerting/historian
 	./apps/alerting/notifications

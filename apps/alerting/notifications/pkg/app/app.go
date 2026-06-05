@@ -45,6 +45,10 @@ func New(cfg app.Config) (app.App, error) {
 			},
 		},
 		ManagedKinds: []simple.AppManagedKind{
+			{
+				Kind:      v0alpha1.AdminConfigKind(),
+				Validator: newAdminConfigValidator(customCfg),
+			},
 			{Kind: v0alpha1.InhibitionRuleKind()},
 			{
 				Kind: v0alpha1.ReceiverKind(),

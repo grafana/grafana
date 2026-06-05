@@ -537,8 +537,8 @@ const (
 	// ActionAlertingProvisioningSetStatus Gives access to set provisioning status to alerting resources. Cannot be used alone. Only in conjunction with other permissions.
 	ActionAlertingProvisioningSetStatus = "alert.provisioning.provenance:write"
 
-	// Alerting admin config actions. Gate access to the AlertingConfig k8s
-	// resource (admin.alerting.grafana.app/v0alpha1). Reads are exposed to
+	// Alerting admin config actions. Gate access to the AdminConfig k8s
+	// resource (notifications.alerting.grafana.app/v0alpha1). Reads are exposed to
 	// viewers so the UI can render consistent state for all roles (e.g.
 	// import-to-GMA button); writes match the legacy /api/v1/ngalert/admin_config
 	// HTTP API which gated mutations with ReqOrgAdmin.

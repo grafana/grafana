@@ -176,7 +176,7 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
 	"alert.admin-config:read",         // accesscontrol.ActionAlertingAdminConfigRead — ExternalAMSyncer reads spec.externalAlertmanagerSync.datasourceUid.
-	"alert.admin-config:write",        // accesscontrol.ActionAlertingAdminConfigWrite — ExternalAMSyncer creates the AlertingConfig singleton on first sync.
+	"alert.admin-config:write",        // accesscontrol.ActionAlertingAdminConfigWrite — ExternalAMSyncer creates the AdminConfig singleton on first sync.
 	"alert.admin-config.status:write", // accesscontrol.ActionAlertingAdminConfigStatusWrite — service-only; humans never write status directly.
 	"users:read",                      // accesscontrol.ActionUsersRead,
 	"org.users:read",                  // accesscontrol.ActionOrgUsersRead,
