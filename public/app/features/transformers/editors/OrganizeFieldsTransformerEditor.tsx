@@ -5,6 +5,7 @@ import { useCallback, useId, useMemo } from 'react';
 import { type GrafanaTheme2, type TransformerUIProps } from '@grafana/data';
 import {
   createOrderFieldsComparer,
+  createFieldsOrdererAuto,
   Order,
   type OrderByItem,
   OrderByMode,
@@ -25,7 +26,6 @@ import {
   RadioButtonGroup,
 } from '@grafana/ui';
 
-import { createFieldsOrdererAuto } from '../../../../../packages/grafana-data/src/transformations/transformers/order';
 import { getAllFieldNamesFromDataFrames, getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
