@@ -246,23 +246,10 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		return parsed, fmt.Errorf("no clients configured")
 	}
 
-	supported := r.clients.SupportedResources()
-
-	// Reject resources that are not enabled/supported for provisioning. SupportedResources()
-	// returns only the enabled set, so a missing kind is either unsupported or disabled.
-	if !isSupportedResource(supported, parsed.GVK) {
-		return nil, NewResourceValidationError(fmt.Errorf("resource %s/%s is not enabled for provisioning", parsed.GVK.Group, parsed.GVK.Kind))
-	}
-
 	// TODO: catch the not found gvk error to return bad request
 	parsed.Client, parsed.GVR, err = r.clients.ForKind(ctx, parsed.GVK)
 	if err != nil {
 		return nil, NewResourceValidationError(fmt.Errorf("get client for kind: %w", err))
-	}
-
-	// Resources may opt out of strict field validation via configuration.
-	if skipsStrictValidation(supported, parsed.GVK) {
-		parsed.SkipStrictValidation = true
 	}
 
 	return parsed, nil
@@ -309,8 +296,8 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 	}
 
 	fieldValidation := "Strict"
-	if f.SkipStrictValidation {
-		fieldValidation = "Ignore"
+	if f.SkipStrictValidation || f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: dashboard exemption is temporary while we improve validation
 	}
 
 	// Handle deletion action separately
@@ -391,8 +378,8 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	identitySpan.End()
 
 	fieldValidation := "Strict"
-	if f.SkipStrictValidation {
-		fieldValidation = "Ignore"
+	if f.SkipStrictValidation || f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: dashboard exemption is temporary while we improve validation
 	}
 
 	// Check for ownership conflicts

@@ -12,7 +12,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/sets"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -23,7 +22,6 @@ import (
 
 func TestParser(t *testing.T) {
 	clients := NewMockResourceClients(t)
-	clients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 	clients.On("ForKind", mock.Anything, dashboardV0.DashboardResourceInfo.GroupVersionKind()).
 		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
 	clients.On("ForKind", mock.Anything, dashboardV1.DashboardResourceInfo.GroupVersionKind()).
@@ -156,79 +154,8 @@ spec:
 	})
 }
 
-func TestParser_SkipStrictValidation(t *testing.T) {
-	dashboardFile := []byte(`apiVersion: dashboard.grafana.app/v0alpha1
-kind: Dashboard
-metadata:
-  name: test
-spec:
-  title: Test
-`)
-
-	newParser := func(supported []SupportedResource) *parser {
-		clients := NewMockResourceClients(t)
-		clients.EXPECT().SupportedResources().Return(supported).Maybe()
-		clients.On("ForKind", mock.Anything, mock.Anything).
-			Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
-		return &parser{
-			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.LocalRepositoryType, Namespace: "xxx", Name: "repo"},
-			clients: clients,
-			config: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
-				Spec:       provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
-			},
-		}
-	}
-
-	t.Run("skips strict validation when the resource is configured to", func(t *testing.T) {
-		p := newParser([]SupportedResource{{GroupKind: DashboardKind.GroupKind(), Capabilities: sets.New(CapabilitySkipValidation)}})
-		parsed, err := p.Parse(context.Background(), &repository.FileInfo{Data: dashboardFile})
-		require.NoError(t, err)
-		require.True(t, parsed.SkipStrictValidation)
-	})
-
-	t.Run("strict by default", func(t *testing.T) {
-		p := newParser([]SupportedResource{{GroupKind: DashboardKind.GroupKind(), Capabilities: sets.New[string]()}})
-		parsed, err := p.Parse(context.Background(), &repository.FileInfo{Data: dashboardFile})
-		require.NoError(t, err)
-		require.False(t, parsed.SkipStrictValidation)
-	})
-}
-
-func TestParser_RejectsUnsupportedResource(t *testing.T) {
-	clients := NewMockResourceClients(t)
-	// Only folders are enabled, so a dashboard file is not supported and must be rejected.
-	clients.EXPECT().SupportedResources().Return([]SupportedResource{
-		{GroupKind: FolderKind.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
-	}).Maybe()
-	clients.On("ForKind", mock.Anything, mock.Anything).
-		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
-
-	p := &parser{
-		repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.LocalRepositoryType, Namespace: "xxx", Name: "repo"},
-		clients: clients,
-		config: &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
-			Spec:       provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
-		},
-	}
-
-	_, err := p.Parse(context.Background(), &repository.FileInfo{Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
-kind: Dashboard
-metadata:
-  name: test
-spec:
-  title: Test
-`)})
-	require.Error(t, err)
-	var resourceErr *ResourceValidationError
-	require.ErrorAs(t, err, &resourceErr, "error should be a ResourceValidationError")
-	require.Contains(t, err.Error(), "is not enabled for provisioning")
-}
-
 func TestParser_FolderMetadataRefFallback(t *testing.T) {
 	clients := NewMockResourceClients(t)
-	clients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 	clients.On("ForKind", mock.Anything, mock.Anything).
 		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
 

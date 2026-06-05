@@ -146,31 +146,6 @@ func supportsFolderAnnotation(supported []SupportedResource, gvk schema.GroupVer
 	return false
 }
 
-// isSupportedResource reports whether gvk's group+kind is in the supported set. Since
-// SupportedResources() returns only the active set, a match means the resource is both
-// supported and active for provisioning.
-func isSupportedResource(supported []SupportedResource, gvk schema.GroupVersionKind) bool {
-	gk := gvk.GroupKind()
-	for _, r := range supported {
-		if r.GroupKind == gk {
-			return true
-		}
-	}
-	return false
-}
-
-// skipsStrictValidation reports whether gvk is a supported resource configured to skip
-// strict field validation (FieldValidation=Ignore) when written.
-func skipsStrictValidation(supported []SupportedResource, gvk schema.GroupVersionKind) bool {
-	gk := gvk.GroupKind()
-	for _, r := range supported {
-		if !r.IsValidated() && r.GroupKind == gk {
-			return true
-		}
-	}
-	return false
-}
-
 // folderGVR builds the GVR for the folder API at the given version.
 func folderGVR(folderAPIVersion string) schema.GroupVersionResource {
 	return schema.GroupVersionResource{
