@@ -60,6 +60,19 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 	if err != nil {
 		return nil, err
 	}
+
+	// Request default permissions for new root folders. The folder API server's App Platform
+	// permission setter (StorageOptions.Permissions) acts on this annotation, writing the
+	// Editor/Viewer ResourcePermission to unified storage (which syncs to Zanzana). Root-only,
+	// mirroring the legacy default-permission behaviour; nested folders inherit from the parent.
+	if folder.IsRootFolderUID(cmd.ParentUID) {
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return nil, err
+		}
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
+	}
+
 	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID, v1.CreateOptions{
 		FieldValidation: v1.FieldValidationIgnore})
 	if err != nil {

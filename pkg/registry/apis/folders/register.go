@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,6 +23,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	sdkres "github.com/grafana/grafana-app-sdk/resource"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -30,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -62,6 +65,13 @@ type FolderAPIBuilder struct {
 	// Legacy services -- these will not exist in the MT environment
 	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface
 	folderPermissionsSvc   accesscontrol.FolderPermissionsService // TODO: Remove this once kubernetesAuthzResourcePermissionApis is removed and the frontend is calling /apis directly to create root level folders
+
+	// In the monolith, resourcePermissionsSvc is built lazily from restConfigProvider on first use:
+	// the loopback rest config is not ready at registration time. Mirrors the MT path, where
+	// resourcePermissionsSvc is injected directly (and restConfigProvider stays nil).
+	restConfigProvider         apiserver.RestConfigProvider
+	resourcePermissionsSvcOnce sync.Once
+	resourcePermissionsSvcErr  error
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -72,9 +82,9 @@ func RegisterAPIService(cfg *setting.Cfg,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
 	zanzanaClient zanzana.Client,
+	restConfigProvider apiserver.RestConfigProvider,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
-		folderPermissionsSvc: folderPermissionsSvc,
 		accessClient:         accessClient,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
 		useZanzana:           features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
@@ -82,6 +92,17 @@ func RegisterAPIService(cfg *setting.Cfg,
 		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
 		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
 	}
+
+	// When the AuthZ resource-permission /apis are enabled, default folder permissions are set
+	// via the App Platform path (grant-permissions annotation -> ResourcePermission resource),
+	// which writes to unified storage and syncs to Zanzana. The legacy folderPermissionsSvc path
+	// (SQL + GetSignedInUser) is intentionally left unwired so its folderStorage wrapper isn't installed.
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+		builder.restConfigProvider = restConfigProvider
+	} else {
+		builder.folderPermissionsSvc = folderPermissionsSvc
+	}
+
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -261,8 +282,41 @@ var defaultPermissions = []map[string]any{
 	},
 }
 
+// resourcePermissionsClient returns the ResourcePermission dynamic client, building it lazily
+// from restConfigProvider on first use in the monolith. Returns nil when neither a directly
+// injected client (MT) nor a restConfigProvider (monolith, flag enabled) is available.
+func (b *FolderAPIBuilder) resourcePermissionsClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+	if b.resourcePermissionsSvc != nil {
+		return b.resourcePermissionsSvc, nil
+	}
+	if b.restConfigProvider == nil {
+		return nil, nil
+	}
+
+	b.resourcePermissionsSvcOnce.Do(func() {
+		cfg, err := b.restConfigProvider.GetRestConfig(ctx)
+		if err != nil {
+			b.resourcePermissionsSvcErr = fmt.Errorf("get rest config: %w", err)
+			return
+		}
+		dyn, err := dynamic.NewForConfig(cfg)
+		if err != nil {
+			b.resourcePermissionsSvcErr = fmt.Errorf("create dynamic client: %w", err)
+			return
+		}
+		client := dyn.Resource(iamv0alpha1.ResourcePermissionInfo.GroupVersionResource())
+		b.resourcePermissionsSvc = &client
+	})
+
+	return b.resourcePermissionsSvc, b.resourcePermissionsSvcErr
+}
+
 func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key *resourcepb.ResourceKey, id authlib.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	if b.resourcePermissionsSvc == nil {
+	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
+	if err != nil {
+		return err
+	}
+	if resourcePermissionsSvc == nil {
 		return nil
 	}
 
@@ -274,7 +328,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 	log := logging.FromContext(ctx)
 	log.Debug("setting default folder permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
 
-	client := (*b.resourcePermissionsSvc).Namespace(obj.GetNamespace())
+	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
 	name := fmt.Sprintf("%s-%s-%s", foldersv1.FolderResourceInfo.GroupVersionResource().Group, foldersv1.FolderResourceInfo.GroupVersionResource().Resource, obj.GetName())
 
 	// the resource permission will likely already exist with admin can admin, so we will need to update it
@@ -303,7 +357,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 		return nil
 	}
 
-	_, err := client.Create(ctx, &unstructured.Unstructured{
+	_, err = client.Create(ctx, &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]any{
 				"name":      name,
