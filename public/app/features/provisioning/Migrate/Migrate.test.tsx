@@ -123,5 +123,13 @@ describe('Migrate', () => {
       // 6 / 8 => 75%.
       expect(screen.getByText('75% complete')).toBeInTheDocument();
     });
+
+    it('keeps the migration guide note linking to the provisioning docs', () => {
+      render(<Migrate />);
+
+      expect(screen.getByText(/the guided migration workflow is on its way/i)).toBeInTheDocument();
+      const docsLink = screen.getByRole('link', { name: /provisioning documentation/i });
+      expect(docsLink).toHaveAttribute('href', expect.stringContaining('grafana.com/docs'));
+    });
   });
 });
