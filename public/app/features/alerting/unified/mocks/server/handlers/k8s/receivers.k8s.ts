@@ -1,5 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
+import { base64UrlEncode } from '@grafana/alerting';
 import { API_GROUP, API_VERSION, type Receiver } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import {
   getAlertmanagerConfig,
@@ -10,6 +11,8 @@ import { KnownProvenance } from 'app/features/alerting/unified/types/knownProven
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import { receiverConfigToK8sIntegration } from 'app/features/alerting/unified/utils/k8s/utils';
+
+import { filterBySelector } from './utils';
 
 const usedByPolicies = ['grafana-default-email'];
 const usedByRules = ['grafana-default-email'];
@@ -32,7 +35,8 @@ const getReceiversList = () => {
         apiVersion: `${API_GROUP}/${API_VERSION}`,
         kind: 'Receiver',
         metadata: {
-          // This isn't exactly accurate, but its the cleanest way to use the same data for AM config and K8S responses
+          // Not exact K8s semantics; shared mock data for AM config and K8s list responses (`name` and `uid`).
+          name: contactPoint.name,
           uid: contactPoint.name,
           annotations: {
             [K8sAnnotations.Provenance]: provenance,
@@ -55,8 +59,25 @@ const getReceiversList = () => {
 };
 
 const listNamespacedReceiverHandler = () =>
-  http.get<{ namespace: string }>(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`, () => {
-    return HttpResponse.json(getReceiversList());
+  http.get<{ namespace: string }>(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`, ({ request }) => {
+    const list = getReceiversList();
+    const fieldSelector = new URL(request.url).searchParams.get('fieldSelector');
+
+    if (fieldSelector) {
+      let filtered = filterBySelector(list.items, fieldSelector);
+
+      if (filtered.length === 0 && fieldSelector.includes('metadata.name=')) {
+        const fieldSelectorValue = fieldSelector.split('metadata.name=')[1]?.split(',')[0]?.trim();
+        if (fieldSelectorValue) {
+          filtered = list.items.filter(
+            (receiver) => receiver.metadata?.name && base64UrlEncode(receiver.metadata.name) === fieldSelectorValue
+          );
+        }
+      }
+
+      return HttpResponse.json({ ...list, items: filtered });
+    }
+    return HttpResponse.json(list);
   });
 
 const getNamespacedReceiverHandler = () =>

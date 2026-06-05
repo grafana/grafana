@@ -1,4 +1,12 @@
-import { chain, filter, matchesProperty, trim } from 'lodash';
+import { chain, filter, get, trim } from 'lodash';
+
+/**
+ * Decodes escaped characters in field selector values.
+ * Matches the Kubernetes API Machinery encoding from encodeFieldSelector.
+ */
+function decodeFieldSelectorValue(value: string): string {
+  return value.replace(/\\,/g, ',').replace(/\\=/g, '=').replace(/\\\\/g, '\\');
+}
 
 /**
  * Filters a list of k8s items by a selector string
@@ -8,13 +16,15 @@ export function filterBySelector<T>(items: T[], selector: string) {
   const filters: string[][] = chain(selector)
     .split(',')
     .map(trim)
-    .map((s) => s.split('='))
+    .map((s) => {
+      const [key, ...valueParts] = s.split('=');
+      return [key, decodeFieldSelectorValue(valueParts.join('='))];
+    })
     .value();
 
   return filter(items, (item) =>
     filters.every(([key, value]) => {
-      const matcher = matchesProperty(key, value);
-      return matcher(item);
+      return get(item, key) === value;
     })
   );
 }

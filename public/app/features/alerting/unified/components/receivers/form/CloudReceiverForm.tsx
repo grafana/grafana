@@ -19,7 +19,7 @@ import { CloudCommonChannelSettings } from './CloudCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
 import { type Notifier } from './notifiers';
 
-interface Props {
+export interface CloudReceiverFormProps {
   alertManagerSourceName: string;
   contactPoint?: Receiver;
   readOnly?: boolean;
@@ -38,7 +38,12 @@ const defaultChannelValues: CloudChannelValues = Object.freeze({
 const cloudNotifiers = cloudNotifierTypes.map<Notifier>((n) => ({ dto: n }));
 const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 
-export const CloudReceiverForm = ({ contactPoint, alertManagerSourceName, readOnly = false, editMode }: Props) => {
+export const CloudReceiverForm = ({
+  contactPoint,
+  alertManagerSourceName,
+  readOnly = false,
+  editMode,
+}: CloudReceiverFormProps) => {
   const { isLoading, data: config } = useGetAlertmanagerConfigurationQuery(alertManagerSourceName);
 
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);

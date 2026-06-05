@@ -43,13 +43,13 @@ const baseDefaultChannelValues = {
   // when the integration is created/type is changed. The backend will use its default if not provided.
 };
 
-interface Props {
+export interface GrafanaReceiverFormProps {
   contactPoint?: GrafanaManagedContactPoint;
   readOnly?: boolean;
   editMode?: boolean;
 }
 
-export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }: Props) => {
+export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }: GrafanaReceiverFormProps) => {
   const [createContactPoint] = useCreateContactPoint({
     alertmanager: GRAFANA_RULES_SOURCE_NAME,
   });
