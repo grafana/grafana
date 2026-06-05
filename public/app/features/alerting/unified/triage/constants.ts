@@ -1,7 +1,6 @@
 import { config } from '@grafana/runtime';
 
 export const VARIABLES = {
-  groupBy: 'groupBy',
   filters: 'filters',
 };
 
@@ -11,7 +10,6 @@ export const VARIABLES = {
  */
 export const URL_PARAMS = {
   filters: 'var-filters',
-  groupBy: 'var-groupBy',
   timeFrom: 'from',
   timeTo: 'to',
 } as const;
@@ -20,12 +18,7 @@ export const URL_PARAMS = {
  * All URL parameters that define the triage page state for saved searches.
  * Used to serialize/deserialize saved search state.
  */
-export const TRIAGE_STATE_URL_PARAMS = [
-  URL_PARAMS.filters,
-  URL_PARAMS.groupBy,
-  URL_PARAMS.timeFrom,
-  URL_PARAMS.timeTo,
-] as const;
+export const TRIAGE_STATE_URL_PARAMS = [URL_PARAMS.filters, URL_PARAMS.timeFrom, URL_PARAMS.timeTo] as const;
 
 export const DATASOURCE_UID = config.unifiedAlerting.stateHistory?.prometheusTargetDatasourceUID;
 export const METRIC_NAME = config.unifiedAlerting.stateHistory?.prometheusMetricName ?? 'GRAFANA_ALERTS';
