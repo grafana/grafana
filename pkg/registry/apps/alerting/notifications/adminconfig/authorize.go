@@ -1,4 +1,4 @@
-package alertingconfig
+package adminconfig
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-// Authorize maps k8s verbs on AlertingConfig (and its /status subresource)
+// Authorize maps k8s verbs on AdminConfig (and its /status subresource)
 // to three RBAC actions: read → Viewer, spec write → Admin (matches the
 // legacy /api/v1/ngalert/admin_config HTTP API), status write → service
 // identity only (sync worker owns it; see serviceIdentityPermissions in

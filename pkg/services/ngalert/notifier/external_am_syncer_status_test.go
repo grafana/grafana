@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	alertingadminv0alpha1 "github.com/grafana/grafana/apps/alerting/admin/pkg/apis/alertingadmin/v0alpha1"
+	alertingnotifv0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
@@ -27,7 +27,7 @@ func TestComputeSyncStatus(t *testing.T) {
 		return &SyncError{Reason: reason, Cause: errors.New(msg)}
 	}
 
-	findSynced := func(t *testing.T, st alertingadminv0alpha1.AlertingConfigStatus) alertingadminv0alpha1.AlertingConfigCondition {
+	findSynced := func(t *testing.T, st alertingnotifv0alpha1.AdminConfigStatus) alertingnotifv0alpha1.AdminConfigCondition {
 		t.Helper()
 		for _, c := range st.Conditions {
 			if c.Type == conditionTypeExternalAlertmanagerSynced {
@@ -35,10 +35,10 @@ func TestComputeSyncStatus(t *testing.T) {
 			}
 		}
 		t.Fatalf("expected Synced condition, got: %+v", st.Conditions)
-		return alertingadminv0alpha1.AlertingConfigCondition{}
+		return alertingnotifv0alpha1.AdminConfigCondition{}
 	}
 
-	externalSync := func(t *testing.T, st alertingadminv0alpha1.AlertingConfigStatus) *alertingadminv0alpha1.AlertingConfigV0alpha1StatusExternalAlertmanagerSync {
+	externalSync := func(t *testing.T, st alertingnotifv0alpha1.AdminConfigStatus) *alertingnotifv0alpha1.AdminConfigV0alpha1StatusExternalAlertmanagerSync {
 		t.Helper()
 		require.NotNil(t, st.ExternalAlertmanagerSync, "externalAlertmanagerSync sub-tree should be populated")
 		return st.ExternalAlertmanagerSync
@@ -52,7 +52,7 @@ func TestComputeSyncStatus(t *testing.T) {
 		assert.Equal(t, originPtr(originAPI), es.Origin)
 
 		synced := findSynced(t, got)
-		assert.Equal(t, alertingadminv0alpha1.AlertingConfigConditionStatusTrue, synced.Status)
+		assert.Equal(t, alertingnotifv0alpha1.AdminConfigConditionStatusTrue, synced.Status)
 		assert.Equal(t, "SyncSucceeded", synced.Reason)
 		assert.Equal(t, nowRFC, synced.LastTransitionTime)
 		assert.Nil(t, synced.Message)
@@ -65,17 +65,17 @@ func TestComputeSyncStatus(t *testing.T) {
 		assert.Equal(t, strPtr("uid-a"), es.DatasourceUid)
 
 		synced := findSynced(t, got)
-		assert.Equal(t, alertingadminv0alpha1.AlertingConfigConditionStatusFalse, synced.Status)
+		assert.Equal(t, alertingnotifv0alpha1.AdminConfigConditionStatusFalse, synced.Status)
 		assert.Equal(t, "MimirFetchFailed", synced.Reason)
 		assert.Equal(t, strPtr("connect: refused"), synced.Message)
 		assert.Equal(t, nowRFC, synced.LastTransitionTime)
 	})
 
 	t.Run("consecutive failures preserve the original lastTransitionTime", func(t *testing.T) {
-		prev := &alertingadminv0alpha1.AlertingConfigStatus{
-			Conditions: []alertingadminv0alpha1.AlertingConfigCondition{{
+		prev := &alertingnotifv0alpha1.AdminConfigStatus{
+			Conditions: []alertingnotifv0alpha1.AdminConfigCondition{{
 				Type:               conditionTypeExternalAlertmanagerSynced,
-				Status:             alertingadminv0alpha1.AlertingConfigConditionStatusFalse,
+				Status:             alertingnotifv0alpha1.AdminConfigConditionStatusFalse,
 				LastTransitionTime: earlRFC,
 				Reason:             "MimirFetchFailed",
 				Message:            strPtr("first failure"),
@@ -85,16 +85,16 @@ func TestComputeSyncStatus(t *testing.T) {
 		got := computeSyncStatus(prev, "uid-a", originAPI, syncErrFor(ReasonMimirFetch, "second failure"), now)
 
 		synced := findSynced(t, got)
-		assert.Equal(t, alertingadminv0alpha1.AlertingConfigConditionStatusFalse, synced.Status)
+		assert.Equal(t, alertingnotifv0alpha1.AdminConfigConditionStatusFalse, synced.Status)
 		assert.Equal(t, strPtr("second failure"), synced.Message)
 		assert.Equal(t, earlRFC, synced.LastTransitionTime, "lastTransitionTime should mark when the streak began, not the latest failure")
 	})
 
 	t.Run("failure after a prior success bumps lastTransitionTime", func(t *testing.T) {
-		prev := &alertingadminv0alpha1.AlertingConfigStatus{
-			Conditions: []alertingadminv0alpha1.AlertingConfigCondition{{
+		prev := &alertingnotifv0alpha1.AdminConfigStatus{
+			Conditions: []alertingnotifv0alpha1.AdminConfigCondition{{
 				Type:               conditionTypeExternalAlertmanagerSynced,
-				Status:             alertingadminv0alpha1.AlertingConfigConditionStatusTrue,
+				Status:             alertingnotifv0alpha1.AdminConfigConditionStatusTrue,
 				LastTransitionTime: earlRFC,
 				Reason:             "SyncSucceeded",
 			}},
@@ -103,17 +103,17 @@ func TestComputeSyncStatus(t *testing.T) {
 		got := computeSyncStatus(prev, "uid-a", originAPI, syncErrFor(ReasonSave, "save broke"), now)
 
 		synced := findSynced(t, got)
-		assert.Equal(t, alertingadminv0alpha1.AlertingConfigConditionStatusFalse, synced.Status)
+		assert.Equal(t, alertingnotifv0alpha1.AdminConfigConditionStatusFalse, synced.Status)
 		assert.Equal(t, nowRFC, synced.LastTransitionTime, "lastTransitionTime advanced on flip True→False")
 		assert.Equal(t, "SaveFailed", synced.Reason)
 		assert.Equal(t, strPtr("save broke"), synced.Message)
 	})
 
 	t.Run("success after a failure bumps lastTransitionTime and clears message", func(t *testing.T) {
-		prev := &alertingadminv0alpha1.AlertingConfigStatus{
-			Conditions: []alertingadminv0alpha1.AlertingConfigCondition{{
+		prev := &alertingnotifv0alpha1.AdminConfigStatus{
+			Conditions: []alertingnotifv0alpha1.AdminConfigCondition{{
 				Type:               conditionTypeExternalAlertmanagerSynced,
-				Status:             alertingadminv0alpha1.AlertingConfigConditionStatusFalse,
+				Status:             alertingnotifv0alpha1.AdminConfigConditionStatusFalse,
 				LastTransitionTime: earlRFC,
 				Reason:             "MimirFetchFailed",
 				Message:            strPtr("was broken"),
@@ -123,7 +123,7 @@ func TestComputeSyncStatus(t *testing.T) {
 		got := computeSyncStatus(prev, "uid-a", originAPI, nil, now)
 
 		synced := findSynced(t, got)
-		assert.Equal(t, alertingadminv0alpha1.AlertingConfigConditionStatusTrue, synced.Status)
+		assert.Equal(t, alertingnotifv0alpha1.AdminConfigConditionStatusTrue, synced.Status)
 		assert.Equal(t, "SyncSucceeded", synced.Reason)
 		assert.Nil(t, synced.Message, "message cleared on recovery")
 		assert.Equal(t, nowRFC, synced.LastTransitionTime, "lastTransitionTime advanced on flip False→True")
@@ -138,8 +138,8 @@ func TestComputeSyncStatus(t *testing.T) {
 	})
 
 	t.Run("datasourceUid reflects the attempted UID, not any prior one", func(t *testing.T) {
-		prev := &alertingadminv0alpha1.AlertingConfigStatus{
-			ExternalAlertmanagerSync: &alertingadminv0alpha1.AlertingConfigV0alpha1StatusExternalAlertmanagerSync{
+		prev := &alertingnotifv0alpha1.AdminConfigStatus{
+			ExternalAlertmanagerSync: &alertingnotifv0alpha1.AdminConfigV0alpha1StatusExternalAlertmanagerSync{
 				DatasourceUid: strPtr("old-uid"),
 			},
 		}
@@ -152,11 +152,11 @@ func TestComputeSyncStatus(t *testing.T) {
 	t.Run("other condition types in prev are preserved", func(t *testing.T) {
 		// Future-proof: if another part of the system adds a condition type
 		// alongside Synced, computeSyncStatus must not stomp it.
-		prev := &alertingadminv0alpha1.AlertingConfigStatus{
-			Conditions: []alertingadminv0alpha1.AlertingConfigCondition{
+		prev := &alertingnotifv0alpha1.AdminConfigStatus{
+			Conditions: []alertingnotifv0alpha1.AdminConfigCondition{
 				{
 					Type:               "RoutingApplied",
-					Status:             alertingadminv0alpha1.AlertingConfigConditionStatusTrue,
+					Status:             alertingnotifv0alpha1.AdminConfigConditionStatusTrue,
 					LastTransitionTime: earlRFC,
 					Reason:             "RoutingApplied",
 				},
@@ -170,7 +170,7 @@ func TestComputeSyncStatus(t *testing.T) {
 		for _, c := range got.Conditions {
 			if c.Type == "RoutingApplied" {
 				saw = true
-				assert.Equal(t, alertingadminv0alpha1.AlertingConfigConditionStatusTrue, c.Status)
+				assert.Equal(t, alertingnotifv0alpha1.AdminConfigConditionStatusTrue, c.Status)
 				assert.Equal(t, earlRFC, c.LastTransitionTime, "unrelated condition should be untouched")
 			}
 		}

@@ -1,4 +1,4 @@
-package alertingconfig
+package app
 
 import (
 	"context"
@@ -7,27 +7,25 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/simple"
 
-	"github.com/grafana/grafana/apps/alerting/admin/pkg/apis/alertingadmin/v0alpha1"
-	"github.com/grafana/grafana/apps/alerting/admin/pkg/app/config"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 )
 
-// NewValidator returns the admission validator for AlertingConfig. Per
-// feature, it dispatches to the matching validator function on
-// config.RuntimeConfig — externalAlertmanagerSync's datasourceUid is
-// validated via cfg.ValidateExternalSyncDatasource, which is implemented
-// in the parent process (pkg/registry/apps/alerting/admin/register.go)
-// where it has access to the datasource service, feature flag client,
-// and namespace→orgID mapping.
+// newAdminConfigValidator returns the admission validator for AdminConfig. Per
+// feature, it dispatches to the matching validator function on Config —
+// externalAlertmanagerSync's datasourceUid is validated via
+// cfg.ValidateExternalSyncDatasource, which is implemented in the parent
+// process (pkg/registry/apps/alerting/notifications) where it has access to
+// the datasource service, feature flag client, and namespace→orgID mapping.
 //
-// When the per-feature validator is nil (test paths), the corresponding
-// check is skipped rather than failing closed — the validator should only
-// reject inputs we can affirmatively prove are invalid.
-func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
+// When the per-feature validator is nil (test paths), the corresponding check
+// is skipped rather than failing closed — the validator should only reject
+// inputs we can affirmatively prove are invalid.
+func newAdminConfigValidator(cfg *Config) *simple.Validator {
 	return &simple.Validator{
 		ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
-			obj, ok := req.Object.(*v0alpha1.AlertingConfig)
+			obj, ok := req.Object.(*v0alpha1.AdminConfig)
 			if !ok {
-				return fmt.Errorf("object is not *v0alpha1.AlertingConfig")
+				return fmt.Errorf("object is not *v0alpha1.AdminConfig")
 			}
 
 			// externalAlertmanagerSync.datasourceUid:
@@ -54,23 +52,23 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 // when both sides are unset/empty, ("uid", true) when set or changed,
 // ("", true) when transitioning to unset (a delete-by-omit pattern, which
 // is always allowed without validation).
-func externalSyncUIDChange(newObj *v0alpha1.AlertingConfig, oldObj any) (string, bool) {
-	newUID := uidFromConfig(newObj)
-	oldUID := uidFromConfig(asAlertingConfig(oldObj))
+func externalSyncUIDChange(newObj *v0alpha1.AdminConfig, oldObj any) (string, bool) {
+	newUID := uidFromAdminConfig(newObj)
+	oldUID := uidFromAdminConfig(asAdminConfig(oldObj))
 	return newUID, newUID != oldUID
 }
 
-func uidFromConfig(c *v0alpha1.AlertingConfig) string {
+func uidFromAdminConfig(c *v0alpha1.AdminConfig) string {
 	if c == nil || c.Spec.ExternalAlertmanagerSync == nil || c.Spec.ExternalAlertmanagerSync.DatasourceUid == nil {
 		return ""
 	}
 	return *c.Spec.ExternalAlertmanagerSync.DatasourceUid
 }
 
-func asAlertingConfig(o any) *v0alpha1.AlertingConfig {
+func asAdminConfig(o any) *v0alpha1.AdminConfig {
 	if o == nil {
 		return nil
 	}
-	cfg, _ := o.(*v0alpha1.AlertingConfig)
+	cfg, _ := o.(*v0alpha1.AdminConfig)
 	return cfg
 }

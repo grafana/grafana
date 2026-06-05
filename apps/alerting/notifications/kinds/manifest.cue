@@ -11,6 +11,7 @@ manifest: {
 				go: {enabled: true}
 			}
 			kinds: [
+				adminConfigv0alpha1,
 				inhibitionRulev0alpha1,
 				receiverv0alpha1,
 				routeTreev0alpha1,

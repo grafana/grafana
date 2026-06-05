@@ -1,13 +1,13 @@
 package v0alpha1
 
-// AlertingConfigStatus reports the runtime observation of admin alerting
+// AdminConfigStatus reports the runtime observation of admin alerting
 // concerns for an org. Written by the controllers that own fields on spec;
 // clients read only.
 //
 // Conditions are top-level (k8s convention: meta.SetStatusCondition, kubectl
 // wait --for=condition=, controller-runtime helpers). Auxiliary observation
 // state is nested per-feature so spec and status read symmetrically.
-AlertingConfigStatus: {
+AdminConfigStatus: {
 	// observedGeneration is the spec.generation last evaluated by the
 	// controllers writing this status.
 	observedGeneration?: int

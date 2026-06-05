@@ -10,6 +10,13 @@ import (
 type Config struct {
 	ReceiverTestingHandler       ReceiverTestingHandler
 	IntegrationTypeSchemaHandler IntegrationTypeSchemaHandler
+
+	// ValidateExternalSyncDatasource is the admission check for the
+	// AdminConfig kind's spec.externalAlertmanagerSync.datasourceUid.
+	// Implementation lives in the parent process where the datasource
+	// service is in scope. Return nil to allow; non-nil error rejects with
+	// the error's message. Nil skips validation (test paths).
+	ValidateExternalSyncDatasource func(ctx context.Context, uid string) error
 }
 
 func (c *Config) Validate() error {

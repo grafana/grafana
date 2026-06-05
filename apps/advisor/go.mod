@@ -27,7 +27,6 @@ replace (
 	github.com/grafana/grafana => ../..
 
 	github.com/grafana/grafana/apps/advisor => ../advisor
-	github.com/grafana/grafana/apps/alerting/admin => ../alerting/admin
 	github.com/grafana/grafana/apps/alerting/alertenrichment => ../alerting/alertenrichment
 	github.com/grafana/grafana/apps/alerting/historian => ../alerting/historian
 	github.com/grafana/grafana/apps/alerting/notifications => ../alerting/notifications
