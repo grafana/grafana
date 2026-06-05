@@ -1294,13 +1294,17 @@
     {
       "metadata": {
         "name": "colorblindThemes",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1780674740170",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-05 15:52:20.170413 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new colorblind-friendly themes",
         "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
         "requiresRestart": true,
         "hideFromDocs": true,
         "expression": "false"

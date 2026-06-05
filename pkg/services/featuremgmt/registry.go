@@ -2839,7 +2839,7 @@ var (
 			HideFromDocs:    true,
 			RequiresRestart: true,
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		}, {
 			Name:        "yAxisTickControl",
 			Description: "Enables fine-grained Y-axis tick options beyond the auto-ticks",

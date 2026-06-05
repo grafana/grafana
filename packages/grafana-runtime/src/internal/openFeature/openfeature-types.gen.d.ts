@@ -40,6 +40,7 @@ declare module "@openfeature/core" {
     | "datasourcesApiServerEnableHealthEndpointFrontend"
     | "flameGraphWithCallTree"
     | "inlineLogDetailsNoScrolls"
+    | "colorblindThemes"
     | "plugins.useMTPluginSettings"
     | "splashScreen"
     | "grafana.newPreferencesPage"
