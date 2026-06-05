@@ -1,12 +1,7 @@
 import { HttpResponse, http } from 'msw';
 
-import {
-  API_GROUP,
-  API_VERSION,
-  type CreateReceiverApiResponse,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-
-import { getAPIBaseURLForMocks } from '../../../../../../mocks/util';
+import { API_GROUP, API_VERSION, type CreateReceiverApiResponse } from '../../..';
+import { getAPIBaseURLForMocks } from '../../../../../mocks/util';
 
 export function createReceiverHandler(
   data: CreateReceiverApiResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Response)

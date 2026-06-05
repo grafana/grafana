@@ -13,8 +13,13 @@ export const getK8sResponse = <T>(kind: string, items: T[]) => {
   };
 };
 
-/** Expected base URL for our k8s APIs */
-export const ALERTING_API_SERVER_BASE_URL = '/apis/notifications.alerting.grafana.app/v0alpha1';
+/**
+ * Expected base URL for our k8s APIs. Uses a wildcard for the API version segment so that the
+ * MSW handlers below intercept requests regardless of whether the runtime is configured to talk
+ * to v0alpha1 or v1beta1 (toggled via `alerting.notificationsAPIV1Beta1`). The version segment is
+ * never consumed by the handlers; this is purely about matching either URL.
+ */
+export const ALERTING_API_SERVER_BASE_URL = '/apis/notifications.alerting.grafana.app/:apiVersion';
 
 export function paginatedHandlerFor(
   groups: PromRuleGroupDTO[]

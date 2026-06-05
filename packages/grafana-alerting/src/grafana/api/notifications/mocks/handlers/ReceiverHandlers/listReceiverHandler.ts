@@ -1,8 +1,7 @@
 import { HttpResponse, http } from 'msw';
 
-import { API_GROUP, API_VERSION } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-
-import { getAPIBaseURLForMocks } from '../../../../../../mocks/util';
+import { API_GROUP, API_VERSION } from '../../..';
+import { getAPIBaseURLForMocks } from '../../../../../mocks/util';
 import { type EnhancedListReceiverApiResponse } from '../../../types';
 
 export function listReceiverHandler(

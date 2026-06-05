@@ -1,4 +1,4 @@
-import { type CreateReceiverTestApiArg, generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type CreateReceiverTestApiArg, notificationsAPI } from '@grafana/alerting/unstable';
 
 interface TestReceiverIntegrationBody {
   integration: {
@@ -22,7 +22,7 @@ export interface CreateReceiverTestOverrideArg extends CreateReceiverTestApiArg 
 const NEW_RECEIVER_PLACEHOLDER = '-';
 
 // We need to enhance the endpoints to add the correct type for the body
-const enhancedApi = generatedAPI.enhanceEndpoints({
+const enhancedApi = notificationsAPI.enhanceEndpoints({
   endpoints: {
     createReceiverTest: (endpoint) => {
       endpoint.query = (queryArg: CreateReceiverTestOverrideArg) => ({

@@ -2,8 +2,7 @@ import { css, cx } from '@emotion/css';
 import { type PropsOf } from '@emotion/react';
 import { Controller, useForm } from 'react-hook-form';
 
-import { ContactPointSelector, RoutingTreeSelector } from '@grafana/alerting/unstable';
-import type { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { ContactPointSelector, type RoutingTree, RoutingTreeSelector } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';

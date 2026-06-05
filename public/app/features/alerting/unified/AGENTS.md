@@ -121,20 +121,24 @@ const { data, isLoading, error } = useGetAlertRulesQuery(params);
 
 **IMPORTANT**: When consuming an API endpoint, always prefer the auto-generated clients from `@grafana/api-clients` over creating custom RTK Query endpoints manually. Do not create new RTKQ endpoints by hand — use the generated ones instead.
 
-The auto-generated clients are available under `@grafana/api-clients/rtkq/<api-group>/<version>` (e.g., `@grafana/api-clients/rtkq/notifications.alerting/v0alpha1`).
+The auto-generated clients are available under `@grafana/api-clients/rtkq/<api-group>/<version>`.
+
+**Special case: `notifications.alerting`** — both `v0alpha1` and `v1beta1` are generated and live in parallel during the migration controlled by the `alerting.notificationsAPIV1Beta1` feature toggle. **Do not import the version-specific clients directly.** Instead, import the toggle-aware re-export from `@grafana/alerting/unstable`, which resolves to the right version at module load. The version-specific imports (`notificationsAPIv0alpha1`, `notificationsAPIv1beta1`) are kept only for migration purposes and will be removed in a future cleanup PR.
 
 **When the auto-generated client works as-is** — just import and use it directly:
 
 ```typescript
-import { generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { notificationsAPI } from '@grafana/alerting/unstable';
 
-const { data } = generatedAPI.useListReceiversQuery(params);
+const { data } = notificationsAPI.useListReceiverQuery(params);
 ```
+
+For other API groups, import from `@grafana/api-clients/rtkq/<api-group>/<version>` as before.
 
 **When the auto-generated client is incomplete** (e.g., missing request body types), use `enhanceEndpoints` to override the endpoint while still using the generated client as base. This avoids creating a fully manual RTKQ endpoint:
 
 ```typescript
-import { CreateReceiverTestApiArg, generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { CreateReceiverTestApiArg, notificationsAPI } from '@grafana/alerting/unstable';
 
 // Define the missing body type
 interface TestReceiverIntegrationBody {
@@ -148,7 +152,7 @@ export interface CreateReceiverTestOverrideArg extends CreateReceiverTestApiArg 
 }
 
 // TODO: Remove this override once the auto-generated client includes the request body type
-const enhancedApi = generatedAPI.enhanceEndpoints({
+const enhancedApi = notificationsAPI.enhanceEndpoints({
   endpoints: {
     createReceiverTest: (endpoint) => {
       endpoint.query = (queryArg: CreateReceiverTestOverrideArg) => ({
@@ -245,8 +249,9 @@ Located in `testSetup/datasources.ts` for data source mocking patterns
 
 For Kubernetes APIs and new schemas – use the `@grafana/alerting` package.
 
-Mock factories are defined in `packages/grafana-alerting/src/grafana/api/notifications/v0alpha1/mocks/fakes`
-MSW handlers in `packages/grafana-alerting/src/grafana/api/notifications/v0alpha1/mocks/handlers`
+Mock factories are defined in `packages/grafana-alerting/src/grafana/api/notifications/mocks/fakes` and MSW handlers in `packages/grafana-alerting/src/grafana/api/notifications/mocks/handlers`. Both follow the `alerting.notificationsAPIV1Beta1` toggle: they read `API_GROUP` / `API_VERSION` from the centralized dispatcher (`notifications/index.ts`), so factories produce the matching `apiVersion` and handlers register against the matching URL automatically — no per-version files. Import them from `@grafana/alerting/testing`.
+
+Tests that need to exercise the toggle-enabled branch must reset the module registry (`jest.resetModules()`) and dynamically `await import(...)` both `@grafana/runtime` and the consumer together, because the dispatcher caches the toggle value at module-load time. See `packages/grafana-alerting/src/grafana/api/notifications/index.test.ts` for the canonical pattern.
 
 And there are "scenarios" that combine the two above. An example of such is `packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.test.scenario.ts` and is used for integration tests.
 
