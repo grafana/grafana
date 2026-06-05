@@ -8,44 +8,29 @@ import (
 )
 
 func TestReadProvisioningResources(t *testing.T) {
-	t.Run("defaults to dashboards and folders (enabled) when no sections are configured", func(t *testing.T) {
+	t.Run("defaults when [provisioning] resources is unset", func(t *testing.T) {
 		cfg, err := NewCfgFromBytes([]byte(``))
 		require.NoError(t, err)
 
-		assert.ElementsMatch(t, []ProvisioningResource{
-			{Group: "dashboard.grafana.app", Kind: "Dashboard", EnableFolderSupport: true, Enabled: true},
-			{Group: "folder.grafana.app", Kind: "Folder", EnableFolderSupport: true, Enabled: true},
+		assert.Equal(t, []string{
+			"folder.grafana.app/Folder:folder",
+			"dashboard.grafana.app/Dashboard:folder",
+			"dashboard.grafana.app/LibraryPanel:folder:disabled",
+			"playlist.grafana.app/Playlist:disabled",
 		}, cfg.ProvisioningResources)
 	})
 
-	t.Run("parses [provisioning.resources.<kind>.<group>] sections", func(t *testing.T) {
+	t.Run("parses the comma-separated token list", func(t *testing.T) {
 		iniContent := `
-[provisioning.resources.Dashboard.dashboard.grafana.app]
-enableFolderSupport = true
-enabled = true
-
-[provisioning.resources.Playlist.playlist.grafana.app]
-enableFolderSupport = false
-enabled = false
+[provisioning]
+resources = dashboard.grafana.app/Dashboard:folder, playlist.grafana.app/Playlist
 `
 		cfg, err := NewCfgFromBytes([]byte(iniContent))
 		require.NoError(t, err)
 
-		assert.ElementsMatch(t, []ProvisioningResource{
-			{Group: "dashboard.grafana.app", Kind: "Dashboard", EnableFolderSupport: true, Enabled: true},
-			{Group: "playlist.grafana.app", Kind: "Playlist", EnableFolderSupport: false, Enabled: false},
+		assert.Equal(t, []string{
+			"dashboard.grafana.app/Dashboard:folder",
+			"playlist.grafana.app/Playlist",
 		}, cfg.ProvisioningResources)
-	})
-
-	t.Run("folder and enabled default when the keys are omitted", func(t *testing.T) {
-		iniContent := `
-[provisioning.resources.Playlist.playlist.grafana.app]
-`
-		cfg, err := NewCfgFromBytes([]byte(iniContent))
-		require.NoError(t, err)
-
-		require.Len(t, cfg.ProvisioningResources, 1)
-		// folder defaults to false; enabled defaults to true.
-		assert.Equal(t, ProvisioningResource{Group: "playlist.grafana.app", Kind: "Playlist", EnableFolderSupport: false, Enabled: true}, cfg.ProvisioningResources[0])
 	})
 }

@@ -2759,23 +2759,23 @@ func schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref common.Referenc
 							Format:      "",
 						},
 					},
-					"enableFolderSupport": {
+					"capabilities": {
 						SchemaProps: spec.SchemaProps{
-							Description: "EnableFolderSupport reports whether the resource is saved inside a folder (as opposed to being org-scoped).",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"enabled": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Enabled reports whether the resource can currently be managed through provisioning.",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
+							Description: "Capabilities is the set of declared capabilities. Known values: \"folder\" (folder-scoped), \"skipvalidation\" (skip validation on write), \"disabled\" (declared but not acted on). A resource is active unless \"disabled\" is present.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
 						},
 					},
 				},
-				Required: []string{"group", "kind", "enabled"},
+				Required: []string{"group", "kind"},
 			},
 		},
 	}

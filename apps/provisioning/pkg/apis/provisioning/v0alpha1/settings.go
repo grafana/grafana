@@ -39,12 +39,10 @@ type SupportedResource struct {
 	// Kind is the kind of the resource (e.g. "Dashboard").
 	Kind string `json:"kind"`
 
-	// EnableFolderSupport reports whether the resource is saved inside a folder
-	// (as opposed to being org-scoped).
-	EnableFolderSupport bool `json:"enableFolderSupport,omitempty"`
-
-	// Enabled reports whether the resource can currently be managed through provisioning.
-	Enabled bool `json:"enabled"`
+	// Capabilities is the set of declared capabilities. Known values: "folder" (folder-scoped),
+	// "skipvalidation" (skip validation on write), "disabled" (declared but not acted on).
+	// A resource is active unless "disabled" is present.
+	Capabilities []string `json:"capabilities,omitempty"`
 }
 
 func (SupportedResource) OpenAPIModelName() string {

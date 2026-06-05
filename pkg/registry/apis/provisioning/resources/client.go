@@ -3,11 +3,13 @@ package resources
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -16,6 +18,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
+
+// Capabilities a supported resource can declare. Each names the opt-in state; absence is
+// the safe default (org-scoped, validated, active). Adding a resource is pure config;
+// adding a capability is a new constant plus behaviour wiring.
+const (
+	// CapabilityFolder marks a folder-scoped resource: it carries the folder annotation on
+	// write. Absent means org-scoped.
+	CapabilityFolder = "folder"
+	// CapabilitySkipValidation skips pipeline/field validation on write. Absent means validated.
+	CapabilitySkipValidation = "skipvalidation"
+	// CapabilityDisabled marks a resource as declared but not acted on (surfaced, inert).
+	// Absent means active.
+	CapabilityDisabled = "disabled"
+)
+
+// KnownCapabilities is the set of recognised capability tokens; unknown tokens are rejected.
+var KnownCapabilities = sets.New(CapabilityFolder, CapabilitySkipValidation, CapabilityDisabled)
 
 // Dashboard GVR/GVK values are re-exported from apps/provisioning/pkg/resources
 // so there is a single source of truth. Folder and User live here because
@@ -33,37 +52,94 @@ var (
 	// SupportedProvisioningResources is the static fallback set of resources that can be
 	// managed from the UI, used when the client factory is created without an explicit
 	// (configured) set. The effective set is normally built from configuration; see
-	// pkg/setting [provisioning.resources.<kind>.<group>] sections.
+	// pkg/setting [provisioning] resources.
 	SupportedProvisioningResources = []SupportedResource{
-		{GroupKind: FolderKind.GroupKind(), EnableFolderSupport: true, Enabled: true},
-		// Dashboards are temporarily exempt from strict field validation (see defaults.ini).
-		{GroupKind: DashboardKind.GroupKind(), EnableFolderSupport: true, Enabled: true, SkipStrictValidation: true},
+		{GroupKind: FolderKind.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+		{GroupKind: DashboardKind.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
 	}
 )
 
 // SupportedResource describes a resource that can be managed through provisioning. It is
-// identified by its group and kind; the API version and plural resource are resolved at
-// runtime through the discovery client (ForKind), so they are not part of the config.
+// identified by its group and kind (the API version and plural resource are resolved at
+// runtime via discovery) plus a set of capabilities expressed in the negative — absence is
+// the safe default.
 type SupportedResource struct {
 	// GroupKind identifies the resource group and kind.
 	schema.GroupKind
-	// EnableFolderSupport reports whether the resource is saved inside a folder,
-	// i.e. whether it should carry the folder header annotation when written.
-	EnableFolderSupport bool
-	// Enabled reports whether the resource can currently be managed through provisioning.
-	// Disabled resources are still declared (and surfaced) but are not acted on.
-	Enabled bool
-	// SkipStrictValidation requests FieldValidation=Ignore when writing the resource,
-	// exempting it from strict field validation on the apiserver. Opt-in per resource.
-	SkipStrictValidation bool
+	// Capabilities is the set of declared capabilities (see Capability* constants).
+	Capabilities sets.Set[string]
 }
 
-// supportsFolderAnnotation reports whether gvk is a supported resource that carries the
-// folder header annotation when written.
+// IsActive reports whether the resource is acted on by the pipeline (the default).
+func (r SupportedResource) IsActive() bool { return !r.Capabilities.Has(CapabilityDisabled) }
+
+// IsValidated reports whether the resource is validated on write (the default).
+func (r SupportedResource) IsValidated() bool { return !r.Capabilities.Has(CapabilitySkipValidation) }
+
+// IsFolderScoped reports whether the resource carries the folder annotation on write.
+func (r SupportedResource) IsFolderScoped() bool { return r.Capabilities.Has(CapabilityFolder) }
+
+// CapabilityList returns the declared capabilities as a sorted slice, for stable surfacing.
+func (r SupportedResource) CapabilityList() []string { return sets.List(r.Capabilities) }
+
+// ParseSupportedResources parses the shared resource grammar — one entry per resource:
+//
+//	<group>/<Kind>[:cap[:cap...]]
+//
+// Group and kind are split on the last "/" (groups contain dots and may be multi-segment).
+// Capabilities are ":"-separated and must be in KnownCapabilities. Parsing is strict and
+// fails fast at startup: each entry must be "<group>/<Kind>" with a non-empty, dotted group
+// and non-empty kind; capabilities must be known and not repeated; and a resource ID must
+// not appear twice. Whitespace is trimmed and empty entries are skipped.
+func ParseSupportedResources(entries []string) ([]SupportedResource, error) {
+	out := make([]SupportedResource, 0, len(entries))
+	seen := sets.New[schema.GroupKind]()
+	for _, raw := range entries {
+		entry := strings.TrimSpace(raw)
+		if entry == "" {
+			continue
+		}
+
+		parts := strings.Split(entry, ":")
+		id := strings.TrimSpace(parts[0])
+		slash := strings.LastIndex(id, "/")
+		if slash <= 0 || slash == len(id)-1 {
+			return nil, fmt.Errorf("invalid provisioning resource %q: expected <group>/<Kind>", entry)
+		}
+		group, kind := id[:slash], id[slash+1:]
+		if !strings.Contains(group, ".") {
+			return nil, fmt.Errorf("invalid provisioning resource %q: group %q must contain a dot", entry, group)
+		}
+
+		gk := schema.GroupKind{Group: group, Kind: kind}
+		if seen.Has(gk) {
+			return nil, fmt.Errorf("duplicate provisioning resource %q", id)
+		}
+		seen.Insert(gk)
+
+		caps := sets.New[string]()
+		for _, c := range parts[1:] {
+			c = strings.TrimSpace(c)
+			if !KnownCapabilities.Has(c) {
+				return nil, fmt.Errorf("invalid provisioning resource %q: unknown capability %q", entry, c)
+			}
+			if caps.Has(c) {
+				return nil, fmt.Errorf("invalid provisioning resource %q: duplicate capability %q", entry, c)
+			}
+			caps.Insert(c)
+		}
+
+		out = append(out, SupportedResource{GroupKind: gk, Capabilities: caps})
+	}
+	return out, nil
+}
+
+// supportsFolderAnnotation reports whether gvk is a supported, folder-scoped resource that
+// carries the folder header annotation when written.
 func supportsFolderAnnotation(supported []SupportedResource, gvk schema.GroupVersionKind) bool {
 	gk := gvk.GroupKind()
 	for _, r := range supported {
-		if r.EnableFolderSupport && r.GroupKind == gk {
+		if r.IsFolderScoped() && r.GroupKind == gk {
 			return true
 		}
 	}
@@ -71,8 +147,8 @@ func supportsFolderAnnotation(supported []SupportedResource, gvk schema.GroupVer
 }
 
 // isSupportedResource reports whether gvk's group+kind is in the supported set. Since
-// SupportedResources() already returns only the enabled set, a match means the resource
-// is both supported and enabled for provisioning.
+// SupportedResources() returns only the active set, a match means the resource is both
+// supported and active for provisioning.
 func isSupportedResource(supported []SupportedResource, gvk schema.GroupVersionKind) bool {
 	gk := gvk.GroupKind()
 	for _, r := range supported {
@@ -88,7 +164,7 @@ func isSupportedResource(supported []SupportedResource, gvk schema.GroupVersionK
 func skipsStrictValidation(supported []SupportedResource, gvk schema.GroupVersionKind) bool {
 	gk := gvk.GroupKind()
 	for _, r := range supported {
-		if r.SkipStrictValidation && r.GroupKind == gk {
+		if !r.IsValidated() && r.GroupKind == gk {
 			return true
 		}
 	}
@@ -209,7 +285,7 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
 	return &clientFactory{
 		clientsProvider:    newSingleAPIClients(configProvider),
-		supportedResources: enabledResources(defaultSupportedResources(supported)),
+		supportedResources: activeResources(defaultSupportedResources(supported)),
 	}
 }
 
@@ -223,15 +299,15 @@ func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.
 		clientFactories[api] = clientFactory
 	}
 
-	return &multiClientFactory{clientFactories: clientFactories, supportedResources: enabledResources(defaultSupportedResources(supported))}
+	return &multiClientFactory{clientFactories: clientFactories, supportedResources: activeResources(defaultSupportedResources(supported))}
 }
 
-// enabledResources returns only the resources flagged as enabled. Disabled resources are
-// declared (and surfaced on the settings endpoint) but are not acted on by the pipeline.
-func enabledResources(all []SupportedResource) []SupportedResource {
+// activeResources returns only the active resources. Disabled resources are declared (and
+// surfaced on the settings endpoint) but are not acted on by the pipeline.
+func activeResources(all []SupportedResource) []SupportedResource {
 	out := make([]SupportedResource, 0, len(all))
 	for _, r := range all {
-		if r.Enabled {
+		if r.IsActive() {
 			out = append(out, r)
 		}
 	}

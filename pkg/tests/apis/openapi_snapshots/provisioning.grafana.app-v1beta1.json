@@ -6051,14 +6051,16 @@
         "type": "object",
         "required": [
           "group",
-          "kind",
-          "enabled"
+          "kind"
         ],
         "properties": {
-          "enabled": {
-            "description": "Enabled reports whether the resource can currently be managed through provisioning.",
-            "type": "boolean",
-            "default": false
+          "capabilities": {
+            "description": "Capabilities is the set of declared capabilities. Known values: \"folder\" (folder-scoped), \"skipvalidation\" (skip validation on write), \"disabled\" (declared but not acted on). A resource is active unless \"disabled\" is present.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
           },
           "group": {
             "description": "Group is the API group of the resource (e.g. \"dashboard.grafana.app\").",
@@ -6069,10 +6071,6 @@
             "description": "Kind is the kind of the resource (e.g. \"Dashboard\").",
             "type": "string",
             "default": ""
-          },
-          "enableFolderSupport": {
-            "description": "EnableFolderSupport reports whether the resource is saved inside a folder (as opposed to being org-scoped).",
-            "type": "boolean"
           }
         }
       },

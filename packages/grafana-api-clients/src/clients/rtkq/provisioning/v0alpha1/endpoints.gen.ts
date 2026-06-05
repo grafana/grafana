@@ -2285,14 +2285,12 @@ export type WebhookResponse = {
   kind?: string;
 };
 export type SupportedResource = {
-  /** Enabled reports whether the resource can currently be managed through provisioning. */
-  enabled: boolean;
+  /** Capabilities is the set of declared capabilities. Known values: "folder" (folder-scoped), "skipvalidation" (skip validation on write), "disabled" (declared but not acted on). A resource is active unless "disabled" is present. */
+  capabilities?: string[];
   /** Group is the API group of the resource (e.g. "dashboard.grafana.app"). */
   group: string;
   /** Kind is the kind of the resource (e.g. "Dashboard"). */
   kind: string;
-  /** EnableFolderSupport reports whether the resource is saved inside a folder (as opposed to being org-scoped). */
-  enableFolderSupport?: boolean;
 };
 export type RepositoryView = {
   /** For git, this is the target branch */

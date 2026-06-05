@@ -802,14 +802,10 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("allowed_targets", strings.Join(opts.ProvisioningAllowedTargets, "|"))
 		require.NoError(t, err)
 	}
-	for _, r := range opts.ProvisioningResources {
-		section, err := getOrCreateSection(fmt.Sprintf("provisioning.resources.%s.%s", r.Kind, r.Group))
+	if len(opts.ProvisioningResources) > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
-		_, err = section.NewKey("enableFolderSupport", fmt.Sprintf("%t", r.EnableFolderSupport))
-		require.NoError(t, err)
-		_, err = section.NewKey("enabled", fmt.Sprintf("%t", r.Enabled))
-		require.NoError(t, err)
-		_, err = section.NewKey("skipStrictValidation", fmt.Sprintf("%t", r.SkipStrictValidation))
+		_, err = provisioningSect.NewKey("resources", strings.Join(opts.ProvisioningResources, ", "))
 		require.NoError(t, err)
 	}
 	if opts.ProvisioningAllowInsecure {
@@ -1019,7 +1015,7 @@ type GrafanaOpts struct {
 	ProvisioningAllowedTargets                           []string
 	ProvisioningAllowInsecure                            bool
 	ProvisioningRepositoryTypes                          []string
-	ProvisioningResources                                []setting.ProvisioningResource
+	ProvisioningResources                                []string
 	ProvisioningMaxResourcesPerRepository                int64
 	ProvisioningMaxRepositories                          int64
 	ProvisioningFolderAPIVersion                         string

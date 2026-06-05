@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -80,7 +81,7 @@ func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
 
 		clients := NewMockResourceClients(t)
 		clients.EXPECT().SupportedResources().Return([]SupportedResource{
-			{GroupKind: replaceTestGVK.GroupKind(), EnableFolderSupport: false},
+			{GroupKind: replaceTestGVK.GroupKind(), Capabilities: sets.New[string]()},
 		})
 
 		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
@@ -110,7 +111,7 @@ func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
 
 		clients := NewMockResourceClients(t)
 		clients.EXPECT().SupportedResources().Return([]SupportedResource{
-			{GroupKind: replaceTestGVK.GroupKind(), EnableFolderSupport: true},
+			{GroupKind: replaceTestGVK.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
 		})
 
 		// Root-level file: EnsureFolderPathExist resolves to the repository root

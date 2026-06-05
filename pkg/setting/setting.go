@@ -156,8 +156,10 @@ type Cfg struct {
 	// Grafana API Server
 	DisableControllers bool
 	// Provisioning config
-	ProvisioningAllowedTargets                []string
-	ProvisioningResources                     []ProvisioningResource // resources that can be managed from the UI (default: dashboards, folders)
+	ProvisioningAllowedTargets []string
+	// ProvisioningResources is the configured set of provisionable resources, each as a
+	// "<group>/<Kind>[:cap...]" token (parsed by resources.ParseSupportedResources at startup).
+	ProvisioningResources                     []string
 	ProvisioningAllowImageRendering           bool
 	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
 	ProvisioningMinSyncInterval               time.Duration
@@ -2486,8 +2488,9 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
 		cfg.ProvisioningAllowedTargets = []string{"folder"}
 	}
-	if err := cfg.readProvisioningResources(iniFile); err != nil {
-		return err
+	cfg.ProvisioningResources = iniFile.Section("provisioning").Key("resources").Strings(",")
+	if len(cfg.ProvisioningResources) == 0 {
+		cfg.ProvisioningResources = defaultProvisioningResources()
 	}
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 	cfg.ProvisioningAllowInsecure = iniFile.Section("provisioning").Key("allow_insecure").MustBool(false)
@@ -2509,66 +2512,17 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	return nil
 }
 
-// ProvisioningResource describes one resource type that can be managed from the UI
-// through provisioning. It is identified by group + kind; the API version and plural
-// resource are resolved at runtime via discovery, so they are not configured here.
-type ProvisioningResource struct {
-	Group string
-	Kind  string
-	// EnableFolderSupport reports whether the resource is saved inside a folder
-	// (carries the folder header annotation), as opposed to being org-scoped.
-	EnableFolderSupport bool
-	// Enabled reports whether the resource can currently be managed through provisioning.
-	// Disabled resources are still declared (and surfaced) but are not acted on.
-	Enabled bool
-	// SkipStrictValidation requests FieldValidation=Ignore when writing the resource,
-	// exempting it from strict field validation on the apiserver. Opt-in per resource.
-	SkipStrictValidation bool
-}
-
-// readProvisioningResources reads the set of provisionable resources from
-// [provisioning.resources.<kind>.<group>] sections, mirroring the per-resource
-// [unified_storage.<resource>.<group>] convention. Each section declares one resource:
-//
-//	[provisioning.resources.Dashboard.dashboard.grafana.app]
-//	enableFolderSupport = true
-//	enabled = true
-//
-// When no sections are configured it falls back to dashboards + folders.
-func (cfg *Cfg) readProvisioningResources(iniFile *ini.File) error {
-	const prefix = "provisioning.resources."
-
-	var out []ProvisioningResource
-	for _, section := range iniFile.Sections() {
-		name := section.Name()
-		if !strings.HasPrefix(name, prefix) {
-			continue
-		}
-
-		// The remainder is "<kind>.<group>"; the kind has no dots, the group does.
-		kindAndGroup := strings.SplitN(name[len(prefix):], ".", 2)
-		if len(kindAndGroup) != 2 || kindAndGroup[0] == "" || kindAndGroup[1] == "" {
-			return fmt.Errorf("invalid provisioning resource section %q: expected [%s<kind>.<group>]", name, prefix)
-		}
-
-		out = append(out, ProvisioningResource{
-			Kind:                 kindAndGroup[0],
-			Group:                kindAndGroup[1],
-			EnableFolderSupport:  section.Key("enableFolderSupport").MustBool(false),
-			Enabled:              section.Key("enabled").MustBool(true),
-			SkipStrictValidation: section.Key("skipStrictValidation").MustBool(false),
-		})
+// defaultProvisioningResources is the built-in set used when [provisioning] resources is
+// unset. Tokens use the shared "<group>/<Kind>[:cap...]" grammar (see
+// resources.ParseSupportedResources). Library panels and playlists are declared but
+// disabled by default.
+func defaultProvisioningResources() []string {
+	return []string{
+		"folder.grafana.app/Folder:folder",
+		"dashboard.grafana.app/Dashboard:folder",
+		"dashboard.grafana.app/LibraryPanel:folder:disabled",
+		"playlist.grafana.app/Playlist:disabled",
 	}
-
-	if len(out) == 0 {
-		out = []ProvisioningResource{
-			{Group: "folder.grafana.app", Kind: "Folder", EnableFolderSupport: true, Enabled: true},
-			{Group: "dashboard.grafana.app", Kind: "Dashboard", EnableFolderSupport: true, Enabled: true},
-		}
-	}
-
-	cfg.ProvisioningResources = out
-	return nil
 }
 
 func (cfg *Cfg) readPublicDashboardsSettings() {

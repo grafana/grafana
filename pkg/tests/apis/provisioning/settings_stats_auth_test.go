@@ -9,7 +9,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -119,26 +118,28 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 		require.NoError(t, result.Error(), "should be able to GET settings")
 		require.NoError(t, result.Into(settings), "should be able to unmarshal settings response")
 
-		// The default config (conf/defaults.ini) declares folders + dashboards (enabled) and
-		// library panels + playlists (disabled). All are surfaced with their full descriptor.
+		// The default config (conf/defaults.ini) declares folders + dashboards (active) and
+		// library panels + playlists (disabled). All are surfaced with their capabilities.
 		require.ElementsMatch(t, []provisioning.SupportedResource{
-			{Group: "folder.grafana.app", Kind: "Folder", EnableFolderSupport: true, Enabled: true},
-			{Group: "dashboard.grafana.app", Kind: "Dashboard", EnableFolderSupport: true, Enabled: true},
-			{Group: "dashboard.grafana.app", Kind: "LibraryPanel", EnableFolderSupport: true, Enabled: false},
-			{Group: "playlist.grafana.app", Kind: "Playlist", EnableFolderSupport: false, Enabled: false},
+			{Group: "folder.grafana.app", Kind: "Folder", Capabilities: []string{"folder"}},
+			{Group: "dashboard.grafana.app", Kind: "Dashboard", Capabilities: []string{"folder"}},
+			{Group: "dashboard.grafana.app", Kind: "LibraryPanel", Capabilities: []string{"disabled", "folder"}},
+			{Group: "playlist.grafana.app", Kind: "Playlist", Capabilities: []string{"disabled"}},
 		}, settings.AvailableResources, "settings should surface the default supported resources")
 	})
 }
 
-// TestIntegrationProvisioning_SettingsExtraResources verifies that a resource added (and
-// enabled) purely through configuration ([provisioning.resources.<kind>.<group>] sections)
-// is surfaced on the settings endpoint, i.e. adding a provisionable resource is a config change.
+// TestIntegrationProvisioning_SettingsExtraResources verifies that a resource added purely
+// through configuration (the [provisioning] resources token list) is surfaced on the
+// settings endpoint, i.e. adding a provisionable resource is a config change.
 func TestIntegrationProvisioning_SettingsExtraResources(t *testing.T) {
 	helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
-		// Added on top of the defaults from conf/defaults.ini. The kind need not be served:
-		// the settings endpoint surfaces the configured descriptor without discovery.
-		opts.ProvisioningResources = []setting.ProvisioningResource{
-			{Group: "example.grafana.app", Kind: "Example", EnableFolderSupport: false, Enabled: true},
+		// Overrides the defaults. The kind need not be served: the settings endpoint surfaces
+		// the configured descriptor without discovery.
+		opts.ProvisioningResources = []string{
+			"folder.grafana.app/Folder:folder",
+			"dashboard.grafana.app/Dashboard:folder",
+			"example.grafana.app/Example",
 		}
 	})
 	ctx := context.Background()
@@ -153,7 +154,7 @@ func TestIntegrationProvisioning_SettingsExtraResources(t *testing.T) {
 	require.NoError(t, result.Into(settings), "should be able to unmarshal settings response")
 
 	require.Contains(t, settings.AvailableResources, provisioning.SupportedResource{
-		Group: "example.grafana.app", Kind: "Example", EnableFolderSupport: false, Enabled: true,
+		Group: "example.grafana.app", Kind: "Example",
 	}, "a resource added through config should be surfaced on the settings endpoint")
 }
 

@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -180,14 +181,14 @@ spec:
 	}
 
 	t.Run("skips strict validation when the resource is configured to", func(t *testing.T) {
-		p := newParser([]SupportedResource{{GroupKind: DashboardKind.GroupKind(), Enabled: true, SkipStrictValidation: true}})
+		p := newParser([]SupportedResource{{GroupKind: DashboardKind.GroupKind(), Capabilities: sets.New(CapabilitySkipValidation)}})
 		parsed, err := p.Parse(context.Background(), &repository.FileInfo{Data: dashboardFile})
 		require.NoError(t, err)
 		require.True(t, parsed.SkipStrictValidation)
 	})
 
 	t.Run("strict by default", func(t *testing.T) {
-		p := newParser([]SupportedResource{{GroupKind: DashboardKind.GroupKind(), Enabled: true}})
+		p := newParser([]SupportedResource{{GroupKind: DashboardKind.GroupKind(), Capabilities: sets.New[string]()}})
 		parsed, err := p.Parse(context.Background(), &repository.FileInfo{Data: dashboardFile})
 		require.NoError(t, err)
 		require.False(t, parsed.SkipStrictValidation)
@@ -198,7 +199,7 @@ func TestParser_RejectsUnsupportedResource(t *testing.T) {
 	clients := NewMockResourceClients(t)
 	// Only folders are enabled, so a dashboard file is not supported and must be rejected.
 	clients.EXPECT().SupportedResources().Return([]SupportedResource{
-		{GroupKind: FolderKind.GroupKind(), Enabled: true},
+		{GroupKind: FolderKind.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
 	}).Maybe()
 	clients.On("ForKind", mock.Anything, mock.Anything).
 		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()

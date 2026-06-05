@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
 
@@ -221,22 +220,17 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		provisioning.GROUP:                provisioningServerURL,
 	}
 
-	supportedResources := make([]resources.SupportedResource, 0, len(c.Settings.ProvisioningResources))
-	for _, r := range c.Settings.ProvisioningResources {
-		supportedResources = append(supportedResources, resources.SupportedResource{
-			GroupKind:            schema.GroupKind{Group: r.Group, Kind: r.Kind},
-			EnableFolderSupport:  r.EnableFolderSupport,
-			Enabled:              r.Enabled,
-			SkipStrictValidation: r.SkipStrictValidation,
-		})
+	supportedResources, err := resources.ParseSupportedResources(c.Settings.ProvisioningResources)
+	if err != nil {
+		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
 
 	// Dashboards and folders have dedicated server URLs; everything else is served by the
-	// aggregated API server. Skip the built-in groups, then ensure every other enabled
+	// aggregated API server. Skip the built-in groups, then ensure every other active
 	// resource's group resolves to the aggregated server — failing loudly if a resource needs
 	// it and it is unset, rather than hitting "no clients provider for group" at request time.
 	for _, r := range supportedResources {
-		if !r.Enabled {
+		if !r.IsActive() {
 			continue
 		}
 		switch r.Group {
