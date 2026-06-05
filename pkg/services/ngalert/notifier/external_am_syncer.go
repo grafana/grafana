@@ -84,6 +84,13 @@ const (
 	ReasonUnclassified SyncReason = "unclassified"
 )
 
+// errNoUpstreamConfig is returned by fetchMimirConfig when the upstream has no
+// alertmanager configuration to import — whether Mimir responds with 404 (no
+// record ever stored for the tenant) or 200 with an empty alertmanager_config
+// field. fetchExtraConfig translates the sentinel into a SyncError tagged
+// ReasonNoUpstreamConfig so both shapes share one classification path.
+var errNoUpstreamConfig = errors.New("upstream Mimir has no alertmanager configuration to import")
+
 func (r SyncReason) Label() string { return string(r) }
 
 func (r SyncReason) ConditionReason() string {
@@ -494,12 +501,11 @@ func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, ui
 	}
 
 	mimirCfg, hash, err := s.fetchMimirConfig(fetchCtx, ds)
+	if errors.Is(err, errNoUpstreamConfig) {
+		return v1.ExtraConfiguration{}, 0, &SyncError{Reason: ReasonNoUpstreamConfig, Cause: err}
+	}
 	if err != nil {
 		return v1.ExtraConfiguration{}, 0, &SyncError{Reason: ReasonMimirFetch, Cause: fmt.Errorf("fetch upstream config: %w", err)}
-	}
-
-	if mimirCfg.AlertmanagerConfig == "" {
-		return v1.ExtraConfiguration{}, 0, &SyncError{Reason: ReasonNoUpstreamConfig, Cause: fmt.Errorf("upstream Mimir has no alertmanager configuration to import")}
 	}
 
 	return v1.ExtraConfiguration{
@@ -624,6 +630,14 @@ func (s *ExternalAMSyncer) fetchMimirConfig(ctx context.Context, ds *datasources
 	}
 	defer func() { _ = resp.Body.Close() }()
 
+	// Mimir returns 404 when no alertmanager_config has ever been stored for
+	// the tenant — semantically "nothing to import". Funnel into the same
+	// errNoUpstreamConfig sentinel that the 200/empty-body branch below uses,
+	// so both shapes get the same NoUpstreamConfig classification upstream.
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, 0, errNoUpstreamConfig
+	}
+
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
 		return nil, 0, fmt.Errorf("unexpected HTTP status %d: %s", resp.StatusCode, string(body))
@@ -637,6 +651,10 @@ func (s *ExternalAMSyncer) fetchMimirConfig(ctx context.Context, ds *datasources
 	var cfg mimirConfigResponse
 	if err := yaml.Unmarshal(body, &cfg); err != nil {
 		return nil, 0, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	if cfg.AlertmanagerConfig == "" {
+		return nil, 0, errNoUpstreamConfig
 	}
 
 	h := fnv.New64a()
