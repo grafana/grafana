@@ -345,6 +345,11 @@ function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
     <div className={styles.container}>
       {model.conditions?.map(({ query, operator, reducer, evaluator }, index) => {
         const isRange = isRangeEvaluator(evaluator);
+        const params = evaluator.params;
+        let thresholdDisplay = '';
+        if (params) {
+          thresholdDisplay = isRange ? `(${params[0]}; ${params[1]})` : String(params[0]);
+        }
 
         return (
           <React.Fragment key={index}>
@@ -357,11 +362,9 @@ function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
             <div className={styles.blue}>
               <Trans i18nKey="alerting.classic-condition-viewer.of">OF</Trans>
             </div>
-            <div className={styles.bold}>{query.params[0]}</div>
+            <div className={styles.bold}>{query.params?.[0]}</div>
             <div className={styles.blue}>{evalFunctions[evaluator.type].text}</div>
-            <div className={styles.bold}>
-              {isRange ? `(${evaluator.params[0]}; ${evaluator.params[1]})` : evaluator.params[0]}
-            </div>
+            <div className={styles.bold}>{thresholdDisplay}</div>
           </React.Fragment>
         );
       })}
@@ -486,7 +489,7 @@ function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
         </div>
         <div className={styles.value}>{expression}</div>
 
-        {evaluator && (
+        {evaluator?.params && (
           <>
             <div className={styles.blue}>{thresholdFunction?.label}</div>
             <div className={styles.bold}>
@@ -496,7 +499,7 @@ function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
         )}
       </div>
       <div className={styles.container}>
-        {unloadEvaluator && (
+        {unloadEvaluator?.params && (
           <>
             <div className={styles.label}>
               <Trans i18nKey="alerting.threshold-expression-viewer.stop-alerting-when">

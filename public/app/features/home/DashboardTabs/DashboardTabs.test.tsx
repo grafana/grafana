@@ -1,14 +1,18 @@
 import { http, HttpResponse } from 'msw';
+import { useEffect, type ReactNode } from 'react';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
 import { setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
 import { DashboardTabs } from './DashboardTabs';
+import { type HomepageTabExtensionProps } from './types';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -47,6 +51,25 @@ beforeEach(() => {
   window.localStorage.removeItem(impressionKey);
   seedStars([]);
 });
+
+const createDashboardTabsExtensionComponent = (
+  pluginId: string,
+  id: string,
+  label: string,
+  content: ReactNode,
+  href?: string
+): ComponentTypeWithExtensionMeta<{}> =>
+  createComponentWithMeta(
+    {
+      pluginId,
+      title: label,
+      component: (({ register, active }: HomepageTabExtensionProps) => {
+        useEffect(() => register({ id, label, href }), [register]);
+        return active ? <div>{content}</div> : null;
+      }) as React.ComponentType,
+    },
+    PluginExtensionPoints.HomepageTabs
+  );
 
 describe('DashboardTabs', () => {
   it('renders Recent tab as active by default and shows recent dashboards', async () => {
@@ -128,5 +151,43 @@ describe('DashboardTabs', () => {
     await waitFor(() => {
       expect(screen.getByText('Starred Dashboard 1')).toBeInTheDocument();
     });
+  });
+
+  it('renders extension tabs from plugins', async () => {
+    const extensionComponents = [
+      createDashboardTabsExtensionComponent(
+        'grafana-setupguide-app',
+        'tab-1',
+        'Plugin Tab 1',
+        <div>Content for Plugin Tab 1</div>
+      ),
+      createDashboardTabsExtensionComponent('grafana-setupguide-app', 'tab-2', 'Plugin Tab 2', null, '/test'),
+      createDashboardTabsExtensionComponent(
+        'grafana-untrusted-app',
+        'tab-3',
+        'Plugin Tab 3',
+        <div>Content for Plugin Tab 3</div>
+      ),
+    ];
+
+    setPluginComponentsHook(() => ({
+      components: extensionComponents,
+      isLoading: false,
+    }));
+
+    const { user } = render(<DashboardTabs />);
+
+    expect(await screen.findByRole('tab', { name: 'Plugin Tab 1' })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: 'Plugin Tab 1' })).toHaveAttribute('aria-selected', 'true');
+    });
+
+    expect(await screen.findByRole('tab', { name: 'Plugin Tab 2' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Plugin Tab 3' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: 'Plugin Tab 1' }));
+    expect(await screen.findByText('Content for Plugin Tab 1')).toBeInTheDocument();
+
+    expect(screen.getByRole('tab', { name: 'Plugin Tab 2' })).toHaveAttribute('href', '/test');
   });
 });

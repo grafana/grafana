@@ -3715,29 +3715,6 @@
       ]
     },
     "/repositories/{name}/webhook": {
-      "get": {
-        "tags": ["Repository"],
-        "description": "connect GET requests to webhook of Repository",
-        "operationId": "getRepositoryWebhook",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/WebhookResponse"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "version": "v1beta1",
-          "kind": "WebhookResponse"
-        }
-      },
       "post": {
         "tags": ["Repository"],
         "description": "Currently only supports github webhooks",
@@ -3866,11 +3843,28 @@
           }
         }
       },
+      "BranchOptions": {
+        "type": "object",
+        "properties": {
+          "enforceTemplate": {
+            "description": "When true, the branch name field in Save drawers is read-only.",
+            "type": "boolean"
+          },
+          "nameTemplate": {
+            "description": "Template for the branch name created in branch workflow. Supports variables: {{action}}, {{resourceKind}}, {{title}}, {{userLogin}}, {{random}}. {{random}} is a 6-character alphanumeric token generated at render time to avoid collisions. The result is sanitised to a valid git ref (lowercase, alphanumeric + dashes, max 100 chars). When empty, the current auto-generated name is preserved.",
+            "type": "string"
+          }
+        }
+      },
       "CommitOptions": {
         "type": "object",
         "properties": {
+          "enforceTemplate": {
+            "description": "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. The Grafana-saved-by trailer is always appended regardless of this setting.",
+            "type": "boolean"
+          },
           "singleResourceMessageTemplate": {
-            "description": "Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}. When empty, a built-in default is used (e.g. \"Save dashboard: <title>\").",
+            "description": "Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}, {{userName}}, {{userLogin}}, {{userEmail}}. When empty, a built-in default is used (e.g. \"Save dashboard: <title>\").",
             "type": "string"
           }
         }
@@ -4095,7 +4089,7 @@
             "type": "string"
           },
           "message": {
-            "description": "Message to use when committing the changes in a single commit",
+            "description": "Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty.",
             "type": "string"
           },
           "path": {
@@ -4629,6 +4623,10 @@
           "fixFolderMetadata": {
             "description": "Options when the action is `fix-folder-metadata`"
           },
+          "message": {
+            "description": "Commit message for this job. Applies to job actions that produce commits (delete, move, migrate, push, fixFolderMetadata). When empty, the backend falls back to the action-specific message field (ExportJobOptions.Message, MigrateJobOptions.Message) for backwards compatibility, then to a built-in default.",
+            "type": "string"
+          },
           "migrate": {
             "description": "Required when the action is `migrate`"
           },
@@ -4736,7 +4734,7 @@
         "type": "object",
         "properties": {
           "message": {
-            "description": "Message to use when committing the changes in a single commit",
+            "description": "Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty.",
             "type": "string"
           },
           "resources": {
@@ -4794,6 +4792,19 @@
           },
           "url": {
             "description": "URL to the originator (eg, PR URL)",
+            "type": "string"
+          }
+        }
+      },
+      "PullRequestOptions": {
+        "type": "object",
+        "properties": {
+          "enforceTemplate": {
+            "description": "When true, the PR title field in Save drawers is read-only.",
+            "type": "boolean"
+          },
+          "titleTemplate": {
+            "description": "Template for pull request titles. Supports the same variables as BranchOptions.NameTemplate ({{random}} is available but rarely useful here). When empty, the first line of the commit message is used.",
             "type": "string"
           }
         }
@@ -4925,6 +4936,9 @@
           "bitbucket": {
             "description": "The repository on Bitbucket. Mutually exclusive with local | github | git."
           },
+          "branch": {
+            "description": "Branch naming options. Only meaningful when Workflows includes \"branch\"."
+          },
           "commit": {
             "description": "Commit message options. Currently only contains the template used by single-resource UI operations; future siblings (bulk, sync) can live here."
           },
@@ -4949,6 +4963,9 @@
           },
           "local": {
             "description": "The repository on the local file system. Mutually exclusive with local | github."
+          },
+          "pullRequest": {
+            "description": "Pull request options. Only meaningful when Workflows includes \"branch\"."
           },
           "sync": {
             "description": "Sync settings -- how values are pulled from the repository into grafana",

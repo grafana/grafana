@@ -12,6 +12,7 @@ import {
 import { GrafanaEdition } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getBackendSrv, setBackendSrv } from '@grafana/runtime';
+import { updateAppPluginSettings } from '@grafana/runtime/unstable';
 import { configureStore } from 'app/store/configureStore';
 
 import * as api from '../api';
@@ -35,6 +36,13 @@ jest.mock('@grafana/runtime', () => {
 
   return runtime;
 });
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  updateAppPluginSettings: jest.fn(),
+}));
+
+const updateAppPluginSettingsMock = jest.mocked(updateAppPluginSettings);
 
 jest.mock('../hooks/usePluginConfig.tsx', () => ({ usePluginConfig: jest.fn(() => ({ value: { meta: {} } })) }));
 
@@ -518,9 +526,6 @@ describe('Plugin details page', () => {
       const name = 'Akumuli';
 
       // @ts-ignore
-      api.updatePluginSettings = jest.fn();
-
-      // @ts-ignore
       usePluginConfig.mockReturnValue({ value: { meta: { enabled: false, pinned: false, jsonData: {} } } });
 
       const { queryByText, getByRole, user } = renderPluginDetails({
@@ -537,16 +542,13 @@ describe('Plugin details page', () => {
       await user.click(getByRole('button', { name: /enable/i }));
 
       // Check if the API request was initiated
-      expect(api.updatePluginSettings).toHaveBeenCalledTimes(1);
-      expect(api.updatePluginSettings).toHaveBeenCalledWith(id, { enabled: true, pinned: true, jsonData: {} });
+      expect(updateAppPluginSettingsMock).toHaveBeenCalledTimes(1);
+      expect(updateAppPluginSettingsMock).toHaveBeenCalledWith(id, { enabled: true, pinned: true, jsonData: {} });
     });
 
     it('should be possible to disable an app plugin', async () => {
       const id = 'akumuli-datasource';
       const name = 'Akumuli';
-
-      // @ts-ignore
-      api.updatePluginSettings = jest.fn();
 
       // @ts-ignore
       usePluginConfig.mockReturnValue({ value: { meta: { enabled: true, pinned: true, jsonData: {} } } });
@@ -565,8 +567,8 @@ describe('Plugin details page', () => {
       await user.click(getByRole('button', { name: /disable/i }));
 
       // Check if the API request was initiated
-      expect(api.updatePluginSettings).toHaveBeenCalledTimes(1);
-      expect(api.updatePluginSettings).toHaveBeenCalledWith(id, { enabled: false, pinned: false, jsonData: {} });
+      expect(updateAppPluginSettingsMock).toHaveBeenCalledTimes(1);
+      expect(updateAppPluginSettingsMock).toHaveBeenCalledWith(id, { enabled: false, pinned: false, jsonData: {} });
     });
 
     it('should not display versions tab for plugins not published to gcom', async () => {
