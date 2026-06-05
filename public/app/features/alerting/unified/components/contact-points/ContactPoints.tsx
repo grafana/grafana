@@ -117,6 +117,17 @@ const ContactPointsTab = () => {
               <Trans i18nKey="alerting.contact-points.create">New contact point</Trans>
             </LinkButton>
           )}
+          <LinkButton
+            icon="download-alt"
+            aria-label={t(
+              'alerting.contact-points-tab.aria-label-export-new-contact-point',
+              'export new contact point'
+            )}
+            variant="secondary"
+            href="/alerting/notifications/receivers/export-new"
+          >
+            <Trans i18nKey="alerting.contact-points.export-new">Export new contact point</Trans>
+          </LinkButton>
           {exportContactPointsSupported && (
             <Button
               icon="download-alt"
