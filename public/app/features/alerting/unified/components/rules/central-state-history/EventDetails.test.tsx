@@ -23,7 +23,7 @@ jest.mock('../state-history/LokiStateHistory', () => ({
 describe('EventDetails', () => {
   it.each([
     { state: GrafanaAlertState.Error, error: 'query failed' },
-    { state: 'Alerting (Error)', error: 'datasource timeout' },
+    { state: 'Alerting (Error)' as const, error: 'datasource timeout' },
   ])('renders error message row when error is present (state: $state)', ({ state, error }) => {
     const record = {
       timestamp: Date.now(),
