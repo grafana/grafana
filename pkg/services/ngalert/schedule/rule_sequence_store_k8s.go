@@ -88,11 +88,11 @@ func convertRuleSequence(seq alertingv0alpha1.RuleSequence) (models.SchedulableR
 
 	recRefs := make([]string, 0, len(seq.Spec.RecordingRules))
 	for _, ref := range seq.Spec.RecordingRules {
-		recRefs = append(recRefs, string(ref.Uid))
+		recRefs = append(recRefs, string(ref.Name))
 	}
 	alertRefs := make([]string, 0, len(seq.Spec.AlertingRules))
 	for _, ref := range seq.Spec.AlertingRules {
-		alertRefs = append(alertRefs, string(ref.Uid))
+		alertRefs = append(alertRefs, string(ref.Name))
 	}
 
 	return models.SchedulableRuleSequence{

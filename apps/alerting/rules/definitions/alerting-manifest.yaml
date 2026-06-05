@@ -545,5 +545,6 @@ spec:
               type: object
           type: object
       scope: Namespaced
+      userReadable: false
     name: v0alpha1
     served: true

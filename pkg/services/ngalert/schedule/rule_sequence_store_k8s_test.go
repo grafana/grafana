@@ -87,10 +87,10 @@ func TestConvertRuleSequence(t *testing.T) {
 						Interval: alertingv0alpha1.RuleSequencePromDuration("30s"),
 					},
 					RecordingRules: []alertingv0alpha1.RuleSequenceRuleRef{
-						{Uid: "rec-1"}, {Uid: "rec-2"},
+						{Name: "rec-1"}, {Name: "rec-2"},
 					},
 					AlertingRules: []alertingv0alpha1.RuleSequenceRuleRef{
-						{Uid: "alert-1"},
+						{Name: "alert-1"},
 					},
 				},
 			},
@@ -110,7 +110,7 @@ func TestConvertRuleSequence(t *testing.T) {
 						Interval: alertingv0alpha1.RuleSequencePromDuration("1m"),
 					},
 					RecordingRules: []alertingv0alpha1.RuleSequenceRuleRef{
-						{Uid: "rec-1"},
+						{Name: "rec-1"},
 					},
 				},
 			},
@@ -130,7 +130,7 @@ func TestConvertRuleSequence(t *testing.T) {
 						Interval: alertingv0alpha1.RuleSequencePromDuration("not-a-duration"),
 					},
 					RecordingRules: []alertingv0alpha1.RuleSequenceRuleRef{
-						{Uid: "rec-1"},
+						{Name: "rec-1"},
 					},
 				},
 			},

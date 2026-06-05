@@ -3510,9 +3510,9 @@
       },
       "RuleSequenceRuleRef": {
         "type": "object",
-        "required": ["uid"],
+        "required": ["name"],
         "properties": {
-          "uid": {
+          "name": {
             "$ref": "#/components/schemas/RuleSequenceRuleUID"
           }
         },
@@ -3533,7 +3533,6 @@
             }
           },
           "recordingRules": {
-            "description": "Non-empty constraint is enforced in Go admission validation (validator.go),\nnot in CUE. Using [...#RuleRef] instead of [#RuleRef, ...#RuleRef] avoids\na codegen bug where the CUE default generates invalid Go/TS defaults\n(empty-UID RuleRef in Go, `uid: <nil>` in TypeScript).",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/RuleSequenceRuleRef"
