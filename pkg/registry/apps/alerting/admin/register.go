@@ -60,13 +60,23 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 
 // newExternalSyncDatasourceValidator builds the admission check for
 // spec.externalAlertmanagerSync.datasourceUid. Mirrors the legacy
-// admin_config HTTP API (pkg/services/ngalert/api/api_configuration.go:165)
+// admin_config HTTP API (pkg/services/ngalert/api/api_configuration.go:138)
 // so both surfaces accept the same inputs during the transition window.
-func newExternalSyncDatasourceValidator(ds datasources.DataSourceService) func(ctx context.Context, uid string) error {
+//
+// Check ordering is broad → narrow: feature flag (the global enabler) is
+// checked before the ini-precedence rejection so when both apply, the user
+// learns that sync isn't active at all before being told about the operator
+// override. The ini check still rejects silent-accept once the flag is on,
+// closing the snap-back risk if the operator later clears the override.
+func newExternalSyncDatasourceValidator(cfg *setting.Cfg, ds datasources.DataSourceService) func(ctx context.Context, uid string) error {
 	return func(ctx context.Context, uid string) error {
 		ofClient := openfeature.NewDefaultClient()
 		if !ofClient.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx)) {
 			return fmt.Errorf("external alertmanager UID sync is disabled on this instance")
+		}
+
+		if cfg != nil && cfg.UnifiedAlerting.ExternalAlertmanagerUID != "" {
+			return fmt.Errorf("external alertmanager UID is managed by the operator (unified_alerting.external_alertmanager_uid); cannot be changed via API")
 		}
 
 		ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -106,15 +116,15 @@ func RegisterAppInstaller(
 		return nil, nil
 	}
 
-	return NewAppInstaller(ng, datasourceService)
+	return NewAppInstaller(cfg, ng, datasourceService)
 }
 
-func NewAppInstaller(ng *ngalert.AlertNG, datasourceService datasources.DataSourceService) (*AppInstaller, error) {
+func NewAppInstaller(cfg *setting.Cfg, ng *ngalert.AlertNG, datasourceService datasources.DataSourceService) (*AppInstaller, error) {
 	installer := &AppInstaller{ng: ng}
 
 	localManifest := manifestdata.LocalManifest()
 	runtimeConfig := adminAppConfig.RuntimeConfig{
-		ValidateExternalSyncDatasource: newExternalSyncDatasourceValidator(datasourceService),
+		ValidateExternalSyncDatasource: newExternalSyncDatasourceValidator(cfg, datasourceService),
 	}
 
 	provider := simple.NewAppProvider(localManifest, runtimeConfig, adminApp.New)
