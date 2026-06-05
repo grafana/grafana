@@ -23,9 +23,9 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	sdkres "github.com/grafana/grafana-app-sdk/resource"
-	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -69,9 +69,8 @@ type FolderAPIBuilder struct {
 	// In the monolith, resourcePermissionsSvc is built lazily from restConfigProvider on first use:
 	// the loopback rest config is not ready at registration time. Mirrors the MT path, where
 	// resourcePermissionsSvc is injected directly (and restConfigProvider stays nil).
-	restConfigProvider         apiserver.RestConfigProvider
-	resourcePermissionsSvcOnce sync.Once
-	resourcePermissionsSvcErr  error
+	restConfigProvider       apiserver.RestConfigProvider
+	resourcePermissionsSvcMu sync.Mutex
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -286,29 +285,34 @@ var defaultPermissions = []map[string]any{
 // from restConfigProvider on first use in the monolith. Returns nil when neither a directly
 // injected client (MT) nor a restConfigProvider (monolith, flag enabled) is available.
 func (b *FolderAPIBuilder) resourcePermissionsClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+	// MT path: the client is injected at construction and never mutated, and restConfigProvider
+	// is nil, so this read is unsynchronized but safe (no concurrent writer).
+	if b.restConfigProvider == nil {
+		return b.resourcePermissionsSvc, nil
+	}
+
+	// Monolith path: build the client lazily on first use, since the loopback rest config isn't
+	// ready at registration time. The mutex serialises concurrent first-time creates (guarding the
+	// data race between the read below and the write). We deliberately do not cache failures: a
+	// transient error (e.g. a cancelled request context) must not permanently poison later creates.
+	b.resourcePermissionsSvcMu.Lock()
+	defer b.resourcePermissionsSvcMu.Unlock()
+
 	if b.resourcePermissionsSvc != nil {
 		return b.resourcePermissionsSvc, nil
 	}
-	if b.restConfigProvider == nil {
-		return nil, nil
+
+	cfg, err := b.restConfigProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get rest config: %w", err)
 	}
-
-	b.resourcePermissionsSvcOnce.Do(func() {
-		cfg, err := b.restConfigProvider.GetRestConfig(ctx)
-		if err != nil {
-			b.resourcePermissionsSvcErr = fmt.Errorf("get rest config: %w", err)
-			return
-		}
-		dyn, err := dynamic.NewForConfig(cfg)
-		if err != nil {
-			b.resourcePermissionsSvcErr = fmt.Errorf("create dynamic client: %w", err)
-			return
-		}
-		client := dyn.Resource(iamv0alpha1.ResourcePermissionInfo.GroupVersionResource())
-		b.resourcePermissionsSvc = &client
-	})
-
-	return b.resourcePermissionsSvc, b.resourcePermissionsSvcErr
+	dyn, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+	client := dyn.Resource(iamv0alpha1.ResourcePermissionInfo.GroupVersionResource())
+	b.resourcePermissionsSvc = &client
+	return b.resourcePermissionsSvc, nil
 }
 
 func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key *resourcepb.ResourceKey, id authlib.AuthInfo, obj utils.GrafanaMetaAccessor) error {
