@@ -19,7 +19,7 @@ export function PanelEditPanelWrapper({ panel, tableView, dashboard }: PanelEdit
   }
 
   return (
-    <SoloPanelContextProvider value={soloPanelContext!} singleMatch={true} dashboard={dashboard}>
+    <SoloPanelContextProvider value={soloPanelContext} singleMatch={true} dashboard={dashboard}>
       <dashboard.state.body.Component model={dashboard.state.body} />
     </SoloPanelContextProvider>
   );

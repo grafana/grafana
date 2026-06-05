@@ -1410,7 +1410,7 @@ export interface FeatureToggles {
   * @default false
   */
   queryEditorNextMultiSelect?: boolean;
-  /** 
+  /**
   * Enables team APIs in the app platform
   * @default false
   */
