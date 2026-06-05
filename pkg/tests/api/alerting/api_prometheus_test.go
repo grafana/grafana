@@ -1012,11 +1012,11 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 		require.Equal(t, folderUID2, body.Data.Groups[1].File)
 	}
 
-	// remove permissions from folderUID2
+	// remove permissions from folderUID2.
 	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, folderUID2)
 	apiClient.ReloadCachedPermissions(t)
 
-	// make sure that folderUID2 is not included in the response
+	// make sure that folderUID2 is not included in the response.
 	{
 		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec
@@ -1037,7 +1037,7 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 		require.Equal(t, folderUID1, body.Data.Groups[0].File)
 	}
 
-	// remove permissions from folderUID1
+	// remove permissions from folderUID1.
 	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, folderUID1)
 	apiClient.ReloadCachedPermissions(t)
 
