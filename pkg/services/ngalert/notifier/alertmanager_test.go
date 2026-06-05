@@ -232,7 +232,7 @@ receivers:
 					},
 				},
 			},
-			expectedError: "failed to get full alertmanager configuration",
+			expectedError: "invalid extra configuration: identifier is required",
 			skipInvalid:   false,
 		},
 	}

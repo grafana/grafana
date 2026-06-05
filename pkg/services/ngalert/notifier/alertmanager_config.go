@@ -91,7 +91,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 		}
 		mergeResult, err := merge.MergeExtraConfig(ctx, prepared)
 		if err != nil {
-			return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to get full alertmanager configuration: %w", err)
+			return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to merge external configuration: %w", err)
 		}
 		prepared = &mergeResult.Config
 	}
