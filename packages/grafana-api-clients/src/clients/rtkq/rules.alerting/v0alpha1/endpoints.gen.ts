@@ -1493,7 +1493,7 @@ export type RecordingRuleList = {
 };
 export type RuleSequenceRuleUid = string;
 export type RuleSequenceRuleRef = {
-  uid: RuleSequenceRuleUid;
+  name: RuleSequenceRuleUid;
 };
 export type RuleSequencePromDuration = string;
 export type RuleSequenceIntervalTrigger = {
@@ -1501,10 +1501,6 @@ export type RuleSequenceIntervalTrigger = {
 };
 export type RuleSequenceSpec = {
   alertingRules?: RuleSequenceRuleRef[];
-  /** Non-empty constraint is enforced in Go admission validation (validator.go),
-    not in CUE. Using [...#RuleRef] instead of [#RuleRef, ...#RuleRef] avoids
-    a codegen bug where the CUE default generates invalid Go/TS defaults
-    (empty-UID RuleRef in Go, `uid: <nil>` in TypeScript). */
   recordingRules: RuleSequenceRuleRef[];
   trigger: RuleSequenceIntervalTrigger;
 };
