@@ -5742,11 +5742,6 @@
         "label": "导出数据面板菜单"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "获取数据面板失败"
-      }
-    },
     "filters-overview": {
       "apply": "应用",
       "apply-close": "应用并关闭",
@@ -5902,11 +5897,6 @@
       "title-complete-git-hub-comment-clipboard": "将完整的 GitHub 评论复制到剪贴板",
       "title-get-help-with-this-panel": "获取此面板的帮助",
       "troubleshooting-docs": "故障排除文档"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "创建数据面板模型失败"
-      }
     },
     "inspect": {
       "data-tab": "数据",
@@ -6313,10 +6303,6 @@
         "tooltip": "打开原始数据面板"
       },
       "undo": "撤销"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "正在加载和初始化数据面板",
-      "title-not-found": "未找到 ID 为 {{panelId}} 的面板"
     },
     "source-link": {
       "title": "来源 ({{provider}})",

@@ -1,4 +1,4 @@
-package api
+package acimpl
 
 import (
 	"context"
@@ -64,7 +64,7 @@ func zanzanaResolve(resp *authzv1.ListResponse, action, scope string) ([]ac.Perm
 		return nil, nil
 	}
 	fake := &fakeZanzanaClient{listResp: resp}
-	r := &zanzanaPermissionResolver{client: fake}
+	r := &ZanzanaPermissionResolver{client: fake}
 	return r.listPermissions(context.Background(), "org:1", "user:parity", group, resource, verb, action, scope)
 }
 
@@ -74,7 +74,7 @@ func TestSearchPermissionsForIdentity_NoActionOrPrefix_ListsAllSupportedActions(
 			Items: []string{"uid-1"},
 		},
 	}
-	r := &zanzanaPermissionResolver{client: fake}
+	r := &ZanzanaPermissionResolver{client: fake}
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
@@ -108,7 +108,7 @@ func TestSearchPermissionsForIdentity_WithAction_DoesNotListAll(t *testing.T) {
 			Items: []string{"dash-1"},
 		},
 	}
-	r := &zanzanaPermissionResolver{client: fake}
+	r := &ZanzanaPermissionResolver{client: fake}
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
@@ -132,7 +132,7 @@ func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
 			Folders: []string{"keep-me", "drop-me"},
 		},
 	}
-	r := &zanzanaPermissionResolver{client: fake}
+	r := &ZanzanaPermissionResolver{client: fake}
 
 	perms, err := r.listPermissions(
 		context.Background(),
@@ -160,7 +160,7 @@ func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
 		fake := &fakeZanzanaClient{
 			listResp: &authzv1.ListResponse{All: true},
 		}
-		r := &zanzanaPermissionResolver{client: fake}
+		r := &ZanzanaPermissionResolver{client: fake}
 
 		perms, err := r.listPermissions(
 			context.Background(),
@@ -186,7 +186,7 @@ func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
 				Items: []string{"abc", "abcdef"},
 			},
 		}
-		r := &zanzanaPermissionResolver{client: fake}
+		r := &ZanzanaPermissionResolver{client: fake}
 
 		perms, err := r.listPermissions(
 			context.Background(),
@@ -216,7 +216,7 @@ func TestListPermissions_ScopeFilter_WildcardScopeQuery(t *testing.T) {
 				Folders: []string{"folder-1"},
 			},
 		}
-		r := &zanzanaPermissionResolver{client: fake}
+		r := &ZanzanaPermissionResolver{client: fake}
 
 		// Filter by dashboards:uid:* — legacy semantics: match "dashboards:uid:*", "dashboards:*", "*"
 		// but NOT individual dashboards:uid:<name>.
@@ -238,7 +238,7 @@ func TestListPermissions_ScopeFilter_WildcardScopeQuery(t *testing.T) {
 		fake := &fakeZanzanaClient{
 			listResp: &authzv1.ListResponse{All: true},
 		}
-		r := &zanzanaPermissionResolver{client: fake}
+		r := &ZanzanaPermissionResolver{client: fake}
 
 		perms, err := r.listPermissions(
 			context.Background(),
@@ -269,7 +269,7 @@ func TestSearchPermissionsForIdentity_ServiceAccount_SubjectType(t *testing.T) {
 			listResp: &authzv1.ListResponse{Items: []string{"dash-1"}},
 		},
 	}
-	r := &zanzanaPermissionResolver{client: fake}
+	r := &ZanzanaPermissionResolver{client: fake}
 
 	_, err := r.searchPermissionsForIdentity(
 		context.Background(),
@@ -291,7 +291,7 @@ func TestSearchPermissionsForIdentity_User_SubjectType(t *testing.T) {
 			listResp: &authzv1.ListResponse{Items: []string{"dash-1"}},
 		},
 	}
-	r := &zanzanaPermissionResolver{client: fake}
+	r := &ZanzanaPermissionResolver{client: fake}
 
 	_, err := r.searchPermissionsForIdentity(
 		context.Background(),
@@ -317,7 +317,7 @@ func TestSearchPermissionsForIdentity_UnsupportedAction_ReturnsEmpty(t *testing.
 			listResp: &authzv1.ListResponse{Items: []string{"something"}},
 		},
 	}
-	r := &zanzanaPermissionResolver{client: fake}
+	r := &ZanzanaPermissionResolver{client: fake}
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
@@ -345,7 +345,7 @@ func TestSearchPermissionsForIdentity_ActionPrefix_FiltersToMatchingActions(t *t
 			listResp: &authzv1.ListResponse{Items: []string{"uid-1"}},
 		},
 	}
-	r := &zanzanaPermissionResolver{client: fake}
+	r := &ZanzanaPermissionResolver{client: fake}
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
@@ -379,7 +379,7 @@ func TestSearchPermissionsForIdentity_ActionPrefix_WithScope(t *testing.T) {
 			Items: []string{"target-folder", "other-folder"},
 		},
 	}
-	r := &zanzanaPermissionResolver{client: fake}
+	r := &ZanzanaPermissionResolver{client: fake}
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
@@ -412,7 +412,7 @@ func TestSearchAllUsers_NoActionOrPrefix_ReturnsEmpty(t *testing.T) {
 	fake := &fakeZanzanaClient{
 		listResp: &authzv1.ListResponse{Items: []string{"uid-1"}},
 	}
-	r := &zanzanaPermissionResolver{client: fake}
+	r := &ZanzanaPermissionResolver{client: fake}
 
 	result, err := r.searchAllUsers(
 		context.Background(),
@@ -434,7 +434,7 @@ func TestSearchPermissionsForIdentity_NamespaceDerivedFromOrgID(t *testing.T) {
 			listResp: &authzv1.ListResponse{Items: []string{"dash-1"}},
 		},
 	}
-	r := &zanzanaPermissionResolver{client: fake}
+	r := &ZanzanaPermissionResolver{client: fake}
 
 	_, err := r.searchPermissionsForIdentity(
 		context.Background(),
@@ -458,7 +458,7 @@ func TestSearchPermissionsForIdentity_ResultKeyedByUserID(t *testing.T) {
 	fake := &fakeZanzanaClient{
 		listResp: &authzv1.ListResponse{Items: []string{"dash-1"}},
 	}
-	r := &zanzanaPermissionResolver{client: fake}
+	r := &ZanzanaPermissionResolver{client: fake}
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
@@ -479,7 +479,7 @@ func TestSearchPermissionsForIdentity_EmptyResult_OmitsUserKey(t *testing.T) {
 	fake := &fakeZanzanaClient{
 		listResp: &authzv1.ListResponse{},
 	}
-	r := &zanzanaPermissionResolver{client: fake}
+	r := &ZanzanaPermissionResolver{client: fake}
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
