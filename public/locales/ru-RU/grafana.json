@@ -5838,11 +5838,6 @@
         "label": "Меню экспорта дашборда"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Не удалось получить дашборд"
-      }
-    },
     "filters-overview": {
       "apply": "Применить",
       "apply-close": "Применить и закрыть",
@@ -5998,11 +5993,6 @@
       "title-complete-git-hub-comment-clipboard": "Копирование полного комментария GitHub в буфер обмена",
       "title-get-help-with-this-panel": "Получение помощи с панелью",
       "troubleshooting-docs": "Документация по устранению неполадок"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Не удалось создать модель дашборда"
-      }
     },
     "inspect": {
       "data-tab": "Данные",
@@ -6412,10 +6402,6 @@
         "tooltip": "Открытие исходного дашборда"
       },
       "undo": "Отменить"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Загрузка и инициализация дашборда",
-      "title-not-found": "Панель с идентификатором {{panelId}} не найдена"
     },
     "source-link": {
       "title": "Источник ({{provider}})",
