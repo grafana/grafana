@@ -237,7 +237,7 @@ func (integration *Integration) Encrypt(encryptFn EncryptFn) error {
 	return errors.Join(errs...)
 }
 
-func mapGetCaseInsensitive(settings map[string]any, key string) (string, any, bool) {
+func MapGetCaseInsensitive(settings map[string]any, key string) (string, any, bool) {
 	if val, ok := settings[key]; ok {
 		return key, val, true
 	}
@@ -251,7 +251,7 @@ func mapGetCaseInsensitive(settings map[string]any, key string) (string, any, bo
 }
 
 func extractFieldCaseInsensitive(settings map[string]any, path schema.IntegrationFieldPath) (string, bool, error) {
-	key, val, ok := mapGetCaseInsensitive(settings, path.Head())
+	key, val, ok := MapGetCaseInsensitive(settings, path.Head())
 	if !ok {
 		return "", false, nil
 	}
