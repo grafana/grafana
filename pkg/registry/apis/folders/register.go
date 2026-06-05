@@ -66,9 +66,8 @@ type FolderAPIBuilder struct {
 	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface
 	folderPermissionsSvc   accesscontrol.FolderPermissionsService // TODO: Remove this once kubernetesAuthzResourcePermissionApis is removed and the frontend is calling /apis directly to create root level folders
 
-	// In the monolith, resourcePermissionsSvc is built lazily from restConfigProvider on first use:
-	// the loopback rest config is not ready at registration time. Mirrors the MT path, where
-	// resourcePermissionsSvc is injected directly (and restConfigProvider stays nil).
+	// Embedded mode builds resourcePermissionsSvc lazily from restConfigProvider; MT injects
+	// resourcePermissionsSvc directly and leaves restConfigProvider nil.
 	restConfigProvider       apiserver.RestConfigProvider
 	resourcePermissionsSvcMu sync.Mutex
 }
@@ -92,10 +91,8 @@ func RegisterAPIService(cfg *setting.Cfg,
 		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
 	}
 
-	// When the AuthZ resource-permission /apis are enabled, default folder permissions are set
-	// via the App Platform path (grant-permissions annotation -> ResourcePermission resource),
-	// which writes to unified storage and syncs to Zanzana. The legacy folderPermissionsSvc path
-	// (SQL + GetSignedInUser) is intentionally left unwired so its folderStorage wrapper isn't installed.
+	// With the flag on, use the App Platform permission path and leave the legacy folderPermissionsSvc
+	// unwired (so its folderStorage wrapper isn't installed); otherwise keep the legacy path.
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
 		builder.restConfigProvider = restConfigProvider
 	} else {
@@ -281,20 +278,16 @@ var defaultPermissions = []map[string]any{
 	},
 }
 
-// resourcePermissionsClient returns the ResourcePermission dynamic client, building it lazily
-// from restConfigProvider on first use in the monolith. Returns nil when neither a directly
-// injected client (MT) nor a restConfigProvider (monolith, flag enabled) is available.
+// resourcePermissionsClient returns the ResourcePermission dynamic client, building it lazily from
+// restConfigProvider in embedded mode. Returns nil when no client is configured (e.g. flag off).
 func (b *FolderAPIBuilder) resourcePermissionsClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
-	// MT path: the client is injected at construction and never mutated, and restConfigProvider
-	// is nil, so this read is unsynchronized but safe (no concurrent writer).
+	// MT: injected directly, never mutated, restConfigProvider nil.
 	if b.restConfigProvider == nil {
 		return b.resourcePermissionsSvc, nil
 	}
 
-	// Monolith path: build the client lazily on first use, since the loopback rest config isn't
-	// ready at registration time. The mutex serialises concurrent first-time creates (guarding the
-	// data race between the read below and the write). We deliberately do not cache failures: a
-	// transient error (e.g. a cancelled request context) must not permanently poison later creates.
+	// Embedded: build lazily (loopback config isn't ready at registration). The mutex avoids a
+	// data race; failures aren't cached so a transient error doesn't poison later creates.
 	b.resourcePermissionsSvcMu.Lock()
 	defer b.resourcePermissionsSvcMu.Unlock()
 
