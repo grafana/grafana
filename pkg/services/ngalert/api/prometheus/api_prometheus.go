@@ -261,7 +261,7 @@ func GetHealthFromQuery(v url.Values) (map[string]struct{}, error) {
 	for _, s := range v["health"] {
 		s = strings.ToLower(s)
 		switch s {
-		case "ok", "error", "nodata", "unknown":
+		case "ok", "error", "nodata":
 			health[s] = struct{}{}
 		default:
 			return nil, fmt.Errorf("unknown health '%s'", s)
