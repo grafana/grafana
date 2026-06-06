@@ -2,6 +2,8 @@ import {
   arrow,
   autoUpdate,
   FloatingArrow,
+  FloatingFocusManager,
+  FloatingPortal,
   offset,
   useDismiss,
   useFloating,
@@ -10,7 +12,7 @@ import {
   useInteractions,
   safePolygon,
 } from '@floating-ui/react';
-import { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, useState, type JSX } from 'react';
+import React, { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, useState, type JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -18,7 +20,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
-import { Portal } from '../Portal/Portal';
+import { getPortalContainer } from '../Portal/Portal';
 
 import { type PopoverContent, type TooltipPlacement } from './types';
 
@@ -32,13 +34,18 @@ export interface TooltipProps {
    * Set to true if you want the tooltip to stay long enough so the user can move mouse over content to select text or click a link
    */
   interactive?: boolean;
+  /**
+   * When true (use with interactive), wraps the tooltip in a FloatingFocusManager so keyboard
+   * users can Tab into focusable elements (links, buttons) inside the tooltip content.
+   */
+  focusable?: boolean;
 }
 
 /**
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-tooltip--docs
  */
 export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
-  ({ children, theme, interactive, show, placement, content }, forwardedRef) => {
+  ({ children, theme, interactive, focusable, show, placement, content }, forwardedRef) => {
     const arrowRef = useRef(null);
     const [controlledVisible, setControlledVisible] = useState(show);
     const isOpen = show ?? controlledVisible;
@@ -104,21 +111,23 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
           ...getReferenceProps(),
         })}
         {isOpen && (
-          <Portal>
-            <div ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
-              <FloatingArrow className={style.arrow} ref={arrowRef} context={context} />
-              <div
-                data-testid={selectors.components.Tooltip.container}
-                id={tooltipId}
-                role="tooltip"
-                className={style.container}
-              >
-                {typeof content === 'string' && content}
-                {isValidElement(content) && cloneElement(content)}
-                {contentIsFunction && content({})}
+          <FloatingPortal root={getPortalContainer()}>
+            <MaybeFocusManager enabled={!!focusable} context={context}>
+              <div ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
+                <FloatingArrow className={style.arrow} ref={arrowRef} context={context} />
+                <div
+                  data-testid={selectors.components.Tooltip.container}
+                  id={tooltipId}
+                  role="tooltip"
+                  className={style.container}
+                >
+                  {typeof content === 'string' && content}
+                  {isValidElement(content) && cloneElement(content)}
+                  {contentIsFunction && content({})}
+                </div>
               </div>
-            </div>
-          </Portal>
+            </MaybeFocusManager>
+          </FloatingPortal>
         )}
       </>
     );
@@ -126,6 +135,23 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
 );
 
 Tooltip.displayName = 'Tooltip';
+
+interface MaybeFocusManagerProps {
+  enabled: boolean;
+  context: Parameters<typeof FloatingFocusManager>[0]['context'];
+  children: React.ReactElement;
+}
+
+function MaybeFocusManager({ enabled, context, children }: MaybeFocusManagerProps) {
+  if (!enabled) {
+    return children;
+  }
+  return (
+    <FloatingFocusManager context={context} modal={false} initialFocus={0} order={['content']} returnFocus={false}>
+      {children}
+    </FloatingFocusManager>
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   const info = buildTooltipTheme(

@@ -29,7 +29,7 @@ export function PanelDescription({ description, className }: Props) {
   };
 
   return description !== '' ? (
-    <Tooltip interactive content={getDescriptionContent}>
+    <Tooltip interactive focusable content={getDescriptionContent}>
       <TitleItem className={cx(className, styles.description)}>
         <Icon name="info-circle" size="md" />
       </TitleItem>
