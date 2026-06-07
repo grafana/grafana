@@ -46,6 +46,24 @@ func routeDefaultPermissions() []accesscontrol.SetResourcePermissionCommand {
 	}
 }
 
+// RoutePermissionsRoleRegistrations returns the templated reader/writer fixed
+// roles for alerting route resource permissions. Routes use the K8s action
+// format, so the role names are
+// fixed:{AlertingNotificationsApiGroup}:{AlertingRoutesResource}.permissions:reader
+// and :writer. These mirror the roles declared by ProvideRoutePermissionsService
+// through resourcepermissions.New; the identity fields below must match the
+// Options passed there.
+func RoutePermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
+	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
+		APIGroup:        accesscontrol.AlertingNotificationsApiGroup,
+		Resource:        accesscontrol.AlertingRoutesResource,
+		K8sActionFormat: true,
+		ReaderRoleName:  routePermissionsReaderRoleName,
+		WriterRoleName:  routePermissionsWriterRoleName,
+		RoleGroup:       models.AlertRolesGroup,
+	})
+}
+
 func ProvideRoutePermissionsService(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, service accesscontrol.Service,
@@ -70,8 +88,8 @@ func ProvideRoutePermissionsService(
 			PermissionEdit:  append([]string{}, RoutesEditActions...),
 			PermissionAdmin: append([]string{}, RoutesAdminActions...),
 		},
-		ReaderRoleName: "Alerting route permission reader",
-		WriterRoleName: "Alerting route permission writer",
+		ReaderRoleName: routePermissionsReaderRoleName,
+		WriterRoleName: routePermissionsWriterRoleName,
 		RoleGroup:      models.AlertRolesGroup,
 	}
 
