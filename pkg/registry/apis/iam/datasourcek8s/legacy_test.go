@@ -79,6 +79,18 @@ func TestK8sDSActionToLegacy(t *testing.T) {
 			expectedAction: "datasources:read",
 			expectedOk:     true,
 		},
+		{
+			name:           "datasource api group get_permissions verb",
+			action:         "loki.datasource.grafana.app/datasources:get_permissions",
+			expectedAction: "datasources.permissions:read",
+			expectedOk:     true,
+		},
+		{
+			name:           "datasource api group set_permissions verb",
+			action:         "*.datasource.grafana.app/datasources:set_permissions",
+			expectedAction: "datasources.permissions:write",
+			expectedOk:     true,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

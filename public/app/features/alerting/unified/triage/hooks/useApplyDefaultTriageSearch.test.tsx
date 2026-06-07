@@ -106,17 +106,18 @@ describe('useApplyDefaultTriageSearch', () => {
     expect(applySavedSearchMock).not.toHaveBeenCalled();
   });
 
-  it('should not apply default search when groupBy is active', async () => {
+  it('should not apply default search when groupBy is active (encoded as var-filters key|groupBy)', async () => {
     const mockDefaultSearch = {
       id: '1',
       name: 'Default Search',
-      query: 'var-groupBy=severity',
+      query: 'var-filters=grafana_folder|groupBy',
       isDefault: true,
       createdAt: Date.now(),
     };
 
     loadDefaultTriageSavedSearchMock.mockResolvedValue(mockDefaultSearch);
-    serializeCurrentStateMock.mockReturnValue('var-groupBy=severity'); // Active groupBy
+    // GroupBy entries live in var-filters now (e.g. grafana_folder|groupBy)
+    serializeCurrentStateMock.mockReturnValue('var-filters=grafana_folder%7CgroupBy');
 
     renderHook(() => useApplyDefaultTriageSearch(), { wrapper: createWrapper() });
 

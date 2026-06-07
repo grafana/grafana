@@ -49,7 +49,7 @@ export const FlagKeys = {
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables org-defined dashboard templates for enterprise */
   GrafanaOrgDashboardTemplates: "grafana.orgDashboardTemplates",
-  /** Replaces the Intercom survey for PanelEditNext feedback with an event that triggers an in-house survey */
+  /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
@@ -83,6 +83,10 @@ export const FlagKeys = {
   QueryEditorNext: "queryEditorNext",
   /** Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor */
   QueryEditorNextMultiSelect: "queryEditorNextMultiSelect",
+  /** Store query history in browser IndexedDB instead of server-side */
+  QueryHistoryLocalOnly: "queryHistory.localOnly",
+  /** Replace the Query History drawer with a new Recent Queries modal UI */
+  QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
@@ -296,7 +300,7 @@ export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluatio
 };
 
 /**
- * Replaces the Intercom survey for PanelEditNext feedback with an event that triggers an in-house survey
+ * Enables firing an event for PanelEditNext feedback that triggers an in-house survey
  *
  * **Details:**
  * - flag key: `grafana.panelEditNextFeedbackEvent`
@@ -480,6 +484,28 @@ export const useFlagQueryEditorNext = (options?: ReactFlagEvaluationOptions): bo
  */
 export const useFlagQueryEditorNextMultiSelect = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("queryEditorNextMultiSelect", false, options).value;
+};
+
+/**
+ * Store query history in browser IndexedDB instead of server-side
+ *
+ * **Details:**
+ * - flag key: `queryHistory.localOnly`
+ * - default value: `false`
+ */
+export const useFlagQueryHistoryLocalOnly = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryHistory.localOnly", false, options).value;
+};
+
+/**
+ * Replace the Query History drawer with a new Recent Queries modal UI
+ *
+ * **Details:**
+ * - flag key: `queryHistory.recentQueriesUI`
+ * - default value: `false`
+ */
+export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryHistory.recentQueriesUI", false, options).value;
 };
 
 /**
