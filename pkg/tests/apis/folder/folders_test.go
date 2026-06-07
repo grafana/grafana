@@ -2596,6 +2596,8 @@ func TestIntegrationFolderCascadeDelete(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagKubernetesFolderCascadeDelete,
 		},
+		// The cascade watcher polls; keep it short so the multi-level cascade converges quickly.
+		FolderCascadeDeletePollInterval: time.Second,
 	})
 
 	client := helper.GetResourceClient(apis.ResourceClientArgs{

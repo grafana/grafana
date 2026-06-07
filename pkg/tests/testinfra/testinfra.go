@@ -581,6 +581,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = ngalertingSection.NewKey("alertmanager_config_poll_interval", opts.NGAlertAlertmanagerConfigPollInterval.String())
 		require.NoError(t, err)
 	}
+	if opts.FolderCascadeDeletePollInterval != 0 {
+		section, err := getOrCreateSection("folder_cascade_delete")
+		require.NoError(t, err)
+		_, err = section.NewKey("poll_interval", opts.FolderCascadeDeletePollInterval.String())
+		require.NoError(t, err)
+	}
 	if opts.AppModeProduction {
 		_, err = dfltSect.NewKey("app_mode", "production")
 		require.NoError(t, err)
@@ -1007,6 +1013,7 @@ type GrafanaOpts struct {
 	DisableFeatureToggles                 []string
 	NGAlertAdminConfigPollInterval        time.Duration
 	NGAlertAlertmanagerConfigPollInterval time.Duration
+	FolderCascadeDeletePollInterval       time.Duration
 	NGAlertSchedulerBaseInterval          time.Duration
 	AnonymousUserRole                     org.RoleType
 	EnableQuota                           bool

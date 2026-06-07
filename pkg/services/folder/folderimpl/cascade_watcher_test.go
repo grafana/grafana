@@ -15,12 +15,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
-	"k8s.io/client-go/util/workqueue"
 
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -41,10 +41,6 @@ func TestIsTerminatingForCascade(t *testing.T) {
 			Finalizers:        []string{folders.CascadeDeleteFinalizer},
 		},
 	}))
-}
-
-func TestTerminatingFolderSelector(t *testing.T) {
-	require.Equal(t, "folder.grafana.app/terminating=true", terminatingFolderSelector)
 }
 
 func TestOrgIDFromNamespace(t *testing.T) {
@@ -125,14 +121,14 @@ func TestListDirectChildFolders_marksTerminatingFromLabel(t *testing.T) {
 }
 
 func TestCascadeWatcher_Run_disabledByFeatureFlag(t *testing.T) {
-	w := ProvideCascadeWatcher(nil, apiserver.WithoutRestConfig, nil, nil)
+	w := ProvideCascadeWatcher(setting.NewCfg(), apiserver.WithoutRestConfig, nil, nil, nil)
 	w.flagEnabled = func(context.Context) bool { return false }
 	err := w.Run(context.Background())
 	require.NoError(t, err)
 }
 
 func TestCascadeWatcher_Run_enabledFlagWithoutRestConfig(t *testing.T) {
-	w := ProvideCascadeWatcher(nil, apiserver.WithoutRestConfig, nil, nil)
+	w := ProvideCascadeWatcher(setting.NewCfg(), apiserver.WithoutRestConfig, nil, nil, nil)
 	w.flagEnabled = func(context.Context) bool { return true }
 	err := w.Run(context.Background())
 	require.NoError(t, err)
@@ -320,63 +316,89 @@ func TestCascadeWatcher_onFolder_skipsWhenNotTerminating(t *testing.T) {
 	require.Empty(t, mut.finalizerRemove)
 }
 
-func TestCascadeWatcher_enqueueParent(t *testing.T) {
-	w := &CascadeWatcher{
-		queue: workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]()),
-		log:   slog.Default(),
-	}
-	t.Cleanup(w.queue.ShutDown)
-
-	child := &foldersv1.Folder{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        "child",
-			Namespace:   "org-12",
-			Annotations: map[string]string{utils.AnnoKeyFolder: "parent"},
+func TestSearchTerminatingFolders(t *testing.T) {
+	var gotLabels []*resourcepb.Requirement
+	searcher := &mockFolderSearcher{
+		search: func(_ context.Context, _ int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+			gotLabels = in.Options.Labels
+			return &resourcepb.ResourceSearchResponse{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{
+						{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+					},
+					Rows: []*resourcepb.ResourceTableRow{
+						{Key: &resourcepb.ResourceKey{Name: "term-a", Resource: "folder"}, Cells: [][]byte{nil}},
+						{Key: &resourcepb.ResourceKey{Name: "term-b", Resource: "folder"}, Cells: [][]byte{nil}},
+					},
+				},
+			}, nil
 		},
 	}
-	w.enqueueParent(child)
 
-	require.Equal(t, 1, w.queue.Len())
-	key, _ := w.queue.Get()
-	require.Equal(t, "org-12/parent", key)
+	names, err := searchTerminatingFolders(context.Background(), searcher, 12)
+	require.NoError(t, err)
+	require.Equal(t, []string{"term-a", "term-b"}, names)
+
+	// Discovery must filter server-side on the terminating label.
+	require.Len(t, gotLabels, 1)
+	require.Equal(t, folders.TerminatingLabel, gotLabels[0].Key)
+	require.Equal(t, []string{folders.TerminatingLabelValue}, gotLabels[0].Values)
 }
 
-func TestCascadeWatcher_enqueueParent_skipsRootFolder(t *testing.T) {
-	w := &CascadeWatcher{
-		queue: workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]()),
-		log:   slog.Default(),
-	}
-	t.Cleanup(w.queue.ShutDown)
-
-	root := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "root", Namespace: "org-12"}}
-	w.enqueueParent(root)
-
-	require.Equal(t, 0, w.queue.Len())
+type fakeOrgLister struct {
+	orgs []*org.OrgDTO
+	err  error
 }
 
-func TestCascadeWatcher_enqueueParent_dedupesSiblings(t *testing.T) {
+func (f *fakeOrgLister) Search(context.Context, *org.SearchOrgsQuery) ([]*org.OrgDTO, error) {
+	return f.orgs, f.err
+}
+
+type fakeFolderGetter struct {
+	folders map[string]*foldersv1.Folder
+}
+
+func (f *fakeFolderGetter) Get(_ context.Context, _, name string) (*foldersv1.Folder, error) {
+	folder, ok := f.folders[name]
+	if !ok {
+		return nil, apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), name)
+	}
+	return folder, nil
+}
+
+func TestCascadeWatcher_pollOnce(t *testing.T) {
+	// Discovery search (label filter) returns a terminating leaf; its child search (parent
+	// filter) returns nothing, so the poller should remove the leaf's finalizer.
+	searcher := &mockFolderSearcher{
+		search: func(_ context.Context, _ int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+			cols := []*resourcepb.ResourceTableColumnDefinition{
+				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+			}
+			if len(in.Options.Labels) > 0 {
+				return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
+					Columns: cols,
+					Rows: []*resourcepb.ResourceTableRow{
+						{Key: &resourcepb.ResourceKey{Name: "leaf", Resource: "folder"}, Cells: [][]byte{nil}},
+					},
+				}}, nil
+			}
+			return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{Columns: cols}}, nil
+		},
+	}
+	mut := &recordingFolderMutator{}
 	w := &CascadeWatcher{
-		queue: workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]()),
-		log:   slog.Default(),
-	}
-	t.Cleanup(w.queue.ShutDown)
-
-	newChild := func(name string) *foldersv1.Folder {
-		return &foldersv1.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        name,
-				Namespace:   "org-12",
-				Annotations: map[string]string{utils.AnnoKeyFolder: "parent"},
-			},
-		}
+		orgs:            &fakeOrgLister{orgs: []*org.OrgDTO{{ID: 12}}},
+		namespaceMapper: func(int64) string { return "org-12" },
+		folderSearch:    searcher,
+		folderMutator:   mut,
+		getter:          &fakeFolderGetter{folders: map[string]*foldersv1.Folder{"leaf": newTerminatingFolder("leaf")}},
+		log:             slog.Default(),
 	}
 
-	// Several children of the same parent draining together collapse into one queued parent key.
-	w.enqueueParent(newChild("child-a"))
-	w.enqueueParent(newChild("child-b"))
-	w.enqueueParent(newChild("child-c"))
+	w.pollOnce(context.Background())
 
-	require.Equal(t, 1, w.queue.Len())
+	require.Equal(t, []string{"leaf"}, mut.finalizerRemove)
+	require.Empty(t, mut.deletedNames())
 }
 
 // fakeFolderTree is an in-memory model of a folder subtree that implements both folderSearcher
