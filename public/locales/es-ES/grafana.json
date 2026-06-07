@@ -3312,6 +3312,10 @@
         "tooltip-description": "Permite buscar silencios mediante un comparador. Se puede hacer coincidir exactamente con el nombre de la etiqueta, el valor y el operador.",
         "tooltip-example": "Ejemplo: <1>env=~\"prod.*\"</1> busca silencios con un comparador <4>env=~\"prod.*\"</4>."
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "Solo se muestran las instancias de alerta en estado de activación.",
       "operator": {
         "equals": "Igual a",
@@ -5501,9 +5505,6 @@
       "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
       "label-no-dashboards-found": "No se han encontrado dashboards"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Cancelar la carga del dashboard"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5773,11 +5774,6 @@
         "label": "Menú de exportación de dashboard"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Error al obtener el dashboard"
-      }
-    },
     "filters-overview": {
       "apply": "Aplicar",
       "apply-close": "Aplicar y cerrar",
@@ -5934,11 +5930,6 @@
       "title-get-help-with-this-panel": "Obtener ayuda para este panel",
       "troubleshooting-docs": "Documentos de resolución de problemas"
     },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Error al crear el modelo de dashboard"
-      }
-    },
     "inspect": {
       "data-tab": "Datos",
       "error-tab": "Error",
@@ -6027,13 +6018,6 @@
       },
       "ungroup-nested-text": "Esto desagrupará todos los grupos anidados.",
       "ungroup-nested-title": "¿Desagrupar grupos anidados?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Dashboard no encontrado"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Dashboard no editable",
@@ -6353,10 +6337,6 @@
       },
       "undo": "Deshacer"
     },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Cargando e iniciando el dashboard",
-      "title-not-found": "Panel con ID {{panelId}} no encontrado"
-    },
     "source-link": {
       "title": "Fuente ({{provider}})",
       "tooltip": "Ver archivo fuente en el repositorio"
@@ -6626,8 +6606,8 @@
     "version-history-comparison": {
       "button-restore": "Restaurar a la versión {{version}} ",
       "label-view-json-diff": "Ver diferencia de JSON",
-      "new-updated-by": "<0>Versión {{version}}</0> actualizada por {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Versión {{version}}</0> actualizada por {{editor}} {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Alternar selección de versión {{version}}",
@@ -7869,8 +7849,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "Ver diferencia de JSON",
-      "new-version-updated": "<0>Versión {{version}}</0> actualizada por {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Versión {{version}}</0> actualizada por {{editor}} {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "Comparando {{baseVersion}} <3></3> {{newVersion}}",
@@ -10229,7 +10209,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Ayuda <1></1>",
-      "access-help-details": "El modo de acceso controla cómo se gestionarán las solicitudes a la fuente de datos.<1><i>Servidor</i></1> debería ser la opción preferida si no se indica nada más.",
+      "access-help-details": "",
       "access-help-title": "Acceder a la ayuda",
       "access-label": "Acceder",
       "allowed-cookies": "Cookies permitidas",
@@ -10915,6 +10895,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -13197,8 +13181,8 @@
       "label-branch": "Rama",
       "label-comment": "Comentario",
       "label-filename": "Nombre de archivo",
-      "label-folder": "Carpeta",
       "label-path": "Ruta",
+      "label-repository-folder": "",
       "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Selecciona o introduce la ruta de la carpeta.",
@@ -13601,6 +13585,21 @@
       "request-failed": "",
       "resource-not-found": ""
     },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
+    },
     "instance-sync-deprecation": {
       "message": "La sincronización de instancias no es totalmente compatible actualmente y provoca errores en los paneles y las alertas. Para usar los paneles y las alertas de la librería, desconecta tu repositorio y vuelve a conectarlo utilizando la sincronización de carpetas.",
       "title": "La sincronización de instancias no es totalmente compatible"
@@ -13887,7 +13886,8 @@
     "sync-job": {
       "error-no-job-id": "Error al iniciar el trabajo",
       "error-no-repository-name": "No se proporcionó ningún nombre de repositorio",
-      "error-starting-job": "Error al iniciar el trabajo"
+      "error-starting-job": "Error al iniciar el trabajo",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "Error al extraer los recursos",
@@ -16608,7 +16608,7 @@
       "message": "No se han encontrado usuarios"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Su token de sesión se ha revocado automáticamente porque ha alcanzado <2>el número máximo de {{numSessions}} sesiones concurrentes</2> para su cuenta.",
+      "auto-revoked": "",
       "resume-message": "<strong>Para reanudar la sesión, inicia sesión de nuevo.</strong>Ponte en contacto con tu administrador o visita la página de licencias para revisar tu cuota si se cierra la sesión automáticamente en repetidas ocasiones.",
       "sign-in": "Iniciar sesión",
       "title-you-have-been-automatically-signed-out": "Se ha cerrado tu sesión automáticamente"

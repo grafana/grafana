@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/alertrule"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/recordingrule"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/rulesequence"
 )
 
 func New(cfg app.Config) (app.App, error) {
@@ -27,6 +28,7 @@ func New(cfg app.Config) (app.App, error) {
 				Kind:      kind,
 				Validator: buildKindValidator(kind, runtimeCfg),
 				Mutator:   buildKindMutator(kind, runtimeCfg),
+				Watcher:   buildKindWatcher(kind, runtimeCfg),
 			}
 			managedKinds = append(managedKinds, managedKind)
 		}
@@ -64,6 +66,8 @@ func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig) *simple.Va
 		return alertrule.NewValidator(cfg)
 	case "RecordingRule":
 		return recordingrule.NewValidator(cfg)
+	case "RuleSequence":
+		return rulesequence.NewValidator(cfg)
 	}
 	return nil
 }
@@ -74,6 +78,18 @@ func buildKindMutator(kind resource.Kind, cfg config.RuntimeConfig) *simple.Muta
 		return alertrule.NewMutator(cfg)
 	case "RecordingRule":
 		return recordingrule.NewMutator(cfg)
+	case "RuleSequence":
+		return rulesequence.NewMutator(cfg)
+	}
+	return nil
+}
+
+func buildKindWatcher(kind resource.Kind, cfg config.RuntimeConfig) operator.ResourceWatcher {
+	switch kind.Kind() {
+	case "RuleSequence":
+		if idx, ok := cfg.MembershipResolver.(*rulesequence.MembershipIndex); ok {
+			return idx
+		}
 	}
 	return nil
 }

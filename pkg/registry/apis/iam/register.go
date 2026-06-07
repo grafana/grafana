@@ -392,12 +392,22 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
-		MaximumNameLength:           80,
-		RequireDeprecatedInternalID: true,
+		MaximumNameLength:    80,
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
 	})
 	opts.StorageOptsRegister(iamv0.UserResourceInfo.GroupResource(), apistore.StorageOptions{
-		MaximumNameLength:           80,
-		RequireDeprecatedInternalID: true,
+		MaximumNameLength:    80,
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
+	})
+	opts.StorageOptsRegister(iamv0.ServiceAccountResourceInfo.GroupResource(), apistore.StorageOptions{
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
+	})
+	opts.StorageOptsRegister(iamv0.TeamBindingResourceInfo.GroupResource(), apistore.StorageOptions{
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Optional,
 	})
 	// Cap the apiserver name at 253 characters so callers get a clear
 	// validation error instead of a silent truncation/error at the storage

@@ -85,7 +85,7 @@ export function getExpressionFromExecutedQuery(executedQueryString: string) {
   return executedQueryString.replace('Expr: ', '');
 }
 
-export function getStringsFromLineFilter(filter: SyntaxNode): SyntaxNode[] {
+function getStringsFromLineFilter(filter: SyntaxNode): SyntaxNode[] {
   const nodes: SyntaxNode[] = [];
   let node: SyntaxNode | null = filter;
   do {
@@ -161,7 +161,7 @@ export function parseToNodeNamesArray(query: string): string[] {
   return queryParts;
 }
 
-export function isQueryWithNode(query: string, nodeType: number): boolean {
+function isQueryWithNode(query: string, nodeType: number): boolean {
   let isQueryWithNode = false;
   const tree = parser.parse(query);
   tree.iterate({
@@ -201,7 +201,7 @@ export function getNodePositionsFromQuery(query: string, nodeTypes?: number[]): 
   return positions;
 }
 
-export function getNodeFromQuery(query: string, nodeType: number): SyntaxNode | undefined {
+function getNodeFromQuery(query: string, nodeType: number): SyntaxNode | undefined {
   const nodes = getNodesFromQuery(query, [nodeType]);
   return nodes.length > 0 ? nodes[0] : undefined;
 }
@@ -375,6 +375,10 @@ function getNodeString(query: string, node: SyntaxNode) {
   return query.substring(node.from, node.to);
 }
 
+/**
+ * @TODO fix the import in public/app/features/explore/Logs and remove the lintignore
+ * @lintignore
+ */
 export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
   if (!query) {
     return false;

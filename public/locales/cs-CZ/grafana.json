@@ -3354,6 +3354,10 @@
         "tooltip-description": "Vyhledat potlačení podle odpovídající shody. Přesně odpovídá názvu štítku, hodnotě a operátoru.",
         "tooltip-example": "Příklad: <1>env=~\"prod.*\"</1> vyhledá potlačení pomocí nástroje pro hledání shod <4>env=~\"prod.*\"</4>."
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "Zobrazují se pouze instance výstrah v aktivním stavu.",
       "operator": {
         "equals": "Je rovno",
@@ -5565,9 +5569,6 @@
       "aria-label-dashboard-name": "Nástěnka {{dashboardName}}",
       "label-no-dashboards-found": "Nebyly nalezeny žádné nástěnky"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Zrušit načítání nástěnky"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5837,11 +5838,6 @@
         "label": "Exportovat nabídku nástěnky"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Nepodařilo se načíst nástěnku"
-      }
-    },
     "filters-overview": {
       "apply": "Použít",
       "apply-close": "Použít a zavřít",
@@ -5998,11 +5994,6 @@
       "title-get-help-with-this-panel": "Získat nápovědu k tomuto panelu",
       "troubleshooting-docs": "Dokumenty pro řešení problémů"
     },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Nepodařilo se vytvořit model nástěnky"
-      }
-    },
     "inspect": {
       "data-tab": "Data",
       "error-tab": "Chyba",
@@ -6091,13 +6082,6 @@
       },
       "ungroup-nested-text": "Tímto zrušíte seskupení všech vnořených skupin.",
       "ungroup-nested-title": "Zrušit seskupení vnořených skupin?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Nástěnka nebyla nalezena"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Nástěnku není možné upravovat",
@@ -6419,10 +6403,6 @@
       },
       "undo": "Zpět"
     },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Načítání a inicializace nástěnky",
-      "title-not-found": "Panel s ID {{panelId}} nebyl nalezen"
-    },
     "source-link": {
       "title": "Zdroj ({{provider}})",
       "tooltip": "Zobrazit zdrojový soubor v úložišti"
@@ -6692,8 +6672,8 @@
     "version-history-comparison": {
       "button-restore": "Obnovit na verzi {{version}}",
       "label-view-json-diff": "Zobrazit rozdíl JSON",
-      "new-updated-by": "<0>Verzi {{version}}</0> aktualizoval uživatel {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Verzi {{version}}</0> aktualizoval uživatel {{editor}} {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Přepnout výběr verze {{version}}",
@@ -7965,8 +7945,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "Zobrazit rozdíl JSON",
-      "new-version-updated": "<0>Verzi {{version}}</0> aktualizoval uživatel {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Verzi {{version}}</0> aktualizoval uživatel {{editor}} {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "Porovnání {{baseVersion}} <3></3> {{newVersion}}",
@@ -10349,7 +10329,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Nápověda <1></1>",
-      "access-help-details": "Režim přístupu řídí, jak budou zpracovány požadavky na zdroj dat.<1><i>Server</i></1> by měl být preferovaným způsobem, pokud není uvedeno nic jiného.",
+      "access-help-details": "",
       "access-help-title": "Otevřít nápovědu",
       "access-label": "Otevřít",
       "allowed-cookies": "Povolené soubory cookie",
@@ -11035,6 +11015,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -13339,8 +13323,8 @@
       "label-branch": "Větev",
       "label-comment": "Komentář",
       "label-filename": "Název souboru",
-      "label-folder": "Složka",
       "label-path": "Cesta",
+      "label-repository-folder": "",
       "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Vyberte nebo zadejte cestu ke složce",
@@ -13755,6 +13739,21 @@
       "request-failed": "",
       "resource-not-found": ""
     },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
+    },
     "instance-sync-deprecation": {
       "message": "Synchronizace instancí není v současné době plně podporována a narušuje panely knihovny a výstrahy. Chcete-li používat panely knihovny a výstrahy, odpojte úložiště a znovu jej připojte pomocí synchronizace složek.",
       "title": "Synchronizace instancí není plně podporována"
@@ -14057,7 +14056,8 @@
     "sync-job": {
       "error-no-job-id": "Nepodařilo se spustit úlohu",
       "error-no-repository-name": "Nebyl zadán žádný název úložiště",
-      "error-starting-job": "Chyba při spouštění úlohy"
+      "error-starting-job": "Chyba při spouštění úlohy",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "Chyba při stahování zdrojů",
@@ -16798,7 +16798,7 @@
       "message": "Nebyli nalezeni žádní uživatelé"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Token relace byl automaticky zrušen, protože jste dosáhli <2>maximálního počtu {{numSessions}} souběžných relací</2> pro svůj účet.",
+      "auto-revoked": "",
       "resume-message": "<strong>Pokud chcete pokračovat v relaci, přihlaste se znovu.</strong>Pokud jste opakovaně automaticky odhlašováni, obraťte se na správce nebo navštivte licenční stránku a zkontrolujte kvótu.",
       "sign-in": "Přihlášení",
       "title-you-have-been-automatically-signed-out": "Byli jste automaticky odhlášeni"

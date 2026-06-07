@@ -164,6 +164,7 @@ export function DashboardTabs() {
                 error={recentError}
                 retry={recentRetry}
                 foldersByUid={foldersByUid}
+                onStarChange={starredRetry}
               />
             )}
             {activeTab === STARRED_TAB_ID && (

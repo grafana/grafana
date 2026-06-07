@@ -332,7 +332,7 @@ func generatePermissionTuples(data *benchmarkData) []*openfgav1.TupleKey {
 	return tuples
 }
 
-// setupBenchmarkServer creates a server with the benchmark data loaded
+// setupBenchmarkServer creates a server with the benchmark data loaded.
 func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	b.Helper()
 	if testing.Short() {
@@ -696,7 +696,7 @@ func BenchmarkSubresourceRelationComparison(b *testing.B) {
 	store, err := srv.getStoreInfo(ctx, benchNamespace)
 	require.NoError(b, err)
 
-	contextuals, err := srv.getContextuals(deniedUser)
+	contextuals, err := srv.getContextuals(deniedUser, nil)
 	require.NoError(b, err)
 
 	subresourceGR := common.FormatGroupResource(benchDashboardGroup, benchDashboardResource, benchStatusSubresource)
@@ -745,7 +745,7 @@ func BenchmarkSubresourceRelationComparison(b *testing.B) {
 						ctx,
 						store,
 						deniedUser,
-						common.RelationCanSubresourceGet,
+						common.SubresourcePermissionRelation(common.RelationSubresourceGet),
 						folderIdent,
 						contextuals,
 						resourceCtx,

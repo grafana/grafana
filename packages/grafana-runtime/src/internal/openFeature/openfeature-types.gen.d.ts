@@ -12,6 +12,8 @@ declare module "@openfeature/core" {
   export type BooleanFlagKey =
     | "lokiShardSplitting"
     | "faroSessionReplay"
+    | "queryHistory.localOnly"
+    | "queryHistory.recentQueriesUI"
     | "provisioningFolderMetadata"
     | "provisioning.readmes"
     | "grafana.kubernetesAnnotationsClient"
