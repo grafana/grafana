@@ -921,7 +921,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	embeddedZanzanaService := authz.ProvideEmbeddedZanzanaService(cfg, server, tracingService)
-	cascadeWatcher := folderimpl.ProvideCascadeWatcher(cfg, eventualRestConfigProvider, resourceClient, userimplService)
+	cascadeWatcher := folderimpl.ProvideCascadeWatcher(cfg, eventualRestConfigProvider, resourceClient, userimplService, orgService)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {
@@ -1655,7 +1655,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	embeddedZanzanaService := authz.ProvideEmbeddedZanzanaService(cfg, server, tracingService)
-	cascadeWatcher := folderimpl.ProvideCascadeWatcher(cfg, eventualRestConfigProvider, resourceClient, userimplService)
+	cascadeWatcher := folderimpl.ProvideCascadeWatcher(cfg, eventualRestConfigProvider, resourceClient, userimplService, orgService)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {
