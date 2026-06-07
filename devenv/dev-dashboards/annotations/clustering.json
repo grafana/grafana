@@ -120,7 +120,7 @@
       "pluginVersion": "13.0.0-local",
       "targets": [
         {
-          "csvContent": "Time,Value\n1759456312660, 1",
+          "csvContent": "Time,Value\n1759456312660, 1\n1759402679375, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
@@ -238,7 +238,7 @@
       "pluginVersion": "13.0.0-local",
       "targets": [
         {
-          "csvContent": "Time,Value\n1759456312660, 1",
+          "csvContent": "Time,Value\n1759456312660, 1\n1759402679375, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
@@ -356,7 +356,7 @@
       "pluginVersion": "13.0.0-local",
       "targets": [
         {
-          "csvContent": "Time,Value\n1759456312660, 1",
+          "csvContent": "Time,Value\n1759456312660, 1\n1759402679375, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
@@ -474,7 +474,7 @@
       "pluginVersion": "13.0.0-local",
       "targets": [
         {
-          "csvContent": "Time,Value\n1759456312660, 1",
+          "csvContent": "Time,Value\n1759456312660, 1\n1759402679375, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
@@ -606,7 +606,7 @@
           "scenarioId": "raw_frame"
         },
         {
-          "csvContent": "Time,Value\n1759456312660, 1",
+          "csvContent": "Time,Value\n1759456312660, 1\n1759402679375, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
@@ -722,7 +722,7 @@
           "scenarioId": "raw_frame"
         },
         {
-          "csvContent": "Time,Value\n1759456312660, 1",
+          "csvContent": "Time,Value\n1759456312660, 1\n1759402679375, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
@@ -843,7 +843,7 @@
           "scenarioId": "raw_frame"
         },
         {
-          "csvContent": "Time,Value\n1759456312660, 1",
+          "csvContent": "Time,Value\n1759456312660, 1\n1759402679375, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
@@ -966,7 +966,7 @@
           "scenarioId": "raw_frame"
         },
         {
-          "csvContent": "Time,Value\n1759456312660, 1",
+          "csvContent": "Time,Value\n1759456312660, 1\n1759402679375, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
@@ -1065,7 +1065,7 @@
       "pluginVersion": "13.0.0-local",
       "targets": [
         {
-          "csvContent": "Time,Value\n1759456312660, 1",
+          "csvContent": "Time,Value\n1759456312660, 1\n1759402679375, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },

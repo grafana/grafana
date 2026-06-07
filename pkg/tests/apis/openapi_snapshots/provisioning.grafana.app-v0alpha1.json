@@ -3943,31 +3943,6 @@
       ]
     },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/webhook": {
-      "get": {
-        "tags": [
-          "Repository"
-        ],
-        "description": "connect GET requests to webhook of Repository",
-        "operationId": "getRepositoryWebhook",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.WebhookResponse"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "version": "v0alpha1",
-          "kind": "WebhookResponse"
-        }
-      },
       "post": {
         "tags": [
           "Repository"

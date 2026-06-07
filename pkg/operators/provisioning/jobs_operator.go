@@ -361,7 +361,10 @@ func setupWorkers(
 		return nil, nil, fmt.Errorf("failed to get URL provider: %w", err)
 	}
 	renderer := pullrequest.NewNoOpRenderer()
-	evaluator := pullrequest.NewEvaluator(renderer, parsers, urlProvider, registry)
+	evaluator := pullrequest.NewEvaluator(renderer, parsers, pullrequest.URLProvider{
+		Internal: urlProvider,
+		Public:   urlProvider,
+	}, registry)
 	commenter := pullrequest.NewCommenter(false)
 	prWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
 	workers = append(workers, prWorker)

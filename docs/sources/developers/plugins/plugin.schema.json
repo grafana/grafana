@@ -330,7 +330,7 @@
     },
     "multiValueFilterOperators": {
       "type": "boolean",
-      "description": "For data source plugins, if the plugin supports multi value operators in adhoc filters."
+      "description": "For data source plugins, if the plugin supports multi value operators in filters."
     },
     "pascalName": {
       "type": "string",

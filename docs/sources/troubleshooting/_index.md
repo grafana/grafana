@@ -13,7 +13,7 @@ labels:
     - enterprise
     - oss
 title: Troubleshooting
-weight: 180
+weight: 700
 ---
 
 # Troubleshooting

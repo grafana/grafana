@@ -233,6 +233,14 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 	// Copy previous values if they exist
 	if a.GetOldObject() != nil {
 		if oldRepo, ok := a.GetOldObject().(*provisioning.Repository); ok {
+			if a.GetOperation() == admission.Update && RequiresNewTokenForURLChange(r, oldRepo) {
+				return invalidRepositoryError(a.GetName(), field.ErrorList{
+					field.Forbidden(
+						field.NewPath("secure", "token"),
+						"a new token is required when changing the repository URL",
+					),
+				})
+			}
 			CopySecureValues(r, oldRepo)
 		}
 	}

@@ -109,10 +109,10 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 	}
 
 	var renderKeyProvider renderKeyProvider
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagRenderAuthJWT) {
-		// only check if the renderer is configured otherwise we dont need to force changing the default.
-		if cfg.RendererServerUrl != "" {
+	if cfg.RendererServerUrl != "" {
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if features.IsEnabledGlobally(featuremgmt.FlagRenderAuthJWT) {
+			// only check if the renderer is configured otherwise we dont need to force changing the default.
 			if strings.TrimSpace(cfg.RendererAuthToken) == "" {
 				err := "Using an empty [rendering]renderer_token is not allowed, set it to another value. " +
 					"Read more at https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/#security"
@@ -130,18 +130,19 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 					return nil, fmt.Errorf("failed to start rendering service: %v", err)
 				}
 			}
-		}
 
-		renderKeyProvider = &jwtRenderKeyProvider{
-			log:       logger,
-			authToken: []byte(cfg.RendererAuthToken),
-			keyExpiry: cfg.RendererRenderKeyLifeTime,
-		}
-	} else {
-		renderKeyProvider = &perRequestRenderKeyProvider{
-			cache:     remoteCache,
-			log:       logger,
-			keyExpiry: cfg.RendererRenderKeyLifeTime,
+			// overwrite the default key provider when we know we have a better way.
+			renderKeyProvider = &jwtRenderKeyProvider{
+				log:       logger,
+				authToken: []byte(cfg.RendererAuthToken),
+				keyExpiry: cfg.RendererRenderKeyLifeTime,
+			}
+		} else {
+			renderKeyProvider = &perRequestRenderKeyProvider{
+				cache:     remoteCache,
+				log:       logger,
+				keyExpiry: cfg.RendererRenderKeyLifeTime,
+			}
 		}
 	}
 
@@ -292,6 +293,10 @@ func (rs *RenderingService) Render(ctx context.Context, renderType RenderType, o
 	startTime := time.Now()
 
 	renderKeyProvider := rs.perRequestRenderKeyProvider
+	if renderKeyProvider == nil {
+		// Rendering is not configured. Just reject the token; it has no reasonable use here.
+		return nil, ErrRenderUnavailable
+	}
 
 	result, err := rs.render(ctx, renderType, opts, renderKeyProvider)
 
@@ -368,6 +373,10 @@ func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts) (*Rende
 	startTime := time.Now()
 
 	renderKeyProvider := rs.perRequestRenderKeyProvider
+	if renderKeyProvider == nil {
+		// Rendering is not configured. Just reject the token; it has no reasonable use here.
+		return nil, ErrRenderUnavailable
+	}
 
 	result, err := rs.renderCSV(ctx, opts, renderKeyProvider)
 

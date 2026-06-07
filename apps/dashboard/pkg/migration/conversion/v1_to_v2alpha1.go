@@ -403,9 +403,16 @@ func transformTimeSettings(dashboard map[string]interface{}, defaults *dashv2alp
 	}
 
 	// Extract other time-related fields
+	// An empty timezone string in V1/V0 is the sentinel meaning "use the user's profile preference".
+	// Explicitly nil out Timezone in V2 so the user-preference fallback still triggers;
+	// an absent timezone key keeps the default ("browser").
 	if timezone, exists := dashboard["timezone"]; exists {
 		if timezoneStr, ok := timezone.(string); ok {
-			timeSettings.Timezone = &timezoneStr
+			if timezoneStr != "" {
+				timeSettings.Timezone = &timezoneStr
+			} else {
+				timeSettings.Timezone = nil
+			}
 		}
 	}
 	if refresh := schemaversion.GetStringValue(dashboard, "refresh"); refresh != "" {

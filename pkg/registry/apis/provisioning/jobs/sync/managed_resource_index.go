@@ -8,12 +8,14 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-// managedResourceIndex is a path index over the current managed resources so
-// the rebuilder can find existing folders and direct children efficiently.
-// Multiple items may share the same path (orphaned resources from previous
-// metadata.name changes); the index preserves all of them.
+// managedResourceIndex is a path and name index over the current managed
+// resources so the rebuilder can find existing folders and direct children
+// efficiently. Multiple items may share the same path (orphaned resources
+// from previous metadata.name changes) or the same name (different resource
+// kinds); the index preserves all of them.
 type managedResourceIndex struct {
 	byPath map[string][]*provisioning.ResourceListItem
+	byName map[string][]*provisioning.ResourceListItem
 }
 
 // newManagedResourceIndex builds a normalized path index over the current
@@ -22,6 +24,7 @@ type managedResourceIndex struct {
 func newManagedResourceIndex(target *provisioning.ResourceList) managedResourceIndex {
 	index := managedResourceIndex{
 		byPath: make(map[string][]*provisioning.ResourceListItem),
+		byName: make(map[string][]*provisioning.ResourceListItem),
 	}
 	if target == nil {
 		return index
@@ -31,6 +34,7 @@ func newManagedResourceIndex(target *provisioning.ResourceList) managedResourceI
 		item := &target.Items[i]
 		path := normalizeManagedResourcePath(item)
 		index.byPath[path] = append(index.byPath[path], item)
+		index.byName[item.Name] = append(index.byName[item.Name], item)
 	}
 
 	return index
@@ -55,6 +59,13 @@ func (index managedResourceIndex) DirectChildrenOf(parentPath string) []string {
 	}
 	slices.Sort(childrenPaths)
 	return childrenPaths
+}
+
+// ExistingByName returns all managed resources with the given k8s name.
+// Multiple items may share the same name when they belong to different
+// resource kinds (e.g. a folder and a dashboard).
+func (index managedResourceIndex) ExistingByName(name string) []*provisioning.ResourceListItem {
+	return index.byName[name]
 }
 
 // normalizeManagedResourcePath makes folder entries comparable with source-tree

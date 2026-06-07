@@ -114,11 +114,17 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         ...shared.url,
         description: t('provisioning.gitlab.url-description', 'The GitLab repository URL'),
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        placeholder: 'https://gitlab.com/owner/repository',
+        placeholder: 'https://gitlab.com/group/repository',
         required: true,
         validation: {
-          ...shared.url.validation,
           required: t('provisioning.gitlab.url-required', 'Repository URL is required'),
+          pattern: {
+            value: /^https:\/\/[^\/]+\/[^\/]+(\/[^\/]+)+\/?$/,
+            message: t(
+              'provisioning.gitlab.url-pattern',
+              'Must be a valid repository URL (https://hostname/group/repository or https://hostname/group/subgroup/repository)'
+            ),
+          },
         },
       },
       branch: {
@@ -169,8 +175,14 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         placeholder: 'https://bitbucket.org/owner/repository',
         required: true,
         validation: {
-          ...shared.url.validation,
           required: t('provisioning.bitbucket.url-required', 'Repository URL is required'),
+          pattern: {
+            value: /^https:\/\/[^\/]+\/[^\/]+(\/[^\/]+)+\/?$/,
+            message: t(
+              'provisioning.bitbucket.url-pattern',
+              'Must be a valid repository URL (https://hostname/owner/repo or https://hostname/scm/project/repo)'
+            ),
+          },
         },
       },
       branch: {

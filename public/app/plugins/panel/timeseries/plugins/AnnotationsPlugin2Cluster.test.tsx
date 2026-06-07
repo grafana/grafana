@@ -126,6 +126,13 @@ describe('AnnotationsPlugin2', () => {
       });
     }
 
+    function applyDrawAxes() {
+      act(() => {
+        //@ts-ignore
+        hooks.drawAxes(new uPlot(uPlotProps));
+      });
+    }
+
     // Manually set static property
     uPlot.pxRatio = 2;
 
@@ -161,6 +168,7 @@ describe('AnnotationsPlugin2', () => {
 
     if (callReady) {
       applyReady();
+      applyDrawAxes();
     }
     return result;
   };

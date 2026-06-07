@@ -41,7 +41,7 @@ The header section lists the dashboard in which the panel appears and the follow
 
 - **Back to dashboard** - Return to the dashboard with changes applied, but not yet saved.
 - **Discard panel changes** - Discard changes you have made to the panel since you last saved the dashboard.
-- **Save dashboard** - Save your changes to the dashboard.
+- **Save** - Save your changes to the dashboard.
 
 ## Visualization preview
 

@@ -156,6 +156,7 @@ type Cfg struct {
 	ProvisioningMaxResourcesPerRepository int64  // 0 = unlimited
 	ProvisioningMaxRepositories           int64  // default 10, 0 in config = unlimited (converted to -1 internally)
 	ProvisioningFolderAPIVersion          string // "v1" (default for on-prem) or "v1beta1"
+	ProvisioningPublicRootURL             string // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
 	DataPath                              string
 	LogsPath                              string
 	EnterpriseLicensePath                 string
@@ -2392,6 +2393,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
 	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
+	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

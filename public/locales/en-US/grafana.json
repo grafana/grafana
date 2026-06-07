@@ -7494,6 +7494,7 @@
       "update-all": "Update all"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "Advanced options",
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
@@ -7501,6 +7502,11 @@
       "file-path": "<strong>File path:</strong> {{filePath}}",
       "form-loading-error": "Error loading form",
       "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
+      "format": {
+        "classic": "Classic",
+        "model-label": "Model",
+        "v2-resource": "V2 Resource"
+      },
       "label-description": "Description",
       "label-target-folder": "Target folder",
       "label-title": "Title",
@@ -11148,7 +11154,7 @@
     "description-order": "Show newest or oldest logs first. When Oldest first is selected, the view automatically scrolls to the newest logs at the bottom.",
     "description-prettify-json": "Format JSON log entries with indentation and line breaks.",
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level.",
-    "description-show-log-attributes": "Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.",
+    "description-show-log-attributes": "Experimental. When OTel logs are displayed, and there are no displayed fields selected, the panel automatically sets displayed fields with relevant key-value pairs from labels and metadata.",
     "description-unwrapped-columns": "Align values using columns when using displayed fields.",
     "description-wrap-lines": "Display logs as a single line or wrap long log entries to fit the panel.",
     "field-selector": {
@@ -11468,7 +11474,7 @@
       "line-contains-not": "Add as line does not contain filter",
       "search-text": "Search in results"
     },
-    "show-log-attributes": "Display log attributes for OTel logs",
+    "show-log-attributes": "Enable log attributes for OTel logs",
     "timestamp-format": "Timestamp resolution",
     "un-themed-log-details": {
       "aria-label-data-links": "Data links",
@@ -12813,6 +12819,7 @@
       "title-button-disabled": "The plugin isn't usable yet, it may take some time to complete the installation."
     },
     "install-controls": {
+      "contact-us": "Contact us",
       "install": "Install",
       "installing": "Installing",
       "update": "Update",
@@ -13059,6 +13066,7 @@
       "token-user-description": "The username that will be used to access the repository with the API token",
       "token-user-required": "Username is required",
       "url-description": "The Bitbucket repository URL",
+      "url-pattern": "Must be a valid repository URL (https://hostname/owner/repo or https://hostname/scm/project/repo)",
       "url-required": "Repository URL is required"
     },
     "bootstrap-step": {
@@ -13373,6 +13381,7 @@
       "token-label": "Project Access Token",
       "token-required": "GitLab token is required",
       "url-description": "The GitLab repository URL",
+      "url-pattern": "Must be a valid repository URL (https://hostname/group/repository or https://hostname/group/subgroup/repository)",
       "url-required": "Repository URL is required"
     },
     "history-view": {
@@ -14786,6 +14795,7 @@
       "bullet-1": "Split content into tabs for quick switching",
       "bullet-2": "Show or hide panels based on template variables and other conditions",
       "bullet-3": "Auto-arrange panels into a grid for an efficient layout",
+      "cta": "Show me",
       "subtitle": "Make your dashboards more impactful and easier to explore",
       "title": "Add tabs and panel conditions to your dashboards"
     },
@@ -14793,6 +14803,7 @@
       "bullet-1": "Store your dashboard configuration safely in any git repository",
       "bullet-2": "keep track of the changes - and who made them",
       "bullet-3": "Works with many deployment scenarios like dev-prod, HA, and instances shared by multiple teams",
+      "cta": "Show me",
       "subtitle": "Bring version control, collaboration, and reliability to your dashboards",
       "title": "Sync your dashboards to Git"
     },
@@ -14800,6 +14811,7 @@
       "bullet-1": "Start from a clean layout instead of building from scratch",
       "bullet-2": "Load a template and customize it to your needs",
       "bullet-3": "Explore and use community dashboards tailored to your data source",
+      "cta": "Show me",
       "subtitle": "Get to a useful dashboard sooner by starting from a proven design",
       "title": "Kickstart dashboards with suggestions and templates"
     },
