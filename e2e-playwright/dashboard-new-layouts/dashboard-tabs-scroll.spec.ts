@@ -73,9 +73,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    // Flaky on CI since PR #123251 introduced the test (May 22, 2026):
-    // `scrollLeftButton` intermittently stays visible after scrolling to start.
-    test.skip('shows scroll buttons and supports paged scrolling', async ({ gotoDashboardPage, selectors, page }) => {
+    test('shows scroll buttons and supports paged scrolling', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({});
       const { firstTab, lastTab } = await buildOverflowTabs(page, dashboardPage, selectors);
 
@@ -96,7 +94,7 @@ test.describe(
         if (await scrollLeftButton.isVisible()) {
           await scrollLeftButton.click();
         }
-        await expect(scrollLeftButton).toBeHidden();
+        await expect(scrollLeftButton).toBeHidden({ timeout: 2_000 });
       }).toPass();
 
       // At the start of the list the first tab is in view and only the right

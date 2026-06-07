@@ -23,13 +23,14 @@ on:
         type: string
         required: true
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
   main:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+      id-token: write
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
     steps:

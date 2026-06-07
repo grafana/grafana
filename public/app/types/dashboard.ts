@@ -1,4 +1,3 @@
-import { type DataQuery } from '@grafana/data';
 import { type Dashboard, type DataSourceRef } from '@grafana/schema';
 import { type ObjectMeta } from 'app/features/apiserver/types';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -11,23 +10,6 @@ export interface HomeDashboardRedirectDTO {
 export interface DashboardDTO {
   dashboard: DashboardDataDTO;
   meta: DashboardMeta;
-}
-
-export interface ImportDashboardResponseDTO {
-  uid: string;
-  pluginId: string;
-  title: string;
-  imported: boolean;
-  importedRevision?: number;
-  importedUri: string;
-  importedUrl: string;
-  slug: string;
-  dashboardId: number;
-  folderId: number;
-  folderUid: string;
-  description: string;
-  path: string;
-  removed: boolean;
 }
 
 export interface SaveDashboardResponseDTO {
@@ -150,11 +132,6 @@ export enum KioskMode {
 }
 
 export type GetMutableDashboardModelFn = () => DashboardModel | null;
-
-export interface QueriesToUpdateOnDashboardLoad {
-  panelId: number;
-  queries: DataQuery[];
-}
 
 export interface DashboardState {
   getModel: GetMutableDashboardModelFn;

@@ -3,6 +3,8 @@ package webhooks
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/url"
 	"strings"
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -55,14 +57,62 @@ func buildWebhookURL(baseURL string, r *provisioning.Repository) string {
 	)
 }
 
-// HACK: assume that the URL is public if it starts with "https://" and does not contain any local IP ranges
-func isPublicURL(url string) bool {
-	return strings.HasPrefix(url, "https://") &&
-		!strings.Contains(url, "localhost") &&
-		!strings.HasPrefix(url, "https://127.") &&
-		!strings.HasPrefix(url, "https://192.") &&
-		!strings.HasPrefix(url, "https://10.") &&
-		!strings.HasPrefix(url, "https://172.16.")
+// privateNetworks are CIDR ranges that are not reachable from the public
+// internet. Webhook providers (e.g. GitHub) cannot deliver to addresses in
+// these ranges, so URLs resolving to them must not be treated as public.
+var privateNetworks = func() []*net.IPNet {
+	cidrs := []string{
+		"127.0.0.0/8",    // loopback
+		"10.0.0.0/8",     // RFC1918
+		"172.16.0.0/12",  // RFC1918
+		"192.168.0.0/16", // RFC1918
+		"169.254.0.0/16", // link-local / cloud metadata
+		"100.64.0.0/10",  // CGNAT
+		"::1/128",        // IPv6 loopback
+		"fe80::/10",      // IPv6 link-local
+		"fc00::/7",       // IPv6 unique local
+	}
+	nets := make([]*net.IPNet, 0, len(cidrs))
+	for _, c := range cidrs {
+		_, n, err := net.ParseCIDR(c)
+		if err != nil {
+			panic(fmt.Sprintf("invalid CIDR %q: %v", c, err))
+		}
+		nets = append(nets, n)
+	}
+	return nets
+}()
+
+// isPublicURL reports whether rawURL is reachable from the public internet.
+// It requires https, rejects localhost and Kubernetes-internal DNS suffixes,
+// and rejects IP literals that fall inside any private/reserved range.
+func isPublicURL(rawURL string) bool {
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Scheme != "https" {
+		return false
+	}
+
+	host := u.Hostname()
+	if host == "" || host == "localhost" {
+		return false
+	}
+
+	if strings.HasSuffix(host, ".svc") || strings.HasSuffix(host, ".cluster.local") {
+		return false
+	}
+
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return true
+	}
+
+	for _, network := range privateNetworks {
+		if network.Contains(ip) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func ProvideWebhooksWithImages(

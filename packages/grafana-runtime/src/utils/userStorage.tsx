@@ -39,7 +39,7 @@ interface RequestOptions extends BackendSrvRequest {
   body?: BackendSrvRequest['data'];
 }
 
-export type UserStorageSpec = {
+type UserStorageSpec = {
   data: { [key: string]: string };
 };
 

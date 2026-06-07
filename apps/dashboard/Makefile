@@ -65,9 +65,6 @@ post-generate-cleanup: ## Clean up the generated code
 	@echo "" >> ./pkg/apis/dashboard/v2/dashboard_spec.cue
 	@cat ./kinds/v2/dashboard_spec.cue >> ./pkg/apis/dashboard/v2/dashboard_spec.cue
 
-	# Temporary workaround until grafana-app-sdk supports selectableFields through union parent paths.
-	@bash ./cuehack/patch_variable_selectable_fields.sh ./pkg/apis/dashboard_manifest.go
-
 	@# Remove generated files for v1beta1 since it's a thin wrapper around v1
 	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_codec_gen.go
 	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go

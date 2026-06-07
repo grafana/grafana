@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { type CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
-import { removeCanvasTransforms } from 'jest-canvas-mock-compare';
 import type uPlot from 'uplot';
 
 import {
@@ -20,7 +19,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
-import { applyDefaultUPlotAxisMeasureTextMock } from '@grafana/test-utils/canvas';
+import { applyDefaultUPlotAxisMeasureTextMock, removeCanvasTransforms } from '@grafana/test-utils/canvas';
 import { measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
 import { XYChartPanel2 } from 'app/plugins/panel/xychart/XYChartPanel';
 import {
@@ -33,8 +32,9 @@ import {
 
 import * as utils from './scatter';
 
+let uPlotInstance: InstanceType<typeof uPlot> | undefined;
 jest.mock('@grafana/ui/src/utils/measureText', () =>
-  require('@grafana/test-utils/canvas').createGrafanaUiMeasureTextJestMock()
+  require('@grafana/test-utils/canvas').createGrafanaUiMeasureTextJestMock(() => uPlotInstance)
 );
 
 const height = 400;
@@ -270,7 +270,6 @@ const setUp = (propsOverrides?: PanelOverrides, seriesOverride?: DataFrame[], ti
 describe('XYChartPanel2', () => {
   let prepConfigSpy: jest.SpyInstance;
   const { prepConfig: realPrepConfig } = jest.requireActual('./scatter');
-  let uPlotInstance: InstanceType<typeof uPlot> | undefined;
   let uPlotAxisEvents: CanvasRenderingContext2DEvent[] | null = null;
   let clearAxisEvents = true;
 
@@ -290,7 +289,7 @@ describe('XYChartPanel2', () => {
   };
 
   beforeEach(() => {
-    applyDefaultUPlotAxisMeasureTextMock(uPlotAxisMeasureText as jest.MockedFunction<typeof uPlotAxisMeasureText>);
+    applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
     // VizLayout always calls `useMeasure`; when legend is hidden the result is unused. Zeros match an unmeasured rect.
     prepConfigSpy = jest.spyOn(utils, 'prepConfig').mockImplementation((opts, theme) => {
       const result = realPrepConfig(opts, theme);
