@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
@@ -101,7 +102,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 		if !recv.HasMimirIntegrations() {
 			continue
 		}
-		grafana, err := legacy_storage.PostableMimirReceiverToPostableGrafanaReceiver(recv)
+		grafana, err := v1.PostableMimirReceiverToPostableGrafanaReceiver(recv)
 		if err != nil {
 			moa.logger.Warn("Failed to convert Mimir receiver to Grafana receiver. Ignoring receiver ", "identifier", mergeResult.Identifier, "receiver", recv.Name, "err", err)
 			failed++
@@ -121,12 +122,12 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
 		managedRoutes := maps.Clone(prepared.ManagedRoutes)
 		if managedRoutes == nil {
-			managedRoutes = make(map[string]*definitions.Route)
+			managedRoutes = make(map[string]*v1.Route)
 		}
 
 		managedInhibitionRules := maps.Clone(prepared.ManagedInhibitionRules)
 		if managedInhibitionRules == nil {
-			managedInhibitionRules = make(definitions.ManagedInhibitionRules)
+			managedInhibitionRules = make(v1.ManagedInhibitionRules)
 		}
 
 		if mergeResult.ExtraRoute != nil {
@@ -135,7 +136,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 			} else {
 				managedRoutes[mergeResult.Identifier] = mergeResult.ExtraRoute
 
-				importedRules, err := legacy_storage.BuildManagedInhibitionRules(mergeResult.Identifier, mergeResult.ExtraInhibitRules)
+				importedRules, err := merge.BuildManagedInhibitionRules(mergeResult.Identifier, mergeResult.ExtraInhibitRules)
 				if err != nil {
 					moa.logger.Warn("failed to build managed inhibition rules for imported configuration", "identifier", mergeResult.Identifier, "err", err)
 				} else {
@@ -153,7 +154,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 
 	prepared.AlertmanagerConfig = preparedConfig
 
-	return PostableAPIConfigToNotificationsConfiguration(prepared, moa.limits)
+	return PostableAPIConfigToNotificationsConfiguration(prepared.AlertmanagerConfig, prepared.SortedTemplates(true), moa.limits)
 }
 
 func (moa *MultiOrgAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context, orgId int64) error {
@@ -220,22 +221,7 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to get latest configuration: %w", err)
 	}
 
-	cfg, err := moa.gettableUserConfigFromAMConfigString(ctx, org, amConfig.AlertmanagerConfiguration)
-	if err != nil {
-		return definitions.GettableUserConfig{}, err
-	}
-
-	if withAutogen {
-		// We validate the notification settings in a similar way to when we POST.
-		// Otherwise, broken settings (e.g. a receiver that doesn't exist) will cause the config returned here to be
-		// different than the config currently in-use.
-		// TODO: Preferably, we'd be getting the config directly from the in-memory AM so adding the autogen config would not be necessary.
-		err := AddAutogenConfig(ctx, moa.logger, moa.configStore, org, &cfg.AlertmanagerConfig, LogInvalidReceivers, moa.featureManager)
-		if err != nil {
-			return definitions.GettableUserConfig{}, err
-		}
-	}
-	return cfg, nil
+	return moa.gettableUserConfigFromAMConfigString(ctx, org, amConfig.AlertmanagerConfiguration, withAutogen)
 }
 
 // ActivateHistoricalConfiguration will set the current alertmanager configuration to a previous value based on the provided
@@ -301,7 +287,7 @@ func (moa *MultiOrgAlertmanager) GetAppliedAlertmanagerConfigurations(ctx contex
 	gettableHistoricConfigs := make([]*definitions.GettableHistoricUserConfig, 0, len(configs))
 	for _, config := range configs {
 		appliedAt := strfmt.DateTime(time.Unix(config.LastApplied, 0).UTC())
-		gettableConfig, err := moa.gettableUserConfigFromAMConfigString(ctx, org, config.AlertmanagerConfiguration)
+		gettableConfig, err := moa.gettableUserConfigFromAMConfigString(ctx, org, config.AlertmanagerConfiguration, false)
 		if err != nil {
 			// If there are invalid records, skip them and return the valid ones.
 			moa.logger.Warn("Invalid configuration found in alert configuration history table", "id", config.ID, "orgID", org)
@@ -321,7 +307,7 @@ func (moa *MultiOrgAlertmanager) GetAppliedAlertmanagerConfigurations(ctx contex
 	return gettableHistoricConfigs, nil
 }
 
-func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx context.Context, orgID int64, config string) (definitions.GettableUserConfig, error) {
+func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx context.Context, orgID int64, config string, withAutogen bool) (definitions.GettableUserConfig, error) {
 	cfg, err := Load([]byte(config))
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to unmarshal alertmanager configuration: %w", err)
@@ -333,14 +319,24 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	}
 
 	alertmanagerConfig := cfg.AlertmanagerConfig
-	templateFiles := cfg.TemplateFiles
+
+	if withAutogen {
+		// We validate the notification settings in a similar way to when we POST.
+		// Otherwise, broken settings (e.g. a receiver that doesn't exist) will cause the config returned here to be
+		// different than the config currently in-use.
+		// TODO: Preferably, we'd be getting the config directly from the in-memory AM so adding the autogen config would not be necessary.
+		err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, &alertmanagerConfig, LogInvalidReceivers, moa.featureManager)
+		if err != nil {
+			return definitions.GettableUserConfig{}, err
+		}
+	}
 
 	result := definitions.GettableUserConfig{
-		TemplateFiles: templateFiles,
+		TemplateFiles: v1.TemplatesToTemplateFiles(cfg.Templates),
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
-			Config: alertmanagerConfig.Config,
+			Config: PostableApiAlertingConfigToAPI(alertmanagerConfig).Config,
 		},
-		ExtraConfigs: cfg.ExtraConfigs,
+		ExtraConfigs: ExtraConfigsToAPI(cfg.ExtraConfigs),
 	}
 
 	// First we encrypt the secure settings.
@@ -399,7 +395,7 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 	ctx context.Context,
 	org int64,
-	modifyFn func([]definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error),
+	modifyFn func([]v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error),
 	dryRun bool,
 ) (merge.RenameResources, error) {
 	currentCfg, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
@@ -457,8 +453,8 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 }
 
 // SaveAndApplyExtraConfiguration adds or replaces an ExtraConfiguration while preserving the main AlertmanagerConfig.
-func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, extraConfig definitions.ExtraConfiguration, replace bool, dryRun bool) (merge.RenameResources, error) {
-	modifyFunc := func(configs []definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error) {
+func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, extraConfig v1.ExtraConfiguration, replace bool, dryRun bool) (merge.RenameResources, error) {
+	modifyFunc := func(configs []v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error) {
 		if replace {
 			// When replacing all configs, authorize deletion for each config with a different identifier.
 			for _, c := range configs {
@@ -494,7 +490,7 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 			}
 		}
 
-		return []definitions.ExtraConfiguration{extraConfig}, nil
+		return []v1.ExtraConfiguration{extraConfig}, nil
 	}
 
 	renamed, err := moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc, dryRun)
@@ -512,11 +508,11 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 
 // DeleteExtraConfiguration deletes an ExtraConfiguration by its identifier while preserving the main AlertmanagerConfig.
 func (moa *MultiOrgAlertmanager) DeleteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, identifier string) error {
-	modifyFunc := func(configs []definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error) {
+	modifyFunc := func(configs []v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error) {
 		if err := authz.AuthorizeDelete(ctx, user, identifier); err != nil {
 			return nil, err
 		}
-		filtered := make([]definitions.ExtraConfiguration, 0, len(configs))
+		filtered := make([]v1.ExtraConfiguration, 0, len(configs))
 		for _, ec := range configs {
 			if ec.Identifier != identifier {
 				filtered = append(filtered, ec)
@@ -559,8 +555,7 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 		}
 	}
 
-	tmpl := definitions.NotificationTemplate{}
-	tmplProvs, err := moa.ProvStore.GetProvenances(ctx, org, tmpl.ResourceType())
+	tmplProvs, err := moa.ProvStore.GetProvenances(ctx, org, (&v1.TemplateGroup{}).ResourceType())
 	if err != nil {
 		return definitions.GettableUserConfig{}, nil
 	}
@@ -669,11 +664,11 @@ func newSaveAMConfigCmd(cfg string, orgID int64, isDefault bool) *models.SaveAle
 // This should not be generally used but exists to facilitate operations that rely on the legacy blob config:
 // - Create/Update ExtraConfig, whose storage currently piggybacks on PostableUserConfig.
 // - Config version history revert, which will eventually need to be replaced with per-resource version history.
-func (moa *MultiOrgAlertmanager) saveAndApplyConfig(ctx context.Context, orgID int64, am Alertmanager, cfg *definitions.PostableUserConfig) error {
+func (moa *MultiOrgAlertmanager) saveAndApplyConfig(ctx context.Context, orgID int64, am Alertmanager, cfg *v1.AMConfigV1) error {
 	moa.alertmanagersMtx.RLock()
 	defer moa.alertmanagersMtx.RUnlock()
 
-	cfgToSave, err := json.Marshal(&cfg)
+	cfgToSave, err := legacy_storage.SerializeAlertmanagerConfig(*cfg)
 	if err != nil {
 		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
 	}

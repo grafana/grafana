@@ -1,4 +1,4 @@
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Status, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
@@ -18,38 +18,13 @@ export function isV0V1StoredVersion(version: string | undefined): boolean {
 }
 
 export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
-  const isKubernetesDashboardsEnabled = config.featureToggles.kubernetesDashboards;
-  const isDashboardNewLayoutsEnabled = config.featureToggles.dashboardNewLayouts;
-
-  const forcingOldDashboardArch = locationService.getSearch().get('scenes') === 'false';
-
-  // console.log(forcingOldDashboardArch);
-  // Force legacy API when dashboard scene is force disabled
-  if (forcingOldDashboardArch) {
-    if (responseFormat === 'v2') {
-      throw new Error('v2 is not supported for legacy architecture');
-    }
-
-    return isKubernetesDashboardsEnabled ? 'v1' : 'legacy';
+  if (responseFormat === 'v1') {
+    return 'v1';
   }
-
-  // Unified manages redirection between v1 and v2, but when responseFormat is undefined we get the unified API
-  if (isKubernetesDashboardsEnabled) {
-    if (responseFormat === 'v1') {
-      return 'v1';
-    }
-    if (responseFormat === 'v2' || isDashboardNewLayoutsEnabled) {
-      return 'v2';
-    }
-    return 'unified';
+  if (responseFormat === 'v2' || config.featureToggles.dashboardNewLayouts) {
+    return 'v2';
   }
-
-  // Handle non-kubernetes case
-  if (responseFormat === 'v2') {
-    throw new Error('v2 is not supported if kubernetes dashboards are disabled');
-  }
-
-  return 'legacy';
+  return 'unified';
 }
 
 // This function is used to determine if the dashboard is a k8s resource (v1 or v2 format)

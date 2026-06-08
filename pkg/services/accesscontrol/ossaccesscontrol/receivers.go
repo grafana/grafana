@@ -33,13 +33,27 @@ func defaultPermissions() []accesscontrol.SetResourcePermissionCommand {
 	}
 }
 
+// ReceiverPermissionsRoleRegistrations returns the templated reader/writer fixed
+// roles for alerting receiver resource permissions
+// (fixed:receivers.permissions:reader and :writer). These mirror the roles
+// declared by ProvideReceiverPermissionsService through resourcepermissions.New;
+// the identity fields below must match the Options passed there.
+func ReceiverPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
+	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
+		Resource:       receiverPermissionsResource,
+		ReaderRoleName: receiverPermissionsReaderRoleName,
+		WriterRoleName: receiverPermissionsWriterRoleName,
+		RoleGroup:      models.AlertRolesGroup,
+	})
+}
+
 func ProvideReceiverPermissionsService(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*ReceiverPermissionsService, error) {
 	options := resourcepermissions.Options{
-		Resource:          "receivers",
+		Resource:          receiverPermissionsResource,
 		ResourceAttribute: "uid",
 		ResourceTranslator: func(ctx context.Context, orgID int64, resourceID string) (string, error) {
 			return models.ScopeReceiversProvider.GetResourceIDFromUID(resourceID), nil
@@ -55,8 +69,8 @@ func ProvideReceiverPermissionsService(
 			string(models.PermissionEdit):  append([]string{}, ReceiversEditActions...),
 			string(models.PermissionAdmin): append([]string{}, ReceiversAdminActions...),
 		},
-		ReaderRoleName: "Alerting receiver permission reader",
-		WriterRoleName: "Alerting receiver permission writer",
+		ReaderRoleName: receiverPermissionsReaderRoleName,
+		WriterRoleName: receiverPermissionsWriterRoleName,
 		RoleGroup:      models.AlertRolesGroup,
 	}
 

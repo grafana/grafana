@@ -502,3 +502,262 @@ func TestDryRunDeletePopulatesExisting(t *testing.T) {
 		require.Equal(t, "team-a", parsed.ExistingFolder())
 	})
 }
+
+func newParsedResource(client *MockDynamicResourceInterface, opts ...func(*ParsedResource)) *ParsedResource {
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "dashboard.grafana.app/v1",
+		"kind":       "Dashboard",
+		"metadata":   map[string]any{"name": "my-dash", "namespace": "default"},
+	}}
+	meta, _ := utils.MetaAccessor(obj)
+	p := &ParsedResource{
+		Obj:    obj,
+		Meta:   meta,
+		Client: client,
+		Repo:   testRepoInfo(),
+		GVR:    DashboardResource,
+	}
+	for _, fn := range opts {
+		fn(p)
+	}
+	return p
+}
+
+func withDryRun() func(*ParsedResource) {
+	return func(p *ParsedResource) {
+		p.DryRunResponse = &unstructured.Unstructured{}
+	}
+}
+
+func withExisting(obj *unstructured.Unstructured) func(*ParsedResource) {
+	return func(p *ParsedResource) {
+		p.Existing = obj
+	}
+}
+
+func withAction(action provisioning.ResourceAction) func(*ParsedResource) {
+	return func(p *ParsedResource) {
+		p.Action = action
+	}
+}
+
+func TestParsedResource_Run(t *testing.T) {
+	successObj := &unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{"name": "my-dash", "namespace": "default"},
+	}}
+	badRequestErr := apierrors.NewBadRequest("uid too long, max 40 characters")
+	forbiddenErr := apierrors.NewForbidden(schema.GroupResource{Resource: "dashboards"}, "my-dash", fmt.Errorf("quota reached"))
+	alreadyExistsErr := apierrors.NewAlreadyExists(schema.GroupResource{Resource: "dashboards"}, "my-dash")
+	notFoundErr := apierrors.NewNotFound(schema.GroupResource{Resource: "dashboards"}, "my-dash")
+	internalErr := apierrors.NewInternalError(fmt.Errorf("something broke"))
+
+	t.Run("nil client returns error", func(t *testing.T) {
+		parsed := &ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "x", "namespace": "default"},
+			}},
+		}
+		err := parsed.Run(t.Context())
+		require.ErrorContains(t, err, "unable to find client")
+	})
+
+	// --- Create path (DryRun + no Existing) ---
+
+	t.Run("create succeeds on first attempt", func(t *testing.T) {
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(successObj, nil)
+
+		parsed := newParsedResource(mc, withDryRun())
+		err := parsed.Run(t.Context())
+
+		require.NoError(t, err)
+		require.Equal(t, provisioning.ResourceActionCreate, parsed.Action)
+		mc.AssertNumberOfCalls(t, "Create", 1)
+		mc.AssertNotCalled(t, "Update")
+	})
+
+	t.Run("create validation error returns immediately without update", func(t *testing.T) {
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, badRequestErr)
+
+		parsed := newParsedResource(mc, withDryRun())
+		err := parsed.Run(t.Context())
+
+		require.True(t, apierrors.IsBadRequest(err))
+		mc.AssertNumberOfCalls(t, "Create", 1)
+		mc.AssertNotCalled(t, "Update")
+	})
+
+	t.Run("create forbidden error returns immediately without update", func(t *testing.T) {
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, forbiddenErr)
+
+		parsed := newParsedResource(mc, withDryRun())
+		err := parsed.Run(t.Context())
+
+		require.True(t, apierrors.IsForbidden(err))
+		mc.AssertNotCalled(t, "Update")
+	})
+
+	t.Run("create internal error returns immediately without update", func(t *testing.T) {
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, internalErr)
+
+		parsed := newParsedResource(mc, withDryRun())
+		err := parsed.Run(t.Context())
+
+		require.True(t, apierrors.IsInternalError(err))
+		mc.AssertNotCalled(t, "Update")
+	})
+
+	t.Run("create AlreadyExists falls through to update", func(t *testing.T) {
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, alreadyExistsErr)
+		mc.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(successObj, nil)
+
+		parsed := newParsedResource(mc, withDryRun())
+		err := parsed.Run(t.Context())
+
+		require.NoError(t, err)
+		require.Equal(t, provisioning.ResourceActionUpdate, parsed.Action)
+		mc.AssertNumberOfCalls(t, "Create", 1)
+		mc.AssertNumberOfCalls(t, "Update", 1)
+	})
+
+	// --- Update path (no DryRun, fetches existing) ---
+
+	t.Run("update succeeds when existing resource found", func(t *testing.T) {
+		existing := managedGrafanaObj("my-dash", "default", nil)
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(existing, nil)
+		mc.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(successObj, nil)
+
+		parsed := newParsedResource(mc)
+		err := parsed.Run(t.Context())
+
+		require.NoError(t, err)
+		require.Equal(t, provisioning.ResourceActionUpdate, parsed.Action)
+		mc.AssertNotCalled(t, "Create")
+	})
+
+	t.Run("update validation error returns immediately without create fallback", func(t *testing.T) {
+		existing := managedGrafanaObj("my-dash", "default", nil)
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(existing, nil)
+		mc.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, badRequestErr)
+
+		parsed := newParsedResource(mc)
+		err := parsed.Run(t.Context())
+
+		require.True(t, apierrors.IsBadRequest(err))
+		mc.AssertNotCalled(t, "Create")
+	})
+
+	t.Run("update NotFound falls through to create", func(t *testing.T) {
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(nil, notFoundErr)
+		mc.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, notFoundErr)
+		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(successObj, nil)
+
+		parsed := newParsedResource(mc)
+		err := parsed.Run(t.Context())
+
+		require.NoError(t, err)
+		require.Equal(t, provisioning.ResourceActionCreate, parsed.Action)
+		mc.AssertNumberOfCalls(t, "Update", 1)
+		mc.AssertNumberOfCalls(t, "Create", 1)
+	})
+
+	t.Run("update NotFound then create also fails returns create error", func(t *testing.T) {
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(nil, notFoundErr)
+		mc.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, notFoundErr)
+		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, forbiddenErr)
+
+		parsed := newParsedResource(mc)
+		err := parsed.Run(t.Context())
+
+		require.True(t, apierrors.IsForbidden(err))
+	})
+
+	// --- Delete path ---
+
+	t.Run("delete succeeds", func(t *testing.T) {
+		existing := managedGrafanaObj("my-dash", "default", nil)
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Delete", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(nil)
+
+		parsed := newParsedResource(mc, withAction(provisioning.ResourceActionDelete), withDryRun(), withExisting(existing))
+		err := parsed.Run(t.Context())
+
+		require.NoError(t, err)
+		require.NotNil(t, parsed.Upsert)
+	})
+
+	t.Run("delete without dry run fetches existing first", func(t *testing.T) {
+		existing := managedGrafanaObj("my-dash", "default", nil)
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(existing, nil)
+		mc.On("Delete", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(nil)
+
+		parsed := newParsedResource(mc, withAction(provisioning.ResourceActionDelete))
+		err := parsed.Run(t.Context())
+
+		require.NoError(t, err)
+		mc.AssertNumberOfCalls(t, "Get", 1)
+	})
+
+	t.Run("delete resource not found returns nil", func(t *testing.T) {
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(nil, notFoundErr)
+
+		parsed := newParsedResource(mc, withAction(provisioning.ResourceActionDelete))
+		err := parsed.Run(t.Context())
+
+		require.NoError(t, err)
+		mc.AssertNotCalled(t, "Delete")
+	})
+
+	t.Run("delete already deleted returns nil", func(t *testing.T) {
+		existing := managedGrafanaObj("my-dash", "default", nil)
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Delete", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(notFoundErr)
+
+		parsed := newParsedResource(mc, withAction(provisioning.ResourceActionDelete), withDryRun(), withExisting(existing))
+		err := parsed.Run(t.Context())
+
+		require.NoError(t, err)
+	})
+
+	t.Run("delete other error returns error", func(t *testing.T) {
+		existing := managedGrafanaObj("my-dash", "default", nil)
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Delete", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(internalErr)
+
+		parsed := newParsedResource(mc, withAction(provisioning.ResourceActionDelete), withDryRun(), withExisting(existing))
+		err := parsed.Run(t.Context())
+
+		require.True(t, apierrors.IsInternalError(err))
+	})
+
+	// --- Ownership checks ---
+
+	t.Run("ownership conflict on upsert returns error", func(t *testing.T) {
+		otherOwner := managedGrafanaObj("my-dash", "default", nil)
+		otherMeta, _ := utils.MetaAccessor(otherOwner)
+		otherMeta.SetManagerProperties(utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "other-repo",
+		})
+
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(otherOwner, nil)
+
+		parsed := newParsedResource(mc)
+		err := parsed.Run(t.Context())
+
+		require.Error(t, err)
+		mc.AssertNotCalled(t, "Create")
+		mc.AssertNotCalled(t, "Update")
+	})
+}

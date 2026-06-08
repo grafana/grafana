@@ -10,6 +10,8 @@ import (
 
 var variableNameFormat = regexp.MustCompile(`^\w+$`)
 
+const variableMetadataNameMaxLength = 253
+
 // walkVariableKinds traverses the VariableSpec union in a single pass and
 // returns the spec name of whichever kind is populated (empty if none) along
 // with the total number of populated kinds. Centralising the walk here keeps
@@ -59,6 +61,39 @@ func walkVariableKinds(spec dashv2beta1.VariableSpec) (name string, count int) {
 func getVariableName(spec dashv2beta1.VariableSpec) string {
 	name, _ := walkVariableKinds(spec)
 	return name
+}
+
+func deriveVariableMetadataName(specName, folderUID string) string {
+	if folderUID == "" {
+		return specName
+	}
+	return specName + "--" + folderUID
+}
+
+func validateVariableMetadataName(gotName, specName, folderUID string) error {
+	expectedName := deriveVariableMetadataName(specName, folderUID)
+	if len(expectedName) > variableMetadataNameMaxLength {
+		return fmt.Errorf("derived metadata.name exceeds maximum length (%d)", variableMetadataNameMaxLength)
+	}
+	if gotName == "" || gotName == expectedName {
+		return nil
+	}
+
+	if folderUID == "" {
+		return fmt.Errorf(
+			"metadata.name %q does not match the name required for spec.spec.name %q: expected %q (omit metadata.name to let the server set it)",
+			gotName,
+			specName,
+			expectedName,
+		)
+	}
+	return fmt.Errorf(
+		"metadata.name %q does not match the name required for spec.spec.name %q in folder %q: expected %q (omit metadata.name to let the server set it)",
+		gotName,
+		specName,
+		folderUID,
+		expectedName,
+	)
 }
 
 func validateVariable(variable *dashv2beta1.Variable) error {

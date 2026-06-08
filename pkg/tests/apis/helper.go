@@ -600,9 +600,12 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	// Get the URL
 	addr := c.env.Server.HTTPServer.Listener.Addr()
 	baseUrl := fmt.Sprintf("http://%s", addr)
-	login := params.User.Identity.GetLogin()
-	if login != "" && params.User.password != "" {
-		baseUrl = fmt.Sprintf("http://%s:%s@%s", login, params.User.password, addr)
+	// User may be zero when callers authenticate via params.Headers (bearer token).
+	if params.User.Identity != nil {
+		login := params.User.Identity.GetLogin()
+		if login != "" && params.User.password != "" {
+			baseUrl = fmt.Sprintf("http://%s:%s@%s", login, params.User.password, addr)
+		}
 	}
 
 	contentType := params.ContentType

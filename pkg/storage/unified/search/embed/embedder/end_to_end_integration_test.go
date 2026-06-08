@@ -201,7 +201,7 @@ func buildEmbedder(ctx context.Context, t *testing.T, name string) *embedder.Emb
 		client, err := vertex.NewClient(ctx, projectID, location)
 		require.NoError(t, err)
 		return &embedder.Embedder{
-			TextEmbedder: vertex.NewDenseEmbedder(client, model, 768),
+			TextEmbedder: vertex.NewDenseEmbedder(client, model, 768, 50),
 			Model:        "vertex/" + model,
 			VectorType:   embedder.VectorTypeDense,
 			Metric:       embedder.CosineDistance,
@@ -219,7 +219,7 @@ func buildEmbedder(ctx context.Context, t *testing.T, name string) *embedder.Emb
 		rt := bedrockruntime.NewFromConfig(cfg)
 		client := bedrock.NewClient(rt)
 		return &embedder.Embedder{
-			TextEmbedder: bedrock.NewDenseEmbedder(client, model, 1024),
+			TextEmbedder: bedrock.NewDenseEmbedder(client, model, 1024, 50),
 			Model:        "bedrock/" + model,
 			VectorType:   embedder.VectorTypeDense,
 			Metric:       embedder.CosineDistance,

@@ -5,7 +5,7 @@ import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneObjectState,
   SceneObjectBase,
@@ -185,7 +185,12 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 
   public hasControls(): boolean {
     const dashboard = getDashboardSceneFor(this);
-    const sectionVariablesEnabled = getFeatureFlagClient().getBooleanValue('dashboardSectionVariables', false);
+    // OpenFeature is not initialized for anonymous users, so fall back to
+    // the static feature toggle to ensure section variables work without auth.
+    const sectionVariablesEnabled = getFeatureFlagClient().getBooleanValue(
+      FlagKeys.DashboardSectionVariables,
+      Boolean(config.featureToggles.dashboardSectionVariables)
+    );
     const panelEditVariables = getPanelEditVariables(dashboard, sectionVariablesEnabled);
     const variables = panelEditVariables ?? sceneGraph.getVariables(this)?.state.variables ?? [];
     const hasVariables = variables.some((v) => v.state.hide !== VariableHide.hideVariable);
@@ -217,7 +222,12 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const styles = useStyles2(getStyles, isQueryEditorNext);
   const showDebugger = window.location.search.includes('scene-debugger');
   const hasDashboardControls = useHasDashboardControls(dashboard);
-  const sectionVariablesEnabled = getFeatureFlagClient().getBooleanValue('dashboardSectionVariables', false);
+  // OpenFeature is not initialized for anonymous users, so fall back to
+  // the static feature toggle to ensure section variables work without auth.
+  const sectionVariablesEnabled = getFeatureFlagClient().getBooleanValue(
+    FlagKeys.DashboardSectionVariables,
+    Boolean(config.featureToggles.dashboardSectionVariables)
+  );
   const panelEditVariables = getPanelEditVariables(dashboard, sectionVariablesEnabled);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();

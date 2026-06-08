@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
@@ -158,7 +160,7 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 			continue
 		}
 		embeddedContactPoint, err := PostableGrafanaReceiverToEmbeddedContactPoint(
-			receiver,
+			new(definition.PostableGrafanaReceiver(*receiver)),
 			models.ProvenanceNone, // TODO should be correct provenance?
 			ecp.decryptValueOrRedacted(true, receiver.UID),
 		)
@@ -210,7 +212,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 		return apimodels.EmbeddedContactPoint{}, err
 	}
 
-	grafanaReceiver := &apimodels.PostableGrafanaReceiver{
+	grafanaReceiver := &v1.PostableGrafanaReceiver{
 		UID:                   contactPoint.UID,
 		Name:                  contactPoint.Name,
 		Type:                  contactPoint.Type,
@@ -241,12 +243,12 @@ func (ecp *ContactPointService) CreateContactPoint(
 		if err := ecp.authz.AuthorizeCreate(ctx, user); err != nil {
 			return apimodels.EmbeddedContactPoint{}, err
 		}
-		revision.Config.AlertmanagerConfig.Receivers = append(revision.Config.AlertmanagerConfig.Receivers, &apimodels.PostableApiReceiver{
+		revision.Config.AlertmanagerConfig.Receivers = append(revision.Config.AlertmanagerConfig.Receivers, &v1.PostableApiReceiver{
 			Receiver: apimodels.Receiver{
 				Name: grafanaReceiver.Name,
 			},
-			PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{grafanaReceiver},
+			PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{grafanaReceiver},
 			},
 		})
 	}
@@ -333,7 +335,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if err != nil {
 		return err
 	}
-	mergedReceiver := &apimodels.PostableGrafanaReceiver{
+	mergedReceiver := &v1.PostableGrafanaReceiver{
 		UID:                   contactPoint.UID,
 		Name:                  contactPoint.Name,
 		Type:                  contactPoint.Type,
@@ -576,7 +578,7 @@ func (ecp *ContactPointService) checkProtectedFields(
 // stitchReceiver modifies a receiver, target, in an alertmanager configStore. It modifies the given configStore in-place.
 // Returns true if the configStore was altered in any way, and false otherwise.
 // If integration was moved to another group and it was the last in the previous group, the second parameter contains the name of the old group that is gone
-func stitchReceiver(cfg *apimodels.PostableUserConfig, target *apimodels.PostableGrafanaReceiver) (oldReceiverName *string, fullRemoval bool, newReceiverCreated bool) {
+func stitchReceiver(cfg *v1.AMConfigV1, target *v1.PostableGrafanaReceiver) (oldReceiverName *string, fullRemoval bool, newReceiverCreated bool) {
 	// Algorithm to fix up receivers. Receivers are very complex and depend heavily on internal consistency.
 	// All receivers in a given receiver group have the same name. We must maintain this across renames.
 groupLoop:
@@ -631,12 +633,12 @@ groupLoop:
 				}
 
 				// Doesn't exist? Create a new group just for the receiver.
-				newGroup := &apimodels.PostableApiReceiver{
+				newGroup := &v1.PostableApiReceiver{
 					Receiver: apimodels.Receiver{
 						Name: target.Name,
 					},
-					PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+					PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
 							target,
 						},
 					},

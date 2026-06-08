@@ -2,12 +2,10 @@ package notifier
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
 
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -25,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -440,7 +439,7 @@ func TestReceiverService_Create(t *testing.T) {
 		user                identity.Requester
 		receiver            models.Receiver
 		expectedCreate      models.Receiver
-		expectedStored      *definitions.PostableApiReceiver
+		expectedStored      *v1.PostableApiReceiver
 		expectedErr         error
 		expectedProvenances map[string]models.Provenance
 		opts                []createReceiverServiceSutOpt
@@ -536,12 +535,12 @@ func TestReceiverService_Create(t *testing.T) {
 					),
 				),
 			)),
-			expectedStored: &definitions.PostableApiReceiver{
+			expectedStored: &v1.PostableApiReceiver{
 				Receiver: definitions.Receiver{
 					Name: lineIntegration.Name,
 				},
-				PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
-					GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+				PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
 						{
 							UID:                   lineIntegration.UID,
 							Name:                  lineIntegration.Name,
@@ -1712,7 +1711,7 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 	for _, tc := range []struct {
 		name             string
 		user             identity.Requester
-		storeRoute       definitions.Route
+		storeRoute       v1.Route
 		storeSettings    map[models.AlertRuleKey]models.ContactPointRouting
 		existing         []*models.Receiver
 		expectedMetadata map[string]models.ReceiverMetadata
@@ -1730,14 +1729,14 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 				{OrgID: 1, UID: "rule1uid"}: models.ContactPointRoutingGen(models.CPRMuts.WithReceiver("receiver1"))(),
 				{OrgID: 1, UID: "rule2uid"}: models.ContactPointRoutingGen(models.CPRMuts.WithReceiver("receiver2"))(),
 			},
-			storeRoute: definitions.Route{
+			storeRoute: v1.Route{
 				Receiver: "receiver1",
-				Routes: []*definitions.Route{
+				Routes: []*v1.Route{
 					{Receiver: "receiver2"},
 					{Receiver: "receiver3"},
 					{
 						Receiver: "receiver4",
-						Routes: []*definitions.Route{
+						Routes: []*v1.Route{
 							{Receiver: "receiver1"},
 							{Receiver: "receiver3"},
 						},
@@ -1897,9 +1896,8 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...cr
 	return sut
 }
 
-func createEncryptedConfig(t *testing.T, secretService secretService, extraConfig *definitions.ExtraConfiguration) string {
-	c := &definitions.PostableUserConfig{}
-	err := json.Unmarshal([]byte(defaultAlertmanagerConfigJSON), c)
+func createEncryptedConfig(t *testing.T, secretService secretService, extraConfig *v1.ExtraConfiguration) string {
+	c, err := Load([]byte(defaultAlertmanagerConfigJSON))
 	require.NoError(t, err)
 	err = EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
 		return secretService.Encrypt(ctx, payload, secrets.WithoutScope())
@@ -1909,7 +1907,7 @@ func createEncryptedConfig(t *testing.T, secretService secretService, extraConfi
 		c.ExtraConfigs = append(c.ExtraConfigs, *extraConfig)
 		require.NoError(t, NewExtraConfigsCrypto(secretService).EncryptExtraConfigs(context.Background(), c))
 	}
-	bytes, err := json.Marshal(c)
+	bytes, err := legacy_storage.SerializeAlertmanagerConfig(*c)
 	require.NoError(t, err)
 	return string(bytes)
 }
@@ -1963,10 +1961,9 @@ const defaultAlertmanagerConfigJSON = `
 }
 `
 
-func getExtraConfig() *definitions.ExtraConfiguration {
-	return &definitions.ExtraConfiguration{
+func getExtraConfig() *v1.ExtraConfiguration {
+	return &v1.ExtraConfiguration{
 		Identifier:         "import",
-		MergeMatchers:      []*labels.Matcher{{Type: labels.MatchEqual, Name: "__imported", Value: "true"}},
 		TemplateFiles:      nil,
 		AlertmanagerConfig: defaultExtraConfig,
 	}

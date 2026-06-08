@@ -72,8 +72,14 @@ jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => (
 describe('ImportDashboardFormV2', () => {
   const mockOnCancel = jest.fn();
   const mockOnSubmit = jest.fn();
+  const mockOnFolderChange = jest.fn();
 
-  function renderForm(hasFloatGridItems = false, inputs: DashboardInputs = mockInputs, dashboardUid?: string) {
+  function renderForm(
+    hasFloatGridItems = false,
+    inputs: DashboardInputs = mockInputs,
+    dashboardUid?: string,
+    onFolderChange?: (uid: string) => void
+  ) {
     const defaultDashboard: DashboardV2Spec = defaultSpec();
     return render(
       <Form<ImportFormDataV2>
@@ -95,6 +101,7 @@ describe('ImportDashboardFormV2', () => {
             onSubmit={mockOnSubmit}
             watch={watch}
             hasFloatGridItems={hasFloatGridItems}
+            onFolderChange={onFolderChange}
           />
         )}
       </Form>
@@ -129,5 +136,28 @@ describe('ImportDashboardFormV2', () => {
 
     const editableUidField = document.querySelector('input[name="k8s.name"]') as HTMLInputElement;
     expect(editableUidField).toBeEnabled();
+  });
+
+  it('calls onFolderChange when folder picker value changes', async () => {
+    const user = userEvent.setup();
+    renderForm(false, mockInputs, undefined, mockOnFolderChange);
+
+    const folderPicker = screen.getByTestId('folder-picker');
+    await user.clear(folderPicker);
+    await user.type(folderPicker, 'new-folder');
+
+    expect(mockOnFolderChange).toHaveBeenCalledWith('new-folder');
+  });
+
+  it('works without onFolderChange callback (optional prop)', async () => {
+    const user = userEvent.setup();
+    renderForm(false, mockInputs, undefined, undefined);
+
+    const folderPicker = screen.getByTestId('folder-picker');
+    // Should not throw when changing folder without callback
+    await user.clear(folderPicker);
+    await user.type(folderPicker, 'some-folder');
+
+    expect(folderPicker).toHaveValue('some-folder');
   });
 });

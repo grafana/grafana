@@ -28,4 +28,5 @@ export const grafanaESModules = [
   '@grafana/react-data-grid',
   '@grafana/llm',
   'pkce-challenge',
+  'uuid',
 ];

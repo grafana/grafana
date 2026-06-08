@@ -158,7 +158,7 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
   }
 }
 
-export const defaultQuery: Partial<Query> = {
+const defaultQuery: Partial<Query> = {
   ...defaultGrafanaPyroscopeDataQuery,
   queryType: defaultPyroscopeQueryType,
 };
