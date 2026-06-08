@@ -20,6 +20,21 @@ jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
   useQueryLibraryContext: () => ({ isDrawerOpen: false }),
 }));
 
+// Mirror usePendingExpression.test.ts so the real usePendingExpression hook (restored via
+// requireActual in the regression suite below) imports cleanly.
+jest.mock('app/features/expressions/ExpressionDatasource', () => ({
+  dataSource: {
+    newQuery: jest.fn(() => ({
+      refId: '--',
+      datasource: { type: '__expr__', uid: '__expr__' },
+    })),
+  },
+}));
+
+jest.mock('app/features/expressions/utils/expressionTypes', () => ({
+  getDefaults: jest.fn((query) => query),
+}));
+
 const mockUseAlertRulesForPanel = jest.fn();
 jest.mock('./hooks/useAlertRulesForPanel', () => ({
   useAlertRulesForPanel: (...args: unknown[]) => mockUseAlertRulesForPanel(...args),
@@ -391,5 +406,84 @@ describe('QueryEditorContextWrapper - delete actions', () => {
     act(() => result.current.actions.deleteTransformation('reduce-0'));
 
     expect(result.current.ui.selectedTransformationIds).toEqual(['organize-1']);
+  });
+});
+
+// Regression: opening a pending picker (+Expression / +Transformation) while in multi-select
+// mode and then cancelling must NOT wipe the bulk selection or silently leave multi-select
+// mode on with empty checkboxes. These tests exercise the REAL pending hooks (the suites above
+// mock them) to cover the full wrapper -> hook -> selection-state flow.
+describe('QueryEditorContextWrapper - pending picker cancel preserves multi-select', () => {
+  beforeEach(() => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [],
+      loading: false,
+      isDashboardSaved: true,
+    });
+
+    const { usePendingExpression } = require('./hooks/usePendingExpression');
+    const { usePendingTransformation } = require('./hooks/usePendingTransformation');
+    usePendingExpression.mockImplementation(jest.requireActual('./hooks/usePendingExpression').usePendingExpression);
+    usePendingTransformation.mockImplementation(
+      jest.requireActual('./hooks/usePendingTransformation').usePendingTransformation
+    );
+  });
+
+  it('preserves bulk query selection and multi-select mode when cancelling a pending expression', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setMultiSelectMode(true));
+    act(() => result.current.toggleQuerySelection({ refId: 'A' } as DataQuery, { multi: true }));
+    act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
+    expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
+
+    // Open the +Expression picker.
+    act(() => result.current.setPendingExpression({ insertAfter: 'B' }));
+    expect(result.current.pendingExpression).toEqual({ insertAfter: 'B' });
+    // Bulk selection and mode stay intact while the picker is open.
+    expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
+    expect(result.current.multiSelectMode).toBe(true);
+
+    // Cancel the picker.
+    act(() => result.current.setPendingExpression(null));
+
+    expect(result.current.pendingExpression).toBeNull();
+    expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
+    expect(result.current.multiSelectMode).toBe(true);
+  });
+
+  it('preserves bulk transformation selection and multi-select mode when cancelling a pending transformation', () => {
+    const { useTransformations } = require('./hooks/useTransformations');
+    const reduce: Transformation = {
+      registryItem: undefined,
+      transformId: 'reduce-0',
+      transformConfig: { id: 'reduce', options: {} },
+    };
+    const organize: Transformation = {
+      registryItem: undefined,
+      transformId: 'organize-1',
+      transformConfig: { id: 'organize', options: {} },
+    };
+    useTransformations.mockReturnValue([reduce, organize]);
+
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setMultiSelectMode(true));
+    act(() => result.current.toggleTransformationSelection(reduce, { multi: true }));
+    act(() => result.current.toggleTransformationSelection(organize, { multi: true }));
+    expect(result.current.selectedTransformationIds).toEqual(['reduce-0', 'organize-1']);
+
+    // Open the +Transformation picker.
+    act(() => result.current.setPendingTransformation({ insertAfter: 'organize-1' }));
+    expect(result.current.pendingTransformation).toEqual({ insertAfter: 'organize-1' });
+    expect(result.current.selectedTransformationIds).toEqual(['reduce-0', 'organize-1']);
+    expect(result.current.multiSelectMode).toBe(true);
+
+    // Cancel the picker.
+    act(() => result.current.setPendingTransformation(null));
+
+    expect(result.current.pendingTransformation).toBeNull();
+    expect(result.current.selectedTransformationIds).toEqual(['reduce-0', 'organize-1']);
+    expect(result.current.multiSelectMode).toBe(true);
   });
 });

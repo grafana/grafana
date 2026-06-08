@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataQuery } from '@grafana/schema';
@@ -374,6 +374,26 @@ describe('SidebarCard', () => {
         id: 'A',
         actionsOverrides: { onDelete: undefined, onToggleHide: undefined, onDuplicate: undefined },
       });
+
+      expect(screen.queryByRole('button', { name: /hide query/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /duplicate query/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /remove query/i })).not.toBeInTheDocument();
+    });
+
+    it('does not render the per-card hover actions in multi-select mode even when handlers are present', async () => {
+      // Per-card delete/duplicate/hide are intentionally suppressed while multi-select is active:
+      // bulk selection drives destructive actions, so exposing the single-card delete path here
+      // would reintroduce a stale single-delete against an item that may not be the bulk target.
+      const { user } = renderSidebarCard({
+        id: 'A',
+        multiSelectMode: true,
+        actionsOverrides: { onDelete: jest.fn(), onToggleHide: jest.fn(), onDuplicate: jest.fn() },
+      });
+
+      // Hover and focus the card to surface any actions that would normally appear on interaction.
+      const card = screen.getByRole('button', { name: /select card A/i });
+      await user.hover(card);
+      fireEvent.focus(card);
 
       expect(screen.queryByRole('button', { name: /hide query/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /duplicate query/i })).not.toBeInTheDocument();
