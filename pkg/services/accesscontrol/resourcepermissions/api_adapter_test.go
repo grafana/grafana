@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -18,6 +17,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+
+	"github.com/grafana/grafana/pkg/web"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -186,7 +187,7 @@ func TestGetAPIGroup(t *testing.T) {
 		}
 
 		group := api.getAPIGroup()
-		assert.Equal(t, "dashboards.grafana.app", group)
+		assert.Equal(t, "dashboard.grafana.app", group)
 	})
 
 	t.Run("default group for folders", func(t *testing.T) {
@@ -200,7 +201,7 @@ func TestGetAPIGroup(t *testing.T) {
 		}
 
 		group := api.getAPIGroup()
-		assert.Equal(t, "folders.grafana.app", group)
+		assert.Equal(t, "folder.grafana.app", group)
 	})
 }
 

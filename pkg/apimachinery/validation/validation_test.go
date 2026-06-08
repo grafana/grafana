@@ -143,7 +143,7 @@ func TestValidation(t *testing.T) {
 			input: []string{
 				"hello",
 				strings.Repeat("a", 128), // long... alpha
-				"dashboards.grafana.app",
+				"dashboard.grafana.app",
 				"prometheus-datasource",
 				"1234", // just a numbers
 				"aaa",
