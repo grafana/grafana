@@ -8112,7 +8112,9 @@
     },
     "data-source-load-error": {
       "back": "Back",
+      "check-updates": "An unknown error occurred while loading the plugin. Please check for updates.",
       "delete": "Delete",
+      "load-error-title": "Error loading plugin",
       "not-found": "Data source not found"
     },
     "data-source-missing-rights-message": {
