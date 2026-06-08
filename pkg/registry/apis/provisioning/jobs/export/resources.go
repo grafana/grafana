@@ -130,7 +130,7 @@ func exportResource(ctx context.Context,
 
 // exportItem writes a single resource to the repository, applying the shared
 // ignore/shim/UID-regen rules. When explicitlyRequested is true, a managed
-// resource produces an error: the caller named a dashboard that cannot be
+// resource produces an error: the caller named a resource that cannot be
 // exported, so the job should surface that failure rather than silently
 // dropping it. The bulk path keeps the quiet ignore since encountering
 // managed resources is expected when iterating the whole namespace.
@@ -147,6 +147,13 @@ func exportItem(ctx context.Context,
 	name := item.GetName()
 	resultBuilder := jobs.NewGVKResult(name, gvk).WithAction(repository.FileActionCreated)
 
+	// Derive a human name from the item's kind so user-facing messages read
+	// correctly for any exported resource, not just dashboards.
+	kindName := gvk.Kind
+	if kindName == "" {
+		kindName = "resource"
+	}
+
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
 		metaError := fmt.Errorf("extracting meta accessor for resource %s: %w", name, err)
@@ -160,7 +167,7 @@ func exportItem(ctx context.Context,
 		if explicitlyRequested {
 			// Leave the default action in place: the recorder discards errors
 			// on FileActionIgnored results, and we want this failure to count.
-			resultBuilder.WithError(fmt.Errorf("dashboard %q is managed by %q and cannot be exported", name, manager.Identity))
+			resultBuilder.WithError(fmt.Errorf("%s %q is managed by %q and cannot be exported", kindName, name, manager.Identity))
 			progress.Record(ctx, resultBuilder.Build())
 			return progress.TooManyErrors()
 		}
