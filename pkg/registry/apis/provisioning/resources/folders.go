@@ -24,8 +24,9 @@ const MaxNumberOfFolders = 10000
 type EnsurePathOption func(*ensurePathConfig)
 
 type ensurePathConfig struct {
-	relocatingUIDs map[string]struct{}
-	forceWalk      bool
+	relocatingUIDs      map[string]struct{}
+	forceWalk           bool
+	writeFolderMetadata bool
 }
 
 func newEnsurePathConfig(opts []EnsurePathOption) ensurePathConfig {
@@ -58,6 +59,14 @@ func WithRelocatingUIDs(uids ...string) EnsurePathOption {
 func WithForceWalk() EnsurePathOption {
 	return func(cfg *ensurePathConfig) {
 		cfg.forceWalk = true
+	}
+}
+
+// WithWriteFolderMetadata causes EnsureFolderPathExist to write a _folder.json
+// file for each newly created folder when folder metadata is enabled.
+func WithWriteFolderMetadata() EnsurePathOption {
+	return func(cfg *ensurePathConfig) {
+		cfg.writeFolderMetadata = true
 	}
 }
 
@@ -199,6 +208,13 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 			return &PathCreationError{
 				Path: f.Path,
 				Err:  fmt.Errorf("ensure folder exists: %w", err),
+			}
+		}
+
+		if epCfg.writeFolderMetadata && fm.folderMetadataEnabled {
+			manifest := NewFolderManifest(f.ID, f.Title, fm.folderGVK)
+			if _, err := WriteFolderMetadata(ctx, fm.repo, f.Path, manifest, ref, ""); err != nil {
+				return fmt.Errorf("write folder metadata for %q: %w", f.Path, err)
 			}
 		}
 

@@ -2473,3 +2473,128 @@ func TestEnsureFolderPathExist_EarlyReturnCheckIDConflict(t *testing.T) {
 		require.Empty(t, client.createCalls)
 	})
 }
+
+func TestEnsureFolderPathExist_WriteFolderMetadata(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("writes _folder.json for new folder when option is set", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "new-folder/_folder.json", "test-ref").
+			Return(nil, repository.ErrFileNotFound)
+		rw.On("Create", mock.Anything, "new-folder/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "").
+			Return(nil)
+
+		folderID := ParseFolder("new-folder/", config.Name).ID
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+			},
+			createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
+		_, err := fm.EnsureFolderPathExist(ctx, "new-folder/dashboard.json", "test-ref", WithWriteFolderMetadata())
+
+		require.NoError(t, err)
+		rw.AssertCalled(t, "Create", mock.Anything, "new-folder/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "")
+		require.Equal(t, []string{folderID}, client.createCalls, "folder should be created in cluster")
+	})
+
+	t.Run("does not write _folder.json when option is not set", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "new-folder/_folder.json", "test-ref").
+			Return(nil, repository.ErrFileNotFound)
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+			},
+			createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
+		_, err := fm.EnsureFolderPathExist(ctx, "new-folder/dashboard.json", "test-ref")
+
+		require.NoError(t, err)
+		rw.AssertNotCalled(t, "Create", mock.Anything, "new-folder/_folder.json", mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("does not write _folder.json when metadata flag is disabled", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, mock.Anything, "test-ref").
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+			},
+			createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), FolderKind)
+		_, err := fm.EnsureFolderPathExist(ctx, "new-folder/dashboard.json", "test-ref", WithWriteFolderMetadata())
+
+		require.NoError(t, err)
+		rw.AssertNotCalled(t, "Create", mock.Anything, "new-folder/_folder.json", mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("does not write _folder.json for existing folder", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "existing-folder/_folder.json", "test-ref").
+			Return(nil, repository.ErrFileNotFound)
+
+		existingFolder := ParseFolder("existing-folder/", config.Name)
+		tree := NewEmptyFolderTree()
+		tree.Add(existingFolder, "")
+
+		fm := NewFolderManager(rw, &fakeDynamicResourceClient{}, tree, FolderKind, WithFolderMetadataEnabled(true))
+		_, err := fm.EnsureFolderPathExist(ctx, "existing-folder/dashboard.json", "test-ref", WithWriteFolderMetadata())
+
+		require.NoError(t, err)
+		rw.AssertNotCalled(t, "Create", mock.Anything, "existing-folder/_folder.json", mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("writes _folder.json for each new folder in nested path", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "a/_folder.json", "test-ref").
+			Return(nil, repository.ErrFileNotFound)
+		rw.On("Read", mock.Anything, "a/b/_folder.json", "test-ref").
+			Return(nil, repository.ErrFileNotFound)
+		rw.On("Create", mock.Anything, "a/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "").
+			Return(nil)
+		rw.On("Create", mock.Anything, "a/b/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "").
+			Return(nil)
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+			},
+			createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
+		_, err := fm.EnsureFolderPathExist(ctx, "a/b/dashboard.json", "test-ref", WithWriteFolderMetadata())
+
+		require.NoError(t, err)
+		rw.AssertCalled(t, "Create", mock.Anything, "a/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "")
+		rw.AssertCalled(t, "Create", mock.Anything, "a/b/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "")
+	})
+}

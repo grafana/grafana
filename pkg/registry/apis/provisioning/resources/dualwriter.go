@@ -420,7 +420,11 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 			})
 		}
 
-		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref); err != nil {
+		var ensureOpts []EnsurePathOption
+		if r.folderMetadataEnabled {
+			ensureOpts = append(ensureOpts, WithWriteFolderMetadata())
+		}
+		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref, ensureOpts...); err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
 
