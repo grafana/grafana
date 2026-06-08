@@ -48,6 +48,7 @@
   "routes": [
     { "method": "GET", "path": "/api/v1/query", "reqRole": "Viewer", "reqAction": "datasources:query" },
     { "method": "GET", "path": "/api/v1/query_range", "reqRole": "Viewer", "reqAction": "datasources:query" },
+    { "method": "POST", "path": "/api/v1/query_range", "reqRole": "Viewer", "reqAction": "datasources:query" },
 
     { "method": "GET", "path": "/api/v1/labels", "reqRole": "Viewer", "reqAction": "datasources:query" },
     { "method": "GET", "path": "/api/v1/label", "reqRole": "Viewer", "reqAction": "datasources:query" },
