@@ -360,7 +360,9 @@ const Log = memo(
           // When logs are unwrapped, we want an empty column space to align with other log lines.
         }
         {showLevel && (log.displayLevel || !wrapLogMessage) && (
-          <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel} </span>
+          <span className={`${styles.level} level-${log.logLevel} field`} title={log.logLevel}>
+            {log.displayLevel}{' '}
+          </span>
         )}
         {showUniqueLabels && log.uniqueLabels && (
           <span className="field">
