@@ -4,7 +4,6 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Card, Text, useStyles2 } from '@grafana/ui';
 
-import { getSharedCardStyles } from './statCardStyles';
 import { percent } from './stats';
 
 type ResourceTone = 'success' | 'info' | 'warning';
@@ -37,7 +36,6 @@ export function resourceTone(managed: number, total: number): ResourceTone {
  */
 export function ResourceStatusCard({ label, managed, total }: ResourceStatusCardProps) {
   const styles = useStyles2(getStyles);
-  const sharedStyles = useStyles2(getSharedCardStyles);
 
   // Nothing of this resource type exists, so there's nothing to migrate; hide
   // the card rather than show an empty 0-of-0.
@@ -54,7 +52,7 @@ export function ResourceStatusCard({ label, managed, total }: ResourceStatusCard
           {label}
         </Text>
       </Card.Heading>
-      <span className={sharedStyles.value}>{percent(managed, total)}</span>
+      <span className={styles.value}>{percent(managed, total)}</span>
       <Text color="secondary" variant="body">
         {t('provisioning.migrate.n-of-m-managed', '{{managed}} of {{total}} managed', { managed, total })}
       </Text>
@@ -92,5 +90,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: theme.colors.warning.transparent,
       borderColor: theme.colors.warning.borderTransparent,
     },
+  }),
+  value: css({
+    fontSize: theme.typography.pxToRem(28),
+    lineHeight: 1.1,
+    fontWeight: theme.typography.fontWeightBold,
+    color: theme.colors.text.primary,
   }),
 });

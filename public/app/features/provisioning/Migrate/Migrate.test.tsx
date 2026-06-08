@@ -62,13 +62,31 @@ describe('Migrate', () => {
     expect(await screen.findByText(/failed to load provisioning stats/i)).toBeInTheDocument();
   });
 
-  it('renders an empty state when there are no resources', async () => {
+  it('renders an empty state only when there are no resources at all', async () => {
     respondWithStats({ instance: [], managed: [] });
 
     render(<Migrate />);
 
     expect(await screen.findByText(/no provisioned resources yet/i)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /migrate to gitops/i })).toBeInTheDocument();
+  });
+
+  it('renders the folder cards when there are folders but no dashboards', async () => {
+    respondWithStats({
+      instance: [{ group: 'folder.grafana.app', resource: 'folders', count: 4 }],
+      managed: [{ kind: 'repo', stats: [{ group: 'folder.grafana.app', resource: 'folders', count: 1 }] }],
+    });
+
+    render(<Migrate />);
+
+    // Not the empty state — folders are still migration targets. Both the
+    // Folders and All resources cards read "1 of 4 managed".
+    expect(await screen.findByText('Folders')).toBeInTheDocument();
+    expect(screen.getByText('All resources')).toBeInTheDocument();
+    expect(screen.getAllByText('1 of 4 managed')).toHaveLength(2);
+    expect(screen.queryByText(/no provisioned resources yet/i)).not.toBeInTheDocument();
+    // No dashboards, so that card is hidden.
+    expect(screen.queryByText('Dashboards')).not.toBeInTheDocument();
   });
 
   describe('with stats', () => {
