@@ -14,12 +14,6 @@
     ],
     "permissions": [
       {
-        "action": "alert.admin-config:read"
-      },
-      {
-        "action": "alert.admin-config:write"
-      },
-      {
         "action": "alert.instances.external:read",
         "scope": "datasources:*"
       },
@@ -198,6 +192,12 @@
       {
         "action": "folders:read",
         "scope": "folders:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/adminconfigs:get"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/adminconfigs:update"
       },
       {
         "action": "notifications.alerting.grafana.app/alertmanagerimports:create",
@@ -407,9 +407,6 @@
     ],
     "permissions": [
       {
-        "action": "alert.admin-config:read"
-      },
-      {
         "action": "alert.instances.external:read",
         "scope": "datasources:*"
       },
@@ -448,6 +445,9 @@
       {
         "action": "alert.silences:read",
         "scope": "folders:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/adminconfigs:get"
       }
     ]
   }

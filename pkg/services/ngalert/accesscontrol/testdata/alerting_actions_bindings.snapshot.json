@@ -1,22 +1,5 @@
 [
   {
-    "action": "alert.admin-config.status:write",
-    "roles": null
-  },
-  {
-    "action": "alert.admin-config:read",
-    "roles": [
-      "fixed:alerting.admin-config:reader",
-      "fixed:alerting.admin-config:writer"
-    ]
-  },
-  {
-    "action": "alert.admin-config:write",
-    "roles": [
-      "fixed:alerting.admin-config:writer"
-    ]
-  },
-  {
     "action": "alert.instances.external:read",
     "roles": [
       "fixed:alerting.instances:reader",
@@ -415,6 +398,23 @@
       "fixed:alerting.rules:writer",
       "fixed:alerting:admin",
       "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/adminconfigs/status:update",
+    "roles": null
+  },
+  {
+    "action": "notifications.alerting.grafana.app/adminconfigs:get",
+    "roles": [
+      "fixed:alerting.admin-config:reader",
+      "fixed:alerting.admin-config:writer"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/adminconfigs:update",
+    "roles": [
+      "fixed:alerting.admin-config:writer"
     ]
   },
   {
