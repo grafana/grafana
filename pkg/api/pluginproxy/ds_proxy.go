@@ -382,13 +382,20 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		return nil
 	}
 
-	switch proxy.dataSource.PluginType() {
-	case datasources.DS_PROMETHEUS,
-		datasources.DS_AMAZON_PROMETHEUS,
-		datasources.DS_AZURE_PROMETHEUS:
-		switch proxy.ctx.Req.Method {
-		case "DELETE", "PUT", "POST":
-			return fmt.Errorf("non allow-listed %ss not allowed on proxied Prometheus datasource", proxy.ctx.Req.Method)
+	proxy.ds.Type = proxy.dataSource.PluginType()
+
+	// Trailing validation below this point for routes that were not matched
+	if proxy.ds.Type == datasources.DS_PROMETHEUS || proxy.ds.Type == datasources.DS_AMAZON_PROMETHEUS || proxy.ds.Type == datasources.DS_AZURE_PROMETHEUS || proxy.ds.Type == datasources.DS_LOKI {
+		ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
+		ctxLogger.Error("plugin route is not covered by RBAC and disabled default falling back to 403", "route", proxy.ctx.Req.URL.Path, "method", proxy.ctx.Req.Method, "datasource", proxy.ds.Type)
+		if proxy.ctx.Req.Method == "DELETE" {
+			return errors.New("non allow-listed DELETEs not allowed on proxied Prometheus or Loki datasource")
+		}
+		if proxy.ctx.Req.Method == "PUT" {
+			return errors.New("non allow-listed PUTs not allowed on proxied Prometheus or Loki datasource")
+		}
+		if proxy.ctx.Req.Method == "POST" {
+			return errors.New("non allow-listed POSTs not allowed on proxied Prometheus or Loki datasource")
 		}
 	}
 

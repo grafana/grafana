@@ -25,6 +25,8 @@ type DataSource struct {
 	// Secure values allows setting values that are never shown to users
 	// The returned properties are only the names of the configured values
 	Secure common.InlineSecureValues `json:"secure,omitzero,omitempty"`
+
+	Type string
 }
 
 func (DataSource) OpenAPIModelName() string {
