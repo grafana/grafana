@@ -76,6 +76,27 @@ func TestValidator_Validate(t *testing.T) {
 			},
 		},
 		{
+			name: "folderless target is not supported yet",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title: "Test Repo",
+						Sync: provisioning.SyncOptions{
+							Enabled:         true,
+							Target:          provisioning.SyncTargetTypeFolderless,
+							IntervalSeconds: 10,
+						}},
+				}
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "The folderless sync target is not supported yet")
+			},
+		},
+		{
 			name: "reserved name",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
