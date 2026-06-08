@@ -5,30 +5,34 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 
+	alertingnotifv0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -39,33 +43,163 @@ import (
 // ptrTo returns a pointer to v.
 func ptrTo[T any](v T) *T { return &v }
 
-// mockAdminConfigStore is a simple test double for AdminConfigurationStore.
-type mockAdminConfigStore struct {
-	mock.Mock
+// fakeAdminConfigClient is an in-memory resource.ClientGenerator + resource.Client
+// that serves AdminConfig objects for the sync tests. It is the UID source: tests
+// seed a datasource UID per org via setUID, and the sync worker reads it through
+// the typed AdminConfigClient. Only the read/write paths the worker exercises
+// (Get, Create, Update) are meaningful; the rest are inert stubs. Status writes
+// (Update) merge into the seeded object so the spec UID survives across ticks.
+type fakeAdminConfigClient struct {
+	mu       sync.Mutex
+	nsMapper request.NamespaceMapper
+	objects  map[string]*alertingnotifv0alpha1.AdminConfig // namespace -> object
+	getErr   map[string]error                              // namespace -> error returned by Get
+	getCalls map[string]int                                // namespace -> Get call count
 }
 
-func (m *mockAdminConfigStore) GetAdminConfiguration(orgID int64) (*ngmodels.AdminConfiguration, error) {
-	args := m.Called(orgID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
+func newFakeAdminConfigClient() *fakeAdminConfigClient {
+	return &fakeAdminConfigClient{
+		nsMapper: func(orgID int64) string { return fmt.Sprintf("org-%d", orgID) },
+		objects:  map[string]*alertingnotifv0alpha1.AdminConfig{},
+		getErr:   map[string]error{},
+		getCalls: map[string]int{},
 	}
-	return args.Get(0).(*ngmodels.AdminConfiguration), args.Error(1)
 }
 
-func (m *mockAdminConfigStore) GetAdminConfigurations() ([]*ngmodels.AdminConfiguration, error) {
-	args := m.Called()
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
+// setUID seeds an AdminConfig for orgID carrying the given external-sync
+// datasource UID. An empty uid seeds a config with no externalSync set, which
+// the worker resolves to "" and skips.
+func (f *fakeAdminConfigClient) setUID(orgID int64, uid string) {
+	obj := &alertingnotifv0alpha1.AdminConfig{}
+	obj.SetNamespace(f.nsMapper(orgID))
+	obj.SetName(alertingnotifv0alpha1.AdminConfigSingletonName)
+	obj.SetResourceVersion("1")
+	if uid != "" {
+		u := uid
+		obj.Spec.Alertmanager = &alertingnotifv0alpha1.AdminConfigAlertmanagerSpec{
+			ExternalSync: &alertingnotifv0alpha1.AdminConfigV0alpha1AlertmanagerSpecExternalSync{DatasourceUid: &u},
+		}
 	}
-	return args.Get(0).([]*ngmodels.AdminConfiguration), args.Error(1)
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.objects[obj.GetNamespace()] = obj
 }
 
-func (m *mockAdminConfigStore) DeleteAdminConfiguration(orgID int64) error {
-	return m.Called(orgID).Error(0)
+// setErr makes Get for orgID return err (simulating a storage failure).
+func (f *fakeAdminConfigClient) setErr(orgID int64, err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.getErr[f.nsMapper(orgID)] = err
 }
 
-func (m *mockAdminConfigStore) UpdateAdminConfiguration(cmd store.UpdateAdminConfigurationCmd) error {
-	return m.Called(cmd).Error(0)
+// totalGetCalls reports how many Get calls the worker made across all orgs.
+func (f *fakeAdminConfigClient) totalGetCalls() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	n := 0
+	for _, c := range f.getCalls {
+		n += c
+	}
+	return n
+}
+
+// resource.ClientGenerator
+
+func (f *fakeAdminConfigClient) ClientFor(resource.Kind) (resource.Client, error) { return f, nil }
+func (f *fakeAdminConfigClient) GetCustomRouteClient(schema.GroupVersion, string) (resource.CustomRouteClient, error) {
+	return nil, nil
+}
+func (f *fakeAdminConfigClient) DiscoveryClient() (resource.DiscoveryClient, error) { return nil, nil }
+
+// resource.Client — only Get/Create/Update (and their *Into variants) are meaningful.
+
+func (f *fakeAdminConfigClient) lookup(ns string) (*alertingnotifv0alpha1.AdminConfig, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.getCalls[ns]++
+	if err := f.getErr[ns]; err != nil {
+		return nil, err
+	}
+	obj, ok := f.objects[ns]
+	if !ok {
+		return nil, k8serrors.NewNotFound(alertingnotifv0alpha1.AdminConfigKind().GroupVersionResource().GroupResource(), alertingnotifv0alpha1.AdminConfigSingletonName)
+	}
+	return obj, nil
+}
+
+// apply stores obj, merging an incoming status onto any existing object so a
+// status write doesn't clobber the seeded spec UID.
+func (f *fakeAdminConfigClient) apply(obj resource.Object) resource.Object {
+	ac, ok := obj.(*alertingnotifv0alpha1.AdminConfig)
+	if !ok {
+		return obj
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if existing, ok := f.objects[ac.GetNamespace()]; ok {
+		merged := *existing
+		merged.Status = ac.Status
+		f.objects[ac.GetNamespace()] = &merged
+		return &merged
+	}
+	cp := *ac
+	f.objects[ac.GetNamespace()] = &cp
+	return &cp
+}
+
+func (f *fakeAdminConfigClient) Get(_ context.Context, id resource.Identifier) (resource.Object, error) {
+	return f.lookup(id.Namespace)
+}
+
+func (f *fakeAdminConfigClient) GetInto(_ context.Context, id resource.Identifier, into resource.Object) error {
+	obj, err := f.lookup(id.Namespace)
+	if err != nil {
+		return err
+	}
+	if t, ok := into.(*alertingnotifv0alpha1.AdminConfig); ok {
+		*t = *obj
+	}
+	return nil
+}
+
+func (f *fakeAdminConfigClient) Create(_ context.Context, _ resource.Identifier, obj resource.Object, _ resource.CreateOptions) (resource.Object, error) {
+	return f.apply(obj), nil
+}
+
+func (f *fakeAdminConfigClient) CreateInto(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions, _ resource.Object) error {
+	_, err := f.Create(ctx, id, obj, opts)
+	return err
+}
+
+func (f *fakeAdminConfigClient) Update(_ context.Context, _ resource.Identifier, obj resource.Object, _ resource.UpdateOptions) (resource.Object, error) {
+	return f.apply(obj), nil
+}
+
+func (f *fakeAdminConfigClient) UpdateInto(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions, _ resource.Object) error {
+	_, err := f.Update(ctx, id, obj, opts)
+	return err
+}
+
+func (f *fakeAdminConfigClient) Patch(_ context.Context, _ resource.Identifier, _ resource.PatchRequest, _ resource.PatchOptions) (resource.Object, error) {
+	return nil, nil
+}
+func (f *fakeAdminConfigClient) PatchInto(_ context.Context, _ resource.Identifier, _ resource.PatchRequest, _ resource.PatchOptions, _ resource.Object) error {
+	return nil
+}
+func (f *fakeAdminConfigClient) Delete(_ context.Context, _ resource.Identifier, _ resource.DeleteOptions) error {
+	return nil
+}
+func (f *fakeAdminConfigClient) List(_ context.Context, _ string, _ resource.ListOptions) (resource.ListObject, error) {
+	return nil, nil
+}
+func (f *fakeAdminConfigClient) ListInto(_ context.Context, _ string, _ resource.ListOptions, _ resource.ListObject) error {
+	return nil
+}
+func (f *fakeAdminConfigClient) Watch(_ context.Context, _ string, _ resource.WatchOptions) (resource.WatchResponse, error) {
+	return nil, nil
+}
+func (f *fakeAdminConfigClient) SubresourceRequest(_ context.Context, _ resource.Identifier, _ resource.CustomRouteRequestOptions) ([]byte, error) {
+	return nil, nil
 }
 
 // buildSyncTestMOA builds a MultiOrgAlertmanager wired for testing syncExternalAMs.
@@ -77,7 +211,7 @@ func (m *mockAdminConfigStore) UpdateAdminConfiguration(cmd store.UpdateAdminCon
 // trigger admin-config-store mock expectations.
 func buildSyncTestMOA(
 	t *testing.T,
-	adminCfgStore store.AdminConfigurationStore,
+	adminCfg *fakeAdminConfigClient,
 	dsService datasources.DataSourceService,
 	featureEnabled bool,
 	operatorUID string,
@@ -106,7 +240,7 @@ func buildSyncTestMOA(
 			ExternalAlertmanagerUID:        operatorUID,
 		},
 	}
-	syncer := NewExternalAMSyncer(adminCfgStore, dsService, httpclient.NewProvider(), v, cfg, m.GetMultiOrgAlertmanagerMetrics(), log.New("test.external_am_sync"), nil, nil)
+	syncer := NewExternalAMSyncer(dsService, httpclient.NewProvider(), v, cfg, m.GetMultiOrgAlertmanagerMetrics(), log.New("test.external_am_sync"), adminCfg, adminCfg.nsMapper)
 	moa, err := NewMultiOrgAlertmanager(
 		cfg,
 		cs,
@@ -191,24 +325,23 @@ func startMimirServer(t *testing.T, alertmanagerConfig string) *httptest.Server 
 }
 
 func TestSyncExternalAMs_FeatureFlagDisabled(t *testing.T) {
-	adminCfg := &mockAdminConfigStore{}
+	adminCfg := newFakeAdminConfigClient()
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, false, "", []int64{1})
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
 	// Flag off → FetchExtraConfig short-circuits before any admin-config lookup.
-	adminCfg.AssertNotCalled(t, "GetAdminConfiguration", mock.Anything)
+	assert.Equal(t, 0, adminCfg.totalGetCalls())
 	assertNoExtraConfigSaved(t, cs, 1)
 }
 
 func TestSyncExternalAMs_NoUID_Skipped(t *testing.T) {
-	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: nil}, nil)
+	adminCfg := newFakeAdminConfigClient()
+	adminCfg.setUID(1, "")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, true, "", []int64{1})
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
-	adminCfg.AssertExpectations(t)
 	assertNoExtraConfigSaved(t, cs, 1)
 }
 
@@ -223,9 +356,9 @@ func TestSyncExternalAMs_DisabledOrgSkipped(t *testing.T) {
 	ds1 := makeMimirDS("uid-1", 1, mimirSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds1}}
 
-	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("uid-1")}, nil)
-	adminCfg.On("GetAdminConfiguration", int64(2)).Return(&ngmodels.AdminConfiguration{OrgID: 2, ExternalAlertmanagerUID: ptrTo("uid-2")}, nil).Maybe()
+	adminCfg := newFakeAdminConfigClient()
+	adminCfg.setUID(1, "uid-1")
+	adminCfg.setUID(2, "uid-2")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1, 2})
 	moa.settings.UnifiedAlerting.DisabledOrgs = map[int64]struct{}{2: {}}
@@ -253,15 +386,14 @@ func TestSyncExternalAMs_OperatorUIDOverridesDB(t *testing.T) {
 	ds := makeMimirDS("operator-uid", 1, mimirSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := &mockAdminConfigStore{}
+	adminCfg := newFakeAdminConfigClient()
 	// Operator UID short-circuits the admin-config lookup; Maybe in case the
 	// resolver gets called via a different path during the bootstrap.
-	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("db-uid")}, nil).Maybe()
+	adminCfg.setUID(1, "db-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "operator-uid", []int64{1})
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
-	adminCfg.AssertExpectations(t)
 	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
 	require.NoError(t, err)
 	cfg, err := Load([]byte(saved.AlertmanagerConfiguration))
@@ -271,14 +403,13 @@ func TestSyncExternalAMs_OperatorUIDOverridesDB(t *testing.T) {
 }
 
 func TestSyncExternalAMs_GetAdminConfigurationError(t *testing.T) {
-	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfiguration", int64(1)).Return(nil, fmt.Errorf("db error"))
+	adminCfg := newFakeAdminConfigClient()
+	adminCfg.setErr(1, fmt.Errorf("admin config client error"))
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, true, "", []int64{1})
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
 	// Admin-config lookup error → FetchExtraConfig logs and returns (nil, 0); no save.
-	adminCfg.AssertExpectations(t)
 	assertNoExtraConfigSaved(t, cs, 1)
 }
 
@@ -301,14 +432,13 @@ func TestSyncExternalAMs_PerOrgErrorIsolation(t *testing.T) {
 
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds1, ds2}}
 
-	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("ds-1")}, nil)
-	adminCfg.On("GetAdminConfiguration", int64(2)).Return(&ngmodels.AdminConfiguration{OrgID: 2, ExternalAlertmanagerUID: ptrTo("ds-2")}, nil)
+	adminCfg := newFakeAdminConfigClient()
+	adminCfg.setUID(1, "ds-1")
+	adminCfg.setUID(2, "ds-2")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1, 2})
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1, 2})
 
-	adminCfg.AssertExpectations(t)
 
 	// Org 1 failed — no ExtraConfig saved (default config remains).
 	assertNoExtraConfigSaved(t, cs, 1)
@@ -336,8 +466,8 @@ func TestSyncExternalAMs_HTTPTimeout(t *testing.T) {
 	ds := makeMimirDS("slow-uid", 1, blockSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("slow-uid")}, nil)
+	adminCfg := newFakeAdminConfigClient()
+	adminCfg.setUID(1, "slow-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
 
@@ -351,7 +481,6 @@ func TestSyncExternalAMs_HTTPTimeout(t *testing.T) {
 	elapsed := time.Since(start)
 
 	assert.Less(t, elapsed, 5*time.Second)
-	adminCfg.AssertExpectations(t)
 	assertNoExtraConfigSaved(t, cs, 1)
 	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "mimir_fetch")))
 }
@@ -364,13 +493,12 @@ func TestSyncExternalAMs_SuccessPath(t *testing.T) {
 	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")}, nil)
+	adminCfg := newFakeAdminConfigClient()
+	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
-	adminCfg.AssertExpectations(t)
 	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
 	require.NoError(t, err)
 	cfg, err := Load([]byte(saved.AlertmanagerConfiguration))
@@ -390,8 +518,8 @@ func TestSyncExternalAMs_DedupOnIdenticalResponse(t *testing.T) {
 	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")}, nil)
+	adminCfg := newFakeAdminConfigClient()
+	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
 
@@ -436,8 +564,8 @@ func TestSyncExternalAMs_SavesWhenResponseChanges(t *testing.T) {
 	ds := makeMimirDS("mimir-uid", 1, srv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")}, nil)
+	adminCfg := newFakeAdminConfigClient()
+	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
 
@@ -463,8 +591,8 @@ func TestSyncExternalAMs_IdentifierMismatchClassifiedOnMetric(t *testing.T) {
 	ds := makeMimirDS("different-uid", 1, mimirSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("different-uid")}, nil)
+	adminCfg := newFakeAdminConfigClient()
+	adminCfg.setUID(1, "different-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
 
@@ -498,8 +626,8 @@ func TestSyncExternalAMs_NoUpstreamConfigClassifiedOnMetric(t *testing.T) {
 	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")}, nil)
+	adminCfg := newFakeAdminConfigClient()
+	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
 	rowsBefore := len(cs.historicConfigs[1])
@@ -530,8 +658,8 @@ func TestSyncExternalAMs_Mimir404ClassifiedAsNoUpstreamConfig(t *testing.T) {
 	ds := makeMimirDS("mimir-uid", 1, srv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")}, nil)
+	adminCfg := newFakeAdminConfigClient()
+	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
 	rowsBefore := len(cs.historicConfigs[1])
@@ -556,8 +684,8 @@ func TestSyncExternalAMs_RejectedByValidator(t *testing.T) {
 	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")}, nil)
+	adminCfg := newFakeAdminConfigClient()
+	adminCfg.setUID(1, "mimir-uid")
 
 	rejecting := &rejectingValidator{err: fmt.Errorf("egress denied")}
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, rejecting)
@@ -589,8 +717,8 @@ receivers:
 	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")}, nil)
+	adminCfg := newFakeAdminConfigClient()
+	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
 

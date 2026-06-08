@@ -308,7 +308,6 @@ func (ng *AlertNG) init() error {
 	}
 
 	externalAMSyncer := notifier.NewExternalAMSyncer(
-		ng.store,
 		ng.DataSourceService,
 		ng.httpClientProvider,
 		dsRequestValidator,
