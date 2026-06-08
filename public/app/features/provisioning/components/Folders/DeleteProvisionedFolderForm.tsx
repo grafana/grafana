@@ -20,6 +20,7 @@ import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFo
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
@@ -86,6 +87,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
         resourceKind: 'folder',
         resourceID: parentFolder?.uid ?? '',
         title: parentFolder?.title ?? '',
+        ...getCurrentCommitUser(),
       });
 
       try {

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/oklog/ulid/v2"
 	"gocloud.dev/blob"
 
@@ -82,14 +82,17 @@ func NewSearchOptions(
 		}
 
 		bleve, err := NewBleveBackend(BleveOptions{
-			Root:                     root,
-			FileThreshold:            int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
-			IndexCacheTTL:            cfg.IndexCacheTTL,             // How long to keep the index cache in memory
-			BuildVersion:             cfg.BuildVersion,
-			OwnsIndex:                ownsIndexFn,
-			IndexMinUpdateInterval:   cfg.IndexMinUpdateInterval,
-			SelectableFieldsForKinds: resource.SelectableFields(),
-			Snapshot:                 snapshot,
+			Root:                           root,
+			FileThreshold:                  int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
+			IndexCacheTTL:                  cfg.IndexCacheTTL,             // How long to keep the index cache in memory
+			BuildVersion:                   cfg.BuildVersion,
+			OwnsIndex:                      ownsIndexFn,
+			IndexMinUpdateInterval:         cfg.IndexMinUpdateInterval,
+			SelectableFieldsForKinds:       resource.SelectableFields(),
+			Snapshot:                       snapshot,
+			DiskCleanupInterval:            cfg.DiskIndexCleanupInterval,
+			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
+			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
 		}, indexMetrics)
 
 		if err != nil {

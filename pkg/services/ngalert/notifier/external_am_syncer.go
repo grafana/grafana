@@ -37,6 +37,7 @@ type mimirConfigResponse struct {
 const (
 	syncReasonDatasourceLookup   = "datasource_lookup"
 	syncReasonMimirFetch         = "mimir_fetch"
+	syncReasonValidate           = "validate"
 	syncReasonSave               = "save"
 	syncReasonIdentifierMismatch = "identifier_mismatch"
 )
@@ -143,6 +144,13 @@ func (s *ExternalAMSyncer) FetchExtraConfig(ctx context.Context, orgID int64) (*
 		return nil, 0
 	}
 
+	// Validate post-dedup, so the cost is paid only when the upstream config actually
+	// changed.
+	if err := ec.Validate(); err != nil {
+		s.logger.Warn("Skipping external AM config save: fetched configuration is invalid", "org_id", orgID, "error", err)
+		s.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, syncReasonValidate).Inc()
+		return nil, 0
+	}
 	return &ec, newHash
 }
 
@@ -267,7 +275,7 @@ func (s *ExternalAMSyncer) fetchMimirConfig(ctx context.Context, ds *datasources
 	// (datasourceproxy.go), so the sync worker honours whatever policy is
 	// configured for the underlying datasource.
 	if s.requestValidator != nil {
-		if err := s.requestValidator.Validate(ds.URL, ds.JsonData, req); err != nil {
+		if err := s.requestValidator.Validate(ds.URL, ds.JsonDataMap(), req); err != nil {
 			return nil, 0, fmt.Errorf("datasource request validation failed: %w", err)
 		}
 	}

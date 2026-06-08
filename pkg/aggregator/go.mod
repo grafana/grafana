@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/aggregator
 
-go 1.26.3
+go 1.26.4
 
 require (
 	github.com/emicklei/go-restful/v3 v3.13.0
@@ -10,10 +10,10 @@ require (
 	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.43.0
-	k8s.io/api v0.36.0
-	k8s.io/apimachinery v0.36.0
+	k8s.io/api v0.36.1
+	k8s.io/apimachinery v0.36.1
 	k8s.io/apiserver v0.36.0
-	k8s.io/client-go v0.36.0
+	k8s.io/client-go v0.36.1
 	k8s.io/component-base v0.36.0
 	k8s.io/klog/v2 v2.140.0
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a
@@ -62,7 +62,6 @@ require (
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/cel-go v0.28.0 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
@@ -100,7 +99,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.67.5 // indirect
+	github.com/prometheus/common v0.68.0 // indirect
 	github.com/prometheus/procfs v0.20.1 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
@@ -147,7 +146,7 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/streaming v0.36.0 // indirect
+	k8s.io/streaming v0.36.1 // indirect
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.34.0 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect

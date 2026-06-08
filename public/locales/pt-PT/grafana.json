@@ -440,7 +440,10 @@
       "label-value": "Valor"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "Ações"
+      "n-contact-points_one": "",
+      "n-contact-points_other": "",
+      "view-route_one": "",
+      "view-route_other": ""
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Adicionar dados de alerta à carga útil",
@@ -456,6 +459,7 @@
     },
     "alert-instances-table": {
       "created": "Criado",
+      "destination": "",
       "labels": "Etiquetas",
       "state": "Estado"
     },
@@ -2341,6 +2345,7 @@
     },
     "notification-route": {
       "no-labels": "Sem etiquetas",
+      "notification-policies": "",
       "notification-policy": "Política de notificação"
     },
     "notification-route-header": {
@@ -3306,6 +3311,10 @@
         "search-by-matchers": "Pesquisar por correspondências",
         "tooltip-description": "Encontrar silêncios por elemento de correspondência. Corresponde exatamente ao nome da etiqueta, ao valor e ao operador.",
         "tooltip-example": "Exemplo: <1>env=~\"prod.*\"</1> encontra silêncios com um correspondente <4>env=~\"prod.*\"</4>."
+      },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
       },
       "only-firing-instances": "Apenas são exibidas as instâncias de alerta no estado de disparo.",
       "operator": {
@@ -4380,7 +4389,6 @@
       "button-cancel": "Cancelar",
       "button-delete": "Eliminar",
       "button-deleting": "A eliminar...",
-      "commit": "Eliminar pasta",
       "delete-warning": "Isto eliminará esta pasta e todas as suas descendentes. No total, isto afetará:",
       "missing-info": "Campos obrigatórios em falta",
       "success-message": "Pasta eliminada com sucesso"
@@ -4494,7 +4502,6 @@
       "button-cancel": "Cancelar",
       "button-rename": "Renomear",
       "button-renaming": "A renomear...",
-      "commit": "Renomear a pasta",
       "error-saving": "Falha ao renomear a pasta",
       "label-folder-name": "Nome da pasta",
       "missing-info": "Campos obrigatórios em falta",
@@ -5498,9 +5505,6 @@
       "aria-label-dashboard-name": "Painel de controlo {{dashboardName}}",
       "label-no-dashboards-found": "Nenhum painel de controlo encontrado"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Cancelar carregamento do painel de controlo"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5770,11 +5774,6 @@
         "label": "Exportar painel de controlo"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Falha ao obter o painel de controlo"
-      }
-    },
     "filters-overview": {
       "apply": "Aplicar",
       "apply-close": "Aplicar e fechar",
@@ -5789,8 +5788,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operador",
-        "placeholder": "Selecionar operador"
+        "aria-label": "Operador"
       },
       "restore": "Restaurar valor predefinido",
       "search": {
@@ -5932,11 +5930,6 @@
       "title-get-help-with-this-panel": "Obter ajuda com este painel",
       "troubleshooting-docs": "Documentos de resolução de problemas"
     },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Falha ao criar modelo de painel de controlo"
-      }
-    },
     "inspect": {
       "data-tab": "Dados",
       "error-tab": "Erro",
@@ -6025,13 +6018,6 @@
       },
       "ungroup-nested-text": "Isto desagrupará todos os grupos aninhados.",
       "ungroup-nested-title": "Desagrupar grupos aninhados?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Painel de controlo não encontrado"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Painel de controlo não editável",
@@ -6351,10 +6337,6 @@
       },
       "undo": "Anular"
     },
-    "solo-panel": {
-      "loading-initializing-dashboard": "A carregar e inicializar o painel de controlo",
-      "title-not-found": "Painel com ID {{panelId}} não encontrado"
-    },
     "source-link": {
       "title": "Origem ({{provider}})",
       "tooltip": "Ver ficheiro de origem no repositório"
@@ -6383,6 +6365,8 @@
         "ungroup-tabs": "Desagrupar separadores"
       },
       "name": "Separadores",
+      "scroll-tabs-left": "",
+      "scroll-tabs-right": "",
       "tab": {
         "new": "Novo separador",
         "repeat": {
@@ -6480,6 +6464,10 @@
         },
         "save-dashboard-short": "Guardar",
         "save-library-panel": "Guardar painel de biblioteca",
+        "save-template": {
+          "label": "",
+          "tooltip": ""
+        },
         "share": {
           "arrow": "Partilhar",
           "tooltip": "Copiar link"
@@ -6493,6 +6481,9 @@
       "read-only": "Apenas para leitura",
       "refresh": "Atualizar o painel de controlo",
       "save": "Guardar o painel de controlo",
+      "save-as-template": {
+        "label": ""
+      },
       "save-dashboard": {
         "label": "Guardar o painel de controlo",
         "tooltip": "Guardar alterações"
@@ -6615,8 +6606,8 @@
     "version-history-comparison": {
       "button-restore": "Restaurar para a versão {{version}}",
       "label-view-json-diff": "Visualizar diferenças JSON",
-      "new-updated-by": "<0>Versão {{version}}</0> atualizada por {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Versão {{version}}</0> atualizada por {{editor}} {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Alternar seleção da versão {{version}}",
@@ -7525,7 +7516,9 @@
         "label-details": "Detalhes",
         "title": "Guardar o painel de controlo",
         "title-copy": "Guardar a cópia do painel de controlo",
-        "title-provisioned": "Painel de controlo fornecido"
+        "title-provisioned": "Painel de controlo fornecido",
+        "title-template": "",
+        "title-update-template": ""
       }
     },
     "save-dashboard-form": {
@@ -7602,6 +7595,10 @@
     },
     "section-filters-list": {
       "add-filter": ""
+    },
+    "section-placement": {
+      "top-row": "",
+      "top-tab": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Permite que vários valores sejam selecionados ao mesmo tempo",
@@ -7742,9 +7739,6 @@
     "variable-display-select": {
       "label": "Visualização",
       "options": {
-        "above-dashboard": {
-          "label": "Acima do painel de controlo"
-        },
         "controls-menu": {
           "description": "Visível quando o menu de controlos está aberto",
           "label": "Menu de controlos"
@@ -7753,9 +7747,9 @@
           "description": "Visível apenas no modo de edição",
           "label": "Oculto"
         },
-        "hidden-label": {
-          "description": "Acima do painel, mas sem mostrar o nome da variável",
-          "label": "Acima do painel de controlo, etiqueta oculta"
+        "top-placement-hidden-label": {
+          "description": "",
+          "label": ""
         }
       }
     },
@@ -7838,12 +7832,15 @@
           "reorder-variables-list": "Reordenar lista de variáveis"
         }
       },
-      "title-above-dashboard_one": "Acima do painel de controlo ({{count}})",
-      "title-above-dashboard_other": "Acima do painel de controlo ({{count}})",
+      "top-placement": {
+        "default": ""
+      },
       "title-controls-menu_one": "Menu de controlos ({{count}})",
       "title-controls-menu_other": "Menu de controlos ({{count}})",
       "title-hidden_one": "Oculto ({{count}})",
-      "title-hidden_other": "Oculto ({{count}})"
+      "title-hidden_other": "Oculto ({{count}})",
+      "title-top-placement_one": "",
+      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -7852,8 +7849,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "Visualizar diferenças JSON",
-      "new-version-updated": "<0>Versão {{version}}</0> atualizada por {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Versão {{version}}</0> atualizada por {{editor}} {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "A comparar {{baseVersion}} <3></3> {{newVersion}}",
@@ -9044,7 +9041,6 @@
       "copy-button": "Copiar para a área de transferência",
       "download-button": "Transferir ficheiro",
       "download-successful_toast_message": "O seu JSON foi descarregado",
-      "export-externally-label": "Exportar o painel de controlo para utilizar noutra instância",
       "export-format": "Formato",
       "export-mode": "Modelo",
       "info-text": "Copiar ou descarregar um ficheiro que contém a definição do seu painel de controlo",
@@ -9137,6 +9133,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "Pasta eliminada",
       "folder-move-error-provisioned": "Não é possível mover a pasta disponibilizada. Para a mover, mova-a no repositório e sincronize para aplicar as alterações.",
@@ -10212,7 +10209,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Ajuda <1></1>",
-      "access-help-details": "O modo de acesso controla a forma como os pedidos à origem de dados serão tratados. O <1><i>servidor</i></1> deve ser a forma preferencial, salvo indicação em contrário.",
+      "access-help-details": "",
       "access-help-title": "Ajuda de acesso",
       "access-label": "Acesso",
       "allowed-cookies": "Cookies permitidos",
@@ -10747,7 +10744,7 @@
     "name-unit": "Unidade",
     "name-value-name": "Nome do valor",
     "name-y-axis-scale": "Escala do eixo Y",
-    "name-y-bucket-scale": "Escala de registo Y",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Automático",
     "placeholder-axis-width": "Automático",
     "placeholder-decimals": "Automático",
@@ -10862,6 +10859,12 @@
     "name-stacking": "Empilhamento"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10874,7 +10877,28 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -11659,11 +11683,10 @@
       "published-by": "Publicado por",
       "updated-on": "Atualizado a"
     },
-    "import-resource-format-error": {
-      "cancel": "Cancelar",
-      "title": "Formato não suportado",
-      "v1-message": "Este painel de controlo está no formato de recurso Kubernetes v1 e não pode ser importado quando a funcionalidade de painéis de controlo do Kubernetes está desativada. Ative o botão da funcionalidade kubernetesDashboards para importar este painel de controlo.",
-      "v2-message": "Este painel de controlo está no formato de recurso v2 e não pode ser importado quando a funcionalidade de painéis de controlo do Kubernetes está desativada. Ative a alternância da funcionalidade kubernetesDashboards para importar este painel de controlo."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Tem a certeza de que pretende eliminar '{{snapshotToRemove}}'?",
@@ -11969,6 +11992,9 @@
     "admin": {
       "subtitle": "Gerir definições de todo o servidor e acesso a recursos como organizações, utilizadores e licenças",
       "title": "Administrador do servidor"
+    },
+    "agentic-testing": {
+      "title": ""
     },
     "alert-list-legacy": {
       "title": "Regras de alerta"
@@ -12566,6 +12592,9 @@
       "save-tooltip": ""
     }
   },
+  "page-loader": {
+    "default": ""
+  },
   "panel": {
     "dashlist": {
       "empty-state-message": "Nenhum grupo de painel de controlo configurado",
@@ -13152,8 +13181,9 @@
       "label-branch": "Ramo",
       "label-comment": "Comentário",
       "label-filename": "Nome do ficheiro",
-      "label-folder": "Pasta",
       "label-path": "Caminho",
+      "label-repository-folder": "",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Selecione ou introduza o caminho da pasta",
       "suffix-configured-branch": "Ramo sincronizado",
@@ -13233,11 +13263,24 @@
     "code-block": {
       "aria-label-copy": "Copiar o código para a área de transferência"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "Definições do repositório guardadas",
       "alert-repository-settings-updated": "Definições do repositório atualizadas",
       "button-save": "Guardar",
       "button-saving": "A guardar...",
+      "description-commit-message-template": "",
       "description-connection": "Selecione a ligação da aplicação GitHub a utilizar",
       "description-enabled": "Assim que a extração automática estiver ativada, o alvo não pode ser alterado.",
       "description-read-only": "Os recursos não podem ser modificados através da Grafana.",
@@ -13248,6 +13291,7 @@
       "error-save-failed": "Não foi possível guardar a definição do repositório",
       "error-save-repository": "Não foi possível guardar as definições do repositório",
       "label-automatic-pulling": "Extração automática",
+      "label-commit-message-template": "",
       "label-connection": "Ligação da aplicação GitHub",
       "label-enabled": "Ativado",
       "label-interval-seconds": "Intervalo (segundos)",
@@ -13256,6 +13300,7 @@
       "label-title": "Título",
       "option-entire-instance": "Instância inteira",
       "option-managed-folder": "Pasta gerida",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "A minha configuração"
     },
@@ -13465,7 +13510,7 @@
       "modal-title-set-up-public-access": "Configurar acesso público",
       "modal-title-set-up-required-features": "Configurar as funcionalidades necessárias",
       "step-description-copy-url": "A partir da saída do ngrok, copie o URL de encaminhamento https:// que tem o seguinte aspeto:",
-      "step-description-enable-feature-toggles": "Adicione a funcionalidade de provisionamento ao seu ficheiro custom.ini. Nota: o kubernetesDashboards está ativado por predefinição, mas se o tiver desativado explicitamente, terá de o ativar nas suas definições da Grafana ou remover a substituição da sua configuração.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Execute este comando para criar um túnel seguro para a sua Grafana local:",
       "step-description-update-grafana-config": "Adicione isto ao seu ficheiro custom.ini, substituindo o URL pelo seu URL ngrok atual:",
       "step-title-copy-url": "Copie o seu URL público",
@@ -13539,6 +13584,21 @@
       "authentication-failed": "",
       "request-failed": "",
       "resource-not-found": ""
+    },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
     },
     "instance-sync-deprecation": {
       "message": "A sincronização de instâncias não é totalmente suportada atualmente e quebra painéis e alertas da biblioteca. Para usar painéis e alertas da biblioteca, desligue o seu repositório e volte a ligá-lo usando a sincronização de pastas.",
@@ -13826,7 +13886,8 @@
     "sync-job": {
       "error-no-job-id": "Falha ao iniciar a tarefa",
       "error-no-repository-name": "Nenhum nome de repositório fornecido",
-      "error-starting-job": "Erro ao iniciar a tarefa"
+      "error-starting-job": "Erro ao iniciar a tarefa",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "Erro ao extrair recursos",
@@ -14148,6 +14209,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Adicionar filtro",
+      "cancel-delete": "",
+      "confirm-delete": "",
+      "confirm-delete-confirm": "",
+      "delete-confirmation-group": "",
       "disable": "Desativar {{type}}",
       "duplicate": "Duplicar {{type}}",
       "enable": "Ativar {{type}}",
@@ -14189,10 +14254,7 @@
       "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
-      "body-query": "Tem a certeza de que pretende eliminar esta consulta?",
-      "body-transformation": "Remover uma transformação pode danificar outras.",
-      "confirm": "Eliminar",
-      "title": "Eliminar {{name}}?"
+      "body-transformation": "Remover uma transformação pode danificar outras."
     },
     "details-sidebar": {
       "cache-timeout": "Tempo limite da cache",
@@ -14656,7 +14718,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Exportar como imagem",
-      "export-json-title": "Exportar como JSON",
       "share-externally-title": "Partilhar externamente",
       "share-internally-title": "Partilhar internamente",
       "share-snapshot-title": "Partilhar instantâneo"
@@ -16547,7 +16608,7 @@
       "message": "Nenhum utilizador encontrado"
     },
     "token-revoked-modal": {
-      "auto-revoked": "O seu token de sessão foi revogado automaticamente, porque atingiu <2>o número máximo de {{numSessions}} sessões simultâneas</2> para a sua conta.",
+      "auto-revoked": "",
       "resume-message": "<strong>Para retomar a sua sessão, inicie sessão novamente.</strong>Contacte o seu administrador ou visite a página de licenças para rever a sua quota se a sua sessão for terminada repetidamente de forma automática.",
       "sign-in": "Iniciar sessão",
       "title-you-have-been-automatically-signed-out": "A sua sessão foi terminada automaticamente"

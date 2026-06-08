@@ -58,6 +58,13 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 			list = append(list, field.Required(field.NewPath("spec", "sync", "target"),
 				"The target type is required when sync is enabled"))
 		}
+
+		// The folderless target is defined in the API but not supported yet.
+		// Reject it until the feature is fully implemented.
+		if cfg.Spec.Sync.Target == provisioning.SyncTargetTypeFolderless {
+			list = append(list, field.Invalid(field.NewPath("spec", "sync", "target"),
+				cfg.Spec.Sync.Target, "The folderless sync target is not supported yet"))
+		}
 	}
 
 	// Reserved names (for now)
@@ -255,6 +262,14 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 	// Copy previous values if they exist
 	if a.GetOldObject() != nil {
 		if oldRepo, ok := a.GetOldObject().(*provisioning.Repository); ok {
+			if a.GetOperation() == admission.Update && RequiresNewTokenForURLChange(r, oldRepo) {
+				return invalidRepositoryError(a.GetName(), field.ErrorList{
+					field.Forbidden(
+						field.NewPath("secure", "token"),
+						"a new token is required when changing the repository URL",
+					),
+				})
+			}
 			CopySecureValues(r, oldRepo)
 		}
 	}

@@ -9,8 +9,6 @@ import (
 	"github.com/fullstorydev/grpchan"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	otgrpc "github.com/opentracing-contrib/go-grpc"
-	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -331,10 +329,8 @@ func GrpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 // and middleware.StreamClientUserHeaderInterceptor as we don't need them.
 func instrument(requestDuration *prometheus.HistogramVec, instrumentationLabelOptions ...middleware.InstrumentationOption) ([]grpc.UnaryClientInterceptor, []grpc.StreamClientInterceptor) {
 	return []grpc.UnaryClientInterceptor{
-			otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer()),
 			middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
 		}, []grpc.StreamClientInterceptor{
-			otgrpc.OpenTracingStreamClientInterceptor(opentracing.GlobalTracer()),
 			middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
 		}
 }

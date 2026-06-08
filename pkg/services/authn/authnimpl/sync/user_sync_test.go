@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/scimutil"
@@ -2252,6 +2253,169 @@ func TestUserSync_SyncUserHook_SCIMUserAllowsGCOMLogin(t *testing.T) {
 	}, nil)
 
 	require.NoError(t, err)
+}
+
+func TestUserSync_createUser_PassesOrgRoleAsDefaultOrgRole(t *testing.T) {
+	tests := []struct {
+		name           string
+		id             *authn.Identity
+		wantOrgRole    string
+		wantSkipOrgSet bool
+	}{
+		{
+			name: "identity role for active org propagates to DefaultOrgRole",
+			id: &authn.Identity{
+				Login:    "identityeditor",
+				Email:    "identityeditor@example.com",
+				Name:     "Identity Editor",
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
+			},
+			wantOrgRole:    "Editor",
+			wantSkipOrgSet: true,
+		},
+		{
+			name: "no OrgRoles leaves DefaultOrgRole empty so k8s falls back to AutoAssignOrgRole",
+			id: &authn.Identity{
+				Login: "newbie",
+				Email: "newbie@example.com",
+				Name:  "Newbie",
+				OrgID: 1,
+			},
+			wantOrgRole:    "",
+			wantSkipOrgSet: false,
+		},
+		{
+			name: "OrgRoles present but no match for active org propagates RoleNone",
+			id: &authn.Identity{
+				Login:    "mismatched",
+				Email:    "mismatched@example.com",
+				Name:     "Mismatched",
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{2: org.RoleEditor},
+			},
+			wantOrgRole:    "None",
+			wantSkipOrgSet: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var captured *user.CreateUserCommand
+			fakeUserSvc := &usertest.FakeUserService{
+				CreateFn: func(_ context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+					captured = cmd
+					return &user.User{ID: 99, UID: "99", Login: cmd.Login, Email: cmd.Email, Name: cmd.Name}, nil
+				},
+			}
+
+			s := ProvideUserSync(
+				fakeUserSvc,
+				&authinfoimpl.OSSUserProtectionImpl{},
+				&authinfotest.FakeService{
+					SetAuthInfoFn:    func(_ context.Context, _ *login.SetAuthInfoCommand) error { return nil },
+					UpdateAuthInfoFn: func(_ context.Context, _ *login.UpdateAuthInfoCommand) error { return nil },
+				},
+				&quotatest.FakeQuotaService{},
+				tracing.InitializeTracerForTest(),
+				featuremgmt.WithFeatures(),
+				setting.NewCfg(),
+				nil,
+			)
+
+			_, err := s.createUser(context.Background(), tt.id)
+			require.NoError(t, err)
+			require.NotNil(t, captured)
+			assert.Equal(t, tt.wantOrgRole, captured.DefaultOrgRole, "DefaultOrgRole should match identity role mapping for the active org")
+			assert.Equal(t, tt.wantSkipOrgSet, captured.SkipOrgSetup, "SkipOrgSetup should still reflect whether OrgRoles are present")
+		})
+	}
+}
+
+func TestUserSync_SyncUserHook_AuthProxyAlignsOrgIDForK8sRole(t *testing.T) {
+	tests := []struct {
+		name                    string
+		authenticatedBy         string
+		kubernetesUsersRedirect bool
+		wantDefaultOrgRole      string
+	}{
+		{
+			name:                    "auth proxy with flag enabled aligns OrgID so the asserted role is written",
+			authenticatedBy:         login.AuthProxyAuthModule,
+			kubernetesUsersRedirect: true,
+			wantDefaultOrgRole:      "Editor",
+		},
+		{
+			name:                    "auth proxy with flag disabled leaves OrgID unaligned so the role resolves to None",
+			authenticatedBy:         login.AuthProxyAuthModule,
+			kubernetesUsersRedirect: false,
+			wantDefaultOrgRole:      "None",
+		},
+		{
+			name:                    "non auth-proxy module is not aligned even with flag enabled",
+			authenticatedBy:         login.SAMLAuthModule,
+			kubernetesUsersRedirect: true,
+			wantDefaultOrgRole:      "None",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, tt.kubernetesUsersRedirect),
+			})
+
+			var captured *user.CreateUserCommand
+			fakeUserSvc := &usertest.FakeUserService{
+				ExpectedError: user.ErrUserNotFound,
+				CreateFn: func(_ context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+					captured = cmd
+					return &user.User{ID: 99, UID: "99", Login: cmd.Login, Email: cmd.Email, Name: cmd.Name, OrgID: 1}, nil
+				},
+			}
+
+			s := ProvideUserSync(
+				fakeUserSvc,
+				&authinfoimpl.OSSUserProtectionImpl{},
+				&authinfotest.FakeService{
+					ExpectedError:    user.ErrUserNotFound,
+					SetAuthInfoFn:    func(_ context.Context, _ *login.SetAuthInfoCommand) error { return nil },
+					UpdateAuthInfoFn: func(_ context.Context, _ *login.UpdateAuthInfoCommand) error { return nil },
+				},
+				&quotatest.FakeQuotaService{},
+				tracing.InitializeTracerForTest(),
+				featuremgmt.WithFeatures(),
+				setting.NewCfg(),
+				nil,
+			)
+
+			// Mirrors the auth proxy identity: the asserted role is keyed by DefaultOrgID but OrgID is unset.
+			email := "proxyuser@example.com"
+			loginName := "proxyuser"
+			id := &authn.Identity{
+				Login:           loginName,
+				Email:           email,
+				Name:            "Proxy User",
+				AuthID:          "proxyuser",
+				AuthenticatedBy: tt.authenticatedBy,
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleEditor},
+				ClientParams: authn.ClientParams{
+					SyncUser:    true,
+					AllowSignUp: true,
+					LookUpParams: login.UserLookupParams{
+						Email: &email,
+						Login: &loginName,
+					},
+				},
+			}
+
+			err := s.SyncUserHook(context.Background(), id, nil)
+			require.NoError(t, err)
+			require.NotNil(t, captured)
+			assert.Equal(t, tt.wantDefaultOrgRole, captured.DefaultOrgRole,
+				"DefaultOrgRole written to the k8s user must reflect whether OrgID was aligned")
+		})
+	}
 }
 
 // Pins: id.Groups ← usr.TeamUIDs; id.ExternalGroups preserved.

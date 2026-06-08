@@ -13,7 +13,7 @@ permissions: {}
 
 jobs:
   config:
-    runs-on: "ubuntu-latest"
+    runs-on: ubuntu-arm64-small
     outputs:
       has-secrets: ${{ steps.check.outputs.has-secrets }}
     steps:
@@ -28,7 +28,7 @@ jobs:
   main:
     needs: config
     if: needs.config.outputs.has-secrets
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
       id-token: write
