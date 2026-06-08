@@ -114,6 +114,8 @@ type DashboardsAPIBuilder struct {
 	unified                  resource.ResourceClient
 	dashboardPermissions     dashboards.PermissionsRegistrationService
 	dashboardPermissionsSvc  accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissionsSvc and add integration test afterDelete hook
+	// Do not access directly: use `resourcePermissionsClient(ctx)`. In embedded mode this is
+	// built lazily from restConfigProvider and is nil until the first call.
 	resourcePermissionsSvc   *dynamic.NamespaceableResourceInterface
 	scheme                   *runtime.Scheme
 	search                   *SearchHandler
