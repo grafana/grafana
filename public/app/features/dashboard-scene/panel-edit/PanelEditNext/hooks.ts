@@ -72,7 +72,6 @@ export function usePanelEditorShell(model: PanelEditor) {
 export function useVizAndDataPaneLayout(model: PanelEditor) {
   const dashboard = getDashboardSceneFor(model);
   const { dataPane, tableView } = model.useState();
-  const panel = model.getPanel();
   const { controls } = dashboard.useState();
 
   const [sidebarSize = SidebarSize.Mini, setSidebarSize] = useLocalStorage<SidebarSize>(
@@ -85,7 +84,6 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
   );
 
   const isScrollingLayout = useScrollReflowLimit();
-  const panelToShow = tableView ?? panel;
 
   const vizDataSplitter = useSnappingSplitter({
     direction: 'column',
@@ -110,8 +108,10 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
   return {
     scene: {
       dataPane,
-      panelToShow,
+      panel: model.getPanel(),
+      tableView,
       controls,
+      dashboard,
     },
     sidebarSize,
     setSidebarSize,

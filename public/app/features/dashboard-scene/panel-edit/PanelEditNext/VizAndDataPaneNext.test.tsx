@@ -4,6 +4,7 @@ import { createRef } from 'react';
 import { VizPanel } from '@grafana/scenes';
 
 import { type DashboardControls } from '../../scene/DashboardControls';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { type PanelDataPane } from '../PanelDataPane/PanelDataPane';
 import { buildPanelEditScene } from '../PanelEditor';
@@ -28,6 +29,10 @@ jest.mock('./QueryEditor/QueryEditorContextWrapper', () => ({
 
 jest.mock('./QueryEditor/Sidebar/Sidebar', () => ({
   Sidebar: () => <div data-testid="query-editor-sidebar" />,
+}));
+
+jest.mock('../PanelEditPanelWrapper', () => ({
+  PanelEditPanelWrapper: () => <div data-testid="panel-viz" />,
 }));
 
 // Minimal mock so instanceof checks in VizAndDataPaneNext work without scene setup
@@ -79,9 +84,11 @@ function mockSplitter(collapsed = false): Splitter {
 function buildMockLayout(dataPane?: PanelDataPane | PanelDataPaneNext, sidebarSize: SidebarSize = SidebarSize.Mini) {
   return {
     scene: {
-      panelToShow: mockSceneRenderer<VizPanel>('panel-viz'),
+      panel: mockSceneRenderer<VizPanel>('panel-viz'),
+      tableView: undefined,
       controls: undefined,
       dataPane,
+      dashboard: mockSceneRenderer<DashboardScene>('dashboard'),
     },
     sidebarSize,
     setSidebarSize: jest.fn(),

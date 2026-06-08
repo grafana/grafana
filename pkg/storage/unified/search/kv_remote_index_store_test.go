@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -185,7 +186,7 @@ func TestKVRemoteIndexStore_DeleteIndex_LargeFileCount(t *testing.T) {
 	for i := range fileCount {
 		rel := fmt.Sprintf("store/file-%03d", i)
 		files[rel] = 4
-		writeKVValue(t, store.store, IndexSnapshotDataSection, store.dataKey(ns, key, rel), []byte("data"))
+		writeKVValue(t, store.store, IndexSnapshotDataSection, store.dataChunkKey(ns, key, rel, 0), []byte("data"))
 	}
 	metaBytes, err := json.Marshal(IndexMeta{BuildVersion: "11.0.0", Files: files})
 	require.NoError(t, err)
@@ -215,7 +216,7 @@ func TestKVRemoteIndexStore_ReadSnapshotFile_OversizedFails(t *testing.T) {
 
 	// Plant a 100-byte value but advertise it as 10.
 	const advertised = 10
-	writeKVValue(t, store.store, IndexSnapshotDataSection, store.dataKey(ns, key, "store/root.bolt"), bytes.Repeat([]byte("x"), 100))
+	writeKVValue(t, store.store, IndexSnapshotDataSection, store.dataChunkKey(ns, key, "store/root.bolt", 0), bytes.Repeat([]byte("x"), 100))
 
 	err := store.ReadSnapshotFile(t.Context(), ns, key, "store/root.bolt", newTempOSFile(t), advertised)
 	require.Error(t, err)
@@ -239,7 +240,7 @@ func TestKVRemoteIndexStore_DownloadRejectsOversizedFile(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, store.WriteSnapshotManifest(ctx, ns, key, metaBytes))
 
-	writeKVValue(t, store.store, IndexSnapshotDataSection, store.dataKey(ns, key, "store/root.bolt"), bytes.Repeat([]byte("x"), advertised*1000))
+	writeKVValue(t, store.store, IndexSnapshotDataSection, store.dataChunkKey(ns, key, "store/root.bolt", 0), bytes.Repeat([]byte("x"), advertised*1000))
 
 	_, err = DownloadIndexSnapshot(ctx, store, ns, key, filepath.Join(t.TempDir(), "dl"))
 	require.Error(t, err)
@@ -624,18 +625,22 @@ func TestKVRemoteIndexStore_RejectsInvalidNsResource(t *testing.T) {
 	store := newTestKVRemoteIndexStore(t)
 	ctx := t.Context()
 
+	// Each fixture flips exactly one field to an invalid value so the
+	// rejection is attributable to a specific invariant rather than e.g.
+	// length on a different field.
+	valid := newTestNsResource()
 	bad := []struct {
 		name string
 		ns   resource.NamespacedResource
 	}{
-		{"empty namespace", resource.NamespacedResource{Group: "g.app", Resource: "r"}},
-		{"slash in namespace", resource.NamespacedResource{Namespace: "a/b", Group: "g.app", Resource: "r"}},
-		{"tilde in namespace", resource.NamespacedResource{Namespace: "a~b", Group: "g.app", Resource: "r"}},
-		{"empty resource", resource.NamespacedResource{Namespace: "ns", Group: "g.app"}},
-		{"dot in resource", resource.NamespacedResource{Namespace: "ns", Resource: "a.b", Group: "g.app"}},
-		{"slash in resource", resource.NamespacedResource{Namespace: "ns", Resource: "a/b", Group: "g.app"}},
-		{"empty group", resource.NamespacedResource{Namespace: "ns", Resource: "r"}},
-		{"slash in group", resource.NamespacedResource{Namespace: "ns", Resource: "r", Group: "a/b"}},
+		{"empty namespace", resource.NamespacedResource{Namespace: "", Group: valid.Group, Resource: valid.Resource}},
+		{"slash in namespace", resource.NamespacedResource{Namespace: "ns/x", Group: valid.Group, Resource: valid.Resource}},
+		{"tilde in namespace", resource.NamespacedResource{Namespace: "ns~x", Group: valid.Group, Resource: valid.Resource}},
+		{"empty resource", resource.NamespacedResource{Namespace: valid.Namespace, Group: valid.Group, Resource: ""}},
+		{"slash in resource", resource.NamespacedResource{Namespace: valid.Namespace, Group: valid.Group, Resource: "a/b"}},
+		{"dot in resource", resource.NamespacedResource{Namespace: valid.Namespace, Group: valid.Group, Resource: "a.b"}},
+		{"empty group", resource.NamespacedResource{Namespace: valid.Namespace, Group: "", Resource: valid.Resource}},
+		{"slash in group", resource.NamespacedResource{Namespace: valid.Namespace, Group: "grp/x", Resource: valid.Resource}},
 	}
 	for _, tt := range bad {
 		t.Run(tt.name, func(t *testing.T) {
@@ -651,13 +656,128 @@ func TestKVRemoteIndexStore_RejectsInvalidNsResource(t *testing.T) {
 	}
 
 	t.Run("slash in namespace via LockNamespaceForCleanup", func(t *testing.T) {
-		_, err := store.LockNamespaceForCleanup(ctx, "a/b")
+		_, err := store.LockNamespaceForCleanup(ctx, "ns/x")
 		require.Error(t, err)
 	})
 	t.Run("empty namespace via ListNamespaceResources", func(t *testing.T) {
 		_, err := store.ListNamespaceResources(ctx, "")
 		require.Error(t, err)
 	})
+}
+
+func TestKVRemoteIndexStore_New_RejectsInvalidChunkSize(t *testing.T) {
+	store := newTestBadgerKV(t)
+	mgr := newTestLeaseManager(t, store, "owner")
+
+	// Below minimum.
+	_, err := NewKVRemoteIndexStore(KVRemoteIndexStoreConfig{KV: store, LeaseManager: mgr, ChunkSize: 100})
+	require.ErrorContains(t, err, "chunk size")
+
+	// Above maximum.
+	_, err = NewKVRemoteIndexStore(KVRemoteIndexStoreConfig{KV: store, LeaseManager: mgr, ChunkSize: 2 * maxKVChunkSize})
+	require.ErrorContains(t, err, "chunk size")
+
+	// Zero is the documented "use defaults" sentinel.
+	s, err := NewKVRemoteIndexStore(KVRemoteIndexStoreConfig{KV: store, LeaseManager: mgr})
+	require.NoError(t, err)
+	require.Equal(t, defaultKVChunkSize, s.chunkSize)
+}
+
+func TestKVRemoteIndexStore_ChunkedRoundTrip(t *testing.T) {
+	// Round-trips files spanning several chunk-count regimes through the
+	// public Write/Read API and verifies byte-for-byte identity. The small
+	// configured chunk size keeps total bytes per case modest while still
+	// exercising multi-chunk reassembly.
+	const chunkSize int64 = 4096
+	ns := newTestNsResource()
+	ctx := t.Context()
+
+	cases := []struct {
+		name string
+		size int64
+	}{
+		{"smaller than one chunk", 100},
+		{"exactly one chunk", chunkSize},
+		{"one chunk plus a byte", chunkSize + 1},
+		{"exactly two chunks", 2 * chunkSize},
+		{"many chunks with partial last", 7*chunkSize + 123},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			store := newChunkSizedTestStore(t, chunkSize)
+			key := ulid.Make()
+			src, want := newTempFileWithContent(t, tc.size)
+
+			require.NoError(t, store.WriteSnapshotFile(ctx, ns, key, "store/seg.zap", src))
+
+			dst := newTempOSFile(t)
+			require.NoError(t, store.ReadSnapshotFile(ctx, ns, key, "store/seg.zap", dst, tc.size))
+			require.Equal(t, want, readAllFromFile(t, dst))
+		})
+	}
+}
+
+func TestKVRemoteIndexStore_ChunkSizeIndependence(t *testing.T) {
+	// A file written with one ChunkSize must round-trip through a reader
+	// configured with a different ChunkSize. The reader recovers the
+	// writer's chunk size from chunk 0's actual length.
+	ns := newTestNsResource()
+	ctx := t.Context()
+	key := ulid.Make()
+	const size int64 = 9000 // 3 chunks at 4 KiB, 2 chunks at 8 KiB
+
+	backingKV := newTestBadgerKV(t)
+	writer := newChunkSizedTestStoreOn(t, backingKV, 4096)
+	reader := newChunkSizedTestStoreOn(t, backingKV, 8192)
+
+	src, want := newTempFileWithContent(t, size)
+	require.NoError(t, writer.WriteSnapshotFile(ctx, ns, key, "f", src))
+
+	dst := newTempOSFile(t)
+	require.NoError(t, reader.ReadSnapshotFile(ctx, ns, key, "f", dst, size))
+	require.Equal(t, want, readAllFromFile(t, dst))
+}
+
+func TestKVRemoteIndexStore_ChunkedWrite_KeyLayout(t *testing.T) {
+	// Pins the on-disk key shape so layout regressions are caught here
+	// rather than indirectly through DownloadIndexSnapshot.
+	const chunkSize int64 = 1024
+	store := newChunkSizedTestStore(t, chunkSize)
+	ns := newTestNsResource()
+	key := ulid.Make()
+	ctx := t.Context()
+
+	src, _ := newTempFileWithContent(t, 2*chunkSize+10)
+	require.NoError(t, store.WriteSnapshotFile(ctx, ns, key, "store/seg.zap", src))
+
+	got := collectDataKeys(t, store, ns, key)
+	want := []string{
+		store.dataChunkKey(ns, key, "store/seg.zap", 0),
+		store.dataChunkKey(ns, key, "store/seg.zap", 1),
+		store.dataChunkKey(ns, key, "store/seg.zap", 2),
+	}
+	require.ElementsMatch(t, want, got)
+}
+
+func TestKVRemoteIndexStore_ReadSnapshotFile_MissingChunk(t *testing.T) {
+	// If chunk 0 is present but a subsequent chunk is missing, the read
+	// must fail rather than silently truncate.
+	const chunkSize int64 = 1024
+	store := newChunkSizedTestStore(t, chunkSize)
+	ns := newTestNsResource()
+	key := ulid.Make()
+	ctx := t.Context()
+
+	src, _ := newTempFileWithContent(t, 3*chunkSize)
+	require.NoError(t, store.WriteSnapshotFile(ctx, ns, key, "f", src))
+
+	// Drop chunk 1 to simulate a partial upload that was somehow not
+	// caught by the upload-side error handling.
+	require.NoError(t, store.store.Delete(ctx, IndexSnapshotDataSection, store.dataChunkKey(ns, key, "f", 1)))
+
+	err := store.ReadSnapshotFile(ctx, ns, key, "f", newTempOSFile(t), 3*chunkSize)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "chunk 1")
 }
 
 func TestIsRetryableSnapshotStoreError_KVErrRetryable(t *testing.T) {
@@ -678,6 +798,60 @@ func TestIsRetryableSnapshotStoreError_KVErrRetryable(t *testing.T) {
 	cancelled, cancel := context.WithCancel(ctx)
 	cancel()
 	assert.False(t, isRetryableSnapshotStoreError(cancelled, kv.ErrRetryable))
+}
+
+// newChunkSizedTestStore builds a KVRemoteIndexStore on a fresh badger KV
+// and forces a small chunk size so chunking tests stay fast. The chunk
+// size is set directly on the internal field so we don't have to lower
+// the production-facing minimum (minKVChunkSize) just to accommodate
+// test fixtures.
+func newChunkSizedTestStore(t *testing.T, chunkSize int64) *KVRemoteIndexStore {
+	t.Helper()
+	return newChunkSizedTestStoreOn(t, newTestBadgerKV(t), chunkSize)
+}
+
+func newChunkSizedTestStoreOn(t *testing.T, store kv.KV, chunkSize int64) *KVRemoteIndexStore {
+	t.Helper()
+	s := newTestKVRemoteIndexStoreOn(t, store, "test-owner")
+	s.chunkSize = chunkSize
+	return s
+}
+
+// newTempFileWithContent writes size bytes of a deterministic pattern to a
+// fresh temp file and returns both the open file (positioned at 0) and the
+// bytes it contains, so callers can use the file as a snapshot source and
+// compare the round-tripped output against the original bytes. File ops go
+// through an os.Root so gosec recognises them as path-traversal-safe.
+func newTempFileWithContent(t *testing.T, size int64) (*os.File, []byte) {
+	t.Helper()
+	buf := make([]byte, size)
+	for i := range buf {
+		buf[i] = byte(i)
+	}
+	root, err := os.OpenRoot(t.TempDir())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = root.Close() })
+
+	f, err := root.Create("src")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = f.Close() })
+	_, err = f.Write(buf)
+	require.NoError(t, err)
+	_, err = f.Seek(0, io.SeekStart)
+	require.NoError(t, err)
+	return f, buf
+}
+
+// readAllFromFile reads the entire content of f. Uses Seek + io.ReadAll on
+// the already-open handle so we don't hand a variable path to os.ReadFile
+// (gosec G304).
+func readAllFromFile(t *testing.T, f *os.File) []byte {
+	t.Helper()
+	_, err := f.Seek(0, io.SeekStart)
+	require.NoError(t, err)
+	b, err := io.ReadAll(f)
+	require.NoError(t, err)
+	return b
 }
 
 // --- helpers ---
@@ -714,7 +888,7 @@ var orphanedSnapshotFiles = []string{"store/root.bolt", "store/00000001.zap"}
 func seedIncompleteSnapshot(t *testing.T, s *KVRemoteIndexStore, ns resource.NamespacedResource, key ulid.ULID) []string {
 	t.Helper()
 	for _, rel := range orphanedSnapshotFiles {
-		writeKVValue(t, s.store, IndexSnapshotDataSection, s.dataKey(ns, key, rel), []byte("orphaned"))
+		writeKVValue(t, s.store, IndexSnapshotDataSection, s.dataChunkKey(ns, key, rel, 0), []byte("orphaned"))
 	}
 	return orphanedSnapshotFiles
 }

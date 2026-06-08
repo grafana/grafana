@@ -1,6 +1,12 @@
 import { type TimeRange } from '@grafana/data';
 import { PrometheusDatasource } from '@grafana/prometheus';
-import { AdHocFiltersVariable, type SceneDataQuery, type SceneObject, sceneGraph } from '@grafana/scenes';
+import {
+  AdHocFiltersVariable,
+  type SceneDataQuery,
+  type SceneObject,
+  isGroupByFilter,
+  sceneGraph,
+} from '@grafana/scenes';
 import { useSceneContext, useVariableValue } from '@grafana/scenes-react';
 import { type DataSourceRef } from '@grafana/schema';
 
@@ -98,12 +104,14 @@ export function removeFilter(sceneContext: SceneObject, key: string) {
 export function clearAllFilters(sceneContext: SceneObject) {
   const filtersVariable = sceneGraph.lookupVariable(VARIABLES.filters, sceneContext);
   if (filtersVariable instanceof AdHocFiltersVariable) {
-    filtersVariable.setState({ filters: [] });
+    // Preserve groupBy entries — only clear regular (non-groupBy) filters.
+    filtersVariable.setState({ filters: filtersVariable.state.filters.filter(isGroupByFilter) });
   }
 }
 
 /**
  * Returns the structured filters array from the AdHocFiltersVariable, reactively.
+ * Excludes groupBy entries — use useGroupByKeys() to access those.
  */
 function useAdHocFilters() {
   const sceneContext = useSceneContext();
@@ -112,11 +120,11 @@ function useAdHocFilters() {
     return [];
   }
   // .useState() subscribes to state changes and triggers re-renders
-  return filtersVariable.useState().filters;
+  return filtersVariable.useState().filters.filter((f) => !isGroupByFilter(f));
 }
 
 /**
- * Returns whether any filters are active, and a function to clear all of them.
+ * Returns whether any (non-groupBy) filters are active, and a function to clear all of them.
  */
 export function useClearAllFilters(): { hasActiveFilters: boolean; clearAllFilters: () => void } {
   const sceneContext = useSceneContext();
@@ -125,6 +133,24 @@ export function useClearAllFilters(): { hasActiveFilters: boolean; clearAllFilte
     hasActiveFilters: filters.length > 0,
     clearAllFilters: () => clearAllFilters(sceneContext),
   };
+}
+
+/**
+ * Returns the current groupBy keys from the unified AdHocFiltersVariable, reactively.
+ * Re-renders when groupBy entries change (AdHocFiltersVariable fires SceneVariableValueChangedEvent
+ * for both filter and groupBy mutations).
+ */
+export function useGroupByKeys(): string[] {
+  // useVariableValue subscribes to the variable and triggers re-renders on any change,
+  // including when groupBy entries are added or removed.
+  useVariableValue(VARIABLES.filters);
+
+  const sceneContext = useSceneContext();
+  const filtersVar = sceneGraph.lookupVariable(VARIABLES.filters, sceneContext);
+  if (!(filtersVar instanceof AdHocFiltersVariable)) {
+    return [];
+  }
+  return filtersVar.state.filters.filter((f) => isGroupByFilter(f) && !f.dismissedGroupBy).map((f) => f.key);
 }
 
 /**

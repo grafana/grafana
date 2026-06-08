@@ -12,7 +12,9 @@ import (
 )
 
 // Validate validates the git repository configuration without requiring decrypted secrets.
-func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
+// allowInsecure permits http:// URLs together with a token (cleartext credentials); it should
+// only be true for local/dev environments.
+func Validate(_ context.Context, obj runtime.Object, allowInsecure bool) field.ErrorList {
 	repo, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return nil
@@ -29,20 +31,22 @@ func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
 		}
 	}
 
-	return validateGitConfig(repo, cfg)
+	return validateGitConfig(repo, cfg, allowInsecure)
 }
 
 // validateGitConfig validates the git configuration fields.
 // This is extracted to be reusable by other git-based repository types (github, gitlab, bitbucket).
-func validateGitConfig(repo *provisioning.Repository, cfg *provisioning.GitRepositoryConfig) field.ErrorList {
-	return ValidateGitConfigFields(repo, cfg.URL, cfg.Branch, cfg.Path)
+func validateGitConfig(repo *provisioning.Repository, cfg *provisioning.GitRepositoryConfig, allowInsecure bool) field.ErrorList {
+	return ValidateGitConfigFields(repo, cfg.URL, cfg.Branch, cfg.Path, allowInsecure)
 }
 
 // ValidateGitConfigFields validates common git configuration fields (Branch, Path, token/connection).
 // This can be reused by git-based repository types (github, gitlab, bitbucket).
 // The URL parameter is only used for token/connection validation logic, not for URL format validation
 // (providers handle their own URL format validation).
-func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path string) field.ErrorList {
+// allowInsecure permits http:// URLs together with a token; when false, that combination is rejected
+// because it sends credentials in cleartext.
+func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path string, allowInsecure bool) field.ErrorList {
 	var list field.ErrorList
 
 	t := string(repo.Spec.Type)
@@ -56,6 +60,15 @@ func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path st
 				list = append(list, field.Invalid(field.NewPath("spec", t, "url"), url, "invalid git URL format"))
 			}
 		}
+	}
+
+	// Reject http:// together with a token: the token would travel in cleartext on every git
+	// operation. The token is a presence check (IsZero) that works without decryption.
+	// URL schemes are case-insensitive, so normalize before comparing (https:// is unaffected,
+	// since it does not have the http:// prefix).
+	if !allowInsecure && strings.HasPrefix(strings.ToLower(url), "http://") && !repo.Secure.Token.IsZero() {
+		list = append(list, field.Invalid(field.NewPath("spec", t, "url"), url,
+			"http:// is not allowed when a token is configured; use https:// to avoid sending credentials in cleartext"))
 	}
 
 	// Validate branch name format if a branch is provided (applies to all repository types)

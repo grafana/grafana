@@ -6,6 +6,7 @@ import { t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
+import { PanelEditPanelWrapper } from '../PanelEditPanelWrapper';
 import { type PanelEditor } from '../PanelEditor';
 import { QueryEditorBanner } from '../QueryEditorBanner';
 
@@ -37,7 +38,7 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
         {controls}
         <div className={cx(styles.vizPane, { [styles.fixedSizeViz]: isScrollingLayout })}>
           <div className={styles.vizContent}>
-            <scene.panelToShow.Component model={scene.panelToShow} />
+            <PanelEditPanelWrapper panel={scene.panel} tableView={scene.tableView} dashboard={scene.dashboard} />
           </div>
         </div>
       </div>
@@ -52,7 +53,7 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
       })}
     >
       <div className={styles.vizContent}>
-        <scene.panelToShow.Component model={scene.panelToShow} />
+        <PanelEditPanelWrapper panel={scene.panel} tableView={scene.tableView} dashboard={scene.dashboard} />
       </div>
     </div>
   );
