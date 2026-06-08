@@ -8,6 +8,6 @@ describe('MigrateToGitopsHeader', () => {
 
     expect(screen.getByRole('heading', { name: /migrate to gitops/i })).toBeInTheDocument();
     expect(screen.getByText(/^experimental$/i)).toBeInTheDocument();
-    expect(screen.getByText(/manage your dashboards and folders like code/i)).toBeInTheDocument();
+    expect(screen.getByText(/manage your grafana resources like code/i)).toBeInTheDocument();
   });
 });

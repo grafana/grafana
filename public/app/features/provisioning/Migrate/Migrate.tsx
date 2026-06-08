@@ -9,8 +9,8 @@ import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1'
 
 import { CONFIGURE_GRAFANA_DOCS_URL } from '../constants';
 
+import { GitOpsProgress } from './GitOpsProgress';
 import { MigrateToGitopsHeader } from './MigrateToGitopsHeader';
-import { OverviewStatCards } from './OverviewStatCards';
 import { aggregateFolderCounts, aggregateTotals, computeBreakdowns } from './stats';
 
 function MigrationGuideNote() {
@@ -72,7 +72,7 @@ export function Migrate() {
   return (
     <Stack direction="column" gap={3}>
       <MigrateToGitopsHeader />
-      <OverviewStatCards totals={totals} folderCounts={folderCounts} />
+      <GitOpsProgress totals={totals} folderCounts={folderCounts} />
       <MigrationGuideNote />
     </Stack>
   );

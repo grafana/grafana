@@ -89,39 +89,23 @@ describe('Migrate', () => {
       expect(screen.getByText(/^experimental$/i)).toBeInTheDocument();
     });
 
-    it('renders the five overview cards with the expected values', () => {
-      render(<Migrate />);
+    it('shows overall progress and reveals one status card per resource type when expanded', async () => {
+      const { user } = render(<Migrate />);
 
-      // Total dashboards card.
-      expect(screen.getByText('Dashboards')).toBeInTheDocument();
-      expect(screen.getByText('100')).toBeInTheDocument();
-
-      // Managed dashboards: 50 of 100 => 50%.
-      expect(screen.getByText('Managed dashboards')).toBeInTheDocument();
-
-      // Unmanaged dashboards: 50 of 100 => 50%.
-      expect(screen.getByText('Unmanaged dashboards')).toBeInTheDocument();
-
-      // Both managed and unmanaged report "50 of 100 dashboards".
-      expect(screen.getAllByText('50 of 100 dashboards')).toHaveLength(2);
-
-      // Progress to GitOps: 40 of 100 => 40%, "40 via Git Sync".
+      // Overall progress bar across all resource types (56 of 108 => 52%).
       expect(screen.getByText('Progress to GitOps')).toBeInTheDocument();
-      expect(screen.getByText('40%')).toBeInTheDocument();
-      expect(screen.getByText('40 via Git Sync')).toBeInTheDocument();
+      expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '52');
 
-      // Two cards show 50% (managed + unmanaged).
-      expect(screen.getAllByText('50%')).toHaveLength(2);
-    });
+      // Breakdown cards are collapsed by default.
+      expect(screen.queryByText('Dashboards')).not.toBeInTheDocument();
 
-    it('renders the folders managed gauge with managed/total and percentage', () => {
-      render(<Migrate />);
+      await user.click(screen.getByRole('button', { name: /toggle migration details/i }));
 
-      expect(screen.getByText('Folders managed')).toBeInTheDocument();
-      // 6 of 8 folders managed (4 git sync + 2 terraform).
-      expect(screen.getByText('6 / 8')).toBeInTheDocument();
-      // 6 / 8 => 75%.
-      expect(screen.getByText('75% complete')).toBeInTheDocument();
+      // Dashboards: 50 of 100 managed; Folders: 6 of 8 managed.
+      expect(screen.getByText('Dashboards')).toBeInTheDocument();
+      expect(screen.getByText('50 of 100 managed')).toBeInTheDocument();
+      expect(screen.getByText('Folders')).toBeInTheDocument();
+      expect(screen.getByText('6 of 8 managed')).toBeInTheDocument();
     });
 
     it('keeps the migration guide note linking to the provisioning docs', () => {

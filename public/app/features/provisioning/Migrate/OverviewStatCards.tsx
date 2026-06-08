@@ -4,9 +4,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { FolderProgressCard } from './FolderProgressCard';
-import { StatCard } from './StatCard';
-import { type FolderCounts, type MigrationTotals, percent } from './stats';
+import { ResourceStatusCard } from './ResourceStatusCard';
+import { type FolderCounts, type MigrationTotals } from './stats';
 
 interface OverviewStatCardsProps {
   totals: MigrationTotals;
@@ -15,47 +14,18 @@ interface OverviewStatCardsProps {
 
 export function OverviewStatCards({ totals, folderCounts }: OverviewStatCardsProps) {
   const styles = useStyles2(getStyles);
-  const progressSubLabel =
-    totals.gitSync > 0
-      ? t('provisioning.migrate.progress-gitops-sub', '{{count}} via Git Sync', { count: totals.gitSync })
-      : t('provisioning.migrate.progress-gitops-sub-empty', 'Start your migration');
-  const dashboardsOf = (value: number) =>
-    t('provisioning.migrate.n-of-m-dashboards', '{{value}} of {{count}} dashboards', {
-      value,
-      count: totals.instanceTotal,
-    });
   return (
     <div className={styles.statCardsRow}>
-      <StatCard
-        icon="apps"
-        tone="info"
-        big={totals.instanceTotal.toLocaleString()}
-        subLabel={t('provisioning.migrate.summary-total-sub', 'Across all providers')}
-        label={t('provisioning.migrate.summary-total', 'Dashboards')}
+      <ResourceStatusCard
+        label={t('provisioning.migrate.dashboards', 'Dashboards')}
+        managed={totals.managed}
+        total={totals.instanceTotal}
       />
-      <StatCard
-        icon="check-circle"
-        tone="success"
-        big={percent(totals.managed, totals.instanceTotal)}
-        subLabel={dashboardsOf(totals.managed)}
-        label={t('provisioning.migrate.managed', 'Managed dashboards')}
+      <ResourceStatusCard
+        label={t('provisioning.migrate.folders', 'Folders')}
+        managed={folderCounts.managed}
+        total={folderCounts.total}
       />
-      <StatCard
-        icon="exclamation-triangle"
-        tone="warning"
-        emphasized={totals.unmanaged > 0}
-        big={percent(totals.unmanaged, totals.instanceTotal)}
-        subLabel={dashboardsOf(totals.unmanaged)}
-        label={t('provisioning.migrate.summary-unmanaged', 'Unmanaged dashboards')}
-      />
-      <StatCard
-        icon="chart-line"
-        tone="primary"
-        big={percent(totals.gitSync, totals.instanceTotal)}
-        subLabel={progressSubLabel}
-        label={t('provisioning.migrate.progress-gitops', 'Progress to GitOps')}
-      />
-      <FolderProgressCard managed={folderCounts.managed} total={folderCounts.total} />
     </div>
   );
 }
@@ -63,7 +33,12 @@ export function OverviewStatCards({ totals, folderCounts }: OverviewStatCardsPro
 const getStyles = (theme: GrafanaTheme2) => ({
   statCardsRow: css({
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-    gap: theme.spacing(2),
+    // Cap each card's width and center the group rather than stretching the
+    // cards edge-to-edge. auto-fit collapses the empty tracks so the row stays
+    // responsive and wraps on narrow viewports.
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 240px))',
+    justifyContent: 'center',
+    alignItems: 'start',
+    gap: theme.spacing(1.5),
   }),
 });

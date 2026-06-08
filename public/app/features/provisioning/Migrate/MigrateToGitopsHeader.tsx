@@ -14,7 +14,7 @@ export function MigrateToGitopsHeader() {
       </Stack>
       <Text color="secondary">
         <Trans i18nKey="provisioning.migrate.header-subtitle">
-          Manage your dashboards and folders like code — every change tracked, every update reviewed, every environment
+          Manage your Grafana resources like code — every change tracked, every update reviewed, every environment
           reproducible. Connect a Git repository to get started.
         </Trans>
       </Text>
