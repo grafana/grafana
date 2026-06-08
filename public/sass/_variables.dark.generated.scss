@@ -109,14 +109,14 @@ $btn-drag-image: '../img/grab_dark.svg';
 $input-bg: #111217;
 
 $input-color: rgb(204, 204, 220);
-$input-border-color: rgba(204, 204, 220, 0.2);
+$input-border-color: rgb(68, 70, 78);
 
 // Dropdowns
 // -------------------------
 $dropdownBackground: #181b1f;
-$dropdownBorder: rgba(204, 204, 220, 0.12);
-$dropdownDividerTop: rgba(204, 204, 220, 0.12);
-$dropdownDividerBottom: rgba(204, 204, 220, 0.12);
+$dropdownBorder: rgb(54, 57, 64);
+$dropdownDividerTop: rgb(54, 57, 64);
+$dropdownDividerBottom: rgb(54, 57, 64);
 
 $dropdownLinkColor: $link-color;
 $dropdownLinkColorHover: $white;
@@ -147,7 +147,7 @@ $tooltipColor: rgb(204, 204, 220);
 
 $popover-bg: #181b1f;
 $popover-color: rgb(204, 204, 220);
-$popover-border-color: rgba(204, 204, 220, 0.12);
+$popover-border-color: rgb(54, 57, 64);
 $popover-header-bg: #22252b;
 $popover-shadow: 0px 8px 24px rgb(1, 4, 9);
 
