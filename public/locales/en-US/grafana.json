@@ -14337,14 +14337,14 @@
         "no-limit": "No limit"
       },
       "query-inspector": "Query inspector",
-      "query-options": "Query Options"
+      "query-options": "Query options"
     },
     "header": {
       "alert": "Alert",
       "expression": "Expression",
-      "pending-expression": "Select an Expression",
+      "pending-expression": "Select an expression",
       "pending-expression-cancel": "Cancel",
-      "pending-transformation": "Select a Transformation",
+      "pending-transformation": "Select a transformation",
       "pending-transformation-cancel": "Cancel",
       "transformation": "Transformation"
     },
@@ -14353,10 +14353,10 @@
       "close-aria": "Close help panel"
     },
     "labels": {
-      "alert": "Alert",
-      "expression": "Expression",
-      "query": "Query",
-      "transformation": "Transformation"
+      "alert": "alert",
+      "expression": "expression",
+      "query": "query",
+      "transformation": "transformation"
     },
     "sidebar": {
       "add-below": "Add below {{id}}",
