@@ -242,7 +242,7 @@ func buildSyncTestMOA(
 			ExternalAlertmanagerUID:        operatorUID,
 		},
 	}
-	syncer := NewExternalAMSyncer(dsService, httpclient.NewProvider(), v, cfg, m.GetMultiOrgAlertmanagerMetrics(), log.New("test.external_am_sync"), adminCfg, adminCfg.nsMapper)
+	syncer := NewExternalAMSyncer(dsService, httpclient.NewProvider(), v, cfg, m.GetMultiOrgAlertmanagerMetrics(), log.New("test.external_am_sync"), adminCfg, adminCfg.nsMapper, cs)
 	moa, err := NewMultiOrgAlertmanager(
 		cfg,
 		cs,
@@ -808,4 +808,87 @@ func TestResolveCfgClient_RetriesOnFailureAndCachesSuccess(t *testing.T) {
 	require.NoError(t, err)
 	require.Same(t, c, c2)
 	require.Equal(t, 2, gen.calls, "successful client should be cached")
+}
+
+// fakeAMConfigReader serves a fixed raw Alertmanager configuration (or an error)
+// for the already-merged check.
+type fakeAMConfigReader struct {
+	raw string
+	err error
+}
+
+func (f fakeAMConfigReader) GetLatestAlertmanagerConfiguration(context.Context, int64) (*ngmodels.AlertConfiguration, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	return &ngmodels.AlertConfiguration{AlertmanagerConfiguration: f.raw}, nil
+}
+
+// validAMConfigBase is a minimal Alertmanager config that Load accepts (Load
+// requires a route). Tests derive merged/unmerged variants from it.
+const validAMConfigBase = `{"alertmanager_config":{"route":{"receiver":"grafana-default-email"},"receivers":[{"name":"grafana-default-email"}]}}`
+
+// configWithManagedRoute returns an AM config carrying a managed route keyed by
+// identifier — i.e. the external config was already merged.
+func configWithManagedRoute(identifier string) string {
+	return validAMConfigBase[:len(validAMConfigBase)-1] + fmt.Sprintf(`,"managed_routes":{%q:{"receiver":"grafana-default-email"}}}`, identifier)
+}
+
+func TestIsMergeCommitted(t *testing.T) {
+	ctx := context.Background()
+	cases := []struct {
+		name      string
+		reader    amConfigReader
+		want      bool
+		wantError bool
+	}{
+		{"managed route for the identifier", fakeAMConfigReader{raw: configWithManagedRoute("ds-1")}, true, false},
+		{"managed route for a different identifier", fakeAMConfigReader{raw: configWithManagedRoute("other")}, false, false},
+		{"no managed routes", fakeAMConfigReader{raw: validAMConfigBase}, false, false},
+		{"read error propagates", fakeAMConfigReader{err: fmt.Errorf("db down")}, false, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &ExternalAMSyncer{configReader: tc.reader}
+			got, err := s.isMergeCommitted(ctx, 1, "ds-1")
+			if tc.wantError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestSyncExternalAMs_StopsAfterMergeCommitted(t *testing.T) {
+	adminCfg := newFakeConfigClient()
+	adminCfg.setUID(1, "ds-1")
+
+	// Upstream Mimir has a real config to import — yet sync must still skip,
+	// because the config was already merged (managed route present).
+	mimirSrv := startMimirServer(t, "route:\n  receiver: mimir-receiver\nreceivers:\n  - name: mimir-receiver")
+	ds1 := makeMimirDS("ds-1", 1, mimirSrv.URL)
+	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds1}}
+
+	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
+	moa.externalAMSyncer.configReader = fakeAMConfigReader{raw: configWithManagedRoute("ds-1")}
+
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+
+	// Nothing imported — sync stopped.
+	assertNoExtraConfigSaved(t, cs, 1)
+
+	// Terminal status recorded: ExternalAlertmanagerSynced=True / MergeCommitted.
+	obj, err := adminCfg.lookup("org-1")
+	require.NoError(t, err)
+	var synced *alertingnotifv0alpha1.ConfigCondition
+	for i := range obj.Status.Conditions {
+		if obj.Status.Conditions[i].Type == conditionTypeExternalAlertmanagerSynced {
+			synced = &obj.Status.Conditions[i]
+		}
+	}
+	require.NotNil(t, synced, "expected an ExternalAlertmanagerSynced condition")
+	assert.Equal(t, alertingnotifv0alpha1.ConfigConditionStatusTrue, synced.Status)
+	assert.Equal(t, conditionReasonMergeCommitted, synced.Reason)
 }
