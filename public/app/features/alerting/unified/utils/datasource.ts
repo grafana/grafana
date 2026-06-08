@@ -361,6 +361,7 @@ export const SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES = [
   'prometheus',
   'grafana-amazonprometheus-datasource',
   'grafana-azureprometheus-datasource',
+  'victoriametrics-metrics-datasource',
 ] as const;
 export type SupportedExternalPrometheusFlavoredRulesSourceType =
   (typeof SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES)[number]; // infer the type from the tuple above so we can maintain a single source of truth

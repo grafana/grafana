@@ -34,11 +34,28 @@ const (
 	DS_TEMPO             = "tempo"
 	DS_TESTDATA          = "grafana-testdata-datasource"
 	DS_ZIPKIN            = "zipkin"
+	DS_VICTORIA_METRICS  = "victoriametrics-metrics-datasource"
 	// CustomHeaderName is the prefix that is used to store the name of a custom header.
 	CustomHeaderName = "httpHeaderName"
 	// CustomHeaderValue is the prefix that is used to store the value of a custom header.
 	CustomHeaderValue = "httpHeaderValue"
 )
+
+var prometheusCompatibleDsTypes = []string{
+	DS_PROMETHEUS,
+	DS_AMAZON_PROMETHEUS,
+	DS_AZURE_PROMETHEUS,
+	DS_VICTORIA_METRICS,
+}
+
+func IsPrometheusCompatible(dsType string) bool {
+	for _, t := range prometheusCompatibleDsTypes {
+		if dsType == t {
+			return true
+		}
+	}
+	return false
+}
 
 type DsAccess string
 
