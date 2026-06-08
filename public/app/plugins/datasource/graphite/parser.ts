@@ -7,8 +7,6 @@ export class Parser {
   lexer: Lexer;
   tokens: AstNode[];
   index: number;
-  // True when the parsed expression used Graphite's pipe syntax (e.g. `metric | scale(2)`),
-  // which getAst() rewrites into the equivalent nested form (`scale(metric, 2)`).
   hasPipe = false;
 
   constructor(expression: string) {
