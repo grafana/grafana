@@ -5774,11 +5774,6 @@
         "label": "Export dashboard menu"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Failed to fetch dashboard"
-      }
-    },
     "filters-overview": {
       "apply": "Apply",
       "apply-close": "Apply and close",
@@ -5934,11 +5929,6 @@
       "title-complete-git-hub-comment-clipboard": "Copy a complete GitHub comment to the clipboard",
       "title-get-help-with-this-panel": "Get help with this panel",
       "troubleshooting-docs": "Troubleshooting docs"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Failed create dashboard model"
-      }
     },
     "inspect": {
       "data-tab": "Data",
@@ -6346,10 +6336,6 @@
         "tooltip": "Open original dashboard"
       },
       "undo": "Undo"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Loading & initializing dashboard",
-      "title-not-found": "Panel with id {{panelId}} not found"
     },
     "source-link": {
       "title": "Source ({{provider}})",
@@ -8651,6 +8637,7 @@
         "much-data": "The query is trying to access too much data. Try one or more of the following:"
       },
       "maximum-pinned-logs": "Maximum of {{PINNED_LOGS_LIMIT}} pinned logs reached. Unpin a log to add another.",
+      "missing-time-field-message": "The Logs visualization requires a time field. Add a time-typed column to your query.",
       "no-logs-found": "No logs found.",
       "scan-for-older-logs": "Scan for older logs",
       "stop-scan": "Stop scan"
@@ -13589,6 +13576,8 @@
       "tab-connections-title": "List of connections",
       "tab-getting-started": "Get started",
       "tab-getting-started-title": "Get started",
+      "tab-migrate": "Migrate to GitOps",
+      "tab-migrate-title": "Migrate to GitOps",
       "tab-repositories": "Repositories",
       "tab-repositories-title": "List of repositories",
       "title-delete-all-configured-repositories": "Delete all configured repositories"
@@ -13646,6 +13635,11 @@
       "show-less": "show less",
       "show-more": "show more",
       "truncated": "Message truncated"
+    },
+    "migrate": {
+      "header-subtitle": "Manage your dashboards and folders like code — every change tracked, every update reviewed, every environment reproducible. Connect a Git repository to get started.",
+      "header-title": "Migrate to GitOps",
+      "intro": "The guided migration workflow is on its way. In the meantime, read the <2>provisioning documentation</2> to learn how Git Sync keeps Grafana and your repository in step."
     },
     "missing-folder-metadata-banner": {
       "error-message": "Could not verify whether this folder has a metadata file. Please try again later.",

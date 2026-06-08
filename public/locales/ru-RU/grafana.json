@@ -3354,6 +3354,10 @@
         "tooltip-description": "Поиск временных отключений по сопоставлению. Точное сопоставление имени метки, значения и оператора.",
         "tooltip-example": "Пример: <1>env=~\"prod.*\"</1> находит временные отключения с помощью сопоставления <4>env=~\"prod.*\"</4>."
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "Отображаются только экземпляры оповещения в состоянии отправки.",
       "operator": {
         "equals": "Равно",
@@ -5565,9 +5569,6 @@
       "aria-label-dashboard-name": "Дашборд {{dashboardName}}",
       "label-no-dashboards-found": "Дашборды не найдены"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Отменить загрузку дашборда"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5837,11 +5838,6 @@
         "label": "Меню экспорта дашборда"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Не удалось получить дашборд"
-      }
-    },
     "filters-overview": {
       "apply": "Применить",
       "apply-close": "Применить и закрыть",
@@ -5998,11 +5994,6 @@
       "title-get-help-with-this-panel": "Получение помощи с панелью",
       "troubleshooting-docs": "Документация по устранению неполадок"
     },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Не удалось создать модель дашборда"
-      }
-    },
     "inspect": {
       "data-tab": "Данные",
       "error-tab": "Ошибка",
@@ -6091,13 +6082,6 @@
       },
       "ungroup-nested-text": "Все вложенные группы будут разгруппированы.",
       "ungroup-nested-title": "Разгруппировать вложенные группы?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Дашборд не найден"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Нередактируемый дашборд",
@@ -6419,10 +6403,6 @@
       },
       "undo": "Отменить"
     },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Загрузка и инициализация дашборда",
-      "title-not-found": "Панель с идентификатором {{panelId}} не найдена"
-    },
     "source-link": {
       "title": "Источник ({{provider}})",
       "tooltip": "Просмотр исходного файла в репозитории"
@@ -6692,8 +6672,8 @@
     "version-history-comparison": {
       "button-restore": "Восстановить до версии {{version}} ",
       "label-view-json-diff": "Просмотр JSON Diff",
-      "new-updated-by": "<0>Версию {{version}}</0> обновил пользователь {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Версию {{version}}</0> обновил пользователь {{editor}} {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Переключить выбор версии {{version}}",
@@ -7965,8 +7945,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "Просмотр JSON Diff",
-      "new-version-updated": "<0>Версию {{version}}</0> обновил пользователь {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Версию {{version}}</0> обновил пользователь {{editor}} {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "Сравнение {{baseVersion}} <3></3> {{newVersion}}",
@@ -10349,7 +10329,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Справка <1></1>",
-      "access-help-details": "Режим доступа определяет, как будут обрабатываться запросы к источнику данных. Если не указано иное, предпочтительным способом является <1><i>сервер</i></1>.",
+      "access-help-details": "",
       "access-help-title": "Справка по доступу",
       "access-label": "Доступ",
       "allowed-cookies": "Разрешенные файлы cookie",
@@ -11035,6 +11015,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -13339,8 +13323,8 @@
       "label-branch": "Ветвь",
       "label-comment": "Комментарий",
       "label-filename": "Имя файла",
-      "label-folder": "Папка",
       "label-path": "Путь",
+      "label-repository-folder": "",
       "path-exists": "",
       "placeholder-branch": "Выберите или введите имя ветви",
       "placeholder-folder": "Выберите или введите путь к папке",
@@ -13755,6 +13739,21 @@
       "request-failed": "Запрос не выполнен",
       "resource-not-found": "Ресурс не найден. Проверьте URL-адрес или репозиторий."
     },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
+    },
     "instance-sync-deprecation": {
       "message": "Синхронизация экземпляров в настоящее время поддерживается не полностью. Она нарушает работу панелей библиотеки и оповещений. Чтобы их использовать, отключите репозиторий и повторно подключите его путем синхронизации папок.",
       "title": "Синхронизация экземпляров поддерживается не полностью"
@@ -14057,7 +14056,8 @@
     "sync-job": {
       "error-no-job-id": "Не удалось запустить задание",
       "error-no-repository-name": "Не указано имя репозитория",
-      "error-starting-job": "Ошибка при запуске задания"
+      "error-starting-job": "Ошибка при запуске задания",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "Ошибка при извлечении ресурсов",
@@ -16798,7 +16798,7 @@
       "message": "Пользователи не найдены"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Ваш токен сеанса автоматически отозван, поскольку вы достигли <2>максимального лимита в размере {{numSessions}} одновременных сеансов</2> для своей учетной записи.",
+      "auto-revoked": "",
       "resume-message": "<strong>Чтобы возобновить сеанс, выполните повторный вход.</strong>Если вас неоднократно автоматически выкидывает из системы, обратитесь к администратору или посетите страницу лицензии, чтобы проверить свою квоту.",
       "sign-in": "Войти",
       "title-you-have-been-automatically-signed-out": "Вы автоматически вышли из системы"
