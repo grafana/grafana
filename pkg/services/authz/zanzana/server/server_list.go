@@ -368,23 +368,26 @@ func getRequestHash(req *openfgav1.ListObjectsRequest) (string, error) {
 
 func typedObjects(typ string, objects []string) []string {
 	prefix := typ + ":"
+	out := make([]string, len(objects))
 	for i := range objects {
-		objects[i] = strings.TrimPrefix(objects[i], prefix)
+		out[i] = strings.TrimPrefix(objects[i], prefix)
 	}
-	return objects
+	return out
 }
 
 func genericObjects(gr string, objects []string) []string {
 	prefix := common.TypeResourcePrefix + gr + "/"
+	out := make([]string, len(objects))
 	for i := range objects {
-		objects[i] = strings.TrimPrefix(objects[i], prefix)
+		out[i] = strings.TrimPrefix(objects[i], prefix)
 	}
-	return objects
+	return out
 }
 
 func folderObject(objects []string) []string {
+	out := make([]string, len(objects))
 	for i := range objects {
-		objects[i] = strings.TrimPrefix(objects[i], common.TypeFolderPrefix)
+		out[i] = strings.TrimPrefix(objects[i], common.TypeFolderPrefix)
 	}
-	return objects
+	return out
 }

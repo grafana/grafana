@@ -19,9 +19,9 @@ GO_RACE_FLAG := $(if $(GO_RACE),-race)
 # Backend build version and ldflags (release / packaging conventions).
 BUILD_NUMBER ?= local
 BUILD_VERSION := $(shell sed -n 's/.*"version": *"\(.*\)".*/\1/p' package.json | sed 's/-pre/-$(BUILD_NUMBER)/')
-BUILD_COMMIT := $(if $(COMMIT_SHA),$(COMMIT_SHA),$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown"))
+BUILD_COMMIT := $(if $(COMMIT_SHA),$(COMMIT_SHA),$(shell git rev-parse HEAD 2>/dev/null || echo "unknown"))
 BUILD_BRANCH := $(if $(BUILD_BRANCH),$(BUILD_BRANCH),$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main"))
-BUILD_STAMP := $(or $(SOURCE_DATE_EPOCH),$(shell date +%s 2>/dev/null))
+BUILD_STAMP := $(or $(SOURCE_DATE_EPOCH),$(shell git log -1 --format=%ct 2>/dev/null),$(shell date +%s 2>/dev/null))
 GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
 	-X main.commit=$(BUILD_COMMIT) \
 	-X main.buildBranch=$(BUILD_BRANCH) \
@@ -461,10 +461,11 @@ $(DOCKER_FILE): $(TARGZ_FILE)
 	--build-arg GRAFANA_TGZ=$(TARGZ_FILE) \
 	--build-arg GO_SRC=tgz-builder \
 	--build-arg JS_SRC=tgz-builder \
+	--build-arg SOURCE_DATE_EPOCH=$$(git log -1 --format=%ct) \
 	--build-arg SLIM=$(SLIM) \
 	--target=final-alpine \
 	--tag $(DOCKER_TAG) \
-	--output type=docker,dest=$@ \
+	--output type=docker,dest=$@,rewrite-timestamp=true \
 	.
 
 .PHONY: build-docker-ubuntu
@@ -477,10 +478,11 @@ $(DOCKER_UBUNTU_FILE): $(TARGZ_FILE)
 	--build-arg GRAFANA_TGZ=$(TARGZ_FILE) \
 	--build-arg GO_SRC=tgz-builder \
 	--build-arg JS_SRC=tgz-builder \
+	--build-arg SOURCE_DATE_EPOCH=$$(git log -1 --format=%ct) \
 	--build-arg SLIM=$(SLIM) \
 	--target=final-ubuntu \
 	--tag $(DOCKER_TAG) \
-	--output type=docker,dest=$@ \
+	--output type=docker,dest=$@,rewrite-timestamp=true \
 	.
 
 .PHONY: build-docker-distroless
@@ -493,10 +495,11 @@ $(DOCKER_DISTROLESS_FILE): $(TARGZ_FILE)
 	--build-arg GRAFANA_TGZ=$(TARGZ_FILE) \
 	--build-arg GO_SRC=tgz-builder \
 	--build-arg JS_SRC=tgz-builder \
+	--build-arg SOURCE_DATE_EPOCH=$$(git log -1 --format=%ct) \
 	--build-arg SLIM=$(SLIM) \
 	--target=final-distroless \
 	--tag $(DOCKER_TAG) \
-	--output type=docker,dest=$@ \
+	--output type=docker,dest=$@,rewrite-timestamp=true \
 	.
 
 MSI_FILE := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).msi
@@ -677,6 +680,7 @@ build-docker-full: ## Build Docker image for development.
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	--build-arg SOURCE_DATE_EPOCH=$$(git log -1 --format=%ct) \
 	--build-arg SLIM=$(SLIM) \
 	--target=final-alpine \
 	--tag grafana/grafana$(TAG_SUFFIX):dev \
@@ -696,6 +700,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	--build-arg SOURCE_DATE_EPOCH=$$(git log -1 --format=%ct) \
 	--build-arg GO_IMAGE=golang:$(GO_VERSION) \
 	--build-arg SLIM=$(SLIM) \
 	--target=final-ubuntu \
@@ -716,6 +721,7 @@ build-docker-full-distroless: ## Build Docker image based on distroless for deve
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	--build-arg SOURCE_DATE_EPOCH=$$(git log -1 --format=%ct) \
 	--build-arg SLIM=$(SLIM) \
 	--target=final-distroless \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-distroless \

@@ -515,7 +515,7 @@ func TestHandleGetRawFile(t *testing.T) {
 				},
 			}
 			mockReadWriter.EXPECT().Config().Return(repo).Maybe()
-			authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, false)
+			authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resources.NewMockResourceClients(t), false)
 
 			if tt.readError != nil {
 				mockReadWriter.EXPECT().Read(mock.Anything, tt.path, "").Return(nil, tt.readError)
@@ -568,7 +568,7 @@ func TestHandleGetRawFile_FolderScopedAuth(t *testing.T) {
 			Check(mock.Anything, mock.Anything, mock.Anything).
 			Return(apierrors.NewForbidden(provisioningapi.RepositoryResourceInfo.GroupResource(), "team-a", errors.New("denied")))
 
-		authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, false)
+		authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resources.NewMockResourceClients(t), false)
 		connector := &filesConnector{access: mockAccess}
 
 		_, err := connector.handleGetRawFile(
@@ -612,7 +612,7 @@ func TestHandleGetRawFile_MaxFileSize(t *testing.T) {
 			mockAccess.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 			mockReadWriter.EXPECT().Config().Return(repo).Maybe()
-			authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, false)
+			authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resources.NewMockResourceClients(t), false)
 
 			mockReadWriter.EXPECT().Read(mock.Anything, path, "").Return(&repository.FileInfo{
 				Path: path,
