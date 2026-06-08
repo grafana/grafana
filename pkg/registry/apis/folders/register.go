@@ -205,7 +205,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 	b.cascadeDeleteEnabled = kubernetesFolderCascadeDeleteEnabled(context.Background())
 	var st grafanarest.Storage = unified
 	if b.cascadeDeleteEnabled {
-		st = newFinalizerStorage(unified)
+		st = newFinalizerStorage(unified, b.searcher)
 	}
 	b.storage = st
 

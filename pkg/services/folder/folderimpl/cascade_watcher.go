@@ -7,13 +7,10 @@ import (
 	"log/slog"
 	"time"
 
-	claims "github.com/grafana/authlib/types"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/open-feature/go-sdk/openfeature"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/util/retry"
@@ -56,33 +53,29 @@ type folderMutator interface {
 	RemoveCascadeFinalizer(ctx context.Context, namespace, name string) error
 }
 
-// folderGetter fetches a single folder CR. Split from folderMutator so the poller can be tested
-// without a real (dynamic) client.
-type folderGetter interface {
-	Get(ctx context.Context, namespace, name string) (*foldersv1.Folder, error)
-}
-
 // orgLister enumerates organizations; the poller searches each org once per tick.
 type orgLister interface {
 	Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*org.OrgDTO, error)
 }
 
-// CascadeWatcher drives cascade deletion of folders that are terminating with the cascade-delete
-// finalizer: it deletes direct child folders, and once a folder has no remaining children it
-// removes the cascade finalizer so the folder can be garbage-collected.
+// CascadeWatcher removes the cascade-delete finalizer from terminating folders so they can be
+// garbage-collected. The folders API server marks the whole subtree terminating at delete time;
+// this watcher only sweeps. Every poll interval it enumerates orgs and, per org, searches for
+// folders carrying the terminating label and removes their finalizer -- in any order, since the
+// whole subtree is already marked.
 //
-// Discovery is a periodic poll, not a List+Watch. Every poll interval the watcher enumerates orgs
-// and, for each, runs one unified-search query for folders carrying the terminating label, then
-// reconciles each. This avoids holding a cluster-wide folder watch; the cost is one search per org
-// per tick (cheap when nothing is terminating, thanks to the label filter) and cascade latency
-// bounded by the poll interval per tree level rather than being event-driven.
+// As a backstop against a partial mark (e.g. the API server crashing mid-delete), before removing
+// a folder's finalizer it also marks any not-yet-terminating direct children terminating, so a
+// missed subtree still drains over subsequent ticks.
+//
+// Discovery is a periodic poll, not a List+Watch: one search per org per tick, cheap when nothing
+// is terminating thanks to the label filter.
 type CascadeWatcher struct {
 	restConfig      apiserver.RestConfigProvider
 	orgs            orgLister
 	namespaceMapper request.NamespaceMapper
 	folderSearch    folderSearcher
 	folderMutator   folderMutator
-	getter          folderGetter
 	flagEnabled     func(ctx context.Context) bool
 	log             *slog.Logger
 	pollInterval    time.Duration
@@ -163,9 +156,7 @@ func (w *CascadeWatcher) Run(ctx context.Context) error {
 		return fmt.Errorf("create folder dynamic client: %w", err)
 	}
 
-	mut := &dynamicFolderMutator{client: dyn.Resource(foldersv1.FolderResourceInfo.GroupVersionResource())}
-	w.folderMutator = mut
-	w.getter = mut
+	w.folderMutator = &dynamicFolderMutator{client: dyn.Resource(foldersv1.FolderResourceInfo.GroupVersionResource())}
 
 	ticker := time.NewTicker(w.pollInterval)
 	defer ticker.Stop()
@@ -199,7 +190,7 @@ func (w *CascadeWatcher) pollOnce(ctx context.Context) {
 	}
 }
 
-// reconcileOrg searches one org for terminating folders and reconciles each.
+// reconcileOrg searches one org for terminating folders and finalizes each.
 func (w *CascadeWatcher) reconcileOrg(ctx context.Context, orgID int64) {
 	svcCtx := identity.WithServiceIdentityContext(ctx, orgID)
 
@@ -208,23 +199,41 @@ func (w *CascadeWatcher) reconcileOrg(ctx context.Context, orgID int64) {
 		w.log.Warn("folder cascade poll: search terminating folders failed", "orgID", orgID, "error", err)
 		return
 	}
-	if len(names) == 0 {
-		return
-	}
 
 	ns := w.namespaceMapper(orgID)
 	for _, name := range names {
-		f, err := w.getter.Get(svcCtx, ns, name)
-		if err != nil {
-			if !apierrors.IsNotFound(err) {
-				w.log.Warn("folder cascade poll: get folder failed", "namespace", ns, "name", name, "error", err)
-			}
+		w.finalizeTerminatingFolder(svcCtx, orgID, ns, name)
+	}
+}
+
+// finalizeTerminatingFolder removes a terminating folder's cascade finalizer so it can be
+// garbage-collected. As a backstop for a partial API-server mark, it first ensures any
+// not-yet-terminating direct children are marked terminating; if that can't be verified or fails,
+// the finalizer is left in place and retried on the next tick.
+func (w *CascadeWatcher) finalizeTerminatingFolder(ctx context.Context, orgID int64, namespace, name string) {
+	if w.folderMutator == nil {
+		return
+	}
+
+	children, err := listDirectChildFolders(ctx, w.folderSearch, orgID, name)
+	if err != nil {
+		w.log.Warn("folder cascade poll: list child folders failed", "namespace", namespace, "name", name, "error", err)
+		return
+	}
+
+	zero := int64(0)
+	for _, child := range children {
+		if child.terminating {
 			continue
 		}
-		if err := w.reconcileFolder(svcCtx, f); err != nil {
-			// A failed reconcile is retried on the next tick.
-			w.log.Warn("folder cascade reconcile failed", "namespace", ns, "name", name, "error", err)
+		if err := w.folderMutator.Delete(ctx, namespace, child.name, &zero); err != nil && !apierrors.IsNotFound(err) {
+			w.log.Warn("folder cascade poll: backstop delete of child failed", "namespace", namespace, "parent", name, "child", child.name, "error", err)
+			return // leave the parent's finalizer; retry next tick
 		}
+	}
+
+	if err := w.folderMutator.RemoveCascadeFinalizer(ctx, namespace, name); err != nil && !apierrors.IsNotFound(err) {
+		w.log.Warn("folder cascade poll: remove finalizer failed", "namespace", namespace, "name", name, "error", err)
 	}
 }
 
@@ -267,74 +276,6 @@ func searchTerminatingFolders(ctx context.Context, searcher folderSearcher, orgI
 		}
 		offset += n
 	}
-}
-
-func (w *CascadeWatcher) reconcileFolder(ctx context.Context, f *foldersv1.Folder) error {
-	if !isTerminatingForCascade(f) {
-		return nil
-	}
-
-	orgID, err := orgIDFromNamespace(f.Namespace)
-	if err != nil {
-		// A malformed namespace will not fix itself, so do not retry.
-		w.log.Warn("failed to resolve org for terminating folder", "namespace", f.Namespace, "name", f.Name, "error", err)
-		return nil
-	}
-
-	svcCtx := identity.WithServiceIdentityContext(ctx, orgID)
-	children, err := listDirectChildFolders(svcCtx, w.folderSearch, orgID, f.Name)
-	if err != nil {
-		return fmt.Errorf("list child folders: %w", err)
-	}
-
-	// The parent keeps its finalizer until the whole subtree is gone: removal is gated on the
-	// total child count, including children still terminating, not just the ones deleted below.
-	if len(children) == 0 {
-		if w.folderMutator == nil {
-			return nil
-		}
-		if err := w.folderMutator.RemoveCascadeFinalizer(svcCtx, f.Namespace, f.Name); err != nil && !apierrors.IsNotFound(err) {
-			return fmt.Errorf("remove cascade finalizer: %w", err)
-		}
-		w.log.Info("removed cascade finalizer", "namespace", f.Namespace, "name", f.Name, "orgID", orgID)
-		return nil
-	}
-
-	if w.folderMutator == nil {
-		return nil
-	}
-
-	// Only delete children that are not already terminating; the rest are draining via their
-	// own finalizers, so re-issuing a delete each tick would be redundant.
-	gracePeriod := f.DeletionGracePeriodSeconds
-	deleted := 0
-	var deleteErr error
-	for _, child := range children {
-		if child.terminating {
-			continue
-		}
-		if err := w.folderMutator.Delete(svcCtx, f.Namespace, child.name, gracePeriod); err != nil && !apierrors.IsNotFound(err) {
-			w.log.Warn("failed to delete child folder", "namespace", f.Namespace, "parent", f.Name, "child", child.name, "error", err)
-			deleteErr = err
-			continue
-		}
-		deleted++
-	}
-
-	if deleted > 0 {
-		w.log.Info("cascading delete to child folders",
-			"namespace", f.Namespace,
-			"name", f.Name,
-			"orgID", orgID,
-			"childFoldersDeleted", deleted,
-			"childFolderCount", len(children),
-		)
-	}
-
-	if deleteErr != nil {
-		return fmt.Errorf("delete child folder: %w", deleteErr)
-	}
-	return nil
 }
 
 // childFolder is a direct child folder returned by search, flagged with whether its own
@@ -395,21 +336,9 @@ func listDirectChildFolders(ctx context.Context, searcher folderSearcher, orgID 
 	}
 }
 
-// dynamicFolderMutator implements folderMutator and folderGetter on top of the folders dynamic client.
+// dynamicFolderMutator implements folderMutator on top of the folders dynamic client.
 type dynamicFolderMutator struct {
 	client dynamic.NamespaceableResourceInterface
-}
-
-func (d *dynamicFolderMutator) Get(ctx context.Context, namespace, name string) (*foldersv1.Folder, error) {
-	obj, err := d.client.Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	f, ok := asFolderCR(obj)
-	if !ok {
-		return nil, fmt.Errorf("object %s/%s is not a folder", namespace, name)
-	}
-	return f, nil
 }
 
 func (d *dynamicFolderMutator) Delete(ctx context.Context, namespace, name string, gracePeriodSeconds *int64) error {
@@ -438,39 +367,6 @@ func (d *dynamicFolderMutator) RemoveCascadeFinalizer(ctx context.Context, names
 		_, err = d.client.Namespace(namespace).Update(ctx, obj, metav1.UpdateOptions{})
 		return err
 	})
-}
-
-func orgIDFromNamespace(ns string) (int64, error) {
-	info, err := claims.ParseNamespace(ns)
-	if err != nil {
-		return 0, err
-	}
-	if info.OrgID < 1 {
-		return 0, fmt.Errorf("invalid org id in namespace %q", ns)
-	}
-	return info.OrgID, nil
-}
-
-func isTerminatingForCascade(f *foldersv1.Folder) bool {
-	if f.DeletionTimestamp == nil || f.DeletionTimestamp.IsZero() {
-		return false
-	}
-	return folders.HasCascadeFinalizer(f)
-}
-
-func asFolderCR(obj interface{}) (*foldersv1.Folder, bool) {
-	switch o := obj.(type) {
-	case *foldersv1.Folder:
-		return o, true
-	case *unstructured.Unstructured:
-		f := &foldersv1.Folder{}
-		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(o.Object, f); err != nil {
-			return nil, false
-		}
-		return f, true
-	default:
-		return nil, false
-	}
 }
 
 // IsDisabled implements registry.CanBeDisabled.
