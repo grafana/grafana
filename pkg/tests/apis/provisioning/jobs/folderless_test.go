@@ -142,6 +142,100 @@ func TestIntegrationProvisioning_FolderlessCoexistence(t *testing.T) {
 		"unprovisioned dashboard must remain unmanaged")
 }
 
+// TestIntegrationProvisioning_FolderlessCoexistsWithFolderAndUnmanaged verifies
+// that a folderless repository coexists with a folder-sync repository and with
+// unprovisioned content: each owns only its own resources, the folder repo keeps
+// its wrapper folder while the folderless repo creates none, and syncing the
+// folderless repo leaves the others untouched.
+func TestIntegrationProvisioning_FolderlessCoexistsWithFolderAndUnmanaged(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	// 1. Unprovisioned dashboard created directly in Grafana.
+	unmanaged := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
+	createdUnmanaged, err := helper.DashboardsV1.Resource.Create(ctx, unmanaged, metav1.CreateOptions{})
+	require.NoError(t, err, "should create an unprovisioned dashboard")
+	unmanagedName := createdUnmanaged.GetName()
+
+	// 2. Folder-sync repository (creates a wrapper folder named after the repo).
+	const folderRepo = "coexist-folder"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       folderRepo,
+		LocalPath:  path.Join(helper.ProvisioningPath, folderRepo),
+		SyncTarget: "folder",
+		Copies: map[string]string{
+			"../testdata/all-panels.json": "folder-dashboard.json",
+		},
+		SkipResourceAssertions: true,
+	})
+
+	// 3. Folderless repository (top level, no wrapper folder).
+	const folderlessRepo = "coexist-folderless"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       folderlessRepo,
+		LocalPath:  path.Join(helper.ProvisioningPath, folderlessRepo),
+		SyncTarget: "folderless",
+		Copies: map[string]string{
+			"../testdata/timeline-demo.json": "folderless-dashboard.json",
+		},
+		SkipResourceAssertions: true,
+	})
+
+	// Each repository owns only its own dashboard; the unprovisioned one stays unmanaged.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		fd, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
+		assert.Equal(collect, folderRepo, fd.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+		// A folder-sync root file lives inside the repo's wrapper folder.
+		assert.Equal(collect, folderRepo, fd.GetAnnotations()[utils.AnnoKeyFolder])
+
+		fld, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
+		assert.Equal(collect, folderlessRepo, fld.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+		// A folderless root file is at the top level.
+		assert.Empty(collect, fld.GetAnnotations()[utils.AnnoKeyFolder])
+
+		um, err := helper.DashboardsV1.Resource.Get(ctx, unmanagedName, metav1.GetOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
+		assert.Empty(collect, um.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "all three should coexist with correct ownership")
+
+	// The folder repo has a wrapper folder; the folderless repo has none.
+	_, err = helper.Folders.Resource.Get(ctx, folderRepo, metav1.GetOptions{})
+	require.NoError(t, err, "folder-sync repo should have a wrapper folder")
+	_, err = helper.Folders.Resource.Get(ctx, folderlessRepo, metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err), "folderless repo must not create a wrapper folder")
+
+	// Capture state before syncing the folderless repo.
+	folderDashBefore, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+	require.NoError(t, err)
+	unmanagedBefore, err := helper.DashboardsV1.Resource.Get(ctx, unmanagedName, metav1.GetOptions{})
+	require.NoError(t, err)
+
+	// Syncing the folderless repo must not touch the folder repo's or unprovisioned resources.
+	helper.SyncAndWait(t, folderlessRepo, nil)
+
+	folderDashAfter, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+	require.NoError(t, err, "folder repo's dashboard must survive a folderless sync")
+	require.Equal(t, folderRepo, folderDashAfter.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+		"folder repo's dashboard must keep its owner")
+	require.Equal(t, folderDashBefore.GetGeneration(), folderDashAfter.GetGeneration(),
+		"folder repo's dashboard must not be modified by a folderless sync")
+
+	unmanagedAfter, err := helper.DashboardsV1.Resource.Get(ctx, unmanagedName, metav1.GetOptions{})
+	require.NoError(t, err, "unprovisioned dashboard must survive a folderless sync")
+	require.Empty(t, unmanagedAfter.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+		"unprovisioned dashboard must remain unmanaged")
+	require.Equal(t, unmanagedBefore.GetGeneration(), unmanagedAfter.GetGeneration(),
+		"unprovisioned dashboard must not be modified by a folderless sync")
+}
+
 // TestIntegrationProvisioning_FolderlessMigrate verifies the migrate flow for a
 // folderless repository: unprovisioned dashboards are exported to the repo and
 // taken over (managed) at the top level, with no wrapper folder, and without
