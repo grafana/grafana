@@ -1,4 +1,3 @@
-import { type Property } from 'csstype';
 import memoize from 'micro-memoize';
 import { type CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
@@ -32,11 +31,12 @@ import { TableCellInspectorMode } from '../TableCellInspector';
 import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
 
-import { inferPills } from './Cells/PillCell';
 import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
+import { type TextAlign } from './styles';
 import {
   type TableRow,
+  type TableCellValue,
   type ColumnTypes,
   type FrameToRowsConverter,
   type Comparator,
@@ -45,6 +45,33 @@ import {
   type MeasureCellHeightEntry,
   type FilterType,
 } from './types';
+
+// inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
+// styles.ts → utils.tsx → renderers.tsx → PillCell.tsx → styles.ts
+/* ---------------------------- Pill inference ----------------------------- */
+const SPLIT_RE = /\s*,\s*/;
+
+export function inferPills(rawValue: TableCellValue): unknown[] {
+  if (rawValue === '' || rawValue == null) {
+    return [];
+  }
+
+  if (Array.isArray(rawValue)) {
+    return rawValue.filter((v) => v != null).map((v) => String(v).trim());
+  }
+
+  const value = String(rawValue);
+
+  if (value[0] === '[') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value.trim().split(SPLIT_RE);
+    }
+  }
+
+  return value.trim().split(SPLIT_RE);
+}
 
 /* ---------------------------- Cell calculations --------------------------- */
 /**
@@ -431,8 +458,6 @@ const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
   TableCellDisplayMode.ColorBackground,
 ]);
 
-export type TextAlign = 'left' | 'right' | 'center';
-
 /**
  * @internal
  * Returns the text-align value for inline-displayed cells for a field based on its type and configuration.
@@ -448,14 +473,6 @@ export function getAlignment(field: Field): TextAlign {
   }
 
   return align;
-}
-
-/**
- * @internal
- * Returns the justify-content value for flex-displayed cells for a field based on its type and configuration.
- */
-export function getJustifyContent(textAlign: TextAlign): Property.JustifyContent {
-  return textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start';
 }
 
 const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;
@@ -926,13 +943,6 @@ export function rowKeyGetter(row: TableRow): string {
 
 /**
  * @internal
- * Returns true if the DataFrame contains nested frames
- */
-export const getIsNestedTable = (fields: Field[]): boolean =>
-  fields.some(({ type }) => type === FieldType.nestedFrames);
-
-/**
- * @internal
  * Calculate the footer height based on the maximum reducer count
  */
 export const calculateFooterHeight = (fields: Field[]): number => {
@@ -1192,22 +1202,6 @@ export function parseStyleJson(rawValue: unknown): CSSProperties | void {
     }
   }
 }
-
-// Safari 26.0 introduced rendering bugs which require us to disable several features of the table.
-// The bugs were later fixed in Safari 26.2.
-export const IS_SAFARI_26 = (() => {
-  if (navigator == null) {
-    return false;
-  }
-  const userAgent = navigator.userAgent;
-  const safariVersionMatch = userAgent.match(/Version\/(\d+)\.(\d+)/);
-  if (!safariVersionMatch) {
-    return false;
-  }
-  const majorVersion = +safariVersionMatch[1];
-  const minorVersion = +safariVersionMatch[2];
-  return majorVersion === 26 && minorVersion <= 1;
-})();
 
 export const getStableRowKey = (rowIndex: number, frame?: DataFrame): string => {
   const key = frame?.meta?.custom?.stableRowKey;
