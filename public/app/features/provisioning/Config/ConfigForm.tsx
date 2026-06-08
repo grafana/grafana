@@ -16,10 +16,8 @@ import {
   Input,
   RadioButtonGroup,
   SecretInput,
-  SecretTextArea,
   Stack,
   Switch,
-  TextArea,
 } from '@grafana/ui';
 import {
   type Repository,
@@ -29,15 +27,8 @@ import {
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
-import { GPGSigningKeyInfo } from '../Shared/GPGSigningKeyInfo';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
-import {
-  getCommitAuthorRequiredMessage,
-  getGitProviderFields,
-  getLocalProviderFields,
-  getSigningFormatOptions,
-  getSigningKeyPlaceholder,
-} from '../Wizard/fields';
+import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
 import { PROVISIONING_URL } from '../constants';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
@@ -48,6 +39,7 @@ import { getHasTokenInstructions } from '../utils/git';
 import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
 
 import { BranchOptionsSection } from './BranchOptionsSection';
+import { CommitOptionsSection } from './CommitOptionsSection';
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
 import { getDefaultValues } from './defaults';
@@ -89,12 +81,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
 
   const isEdit = Boolean(repositoryName);
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
-  const [signingKeyConfigured, setSigningKeyConfigured] = useState(Boolean(data?.secure?.signingKey?.name));
-  const signingKeyValue = watch('signingKey');
-  const signingFormat = watch('signingFormat') ?? 'none';
-  const signingEnabled = signingFormat !== 'none';
-  const authorRequired = Boolean(signingKeyValue);
-  const authorRequiredMessage = getCommitAuthorRequiredMessage();
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
   const [type, readOnly] = watch(['type', 'readOnly']);
@@ -401,176 +387,23 @@ export function ConfigForm({ data }: ConfigFormProps) {
               nameTemplateName="branchOptions.nameTemplate"
               enforceTemplateName="branchOptions.enforceTemplate"
             />
-            <ControlledCollapse
-              label={t('provisioning.commit-options.label-commit-options', 'Commit options (advanced)')}
-              isOpen={signingEnabled}
-            >
-              <Stack direction="column" gap={2}>
-                <Field
-                  noMargin
-                  label={t('provisioning.config-form.label-commit-message-template', 'Commit message template')}
-                  description={t(
-                    'provisioning.config-form.description-commit-message-template',
-                    'Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. A "Grafana-saved-by: <name> (<login>)" trailer is appended automatically. Leave empty to use the built-in defaults.',
-                    {
-                      actionVar: '{{action}}',
-                      kindVar: '{{resourceKind}}',
-                      idVar: '{{resourceID}}',
-                      titleVar: '{{title}}',
-                      userNameVar: '{{userName}}',
-                      userLoginVar: '{{userLogin}}',
-                      userEmailVar: '{{userEmail}}',
-                    }
-                  )}
-                >
-                  <Input
-                    id="commit-message-template"
-                    {...register('commit.singleResourceMessageTemplate')}
-                    placeholder={t(
-                      'provisioning.config-form.placeholder-commit-message-template',
-                      'feat(dashboards): {{actionVar}} {{titleVar}}',
-                      { actionVar: '{{action}}', titleVar: '{{title}}' }
-                    )}
-                  />
-                </Field>
-                <Field noMargin>
-                  <Checkbox
-                    {...register('commit.enforceTemplate')}
-                    label={t('provisioning.commit-options.label-enforce-template', 'Enforce commit message template')}
-                    description={t(
-                      'provisioning.commit-options.description-enforce-template',
-                      'Pre-fill the commit message in save dialogs from the template above and make it read-only. The "Grafana-saved-by" trailer is always appended.'
-                    )}
-                  />
-                </Field>
-                {gitFields?.signingFormatConfig && (
-                  <Field
-                    noMargin
-                    label={gitFields.signingFormatConfig.label}
-                    description={gitFields.signingFormatConfig.description}
-                  >
-                    <Controller
-                      name="signingFormat"
-                      control={control}
-                      render={({ field: { ref, ...field } }) => (
-                        <RadioButtonGroup
-                          {...field}
-                          options={getSigningFormatOptions()}
-                          onChange={(value) => {
-                            field.onChange(value);
-                            setValue('signingKey', '');
-                            setValue('smimeCertificate', '');
-                            setSigningKeyConfigured(false);
-                          }}
-                        />
-                      )}
-                    />
-                  </Field>
-                )}
-                {signingEnabled && gitFields?.signingKeyConfig && (
-                  <>
-                    {hasTokenInstructions && <GPGSigningKeyInfo type={type} />}
-                    <Field
-                      noMargin
-                      htmlFor="signingKey"
-                      label={gitFields.signingKeyConfig.label}
-                      description={gitFields.signingKeyConfig.description}
-                      error={errors?.signingKey?.message}
-                      invalid={!!errors.signingKey}
-                    >
-                      <Controller
-                        name="signingKey"
-                        control={control}
-                        render={({ field: { ref, ...field } }) => (
-                          <SecretTextArea
-                            {...field}
-                            id="signingKey"
-                            invalid={!!errors.signingKey}
-                            placeholder={getSigningKeyPlaceholder(signingFormat)}
-                            isConfigured={signingKeyConfigured}
-                            onReset={() => {
-                              setValue('signingKey', '');
-                              setValue('commit.authorName', '');
-                              setValue('commit.authorEmail', '');
-                              setSigningKeyConfigured(false);
-                            }}
-                            rows={8}
-                            grow
-                          />
-                        )}
-                      />
-                    </Field>
-                    {signingFormat === 'smime' && gitFields.smimeCertificateConfig && (
-                      <Field
-                        noMargin
-                        htmlFor="smimeCertificate"
-                        label={gitFields.smimeCertificateConfig.label}
-                        description={gitFields.smimeCertificateConfig.description}
-                        error={errors?.smimeCertificate?.message}
-                        invalid={!!errors.smimeCertificate}
-                      >
-                        <Controller
-                          name="smimeCertificate"
-                          control={control}
-                          render={({ field: { ref, ...field } }) => (
-                            <TextArea
-                              {...field}
-                              id="smimeCertificate"
-                              invalid={!!errors.smimeCertificate}
-                              placeholder={gitFields.smimeCertificateConfig?.placeholder}
-                              rows={8}
-                            />
-                          )}
-                        />
-                      </Field>
-                    )}
-                    {gitFields.commitAuthorNameConfig && (
-                      <Field
-                        noMargin
-                        htmlFor="commit-author-name"
-                        required={authorRequired}
-                        label={gitFields.commitAuthorNameConfig.label}
-                        description={gitFields.commitAuthorNameConfig.description}
-                        error={errors?.commit?.authorName?.message}
-                        invalid={!!errors?.commit?.authorName}
-                      >
-                        <Input
-                          id="commit-author-name"
-                          disabled={!signingKeyValue}
-                          {...register('commit.authorName', {
-                            validate: (val) =>
-                              !authorRequired || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
-                          })}
-                          placeholder={gitFields.commitAuthorNameConfig.placeholder}
-                        />
-                      </Field>
-                    )}
-                    {gitFields.commitAuthorEmailConfig && (
-                      <Field
-                        noMargin
-                        htmlFor="commit-author-email"
-                        required={authorRequired}
-                        label={gitFields.commitAuthorEmailConfig.label}
-                        description={gitFields.commitAuthorEmailConfig.description}
-                        error={errors?.commit?.authorEmail?.message}
-                        invalid={!!errors?.commit?.authorEmail}
-                      >
-                        <Input
-                          id="commit-author-email"
-                          type="email"
-                          disabled={!signingKeyValue}
-                          {...register('commit.authorEmail', {
-                            validate: (val) =>
-                              !authorRequired || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
-                          })}
-                          placeholder={gitFields.commitAuthorEmailConfig.placeholder}
-                        />
-                      </Field>
-                    )}
-                  </>
-                )}
-              </Stack>
-            </ControlledCollapse>
+            {gitFields && (
+              <CommitOptionsSection<RepositoryFormData>
+                register={register}
+                control={control}
+                setValue={setValue}
+                messageTemplateName="commit.singleResourceMessageTemplate"
+                enforceTemplateName="commit.enforceTemplate"
+                type={type}
+                gitFields={gitFields}
+                signingFormatName="signingFormat"
+                signingKeyName="signingKey"
+                smimeCertificateName="smimeCertificate"
+                authorNameName="commit.authorName"
+                authorEmailName="commit.authorEmail"
+                defaultSigningKeyConfigured={Boolean(data?.secure?.signingKey?.name)}
+              />
+            )}
           </>
         )}
         {type === 'github' && <ConfigFormGithubCollapse register={register} />}

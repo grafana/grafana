@@ -2,6 +2,8 @@ import { type BranchOptions, type CommitOptions, type RepositorySpec } from 'app
 
 import { type RepositoryFormData } from '../types';
 
+// Build the spec-level commit options from the form, omitting empty values so we
+// don't persist blank templates. Returns undefined when nothing is configured.
 const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined => {
   const singleResourceMessageTemplate = data.commit?.singleResourceMessageTemplate?.trim();
   const enforceTemplate = data.commit?.enforceTemplate;
@@ -35,6 +37,8 @@ const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined
   return commit;
 };
 
+// Build the spec-level branch naming options from the form, omitting empty
+// values. Returns undefined when nothing is configured.
 const buildBranchOptions = (data: RepositoryFormData): BranchOptions | undefined => {
   const nameTemplate = data.branchOptions?.nameTemplate?.trim();
   const enforceTemplate = data.branchOptions?.enforceTemplate;
