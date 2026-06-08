@@ -22,6 +22,12 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// The struct size the request body unmarshals to is a few bytes and much deviation from that would mean a malformed body.
+const (
+	maxQueryBodySize  = 10 * 1024 // 10 KiB
+	maxMutateBodySize = 10 * 1024 // 10 KiB
+)
+
 type Api struct {
 	PublicDashboardService publicdashboards.Service
 	Middleware             publicdashboards.Middleware
@@ -185,6 +191,8 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Err(ErrInvalidUid.Errorf("CreatePublicDashboard: invalid Uid %s", dashboardUid))
 	}
 
+	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, maxMutateBodySize)
+
 	pdDTO := &PublicDashboardDTO{}
 	if err := web.Bind(c.Req, pdDTO); err != nil {
 		return response.Err(ErrBadRequest.Errorf("CreatePublicDashboard: bad request data %v", err))
@@ -243,6 +251,8 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	if !validation.IsValidShortUID(uid) {
 		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid Uid %s", uid))
 	}
+
+	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, maxMutateBodySize)
 
 	pdDTO := &PublicDashboardDTO{}
 	if err := web.Bind(c.Req, pdDTO); err != nil {
