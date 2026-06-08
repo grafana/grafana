@@ -19,7 +19,7 @@ GO_RACE_FLAG := $(if $(GO_RACE),-race)
 # Backend build version and ldflags (release / packaging conventions).
 BUILD_NUMBER ?= local
 BUILD_VERSION := $(shell sed -n 's/.*"version": *"\(.*\)".*/\1/p' package.json | sed 's/-pre/-$(BUILD_NUMBER)/')
-BUILD_COMMIT := $(if $(COMMIT_SHA),$(COMMIT_SHA),$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown"))
+BUILD_COMMIT := $(if $(COMMIT_SHA),$(COMMIT_SHA),$(shell git rev-parse HEAD 2>/dev/null || echo "unknown"))
 BUILD_BRANCH := $(if $(BUILD_BRANCH),$(BUILD_BRANCH),$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main"))
 BUILD_STAMP := $(or $(SOURCE_DATE_EPOCH),$(shell git log -1 --format=%ct 2>/dev/null),$(shell date +%s 2>/dev/null))
 GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
