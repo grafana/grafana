@@ -832,6 +832,148 @@ jobs:
       environment: prod
       runs-on: ubuntu-x64-small
 
+<<<<<<< Updated upstream
+=======
+  publish-dockerhub:
+    if: github.repository == 'grafana/grafana' && github.ref_name == 'main'
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-x64-small
+    needs:
+      - setup
+      - verify-targz
+      - build-docker-linux-amd64
+      - build-docker-linux-arm64
+      - build-docker-linux-armv7
+      - verify-packages
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: alpine
+            full-artifact: artifacts-docker
+            slim-artifact: artifacts-docker-alpine-slim
+            full-tag-suffix: ""
+            slim-tag-suffix: "-slim"
+          - variant: ubuntu
+            full-artifact: artifacts-docker-ubuntu
+            slim-artifact: artifacts-docker-ubuntu-slim
+            full-tag-suffix: "-ubuntu"
+            slim-tag-suffix: "-ubuntu-slim"
+          - variant: distroless
+            full-artifact: artifacts-docker-distroless
+            slim-artifact: artifacts-docker-distroless-slim
+            full-tag-suffix: "-distroless"
+            slim-tag-suffix: "-distroless-slim"
+    steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ${{ matrix.full-artifact }}-linux-amd64
+          path: dist
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ${{ matrix.full-artifact }}-linux-arm64
+          path: dist
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ${{ matrix.full-artifact }}-linux-armv7
+          path: dist
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ${{ matrix.slim-artifact }}-linux-amd64
+          path: dist
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ${{ matrix.slim-artifact }}-linux-arm64
+          path: dist
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ${{ matrix.slim-artifact }}-linux-armv7
+          path: dist
+      - name: Push ${{ matrix.variant }} + ${{ matrix.variant }}-slim to Docker Hub
+        env:
+          VERSION: ${{ needs.setup.outputs.version }}
+          FULL_TAG_SUFFIX: ${{ matrix.full-tag-suffix }}
+          SLIM_TAG_SUFFIX: ${{ matrix.slim-tag-suffix }}
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${VERSION//+/-}"
+          for f in dist/*.docker.tar.gz; do docker load -i "$f"; done \
+            | grep "Loaded image:" | sed 's/Loaded image: //' | sort -u | tee docker_images
+          while read -r line; do docker push "$line"; done < docker_images
+          docker manifest create "grafana/grafana:main${FULL_TAG_SUFFIX}" \
+            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-amd64" \
+            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-arm64" \
+            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-armv7"
+          docker manifest create "grafana/grafana:main${SLIM_TAG_SUFFIX}" \
+            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-amd64" \
+            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-arm64" \
+            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-armv7"
+          docker manifest create "grafana/grafana-dev:${TAG_VERSION}${FULL_TAG_SUFFIX}" \
+            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-amd64" \
+            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-arm64" \
+            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-armv7"
+          docker manifest create "grafana/grafana-dev:${TAG_VERSION}${SLIM_TAG_SUFFIX}" \
+            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-amd64" \
+            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-arm64" \
+            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-armv7"
+          docker manifest push "grafana/grafana:main${FULL_TAG_SUFFIX}"
+          docker manifest push "grafana/grafana:main${SLIM_TAG_SUFFIX}"
+          docker manifest push "grafana/grafana-dev:${TAG_VERSION}${FULL_TAG_SUFFIX}"
+          docker manifest push "grafana/grafana-dev:${TAG_VERSION}${SLIM_TAG_SUFFIX}"
+
+  run-meticulous-tests:
+    if: github.repository == 'grafana/grafana'
+    needs:
+      - setup
+      - publish-dockerhub
+    name: Run Meticulous tests
+    runs-on: ubuntu-x64-small
+    continue-on-error: true
+    permissions:
+      actions: write
+      contents: read
+      id-token: write
+      issues: write
+      pull-requests: write
+      statuses: read
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Compute image tag
+        id: tag
+        env:
+          VERSION: ${{ needs.setup.outputs.version }}
+        run: echo "value=grafana/grafana-dev:${VERSION//+/-}" >> "$GITHUB_OUTPUT"
+
+      - name: Pull image from Dockerhub
+        env:
+          IMAGE_TAG: ${{ steps.tag.outputs.value }}
+        run: docker pull "$IMAGE_TAG"
+
+      - name: Get vault secrets
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            METICULOUS_API_TOKEN=meticulous-ui:api-token
+
+      - name: Run Meticulous tests
+        uses: alwaysmeticulous/report-diffs-action/upload-container@89c6081b30d17cfcc410b5c19c269cd7a4d67cdf # v1
+        with:
+          api-token: ${{ env.METICULOUS_API_TOKEN }}
+          image-tag: ${{ steps.tag.outputs.value }}
+          container-port: 3000
+          container-env: |
+            GF_AUTH_ANONYMOUS_ENABLED=true
+            GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+
+>>>>>>> Stashed changes
   dispatch-npm-canaries:
     if: github.repository == 'grafana/grafana' && github.ref_name == 'main'
     name: Dispatch publish NPM canaries
