@@ -2,11 +2,13 @@ package legacy
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -108,18 +110,55 @@ func (v *preferencesCountValidator) countRejected(response *resourcepb.BulkRespo
 	return n
 }
 
+// ownerRow holds the columns needed to derive a preference's resource name,
+// scanned from the same joined query the read path uses.
+type ownerRow struct {
+	UserUID sql.NullString `xorm:"user_uid"`
+	TeamUID sql.NullString `xorm:"team_uid"`
+}
+
 // countLegacy mirrors the listPreferences read path: include namespace rows
 // (user_id = 0 AND team_id = 0), user rows whose user still exists, and team
 // rows whose team still exists. The LEFT JOINs let us keep namespace rows in
 // the result while still being able to test for user/team existence.
+//
+// It counts *distinct resource names* rather than raw rows. The migrator emits
+// one resource per row, but the resource name is derived solely from the owner
+// (team uid, else user uid, else namespace) — see asPreferencesResource. When
+// the legacy table holds duplicate rows for the same owner (no unique
+// constraint enforces one row per org/user/team), they collapse to a single
+// resource in unified storage, which dedups by name. Counting raw rows here
+// would over-count and false-fail the strict parity check.
 func (v *preferencesCountValidator) countLegacy(sess *xorm.Session, orgID int64) (int64, error) {
-	return sess.Table("preferences").
+	var rows []ownerRow
+	err := sess.Table("preferences").
+		Select("u.uid AS user_uid, t.uid AS team_uid").
 		Join("LEFT", []string{"user", "u"}, "preferences.user_id = u.id").
 		Join("LEFT", []string{"team", "t"}, "preferences.team_id = t.id").
 		Where(`preferences.org_id = ?
 			AND (preferences.user_id = 0 OR u.uid IS NOT NULL)
 			AND (preferences.team_id = 0 OR t.uid IS NOT NULL)`, orgID).
-		Count()
+		Find(&rows)
+	if err != nil {
+		return 0, err
+	}
+
+	names := make(map[string]struct{}, len(rows))
+	for _, r := range rows {
+		// Mirror asPreferencesResource: team takes precedence over user.
+		owner := utils.OwnerReference{}
+		if r.TeamUID.Valid {
+			owner.Owner = utils.TeamResourceOwner
+			owner.Identifier = r.TeamUID.String
+		} else if r.UserUID.Valid {
+			owner.Owner = utils.UserResourceOwner
+			owner.Identifier = r.UserUID.String
+		} else {
+			owner.Owner = utils.NamespaceResourceOwner
+		}
+		names[owner.AsName()] = struct{}{}
+	}
+	return int64(len(names)), nil
 }
 
 func (v *preferencesCountValidator) countUnified(ctx context.Context, sess *xorm.Session, summary *resourcepb.BulkResponse_Summary) (int64, error) {
