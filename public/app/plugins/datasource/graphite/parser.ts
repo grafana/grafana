@@ -178,9 +178,6 @@ export class Parser {
     return node;
   }
 
-  // Graphite supports a pipe syntax where `seriesList | func(args)` is equivalent to
-  // `func(seriesList, args)`. We rewrite each piped call into the nested form so the rest
-  // of the query builder (which only understands nested functions) can handle it unchanged.
   pipedFunctionCall(node: AstNode): AstNode {
     while (this.match('|')) {
       this.consumeToken();
