@@ -44,8 +44,6 @@ export interface ConfirmContentProps {
   onAlternative?(): void;
   /** Disable the confirm button and the confirm text input if needed */
   disabled?: boolean;
-  /** Control event propagation on submit */
-  propagate?: boolean;
 }
 
 export const ConfirmContent = ({
@@ -62,7 +60,6 @@ export const ConfirmContent = ({
   description,
   justifyButtons = 'flex-end',
   disabled,
-  propagate = true,
 }: ConfirmContentProps) => {
   const [isDisabled, setIsDisabled] = useState(disabled);
   const styles = useStyles2(getStyles);
@@ -96,9 +93,7 @@ export const ConfirmContent = ({
   const { handleSubmit } = useForm();
   const stopPropagation = (callback: (event: React.FormEvent) => void) => {
     return (event: React.FormEvent) => {
-      if (!propagate) {
-        event.stopPropagation();
-      }
+      event.stopPropagation();
       callback(event);
     };
   };

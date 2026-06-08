@@ -98,7 +98,6 @@ export const DataSourceDefaultButton = ({ uid }: { uid: string }) => {
         dismissText={t('datasources.default-button.cancel', 'Cancel')}
         onConfirm={() => onChangeDefault(!dataSource.isDefault)}
         onDismiss={() => setConfirming(false)}
-        propagate={false}
       />
     </>
   );
