@@ -75,6 +75,8 @@ export const FlagKeys = {
   PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
   PluginsUseMTPlugins: "plugins.useMTPlugins",
+  /** Enable configurable commit message, branch name, and pull request title conventions for Git Sync */
+  ProvisioningGitConventions: "provisioning.gitConventions",
   /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
   ProvisioningReadmes: "provisioning.readmes",
   /** Allow setting folder metadata for provisioned folders */
@@ -440,6 +442,17 @@ export const useFlagPluginsUseMTPluginSettings = (options?: ReactFlagEvaluationO
  */
 export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("plugins.useMTPlugins", false, options).value;
+};
+
+/**
+ * Enable configurable commit message, branch name, and pull request title conventions for Git Sync
+ *
+ * **Details:**
+ * - flag key: `provisioning.gitConventions`
+ * - default value: `false`
+ */
+export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("provisioning.gitConventions", false, options).value;
 };
 
 /**
