@@ -34,6 +34,19 @@ describe('ActionEditorModalContent', () => {
     },
   };
 
+  const buildInfinityAction = (datasourceUid: string): Action => ({
+    ...validAction,
+    type: ActionType.Infinity,
+    [ActionType.Infinity]: {
+      method: HttpRequestMethod.POST,
+      url: 'https://api.example.com',
+      body: '{}',
+      queryParams: [],
+      headers: [['Content-Type', 'application/json']],
+      datasourceUid,
+    },
+  });
+
   const defaultProps = {
     action: validAction,
     index: 2,
@@ -93,31 +106,16 @@ describe('ActionEditorModalContent', () => {
     expect(screen.getByRole('button', { name: /Save/i })).toBeDisabled();
   });
 
-  it.each([
-    ['', true],
-    ['ds-uid', false],
-  ])('toggles Save based on Infinity datasourceUid="%s" (disabled=%s)', (datasourceUid, expectedDisabled) => {
-    const infinityAction: Action = {
-      ...validAction,
-      type: ActionType.Infinity,
-      [ActionType.Infinity]: {
-        method: HttpRequestMethod.POST,
-        url: 'https://api.example.com',
-        body: '{}',
-        queryParams: [],
-        headers: [['Content-Type', 'application/json']],
-        datasourceUid,
-      },
-    };
+  it('disables Save when the Infinity datasourceUid is an empty string', () => {
+    render(<ActionEditorModalContent {...defaultProps} action={buildInfinityAction('')} />);
 
-    render(<ActionEditorModalContent {...defaultProps} action={infinityAction} />);
+    expect(screen.getByRole('button', { name: /Save/i })).toBeDisabled();
+  });
 
-    const saveButton = screen.getByRole('button', { name: /Save/i });
-    if (expectedDisabled) {
-      expect(saveButton).toBeDisabled();
-    } else {
-      expect(saveButton).toBeEnabled();
-    }
+  it('enables Save when the Infinity datasourceUid is set', () => {
+    render(<ActionEditorModalContent {...defaultProps} action={buildInfinityAction('ds-uid')} />);
+
+    expect(screen.getByRole('button', { name: /Save/i })).toBeEnabled();
   });
 
   it('calls onSave with the current action and index when Save is clicked', async () => {

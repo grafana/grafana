@@ -16,7 +16,7 @@ const mockSuggestions: VariableSuggestion[] = [
   { value: '${var1}', label: 'Variable 1', origin: VariableOrigin.BuiltIn },
 ];
 
-const buildAction = (overrides: Partial<Action> = {}): Action => ({
+const buildFetchAction = (overrides: Partial<Action> = {}): Action => ({
   ...defaultActionConfig,
   title: 'Sample Action',
   type: ActionType.Fetch,
@@ -53,7 +53,7 @@ describe('ActionsInlineEditor', () => {
   });
 
   it('renders existing actions', () => {
-    const actions = [buildAction({ title: 'First action' }), buildAction({ title: 'Second action' })];
+    const actions = [buildFetchAction({ title: 'First action' }), buildFetchAction({ title: 'Second action' })];
 
     render(<ActionsInlineEditor {...defaultProps} actions={actions} />);
 
@@ -73,7 +73,7 @@ describe('ActionsInlineEditor', () => {
 
   it('opens the modal with the Edit action heading when an existing action is edited', async () => {
     const user = userEvent.setup();
-    render(<ActionsInlineEditor {...defaultProps} actions={[buildAction()]} />);
+    render(<ActionsInlineEditor {...defaultProps} actions={[buildFetchAction()]} />);
 
     await user.click(screen.getByRole('button', { name: /edit/i }));
 
@@ -83,7 +83,7 @@ describe('ActionsInlineEditor', () => {
 
   it('removes an action when its remove button is clicked', async () => {
     const user = userEvent.setup();
-    const actions = [buildAction({ title: 'Keep me' }), buildAction({ title: 'Remove me' })];
+    const actions = [buildFetchAction({ title: 'Keep me' }), buildFetchAction({ title: 'Remove me' })];
 
     render(<ActionsInlineEditor {...defaultProps} actions={actions} />);
 
@@ -96,7 +96,7 @@ describe('ActionsInlineEditor', () => {
 
   it('passes showOneClick to the modal contents and surfaces the one-click switch', async () => {
     const user = userEvent.setup();
-    render(<ActionsInlineEditor {...defaultProps} actions={[buildAction()]} showOneClick={true} />);
+    render(<ActionsInlineEditor {...defaultProps} actions={[buildFetchAction()]} showOneClick={true} />);
 
     await user.click(screen.getByRole('button', { name: /edit/i }));
 
@@ -105,7 +105,7 @@ describe('ActionsInlineEditor', () => {
 
   it('hides the one-click switch when showOneClick is false', async () => {
     const user = userEvent.setup();
-    render(<ActionsInlineEditor {...defaultProps} actions={[buildAction()]} showOneClick={false} />);
+    render(<ActionsInlineEditor {...defaultProps} actions={[buildFetchAction()]} showOneClick={false} />);
 
     await user.click(screen.getByRole('button', { name: /edit/i }));
 
@@ -114,7 +114,7 @@ describe('ActionsInlineEditor', () => {
 
   it('saves edits to an existing action through the modal', async () => {
     const user = userEvent.setup();
-    const actions = [buildAction({ title: 'Editable' })];
+    const actions = [buildFetchAction({ title: 'Editable' })];
 
     render(<ActionsInlineEditor {...defaultProps} actions={actions} />);
 
@@ -124,12 +124,11 @@ describe('ActionsInlineEditor', () => {
     await user.click(screen.getByRole('button', { name: /^Save$/i }));
 
     expect(mockOnChange).toHaveBeenCalledTimes(1);
-    expect(mockOnChange.mock.calls[0][0]).toHaveLength(1);
-    expect(mockOnChange.mock.calls[0][0][0]).toEqual(
+    expect(mockOnChange).toHaveBeenCalledWith([
       expect.objectContaining({
         title: 'Editable',
         [ActionType.Fetch]: expect.objectContaining({ method: HttpRequestMethod.GET }),
-      })
-    );
+      }),
+    ]);
   });
 });
