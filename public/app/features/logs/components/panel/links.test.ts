@@ -7,7 +7,7 @@ import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { createLogLine } from '../mocks/logRow';
 
-import { getTempoTraceFromLinks } from './links';
+import { getTempoTraceFromLinks, getTraceIdFromTraceQlQuery } from './links';
 import { type LogListModel } from './processing';
 
 describe('getTempoTraceFromLinks', () => {
@@ -81,5 +81,30 @@ describe('getTempoTraceFromLinks', () => {
       query: '2203801e0171aa8b',
       queryType: 'traceql',
     });
+  });
+});
+
+describe('getTraceIdFromTraceQlQuery', () => {
+  test.each([
+    ['{trace:id = "2203801e0171aa8b"}', '2203801e0171aa8b'],
+    ['{ trace:id = "2203801e0171aa8b" }', '2203801e0171aa8b'],
+    ['{trace:id="2203801e0171aa8b"}', '2203801e0171aa8b'],
+    ['  {trace:id = "46b539f510ab12113b5011db58d5a334"}  ', '46b539f510ab12113b5011db58d5a334'],
+    ['{trace:id = `2203801e0171aa8b`}', '2203801e0171aa8b'],
+    ['{trace:id = "ABCDEF0123456789"}', 'ABCDEF0123456789'],
+  ])('extracts the trace ID from a TraceQL trace-id lookup: %s', (query, expected) => {
+    expect(getTraceIdFromTraceQlQuery(query)).toBe(expected);
+  });
+
+  test.each([
+    ['2203801e0171aa8b'], // a bare trace ID is not a TraceQL query
+    ['{ span.foo = "bar" }'], // a different TraceQL query
+    ['{trace:id = "not-hex-zz"}'], // non-hex value
+    ['{trace:id =~ "2203801e0171aa8b"}'], // regex operator, not an exact lookup
+    ['{trace:id = "abc" && span.foo = "bar"}'], // compound query
+    ['{trace:id = `2203801e0171aa8b"}'], // mismatched quote characters
+    [''],
+  ])('returns undefined for non trace-id lookups: %s', (query) => {
+    expect(getTraceIdFromTraceQlQuery(query)).toBeUndefined();
   });
 });

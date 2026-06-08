@@ -937,8 +937,7 @@ func (s *Service) checkPermissionLegacy(ctx context.Context, scopeMap map[string
 		req.ParentFolder = accesscontrol.GeneralFolderUID
 	}
 
-	// Wildcard grant, no further checks needed
-	if scopeMap["*"] {
+	if !t.SkipWildcard() && scopeMap["*"] {
 		return true, nil
 	}
 

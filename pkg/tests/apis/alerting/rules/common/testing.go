@@ -38,6 +38,22 @@ func NewRecordingRuleClient(t *testing.T, user apis.User) *apis.TypedClient[v0al
 	}
 }
 
+func NewRuleSequenceClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.RuleSequence, v0alpha1.RuleSequenceList] {
+	t.Helper()
+
+	client, err := dynamic.NewForConfig(user.NewRestConfig())
+	require.NoError(t, err)
+
+	return &apis.TypedClient[v0alpha1.RuleSequence, v0alpha1.RuleSequenceList]{
+		Client: client.Resource(
+			v0alpha1.RuleSequenceKind().GroupVersionResource()).Namespace("default"),
+	}
+}
+
+func GetTestHelperWithRuleSequences(t *testing.T) *apis.K8sTestHelper {
+	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
+}
+
 func NewFolderClient(t *testing.T, user apis.User) *apis.TypedClient[folders.Folder, folders.FolderList] {
 	t.Helper()
 

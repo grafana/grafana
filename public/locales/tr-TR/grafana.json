@@ -3312,6 +3312,10 @@
         "tooltip-description": "Sessize almaları eşleştiriciye göre bulun. Etiket adını, değerini ve işleci tam olarak eşleştirir.",
         "tooltip-example": "Örnek: <1>env=~\"prod.*\"</1>, <4>env=~\"prod.*\"</4> eşleştiricisine sahip sessize almaları bulur."
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "Yalnızca tetikleme durumundaki uyarı örnekleri görüntülenir.",
       "operator": {
         "equals": "Eşittir",
@@ -5501,9 +5505,6 @@
       "aria-label-dashboard-name": "{{dashboardName}} panosu",
       "label-no-dashboards-found": "Hiç pano bulunamadı"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Pano yüklemesini iptal et"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5773,11 +5774,6 @@
         "label": "Pano menüsünü dışa aktar"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Pano alınamadı"
-      }
-    },
     "filters-overview": {
       "apply": "Uygula",
       "apply-close": "Uygula ve kapat",
@@ -5934,11 +5930,6 @@
       "title-get-help-with-this-panel": "Bu panel için yardım al",
       "troubleshooting-docs": "Sorun giderme belgeleri"
     },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Pano modeli oluşturulamadı"
-      }
-    },
     "inspect": {
       "data-tab": "Veri",
       "error-tab": "Hata",
@@ -6027,13 +6018,6 @@
       },
       "ungroup-nested-text": "Bu işlem, iç içe geçmiş tüm grupların gruplandırmasını kaldıracaktır.",
       "ungroup-nested-title": "İç içe geçmiş grupların gruplandırması kaldırılsın mı?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Pano bulunamadı"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Pano düzenlenemiyor",
@@ -6353,10 +6337,6 @@
       },
       "undo": "Geri al"
     },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Pano yükleniyor ve başlatılıyor",
-      "title-not-found": "{{panelId}} kimliğine sahip panel bulunamadı"
-    },
     "source-link": {
       "title": "Kaynak ({{provider}})",
       "tooltip": "Kaynak dosyayı depoda göster"
@@ -6626,8 +6606,8 @@
     "version-history-comparison": {
       "button-restore": "{{version}} sürümüne geri yükle",
       "label-view-json-diff": "JSON farkını görüntüle",
-      "new-updated-by": "<0>{{version}} sürümü</0> {{editor}} tarafından {{timeAgo}} önce güncellendi",
-      "old-updated-by": "<0>{{version}} sürümü</0> {{editor}} tarafından {{timeAgo}} önce güncellendi"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "{{version}} sürümünün seçimini değiştir",
@@ -7869,8 +7849,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "JSON farkını görüntüle",
-      "new-version-updated": "<0>{{version}} sürümü</0> {{editor}} tarafından {{timeAgo}} önce güncellendi",
-      "old-version-updated": "<0>{{version}} sürümü</0> {{editor}} tarafından {{timeAgo}} önce güncellendi"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "{{baseVersion}} <3></3> {{newVersion}} karşılaştırması",
@@ -10229,7 +10209,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Yardım <1></1>",
-      "access-help-details": "Erişim modu, veri kaynağına yapılan isteklerin nasıl işleneceğini kontrol eder. Aksi belirtilmedikçe <1><i>Sunucu</i></1> tercih edilen yöntem olmalıdır.",
+      "access-help-details": "",
       "access-help-title": "Erişim yardımı",
       "access-label": "Erişim",
       "allowed-cookies": "İzin verilen çerezler",
@@ -10915,6 +10895,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -13197,8 +13181,8 @@
       "label-branch": "Dal",
       "label-comment": "Yorum",
       "label-filename": "Dosya adı",
-      "label-folder": "Klasör",
       "label-path": "Yol",
+      "label-repository-folder": "",
       "path-exists": "",
       "placeholder-branch": "Dal adını seçin veya girin",
       "placeholder-folder": "Klasör yolunu seçin veya girin",
@@ -13601,6 +13585,21 @@
       "request-failed": "İstek başarısız oldu",
       "resource-not-found": "Kaynak bulunamadı. Lütfen URL'yi veya depoyu kontrol edin."
     },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
+    },
     "instance-sync-deprecation": {
       "message": "Örnek senkronizasyonu şu anda tam olarak desteklenmiyor ve kitaplık panoları ile uyarıları bozabilir. Kitaplık panolarını ve uyarıları kullanmak için deponuzun bağlantısını kesin ve klasör senkronizasyonuyla yeniden bağlayın.",
       "title": "Örnek senkronizasyonu tam olarak desteklenmiyor"
@@ -13887,7 +13886,8 @@
     "sync-job": {
       "error-no-job-id": "İş başlatılamadı",
       "error-no-repository-name": "Depo adı sağlanmadı",
-      "error-starting-job": "İş başlatılırken hata oluştu"
+      "error-starting-job": "İş başlatılırken hata oluştu",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "Kaynaklar çekilirken hata oluştu",
@@ -16608,7 +16608,7 @@
       "message": "Kullanıcı bulunamadı"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Oturum belirteciniz, hesabınız için <2>izin verilen {{numSessions}} eş zamanlı oturum sınırına</2> ulaşıldığı için otomatik olarak iptal edildi.",
+      "auto-revoked": "",
       "resume-message": "<strong>Oturumunuza devam etmek için tekrar giriş yapın.</strong> Sürekli olarak otomatik çıkış yapıyorsanız kotanızı gözden geçirmek için yöneticinizle iletişime geçin veya lisans sayfasını ziyaret edin.",
       "sign-in": "Giriş yap",
       "title-you-have-been-automatically-signed-out": "Otomatik olarak çıkış yaptınız"

@@ -6,7 +6,7 @@ import { type Location } from 'history';
 import { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useToggle } from 'react-use';
-import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -28,12 +28,13 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/services/context_srv';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
+import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useNotificationTemplateAbility } from '../../hooks/abilities/alertmanager/useNotificationTemplateAbility';
+import { NotificationTemplateAction } from '../../hooks/abilities/types';
 import { KnownProvenance } from '../../types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_TEMPLATE_EXAMPLES, DOCS_URL_TEMPLATE_NOTIFICATIONS } from '../../utils/docs';
@@ -109,10 +110,10 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const formRef = useRef<HTMLFormElement>(null);
   const isGrafanaAlertManager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
 
-  // Check if user has permission to test templates
-  const canTestTemplates =
-    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsTemplatesTest) ||
-    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsWrite);
+  // Check if user has permission to test templates.
+  const canTestTemplates = isGranted(
+    useNotificationTemplateAbility({ action: NotificationTemplateAction.Test, context: originalTemplate })
+  );
 
   // Only show preview and payload panels if both conditions are met:
   // 1. It's a Grafana Alertmanager
@@ -349,7 +350,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                         </div>
                         <Box flex={1}>
                           <AutoSizer>
-                            {({ width, height }: Size) => (
+                            {({ width, height }) => (
                               <TemplateEditor
                                 value={getValues('content')}
                                 onBlur={(value) => setValue('content', value)}

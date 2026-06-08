@@ -3312,6 +3312,10 @@
         "tooltip-description": "Hitta tystnader efter matchare. Matchar etikettnamn, värde och operator exakt.",
         "tooltip-example": "Exempel: <1>env=~”prod.*”</1> hittar tystnader med matchningsverktyget <4>env=~”prod.*”</4>."
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "Endast varningsinstanser i aktiveringstillståndet visas.",
       "operator": {
         "equals": "Är lika med",
@@ -5501,9 +5505,6 @@
       "aria-label-dashboard-name": "{{dashboardName}} instrumentpanel",
       "label-no-dashboards-found": "Inga instrumentpaneler hittades"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Avbryt laddning av instrumentpanel"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5773,11 +5774,6 @@
         "label": "Menyn Exportera kontrollpanel"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Det gick inte att hämta instrumentpanel"
-      }
-    },
     "filters-overview": {
       "apply": "Tillämpa",
       "apply-close": "Tillämpa och stäng",
@@ -5934,11 +5930,6 @@
       "title-get-help-with-this-panel": "Få hjälp med denna panel",
       "troubleshooting-docs": "Felsökningsdokument"
     },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Det gick inte att skapa instrumentpanelsmodell"
-      }
-    },
     "inspect": {
       "data-tab": "Data",
       "error-tab": "Fel",
@@ -6027,13 +6018,6 @@
       },
       "ungroup-nested-text": "Det kommer att dela upp alla nästlade grupper.",
       "ungroup-nested-title": "Dela upp nästlade grupper?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Instrumentpanelen hittades inte"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Instrumentpanelen kan inte redigeras",
@@ -6353,10 +6337,6 @@
       },
       "undo": "Ångra"
     },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Laddar och initierar instrumentpanel",
-      "title-not-found": "Panel med ID {{panelId}} hittades inte"
-    },
     "source-link": {
       "title": "Källa ({{provider}})",
       "tooltip": "Visa källfil på lagringsplatsen"
@@ -6626,8 +6606,8 @@
     "version-history-comparison": {
       "button-restore": "Återställ till version {{version}}",
       "label-view-json-diff": "Visa JSON-skillnader",
-      "new-updated-by": "<0>Version {{version}}</0> uppdaterad av {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Version {{version}}</0> uppdaterad av {{editor}} {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Växla val av version {{version}}",
@@ -7869,8 +7849,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "Visa JSON-skillnader",
-      "new-version-updated": "<0>Version {{version}}</0> uppdaterad av {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Version {{version}}</0> uppdaterad av {{editor}} {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "Jämför {{baseVersion}} <3></3> {{newVersion}}",
@@ -10229,7 +10209,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Hjälp <1></1>",
-      "access-help-details": "Åtkomstläge reglerar hur förfrågningar till datakällan ska hanteras.<1><i>Server</i></1> bör vara det föredragna sättet om inget annat anges.",
+      "access-help-details": "",
       "access-help-title": "Hjälp för Access",
       "access-label": "Access",
       "allowed-cookies": "Tillåtna cookies",
@@ -10915,6 +10895,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -13197,8 +13181,8 @@
       "label-branch": "Gren",
       "label-comment": "Kommentar",
       "label-filename": "Filnamn",
-      "label-folder": "Mapp",
       "label-path": "Sökväg",
+      "label-repository-folder": "",
       "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Välj eller ange mappens sökväg",
@@ -13601,6 +13585,21 @@
       "request-failed": "",
       "resource-not-found": ""
     },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
+    },
     "instance-sync-deprecation": {
       "message": "Instanssynkronisering stöds för närvarande inte fullt ut och bryter bibliotekspaneler och varningar. För att använda bibliotekspaneler och larm behöver du koppla från lagringsplatsen och sedan ansluta den på nytt med mappsynkronisering.",
       "title": "Instanssynkronisering stöds inte helt"
@@ -13887,7 +13886,8 @@
     "sync-job": {
       "error-no-job-id": "Misslyckades att starta",
       "error-no-repository-name": "Inget lagringsplatsnamn angivet",
-      "error-starting-job": "Fel vid start av jobb"
+      "error-starting-job": "Fel vid start av jobb",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "Fel vid hämtning av resurser",
@@ -16608,7 +16608,7 @@
       "message": "Inga användare hittades"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Din sessionstoken återkallades automatiskt eftersom du har nått <2>det maximala antalet {{numSessions}} samtidiga sessioner</2> för ditt konto.",
+      "auto-revoked": "",
       "resume-message": "<strong>För att återuppta din session loggar du in igen.</strong>Kontakta din administratör eller gå till licenssidan för att granska din kvot om du upprepade gånger loggas ut automatiskt.",
       "sign-in": "Logga in",
       "title-you-have-been-automatically-signed-out": "Du har loggats ut automatiskt"
