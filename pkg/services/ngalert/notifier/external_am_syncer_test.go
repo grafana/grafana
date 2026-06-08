@@ -765,3 +765,46 @@ func TestBuildMimirConfigURL(t *testing.T) {
 		})
 	}
 }
+
+// flakyClientGenerator fails ClientFor for the first failN calls, then delegates
+// to a working generator — used to exercise resolveCfgClient's retry behavior.
+type flakyClientGenerator struct {
+	failN    int
+	calls    int
+	delegate resource.ClientGenerator
+}
+
+func (g *flakyClientGenerator) ClientFor(k resource.Kind) (resource.Client, error) {
+	g.calls++
+	if g.calls <= g.failN {
+		return nil, fmt.Errorf("apiserver not ready")
+	}
+	return g.delegate.ClientFor(k)
+}
+
+func (g *flakyClientGenerator) GetCustomRouteClient(schema.GroupVersion, string) (resource.CustomRouteClient, error) {
+	return nil, nil
+}
+func (g *flakyClientGenerator) DiscoveryClient() (resource.DiscoveryClient, error) { return nil, nil }
+
+func TestResolveCfgClient_RetriesOnFailureAndCachesSuccess(t *testing.T) {
+	gen := &flakyClientGenerator{failN: 1, delegate: newFakeAdminConfigClient()}
+	s := &ExternalAMSyncer{clientGenerator: gen}
+
+	// First call: the generator errors. The failure must NOT be cached.
+	_, err := s.resolveCfgClient()
+	require.Error(t, err)
+	require.Equal(t, 1, gen.calls)
+
+	// Second call: retries and succeeds.
+	c, err := s.resolveCfgClient()
+	require.NoError(t, err)
+	require.NotNil(t, c)
+	require.Equal(t, 2, gen.calls)
+
+	// Third call: returns the cached client without rebuilding.
+	c2, err := s.resolveCfgClient()
+	require.NoError(t, err)
+	require.Same(t, c, c2)
+	require.Equal(t, 2, gen.calls, "successful client should be cached")
+}

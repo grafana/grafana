@@ -180,8 +180,8 @@ type ExternalAMSyncer struct {
 	clientGenerator resource.ClientGenerator
 	namespaceMapper request.NamespaceMapper
 
-	cfgClientOnce sync.Once
-	cfgClient     *alertingnotifv0alpha1.AdminConfigClient
+	cfgClientMu sync.Mutex
+	cfgClient   *alertingnotifv0alpha1.AdminConfigClient
 }
 
 // NewExternalAMSyncer constructs an ExternalAMSyncer. requestValidator may
@@ -211,22 +211,27 @@ func NewExternalAMSyncer(
 	}
 }
 
-// resolveCfgClient lazily builds the AdminConfig client. Caches both
-// success and failure via sync.Once — apiserver-not-ready failure mode
-// doesn't get retried on every sync tick.
-func (s *ExternalAMSyncer) resolveCfgClient() *alertingnotifv0alpha1.AdminConfigClient {
-	if s.clientGenerator == nil {
-		return nil
+// resolveCfgClient lazily builds and caches the AdminConfig client. It is built
+// lazily (not in NewExternalAMSyncer) because the ClientGenerator blocks until
+// the apiserver is ready, which would deadlock during DI. The successful client
+// is cached, but construction failures are NOT: the next call retries, so a
+// transient apiserver-not-ready at the first tick doesn't disable sync until
+// the process restarts.
+func (s *ExternalAMSyncer) resolveCfgClient() (*alertingnotifv0alpha1.AdminConfigClient, error) {
+	s.cfgClientMu.Lock()
+	defer s.cfgClientMu.Unlock()
+	if s.cfgClient != nil {
+		return s.cfgClient, nil
 	}
-	s.cfgClientOnce.Do(func() {
-		c, err := alertingnotifv0alpha1.NewAdminConfigClientFromGenerator(s.clientGenerator)
-		if err != nil {
-			s.logger.Warn("Failed to construct AdminConfig client", "error", err)
-			return
-		}
-		s.cfgClient = c
-	})
-	return s.cfgClient
+	if s.clientGenerator == nil {
+		return nil, fmt.Errorf("no client generator configured")
+	}
+	c, err := alertingnotifv0alpha1.NewAdminConfigClientFromGenerator(s.clientGenerator)
+	if err != nil {
+		return nil, fmt.Errorf("construct AdminConfig client: %w", err)
+	}
+	s.cfgClient = c
+	return s.cfgClient, nil
 }
 
 // orgServiceContext wraps ctx with a service identity scoped to the org's
@@ -339,9 +344,6 @@ func (s *ExternalAMSyncer) MarkFailed(ctx context.Context, orgID int64, syncErr 
 // through the save path — cheap, avoids state coupling. syncErr == nil
 // signals success.
 func (s *ExternalAMSyncer) writeSyncStatusFor(ctx context.Context, orgID int64, syncErr error) {
-	if s.resolveCfgClient() == nil {
-		return
-	}
 	uid, origin, err := s.resolveExternalAMUIDForOrg(ctx, orgID)
 	if err != nil {
 		s.logger.Warn("Failed to re-resolve UID for status write", "org_id", orgID, "error", err)
@@ -358,8 +360,9 @@ func (s *ExternalAMSyncer) writeSyncStatusFor(ctx context.Context, orgID int64, 
 // Best-effort — failures are logged. Steady-state-healthy sync produces no
 // physical writes thanks to unified storage's byte-equality dedup.
 func (s *ExternalAMSyncer) recordSyncResult(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, syncErr error) {
-	c := s.resolveCfgClient()
-	if c == nil {
+	c, err := s.resolveCfgClient()
+	if err != nil {
+		s.logger.Warn("Failed to resolve AdminConfig client for status write", "org_id", orgID, "error", err)
 		return
 	}
 	nsCtx, ns := s.orgServiceContext(ctx, orgID)
@@ -369,7 +372,7 @@ func (s *ExternalAMSyncer) recordSyncResult(ctx context.Context, orgID int64, ui
 	id := resource.Identifier{Namespace: ns, Name: alertingnotifv0alpha1.AdminConfigSingletonName}
 	now := time.Now()
 
-	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		existing, getErr := c.Get(nsCtx, id)
 		if k8serrors.IsNotFound(getErr) {
 			// Seed .Status on Create. Unified storage persists the whole object
@@ -532,9 +535,9 @@ func (s *ExternalAMSyncer) resolveExternalAMUIDForOrg(ctx context.Context, orgID
 		return uid, originIni, nil
 	}
 
-	c := s.resolveCfgClient()
-	if c == nil {
-		return "", "", fmt.Errorf("AdminConfig API client unavailable")
+	c, err := s.resolveCfgClient()
+	if err != nil {
+		return "", "", err
 	}
 	nsCtx, ns := s.orgServiceContext(ctx, orgID)
 	ac, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingnotifv0alpha1.AdminConfigSingletonName})
@@ -556,9 +559,9 @@ func (s *ExternalAMSyncer) IsConfiguredForOrg(ctx context.Context, orgID int64) 
 		return true, nil
 	}
 
-	c := s.resolveCfgClient()
-	if c == nil {
-		return false, fmt.Errorf("AdminConfig API client unavailable")
+	c, err := s.resolveCfgClient()
+	if err != nil {
+		return false, err
 	}
 	nsCtx, ns := s.orgServiceContext(ctx, orgID)
 	ac, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingnotifv0alpha1.AdminConfigSingletonName})
