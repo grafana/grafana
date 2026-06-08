@@ -444,3 +444,59 @@ func TestIntegrationServerListStreamDeadline(t *testing.T) {
 		require.Error(t, err)
 	})
 }
+
+// TestStripHelpersDoNotMutateInput guards the root cause of a cache-poisoning bug: the List
+// response strip helpers must return a new slice and never mutate their input, which may be the
+// *openfgav1.ListObjectsResponse.Objects slice owned by the query cache. Mutating it in place
+// corrupted the cached full object idents that BatchCheck relies on.
+func TestStripHelpersDoNotMutateInput(t *testing.T) {
+	t.Run("typedObjects", func(t *testing.T) {
+		in := []string{"folder:abc", "folder:def"}
+		out := typedObjects("folder", in)
+		require.Equal(t, []string{"folder:abc", "folder:def"}, in, "input must not be mutated")
+		require.Equal(t, []string{"abc", "def"}, out)
+	})
+	t.Run("genericObjects", func(t *testing.T) {
+		in := []string{"resource:dashboard.grafana.app/dashboards/x"}
+		out := genericObjects("dashboard.grafana.app/dashboards", in)
+		require.Equal(t, []string{"resource:dashboard.grafana.app/dashboards/x"}, in, "input must not be mutated")
+		require.Equal(t, []string{"x"}, out)
+	})
+	t.Run("folderObject", func(t *testing.T) {
+		in := []string{"folder:abc", "folder:def"}
+		out := folderObject(in)
+		require.Equal(t, []string{"folder:abc", "folder:def"}, in, "input must not be mutated")
+		require.Equal(t, []string{"abc", "def"}, out)
+	})
+}
+
+// TestIntegrationListDoesNotPoisonBatchCheckCache reproduces the end-to-end bug: with the query
+// cache enabled, a List call must not corrupt the cached ListObjects response that a subsequent
+// BatchCheck (identical request) reads, so a directly-granted resource stays authorized.
+func TestIntegrationListDoesNotPoisonBatchCheckCache(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	server := setupOpenFGAServer(t)
+	setup(t, server)
+	server.cfg.CacheSettings.CheckQueryCacheEnabled = true
+
+	ctx := newContextWithNamespace()
+
+	// 1. List populates the ListObjects query cache and strips idents for its own response.
+	_, err := server.List(ctx, &authzv1.ListRequest{
+		Namespace: namespace, Verb: utils.VerbList, Subject: "user:1",
+		Group: dashboardGroup, Resource: dashboardResource,
+	})
+	require.NoError(t, err)
+
+	// 2. BatchCheck issues the identical ListObjects request (cache hit) and must still resolve
+	//    user:1's direct grant on dashboard "1".
+	res, err := server.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+		Namespace: namespace, Subject: "user:1",
+		Checks: []*authzv1.BatchCheckItem{
+			{CorrelationId: "c", Verb: utils.VerbGet, Group: dashboardGroup, Resource: dashboardResource, Name: "1", Folder: ""},
+		},
+	})
+	require.NoError(t, err)
+	assert.True(t, res.GetResults()["c"].GetAllowed(), "directly-granted dashboard must stay authorized after a prior List")
+}
