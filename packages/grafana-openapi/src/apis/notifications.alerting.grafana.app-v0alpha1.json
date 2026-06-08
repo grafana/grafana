@@ -28,11 +28,11 @@
         }
       }
     },
-    "/adminconfigs": {
+    "/configs": {
       "get": {
-        "tags": ["AdminConfig"],
-        "description": "list or watch objects of kind AdminConfig",
-        "operationId": "listAdminConfig",
+        "tags": ["Config"],
+        "description": "list or watch objects of kind Config",
+        "operationId": "listConfig",
         "parameters": [
           {
             "name": "allowWatchBookmarks",
@@ -140,17 +140,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfigList"
+                  "$ref": "#/components/schemas/ConfigList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfigList"
+                  "$ref": "#/components/schemas/ConfigList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfigList"
+                  "$ref": "#/components/schemas/ConfigList"
                 }
               }
             }
@@ -160,13 +160,13 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "post": {
-        "tags": ["AdminConfig"],
-        "description": "create an AdminConfig",
-        "operationId": "createAdminConfig",
+        "tags": ["Config"],
+        "description": "create a Config",
+        "operationId": "createConfig",
         "parameters": [
           {
             "name": "dryRun",
@@ -200,12 +200,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AdminConfig"
+                "$ref": "#/components/schemas/Config"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/AdminConfig"
+                "$ref": "#/components/schemas/Config"
               }
             }
           },
@@ -217,12 +217,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               }
             }
@@ -232,12 +232,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               }
             }
@@ -247,12 +247,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               }
             }
@@ -262,13 +262,13 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "delete": {
-        "tags": ["AdminConfig"],
-        "description": "delete collection of AdminConfig",
-        "operationId": "deletecollectionAdminConfig",
+        "tags": ["Config"],
+        "description": "delete collection of Config",
+        "operationId": "deletecollectionConfig",
         "parameters": [
           {
             "name": "continue",
@@ -418,7 +418,7 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "parameters": [
@@ -433,23 +433,23 @@
         }
       ]
     },
-    "/adminconfigs/{name}": {
+    "/configs/{name}": {
       "get": {
-        "tags": ["AdminConfig"],
-        "description": "read the specified AdminConfig",
-        "operationId": "getAdminConfig",
+        "tags": ["Config"],
+        "description": "read the specified Config",
+        "operationId": "getConfig",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               }
             }
@@ -459,13 +459,13 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "put": {
-        "tags": ["AdminConfig"],
-        "description": "replace the specified AdminConfig",
-        "operationId": "replaceAdminConfig",
+        "tags": ["Config"],
+        "description": "replace the specified Config",
+        "operationId": "replaceConfig",
         "parameters": [
           {
             "name": "dryRun",
@@ -499,12 +499,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AdminConfig"
+                "$ref": "#/components/schemas/Config"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/AdminConfig"
+                "$ref": "#/components/schemas/Config"
               }
             }
           },
@@ -516,12 +516,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               }
             }
@@ -531,12 +531,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               }
             }
@@ -546,13 +546,13 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "delete": {
-        "tags": ["AdminConfig"],
-        "description": "delete an AdminConfig",
-        "operationId": "deleteAdminConfig",
+        "tags": ["Config"],
+        "description": "delete a Config",
+        "operationId": "deleteConfig",
         "parameters": [
           {
             "name": "dryRun",
@@ -636,13 +636,13 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "patch": {
-        "tags": ["AdminConfig"],
-        "description": "partially update the specified AdminConfig",
-        "operationId": "updateAdminConfig",
+        "tags": ["Config"],
+        "description": "partially update the specified Config",
+        "operationId": "updateConfig",
         "parameters": [
           {
             "name": "dryRun",
@@ -712,12 +712,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               }
             }
@@ -727,12 +727,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               }
             }
@@ -742,14 +742,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the AdminConfig",
+          "description": "name of the Config",
           "required": true,
           "schema": {
             "type": "string",
@@ -767,23 +767,23 @@
         }
       ]
     },
-    "/adminconfigs/{name}/status": {
+    "/configs/{name}/status": {
       "get": {
-        "tags": ["AdminConfig"],
-        "description": "read status of the specified AdminConfig",
-        "operationId": "getAdminConfigStatus",
+        "tags": ["Config"],
+        "description": "read status of the specified Config",
+        "operationId": "getConfigStatus",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               }
             }
@@ -793,13 +793,13 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "put": {
-        "tags": ["AdminConfig"],
-        "description": "replace status of the specified AdminConfig",
-        "operationId": "replaceAdminConfigStatus",
+        "tags": ["Config"],
+        "description": "replace status of the specified Config",
+        "operationId": "replaceConfigStatus",
         "parameters": [
           {
             "name": "dryRun",
@@ -833,12 +833,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AdminConfig"
+                "$ref": "#/components/schemas/Config"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/AdminConfig"
+                "$ref": "#/components/schemas/Config"
               }
             }
           },
@@ -850,12 +850,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               }
             }
@@ -865,12 +865,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               }
             }
@@ -880,13 +880,13 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "patch": {
-        "tags": ["AdminConfig"],
-        "description": "partially update status of the specified AdminConfig",
-        "operationId": "updateAdminConfigStatus",
+        "tags": ["Config"],
+        "description": "partially update status of the specified Config",
+        "operationId": "updateConfigStatus",
         "parameters": [
           {
             "name": "dryRun",
@@ -956,12 +956,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               }
             }
@@ -971,12 +971,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               }
             }
@@ -986,14 +986,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the AdminConfig",
+          "description": "name of the Config",
           "required": true,
           "schema": {
             "type": "string",
@@ -4594,7 +4594,7 @@
   },
   "components": {
     "schemas": {
-      "AdminConfig": {
+      "Config": {
         "type": "object",
         "required": ["kind", "apiVersion", "metadata", "spec"],
         "properties": {
@@ -4615,61 +4615,21 @@
             ]
           },
           "spec": {
-            "$ref": "#/components/schemas/AdminConfigSpec"
+            "$ref": "#/components/schemas/ConfigSpec"
           },
           "status": {
-            "$ref": "#/components/schemas/AdminConfigStatus"
+            "$ref": "#/components/schemas/ConfigStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
           {
             "group": "notifications.alerting.grafana.app",
-            "kind": "AdminConfig",
+            "kind": "Config",
             "version": "v0alpha1"
           }
         ]
       },
-      "AdminConfigAlertmanagerSpec": {
-        "description": "AlertmanagerSpec groups admin config for the current org's Alertmanager.",
-        "type": "object",
-        "properties": {
-          "externalSync": {
-            "description": "externalSync configures syncing the Alertmanager configuration from a\nMimir/Cortex datasource into the current org. The worker periodically\nfetches the upstream configuration and merges it into the current org's\nGrafana alertmanager configuration.",
-            "type": "object",
-            "properties": {
-              "datasourceUid": {
-                "description": "datasourceUid is the UID of the Mimir/Cortex Alertmanager datasource\nto sync from. Empty means no sync is configured for the current org.\nThe operator ini setting `unified_alerting.external_alertmanager_uid`\noverrides this when set; see status.alertmanager.externalSync.origin.",
-                "type": "string"
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      "AdminConfigAlertmanagerStatus": {
-        "description": "AlertmanagerStatus mirrors #AlertmanagerSpec with runtime observation.",
-        "type": "object",
-        "properties": {
-          "externalSync": {
-            "type": "object",
-            "properties": {
-              "datasourceUid": {
-                "description": "datasourceUid is the UID actually used on the last sync attempt; may\nlag spec until the next tick. When origin=ini, this is the ini\noverride value.",
-                "type": "string"
-              },
-              "origin": {
-                "description": "origin records which source supplied datasourceUid on the last run.\n\"ini\" (grafana.ini's unified_alerting.external_alertmanager_uid) wins\nover \"api\" (spec.alertmanager.externalSync.datasourceUid).",
-                "type": "string",
-                "enum": ["api", "ini"]
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      "AdminConfigCondition": {
+      "ConfigCondition": {
         "description": "Condition mirrors metav1.Condition. Inlined because the app-sdk codegen\nhere can't reference metav1.Condition from CUE. Field semantics are\nk8s-standard; reason values are produced by SyncReason in the syncer.",
         "type": "object",
         "required": ["type", "status", "lastTransitionTime", "reason"],
@@ -4697,7 +4657,7 @@
         },
         "additionalProperties": false
       },
-      "AdminConfigList": {
+      "ConfigList": {
         "type": "object",
         "required": ["metadata", "items"],
         "properties": {
@@ -4711,7 +4671,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/AdminConfig"
+                  "$ref": "#/components/schemas/Config"
                 }
               ]
             }
@@ -4732,32 +4692,51 @@
         "x-kubernetes-group-version-kind": [
           {
             "group": "notifications.alerting.grafana.app",
-            "kind": "AdminConfigList",
+            "kind": "ConfigList",
             "version": "v0alpha1"
           }
         ]
       },
-      "AdminConfigSpec": {
+      "ConfigSpec": {
         "type": "object",
         "properties": {
-          "alertmanager": {
-            "$ref": "#/components/schemas/AdminConfigAlertmanagerSpec"
+          "externalAlertmanagerSync": {
+            "type": "object",
+            "properties": {
+              "datasourceUid": {
+                "description": "datasourceUid is the UID of the Mimir/Cortex Alertmanager datasource to\nsync from. Empty means no sync is configured for the current org. The\noperator ini setting `unified_alerting.external_alertmanager_uid`\noverrides this when set; see status.externalAlertmanagerSync.origin.",
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
       },
-      "AdminConfigStatus": {
+      "ConfigStatus": {
         "type": "object",
         "properties": {
-          "alertmanager": {
-            "$ref": "#/components/schemas/AdminConfigAlertmanagerStatus"
-          },
           "conditions": {
             "description": "Standard k8s-style condition list. Each binary-state feature owns one\ncondition type. Current types:\n  - ExternalAlertmanagerSynced: True after a successful sync, False\n    after a failed attempt, Unknown until the first attempt.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/AdminConfigCondition"
+              "$ref": "#/components/schemas/ConfigCondition"
             }
+          },
+          "externalAlertmanagerSync": {
+            "type": "object",
+            "properties": {
+              "datasourceUid": {
+                "description": "datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.",
+                "type": "string"
+              },
+              "origin": {
+                "description": "origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_alertmanager_uid) wins over \"api\"\n(spec.externalAlertmanagerSync.datasourceUid).",
+                "type": "string",
+                "enum": ["api", "ini"]
+              }
+            },
+            "additionalProperties": false
           },
           "observedGeneration": {
             "description": "observedGeneration is the spec.generation last evaluated by the\ncontrollers writing this status.",

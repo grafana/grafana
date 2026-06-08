@@ -1,29 +1,20 @@
 package v0alpha1
 
-// AdminConfig is the per-org alerting admin config — a singleton resource
-// carrying admin-controllable settings for the alerting stack. Settings are
-// grouped into sections by area (e.g. alertmanager); each section's spec and
-// status live in their own file (e.g. alertmanager.cue) and are embedded into
-// the models below.
-AdminConfigSpec: {
-	// alertmanager groups admin config for the current org's Alertmanager.
-	alertmanager?: #AlertmanagerSpec
-}
+// Config is the per-org alerting admin config — a singleton resource carrying
+// admin-controllable settings for the org's alerting stack. Each feature's spec
+// and status live in their own file (e.g. externalAlertmanagerSync.cue) and are
+// merged into the models below.
+ConfigSpec: {}
 
-// AdminConfigStatus reports the runtime observation of admin alerting concerns
-// for an org. Written by the controllers that own fields on spec; clients read
-// only.
+// ConfigStatus reports the runtime observation of admin alerting concerns for an
+// org. Written by the controllers that own fields on spec; clients read only.
 //
 // Conditions are top-level (k8s convention: meta.SetStatusCondition, kubectl
-// wait --for=condition=, controller-runtime helpers). Per-area observation
-// state mirrors the spec sections.
-AdminConfigStatus: {
+// wait --for=condition=, controller-runtime helpers).
+ConfigStatus: {
 	// observedGeneration is the spec.generation last evaluated by the
 	// controllers writing this status.
 	observedGeneration?: int
-
-	// alertmanager mirrors spec.alertmanager with runtime observation.
-	alertmanager?: #AlertmanagerStatus
 
 	// Standard k8s-style condition list. Each binary-state feature owns one
 	// condition type. Current types:

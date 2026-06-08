@@ -1,4 +1,4 @@
-package adminconfig
+package config
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-// Authorize maps k8s verbs on AdminConfig (and its /status subresource)
+// Authorize maps k8s verbs on Config (and its /status subresource)
 // to three RBAC actions: read → Viewer, spec write → Admin (matches the
 // legacy /api/v1/ngalert/admin_config HTTP API), status write → service
 // identity only (sync worker owns it; see serviceIdentityPermissions in
@@ -27,18 +27,18 @@ func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authori
 	if attr.GetSubresource() == "status" {
 		switch attr.GetVerb() {
 		case "get", "list", "watch":
-			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingAdminConfigRead)
+			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingConfigRead)
 		case "create", "patch", "update":
-			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingAdminConfigStatusWrite)
+			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingConfigStatusWrite)
 		default:
 			return authorizer.DecisionNoOpinion, "", nil
 		}
 	} else {
 		switch attr.GetVerb() {
 		case "get", "list", "watch":
-			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingAdminConfigRead)
+			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingConfigRead)
 		case "create", "patch", "update", "delete", "deletecollection":
-			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingAdminConfigWrite)
+			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingConfigWrite)
 		default:
 			return authorizer.DecisionNoOpinion, "", nil
 		}
