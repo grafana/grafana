@@ -34,6 +34,23 @@ type ParserFactory interface {
 	GetParser(ctx context.Context, repo repository.Reader) (Parser, error)
 }
 
+// strictValidationExemptions lists the GroupResources that receive
+// FieldValidation=Ignore on apiserver writes instead of the default Strict.
+//
+// FIXME: the dashboard exemption is temporary while we improve validation.
+// New resources must be added here deliberately rather than relying on a
+// hardcoded equality check.
+var strictValidationExemptions = map[schema.GroupResource]struct{}{
+	DashboardResource.GroupResource(): {},
+}
+
+// skipsStrictValidation reports whether the given GroupResource is exempt from
+// strict field validation and should be written with FieldValidation=Ignore.
+func skipsStrictValidation(gr schema.GroupResource) bool {
+	_, ok := strictValidationExemptions[gr]
+	return ok
+}
+
 // Parser is a parser for a given repository
 //
 //go:generate mockery --name Parser --structname MockParser --inpackage --filename parser_mock.go --with-expecter
@@ -308,8 +325,8 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 	}
 
 	fieldValidation := "Strict"
-	if f.SkipStrictValidation || f.GVR == DashboardResource {
-		fieldValidation = "Ignore" // FIXME: dashboard exemption is temporary while we improve validation
+	if f.SkipStrictValidation || skipsStrictValidation(f.GVR.GroupResource()) {
+		fieldValidation = "Ignore"
 	}
 
 	// Handle deletion action separately
@@ -390,8 +407,8 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	identitySpan.End()
 
 	fieldValidation := "Strict"
-	if f.SkipStrictValidation || f.GVR == DashboardResource {
-		fieldValidation = "Ignore" // FIXME: dashboard exemption is temporary while we improve validation
+	if f.SkipStrictValidation || skipsStrictValidation(f.GVR.GroupResource()) {
+		fieldValidation = "Ignore"
 	}
 
 	// Check for ownership conflicts

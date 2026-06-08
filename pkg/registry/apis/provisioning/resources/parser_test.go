@@ -576,6 +576,73 @@ func TestDryRunDeletePopulatesExisting(t *testing.T) {
 	})
 }
 
+func TestSkipsStrictValidation(t *testing.T) {
+	// Behaviour must be identical to the previous hardcoded dashboard check:
+	// only the dashboard resource is exempt from strict validation.
+	require.True(t, skipsStrictValidation(DashboardResource.GroupResource()),
+		"dashboard resource must be exempt from strict validation")
+	require.False(t, skipsStrictValidation(FolderResource.GroupResource()),
+		"non-dashboard resources must use strict validation")
+}
+
+func TestParsedResource_DryRun_FieldValidation(t *testing.T) {
+	notFound := apierrors.NewNotFound(schema.GroupResource{Resource: "test"}, "my-resource")
+
+	tests := []struct {
+		name                string
+		gvr                 schema.GroupVersionResource
+		skipStrict          bool
+		wantFieldValidation string
+	}{
+		{
+			name:                "dashboard resource is exempt and uses Ignore",
+			gvr:                 DashboardResource,
+			wantFieldValidation: "Ignore",
+		},
+		{
+			name:                "non-dashboard resource uses Strict",
+			gvr:                 FolderResource,
+			wantFieldValidation: "Strict",
+		},
+		{
+			name:                "SkipStrictValidation forces Ignore regardless of resource",
+			gvr:                 FolderResource,
+			skipStrict:          true,
+			wantFieldValidation: "Ignore",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &MockDynamicResourceInterface{}
+			// No existing resource, so DryRun takes the Create path.
+			mockClient.On("Get", mock.Anything, "my-resource", metav1.GetOptions{}, mock.Anything).
+				Return(nil, notFound)
+
+			obj := &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "my-resource", "namespace": "default"},
+			}}
+			mockClient.On("Create", mock.Anything, obj,
+				mock.MatchedBy(func(opts metav1.CreateOptions) bool {
+					return opts.FieldValidation == tt.wantFieldValidation
+				}), mock.Anything).
+				Return(obj, nil)
+
+			parsed := &ParsedResource{
+				Action:               provisioning.ResourceActionCreate,
+				Obj:                  obj,
+				GVR:                  tt.gvr,
+				SkipStrictValidation: tt.skipStrict,
+				Client:               mockClient,
+				Repo:                 testRepoInfo(),
+			}
+
+			require.NoError(t, parsed.DryRun(context.Background()))
+			mockClient.AssertExpectations(t)
+		})
+	}
+}
+
 func newParsedResource(client *MockDynamicResourceInterface, opts ...func(*ParsedResource)) *ParsedResource {
 	obj := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "dashboard.grafana.app/v1",
