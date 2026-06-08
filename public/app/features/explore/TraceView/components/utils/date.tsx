@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import { round as _round, dropWhile as _dropWhile } from 'lodash';
-import moment from 'moment-timezone';
+
+import { dateTimeAsMoment, toDuration } from '@grafana/data';
 
 import { toFloatPrecision } from './number';
 
@@ -43,7 +44,7 @@ const quantizeDuration = (duration: number, floatPrecision: number, conversionFa
  * @returns {string} formatted, unit-labelled string with time in milliseconds
  */
 export function formatDate(duration: number) {
-  return moment(duration / ONE_MILLISECOND).format(STANDARD_DATE_FORMAT);
+  return dateTimeAsMoment(duration / ONE_MILLISECOND).format(STANDARD_DATE_FORMAT);
 }
 
 /**
@@ -51,7 +52,7 @@ export function formatDate(duration: number) {
  * @returns {string} formatted, unit-labelled string with time in milliseconds
  */
 export function formatTime(duration: number) {
-  return moment(duration / ONE_MILLISECOND).format(STANDARD_TIME_FORMAT);
+  return dateTimeAsMoment(duration / ONE_MILLISECOND).format(STANDARD_TIME_FORMAT);
 }
 
 /**
@@ -60,7 +61,7 @@ export function formatTime(duration: number) {
  */
 export function formatMillisecondTime(duration: number) {
   const targetDuration = quantizeDuration(duration, DEFAULT_MS_PRECISION, ONE_MILLISECOND);
-  return `${moment.duration(targetDuration / ONE_MILLISECOND).asMilliseconds()}ms`;
+  return `${toDuration(targetDuration / ONE_MILLISECOND).asMilliseconds()}ms`;
 }
 
 /**
@@ -69,7 +70,7 @@ export function formatMillisecondTime(duration: number) {
  */
 export function formatSecondTime(duration: number) {
   const targetDuration = quantizeDuration(duration, DEFAULT_MS_PRECISION, ONE_SECOND);
-  return `${moment.duration(targetDuration / ONE_MILLISECOND).asSeconds()}s`;
+  return `${toDuration(targetDuration / ONE_MILLISECOND).asSeconds()}s`;
 }
 
 /**

@@ -104,7 +104,7 @@ describe('Format Time Transformer', () => {
       '2023-07 8:00:00 pm',
       '2023-04 9:20:00 pm',
       '2023-07 11:34:49 pm',
-      'Invalid date',
+      'Invalid DateTime',
     ]);
   });
 });

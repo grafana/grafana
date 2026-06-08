@@ -1,6 +1,6 @@
-import moment from 'moment';
 import { Fragment } from 'react';
 
+import { dateTimeAsMoment } from '@grafana/data';
 import { Stack } from '@grafana/ui';
 import { type AlertmanagerConfig, type MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
@@ -38,9 +38,9 @@ export const isValidStartAndEndTime = (startTime?: string, endTime?: string): bo
 
   const timeUnit = 'HH:mm';
   // @ts-ignore typescript types here incorrect, sigh
-  const startDate = moment().startOf('day').add(startTime, timeUnit);
+  const startDate = dateTimeAsMoment().startOf('day').add(startTime, timeUnit);
   // @ts-ignore typescript types here incorrect, sigh
-  const endDate = moment().startOf('day').add(endTime, timeUnit);
+  const endDate = dateTimeAsMoment().startOf('day').add(endTime, timeUnit);
 
   if (startTime && endTime && startDate.isBefore(endDate)) {
     return true;

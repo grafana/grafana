@@ -1,5 +1,4 @@
 import { map as _map, each, indexOf, isArray, isString } from 'lodash';
-import moment from 'moment';
 import { lastValueFrom, merge, Observable, of, type OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { coerce, gte, SemVer, valid } from 'semver';
@@ -15,6 +14,7 @@ import {
   dateMath,
   type DateTime,
   dateTime,
+  dateTimeAsMoment,
   getSearchFilterScopedVar,
   type MetricFindValue,
   type QueryResultMetaStat,
@@ -653,9 +653,9 @@ export class GraphiteDatasource
           return date;
         }
 
-        return moment(parsedDate.toDate());
+        return dateTimeAsMoment(parsedDate.toDate());
       } else {
-        return moment(date.toDate());
+        return dateTimeAsMoment(date.toDate());
       }
     };
 

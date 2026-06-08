@@ -2,7 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { select } from 'react-select-event';
 
-import { type LogRowModel, dateTime } from '@grafana/data';
+import { type LogRowModel } from '@grafana/data';
 
 import { type LogContextProvider, SHOULD_INCLUDE_PIPELINE_OPERATIONS } from '../LogContextProvider';
 import { type ContextFilter, type LokiQuery } from '../types';
@@ -121,11 +121,12 @@ describe('LokiContextUi', () => {
     render(<LokiContextUi {...props} />);
 
     await waitFor(() => {
-      expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalledWith(props.row, props.origQuery, {
-        from: dateTime(props.row.timeEpochMs),
-        to: dateTime(props.row.timeEpochMs),
-        raw: { from: dateTime(props.row.timeEpochMs), to: dateTime(props.row.timeEpochMs) },
-      });
+      expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalledWith(props.row, props.origQuery, expect.anything());
+      const [, , timeRangeArg] = (props.logContextProvider.getInitContextFilters as jest.Mock).mock.calls[2];
+      expect(timeRangeArg.from.valueOf()).toBe(props.row.timeEpochMs);
+      expect(timeRangeArg.to.valueOf()).toBe(props.row.timeEpochMs);
+      expect(timeRangeArg.raw.from.valueOf()).toBe(props.row.timeEpochMs);
+      expect(timeRangeArg.raw.to.valueOf()).toBe(props.row.timeEpochMs);
     });
   });
 
