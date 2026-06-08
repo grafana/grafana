@@ -106,14 +106,14 @@ func (p *simpleClientProvider) GetOrCreateHandler(namespace string) client.K8sHa
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
-	dashboardService         dashboards.DashboardService
-	features                 featuremgmt.FeatureToggles
-	accessControl            accesscontrol.AccessControl
-	accessClient             authlib.AccessClient
-	legacy                   legacy.DashboardAccessor
-	unified                  resource.ResourceClient
-	dashboardPermissions     dashboards.PermissionsRegistrationService
-	dashboardPermissionsSvc  accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissionsSvc and add integration test afterDelete hook
+	dashboardService        dashboards.DashboardService
+	features                featuremgmt.FeatureToggles
+	accessControl           accesscontrol.AccessControl
+	accessClient            authlib.AccessClient
+	legacy                  legacy.DashboardAccessor
+	unified                 resource.ResourceClient
+	dashboardPermissions    dashboards.PermissionsRegistrationService
+	dashboardPermissionsSvc accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissionsSvc and add integration test afterDelete hook
 	// Do not access directly: use `resourcePermissionsClient(ctx)`. In embedded mode this is
 	// built lazily from restConfigProvider and is nil until the first call.
 	resourcePermissionsSvc   *dynamic.NamespaceableResourceInterface
@@ -1123,6 +1123,31 @@ var defaultDashboardPermissions = []map[string]any{
 	},
 }
 
+// buildDefaultDashboardPermissions returns the permission list applied to a newly created
+// root dashboard. The creator (a user or service account) is granted admin so they can
+// manage the dashboard they just created, mirroring the legacy SetDefaultPermissionsAfterCreate.
+func buildDefaultDashboardPermissions(id authlib.AuthInfo) []map[string]any {
+	var creatorKind string
+	switch id.GetIdentityType() {
+	case authlib.TypeUser:
+		creatorKind = string(iamv0alpha1.ResourcePermissionSpecPermissionKindUser)
+	case authlib.TypeServiceAccount:
+		creatorKind = string(iamv0alpha1.ResourcePermissionSpecPermissionKindServiceAccount)
+	}
+
+	if creatorKind == "" {
+		return defaultDashboardPermissions
+	}
+
+	permissions := make([]map[string]any, 0, len(defaultDashboardPermissions)+1)
+	permissions = append(permissions, map[string]any{
+		"kind": creatorKind,
+		"name": id.GetIdentifier(),
+		"verb": "admin",
+	})
+	return append(permissions, defaultDashboardPermissions...)
+}
+
 func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Context, key *resourcepb.ResourceKey, id authlib.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
 	if err != nil {
@@ -1138,6 +1163,20 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 
 	log := logging.FromContext(ctx)
 	log.Debug("setting default dashboard permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
+
+	// Setting the default permissions is a system operation triggered by the creation
+	// of the dashboard, not an action the requester performs directly. The creator does
+	// not yet have permission to manage permissions on the brand-new dashboard, so we use
+	// a service identity to write them through the ResourcePermission API.
+	nsInfo, err := authlib.ParseNamespace(obj.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("parse namespace: %w", err)
+	}
+	ctx = identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
+
+	// The creator gets admin on their dashboard, in addition to the default basic-role
+	// permissions. Anonymous and other non-user identities don't get an explicit grant.
+	permissions := buildDefaultDashboardPermissions(id)
 
 	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
 	name := fmt.Sprintf("%s-%s-%s", dashv1.DashboardResourceInfo.GroupVersionResource().Group, dashv1.DashboardResourceInfo.GroupVersionResource().Resource, obj.GetName())
@@ -1155,7 +1194,7 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 						"resource": dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
 						"name":     obj.GetName(),
 					},
-					"permissions": defaultDashboardPermissions,
+					"permissions": permissions,
 				},
 			},
 		}, metav1.UpdateOptions{})
@@ -1179,7 +1218,7 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 					"resource": dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
 					"name":     obj.GetName(),
 				},
-				"permissions": defaultDashboardPermissions,
+				"permissions": permissions,
 			},
 		},
 	}, metav1.CreateOptions{})
