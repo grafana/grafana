@@ -1,12 +1,7 @@
 import { type MetricFindValue, type TimeRange } from '@grafana/data';
 import { type PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
-import {
-  type AdHocFilterWithLabels,
-  type AdHocFiltersVariable,
-  type GroupByVariable,
-  sceneGraph,
-} from '@grafana/scenes';
+import { type AdHocFilterWithLabels, type AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 
 import { COMBINED_FILTER_LABEL_KEYS, DATASOURCE_UID, METRIC_NAME } from '../constants';
 
@@ -98,10 +93,10 @@ async function buildTagKeysResult(
 }
 
 /**
- * Provider for the GroupBy variable.
+ * Provider for the groupBy keys inside the unified AdHocFiltersVariable.
  * Shows promoted labels first, then remaining datasource labels alphabetically.
  */
-export function getGroupByTagKeysProvider(variable: GroupByVariable, _currentKey: string | null) {
+export function getGroupByTagKeysProvider(variable: AdHocFiltersVariable, _currentKey?: string | null) {
   const timeRange = sceneGraph.getTimeRange(variable).state.value;
   return buildTagKeysResult(timeRange, GROUPBY_PROMOTED);
 }

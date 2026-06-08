@@ -13,7 +13,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -329,7 +329,7 @@ func (d *AlertsRouter) datasourceToExternalAMcfg(ds *datasources.DataSource) (Ex
 func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, error) {
 	// We re-use the same parsing logic as the datasource to make sure it matches whatever output the user received
 	// when doing the healthcheck.
-	parsed, err := datasource.ValidateURL(datasources.DS_ALERTMANAGER, ds.URL)
+	parsed, err := validation.ValidateURL(datasources.DS_ALERTMANAGER, ds.URL)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse alertmanager datasource url: %w", err)
 	}

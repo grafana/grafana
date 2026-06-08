@@ -7,7 +7,7 @@ import { setupMswServer } from '../../../mockApi';
 import { grantUserPermissions } from '../../../mocks';
 import { KnownProvenance } from '../../../types/knownProvenance';
 import { isNotSupported, isProvisioned } from '../abilityUtils';
-import { NotificationTemplateAction } from '../types';
+import { NotificationTemplateAction, isInsufficientPermissions } from '../types';
 
 import {
   EXTERNAL_AM_VISIBILITY_PERMISSION,
@@ -245,7 +245,7 @@ describe('useNotificationTemplateAbility', () => {
   });
 
   describe('vanilla Prometheus alertmanager', () => {
-    it('should return NotSupported for all actions — no configuration API available', () => {
+    it('should return NotSupported for write actions — no configuration API available', () => {
       const amSource = setupVanillaPrometheusAlertmanager();
       grantUserPermissions([]);
 
@@ -260,7 +260,8 @@ describe('useNotificationTemplateAbility', () => {
         { wrapper: createAlertmanagerWrapper(amSource) }
       );
 
-      expect(isNotSupported(result.current.view)).toBe(true);
+      // View is always supported — returned as InsufficientPermissions when no perm is held.
+      expect(isInsufficientPermissions(result.current.view)).toBe(true);
       expect(isNotSupported(result.current.create)).toBe(true);
       expect(isNotSupported(result.current.update)).toBe(true);
       expect(isNotSupported(result.current.delete)).toBe(true);
@@ -269,9 +270,9 @@ describe('useNotificationTemplateAbility', () => {
   });
 
   describe('external (Mimir) alertmanager', () => {
-    it('should deny View and Create and list the expected required permissions', () => {
-      // The template hooks only check Grafana-AM-specific permissions, so external
-      // permissions are never sufficient. The snapshot captures the anyOfPermissions list.
+    it('should grant View and Create when external AM permissions are held', () => {
+      // The hook now selects EXTERNAL_AM_PERMISSIONS for non-Grafana AMs, so external
+      // permissions are correctly recognised and grant the corresponding abilities.
       setupMimirAlertmanager(MIMIR_DATASOURCE_UID);
       grantUserPermissions([
         EXTERNAL_AM_VISIBILITY_PERMISSION,
@@ -287,9 +288,8 @@ describe('useNotificationTemplateAbility', () => {
         { wrapper: createAlertmanagerWrapper(MIMIR_DATASOURCE_UID) }
       );
 
-      expect(result.current.view.granted).toBe(false);
-      expect(result.current.create.granted).toBe(false);
-      expect(result.current).toMatchSnapshot();
+      expect(result.current.view.granted).toBe(true);
+      expect(result.current.create.granted).toBe(true);
     });
   });
 });

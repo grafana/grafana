@@ -877,6 +877,78 @@ describe('LogLineDetails', () => {
     expect(await screen.findByText('Trace view')).toBeInTheDocument();
   });
 
+  test('Requests the trace by ID when the derived field uses a TraceQL trace-id lookup', async () => {
+    const entry = 'traceId=1234 msg="some message"';
+    const dataFrame = toDataFrame({
+      fields: [
+        { name: 'timestamp', config: {}, type: FieldType.time, values: [1] },
+        { name: 'entry', values: [entry] },
+        {
+          name: 'traceId',
+          values: ['1234'],
+          config: { links: [{ title: 'link title', url: 'localhost:3210/${__value.text}' }] },
+        },
+        { name: 'userId', values: ['5678'] },
+      ],
+    });
+    const log = createLogLine(
+      { entry, dataFrame, entryFieldIndex: 0, rowIndex: 0, datasourceUid: lokiDS.uid },
+      {
+        escape: false,
+        order: LogsSortOrder.Descending,
+        timeZone: 'browser',
+        virtualization: undefined,
+        wrapLogMessage: true,
+        getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame, vars: ScopedVars) => {
+          if (field.config && field.config.links) {
+            return field.config.links.map((link) => {
+              return {
+                href: '/explore',
+                interpolatedParams: {
+                  query: {
+                    datasource: {
+                      uid: tempoDS.uid,
+                    },
+                    refId: 'A',
+                    query: '{trace:id = "abcd1234"}',
+                    queryType: 'traceql',
+                  },
+                },
+                title: 'tempo',
+                target: '_blank',
+                origin: field,
+              };
+            });
+          }
+          return [];
+        },
+      }
+    );
+
+    const querySpy = jest.spyOn(tempoDS, 'query').mockReturnValueOnce(
+      of({
+        data: [
+          createDataFrame({
+            fields: [
+              { name: 'traceID', values: ['5d5d850e24d89509'], type: FieldType.string },
+              { name: 'spanID', values: ['5d5d850e24d89509'], type: FieldType.string },
+            ],
+          }),
+        ],
+      })
+    );
+
+    await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
+
+    await userEvent.click(screen.getByText('Trace'));
+
+    expect(await screen.findByText('Trace view')).toBeInTheDocument();
+    // The TraceQL lookup must be unwrapped to the bare trace ID so Tempo returns full trace spans.
+    expect(querySpy).toHaveBeenCalledWith(
+      expect.objectContaining({ targets: [expect.objectContaining({ query: 'abcd1234' })] })
+    );
+  });
+
   test('Shows a message if the trace cannot be retrieved', async () => {
     const entry = 'traceId=1234 msg="some message"';
     const dataFrame = toDataFrame({

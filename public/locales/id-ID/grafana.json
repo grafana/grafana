@@ -3291,6 +3291,10 @@
         "tooltip-description": "Cari mode senyap berdasarkan pencocok. Mencocokkan nama label, nilai, dan operator dengan tepat.",
         "tooltip-example": "Contoh: <1>env=~\"prod.*\"</1> menemukan mode senyap dengan pencocok <4>env=~\"prod.*\"</4>."
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "Hanya instans peringatan dalam keadaan menyala yang ditampilkan.",
       "operator": {
         "equals": "Sama dengan",
@@ -5469,9 +5473,6 @@
       "aria-label-dashboard-name": "dasbor {{dashboardName}}",
       "label-no-dashboards-found": "Tidak ada dasbor yang ditemukan"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Batalkan memuat dasbor"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5741,11 +5742,6 @@
         "label": "Ekspor menu dasbor"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Gagal mengambil dasbor"
-      }
-    },
     "filters-overview": {
       "apply": "Terapkan",
       "apply-close": "Terapkan dan tutup",
@@ -5902,11 +5898,6 @@
       "title-get-help-with-this-panel": "Dapatkan bantuan dengan panel ini",
       "troubleshooting-docs": "Dokumen pemecahan masalah"
     },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Gagal membuat model dasbor"
-      }
-    },
     "inspect": {
       "data-tab": "Data",
       "error-tab": "Kesalahan",
@@ -5995,13 +5986,6 @@
       },
       "ungroup-nested-text": "Ini akan membatalkan pengelompokan semua grup yang bersarang.",
       "ungroup-nested-title": "Batalkan pengelompokan grup yang bersarang?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Dasbor tidak ditemukan"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Dasbor tidak dapat diedit",
@@ -6320,10 +6304,6 @@
       },
       "undo": "Batalkan"
     },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Memuat & menginisialisasi dasbor",
-      "title-not-found": "Panel dengan id {{panelId}} tidak ditemukan"
-    },
     "source-link": {
       "title": "Sumber ({{provider}})",
       "tooltip": "Lihat file sumber di repositori"
@@ -6593,8 +6573,8 @@
     "version-history-comparison": {
       "button-restore": "Pulihkan ke versi {{version}}",
       "label-view-json-diff": "Lihat diff JSON",
-      "new-updated-by": "<0>Versi {{version}}</0> diperbarui oleh {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Versi {{version}}</0> diperbarui oleh {{editor}} {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Alihkan tombol pemilihan versi {{version}}",
@@ -7821,8 +7801,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "Lihat diff JSON",
-      "new-version-updated": "<0>Versi {{version}}</0> diperbarui oleh {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Versi {{version}}</0> diperbarui oleh {{editor}} {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "Membandingkan {{baseVersion}} <3></3> {{newVersion}}",
@@ -10169,7 +10149,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Bantuan <1></1>",
-      "access-help-details": "Mode akses mengontrol bagaimana permintaan ke sumber data akan ditangani.<1><i>Server</i></1> harus menjadi cara yang dipilih, jika tidak ada pernyataan lain yang ditentukan.",
+      "access-help-details": "",
       "access-help-title": "Akses bantuan",
       "access-label": "Akses",
       "allowed-cookies": "Cookie yang diizinkan",
@@ -10855,6 +10835,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -13126,8 +13110,8 @@
       "label-branch": "Cabang",
       "label-comment": "Komentar",
       "label-filename": "Nama file",
-      "label-folder": "Folder",
       "label-path": "Jalur",
+      "label-repository-folder": "",
       "path-exists": "",
       "placeholder-branch": "Pilih atau masukkan nama cabang",
       "placeholder-folder": "Pilih atau masukkan jalur folder",
@@ -13524,6 +13508,21 @@
       "request-failed": "Permintaan gagal",
       "resource-not-found": "Sumber daya tidak ditemukan. Silakan periksa URL atau repositori."
     },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
+    },
     "instance-sync-deprecation": {
       "message": "Sinkronisasi instance saat ini tidak sepenuhnya didukung dan memutus panel pustaka dan peringatan. Untuk menggunakan panel dan peringatan pustaka, putuskan koneksi repositori Anda dan hubungkan kembali menggunakan sinkronisasi folder.",
       "title": "Sinkronisasi instance tidak sepenuhnya didukung"
@@ -13802,7 +13801,8 @@
     "sync-job": {
       "error-no-job-id": "Gagal memulai pekerjaan",
       "error-no-repository-name": "Tidak ada nama repositori yang disediakan",
-      "error-starting-job": "Kesalahan saat memulai pekerjaan"
+      "error-starting-job": "Kesalahan saat memulai pekerjaan",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "Kesalahan saat melakukan pull pada sumber daya",
@@ -16513,7 +16513,7 @@
       "message": "Pengguna tidak ditemukan"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Token sesi Anda dicabut secara otomatis karena Anda telah mencapai <2>jumlah maksimum {{numSessions}} sesi bersamaan</2> untuk akun Anda.",
+      "auto-revoked": "",
       "resume-message": "<strong>Untuk melanjutkan sesi Anda, masuk lagi.</strong>Hubungi administrator Anda atau kunjungi halaman lisensi untuk meninjau kuota Anda jika Anda berulang kali dikeluarkan secara otomatis.",
       "sign-in": "Masuk",
       "title-you-have-been-automatically-signed-out": "Anda telah keluar secara otomatis"
