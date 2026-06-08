@@ -7,8 +7,11 @@ import { type RepositoryFormData } from '../types';
 const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined => {
   const singleResourceMessageTemplate = data.commit?.singleResourceMessageTemplate?.trim();
   const enforceTemplate = data.commit?.enforceTemplate;
+  const authorName = data.commit?.authorName?.trim();
+  const authorEmail = data.commit?.authorEmail?.trim();
+  const signingFormat = data.signingFormat && data.signingFormat !== 'none' ? data.signingFormat : undefined;
 
-  if (!singleResourceMessageTemplate && !enforceTemplate) {
+  if (!singleResourceMessageTemplate && !enforceTemplate && !authorName && !authorEmail) {
     return undefined;
   }
 
@@ -18,6 +21,15 @@ const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined
   }
   if (enforceTemplate) {
     commit.enforceTemplate = enforceTemplate;
+  }
+  if (authorName) {
+    commit.authorName = authorName;
+  }
+  if (authorEmail) {
+    commit.authorEmail = authorEmail;
+  }
+  if (signingFormat && (authorName || authorEmail)) {
+    commit.signingFormat = signingFormat;
   }
   return commit;
 };
@@ -139,6 +151,7 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     prWorkflow: spec.workflows.includes('branch'),
     enablePushToConfiguredBranch: spec.workflows.includes('write'),
     connectionName: spec.connection?.name,
+    signingFormat: spec.commit?.signingFormat ?? 'none',
   });
 };
 
