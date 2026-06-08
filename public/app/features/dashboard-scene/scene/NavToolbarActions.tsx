@@ -39,8 +39,8 @@ import { isLibraryPanel } from '../utils/utils';
 import { type DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
-import { LeftActions } from './new-toolbar/LeftActions';
-import { RightActions } from './new-toolbar/RightActions';
+import { Actions } from './new-toolbar/Actions';
+import { BreadcrumbActions } from './new-toolbar/BreadcrumbActions';
 import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
 
 interface Props {
@@ -52,8 +52,8 @@ export const NavToolbarActions = memo<Props>(({ dashboard }) => {
 
   return hasNewToolbar ? (
     <AppChromeUpdate
-      breadcrumbActions={<LeftActions dashboard={dashboard} />}
-      actions={<RightActions dashboard={dashboard} />}
+      breadcrumbActions={<BreadcrumbActions dashboard={dashboard} />}
+      actions={<Actions dashboard={dashboard} />}
     />
   ) : (
     <AppChromeUpdate actions={<ToolbarActions dashboard={dashboard} />} />

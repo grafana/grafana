@@ -117,6 +117,28 @@ func TestObjectStorageLock_LostChannel(t *testing.T) {
 	}
 }
 
+func TestObjectStorageLock_LostChannelStableAcrossAcquire(t *testing.T) {
+	backend := newFakeBackend(newConditionalBucket())
+	lock := newTestLock(t, backend, "test-lock", "instance-1", 100*time.Millisecond, 50*time.Millisecond)
+
+	lost := lock.Lost()
+	require.Equal(t, lost, lock.Lost())
+
+	ctx := t.Context()
+	require.NoError(t, lock.Acquire(ctx))
+	require.Equal(t, lost, lock.Lost())
+
+	// Delete the lock to simulate external loss. The channel obtained before
+	// Acquire should be the one that signals the loss.
+	require.NoError(t, backend.Delete(ctx, "test-lock", "instance-1"))
+
+	select {
+	case <-lost:
+	case <-time.After(1 * time.Second):
+		t.Fatal("expected pre-Acquire Lost channel to be signaled")
+	}
+}
+
 func TestNewObjectStorageLock_Validation(t *testing.T) {
 	backend := newFakeBackend(newConditionalBucket())
 	validKey := "test-lock"

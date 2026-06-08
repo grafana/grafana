@@ -132,7 +132,6 @@ describe('SharedPreferencesFunctional', () => {
         homeDashboardUID: dashboardToSelect.uid,
         queryHistory: { homeTab: '' },
         language: 'fr-FR',
-        regionalFormat: '',
         navbar: { bookmarkUrls: [] },
       },
     });
@@ -142,7 +141,7 @@ describe('SharedPreferencesFunctional', () => {
     const capture = captureRequests();
     const { user } = await setup();
 
-    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /Interface theme/ }), 'Sapphire dusk');
+    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /Interface theme/ }), 'Gilded grove');
 
     await user.click(screen.getByText('Save preferences'));
 
@@ -150,7 +149,7 @@ describe('SharedPreferencesFunctional', () => {
     const newPreferences = await getPrefsUpdateRequest(requests);
 
     expect(newPreferences).toMatchObject({
-      spec: { theme: 'sapphiredusk' },
+      spec: { theme: 'gildedgrove' },
     });
   });
 
@@ -180,7 +179,6 @@ describe('SharedPreferencesFunctional', () => {
         homeDashboardUID: '',
         queryHistory: { homeTab: '' },
         language: '',
-        regionalFormat: '',
         navbar: { bookmarkUrls: [] },
       },
     });
@@ -228,21 +226,5 @@ describe('SharedPreferencesFunctional', () => {
     await waitFor(() => expect(themeSelect).toBeDisabled());
 
     expect(screen.getByText('Save preferences').closest('button')).not.toBeDisabled();
-  });
-});
-
-describe('localeFormatPreference feature toggle', () => {
-  describe('when enabled', () => {
-    testWithFeatureToggles({ enable: ['localeFormatPreference'] });
-
-    it('renders the regional format field', async () => {
-      await setup();
-      expect(await screen.findByRole('combobox', { name: /region format/i })).toBeInTheDocument();
-    });
-  });
-
-  it('does not render the regional format field when disabled', async () => {
-    await setup();
-    expect(screen.queryByRole('combobox', { name: /region format/i })).not.toBeInTheDocument();
   });
 });

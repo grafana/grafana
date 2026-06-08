@@ -1,6 +1,5 @@
 import WKT from 'ol/format/WKT';
 import { type Geometry, Point } from 'ol/geom';
-import { type SortColumn } from 'react-data-grid';
 
 import {
   createDataFrame,
@@ -15,6 +14,7 @@ import {
   type LinkModel,
   type ValueLinkConfig,
 } from '@grafana/data';
+import { type SortColumn } from '@grafana/react-data-grid';
 import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { TableCellDisplayMode } from '../types';

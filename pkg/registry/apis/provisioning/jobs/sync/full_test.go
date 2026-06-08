@@ -1696,6 +1696,85 @@ func TestApplyChanges_DefersBothRenamedAndOrphanFolderDeletion(t *testing.T) {
 	}, callOrder)
 }
 
+func TestApplyChanges_ExistingHashPassedToWrite(t *testing.T) {
+	t.Run("existing hash from change.Existing is passed as WriteResourceOption", func(t *testing.T) {
+		repoResources := resources.NewMockRepositoryResources(t)
+		clients := resources.NewMockResourceClients(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+		tracer := tracing.NewNoopTracerService()
+		metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
+
+		changes := []ResourceFileChange{
+			{
+				Action: repository.FileActionUpdated,
+				Path:   "myfolder/dashboard.json",
+				Existing: &provisioning.ResourceListItem{
+					Name:     "dash-uid",
+					Group:    "dashboard.grafana.app",
+					Resource: "dashboards",
+					Hash:     "existing-hash",
+				},
+			},
+		}
+
+		progress.On("SetTotal", mock.Anything, 1).Return()
+		progress.On("TooManyErrors").Return(nil)
+		progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+
+		repoResources.On("ReplaceResourceFromFile",
+			mock.Anything, "myfolder/dashboard.json", "test-ref", "dash-uid",
+			schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards"},
+			mock.MatchedBy(func(opt resources.WriteResourceOption) bool { return opt != nil }),
+		).Return("dash-uid", schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}, nil)
+
+		progress.On("Record", mock.Anything, mock.Anything).Return()
+
+		err := applyChanges(
+			context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
+			quotas.NewInMemoryQuotaTracker(0, 0), true,
+		)
+		require.NoError(t, err)
+	})
+
+	t.Run("no option passed when existing has no hash", func(t *testing.T) {
+		repoResources := resources.NewMockRepositoryResources(t)
+		clients := resources.NewMockResourceClients(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+		tracer := tracing.NewNoopTracerService()
+		metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
+
+		changes := []ResourceFileChange{
+			{
+				Action: repository.FileActionUpdated,
+				Path:   "myfolder/dashboard.json",
+				Existing: &provisioning.ResourceListItem{
+					Name:     "dash-uid",
+					Group:    "dashboard.grafana.app",
+					Resource: "dashboards",
+					Hash:     "",
+				},
+			},
+		}
+
+		progress.On("SetTotal", mock.Anything, 1).Return()
+		progress.On("TooManyErrors").Return(nil)
+		progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+
+		repoResources.On("ReplaceResourceFromFile",
+			mock.Anything, "myfolder/dashboard.json", "test-ref", "dash-uid",
+			schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards"},
+		).Return("dash-uid", schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}, nil)
+
+		progress.On("Record", mock.Anything, mock.Anything).Return()
+
+		err := applyChanges(
+			context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
+			quotas.NewInMemoryQuotaTracker(0, 0), true,
+		)
+		require.NoError(t, err)
+	})
+}
+
 func TestApplyChanges_SortsFolderUpdatesShallowestFirst(t *testing.T) {
 	repoResources := resources.NewMockRepositoryResources(t)
 	clients := resources.NewMockResourceClients(t)

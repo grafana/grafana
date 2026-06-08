@@ -554,6 +554,102 @@ export const partialTabSpecSchema = z
   })
   .describe('Fields to update (partial TabsLayoutTabSpec)');
 
+// Annotation building-block schemas (v2beta1)
+
+const annotationPanelFilterSchema = z.object({
+  exclude: z
+    .boolean()
+    .optional()
+    .describe('When true, the listed panels are excluded; otherwise only those panels show the annotation'),
+  ids: z.array(z.number()).describe('Panel IDs to include or exclude'),
+});
+
+const annotationEventFieldMappingSchema = z.object({
+  source: z.string().optional().describe('Source type for the field value (e.g., "field", "text")'),
+  value: z.string().optional().describe('Constant value to use when source is "text"'),
+  regex: z.string().optional().describe('Regular expression applied to the field value'),
+});
+
+export const annotationQueryKindSchema = z.object({
+  kind: z.literal('AnnotationQuery').optional().default('AnnotationQuery'),
+  spec: z.object({
+    name: z.string().describe('Annotation name. Must be unique within the dashboard.'),
+    enable: z.boolean().optional().default(true).describe('Whether the annotation is enabled by default'),
+    hide: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe('Whether the annotation toggle is hidden from the dashboard controls'),
+    iconColor: z
+      .string()
+      .optional()
+      .default('red')
+      .describe('Icon color for the annotation marker (e.g., "red", "blue", semantic color name)'),
+    builtIn: z
+      .boolean()
+      .optional()
+      .describe(
+        'Built-in Grafana dashboard annotations layer. Exactly one built-in annotation exists per dashboard and is managed by Grafana.'
+      ),
+    placement: z
+      .literal('inControlsMenu')
+      .optional()
+      .describe('Render the annotation toggle in the dashboard controls dropdown menu instead of inline'),
+    filter: annotationPanelFilterSchema.optional().describe('Limit the annotation to specific panels'),
+    mappings: z
+      .record(z.string(), annotationEventFieldMappingSchema)
+      .optional()
+      .describe('Map data frame fields to annotation event fields'),
+    legacyOptions: z
+      .record(z.string(), z.unknown())
+      .optional()
+      .describe('Catch-all bag for datasource-specific properties'),
+    query: dataQueryKindSchema.describe(
+      'Annotation query (DataQueryKind). For built-in dashboard annotations use group: "grafana".'
+    ),
+  }),
+});
+
+const partialAnnotationPanelFilterSchema = z.object({
+  exclude: z
+    .boolean()
+    .optional()
+    .describe('When true, the listed panels are excluded; otherwise only those panels show the annotation'),
+  ids: z.array(z.number()).optional().describe('Panel IDs to include or exclude (replaces existing array)'),
+});
+
+const partialDataQueryKindSchema = z.object({
+  kind: z.literal('DataQuery').optional(),
+  group: z.string().optional().describe('Datasource type (e.g., "prometheus", "loki", "grafana")'),
+  version: z.string().optional(),
+  datasource: z
+    .object({
+      name: z.string().optional(),
+    })
+    .optional(),
+  spec: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe('Query-specific fields. Deep-merged into the existing query spec.'),
+});
+
+export const partialAnnotationQueryKindSchema = z.object({
+  kind: z.literal('AnnotationQuery').optional(),
+  spec: z
+    .object({
+      name: z.string().optional().describe('Rename the annotation. Must remain unique within the dashboard.'),
+      enable: z.boolean().optional(),
+      hide: z.boolean().optional(),
+      iconColor: z.string().optional(),
+      placement: z.literal('inControlsMenu').optional(),
+      filter: partialAnnotationPanelFilterSchema.optional(),
+      mappings: z.record(z.string(), annotationEventFieldMappingSchema).optional(),
+      legacyOptions: z.record(z.string(), z.unknown()).optional(),
+      query: partialDataQueryKindSchema.optional().describe('Partial query update; deep-merged into existing query.'),
+    })
+    .describe('Fields to update (partial AnnotationQuerySpec). Omitted fields are left unchanged.'),
+});
+
 // Payload schemas -- one per mutation command.
 // These compose the building-block schemas above into the exact shape
 // each command's `payload` field expects.
@@ -597,6 +693,25 @@ export const listVariablesPayloadSchema = z.object({
     .describe(
       'Variable scope: "/" (default) = list dashboard-level variables; "/rows/N" or "/tabs/N" = list variables for that section only.'
     ),
+});
+
+// Annotation payload schemas
+
+export const addAnnotationPayloadSchema = z.object({
+  annotation: annotationQueryKindSchema.describe('Annotation definition (AnnotationQueryKind)'),
+  position: z.number().optional().describe('Position in annotations list (optional, appends if not set)'),
+});
+
+export const updateAnnotationPayloadSchema = z.object({
+  name: z.string().describe('Annotation name to update'),
+  annotation: partialAnnotationQueryKindSchema.describe(
+    'Partial annotation update. Only provided fields are applied. Object fields are deep-merged. ' +
+      'Arrays (e.g. filter.ids) are replaced wholesale.'
+  ),
+});
+
+export const removeAnnotationPayloadSchema = z.object({
+  name: z.string().describe('Annotation name to remove'),
 });
 
 // Layout payload schemas
@@ -1049,6 +1164,12 @@ export const payloads = {
   removeVariable: removeVariablePayloadSchema.describe('Remove a template variable'),
   updateVariable: updateVariablePayloadSchema.describe('Update an existing template variable'),
   listVariables: listVariablesPayloadSchema.describe('List template variables for a scope (dashboard or section)'),
+  addAnnotation: addAnnotationPayloadSchema.describe('Add a new dashboard annotation layer'),
+  updateAnnotation: updateAnnotationPayloadSchema.describe(
+    'Update an existing dashboard annotation layer by name (partial update, deep-merge)'
+  ),
+  removeAnnotation: removeAnnotationPayloadSchema.describe('Remove a dashboard annotation layer by name'),
+  listAnnotations: emptyPayloadSchema.describe('List all annotation layers on the dashboard'),
   enterEditMode: emptyPayloadSchema.describe('Enter dashboard edit mode'),
   getLayout: getLayoutPayloadSchema.describe('Get the dashboard layout tree and trimmed elements map'),
   addRow: addRowPayloadSchema.describe('Add a new row to the dashboard layout'),

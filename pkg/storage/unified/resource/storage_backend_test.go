@@ -338,7 +338,7 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 					require.Equal(t, rvs[j], writtenEvent.ResourceVersion)
 
 					if j > 0 {
-						require.Equal(t, rvs[j-1], writtenEvent.PreviousRV)
+						require.Equal(t, rvs[j-1], writtenEvent.PreviousRV) // #nosec G602 -- bounds checked by `j > 0`
 					}
 				case <-ctx.Done():
 					require.FailNow(t, "timed out waiting for events")
@@ -1296,7 +1296,7 @@ func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, n
 	// whose latest RV is slightly before sinceRv. Add these to each
 	// expectation's changes map so the test can validate them.
 	for _, expect := range expectations {
-		lookbackRv := subtractDurationFromSnowflake(expect.rv, backend.searchLookback)
+		lookbackRv := SubtractDurationFromSnowflake(expect.rv, backend.searchLookback)
 		for name, mr := range allResources {
 			if _, ok := expect.changes[name]; ok {
 				continue // already expected

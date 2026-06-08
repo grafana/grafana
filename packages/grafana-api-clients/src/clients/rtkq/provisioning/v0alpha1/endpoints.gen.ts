@@ -549,10 +549,6 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/test`, method: 'POST', body: queryArg.body }),
         invalidatesTags: ['Repository'],
       }),
-      getRepositoryWebhook: build.query<GetRepositoryWebhookApiResponse, GetRepositoryWebhookApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/webhook` }),
-        providesTags: ['Repository'],
-      }),
       createRepositoryWebhook: build.mutation<CreateRepositoryWebhookApiResponse, CreateRepositoryWebhookApiArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/webhook`, method: 'POST' }),
         invalidatesTags: ['Repository'],
@@ -1437,11 +1433,6 @@ export type CreateRepositoryTestApiArg = {
     status?: any;
   };
 };
-export type GetRepositoryWebhookApiResponse = /** status 200 OK */ WebhookResponse;
-export type GetRepositoryWebhookApiArg = {
-  /** name of the WebhookResponse */
-  name: string;
-};
 export type CreateRepositoryWebhookApiResponse = /** status 200 OK */ WebhookResponse;
 export type CreateRepositoryWebhookApiArg = {
   /** name of the WebhookResponse */
@@ -1614,6 +1605,14 @@ export type GitHubConnectionConfig = {
   /** GitHub App installation ID */
   installationID: string;
 };
+export type GitHubEnterpriseConnectionConfig = {
+  /** GitHub App ID */
+  appID: string;
+  /** GitHub App installation ID */
+  installationID: string;
+  /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
+  serverUrl: string;
+};
 export type GitlabConnectionConfig = {
   /** App client ID */
   clientID: string;
@@ -1625,6 +1624,8 @@ export type ConnectionSpec = {
   description?: string;
   /** GitHub connection configuration Only applicable when provider is "github" */
   github?: GitHubConnectionConfig;
+  /** GitHub Enterprise Server connection configuration Only applicable when provider is "githubEnterprise" */
+  githubEnterprise?: GitHubEnterpriseConnectionConfig;
   /** Gitlab connection configuration Only applicable when provider is "gitlab" */
   gitlab?: GitlabConnectionConfig;
   /** The connection display name (shown in the UI) */
@@ -1634,8 +1635,9 @@ export type ConnectionSpec = {
     Possible enum values:
      - `"bitbucket"`
      - `"github"`
+     - `"githubEnterprise"`
      - `"gitlab"` */
-  type: 'bitbucket' | 'github' | 'gitlab';
+  type: 'bitbucket' | 'github' | 'githubEnterprise' | 'gitlab';
   /** The connection URL */
   url?: string;
 };
@@ -1783,7 +1785,7 @@ export type FixFolderMetadataJobOptions = {
   ref?: string;
 };
 export type MigrateJobOptions = {
-  /** Message to use when committing the changes in a single commit */
+  /** Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty. */
   message?: string;
   /** Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported. */
   resources?: ResourceRef[];
@@ -1817,7 +1819,7 @@ export type ExportJobOptions = {
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
-  /** Message to use when committing the changes in a single commit */
+  /** Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty. */
   message?: string;
   /** FIXME: we should validate this in admission hooks Prefix in target file system */
   path?: string;
@@ -1849,6 +1851,8 @@ export type JobSpec = {
   delete?: DeleteJobOptions;
   /** Options when the action is `fix-folder-metadata` */
   fixFolderMetadata?: FixFolderMetadataJobOptions;
+  /** Commit message for this job. Applies to job actions that produce commits (delete, move, migrate, push, fixFolderMetadata). When empty, the backend falls back to the action-specific message field (ExportJobOptions.Message, MigrateJobOptions.Message) for backwards compatibility, then to a built-in default. */
+  message?: string;
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;
   /** Move when the action is `move` */
@@ -1945,8 +1949,16 @@ export type BitbucketRepositoryConfig = {
   /** The repository URL (e.g. `https://bitbucket.org/example/test`). */
   url?: string;
 };
+export type BranchOptions = {
+  /** When true, the branch name field in Save drawers is read-only. */
+  enforceTemplate?: boolean;
+  /** Template for the branch name created in branch workflow. Supports variables: {{action}}, {{resourceKind}}, {{title}}, {{userLogin}}, {{random}}. {{random}} is a 6-character alphanumeric token generated at render time to avoid collisions. The result is sanitised to a valid git ref (lowercase, alphanumeric + dashes, max 100 chars). When empty, the current auto-generated name is preserved. */
+  nameTemplate?: string;
+};
 export type CommitOptions = {
-  /** Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}. When empty, a built-in default is used (e.g. "Save dashboard: <title>"). */
+  /** When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. The Grafana-saved-by trailer is always appended regardless of this setting. */
+  enforceTemplate?: boolean;
+  /** Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}, {{userName}}, {{userLogin}}, {{userEmail}}. When empty, a built-in default is used (e.g. "Save dashboard: <title>"). */
   singleResourceMessageTemplate?: string;
 };
 export type ConnectionInfo = {
@@ -1976,6 +1988,18 @@ export type GitHubRepositoryConfig = {
   /** The repository URL (e.g. `https://github.com/example/test`). */
   url?: string;
 };
+export type GitHubEnterpriseRepositoryConfig = {
+  /** The branch to use in the repository. */
+  branch: string;
+  /** Whether we should show dashboard previews for pull requests. */
+  generateDashboardPreviews?: boolean;
+  /** Path is the subdirectory for the Grafana data inside the repository. */
+  path?: string;
+  /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
+  serverUrl?: string;
+  /** The repository URL on the GHES server (e.g. `https://ghes.example.com/example/test`). */
+  url?: string;
+};
 export type GitLabRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
@@ -1989,6 +2013,12 @@ export type GitLabRepositoryConfig = {
 export type LocalRepositoryConfig = {
   path?: string;
 };
+export type PullRequestOptions = {
+  /** When true, the PR title field in Save drawers is read-only. */
+  enforceTemplate?: boolean;
+  /** Template for pull request titles. Supports the same variables as BranchOptions.NameTemplate ({{random}} is available but rarely useful here). When empty, the first line of the commit message is used. */
+  titleTemplate?: string;
+};
 export type SyncOptions = {
   /** Enabled must be saved as true before any sync job will run */
   enabled: boolean;
@@ -1998,8 +2028,9 @@ export type SyncOptions = {
     
     Possible enum values:
      - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
+     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment. NOTE: The folderless target is not fully implemented yet. It is gated by the provisioning `allowed_targets` setting (which defaults to `folder`), so it must be explicitly enabled, and its behavior may still change.
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
-  target: 'folder' | 'instance';
+  target: 'folder' | 'folderless' | 'instance';
 };
 export type WebhookConfig = {
   /** Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL. */
@@ -2008,6 +2039,8 @@ export type WebhookConfig = {
 export type RepositorySpec = {
   /** The repository on Bitbucket. Mutually exclusive with local | github | git. */
   bitbucket?: BitbucketRepositoryConfig;
+  /** Branch naming options. Only meaningful when Workflows includes "branch". */
+  branch?: BranchOptions;
   /** Commit message options. Currently only contains the template used by single-resource UI operations; future siblings (bulk, sync) can live here. */
   commit?: CommitOptions;
   /** The connection the repository references. This means the Repository is interacting with git via a Connection. */
@@ -2018,10 +2051,14 @@ export type RepositorySpec = {
   git?: GitRepositoryConfig;
   /** The repository on GitHub. Mutually exclusive with local | github | git. */
   github?: GitHubRepositoryConfig;
+  /** The repository on a self-managed GitHub Enterprise Server (GHES). Mutually exclusive with local | github | git. */
+  githubEnterprise?: GitHubEnterpriseRepositoryConfig;
   /** The repository on GitLab. Mutually exclusive with local | github | git. */
   gitlab?: GitLabRepositoryConfig;
   /** The repository on the local file system. Mutually exclusive with local | github. */
   local?: LocalRepositoryConfig;
+  /** Pull request options. Only meaningful when Workflows includes "branch". */
+  pullRequest?: PullRequestOptions;
   /** Sync settings -- how values are pulled from the repository into grafana */
   sync: SyncOptions;
   /** The repository display name (shown in the UI) */
@@ -2032,9 +2069,10 @@ export type RepositorySpec = {
      - `"bitbucket"`
      - `"git"`
      - `"github"`
+     - `"githubEnterprise"`
      - `"gitlab"`
      - `"local"` */
-  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+  type: 'bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local';
   /** Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider. */
   webhook?: WebhookConfig;
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
@@ -2140,9 +2178,10 @@ export type ResourceRepositoryInfo = {
      - `"bitbucket"`
      - `"git"`
      - `"github"`
+     - `"githubEnterprise"`
      - `"gitlab"`
      - `"local"` */
-  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+  type: 'bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local';
 };
 export type Unstructured = {
   [key: string]: any;
@@ -2246,6 +2285,14 @@ export type WebhookResponse = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
 };
+export type SupportedResource = {
+  /** Disabled reports whether the resource is declared but not acted on by provisioning. Active resources omit this field. */
+  disabled?: boolean;
+  /** Group is the API group of the resource (e.g. "dashboard.grafana.app"). */
+  group: string;
+  /** Kind is the kind of the resource (e.g. "Dashboard"). */
+  kind: string;
+};
 export type RepositoryView = {
   /** For git, this is the target branch */
   branch?: string;
@@ -2259,8 +2306,9 @@ export type RepositoryView = {
     
     Possible enum values:
      - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
+     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment. NOTE: The folderless target is not fully implemented yet. It is gated by the provisioning `allowed_targets` setting (which defaults to `folder`), so it must be explicitly enabled, and its behavior may still change.
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
-  target: 'folder' | 'instance';
+  target: 'folder' | 'folderless' | 'instance';
   /** Repository display */
   title: string;
   /** The repository type
@@ -2269,9 +2317,10 @@ export type RepositoryView = {
      - `"bitbucket"`
      - `"git"`
      - `"github"`
+     - `"githubEnterprise"`
      - `"gitlab"`
      - `"local"` */
-  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+  type: 'bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local';
   /** For git, this is the target URL */
   url?: string;
   /** The supported workflows */
@@ -2281,11 +2330,13 @@ export type RepositoryViewList = {
   /** Whether image rendering is allowed for dashboard previews */
   allowImageRendering: boolean;
   /** The valid targets (can disable instance or folder types) */
-  allowedTargets?: ('folder' | 'instance')[];
+  allowedTargets?: ('folder' | 'folderless' | 'instance')[];
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */
-  availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'gitlab' | 'local')[];
+  availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local')[];
+  /** AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Disabled). */
+  availableResources?: SupportedResource[];
   items: RepositoryView[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
@@ -2376,8 +2427,6 @@ export const {
   useReplaceRepositoryStatusMutation,
   useUpdateRepositoryStatusMutation,
   useCreateRepositoryTestMutation,
-  useGetRepositoryWebhookQuery,
-  useLazyGetRepositoryWebhookQuery,
   useCreateRepositoryWebhookMutation,
   useGetFrontendSettingsQuery,
   useLazyGetFrontendSettingsQuery,

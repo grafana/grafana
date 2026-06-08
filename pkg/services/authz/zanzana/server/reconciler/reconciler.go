@@ -98,7 +98,7 @@ func (c Config) listPageSize() int64 {
 var DefaultCRDs = []schema.GroupVersionResource{
 	folderv1.FolderResourceInfo.GroupVersionResource(),
 	iamv0.ResourcePermissionInfo.GroupVersionResource(),
-	iamv0.TeamBindingResourceInfo.GroupVersionResource(),
+	iamv0.TeamResourceInfo.GroupVersionResource(),
 	iamv0.UserResourceInfo.GroupVersionResource(),
 	iamv0.ServiceAccountResourceInfo.GroupVersionResource(),
 }

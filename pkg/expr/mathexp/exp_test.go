@@ -32,22 +32,6 @@ func unixTimePointer(sec, nsec int64) *time.Time {
 	return &t
 }
 
-func float64Pointer(f float64) *float64 {
-	return &f
-}
-
-func strPointer(s string) *string {
-	return &s
-}
-
-func int64Pointer(i int64) *int64 {
-	return &i
-}
-
-func boolPointer(b bool) *bool {
-	return &b
-}
-
 func resultValuesNoErr(v ...Value) Results {
 	return Results{
 		Values: v,
@@ -58,9 +42,9 @@ func resultValuesNoErr(v ...Value) Results {
 var aSeries = Vars{
 	"A": resultValuesNoErr(
 		makeSeries("temp", nil, tp{
-			time.Unix(5, 0), float64Pointer(2),
+			time.Unix(5, 0), new(2.),
 		}, tp{
-			time.Unix(10, 0), float64Pointer(1),
+			time.Unix(10, 0), new(1.),
 		}),
 	),
 }
@@ -68,34 +52,34 @@ var aSeries = Vars{
 var aSeriesbNumber = Vars{
 	"A": resultValuesNoErr(
 		makeSeries("temp", nil, tp{
-			time.Unix(5, 0), float64Pointer(2),
+			time.Unix(5, 0), new(2.),
 		}, tp{
-			time.Unix(10, 0), float64Pointer(1),
+			time.Unix(10, 0), new(1.),
 		}),
 	),
 	"B": resultValuesNoErr(
-		makeNumber("volt", data.Labels{"id": "1"}, float64Pointer(7)),
+		makeNumber("volt", data.Labels{"id": "1"}, new(7.)),
 	),
 }
 
 var twoSeriesSets = Vars{
 	"A": resultValuesNoErr(
 		makeSeries("temp", data.Labels{"sensor": "a", "turbine": "1"}, tp{
-			time.Unix(5, 0), float64Pointer(6),
+			time.Unix(5, 0), new(6.),
 		}, tp{
-			time.Unix(10, 0), float64Pointer(8),
+			time.Unix(10, 0), new(8.),
 		}),
 		makeSeries("temp", data.Labels{"sensor": "b", "turbine": "1"}, tp{
-			time.Unix(5, 0), float64Pointer(10),
+			time.Unix(5, 0), new(10.),
 		}, tp{
-			time.Unix(10, 0), float64Pointer(16),
+			time.Unix(10, 0), new(16.),
 		}),
 	),
 	"B": resultValuesNoErr(
 		makeSeries("efficiency", data.Labels{"turbine": "1"}, tp{
-			time.Unix(5, 0), float64Pointer(.5),
+			time.Unix(5, 0), new(.5),
 		}, tp{
-			time.Unix(10, 0), float64Pointer(.2),
+			time.Unix(10, 0), new(.2),
 		}),
 	),
 }
@@ -103,4 +87,4 @@ var twoSeriesSets = Vars{
 // NaN is just to make the calls a little cleaner, the one
 // call is not for any sort of equality side effect in tests.
 // note: cmp.Equal must be used to test Equality for NaNs.
-var NaN = float64Pointer(math.NaN())
+var NaN = new(math.NaN())

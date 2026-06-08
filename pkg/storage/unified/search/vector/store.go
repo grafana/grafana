@@ -25,6 +25,19 @@ type VectorBackend interface {
 
 	Upsert(ctx context.Context, vectors []Vector) error
 
+	// UpsertReplaceSubresources replaces, in a single transaction, the
+	// stored subresource set for each (model, namespace, resource, uid)
+	// present in `vectors`: any stored subresource for those tuples that
+	// isn't being upserted is deleted, then the input vectors are
+	// upserted. Used by the reconciler so stale-row cleanup and
+	// the new write commit atomically.
+	//
+	// TODO: only re-embed and upsert subresources whose content actually
+	// changed since the last write. Today the reconciler re-embeds every
+	// panel on any dashboard write, which is wasteful when only one
+	// panel changed.
+	UpsertReplaceSubresources(ctx context.Context, vectors []Vector) error
+
 	// Delete removes every resource and subresource under `uid`. model must be non-empty.
 	Delete(ctx context.Context, namespace, model, resource, uid string) error
 
@@ -42,8 +55,19 @@ type VectorBackend interface {
 	// resources that already have embeddings.
 	Exists(ctx context.Context, namespace, model, resource, uid string) (bool, error)
 
-	// GetLatestRV is the global write-pipeline checkpoint. 0 if empty.
+	// GetLatestRV is the reconciler checkpoint. 0 if never advanced.
 	GetLatestRV(ctx context.Context) (int64, error)
+
+	// SetLatestRV advances the reconciler checkpoint. The update is
+	// monotonic — a smaller rv is silently ignored, so concurrent callers
+	// can't rewind the cursor.
+	SetLatestRV(ctx context.Context, rv int64) error
+
+	// TryAcquireReconcilerLock obtains a session-level advisory lock so only
+	// one reconciler runs across replicas. Same release/leak
+	// semantics as TryAcquireBackfillLock; the locks use distinct names so
+	// they don't contend with each other.
+	TryAcquireReconcilerLock(ctx context.Context) (release func(), acquired bool, err error)
 
 	// ListIncompleteBackfillJobs returns one row per active backfill job for
 	// the given model. Filtering server-side keeps instances configured for

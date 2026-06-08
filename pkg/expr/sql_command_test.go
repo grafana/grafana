@@ -196,7 +196,7 @@ func TestHandleSqlInput(t *testing.T) {
 			frames: data.Frames{
 				data.NewFrame("",
 					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-					data.NewField("value", nil, []*float64{fp(2)}),
+					data.NewField("value", nil, []*float64{new(2.0)}),
 				),
 			},
 			expectFrame: true,
@@ -206,7 +206,7 @@ func TestHandleSqlInput(t *testing.T) {
 			frames: data.Frames{
 				data.NewFrame("",
 					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-					data.NewField("value", data.Labels{"foo": "bar"}, []*float64{fp(2)}),
+					data.NewField("value", data.Labels{"foo": "bar"}, []*float64{new(2.0)}),
 				),
 			},
 			expectErr: "labels in the response that can not be mapped to a table",
@@ -216,11 +216,11 @@ func TestHandleSqlInput(t *testing.T) {
 			frames: data.Frames{
 				data.NewFrame("",
 					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-					data.NewField("value", nil, []*float64{fp(2)}),
+					data.NewField("value", nil, []*float64{new(2.0)}),
 				),
 				data.NewFrame("",
 					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-					data.NewField("value", nil, []*float64{fp(2)}),
+					data.NewField("value", nil, []*float64{new(2.0)}),
 				),
 			},
 			expectErr: "more than one dataframe that can not be automatically mapped to a single table",
@@ -230,7 +230,7 @@ func TestHandleSqlInput(t *testing.T) {
 			frames: data.Frames{
 				data.NewFrame("",
 					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-					data.NewField("value", data.Labels{"host": "a"}, []*float64{fp(2)}),
+					data.NewField("value", data.Labels{"host": "a"}, []*float64{new(2.0)}),
 				).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
 			},
 			expectFrame: true,
@@ -241,7 +241,7 @@ func TestHandleSqlInput(t *testing.T) {
 			frames: data.Frames{
 				data.NewFrame("",
 					data.NewField("time", nil, []string{"1"}), // string is not valid for time field
-					data.NewField("value", data.Labels{"host": "a"}, []*float64{fp(2)}),
+					data.NewField("value", data.Labels{"host": "a"}, []*float64{new(2.0)}),
 				).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
 			},
 			expectErr: "missing time field",

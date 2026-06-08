@@ -3,12 +3,19 @@ package annotation
 import (
 	"context"
 	"errors"
+	"time"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 )
 
-// ErrNotFound is returned by Store implementations when the requested annotation does not exist.
-var ErrNotFound = errors.New("annotation not found")
+var (
+	// ErrNotFound is returned when the requested annotation does not exist.
+	ErrNotFound = errors.New("annotation not found")
+	// ErrAlreadyExists is returned when a unique constraint would be violated.
+	ErrAlreadyExists = errors.New("annotation already exists")
+	// ErrInvalidInput is returned for caller-supplied input the backend cannot accept.
+	ErrInvalidInput = errors.New("invalid annotation input")
+)
 
 type Store interface {
 	Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error)
@@ -16,6 +23,7 @@ type Store interface {
 	Create(ctx context.Context, annotation *annotationV0.Annotation) (*annotationV0.Annotation, error)
 	Update(ctx context.Context, annotation *annotationV0.Annotation) (*annotationV0.Annotation, error)
 	Delete(ctx context.Context, namespace, name string) error
+	Close() error
 }
 
 type ListOptions struct {
@@ -39,7 +47,7 @@ type AnnotationList struct {
 }
 
 type LifecycleManager interface {
-	Cleanup(ctx context.Context) (int64, error)
+	Cleanup(ctx context.Context, before time.Time) (int64, error)
 }
 
 type TagProvider interface {

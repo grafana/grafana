@@ -9,12 +9,17 @@ import (
 	"time"
 
 	pgvector "github.com/pgvector/pgvector-go"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/vector")
 
 var _ VectorBackend = (*pgvectorBackend)(nil)
 
@@ -24,6 +29,11 @@ var _ VectorBackend = (*pgvectorBackend)(nil)
 // run `SELECT hashtext('vectorbackfiller')::bigint` in psql to find the
 // matching row.
 const backfillAdvisoryLockName = "vectorbackfiller"
+
+// reconcilerAdvisoryLockName is the per-cycle lock used by the
+// reconciler. Distinct from backfillAdvisoryLockName so a backfill and
+// a reconciler cycle can run concurrently on the same cluster.
+const reconcilerAdvisoryLockName = "vectorreconciler"
 
 type pgvectorBackend struct {
 	db       db.DB
@@ -81,10 +91,24 @@ func validateResource(resource string) error {
 	return nil
 }
 
-func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) error {
+func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) (retErr error) {
 	if len(vectors) == 0 {
 		return nil
 	}
+
+	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.Upsert")
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
+	}()
+	span.SetAttributes(
+		attribute.Int("vector_count", len(vectors)),
+		attribute.String("resource", vectors[0].Resource),
+		attribute.String("namespace", vectors[0].Namespace),
+	)
 
 	for i := range vectors {
 		if err := vectors[i].Validate(); err != nil {
@@ -92,45 +116,124 @@ func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) error {
 		}
 	}
 
-	// track max rv so we can update global db rv
-	var batchMaxRV int64
+	return b.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
+		return b.upsertAll(ctx, tx, vectors)
+	})
+}
+
+func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, vectors []Vector) (retErr error) {
+	if len(vectors) == 0 {
+		return nil
+	}
+
+	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.UpsertReplaceSubresources")
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
+	}()
+	span.SetAttributes(
+		attribute.Int("vector_count", len(vectors)),
+		attribute.String("resource", vectors[0].Resource),
+		attribute.String("namespace", vectors[0].Namespace),
+	)
+
 	for i := range vectors {
-		if vectors[i].ResourceVersion > batchMaxRV {
-			batchMaxRV = vectors[i].ResourceVersion
+		if err := vectors[i].Validate(); err != nil {
+			return fmt.Errorf("vector[%d]: %w", i, err)
 		}
 	}
 
-	return b.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
-		for i := range vectors {
-			if err := validateResource(vectors[i].Resource); err != nil {
-				return fmt.Errorf("vector[%d]: %w", i, err)
-			}
-			emb, err := fitEmbedding(vectors[i].Embedding, EmbeddingDim)
-			if err != nil {
-				return fmt.Errorf("vector[%d]: %w", i, err)
-			}
-			req := &sqlVectorCollectionUpsertRequest{
-				SQLTemplate: sqltemplate.New(b.dialect),
-				Resource:    vectors[i].Resource,
-				Vector:      &vectors[i],
-				Embedding:   pgvector.NewHalfVector(emb),
-			}
-			if _, err := dbutil.Exec(ctx, tx, sqlVectorCollectionUpsert, req); err != nil {
-				return fmt.Errorf("upsert vector %s/%s: %w", vectors[i].UID, vectors[i].Subresource, err)
-			}
-		}
+	type uidKey struct{ resource, namespace, model, uid string }
+	groups := map[uidKey][]string{}
+	for _, v := range vectors {
+		k := uidKey{v.Resource, v.Namespace, v.Model, v.UID}
+		groups[k] = append(groups[k], v.Subresource)
+	}
 
-		// WHERE clause keeps this monotonic under concurrent writers.
-		if batchMaxRV > 0 {
-			if _, err := tx.ExecContext(ctx,
-				`UPDATE vector_latest_rv SET latest_rv = $1 WHERE id = 1 AND latest_rv < $1`,
-				batchMaxRV,
-			); err != nil {
-				return fmt.Errorf("bump vector_latest_rv: %w", err)
+	return b.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
+		for k, kept := range groups {
+			if err := validateResource(k.resource); err != nil {
+				return err
+			}
+			stored, err := b.subresourceKeysTx(ctx, tx, k.namespace, k.model, k.resource, k.uid)
+			if err != nil {
+				return fmt.Errorf("read subresources %s/%s: %w", k.namespace, k.uid, err)
+			}
+			keep := make(map[string]struct{}, len(kept))
+			for _, s := range kept {
+				keep[s] = struct{}{}
+			}
+			var stale []string
+			for _, s := range stored {
+				if _, ok := keep[s]; !ok {
+					stale = append(stale, s)
+				}
+			}
+			if len(stale) > 0 {
+				req := &sqlVectorCollectionDeleteSubresourcesRequest{
+					SQLTemplate:  sqltemplate.New(b.dialect),
+					Resource:     k.resource,
+					Namespace:    k.namespace,
+					Model:        k.model,
+					UID:          k.uid,
+					Subresources: stale,
+				}
+				if _, err := dbutil.Exec(ctx, tx, sqlVectorCollectionDeleteSubresource, req); err != nil {
+					return fmt.Errorf("delete stale subresources %s/%s: %w", k.namespace, k.uid, err)
+				}
 			}
 		}
-		return nil
+		return b.upsertAll(ctx, tx, vectors)
 	})
+}
+
+// upsertAll does the per-vector INSERT/UPSERT loop. Caller owns the
+// transaction; called from both Upsert and UpsertReplaceSubresources.
+func (b *pgvectorBackend) upsertAll(ctx context.Context, tx db.Tx, vectors []Vector) error {
+	for i := range vectors {
+		if err := validateResource(vectors[i].Resource); err != nil {
+			return fmt.Errorf("vector[%d]: %w", i, err)
+		}
+		emb, err := fitEmbedding(vectors[i].Embedding, EmbeddingDim)
+		if err != nil {
+			return fmt.Errorf("vector[%d]: %w", i, err)
+		}
+		req := &sqlVectorCollectionUpsertRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Resource:    vectors[i].Resource,
+			Vector:      &vectors[i],
+			Embedding:   pgvector.NewHalfVector(emb),
+		}
+		if _, err := dbutil.Exec(ctx, tx, sqlVectorCollectionUpsert, req); err != nil {
+			return fmt.Errorf("upsert vector %s/%s: %w", vectors[i].UID, vectors[i].Subresource, err)
+		}
+	}
+	return nil
+}
+
+// subresourceKeysTx reads the stored subresource keys for one UID
+// inside the caller's transaction.
+func (b *pgvectorBackend) subresourceKeysTx(ctx context.Context, tx db.Tx, namespace, model, resource, uid string) ([]string, error) {
+	req := &sqlVectorCollectionGetContentRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Resource:    resource,
+		Namespace:   namespace,
+		Model:       model,
+		UID:         uid,
+		Response:    &sqlVectorCollectionGetContentResponse{},
+	}
+	rows, err := dbutil.Query(ctx, tx, sqlVectorCollectionGetContent, req)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]string, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, r.Subresource)
+	}
+	return out, nil
 }
 
 func (b *pgvectorBackend) Delete(ctx context.Context, namespace, model, resource, uid string) error {
@@ -219,7 +322,23 @@ func (b *pgvectorBackend) Exists(ctx context.Context, namespace, model, resource
 }
 
 func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource string,
-	embedding []float32, limit int, filters ...SearchFilter) ([]VectorSearchResult, error) {
+	embedding []float32, limit int, filters ...SearchFilter) (results []VectorSearchResult, retErr error) {
+	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.Search")
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
+	}()
+	span.SetAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("model", model),
+		attribute.String("resource", resource),
+		attribute.Int("limit", limit),
+		attribute.Int("filter_count", len(filters)),
+	)
+
 	if err := validateResource(resource); err != nil {
 		return nil, err
 	}
@@ -257,7 +376,7 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 		return nil, err
 	}
 
-	results := make([]VectorSearchResult, len(rows))
+	results = make([]VectorSearchResult, len(rows))
 	for i, row := range rows {
 		results[i] = VectorSearchResult{
 			UID:         row.UID,
@@ -370,4 +489,43 @@ func (b *pgvectorBackend) GetLatestRV(ctx context.Context) (int64, error) {
 		return 0, fmt.Errorf("read vector_latest_rv: %w", err)
 	}
 	return rv, nil
+}
+
+// SetLatestRV bumps the checkpoint. The WHERE guard makes this monotonic;
+// a stale rv from a slower replica can't rewind a more advanced cursor.
+func (b *pgvectorBackend) SetLatestRV(ctx context.Context, rv int64) error {
+	if rv <= 0 {
+		return nil
+	}
+	if _, err := b.db.ExecContext(ctx,
+		`UPDATE vector_latest_rv SET latest_rv = $1 WHERE id = 1 AND latest_rv < $1`,
+		rv,
+	); err != nil {
+		return fmt.Errorf("set vector_latest_rv: %w", err)
+	}
+	return nil
+}
+
+func (b *pgvectorBackend) TryAcquireReconcilerLock(ctx context.Context) (func(), bool, error) {
+	conn, err := b.db.SqlDB().Conn(ctx)
+	if err != nil {
+		return nil, false, fmt.Errorf("acquire reconciler conn: %w", err)
+	}
+	var got bool
+	if err := conn.QueryRowContext(ctx,
+		"SELECT pg_try_advisory_lock(hashtext($1)::bigint)", reconcilerAdvisoryLockName,
+	).Scan(&got); err != nil {
+		_ = conn.Close()
+		return nil, false, fmt.Errorf("pg_try_advisory_lock: %w", err)
+	}
+	if !got {
+		_ = conn.Close()
+		return nil, false, nil
+	}
+	release := func() {
+		_, _ = conn.ExecContext(context.Background(),
+			"SELECT pg_advisory_unlock(hashtext($1)::bigint)", reconcilerAdvisoryLockName)
+		_ = conn.Close()
+	}
+	return release, true, nil
 }

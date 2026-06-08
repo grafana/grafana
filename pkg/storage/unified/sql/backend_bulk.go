@@ -363,7 +363,7 @@ func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, b
 			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
 				Key:    req.Key,
 				Action: req.Action,
-				Error:  "unable to unmarshal json",
+				Error:  fmt.Sprintf("unable to unmarshal json (bulk): %s", err.Error()),
 			})
 			continue
 		}

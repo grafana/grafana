@@ -91,7 +91,7 @@
     },
     {
       groupName: "locker",
-      reviewers: ["team:grafana/plugins-platform-frontend"],
+      reviewers: ["team:grafana/grafana-catalog"],
       matchPackageNames: ["@locker/{/,}**"],
       minimumReleaseAge: "7 days",
     },

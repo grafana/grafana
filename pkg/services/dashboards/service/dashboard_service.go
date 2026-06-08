@@ -1144,7 +1144,10 @@ func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *dashbo
 		return nil, err
 	}
 
-	dr.SetDefaultPermissions(ctx, dto, dash, false)
+	// new dashboard created
+	if dto.Dashboard.ID == 0 {
+		dr.SetDefaultPermissions(ctx, dto, dash, false)
+	}
 
 	return dash, nil
 }

@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -720,6 +721,26 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		require.Equal(t, rvA, seen[nsA], "namespace A should yield latest rv for shared")
 		require.Equal(t, rvB, seen[nsB], "namespace B should yield latest rv for shared")
 	})
+
+	t.Run("rejects missing group or resource", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			key  resource.NamespacedResource
+		}{
+			{name: "missing group", key: resource.NamespacedResource{Resource: "resource"}},
+			{name: "missing resource", key: resource.NamespacedResource{Group: "group"}},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				_, seq := backend.ListModifiedSince(ctx, tc.key, rvCreated, nil)
+				var gotErr error
+				for _, err := range seq {
+					gotErr = err
+					break
+				}
+				require.Error(t, gotErr)
+			})
+		}
+	})
 }
 
 func runTestIntegrationBackendListHistory(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
@@ -1156,11 +1177,16 @@ func runTestIntegrationBackendListHistoryErrorReporting(t *testing.T, backend re
 }
 
 func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	server := newServer(t, backend)
 	store, ok := backend.(resource.BlobSupport)
 	require.True(t, ok)
 	ns := nsPrefix + "-ns1"
+	// Blob RPCs gate on namespace match; the default empty-user ctx from
+	// NewTestContext would 403.
+	ctx := identity.WithServiceIdentityForSingleNamespaceContext(
+		testutil.NewTestContext(t, time.Now().Add(5*time.Second)),
+		ns,
+	)
 
 	t.Run("put and fetch blob", func(t *testing.T) {
 		key := &resourcepb.ResourceKey{
@@ -1169,6 +1195,31 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 			Resource:  "rrr",
 			Name:      "nnn",
 		}
+
+		// PutBlob must 404 before the parent exists (see blob.proto).
+		preExisting, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
+			Resource:    key,
+			Method:      resourcepb.PutBlobRequest_GRPC,
+			ContentType: "plain/text",
+			Value:       []byte("rejected"),
+		})
+		require.NoError(t, err)
+		require.NotNil(t, preExisting.Error)
+		require.Equal(t, int32(http.StatusNotFound), preExisting.Error.Code)
+
+		initial := &unstructured.Unstructured{}
+		initialMeta, err := utils.MetaAccessor(initial)
+		require.NoError(t, err)
+		initialMeta.SetName(key.Name)
+		initialMeta.SetNamespace(key.Namespace)
+		initial.SetAPIVersion(key.Group + "/v1")
+		initial.SetKind("Test")
+		initialVal, err := initial.MarshalJSON()
+		require.NoError(t, err)
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: initialVal})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+
 		b1, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
 			Resource:    key,
 			Method:      resourcepb.PutBlobRequest_GRPC,
@@ -1198,7 +1249,6 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		require.Contains(t, string(found.Value), "hello 22222")
 
-		// Save a resource with annotation
 		obj := &unstructured.Unstructured{}
 		meta, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
@@ -1209,21 +1259,21 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		obj.SetKind("Test")
 		val, err := obj.MarshalJSON()
 		require.NoError(t, err)
-		out, err := server.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: val})
+		out, err := server.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: val, ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
 		require.Nil(t, out.Error)
-		require.True(t, out.ResourceVersion > 0)
+		require.True(t, out.ResourceVersion > created.ResourceVersion)
 
 		// The server (not store!) will lookup the saved annotation and return the correct payload
 		res, err := server.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key})
 		require.NoError(t, err)
-		require.Nil(t, out.Error)
+		require.Nil(t, res.Error)
 		require.Contains(t, string(res.Value), "hello 22222")
 
 		// But we can still get an older version with an explicit UID
 		res, err = server.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, Uid: b1.Uid})
 		require.NoError(t, err)
-		require.Nil(t, out.Error)
+		require.Nil(t, res.Error)
 		require.Contains(t, string(res.Value), "hello 11111")
 	})
 }

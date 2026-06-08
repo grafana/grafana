@@ -75,6 +75,7 @@ export function QueryEditorContextWrapper({
   const clearSideEffectsRef = useRef<() => void>(() => {});
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [confirmingDeleteActionKey, setConfirmingDeleteActionKey] = useState<string | null>(null);
 
   const {
     selectedQueryRefIds,
@@ -93,10 +94,12 @@ export function QueryEditorContextWrapper({
     onClearSideEffects: useCallback(() => clearSideEffectsRef.current(), []),
   });
 
-  // Wrap each selection mutator to clear alert selection (cross-type exclusivity).
+  // Wrap each selection mutator to clear alert selection (cross-type exclusivity) and dismiss any
+  // open inline delete confirmation because both are selection-scoped UI state.
   const onCardSelectionChange = useCallback(
     (queryRefId: string | null, transformationId: string | null) => {
       setSelectedAlertId(null);
+      setConfirmingDeleteActionKey(null);
       onCardSelectionChangeRaw(queryRefId, transformationId);
     },
     [onCardSelectionChangeRaw]
@@ -105,6 +108,7 @@ export function QueryEditorContextWrapper({
   const toggleQuerySelection = useCallback(
     (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => {
       setSelectedAlertId(null);
+      setConfirmingDeleteActionKey(null);
       toggleQuerySelectionRaw(query, modifiers);
     },
     [toggleQuerySelectionRaw]
@@ -113,6 +117,7 @@ export function QueryEditorContextWrapper({
   const toggleTransformationSelection = useCallback(
     (transformation: Transformation, modifiers?: SelectionModifiers) => {
       setSelectedAlertId(null);
+      setConfirmingDeleteActionKey(null);
       toggleTransformationSelectionRaw(transformation, modifiers);
     },
     [toggleTransformationSelectionRaw]
@@ -120,12 +125,14 @@ export function QueryEditorContextWrapper({
 
   const clearSelection = useCallback(() => {
     setSelectedAlertId(null);
+    setConfirmingDeleteActionKey(null);
     clearSelectionRaw();
   }, [clearSelectionRaw]);
 
   const selectAlert = useCallback(
     (alertId: string | null) => {
       setSelectedAlertId(alertId);
+      setConfirmingDeleteActionKey(null);
       clearSelectionRaw();
     },
     [clearSelectionRaw]
@@ -303,6 +310,8 @@ export function QueryEditorContextWrapper({
       },
       finalizePendingTransformation,
       showVersionBanner: Boolean(showVersionBanner),
+      confirmingDeleteActionKey,
+      setConfirmingDeleteActionKey,
     }),
     [
       selectedQuery,
@@ -339,6 +348,7 @@ export function QueryEditorContextWrapper({
       finalizePendingTransformation,
       clearPendingTransformation,
       showVersionBanner,
+      confirmingDeleteActionKey,
     ]
   );
 

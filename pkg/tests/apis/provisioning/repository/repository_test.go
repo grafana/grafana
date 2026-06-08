@@ -280,7 +280,7 @@ func TestIntegrationProvisioning_ViewerSettings_CustomRepositoryTypes(t *testing
 	if !extensions.IsEnterprise {
 		helper = common.RunGrafana(t, common.WithRepositoryTypes([]string{"local", "github"}))
 	} else {
-		helper = common.RunGrafana(t, common.WithRepositoryTypes([]string{"local", "git", "github", "bitbucket"}))
+		helper = common.RunGrafana(t, common.WithRepositoryTypes([]string{"local", "git", "github", "bitbucket", "githubEnterprise"}))
 	}
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -305,6 +305,7 @@ func TestIntegrationProvisioning_ViewerSettings_CustomRepositoryTypes(t *testing
 				provisioning.GitRepositoryType,
 				provisioning.GitHubRepositoryType,
 				provisioning.BitbucketRepositoryType,
+				provisioning.GitHubEnterpriseRepositoryType,
 			}, settings.AvailableRepositoryTypes)
 		} else {
 			assert.ElementsMatch(collect, []provisioning.RepositoryType{

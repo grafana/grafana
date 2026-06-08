@@ -31,21 +31,18 @@ import (
 )
 
 type URLPrefs struct {
-	Language       string
-	RegionalFormat string
-	Theme          string
+	Language string
+	Theme    string
 }
 
 // URL prefs take precedence over any saved user preferences
 func getURLPrefs(c *contextmodel.ReqContext) URLPrefs {
 	language := c.Query("lang")
 	theme := c.Query("theme")
-	regionalFormat := c.Query("regionalFormat")
 
 	return URLPrefs{
-		Language:       language,
-		RegionalFormat: regionalFormat,
-		Theme:          theme,
+		Language: language,
+		Theme:    theme,
 	}
 }
 
@@ -92,31 +89,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		language = urlPrefs.Language
 	} else if prefs.JSONData.Language != "" {
 		language = prefs.JSONData.Language
-	}
-
-	var regionalFormat string
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagLocaleFormatPreference) {
-		regionalFormat = "en"
-
-		// We default the regional format (locale) to the Accept-Language header rather than the language preference
-		// mainly because we want to avoid defaulting to en-US for most users who have not set a preference, and we
-		// don't have more specific English language preferences yet.
-
-		// Regional format preference order (from most-preferred to least):
-		// 1. URL parameter
-		// 2. regionalFormat User preference
-		// 3. Accept-Language header
-		// 4. Language preference
-		if urlPrefs.RegionalFormat != "" {
-			regionalFormat = urlPrefs.RegionalFormat
-		} else if prefs.JSONData.RegionalFormat != "" {
-			regionalFormat = prefs.JSONData.RegionalFormat
-		} else if acceptLangHeaderFirstValue != "" {
-			regionalFormat = acceptLangHeaderFirstValue
-		} else if language != "" {
-			regionalFormat = language
-		}
 	}
 
 	appURL := hs.Cfg.AppURL
@@ -170,8 +142,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			LightTheme:                 theme.Type == "light",
 			Timezone:                   prefs.Timezone,
 			WeekStart:                  weekStart,
-			Locale:                     locale, // << will be removed in favor of RegionalFormat
-			RegionalFormat:             regionalFormat,
+			Locale:                     locale,
 			Language:                   language,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,

@@ -224,6 +224,9 @@ func (f *fakeVector) markExists(ns, model, res, uid string) {
 func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	return nil, nil
 }
+func (f *fakeVector) UpsertReplaceSubresources(ctx context.Context, vs []vector.Vector) error {
+	return f.Upsert(ctx, vs)
+}
 func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -263,6 +266,10 @@ func (f *fakeVector) Exists(_ context.Context, ns, model, res, uid string) (bool
 	return f.existsSet[existsKey(ns, model, res, uid)], nil
 }
 func (f *fakeVector) GetLatestRV(context.Context) (int64, error) { return 0, nil }
+func (f *fakeVector) SetLatestRV(context.Context, int64) error   { return nil }
+func (f *fakeVector) TryAcquireReconcilerLock(context.Context) (func(), bool, error) {
+	return func() {}, true, nil
+}
 func (f *fakeVector) ListIncompleteBackfillJobs(_ context.Context, model string) ([]vector.BackfillJob, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -344,4 +351,40 @@ func newFakeEmbedder(text *fakeText) *embedder.Embedder {
 		Metric:       embedder.CosineDistance,
 		Dimensions:   uint32(text.dim),
 	}
+}
+
+// fakeDashboardStats implements builders.DashboardStats. Tests pre-load
+// stats via set(); unknown UIDs return the zero map. err short-circuits
+// every call so the best-effort path can be exercised.
+type fakeDashboardStats struct {
+	mu    sync.Mutex
+	stats map[string]map[string]int64
+	err   error
+	calls int
+}
+
+func newFakeDashboardStats() *fakeDashboardStats {
+	return &fakeDashboardStats{stats: map[string]map[string]int64{}}
+}
+
+func (f *fakeDashboardStats) GetStats(context.Context, string) (map[string]map[string]int64, error) {
+	// Backfill never calls GetStats; method exists only to satisfy
+	// builders.DashboardStats.
+	return nil, nil
+}
+
+func (f *fakeDashboardStats) GetDashboardStats(_ context.Context, namespace, uid string) (map[string]int64, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.calls++
+	if f.err != nil {
+		return nil, f.err
+	}
+	return f.stats[namespace+"|"+uid], nil
+}
+
+func (f *fakeDashboardStats) set(namespace, uid string, stats map[string]int64) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.stats[namespace+"|"+uid] = stats
 }

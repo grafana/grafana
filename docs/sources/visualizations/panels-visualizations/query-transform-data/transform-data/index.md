@@ -744,6 +744,15 @@ After choosing the field by which you want to group your data, you can add vario
 | server 2  | 88.6                   | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 10:32:20</td><td>Overload</td></tr><tr><td>2020-07-07 09:30:05</td><td>OK</td></tr><tr><td>2020-07-07 09:25:05</td><td>OK</td></tr></tbody></table>  |
 | server 3  | 59.6                   | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>OK</td></tr><tr><td>2020-07-07 10:31:22</td><td>OK</td></tr><tr><td>2020-07-07 09:30:57</td><td>Rebooting</td></tr></tbody></table> |
 
+#### Display options
+
+> **Note:** Display options are in public preview. To try out the new editor for this transformation, enable the `groupToNestedTableV2` feature toggle. To try out nested field overrides, enable `nestedFramesFieldOverrides`.
+
+| Option                            | Description                                                                                                                |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Show field names in nested tables | Show or hide the column headers inside each nested table. On by default                                                    |
+| Expand nested rows by default     | Expand all nested rows automatically when the panel loads, instead of starting with all columns collapsed. Off by default. |
+
 ### Create heatmap
 
 Use this transformation to prepare histogram data for visualizing trends over time. Similar to the heatmap visualization, this transformation converts histogram metrics into temporal buckets.
@@ -1545,6 +1554,7 @@ The transformation preserves all original time points while reducing noise, resu
 [Table panel]: ref:table-panel
 [Calculation types]: ref:calculation-types
 [sparkline cell type]: ref:sparkline-cell-type
+[configuration file]: ref:configuration-file
 [Time series panel]: ref:time-series-panel
 [feature toggle]: ref:feature-toggle
 [dashboard variable]: ref:dashboard-variable

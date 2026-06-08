@@ -6,7 +6,6 @@ import {
   AxisPlacement,
   BarAlignment,
   GraphDrawStyle,
-  LegendDisplayMode,
   StackingMode,
   TooltipDisplayMode,
   VisibilityMode,
@@ -35,7 +34,6 @@ export const alertRuleSummaryVizConfig = VizConfigBuilders.timeseries()
   .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
   .setOption('legend', {
     showLegend: false,
-    displayMode: LegendDisplayMode.Hidden,
   })
   .setOverrides((builder) =>
     builder

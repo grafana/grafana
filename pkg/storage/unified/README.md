@@ -222,7 +222,6 @@ signing_keys_url = http://localhost:3011/api/signing-keys/keys
 mode = "on-prem"
 
 [feature_toggles]
-unifiedStorage = true
 unifiedStorageHistoryPruner = true
 unifiedStorageSearchPermissionFiltering = false
 
@@ -403,9 +402,6 @@ storage_type = unified
 [grpc_server_authentication]
 signing_keys_url = http://localhost:3011/api/signing-keys/keys
 mode = "on-prem"
-
-[feature_toggles]
-unifiedStorage = true
 
 [unified_storage]
 enable_sharding = true

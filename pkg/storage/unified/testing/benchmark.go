@@ -535,7 +535,7 @@ func runStorageAndSearchBenchmark(
 				Query: job.title,
 				QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
 					{
-						Name: "title",
+						Name: resource.SEARCH_FIELD_TITLE_PHRASE,
 						Type: resourcepb.QueryFieldType_KEYWORD,
 					},
 				},

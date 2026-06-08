@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,7 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
@@ -296,6 +297,15 @@ type SearchOptions struct {
 	// have existed before its predecessor in the same Grafana-version group is
 	// considered eligible for cleanup.
 	IndexSnapshotCleanupGracePeriod time.Duration
+
+	// VectorSearch query-embedding cache. nil disables the cache path.
+	QueryCache             vector.QueryEmbeddingCache
+	QueryCacheMaxPerTenant int
+
+	// VectorSearch per-tenant rate limiter. nil disables rate limiting.
+	RateLimiter        vector.RateLimiter
+	RateLimitPerTenant int
+	RateLimitWindow    time.Duration
 }
 
 type ResourceServerOptions struct {
@@ -342,6 +352,8 @@ type ResourceServerOptions struct {
 
 	IndexMetrics *BleveIndexMetrics
 
+	VectorMetrics *VectorMetrics
+
 	// MaxPageSizeBytes is the maximum size of a page in bytes.
 	MaxPageSizeBytes int
 
@@ -367,6 +379,33 @@ type ResourceServerOptions struct {
 	// VectorSearch RPC. nil when no [vector_embedder] provider is configured;
 	// the RPC then returns Unimplemented.
 	Embedder *embedder.Embedder
+
+	// VectorBackfiller, when non-nil, is launched in a background
+	// goroutine after Init. The server tracks it in its WaitGroup so
+	// Stop blocks until it returns. nil = backfill feature off.
+	VectorBackfiller Runnable
+
+	// VectorReconciler, when non-nil, is launched alongside the
+	// backfiller; the server attaches its own broadcaster to it before
+	// starting Run so the reconciler's watch path lights up. nil =
+	// reconciler feature off.
+	VectorReconciler BroadcasterConsumer
+}
+
+// Runnable is anything the server can launch in a goroutine and that
+// exits cleanly on context cancel. Stays abstract so the resource
+// package doesn't have to import the concrete indexer packages, which
+// would cycle.
+type Runnable interface {
+	Run(ctx context.Context) error
+}
+
+// BroadcasterConsumer is a Runnable that wants the server's write-events
+// broadcaster attached before Run. The server sets this up once
+// initWatcher has populated its broadcaster.
+type BroadcasterConsumer interface {
+	Runnable
+	UseBroadcaster(b Broadcaster[*WrittenEvent])
 }
 
 func (opts ResourceServerOptions) bulkBatchOptions() BulkBatchOptions {
@@ -395,7 +434,7 @@ func NewUninitializedSearchServer(opts ResourceServerOptions) (SearchServer, err
 	}
 
 	// Create the search server using the search.go factory
-	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.VectorBackend, opts.Embedder, opts.AccessClient, blobstore, opts.IndexMetrics, opts.OwnsIndexFn)
+	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.VectorBackend, opts.Embedder, opts.AccessClient, blobstore, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
 	if err != nil || searchServer == nil {
 		return nil, fmt.Errorf("search server could not be created: %w", err)
 	}
@@ -500,11 +539,13 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		quotasConfig:                   opts.QuotasConfig,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
+		vectorBackfiller:               opts.VectorBackfiller,
+		vectorWriteReconciler:          opts.VectorReconciler,
 	}
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchServer(opts.Search, s.backend, opts.VectorBackend, opts.Embedder, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
+		s.search, err = newSearchServer(opts.Search, s.backend, opts.VectorBackend, opts.Embedder, s.access, s.blob, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
 		if err != nil {
 			return nil, err
 		}
@@ -599,6 +640,12 @@ type server struct {
 	storageEnabled                 bool
 
 	bookmarkFrequency time.Duration
+
+	// Async vector indexers (backfiller + reconciler).
+	// Started in Init, joined in Stop via indexersWG.
+	vectorBackfiller      Runnable
+	vectorWriteReconciler BroadcasterConsumer
+	indexersWG            sync.WaitGroup
 }
 
 // Init implements ResourceServer.
@@ -619,11 +666,42 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = s.initWatcher()
 		}
 
+		// Launch async vector indexers (backfiller + reconciler) once
+		// the broadcaster is up. They run for the server's lifetime
+		// and Stop() joins them via indexersWG.
+		if s.initErr == nil {
+			s.startVectorIndexers()
+		}
+
 		if s.initErr != nil {
 			s.log.Error("error running resource server init", "error", s.initErr)
 		}
 	})
 	return s.initErr
+}
+
+// startVectorIndexers launches the configured backfiller and
+// reconciler. Both are optional (nil = feature off). The reconciler
+// gets the server's broadcaster via UseBroadcaster before Run; the
+// backfiller doesn't need the watch path.
+func (s *server) startVectorIndexers() {
+	if s.vectorBackfiller != nil {
+		s.indexersWG.Go(func() {
+			if err := s.vectorBackfiller.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
+				s.log.Error("vector backfiller stopped", "err", err)
+			}
+		})
+	}
+	if s.vectorWriteReconciler != nil {
+		if s.broadcaster != nil {
+			s.vectorWriteReconciler.UseBroadcaster(s.broadcaster)
+		}
+		s.indexersWG.Go(func() {
+			if err := s.vectorWriteReconciler.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
+				s.log.Error("vector reconciler stopped", "err", err)
+			}
+		})
+	}
 }
 
 // trackWrite atomically checks the stopping flag and increments the in-flight
@@ -663,6 +741,20 @@ func (s *server) Stop(ctx context.Context) error {
 		s.log.Debug("all in-flight write operations completed")
 	case <-ctx.Done():
 		s.log.Warn("timed out waiting for in-flight write operations to complete")
+	}
+
+	// Wait for async vector indexers (backfiller, reconciler) to wind
+	// down. They observe s.ctx, so the cancel above unblocks them.
+	indexersDone := make(chan struct{})
+	go func() {
+		s.indexersWG.Wait()
+		close(indexersDone)
+	}()
+	select {
+	case <-indexersDone:
+		s.log.Debug("vector indexers stopped")
+	case <-ctx.Done():
+		s.log.Warn("timed out waiting for vector indexers to stop")
 	}
 
 	var stopFailed bool
@@ -891,6 +983,20 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	}
 	defer s.inflight.Done()
 
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
+
+	rsp := &resourcepb.CreateResponse{}
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		rsp.Error = &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+		return rsp, nil
+	}
+
 	err := s.checkQuota(ctx, NamespacedResource{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
@@ -909,20 +1015,6 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 				Code:    http.StatusForbidden,
 			},
 		}, nil
-	}
-
-	if r := verifyRequestKey(req.Key); r != nil {
-		return nil, fmt.Errorf("invalid request key: %s", r.Message)
-	}
-
-	rsp := &resourcepb.CreateResponse{}
-	user, ok := claims.AuthInfoFrom(ctx)
-	if !ok || user == nil {
-		rsp.Error = &resourcepb.ErrorResult{
-			Message: "no user found in context",
-			Code:    http.StatusUnauthorized,
-		}
-		return rsp, nil
 	}
 
 	var res *resourcepb.CreateResponse
@@ -1016,6 +1108,10 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 	}
 	defer s.inflight.Done()
 
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
+
 	rsp := &resourcepb.UpdateResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
@@ -1060,6 +1156,32 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 
+	// Skip write events when there is no change to the payload, but still enforce RBAC.
+	if bytes.Equal(req.Value, latest.Value) {
+		key := req.Key
+		a, err := s.access.Check(ctx, user, claims.CheckRequest{
+			Verb:      utils.VerbUpdate,
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Namespace: key.Namespace,
+			Name:      key.Name,
+		}, latest.Folder)
+		if err != nil {
+			return &resourcepb.UpdateResponse{Error: AsErrorResult(err)}, nil
+		}
+		if !a.Allowed {
+			return &resourcepb.UpdateResponse{
+				Error: &resourcepb.ErrorResult{
+					Message: "not allowed to update resource",
+					Code:    http.StatusForbidden,
+				},
+			}, nil
+		}
+
+		rsp.ResourceVersion = latest.ResourceVersion // No change, return the current RV
+		return rsp, nil
+	}
+
 	event, e := s.newEvent(ctx, user, req.Key, req.ResourceVersion, req.Value, latest.Value)
 	if e != nil {
 		rsp.Error = e
@@ -1082,6 +1204,10 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		return nil, errStopping
 	}
 	defer s.inflight.Done()
+
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
 
 	rsp := &resourcepb.DeleteResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
@@ -1187,6 +1313,9 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 }
 
 func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.server.Read")
+	defer span.End()
+
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return &resourcepb.ReadResponse{
@@ -1196,8 +1325,12 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 			}}, nil
 	}
 
-	if req.Key.Resource == "" {
-		return &resourcepb.ReadResponse{Error: NewBadRequestError("missing resource")}, nil
+	// Don't validate the name format here: a lookup with an odd or
+	// invalid-looking name should fall through to the backend and surface as
+	// NotFound, matching K8s Get semantics. Strict name validation belongs on
+	// writes (Create/Update/Delete).
+	if r := verifyRequestKeyCollection(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
 	}
 
 	var (
@@ -1253,8 +1386,15 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
-	span.SetAttributes(attribute.String("group", req.Options.Key.Group), attribute.String("resource", req.Options.Key.Resource))
 	defer span.End()
+
+	if req.Options == nil {
+		return nil, status.Error(codes.InvalidArgument, "missing list options")
+	}
+	if r := verifyRequestKeyCollection(req.Options.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
+	span.SetAttributes(attribute.String("group", req.Options.Key.Group), attribute.String("resource", req.Options.Key.Resource))
 
 	// The history + trash queries do not yet support additional filters
 	if req.Source != resourcepb.ListRequest_STORE {
@@ -1568,6 +1708,13 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		return apierrors.NewUnauthorized("no user found in context")
 	}
 
+	if req.Options == nil {
+		return status.Error(codes.InvalidArgument, "missing watch options")
+	}
+	if r := verifyRequestKeyCollection(req.Options.Key); r != nil {
+		return status.Error(codes.InvalidArgument, r.Message)
+	}
+
 	key := req.Options.Key
 	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 	checker, _, err := s.access.Compile(ctx, user, claims.ListRequest{
@@ -1658,6 +1805,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			for iter.Next() {
 				if err := iter.Error(); err != nil {
 					return err
+				}
+				if !checker(iter.Name(), iter.Folder()) {
+					continue
 				}
 				if err := srv.Send(&resourcepb.WatchEvent{
 					Type: resourcepb.WatchEvent_ADDED,
@@ -1810,7 +1960,34 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 	return s.search.GetStats(ctx, req)
 }
 
+// requireUserNamespace is a cross-tenant safety net for delegated-only
+// RPCs. It does not replace resource-level access.Check; it only catches
+// the case where a caller authenticated for one namespace asks for data
+// in another.
+func requireUserNamespace(ctx context.Context, namespace string) *resourcepb.ErrorResult {
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+	}
+	if !claims.NamespaceMatches(user.GetNamespace(), namespace) {
+		return &resourcepb.ErrorResult{
+			Message: "namespace mismatch",
+			Code:    http.StatusForbidden,
+		}
+	}
+	return nil
+}
+
+// ListManagedObjects implements ManagedObjectIndexServer.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
+		return &resourcepb.ListManagedObjectsResponse{Error: errRes}, nil
+	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -1818,7 +1995,13 @@ func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListMan
 	return s.search.ListManagedObjects(ctx, req)
 }
 
+// CountManagedObjects implements ManagedObjectIndexServer.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
+	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
+		return &resourcepb.CountManagedObjectsResponse{Error: errRes}, nil
+	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -1831,12 +2014,59 @@ func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckReque
 	return s.diagnostics.IsHealthy(ctx, req) //nolint:staticcheck
 }
 
-// GetBlob implements BlobStore.
+// PutBlob implements BlobStore.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+	if req.Resource == nil {
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "missing resource key",
+			Code:    http.StatusBadRequest,
+		}}, nil
+	}
 	if s.blob == nil {
 		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
 			Message: "blob store not configured",
 			Code:    http.StatusNotImplemented,
+		}}, nil
+	}
+
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}}, nil
+	}
+
+	// Load the parent both to enforce existence (see proto) and to get its
+	// folder for access.Check.
+	parent := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: req.Resource})
+	switch {
+	case parent == nil:
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "parent resource not found",
+			Code:    http.StatusNotFound,
+		}}, nil
+	case parent.Error != nil:
+		// Surface backend status as-is; collapsing to 404 would hide
+		// transient 5xx as "not found".
+		return &resourcepb.PutBlobResponse{Error: parent.Error}, nil
+	}
+
+	a, err := s.access.Check(ctx, user, claims.CheckRequest{
+		Verb:      utils.VerbUpdate,
+		Group:     req.Resource.Group,
+		Resource:  req.Resource.Resource,
+		Namespace: req.Resource.Namespace,
+		Name:      req.Resource.Name,
+	}, parent.Folder)
+	if err != nil {
+		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
+	}
+	if !a.Allowed {
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Code: http.StatusForbidden,
 		}}, nil
 	}
 
@@ -1905,7 +2135,18 @@ func (s *server) getPartialObject(ctx context.Context, key *resourcepb.ResourceK
 }
 
 // GetBlob implements BlobStore.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
+	if req.Resource == nil {
+		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "missing resource key",
+			Code:    http.StatusBadRequest,
+		}}, nil
+	}
+	if errRes := requireUserNamespace(ctx, req.Resource.Namespace); errRes != nil {
+		return &resourcepb.GetBlobResponse{Error: errRes}, nil
+	}
 	if s.blob == nil {
 		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
 			Message: "blob store not configured",
@@ -1989,7 +2230,13 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	}
 }
 
+// RebuildIndexes implements ResourceIndexServer.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
+		return &resourcepb.RebuildIndexesResponse{Error: errRes}, nil
+	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}

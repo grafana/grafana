@@ -77,7 +77,10 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 	// In selective mode (caller supplied an explicit Resources list) we skip
 	// the cleanup, because deleting every other unmanaged resource would be
 	// destructive — the user only asked to take over the named ones.
-	if repo.Config().Spec.Sync.Target != provisioning.SyncTargetTypeFolder && len(options.Resources) == 0 {
+	// Folderless repositories also coexist with unmanaged resources, so they
+	// must never trigger a namespace clean.
+	target := repo.Config().Spec.Sync.Target
+	if target != provisioning.SyncTargetTypeFolder && target != provisioning.SyncTargetTypeFolderless && len(options.Resources) == 0 {
 		progress.SetMessage(ctx, "clean namespace")
 		if err := m.namespaceCleaner.Clean(ctx, namespace, progress); err != nil {
 			return fmt.Errorf("clean namespace: %w", err)

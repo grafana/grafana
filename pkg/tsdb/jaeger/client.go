@@ -36,11 +36,11 @@ func New(hc *http.Client, logger log.Logger, settings backend.DataSourceInstance
 // doGet performs a GET request with the given context so that contextual HTTP middleware
 // (e.g. Forward OAuth Identity, x-grafana-id) can attach headers to the outgoing request.
 func (j *JaegerClient) doGet(ctx context.Context, rawURL string) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil) // #nosec G704 -- datasource client targets operator-configured URL
 	if err != nil {
 		return nil, err
 	}
-	res, err := j.httpClient.Do(req)
+	res, err := j.httpClient.Do(req) // #nosec G704 -- datasource client targets operator-configured URL
 	if err != nil {
 		j.logger.Error("Jaeger request failed", "error", err)
 		return nil, err

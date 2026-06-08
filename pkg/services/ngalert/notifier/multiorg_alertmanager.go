@@ -16,12 +16,15 @@ import (
 	alertingCluster "github.com/grafana/alerting/cluster"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -29,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -120,6 +124,11 @@ type MultiOrgAlertmanager struct {
 	metrics *metrics.MultiOrgAlertmanager
 	ns      notifications.Service
 
+	// externalAMSyncer owns the Mimir/Cortex sync state and dependencies
+	// (datasource service, HTTP transport, request validator). MultiOrgAlertmanager
+	// only delegates to it; the sync surface is intentionally kept off this struct.
+	externalAMSyncer *ExternalAMSyncer
+
 	receiverResourcePermissions ac.ReceiverPermissionsService
 	routesResourcePermissions   ac.RoutePermissionsService
 }
@@ -150,6 +159,10 @@ func NewMultiOrgAlertmanager(
 	featureManager featuremgmt.FeatureToggles,
 	notificationHistorian nfstatus.NotificationHistorian,
 	skipClustering bool,
+	adminConfigStore store.AdminConfigurationStore,
+	datasourceService datasources.DataSourceService,
+	httpClientProvider httpclient.Provider,
+	requestValidator validations.DataSourceRequestValidator,
 	opts ...Option,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
@@ -170,6 +183,17 @@ func NewMultiOrgAlertmanager(
 		ns:                          ns,
 		peer:                        &NilPeer{},
 	}
+	// Fetch responsibilities live on ExternalAMSyncer; MOA drives it per-org inside
+	// SyncAlertmanagersForOrgs and owns the save+apply via SaveAndApplyExtraConfiguration.
+	moa.externalAMSyncer = NewExternalAMSyncer(
+		adminConfigStore,
+		datasourceService,
+		httpClientProvider,
+		requestValidator,
+		cfg,
+		m,
+		l,
+	)
 
 	if skipClustering {
 		moa.logger.Info("Not setting up clustering for the multi-org Alertmanager")
@@ -342,7 +366,6 @@ func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Con
 		return err
 	}
 
-	// Then, sync them by creating or deleting Alertmanagers as necessary.
 	moa.metrics.DiscoveredConfigurations.Set(float64(len(orgIDs)))
 	moa.SyncAlertmanagersForOrgs(ctx, orgIDs)
 
@@ -366,14 +389,91 @@ func (moa *MultiOrgAlertmanager) getLatestConfigs(ctx context.Context) (map[int6
 	return result, nil
 }
 
+// syncBypassAuthz satisfies ExtraConfigAuthz with no-op checks. Used by the
+// system-driven external Alertmanager sync pre-pass where there is no user
+// request to authorize against — the operator configured sync at the admin
+// layer and the pre-pass is just persisting upstream content under that
+// configuration.
+type syncBypassAuthz struct{}
+
+func (syncBypassAuthz) AuthorizeCreate(context.Context, identity.Requester) error {
+	return nil
+}
+
+func (syncBypassAuthz) AuthorizeUpdate(context.Context, identity.Requester, string) error {
+	return nil
+}
+
+func (syncBypassAuthz) AuthorizeDelete(context.Context, identity.Requester, string) error {
+	return nil
+}
+
+// syncExternalAMConfigForOrgs runs the external Alertmanager fetch for each
+// non-disabled org whose Alertmanager instance has already been created, and
+// persists any changed configs via SaveAndApplyExtraConfiguration.
+//
+// The Alertmanager-exists check matches SaveAndApplyExtraConfiguration's
+// expectation that the org's Alertmanager is at least registered (it tolerates
+// not-ready, but errors when there's no instance at all). On the first sync
+// tick after Grafana startup the instances haven't been created yet — the
+// locked loop below creates them and the next tick picks up the sync.
+//
+// The disabled-orgs filter is duplicated from SyncAlertmanagersForOrgs because
+// the pre-pass runs before the locked loop's own filter.
+//
+// All per-org failures are logged + counted on the failures metric and do not
+// abort other orgs.
+func (moa *MultiOrgAlertmanager) syncExternalAMConfigForOrgs(ctx context.Context, orgIDs []int64) {
+	for _, orgID := range orgIDs {
+		if _, isDisabled := moa.settings.UnifiedAlerting.DisabledOrgs[orgID]; isDisabled {
+			continue
+		}
+		moa.alertmanagersMtx.RLock()
+		_, amExists := moa.alertmanagers[orgID]
+		moa.alertmanagersMtx.RUnlock()
+		if !amExists {
+			continue
+		}
+		ec, hash := moa.externalAMSyncer.FetchExtraConfig(ctx, orgID)
+		if ec == nil {
+			continue
+		}
+		// External sync is system-driven, so we use a service identity and a no-op
+		// authz: there is no end-user request to authorize against.
+		svcCtx, svcUser := identity.WithServiceIdentity(ctx, orgID)
+		if _, err := moa.SaveAndApplyExtraConfiguration(svcCtx, orgID, svcUser, syncBypassAuthz{}, *ec, false /*replace*/, false /*dryRun*/); err != nil {
+			reason := classifySyncError(err)
+			moa.logger.Warn("Failed to save external AM configuration", "org_id", orgID, "reason", reason, "error", err)
+			moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues(fmt.Sprintf("%d", orgID), reason).Inc()
+			continue
+		}
+		moa.externalAMSyncer.MarkSaved(orgID, hash)
+	}
+}
+
 // SyncAlertmanagersForOrgs syncs configuration of the Alertmanager required by each organization.
 func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, orgIDs []int64) {
 	orgsFound := make(map[int64]struct{}, len(orgIDs))
+
+	// External Alertmanager sync runs as a pre-pass, before we acquire the
+	// alertmanagersMtx write lock for the per-org sync below. SaveAndApplyExtraConfiguration
+	// internally takes the alertmanagersMtx RLock (via AlertmanagerFor and saveAndApplyConfig),
+	// so calling it from inside the locked loop would deadlock; running it here keeps the
+	// fetch+save coupled to MAM's polling cadence without that conflict.
+	//
+	// On the first tick after startup the per-org Alertmanager instances haven't been
+	// created yet and the pre-pass skips those orgs. The locked loop below creates them
+	// and the next tick picks up the sync.
+	moa.syncExternalAMConfigForOrgs(ctx, orgIDs)
+
+	// Read dbConfigs AFTER the pre-pass so the snapshot includes any saves performed
+	// above. This avoids in-place mutation of a pre-loaded map mid-flow.
 	dbConfigs, err := moa.getLatestConfigs(ctx)
 	if err != nil {
 		moa.logger.Error("Failed to load Alertmanager configurations", "error", err)
 		return
 	}
+
 	moa.alertmanagersMtx.Lock()
 	for _, orgID := range orgIDs {
 		if _, isDisabledOrg := moa.settings.UnifiedAlerting.DisabledOrgs[orgID]; isDisabledOrg {
@@ -499,6 +599,18 @@ func (moa *MultiOrgAlertmanager) StopAndWait() {
 // Returns nil if clustering is not configured.
 func (moa *MultiOrgAlertmanager) Peer() alertingNotify.ClusterPeer {
 	return moa.peer
+}
+
+// IsExternalAMSyncConfiguredForOrg reports whether external Alertmanager sync
+// configuration exists for the given org (operator-level ini value or per-org
+// admin_config UID). It does not consider whether the sync feature flag is on —
+// gating on configuration alone is intentional so that the convert API stays
+// consistent with the persisted admin_config regardless of feature-flag state.
+// Thin wrapper around ExternalAMSyncer.IsConfiguredForOrg kept here so the
+// Alertmanager interface used by the convert API does not need to know about
+// ExternalAMSyncer.
+func (moa *MultiOrgAlertmanager) IsExternalAMSyncConfiguredForOrg(_ context.Context, orgID int64) (bool, error) {
+	return moa.externalAMSyncer.IsConfiguredForOrg(orgID)
 }
 
 // AlertmanagerFor returns the Alertmanager instance for the organization provided.

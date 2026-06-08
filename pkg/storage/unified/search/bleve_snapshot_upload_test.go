@@ -88,6 +88,7 @@ func TestUploadSnapshot_Success(t *testing.T) {
 	uploadedMeta := store.getLastUploadedMeta()
 	assert.Equal(t, int64(42), uploadedMeta.LatestResourceVersion)
 	assert.Equal(t, be.opts.BuildVersion, uploadedMeta.BuildVersion)
+	assert.NotZero(t, uploadedMeta.IndexFormat)
 	assert.Equal(t, be.opts.BuildVersion, store.getLastLockBuildVersion())
 	// BuildTime must be populated from the index's internal build
 	// info (set by newBleveIndex), not left zero. Compare with second-level
@@ -310,8 +311,26 @@ func TestUploadSnapshot_SkipsWhenRecentSameVersionRemoteExists(t *testing.T) {
 	assert.Equal(t, int32(1), store.readManifestCalls.Load())
 }
 
-// TestUploadSnapshot_ProceedsWhenRemoteIsDifferentVersion verifies that the
-// probe does not skip when only different-version snapshots are present.
+// TestUploadSnapshot_ProceedsWhenRemoteHasNewerIndexFormat verifies that the
+// probe does not skip when only too-new index-format snapshots are present.
+func TestUploadSnapshot_ProceedsWhenRemoteHasNewerIndexFormat(t *testing.T) {
+	store := newHookableStore(t)
+	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, UploadInterval: time.Hour})
+	require.NotEmpty(t, be.maxSupportedIndexFormat)
+	recent := makeULID(t, time.Now().Add(-5*time.Minute))
+	key := newTestNsResource()
+	formatType, version, ok := parseIndexFormat(be.maxSupportedIndexFormat)
+	require.True(t, ok)
+	seedSnapshot(t, context.Background(), store.bucket, key, recent, &IndexMeta{
+		BuildVersion: "11.5.0",
+		IndexFormat:  indexFormat(formatType, version+1),
+	})
+	idx := newUploadTestIndex(t, be, key, 42)
+
+	require.NoError(t, be.uploadSnapshot(t.Context(), key, idx))
+	assert.Equal(t, int32(1), store.uploadCalls.Load())
+}
+
 func TestUploadSnapshot_ProceedsWhenRemoteIsDifferentVersion(t *testing.T) {
 	store := newHookableStore(t)
 	recent := makeULID(t, time.Now().Add(-5*time.Minute))

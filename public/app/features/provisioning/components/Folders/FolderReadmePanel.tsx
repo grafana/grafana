@@ -3,7 +3,7 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useRef } from 'react';
 import { useIntersection } from 'react-use';
 
-import { type GrafanaTheme2, renderMarkdown } from '@grafana/data';
+import { type GrafanaTheme2, renderMarkdown, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
@@ -172,6 +172,7 @@ function RenderedMarkdown({
 }) {
   const html = renderMarkdown(markdown);
   const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo });
+  const safe = textUtil.sanitize(rewritten);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -188,7 +189,7 @@ function RenderedMarkdown({
     return () => el.removeEventListener('click', handleClick);
   }, [repositoryType]);
 
-  return <div ref={containerRef} className="markdown-html" dangerouslySetInnerHTML={{ __html: rewritten }} />;
+  return <div ref={containerRef} className="markdown-html" dangerouslySetInnerHTML={{ __html: safe }} />;
 }
 
 /**

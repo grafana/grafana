@@ -26,6 +26,10 @@ Grafana is a monitoring and observability platform. Go backend, TypeScript/React
 - Only add a comment when it explains **why** something is done or reveals non-obvious logic that a reader must know to safely change the code. If the code is self-explanatory, no comment is needed.
 - Never include links (Slack, GitHub, Jira, etc.) in code comments.
 
+## Human Review Gates
+
+Before running `git push`, stop and get explicit human approval. When changes are ready, show a summary of changes and wait for instruction. "Open a PR" in a task description is intent, not permission to push without review.
+
 ## Commands
 
 ### Build & Run

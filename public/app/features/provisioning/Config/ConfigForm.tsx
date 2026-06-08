@@ -38,6 +38,7 @@ import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions } from '../utils/git';
 import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
 
+import { CommitMessageTemplateField } from './CommitMessageTemplateField';
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
 import { getDefaultValues } from './defaults';
@@ -192,6 +193,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
             placeholder={t('provisioning.config-form.placeholder-my-config', 'My config')}
           />
         </Field>
+        <CommitMessageTemplateField register={register} />
         {gitFields && (
           <>
             {usesGitHubApp ? (

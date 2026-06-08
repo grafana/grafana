@@ -497,7 +497,7 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 func (a *alertRule) send(ctx context.Context, logger log.Logger, states state.StateTransitions) definitions.PostableAlerts {
 	alerts := definitions.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(states))}
 	for _, alertState := range states {
-		alerts.PostableAlerts = append(alerts.PostableAlerts, *state.StateToPostableAlert(alertState, a.appURL, a.featureToggles))
+		alerts.PostableAlerts = append(alerts.PostableAlerts, *state.StateToPostableAlert(alertState, a.appURL))
 	}
 
 	if len(alerts.PostableAlerts) > 0 {
@@ -509,7 +509,7 @@ func (a *alertRule) send(ctx context.Context, logger log.Logger, states state.St
 
 // sendExpire sends alerts to expire all previously firing alerts in the provided state transitions.
 func (a *alertRule) expireAndSend(ctx context.Context, states []state.StateTransition) {
-	expiredAlerts := state.FromAlertsStateToStoppedAlert(states, a.appURL, a.clock, a.featureToggles)
+	expiredAlerts := state.FromAlertsStateToStoppedAlert(states, a.appURL, a.clock)
 	if len(expiredAlerts.PostableAlerts) > 0 {
 		a.sender.Send(ctx, a.key.AlertRuleKey, expiredAlerts)
 	}
