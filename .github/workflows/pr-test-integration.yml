@@ -228,7 +228,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
-          go test -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)

@@ -2332,6 +2332,92 @@ func TestUserSync_createUser_PassesOrgRoleAsDefaultOrgRole(t *testing.T) {
 	}
 }
 
+func TestUserSync_SyncUserHook_AuthProxyAlignsOrgIDForK8sRole(t *testing.T) {
+	tests := []struct {
+		name                    string
+		authenticatedBy         string
+		kubernetesUsersRedirect bool
+		wantDefaultOrgRole      string
+	}{
+		{
+			name:                    "auth proxy with flag enabled aligns OrgID so the asserted role is written",
+			authenticatedBy:         login.AuthProxyAuthModule,
+			kubernetesUsersRedirect: true,
+			wantDefaultOrgRole:      "Editor",
+		},
+		{
+			name:                    "auth proxy with flag disabled leaves OrgID unaligned so the role resolves to None",
+			authenticatedBy:         login.AuthProxyAuthModule,
+			kubernetesUsersRedirect: false,
+			wantDefaultOrgRole:      "None",
+		},
+		{
+			name:                    "non auth-proxy module is not aligned even with flag enabled",
+			authenticatedBy:         login.SAMLAuthModule,
+			kubernetesUsersRedirect: true,
+			wantDefaultOrgRole:      "None",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, tt.kubernetesUsersRedirect),
+			})
+
+			var captured *user.CreateUserCommand
+			fakeUserSvc := &usertest.FakeUserService{
+				ExpectedError: user.ErrUserNotFound,
+				CreateFn: func(_ context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+					captured = cmd
+					return &user.User{ID: 99, UID: "99", Login: cmd.Login, Email: cmd.Email, Name: cmd.Name, OrgID: 1}, nil
+				},
+			}
+
+			s := ProvideUserSync(
+				fakeUserSvc,
+				&authinfoimpl.OSSUserProtectionImpl{},
+				&authinfotest.FakeService{
+					ExpectedError:    user.ErrUserNotFound,
+					SetAuthInfoFn:    func(_ context.Context, _ *login.SetAuthInfoCommand) error { return nil },
+					UpdateAuthInfoFn: func(_ context.Context, _ *login.UpdateAuthInfoCommand) error { return nil },
+				},
+				&quotatest.FakeQuotaService{},
+				tracing.InitializeTracerForTest(),
+				featuremgmt.WithFeatures(),
+				setting.NewCfg(),
+				nil,
+			)
+
+			// Mirrors the auth proxy identity: the asserted role is keyed by DefaultOrgID but OrgID is unset.
+			email := "proxyuser@example.com"
+			loginName := "proxyuser"
+			id := &authn.Identity{
+				Login:           loginName,
+				Email:           email,
+				Name:            "Proxy User",
+				AuthID:          "proxyuser",
+				AuthenticatedBy: tt.authenticatedBy,
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleEditor},
+				ClientParams: authn.ClientParams{
+					SyncUser:    true,
+					AllowSignUp: true,
+					LookUpParams: login.UserLookupParams{
+						Email: &email,
+						Login: &loginName,
+					},
+				},
+			}
+
+			err := s.SyncUserHook(context.Background(), id, nil)
+			require.NoError(t, err)
+			require.NotNil(t, captured)
+			assert.Equal(t, tt.wantDefaultOrgRole, captured.DefaultOrgRole,
+				"DefaultOrgRole written to the k8s user must reflect whether OrgID was aligned")
+		})
+	}
+}
+
 // Pins: id.Groups ← usr.TeamUIDs; id.ExternalGroups preserved.
 func TestSyncSignedInUserToIdentity_GroupsContract(t *testing.T) {
 	usr := &user.SignedInUser{

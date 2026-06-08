@@ -4,7 +4,7 @@ import { type Silence } from 'app/plugins/datasource/alertmanager/types';
 import { type AccessControlAction } from 'app/types/accessControl';
 
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
-import { getInstancesPermissions, instancesPermissions } from '../../../utils/access-control';
+import { getInstancesPermissions, instancesPermissions, silencesPermissions } from '../../../utils/access-control';
 import { makeAbility } from '../abilityUtils';
 import { type AsyncAbility, InsufficientPermissions, Loading, SilenceAction } from '../types';
 
@@ -38,7 +38,13 @@ export function useSilenceAbility(payload: SilenceAbilityParam): AsyncAbility {
           return Loading;
         }
         const permissions = getInstancesPermissions(selectedAlertmanager);
-        return makeAbility(true, [permissions.create]);
+        // For Grafana AM, also accept alert.silences:create — the backend HTTP gate
+        // accepts either action and the frontend should mirror that.
+        const acceptedPermissions =
+          permissions.create === instancesPermissions.create.grafana
+            ? [instancesPermissions.create.grafana, silencesPermissions.create.grafana]
+            : [permissions.create];
+        return makeAbility(true, acceptedPermissions);
       }
 
       case SilenceAction.Update: {

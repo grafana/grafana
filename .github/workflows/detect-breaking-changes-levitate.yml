@@ -26,7 +26,6 @@ jobs:
         working-directory: './pr'
     permissions:
       contents: read
-      id-token: write
 
     steps:
       - uses: actions/checkout@v5
@@ -64,7 +63,6 @@ jobs:
     runs-on: ubuntu-arm64
     permissions:
       contents: read
-      id-token: write
     defaults:
       run:
         working-directory: './base'

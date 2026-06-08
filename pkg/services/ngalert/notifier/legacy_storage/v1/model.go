@@ -171,16 +171,21 @@ type ExtraConfiguration struct {
 	AlertmanagerConfig string
 }
 
+// GetAlertmanagerConfig parses the stored Prometheus/Mimir alertmanager YAML and converts it
+// to Grafana's PostableApiAlertingConfig, including route wrapping and receiver format conversion.
 func (c *ExtraConfiguration) GetAlertmanagerConfig() (PostableApiAlertingConfig, error) {
 	prometheusConfig, err := c.parsePrometheusConfig()
 	if err != nil {
 		return PostableApiAlertingConfig{}, err
 	}
-
-	return fromPrometheusConfig(prometheusConfig), nil
+	cfg, _, err := alertmanagerConfigFromPrometheus(prometheusConfig)
+	return cfg, err
 }
 
-func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingConfig {
+// alertmanagerConfigFromPrometheus converts a parsed Prometheus/Mimir config to
+// Grafana's PostableApiAlertingConfig. It also returns the intermediate
+// definition-format receivers (index-aligned) so callers can reuse the conversion.
+func alertmanagerConfigFromPrometheus(prometheusConfig config.Config) (PostableApiAlertingConfig, []definition.Receiver, error) {
 	config := PostableApiAlertingConfig{
 		Config: Config{
 			Global:            prometheusConfig.Global,
@@ -190,15 +195,19 @@ func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingCon
 			MuteTimeIntervals: MuteTimeIntervalsToModel(prometheusConfig.MuteTimeIntervals),
 			Templates:         prometheusConfig.Templates,
 		},
+		Receivers: make([]*PostableApiReceiver, 0, len(prometheusConfig.Receivers)),
 	}
-
+	defs := make([]definition.Receiver, 0, len(prometheusConfig.Receivers))
 	for _, receiver := range prometheusConfig.Receivers {
-		config.Receivers = append(config.Receivers, &PostableApiReceiver{
-			Receiver: compat.UpstreamReceiverToDefinitionReceiver(receiver),
-		})
+		def := compat.UpstreamReceiverToDefinitionReceiver(receiver)
+		defs = append(defs, def)
+		grafana, err := PostableMimirReceiverToPostableGrafanaReceiver(&PostableApiReceiver{Receiver: def})
+		if err != nil {
+			return PostableApiAlertingConfig{}, nil, fmt.Errorf("failed to convert Mimir receiver %s to Grafana receiver: %w", def.Name, err)
+		}
+		config.Receivers = append(config.Receivers, grafana)
 	}
-
-	return config
+	return config, defs, nil
 }
 
 func (c *ExtraConfiguration) parsePrometheusConfig() (config.Config, error) {
@@ -235,15 +244,35 @@ func (c ExtraConfiguration) Validate() error {
 		return errors.New("identifier is required")
 	}
 
-	cfg, err := c.GetAlertmanagerConfig()
+	prometheusConfig, err := c.parsePrometheusConfig()
 	if err != nil {
 		return errInvalidExtraConfiguration(fmt.Errorf("failed to parse alertmanager config: %w", err))
+	}
+
+	cfg, defs, err := alertmanagerConfigFromPrometheus(prometheusConfig)
+	if err != nil {
+		return errInvalidExtraConfiguration(fmt.Errorf("failed to parse alertmanager config: %w", err))
+	}
+
+	// Reject fields Grafana can't represent (e.g. *_file / *_ref) that conversion
+	// would silently drop. Collect across all receivers to report them at once.
+	var unsupported []unsupportedReceiverFields
+	for i, def := range defs {
+		fields, err := findUnsupportedReceiverFields(prometheusConfig.Receivers[i], def)
+		if err != nil {
+			return errInvalidExtraConfiguration(err)
+		}
+		if len(fields) > 0 {
+			unsupported = append(unsupported, unsupportedReceiverFields{Receiver: def.Name, Fields: fields})
+		}
+	}
+	if len(unsupported) > 0 {
+		return errUnsupportedReceiverFields(unsupported)
 	}
 	err = cfg.Validate()
 	if err != nil {
 		return errInvalidExtraConfiguration(fmt.Errorf("invalid alertmanager config: %w", err))
 	}
-
 	return nil
 }
 

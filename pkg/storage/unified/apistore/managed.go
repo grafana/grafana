@@ -217,6 +217,25 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 	return nil
 }
 
+// managedResourceCommitMessage returns the git commit message to use when
+// forwarding a managed-resource write to the provisioning files endpoint. It
+// prefers the caller-supplied grafana.app/message annotation and falls back to
+// an action-specific message so the downstream nanogit commit always has a
+// non-empty subject.
+func managedResourceCommitMessage(obj utils.GrafanaMetaAccessor, action resourcepb.WatchEvent_Type) string {
+	if msg := obj.GetMessage(); msg != "" {
+		return msg
+	}
+	switch action {
+	case resourcepb.WatchEvent_ADDED:
+		return fmt.Sprintf("Create %s", obj.GetName())
+	case resourcepb.WatchEvent_DELETED:
+		return fmt.Sprintf("Delete %s", obj.GetName())
+	default:
+		return fmt.Sprintf("Update %s", obj.GetName())
+	}
+}
+
 func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 	err error,
 	action resourcepb.WatchEvent_Type,
@@ -269,6 +288,7 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 			Resource("repositories").
 			Name(repo.Identity).
 			Suffix("files", src.Path).
+			Param("message", managedResourceCommitMessage(obj, action)).
 			Do(ctx)
 		return result.Error()
 	}
@@ -283,13 +303,18 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 		return fmt.Errorf("unsupported provisioning action: %v, %w", action, err)
 	}
 
-	// Execute the change
+	// Execute the change. The provisioning files endpoint reads the commit
+	// message from the `message` query parameter only — it does not inspect
+	// the body's grafana.app/message annotation. Forward the annotation here
+	// (with a sensible fallback) so writes through this fallback path produce
+	// a non-empty git commit message.
 	result := req.Namespace(obj.GetNamespace()).
 		Resource("repositories").
 		Name(repo.Identity).
 		Suffix("files", src.Path).
 		Body(orig).
 		Param("skipDryRun", "true").
+		Param("message", managedResourceCommitMessage(obj, action)).
 		Do(ctx)
 	err = result.Error()
 	if err != nil {

@@ -166,6 +166,35 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 			expectedError: "",
 		},
 		{
+			name: "should skip namespace cleanup for folderless-type repositories",
+			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
+				rw.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "test-namespace",
+					},
+					Spec: provisioning.RepositorySpec{
+						Sync: provisioning.SyncOptions{
+							Target: provisioning.SyncTargetTypeFolderless,
+						},
+					},
+				})
+				// Export should run for folderless-type repositories
+				pr.On("SetMessage", mock.Anything, "export resources").Return()
+				pr.On("StrictMaxErrors", 1).Return()
+				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
+					return job.Spec.Push != nil
+				}), mock.Anything).Return(nil)
+				pr.On("ResetResults", false).Return()
+				// Cleaner should be skipped - folderless coexists with unmanaged resources
+				pr.On("SetMessage", mock.Anything, "pull resources").Return()
+				sw.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
+					return job.Spec.Pull != nil && !job.Spec.Pull.Incremental
+				}), pr).Return(nil)
+			},
+			expectedError: "",
+		},
+		{
 			name: "should fail when sync job fails for folder-type repositories",
 			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
