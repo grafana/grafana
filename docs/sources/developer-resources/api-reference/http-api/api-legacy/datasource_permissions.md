@@ -178,7 +178,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-When granting "Query" permission, The subject also has read access to the data source.
+When granting a `Query` permission, the user also has read access to the data source.
 
 **Example response:**
 
@@ -231,7 +231,7 @@ Append `?ds_type=<TYPE>` when you need to disambiguate the UID; refer to [Option
 To add a permission, set the `permission` field to either `Query`, `Edit`, or `Admin`.
 To remove a permission, set the `permission` field to an empty string.
 
-When adding `Query`, `Edit`, or `Admin`, the subject implicitly has `Read` access.
+When adding `Query`, `Edit`, or `Admin` permissions, the user implicitly has `Read` access.
 
 **Required permissions**
 
