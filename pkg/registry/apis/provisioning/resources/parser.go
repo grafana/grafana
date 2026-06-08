@@ -211,8 +211,25 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		obj.SetName(obj.GetGenerateName() + util.GenerateShortUID())
 	}
 
-	// Calculate folder identifier from the file path
-	if info.Path != "" {
+	obj.SetUID("")             // clear identifiers
+	obj.SetResourceVersion("") // clear identifiers
+
+	// FIXME: remove this check once we have better unit tests
+	if r.clients == nil {
+		return parsed, fmt.Errorf("no clients configured")
+	}
+
+	// TODO: catch the not found gvk error to return bad request
+	parsed.Client, parsed.GVR, err = r.clients.ForKind(ctx, parsed.GVK)
+	if err != nil {
+		return nil, NewResourceValidationError(fmt.Errorf("get client for kind: %w", err))
+	}
+
+	// Calculate the folder identifier from the file path, but only for resources that
+	// are contained in folders. Org-scoped resources (those not folder-scoped in the
+	// configured supported set) must not have a folder annotation stamped onto them:
+	// it would be meaningless and possibly dangling.
+	if info.Path != "" && supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK) {
 		dirPath := safepath.Dir(info.Path)
 		// _folder.json represents the directory it lives in, so its parent is one level above.
 		if r.folderMetadataEnabled && IsFolderMetadataFile(info.Path) {
@@ -237,19 +254,6 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		} else {
 			parsed.Meta.SetFolder(RootFolder(r.config))
 		}
-	}
-	obj.SetUID("")             // clear identifiers
-	obj.SetResourceVersion("") // clear identifiers
-
-	// FIXME: remove this check once we have better unit tests
-	if r.clients == nil {
-		return parsed, fmt.Errorf("no clients configured")
-	}
-
-	// TODO: catch the not found gvk error to return bad request
-	parsed.Client, parsed.GVR, err = r.clients.ForKind(ctx, parsed.GVK)
-	if err != nil {
-		return nil, NewResourceValidationError(fmt.Errorf("get client for kind: %w", err))
 	}
 
 	return parsed, nil
