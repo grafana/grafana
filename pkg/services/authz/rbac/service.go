@@ -71,6 +71,11 @@ type Settings struct {
 	// LocalFolderCacheTTL, when non-zero, adds an in-memory L1 cache in front
 	// of the remote folder cache to reduce round-trips and deserialization cost.
 	LocalFolderCacheTTL time.Duration
+	// FolderScopedAuthzForCRDs enables the dual-check authz path for
+	// *.ext.grafana.app resources that are not registered in mapper.go.
+	//  When false, the legacy behaviour is preserved end-to-end
+	// (mapper miss falls back to the k8sNativeMapping path with HasFolderSupport=true).
+	FolderScopedAuthzForCRDs bool
 }
 
 func NewService(
@@ -869,18 +874,49 @@ func (s *Service) newFolderTreeGetter(ctx context.Context, ns types.NamespaceInf
 	}
 }
 
+// checkPermission dispatches to one of two checks based on mapper presence:
+//
+//   - mapper hit (legacy registrations like dashboards, folders, librarypanels,
+//     serviceaccounts, …) → checkPermissionLegacy preserves the existing
+//     HasFolderSupport / SkipScope / GeneralFolderUID inheritance behaviour.
+//   - mapper miss in *.ext.grafana.app → when FolderScopedAuthzForCRDs is enabled,
+//     checkPermissionDualCheck enforces the "stack role AND folder permission"
+//     model. All other mapper misses use the legacy fallback.
+//
+// The fork is intentionally explicit so the new behaviour is easy to read and
+// easy to retire once all resources move to the dual-check model.
 func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool, req *checkRequest, getTree folderTreeGetter) (bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.checkPermission", trace.WithAttributes(
 		attribute.Int("scope_count", len(scopeMap))))
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	t, ok := s.mapper.Get(req.Group, req.Resource, req.Subresource)
-	if !ok {
-		ctxLogger.Debug("resource not in mapper, using K8s-native fallback", "group", req.Group, "resource", req.Resource, "subresource", req.Subresource)
-		t = newK8sNativeMapping(req.Group, req.Resource, req.Subresource)
+	if t, ok := s.mapper.Get(req.Group, req.Resource, req.Subresource); ok {
+		ctxLogger.Debug("resource in mapper, using checkPermissionLegacy", "group", req.Group, "resource", req.Resource, "subresource", req.Subresource)
+		return s.checkPermissionLegacy(ctx, scopeMap, req, t, getTree)
 	}
 
+	if s.settings.FolderScopedAuthzForCRDs && strings.HasSuffix(req.Group, ".ext.grafana.app") {
+		ctxLogger.Debug("checkPermission: mapper miss and dual-check path (*.ext.grafana.app)",
+			"group", req.Group, "resource", req.Resource, "subresource", req.Subresource,
+			"verb", req.Verb, "name", req.Name, "parent_folder", req.ParentFolder,
+			"scope_count", len(scopeMap))
+		return s.checkPermissionDualCheck(ctx, scopeMap, req, getTree)
+	}
+
+	ctxLogger.Debug("checkPermission: mapper miss and no dual-check path",
+		"group", req.Group, "resource", req.Resource, "subresource", req.Subresource,
+		"verb", req.Verb, "name", req.Name, "parent_folder", req.ParentFolder,
+		"scope_count", len(scopeMap))
+	t := newK8sNativeMapping(req.Group, req.Resource, req.Subresource)
+	return s.checkPermissionLegacy(ctx, scopeMap, req, t, getTree)
+}
+
+// checkPermissionLegacy runs the default check for resources that have a
+// translation registered in mapper.go (and for K8s-native fallback when the
+// folder-scoped toggle is off). Behaviour is preserved verbatim from the
+// pre-fork checkPermission.
+func (s *Service) checkPermissionLegacy(ctx context.Context, scopeMap map[string]bool, req *checkRequest, t Mapping, getTree folderTreeGetter) (bool, error) {
 	if req.Name == "" && req.Verb != utils.VerbCreate {
 		// For resources that require a wildcard scope, we can perform the check immediately
 		if t.Scope("") == "*" {
@@ -915,6 +951,104 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 	}
 
 	return s.checkInheritedPermissions(ctx, scopeMap, req, getTree)
+}
+
+// checkPermissionDualCheck implements the new "stack role AND folder
+// permission" model for K8s-native (mapper-miss) resources.
+// Apiextensions configures storage to check folder-scoped objects carry a non-root folder
+// annotation (see apistore.StorageOptions.RequireFolder), so the check here
+// reduces to presence-driven logic — no HasFolderSupport gate, no
+// GeneralFolderUID default.
+//
+// Stack-role toggle interpretation:
+//
+// Grafana RBAC's getScopeMap collapses any wildcard scope (`*`, `widgets:*`,
+// etc.) into scopeMap["*"]; permissions granted with an empty scope land in
+// scopeMap[""]. In the dual-check model both signal the same thing — "the
+// user holds the stack role for this action" — and neither is allowed to
+// auto-allow when the request targets an object in a folder. The folder
+// branch is always consulted whenever req.ParentFolder is set.
+//
+// Service identities / true admins bypass this function entirely via the
+// authz client's identity-type guard, so removing the wildcard auto-allow
+// here only affects user identities that hold a resource-type wildcard
+// without a matching folder grant.
+func (s *Service) checkPermissionDualCheck(ctx context.Context, scopeMap map[string]bool, req *checkRequest, getTree folderTreeGetter) (bool, error) {
+	ctxLogger := s.logger.FromContext(ctx)
+
+	hasStackRole := scopeMap["*"] || scopeMap[""]
+
+	// Capabilities probe (no name, not Create): only the stack-role toggle
+	// counts. Folder grants on this resource do not light up
+	// "can the user do X anywhere?".
+	if req.Name == "" && req.Verb != utils.VerbCreate {
+		return hasStackRole, nil
+	}
+
+	// No stack-role toggle at all (can't proceed regardless of folder grants).
+	if !hasStackRole {
+		return false, nil
+	}
+
+	// Cluster-scoped resource or one that simply does not live in a folder
+	// (RequireFolder=false): the stack-role toggle is sufficient.
+	if req.ParentFolder == "" {
+		return true, nil
+	}
+
+	// The stack-role grant lives under the resource-type action
+	// (e.g. customcrdtest.ext.grafana.app/widgets:create), so the scopeMap
+	// passed in here only ever contains widget scopes. To enforce the folder
+	// half of the AND we have to issue a second permission query for the
+	// corresponding folder action (folders:read for reads, folders:write for
+	// writes), include the action-set names so users granted via
+	// managed roles like "folders:edit" are matched, and finally run
+	// inheritance against the resulting scopeMap.
+	folderAction, folderActionSets := dualCheckFolderAuthz(req.Verb)
+	folderScopeMap, err := s.getIdentityPermissions(ctx, req.Namespace, req.IdentityType, req.UserUID, folderAction, folderActionSets)
+	if err != nil {
+		return false, err
+	}
+
+	// Wildcard folder grant (Folder admin / `folders:write` scope=*) → allow
+	// without walking the tree. getScopeMap collapses any wildcard to "*"
+	// and empty scopes land at "".
+	if folderScopeMap["*"] || folderScopeMap[""] {
+		return true, nil
+	}
+
+	ctxLogger.Debug("dualCheck: walking folder inheritance",
+		"group", req.Group, "resource", req.Resource, "verb", req.Verb,
+		"name", req.Name, "parent_folder", req.ParentFolder,
+		"folder_action", folderAction, "folder_action_sets", folderActionSets,
+		"folder_scope_count", len(folderScopeMap))
+	allowed, err := s.checkInheritedPermissions(ctx, folderScopeMap, req, getTree)
+	return allowed, err
+}
+
+// dualCheckFolderAuthz returns the legacy folder action plus the action-set
+// names that gate folder-scoped CRD access in the dual-check model.
+//
+//   - Read verbs (get/list/watch) require folders:read on the parent, or
+//     equivalently any of the folders:view / folders:edit / folders:admin
+//     action sets.
+//   - Write verbs (create/update/patch/delete/deletecollection) require
+//     folders:write on the parent, or equivalently folders:edit / folders:admin.
+//
+// Including the action-set names mirrors how the legacy folder mapper in
+// newFolderTranslation() resolves permissions, so users granted via managed
+// roles (which write the action-set name into the permissions table instead
+// of every individual action) are correctly matched.
+//
+// Unknown verbs fall through to the write set so that anything that mutates
+// state still has to clear the folder-edit bar.
+func dualCheckFolderAuthz(verb string) (string, []string) {
+	switch verb {
+	case utils.VerbGet, utils.VerbList, utils.VerbWatch:
+		return "folders:read", []string{"folders:view", "folders:edit", "folders:admin"}
+	default:
+		return "folders:write", []string{"folders:edit", "folders:admin"}
+	}
 }
 
 func (s *Service) getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
