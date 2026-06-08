@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import { Combobox, type ComboboxOption } from '@grafana/ui';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
@@ -23,6 +24,7 @@ export function RecordingSplitModeSelector() {
 
   return (
     <Combobox<RecordingSplitMode>
+      aria-label={t('alerting.recording-split-mode-selector.aria-label-layout', 'Recording rules layout')}
       options={OPTIONS}
       value={current}
       width={28}

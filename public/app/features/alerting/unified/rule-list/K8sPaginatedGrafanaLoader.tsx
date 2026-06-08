@@ -98,7 +98,7 @@ export function K8sPaginatedGrafanaLoader({
           </div>
         )}
 
-        <div role="tree">
+        <div>
           {filteredFolders.map((folder) => {
             const folderUid = folder.metadata.name;
             if (!folderUid) {
