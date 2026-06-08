@@ -42,10 +42,8 @@ type RuntimeConfig struct {
 	// RuleSequence (if any) owns a rule UID. The default implementation is a
 	// watch-backed in-memory index that provides O(1) lookups.
 	MembershipResolver RuleSequenceMembershipResolver
-	// WatchNamespace scopes the RuleSequence membership-index informer to a
-	// single namespace. In cloud each Grafana instance serves one stack
-	// namespace and its storage identity is scoped to it, so an all-namespace
-	// watch is rejected by unified storage with a namespace mismatch. An empty
-	// value watches all namespaces (the on-prem multi-org default).
+	// WatchNamespace scopes the RuleSequence informer to one namespace. Empty
+	// watches all namespaces (on-prem default); in cloud it must be the stack
+	// namespace, else the all-namespace watch is rejected as a mismatch.
 	WatchNamespace string
 }

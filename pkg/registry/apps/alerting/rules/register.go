@@ -90,18 +90,15 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
-// watchNamespace returns the namespace the RuleSequence membership-index
-// informer should watch. In cloud each Grafana instance serves a single stack
-// namespace and its unified-storage identity is scoped to it, so watching all
-// namespaces is rejected with a namespace mismatch. On-prem (no stack ID) has
-// no such scoping and may serve multiple orgs, so we return an empty string to
-// watch all namespaces.
+// watchNamespace returns the namespace the RuleSequence informer should watch.
+// In cloud each instance serves one stack namespace and its storage identity is
+// scoped to it, so an all-namespace watch is rejected as a mismatch; on-prem
+// (no stack ID) returns "" to watch all namespaces.
 func watchNamespace(cfg *setting.Cfg) string {
 	if cfg == nil || cfg.StackID == "" {
 		return ""
 	}
-	// The cloud namespace mapper ignores the org ID and always returns the
-	// single stack namespace this instance serves.
+	// The cloud mapper ignores the org ID and returns the stack namespace.
 	return reqns.GetNamespaceMapper(cfg)(0)
 }
 
