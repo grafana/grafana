@@ -215,6 +215,32 @@ export function logRowsToReadableJson(logs: LogRowModel[], pickFields: string[] 
   });
 }
 
+/**
+ * Returns true when frames have rows but no time field — used to surface an actionable
+ * error instead of silently showing "No data".
+ */
+export function isMissingTimeField(series: DataFrame[] | undefined): boolean {
+  if (!series || series.length === 0) {
+    return false;
+  }
+  const hasRows = series.some((frame) => frame.length > 0);
+  if (!hasRows) {
+    return false;
+  }
+  return !series.some((frame) => frame.fields.some((field) => field.type === FieldType.time));
+}
+
+export function isMissingStringField(series: DataFrame[] | undefined): boolean {
+  if (!series || series.length === 0) {
+    return false;
+  }
+  const hasRows = series.some((frame) => frame.length > 0);
+  if (!hasRows) {
+    return false;
+  }
+  return !series.some((frame) => frame.fields.some((field) => field.type === FieldType.string));
+}
+
 export const getLogsVolumeMaximumRange = (dataFrames: DataFrame[]) => {
   let widestRange = { from: Infinity, to: -Infinity };
 

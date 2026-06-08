@@ -21,6 +21,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-06-06,refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
 2023-05-05,faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 2026-05-22,faroSessionReplay,experimental,@grafana/session-replay,false,false,true
+2026-05-21,queryHistory.localOnly,experimental,@grafana/datapro,false,false,true
+2026-05-21,queryHistory.recentQueriesUI,experimental,@grafana/datapro,false,false,true
 2023-07-06,awsDatasourcesTempCredentials,GA,@grafana/data-sources-plugins,false,false,false
 2023-07-13,mlExpressions,experimental,@grafana/alerting-squad,false,false,false
 2024-09-19,datasourceAPIServers,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -327,7 +329,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,flameGraphWithCallTree,preview,@grafana/observability-traces-and-profiling,false,false,true
 2026-05-22,advisorDatasourceIntegration,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-22,inlineLogDetailsNoScrolls,experimental,@grafana/observability-logs,false,false,true
-2026-05-22,colorblindThemes,GA,@grafana/grafana-frontend-platform,false,true,false
 2026-05-22,yAxisTickControl,experimental,@grafana/dataviz-squad,false,false,true
 2026-05-22,logsTablePanelNG,experimental,@grafana/observability-logs,false,false,false
 2026-05-22,plugins.useMTPluginSettings,experimental,@grafana/grafana-frontend-platform,false,false,true

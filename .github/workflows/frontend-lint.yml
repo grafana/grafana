@@ -190,7 +190,10 @@ jobs:
             exit 1
         fi
   lint-frontend-openapi:
-    # Run this workflow for OSS only
+    needs: detect-changes
+    # Run this workflow for OSS only, and only when frontend code or this workflow
+    # file has changed (skips unrelated .github/** changes).
+    if: needs.detect-changes.outputs.changed == 'true'
     permissions:
       contents: read
       id-token: write
@@ -381,6 +384,7 @@ jobs:
       run: |
         yarn run knip --workspace '@grafana/*'
         yarn run knip --workspace '@test-plugins/*'
+        yarn run knip --workspace '@grafana-plugins/*'
 
   yarn-install-validation:
     needs:

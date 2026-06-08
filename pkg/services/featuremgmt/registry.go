@@ -201,6 +201,22 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "queryHistory.localOnly",
+			Description: "Store query history in browser IndexedDB instead of server-side",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "queryHistory.recentQueriesUI",
+			Description: "Replace the Query History drawer with a new Recent Queries modal UI",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageGeneralAvailability,
@@ -415,6 +431,7 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Expression:  "true",
 		},
+
 		{
 			Name:            "kubernetesCorrelations",
 			Description:     "Adds support for Kubernetes correlations",
@@ -2814,16 +2831,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-		},
-		{
-			Name:            "colorblindThemes",
-			Description:     "Enables the new colorblind-friendly themes",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaFrontendPlatformSquad,
-			HideFromDocs:    true,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		}, {
 			Name:        "yAxisTickControl",
 			Description: "Enables fine-grained Y-axis tick options beyond the auto-ticks",
@@ -3165,7 +3172,7 @@ var (
 		},
 		{
 			Name:         "grafana.panelEditNextFeedbackEvent",
-			Description:  "Replaces the Intercom survey for PanelEditNext feedback with an event that triggers an in-house survey",
+			Description:  "Enables firing an event for PanelEditNext feedback that triggers an in-house survey",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDataProSquad,
 			HideFromDocs: true,

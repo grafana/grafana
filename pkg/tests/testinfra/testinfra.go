@@ -101,22 +101,22 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 
 	// Potentially allocate a real gRPC port for unified storage
 	runstore := false
+	var grpcListener net.Listener
 	unistore, _ := cfg.Raw.GetSection("grafana-apiserver")
 	if unistore != nil &&
 		unistore.Key("storage_type").MustString("") == string(options.StorageTypeUnifiedGrpc) &&
 		unistore.Key("address").String() == "" {
-		// Allocate a new address
-		listener2, err := net.Listen("tcp", "127.0.0.1:0")
+		// Reserve an ephemeral port and keep the listener open. We hand it
+		// straight to the gRPC server below instead of closing it and dialing
+		// the address again at startup, which left a window for a parallel
+		// process to claim the port and flake the test.
+		grpcListener, err = net.Listen("tcp", "127.0.0.1:0")
 		require.NoError(t, err)
 
 		cfg.GRPCServer.Network = "tcp"
-		cfg.GRPCServer.Address = listener2.Addr().String()
+		cfg.GRPCServer.Address = grpcListener.Addr().String()
 		cfg.GRPCServer.TLSConfig = nil
 		_, err = unistore.NewKey("address", cfg.GRPCServer.Address)
-		require.NoError(t, err)
-
-		// release the one we just discovered -- it will be used by the services on startup
-		err = listener2.Close()
 		require.NoError(t, err)
 		runstore = true
 	}
@@ -166,7 +166,7 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 	var grpcService *grpcserver.DSKitService
 	if runstore {
 		tracer := otel.Tracer("test-grpc-server")
-		grpcService, err = grpcserver.ProvideDSKitService(env.Cfg, tracer, prometheus.NewPedanticRegistry(), "test-grpc-server")
+		grpcService, err = grpcserver.ProvideDSKitServiceWithListener(env.Cfg, tracer, prometheus.NewPedanticRegistry(), "test-grpc-server", grpcListener)
 		require.NoError(t, err)
 
 		registerer := prometheus.NewPedanticRegistry()
@@ -460,6 +460,10 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = rbacSect.NewKey("single_organization", "true")
 		require.NoError(t, err)
 	}
+	if opts.BasicRoleAggregatorEnabled {
+		_, err = rbacSect.NewKey("basic_role_aggregator_enabled", "true")
+		require.NoError(t, err)
+	}
 
 	if opts.DisableAuthZClientCache {
 		authzSect, err := cfg.NewSection("authorization")
@@ -533,6 +537,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	pluginsSect, err := getOrCreateSection("plugins")
 	require.NoError(t, err)
 	_, err = pluginsSect.NewKey("disable_plugins", "grafana-assistant-app")
+	require.NoError(t, err)
+	// Disable async plugin preinstall in tests. The background installer
+	// downloads plugins from grafana.com into the test's tempdir, racing
+	// t.TempDir cleanup and producing "directory not empty" failures, and
+	// adds a network dependency that no integration test actually needs.
+	_, err = pluginsSect.NewKey("preinstall_disabled", "true")
 	require.NoError(t, err)
 
 	if opts.EnableCSP {
@@ -792,6 +802,18 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("allowed_targets", strings.Join(opts.ProvisioningAllowedTargets, "|"))
 		require.NoError(t, err)
 	}
+	if len(opts.ProvisioningResources) > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("resources", strings.Join(opts.ProvisioningResources, ", "))
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningAllowInsecure {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("allow_insecure", "true")
+		require.NoError(t, err)
+	}
 	if len(opts.ProvisioningRepositoryTypes) > 0 {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
@@ -991,7 +1013,9 @@ type GrafanaOpts struct {
 	UnifiedStorageResourceVersionBatchTransactionTimeout time.Duration
 	PermittedProvisioningPaths                           string
 	ProvisioningAllowedTargets                           []string
+	ProvisioningAllowInsecure                            bool
 	ProvisioningRepositoryTypes                          []string
+	ProvisioningResources                                []string
 	ProvisioningMaxResourcesPerRepository                int64
 	ProvisioningMaxRepositories                          int64
 	ProvisioningFolderAPIVersion                         string
@@ -1002,6 +1026,7 @@ type GrafanaOpts struct {
 	EnableRecordingRules                                 bool
 	EnableSCIM                                           bool
 	RBACSingleOrganization                               bool
+	BasicRoleAggregatorEnabled                           bool
 	APIServerRuntimeConfig                               string
 	DisableControllers                                   bool
 	DisableDBCleanup                                     bool

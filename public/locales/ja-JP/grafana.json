@@ -3291,6 +3291,10 @@
         "tooltip-description": "マッチャーでサイレンスを検索します。ラベル名、値、および演算子が完全に一致します。",
         "tooltip-example": "例：<1>env=~\"prod.*\"</1>は、<4>env=~\"prod.*\"</4>というマッチャーを持つサイレンスを検出します。"
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "発生ステートのアラートインスタンスのみが表示されます。",
       "operator": {
         "equals": "等しい",
@@ -5469,9 +5473,6 @@
       "aria-label-dashboard-name": "{{dashboardName}}ダッシュボード",
       "label-no-dashboards-found": "ダッシュボードが見つかりませんでした"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "ダッシュボードの読み込みをキャンセル"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5741,11 +5742,6 @@
         "label": "ダッシュボードをエクスポート"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "ダッシュボードの取得に失敗しました"
-      }
-    },
     "filters-overview": {
       "apply": "適用",
       "apply-close": "適用して閉じる",
@@ -5902,11 +5898,6 @@
       "title-get-help-with-this-panel": "このパネルのヘルプを取得",
       "troubleshooting-docs": "トラブルシューティングドキュメント"
     },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "ダッシュボードモデルの作成に失敗しました"
-      }
-    },
     "inspect": {
       "data-tab": "データ",
       "error-tab": "エラー",
@@ -5995,13 +5986,6 @@
       },
       "ungroup-nested-text": "これにより、ネストされたすべてのグループのグループ化が解除されます。",
       "ungroup-nested-title": "ネストされたグループのグループ化を解除しますか？"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "ダッシュボードが見つかりません"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "ダッシュボードは編集できません",
@@ -6320,10 +6304,6 @@
       },
       "undo": "元に戻す"
     },
-    "solo-panel": {
-      "loading-initializing-dashboard": "ダッシュボードの読み込みと初期化",
-      "title-not-found": "ID{{panelId}}のパネルが見つかりません"
-    },
     "source-link": {
       "title": "ソース（{{provider}}）",
       "tooltip": "リポジトリ内のソースファイルを表示"
@@ -6593,8 +6573,8 @@
     "version-history-comparison": {
       "button-restore": "バージョン、{{version}}に復元",
       "label-view-json-diff": "JSON差分を表示",
-      "new-updated-by": "<0>バージョン{{version}}</0>、{{editor}}が{{timeAgo}}に更新",
-      "old-updated-by": "<0>バージョン{{version}}</0>、{{editor}}が{{timeAgo}}に更新"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "バージョン{{version}}の選択を切り替え",
@@ -7821,8 +7801,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "JSON差分を表示",
-      "new-version-updated": "<0>バージョン{{version}}</0>、{{editor}}が{{timeAgo}}に更新",
-      "old-version-updated": "<0>バージョン{{version}}</0>、{{editor}}が{{timeAgo}}に更新"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "{{baseVersion}}<3></3>と{{newVersion}}を比較",
@@ -10169,7 +10149,7 @@
     },
     "data-source-http-settings": {
       "access-help": "ヘルプ<1></1>",
-      "access-help-details": "アクセスモードは、データソースへのリクエストの処理方法を制御します。特に明記されていない場合は、<1><i>サーバー</i></1>が望ましい方法です。",
+      "access-help-details": "",
       "access-help-title": "ヘルプにアクセス",
       "access-label": "アクセス",
       "allowed-cookies": "許可されたクッキー",
@@ -10855,6 +10835,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -13126,8 +13110,8 @@
       "label-branch": "ブランチ",
       "label-comment": "コメント",
       "label-filename": "ファイル名",
-      "label-folder": "フォルダ",
       "label-path": "パス",
+      "label-repository-folder": "",
       "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "フォルダパスを選択または入力",
@@ -13524,6 +13508,21 @@
       "request-failed": "",
       "resource-not-found": "リソースが見つかりません。URLまたはリポジトリを確認してください。"
     },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
+    },
     "instance-sync-deprecation": {
       "message": "現在インスタンス同期は完全にはサポートされておらず、ライブラリパネルとアラートが正常に動作しません。ライブラリパネルとアラートを使用するには、リポジトリの接続を解除し、代わりにフォルダ同期を使用して再接続します。",
       "title": "インスタンス同期は完全にはサポートされていません"
@@ -13802,7 +13801,8 @@
     "sync-job": {
       "error-no-job-id": "ジョブを開始できませんでした",
       "error-no-repository-name": "リポジトリ名が指定されていません",
-      "error-starting-job": "ジョブ開始時のエラー"
+      "error-starting-job": "ジョブ開始時のエラー",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "リソース取得時のエラー",
@@ -16513,7 +16513,7 @@
       "message": "ユーザーが見つかりません"
     },
     "token-revoked-modal": {
-      "auto-revoked": "アカウントの<2>同時セッション数の上限（{{numSessions}}件）</2>に達したため、セッショントークンは自動的に失効しました。",
+      "auto-revoked": "",
       "resume-message": "<strong>セッションを再開するには、再度サインインしてください。</strong>自動的にサインアウトが繰り返される場合は、管理者に連絡するか、ライセンスページでクォータを確認してください。",
       "sign-in": "サインイン",
       "title-you-have-been-automatically-signed-out": "自動的にサインアウトされました"

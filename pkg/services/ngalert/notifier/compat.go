@@ -57,19 +57,22 @@ func IntegrationToIntegrationConfig(i models.Integration) (alertingModels.Integr
 	}, nil
 }
 
-func PostableAPIConfigToNotificationsConfiguration(c *v1.AMConfigV1, limits alertingNotify.DynamicLimits) (alertingNotify.NotificationsConfiguration, error) {
-	receivers, err := ModelToAPIReceivers(c.AlertmanagerConfig.Receivers)
+func PostableAPIConfigToNotificationsConfiguration(
+	cfg v1.PostableApiAlertingConfig,
+	tmpls []v1.TemplateGroup,
+	limits alertingNotify.DynamicLimits,
+) (alertingNotify.NotificationsConfiguration, error) {
+	receivers, err := ModelToAPIReceivers(cfg.Receivers)
 	if err != nil {
 		return alertingNotify.NotificationsConfiguration{}, err
 	}
 	return alertingNotify.NotificationsConfiguration{
-		RoutingTree:       RouteToAPI(c.AlertmanagerConfig.Route),
-		InhibitRules:      c.AlertmanagerConfig.InhibitRules,
-		MuteTimeIntervals: ModelToMuteTimeIntervals(c.AlertmanagerConfig.MuteTimeIntervals),
-		TimeIntervals:     ModelToTimeIntervals(c.AlertmanagerConfig.TimeIntervals),
-		Templates:         ModelToTemplateDefinitions(c.SortedTemplates(true)),
-		Receivers:         receivers,
-		Limits:            limits,
+		RoutingTree:   RouteToAPI(cfg.Route),
+		InhibitRules:  cfg.InhibitRules,
+		TimeIntervals: ModelToTimeIntervals(cfg.TimeIntervals, cfg.MuteTimeIntervals),
+		Templates:     ModelToTemplateDefinitions(tmpls),
+		Receivers:     receivers,
+		Limits:        limits,
 	}, nil
 }
 
@@ -100,23 +103,19 @@ func ModelToReceiverConfig(r *v1.PostableApiReceiver) (alertingModels.ReceiverCo
 	return result, nil
 }
 
-func ModelToTimeIntervals(in []v1.TimeInterval) []alertingNotify.TimeInterval {
-	out := make([]alertingNotify.TimeInterval, 0, len(in))
-	for _, t := range in {
+func ModelToTimeIntervals(in []v1.TimeInterval, mute []v1.MuteTimeInterval) []alertingNotify.TimeInterval {
+	// go with mute intervals first, in the case of collision in the alertmanager, the last will will, which is expected behavior.
+	out := make([]alertingNotify.TimeInterval, 0, len(in)+len(mute))
+	for _, t := range mute {
 		out = append(out, config.TimeInterval{
 			Name:          t.Name,
 			TimeIntervals: t.TimeIntervals,
 		})
 	}
-	return out
-}
-
-func ModelToMuteTimeIntervals(in []v1.MuteTimeInterval) []alertingNotify.MuteTimeInterval {
-	out := make([]alertingNotify.MuteTimeInterval, 0, len(in))
-	for _, m := range in {
-		out = append(out, config.MuteTimeInterval{
-			Name:          m.Name,
-			TimeIntervals: m.TimeIntervals,
+	for _, t := range in {
+		out = append(out, config.TimeInterval{
+			Name:          t.Name,
+			TimeIntervals: t.TimeIntervals,
 		})
 	}
 	return out
@@ -149,12 +148,11 @@ var ExtraConfigsToAPI = v1.ExtraConfigsToDB
 func NotificationsConfigurationToPostableAPIConfig(config alertingNotify.NotificationsConfiguration) apimodels.PostableApiAlertingConfig {
 	return apimodels.PostableApiAlertingConfig{
 		Config: apimodels.Config{
-			Global:            nil, // Grafana does not have global.
-			Route:             config.RoutingTree,
-			InhibitRules:      config.InhibitRules,
-			TimeIntervals:     config.TimeIntervals,
-			MuteTimeIntervals: config.MuteTimeIntervals,
-			Templates:         nil, // we do not use this.
+			Global:        nil, // Grafana does not have global.
+			Route:         config.RoutingTree,
+			InhibitRules:  config.InhibitRules,
+			TimeIntervals: config.TimeIntervals,
+			Templates:     nil, // we do not use this.
 		},
 		Receivers: APIReceiversToPostableAPIReceivers(config.Receivers),
 	}
