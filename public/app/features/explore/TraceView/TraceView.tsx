@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { type RefObject, useMemo, useState } from 'react';
-import { useToggle } from 'react-use';
+import { useAsync, useToggle } from 'react-use';
 
 import {
   CoreApp,
@@ -19,7 +19,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getTraceToLogsOptions, type TraceToMetricsData, type TraceToProfilesData } from '@grafana/o11y-ds-frontend';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, isAppPluginInstalled } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { type TempoQuery } from '@grafana-plugins/tempo/types';
@@ -30,6 +30,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { changePanelState } from '../state/explorePane';
 
 import memoizedTraceCriticalPath from './components/CriticalPath';
+import { AdaptiveTracesRestoredBanner } from './components/TracePageHeader/AdaptiveTracesRestoredBanner';
 import { TracePageHeader } from './components/TracePageHeader/TracePageHeader';
 import TraceTimelineViewer from './components/TraceTimelineViewer';
 import { type TraceFlameGraphs } from './components/TraceTimelineViewer/SpanDetail';
@@ -43,6 +44,8 @@ import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
 import { useSearch } from './useSearch';
 import { useViewRange } from './useViewRange';
+
+const ADAPTIVE_TRACES_APP_PLUGIN_ID = 'grafana-adaptivetraces-app' as const;
 
 const getStyles = (theme: GrafanaTheme2) => ({
   noDataMsg: css({
@@ -103,6 +106,27 @@ export function TraceView(props: Props) {
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
 
   const criticalPath = useMemo(() => memoizedTraceCriticalPath(traceProp), [traceProp]);
+  const { value: isAdaptiveTracesAppInstalled } = useAsync(
+    () => isAppPluginInstalled(ADAPTIVE_TRACES_APP_PLUGIN_ID),
+    []
+  );
+
+  const isRestoredByAdaptiveTraces = useMemo(
+    () => {
+      if (!isAdaptiveTracesAppInstalled) {
+        return false;
+      }
+
+      return (
+        traceProp?.spans?.some((span) =>
+          span.tags?.some(
+            (tag) => tag.key === 'grafana.adaptivetraces.restored' && (tag.value === true || tag.value === 'true')
+          )
+        ) ?? false
+      );
+    },
+    [isAdaptiveTracesAppInstalled, traceProp]
+  );
   const { search, setSearch, spanFilterMatches } = useSearch(exploreId, traceProp?.spans, spanFilters, criticalPath);
 
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
@@ -186,6 +210,8 @@ export function TraceView(props: Props) {
     <>
       {props.dataFrames?.length && traceProp ? (
         <>
+          {isRestoredByAdaptiveTraces && <AdaptiveTracesRestoredBanner />}
+
           <TracePageHeader
             trace={traceProp}
             data={props.dataFrames[0]}

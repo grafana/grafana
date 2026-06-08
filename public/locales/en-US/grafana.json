@@ -8811,6 +8811,10 @@
       "url": "URL"
     },
     "trace-view": {
+      "adaptive-traces-restored": {
+        "body": "This trace was originally dropped by Adaptive Traces and has been restored. A restored trace is not included in TraceQL queries and can only be queried by trace ID. Please review the <2>documentation</2> for more details.",
+        "title": "Trace restored by Adaptive Traces"
+      },
       "aria-label-copy": "Copy to clipboard",
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
