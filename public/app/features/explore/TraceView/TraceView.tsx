@@ -30,6 +30,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { changePanelState } from '../state/explorePane';
 
 import memoizedTraceCriticalPath from './components/CriticalPath';
+import { AdaptiveTracesRestoredBanner } from './components/TracePageHeader/AdaptiveTracesRestoredBanner';
 import { TracePageHeader } from './components/TracePageHeader/TracePageHeader';
 import TraceTimelineViewer from './components/TraceTimelineViewer';
 import { type TraceFlameGraphs } from './components/TraceTimelineViewer/SpanDetail';
@@ -103,6 +104,16 @@ export function TraceView(props: Props) {
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
 
   const criticalPath = useMemo(() => memoizedTraceCriticalPath(traceProp), [traceProp]);
+
+  const isRestoredByAdaptiveTraces = useMemo(
+    () =>
+      traceProp?.spans?.some((span) =>
+        span.tags?.some(
+          (tag) => tag.key === 'grafana.adaptivetraces.restored' && (tag.value === true || tag.value === 'true')
+        )
+      ) ?? false,
+    [traceProp]
+  );
   const { search, setSearch, spanFilterMatches } = useSearch(exploreId, traceProp?.spans, spanFilters, criticalPath);
 
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
@@ -186,6 +197,8 @@ export function TraceView(props: Props) {
     <>
       {props.dataFrames?.length && traceProp ? (
         <>
+          {isRestoredByAdaptiveTraces && <AdaptiveTracesRestoredBanner />}
+
           <TracePageHeader
             trace={traceProp}
             data={props.dataFrames[0]}

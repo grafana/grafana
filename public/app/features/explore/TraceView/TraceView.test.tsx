@@ -146,6 +146,29 @@ describe('TraceView', () => {
     rerender(getTraceView([frameNew]));
     expect(screen.queryByText(/Resource/)).not.toBeInTheDocument();
   });
+
+  describe('Adaptive Traces restored banner', () => {
+    const restoredBannerTitle = /Trace restored by Adaptive Traces/;
+
+    it('does not render the banner when no span has the restored attribute', () => {
+      renderTraceView();
+      expect(screen.queryByText(restoredBannerTitle)).not.toBeInTheDocument();
+    });
+
+    it('renders the banner when at least one span has grafana.adaptivetraces.restored=true', () => {
+      renderTraceView([frameRestoredByAdaptiveTraces]);
+      expect(screen.getByText(restoredBannerTitle)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /documentation/ })).toBeInTheDocument();
+    });
+
+    it('hides the banner after the user dismisses it', async () => {
+      renderTraceView([frameRestoredByAdaptiveTraces]);
+      expect(screen.getByText(restoredBannerTitle)).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
+      expect(screen.queryByText(restoredBannerTitle)).not.toBeInTheDocument();
+    });
+  });
 });
 
 const response: TraceData & { spans: TraceSpanData[] } = {
@@ -357,6 +380,30 @@ const frameNew = new MutableDataFrame({
     },
     { name: 'warnings', values: [undefined, undefined] },
     { name: 'stackTraces', values: [undefined, undefined] },
+  ],
+  meta: {
+    preferredVisualisationType: 'trace',
+  },
+});
+
+const restoredResponse: TraceData & { spans: TraceSpanData[] } = {
+  ...response,
+  spans: response.spans.map((span, index) =>
+    index === 0
+      ? {
+          ...span,
+          tags: [...(span.tags ?? []), { key: 'grafana.adaptivetraces.restored', type: 'bool', value: true }],
+        }
+      : span
+  ),
+};
+
+const frameRestoredByAdaptiveTraces = new MutableDataFrame({
+  fields: [
+    {
+      name: 'trace',
+      values: [restoredResponse],
+    },
   ],
   meta: {
     preferredVisualisationType: 'trace',
