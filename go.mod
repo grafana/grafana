@@ -23,7 +23,7 @@ require (
 	github.com/BurntSushi/toml v1.5.0 // @grafana/identity-access-team
 	github.com/DATA-DOG/go-sqlmock v1.5.2 // @grafana/grafana-search-and-storage
 	github.com/Masterminds/semver v1.5.0 // @grafana/grafana-backend-group
-	github.com/Masterminds/semver/v3 v3.4.0 // @grafana/grafana-backend-services-squad
+	github.com/Masterminds/semver/v3 v3.5.0 // @grafana/grafana-backend-services-squad
 	github.com/Masterminds/sprig/v3 v3.3.0 // @grafana/grafana-backend-group
 	github.com/PaesslerAG/jsonpath v0.1.1 // @grafana/grafana-search-and-storage
 	github.com/VividCortex/mysqlerr v1.0.0 // @grafana/grafana-backend-group
@@ -31,11 +31,12 @@ require (
 	github.com/andybalholm/brotli v1.2.0 // @grafana/data-sources-plugins
 	github.com/apache/arrow-go/v18 v18.5.2 // @grafana/grafana-catalog
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
-	github.com/aws/aws-sdk-go v1.55.7 // @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go v1.55.7 // indirect; @grafana/data-sources-plugins
 	github.com/aws/aws-sdk-go-v2 v1.41.9 // @grafana/data-sources-plugins
 	github.com/aws/aws-sdk-go-v2/config v1.32.15 // @grafana/grafana-search-and-storage
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.14 // @grafana/grafana-operator-experience-squad
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.21 // @grafana/grafana-operator-experience-squad
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.20.3 // @grafana/alerting-backend
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.50.5 // @grafana/grafana-search-and-storage
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.45.3 // @grafana/data-sources-plugins
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.73.0 // @grafana/data-sources-plugins
@@ -361,7 +362,6 @@ require (
 	github.com/at-wat/mqtt-go v0.19.6 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.10 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.20.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.25 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.25 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.24 // indirect

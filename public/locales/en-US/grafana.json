@@ -3006,6 +3006,9 @@
         "results-loading": "Searching – found {{numberOfRules}} rules",
         "results-with-cancellation": "Search cancelled – found {{numberOfRules}} rules"
       },
+      "import-disabled-tooltip": {
+        "auto-sync": "Imports are unavailable while Mimir Alertmanager auto-sync is active"
+      },
       "import-to-gma": {
         "new-badge": "New!",
         "text": "Import to Grafana-managed rules"
@@ -3260,6 +3263,30 @@
       "tooltip-content": "Not finding the data source you want? Some data sources are not supported for alerting. Click on the icon for more information."
     },
     "settings": {
+      "auto-sync": {
+        "action-disable": "Disable sync",
+        "add-datasource-link": "Add Mimir datasource",
+        "badge-active": "Active",
+        "badge-not-configured": "Not configured",
+        "badge-operator-managed": "Managed by operator",
+        "description": "Continuously sync alert configuration from a Mimir or Cortex Alertmanager datasource into Grafana.",
+        "disable-confirm-action": "Disable sync",
+        "disable-confirm-body": "Disabling will stop continuous sync from datasource {{uid}}. You can re-enable it later by selecting a datasource again.",
+        "disable-confirm-body-generic": "Disabling will stop continuous sync. You can re-enable it later by selecting a datasource again.",
+        "disable-confirm-title": "Disable Mimir Alertmanager auto-sync?",
+        "disable-success": "Mimir Alertmanager auto-sync disabled",
+        "operator-managed-info": "This value is set by the <1>[unified_alerting] external_alertmanager_uid</1> key in grafana.ini and cannot be changed from the UI. Edit the configuration file and restart Grafana, or remove the key to manage sync from here.",
+        "operator-managed-title": "Managed by operator",
+        "orphan-warning": "The configured datasource UID {{uid}} is not available. Disable sync or restore the datasource to continue.",
+        "orphan-warning-title": "Configured datasource not found",
+        "picker-empty": "No Mimir or Cortex datasources available",
+        "picker-label": "Datasource",
+        "picker-placeholder": "Select a Mimir or Cortex Alertmanager datasource…",
+        "save-disabled-no-selection": "Select a Mimir or Cortex Alertmanager datasource to enable saving.",
+        "save-error": "Failed to save Mimir Alertmanager auto-sync",
+        "save-success": "Mimir Alertmanager auto-sync enabled",
+        "title": "Auto-sync configuration"
+      },
       "tabs": {
         "alert-managers": "Alert managers"
       }
@@ -4965,9 +4992,6 @@
       "dashboard-from-template": "Dashboard from template",
       "light-theme": "Light",
       "scopes": "Scopes"
-    },
-    "badge": {
-      "provisioned": "Provisioned"
     },
     "empty-state": {
       "button-title": "Search with Grafana Assistant",
@@ -7315,12 +7339,6 @@
       "title-controls-menu_one": "Controls menu ({{count}})",
       "title-controls-menu_other": "Controls menu ({{count}})"
     },
-    "managed-badge": {
-      "kubectl": "Managed by: Kubectl",
-      "plugin": "Managed by: Plugin {{id}}",
-      "provisioned": "Provisioned",
-      "terraform": "Managed by: Terraform"
-    },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "Dashboard is already in the selected folder.",
       "api-error": "Failed to move dashboard",
@@ -8112,7 +8130,9 @@
     },
     "data-source-load-error": {
       "back": "Back",
+      "check-updates": "An unknown error occurred while loading the plugin. Please check for updates.",
       "delete": "Delete",
+      "load-error-title": "Error loading plugin",
       "not-found": "Data source not found"
     },
     "data-source-missing-rights-message": {
@@ -8141,14 +8161,19 @@
     "data-sources-list-card": {
       "explore": "Explore"
     },
+    "default-button": {
+      "active": "This data source is currently set as the default.",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "error": "Failed to update default data source",
+      "make": "Make default",
+      "make-confirm": "Are you sure you want to set this data source as the default for all users?",
+      "remove": "Remove default",
+      "remove-confirm": "Are you sure you want to remove the default status from this data source for all users?",
+      "tooltip": "The default data source is preselected in new panels."
+    },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
-      "default-active": "This data source is currently set as the default.",
-      "default-error": "Failed to update default data source",
-      "default-label": "Default",
-      "default-make-button": "Make default",
-      "default-remove-button": "Remove default",
-      "default-tooltip": "The default data source is preselected in new panels.",
       "explore-data": "Explore data",
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
@@ -9129,8 +9154,7 @@
     "select-placeholder": "Filter by folder"
   },
   "folder-repo": {
-    "read-only-badge": "Read only",
-    "repository-not-found-tooltip": "Repository not found"
+    "read-only-badge": "Read only"
   },
   "folders": {
     "api": {
@@ -13629,6 +13653,13 @@
       "path-label": "Repository Path",
       "path-required": "Repository path is required"
     },
+    "managed-badge": {
+      "classic-file-provisioning": "Managed by: File provisioning",
+      "kubectl": "Managed by: Kubectl",
+      "plugin": "Managed by: Plugin {{id}}",
+      "provisioned": "Provisioned",
+      "terraform": "Managed by: Terraform"
+    },
     "managed-by-repository-tooltip": "Managed by: Repository",
     "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",
     "message": {
@@ -14306,14 +14337,14 @@
         "no-limit": "No limit"
       },
       "query-inspector": "Query inspector",
-      "query-options": "Query Options"
+      "query-options": "Query options"
     },
     "header": {
       "alert": "Alert",
       "expression": "Expression",
-      "pending-expression": "Select an Expression",
+      "pending-expression": "Select an expression",
       "pending-expression-cancel": "Cancel",
-      "pending-transformation": "Select a Transformation",
+      "pending-transformation": "Select a transformation",
       "pending-transformation-cancel": "Cancel",
       "transformation": "Transformation"
     },
@@ -14322,10 +14353,10 @@
       "close-aria": "Close help panel"
     },
     "labels": {
-      "alert": "Alert",
-      "expression": "Expression",
-      "query": "Query",
-      "transformation": "Transformation"
+      "alert": "alert",
+      "expression": "expression",
+      "query": "query",
+      "transformation": "transformation"
     },
     "sidebar": {
       "add-below": "Add below {{id}}",
