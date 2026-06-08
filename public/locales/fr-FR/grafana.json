@@ -5774,11 +5774,6 @@
         "label": "Menu d’exportation du tableau de bord"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Échec de la récupération du tableau de bord"
-      }
-    },
     "filters-overview": {
       "apply": "Appliquer",
       "apply-close": "Appliquer et fermer",
@@ -5934,11 +5929,6 @@
       "title-complete-git-hub-comment-clipboard": "Copier un commentaire GitHub complet dans le presse-papiers",
       "title-get-help-with-this-panel": "Obtenir de l’aide sur ce panneau",
       "troubleshooting-docs": "Documents de dépannage"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Échec de la création du modèle de tableau de bord"
-      }
     },
     "inspect": {
       "data-tab": "Données",
@@ -6346,10 +6336,6 @@
         "tooltip": "Ouvrir le tableau de bord d’origine"
       },
       "undo": "Annuler"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Chargement et initialisation du tableau de bord",
-      "title-not-found": "Panneau avec l’ID {{panelId}} introuvable"
     },
     "source-link": {
       "title": "Source ({{provider}})",

@@ -216,6 +216,7 @@ export function EditDataSourceView({
     return (
       <DataSourceLoadError
         notFound={!hasDataSource || !dsi}
+        errorMsg={loadError}
         dataSourceRights={dataSourceRights}
         onDelete={() => {
           trackDsConfigClicked('delete');

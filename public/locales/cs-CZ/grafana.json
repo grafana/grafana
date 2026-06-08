@@ -5838,11 +5838,6 @@
         "label": "Exportovat nabídku nástěnky"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Nepodařilo se načíst nástěnku"
-      }
-    },
     "filters-overview": {
       "apply": "Použít",
       "apply-close": "Použít a zavřít",
@@ -5998,11 +5993,6 @@
       "title-complete-git-hub-comment-clipboard": "Kopírovat celý komentář na GitHubu do schránky",
       "title-get-help-with-this-panel": "Získat nápovědu k tomuto panelu",
       "troubleshooting-docs": "Dokumenty pro řešení problémů"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Nepodařilo se vytvořit model nástěnky"
-      }
     },
     "inspect": {
       "data-tab": "Data",
@@ -6412,10 +6402,6 @@
         "tooltip": "Otevřít původní nástěnku"
       },
       "undo": "Zpět"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Načítání a inicializace nástěnky",
-      "title-not-found": "Panel s ID {{panelId}} nebyl nalezen"
     },
     "source-link": {
       "title": "Zdroj ({{provider}})",

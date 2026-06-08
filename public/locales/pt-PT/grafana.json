@@ -5774,11 +5774,6 @@
         "label": "Exportar painel de controlo"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Falha ao obter o painel de controlo"
-      }
-    },
     "filters-overview": {
       "apply": "Aplicar",
       "apply-close": "Aplicar e fechar",
@@ -5934,11 +5929,6 @@
       "title-complete-git-hub-comment-clipboard": "Copiar um comentário completo do GitHub para a área de transferência",
       "title-get-help-with-this-panel": "Obter ajuda com este painel",
       "troubleshooting-docs": "Documentos de resolução de problemas"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Falha ao criar modelo de painel de controlo"
-      }
     },
     "inspect": {
       "data-tab": "Dados",
@@ -6346,10 +6336,6 @@
         "tooltip": "Abrir o painel de controlo original"
       },
       "undo": "Anular"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "A carregar e inicializar o painel de controlo",
-      "title-not-found": "Painel com ID {{panelId}} não encontrado"
     },
     "source-link": {
       "title": "Origem ({{provider}})",

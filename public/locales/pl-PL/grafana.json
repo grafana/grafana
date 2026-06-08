@@ -5838,11 +5838,6 @@
         "label": "Menu eksportu pulpitu"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Nie udało się pobrać pulpitu"
-      }
-    },
     "filters-overview": {
       "apply": "Zastosuj",
       "apply-close": "Zastosuj i zamknij",
@@ -5998,11 +5993,6 @@
       "title-complete-git-hub-comment-clipboard": "Kopiuj cały komentarz z GitHub do schowka",
       "title-get-help-with-this-panel": "Uzyskaj pomoc dotyczącą tego panelu",
       "troubleshooting-docs": "Dokumenty dotyczące rozwiązywania problemów"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Nie udało się utworzyć modelu pulpitu"
-      }
     },
     "inspect": {
       "data-tab": "Dane",
@@ -6412,10 +6402,6 @@
         "tooltip": "Otwórz oryginalny pulpit"
       },
       "undo": "Cofnij"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Wczytywanie i inicjowanie pulpitu",
-      "title-not-found": "Nie znaleziono panelu o identyfikatorze {{panelId}}"
     },
     "source-link": {
       "title": "Źródło ({{provider}})",
