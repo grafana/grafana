@@ -30,6 +30,13 @@ func New(cfg app.Config) (app.App, error) {
 				Mutator:   buildKindMutator(kind, runtimeCfg),
 				Watcher:   buildKindWatcher(kind, runtimeCfg),
 			}
+			// Scope the informer's ListWatch to a single namespace when
+			// configured. Only kinds with a watcher run an informer, so this
+			// only affects RuleSequence. An empty namespace watches all
+			// namespaces (the on-prem default).
+			if managedKind.Watcher != nil && runtimeCfg.WatchNamespace != "" {
+				managedKind.ReconcileOptions.Namespace = runtimeCfg.WatchNamespace
+			}
 			managedKinds = append(managedKinds, managedKind)
 		}
 	}
