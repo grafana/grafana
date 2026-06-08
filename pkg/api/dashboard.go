@@ -18,6 +18,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	claims "github.com/grafana/authlib/types"
+	dashboardsV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -397,9 +398,13 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 			" OR it should include a object wrapper with an explicit 'apiVersion' and move the body into a 'spec' element", nil)
 	}
 
+	obj := &unstructured.Unstructured{Object: map[string]interface{}{
+		"spec": spec,
+	}}
+
 	// Items with metadata, spec, etc
 	if dashboards.LooksLikeK8sResource(spec) {
-		obj := &unstructured.Unstructured{Object: spec}
+		obj.Object = spec
 		apiVersion := obj.GetAPIVersion()
 		switch {
 		case strings.HasPrefix(apiVersion, dashboardsV1.GROUP):
@@ -415,83 +420,19 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 				obj.SetName(uid) // overwrite the incoming name -- this might happen from TF providers
 			}
 			hs.log.Warn("DEPRECATION WARNING: Accepting k8s style dashboard in legacy /api/dashboards/db.  Please use the /apis/dashboard.grafana.app/ API to manage this resource", "dashboard", obj.GetName())
-			return hs.saveDashboardViaK8s(c, cmd, obj)
 
 		case apiVersion == "":
 			return response.Error(http.StatusBadRequest, "Dashboard appears to be a k8s style resource, but is missing an explicit apiVersion.", nil)
+		default:
+			return response.Error(http.StatusBadRequest, "The dashboard payload references a non dashboard apiVersion.  This should be sent to the requested api directly", nil)
 		}
-		return response.Error(http.StatusBadRequest, "The dashboard payload references a non dashboard apiVersion.  This should be sent to the requested api directly", nil)
+	} else {
+		// Default legacy POSTs to v0alpha1: matches the prior DashboardService.SaveDashboard
+		// behavior. v0 lets the dashboard apiserver mutate hook strip uid/version/id without
+		// running the v1 schema migrations, so legacy callers' panel content is preserved.
+		obj.SetAPIVersion(dashboardsV0.APIVERSION)
 	}
-
-	_, found := spec["title"]
-	if !found {
-		return response.Error(http.StatusBadRequest, "Dashboard is missing required title property", nil)
-	}
-
-	ctx = c.Req.Context()
-
-	var userID int64
-	if id, err := identity.UserIdentifier(c.GetID()); err == nil {
-		userID = id
-	}
-
-	cmd.OrgID = c.GetOrgID()
-	cmd.UserID = userID
-
-	dash := cmd.GetDashboardModel()
-	newDashboard := dash.ID == 0
-	if newDashboard {
-		limitReached, err := hs.QuotaService.QuotaReached(c, dashboards.QuotaTargetSrv)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Failed to get quota", err)
-		}
-		if limitReached {
-			return response.Error(http.StatusForbidden, "Quota reached", nil)
-		}
-	}
-
-	var provisioningData *dashboards.DashboardProvisioning
-	if dash.ID != 0 {
-		data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(c.Req.Context(), dash.ID)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Error while checking if dashboard is provisioned using ID", err)
-		}
-		provisioningData = data
-	} else if dash.UID != "" {
-		data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(c.Req.Context(), dash.OrgID, dash.UID)
-		if err != nil && !errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) && !errors.Is(err, dashboards.ErrDashboardNotFound) {
-			return response.Error(http.StatusInternalServerError, "Error while checking if dashboard is provisioned", err)
-		}
-		provisioningData = data
-	}
-
-	allowUiUpdate := true
-	if provisioningData != nil {
-		allowUiUpdate = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
-	}
-
-	dashItem := &dashboards.SaveDashboardDTO{
-		Dashboard: dash,
-		Message:   cmd.Message,
-		OrgID:     c.GetOrgID(),
-		User:      c.SignedInUser,
-		Overwrite: cmd.Overwrite,
-	}
-
-	dashboard, saveErr := hs.DashboardService.SaveDashboard(ctx, dashItem, allowUiUpdate)
-	if saveErr != nil {
-		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, saveErr)
-	}
-
-	return response.JSON(http.StatusOK, util.DynMap{
-		"status":    "success",
-		"slug":      dashboard.Slug,
-		"version":   dashboard.Version,
-		"id":        dashboard.ID,
-		"uid":       dashboard.UID,
-		"url":       dashboard.GetURL(),
-		"folderUid": dashboard.FolderUID,
-	})
+	return hs.saveDashboardViaK8s(c, cmd, obj)
 }
 
 func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashboards.SaveDashboardCommand, obj *unstructured.Unstructured) response.Response {
@@ -513,121 +454,174 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	}
 	client := tmp.Resource(gv.WithResource(dashboardsV1.DASHBOARD_RESOURCE)).Namespace(namespace)
 
-	obj.SetKind("Dashboard") // Writing to the dashboard API
+	// /api/dashboards/db lets clients place identity (uid, id) and version
+	// inside the spec; lift them onto k8s metadata, then strip the originals
+	// so the apistore mutate hooks see a clean spec.
+	specUID, _, _ := unstructured.NestedString(obj.Object, "spec", "uid")
+	internalID, err := nestedInternalID(obj.Object)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, err.Error(), err)
+	}
+	specVersion, hasSpecVersion, err := nestedSpecVersion(obj.Object)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, err.Error(), err)
+	}
+	unstructured.RemoveNestedField(obj.Object, "spec", "uid")
+	unstructured.RemoveNestedField(obj.Object, "spec", "id")
+	unstructured.RemoveNestedField(obj.Object, "spec", "version")
+
+	// Reset the wrapper to a clean state the apistore will accept.
+	obj.SetKind("Dashboard")
 	obj.SetNamespace(namespace)
-	obj.SetAnnotations(map[string]string{}) // clear any annotations
-	obj.SetLabels(map[string]string{})      // clear any labels
+	obj.SetAnnotations(map[string]string{})
+	obj.SetLabels(map[string]string{})
 	delete(obj.Object, "status")
-	delete(obj.Object, "access") // can exist if you copied a /dto object
+	delete(obj.Object, "access") // present if the caller copied a /dto object
 
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to read grafana metadata", err)
 	}
-	meta.SetResourceVersionInt64(0) // remove
-	meta.SetFolder(cmd.FolderUID)
-	meta.SetMessage(cmd.Message)
 	meta.SetUID("")
-	meta.SetResourceVersion("") // remove
+	meta.SetResourceVersion("")
 	meta.SetFinalizers(nil)
 	meta.SetManagedFields(nil)
+	meta.SetFolder(cmd.FolderUID)
+	meta.SetMessage(cmd.Message)
 
 	name := obj.GetName()
-	if name == "" {
-		name, _, _ = unstructured.NestedString(obj.Object, "spec", "uid")
-	}
-
-	// Check (and remove) any legacy internal IDs
-	var old *unstructured.Unstructured
-	internalID, err := nestedInternalID(obj.Object)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, err.Error(), err)
-	}
-	if internalID > 0 && name == "" {
-		found, err := client.List(ctx, metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("%s=%d", utils.LabelKeyDeprecatedInternalID, internalID),
-			Limit:         2,
-		})
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "unable to lookup previous version", err)
-		}
-		if len(found.Items) == 0 {
-			return response.Error(http.StatusBadRequest,
-				fmt.Sprintf("The payload includes an internal identifier (%d) that is not found", internalID), nil)
-		}
-
-		old = &found.Items[0]
-		name = old.GetName()
+	if name == "" && specUID != "" {
+		name = specUID
 		meta.SetName(name)
-		if !cmd.Overwrite {
-			return response.Error(http.StatusConflict,
-				"Dashboard with the same internal ID already exists. Use overwrite flag to update.", nil)
-		}
 	}
 
-	// Never send internal ID or UID in the body
-	unstructured.RemoveNestedField(obj.Object, "spec", "id")
-	unstructured.RemoveNestedField(obj.Object, "spec", "uid")
+	// Resolve any legacy numeric id onto the k8s name. Errors here pin the
+	// legacy contract: 404 on unknown id, 500 on ambiguous id, 400 when the
+	// supplied uid refers to a different dashboard than the id does.
+	var old *unstructured.Unstructured
+	if internalID > 0 {
+		var rsp response.Response
+		if name, old, rsp = hs.resolveLegacyInternalID(ctx, client, internalID, name); rsp != nil {
+			return rsp
+		}
+		meta.SetName(name)
+		meta.SetDeprecatedInternalID(internalID) // nolint:staticcheck
+	}
 
-	isCreate := name == ""
-	if isCreate {
-		obj.SetGenerateName("a") // prefix
-	} else if old == nil {
-		// Read the old value first
+	// Pull the existing object if we don't already have it; isCreate flips
+	// once we know the name doesn't exist.
+	if name != "" && old == nil {
 		old, err = client.Get(ctx, name, metav1.GetOptions{})
-		if err == nil && old != nil {
-			if !cmd.Overwrite {
+		if k8serrors.IsNotFound(err) {
+			old = nil
+		} else if err != nil {
+			// 403 / etc. must reach the client unchanged.
+			return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, err)
+		}
+	}
+	isCreate := old == nil
+	if isCreate && name == "" && obj.GetGenerateName() == "" {
+		obj.SetGenerateName("a")
+	}
+
+	if !isCreate {
+		oldMeta, err := utils.MetaAccessor(old)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to read grafana metadata", err)
+		}
+		// Check if provisioning allows edits.
+		// NOTE this would be handled by the storage layer, however the error is different so
+		// we are checking here to make the existing contracts on /api hold.
+		if m, ok := oldMeta.GetManagerProperties(); ok && !m.AllowsEdits {
+			return response.Error(http.StatusBadRequest, dashboards.ErrDashboardCannotSaveProvisionedDashboard.Error(), nil)
+		}
+
+		// Without overwrite, accept the update only when the caller supplied
+		// the current version (we return meta.GetGeneration() as "version").
+		if !cmd.Overwrite {
+			if !hasSpecVersion || specVersion != oldMeta.GetGeneration() {
 				return response.Error(http.StatusConflict,
 					"Dashboard already exists. Use overwrite flag to update.", nil)
 			}
-		} else if err != nil && k8serrors.IsNotFound(err) {
-			isCreate = true // but name exists
-		} else {
-			return response.Error(http.StatusInternalServerError,
-				"Failed to read existing dashboard", err)
 		}
 	}
 
-	validation := "Warn"
+	validation := metav1.FieldValidationWarn
 	if strings.HasPrefix(gv.Version, "v0") {
-		validation = "Ignore" // v0 can be anything
+		validation = metav1.FieldValidationIgnore // v0 accepts anything
 	}
 	var dash *unstructured.Unstructured
 	if isCreate {
-		dash, err = client.Create(ctx, obj, metav1.CreateOptions{
-			FieldValidation: validation,
-		})
+		// Seed default RBAC permissions for the creator. The apistore strips
+		// this annotation before persisting and invokes its
+		// DefaultPermissionSetter hook after the resource is created.
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
+		dash, err = client.Create(ctx, obj, metav1.CreateOptions{FieldValidation: validation})
 	} else {
-		dash, err = client.Update(ctx, obj, metav1.UpdateOptions{
-			FieldValidation: validation,
-		})
+		dash, err = client.Update(ctx, obj, metav1.UpdateOptions{FieldValidation: validation})
 	}
 	if err != nil {
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, err)
 	}
 
-	meta, err = utils.MetaAccessor(dash)
+	dashMeta, err := utils.MetaAccessor(dash)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed get meta accessor", err)
 	}
 
 	title, _, _ = unstructured.NestedString(dash.Object, "spec", "title")
 	slug := slugify.Slugify(title)
-
 	return response.JSON(http.StatusOK, util.DynMap{
 		"status":    "success",
 		"slug":      slug,
-		"version":   meta.GetGeneration(),
-		"id":        meta.GetDeprecatedInternalID(), //nolint:staticcheck
-		"uid":       meta.GetName(),
-		"url":       dashboards.GetDashboardFolderURL(false, meta.GetName(), slug),
-		"folderUid": meta.GetFolder(),
+		"version":   dashMeta.GetGeneration(),
+		"id":        dashMeta.GetDeprecatedInternalID(), //nolint:staticcheck
+		"uid":       dashMeta.GetName(),
+		"url":       dashboards.GetDashboardFolderURL(false, dashMeta.GetName(), slug),
+		"folderUid": dashMeta.GetFolder(),
 	})
+}
+
+// resolveLegacyInternalID maps a legacy numeric id onto the k8s resource name
+// and (when fetched along the way) the existing object. A non-nil
+// response.Response means we couldn't resolve it and the caller should return
+// it directly: 404 if no dashboard has that id and no uid was supplied, 500 if
+// the id is ambiguous, 400 if the supplied uid refers to a different dashboard.
+func (hs *HTTPServer) resolveLegacyInternalID(ctx context.Context, client dynamic.ResourceInterface, internalID int64, name string) (string, *unstructured.Unstructured, response.Response) {
+	ref, err := hs.DashboardService.GetDashboardUIDByID(ctx, &dashboards.GetDashboardRefByIDQuery{ID: internalID})
+	switch {
+	case errors.Is(err, dashboards.ErrDashboardNotFound):
+		if name == "" {
+			return "", nil, response.Error(http.StatusNotFound, dashboards.ErrDashboardNotFound.Error(), nil)
+		}
+		// uid was provided; treat as a regular create with a legacy id label.
+		return name, nil, nil
+	case err != nil:
+		// "unexpected number of dashboards" + any other unexpected error.
+		return "", nil, response.Error(http.StatusInternalServerError, err.Error(), err)
+	}
+	if name == "" {
+		obj, gerr := client.Get(ctx, ref.UID, metav1.GetOptions{})
+		if gerr != nil && !k8serrors.IsNotFound(gerr) {
+			return "", nil, response.Error(http.StatusInternalServerError, "Failed to read existing dashboard", gerr)
+		}
+		return ref.UID, obj, nil
+	}
+	if name == ref.UID {
+		return name, nil, nil
+	}
+	// id and uid disagree; allow the new uid only if it isn't already taken.
+	if _, gerr := client.Get(ctx, name, metav1.GetOptions{}); gerr == nil {
+		return "", nil, response.Error(http.StatusBadRequest, dashboards.ErrDashboardWithSameUIDExists.Error(), nil)
+	} else if !k8serrors.IsNotFound(gerr) {
+		return "", nil, response.Error(http.StatusInternalServerError, "Failed to read existing dashboard", gerr)
+	}
+	return name, nil, nil
 }
 
 func nestedInternalID(obj map[string]interface{}) (int64, error) {
 	val, found, err := unstructured.NestedFieldNoCopy(obj, "spec", "id")
-	if !found || err != nil {
+	if !found || err != nil || val == nil {
 		return 0, nil
 	}
 	i, ok := val.(int64)
@@ -639,6 +633,36 @@ func nestedInternalID(obj map[string]interface{}) (int64, error) {
 		return n.Int64()
 	}
 	return 0, fmt.Errorf("unsupported ID type: %T", val)
+}
+
+// nestedSpecVersion reads spec.version as int64. The legacy /api/dashboards/db
+// payload encodes version as a JSON number; simplejson parses it via UseNumber
+// so we usually see json.Number, but tolerate the common numeric types too.
+// A missing field returns (0, false, nil); a malformed field returns an error
+// so callers can surface a 400 instead of letting it fall through as a 409.
+func nestedSpecVersion(obj map[string]interface{}) (int64, bool, error) {
+	val, found, err := unstructured.NestedFieldNoCopy(obj, "spec", "version")
+	if err != nil {
+		return 0, false, fmt.Errorf("spec.version is invalid: %w", err)
+	}
+	if !found || val == nil {
+		return 0, false, nil
+	}
+	switch v := val.(type) {
+	case int64:
+		return v, true, nil
+	case int:
+		return int64(v), true, nil
+	case float64:
+		return int64(v), true, nil
+	case json.Number:
+		i, err := v.Int64()
+		if err != nil {
+			return 0, false, fmt.Errorf("spec.version is not an integer: %w", err)
+		}
+		return i, true, nil
+	}
+	return 0, false, fmt.Errorf("spec.version has unsupported type %T", val)
 }
 
 // swagger:route GET /dashboards/home dashboards getHomeDashboard

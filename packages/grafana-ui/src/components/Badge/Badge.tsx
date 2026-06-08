@@ -26,7 +26,11 @@ const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, cla
   const styles = useStyles2(getStyles, color);
   const badge = (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
-      {icon && <Icon name={icon} size="sm" />}
+      {icon && (
+        <span className={styles.iconWrap}>
+          <Icon name={icon} size="sm" />
+        </span>
+      )}
       {text}
     </div>
   );
@@ -94,7 +98,12 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
       gap: theme.spacing(0.5),
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
+      alignItems: 'flex-start',
+    }),
+    iconWrap: css({
+      display: 'inline-flex',
       alignItems: 'center',
+      height: '1lh',
     }),
   };
 };

@@ -168,59 +168,6 @@ func TestTranslateTeamToMemberTuples(t *testing.T) {
 	})
 }
 
-func TestTranslateGlobalRoleBindingToTuples(t *testing.T) {
-	tests := []struct {
-		name         string
-		subjectKind  iamv0.GlobalRoleBindingSpecSubjectKind
-		subjectName  string
-		expectedUser string
-	}{
-		{
-			name:         "user subject",
-			subjectKind:  iamv0.GlobalRoleBindingSpecSubjectKindUser,
-			subjectName:  "uid1",
-			expectedUser: "user:uid1",
-		},
-		{
-			name:         "service-account subject",
-			subjectKind:  iamv0.GlobalRoleBindingSpecSubjectKindServiceAccount,
-			subjectName:  "sa1",
-			expectedUser: "service-account:sa1",
-		},
-		{
-			name:         "team subject",
-			subjectKind:  iamv0.GlobalRoleBindingSpecSubjectKindTeam,
-			subjectName:  "team1",
-			expectedUser: "team:team1#member",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			grb := &iamv0.GlobalRoleBinding{
-				ObjectMeta: metav1.ObjectMeta{Name: "grb-test"},
-				Spec: iamv0.GlobalRoleBindingSpec{
-					Subject: iamv0.GlobalRoleBindingspecSubject{
-						Kind: tt.subjectKind,
-						Name: tt.subjectName,
-					},
-					RoleRefs: []iamv0.GlobalRoleBindingspecRoleRef{
-						{Kind: "GlobalRole", Name: "global-role-1"},
-					},
-				},
-			}
-
-			tuples, err := TranslateGlobalRoleBindingToTuples(toUnstructured(t, grb))
-			require.NoError(t, err)
-			require.Len(t, tuples, 1)
-
-			assert.Equal(t, tt.expectedUser, tuples[0].GetUser())
-			assert.Equal(t, common.RelationAssignee, tuples[0].GetRelation())
-			assert.Equal(t, "role:global-role-1", tuples[0].GetObject())
-		})
-	}
-}
-
 func TestTranslateRoleBindingToTuples(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -554,7 +501,7 @@ func TestResolveAllGlobalRolePermissions(t *testing.T) {
 
 // TestUnlinkedGlobalRoleInjection verifies the per-namespace injection logic:
 // GlobalRoles referenced by a namespace Role are NOT injected as standalone tuples
-// (their permissions are already inlined via translateRoleToTuples composition).
+// (their permissions are already inlined via TranslateRoleToTuples composition).
 // GlobalRoles NOT referenced by any namespace Role ARE injected as standalone tuples.
 func TestUnlinkedGlobalRoleInjection(t *testing.T) {
 	globalRolePerms := map[string][]*authzextv1.RolePermission{
@@ -622,7 +569,7 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 			},
 		}
 
-		tuples, err := translateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+		tuples, err := TranslateRoleToTuples(toUnstructured(t, role), globalRolePerms)
 		require.NoError(t, err)
 		// Expects: dashboards:read/d1 (inherited) + dashboards:read/d2 (own addition),
 		// dashboards:write/d1 is omitted.
@@ -639,12 +586,12 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 			},
 		}
 
-		tuples, err := translateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+		tuples, err := TranslateRoleToTuples(toUnstructured(t, role), globalRolePerms)
 		require.NoError(t, err)
 		require.NotEmpty(t, tuples)
 	})
 
-	t.Run("public TranslateRoleToTuples — no composition even with RoleRefs", func(t *testing.T) {
+	t.Run("nil globalRolePerms — no composition even with RoleRefs", func(t *testing.T) {
 		role := &iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{Name: "wrapper-role"},
 			Spec: iamv0.RoleSpec{
@@ -658,12 +605,12 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 			},
 		}
 
-		// Public wrapper passes nil globalRolePerms — no composition.
-		tuplesNoComposition, err := TranslateRoleToTuples(toUnstructured(t, role))
+		// nil globalRolePerms — no composition.
+		tuplesNoComposition, err := TranslateRoleToTuples(toUnstructured(t, role), nil)
 		require.NoError(t, err)
 
 		// With composition, the same role also inherits dashboards:write from global-role-a.
-		tuplesWithComposition, err := translateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+		tuplesWithComposition, err := TranslateRoleToTuples(toUnstructured(t, role), globalRolePerms)
 		require.NoError(t, err)
 
 		// Composition produces more (or equal if deduped) tuples than no-composition.
@@ -683,7 +630,7 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 			},
 		}
 
-		tuples, err := translateRoleToTuples(toUnstructured(t, role), nil)
+		tuples, err := TranslateRoleToTuples(toUnstructured(t, role), nil)
 		require.NoError(t, err)
 		// Only own Permissions are used — global role not inherited.
 		require.NotEmpty(t, tuples)
@@ -712,7 +659,7 @@ func TestTranslateRoleToTuples_RoleManagementPermissions(t *testing.T) {
 		},
 	}
 
-	tuples, err := TranslateRoleToTuples(toUnstructured(t, role))
+	tuples, err := TranslateRoleToTuples(toUnstructured(t, role), nil)
 	require.NoError(t, err)
 
 	require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
@@ -973,41 +920,6 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 				}
 
 				tuples, err := TranslateServiceAccountToTuples(toUnstructured(t, sa))
-				require.NoError(t, err)
-
-				for _, tuple := range tuples {
-					validateTupleAgainstSchema(t, ts, tuple)
-				}
-			})
-		}
-	})
-
-	t.Run("global role bindings for all subject kinds", func(t *testing.T) {
-		subjects := []struct {
-			kind iamv0.GlobalRoleBindingSpecSubjectKind
-			name string
-		}{
-			{iamv0.GlobalRoleBindingSpecSubjectKindUser, "uid1"},
-			{iamv0.GlobalRoleBindingSpecSubjectKindServiceAccount, "sa1"},
-			{iamv0.GlobalRoleBindingSpecSubjectKindTeam, "team1"},
-		}
-
-		for _, s := range subjects {
-			t.Run(string(s.kind), func(t *testing.T) {
-				grb := &iamv0.GlobalRoleBinding{
-					ObjectMeta: metav1.ObjectMeta{Name: "grb-schema-test"},
-					Spec: iamv0.GlobalRoleBindingSpec{
-						Subject: iamv0.GlobalRoleBindingspecSubject{
-							Kind: s.kind,
-							Name: s.name,
-						},
-						RoleRefs: []iamv0.GlobalRoleBindingspecRoleRef{
-							{Kind: "GlobalRole", Name: "global-role"},
-						},
-					},
-				}
-
-				tuples, err := TranslateGlobalRoleBindingToTuples(toUnstructured(t, grb))
 				require.NoError(t, err)
 
 				for _, tuple := range tuples {

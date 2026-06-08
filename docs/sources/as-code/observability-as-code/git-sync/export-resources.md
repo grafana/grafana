@@ -29,15 +29,22 @@ aliases:
 
 {{< /admonition >}}
 
-Traditional operations such as moving or copying a dashboard to a provisioned folder or bulk export are gradually being incorporated into Git Sync. In the meantime the following options are available:
+You can add dashboards to Git Sync using any of the following options:
 
-- [Export an existing dashboard from the Grafana UI as a copy](#add-an-existing-dashboard-from-the-grafana-ui)
-- [Export the dashboard with Grafana CLI](#add-a-dashboard-with-grafana-cli)
-- [Copy the dashboard as JSON and commit to the repository](#add-a-dashboard-via-json-export)
+- [Add a dashboard using Import dashboards](#add-a-dashboard-using-import-dashboards)
+- [Export an existing dashboard from the Grafana UI as a copy](#copy-an-existing-dashboard-from-the-grafana-ui)
+- [Export a dashboard with Grafana CLI](#add-a-dashboard-with-the-grafana-cli)
+- [Copy a dashboard as JSON and commit to the repository](#add-a-dashboard-via-json-export)
 
-## Add an existing dashboard from the Grafana UI
+## Add a dashboard using Import dashboards
 
-You can save a copy of dashboard directly from the Grafana UI to your provisioned folder.
+You can import dashboards directly into your Git Sync provisioned folders using the Grafana UI or the HTTP API.
+
+For more information refer to [Import dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/import-dashboards/) in the Data Visualization documentation.
+
+## Copy an existing dashboard from the Grafana UI
+
+You can also save a copy of dashboard directly from the Grafana UI to your provisioned folder.
 
 To do so, follow these steps:
 
@@ -51,7 +58,7 @@ To do so, follow these steps:
 1. Click **Save**.
 1. In your synced GitHub repository, merge the branch with the dashboard you want to sync.
 
-## Add a dashboard with Grafana CLI
+## Add a dashboard with the Grafana CLI
 
 You can also export an existing dashboard with `gcx`, the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/). Use `gcx` to download the resources you want to sync from Grafana, and then commit and push those files to your provisioned Git repository. Git Sync will then detect the commit, and synchronize with Grafana.
 
@@ -102,9 +109,9 @@ To export a dashboard as a JSON file it must follow this CRD structure:
 
 The structure includes:
 
-- `apiVersion`: Specifies the API version (currently `v1`)
+- `apiVersion`: Specifies the API version. Both classic and `v2` JSON models are supported. For more information, refer to [Dashboard JSON model](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/)
 - `kind`: Identifies the resource type (Dashboard)
-- `metadata`: Contains the dashboard identifier `uid`. You can find the identifier in the dahsboard's URL or in the exported JSON
+- `metadata`: Contains the dashboard identifier `uid`. You can find the identifier in the dashboard's URL or in the exported JSON
 - `spec`: Wraps your original dashboard JSON
 
 ## Work with Git-managed dashboards

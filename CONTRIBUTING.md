@@ -11,13 +11,13 @@ Whether you're a new contributor or a seasoned veteran, we hope these resources 
 #### Interact and be heard
 
 - **Forums:** Do you have a problem, question, or curiosity? Visit our [forums](https://gra.fan/fromgithubtoforums) for a reservoir of knowledge, submit your own questions and answers!
-- **Meetups:** Craving in-person connections without the long journeys? [Join your local Grafana & Friends meetup group](http://www.grafana.com/g/communityengcamp-githubtomeetup)!
+- **Meetups:** Craving in-person connections without the long journeys? [Join your local Grafana & Friends meetup group](https://www.grafana.com/g/communityengcamp-githubtomeetup)!
 - **Community Slack:** Eager for real-time connections with fellow users? Begin a conversation on [Slack](https://gra.fan/githubtoslack).
 
 #### Learn
 
-- **YouTube:** From getting started to exploring newer projects like Pyroscope and Beyla, the [Grafana YouTube channel](http://www.grafana.com/g/communityengcamp-githubtoyoutube) has what you need to get started!
-- **Meetups:** Join a [group near you](http://www.grafana.com/g/communityengcamp-githubtomeetup) to learn from local experts and ask questions in real time.
+- **YouTube:** From getting started to exploring newer projects like Pyroscope and Beyla, the [Grafana YouTube channel](https://www.grafana.com/g/communityengcamp-githubtoyoutube) has what you need to get started!
+- **Meetups:** Join a [group near you](https://www.grafana.com/g/communityengcamp-githubtomeetup) to learn from local experts and ask questions in real time.
 
 #### Make technical contributions
 
@@ -25,7 +25,7 @@ Whether you're a new contributor or a seasoned veteran, we hope these resources 
 
 #### Share your story
 
-- **Meetups and blogs:** We’d love to feature your OSS Grafana Labs use case or story at an upcoming Grafana & Friends meetup or on the Grafana blog! Submit your idea [here](http://www.grafana.com/g/communityengcamp-githubtocca), and we’ll connect with you on next steps if accepted.
+- **Meetups and blogs:** We’d love to feature your OSS Grafana Labs use case or story at an upcoming Grafana & Friends meetup or on the Grafana blog! Submit your idea [here](https://www.grafana.com/g/communityengcamp-githubtocca), and we’ll connect with you on next steps if accepted.
 
 ## Choose the right channel
 

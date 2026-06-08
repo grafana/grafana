@@ -1,4 +1,4 @@
-import { type Locator } from 'playwright';
+import { type Locator } from '@playwright/test';
 
 import { type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
 

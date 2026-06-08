@@ -22,7 +22,7 @@ func (s *Server) mutateFolders(ctx context.Context, store *zanzana.StoreInfo, op
 	for _, operation := range operations {
 		switch op := operation.Operation.(type) {
 		case *authzextv1.MutateOperation_SetFolderParent:
-			tuple, err := s.getFolderWriteTuple(ctx, store, op.SetFolderParent)
+			tuple, err := s.getFolderWriteTuple(op.SetFolderParent)
 			if err != nil {
 				return err
 			}
@@ -62,7 +62,7 @@ func (s *Server) mutateFolders(ctx context.Context, store *zanzana.StoreInfo, op
 	return nil
 }
 
-func (s *Server) getFolderWriteTuple(ctx context.Context, store *zanzana.StoreInfo, req *authzextv1.SetFolderParentOperation) (*openfgav1.TupleKey, error) {
+func (s *Server) getFolderWriteTuple(req *authzextv1.SetFolderParentOperation) (*openfgav1.TupleKey, error) {
 	// Folder is at the root level
 	if req.GetParent() == "" {
 		return nil, nil
