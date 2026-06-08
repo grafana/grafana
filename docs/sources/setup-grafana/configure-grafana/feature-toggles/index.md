@@ -79,6 +79,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `multiPropsVariables`                        | Enables support for variables whose values can have multiple properties                                                                                       | Yes                |
 | `dashboardSectionVariables`                  | Enables support for section level variables (rows and tabs)                                                                                                   | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                                            |                    |
+| `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings and gradually moves them to a modal                                                                  | Yes                |
 
 ## Public preview feature toggles
 

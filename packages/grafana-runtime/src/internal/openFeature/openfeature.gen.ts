@@ -39,6 +39,8 @@ export const FlagKeys = {
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
+  /** Redesigns dashboard settings page into Advanced Settings and gradually moves them to a modal */
+  GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Enables usage of the new annotations API client */
@@ -242,6 +244,17 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
  */
 export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("globalDashboardVariables", false, options).value;
+};
+
+/**
+ * Redesigns dashboard settings page into Advanced Settings and gradually moves them to a modal
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardSettingsRedesign`
+ * - default value: `true`
+ */
+export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardSettingsRedesign", true, options).value;
 };
 
 /**

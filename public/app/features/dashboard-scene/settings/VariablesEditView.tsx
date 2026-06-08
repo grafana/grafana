@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 
 import { type NavModel, type NavModelItem, PageLayoutType, generateUUID } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
+import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
 import {
   type SceneComponentProps,
   SceneObjectBase,
@@ -8,11 +11,17 @@ import {
   type SceneVariables,
   sceneGraph,
 } from '@grafana/scenes';
+import { Alert, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import {
+  HIGHLIGHT_CATEGORY_PARAM_NAME,
+  CATEGORY_PARAM_NAME,
+} from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 import { createUsagesNetwork, transformUsagesToNetwork } from '../variables/utils';
 
@@ -238,6 +247,39 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const usagesNetwork = useMemo(() => model.getUsagesNetwork(), [model]);
   const usages = useMemo(() => model.getUsages(), [model]);
   const saveModel = model.getSaveModel();
+  const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
+
+  const goToSidebar = () => {
+    // close settings and open dashboard sidebar
+    const dashboard = getDashboardSceneFor(model);
+    dashboard.state.editPane.selectObject(dashboard);
+    locationService.partial({
+      editview: null,
+      [HIGHLIGHT_CATEGORY_PARAM_NAME]: 'dashboard-variables',
+      [CATEGORY_PARAM_NAME]: 'dashboard-variables',
+    });
+
+    DashboardInteractions.takeMeToSidebarClicked({ item: 'variables' });
+  };
+
+  if (isSettingsPageRedesignEnabled) {
+    return (
+      <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
+        <NavToolbarActions dashboard={dashboard} />
+        <Alert
+          severity="info"
+          title={t('dashboard-scene.dashboard-settings.variables.title-moved', 'Looking for variable settings?')}
+        >
+          <Trans i18nKey="dashboard-scene.dashboard-settings.variables.description-moved">
+            Variable settings has been moved to the dashboard&apos;s sidebar.
+          </Trans>
+          <Button onClick={goToSidebar} fill="text" variant="primary" size="md">
+            {t('dashboard-scene.dashboard-settings.variables.button-moved', 'Take me there')}
+          </Button>
+        </Alert>
+      </Page>
+    );
+  }
 
   if (editIndex !== undefined && variables[editIndex]) {
     const variable = variables[editIndex];
