@@ -1,4 +1,4 @@
-import { QueryStatus, skipToken } from '@reduxjs/toolkit/query';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
@@ -138,14 +138,15 @@ export async function getFolderByUidFacade(uid: string) {
   const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
 
   if (shouldUseAppPlatformAPI) {
-    // Virtual folders aren't real resources, so skip the network entirely and
-    // synthesise the combined response from the hardcoded folder constants.
+    // Virtual folders aren't real resources, so the folder object comes from a
+    // hardcoded constant and they have no parents. Access is still a real query —
+    // the backend returns proper access info for the root and "shared with me" folders.
     if (isVirtualFolder) {
-      return combineFolderResponses(
-        isRoot ? rootFolder : sharedWithMeFolder,
-        { canAdmin: false, canDelete: false, canEdit: false, canSave: false, accessControl: {} },
-        []
-      );
+      const accessResponse = await dispatch(folderAPIv1beta1.endpoints.getFolderAccess.initiate({ name: uid }));
+      if (!accessResponse?.data) {
+        throw accessResponse.error || new Error('Folder access response is undefined');
+      }
+      return combineFolderResponses(isRoot ? rootFolder : sharedWithMeFolder, accessResponse.data, []);
     }
 
     const responses = await Promise.all([
@@ -210,12 +211,11 @@ export function useGetFolderQueryFacade(uid?: string) {
   const legacyFolderResult = useGetFolderQueryLegacy(
     !shouldUseAppPlatformAPI && uid ? { folderUID: uid, accesscontrol: true, isLegacyCall: false } : skipToken
   );
-  let resultFolder = useGetFolderQuery(shouldUseAppPlatformAPI && !isVirtualFolder ? params : skipToken);
-  const resultAccess = useGetFolderAccessQuery(
-    shouldUseAppPlatformAPI && uid && !isVirtualFolder ? { name: uid } : skipToken
-  );
-  // We get parents and folders for virtual folders too. Parents should just return empty array but it's easier to
-  // stitch the responses this way and access can actually return different response based on the grafana setup.
+  // The folder object itself isn't fetched for virtual folders (the resource
+  // doesn't exist), but access is a real query for them — the backend returns
+  // proper access info for the root and "shared with me" folders.
+  const resultFolder = useGetFolderQuery(shouldUseAppPlatformAPI && !isVirtualFolder ? params : skipToken);
+  const resultAccess = useGetFolderAccessQuery(shouldUseAppPlatformAPI ? params : skipToken);
   const resultParents = useGetFolderParentsQuery(shouldUseAppPlatformAPI ? params : skipToken);
   const [triggerGetUserDisplayMapping, resultUserDisplay] = useLazyGetDisplayMappingQuery();
 
@@ -235,39 +235,26 @@ export function useGetFolderQueryFacade(uid?: string) {
     return legacyFolderResult;
   }
 
-  // For virtual folders we simulate the response with hardcoded data.
+  // For virtual folders the folder object is hardcoded and there are no parents, but access
+  // is a real query whose loading/error state we surface directly.
   if (isVirtualFolder) {
-    resultFolder = {
-      ...resultFolder,
-      status: QueryStatus.fulfilled,
-      fulfilledTimeStamp: Date.now(),
-      isUninitialized: false,
-      error: undefined,
-      isError: false,
-      isSuccess: true,
-      isLoading: false,
-      isFetching: false,
-      data: isRoot ? rootFolder : sharedWithMeFolder,
-      currentData: isRoot ? rootFolder : sharedWithMeFolder,
-    };
+    const folder = isRoot ? rootFolder : sharedWithMeFolder;
+    const data = resultAccess.data ? combineFolderResponses(folder, resultAccess.data, []) : undefined;
 
     // Wrap the stitched data into single RTK query response type object so this looks like a single API call
     return {
-      ...resultFolder,
+      ...resultAccess,
+      data,
+      currentData: data,
       refetch: async () => {
-        return Promise.all([resultFolder.refetch(), resultParents.refetch(), resultAccess.refetch()]);
+        return Promise.all([resultParents.refetch(), resultAccess.refetch()]);
       },
     };
   } else {
     // Stitch together the responses to create a single FolderDTO object so on the outside this behaves as the legacy
     // api client.
     let newData: CombinedFolder | undefined;
-    if (
-      resultFolder.data &&
-      resultParents.data &&
-      resultAccess.data &&
-      (needsUserData ? resultUserDisplay.data : true)
-    ) {
+    if (resultFolder.data && resultParents.data && resultAccess.data && (!needsUserData || resultUserDisplay.data)) {
       newData = combineFolderResponses(
         resultFolder.data,
         resultAccess.data,
