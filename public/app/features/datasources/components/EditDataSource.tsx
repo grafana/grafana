@@ -35,6 +35,7 @@ import { type DataSourceRights } from '../types';
 
 import { ButtonRow } from './ButtonRow';
 import { CloudInfoBox } from './CloudInfoBox';
+import { DataSourceDefaultButton } from './DataSourceDefaultButton';
 import { DataSourceLoadError } from './DataSourceLoadError';
 import { DataSourceMissingRightsMessage } from './DataSourceMissingRightsMessage';
 import { DataSourcePluginConfigPage } from './DataSourcePluginConfigPage';
@@ -216,6 +217,7 @@ export function EditDataSourceView({
     return (
       <DataSourceLoadError
         notFound={!hasDataSource || !dsi}
+        errorMsg={loadError}
         dataSourceRights={dataSourceRights}
         onDelete={() => {
           trackDsConfigClicked('delete');
@@ -298,7 +300,9 @@ export function EditDataSourceView({
         }}
         canDelete={!readOnly && hasDeleteRights}
         canSave={!readOnly && hasWriteRights}
-      />
+      >
+        <DataSourceDefaultButton uid={dataSource.uid} />
+      </ButtonRow>
     </form>
   );
 }

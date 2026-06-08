@@ -189,9 +189,10 @@ func TestTimeIntervals(t *testing.T) {
 				mti("mti3"),
 			},
 			expected: []v1.TimeInterval{
+				ti("mti1"),
 				ti("ti2"),
-				ti("ti4"),
 				ti("mti3"),
+				ti("ti4"),
 			},
 			expectedRenames: map[string]string{},
 		},
@@ -210,9 +211,10 @@ func TestTimeIntervals(t *testing.T) {
 				mti("ti2"),
 			},
 			expected: []v1.TimeInterval{
+				ti("mti1"),
 				ti("ti2"),
-				ti("mti1" + suffix),
 				ti("ti2" + suffix),
+				ti("mti1" + suffix),
 			},
 			expectedRenames: map[string]string{
 				"ti2":  "ti2" + suffix,
@@ -234,9 +236,10 @@ func TestTimeIntervals(t *testing.T) {
 				mti("ti1"),
 			},
 			expected: []v1.TimeInterval{
+				ti("ti1"),
 				ti("ti1" + suffix),
-				ti("ti1" + suffix + suffix),
 				ti("ti1" + suffix + "_01"),
+				ti("ti1" + suffix + suffix),
 			},
 			expectedRenames: map[string]string{
 				"ti1" + suffix: "ti1" + suffix + suffix,
@@ -279,10 +282,11 @@ func TestTimeIntervals(t *testing.T) {
 				mti("ti1" + suffix + "_01"),
 			},
 			expected: []v1.TimeInterval{
+				ti("ti1"),
 				ti("ti1" + suffix),
+				ti("ti1" + suffix + "_01"),
 				ti("ti1" + suffix + "_02"),
 				ti("ti2"),
-				ti("ti1" + suffix + "_01"),
 			},
 			expectedRenames: map[string]string{
 				"ti1": "ti1" + suffix + "_02",
@@ -486,11 +490,15 @@ func TestMergeExtraConfig(t *testing.T) {
 		assertResult(t, MergeResult{
 			Config: v1.AMConfigV1{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) {
 				p.Global = nil
-				// remove mti-2 (absent from fullMimirSwappedIntervals) and add the renamed intervals
-				expected := p.TimeIntervals[:len(p.TimeIntervals)-1]
-				expected = append(expected, v1.TimeInterval{Name: "mti-1" + identifier})
-				expected = append(expected, v1.TimeInterval{Name: "ti-1" + identifier})
-				p.TimeIntervals = expected
+				// Keep mti-1 and ti-1 from base; mti-2 is absent in fullMimirSwappedIntervals.
+				// Incoming: mute ti-1 (renamed) → ti-1+id, time ti-2 (no conflict), time mti-1 (renamed) → mti-1+id.
+				p.TimeIntervals = []v1.TimeInterval{
+					p.TimeIntervals[0], // mti-1 (existing mute, folded)
+					p.TimeIntervals[1], // ti-1
+					{Name: "ti-1" + identifier},
+					p.TimeIntervals[3], // ti-2 (incoming time, no conflict)
+					{Name: "mti-1" + identifier},
+				}
 			})},
 			RenameResources: RenameResources{
 				TimeIntervals: map[string]string{

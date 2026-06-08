@@ -132,7 +132,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (MergeResult, error
 				Global:            nil, // Grafana does not have global.
 				Route:             route,
 				InhibitRules:      inhibitRules,
-				MuteTimeIntervals: cfg.AlertmanagerConfig.MuteTimeIntervals,
+				MuteTimeIntervals: nil, // folded into TimeIntervals above
 				TimeIntervals:     mergedTimeIntervals,
 				Templates:         nil, // we do not use this.
 			},
@@ -179,12 +179,16 @@ func TimeIntervals(
 ) ([]v1.TimeInterval, map[string]string) {
 	// combine all incoming intervals into a single list
 	incomingAll := make([]v1.TimeInterval, 0, len(incomingTimeIntervals)+len(incomingMuteIntervals))
-	incomingAll = append(incomingAll, incomingTimeIntervals...)
 	for _, interval := range incomingMuteIntervals {
 		incomingAll = append(incomingAll, v1.TimeInterval(interval))
 	}
+	incomingAll = append(incomingAll, incomingTimeIntervals...)
 	usedNames := createIndexTimeIntervals(existingMuteIntervals, existingTimeIntervals, incomingAll)
-	result := make([]v1.TimeInterval, 0, len(existingTimeIntervals)+len(incomingMuteIntervals)+len(incomingTimeIntervals))
+	result := make([]v1.TimeInterval, 0, len(existingMuteIntervals)+len(existingTimeIntervals)+len(incomingMuteIntervals)+len(incomingTimeIntervals))
+	// fold mute time intervals into time intervals. The order is important here because during the applying time intervals with the same name win
+	for _, interval := range existingMuteIntervals {
+		result = append(result, v1.TimeInterval(interval))
+	}
 	result = append(result, existingTimeIntervals...)
 	renames := make(map[string]string)
 	for idx, interval := range incomingAll {
