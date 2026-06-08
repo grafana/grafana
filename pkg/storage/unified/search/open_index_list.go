@@ -64,7 +64,7 @@ func (b *bleveBackend) LoadOpenIndexStats(now time.Time, maxAge time.Duration) (
 	return readOpenIndexList(file, now, maxAge)
 }
 
-// readOpenIndexList validates an open index list and returns why it should not be trusted.
+// readOpenIndexList validates an open index list and returns error if invalid.
 func readOpenIndexList(reader io.Reader, now time.Time, maxAge time.Duration) ([]resource.ResourceStats, error) {
 	var list openIndexListFile
 	if err := json.NewDecoder(reader).Decode(&list); err != nil {
