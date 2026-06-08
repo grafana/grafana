@@ -970,6 +970,16 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	maxConns := opts.DBMaxConns
 	if maxConns <= 0 {
 		maxConns = 2
+		// SQLite serializes writes and only allows a single writer at a time. With
+		// more than one pooled connection, concurrent startup writers (e.g. the
+		// access-control seeder racing the unified-storage reconciler on the same
+		// file) collide and surface as SQLITE_BUSY/"database is locked" instead of
+		// queueing. busy_timeout does not help here because deferred transactions
+		// fail immediately on lock upgrade. Pinning the pool to a single connection
+		// forces those writers to queue at the pool level, removing the flake.
+		if db.IsTestDbSQLite() {
+			maxConns = 1
+		}
 	}
 
 	_, err = dbSection.NewKey("max_open_conn", fmt.Sprintf("%d", maxConns))
