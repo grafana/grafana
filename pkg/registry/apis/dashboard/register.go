@@ -1133,6 +1133,9 @@ func buildDefaultDashboardPermissions(id authlib.AuthInfo) []map[string]any {
 		creatorKind = string(iamv0alpha1.ResourcePermissionSpecPermissionKindUser)
 	case authlib.TypeServiceAccount:
 		creatorKind = string(iamv0alpha1.ResourcePermissionSpecPermissionKindServiceAccount)
+	default:
+		// Other identity types (API keys, anonymous, render service, etc.) do not get
+		// creator-admin permissions; they fall back to the default permission set.
 	}
 
 	if creatorKind == "" {
