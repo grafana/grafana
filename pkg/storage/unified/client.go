@@ -282,6 +282,7 @@ func NewSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (res
 				Audiences:        []string{"resourceStore"},
 				Namespace:        clientCfg.TokenNamespace,
 				AllowInsecure:    cfg.Env == setting.Dev,
+				IsDev:            cfg.Env == setting.Dev,
 			},
 		)
 		if err != nil {

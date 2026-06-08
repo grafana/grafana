@@ -76,6 +76,7 @@ func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cf
 		Audiences:        []string{"resourceStore"},
 		Namespace:        clientCfg.TokenNamespace,
 		AllowInsecure:    cfg.Env == setting.Dev,
+		IsDev:            cfg.Env == setting.Dev,
 	})
 }
 
@@ -169,6 +170,7 @@ type RemoteResourceClientConfig struct {
 	Audiences        []string
 	Namespace        string
 	AllowInsecure    bool
+	IsDev            bool
 	// TokenExchanger overrides the default exchange client when non-nil.
 	TokenExchanger authnlib.TokenExchanger
 }
@@ -185,12 +187,15 @@ func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface,
 }
 
 // NewAuthnGrpcClientInterceptor builds the authlib gRPC client interceptor used to authenticate outbound calls to
-// unified storage services. Will use the in-process token exchanger when the token exchange url is empty.
+// unified storage services. Will use the in-process token exchanger when the token exchange url is empty and dev mode is enabled.
 func NewAuthnGrpcClientInterceptor(tracer trace.Tracer, cfg RemoteResourceClientConfig) (*authnlib.GrpcClientInterceptor, error) {
 	var tc authnlib.TokenExchanger
 	if cfg.TokenExchanger != nil {
 		tc = cfg.TokenExchanger
 	} else if cfg.TokenExchangeURL == "" {
+		if !cfg.IsDev {
+			return nil, fmt.Errorf("token exchange url is required outside of development mode")
+		}
 		tc = ProvideInProcExchanger()
 	} else {
 		exchangeOpts := []authnlib.ExchangeClientOpts{}
