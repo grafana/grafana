@@ -26,11 +26,11 @@ const (
 	// KVRemoteIndexStore stores snapshot manifests. Separate from the
 	// data section so listing complete snapshots only requires scanning
 	// manifest keys (one per snapshot) rather than every data file key.
-	IndexSnapshotManifestSection = "index-snapshot-manifest"
+	IndexSnapshotManifestSection = kv.SearchSnapshotManifestSection
 
 	// IndexSnapshotDataSection is the KV section under which
 	// KVRemoteIndexStore stores per-file snapshot data.
-	IndexSnapshotDataSection = "index-snapshot-data"
+	IndexSnapshotDataSection = kv.SearchSnapshotDataSection
 
 	// defaultKVLockTTL matches BucketRemoteIndexStore's default lock TTL.
 	defaultKVLockTTL = 3 * time.Minute
