@@ -5,6 +5,25 @@ import { ManagerKind } from 'app/features/apiserver/types';
 export const FOLDER_GROUPS = ['folder.grafana.app', 'folders'];
 export const DASHBOARD_GROUPS = ['dashboard.grafana.app'];
 
+const DASHBOARD_BUCKET = 'dashboard.grafana.app';
+const FOLDER_BUCKET = 'folder.grafana.app';
+
+/**
+ * Classify a stats entry into the dashboard or folder bucket, keyed by BOTH
+ * group and resource. A group like `dashboard.grafana.app` also exposes other
+ * resources (e.g. `variables`, `librarypanels`); those must not be counted as
+ * dashboards. Anything that isn't a dashboard or folder is ignored.
+ */
+function bucketKeyFor(group: string, resource: string): typeof DASHBOARD_BUCKET | typeof FOLDER_BUCKET | undefined {
+  if (DASHBOARD_GROUPS.includes(group) && resource === 'dashboards') {
+    return DASHBOARD_BUCKET;
+  }
+  if (FOLDER_GROUPS.includes(group) && resource === 'folders') {
+    return FOLDER_BUCKET;
+  }
+  return undefined;
+}
+
 export interface GroupBreakdown {
   group: string;
   resource: string;
@@ -68,9 +87,7 @@ export function computeBreakdowns(data?: ResourceStats): GroupBreakdown[] {
   }
 
   data?.instance?.forEach((c) => {
-    // Fold legacy `folders` group into folder.grafana.app for display.
-    const key = FOLDER_GROUPS.includes(c.group) ? 'folder.grafana.app' : c.group;
-    const entry = map.get(key);
+    const entry = map.get(bucketKeyFor(c.group, c.resource) ?? '');
     if (entry) {
       entry.total += c.count;
     }
@@ -80,8 +97,7 @@ export function computeBreakdowns(data?: ResourceStats): GroupBreakdown[] {
     const kind = m.kind ?? '';
     const isGitSync = kind === ManagerKind.Repo;
     m.stats.forEach((s) => {
-      const key = FOLDER_GROUPS.includes(s.group) ? 'folder.grafana.app' : s.group;
-      const entry = map.get(key);
+      const entry = map.get(bucketKeyFor(s.group, s.resource) ?? '');
       if (!entry) {
         return;
       }
