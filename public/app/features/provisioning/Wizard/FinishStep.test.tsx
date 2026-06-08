@@ -111,4 +111,44 @@ describe('FinishStep', () => {
       expect(screen.queryByText(PR_LABEL)).not.toBeInTheDocument();
     });
   });
+
+  describe('commit signing', () => {
+    it('renders the signing method selector for github with signing off by default', async () => {
+      const { user } = setup('github');
+
+      await user.click(await screen.findByText(COMMIT_LABEL));
+
+      expect(screen.getByText('Commit signing')).toBeInTheDocument();
+      expect(screen.queryByLabelText(/Signing key/)).not.toBeInTheDocument();
+    });
+
+    it('reveals signing key and author fields after a method is selected', async () => {
+      const { user } = setup('github');
+
+      await user.click(await screen.findByText(COMMIT_LABEL));
+      await user.click(screen.getByLabelText('GPG'));
+
+      expect(screen.getByLabelText(/Signing key/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Signer name/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Signer email/)).toBeInTheDocument();
+    });
+
+    it('shows the S/MIME certificate field only for the smime method', async () => {
+      const { user } = setup('github');
+
+      await user.click(await screen.findByText(COMMIT_LABEL));
+      await user.click(screen.getByLabelText('GPG'));
+      expect(screen.queryByLabelText(/S\/MIME certificate/)).not.toBeInTheDocument();
+
+      await user.click(screen.getByLabelText('S/MIME'));
+      expect(screen.getByLabelText(/S\/MIME certificate/)).toBeInTheDocument();
+    });
+
+    it('does not render the signing section for local repositories', async () => {
+      setup('local');
+
+      expect(await screen.findByText('Read only')).toBeInTheDocument();
+      expect(screen.queryByText('Commit signing')).not.toBeInTheDocument();
+    });
+  });
 });

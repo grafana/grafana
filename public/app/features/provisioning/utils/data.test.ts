@@ -321,6 +321,111 @@ describe('provisioning data mapping', () => {
     });
   });
 
+  describe('commit signing', () => {
+    it('writes signerName and signerEmail to spec when provided', () => {
+      const formData = makeFormData('github');
+      formData.commit = { signerName: 'Jane Doe', signerEmail: 'jane@example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.signerName).toBe('Jane Doe');
+      expect(spec.commit?.signerEmail).toBe('jane@example.com');
+    });
+
+    it('trims author fields before writing to spec', () => {
+      const formData = makeFormData('github');
+      formData.commit = { signerName: '  Jane Doe  ', signerEmail: '  jane@example.com  ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.signerName).toBe('Jane Doe');
+      expect(spec.commit?.signerEmail).toBe('jane@example.com');
+    });
+
+    it('omits author fields from spec when whitespace-only', () => {
+      const formData = makeFormData('github');
+      formData.commit = { signerName: '   ', signerEmail: '   ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).toBeUndefined();
+    });
+
+    it('writes only the author fields that are set', () => {
+      const formData = makeFormData('github');
+      formData.commit = { signerName: 'Jane Doe' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.signerName).toBe('Jane Doe');
+      expect(spec.commit).not.toHaveProperty('signerEmail');
+      expect(spec.commit).not.toHaveProperty('singleResourceMessageTemplate');
+    });
+
+    it('reads author fields from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        commit: { signerName: 'Jane Doe', signerEmail: 'jane@example.com' },
+      };
+      const data = specToData(spec);
+      expect(data.commit?.signerName).toBe('Jane Doe');
+      expect(data.commit?.signerEmail).toBe('jane@example.com');
+    });
+
+    it('writes signingMethod to spec when signing is configured', () => {
+      const formData = makeFormData('github');
+      formData.signingMethod = 'ssh';
+      formData.commit = { signerName: 'Jane Doe', signerEmail: 'jane@example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.signingMethod).toBe('ssh');
+    });
+
+    it('omits signingMethod when not set', () => {
+      const formData = makeFormData('github');
+      formData.commit = { signerName: 'Jane Doe', signerEmail: 'jane@example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).not.toHaveProperty('signingMethod');
+    });
+
+    it('writes smimeCertificate to spec when set', () => {
+      const formData = makeFormData('github');
+      formData.signingMethod = 'smime';
+      formData.smimeCertificate = '-----BEGIN CERTIFICATE-----';
+      formData.commit = { signerName: 'Jane Doe', signerEmail: 'jane@example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.signingMethod).toBe('smime');
+      expect(spec.commit?.smimeCertificate).toBe('-----BEGIN CERTIFICATE-----');
+    });
+
+    it('reads signingMethod and smimeCertificate from spec, never the signing key', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        commit: {
+          signerName: 'Jane Doe',
+          signerEmail: 'jane@example.com',
+          signingMethod: 'smime',
+          smimeCertificate: '-----BEGIN CERTIFICATE-----',
+        },
+      };
+      const data = specToData(spec);
+      expect(data.signingMethod).toBe('smime');
+      expect(data.smimeCertificate).toBe('-----BEGIN CERTIFICATE-----');
+      expect(data.commitSigningKey).toBe('');
+    });
+
+    it('reads signingMethod as empty when spec has no signing format', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+      };
+      const data = specToData(spec);
+      expect(data.signingMethod).toBe('');
+    });
+  });
+
   describe('pull request options', () => {
     it('writes titleTemplate to spec when provided', () => {
       const formData = makeFormData('github');

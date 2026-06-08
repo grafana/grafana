@@ -16,7 +16,8 @@ export interface UseWizardSubmissionParams {
   methods: UseFormReturn<WizardFormData>;
   submitData: (
     spec: RepositorySpec,
-    token?: string
+    token?: string,
+    commitSigningKey?: string
   ) => Promise<{ data?: { metadata?: { name?: string } }; error?: unknown }>;
   setStepStatusInfo: (info: StepStatusInfo) => void;
   onSuccess: () => void;
@@ -70,8 +71,9 @@ export function useWizardSubmission({
           formData.githubAuthType === 'github-app' ? formData.githubApp?.connectionName : undefined;
         const spec = dataToSpec(formData.repository, connectionName);
         const token = formData.githubAuthType === 'pat' ? formData.repository.token : undefined;
+        const commitSigningKey = formData.repository.signingMethod ? formData.repository.commitSigningKey : undefined;
 
-        const rsp = await submitData(spec, token);
+        const rsp = await submitData(spec, token, commitSigningKey);
         if (rsp.error) {
           if (isFetchError(rsp.error)) {
             setStepStatusInfo({

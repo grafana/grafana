@@ -139,7 +139,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
     setSubmitError(undefined);
     try {
       const spec = dataToSpec(form);
-      await submitData(spec, form.token);
+      const removeSigningKey = !form.signingMethod && Boolean(data?.secure?.commitSigningKey?.name);
+      await submitData(spec, form.token, form.signingMethod ? form.commitSigningKey : undefined, removeSigningKey);
     } catch (err) {
       if (isFetchError(err)) {
         const fieldErrors = getConfigFormErrors(err.data);
@@ -390,8 +391,17 @@ export function ConfigForm({ data }: ConfigFormProps) {
             />
             <CommitOptionsSection<RepositoryFormData>
               register={register}
+              control={control}
+              setValue={setValue}
               messageTemplateName="commit.singleResourceMessageTemplate"
               enforceTemplateName="commit.enforceTemplate"
+              type={type}
+              signingMethodName="signingMethod"
+              signingKeyName="commitSigningKey"
+              smimeCertificateName="smimeCertificate"
+              signerNameName="commit.signerName"
+              signerEmailName="commit.signerEmail"
+              defaultSigningKeyConfigured={Boolean(data?.secure?.commitSigningKey?.name)}
             />
             {/* Pull requests are not supported by the pure git type. */}
             {type !== 'git' && (
