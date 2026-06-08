@@ -77,6 +77,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ResourceType{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref),
 		ResourceWrapper{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref),
 		SecureValues{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref),
+		SupportedResource{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref),
 		SyncJobOptions{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref),
 		SyncOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref),
 		SyncStatus{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref),
@@ -2694,6 +2695,20 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 							},
 						},
 					},
+					"availableResources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Disabled).",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(SupportedResource{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 					"items": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
@@ -2717,7 +2732,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			RepositoryView{}.OpenAPIModelName()},
+			RepositoryView{}.OpenAPIModelName(), SupportedResource{}.OpenAPIModelName()},
 	}
 }
 
@@ -3267,6 +3282,43 @@ func schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref common.ReferenceCall
 		},
 		Dependencies: []string{
 			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "SupportedResource describes a resource type declared for provisioning. A resource is identified by its group and kind; the API version and plural resource are resolved at runtime via discovery, so they are not part of this descriptor.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Group is the API group of the resource (e.g. \"dashboard.grafana.app\").",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is the kind of the resource (e.g. \"Dashboard\").",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"disabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Disabled reports whether the resource is declared but not acted on by provisioning. Active resources omit this field.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"group", "kind"},
+			},
+		},
 	}
 }
 

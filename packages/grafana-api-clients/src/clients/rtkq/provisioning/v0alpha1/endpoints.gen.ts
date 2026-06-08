@@ -2285,6 +2285,14 @@ export type WebhookResponse = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
 };
+export type SupportedResource = {
+  /** Disabled reports whether the resource is declared but not acted on by provisioning. Active resources omit this field. */
+  disabled?: boolean;
+  /** Group is the API group of the resource (e.g. "dashboard.grafana.app"). */
+  group: string;
+  /** Kind is the kind of the resource (e.g. "Dashboard"). */
+  kind: string;
+};
 export type RepositoryView = {
   /** For git, this is the target branch */
   branch?: string;
@@ -2327,6 +2335,8 @@ export type RepositoryViewList = {
   apiVersion?: string;
   /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */
   availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local')[];
+  /** AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Disabled). */
+  availableResources?: SupportedResource[];
   items: RepositoryView[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;

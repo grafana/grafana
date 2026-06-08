@@ -5553,6 +5553,17 @@
               "enum": ["bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"]
             }
           },
+          "availableResources": {
+            "description": "AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Disabled).",
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/SupportedResource"
+                }
+              ]
+            }
+          },
           "items": {
             "type": "array",
             "items": {
@@ -5942,6 +5953,27 @@
                 "$ref": "#/components/schemas/InlineSecureValue"
               }
             ]
+          }
+        }
+      },
+      "SupportedResource": {
+        "description": "SupportedResource describes a resource type declared for provisioning. A resource is identified by its group and kind; the API version and plural resource are resolved at runtime via discovery, so they are not part of this descriptor.",
+        "type": "object",
+        "required": ["group", "kind"],
+        "properties": {
+          "disabled": {
+            "description": "Disabled reports whether the resource is declared but not acted on by provisioning. Active resources omit this field.",
+            "type": "boolean"
+          },
+          "group": {
+            "description": "Group is the API group of the resource (e.g. \"dashboard.grafana.app\").",
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
+            "description": "Kind is the kind of the resource (e.g. \"Dashboard\").",
+            "type": "string",
+            "default": ""
           }
         }
       },

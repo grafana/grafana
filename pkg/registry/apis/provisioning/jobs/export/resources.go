@@ -27,26 +27,28 @@ type conversionShim = func(ctx context.Context, item *unstructured.Unstructured)
 
 func ExportResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
 	progress.SetMessage(ctx, "start resource export")
-	for _, kind := range resources.SupportedProvisioningResources {
-		// skip from folders as we do them first... so only dashboards
-		if kind == resources.FolderResource {
+	for _, supported := range clients.SupportedResources() {
+		// skip folders as we do them first... so only non-folder kinds here
+		if supported.GroupKind == resources.FolderKind.GroupKind() {
 			continue
 		}
 
-		progress.SetMessage(ctx, fmt.Sprintf("export %s", kind.Resource))
-		client, _, err := clients.ForResource(ctx, kind)
+		// Resolve the preferred version + plural resource via discovery.
+		client, gvr, err := clients.ForKind(ctx, schema.GroupVersionKind{Group: supported.Group, Kind: supported.Kind})
 		if err != nil {
-			return fmt.Errorf("get client for %s: %w", kind.Resource, err)
+			return fmt.Errorf("get client for %s: %w", supported.Kind, err)
 		}
+
+		progress.SetMessage(ctx, fmt.Sprintf("export %s", gvr.Resource))
 
 		// When requesting dashboards over the v1 api, we want to keep the original apiVersion if conversion fails
 		var shim conversionShim
-		if kind.GroupResource() == resources.DashboardResource.GroupResource() {
-			shim = newDashboardConversionShim(kind, clients)
+		if gvr.GroupResource() == resources.DashboardResource.GroupResource() {
+			shim = newDashboardConversionShim(gvr, clients)
 		}
 
 		if err := exportResource(ctx, options, client, shim, repositoryResources, progress, generateNewUIDs); err != nil {
-			return fmt.Errorf("export %s: %w", kind.Resource, err)
+			return fmt.Errorf("export %s: %w", gvr.Resource, err)
 		}
 	}
 
