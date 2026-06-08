@@ -477,14 +477,15 @@ test.describe('Query Editor Next: Query Options', { tag: ['@panels', '@queryEdit
     await expect(page.getByRole('button', { name: /Edit Relative time/i })).toContainText('1h');
   });
 
-  test('clicking outside closes the query options sidebar', async ({ gotoDashboardPage, page }) => {
-    await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
+  test('clicking outside closes the query options sidebar', async ({ gotoDashboardPage, page, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
     await page.getByRole('button', { name: /Query Options/i }).click();
     const maxDataPointsInput = page.getByRole('spinbutton', { name: 'Max data points' });
     await expect(maxDataPointsInput).toBeVisible();
 
-    await page.getByTestId('viz-resizer').click({ force: true });
+    // Click the viz panel — a stable target outside the sidebar — to trigger the outside-click close.
+    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).click({ force: true });
     await expect(maxDataPointsInput).toBeHidden();
   });
 });

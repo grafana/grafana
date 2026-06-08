@@ -7895,6 +7895,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Open query pane",
+      "open-query-pane": "Open query pane",
+      "open-sidebar": "Open sidebar",
       "tooltip-open-query-pane": "Open query pane"
     },
     "viz-panel-links-renderer": {

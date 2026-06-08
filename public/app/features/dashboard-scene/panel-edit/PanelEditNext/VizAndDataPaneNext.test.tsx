@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
+import { createRef } from 'react';
 
 import { VizPanel } from '@grafana/scenes';
 
+import { type DashboardControls } from '../../scene/DashboardControls';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { type PanelDataPane } from '../PanelDataPane/PanelDataPane';
 import { buildPanelEditScene } from '../PanelEditor';
@@ -39,26 +42,60 @@ jest.mock('./PanelDataPaneNext', () => ({
   },
 }));
 
-const MockPanelComponent = () => <div data-testid="panel-viz" />;
+type VizAndDataPaneLayout = ReturnType<typeof useVizAndDataPaneLayout>;
+type Splitter = VizAndDataPaneLayout['vizDataSplitter'];
 
-function buildMockLayout(dataPane?: PanelDataPane | PanelDataPaneNext) {
+// Scene objects expose `Component` via a read-only getter, so a sentinel-rendering stub needs a
+// boundary cast. Scoping it here keeps the rest of the layout fully type-checked.
+function mockSceneRenderer<T>(testId: string): T {
+  const Component = () => <div data-testid={testId} />;
+  return { Component } as unknown as T;
+}
+
+function mockSplitter(collapsed = false): Splitter {
+  return {
+    containerProps: { ref: createRef<HTMLDivElement>(), className: '' },
+    primaryProps: { ref: createRef<HTMLDivElement>(), className: '', style: {}, id: 'primary-pane' },
+    secondaryProps: { ref: createRef<HTMLDivElement>(), className: '', style: {} },
+    splitterProps: {
+      onPointerUp: jest.fn(),
+      onPointerDown: jest.fn(),
+      onPointerMove: jest.fn(),
+      onKeyDown: jest.fn(),
+      onKeyUp: jest.fn(),
+      onDoubleClick: jest.fn(),
+      onBlur: jest.fn(),
+      ref: createRef<HTMLDivElement>(),
+      style: {},
+      role: 'separator',
+      'aria-valuemin': 0,
+      'aria-valuemax': 100,
+      'aria-valuenow': 50,
+      'aria-controls': 'primary-pane',
+      'aria-label': 'Pane resize widget',
+      tabIndex: 0,
+      className: '',
+    },
+    splitterState: { collapsed },
+    onToggleCollapse: jest.fn(),
+  };
+}
+
+function buildMockLayout(dataPane?: PanelDataPane | PanelDataPaneNext, sidebarSize: SidebarSize = SidebarSize.Mini) {
   return {
     scene: {
-      panel: { Component: MockPanelComponent },
-      tableView: { Component: MockPanelComponent },
-      controls: null,
+      panel: mockSceneRenderer<VizPanel>('panel-viz'),
+      tableView: undefined,
+      controls: undefined,
       dataPane,
-      dashboard: {},
+      dashboard: mockSceneRenderer<DashboardScene>('dashboard'),
     },
-    layout: {
-      sidebarSize: SidebarSize.Mini,
-      setSidebarSize: jest.fn(),
-      isScrollingLayout: false,
-      gridStyles: {},
-      sidebarResizeHandle: { ref: jest.fn(), className: '' },
-      vizResizeHandle: { ref: jest.fn(), className: '' },
-    },
-  } as unknown as ReturnType<typeof useVizAndDataPaneLayout>;
+    sidebarSize,
+    setSidebarSize: jest.fn(),
+    isScrollingLayout: false,
+    vizDataSplitter: mockSplitter(),
+    sidebarSplitter: mockSplitter(),
+  } satisfies VizAndDataPaneLayout;
 }
 
 const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
@@ -107,11 +144,10 @@ describe('VizAndDataPaneNext', () => {
 
   describe('when panel has controls', () => {
     it('renders the controls', () => {
-      const MockControls = { Component: () => <div data-testid="panel-controls" /> };
       const base = buildMockLayout(undefined);
       jest.mocked(useVizAndDataPaneLayout).mockReturnValue({
         ...base,
-        scene: { ...base.scene, controls: MockControls as unknown as typeof base.scene.controls },
+        scene: { ...base.scene, controls: mockSceneRenderer<DashboardControls>('panel-controls') },
       });
       render(<VizAndDataPaneNext model={panelEditor} />);
       expect(screen.getByTestId('panel-controls')).toBeInTheDocument();
