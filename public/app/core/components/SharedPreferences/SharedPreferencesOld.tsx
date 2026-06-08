@@ -1,7 +1,7 @@
 import { PureComponent } from 'react';
 import * as React from 'react';
 
-import { FeatureState } from '@grafana/data';
+import { FeatureState, type ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -23,16 +23,16 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
 
-import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
-
 import { getLanguageOptions, getStyles, getTranslatedThemeName, type Props, type State } from './utils';
 
-export class SharedPreferences extends PureComponent<Props, State> {
+type ClassProps = Props & { themes: ThemeRegistryItem[] };
+
+export class SharedPreferences extends PureComponent<ClassProps, State> {
   service: PreferencesService;
   themeOptions: ComboboxOption[];
   languageOptions: ComboboxOption[];
 
-  constructor(props: Props) {
+  constructor(props: ClassProps) {
     super(props);
 
     this.service = new PreferencesService(props.resourceUri);
@@ -47,7 +47,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       navbar: { bookmarkUrls: [] },
     };
 
-    const themes = getSelectableThemes();
+    const themes = props.themes;
 
     // Options are translated, so must be called after init but call them
     // in constructor to avoid memo-break of array changing every render

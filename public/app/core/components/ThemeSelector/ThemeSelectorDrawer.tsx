@@ -7,7 +7,7 @@ import { Drawer, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { changeTheme } from 'app/core/services/theme';
 
 import { ThemeCard } from './ThemeCard';
-import { getSelectableThemes } from './getSelectableThemes';
+import { useSelectableThemes } from './useSelectableThemes';
 
 interface Props {
   onClose: () => void;
@@ -15,7 +15,7 @@ interface Props {
 
 export function ThemeSelectorDrawer({ onClose }: Props) {
   const styles = useStyles2(getStyles);
-  const themes = getSelectableThemes();
+  const themes = useSelectableThemes();
   const currentTheme = useTheme2();
 
   const onChange = (theme: ThemeRegistryItem) => {

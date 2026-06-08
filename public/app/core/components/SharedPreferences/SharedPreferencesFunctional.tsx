@@ -26,7 +26,7 @@ import {
 import { changeTheme } from 'app/core/services/theme';
 
 import { DashboardPicker } from '../Select/DashboardPicker';
-import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
+import { useSelectableThemes } from '../ThemeSelector/useSelectableThemes';
 
 import { languageChanged, saveButtonClicked, themeChanged } from './analytics/main';
 import { useSharedPreferences } from './useSharedPreferences';
@@ -49,7 +49,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     homeDashboardUID: '',
   });
 
-  const themes = getSelectableThemes();
+  const themes = useSelectableThemes();
   const styles = useStyles2(getStyles);
 
   // Options are translated, so must be called after init but call them
