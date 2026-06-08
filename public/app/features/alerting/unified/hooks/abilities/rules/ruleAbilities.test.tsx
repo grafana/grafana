@@ -97,6 +97,9 @@ describe('useRuleAdministrationAbility', () => {
 
     // Snapshot the initial loading state before the ruler resolves
     expect(result.current).toMatchSnapshot();
+
+    // Drain the async queue so the test does not leave in-flight state updates
+    await waitFor(() => expect(result.current.loading).toBe(false));
   });
 
   it('returns INSUFFICIENT_PERMISSIONS when user lacks folder edit permission', async () => {
@@ -410,8 +413,11 @@ function makePromRule(overrides?: Partial<GrafanaPromRuleDTO>): GrafanaPromRuleD
 }
 
 describe('usePromRuleAdministrationAbility', () => {
-  it('returns all NOT_SUPPORTED when skipToken is passed', () => {
+  it('returns all NOT_SUPPORTED when skipToken is passed', async () => {
     const { result } = renderHook(() => usePromRuleAdministrationAbility(skipToken), { wrapper: wrapper() });
+
+    // Drain the async queue from useRulePluginImmutability's useAsync call
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(isNotSupported(result.current.update)).toBe(true);
     expect(isNotSupported(result.current.delete)).toBe(true);

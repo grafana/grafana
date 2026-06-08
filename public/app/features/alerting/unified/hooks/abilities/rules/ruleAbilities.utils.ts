@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { useAppPluginEnabled } from '@grafana/runtime';
 import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
@@ -7,7 +8,6 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type GrafanaPromRuleDTO, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
-import { useGetPluginSettingsQuery } from '../../../api/pluginsApi';
 import { getRulesPermissions } from '../../../utils/access-control';
 import { isAdmin } from '../../../utils/misc';
 import { getRulePluginOrigin } from '../../../utils/rules';
@@ -171,10 +171,8 @@ export function useRulePluginImmutability(rule: RulerRuleDTO | GrafanaPromRuleDT
   pluginLoading: boolean;
 } {
   const pluginOrigin = getRulePluginOrigin(rule);
-  const { data: pluginSettings, isLoading } = useGetPluginSettingsQuery(pluginOrigin?.pluginId ?? '', {
-    skip: !pluginOrigin?.pluginId,
-  });
-  const isPluginInstalled = pluginSettings?.enabled ?? false;
+  // Empty string returns false immediately without a network call
+  const { value: isPluginInstalled = false, loading: isLoading } = useAppPluginEnabled(pluginOrigin?.pluginId ?? '');
 
   return useMemo(
     () => ({

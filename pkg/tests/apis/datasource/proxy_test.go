@@ -38,8 +38,8 @@ type capturedRequest struct {
 // TestIntegrationDatasourceProxy exercises the datasource frontend proxy through
 // both the legacy (/api/datasources/proxy/...) and the apiserver
 // (.../datasources/<uid>/proxy/...) routes. Both share the same
-// pluginproxy.DataSourceProxy machinery, so the core behaviors are asserted on
-// both transports, while transport-specific edge cases are asserted once.
+// pluginproxy.DataSourceProxy machinery, so every behavior is asserted per
+// transport (see the transports slice).
 func TestIntegrationDatasourceProxy(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -129,25 +129,35 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 		return raw.Response.StatusCode, raw.Body
 	}
 
-	legacyPath := func(sub string) string {
-		return "/api/datasources/proxy/uid/" + uid + "/" + sub
+	legacyPath := func(dsUID, sub string) string {
+		return "/api/datasources/proxy/uid/" + dsUID + "/" + sub
 	}
-	apiserverPath := func(sub string) string {
-		return "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/" + uid + "/proxy/" + sub
+	apiserverPath := func(dsUID, sub string) string {
+		return "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/" + dsUID + "/proxy/" + sub
 	}
+
+	// A viewer with the query permission may reach the proxy, but the Prometheus
+	// admin (rules) routes require the Editor role.
+	routeViewer := helper.CreateUser("proxy-route-viewer", apis.Org1, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{datasources.ActionQuery},
+			Resource:          datasources.ScopeRoot,
+			ResourceID:        uid,
+			ResourceAttribute: "uid",
+		},
+	})
 
 	transports := []struct {
 		name string
-		path func(sub string) string
+		path func(dsUID, sub string) string
 	}{
 		{"legacy", legacyPath},
 		{"apiserver", apiserverPath},
 	}
 
-	// Core behaviors, asserted on both transports.
 	for _, transport := range transports {
 		t.Run(transport.name+" forwards path, query, basic auth, identity and filtered cookies", func(t *testing.T) {
-			status, body := doProxy(helper.Org1.Admin, http.MethodGet, transport.path("api/v1/labels?match%5B%5D=up"), map[string]string{
+			status, body := doProxy(helper.Org1.Admin, http.MethodGet, transport.path(uid, "api/v1/labels?match%5B%5D=up"), map[string]string{
 				"Cookie": "kept=1; dropped=2; prefXY=3",
 			})
 			require.Equal(t, http.StatusOK, status, "body: %s", body)
@@ -173,7 +183,7 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 		})
 
 		t.Run(transport.name+" honours the X-DS-Authorization override", func(t *testing.T) {
-			status, body := doProxy(helper.Org1.Admin, http.MethodGet, transport.path("api/v1/labels"), map[string]string{
+			status, body := doProxy(helper.Org1.Admin, http.MethodGet, transport.path(uid, "api/v1/labels"), map[string]string{
 				"X-DS-Authorization": "Bearer ds-token",
 			})
 			require.Equal(t, http.StatusOK, status, "body: %s", body)
@@ -185,51 +195,38 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 		})
 
 		t.Run(transport.name+" converts an upstream 401 to 400", func(t *testing.T) {
-			status, _ := doProxy(helper.Org1.Admin, http.MethodGet, transport.path("api/v1/unauthorized"), nil)
+			status, _ := doProxy(helper.Org1.Admin, http.MethodGet, transport.path(uid, "api/v1/unauthorized"), nil)
 			require.Equal(t, http.StatusBadRequest, status, "401 should be converted to 400")
 		})
-	}
 
-	// Transport-specific edge cases (shared machinery, asserted once).
-	t.Run("apiserver rejects non-allow-listed methods for Prometheus", func(t *testing.T) {
-		status, _ := doProxy(helper.Org1.Admin, http.MethodDelete, apiserverPath("api/v1/labels"), nil)
-		require.Equal(t, http.StatusForbidden, status)
-		require.Nil(t, upstreamGot(), "blocked request must not reach the upstream")
-	})
-
-	t.Run("apiserver enforces plugin route RBAC", func(t *testing.T) {
-		// A viewer with the query permission passes the apiserver authorizer, but
-		// the Prometheus admin (rules) routes require the Editor role.
-		viewer := helper.CreateUser("proxy-route-viewer", apis.Org1, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{
-			{
-				Actions:           []string{datasources.ActionQuery},
-				Resource:          datasources.ScopeRoot,
-				ResourceID:        uid,
-				ResourceAttribute: "uid",
-			},
+		t.Run(transport.name+" rejects non-allow-listed methods for Prometheus", func(t *testing.T) {
+			status, _ := doProxy(helper.Org1.Admin, http.MethodDelete, transport.path(uid, "api/v1/labels"), nil)
+			require.Equal(t, http.StatusForbidden, status)
+			require.Nil(t, upstreamGot(), "blocked request must not reach the upstream")
 		})
 
-		// DELETE /rules requires Editor -> denied for the viewer.
-		status, _ := doProxy(viewer, http.MethodDelete, apiserverPath("rules"), nil)
-		require.Equal(t, http.StatusForbidden, status)
-		require.Nil(t, upstreamGot(), "RBAC-denied request must not reach the upstream")
+		t.Run(transport.name+" enforces plugin route RBAC", func(t *testing.T) {
+			// DELETE /rules requires Editor -> denied for the viewer.
+			status, _ := doProxy(routeViewer, http.MethodDelete, transport.path(uid, "rules"), nil)
+			require.Equal(t, http.StatusForbidden, status)
+			require.Nil(t, upstreamGot(), "RBAC-denied request must not reach the upstream")
 
-		// GET /rules only requires Viewer -> allowed.
-		status, body := doProxy(viewer, http.MethodGet, apiserverPath("rules"), nil)
-		require.Equal(t, http.StatusOK, status, "body: %s", body)
-		require.NotNil(t, upstreamGot())
-	})
+			// GET /rules only requires Viewer -> allowed.
+			status, body := doProxy(routeViewer, http.MethodGet, transport.path(uid, "rules"), nil)
+			require.Equal(t, http.StatusOK, status, "body: %s", body)
+			require.NotNil(t, upstreamGot())
+		})
 
-	t.Run("apiserver returns 404 for an unknown datasource", func(t *testing.T) {
-		path := "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/does-not-exist/proxy/api/v1/labels"
-		status, _ := doProxy(helper.Org1.Admin, http.MethodGet, path, nil)
-		require.Equal(t, http.StatusNotFound, status)
-		require.Nil(t, upstreamGot())
-	})
+		t.Run(transport.name+" returns 404 for an unknown datasource", func(t *testing.T) {
+			status, _ := doProxy(helper.Org1.Admin, http.MethodGet, transport.path("does-not-exist", "api/v1/labels"), nil)
+			require.Equal(t, http.StatusNotFound, status)
+			require.Nil(t, upstreamGot())
+		})
 
-	t.Run("apiserver denies cross-org access", func(t *testing.T) {
-		status, _ := doProxy(helper.OrgB.Admin, http.MethodGet, apiserverPath("api/v1/labels"), nil)
-		require.NotEqual(t, http.StatusOK, status)
-		require.Nil(t, upstreamGot(), "cross-org request must not reach the upstream")
-	})
+		t.Run(transport.name+" denies cross-org access", func(t *testing.T) {
+			status, _ := doProxy(helper.OrgB.Admin, http.MethodGet, transport.path(uid, "api/v1/labels"), nil)
+			require.NotEqual(t, http.StatusOK, status)
+			require.Nil(t, upstreamGot(), "cross-org request must not reach the upstream")
+		})
+	}
 }
