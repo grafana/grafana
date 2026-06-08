@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -164,7 +163,6 @@ func ClassifySaveError(err error) *SyncError {
 // save per restart before dedup engages, accepted as the cost of avoiding sidecar
 // persistence for the hash.
 type ExternalAMSyncer struct {
-	adminConfigStore   store.AdminConfigurationStore
 	datasourceService  datasources.DataSourceService
 	httpClientProvider httpclient.Provider
 	requestValidator   validations.DataSourceRequestValidator
@@ -191,7 +189,6 @@ type ExternalAMSyncer struct {
 // no-op default. Nil clientGenerator/namespaceMapper (test paths) falls
 // back to the legacy admin_config store and skips status writes.
 func NewExternalAMSyncer(
-	adminConfigStore store.AdminConfigurationStore,
 	datasourceService datasources.DataSourceService,
 	httpClientProvider httpclient.Provider,
 	requestValidator validations.DataSourceRequestValidator,
@@ -202,7 +199,6 @@ func NewExternalAMSyncer(
 	namespaceMapper request.NamespaceMapper,
 ) *ExternalAMSyncer {
 	return &ExternalAMSyncer{
-		adminConfigStore:   adminConfigStore,
 		datasourceService:  datasourceService,
 		httpClientProvider: httpClientProvider,
 		requestValidator:   requestValidator,
@@ -225,7 +221,7 @@ func (s *ExternalAMSyncer) resolveCfgClient() *alertingnotifv0alpha1.AdminConfig
 	s.cfgClientOnce.Do(func() {
 		c, err := alertingnotifv0alpha1.NewAdminConfigClientFromGenerator(s.clientGenerator)
 		if err != nil {
-			s.logger.Warn("Failed to construct admin Config client, falling back to legacy admin_config", "error", err)
+			s.logger.Warn("Failed to construct AdminConfig client", "error", err)
 			return
 		}
 		s.cfgClient = c
@@ -528,67 +524,51 @@ func externalSyncDatasourceUIDFromConfig(c *alertingnotifv0alpha1.AdminConfig) s
 // resolveExternalAMUIDForOrg returns the datasource UID to use for external AM
 // sync for the given org and where it came from. The operator-level
 // ExternalAlertmanagerUID setting takes precedence over the per-org value.
-// Per-org reads from the AdminConfig k8s resource when the client is wired,
-// otherwise falls back to the legacy admin_config table. Returns "" when
-// neither is set (sync should be skipped). Returns an error only on storage
-// failure looking up the per-org config.
+// The per-org value is read from the AdminConfig k8s resource; if its client
+// can't be constructed the sync fails for this tick rather than falling back to
+// anything. Returns "" when no UID is set (sync should be skipped).
 func (s *ExternalAMSyncer) resolveExternalAMUIDForOrg(ctx context.Context, orgID int64) (string, externalSyncOrigin, error) {
 	if uid := s.settings.UnifiedAlerting.ExternalAlertmanagerUID; uid != "" {
 		return uid, originIni, nil
 	}
 
-	if c := s.resolveCfgClient(); c != nil {
-		nsCtx, ns := s.orgServiceContext(ctx, orgID)
-		ac, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingnotifv0alpha1.AdminConfigSingletonName})
-		if err != nil {
-			if k8serrors.IsNotFound(err) {
-				return "", originAPI, nil
-			}
-			return "", "", err
-		}
-		return externalSyncDatasourceUIDFromConfig(ac), originAPI, nil
+	c := s.resolveCfgClient()
+	if c == nil {
+		return "", "", fmt.Errorf("AdminConfig API client unavailable")
 	}
-
-	cfg, err := s.adminConfigStore.GetAdminConfiguration(orgID)
+	nsCtx, ns := s.orgServiceContext(ctx, orgID)
+	ac, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingnotifv0alpha1.AdminConfigSingletonName})
 	if err != nil {
-		if errors.Is(err, store.ErrNoAdminConfiguration) {
+		if k8serrors.IsNotFound(err) {
 			return "", originAPI, nil
 		}
 		return "", "", err
 	}
-	if cfg.ExternalAlertmanagerUID == nil {
-		return "", originAPI, nil
-	}
-	return *cfg.ExternalAlertmanagerUID, originAPI, nil
+	return externalSyncDatasourceUIDFromConfig(ac), originAPI, nil
 }
 
 // IsConfiguredForOrg reports whether external Alertmanager sync is configured
 // for the given org. True when the operator-level ini setting is non-empty
 // (applies to all orgs) OR a non-empty datasource UID is set on the AdminConfig
-// resource at .spec.alertmanager.externalSync.datasourceUid (or legacy
-// admin_config table when the API flag is off).
+// resource at .spec.alertmanager.externalSync.datasourceUid.
 func (s *ExternalAMSyncer) IsConfiguredForOrg(ctx context.Context, orgID int64) (bool, error) {
 	if s.settings.UnifiedAlerting.ExternalAlertmanagerUID != "" {
 		return true, nil
 	}
 
-	if c := s.resolveCfgClient(); c != nil {
-		nsCtx, ns := s.orgServiceContext(ctx, orgID)
-		ac, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingnotifv0alpha1.AdminConfigSingletonName})
-		if err != nil {
-			if k8serrors.IsNotFound(err) {
-				return false, nil
-			}
-			return false, err
-		}
-		return externalSyncDatasourceUIDFromConfig(ac) != "", nil
+	c := s.resolveCfgClient()
+	if c == nil {
+		return false, fmt.Errorf("AdminConfig API client unavailable")
 	}
-
-	cfg, err := s.adminConfigStore.GetAdminConfiguration(orgID)
-	if err != nil && !errors.Is(err, store.ErrNoAdminConfiguration) {
+	nsCtx, ns := s.orgServiceContext(ctx, orgID)
+	ac, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingnotifv0alpha1.AdminConfigSingletonName})
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return false, nil
+		}
 		return false, err
 	}
-	return cfg != nil && cfg.ExternalAlertmanagerUID != nil && *cfg.ExternalAlertmanagerUID != "", nil
+	return externalSyncDatasourceUIDFromConfig(ac) != "", nil
 }
 
 // fetchMimirConfig fetches the alertmanager configuration from a Mimir/Cortex
