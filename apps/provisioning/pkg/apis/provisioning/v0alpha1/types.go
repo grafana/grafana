@@ -39,10 +39,6 @@ type SecureValues struct {
 	// is selected by spec.commit.signingFormat. When unset, commits are
 	// unsigned.
 	SigningKey common.InlineSecureValue `json:"signingKey,omitzero,omitempty"`
-
-	// X.509 certificate paired with SigningKey when signingFormat is "smime".
-	// Unused for the gpg and ssh formats.
-	SMIMECertificate common.InlineSecureValue `json:"smimeCertificate,omitzero,omitempty"`
 }
 
 func (SecureValues) OpenAPIModelName() string {
@@ -50,7 +46,7 @@ func (SecureValues) OpenAPIModelName() string {
 }
 
 func (v SecureValues) IsZero() bool {
-	return v.Token.IsZero() && v.WebhookSecret.IsZero() && v.SigningKey.IsZero() && v.SMIMECertificate.IsZero()
+	return v.Token.IsZero() && v.WebhookSecret.IsZero() && v.SigningKey.IsZero()
 }
 
 type LocalRepositoryConfig struct {
@@ -346,6 +342,11 @@ type CommitOptions struct {
 	// Format of the key in secure.signingKey. One of "gpg", "ssh", or "smime".
 	// When empty, defaults to "gpg".
 	SigningFormat SigningFormat `json:"signingFormat,omitempty"`
+
+	// PEM-encoded X.509 certificate paired with secure.signingKey when
+	// signingFormat is "smime". This is public (not a secret) and is embedded
+	// in the commit signature. Unused for the gpg and ssh formats.
+	SMIMECertificate string `json:"smimeCertificate,omitempty"`
 }
 
 // SigningFormat selects the key format used to sign commits.

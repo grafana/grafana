@@ -19,9 +19,6 @@ type SecureValuesApplyConfiguration struct {
 	// is selected by spec.commit.signingFormat. When unset, commits are
 	// unsigned.
 	SigningKey *commonv0alpha1.InlineSecureValue `json:"signingKey,omitempty"`
-	// X.509 certificate paired with SigningKey when signingFormat is "smime".
-	// Unused for the gpg and ssh formats.
-	SMIMECertificate *commonv0alpha1.InlineSecureValue `json:"smimeCertificate,omitempty"`
 }
 
 // SecureValuesApplyConfiguration constructs a declarative configuration of the SecureValues type for use with
@@ -51,13 +48,5 @@ func (b *SecureValuesApplyConfiguration) WithWebhookSecret(value commonv0alpha1.
 // If called multiple times, the SigningKey field is set to the value of the last call.
 func (b *SecureValuesApplyConfiguration) WithSigningKey(value commonv0alpha1.InlineSecureValue) *SecureValuesApplyConfiguration {
 	b.SigningKey = &value
-	return b
-}
-
-// WithSMIMECertificate sets the SMIMECertificate field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the SMIMECertificate field is set to the value of the last call.
-func (b *SecureValuesApplyConfiguration) WithSMIMECertificate(value commonv0alpha1.InlineSecureValue) *SecureValuesApplyConfiguration {
-	b.SMIMECertificate = &value
 	return b
 }

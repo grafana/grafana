@@ -127,6 +127,9 @@ repository: {
 					authorEmail?: string
 					// Format of the key in secure.signingKey. When empty, defaults to "gpg".
 					signingFormat?: "gpg" | "ssh" | "smime"
+					// PEM-encoded X.509 certificate paired with secure.signingKey when
+					// signingFormat is "smime". This is public, not a secret.
+					smimeCertificate?: string
 				}
 				#HealthStatus: {
 					// When not healthy, requests will not be executed

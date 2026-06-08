@@ -1514,7 +1514,6 @@ func (in *SecureValues) DeepCopyInto(out *SecureValues) {
 	in.Token.DeepCopyInto(&out.Token)
 	in.WebhookSecret.DeepCopyInto(&out.WebhookSecret)
 	in.SigningKey.DeepCopyInto(&out.SigningKey)
-	in.SMIMECertificate.DeepCopyInto(&out.SMIMECertificate)
 	return
 }
 
