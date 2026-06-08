@@ -110,7 +110,7 @@ export function ImportForm({
               <Input
                 disabled
                 {...register('uid', {
-                  setValueAs: (v: string) => (typeof v === 'string' ? v.trim() : v),
+                  setValueAs: (v) => (typeof v === 'string' ? v.trim() : v),
                   validate: async (v: string) => await validateUid(v),
                 })}
                 addonAfter={
@@ -125,7 +125,7 @@ export function ImportForm({
               <Input
                 {...register('uid', {
                   required: true,
-                  setValueAs: (v: string) => (typeof v === 'string' ? v.trim() : v),
+                  setValueAs: (v) => (typeof v === 'string' ? v.trim() : v),
                   validate: async (v: string) => await validateUid(v),
                 })}
               />
