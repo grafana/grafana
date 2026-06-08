@@ -34,14 +34,11 @@ func TestIntegrationProvisioning_JobValidationConfiguredResources(t *testing.T) 
 	})
 	ctx := context.Background()
 
+	// The job admission validator only requires a non-empty repository name; it does not check
+	// repository existence (that happens later, in the jobs connector / worker). Creating Job
+	// objects directly through the resource client exercises admission in isolation, so no real
+	// repository is needed.
 	const repo = "job-validation-configured-resources"
-	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "folder",
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    1,
-	})
 
 	tests := []struct {
 		name         string
