@@ -2383,6 +2383,7 @@ __metadata:
     "@grafana/scenes": "npm:^8.2.6"
     "@grafana/schema": "npm:13.1.0-pre"
     "@leeoniya/ufuzzy": "npm:1.0.19"
+    "@react-hookz/web": "npm:^25.2.0"
     "@rollup/plugin-json": "npm:6.1.0"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@testing-library/react": "npm:16.3.0"
@@ -7076,6 +7077,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-hookz/web@npm:^25.2.0":
+  version: 25.2.0
+  resolution: "@react-hookz/web@npm:25.2.0"
+  dependencies:
+    "@ver0/deep-equal": "npm:^1.0.0"
+  peerDependencies:
+    js-cookie: ^3.0.5
+    react: ^16.8 || ^17 || ^18 || ^19
+    react-dom: ^16.8 || ^17 || ^18 || ^19
+  peerDependenciesMeta:
+    js-cookie:
+      optional: true
+  checksum: 10/c23a10a1028760951318df440d1c314b0a1d848fc4a80968f5c31a1c832b388cb300e4a7f9f4edf0b80e81274f53ca2adfe5fe0ea97cac92bd8fb1b94a15bae0
+  languageName: node
+  linkType: hard
+
 "@react-stately/flags@npm:^3.1.2":
   version: 3.1.2
   resolution: "@react-stately/flags@npm:3.1.2"
@@ -11340,6 +11357,13 @@ __metadata:
   version: 1.11.1
   resolution: "@unrs/resolver-binding-win32-x64-msvc@npm:1.11.1"
   conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@ver0/deep-equal@npm:^1.0.0":
+  version: 1.0.1
+  resolution: "@ver0/deep-equal@npm:1.0.1"
+  checksum: 10/7ab3679eaecdee998335e7873ac06b1d2121b8587f75bb4b25a0ece7c525754146ee9d3ef490705b00858990c9e369909e73bdfc858d1095113de637e3d03526
   languageName: node
   linkType: hard
 
@@ -18619,6 +18643,7 @@ __metadata:
     "@react-aria/overlays": "npm:3.30.0"
     "@react-aria/utils": "npm:3.31.0"
     "@react-awesome-query-builder/ui": "npm:6.6.15"
+    "@react-hookz/web": "npm:^25.2.0"
     "@react-types/button": "npm:3.13.0"
     "@react-types/menu": "npm:3.10.3"
     "@react-types/overlays": "npm:3.9.0"

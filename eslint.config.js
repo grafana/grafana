@@ -73,6 +73,11 @@ const baseImportConfig = {
       importNames: ['useDispatch', 'useSelector'],
       message: 'Please import from app/types/store instead.',
     },
+    {
+      name: 'react-use',
+      importNames: ['useObservable'],
+      message: 'react-use is being phased out. Import useObservable from @grafana/data/unstable instead.',
+    },
   ],
 };
 

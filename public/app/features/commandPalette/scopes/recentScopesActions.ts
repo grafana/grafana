@@ -1,6 +1,6 @@
-import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
+import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';

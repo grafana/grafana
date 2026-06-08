@@ -35,6 +35,8 @@ const esModules = [
   'pbf',
   'geotiff',
   'uuid',
+  '@react-hookz/web',
+  '@ver0/deep-equal',
 ].join('|');
 
 module.exports = {

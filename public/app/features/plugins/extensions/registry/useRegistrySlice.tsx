@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { useObservable } from 'react-use';
+
+import { useObservable } from '@grafana/data/unstable';
 
 import {
   useAddedComponentsRegistry,
