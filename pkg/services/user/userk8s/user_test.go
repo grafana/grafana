@@ -486,6 +486,124 @@ func TestUserK8sService_GetByID(t *testing.T) {
 	}
 }
 
+func TestUserK8sService_GetByUID(t *testing.T) {
+	makeGetResponse := func(u v0alpha1.User) func(http.ResponseWriter, *http.Request) {
+		return func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(u)
+		}
+	}
+
+	tests := []struct {
+		name           string
+		cmd            *user.GetUserByUIDQuery
+		requesterOrgID int64
+		serverResponse func(w http.ResponseWriter, r *http.Request)
+		nilProvider    bool
+		noRequester    bool
+		expectErr      bool
+		expectErrIs    error
+		expectUser     *user.User
+	}{
+		{
+			name:           "successfully retrieves a user by UID",
+			requesterOrgID: 1,
+			cmd:            &user.GetUserByUIDQuery{UID: "some-uid"},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Contains(t, r.URL.Path, "some-uid")
+				makeGetResponse(newTestK8sUser("some-uid", "org-1", "jdoe", "jdoe@example.com"))(w, r)
+			},
+			expectUser: &user.User{
+				ID:            42,
+				UID:           "some-uid",
+				OrgID:         1,
+				Login:         "jdoe",
+				Email:         "jdoe@example.com",
+				Name:          "John Doe",
+				IsAdmin:       true,
+				EmailVerified: true,
+				LastSeenAt:    time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC),
+			},
+		},
+		{
+			name:           "returns ErrUserNotFound when user does not exist",
+			requesterOrgID: 1,
+			cmd:            &user.GetUserByUIDQuery{UID: "missing-uid"},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusNotFound)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusFailure,
+					Reason:   metav1.StatusReasonNotFound,
+					Code:     http.StatusNotFound,
+				})
+			},
+			expectErr:   true,
+			expectErrIs: user.ErrUserNotFound,
+		},
+		{
+			name:           "propagates non-not-found error from k8s client",
+			requesterOrgID: 1,
+			cmd:            &user.GetUserByUIDQuery{UID: "some-uid"},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusFailure,
+					Message:  "k8s error",
+					Code:     http.StatusInternalServerError,
+				})
+			},
+			expectErr: true,
+		},
+		{
+			name:        "returns error when config provider not initialized",
+			cmd:         &user.GetUserByUIDQuery{UID: "some-uid"},
+			nilProvider: true,
+			expectErr:   true,
+		},
+		{
+			name:        "returns error when no requester in context",
+			cmd:         &user.GetUserByUIDQuery{UID: "some-uid"},
+			noRequester: true,
+			expectErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+				nilProvider:    tt.nilProvider,
+				noRequester:    tt.noRequester,
+				requesterOrgID: tt.requesterOrgID,
+				serverResponse: tt.serverResponse,
+			})
+
+			result, err := svc.GetByUID(ctx, tt.cmd)
+
+			if tt.expectErr {
+				require.Error(t, err)
+				if tt.expectErrIs != nil {
+					require.ErrorIs(t, err, tt.expectErrIs)
+				}
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectUser.ID, result.ID)
+			assert.Equal(t, tt.expectUser.UID, result.UID)
+			assert.Equal(t, tt.expectUser.OrgID, result.OrgID)
+			assert.Equal(t, tt.expectUser.Login, result.Login)
+			assert.Equal(t, tt.expectUser.Email, result.Email)
+			assert.Equal(t, tt.expectUser.Name, result.Name)
+			assert.Equal(t, tt.expectUser.IsAdmin, result.IsAdmin)
+			assert.Equal(t, tt.expectUser.EmailVerified, result.EmailVerified)
+		})
+	}
+}
+
 func TestUserK8sService_GetByEmail(t *testing.T) {
 	tests := []struct {
 		name           string
