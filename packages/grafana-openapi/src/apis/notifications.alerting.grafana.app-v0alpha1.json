@@ -4629,6 +4629,46 @@
           }
         ]
       },
+      "AdminConfigAlertmanagerSpec": {
+        "description": "AlertmanagerSpec groups admin config for the current org's Alertmanager.",
+        "type": "object",
+        "properties": {
+          "externalSync": {
+            "description": "externalSync configures syncing the Alertmanager configuration from a\nMimir/Cortex datasource into the current org. The worker periodically\nfetches the upstream configuration and merges it into the current org's\nGrafana alertmanager configuration.",
+            "type": "object",
+            "properties": {
+              "datasourceUid": {
+                "description": "datasourceUid is the UID of the Mimir/Cortex Alertmanager datasource\nto sync from. Empty means no sync is configured for the current org.\nThe operator ini setting `unified_alerting.external_alertmanager_uid`\noverrides this when set; see status.alertmanager.externalSync.origin.",
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdminConfigAlertmanagerStatus": {
+        "description": "AlertmanagerStatus mirrors #AlertmanagerSpec with runtime observation.",
+        "type": "object",
+        "properties": {
+          "externalSync": {
+            "type": "object",
+            "properties": {
+              "datasourceUid": {
+                "description": "datasourceUid is the UID actually used on the last sync attempt; may\nlag spec until the next tick. When origin=ini, this is the ini\noverride value.",
+                "type": "string"
+              },
+              "origin": {
+                "description": "origin records which source supplied datasourceUid on the last run.\n\"ini\" (grafana.ini's unified_alerting.external_alertmanager_uid) wins\nover \"api\" (spec.alertmanager.externalSync.datasourceUid).",
+                "type": "string",
+                "enum": ["api", "ini"]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
       "AdminConfigCondition": {
         "description": "Condition mirrors metav1.Condition. Inlined because the app-sdk codegen\nhere can't reference metav1.Condition from CUE. Field semantics are\nk8s-standard; reason values are produced by SyncReason in the syncer.",
         "type": "object",
@@ -4700,16 +4740,8 @@
       "AdminConfigSpec": {
         "type": "object",
         "properties": {
-          "externalAlertmanagerSync": {
-            "description": "externalAlertmanagerSync configures the per-org external Alertmanager\nconfiguration sync worker. The worker periodically fetches the\nalertmanager configuration from a Mimir/Cortex datasource and merges\nit into the org's local alertmanager configuration.",
-            "type": "object",
-            "properties": {
-              "datasourceUid": {
-                "description": "datasourceUid is the UID of the Mimir/Cortex Alertmanager\ndatasource to sync from. Empty means no per-org sync configured.\nThe operator ini setting `unified_alerting.external_alertmanager_uid`\noverrides this when set; see status.externalAlertmanagerSync.origin.",
-                "type": "string"
-              }
-            },
-            "additionalProperties": false
+          "alertmanager": {
+            "$ref": "#/components/schemas/AdminConfigAlertmanagerSpec"
           }
         },
         "additionalProperties": false
@@ -4717,28 +4749,15 @@
       "AdminConfigStatus": {
         "type": "object",
         "properties": {
+          "alertmanager": {
+            "$ref": "#/components/schemas/AdminConfigAlertmanagerStatus"
+          },
           "conditions": {
             "description": "Standard k8s-style condition list. Each binary-state feature owns one\ncondition type. Current types:\n  - ExternalAlertmanagerSynced: True after a successful sync, False\n    after a failed attempt, Unknown until the first attempt.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AdminConfigCondition"
             }
-          },
-          "externalAlertmanagerSync": {
-            "description": "externalAlertmanagerSync mirrors the spec sub-object with runtime\nobservation. Conditions for this feature live at\n.status.conditions[type=ExternalAlertmanagerSynced].",
-            "type": "object",
-            "properties": {
-              "datasourceUid": {
-                "description": "datasourceUid is the UID actually used on the last sync attempt;\nmay lag spec until the next tick. When origin=ini, this is the\nini override value.",
-                "type": "string"
-              },
-              "origin": {
-                "description": "origin records which source supplied datasourceUid on the last run.\n\"ini\" (grafana.ini's unified_alerting.external_alertmanager_uid)\nwins over \"api\" (spec.externalAlertmanagerSync.datasourceUid).",
-                "type": "string",
-                "enum": ["api", "ini"]
-              }
-            },
-            "additionalProperties": false
           },
           "observedGeneration": {
             "description": "observedGeneration is the spec.generation last evaluated by the\ncontrollers writing this status.",

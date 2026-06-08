@@ -1,31 +1,29 @@
 package v0alpha1
 
-// AdminConfigStatus reports the runtime observation of admin alerting
-// concerns for an org. Written by the controllers that own fields on spec;
-// clients read only.
+// AdminConfig is the per-org alerting admin config — a singleton resource
+// carrying admin-controllable settings for the alerting stack. Settings are
+// grouped into sections by area (e.g. alertmanager); each section's spec and
+// status live in their own file (e.g. alertmanager.cue) and are embedded into
+// the models below.
+AdminConfigSpec: {
+	// alertmanager groups admin config for the current org's Alertmanager.
+	alertmanager?: #AlertmanagerSpec
+}
+
+// AdminConfigStatus reports the runtime observation of admin alerting concerns
+// for an org. Written by the controllers that own fields on spec; clients read
+// only.
 //
 // Conditions are top-level (k8s convention: meta.SetStatusCondition, kubectl
-// wait --for=condition=, controller-runtime helpers). Auxiliary observation
-// state is nested per-feature so spec and status read symmetrically.
+// wait --for=condition=, controller-runtime helpers). Per-area observation
+// state mirrors the spec sections.
 AdminConfigStatus: {
 	// observedGeneration is the spec.generation last evaluated by the
 	// controllers writing this status.
 	observedGeneration?: int
 
-	// externalAlertmanagerSync mirrors the spec sub-object with runtime
-	// observation. Conditions for this feature live at
-	// .status.conditions[type=ExternalAlertmanagerSynced].
-	externalAlertmanagerSync?: {
-		// datasourceUid is the UID actually used on the last sync attempt;
-		// may lag spec until the next tick. When origin=ini, this is the
-		// ini override value.
-		datasourceUid?: string
-
-		// origin records which source supplied datasourceUid on the last run.
-		// "ini" (grafana.ini's unified_alerting.external_alertmanager_uid)
-		// wins over "api" (spec.externalAlertmanagerSync.datasourceUid).
-		origin?: "api" | "ini"
-	}
+	// alertmanager mirrors spec.alertmanager with runtime observation.
+	alertmanager?: #AlertmanagerStatus
 
 	// Standard k8s-style condition list. Each binary-state feature owns one
 	// condition type. Current types:
