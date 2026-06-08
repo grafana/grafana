@@ -75,8 +75,7 @@ export function useWizardSubmission({
         const signingFormat = formData.repository.signingFormat;
         const signing = signingFormat && signingFormat !== 'none';
         const signingKey = signing ? formData.repository.signingKey : undefined;
-        const smimeCertificate =
-          signing && signingFormat === 'smime' ? formData.repository.smimeCertificate : undefined;
+        const smimeCertificate = signing && signingFormat === 'smime' ? formData.repository.smimeCertificate : undefined;
 
         const rsp = await submitData(spec, token, signingKey, smimeCertificate);
         if (rsp.error) {

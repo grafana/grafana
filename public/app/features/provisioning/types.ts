@@ -1,5 +1,3 @@
-import { type Path } from 'react-hook-form';
-
 import {
   type BitbucketRepositoryConfig,
   type BranchOptions,
@@ -30,21 +28,13 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | 'branch'> &
     readOnly: boolean;
     prWorkflow: boolean;
     enablePushToConfiguredBranch: boolean;
-    // top-level inline secure value
     token?: string;
-    // Selected commit signing format. "none" disables signing (form-only; maps to spec.commit.signingFormat).
     signingFormat?: 'none' | 'gpg' | 'ssh' | 'smime';
-    // Private key for signing commits the repository writes back.
     signingKey?: string;
-    // X.509 certificate paired with signingKey when signingFormat is "smime".
     smimeCertificate?: string;
-    // GitHub App connection name (when using app-based auth instead of PAT)
     connectionName?: string;
-    // Spec-level branch naming options (maps to RepositorySpec.branch)
     branchOptions?: BranchOptions;
   };
-
-export type RepositorySettingsField = Path<RepositoryFormData>;
 
 // Connection type definition - extracted from API client
 export type ConnectionType = ConnectionSpec['type'];
