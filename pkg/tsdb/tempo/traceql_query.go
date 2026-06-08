@@ -35,6 +35,10 @@ func (s *Service) runTraceQlQuery(ctx context.Context, pCtx backend.PluginContex
 		return nil, backend.DownstreamErrorf("failed to unmarshall Tempo query model: %w", err)
 	}
 
+	if tempoQuery.Query == nil || *tempoQuery.Query == "" {
+		return nil, backend.DownstreamErrorf("query is required")
+	}
+
 	if isMetricsQuery(*tempoQuery.Query) {
 		return s.runTraceQlQueryMetrics(ctx, pCtx, backendQuery, tempoQuery)
 	}

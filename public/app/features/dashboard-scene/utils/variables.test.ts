@@ -15,18 +15,23 @@ import {
   AdHocFiltersVariable,
   CustomVariable,
   DataSourceVariable,
+  EmbeddedScene,
   GroupByVariable,
   QueryVariable,
+  SceneFlexLayout,
   SceneVariableSet,
+  ScopesVariable,
   SwitchVariable,
+  TestVariable,
 } from '@grafana/scenes';
 import { defaultDashboard, defaultTimePickerConfig, type VariableType } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
+import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { NEW_LINK } from '../settings/links/utils';
 
-import { createSceneVariableFromVariableModel, createVariablesForSnapshot } from './variables';
+import { createSceneVariableFromVariableModel, createVariablesForSnapshot, getUserDefinedVariables } from './variables';
 
 // mock getDataSourceSrv.getInstanceSettings()
 jest.mock('@grafana/runtime', () => ({
@@ -442,6 +447,7 @@ describe('when creating variables objects', () => {
       description: 'Adhoc Description',
       allowCustomValue: false,
       applicabilityEnabled: false,
+      $behaviors: [expect.any(ReportInteractionBehavior)],
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -462,10 +468,6 @@ describe('when creating variables objects', () => {
       applyMode: 'auto',
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
-      collapsible: undefined,
-      $behaviors: undefined,
-      defaultKeys: undefined,
-      drilldownRecommendationsEnabled: undefined,
       enableGroupBy: false,
       layout: 'combobox',
     });
@@ -527,6 +529,7 @@ describe('when creating variables objects', () => {
       key: expect.any(String),
       description: 'Adhoc Description',
       applicabilityEnabled: false,
+      $behaviors: [expect.any(ReportInteractionBehavior)],
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -554,9 +557,6 @@ describe('when creating variables objects', () => {
       ],
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
-      collapsible: undefined,
-      $behaviors: undefined,
-      drilldownRecommendationsEnabled: undefined,
       enableGroupBy: false,
       layout: 'combobox',
     });
@@ -1028,5 +1028,21 @@ describe('when creating snapshot variables from dashboard model', () => {
     expect(intervalSnapshot.state.value).toBe('10s');
     expect(intervalSnapshot.state.text).toBe('10s');
     expect(intervalSnapshot.state.isReadOnly).toBe(true);
+  });
+});
+
+describe('getUserDefinedVariables', () => {
+  it('should exclude ScopesVariable and return only user-defined variables', () => {
+    const userVar = new TestVariable({ name: 'myVar' });
+    const scopesVar = new ScopesVariable({ enable: true });
+    const scene = new EmbeddedScene({
+      $variables: new SceneVariableSet({ variables: [scopesVar, userVar] }),
+      body: new SceneFlexLayout({ children: [] }),
+    });
+
+    const result = getUserDefinedVariables(scene);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe(userVar);
   });
 });

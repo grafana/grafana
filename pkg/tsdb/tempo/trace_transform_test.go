@@ -116,7 +116,7 @@ func TestTraceToFrame(t *testing.T) {
 
 		traceID64Bit := bFrame.GetRow(1)
 		require.NotNil(t, traceID64Bit)
-		require.Equal(t, "0001020304050607", traceID64Bit["traceID"])
+		require.Equal(t, "00000000000000000001020304050607", traceID64Bit["traceID"])
 	})
 }
 
@@ -300,6 +300,54 @@ func fieldNames(frame *data.Frame) []string {
 	}
 
 	return names
+}
+
+func TestSpanToSpanRowTraceIDNotLeftTrimmed(t *testing.T) {
+	// A trace ID whose first 8 bytes are all zeros should be returned as a full
+	// 32-character hex string, not left-trimmed to 16 characters.
+	span := &v1.Span{
+		TraceId:           []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7},
+		SpanId:            []byte{0, 1, 2, 3, 4, 5, 6, 7},
+		ParentSpanId:      []byte{0, 0, 0, 0, 0, 0, 0, 0},
+		Name:              "test-span",
+		StartTimeUnixNano: 1616072924070497000,
+		EndTimeUnixNano:   1616072924078918000,
+		Status:            &v1.Status{},
+	}
+	resource := &resourcev1.Resource{
+		Attributes: []*commonv11.KeyValue{
+			{
+				Key: "service.name",
+				Value: &commonv11.AnyValue{
+					Value: &commonv11.AnyValue_StringValue{StringValue: "test-service"},
+				},
+			},
+		},
+	}
+
+	scope := &commonv11.InstrumentationScope{Name: "test", Version: "1.0"}
+	row, err := spanToSpanRow(span, scope, resource)
+	require.NoError(t, err)
+
+	// traceID is the first field in the row
+	require.Equal(t, "00000000000000000001020304050607", row[0],
+		"trace ID with leading zero bytes must not be left-trimmed")
+}
+
+func TestSpanLinksToReferencesTraceIDNotLeftTrimmed(t *testing.T) {
+	// A trace ID with leading zero bytes in a span link should be returned as a
+	// full 32-character hex string, not left-trimmed.
+	links := []*v1.Span_Link{
+		{
+			TraceId: []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7},
+			SpanId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
+		},
+	}
+
+	refs := spanLinksToReferences(links)
+	require.Len(t, refs, 1)
+	require.Equal(t, "00000000000000000001020304050607", refs[0].TraceID,
+		"trace ID with leading zero bytes in span links must not be left-trimmed")
 }
 
 func findSpan(trace tempopb.Trace, spanId string) *v1.Span {

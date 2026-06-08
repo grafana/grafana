@@ -228,7 +228,19 @@ export async function openScopesSelector(page: Page, scopes?: TestScope[]) {
   const responsePromise = scopeNodeChildrenRequest(page, scopes);
 
   await click();
-  await responsePromise;
+
+  // Wait for either a network response (first fetch) or tree items appearing in the UI.
+  // When scope node children are already in the RTK Query cache from a previous open in
+  // the same session, no HTTP request is made and waitForResponse would time out. Racing
+  // against the UI update handles both cases correctly.
+  const uiLoaded = page
+    .getByTestId(/^scopes-tree-.*-(checkbox|radio|link|expand)/)
+    .first()
+    .waitFor({ timeout: 5000 })
+    .catch(() => null);
+
+  const safeResponse = responsePromise.catch(() => null);
+  await Promise.race([safeResponse, uiLoaded]);
 }
 
 /**
@@ -245,7 +257,19 @@ export async function expandScopesSelection(page: Page, parentScope: string, sco
   const responsePromise = scopeNodeChildrenRequest(page, scopes, parentScope);
 
   await click();
-  await responsePromise;
+
+  // Wait for either a network response (first fetch) or the expand button gaining
+  // aria-expanded="true". When scope node children are already in the RTK Query cache,
+  // no HTTP request is made and waitForResponse would time out. Racing against the UI
+  // update handles both cases correctly.
+  const uiExpanded = page
+    .getByTestId(`scopes-tree-${parentScope}-expand`)
+    .and(page.locator('[aria-expanded="true"]'))
+    .waitFor({ timeout: 5000 })
+    .catch(() => null);
+
+  const safeResponse = responsePromise.catch(() => null);
+  await Promise.race([safeResponse, uiExpanded]);
 }
 
 /**
@@ -298,10 +322,50 @@ export async function selectScope(page: Page, scopeName: string, selectedScope?:
     return;
   }
 
+  const checkboxTestId = `scopes-tree-${scopeName}-checkbox`;
+  const radioTestId = `scopes-tree-${scopeName}-radio`;
+
+  // Grafana's scope selector uses React-controlled checkboxes: the checked state lives in the
+  // DOM property `element.checked`, not in `aria-checked` (which is never set).
+  const isCheckedNow = () =>
+    page
+      .evaluate(
+        ([cb, rb]) => {
+          const el = document.querySelector(`[data-testid="${cb}"]`) ?? document.querySelector(`[data-testid="${rb}"]`);
+          return el instanceof HTMLInputElement ? el.checked : false;
+        },
+        [checkboxTestId, radioTestId]
+      )
+      .catch(() => false);
+
+  // If already checked, clicking would deselect it — skip the click entirely.
+  if (await isCheckedNow()) {
+    return;
+  }
+
   const responsePromise = scopeSelectRequest(page, selectedScope);
 
   await click();
-  await responsePromise;
+
+  // Wait for either a network response (first fetch) or the DOM .checked property becoming true.
+  // When scope data is already in the RTK Query cache from a previous selection in the same
+  // session, no HTTP request is made and waitForResponse would time out. Racing against the
+  // UI update handles both cases correctly.
+  const uiSelected = page
+    .waitForFunction(
+      ([cb, rb]) => {
+        const el = document.querySelector(`[data-testid="${cb}"]`) ?? document.querySelector(`[data-testid="${rb}"]`);
+        return el instanceof HTMLInputElement ? el.checked : false;
+      },
+      [checkboxTestId, radioTestId],
+      { timeout: 5000 }
+    )
+    .catch(() => null);
+
+  // Attach .catch before the race: a .catch after await only suppresses the unhandled-rejection
+  // warning, it does not prevent the await itself from throwing if responsePromise rejects first.
+  const safeResponse = responsePromise.catch(() => null);
+  await Promise.race([safeResponse, uiSelected]);
 }
 
 /**
@@ -435,7 +499,18 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
   );
 
   await click();
-  await responsePromise;
+
+  // Wait for either a network response (first fetch) or the drawer closing.
+  // When scope data is already in the RTK Query cache from a previous selection in the same
+  // session, no HTTP request is made and waitForResponse would time out. Racing against the
+  // UI update handles both cases correctly.
+  const uiClosed = page
+    .waitForSelector('[data-testid="scopes-selector-apply"]', { state: 'hidden', timeout: 5000 })
+    .catch(() => null);
+
+  const safeResponse = responsePromise.catch(() => null);
+  await Promise.race([safeResponse, uiClosed]);
+
   // Wait for the apply button to disappear (selector closed)
   await page.waitForSelector('[data-testid="scopes-selector-apply"]', { state: 'hidden', timeout: 5000 });
   // Wait for any resulting API calls to complete

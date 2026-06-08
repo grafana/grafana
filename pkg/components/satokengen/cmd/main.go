@@ -21,7 +21,7 @@ func main() {
 		}
 	}
 
-	for i := 0; i < numKeys; i++ {
+	for i := range numKeys {
 		key, err := satokengen.New("pl")
 		if err != nil {
 			fmt.Println("ERROR: generating key failed:", err)

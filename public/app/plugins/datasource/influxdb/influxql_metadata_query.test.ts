@@ -1,4 +1,4 @@
-import config from 'app/core/config';
+import { config } from '@grafana/runtime';
 
 import { getAllMeasurements, getAllPolicies, getFieldKeys, getTagKeys, getTagValues } from './influxql_metadata_query';
 import { getMockInfluxDS } from './mocks/datasource';

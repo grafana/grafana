@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../http_api/user/ # /docs/grafana/next/http_api/user/
-  - ../../../developers/http_api/user/ # /docs/grafana/next/developers/http_api/user/
-  - ../../../../developer-resources/api-reference/http-api/user #legacy folder
+  - ../../../../http_api/user/ # /docs/grafana/next/http_api/user/
+  - ../../../../developers/http_api/user/ # /docs/grafana/next/developers/http_api/user/
+  - ../../../../developer-resources/api-reference/http-api/user/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/user/
 description: Grafana User HTTP API
 keywords:

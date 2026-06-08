@@ -42,7 +42,12 @@ func (r *subProxyREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	m := newConnectMetric("proxy", r.pluginJSON.ID)
+
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		m.SetError()
+		defer m.Record()
+
 		responder.Error(fmt.Errorf("TODO, proxy: %s", r.pluginJSON.ID))
 	}), nil
 }

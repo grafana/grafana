@@ -12,11 +12,14 @@ import (
 
 type extra struct {
 	decrypter repository.Decrypter
+	// allowInsecure permits http:// URLs together with a token (cleartext credentials); local/dev only.
+	allowInsecure bool
 }
 
-func Extra(decrypter repository.Decrypter) repository.Extra {
+func Extra(decrypter repository.Decrypter, allowInsecure bool) repository.Extra {
 	return &extra{
-		decrypter: decrypter,
+		decrypter:     decrypter,
+		allowInsecure: allowInsecure,
 	}
 }
 
@@ -51,5 +54,5 @@ func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
 }
 
 func (e *extra) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return Validate(ctx, obj)
+	return Validate(ctx, obj, e.allowInsecure)
 }

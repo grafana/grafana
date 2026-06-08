@@ -6,7 +6,7 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '../types/dataFrame';
 
-import { decoupleHideFromState, getFieldDisplayName, getFrameDisplayName } from './fieldState';
+import { getFieldDisplayName, getFrameDisplayName } from './fieldState';
 
 interface TitleScenario {
   frames: DataFrame[];
@@ -296,22 +296,5 @@ describe('Check field state calculations (displayName and id)', () => {
       fieldIndex: 1,
     });
     expect(title).toEqual('line {host="ec2-13-53-116-156.eu-north-1.compute.amazonaws.com", region="eu-north1"}');
-  });
-});
-
-describe('decoupleHideFromState', () => {
-  it('should not throw an error for fields with no "custom" in config', () => {
-    const frame = toDataFrame({
-      fields: [{ name: 'Field 1', config: {} }],
-    });
-
-    expect(frame.fields[0].state?.hideFrom).toBeUndefined();
-
-    decoupleHideFromState([frame], {
-      defaults: {},
-      overrides: [],
-    });
-
-    expect(frame.fields[0].state?.hideFrom).not.toBeUndefined();
   });
 });

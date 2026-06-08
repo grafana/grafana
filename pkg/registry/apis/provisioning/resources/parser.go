@@ -124,6 +124,13 @@ type ParsedResource struct {
 	// Create or Update
 	Action provisioning.ResourceAction
 
+	// SkipStrictValidation requests FieldValidation=Ignore on the apiserver
+	// write. Used by in-place renames so that a path/folder change cannot be
+	// blocked by strict schema validation of an unchanged spec — a dashboard
+	// that already lives in the cluster (e.g. saved before stricter CUE
+	// schemas were enforced) must remain renameable.
+	SkipStrictValidation bool
+
 	// The results from dry run
 	DryRunResponse *unstructured.Unstructured
 
@@ -218,6 +225,12 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 			if r.folderMetadataEnabled && r.reader != nil {
 				if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, info.Ref); err == nil && meta.Name != "" {
 					folderID = meta.Name
+				} else if err != nil && errors.Is(err, repository.ErrRefNotFound) {
+					// Target branch doesn't exist yet (e.g. new PR branch). Fall back to
+					// the configured branch where _folder.json is already committed.
+					if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, ""); err == nil && meta.Name != "" {
+						folderID = meta.Name
+					}
 				}
 			}
 			parsed.Meta.SetFolder(folderID)
@@ -283,8 +296,8 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 	}
 
 	fieldValidation := "Strict"
-	if f.GVR == DashboardResource {
-		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	if f.SkipStrictValidation || f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: dashboard exemption is temporary while we improve validation
 	}
 
 	// Handle deletion action separately
@@ -365,8 +378,8 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	identitySpan.End()
 
 	fieldValidation := "Strict"
-	if f.GVR == DashboardResource {
-		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	if f.SkipStrictValidation || f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: dashboard exemption is temporary while we improve validation
 	}
 
 	// Check for ownership conflicts
@@ -448,6 +461,12 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 
 		if err == nil {
 			return nil // it worked, return
+		}
+		// Only fall through to Update when the resource was already created.
+		// For validation, permission, or any other non-conflict errors, return immediately.
+		// Retrying with a different HTTP method won't help.
+		if !apierrors.IsAlreadyExists(err) {
+			return err
 		}
 	}
 

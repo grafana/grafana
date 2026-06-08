@@ -7,7 +7,7 @@ import { type DeepRequired, type ThemeRichColor, ThemeRichColorInputSchema } fro
 
 const ThemeColorsModeSchema = z.enum(['light', 'dark']);
 /** @internal */
-export type ThemeColorsMode = z.infer<typeof ThemeColorsModeSchema>;
+type ThemeColorsMode = z.infer<typeof ThemeColorsModeSchema>;
 
 const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
   z
@@ -87,7 +87,7 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
 
 // Need to override the zod type to include the generic properly
 /** @internal */
-export type ThemeColorsBase<TColor> = DeepRequired<
+type ThemeColorsBase<TColor> = DeepRequired<
   Omit<
     z.infer<ReturnType<typeof createThemeColorsBaseSchema>>,
     'primary' | 'secondary' | 'tertiary' | 'info' | 'error' | 'success' | 'warning'
@@ -101,8 +101,6 @@ export type ThemeColorsBase<TColor> = DeepRequired<
   success: TColor;
   warning: TColor;
 };
-
-export interface ThemeHoverStrengh {}
 
 /** @beta */
 export interface ThemeColors extends ThemeColorsBase<ThemeRichColor> {

@@ -2,7 +2,8 @@ import { dateTime } from '../datetime/moment_wrapper';
 import { type DecimalCount } from '../types/displayValue';
 import { type TimeZone } from '../types/time';
 
-import { toFixed, getValueFormat, scaledUnits, formattedValueToString } from './valueFormats';
+import { toFixed, scaledUnits, formattedValueToString } from './baseFormatters';
+import { getValueFormat } from './valueFormats';
 
 interface ValueFormatTest {
   id: string;

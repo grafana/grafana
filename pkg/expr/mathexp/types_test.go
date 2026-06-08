@@ -22,38 +22,38 @@ func TestSeriesSort(t *testing.T) {
 			name:       "unordered series should sort by time ascending",
 			descending: false,
 			series: makeSeries("", nil, tp{
-				time.Unix(3, 0), float64Pointer(3),
+				time.Unix(3, 0), new(3.0),
 			}, tp{
-				time.Unix(1, 0), float64Pointer(1),
+				time.Unix(1, 0), new(1.0),
 			}, tp{
-				time.Unix(2, 0), float64Pointer(2),
+				time.Unix(2, 0), new(2.0),
 			}),
 			sortedSeriesIs: assert.Equal,
 			sortedSeries: makeSeries("", nil, tp{
-				time.Unix(1, 0), float64Pointer(1),
+				time.Unix(1, 0), new(1.0),
 			}, tp{
-				time.Unix(2, 0), float64Pointer(2),
+				time.Unix(2, 0), new(2.0),
 			}, tp{
-				time.Unix(3, 0), float64Pointer(3),
+				time.Unix(3, 0), new(3.0),
 			}),
 		},
 		{
 			name:       "unordered series should sort by time descending",
 			descending: true,
 			series: makeSeries("", nil, tp{
-				time.Unix(3, 0), float64Pointer(3),
+				time.Unix(3, 0), new(3.0),
 			}, tp{
-				time.Unix(1, 0), float64Pointer(1),
+				time.Unix(1, 0), new(1.0),
 			}, tp{
-				time.Unix(2, 0), float64Pointer(2),
+				time.Unix(2, 0), new(2.0),
 			}),
 			sortedSeriesIs: assert.Equal,
 			sortedSeries: makeSeries("", nil, tp{
-				time.Unix(3, 0), float64Pointer(3),
+				time.Unix(3, 0), new(3.0),
 			}, tp{
-				time.Unix(2, 0), float64Pointer(2),
+				time.Unix(2, 0), new(2.0),
 			}, tp{
-				time.Unix(1, 0), float64Pointer(1),
+				time.Unix(1, 0), new(1.0),
 			}),
 		},
 	}
@@ -98,7 +98,7 @@ func TestSeriesFromFrame(t *testing.T) {
 			frame: &data.Frame{
 				Fields: []*data.Field{
 					data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
-					data.NewField("value", nil, []*float64{float64Pointer(5)}),
+					data.NewField("value", nil, []*float64{new(5.0)}),
 				},
 			},
 			errIs: assert.NoError,
@@ -107,7 +107,7 @@ func TestSeriesFromFrame(t *testing.T) {
 				Frame: &data.Frame{
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
-						data.NewField("value", nil, []*float64{float64Pointer(5)}),
+						data.NewField("value", nil, []*float64{new(5.0)}),
 					},
 				},
 			},
@@ -116,7 +116,7 @@ func TestSeriesFromFrame(t *testing.T) {
 			name: "[]*float, []time frame should convert",
 			frame: &data.Frame{
 				Fields: []*data.Field{
-					data.NewField("value", nil, []*float64{float64Pointer(5)}),
+					data.NewField("value", nil, []*float64{new(5.0)}),
 					data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 				},
 			},
@@ -126,7 +126,7 @@ func TestSeriesFromFrame(t *testing.T) {
 				Frame: &data.Frame{
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
-						data.NewField("value", nil, []*float64{float64Pointer(5)}),
+						data.NewField("value", nil, []*float64{new(5.0)}),
 					},
 				},
 			},
@@ -136,7 +136,7 @@ func TestSeriesFromFrame(t *testing.T) {
 			frame: &data.Frame{
 				Fields: []*data.Field{
 					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
-					data.NewField("value", nil, []*int64{int64Pointer(5)}),
+					data.NewField("value", nil, []*int64{new(int64(5))}),
 				},
 			},
 			errIs: assert.NoError,
@@ -145,7 +145,7 @@ func TestSeriesFromFrame(t *testing.T) {
 				Frame: &data.Frame{
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
-						data.NewField("value", nil, []*float64{float64Pointer(5)}),
+						data.NewField("value", nil, []*float64{new(5.0)}),
 					},
 				},
 			},
@@ -164,7 +164,7 @@ func TestSeriesFromFrame(t *testing.T) {
 				Frame: &data.Frame{
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
-						data.NewField("value", nil, []*float64{float64Pointer(5)}),
+						data.NewField("value", nil, []*float64{new(5.0)}),
 					},
 				},
 			},
@@ -183,7 +183,7 @@ func TestSeriesFromFrame(t *testing.T) {
 				Frame: &data.Frame{
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
-						data.NewField("value", nil, []*float64{float64Pointer(5)}),
+						data.NewField("value", nil, []*float64{new(5.0)}),
 					},
 				},
 			},
@@ -193,7 +193,7 @@ func TestSeriesFromFrame(t *testing.T) {
 			frame: &data.Frame{
 				Fields: []*data.Field{
 					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
-					data.NewField("value", nil, []*string{strPointer("5")}),
+					data.NewField("value", nil, []*string{new("5")}),
 				},
 			},
 			errIs: assert.NoError,
@@ -202,7 +202,7 @@ func TestSeriesFromFrame(t *testing.T) {
 				Frame: &data.Frame{
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
-						data.NewField("value", nil, []*float64{float64Pointer(5)}),
+						data.NewField("value", nil, []*float64{new(5.0)}),
 					},
 				},
 			},
@@ -221,7 +221,7 @@ func TestSeriesFromFrame(t *testing.T) {
 				Frame: &data.Frame{
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
-						data.NewField("value", nil, []*float64{float64Pointer(1)}),
+						data.NewField("value", nil, []*float64{new(1.0)}),
 					},
 				},
 			},
@@ -231,7 +231,7 @@ func TestSeriesFromFrame(t *testing.T) {
 			frame: &data.Frame{
 				Fields: []*data.Field{
 					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
-					data.NewField("value", nil, []*bool{boolPointer(true)}),
+					data.NewField("value", nil, []*bool{new(true)}),
 				},
 			},
 			errIs: assert.NoError,
@@ -240,7 +240,7 @@ func TestSeriesFromFrame(t *testing.T) {
 				Frame: &data.Frame{
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
-						data.NewField("value", nil, []*float64{float64Pointer(1)}),
+						data.NewField("value", nil, []*float64{new(1.0)}),
 					},
 				},
 			},

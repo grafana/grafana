@@ -1,10 +1,5 @@
 package kinds
 
-import (
-	"embed"
-	"encoding/json"
-)
-
 // NodesQueryType defines model for NodesQuery.Type.
 // +enum
 type NodesQueryType string
@@ -181,12 +176,4 @@ type USAQuery struct {
 	Mode   string   `json:"mode,omitempty"`
 	Period string   `json:"period,omitempty"`
 	States []string `json:"states,omitempty"`
-}
-
-//go:embed query.types.json
-var f embed.FS
-
-// QueryTypeDefinitionListJSON returns the query type definitions
-func QueryTypeDefinitionListJSON() (json.RawMessage, error) {
-	return f.ReadFile("query.types.json")
 }

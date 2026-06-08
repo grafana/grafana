@@ -124,7 +124,7 @@ export const SearchResultsTable = React.memo(
 
     const handleLoadMore = useCallback(
       async (startIndex: number, endIndex: number) => {
-        await response.loadMoreItems(startIndex, endIndex);
+        await response.loadMoreItems(endIndex);
 
         // After we load more items, select them if the "select all" checkbox
         // is selected

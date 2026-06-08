@@ -6,7 +6,6 @@
 package apistore
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -46,9 +45,7 @@ import (
 )
 
 const (
-	MaxUpdateAttempts          = 30
-	LargeObjectSupportEnabled  = true
-	LargeObjectSupportDisabled = false
+	MaxUpdateAttempts = 30
 )
 
 var (
@@ -58,13 +55,23 @@ var (
 
 type DefaultPermissionSetter = func(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
 
+type DeprecatedIDState int
+
+const (
+	// The ID property will always be dropped
+	DeprecatedID_None DeprecatedIDState = iota
+	// The ID will always be added
+	DeprecatedID_Required
+	// OK if the value is sent, but not added automatically
+	DeprecatedID_Optional
+)
+
 // Optional settings that apply to a single resource
 type StorageOptions struct {
 	Scheme *runtime.Scheme
 
-	// ????: should we constrain this to only dashboards for now?
-	// Not yet clear if this is a good general solution, or just a stop-gap
-	LargeObjectSupport LargeObjectSupport
+	// Required to force unique constraints
+	Index resourcepb.ResourceIndexClient
 
 	// Allow writing objects with metadata.annotations[grafana.app/folder]
 	EnableFolderSupport bool
@@ -72,8 +79,8 @@ type StorageOptions struct {
 	// Some resources should not allow the absolute maximum (254 characters)
 	MaximumNameLength int
 
-	// Add internalID label when missing
-	RequireDeprecatedInternalID bool
+	// How should we handle deprecated internal IDs
+	DeprecatedInternalID DeprecatedIDState
 
 	// Process inline secure values
 	SecureValues secrets.InlineSecureValueSupport
@@ -177,7 +184,7 @@ func NewStorage(
 			"resource", config.GroupResource.String())
 	}
 
-	if opts.RequireDeprecatedInternalID {
+	if opts.DeprecatedInternalID == DeprecatedID_Required {
 		node, err := snowflake.NewNode(rand.Int64N(1024))
 		if err != nil {
 			return nil, nil, err
@@ -253,16 +260,33 @@ func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
 	ctx, span := tracer.Start(ctx, "apistore.Storage.Create")
 	defer span.End()
+
+	rkey, err := s.getKey(key)
+	if err != nil {
+		return err
+	}
+
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return err
+	}
+
+	// Make sure we are looking at the correct namespace
+	if meta.GetNamespace() != rkey.Namespace {
+		if meta.GetNamespace() == "" {
+			meta.SetNamespace(rkey.Namespace)
+		} else {
+			return apierrors.NewBadRequest("namespace mismatch")
+		}
+	}
+
 	v, err := s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
 		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_ADDED, key, obj, out)
 	}
 	req := &resourcepb.CreateRequest{
 		Value: v.raw.Bytes(),
-	}
-	req.Key, err = s.getKey(key)
-	if err != nil {
-		return err
+		Key:   rkey,
 	}
 
 	v.permissionCreator, err = afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, obj, s.opts.Permissions)
@@ -286,7 +310,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
-	meta, err := utils.MetaAccessor(out)
+	meta, err = utils.MetaAccessor(out)
 	if err != nil {
 		return err
 	}
@@ -616,11 +640,10 @@ func (s *Storage) GuaranteedUpdate(
 	ctx, span := tracer.Start(ctx, "apistore.Storage.GuaranteedUpdate")
 	defer span.End()
 	var (
-		res           storage.ResponseMeta
-		updatedObj    runtime.Object
-		existingObj   runtime.Object
-		existingBytes []byte
-		err           error
+		res         storage.ResponseMeta
+		updatedObj  runtime.Object
+		existingObj runtime.Object
+		err         error
 	)
 	req := &resourcepb.UpdateRequest{}
 	req.Key, err = s.getKey(key)
@@ -679,7 +702,6 @@ func (s *Storage) GuaranteedUpdate(
 			return s.Create(ctx, key, updatedObj, destination, 0)
 		}
 
-		existingBytes = readResponse.Value
 		existingObj, err = s.convertToObject(ctx, readResponse.Value, s.newFunc())
 		if err != nil {
 			return err
@@ -699,14 +721,6 @@ func (s *Storage) GuaranteedUpdate(
 			continue
 		}
 
-		// restore the full original object before tryUpdate
-		if s.opts.LargeObjectSupport != nil && existing.GetBlob() != nil {
-			err = s.opts.LargeObjectSupport.Reconstruct(ctx, req.Key, s.store, existing)
-			if err != nil {
-				return err
-			}
-		}
-
 		updatedObj, _, err = tryUpdate(existingObj, res)
 		if err != nil {
 			if attempt >= MaxUpdateAttempts {
@@ -720,34 +734,29 @@ func (s *Storage) GuaranteedUpdate(
 			return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
 		}
 
-		// Only update (for real) if the bytes have changed
-		var rv uint64
 		req.Value = v.raw.Bytes()
-		if !bytes.Equal(req.Value, existingBytes) {
-			req.ResourceVersion = readResponse.ResourceVersion
-			updateResponse, err := s.store.Update(ctx, req)
-			if err != nil {
-				err = resource.GetError(resource.AsErrorResult(err))
-			} else if updateResponse.Error != nil {
-				if attempt < MaxUpdateAttempts && updateResponse.Error.Code == http.StatusConflict {
-					continue // try the read again
-				}
-				err = resource.GetError(updateResponse.Error)
+		req.ResourceVersion = readResponse.ResourceVersion
+		updateResponse, err := s.store.Update(ctx, req) // Also does RBAC check
+		if err != nil {
+			err = resource.GetError(resource.AsErrorResult(err))
+		} else if updateResponse.Error != nil {
+			if attempt < MaxUpdateAttempts && updateResponse.Error.Code == http.StatusConflict {
+				continue // try the read again
 			}
+			err = resource.GetError(updateResponse.Error)
+		}
 
-			// Cleanup secure values
-			if err = v.finish(ctx, err, s.opts.SecureValues); err != nil {
-				return err
-			}
-
-			rv = uint64(updateResponse.ResourceVersion)
+		// Cleanup secure values
+		if err = v.finish(ctx, err, s.opts.SecureValues); err != nil {
+			return err
 		}
 
 		if _, err := s.convertToObject(ctx, req.Value, destination); err != nil {
 			return err
 		}
 
-		if rv > 0 {
+		if updateResponse.ResourceVersion > 0 {
+			rv := uint64(updateResponse.ResourceVersion)
 			if err := s.versioner.UpdateObject(destination, rv); err != nil {
 				return err
 			}

@@ -85,7 +85,7 @@ func ProvideAppInstallers(
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagLiveAPIServer) {
+	if features.IsEnabledGlobally(featuremgmt.FlagLiveRunAPIServer) {
 		installers = append(installers, liveAppInstaller)
 	}
 

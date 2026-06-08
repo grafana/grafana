@@ -30,6 +30,21 @@
         "fr_notify": false,
         "fr_weekly": true
       }
+    },
+    {
+      "name": "frontend-platform",
+      "kickoff_date": "2026-05-27",
+      "adoption_date": "2025-05-27",
+      "codeowners_teams": [
+        "@grafana/grafana-frontend-platform"
+      ],
+      "area_labels": ["area/internationalization", "area/panel/text"],
+      "enabled": {
+        "pr_notify": true,
+        "pr_weekly": true,
+        "fr_notify": true,
+        "fr_weekly": true
+      }
     }
   ]
 }

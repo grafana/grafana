@@ -1,7 +1,11 @@
 import { type SelectableValue, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { SEARCH_SELECTED_SORT } from 'app/features/search/constants';
+import {
+  RECENTLY_DELETED_SORT_VALUES,
+  SEARCH_SELECTED_LAYOUT_DELETED,
+  SEARCH_SELECTED_SORT_DELETED,
+} from 'app/features/search/constants';
 import { type SearchState } from 'app/features/search/types';
 
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
@@ -11,8 +15,11 @@ import { initialState, SearchStateManager } from '../../search/state/SearchState
 // We want to clear the search results when the user clears any search input
 // to trigger the skeleton state.
 export class TrashStateManager extends SearchStateManager {
+  protected sortStorageKey = SEARCH_SELECTED_SORT_DELETED;
+  protected layoutStorageKey = SEARCH_SELECTED_LAYOUT_DELETED;
+
   setStateAndDoSearch(state: Partial<SearchState>) {
-    const sort = state.sort || this.state.sort || store.get(SEARCH_SELECTED_SORT) || undefined;
+    const sort = state.sort || this.state.sort || store.get(this.sortStorageKey) || undefined;
 
     const query = state.query ?? this.state.query;
     const tags = state.tag ?? this.state.tag;
@@ -74,19 +81,27 @@ export class TrashStateManager extends SearchStateManager {
     return Promise.resolve([
       {
         label: t('browse-dashboards.trash-state-manager.label.alphabetically-az', 'Alphabetically (A–Z)'),
-        value: 'alpha-asc',
+        value: RECENTLY_DELETED_SORT_VALUES[0],
       },
       {
         label: t('browse-dashboards.trash-state-manager.label.alphabetically-za', 'Alphabetically (Z–A)'),
-        value: 'alpha-desc',
+        value: RECENTLY_DELETED_SORT_VALUES[1],
       },
       {
         label: t('browse-dashboards.trash-state-manager.label.deleted-oldest', 'Deleted (oldest first)'),
-        value: 'deleted-asc',
+        value: RECENTLY_DELETED_SORT_VALUES[2],
       },
       {
         label: t('browse-dashboards.trash-state-manager.label.deleted-newest', 'Deleted (newest first)'),
-        value: 'deleted-desc',
+        value: RECENTLY_DELETED_SORT_VALUES[3],
+      },
+      {
+        label: t('browse-dashboards.trash-state-manager.label.deleted-by-az', 'Deleted by (A–Z)'),
+        value: 'deletedby-asc',
+      },
+      {
+        label: t('browse-dashboards.trash-state-manager.label.deleted-by-za', 'Deleted by (Z–A)'),
+        value: 'deletedby-desc',
       },
     ]);
   };

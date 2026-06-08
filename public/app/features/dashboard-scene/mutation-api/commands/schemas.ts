@@ -462,12 +462,53 @@ export const repeatOptionsSchema = z
   })
   .describe('Repeat options matching v2beta1 RepeatOptions');
 
+const conditionalRenderingVariableKindSchema = z.object({
+  kind: z.literal('ConditionalRenderingVariable'),
+  spec: z.object({
+    variable: z.string().describe('Name of the dashboard template variable'),
+    operator: z.enum(['equals', 'notEquals', 'matches', 'notMatches']),
+    value: z.string().describe('Value to compare against. For matches/notMatches this is a regex.'),
+  }),
+});
+
+const conditionalRenderingDataKindSchema = z.object({
+  kind: z.literal('ConditionalRenderingData'),
+  spec: z.object({
+    value: z.boolean().describe('true = "has data", false = "no data"'),
+  }),
+});
+
+const conditionalRenderingTimeRangeSizeKindSchema = z.object({
+  kind: z.literal('ConditionalRenderingTimeRangeSize'),
+  spec: z.object({
+    value: z.string().describe('Duration threshold (e.g. "5m", "1h", "7d", "6M", "1y")'),
+  }),
+});
+
+export const conditionalRenderingGroupKindSchema = z.object({
+  kind: z.literal('ConditionalRenderingGroup').optional().default('ConditionalRenderingGroup'),
+  spec: z.object({
+    visibility: z.enum(['show', 'hide']).describe('Whether to show or hide the element when conditions match'),
+    condition: z.enum(['and', 'or']).describe('"and" = match all rules; "or" = match any rule'),
+    items: z
+      .array(
+        z.discriminatedUnion('kind', [
+          conditionalRenderingVariableKindSchema,
+          conditionalRenderingDataKindSchema,
+          conditionalRenderingTimeRangeSizeKindSchema,
+        ])
+      )
+      .describe('List of conditions. Pass an empty array to remove all rules.'),
+  }),
+});
+
 export const rowsLayoutRowSpecSchema = z.object({
   title: z.string().optional().describe('Row heading title'),
   collapse: z.boolean().optional().default(false).describe('Whether the row starts collapsed'),
   hideHeader: z.boolean().optional().default(false).describe('Hide the row header'),
   fillScreen: z.boolean().optional().default(false).describe('Row fills viewport height'),
   repeat: rowRepeatOptionsSchema.optional().describe('Repeat row for each value of a variable'),
+  conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this row'),
 });
 
 export const partialRowSpecSchema = z
@@ -479,12 +520,16 @@ export const partialRowSpecSchema = z
     repeat: rowRepeatOptionsSchema
       .optional()
       .describe('Repeat row for each value of a variable. Omit to leave unchanged.'),
+    conditionalRendering: conditionalRenderingGroupKindSchema
+      .optional()
+      .describe('Show/hide rules for this row. Omit to leave unchanged.'),
   })
   .describe('Fields to update (partial RowsLayoutRowSpec)');
 
 export const tabsLayoutTabSpecSchema = z.object({
   title: z.string().optional().describe('Tab title'),
   repeat: tabRepeatOptionsSchema.optional().describe('Repeat tab for each value of a variable'),
+  conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this tab'),
 });
 
 export const partialTabSpecSchema = z
@@ -493,8 +538,107 @@ export const partialTabSpecSchema = z
     repeat: tabRepeatOptionsSchema
       .optional()
       .describe('Repeat tab for each value of a variable. Omit to leave unchanged.'),
+    conditionalRendering: conditionalRenderingGroupKindSchema
+      .optional()
+      .describe('Show/hide rules for this tab. Omit to leave unchanged.'),
   })
   .describe('Fields to update (partial TabsLayoutTabSpec)');
+
+// Annotation building-block schemas (v2beta1)
+
+const annotationPanelFilterSchema = z.object({
+  exclude: z
+    .boolean()
+    .optional()
+    .describe('When true, the listed panels are excluded; otherwise only those panels show the annotation'),
+  ids: z.array(z.number()).describe('Panel IDs to include or exclude'),
+});
+
+const annotationEventFieldMappingSchema = z.object({
+  source: z.string().optional().describe('Source type for the field value (e.g., "field", "text")'),
+  value: z.string().optional().describe('Constant value to use when source is "text"'),
+  regex: z.string().optional().describe('Regular expression applied to the field value'),
+});
+
+export const annotationQueryKindSchema = z.object({
+  kind: z.literal('AnnotationQuery').optional().default('AnnotationQuery'),
+  spec: z.object({
+    name: z.string().describe('Annotation name. Must be unique within the dashboard.'),
+    enable: z.boolean().optional().default(true).describe('Whether the annotation is enabled by default'),
+    hide: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe('Whether the annotation toggle is hidden from the dashboard controls'),
+    iconColor: z
+      .string()
+      .optional()
+      .default('red')
+      .describe('Icon color for the annotation marker (e.g., "red", "blue", semantic color name)'),
+    builtIn: z
+      .boolean()
+      .optional()
+      .describe(
+        'Built-in Grafana dashboard annotations layer. Exactly one built-in annotation exists per dashboard and is managed by Grafana.'
+      ),
+    placement: z
+      .literal('inControlsMenu')
+      .optional()
+      .describe('Render the annotation toggle in the dashboard controls dropdown menu instead of inline'),
+    filter: annotationPanelFilterSchema.optional().describe('Limit the annotation to specific panels'),
+    mappings: z
+      .record(z.string(), annotationEventFieldMappingSchema)
+      .optional()
+      .describe('Map data frame fields to annotation event fields'),
+    legacyOptions: z
+      .record(z.string(), z.unknown())
+      .optional()
+      .describe('Catch-all bag for datasource-specific properties'),
+    query: dataQueryKindSchema.describe(
+      'Annotation query (DataQueryKind). For built-in dashboard annotations use group: "grafana".'
+    ),
+  }),
+});
+
+const partialAnnotationPanelFilterSchema = z.object({
+  exclude: z
+    .boolean()
+    .optional()
+    .describe('When true, the listed panels are excluded; otherwise only those panels show the annotation'),
+  ids: z.array(z.number()).optional().describe('Panel IDs to include or exclude (replaces existing array)'),
+});
+
+const partialDataQueryKindSchema = z.object({
+  kind: z.literal('DataQuery').optional(),
+  group: z.string().optional().describe('Datasource type (e.g., "prometheus", "loki", "grafana")'),
+  version: z.string().optional(),
+  datasource: z
+    .object({
+      name: z.string().optional(),
+    })
+    .optional(),
+  spec: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe('Query-specific fields. Deep-merged into the existing query spec.'),
+});
+
+export const partialAnnotationQueryKindSchema = z.object({
+  kind: z.literal('AnnotationQuery').optional(),
+  spec: z
+    .object({
+      name: z.string().optional().describe('Rename the annotation. Must remain unique within the dashboard.'),
+      enable: z.boolean().optional(),
+      hide: z.boolean().optional(),
+      iconColor: z.string().optional(),
+      placement: z.literal('inControlsMenu').optional(),
+      filter: partialAnnotationPanelFilterSchema.optional(),
+      mappings: z.record(z.string(), annotationEventFieldMappingSchema).optional(),
+      legacyOptions: z.record(z.string(), z.unknown()).optional(),
+      query: partialDataQueryKindSchema.optional().describe('Partial query update; deep-merged into existing query.'),
+    })
+    .describe('Fields to update (partial AnnotationQuerySpec). Omitted fields are left unchanged.'),
+});
 
 // Payload schemas -- one per mutation command.
 // These compose the building-block schemas above into the exact shape
@@ -512,6 +656,25 @@ export const updateVariablePayloadSchema = z.object({
 
 export const removeVariablePayloadSchema = z.object({
   name: z.string().describe('Variable name to remove'),
+});
+
+// Annotation payload schemas
+
+export const addAnnotationPayloadSchema = z.object({
+  annotation: annotationQueryKindSchema.describe('Annotation definition (AnnotationQueryKind)'),
+  position: z.number().optional().describe('Position in annotations list (optional, appends if not set)'),
+});
+
+export const updateAnnotationPayloadSchema = z.object({
+  name: z.string().describe('Annotation name to update'),
+  annotation: partialAnnotationQueryKindSchema.describe(
+    'Partial annotation update. Only provided fields are applied. Object fields are deep-merged. ' +
+      'Arrays (e.g. filter.ids) are replaced wholesale.'
+  ),
+});
+
+export const removeAnnotationPayloadSchema = z.object({
+  name: z.string().describe('Annotation name to remove'),
 });
 
 // Layout payload schemas
@@ -826,7 +989,20 @@ export const layoutItemInputSchema = z
         'Layout item type hint. If omitted, automatically determined from the target layout. ' +
           'A warning is emitted if the provided kind does not match the target layout.'
       ),
-    spec: gridLayoutItemKindSchema.shape.spec.omit({ element: true }).partial().optional().default({}),
+    spec: gridLayoutItemKindSchema.shape.spec
+      .omit({ element: true })
+      .extend({
+        conditionalRendering: conditionalRenderingGroupKindSchema
+          .optional()
+          .describe(
+            'Show/hide rules (Auto grid layout only). ' +
+              'On ADD_PANEL, ignored with a warning if the target is not Auto grid. ' +
+              'On UPDATE_PANEL, returns an error.'
+          ),
+      })
+      .partial()
+      .optional()
+      .default({}),
   })
   .describe(
     'Layout item with optional sizing hints. The kind is optional and auto-detected from the target layout. ' +
@@ -860,12 +1036,28 @@ export const addPanelPayloadSchema = z.object({
     ),
 });
 
-export const updatePanelPayloadSchema = z.object({
-  element: elementReferenceSchema.describe('Panel to update, identified by element name'),
-  panel: partialPanelKindSchema.describe(
-    'Partial panel update. Only provided fields are applied. Options and fieldConfig are deep-merged.'
-  ),
-});
+export const updatePanelPayloadSchema = z
+  .object({
+    element: elementReferenceSchema.describe('Panel to update, identified by element name'),
+    panel: partialPanelKindSchema
+      .optional()
+      .describe(
+        'Partial panel update. Only provided fields are applied. Options and fieldConfig are deep-merged. ' +
+          'Can be omitted when only setting conditionalRendering.'
+      ),
+    conditionalRendering: conditionalRenderingGroupKindSchema
+      .optional()
+      .describe('Show/hide rules for this panel (Auto grid layout only). Omit to leave unchanged.'),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.panel && data.conditionalRendering === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        message: 'At least one of panel or conditionalRendering must be provided.',
+      });
+    }
+  });
 
 export const removePanelPayloadSchema = z.object({
   elements: z.array(elementReferenceSchema).max(10).describe('Panels to remove, identified by element name'),
@@ -905,6 +1097,25 @@ export const movePanelPayloadSchema = z.object({
   position: gridPositionSchema.optional().describe('DEPRECATED: Use layoutItem instead.'),
 });
 
+export const updateDashboardSettingsPayloadSchema = z.object({
+  title: z.string().optional().describe('Dashboard title'),
+  description: z.string().optional().describe('Dashboard description'),
+  tags: z.array(z.string()).optional().describe('Dashboard tags'),
+  refresh: z
+    .string()
+    .optional()
+    .describe('Auto-refresh interval (e.g. "5s", "1m", "5m", "15m", "30m", "1h", "2h", "1d", "" to disable)'),
+  timeRange: z
+    .object({
+      from: z.string().describe('Start of time range (e.g. "now-6h")'),
+      to: z.string().describe('End of time range (e.g. "now")'),
+    })
+    .optional()
+    .describe('Dashboard time range'),
+  timezone: z.string().optional().describe('Timezone ("browser", "utc", or IANA timezone)'),
+  editable: z.boolean().optional().describe('Whether the dashboard is editable'),
+});
+
 /**
  * Per-command payload schemas, accessible via DashboardMutationAPI.getPayloadSchema().
  *
@@ -916,6 +1127,12 @@ export const payloads = {
   removeVariable: removeVariablePayloadSchema.describe('Remove a template variable'),
   updateVariable: updateVariablePayloadSchema.describe('Update an existing template variable'),
   listVariables: emptyPayloadSchema.describe('List all template variables on the dashboard'),
+  addAnnotation: addAnnotationPayloadSchema.describe('Add a new dashboard annotation layer'),
+  updateAnnotation: updateAnnotationPayloadSchema.describe(
+    'Update an existing dashboard annotation layer by name (partial update, deep-merge)'
+  ),
+  removeAnnotation: removeAnnotationPayloadSchema.describe('Remove a dashboard annotation layer by name'),
+  listAnnotations: emptyPayloadSchema.describe('List all annotation layers on the dashboard'),
   enterEditMode: emptyPayloadSchema.describe('Enter dashboard edit mode'),
   getLayout: getLayoutPayloadSchema.describe('Get the dashboard layout tree and trimmed elements map'),
   addRow: addRowPayloadSchema.describe('Add a new row to the dashboard layout'),
@@ -937,4 +1154,7 @@ export const payloads = {
     'Move a panel to a different group or reposition within the current group'
   ),
   getDashboardInfo: emptyPayloadSchema.describe('Get dashboard metadata (title, description, uid, tags, folder info)'),
+  updateDashboardSettings: updateDashboardSettingsPayloadSchema.describe(
+    'Update dashboard settings (title, description, tags, refresh, time range, timezone, editable)'
+  ),
 };

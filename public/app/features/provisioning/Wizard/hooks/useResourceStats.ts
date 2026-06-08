@@ -45,11 +45,23 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
       case 'folders':
       case 'folder.grafana.app':
         resourceCount += stat.count;
-        counts.push(t('provisioning.bootstrap-step.folders-count', '{{count}} folder', { count: stat.count }));
+        counts.push(
+          t('provisioning.bootstrap-step.folders-count', '', {
+            count: stat.count,
+            defaultValue_one: '{{count}} folder',
+            defaultValue_other: '{{count}} folder',
+          })
+        );
         break;
       case 'dashboard.grafana.app':
         resourceCount += stat.count;
-        counts.push(t('provisioning.bootstrap-step.dashboards-count', '{{count}} dashboard', { count: stat.count }));
+        counts.push(
+          t('provisioning.bootstrap-step.dashboards-count', '', {
+            count: stat.count,
+            defaultValue_one: '{{count}} dashboard',
+            defaultValue_other: '{{count}} dashboard',
+          })
+        );
         break;
     }
   });
@@ -61,12 +73,22 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
           case 'folders':
           case 'folder.grafana.app':
             resourceCount += stat.count;
-            counts.push(t('provisioning.bootstrap-step.folders-count', '{{count}} folder', { count: stat.count }));
+            counts.push(
+              t('provisioning.bootstrap-step.folders-count', '', {
+                count: stat.count,
+                defaultValue_one: '{{count}} folder',
+                defaultValue_other: '{{count}} folder',
+              })
+            );
             break;
           case 'dashboard.grafana.app':
             resourceCount += stat.count;
             counts.push(
-              t('provisioning.bootstrap-step.dashboards-count', '{{count}} dashboard', { count: stat.count })
+              t('provisioning.bootstrap-step.dashboards-count', '', {
+                count: stat.count,
+                defaultValue_one: '{{count}} dashboard',
+                defaultValue_other: '{{count}} dashboard',
+              })
             );
             break;
         }
@@ -149,7 +171,11 @@ export function useResourceStats(
     resourceCount > 0 ? resourceCountString : t('provisioning.bootstrap-step.empty', 'Empty');
   const fileCountDisplay =
     fileCount > 0
-      ? t('provisioning.bootstrap-step.files-count', '{{count}} files', { count: fileCount })
+      ? t('provisioning.bootstrap-step.files-count', '', {
+          count: fileCount,
+          defaultValue_one: '{{count}} files',
+          defaultValue_other: '{{count}} files',
+        })
       : t('provisioning.bootstrap-step.empty', 'Empty');
 
   return {

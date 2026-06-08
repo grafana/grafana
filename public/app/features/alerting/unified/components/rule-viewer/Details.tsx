@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { formatDistanceToNowStrict } from 'date-fns';
+import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { isEmpty, isUndefined } from 'lodash';
 import { Fragment } from 'react/jsx-runtime';
 
@@ -35,7 +35,7 @@ enum RuleType {
 
 const DetailGroup = ({ title, children }: { title?: string; children: React.ReactNode }) => {
   return (
-    <Stack direction="column" gap={1}>
+    <Stack direction="column" gap={1} role={title ? 'group' : undefined} aria-label={title || undefined}>
       {title && <Text variant="h4">{title}</Text>}
       <Stack direction="column" gap={2}>
         {children}

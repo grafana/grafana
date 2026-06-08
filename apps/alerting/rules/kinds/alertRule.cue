@@ -17,6 +17,7 @@ alertRulev0alpha1: alertRuleKind & {
 		operations: [
 			"CREATE",
 			"UPDATE",
+			"DELETE",
 		]
 	}
 	mutation: {
@@ -30,8 +31,9 @@ alertRulev0alpha1: alertRuleKind & {
 		"spec.paused",
 		"spec.panelRef.dashboardUID",
 		"spec.panelRef.panelID",
-		// TODO: make selectableFields play nicely with union types
-		// "spec.notificationSettings.receiver",
+		"spec.notificationSettings.type",
+		"spec.notificationSettings.receiver",
+		"spec.notificationSettings.routingTree",
 		// TODO: add status fields for filtering
 	]
 

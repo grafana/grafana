@@ -108,6 +108,10 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
             i18nKey="alerting.triage.show-all-labels"
             values={{ count: allLabels.length }}
             defaults={'Show all ({{ count }})'}
+            tOptions={{
+              defaultValue_one: 'Show all ({{ count }})',
+              defaultValue_other: 'Show all ({{ count }})',
+            }}
           />
         </Button>
       )}
@@ -181,6 +185,10 @@ function LabelValuesList({ labelKey, values, onValueClick, valueHits }: LabelVal
             i18nKey="alerting.triage.show-all-values"
             values={{ count: matchedValues.length }}
             defaults={'Show all ({{ count }})'}
+            tOptions={{
+              defaultValue_one: 'Show all ({{ count }})',
+              defaultValue_other: 'Show all ({{ count }})',
+            }}
           />
         </Button>
       )}

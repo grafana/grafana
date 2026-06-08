@@ -1,4 +1,4 @@
-import { type PluginError, type PluginMeta, renderMarkdown } from '@grafana/data';
+import { type PluginError, renderMarkdown } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { installPluginMeta, logPluginMetaError, uninstallPluginMeta } from '@grafana/runtime/internal';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
@@ -198,7 +198,7 @@ async function getLocalPluginChangelog(id: string): Promise<string> {
 export async function getLocalPlugins(): Promise<LocalPlugin[]> {
   const localPlugins: LocalPlugin[] = await getBackendSrv().get(
     `${API_ROOT}`,
-    accessControlQueryParam({ embedded: 0 })
+    accessControlQueryParam({ embedded: 'include-datasource' })
   );
 
   return localPlugins.filter(isLocalPluginVisibleByConfig);
@@ -221,14 +221,17 @@ export async function getProvisionedPlugins(): Promise<ProvisionedPlugin[]> {
 }
 
 export async function installPlugin(id: string, version?: string) {
-  // Install via K8s PluginMeta API (no-op when useMTPlugins is off).
+  // Install via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
   // We call both this and the legacy path because the K8s settings API doesn't cover all
   // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
   // TODO(@hugohaggmark): return early once all plugin types support the K8s Settings API.
   try {
     await installPluginMeta(id, version ?? '');
   } catch (error: unknown) {
-    logPluginMetaError(`PluginMeta: Failed to install plugin with id ${id} and version ${version}`, error);
+    logPluginMetaError(`installPluginMeta: Failed to install plugin`, error, {
+      pluginId: id,
+      pluginVersion: version ?? '',
+    });
   }
 
   // Legacy install path — kept until K8s settings API covers all plugin types.
@@ -243,28 +246,38 @@ export async function installPlugin(id: string, version?: string) {
 }
 
 export async function uninstallPlugin(id: string) {
-  // Uninstall via K8s PluginMeta API (no-op when useMTPlugins is off).
+  // Uninstall via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
   // We call both this and the legacy path because the K8s settings API doesn't cover all
   // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
   // TODO(@hugohaggmark): return early once all plugin types support the K8s Settings API.
   try {
     await uninstallPluginMeta(id);
   } catch (error: unknown) {
-    logPluginMetaError(`PluginMeta: Failed to uninstall plugin with id ${id}`, error);
+    logPluginMetaError(`uninstallPluginMeta: Failed to uninstall plugin`, error, {
+      pluginId: id,
+    });
   }
 
   // Legacy uninstall path — kept until K8s settings API covers all plugin types.
   return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall`);
 }
 
-export async function updatePluginSettings(id: string, data: Partial<PluginMeta>) {
-  const response = await getBackendSrv().datasourceRequest({
-    url: `/api/plugins/${id}/settings`,
-    method: 'POST',
-    data,
-  });
-
-  return response?.data;
+export async function getPluginEntitlement(id: string): Promise<boolean> {
+  try {
+    await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/entitlement`);
+    return true;
+  } catch (error) {
+    if (isFetchError(error)) {
+      error.isHandled = true;
+      if (error.status === 401 || error.status === 403 || error.status === 404) {
+        return false;
+      }
+      console.warn(`Failed to fetch entitlement for plugin "${id}" (status ${error.status})`);
+    } else {
+      console.warn(`Failed to fetch entitlement for plugin "${id}": unexpected error`);
+    }
+    return false;
+  }
 }
 
 export const api = { getRemotePlugins, getInstalledPlugins: getLocalPlugins, installPlugin, uninstallPlugin };

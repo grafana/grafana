@@ -55,7 +55,7 @@ import { LogLineContext } from 'app/features/logs/components/panel/LogLineContex
 import { LogList, type LogListOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
 import { dedupLogRows, LogLevelColor } from 'app/features/logs/logsModel';
-import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
+import { getLogLevelFromKey, getLogLevelInfo, isMissingTimeField } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
@@ -913,6 +913,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             <ExploreLogsTable
               eventBus={eventBus}
               data={panelData}
+              isLabelFilterActive={props.isFilterLabelActive}
               timeZone={timeZone}
               buildLinkToLogLine={onTablePermalinkClick}
               externalOptions={tableOptions}
@@ -1032,10 +1033,18 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         {!loading && !hasData && !scanning && (
           <div className={styles.noDataWrapper}>
             <div className={styles.noData}>
-              <Trans i18nKey="explore.logs.no-logs-found">No logs found.</Trans>
-              <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickScan}>
-                <Trans i18nKey="explore.logs.scan-for-older-logs">Scan for older logs</Trans>
-              </Button>
+              {isMissingTimeField(props.logsFrames) ? (
+                <Trans i18nKey="explore.logs.missing-time-field-message">
+                  The Logs visualization requires a time field. Add a time-typed column to your query.
+                </Trans>
+              ) : (
+                <>
+                  <Trans i18nKey="explore.logs.no-logs-found">No logs found.</Trans>
+                  <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickScan}>
+                    <Trans i18nKey="explore.logs.scan-for-older-logs">Scan for older logs</Trans>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         )}

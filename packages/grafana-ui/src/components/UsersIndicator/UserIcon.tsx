@@ -127,7 +127,7 @@ const getIconBorder = (color: string): string => {
   return `0 0 0 1px ${color}`;
 };
 
-export const getStyles = (theme: GrafanaTheme2, isActive: boolean) => {
+const getStyles = (theme: GrafanaTheme2, isActive: boolean) => {
   const shadowColor = isActive ? theme.colors.primary.main : theme.colors.border.medium;
   const shadowHoverColor = isActive ? theme.colors.primary.text : theme.colors.border.strong;
 

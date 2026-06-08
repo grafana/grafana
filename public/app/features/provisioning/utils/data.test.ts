@@ -202,6 +202,47 @@ describe('provisioning data mapping', () => {
     });
   });
 
+  describe('commit message template', () => {
+    it('writes singleResourceMessageTemplate to spec when provided', () => {
+      const formData = makeFormData('github');
+      formData.commit = { singleResourceMessageTemplate: 'feat(dashboards): {{action}} {{title}}' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.singleResourceMessageTemplate).toBe('feat(dashboards): {{action}} {{title}}');
+    });
+
+    it('trims surrounding whitespace before writing to spec', () => {
+      const formData = makeFormData('github');
+      formData.commit = { singleResourceMessageTemplate: '  feat: {{title}}  ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.singleResourceMessageTemplate).toBe('feat: {{title}}');
+    });
+
+    it('omits commit from spec when template is whitespace-only', () => {
+      const formData = makeFormData('github');
+      formData.commit = { singleResourceMessageTemplate: '   ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).toBeUndefined();
+    });
+
+    it('omits commit from spec when not set', () => {
+      const spec = dataToSpec(makeFormData('github'));
+      expect(spec.commit).toBeUndefined();
+    });
+
+    it('reads commit from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        commit: { singleResourceMessageTemplate: 'feat: {{title}}' },
+      };
+      const data = specToData(spec);
+      expect(data.commit?.singleResourceMessageTemplate).toBe('feat: {{title}}');
+    });
+  });
+
   describe('empty branch sends empty string for backend auto-detection', () => {
     it.each(['github', 'gitlab', 'bitbucket', 'git'] as const)(
       'sends empty branch for %s when branch is not set',
