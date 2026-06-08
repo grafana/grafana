@@ -43,6 +43,25 @@ const (
 	// atomic on most backends, but we still chunk to keep individual calls
 	// small.
 	kvDeleteBatchSize = kv.MaxBatchOps
+
+	// defaultKVChunkSize bounds the size of a single value written to the
+	// underlying KV. 10 MiB sits well under the per-value limit on every
+	// supported KV backend.
+	defaultKVChunkSize int64 = 10 * 1024 * 1024
+
+	// minKVChunkSize / maxKVChunkSize bound user-supplied ChunkSize
+	// values. The bounds are sanity guards: anything in this range works
+	// correctly, but values far from typical (a few MiB) are unlikely to
+	// be intentional. The upper bound stays under every backend's
+	// per-value cap with margin.
+	minKVChunkSize int64 = 1024 * 1024
+	maxKVChunkSize int64 = 1024 * 1024 * 1024
+
+	// kvChunkSuffixFormat zero-pads the chunk index so listing returns
+	// chunks in numeric order. Six digits supports up to a million chunks
+	// per file, which is comfortable headroom even at the minimum chunk
+	// size.
+	kvChunkSuffixFormat = "%06d"
 )
 
 // KVRemoteIndexStoreConfig configures NewKVRemoteIndexStore.
@@ -59,6 +78,13 @@ type KVRemoteIndexStoreConfig struct {
 	// build and cleanup locks. Zero values fall back to defaults.
 	BuildLock   LockOptions
 	CleanupLock LockOptions
+
+	// ChunkSize bounds the size (in bytes) of a single KV value used to
+	// store snapshot file data. Files larger than ChunkSize are split into
+	// numbered chunks; readers recover the chunk size from chunk 0's actual
+	// length, so writers can change ChunkSize between deployments without
+	// breaking existing snapshots. Zero falls back to defaultKVChunkSize.
+	ChunkSize int64
 }
 
 // KVRemoteIndexStore implements RemoteIndexStore on top of a kv.KV.
@@ -91,8 +117,13 @@ type KVRemoteIndexStoreConfig struct {
 // Locks live in kv.LeasesSection (managed by lease.Manager), so snapshot
 // keys and lease keys never overlap.
 //
-// Each data file is stored as a single KV value. Transparent chunking for
-// files larger than the backend's per-value limit is not yet implemented.
+// Each snapshot file is split into one or more fixed-size chunks, each
+// stored as a single KV value at key "<...>/<index-key>/<relPath>/<NNNNN>"
+// where NNNNN is the zero-padded chunk index. Even small files get one
+// chunk at index 000000, so read and write paths don't need a separate
+// non-chunked code path. ChunkSize is recoverable at read time from the
+// observed size of chunk 0, so the writer's choice of ChunkSize is not
+// part of the persistent format and can change between deployments.
 //
 // Known limitation: because ListIndexKeys lists only the manifest section,
 // CleanupIncompleteIndexSnapshots cannot detect incomplete uploads (data
@@ -104,6 +135,7 @@ type KVRemoteIndexStore struct {
 	leaseMgr        *lease.Manager
 	buildLockOpts   LockOptions
 	cleanupLockOpts LockOptions
+	chunkSize       int64
 	log             log.Logger
 }
 
@@ -116,11 +148,16 @@ func NewKVRemoteIndexStore(cfg KVRemoteIndexStoreConfig) (*KVRemoteIndexStore, e
 	if cfg.LeaseManager == nil {
 		return nil, fmt.Errorf("lease manager is required")
 	}
+	chunkSize := cmp.Or(cfg.ChunkSize, defaultKVChunkSize)
+	if chunkSize < minKVChunkSize || chunkSize > maxKVChunkSize {
+		return nil, fmt.Errorf("chunk size %d out of range [%d, %d]", chunkSize, minKVChunkSize, maxKVChunkSize)
+	}
 	return &KVRemoteIndexStore{
 		store:           cfg.KV,
 		leaseMgr:        cfg.LeaseManager,
 		buildLockOpts:   cfg.BuildLock,
 		cleanupLockOpts: cfg.CleanupLock,
+		chunkSize:       chunkSize,
 		log:             log.New("kv-remote-index-store"),
 	}, nil
 }
@@ -153,8 +190,16 @@ func kvNamespacePrefix(namespace string) string {
 	return namespace + "/"
 }
 
-func (s *KVRemoteIndexStore) dataKey(ns resource.NamespacedResource, indexKey ulid.ULID, relPath string) string {
-	return kvDataPrefix(ns, indexKey) + relPath
+// dataKeyPrefix returns the per-file prefix under which all chunks of a
+// single snapshot file live. The trailing slash makes prefix-based listing
+// return only this file's chunks.
+func (s *KVRemoteIndexStore) dataKeyPrefix(ns resource.NamespacedResource, indexKey ulid.ULID, relPath string) string {
+	return kvDataPrefix(ns, indexKey) + relPath + "/"
+}
+
+// dataChunkKey returns the KV key for one chunk of a snapshot file.
+func (s *KVRemoteIndexStore) dataChunkKey(ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, chunkIdx int64) string {
+	return s.dataKeyPrefix(ns, indexKey, relPath) + fmt.Sprintf(kvChunkSuffixFormat, chunkIdx)
 }
 
 // manifestKey returns the key for a snapshot's manifest in the manifest
@@ -199,53 +244,132 @@ func validateNsResource(ns resource.NamespacedResource) error {
 	return nil
 }
 
-// WriteSnapshotFile streams src into a single KV value at the per-file key
-// in the data section. Chunking for large files is not yet implemented.
+// WriteSnapshotFile splits src into chunks of at most chunkSize bytes and
+// writes each chunk to a separate KV value under the per-file prefix. Empty
+// files are not supported because all KV backends reject zero-byte values,
+// but snapshot files produced by Bleve are always non-empty in practice.
 func (s *KVRemoteIndexStore) WriteSnapshotFile(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, relPath string, src *os.File) error {
 	if err := validateNsResource(nsResource); err != nil {
 		return err
 	}
-	w, err := s.store.Save(ctx, IndexSnapshotDataSection, s.dataKey(nsResource, indexKey, relPath))
+	stat, err := src.Stat()
 	if err != nil {
-		return fmt.Errorf("opening kv writer for %s: %w", relPath, err)
+		return fmt.Errorf("stat snapshot file %s: %w", relPath, err)
 	}
-	if _, err := io.Copy(w, src); err != nil {
-		_ = w.Close()
-		return fmt.Errorf("writing snapshot file %s: %w", relPath, err)
+	size := stat.Size()
+	if size == 0 {
+		return fmt.Errorf("snapshot file %s is empty", relPath)
 	}
-	if err := w.Close(); err != nil {
-		return fmt.Errorf("closing kv writer for %s: %w", relPath, err)
+	numChunks := (size + s.chunkSize - 1) / s.chunkSize
+
+	for chunkIdx := range numChunks {
+		offset := chunkIdx * s.chunkSize
+		length := s.chunkSize
+		if remaining := size - offset; remaining < length {
+			length = remaining
+		}
+		section := io.NewSectionReader(src, offset, length)
+		if err := s.writeChunk(ctx, nsResource, indexKey, relPath, chunkIdx, section); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-// ReadSnapshotFile streams the KV value at the per-file key in the data
-// section into dst, capping the transfer at expectedSize+1 bytes so a
-// misadvertised size cannot transfer unbounded data. Returns
-// ErrSnapshotNotFound if the key is absent.
+// writeChunk uploads a single chunk to its KV key. The reader is fully
+// drained or an error is returned.
+func (s *KVRemoteIndexStore) writeChunk(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, chunkIdx int64, src io.Reader) error {
+	key := s.dataChunkKey(ns, indexKey, relPath, chunkIdx)
+	w, err := s.store.Save(ctx, IndexSnapshotDataSection, key)
+	if err != nil {
+		return fmt.Errorf("opening kv writer for %s chunk %d: %w", relPath, chunkIdx, err)
+	}
+	if _, err := io.Copy(w, src); err != nil {
+		_ = w.Close()
+		return fmt.Errorf("writing %s chunk %d: %w", relPath, chunkIdx, err)
+	}
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("closing kv writer for %s chunk %d: %w", relPath, chunkIdx, err)
+	}
+	return nil
+}
+
+// ReadSnapshotFile reassembles a snapshot file by reading chunks 0..N-1 in
+// order, where N is recovered from chunk 0's actual size and the advertised
+// expectedSize. Returns ErrSnapshotNotFound if chunk 0 is missing, and
+// wraps resource.ErrWriteLimitExceeded if the assembled file would exceed
+// expectedSize.
 func (s *KVRemoteIndexStore) ReadSnapshotFile(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
 	if err := validateNsResource(nsResource); err != nil {
 		return err
 	}
-	rc, err := s.store.Get(ctx, IndexSnapshotDataSection, s.dataKey(nsResource, indexKey, relPath))
+
+	// Chunk 0's cap is expectedSize+1: either the whole file fits in one
+	// chunk, or we'll observe the writer's chunk size as len(chunk0) and
+	// fetch the remaining chunks from there.
+	n0, err := s.readChunk(ctx, nsResource, indexKey, relPath, 0, dst, expectedSize+1)
 	if err != nil {
 		if errors.Is(err, kv.ErrNotFound) {
 			return ErrSnapshotNotFound
 		}
-		return fmt.Errorf("reading snapshot file %s: %w", relPath, err)
+		return err
 	}
-	defer func() { _ = rc.Close() }()
-
-	// Read one extra byte so we can detect oversized objects without a
-	// second round trip.
-	n, err := io.Copy(dst, io.LimitReader(rc, expectedSize+1))
-	if err != nil {
-		return fmt.Errorf("copying snapshot file %s: %w", relPath, err)
-	}
-	if n > expectedSize {
+	switch {
+	case n0 > expectedSize:
 		return fmt.Errorf("remote object %s exceeds expected size %d: %w", relPath, expectedSize, resource.ErrWriteLimitExceeded)
+	case n0 == expectedSize:
+		// Single-chunk file fully covered by chunk 0.
+		return nil
+	case n0 == 0:
+		// Multi-chunk file with an empty chunk 0 would never make
+		// progress and we have no chunk size to derive. Treat it as
+		// corruption.
+		return fmt.Errorf("chunk 0 of %s is empty but expected size %d", relPath, expectedSize)
+	}
+
+	// Chunk 0 covered some but not all of the file, so its size IS the
+	// writer's chunk size; fetch the rest accordingly.
+	chunkSize := n0
+	written := n0
+	for chunkIdx := int64(1); written < expectedSize; chunkIdx++ {
+		// Cap each subsequent chunk at chunkSize+1 to detect over-read
+		// without buffering the whole chunk first.
+		n, err := s.readChunk(ctx, nsResource, indexKey, relPath, chunkIdx, dst, chunkSize+1)
+		if err != nil {
+			if errors.Is(err, kv.ErrNotFound) {
+				return fmt.Errorf("chunk %d of %s missing: %w", chunkIdx, relPath, err)
+			}
+			return err
+		}
+		if n == 0 {
+			return fmt.Errorf("chunk %d of %s is empty", chunkIdx, relPath)
+		}
+		written += n
+		if written > expectedSize {
+			return fmt.Errorf("remote object %s exceeds expected size %d: %w", relPath, expectedSize, resource.ErrWriteLimitExceeded)
+		}
 	}
 	return nil
+}
+
+// readChunk fetches one chunk into dst, capped at maxBytes to detect
+// over-sized values. Returns the number of bytes written. Propagates
+// kv.ErrNotFound unwrapped so callers can distinguish a missing chunk.
+func (s *KVRemoteIndexStore) readChunk(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, chunkIdx int64, dst io.Writer, maxBytes int64) (int64, error) {
+	key := s.dataChunkKey(ns, indexKey, relPath, chunkIdx)
+	rc, err := s.store.Get(ctx, IndexSnapshotDataSection, key)
+	if err != nil {
+		if errors.Is(err, kv.ErrNotFound) {
+			return 0, err
+		}
+		return 0, fmt.Errorf("reading %s chunk %d: %w", relPath, chunkIdx, err)
+	}
+	defer func() { _ = rc.Close() }()
+	n, err := io.Copy(dst, io.LimitReader(rc, maxBytes))
+	if err != nil {
+		return n, fmt.Errorf("copying %s chunk %d: %w", relPath, chunkIdx, err)
+	}
+	return n, nil
 }
 
 // WriteSnapshotManifest stores the manifest as a single KV value in the

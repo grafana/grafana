@@ -357,7 +357,12 @@ export enum AlertmanagerChoice {
 
 export interface GrafanaAlertingConfiguration {
   alertmanagersChoice: AlertmanagerChoice;
+  // Snake_case mirrors the wire format from /api/v1/ngalert/admin_config.
+  external_alertmanager_uid?: string;
 }
+
+// POST /api/v1/ngalert/admin_config accepts partial updates.
+export type PostableGrafanaAlertingConfiguration = Partial<GrafanaAlertingConfiguration>;
 
 export enum AlertManagerImplementation {
   cortex = 'cortex',
