@@ -26,7 +26,10 @@ type DataSource struct {
 	// The returned properties are only the names of the configured values
 	Secure common.InlineSecureValues `json:"secure,omitzero,omitempty"`
 
-	Type string
+	// Type is the datasource plugin type. It is not part of the persisted/serialized
+	// representation (the type is conveyed via the API group/version); it is only
+	// populated for internal use such as proxy request validation.
+	Type string `json:"-"`
 }
 
 func (DataSource) OpenAPIModelName() string {
