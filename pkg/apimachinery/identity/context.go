@@ -177,13 +177,13 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"playlists:write",       // playlist.ActionPlaylistsWrite
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
-	"alert.admin-config:read",         // accesscontrol.ActionAlertingAdminConfigRead — ExternalAMSyncer reads spec.externalAlertmanagerSync.datasourceUid.
-	"alert.admin-config:write",        // accesscontrol.ActionAlertingAdminConfigWrite — ExternalAMSyncer creates the AdminConfig singleton on first sync.
-	"alert.admin-config.status:write", // accesscontrol.ActionAlertingAdminConfigStatusWrite — service-only; humans never write status directly.
-	"users:read",                      // accesscontrol.ActionUsersRead,
-	"org.users:read",                  // accesscontrol.ActionOrgUsersRead,
-	"teams:read",                      // accesscontrol.ActionTeamsRead,
-	"serviceaccounts:read",            // serviceaccounts.ActionRead,
+	"notifications.alerting.grafana.app/adminconfigs:get",           // accesscontrol.ActionAlertingAdminConfigRead — ExternalAMSyncer reads spec.alertmanager.externalSync.datasourceUid.
+	"notifications.alerting.grafana.app/adminconfigs:update",        // accesscontrol.ActionAlertingAdminConfigWrite — ExternalAMSyncer creates the AdminConfig singleton on first sync.
+	"notifications.alerting.grafana.app/adminconfigs/status:update", // accesscontrol.ActionAlertingAdminConfigStatusWrite — service-only; humans never write status directly.
+	"users:read",           // accesscontrol.ActionUsersRead,
+	"org.users:read",       // accesscontrol.ActionOrgUsersRead,
+	"teams:read",           // accesscontrol.ActionTeamsRead,
+	"serviceaccounts:read", // serviceaccounts.ActionRead,
 )
 
 // Note: Any wildcard-prefixed permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go

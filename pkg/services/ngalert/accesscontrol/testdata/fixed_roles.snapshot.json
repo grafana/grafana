@@ -1099,7 +1099,7 @@
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.admin-config:read"
+        "action": "notifications.alerting.grafana.app/adminconfigs:get"
       }
     ],
     "grants": [
@@ -1113,10 +1113,10 @@
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.admin-config:read"
+        "action": "notifications.alerting.grafana.app/adminconfigs:get"
       },
       {
-        "action": "alert.admin-config:write"
+        "action": "notifications.alerting.grafana.app/adminconfigs:update"
       }
     ],
     "grants": [
