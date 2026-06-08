@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import classNames from 'clsx';
 import { PureComponent, type CSSProperties } from 'react';
 import * as React from 'react';
 import ReactGridLayout, { type ItemCallback } from 'react-grid-layout';

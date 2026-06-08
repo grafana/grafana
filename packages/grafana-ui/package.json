@@ -96,7 +96,6 @@
     "@uiw/codemirror-theme-vscode": "4.25.9",
     "@uiw/react-codemirror": "4.25.9",
     "calculate-size": "1.1.1",
-    "classnames": "2.5.1",
     "clsx": "^2.1.1",
     "date-fns": "4.1.0",
     "downshift": "^9.0.6",

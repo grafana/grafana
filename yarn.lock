@@ -3139,7 +3139,6 @@ __metadata:
     "@uiw/react-codemirror": "npm:4.25.9"
     calculate-size: "npm:1.1.1"
     chance: "npm:^1.1.13"
-    classnames: "npm:2.5.1"
     clsx: "npm:^2.1.1"
     common-tags: "npm:1.8.2"
     css-loader: "npm:7.1.2"
@@ -13471,7 +13470,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"classnames@npm:2.5.1, classnames@npm:^2.2.1, classnames@npm:^2.2.5, classnames@npm:^2.3.1, classnames@npm:^2.3.2, classnames@npm:^2.5.1":
+"classnames@npm:^2.2.1, classnames@npm:^2.2.5, classnames@npm:^2.3.1, classnames@npm:^2.3.2, classnames@npm:^2.5.1":
   version: 2.5.1
   resolution: "classnames@npm:2.5.1"
   checksum: 10/58eb394e8817021b153bb6e7d782cfb667e4ab390cb2e9dac2fc7c6b979d1cc2b2a733093955fc5c94aa79ef5c8c89f11ab77780894509be6afbb91dddd79d15
@@ -18702,7 +18701,7 @@ __metadata:
     centrifuge: "npm:5.5.3"
     chance: "npm:^1.1.13"
     chrome-remote-interface: "npm:0.33.3"
-    classnames: "npm:2.5.1"
+    clsx: "npm:^2.1.1"
     codeowners: "npm:^5.1.1"
     combokeys: "npm:^3.0.0"
     comlink: "npm:4.4.2"

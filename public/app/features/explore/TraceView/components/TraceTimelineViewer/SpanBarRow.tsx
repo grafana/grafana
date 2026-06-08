@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css, keyframes } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import * as React from 'react';
 
 import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';

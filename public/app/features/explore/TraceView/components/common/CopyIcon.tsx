@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
