@@ -26,11 +26,10 @@ const (
 	EventsSection         = "unified/events"
 	LastImportTimeSection = "unified/lastimport"
 	PendingDeleteSection  = "unified/pendingdelete"
+	LeasesSection         = "unified/leases"
 )
 
 var _ KV = &SqlKV{}
-
-var sqlKVLog = logging.DefaultLogger.With("logger", "resource-sqlkv")
 
 // DataImportRow represents a single append-only resource_history row written during bulk import.
 type DataImportRow struct {
@@ -61,6 +60,7 @@ type DataImportLegacyFields struct {
 type SqlKV struct {
 	db         *sql.DB
 	dialect    Dialect
+	log        logging.Logger
 	DriverName string // TODO: remove when backwards compatibility is no longer needed.
 }
 
@@ -83,6 +83,7 @@ func NewSQLKV(db *sql.DB, driverName string) (KV, error) {
 	return &SqlKV{
 		db:         db,
 		dialect:    dialect,
+		log:        logging.DefaultLogger.With("logger", "sqlkv"),
 		DriverName: driverName, // for usage in datastore
 	}, nil
 }
@@ -101,6 +102,8 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "resource_history"
 	case PendingDeleteSection:
 		tableName = "pending_tenant_deletions"
+	case LeasesSection:
+		tableName = "kv_leases"
 	default:
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
@@ -207,7 +210,7 @@ func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow)
 			return fmt.Errorf("failed to build data import batch query: %w", err)
 		}
 		if _, err = conn.ExecContext(ctx, query, args...); err != nil {
-			sqlKVLog.Error("sqlkv bulk import insert failed",
+			k.log.Error("sqlkv bulk import insert failed",
 				"error", err,
 				"dialect", k.dialect.Name(),
 				"rows", len(rows),
@@ -228,7 +231,7 @@ func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow)
 
 	insertDuration := time.Since(insertStart)
 	if insertDuration > 500*time.Millisecond {
-		sqlKVLog.Warn("slow sqlkv bulk import insert",
+		k.log.Warn("slow sqlkv bulk import insert",
 			"dialect", k.dialect.Name(),
 			"rows", len(rows),
 			"statements", statementCount,
@@ -238,7 +241,7 @@ func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow)
 			"insert", insertDuration,
 		)
 	} else {
-		sqlKVLog.Debug("sqlkv bulk import insert timing",
+		k.log.Debug("sqlkv bulk import insert timing",
 			"dialect", k.dialect.Name(),
 			"rows", len(rows),
 			"statements", statementCount,
@@ -379,7 +382,7 @@ func (k *SqlKV) Save(ctx context.Context, section string, key string) (io.WriteC
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
 	}
-	if section != DataSection && section != EventsSection && section != PendingDeleteSection && section != LastImportTimeSection {
+	if section != DataSection && section != EventsSection && section != PendingDeleteSection && section != LastImportTimeSection && section != LeasesSection {
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 
@@ -432,9 +435,11 @@ func (w *sqlWriteCloser) Close() error {
 
 	keyPath := getKeyPath(w.section, w.key)
 
-	// do regular kv save: simple key_path + value insert with conflict check.
-	// can only do this on resource_events and pending_tenant_deletions for now, until we drop the columns in resource_history
-	if w.section == EventsSection || w.section == PendingDeleteSection {
+	// Do regular kv save: simple key_path + value insert with conflict check.
+	// Used for sections that map to dedicated key-value tables (resource_events,
+	// pending_tenant_deletions, kv_leases). DataSection still goes through the
+	// resource_history-specific path below until the legacy columns are dropped.
+	if w.section == EventsSection || w.section == PendingDeleteSection || w.section == LeasesSection {
 		query, args := qb.buildUpsertQuery(keyPath, value)
 		_, err := w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 		if err != nil {
@@ -658,7 +663,7 @@ func isDuplicateKeyError(err error) bool {
 }
 
 // batchUpdate updates the value for an existing key_path.
-// Returns ErrNotFound when the key does not exist (RowsAffected == 0).
+// Returns ErrNotFound when the key does not exist.
 func (k *SqlKV) batchUpdate(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte) error {
 	query, args := qb.buildUpdateDatastoreQuery(keyPath, value)
 	result, err := conn.ExecContext(ctx, query, args...)
@@ -669,8 +674,24 @@ func (k *SqlKV) batchUpdate(ctx context.Context, conn dbtx, qb *queryBuilder, ke
 	if err != nil {
 		return err
 	}
-	if n == 0 {
+	if n > 0 {
+		return nil
+	}
+	if k.dialect.Name() != "mysql" {
 		return ErrNotFound
+	}
+
+	// MySQL reports changed rows by default, not matched rows, so an UPDATE that
+	// sets the same value can return 0 even when the key exists.
+	query, args = qb.buildExistsQuery(keyPath)
+	row := conn.QueryRowContext(ctx, query, args...)
+
+	var exists int
+	if err := row.Scan(&exists); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrNotFound
+		}
+		return err
 	}
 	return nil
 }

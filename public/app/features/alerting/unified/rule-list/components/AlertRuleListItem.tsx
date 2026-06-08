@@ -30,6 +30,7 @@ import { labelsSize } from '../../utils/labels';
 import { createContactPointSearchLink, makeDataSourceLink } from '../../utils/misc';
 import { type RulePluginOrigin } from '../../utils/rules';
 
+import { GroupIntervalIndicator } from './GroupIntervalMetadata';
 import { ListItem } from './ListItem';
 import { RuleLocation } from './RuleLocation';
 import { calculateNextEvaluationEstimate, normalizeHealth, normalizeState } from './util';
@@ -60,6 +61,12 @@ export interface AlertRuleListItemProps {
   // the grouped view doesn't need to show the location again – it's redundant
   showLocation?: boolean;
   querySourceUIDs?: string[];
+  // Evaluation interval (in seconds) for the rule. Only set for rules that belong to artificial
+  // `no_group_for_rule_*` groups, where the group header — which normally surfaces this — isn't
+  // rendered. For rules in normal groups this stays undefined and the interval is shown at the
+  // group-header level instead. Distinct from `evaluationInterval` above which is a Prometheus
+  // duration string consumed by `EvaluationMetadata`.
+  evalIntervalSeconds?: number;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -87,6 +94,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     operation,
     showLocation = true,
     querySourceUIDs = [],
+    evalIntervalSeconds,
   } = props;
 
   const listItemAriaId = useId();
@@ -176,6 +184,11 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
       }
       actions={actions}
       meta={metadata}
+      metaRight={
+        evalIntervalSeconds !== undefined
+          ? [<GroupIntervalIndicator key="interval" seconds={evalIntervalSeconds} />]
+          : undefined
+      }
     />
   );
 };
@@ -201,6 +214,7 @@ export function RecordingRuleListItem({
   actions,
   showLocation = true,
   querySourceUIDs = [],
+  evalIntervalSeconds,
 }: RecordingRuleListItemProps) {
   const metadata: ReactNode[] = [];
   if (namespace && group && showLocation) {
@@ -241,6 +255,11 @@ export function RecordingRuleListItem({
       icon={<StateIcon type="recording" health={ruleHealth} isPaused={isPaused} />}
       actions={actions}
       meta={metadata}
+      metaRight={
+        evalIntervalSeconds !== undefined
+          ? [<GroupIntervalIndicator key="interval" seconds={evalIntervalSeconds} />]
+          : undefined
+      }
     />
   );
 }

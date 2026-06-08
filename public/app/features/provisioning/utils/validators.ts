@@ -26,3 +26,30 @@ export function validateNoHiddenCharacters(value: string | undefined): string | 
     'This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again.'
   );
 }
+
+/**
+ * react-hook-form `validate` function.
+ * Rejects URLs that embed credentials in the userinfo component (e.g. https://user:token@host/...).
+ * Returns `true` when valid, or an error message string when credentials are detected.
+ */
+export function validateNoUserInfoInUrl(value: string | undefined): string | true {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.username !== '' || parsed.password !== '') {
+      return t(
+        'provisioning.validation.url-with-credentials',
+        'Repository URL must not include a username or password. Remove credentials from the URL and use the token field instead.'
+      );
+    }
+  } catch {
+    // Malformed URL — defer to the per-provider regex pattern for the format error.
+    return true;
+  }
+
+  return true;
+}

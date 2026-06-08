@@ -38,7 +38,7 @@ export const DEFAULT_LOGS_BUILDER_QUERY: BuilderQueryExpression = {
   limit: 1000,
 };
 
-export const OPERATORS_BY_TYPE: Record<string, Array<SelectableValue<string>>> = {
+const OPERATORS_BY_TYPE: Record<string, Array<SelectableValue<string>>> = {
   string: [
     { label: '==', value: '==' },
     { label: '!=', value: '!=' },

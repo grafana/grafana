@@ -13,7 +13,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -49,7 +49,7 @@ type AlertsRouter struct {
 	adminConfigPollInterval time.Duration
 
 	datasourceService datasources.DataSourceService
-	secretService     secrets.Service
+	secretService     secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	featureManager    featuremgmt.FeatureToggles
 	broadcastAlerts   bool
 	senderMetrics     *metrics.Sender
@@ -57,8 +57,11 @@ type AlertsRouter struct {
 
 func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore,
 	clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration,
-	datasourceService datasources.DataSourceService, secretService secrets.Service, featureManager featuremgmt.FeatureToggles,
-	broadcastAlerts bool, senderMetrics *metrics.Sender) *AlertsRouter {
+	datasourceService datasources.DataSourceService,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	featureManager featuremgmt.FeatureToggles,
+	broadcastAlerts bool, senderMetrics *metrics.Sender,
+) *AlertsRouter {
 	d := &AlertsRouter{
 		logger:           log.New("ngalert.sender.router"),
 		clock:            clk,
@@ -326,7 +329,7 @@ func (d *AlertsRouter) datasourceToExternalAMcfg(ds *datasources.DataSource) (Ex
 func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, error) {
 	// We re-use the same parsing logic as the datasource to make sure it matches whatever output the user received
 	// when doing the healthcheck.
-	parsed, err := datasource.ValidateURL(datasources.DS_ALERTMANAGER, ds.URL)
+	parsed, err := validation.ValidateURL(datasources.DS_ALERTMANAGER, ds.URL)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse alertmanager datasource url: %w", err)
 	}

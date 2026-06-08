@@ -12,7 +12,6 @@ import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorConte
 import { EMPTY_ALERT } from '../types';
 
 import { AlertsView } from './Alerts/AlertsView';
-import { BulkActionsBar } from './BulkActionsBar';
 import { SidebarFooter } from './Footer/SidebarFooter';
 import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
 import { SidebarHeaderActions } from './SidebarHeaderActions';
@@ -36,7 +35,11 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
 
   const alertsLabel = loading
     ? t('query-editor-next.sidebar.alerts-loading', 'Alerts')
-    : t('query-editor-next.sidebar.alerts', 'Alerts ({{count}})', { count: alertRules.length });
+    : t('query-editor-next.sidebar.alerts', '', {
+        count: alertRules.length,
+        defaultValue_one: 'Alerts ({{count}})',
+        defaultValue_other: 'Alerts ({{count}})',
+      });
 
   const viewOptions: SegmentedToggleProps<QueryEditorType>['options'] = [
     { value: QueryEditorType.Query, label: t('query-editor-next.sidebar.data', 'Data'), icon: 'database' },
@@ -54,7 +57,6 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
           showBackground={false}
         />
       </SidebarHeaderActions>
-      <BulkActionsBar />
       {/** The translateX property of the hoverActions in SidebarCard causes the scroll container to overflow by 8px. */}
       <ScrollContainer overflowX="hidden">
         <div className={styles.content}>

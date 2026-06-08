@@ -28,63 +28,126 @@ func validateGroupLabels(r *model.AlertRule, oldObject resource.Object, action r
 	return util.ValidateGroupLabels(r.Labels, oldLabels, action)
 }
 
+func validateDelete(ctx context.Context, req *app.AdmissionRequest, cfg config.RuntimeConfig) error {
+	oldRule, ok := req.OldObject.(*model.AlertRule)
+	if !ok {
+		return fmt.Errorf("old object is not of type *v0alpha1.AlertRule")
+	}
+	if cfg.MembershipResolver != nil {
+		memberships, err := cfg.MembershipResolver.Resolve(ctx, []string{oldRule.Name})
+		if err != nil {
+			return fmt.Errorf("failed to resolve sequence membership for rule %q: %w", oldRule.Name, err)
+		}
+		if memberships[oldRule.Name].Found {
+			return fmt.Errorf("cannot delete rule %q because it belongs to rule sequence %q", oldRule.Name, memberships[oldRule.Name].SequenceUID)
+		}
+	}
+	return nil
+}
+
+func validateFolderAndSequenceMembership(ctx context.Context, r *model.AlertRule, oldRule *model.AlertRule, action resource.AdmissionAction, cfg config.RuntimeConfig) error {
+	folderUID := ""
+	if r.Annotations != nil {
+		folderUID = r.Annotations[model.FolderAnnotationKey]
+	}
+	if folderUID == "" {
+		return fmt.Errorf("folder is required")
+	}
+	if cfg.FolderValidator != nil {
+		ok, verr := cfg.FolderValidator(ctx, folderUID)
+		if verr != nil {
+			return fmt.Errorf("failed to validate folder: %w", verr)
+		}
+		if !ok {
+			return fmt.Errorf("folder does not exist: %s", folderUID)
+		}
+	}
+
+	if action == resource.AdmissionActionUpdate && oldRule != nil && cfg.MembershipResolver != nil {
+		oldFolderUID := ""
+		if oldRule.Annotations != nil {
+			oldFolderUID = oldRule.Annotations[model.FolderAnnotationKey]
+		}
+		if oldFolderUID != folderUID {
+			memberships, err := cfg.MembershipResolver.Resolve(ctx, []string{r.Name})
+			if err != nil {
+				return fmt.Errorf("failed to resolve sequence membership for rule %q: %w", r.Name, err)
+			}
+			if memberships[r.Name].Found {
+				return fmt.Errorf("cannot move rule %q to folder %q because it belongs to rule sequence %q", r.Name, folderUID, memberships[r.Name].SequenceUID)
+			}
+		}
+	}
+	return nil
+}
+
+func validateDurations(r *model.AlertRule) error {
+	if r.Spec.For != nil {
+		d, err := prom_model.ParseDuration(*r.Spec.For)
+		if err != nil {
+			return fmt.Errorf("invalid 'for' duration: %w", err)
+		}
+		if time.Duration(d) < 0 {
+			return fmt.Errorf("'for' cannot be less than 0")
+		}
+	}
+	if r.Spec.KeepFiringFor != nil {
+		d, err := prom_model.ParseDuration(*r.Spec.KeepFiringFor)
+		if err != nil {
+			return fmt.Errorf("invalid 'keepFiringFor' duration: %w", err)
+		}
+		if time.Duration(d) < 0 {
+			return fmt.Errorf("'keepFiringFor' cannot be less than 0")
+		}
+	}
+	return nil
+}
+
 func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 	return &simple.Validator{
 		ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
-			// Cast to specific type
+			// req.Object will not cast to *AlertRule for delete requests,
+			// so handle deletes before we attempt to cast it.
+			if req.Action == resource.AdmissionActionDelete {
+				return validateDelete(ctx, req, cfg)
+			}
+
 			r, ok := req.Object.(*model.AlertRule)
 			if !ok {
 				return fmt.Errorf("object is not of type *v0alpha1.AlertRule")
 			}
-			// 1) Validate provenance status annotation
+			var oldRule *model.AlertRule
+			if req.OldObject != nil {
+				oldRule, _ = req.OldObject.(*model.AlertRule)
+			}
+
 			sourceProv := r.GetProvenanceStatus()
 			if !slices.Contains(model.AcceptedProvenanceStatuses, sourceProv) {
 				return fmt.Errorf("invalid provenance status: %s", sourceProv)
 			}
 
-			// 2) Validate group labels rules
 			if err := validateGroupLabels(r, req.OldObject, req.Action); err != nil {
 				return err
 			}
 
-			// 3) Validate folder is set and exists
-			// Read folder UID directly from annotations
-			folderUID := ""
-			if r.Annotations != nil {
-				folderUID = r.Annotations[model.FolderAnnotationKey]
-			}
-			if folderUID == "" {
-				return fmt.Errorf("folder is required")
-			}
-			if cfg.FolderValidator != nil {
-				ok, verr := cfg.FolderValidator(ctx, folderUID)
-				if verr != nil {
-					return fmt.Errorf("failed to validate folder: %w", verr)
-				}
-				if !ok {
-					return fmt.Errorf("folder does not exist: %s", folderUID)
-				}
+			if err := validateFolderAndSequenceMembership(ctx, r, oldRule, req.Action, cfg); err != nil {
+				return err
 			}
 
-			// 4) Validate notification settings receiver if provided
 			if r.Spec.NotificationSettings != nil && cfg.NotificationSettingsValidator != nil {
-				err := cfg.NotificationSettingsValidator(ctx, *r.Spec.NotificationSettings)
-				if err != nil {
+				if err := cfg.NotificationSettingsValidator(ctx, *r.Spec.NotificationSettings); err != nil {
 					return fmt.Errorf("notification settings validation error: %w", err)
 				}
 			}
 
-			// 5) Enforce max title length
 			if len(r.Spec.Title) > model.AlertRuleMaxTitleLength {
 				return fmt.Errorf("alert rule title is too long. Max length is %d", model.AlertRuleMaxTitleLength)
 			}
 
-			// 6) Validate evaluation interval against base interval
 			if err := util.ValidateInterval(cfg.BaseEvaluationInterval, &r.Spec.Trigger.Interval); err != nil {
 				return err
 			}
 
-			// 7) Disallow reserved/spec system label keys
 			if r.Spec.Labels != nil {
 				for key := range r.Spec.Labels {
 					if _, bad := cfg.ReservedLabelKeys[key]; bad {
@@ -93,34 +156,15 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 				}
 			}
 
-			// 8) For and KeepFiringFor must be >= 0 if set
-			if r.Spec.For != nil {
-				d, err := prom_model.ParseDuration(*r.Spec.For)
-				if err != nil {
-					return fmt.Errorf("invalid 'for' duration: %w", err)
-				}
-				if time.Duration(d) < 0 {
-					return fmt.Errorf("'for' cannot be less than 0")
-				}
+			if err := validateDurations(r); err != nil {
+				return err
 			}
-			if r.Spec.KeepFiringFor != nil {
-				d, err := prom_model.ParseDuration(*r.Spec.KeepFiringFor)
-				if err != nil {
-					return fmt.Errorf("invalid 'keepFiringFor' duration: %w", err)
-				}
-				if time.Duration(d) < 0 {
-					return fmt.Errorf("'keepFiringFor' cannot be less than 0")
-				}
-			}
-			// 9) Validate the expressions
+
 			expressions := make([]util.Expression, 0, len(r.Spec.Expressions))
 			for _, expression := range r.Spec.Expressions {
 				expressions = append(expressions, &expression)
 			}
-			if err := util.ValidateExpressions(expressions); err != nil {
-				return err
-			}
-			return nil
+			return util.ValidateExpressions(expressions)
 		},
 	}
 }

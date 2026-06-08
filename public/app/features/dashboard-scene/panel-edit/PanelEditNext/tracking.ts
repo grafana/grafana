@@ -1,6 +1,8 @@
 import { debounce } from 'lodash';
 
-import { reportInteraction } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { PanelEditNextFeedbackEvent } from 'app/types/events';
 
 import { QueryEditorType } from './constants';
 
@@ -135,6 +137,12 @@ export function trackQueryOptionsToggle(open: boolean) {
   });
 }
 
+export function trackSelectButtonClick() {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'click_multi_select',
+  });
+}
+
 export function trackRenameInitiated() {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action: 'rename_initiated',
@@ -142,52 +150,14 @@ export function trackRenameInitiated() {
   });
 }
 
-const INTERCOM_APP_ID = 'agpb1wfw';
-const INTERCOM_SURVEY_ID = '59003702';
-
-function getIntercom(): ((command: string, ...args: unknown[]) => void) | undefined {
-  if ('Intercom' in window && typeof window.Intercom === 'function') {
-    return window.Intercom;
+export function startFeedbackSurvey(): void {
+  const isPanelEditNextFeedbackEventEnabled = getFeatureFlagClient().getBooleanValue(
+    FlagKeys.GrafanaPanelEditNextFeedbackEvent,
+    false
+  );
+  if (isPanelEditNextFeedbackEventEnabled) {
+    // Fire an event for grafana-setupguide-app to detect, which will show the survey in Cloud.
+    getAppEvents().publish(new PanelEditNextFeedbackEvent());
+    return;
   }
-  return undefined;
-}
-
-let intercomLoadPromise: Promise<void> | null = null;
-
-function ensureIntercomLoaded(): Promise<void> {
-  if (typeof getIntercom() === 'function') {
-    return Promise.resolve();
-  }
-
-  if (intercomLoadPromise) {
-    return intercomLoadPromise;
-  }
-
-  intercomLoadPromise = new Promise<void>((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = `https://widget.intercom.io/widget/${INTERCOM_APP_ID}`;
-    script.async = true;
-    script.onload = () => {
-      getIntercom()?.('boot', { app_id: INTERCOM_APP_ID, hide_default_launcher: true });
-      resolve();
-    };
-    script.onerror = () => {
-      intercomLoadPromise = null;
-      reject(new Error('Failed to load Intercom'));
-    };
-    document.head.appendChild(script);
-  });
-
-  return intercomLoadPromise;
-}
-
-export function startIntercomSurvey(): void {
-  ensureIntercomLoaded()
-    .then(() => {
-      getIntercom()?.('startSurvey', INTERCOM_SURVEY_ID);
-    })
-    .catch(() => {
-      // Intercom blocked or unavailable — silently ignore.
-      // The survey is non-critical; the editor remains fully functional.
-    });
 }

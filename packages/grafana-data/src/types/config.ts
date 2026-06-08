@@ -107,7 +107,7 @@ export interface GrafanaJavascriptAgentConfig {
   tracingInstrumentalizationEnabled: boolean;
 }
 
-export interface UnifiedAlertingStateHistoryConfig {
+interface UnifiedAlertingStateHistoryConfig {
   backend?: string;
   primary?: string;
   prometheusTargetDatasourceUID?: string;
@@ -179,7 +179,6 @@ export interface CurrentUserDTO {
   gravatarUrl: string;
   timezone: string;
   weekStart: string;
-  regionalFormat: string;
   language: string;
   permissions?: Record<string, boolean>;
   analytics: AnalyticsSettings;
@@ -350,7 +349,7 @@ export interface GrafanaConfig {
   };
 }
 
-export interface SqlConnectionLimits {
+interface SqlConnectionLimits {
   maxOpenConns: number;
   maxIdleConns: number;
   connMaxLifetime: number;

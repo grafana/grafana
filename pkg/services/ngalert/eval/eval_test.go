@@ -6,13 +6,15 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -39,7 +41,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			desc: "zero valued single instance is single Normal state result",
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{
-					data.NewFrame("", data.NewField("", nil, []*float64{util.Pointer(0.0)})),
+					data.NewFrame("", data.NewField("", nil, []*float64{new(0.0)})),
 				},
 			},
 			expectResultLength: 1,
@@ -53,7 +55,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			desc: "non-zero valued single instance is single Alerting state result",
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{
-					data.NewFrame("", data.NewField("", nil, []*float64{util.Pointer(1.0)})),
+					data.NewFrame("", data.NewField("", nil, []*float64{new(1.0)})),
 				},
 			},
 			expectResultLength: 1,
@@ -148,7 +150,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{
 					data.NewFrame("",
-						data.NewField("", nil, []*float64{util.Pointer(23.0)}),
+						data.NewField("", nil, []*float64{new(23.0)}),
 						data.NewField("", nil, []*float64{}),
 					),
 				},
@@ -184,7 +186,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{
 					data.NewFrame("",
-						data.NewField("", nil, []*float64{util.Pointer(2.0), util.Pointer(3.0)}),
+						data.NewField("", nil, []*float64{new(2.0), new(3.0)}),
 					),
 				},
 			},
@@ -235,10 +237,10 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{
 					data.NewFrame("",
-						data.NewField("", nil, []*float64{util.Pointer(1.0)}),
+						data.NewField("", nil, []*float64{new(1.0)}),
 					),
 					data.NewFrame("",
-						data.NewField("", nil, []*float64{util.Pointer(2.0)}),
+						data.NewField("", nil, []*float64{new(2.0)}),
 					),
 				},
 			},
@@ -278,7 +280,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 						data.NewField("", nil, []float64{3}),
 					),
 					data.NewFrame("",
-						data.NewField("", data.Labels{"a": "b"}, []*float64{util.Pointer(2.0)}),
+						data.NewField("", data.Labels{"a": "b"}, []*float64{new(2.0)}),
 					),
 				},
 			},
@@ -779,7 +781,7 @@ func TestQueryDataResponseToExecutionResults(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar"},
-									[]*float64{util.Pointer(10.0)},
+									[]*float64{new(10.0)},
 								),
 							},
 						},
@@ -793,7 +795,7 @@ func TestQueryDataResponseToExecutionResults(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar"},
-									[]*float64{util.Pointer(1.0)},
+									[]*float64{new(1.0)},
 								),
 							},
 						},
@@ -890,7 +892,7 @@ func TestEvaluate(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar"},
-									[]*float64{util.Pointer(10.0)},
+									[]*float64{new(10.0)},
 								),
 							},
 						}},
@@ -902,7 +904,7 @@ func TestEvaluate(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar"},
-									[]*float64{util.Pointer(1.0)},
+									[]*float64{new(1.0)},
 								),
 							},
 						}},
@@ -918,12 +920,12 @@ func TestEvaluate(t *testing.T) {
 					"A": {
 						Var:    "A",
 						Labels: data.Labels{"foo": "bar"},
-						Value:  util.Pointer(10.0),
+						Value:  new(10.0),
 					},
 					"B": {
 						Var:    "B",
 						Labels: data.Labels{"foo": "bar"},
-						Value:  util.Pointer(1.0),
+						Value:  new(1.0),
 					},
 				},
 				EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={foo=bar} value=1 ]",
@@ -943,7 +945,7 @@ func TestEvaluate(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar"},
-									[]*float64{util.Pointer(10.0)},
+									[]*float64{new(10.0)},
 								),
 							},
 						}},
@@ -955,7 +957,7 @@ func TestEvaluate(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar", "bar": "baz"},
-									[]*float64{util.Pointer(1.0)},
+									[]*float64{new(1.0)},
 								),
 							},
 						}},
@@ -972,12 +974,12 @@ func TestEvaluate(t *testing.T) {
 					"A": {
 						Var:    "A",
 						Labels: data.Labels{"foo": "bar"},
-						Value:  util.Pointer(10.0),
+						Value:  new(10.0),
 					},
 					"B": {
 						Var:    "B",
 						Labels: data.Labels{"foo": "bar", "bar": "baz"},
-						Value:  util.Pointer(1.0),
+						Value:  new(1.0),
 					},
 				},
 				EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={bar=baz, foo=bar} value=1 ]",
@@ -997,7 +999,7 @@ func TestEvaluate(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar"},
-									[]*float64{util.Pointer(10.0)},
+									[]*float64{new(10.0)},
 								),
 							},
 						}},
@@ -1009,7 +1011,7 @@ func TestEvaluate(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar", "bar": "baz"},
-									[]*float64{util.Pointer(1.0)},
+									[]*float64{new(1.0)},
 								),
 							},
 						}},
@@ -1037,7 +1039,7 @@ func TestEvaluate(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar"},
-									[]*float64{util.Pointer(10.0)},
+									[]*float64{new(10.0)},
 								),
 							},
 						}},
@@ -1050,7 +1052,7 @@ func TestEvaluate(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar", "bar": "baz"},
-									[]*float64{util.Pointer(1.0)},
+									[]*float64{new(1.0)},
 								),
 							},
 						}},
@@ -1078,7 +1080,7 @@ func TestEvaluate(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar"},
-									[]*float64{util.Pointer(10.0)},
+									[]*float64{new(10.0)},
 								),
 							},
 						}},
@@ -1092,7 +1094,7 @@ func TestEvaluate(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar"},
-									[]*float64{util.Pointer(10.0)},
+									[]*float64{new(10.0)},
 								),
 							},
 						}},
@@ -1104,7 +1106,7 @@ func TestEvaluate(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar"},
-									[]*float64{util.Pointer(1.0)},
+									[]*float64{new(1.0)},
 								),
 							},
 						}},
@@ -1120,17 +1122,17 @@ func TestEvaluate(t *testing.T) {
 					"A": {
 						Var:    "A",
 						Labels: data.Labels{"foo": "bar"},
-						Value:  util.Pointer(10.0),
+						Value:  new(10.0),
 					},
 					"B": {
 						Var:    "B",
 						Labels: data.Labels{"foo": "bar"},
-						Value:  util.Pointer(10.0),
+						Value:  new(10.0),
 					},
 					"C": {
 						Var:    "C",
 						Labels: data.Labels{"foo": "bar"},
-						Value:  util.Pointer(1.0),
+						Value:  new(1.0),
 					},
 				},
 				EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={foo=bar} value=10 ], [ var='C' labels={foo=bar} value=1 ]",
@@ -1156,7 +1158,7 @@ func TestEvaluate(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar"},
-									[]*float64{util.Pointer(10.0), util.Pointer(20.0)},
+									[]*float64{new(10.0), new(20.0)},
 								),
 							},
 						}},
@@ -1169,7 +1171,7 @@ func TestEvaluate(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar"},
-									[]*float64{util.Pointer(15.0)},
+									[]*float64{new(15.0)},
 								),
 							},
 							Meta: &data.FrameMeta{
@@ -1178,7 +1180,7 @@ func TestEvaluate(t *testing.T) {
 										Var:              "B",
 										IsDatasourceNode: false,
 										Labels:           data.Labels{"foo": "bar"},
-										Value:            util.Pointer(15.0),
+										Value:            new(15.0),
 									},
 								},
 							},
@@ -1192,7 +1194,7 @@ func TestEvaluate(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar"},
-									[]*float64{util.Pointer(1.0)},
+									[]*float64{new(1.0)},
 								),
 							},
 							Meta: &data.FrameMeta{
@@ -1201,13 +1203,13 @@ func TestEvaluate(t *testing.T) {
 										Var:              "B",
 										IsDatasourceNode: false,
 										Labels:           data.Labels{"foo": "bar"},
-										Value:            util.Pointer(15.0),
+										Value:            new(15.0),
 									},
 									{
 										Var:              "C",
 										IsDatasourceNode: false,
 										Labels:           data.Labels{"foo": "bar"},
-										Value:            util.Pointer(1.0),
+										Value:            new(1.0),
 									},
 								},
 							},
@@ -1225,13 +1227,13 @@ func TestEvaluate(t *testing.T) {
 						Var:              "B",
 						IsDatasourceNode: false,
 						Labels:           data.Labels{"foo": "bar"},
-						Value:            util.Pointer(15.0),
+						Value:            new(15.0),
 					},
 					"C": {
 						Var:              "C",
 						IsDatasourceNode: false,
 						Labels:           data.Labels{"foo": "bar"},
-						Value:            util.Pointer(1.0),
+						Value:            new(1.0),
 					},
 				},
 				// Note the absence of "A" in the EvaluationString.
@@ -1312,7 +1314,7 @@ func TestEvaluateRawLimit(t *testing.T) {
 							data.NewField(
 								"Value",
 								data.Labels{"foo": "bar"},
-								[]*float64{util.Pointer(10.0)},
+								[]*float64{new(10.0)},
 							),
 						},
 					}},
@@ -1325,7 +1327,7 @@ func TestEvaluateRawLimit(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar"},
-									[]*float64{util.Pointer(10.0)},
+									[]*float64{new(10.0)},
 								),
 							},
 						},
@@ -1335,7 +1337,7 @@ func TestEvaluateRawLimit(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "baz"},
-									[]*float64{util.Pointer(10.0)},
+									[]*float64{new(10.0)},
 								),
 							},
 						},
@@ -1612,4 +1614,59 @@ func (f fakeNode) SetInputTo(a string) {
 
 func (f fakeNode) DisabledErr() error {
 	return nil
+}
+
+func TestSanitizeHeaderValue(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "plain value passes through unchanged",
+			input:    "hello-world",
+			expected: "hello-world",
+		},
+		{
+			name:     "CR is stripped",
+			input:    "foo\rbar",
+			expected: "foobar",
+		},
+		{
+			name:     "LF is stripped",
+			input:    "foo\nbar",
+			expected: "foobar",
+		},
+		{
+			name:     "CRLF sequence is stripped",
+			input:    "foo\r\nbar",
+			expected: "foobar",
+		},
+		{
+			name:     "other ASCII control characters are stripped",
+			input:    "foo\x00\x01\x1f\x7fbar",
+			expected: "foobar",
+		},
+		{
+			name:     "value exactly 128 bytes is not truncated",
+			input:    strings.Repeat("a", 128),
+			expected: strings.Repeat("a", 128),
+		},
+		{
+			name:     "value longer than 128 bytes is truncated",
+			input:    strings.Repeat("a", 200),
+			expected: strings.Repeat("a", 128),
+		},
+		{
+			name:     "control chars removed before truncation check",
+			input:    strings.Repeat("a", 100) + "\r\n" + strings.Repeat("b", 100),
+			expected: strings.Repeat("a", 100) + strings.Repeat("b", 28),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, sanitizeHeaderValue(tt.input))
+		})
+	}
 }

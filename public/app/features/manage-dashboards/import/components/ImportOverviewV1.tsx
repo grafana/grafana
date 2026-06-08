@@ -24,10 +24,11 @@ type Props = {
   meta: { updatedAt: string; orgName: string };
   source: DashboardSource;
   folderUid: string;
+  onFolderChange?: (uid: string) => void;
   onCancel: () => void;
 };
 
-export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, onCancel }: Props) {
+export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, onFolderChange, onCancel }: Props) {
   const [uidReset, setUidReset] = useState(false);
   const folder = { uid: folderUid };
 
@@ -111,6 +112,7 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
             onUidReset={() => setUidReset(true)}
             onSubmit={onSubmit}
             watch={watch}
+            onFolderChange={onFolderChange}
           />
         )}
       </Form>

@@ -5,8 +5,9 @@ import { render, screen, testWithFeatureToggles, userEvent, within } from 'test/
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
-import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/components/notification-policies/permissions';
+import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/hooks/abilities/alertmanager/useNotificationPolicyAbility';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   getErrorResponse,
@@ -49,6 +50,7 @@ import {
   deleteRoutingTree,
   getRoutingTree,
   resetRoutingTreeMap,
+  setAllRoutingTreePermissions,
   setRoutingTree,
 } from './mocks/server/entities/k8s/routingtrees';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
@@ -179,20 +181,8 @@ describe.each([
   { testName: 'PolicyPage', renderPage: renderPolicyPage(ROOT_ROUTE_NAME), routeName: ROOT_ROUTE_NAME },
   { testName: 'PolicyPage', renderPage: renderPolicyPage(OtherPolicyName), routeName: OtherPolicyName },
 ])('$testName - Policy: $routeName', ({ testName, renderPage, routeName }) => {
-  // combobox hack :/
   beforeAll(() => {
-    const mockGetBoundingClientRect = jest.fn(() => ({
-      width: 120,
-      height: 120,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-    }));
-
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: mockGetBoundingClientRect,
-    });
+    mockComboboxRect();
   });
 
   beforeEach(() => {
@@ -302,6 +292,9 @@ describe.each([
         routes: [],
       })
     );
+    // createKubernetesRoutingTreeSpec builds a minimal tree without k8s access annotations.
+    // Set them explicitly so the entity-level canEditEntity / canAdminEntity checks pass.
+    setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
     const { user } = renderPage();
 
     // Sanity check to make sure we actually have an undefined root route.
@@ -335,6 +328,11 @@ describe.each([
       AccessControlAction.AlertingNotificationsRead,
       AccessControlAction.AlertingNotificationsExternalRead,
     ]);
+    // Entity annotations must reflect RBAC: a user without write permission gets canWrite: false
+    // from the backend. Without this the mock is in an impossible state (entity canWrite: true
+    // for a user who has no write RBAC), which previously only happened to hide the button
+    // because of a now-removed redundant global-RBAC double-gate.
+    setAllRoutingTreePermissions({ canWrite: false, canDelete: false, canAdmin: false });
 
     const { user } = renderPage();
 

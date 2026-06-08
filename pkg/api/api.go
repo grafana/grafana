@@ -52,7 +52,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
-	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
+	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
@@ -198,18 +198,18 @@ func (hs *HTTPServer) registerRoutes() {
 		// anonymous view public dashboard
 		r.Get("/public-dashboards/:accessToken",
 			hs.PublicDashboardsApi.Middleware.HandleView,
-			publicdashboardsapi.SetPublicDashboardAccessToken,
-			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
-			publicdashboardsapi.CountPublicDashboardRequest(),
+			publicdashboards.SetPublicDashboardAccessToken,
+			publicdashboards.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
+			publicdashboards.CountPublicDashboardRequest(),
 			hs.Index,
 		)
 
 		r.Get("/bootdata/:accessToken",
 			reqNoAuth,
 			hs.PublicDashboardsApi.Middleware.HandleView,
-			publicdashboardsapi.SetPublicDashboardAccessToken,
-			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
-			publicdashboardsapi.CountPublicDashboardRequest(),
+			publicdashboards.SetPublicDashboardAccessToken,
+			publicdashboards.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
+			publicdashboards.CountPublicDashboardRequest(),
 			hs.GetBootdata,
 		)
 	}
@@ -395,11 +395,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// orgs (admin routes)
 		apiRoute.Get("/orgs/name/:name/", authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionOrgsRead)), routing.Wrap(hs.GetOrgByName))
-
-		// Preferences
-		apiRoute.Group("/preferences", func(prefRoute routing.RouteRegister) {
-			prefRoute.Post("/set-home-dash", routing.Wrap(hs.SetHomeDashboard))
-		})
 
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {

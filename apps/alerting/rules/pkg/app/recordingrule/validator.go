@@ -27,13 +27,89 @@ func validateGroupLabels(r *model.RecordingRule, oldObject resource.Object, acti
 	return util.ValidateGroupLabels(r.Labels, oldLabels, action)
 }
 
+func validateDelete(ctx context.Context, req *app.AdmissionRequest, cfg config.RuntimeConfig) error {
+	oldRule, ok := req.OldObject.(*model.RecordingRule)
+	if !ok {
+		return fmt.Errorf("old object is not of type *v0alpha1.RecordingRule")
+	}
+	if cfg.MembershipResolver != nil {
+		memberships, err := cfg.MembershipResolver.Resolve(ctx, []string{oldRule.Name})
+		if err != nil {
+			return fmt.Errorf("failed to resolve sequence membership for rule %q: %w", oldRule.Name, err)
+		}
+		if memberships[oldRule.Name].Found {
+			return fmt.Errorf("cannot delete rule %q because it belongs to rule sequence %q", oldRule.Name, memberships[oldRule.Name].SequenceUID)
+		}
+	}
+	return nil
+}
+
+func validateFolderAndSequenceMembership(ctx context.Context, r *model.RecordingRule, oldRule *model.RecordingRule, action resource.AdmissionAction, cfg config.RuntimeConfig) error {
+	folderUID := ""
+	if r.Annotations != nil {
+		folderUID = r.Annotations[model.FolderAnnotationKey]
+	}
+	if folderUID == "" {
+		return fmt.Errorf("folder is required")
+	}
+	if cfg.FolderValidator != nil {
+		ok, verr := cfg.FolderValidator(ctx, folderUID)
+		if verr != nil {
+			return fmt.Errorf("failed to validate folder: %w", verr)
+		}
+		if !ok {
+			return fmt.Errorf("folder does not exist: %s", folderUID)
+		}
+	}
+
+	if action == resource.AdmissionActionUpdate && oldRule != nil && cfg.MembershipResolver != nil {
+		oldFolderUID := ""
+		if oldRule.Annotations != nil {
+			oldFolderUID = oldRule.Annotations[model.FolderAnnotationKey]
+		}
+		if oldFolderUID != folderUID {
+			memberships, err := cfg.MembershipResolver.Resolve(ctx, []string{r.Name})
+			if err != nil {
+				return fmt.Errorf("failed to resolve sequence membership for rule %q: %w", r.Name, err)
+			}
+			if memberships[r.Name].Found {
+				return fmt.Errorf("cannot move rule %q to folder %q because it belongs to rule sequence %q", r.Name, folderUID, memberships[r.Name].SequenceUID)
+			}
+		}
+	}
+	return nil
+}
+
+func validateMetric(r *model.RecordingRule) error {
+	if r.Spec.Metric == "" {
+		return fmt.Errorf("metric must be specified")
+	}
+	metric := prom_model.LabelValue(r.Spec.Metric)
+	if !metric.IsValid() {
+		return fmt.Errorf("metric contains invalid characters")
+	}
+	if !prom_model.IsValidMetricName(metric) { // nolint:staticcheck
+		return fmt.Errorf("invalid metric name")
+	}
+	return nil
+}
+
 func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 	return &simple.Validator{
 		ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
-			// Cast to specific type
+			// req.Object will not cast to *RecordingRule for delete requests,
+			// so handle deletes before we attempt to cast it.
+			if req.Action == resource.AdmissionActionDelete {
+				return validateDelete(ctx, req, cfg)
+			}
+
 			r, ok := req.Object.(*model.RecordingRule)
 			if !ok {
 				return fmt.Errorf("object is not of type *v0alpha1.RecordingRule")
+			}
+			var oldRule *model.RecordingRule
+			if req.OldObject != nil {
+				oldRule, _ = req.OldObject.(*model.RecordingRule)
 			}
 
 			sourceProv := r.GetProvenanceStatus()
@@ -45,21 +121,8 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 				return err
 			}
 
-			folderUID := ""
-			if r.Annotations != nil {
-				folderUID = r.Annotations[model.FolderAnnotationKey]
-			}
-			if folderUID == "" {
-				return fmt.Errorf("folder is required")
-			}
-			if cfg.FolderValidator != nil {
-				ok, verr := cfg.FolderValidator(ctx, folderUID)
-				if verr != nil {
-					return fmt.Errorf("failed to validate folder: %w", verr)
-				}
-				if !ok {
-					return fmt.Errorf("folder does not exist: %s", folderUID)
-				}
+			if err := validateFolderAndSequenceMembership(ctx, r, oldRule, req.Action, cfg); err != nil {
+				return err
 			}
 
 			if len(r.Spec.Title) > model.AlertRuleMaxTitleLength {
@@ -86,18 +149,7 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 				return err
 			}
 
-			if r.Spec.Metric == "" {
-				return fmt.Errorf("metric must be specified")
-			}
-			metric := prom_model.LabelValue(r.Spec.Metric)
-			if !metric.IsValid() {
-				return fmt.Errorf("metric contains invalid characters")
-			}
-			if !prom_model.IsValidMetricName(metric) { // nolint:staticcheck
-				return fmt.Errorf("invalid metric name")
-			}
-
-			return nil
+			return validateMetric(r)
 		},
 	}
 }

@@ -25,7 +25,7 @@ import (
 
 const (
 	UserResource      = "users"
-	UserResourceGroup = "iam.grafana.com"
+	UserResourceGroup = "iam.grafana.app"
 )
 
 var (
@@ -43,6 +43,11 @@ var (
 		fieldEmail:                  "email",
 	}
 )
+
+// UserSortFieldMapping returns a mapping of unified search field names to legacy SQL sort key names.
+func UserSortFieldMapping() map[string]string {
+	return userSortFieldMapping
+}
 
 // UserLegacySearchClient is a client for searching for users in the legacy search engine.
 type UserLegacySearchClient struct {

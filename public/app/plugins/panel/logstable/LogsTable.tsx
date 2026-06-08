@@ -25,6 +25,7 @@ import {
   parseLogsFrame,
 } from 'app/features/logs/logsFrame';
 import { dataFrameToLogsModel } from 'app/features/logs/logsModel';
+import { isMissingStringField, isMissingTimeField } from 'app/features/logs/utils';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
 import { LogDetailsContextProvider } from './LogDetailsContext';
@@ -212,7 +213,7 @@ export const LogsTable = ({
   );
 
   // Extract fields transform
-  const { extractedFrame } = useExtractFields({ rawTableFrame, fieldConfig, timeZone });
+  const { extractedFrame } = useExtractFields({ rawTableFrame, fieldConfig, timeZone, replaceVariables });
 
   // Organize fields transform
   const { organizedFrame } = useOrganizeFields({
@@ -278,7 +279,15 @@ export const LogsTable = ({
 
   // Show no data state if query returns nothing
   if ((noSeries || noValues || noLogsFrame) && data.state === LoadingState.Done) {
-    return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
+    return (
+      <PanelDataErrorView
+        fieldConfig={fieldConfig}
+        panelId={id}
+        data={data}
+        needsStringField={isMissingStringField(data.series)}
+        needsTimeField={isMissingTimeField(data.series)}
+      />
+    );
   }
 
   // Don't render the table if we don't have the required data to show the visualization

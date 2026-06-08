@@ -2,11 +2,13 @@ name: PR build Docker image
 
 on:
   pull_request:
+  workflow_dispatch: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
+# for meticulous tests
 permissions: {}
 
 jobs:
@@ -19,111 +21,229 @@ jobs:
       contents: read
     outputs:
       changed: ${{ steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.backend == 'true' }}
+      frontend: ${{ steps.detect-changes.outputs.frontend }}
     steps:
       - uses: actions/checkout@v5
         with:
           persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 2
+          fetch-depth: 0
+          filter: blob:none
       - name: Detect changes
         id: detect-changes
         uses: ./.github/actions/change-detection
         with:
           self: .github/workflows/pr-build-grafana.yml
 
-  build-grafana:
-    needs: detect-changes
+  setup:
+    name: setup
+    needs: [detect-changes]
     if: needs.detect-changes.outputs.changed == 'true'
-    name: Build & Package Grafana
-    runs-on: ubuntu-x64-xlarge
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.output.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Set up version
+        run: jq -r .version package.json | sed -s "s/pre/${BUILD_ID}/g" > VERSION
+        env:
+          BUILD_ID: ${{ github.run_id }}
+      - id: output
+        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+
+  build-frontend:
+    name: build frontend
+    runs-on: ubuntu-x64-large
+    needs: [setup]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-node
+      - name: Install JS dependencies
+        run: yarn install --immutable
+      - name: Build frontend
+        run: yarn build
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: pr-frontend
+          path: public
+          retention-days: 1
+
+  build-backend:
+    name: build backend
+    runs-on: ubuntu-x64-large
+    needs: [setup]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/build-go
+        with:
+          build-number: ${{ github.run_id }}
+          build-version: ${{ needs.setup.outputs.version }}
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: pr-backend
+          path: bin/linux/amd64
+          retention-days: 1
+
+  build-targz:
+    name: build targz
+    runs-on: ubuntu-x64-large
+    needs:
+      - setup
+      - build-frontend
+      - build-backend
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/build-targz
+        with:
+          build-number: ${{ github.run_id }}
+          build-version: ${{ needs.setup.outputs.version }}
+          frontend-artifact: pr-frontend
+          backend-artifact: pr-backend
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: pr-targz
+          path: dist
+          retention-days: 1
+
+  build-docker:
+    name: build docker
+    runs-on: ubuntu-x64-large
+    needs:
+      - setup
+      - build-targz
     permissions:
       contents: read
       id-token: write
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: actions/checkout@v5
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
-
-      - name: Build Grafana
-        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: pr-targz
+          path: dist
+      - name: Set up Docker Buildx
+        run: docker buildx create --use
+      - name: Build docker image
         env:
-          CACHE_BUILDERS: ${{ github.event.pull_request.head.repo.fork == false }}
-        with:
-          cache-binary: "true"
-          version: 0.18.8
-          verb: run
-          args: go run ./pkg/build/cmd artifacts -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" --cache-builders=${CACHE_BUILDERS} > out.txt
-      - name: Cat built artifact
-        run: cat out.txt
-      - name: Move built artifacts
+          GOOS: linux
+          GOARCH: amd64
+          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
         run: |
-          mkdir -p build-dir
-          mv "$(grep 'grafana_.*docker.tar.gz$' out.txt)" build-dir/grafana.docker.tar.gz
-
-      - name: Set artifact name
-        run: echo "artifact=grafana-server-${{github.run_number}}" >> "$GITHUB_OUTPUT"
-        id: artifact
-
-      - name: Upload grafana docker tarball
-        uses: actions/upload-artifact@v7
+          for TARGZ in dist/*.tar.gz; do break; done
+          TAG_VERSION="${BUILD_VERSION//+/-}"
+          make build-docker \
+            -o "$TARGZ" \
+            BUILD_VERSION="$BUILD_VERSION" \
+            BUILD_NUMBER="$BUILD_NUMBER" \
+            DOCKER_TAG="grafana/grafana-image-tags:${TAG_VERSION}-amd64"
+      - name: Stage docker artifact
+        run: |
+          mkdir -p upload
+          cp dist/*.docker.tar.gz upload/
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
+          name: pr-docker
+          path: upload
           retention-days: 1
-          name: grafana-docker-tar-gz
-          path: build-dir/grafana.docker.tar.gz
 
   push-docker-image:
     needs:
       - detect-changes
-      - build-grafana
+      - build-docker
     if: needs.detect-changes.outputs.changed == 'true'
     name: Push PR Docker image
+    outputs:
+      IMAGE: ${{ steps.push-image.outputs.IMAGE }}
     permissions:
       contents: read
       id-token: write
     runs-on: ubuntu-x64
     steps:
-      - id: get-github-token
-        name: "create github app token"
-        uses: grafana/shared-workflows/actions/create-github-app-token@eb02241ed0a92aff205feab8ac3afcdf51c757c8 # create-github-app-token-v0.2.0
-        with:
-          github_app: "delivery-bot-app"
       - uses: grafana/shared-workflows/actions/login-to-gar@main
         id: login-to-gar
         with:
           registry: 'us-docker.pkg.dev'
           environment: 'dev'
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: grafana-docker-tar-gz
+          name: pr-docker
           path: .
       - name: Load & Push Docker image
+        id: push-image
         env:
           BUILD_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
-          LOADED_IMAGE_NAME=$(docker load -i grafana.docker.tar.gz | sed 's/Loaded image: //g')
+          for f in *.docker.tar.gz; do break; done
+          LOADED_IMAGE_NAME=$(docker load -i "$f" | sed 's/Loaded image: //g')
           VERSION=$(echo "${LOADED_IMAGE_NAME}" | cut -d ':' -f 2 | cut -d '-' -f 1)
           DOCKER_IMAGE="us-docker.pkg.dev/grafanalabs-dev/docker-grafana-dev/grafana:${VERSION}-${BUILD_ID}"
           docker tag "${LOADED_IMAGE_NAME}" "${DOCKER_IMAGE}"
           docker push "${DOCKER_IMAGE}"
           echo "IMAGE=${DOCKER_IMAGE}" >> "$GITHUB_ENV"
-      - name: Add PR status check
-        env:
-          GH_TOKEN: ${{ steps.get-github-token.outputs.token }}
-          SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          gh api \
-            --method POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/grafana/grafana/check-runs \
-           -f "name=${IMAGE}" \
-           -f "head_sha=${SHA}" \
-           -f 'status=completed' \
-           -f 'conclusion=neutral' \
-           -f 'output[title]=Docker image' \
-           -f "output[summary]=${IMAGE}" \
-           -f "output[text]=${IMAGE}"
+          echo "IMAGE=${DOCKER_IMAGE}" | tee -a "$GITHUB_OUTPUT"
+
+  run-meticulous-tests:
+    if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.frontend == 'true'
+    needs: [push-docker-image, detect-changes]
+    name: Run Meticulous tests
+    runs-on: ubuntu-x64-small
+    continue-on-error: true
+    env:
+      IMAGE_TAG: ${{ needs.push-docker-image.outputs.IMAGE }}
+    permissions:
+      actions: write
+      contents: read
+      id-token: write
+      issues: write
+      pull-requests: write
+      statuses: read
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        id: login-to-gar
+        with:
+          registry: 'us-docker.pkg.dev'
+          environment: 'dev'
+
+      - name: Pull image from GAR
+        run: docker pull "$IMAGE_TAG"
+
+      - name: Get vault secrets
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            METICULOUS_API_TOKEN=meticulous-ui:api-token
+
+      - name: Run Meticulous tests
+        uses: alwaysmeticulous/report-diffs-action/upload-container@89c6081b30d17cfcc410b5c19c269cd7a4d67cdf # v1
+        with:
+          api-token: ${{ env.METICULOUS_API_TOKEN }}
+          image-tag: ${{ env.IMAGE_TAG }}
+          container-port: 3000
+          container-env: |
+            GF_AUTH_ANONYMOUS_ENABLED=true
+            GF_AUTH_ANONYMOUS_ORG_ROLE=Admin

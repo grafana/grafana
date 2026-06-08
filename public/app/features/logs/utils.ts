@@ -32,6 +32,7 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getConfig } from 'app/core/config';
 
 import { getLogsExtractFields } from '../explore/Logs/LogsTable';
@@ -47,8 +48,13 @@ import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME, parseLogsFrame } fro
  * Parse the line for level words. If no level is found, it returns `LogLevel.unknown`.
  *
  * Example: `getLogLevel('WARN 1999-12-31 this is great') // LogLevel.warn`
+ * @deprecated
  */
 export function getLogLevel(line: string): LogLevel {
+  const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaLogLevelInference, false);
+  if (!enabled) {
+    return LogLevel.unknown;
+  }
   if (!line) {
     return LogLevel.unknown;
   }
@@ -207,6 +213,32 @@ export function logRowsToReadableJson(logs: LogRowModel[], pickFields: string[] 
       fields: logFields,
     };
   });
+}
+
+/**
+ * Returns true when frames have rows but no time field — used to surface an actionable
+ * error instead of silently showing "No data".
+ */
+export function isMissingTimeField(series: DataFrame[] | undefined): boolean {
+  if (!series || series.length === 0) {
+    return false;
+  }
+  const hasRows = series.some((frame) => frame.length > 0);
+  if (!hasRows) {
+    return false;
+  }
+  return !series.some((frame) => frame.fields.some((field) => field.type === FieldType.time));
+}
+
+export function isMissingStringField(series: DataFrame[] | undefined): boolean {
+  if (!series || series.length === 0) {
+    return false;
+  }
+  const hasRows = series.some((frame) => frame.length > 0);
+  if (!hasRows) {
+    return false;
+  }
+  return !series.some((frame) => frame.fields.some((field) => field.type === FieldType.string));
 }
 
 export const getLogsVolumeMaximumRange = (dataFrames: DataFrame[]) => {
@@ -432,11 +464,23 @@ function getDataSourceLabelType(labelType: string, datasourceType: string | unde
     case 'loki':
       switch (labelType) {
         case 'I':
-          return t('logs.fields.type.loki.indexed-label', 'Indexed labels', { count: plural ? 2 : 1 });
+          return t('logs.fields.type.loki.indexed-label', '', {
+            count: plural ? 2 : 1,
+            defaultValue_one: 'Indexed labels',
+            defaultValue_other: 'Indexed labels',
+          });
         case 'S':
-          return t('logs.fields.type.loki.structured-metadata', 'Structured metadata', { count: plural ? 2 : 1 });
+          return t('logs.fields.type.loki.structured-metadata', '', {
+            count: plural ? 2 : 1,
+            defaultValue_one: 'Structured metadata',
+            defaultValue_other: 'Structured metadata',
+          });
         case 'P':
-          return t('logs.fields.type.loki.parsedl-label', 'Parsed fields', { count: plural ? 2 : 1 });
+          return t('logs.fields.type.loki.parsedl-label', '', {
+            count: plural ? 2 : 1,
+            defaultValue_one: 'Parsed fields',
+            defaultValue_other: 'Parsed fields',
+          });
         default:
           return null;
       }

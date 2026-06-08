@@ -75,6 +75,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   /** Container's initial page position, used to compensate for layout shifts during drag */
   private _initialContainerRect: { top: number; left: number } | null = null;
   private _lastDropTargetGridItemKey: string | null = null;
+  protected _renderBeforeActivation = true;
 
   public constructor(state: Partial<AutoGridLayoutState>) {
     super({
@@ -119,6 +120,10 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   }
 
   public getDragHooks() {
+    if (!this.isDraggable()) {
+      return {};
+    }
+
     return {
       onDragStart: (evt: ReactPointerEvent, panel: VizPanel) => {
         const gridItem = panel.parent;

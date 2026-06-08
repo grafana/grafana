@@ -18,6 +18,7 @@ spec:
           operations:
           - CREATE
           - UPDATE
+          - DELETE
       conversion: false
       kind: AlertRule
       plural: AlertRules
@@ -268,6 +269,10 @@ spec:
       - spec.paused
       - spec.panelRef.dashboardUID
       - spec.panelRef.panelID
+      - spec.notificationSettings.type
+      - spec.notificationSettings.receiver
+      - spec.notificationSettings.routingTree
+      userReadable: false
     - admission:
         mutation:
           operations:
@@ -277,6 +282,7 @@ spec:
           operations:
           - CREATE
           - UPDATE
+          - DELETE
       conversion: false
       kind: RecordingRule
       plural: RecordingRules
@@ -429,5 +435,116 @@ spec:
       selectableFields:
       - spec.title
       - spec.paused
+      - spec.metric
+      - spec.targetDatasourceUID
+      userReadable: false
+    - admission:
+        mutation:
+          operations:
+          - CREATE
+          - UPDATE
+        validation:
+          operations:
+          - CREATE
+          - UPDATE
+      conversion: false
+      kind: RuleSequence
+      plural: RuleSequences
+      schemas:
+        IntervalTrigger:
+          additionalProperties: false
+          properties:
+            interval:
+              $ref: '#/components/schemas/PromDuration'
+          required:
+          - interval
+          type: object
+        OperatorState:
+          additionalProperties: false
+          properties:
+            descriptiveState:
+              description: descriptiveState is an optional more descriptive state
+                field which has no requirements on format
+              type: string
+            details:
+              additionalProperties: true
+              description: details contains any extra information that is operator-specific
+              type: object
+            lastEvaluation:
+              description: lastEvaluation is the ResourceVersion last evaluated
+              type: string
+            state:
+              description: |-
+                state describes the state of the lastEvaluation.
+                It is limited to three possible states for machine evaluation.
+              enum:
+              - success
+              - in_progress
+              - failed
+              type: string
+          required:
+          - lastEvaluation
+          - state
+          type: object
+        PromDuration:
+          not:
+            pattern: hmuµn
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
+          type: string
+        RuleRef:
+          additionalProperties: false
+          properties:
+            name:
+              $ref: '#/components/schemas/RuleUID'
+              description: name is the metadata.name of an AlertRule or RecordingRule
+                resource.
+          required:
+          - name
+          type: object
+        RuleSequence:
+          properties:
+            spec:
+              $ref: '#/components/schemas/spec'
+            status:
+              $ref: '#/components/schemas/status'
+          required:
+          - spec
+        RuleUID:
+          pattern: ^[a-zA-Z0-9_-]+$
+          type: string
+        spec:
+          additionalProperties: false
+          properties:
+            alertingRules:
+              items:
+                $ref: '#/components/schemas/RuleRef'
+              type: array
+            recordingRules:
+              items:
+                $ref: '#/components/schemas/RuleRef'
+              type: array
+            trigger:
+              $ref: '#/components/schemas/IntervalTrigger'
+          required:
+          - trigger
+          - recordingRules
+          type: object
+        status:
+          additionalProperties: false
+          properties:
+            additionalFields:
+              additionalProperties: true
+              description: additionalFields is reserved for future use
+              type: object
+            operatorStates:
+              additionalProperties:
+                $ref: '#/components/schemas/OperatorState'
+              description: |-
+                operatorStates is a map of operator ID to operator state evaluations.
+                Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+              type: object
+          type: object
+      scope: Namespaced
+      userReadable: false
     name: v0alpha1
     served: true

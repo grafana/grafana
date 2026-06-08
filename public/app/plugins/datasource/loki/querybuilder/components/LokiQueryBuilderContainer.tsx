@@ -22,7 +22,7 @@ export interface Props {
   timeRange?: TimeRange;
 }
 
-export interface State {
+interface State {
   visQuery?: LokiVisualQuery;
   expr: string;
 }

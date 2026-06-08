@@ -62,7 +62,7 @@ func ProvideService(
 	folderService folder.Service,
 	pluginSettings pluginsettings.Service,
 	quotaService quota.Service,
-	secrectService secrets.Service,
+	secrectService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	orgService org.Service,
 	userService user.Service,
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
@@ -172,7 +172,7 @@ func (ps *ProvisioningServiceImpl) running(ctx context.Context) error {
 
 func (ps *ProvisioningServiceImpl) setDashboardProvisioner() error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(context.Background(), dashboardPath, ps.dashboardProvisioningService, ps.Cfg, ps.orgService, ps.dashboardService, ps.folderService, ps.dual, ps.serverLock)
+	dashProvisioner, err := ps.newDashboardProvisioner(context.Background(), dashboardPath, ps.dashboardProvisioningService, ps.Cfg, ps.orgService, ps.dashboardService, ps.folderService, ps.serverLock)
 	if err != nil {
 		return fmt.Errorf("%v: %w", "Failed to create provisioner", err)
 	}
@@ -241,7 +241,7 @@ type ProvisioningServiceImpl struct {
 	correlationsService          correlations.Service
 	pluginsSettings              pluginsettings.Service
 	quotaService                 quota.Service
-	secretService                secrets.Service
+	secretService                secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	folderService                folder.Service
 	resourcePermissions          accesscontrol.ReceiverPermissionsService
 	routesPermissions            accesscontrol.RoutePermissionsService

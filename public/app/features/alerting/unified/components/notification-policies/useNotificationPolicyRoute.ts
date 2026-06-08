@@ -14,13 +14,15 @@ import {
 import { type BaseAlertmanagerArgs, type Skippable } from 'app/features/alerting/unified/types/hooks';
 import {
   MatcherOperator,
+  type ObjectMatcher,
   ROUTES_META_SYMBOL,
   type Route,
   type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { useNotificationPolicyAbility } from '../../hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import { NotificationPolicyAction } from '../../hooks/abilities/types';
 import { useAsync } from '../../hooks/useAsync';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import {
@@ -29,7 +31,7 @@ import {
   updateRouteAction,
 } from '../../reducers/alertmanager/notificationPolicyRoutes';
 import { type FormAmRoute } from '../../types/amroutes';
-import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
+import { addUniqueIdentifierToRoute, extractNotificationPolicyProvenance } from '../../utils/amroutes';
 import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { getAnnotation, isProvisionedResource, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { routeAdapter } from '../../utils/routeAdapter';
@@ -42,8 +44,22 @@ import {
 } from '../../utils/routeTree';
 
 export function isRouteProvisioned(route: Route): boolean {
-  const provenance = route[ROUTES_META_SYMBOL]?.provenance ?? route.provenance;
-  return isProvisionedResource(provenance);
+  return isProvisionedResource(extractNotificationPolicyProvenance(route));
+}
+
+/**
+ * Returns the k8s ObjectMeta for a notification policy route, or undefined
+ * if the route was not loaded via the k8s API.
+ *
+ * Unwraps the two-level indirection: route → ROUTES_META_SYMBOL → metadata.
+ */
+export function getRoutePolicyMeta(route: Route) {
+  return route[ROUTES_META_SYMBOL]?.metadata;
+}
+
+/** True when the route has k8s ObjectMeta attached (i.e. loaded via the k8s API). */
+export function routeHasK8sMeta(route: Route): boolean {
+  return Boolean(route[ROUTES_META_SYMBOL]?.metadata);
 }
 
 const {
@@ -338,9 +354,7 @@ export function useCreateRoutingTree() {
  */
 export function useCreatePolicyAction(allPolicies: Route[] | undefined) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [createPoliciesSupported, createPoliciesAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.CreateNotificationPolicy
-  );
+  const createAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.Create });
   const [createTrigger] = useCreateRoutingTree();
 
   const existingPolicyNames = useMemo(
@@ -352,8 +366,8 @@ export function useCreatePolicyAction(allPolicies: Route[] | undefined) {
     isCreateModalOpen,
     openCreateModal: () => setIsCreateModalOpen(true),
     closeCreateModal: () => setIsCreateModalOpen(false),
-    createPoliciesSupported,
-    createPoliciesAllowed,
+    createPoliciesSupported: createAbility.granted || createAbility.cause === 'INSUFFICIENT_PERMISSIONS',
+    createPoliciesAllowed: createAbility.granted,
     createTrigger,
     existingPolicyNames,
   };
@@ -422,6 +436,11 @@ export function createKubernetesRoutingTreeSpec(rootRoute: Route): RoutingTree {
 }
 
 export const NAMED_ROOT_LABEL_NAME = '__grafana_managed_route__';
+
+/** Returns true when the ObjectMatcher targets the internal routing label added by k8sRouteToRoute. */
+export function isNamedRootMatcher(matcher: ObjectMatcher): boolean {
+  return matcher[0] === NAMED_ROOT_LABEL_NAME;
+}
 
 export function k8sRouteToRoute(route: RoutingTree): Route {
   return {

@@ -86,7 +86,7 @@ func createCliContextWithArgs(t *testing.T, args []string, flagPairs ...string) 
 	// Add flags from the key-value pairs
 	for i := 0; i < len(flagPairs); i += 2 {
 		key := flagPairs[i]
-		value := flagPairs[i+1]
+		value := flagPairs[i+1] // #nosec G602 -- loop step of 2 ensures i+1 is in range
 		flagSet.String(key, "", "")
 		err := flagSet.Set(key, value)
 		require.NoError(t, err, "Failed to set flag %s=%s", key, value)
