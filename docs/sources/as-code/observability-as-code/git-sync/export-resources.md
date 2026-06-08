@@ -38,7 +38,7 @@ You can add dashboards to Git Sync using any of the following options:
 
 ## Add a dashboard using Import dashboards
 
-You can import dashboards directly into your Git Sync folders using the UI or the HTTP API. 
+You can import dashboards directly into your Git Sync folders using the UI or the HTTP API.
 
 For more information refer to [](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/import-dashboards/).
 
@@ -57,7 +57,6 @@ To do so, follow these steps:
    - Fill in the rest of the fields accordingly.
 1. Click **Save**.
 1. In your synced GitHub repository, merge the branch with the dashboard you want to sync.
-
 
 ## Add a dashboard with the Grafana CLI
 
