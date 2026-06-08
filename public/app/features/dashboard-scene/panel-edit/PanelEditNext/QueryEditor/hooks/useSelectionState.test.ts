@@ -419,4 +419,121 @@ describe('useSelectionState', () => {
       expect(result.current.selectedQueryRefIds).toEqual(['A_renamed', 'B']);
     });
   });
+
+  describe('onCardSelectionChange — seedBulk', () => {
+    it('seeds the bulk selection with the activated query', () => {
+      const { result } = setup();
+      act(() => result.current.onCardSelectionChange('B', null, { seedBulk: true }));
+      expect(result.current.activeQueryRefId).toBe('B');
+      expect(result.current.selectedQueryRefIds).toEqual(['B']);
+      expect(result.current.selectedTransformationIds).toEqual([]);
+    });
+
+    it('seeds the bulk selection with the activated transformation', () => {
+      const { result } = setup();
+      act(() => result.current.onCardSelectionChange(null, 'tx-1', { seedBulk: true }));
+      expect(result.current.activeTransformationId).toBe('tx-1');
+      expect(result.current.selectedTransformationIds).toEqual(['tx-1']);
+      expect(result.current.selectedQueryRefIds).toEqual([]);
+    });
+
+    it('seeds the query anchor so a follow-up Shift+Click ranges from it', () => {
+      const { result } = setup();
+      act(() => result.current.onCardSelectionChange('B', null, { seedBulk: true }));
+      act(() => result.current.toggleQuerySelection({ refId: 'D' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['B', 'C', 'D']);
+    });
+
+    it('seeds nothing when activating with null ids', () => {
+      const { result } = setup();
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }));
+      act(() => result.current.onCardSelectionChange(null, null, { seedBulk: true }));
+      expect(result.current.selectedQueryRefIds).toEqual([]);
+      expect(result.current.selectedTransformationIds).toEqual([]);
+    });
+  });
+
+  describe('removeQueryFromSelection', () => {
+    it('removes the query from the bulk selection', () => {
+      const { result } = setup();
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }));
+      act(() => result.current.toggleQuerySelection({ refId: 'C' }, { multi: true }));
+      act(() => result.current.removeQueryFromSelection('A'));
+      expect(result.current.selectedQueryRefIds).toEqual(['C']);
+    });
+
+    it('falls the active query back to the first query when the active one is removed', () => {
+      const { result } = setup();
+      act(() => result.current.activateQuery(mockQueries[2]));
+      expect(result.current.activeQueryRefId).toBe('C');
+      act(() => result.current.removeQueryFromSelection('C'));
+      expect(result.current.activeQueryRefId).toBe('A');
+    });
+
+    it('leaves the active query untouched when a different query is removed', () => {
+      const { result } = setup();
+      act(() => result.current.activateQuery(mockQueries[2]));
+      act(() => result.current.removeQueryFromSelection('A'));
+      expect(result.current.activeQueryRefId).toBe('C');
+    });
+
+    it('clears the anchor so a later Shift+Click no longer ranges from the removed query', () => {
+      const { result } = setup();
+      // Anchor on B via plain click, then remove B.
+      act(() => result.current.toggleQuerySelection({ refId: 'B' }));
+      act(() => result.current.removeQueryFromSelection('B'));
+      // With the anchor cleared, a Shift+Click on D ranges from the active query (A), not B.
+      act(() => result.current.toggleQuerySelection({ refId: 'D' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'B', 'C', 'D']);
+    });
+  });
+
+  describe('removeTransformationFromSelection', () => {
+    it('removes the transformation from the bulk selection', () => {
+      const { result } = setup();
+      act(() => result.current.toggleTransformationSelection(mockTransformations[0]));
+      act(() => result.current.toggleTransformationSelection(mockTransformations[2], { multi: true }));
+      act(() => result.current.removeTransformationFromSelection('tx-0'));
+      expect(result.current.selectedTransformationIds).toEqual(['tx-2']);
+    });
+
+    it('clears the active transformation when the active one is removed', () => {
+      const { result } = setup();
+      act(() => result.current.activateTransformation(mockTransformations[1]));
+      expect(result.current.activeTransformationId).toBe('tx-1');
+      act(() => result.current.removeTransformationFromSelection('tx-1'));
+      expect(result.current.activeTransformationId).toBeNull();
+    });
+
+    it('clears the anchor so a later Shift+Click no longer ranges from the removed transformation', () => {
+      const { result } = setup();
+      act(() => result.current.toggleTransformationSelection(mockTransformations[0]));
+      act(() => result.current.removeTransformationFromSelection('tx-0'));
+      act(() => result.current.toggleTransformationSelection(mockTransformations[2], { range: true }));
+      // Anchor cleared → plain selection of the clicked transformation only.
+      expect(result.current.selectedTransformationIds).toEqual(['tx-2']);
+    });
+  });
+
+  describe('reconciling the active transformation with the list', () => {
+    it('clears the active transformation when it is removed from the transformations list', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: defaultProps,
+      });
+      act(() => result.current.activateTransformation(mockTransformations[1]));
+      expect(result.current.activeTransformationId).toBe('tx-1');
+      rerender({ ...defaultProps, transformations: mockTransformations.filter((t) => t.transformId !== 'tx-1') });
+      expect(result.current.activeTransformationId).toBeNull();
+    });
+  });
+
+  describe('range selection with an unknown card', () => {
+    it('falls back to a plain selection when the Shift+Clicked query is not in the list', () => {
+      const { result } = setup();
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }));
+      // 'Z' is not part of the queries, so the contiguous range cannot be computed.
+      act(() => result.current.toggleQuerySelection({ refId: 'Z' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['Z']);
+    });
+  });
 });

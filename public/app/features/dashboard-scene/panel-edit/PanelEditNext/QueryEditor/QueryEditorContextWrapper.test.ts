@@ -260,6 +260,101 @@ describe('QueryEditorContextWrapper - clearSelection', () => {
   });
 });
 
+describe('QueryEditorContextWrapper - selection toggles', () => {
+  beforeEach(() => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [],
+      loading: false,
+      isDashboardSaved: true,
+    });
+  });
+
+  it('ignores a multi/range toggle while not in multi-select mode', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.toggleQuerySelection({ refId: 'A' } as DataQuery, { multi: true }));
+
+    expect(result.current.multiSelectMode).toBe(false);
+    expect(result.current.selectedQueryRefIds).toEqual([]);
+  });
+
+  it('activates a query on a plain toggle without entering multi-select mode', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.toggleQuerySelection({ refId: 'A' } as DataQuery));
+
+    expect(result.current.multiSelectMode).toBe(false);
+    expect(result.current.selectedQueryRefIds).toEqual([]);
+  });
+
+  it('ignores a transformation multi/range toggle while not in multi-select mode', () => {
+    const reduce: Transformation = {
+      registryItem: undefined,
+      transformId: 'reduce-0',
+      transformConfig: { id: 'reduce', options: {} },
+    };
+    const { useTransformations } = require('./hooks/useTransformations');
+    useTransformations.mockReturnValue([reduce]);
+
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.toggleTransformationSelection(reduce, { multi: true }));
+
+    expect(result.current.multiSelectMode).toBe(false);
+    expect(result.current.selectedTransformationIds).toEqual([]);
+  });
+
+  it('activates a transformation on a plain toggle without entering multi-select mode', () => {
+    const reduce: Transformation = {
+      registryItem: undefined,
+      transformId: 'reduce-0',
+      transformConfig: { id: 'reduce', options: {} },
+    };
+    const { useTransformations } = require('./hooks/useTransformations');
+    useTransformations.mockReturnValue([reduce]);
+
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.toggleTransformationSelection(reduce));
+
+    expect(result.current.multiSelectMode).toBe(false);
+    expect(result.current.selectedTransformation).toEqual(reduce);
+    expect(result.current.selectedTransformationIds).toEqual([]);
+  });
+
+  it('activates a transformation directly via setSelectedTransformation while in multi-select mode', () => {
+    const reduce: Transformation = {
+      registryItem: undefined,
+      transformId: 'reduce-0',
+      transformConfig: { id: 'reduce', options: {} },
+    };
+    const { useTransformations } = require('./hooks/useTransformations');
+    useTransformations.mockReturnValue([reduce]);
+
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setMultiSelectMode(true));
+    act(() => result.current.setSelectedTransformation(reduce));
+
+    // Active editor selection follows the clicked card, bulk selection is left untouched.
+    expect(result.current.selectedTransformation).toEqual(reduce);
+    expect(result.current.multiSelectMode).toBe(true);
+  });
+
+  it('clears the bulk selection when multi-select mode is turned off via setMultiSelectMode', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setMultiSelectMode(true));
+    act(() => result.current.toggleQuerySelection({ refId: 'A' } as DataQuery, { multi: true }));
+    expect(result.current.selectedQueryRefIds).toEqual(['A']);
+
+    act(() => result.current.setMultiSelectMode(false));
+
+    expect(result.current.multiSelectMode).toBe(false);
+    expect(result.current.selectedQueryRefIds).toEqual([]);
+  });
+});
+
 function renderWithBothContexts(dataPane: PanelDataPaneNext) {
   return renderHook(
     () => ({
