@@ -12,10 +12,12 @@ import {
   Checkbox,
   Combobox,
   ControlledCollapse,
+  Divider,
   Field,
   Input,
   RadioButtonGroup,
   SecretInput,
+  SecretTextArea,
   Stack,
   Switch,
 } from '@grafana/ui';
@@ -27,8 +29,15 @@ import {
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
+import { GPGSigningKeyInfo } from '../Shared/GPGSigningKeyInfo';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
-import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
+import {
+  getCommitAuthorRequiredMessage,
+  getGitProviderFields,
+  getLocalProviderFields,
+  getSigningFormatOptions,
+  getSigningKeyPlaceholder,
+} from '../Wizard/fields';
 import { PROVISIONING_URL } from '../constants';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
@@ -81,6 +90,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
 
   const isEdit = Boolean(repositoryName);
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
+  const [signingKeyConfigured, setSigningKeyConfigured] = useState(Boolean(data?.secure?.signingKey?.name));
+  const [smimeCertConfigured, setSmimeCertConfigured] = useState(Boolean(data?.secure?.smimeCertificate?.name));
+  const signingKeyValue = watch('signingKey');
+  const signingFormat = watch('signingFormat') ?? 'none';
+  const signingEnabled = signingFormat !== 'none';
+  const authorRequired = Boolean(signingKeyValue);
+  const authorRequiredMessage = getCommitAuthorRequiredMessage();
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
   const [type, readOnly] = watch(['type', 'readOnly']);
@@ -137,7 +153,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
     setSubmitError(undefined);
     try {
       const spec = dataToSpec(form);
-      await submitData(spec, form.token);
+      const signing = form.signingFormat && form.signingFormat !== 'none';
+      await submitData(
+        spec,
+        form.token,
+        signing ? form.signingKey : undefined,
+        signing && form.signingFormat === 'smime' ? form.smimeCertificate : undefined
+      );
     } catch (err) {
       if (isFetchError(err)) {
         const fieldErrors = getConfigFormErrors(err.data);
@@ -449,6 +471,141 @@ export function ConfigForm({ data }: ConfigFormProps) {
             </Stack>
           </ControlledCollapse>
         )}
+
+        {gitFields?.signingKeyConfig &&
+          gitFields.signingFormatConfig &&
+          gitFields.smimeCertificateConfig &&
+          gitFields.commitAuthorNameConfig &&
+          gitFields.commitAuthorEmailConfig && (
+            <>
+              <Divider spacing={0} />
+              <Field
+                noMargin
+                label={gitFields.signingFormatConfig.label}
+                description={gitFields.signingFormatConfig.description}
+              >
+                <Controller
+                  name="signingFormat"
+                  control={control}
+                  render={({ field: { ref, ...field } }) => (
+                    <RadioButtonGroup
+                      {...field}
+                      options={getSigningFormatOptions()}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        setValue('signingKey', '');
+                        setValue('smimeCertificate', '');
+                        setSigningKeyConfigured(false);
+                        setSmimeCertConfigured(false);
+                      }}
+                    />
+                  )}
+                />
+              </Field>
+              {signingEnabled && (
+                <>
+                  {hasTokenInstructions && <GPGSigningKeyInfo type={type} />}
+                  <Field
+                    noMargin
+                    htmlFor="signingKey"
+                    label={gitFields.signingKeyConfig.label}
+                    description={gitFields.signingKeyConfig.description}
+                    error={errors?.signingKey?.message}
+                    invalid={!!errors.signingKey}
+                  >
+                    <Controller
+                      name="signingKey"
+                      control={control}
+                      render={({ field: { ref, ...field } }) => (
+                        <SecretTextArea
+                          {...field}
+                          id="signingKey"
+                          invalid={!!errors.signingKey}
+                          placeholder={getSigningKeyPlaceholder(signingFormat)}
+                          isConfigured={signingKeyConfigured}
+                          onReset={() => {
+                            setValue('signingKey', '');
+                            setValue('commit.authorName', '');
+                            setValue('commit.authorEmail', '');
+                            setSigningKeyConfigured(false);
+                          }}
+                          rows={8}
+                          grow
+                        />
+                      )}
+                    />
+                  </Field>
+                  {signingFormat === 'smime' && (
+                    <Field
+                      noMargin
+                      htmlFor="smimeCertificate"
+                      label={gitFields.smimeCertificateConfig.label}
+                      description={gitFields.smimeCertificateConfig.description}
+                      error={errors?.smimeCertificate?.message}
+                      invalid={!!errors.smimeCertificate}
+                    >
+                      <Controller
+                        name="smimeCertificate"
+                        control={control}
+                        render={({ field: { ref, ...field } }) => (
+                          <SecretTextArea
+                            {...field}
+                            id="smimeCertificate"
+                            invalid={!!errors.smimeCertificate}
+                            placeholder={gitFields.smimeCertificateConfig?.placeholder}
+                            isConfigured={smimeCertConfigured}
+                            onReset={() => {
+                              setValue('smimeCertificate', '');
+                              setSmimeCertConfigured(false);
+                            }}
+                            rows={8}
+                            grow
+                          />
+                        )}
+                      />
+                    </Field>
+                  )}
+                  <Field
+                    noMargin
+                    htmlFor="commit-author-name"
+                    required={authorRequired}
+                    label={gitFields.commitAuthorNameConfig.label}
+                    description={gitFields.commitAuthorNameConfig.description}
+                    error={errors?.commit?.authorName?.message}
+                    invalid={!!errors?.commit?.authorName}
+                  >
+                    <Input
+                      id="commit-author-name"
+                      disabled={!signingKeyValue}
+                      {...register('commit.authorName', {
+                        validate: (val) => !authorRequired || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
+                      })}
+                      placeholder={gitFields.commitAuthorNameConfig.placeholder}
+                    />
+                  </Field>
+                  <Field
+                    noMargin
+                    htmlFor="commit-author-email"
+                    required={authorRequired}
+                    label={gitFields.commitAuthorEmailConfig.label}
+                    description={gitFields.commitAuthorEmailConfig.description}
+                    error={errors?.commit?.authorEmail?.message}
+                    invalid={!!errors?.commit?.authorEmail}
+                  >
+                    <Input
+                      id="commit-author-email"
+                      type="email"
+                      disabled={!signingKeyValue}
+                      {...register('commit.authorEmail', {
+                        validate: (val) => !authorRequired || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
+                      })}
+                      placeholder={gitFields.commitAuthorEmailConfig.placeholder}
+                    />
+                  </Field>
+                </>
+              )}
+            </>
+          )}
 
         <Stack gap={2}>
           <Button type={'submit'} disabled={isLoading}>
