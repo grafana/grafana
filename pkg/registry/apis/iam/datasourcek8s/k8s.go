@@ -41,13 +41,33 @@ func LegacyVerbToK8sAction(dsType, legacyVerb string) string {
 	}
 }
 
+// legacyActionToK8s converts a legacy datasource action to its k8s form.
+// It handles the resource-permissions actions (datasources.permissions:read/write)
+// and the plain datasource verbs (datasources:read/write/…). Returns the converted
+// action and whether a conversion was applied.
+func legacyActionToK8s(dsType, action string) (string, bool) {
+	if permVerb, ok := strings.CutPrefix(action, "datasources.permissions:"); ok {
+		switch permVerb {
+		case "read":
+			return K8sDatasourceAPIGroup(dsType) + "/datasources:get_permissions", true
+		case "write":
+			return K8sDatasourceAPIGroup(dsType) + "/datasources:set_permissions", true
+		default:
+			return action, false
+		}
+	}
+	legacyVerb, ok := strings.CutPrefix(action, "datasources:")
+	if !ok || strings.Contains(legacyVerb, ":") {
+		return action, false
+	}
+	return LegacyVerbToK8sAction(dsType, legacyVerb), true
+}
+
 // LegacyDatasourceAction replaces a legacy ds action string with its k8s form
 func LegacyDatasourceAction(dsType string, action *string) {
-	legacyVerb, ok := strings.CutPrefix(*action, "datasources:")
-	if !ok || strings.Contains(legacyVerb, ":") {
-		return
+	if converted, ok := legacyActionToK8s(dsType, *action); ok {
+		*action = converted
 	}
-	*action = LegacyVerbToK8sAction(dsType, legacyVerb)
 }
 
 // LegacyDatasourceScopeAndActionToK8s converts legacy datasource scope and action to k8s form
@@ -58,8 +78,8 @@ func LegacyDatasourceScopeAndActionToK8s(datasourceType, scope, action string) (
 	if uid, ok := strings.CutPrefix(scope, "datasources:uid:"); ok {
 		scope = LegacyUIDScopeToK8s(datasourceType, uid)
 	}
-	if legacyVerb, ok := strings.CutPrefix(action, "datasources:"); ok {
-		action = LegacyVerbToK8sAction(datasourceType, legacyVerb)
+	if converted, ok := legacyActionToK8s(datasourceType, action); ok {
+		action = converted
 	}
 	return scope, action
 }

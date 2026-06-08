@@ -16,12 +16,15 @@ export function CommitMessageTemplateField({ register }: Props) {
       label={t('provisioning.config-form.label-commit-message-template', 'Commit message template')}
       description={t(
         'provisioning.config-form.description-commit-message-template',
-        'Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}. Leave empty to use the built-in defaults.',
+        'Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. A "Grafana-saved-by: <name> (<login>)" trailer is appended automatically. Leave empty to use the built-in defaults.',
         {
           actionVar: '{{action}}',
           kindVar: '{{resourceKind}}',
           idVar: '{{resourceID}}',
           titleVar: '{{title}}',
+          userNameVar: '{{userName}}',
+          userLoginVar: '{{userLogin}}',
+          userEmailVar: '{{userEmail}}',
         }
       )}
     >

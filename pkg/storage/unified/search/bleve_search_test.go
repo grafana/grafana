@@ -177,6 +177,17 @@ func TestCanSearchByTitle(t *testing.T) {
 		checkSearchQuery(t, index, newTestQuery("A01"), nil)
 	})
 
+	t.Run("title filter ignores empty tokens from split values", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "foo bar",
+			"name2": "baz",
+		})
+
+		checkSearchQuery(t, index, newQueryByTitle("foo "), []string{"name1"})
+		checkSearchQuery(t, index, newQueryByTitle("foo-"), []string{"name1"})
+	})
+
 	t.Run("title search with character will match one document", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, noop)
 		indexDocumentsWithTitles(t, index, key, map[string]string{

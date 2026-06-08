@@ -58,7 +58,13 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 	// an additional check whether it is an actual user is required
 	if c.IsIdentityType(claims.TypeUser) {
 		userID, _ := c.GetInternalID()
-		if err := addOrUpdateTeamMember(c.Req.Context(), tapi.teamPermissionsService, userID, c.GetOrgID(),
+		ctx := c.Req.Context()
+		// K8s-stored teams have t.ID=0, so route the write by UID.
+		if ofClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx)) {
+			if err := tapi.addCreatorAsAdminViaK8s(c, t.UID, userID); err != nil {
+				c.Logger.Error("Could not add creator to team", "error", err)
+			}
+		} else if err := addOrUpdateTeamMember(ctx, tapi.teamPermissionsService, userID, c.GetOrgID(),
 			t.ID, dashboardaccess.PERMISSION_ADMIN.String()); err != nil {
 			c.Logger.Error("Could not add creator to team", "error", err)
 		}

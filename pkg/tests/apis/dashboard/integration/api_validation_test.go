@@ -1502,9 +1502,8 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext) {
 		err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 		require.NoError(t, err)
 
-		// In case kubernetesDashboards feature flag is set to true,
-		// we don't grant admin permission to dashboard creator on nested folders.
-		// This means that the viewer will not be able to delete the dashboard.
+		// Dashboard creators don't get admin permission on nested folders, so
+		// the viewer can't delete a dashboard inside one.
 		err = viewerClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
 		require.Error(t, err)
 		err = adminClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})

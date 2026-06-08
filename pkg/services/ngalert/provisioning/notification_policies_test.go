@@ -295,8 +295,8 @@ func TestResetPolicyTree(t *testing.T) {
 	currentRevision.Config.AlertmanagerConfig.Route = &v1.Route{
 		Receiver: "receiver",
 	}
-	currentRevision.Config.TemplateFiles = map[string]string{
-		"test": "test",
+	currentRevision.Config.Templates = map[v1.ResourceUID]v1.TemplateGroup{
+		v1.TemplateUID(v1.TemplateKindGrafana, "test"): v1.NewTemplateGroup("test", "test", v1.TemplateKindGrafana, models.ProvenanceNone),
 	}
 	currentRevision.Config.AlertmanagerConfig.TimeIntervals = []v1.TimeInterval{
 		{

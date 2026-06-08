@@ -1901,7 +1901,7 @@ func TestGetWorkingFolderUID(t *testing.T) {
 		rc.Req.Header.Del(folderUIDHeader)
 
 		folderUID := getWorkingFolderUID(rc)
-		require.Equal(t, folder.RootFolderUID, folderUID)
+		require.Equal(t, folder.LegacyRootFolderUID, folderUID) //nolint:staticcheck
 	})
 
 	t.Run("should return specified folder UID when header is present", func(t *testing.T) {
@@ -1918,7 +1918,7 @@ func TestGetWorkingFolderUID(t *testing.T) {
 		rc.Req.Header.Set(folderUIDHeader, "")
 
 		folderUID := getWorkingFolderUID(rc)
-		require.Equal(t, folder.RootFolderUID, folderUID)
+		require.Equal(t, folder.LegacyRootFolderUID, folderUID) //nolint:staticcheck
 	})
 
 	t.Run("should trim whitespace from header value", func(t *testing.T) {
@@ -2174,9 +2174,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 	})
 
 	t.Run("should return 409 when external alertmanager sync is configured for the org", func(t *testing.T) {
-		t.Skip("flaky test")
-
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		mockAM := &mockAlertmanager{}
 		mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(true, nil).Once()
 

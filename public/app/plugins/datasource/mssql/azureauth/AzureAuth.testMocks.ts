@@ -1,26 +1,4 @@
 import { type AzureDataSourceSettings } from '@grafana/azure-sdk';
-import { type GrafanaBootConfig } from '@grafana/runtime';
-
-export const configWithManagedIdentityEnabled: Partial<GrafanaBootConfig> = {
-  azure: {
-    managedIdentityEnabled: true,
-    workloadIdentityEnabled: false,
-    userIdentityEnabled: false,
-    userIdentityFallbackCredentialsEnabled: false,
-    azureEntraPasswordCredentialsEnabled: false,
-  },
-};
-
-export const configWithManagedIdentityDisabled: Partial<GrafanaBootConfig> = {
-  azure: {
-    managedIdentityEnabled: false,
-    workloadIdentityEnabled: false,
-    userIdentityEnabled: false,
-    cloud: 'AzureCloud',
-    userIdentityFallbackCredentialsEnabled: false,
-    azureEntraPasswordCredentialsEnabled: false,
-  },
-};
 
 export const dataSourceSettingsWithMsiCredentials: Partial<AzureDataSourceSettings> = {
   jsonData: { azureCredentials: { authType: 'msi' } },

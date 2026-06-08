@@ -822,7 +822,7 @@ func getWorkingFolderUID(c *contextmodel.ReqContext) string {
 	if folderUID != "" {
 		return folderUID
 	}
-	return folder.RootFolderUID
+	return folder.LegacyRootFolderUID //nolint:staticcheck
 }
 
 func namespaceErrorResponse(err error) response.Response {

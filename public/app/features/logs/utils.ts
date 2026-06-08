@@ -215,6 +215,32 @@ export function logRowsToReadableJson(logs: LogRowModel[], pickFields: string[] 
   });
 }
 
+/**
+ * Returns true when frames have rows but no time field — used to surface an actionable
+ * error instead of silently showing "No data".
+ */
+export function isMissingTimeField(series: DataFrame[] | undefined): boolean {
+  if (!series || series.length === 0) {
+    return false;
+  }
+  const hasRows = series.some((frame) => frame.length > 0);
+  if (!hasRows) {
+    return false;
+  }
+  return !series.some((frame) => frame.fields.some((field) => field.type === FieldType.time));
+}
+
+export function isMissingStringField(series: DataFrame[] | undefined): boolean {
+  if (!series || series.length === 0) {
+    return false;
+  }
+  const hasRows = series.some((frame) => frame.length > 0);
+  if (!hasRows) {
+    return false;
+  }
+  return !series.some((frame) => frame.fields.some((field) => field.type === FieldType.string));
+}
+
 export const getLogsVolumeMaximumRange = (dataFrames: DataFrame[]) => {
   let widestRange = { from: Infinity, to: -Infinity };
 
@@ -438,11 +464,23 @@ function getDataSourceLabelType(labelType: string, datasourceType: string | unde
     case 'loki':
       switch (labelType) {
         case 'I':
-          return t('logs.fields.type.loki.indexed-label', 'Indexed labels', { count: plural ? 2 : 1 });
+          return t('logs.fields.type.loki.indexed-label', '', {
+            count: plural ? 2 : 1,
+            defaultValue_one: 'Indexed labels',
+            defaultValue_other: 'Indexed labels',
+          });
         case 'S':
-          return t('logs.fields.type.loki.structured-metadata', 'Structured metadata', { count: plural ? 2 : 1 });
+          return t('logs.fields.type.loki.structured-metadata', '', {
+            count: plural ? 2 : 1,
+            defaultValue_one: 'Structured metadata',
+            defaultValue_other: 'Structured metadata',
+          });
         case 'P':
-          return t('logs.fields.type.loki.parsedl-label', 'Parsed fields', { count: plural ? 2 : 1 });
+          return t('logs.fields.type.loki.parsedl-label', '', {
+            count: plural ? 2 : 1,
+            defaultValue_one: 'Parsed fields',
+            defaultValue_other: 'Parsed fields',
+          });
         default:
           return null;
       }

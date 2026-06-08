@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,6 +16,45 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+// Anchors what semver.NewVersion accepts for the strings we feed it from
+// cfg.BuildVersion / cfg.MinFileIndexBuildVersion (options.go) and from snapshot
+// metadata (bleve_snapshot.go, remote_index_cleanup.go). Parsing failures are
+// not fatal at call sites — they fall back to nil — but a change here would
+// quietly hide or expose snapshots, so it's worth pinning.
+func TestBuildVersionParsing(t *testing.T) {
+	tests := []struct {
+		input    string
+		wantOK   bool
+		wantNorm string // expected v.String() when wantOK
+	}{
+		{input: "11.5.0", wantOK: true, wantNorm: "11.5.0"},
+		{input: "11.5.0-pre1", wantOK: true, wantNorm: "11.5.0-pre1"},
+		{input: "11.5.0+meta", wantOK: true, wantNorm: "11.5.0+meta"},
+		{input: "v11.5.0", wantOK: true, wantNorm: "11.5.0"}, // v-prefix is stripped
+		{input: "11.5", wantOK: true, wantNorm: "11.5.0"},    // missing patch is filled in
+		// Real build versions seen in production.
+		{input: "13.1.0-ephemeral-enterprise-11758-10265-1", wantOK: true, wantNorm: "13.1.0-ephemeral-enterprise-11758-10265-1"},
+		{input: "13.1.0-ephemeral-oss-123137-102418-1", wantOK: true, wantNorm: "13.1.0-ephemeral-oss-123137-102418-1"},
+		{input: "13.0.0-23069273608.patch13", wantOK: true, wantNorm: "13.0.0-23069273608.patch13"},
+		{input: "13.1.0-25901809875", wantOK: true, wantNorm: "13.1.0-25901809875"},
+		{input: "dev", wantOK: false},
+		{input: "main", wantOK: false},
+		{input: "a1b2c3d4", wantOK: false}, // git SHA-like
+	}
+	for _, tc := range tests {
+		t.Run(tc.input, func(t *testing.T) {
+			v, err := semver.NewVersion(tc.input)
+			if tc.wantOK {
+				require.NoError(t, err)
+				require.NotNil(t, v)
+				assert.Equal(t, tc.wantNorm, v.String())
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
 
 func TestSnapshotLockHeartbeat(t *testing.T) {
 	tests := []struct {

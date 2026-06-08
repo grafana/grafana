@@ -30,6 +30,10 @@ func K8sDSActionToLegacy(action string) (string, bool) {
 		return "datasources:write", true
 	case "delete":
 		return "datasources:delete", true
+	case "get_permissions":
+		return "datasources.permissions:read", true
+	case "set_permissions":
+		return "datasources.permissions:write", true
 	default:
 		return "", false
 	}

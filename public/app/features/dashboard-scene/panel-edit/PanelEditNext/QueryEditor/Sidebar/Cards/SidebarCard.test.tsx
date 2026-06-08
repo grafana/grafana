@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { type DataQuery } from '@grafana/schema';
 
+import { type ActionItem } from '../../../actionItem';
 import { QueryEditorType } from '../../../constants';
 import { ds1SettingsMock, renderWithQueryEditorProvider } from '../../testUtils';
 import { type Transformation } from '../../types';
@@ -48,8 +49,8 @@ function renderSidebarCard({
   },
 }: RenderSidebarCardProps = {}) {
   const queries: DataQuery[] = [{ refId: id, datasource: { type: 'test', uid: 'test' } }];
-  const item = {
-    name: id,
+  const item: ActionItem = {
+    id,
     type: QueryEditorType.Query,
     isHidden,
   };
@@ -219,7 +220,7 @@ describe('SidebarCard', () => {
 
     it('sets aria-pressed to true when isPartOfSelection is true and isSelected is false', () => {
       const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
-      const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
+      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
 
       renderWithQueryEditorProvider(
         <SidebarCard id="A" isSelected={false} isPartOfSelection={true} item={item} onSelect={jest.fn()}>
@@ -253,7 +254,7 @@ describe('SidebarCard', () => {
         { refId: 'A', datasource: { type: 'test', uid: 'test' } },
         { refId: 'B', datasource: { type: 'test', uid: 'test' } },
       ];
-      const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
+      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
 
       const { user } = renderWithQueryEditorProvider(
         <SidebarCard id="A" isSelected={false} item={item} onSelect={onSelect}>
@@ -270,7 +271,7 @@ describe('SidebarCard', () => {
     it('passes multi: true to onSelect on plain click when in multi-select mode', async () => {
       const onSelect = jest.fn();
       const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
-      const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
+      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
 
       const { user } = renderWithQueryEditorProvider(
         <SidebarCard id="A" isSelected={false} item={item} onSelect={onSelect}>
@@ -287,7 +288,7 @@ describe('SidebarCard', () => {
     it('passes multi: true to onSelect on Enter when in multi-select mode', async () => {
       const onSelect = jest.fn();
       const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
-      const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
+      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
 
       const { user } = renderWithQueryEditorProvider(
         <SidebarCard id="A" isSelected={false} item={item} onSelect={onSelect}>
@@ -337,7 +338,7 @@ describe('SidebarCard', () => {
 
   describe('multi-select checkbox', () => {
     const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
-    const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
+    const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
 
     it('does not render the checkbox when multi-select mode is off', () => {
       renderWithQueryEditorProvider(

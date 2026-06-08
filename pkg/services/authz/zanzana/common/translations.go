@@ -78,6 +78,11 @@ var resourceTranslations = map[string]resourceTranslation{
 			"dashboards:write":  newScopedMapping(RelationUpdate, dashboardGroup, dashboardResource, ""),
 			"dashboards:create": newScopedMapping(RelationCreate, dashboardGroup, dashboardResource, ""),
 			"dashboards:delete": newScopedMapping(RelationDelete, dashboardGroup, dashboardResource, ""),
+			// Permission management
+			"folders.permissions:read":     newMapping(RelationGetPermissions, ""),
+			"folders.permissions:write":    newMapping(RelationSetPermissions, ""),
+			"dashboards.permissions:read":  newScopedMapping(RelationGetPermissions, dashboardGroup, dashboardResource, ""),
+			"dashboards.permissions:write": newScopedMapping(RelationSetPermissions, dashboardGroup, dashboardResource, ""),
 			// Action sets
 			"folders:view":     newMapping(RelationSetView, ""),
 			"folders:edit":     newMapping(RelationSetEdit, ""),
@@ -96,6 +101,9 @@ var resourceTranslations = map[string]resourceTranslation{
 			"dashboards:write":  newMapping(RelationUpdate, ""),
 			"dashboards:create": newMapping(RelationCreate, ""),
 			"dashboards:delete": newMapping(RelationDelete, ""),
+			// Permission management
+			"dashboards.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"dashboards.permissions:write": newMapping(RelationSetPermissions, ""),
 			// Action sets
 			"dashboards:view":  newMapping(RelationSetView, ""),
 			"dashboards:edit":  newMapping(RelationSetEdit, ""),

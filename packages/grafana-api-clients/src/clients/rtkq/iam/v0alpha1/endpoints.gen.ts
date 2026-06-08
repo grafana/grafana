@@ -139,7 +139,6 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             page: queryArg.page,
             offset: queryArg.offset,
-            sort: queryArg.sort,
           },
         }),
         invalidatesTags: ['Search'],
@@ -800,8 +799,6 @@ export type SearchExternalGroupMappingsApiArg = {
   page?: number;
   /** number of results to skip */
   offset?: number;
-  /** sortable field */
-  sort?: string;
   body: {
     externalGroups?: string[];
   };
@@ -1838,12 +1835,6 @@ export type TeamList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1IdentityRef = {
-  /** Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace. */
-  name: string;
-  /** Type of identity e.g. "user". For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15 */
-  type: string;
-};
 export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMember = {
   /** AvatarURL is the url where we can get the avatar for identity */
   avatarURL?: string;
@@ -1851,7 +1842,7 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMember = {
   displayName: string;
   /** External is set if member ship was synced from external IDP. */
   external?: boolean;
-  identity: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1IdentityRef;
+  identity: IdentityRef;
   /** InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible */
   internalId?: number;
   /** Permission member has in team.

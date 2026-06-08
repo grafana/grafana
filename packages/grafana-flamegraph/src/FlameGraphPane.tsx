@@ -12,7 +12,7 @@ import { FLAMEGRAPH_CONTAINER_HEIGHT } from './constants';
 import { useColorScheme } from './hooks';
 import { type ClickedItemData, PaneView, type ViewMode, type TextAlign } from './types';
 
-export type FlameGraphPaneProps = {
+type FlameGraphPaneProps = {
   paneView: PaneView;
   dataContainer: FlameGraphDataContainer;
   search: string;

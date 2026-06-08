@@ -3,6 +3,8 @@ package resource
 import (
 	"cmp"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"hash/fnv"
 	"math/rand"
@@ -11,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	gocache "github.com/patrickmn/go-cache"
 	"go.opentelemetry.io/otel/attribute"
@@ -38,6 +40,9 @@ import (
 )
 
 const maxBatchSize = 1000
+
+// openIndexStatsMaxAge is how far back startup accepts the local open index list.
+const openIndexStatsMaxAge = time.Hour
 
 // unknownBuildSize is passed when the caller does not have a cheap size hint.
 // Backends should treat it as unknown, not as an empty resource.
@@ -120,8 +125,15 @@ type BuildFn func(index ResourceIndex) (int64, error)
 // UpdateFn is responsible for updating index with changes since given RV. It should return new RV (to be used as next sinceRV), number of updated documents and error, if any.
 type UpdateFn func(context context.Context, index ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error)
 
-// SearchBackend contains the technology specific logic to support search
+// SearchBackend contains the technology specific logic to support search.
 type SearchBackend interface {
+	// LoadOpenIndexStats returns recently-open indexes from local backend state.
+	// Empty stats means no usable state exists, and callers should fall back to storage stats.
+	LoadOpenIndexStats(now time.Time, maxAge time.Duration) ([]ResourceStats, error)
+
+	// WriteOpenIndexStats persists currently-open indexes to local backend state.
+	WriteOpenIndexStats(now time.Time) error
+
 	// GetIndex returns existing index, or nil.
 	GetIndex(key NamespacedResource) ResourceIndex
 
@@ -154,6 +166,9 @@ type SearchBackend interface {
 
 	// GetOpenIndexes returns the list of indexes that are currently open.
 	GetOpenIndexes() []NamespacedResource
+
+	// Stop closes indexes and stops backend background tasks.
+	Stop()
 }
 
 // searchServer supports indexing+search regardless of implementation.
@@ -169,6 +184,12 @@ type searchServer struct {
 	builders      *builderCache
 	initWorkers   int
 	initMinSize   int
+
+	queryCache             vector.QueryEmbeddingCache
+	queryCacheMaxPerTenant int
+	rateLimiter            vector.RateLimiter
+	rateLimitPerTenant     int
+	rateLimitWindow        time.Duration
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
 
@@ -270,6 +291,12 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		selectableFields:          opts.SelectableFieldsForKinds,
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
+
+		queryCache:             opts.QueryCache,
+		queryCacheMaxPerTenant: opts.QueryCacheMaxPerTenant,
+		rateLimiter:            opts.RateLimiter,
+		rateLimitPerTenant:     opts.RateLimitPerTenant,
+		rateLimitWindow:        opts.RateLimitWindow,
 	}
 
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
@@ -602,26 +629,18 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		attribute.Int("limit", limit),
 	)
 
-	// Embed the query as a retrieval *query* (different task hint than the
-	// retrieval *document* hint used at index time — providers tune
-	// projections per side of the retrieval pair).
-	out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
-		Texts:     []string{req.Query},
-		Normalize: s.embedder.ShouldNormalize(),
-		Task:      embedder.TaskRetrievalQuery,
-	})
-	if err != nil {
-		s.log.Error("vector search: embed query", "err", err)
-		return nil, status.Error(codes.Internal, "embed query")
+	if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
+		return nil, err
 	}
-	if len(out.Embeddings) != 1 || len(out.Embeddings[0].Dense) == 0 {
-		s.log.Error("vector search: embedder returned no vectors")
-		return nil, status.Error(codes.Internal, "embed query: empty result")
+
+	dense, err := s.embedVectorSearchQuery(ctx, req.Key.Namespace, req.Query)
+	if err != nil {
+		return nil, err
 	}
 
 	results, err := s.vectorBackend.Search(ctx,
 		req.Key.Namespace, s.embedder.Model, req.Key.Resource,
-		out.Embeddings[0].Dense, limit, translateVectorSearchFilters(req.Filters)...)
+		dense, limit, translateVectorSearchFilters(req.Filters)...)
 	if err != nil {
 		s.log.Error("vector search: backend", "err", err)
 		return nil, status.Error(codes.Internal, "vector search backend")
@@ -683,6 +702,109 @@ func validateVectorSearchRequest(req *resourcepb.VectorSearchRequest) *resourcep
 		}
 	}
 	return nil
+}
+
+// checkVectorSearchRateLimit returns a gRPC status error when the
+// request must be rejected (over quota or limiter unreachable), nil
+// when it should proceed.
+func (s *searchServer) checkVectorSearchRateLimit(ctx context.Context, namespace string) error {
+	if s.rateLimiter == nil {
+		return nil
+	}
+	allowed, count, err := s.rateLimiter.Allow(ctx, namespace, s.rateLimitWindow, s.rateLimitPerTenant)
+	if err != nil {
+		s.log.Error("vector search: rate-limit check failed, fail-closed", "err", err, "namespace", namespace)
+		if s.vectorMetrics != nil {
+			s.vectorMetrics.RateLimiterErrorsTotal.Inc()
+		}
+		return status.Error(codes.Unavailable, "rate limiter unavailable")
+	}
+	if !allowed {
+		if s.vectorMetrics != nil {
+			s.vectorMetrics.RateLimitedRequestsTotal.Inc()
+		}
+		return status.Errorf(codes.ResourceExhausted, "tenant rate limit exceeded: %d requests in window", count)
+	}
+	return nil
+}
+
+// embedVectorSearchQuery returns the query embedding, fetching it from
+// the cache on hit or calling the embedder on miss (and best-effort
+// writing back into the cache, enforcing the per-tenant cap).
+func (s *searchServer) embedVectorSearchQuery(ctx context.Context, namespace, query string) ([]float32, error) {
+	queryHash := sha256Hex(query)
+	if dense, ok := s.lookupCachedQueryEmbedding(ctx, namespace, queryHash); ok {
+		return dense, nil
+	}
+
+	// Embed the query as a retrieval *query* (different task hint than
+	// the retrieval *document* hint used at index time — providers tune
+	// projections per side of the retrieval pair).
+	out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
+		Texts:     []string{query},
+		Normalize: s.embedder.ShouldNormalize(),
+		Task:      embedder.TaskRetrievalQuery,
+	})
+	if err != nil {
+		s.log.Error("vector search: embed query", "err", err)
+		return nil, status.Error(codes.Internal, "embed query")
+	}
+	if len(out.Embeddings) != 1 || len(out.Embeddings[0].Dense) == 0 {
+		s.log.Error("vector search: embedder returned no vectors")
+		return nil, status.Error(codes.Internal, "embed query: empty result")
+	}
+	dense := out.Embeddings[0].Dense
+	if s.vectorMetrics != nil {
+		s.vectorMetrics.QueryCacheMissesTotal.WithLabelValues(s.embedder.Model).Inc()
+	}
+	s.storeCachedQueryEmbedding(ctx, namespace, queryHash, dense)
+	return dense, nil
+}
+
+// lookupCachedQueryEmbedding returns (embedding, true) on hit; (nil,
+// false) on miss or any error (cache failures must not fail the search).
+func (s *searchServer) lookupCachedQueryEmbedding(ctx context.Context, namespace, queryHash string) ([]float32, bool) {
+	if s.queryCache == nil {
+		return nil, false
+	}
+	emb, hit, err := s.queryCache.Get(ctx, namespace, s.embedder.Model, queryHash)
+	if err != nil {
+		s.log.Warn("vector search: cache lookup failed, falling through", "err", err)
+		return nil, false
+	}
+	if !hit {
+		return nil, false
+	}
+	if s.vectorMetrics != nil {
+		s.vectorMetrics.QueryCacheHitsTotal.WithLabelValues(s.embedder.Model).Inc()
+	}
+	return emb, true
+}
+
+// vectorQueryCacheEvictTargetFraction is how full the cache is left
+// after an eviction round runs.
+const vectorQueryCacheEvictTargetFraction = 0.8
+
+// storeCachedQueryEmbedding writes the freshly-embedded vector into the
+// cache (best-effort). When the tenant is at or above the cap, eviction
+// trims down to vectorQueryCacheEvictTargetFraction of the cap in one
+// pass so we don't run a DELETE on every cache miss at steady state.
+func (s *searchServer) storeCachedQueryEmbedding(ctx context.Context, namespace, queryHash string, dense []float32) {
+	if s.queryCache == nil || s.queryCacheMaxPerTenant <= 0 {
+		return
+	}
+	if n, err := s.queryCache.Count(ctx, namespace); err == nil && int(n) >= s.queryCacheMaxPerTenant {
+		target := int(float64(s.queryCacheMaxPerTenant) * vectorQueryCacheEvictTargetFraction)
+		evictN := int(n) - target
+		if deleted, err := s.queryCache.EvictOldest(ctx, namespace, evictN); err != nil {
+			s.log.Warn("vector search: cache evict failed", "err", err)
+		} else if deleted > 0 && s.vectorMetrics != nil {
+			s.vectorMetrics.QueryCacheEvictionsTotal.Add(float64(deleted))
+		}
+	}
+	if err := s.queryCache.Put(ctx, namespace, s.embedder.Model, queryHash, dense); err != nil {
+		s.log.Warn("vector search: cache put failed", "err", err)
+	}
 }
 
 // vectorAuthzKey de-dupes (UID, Folder) so sub-resources of the same
@@ -966,12 +1088,28 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 	}, nil
 }
 
+func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, error) {
+	stats, err := s.search.LoadOpenIndexStats(time.Now(), openIndexStatsMaxAge)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("failed to load open index stats, falling back to resource stats", "error", err)
+	} else if len(stats) > 0 {
+		// Do not apply initMinSize here: open index stats restore indexes that were recently open on this node,
+		// rather than discovering resources from storage.
+		s.log.FromContext(ctx).Info("using open index stats", "indexes", len(stats))
+		return stats, nil
+	} else {
+		s.log.FromContext(ctx).Debug("open index stats unavailable, falling back to resource stats")
+	}
+
+	return s.storage.GetResourceStats(ctx, NamespacedResource{}, s.initMinSize)
+}
+
 func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 	totalBatchesIndexed := 0
 	group := errgroup.Group{}
 	group.SetLimit(s.initWorkers)
 
-	stats, err := s.storage.GetResourceStats(ctx, NamespacedResource{}, s.initMinSize)
+	stats, err := s.startupIndexStats(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -1028,15 +1166,20 @@ func (s *searchServer) init(ctx context.Context) error {
 	s.bgTaskWg.Add(1)
 	go s.runPeriodicScanForIndexesToRebuild(subctx)
 
+	s.startRateBucketSweeper(subctx)
+
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
 	return nil
 }
 
 func (s *searchServer) stop() {
-	// Stop background tasks.
+	// This stops search-server tasks only: rebuild workers, rebuild scans, and rate-limit sweeping.
 	s.bgTaskCancel()
 	s.bgTaskWg.Wait()
+
+	// Stop the backend after search-server workers so no rebuild can race with closing indexes.
+	s.search.Stop()
 }
 
 // Init initializes the search server.
@@ -1078,6 +1221,42 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			s.findIndexesToRebuild(importTimes, nil, time.Now(), true)
 		}
 	}
+}
+
+func sha256Hex(s string) string {
+	h := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(h[:])
+}
+
+// Old buckets never affect Allow() — sweeping is purely housekeeping.
+func (s *searchServer) startRateBucketSweeper(ctx context.Context) {
+	if s.rateLimiter == nil || s.rateLimitWindow <= 0 {
+		return
+	}
+	s.bgTaskWg.Go(func() {
+		interval := s.rateLimitWindow / 2
+		if interval < time.Minute {
+			interval = time.Minute
+		}
+		t := time.NewTicker(interval)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				cutoff := time.Now().Add(-2 * s.rateLimitWindow)
+				deleted, err := s.rateLimiter.SweepOlderThan(ctx, cutoff)
+				if err != nil {
+					s.log.Warn("rate-bucket sweep failed", "err", err)
+					continue
+				}
+				if deleted > 0 {
+					s.log.Debug("rate-bucket sweep", "deleted", deleted, "cutoff", cutoff)
+				}
+			}
+		}
+	})
 }
 
 // jitterForKey returns a deterministic jitter duration for the given key,
