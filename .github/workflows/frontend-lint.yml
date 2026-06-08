@@ -412,3 +412,6 @@ jobs:
       run: |
         echo "::error::yarn.lock contains duplicate dependencies. Run 'yarn dedupe' locally, commit the updated yarn.lock, and push again."
         exit 1
+
+    - name: Check yarn constraints
+      run: yarn constraints

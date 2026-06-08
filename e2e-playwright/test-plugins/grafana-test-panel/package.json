@@ -13,19 +13,19 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@grafana/plugin-configs": "workspace:*",
-    "@types/node": "24.9.2",
+    "@types/node": "24.10.1",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "i18next-cli": "^1.48.0",
     "typescript": "6.0.2",
     "webpack": "^5.105.0",
-    "webpack-merge": "5.10.0"
+    "webpack-merge": "6.0.1"
   },
   "engines": {
     "node": ">= 22 <25"
   },
   "dependencies": {
-    "@emotion/css": "11.11.2",
+    "@emotion/css": "11.13.5",
     "@grafana/data": "workspace:*",
     "@grafana/i18n": "workspace:*",
     "@grafana/runtime": "workspace:*",

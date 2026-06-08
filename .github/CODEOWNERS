@@ -802,6 +802,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /.yarn @grafana/frontend-ops
 /.yarnrc.yml @grafana/frontend-ops
 /yarn.lock @grafana/frontend-ops
+yarn.config.cjs
 /lerna.json @grafana/frontend-ops
 /.prettierrc.js @grafana/frontend-ops
 /.vim @zoltanbedi
