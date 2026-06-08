@@ -408,7 +408,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
             />
             <ControlledCollapse
               label={t('provisioning.commit-options.label-commit-options', 'Commit options (advanced)')}
-              isOpen={false}
+              isOpen={signingEnabled}
             >
               <Stack direction="column" gap={2}>
                 <Field

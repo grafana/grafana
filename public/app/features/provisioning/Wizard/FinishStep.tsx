@@ -2,7 +2,17 @@ import { memo, useEffect, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Checkbox, ControlledCollapse, Field, Input, RadioButtonGroup, SecretTextArea, Stack, Text, TextLink } from '@grafana/ui';
+import {
+  Checkbox,
+  ControlledCollapse,
+  Field,
+  Input,
+  RadioButtonGroup,
+  SecretTextArea,
+  Stack,
+  Text,
+  TextLink,
+} from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { BranchOptionsSection } from '../Config/BranchOptionsSection';
@@ -362,7 +372,6 @@ export const FinishStep = memo(function FinishStep() {
           />
         </Field>
       )}
-
     </Stack>
   );
 });
