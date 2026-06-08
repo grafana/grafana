@@ -61,6 +61,7 @@ FROM ${GO_IMAGE} AS go-builder
 
 ARG COMMIT_SHA=""
 ARG BUILD_BRANCH=""
+ARG SOURCE_DATE_EPOCH=""
 ARG GO_BUILD_TAGS="oss"
 ARG WIRE_TAGS="oss"
 
@@ -101,6 +102,7 @@ COPY .github .github
 
 ENV COMMIT_SHA=${COMMIT_SHA}
 ENV BUILD_BRANCH=${BUILD_BRANCH}
+ENV SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
