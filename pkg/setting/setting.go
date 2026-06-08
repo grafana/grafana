@@ -1079,7 +1079,7 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	}
 
 	alertingAnnotations := cfg.Raw.Section("unified_alerting.state_history.annotations")
-	if alertingAnnotations.Key("max_age").Value() == "" && section.Key("max_annotations_to_keep").Value() == "" {
+	if alertingAnnotations.Key("max_age").Value() == "" && alertingAnnotations.Key("max_annotations_to_keep").Value() == "" {
 		// Although this section is not documented anymore, we decided to keep it to avoid potential data-loss when user upgrades Grafana and does not change the setting.
 		// TODO delete some time after Grafana 11.
 		alertingSection := cfg.Raw.Section("alerting")
