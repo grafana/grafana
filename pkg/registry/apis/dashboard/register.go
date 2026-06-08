@@ -976,6 +976,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		apiVersion:              apiVersion,
 		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
 		live:                    b.dashboardActivityChannel,
+		features:                b.features,
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits

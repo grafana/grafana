@@ -1844,8 +1844,9 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 
 	// Request default permissions for new root dashboards via the App Platform path; the dashboard
 	// API server's permission setter acts on this annotation. Root-only (nested inherit from the
-	// parent) and ignored on update, so it's safe before the create-or-update below.
-	if cmd.FolderUID == "" && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+	// parent), dashboards only (folders have their own setter), and ignored on update, so it's safe
+	// before the create-or-update below.
+	if !cmd.IsFolder && cmd.FolderUID == "" && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
 		meta, err := utils.MetaAccessor(obj)
 		if err != nil {
 			return nil, err
