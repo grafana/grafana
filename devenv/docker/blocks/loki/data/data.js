@@ -80,17 +80,49 @@ function fakeTraceId() {
   return traceId;
 }
 
+function getRandomLevel() {
+  const roll = Math.random();
+  if (roll < 0.12) {
+    return { type: 'unknown', value: 'unknown' };
+  }
+  if (roll < 0.24) {
+    return { type: 'unspecified' };
+  }
+  return {
+    type: 'normal',
+    value: chooseRandomElement(['debug', 'info', 'info', 'info', 'info', 'warning', 'error', 'error']),
+  };
+}
+
 function getRandomLogItem(counter) {
   const randomText = `${Math.trunc(Math.random() * 1000 * 1000 * 1000)}`;
   const maybeAnsiText = Math.random() < 0.5 ? 'with ANSI \u001b[31mpart of the text\u001b[0m' : '';
-  return {
-    _entry: `log text ${maybeAnsiText} [${randomText}]`,
+  const level = getRandomLevel();
+  const levelHint =
+    level.type === 'unknown' ? ' [level=unknown]' : level.type === 'unspecified' ? ' [no level]' : '';
+  const item = {
+    _entry: `log text ${maybeAnsiText} [${randomText}]${levelHint}`,
     counter: counter.toString(),
-    float: Math.random() > 0.2 ? (Math.trunc(100000 * Math.random())/1000).toString() : 'NaN',
+    float: Math.random() > 0.2 ? (Math.trunc(100000 * Math.random()) / 1000).toString() : 'NaN',
     wave: getSineValue(counter, 20), // let's loop in 20 steps
     label: chooseRandomElement(['val1', 'val2', 'val3']),
-    level: chooseRandomElement(['debug','info', 'info', 'info', 'info', 'warning', 'error', 'error']),
   };
+  if (level.type !== 'unspecified') {
+    item.level = level.value;
+  }
+  return item;
+}
+
+function buildStructuredMetadata(item) {
+  const metadata = {
+    structuredMetadataKey: 'value',
+    traceId: fakeTraceId(),
+  };
+  // Loki only auto-detects standard severities into detected_level; explicit "unknown" needs metadata.
+  if (item.level === 'unknown') {
+    metadata.detected_level = 'unknown';
+  }
+  return metadata;
 }
 
 function getRandomJSONLogLine(counter) {
@@ -188,8 +220,9 @@ async function sendOldLogs() {
     const timestampNs = `${timestampMs}${getRandomNanosecPart()}`;
     globalCounter += 1;
     const item = getRandomLogItem(globalCounter)
-    await lokiSendLogLine(timestampNs, JSON.stringify(item), {age:'old', place:'moon', ...sharedLabels}, {structuredMetadataKey: 'value', traceId: fakeTraceId()});
-    await lokiSendLogLine(timestampNs, logFmtLine(item), {age:'old', place:'luna', ...sharedLabels}, {structuredMetadataKey: 'value', traceId: fakeTraceId()});
+    const structuredMetadata = buildStructuredMetadata(item);
+    await lokiSendLogLine(timestampNs, JSON.stringify(item), {age:'old', place:'moon', ...sharedLabels}, structuredMetadata);
+    await lokiSendLogLine(timestampNs, logFmtLine(item), {age:'old', place:'luna', ...sharedLabels}, structuredMetadata);
   };
 }
 
@@ -199,8 +232,9 @@ async function sendNewLogs() {
     const nowMs = new Date().getTime();
     const timestampNs = `${nowMs}${getRandomNanosecPart()}`;
     const item = getRandomLogItem(globalCounter)
-    await lokiSendLogLine(timestampNs, JSON.stringify(item), {age:'new', place:'moon', ...sharedLabels}, {structuredMetadataKey: 'value', traceId: fakeTraceId()});
-    await lokiSendLogLine(timestampNs, logFmtLine(item), {age:'new', place:'luna', ...sharedLabels}, {structuredMetadataKey: 'value', traceId: fakeTraceId()});
+    const structuredMetadata = buildStructuredMetadata(item);
+    await lokiSendLogLine(timestampNs, JSON.stringify(item), {age:'new', place:'moon', ...sharedLabels}, structuredMetadata);
+    await lokiSendLogLine(timestampNs, logFmtLine(item), {age:'new', place:'luna', ...sharedLabels}, structuredMetadata);
     const sleepDuration  = 200 + Math.random() * 800; // between 0.2 and 1 seconds
     await sleep(sleepDuration);
   }
