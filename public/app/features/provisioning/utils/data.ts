@@ -26,11 +26,13 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
   const singleResourceMessageTemplate = data.commit?.singleResourceMessageTemplate?.trim();
   const authorName = data.commit?.authorName?.trim();
   const authorEmail = data.commit?.authorEmail?.trim();
+  const signingFormat = data.signingFormat && data.signingFormat !== 'none' ? data.signingFormat : undefined;
   if (singleResourceMessageTemplate || authorName || authorEmail) {
     spec.commit = {
       ...(singleResourceMessageTemplate && { singleResourceMessageTemplate }),
       ...(authorName && { authorName }),
       ...(authorEmail && { authorEmail }),
+      ...(signingFormat && (authorName || authorEmail) && { signingFormat }),
     };
   }
 
@@ -99,6 +101,7 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     prWorkflow: spec.workflows.includes('branch'),
     enablePushToConfiguredBranch: spec.workflows.includes('write'),
     connectionName: spec.connection?.name,
+    signingFormat: spec.commit?.signingFormat ?? 'none',
   });
 };
 

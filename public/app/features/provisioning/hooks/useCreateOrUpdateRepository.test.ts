@@ -60,7 +60,7 @@ describe('useCreateOrUpdateRepository', () => {
     expect(captured.test?.secure).toEqual({ token: { create: 'my-token' } });
   });
 
-  it('includes gpgSigningKey in secure payload when provided', async () => {
+  it('includes signingKey in secure payload when provided', async () => {
     const captured = captureRequests();
     const { result } = renderHook(() => useCreateOrUpdateRepository(), { wrapper: getWrapper({}) });
 
@@ -69,10 +69,25 @@ describe('useCreateOrUpdateRepository', () => {
     });
 
     await waitFor(() => expect(captured.create).toBeDefined());
-    expect(captured.create?.secure).toEqual({ gpgSigningKey: { create: 'PGP-KEY' } });
+    expect(captured.create?.secure).toEqual({ signingKey: { create: 'PGP-KEY' } });
   });
 
-  it('includes both token and gpgSigningKey when both provided', async () => {
+  it('includes signingKey and smimeCertificate in secure payload when provided', async () => {
+    const captured = captureRequests();
+    const { result } = renderHook(() => useCreateOrUpdateRepository(), { wrapper: getWrapper({}) });
+
+    await act(async () => {
+      await result.current[0](baseSpec, undefined, 'SMIME-KEY', 'SMIME-CERT');
+    });
+
+    await waitFor(() => expect(captured.create).toBeDefined());
+    expect(captured.create?.secure).toEqual({
+      signingKey: { create: 'SMIME-KEY' },
+      smimeCertificate: { create: 'SMIME-CERT' },
+    });
+  });
+
+  it('includes both token and signingKey when both provided', async () => {
     const captured = captureRequests();
     const { result } = renderHook(() => useCreateOrUpdateRepository(), { wrapper: getWrapper({}) });
 
@@ -83,11 +98,11 @@ describe('useCreateOrUpdateRepository', () => {
     await waitFor(() => expect(captured.create).toBeDefined());
     expect(captured.create?.secure).toEqual({
       token: { create: 'my-token' },
-      gpgSigningKey: { create: 'PGP-KEY' },
+      signingKey: { create: 'PGP-KEY' },
     });
   });
 
-  it('omits secure when neither token nor gpgSigningKey provided', async () => {
+  it('omits secure when neither token nor signingKey provided', async () => {
     const captured = captureRequests();
     const { result } = renderHook(() => useCreateOrUpdateRepository(), { wrapper: getWrapper({}) });
 
@@ -122,7 +137,7 @@ describe('useCreateOrUpdateRepository', () => {
     await waitFor(() => expect(captured.update).toBeDefined());
     expect(captured.update?.secure).toEqual({
       token: { create: 'my-token' },
-      gpgSigningKey: { create: 'PGP-KEY' },
+      signingKey: { create: 'PGP-KEY' },
     });
   });
 });

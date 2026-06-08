@@ -228,18 +228,29 @@ func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCal
 						SchemaProps: spec.SchemaProps{
 							Description: "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. The Grafana-saved-by trailer is always appended regardless of this setting.",
 							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"authorName": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Name used as the commit author and committer. Required for the GPG signing key's UID to match the commit, which GitHub needs to mark commits as Verified. When empty, defaults to \"Grafana\".",
+							Description: "Name used as the commit author and committer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to \"Grafana\".",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"authorEmail": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Email used as the commit author and committer. Must match the email on the GPG signing key's UID and a verified email on the GitHub account where the matching public key is registered. When empty, defaults to \"noreply@grafana.com\".",
+							Description: "Email used as the commit author and committer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to \"noreply@grafana.com\".",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"signingFormat": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Format of the key in secure.signingKey. One of \"gpg\", \"ssh\", or \"smime\". When empty, defaults to \"gpg\".\n\nPossible enum values:\n - `\"gpg\"`\n - `\"smime\"`\n - `\"ssh\"`",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"gpg", "smime", "ssh"},
 						},
 					},
 				},
@@ -3288,9 +3299,16 @@ func schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref common.ReferenceCall
 							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
 						},
 					},
-					"gpgSigningKey": {
+					"signingKey": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Armored OpenPGP private key used to sign commits the repository writes back. When unset, commits are unsigned.",
+							Description: "Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingFormat. When unset, commits are unsigned.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+						},
+					},
+					"smimeCertificate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "X.509 certificate paired with SigningKey when signingFormat is \"smime\". Unused for the gpg and ssh formats.",
 							Default:     map[string]interface{}{},
 							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
 						},

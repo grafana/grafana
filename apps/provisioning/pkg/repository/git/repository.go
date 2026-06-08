@@ -43,13 +43,15 @@ const (
 )
 
 type RepositoryConfig struct {
-	URL           string
-	Branch        string
-	TokenUser     string
-	Token         common.RawSecureValue
-	SigningKey    common.RawSecureValue
-	Path          string
-	SkipGitSuffix bool
+	URL              string
+	Branch           string
+	TokenUser        string
+	Token            common.RawSecureValue
+	SigningKey       common.RawSecureValue
+	SigningFormat    provisioning.SigningFormat
+	SMIMECertificate common.RawSecureValue
+	Path             string
+	SkipGitSuffix    bool
 }
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
@@ -85,11 +87,11 @@ func NewRepository(
 
 	var writerOptions []nanogit.WriterOption
 	if !gitConfig.SigningKey.IsZero() {
-		modifier, err := gpgCommitModifier(gitConfig.SigningKey)
+		signer, err := signingOption(gitConfig)
 		if err != nil {
 			return nil, fmt.Errorf("configure commit signing: %w", err)
 		}
-		writerOptions = append(writerOptions, nanogit.WithCommitModifier(modifier))
+		writerOptions = append(writerOptions, signer)
 	}
 
 	return &gitRepository{

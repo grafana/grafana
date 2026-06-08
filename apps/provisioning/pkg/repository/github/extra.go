@@ -55,17 +55,24 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("unable to decrypt token: %w", err)
 	}
 
-	signingKey, err := secure.GPGSigningKey(ctx)
+	signingKey, err := secure.SigningKey(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decrypt signing key: %w", err)
 	}
 
+	smimeCert, err := secure.SMIMECertificate(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt smime certificate: %w", err)
+	}
+
 	gitRepo, err := git.NewRepository(ctx, r, git.RepositoryConfig{
-		URL:        r.Spec.GitHub.URL,
-		Branch:     r.Spec.GitHub.Branch,
-		Path:       r.Spec.GitHub.Path,
-		Token:      token,
-		SigningKey: signingKey,
+		URL:              r.Spec.GitHub.URL,
+		Branch:           r.Spec.GitHub.Branch,
+		Path:             r.Spec.GitHub.Path,
+		Token:            token,
+		SigningKey:       signingKey,
+		SigningFormat:    git.SigningFormatFromSpec(r),
+		SMIMECertificate: smimeCert,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error creating git repository: %w", err)

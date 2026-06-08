@@ -35,9 +35,14 @@ type SecureValues struct {
 	// Some webhooks (including github) require a secret key value
 	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
 
-	// Armored OpenPGP private key used to sign commits the repository
-	// writes back. When unset, commits are unsigned.
-	GPGSigningKey common.InlineSecureValue `json:"gpgSigningKey,omitzero,omitempty"`
+	// Private key used to sign commits the repository writes back. The format
+	// is selected by spec.commit.signingFormat. When unset, commits are
+	// unsigned.
+	SigningKey common.InlineSecureValue `json:"signingKey,omitzero,omitempty"`
+
+	// X.509 certificate paired with SigningKey when signingFormat is "smime".
+	// Unused for the gpg and ssh formats.
+	SMIMECertificate common.InlineSecureValue `json:"smimeCertificate,omitzero,omitempty"`
 }
 
 func (SecureValues) OpenAPIModelName() string {
@@ -45,7 +50,7 @@ func (SecureValues) OpenAPIModelName() string {
 }
 
 func (v SecureValues) IsZero() bool {
-	return v.Token.IsZero() && v.WebhookSecret.IsZero() && v.GPGSigningKey.IsZero()
+	return v.Token.IsZero() && v.WebhookSecret.IsZero() && v.SigningKey.IsZero() && v.SMIMECertificate.IsZero()
 }
 
 type LocalRepositoryConfig struct {
@@ -328,17 +333,30 @@ type CommitOptions struct {
 	// SingleResourceMessageTemplate and rendered read-only. The
 	// Grafana-saved-by trailer is always appended regardless of this setting.
 	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
-	// Name used as the commit author and committer. Required for the GPG
-	// signing key's UID to match the commit, which GitHub needs to mark
-	// commits as Verified. When empty, defaults to "Grafana".
+	// Name used as the commit author and committer. Required for the signing
+	// key's identity to match the commit, which providers need to mark commits
+	// as Verified. When empty, defaults to "Grafana".
 	AuthorName string `json:"authorName,omitempty"`
 
-	// Email used as the commit author and committer. Must match the email on
-	// the GPG signing key's UID and a verified email on the GitHub account
-	// where the matching public key is registered. When empty, defaults to
-	// "noreply@grafana.com".
+	// Email used as the commit author and committer. Must match the signing
+	// key's identity and a verified email on the account where the matching
+	// public key is registered. When empty, defaults to "noreply@grafana.com".
 	AuthorEmail string `json:"authorEmail,omitempty"`
+
+	// Format of the key in secure.signingKey. One of "gpg", "ssh", or "smime".
+	// When empty, defaults to "gpg".
+	SigningFormat SigningFormat `json:"signingFormat,omitempty"`
 }
+
+// SigningFormat selects the key format used to sign commits.
+// +enum
+type SigningFormat string
+
+const (
+	GPGSigningFormat   SigningFormat = "gpg"
+	SSHSigningFormat   SigningFormat = "ssh"
+	SMIMESigningFormat SigningFormat = "smime"
+)
 
 func (CommitOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "CommitOptions"

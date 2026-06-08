@@ -39,19 +39,26 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("unable to decrypt token: %w", err)
 	}
 
-	signingKey, err := secure.GPGSigningKey(ctx)
+	signingKey, err := secure.SigningKey(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decrypt signing key: %w", err)
 	}
 
+	smimeCert, err := secure.SMIMECertificate(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt smime certificate: %w", err)
+	}
+
 	return NewRepository(ctx, r, RepositoryConfig{
-		URL:           cfg.URL,
-		Branch:        cfg.Branch,
-		Path:          cfg.Path,
-		TokenUser:     cfg.TokenUser,
-		Token:         token,
-		SigningKey:    signingKey,
-		SkipGitSuffix: true,
+		URL:              cfg.URL,
+		Branch:           cfg.Branch,
+		Path:             cfg.Path,
+		TokenUser:        cfg.TokenUser,
+		Token:            token,
+		SigningKey:       signingKey,
+		SigningFormat:    SigningFormatFromSpec(r),
+		SMIMECertificate: smimeCert,
+		SkipGitSuffix:    true,
 	})
 }
 

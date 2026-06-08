@@ -72,30 +72,47 @@ describe('FinishStep', () => {
     } as ReturnType<typeof useGetFrontendSettingsQuery>);
   });
 
-  describe('GPG signing key section', () => {
-    it('renders signing key, author name, and author email fields for github', () => {
+  describe('signing key section', () => {
+    it('renders the signing format selector for github with signing off by default', () => {
       setup();
-      expect(screen.getByText('GPG signing key')).toBeInTheDocument();
+      expect(screen.getByText('Signing format')).toBeInTheDocument();
+      expect(screen.queryByText('Signing key')).not.toBeInTheDocument();
+    });
+
+    it('reveals signing key and author fields after a format is selected', async () => {
+      const { user } = setup();
+      await user.click(screen.getByLabelText('GPG'));
+      expect(screen.getByText('Signing key')).toBeInTheDocument();
       expect(screen.getByLabelText(/Commit author name/)).toBeInTheDocument();
       expect(screen.getByLabelText(/Commit author email/)).toBeInTheDocument();
     });
 
-    it('disables author fields when no signing key is set', () => {
-      setup();
+    it('disables author fields when no signing key is set', async () => {
+      const { user } = setup();
+      await user.click(screen.getByLabelText('GPG'));
       expect(screen.getByLabelText(/Commit author name/)).toBeDisabled();
       expect(screen.getByLabelText(/Commit author email/)).toBeDisabled();
     });
 
     it('enables author fields after a signing key is entered', async () => {
       const { user } = setup();
-      await user.type(screen.getByLabelText(/GPG signing key/), 'PGP-KEY');
+      await user.click(screen.getByLabelText('GPG'));
+      await user.type(screen.getByLabelText(/Signing key/), 'PGP-KEY');
       expect(screen.getByLabelText(/Commit author name/)).toBeEnabled();
       expect(screen.getByLabelText(/Commit author email/)).toBeEnabled();
     });
 
-    it('does not render signing key section for local repositories', () => {
+    it('shows the S/MIME certificate field only for the smime format', async () => {
+      const { user } = setup();
+      await user.click(screen.getByLabelText('GPG'));
+      expect(screen.queryByText('S/MIME certificate')).not.toBeInTheDocument();
+      await user.click(screen.getByLabelText('S/MIME'));
+      expect(screen.getByText('S/MIME certificate')).toBeInTheDocument();
+    });
+
+    it('does not render the signing section for local repositories', () => {
       setup({ repository: { type: 'local', path: '/var/repos' } });
-      expect(screen.queryByText('GPG signing key')).not.toBeInTheDocument();
+      expect(screen.queryByText('Signing format')).not.toBeInTheDocument();
     });
   });
 });
