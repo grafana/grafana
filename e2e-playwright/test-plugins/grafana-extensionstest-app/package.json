@@ -14,8 +14,8 @@
   "devDependencies": {
     "@grafana/plugin-configs": "workspace:*",
     "@types/node": "24.9.2",
-    "@types/react": "18.3.18",
-    "@types/react-dom": "18.3.5",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
     "i18next-cli": "^1.48.0",
     "typescript": "6.0.2",
     "webpack": "^5.105.0",
@@ -29,8 +29,8 @@
     "@grafana/i18n": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/ui": "workspace:*",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
     "react-router-dom": "^6.26.1"
   },
   "peerDependencies": {

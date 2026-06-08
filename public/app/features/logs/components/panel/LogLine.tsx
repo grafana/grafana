@@ -128,6 +128,9 @@ const LogLineComponent = memo(
       wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
     );
     const logLineRef = useRef<HTMLDivElement | null>(null);
+    // TODO remove when react-use is fixed
+    // see https://github.com/streamich/react-use/issues/2612
+    // @ts-expect-error
     const intersection = useIntersection(logLineRef, {});
     const pinned = useLogIsPinned(log);
     const permalinked = useLogIsPermalinked(log);

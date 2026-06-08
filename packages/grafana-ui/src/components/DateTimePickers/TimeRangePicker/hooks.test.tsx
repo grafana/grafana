@@ -13,7 +13,7 @@ describe('useListFocus', () => {
 
   const testid = 'test';
   const getListElement = (
-    ref: RefObject<HTMLUListElement>,
+    ref: RefObject<HTMLUListElement | null>,
     handleKeys?: (event: KeyboardEvent) => void,
     onClick?: () => void
   ) => (

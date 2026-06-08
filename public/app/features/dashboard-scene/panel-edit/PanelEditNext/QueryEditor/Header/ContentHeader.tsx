@@ -101,7 +101,7 @@ export interface ContentHeaderProps {
    * Optional ref to the container div.
    * Used downstream for saved queries positioning.
    */
-  containerRef?: RefObject<HTMLDivElement>;
+  containerRef?: RefObject<HTMLDivElement | null>;
   /**
    * Optional type config for query editor types (icons, colors, labels).
    * If not provided, will be computed from the current theme.

@@ -57,7 +57,7 @@
     "@leeoniya/ufuzzy": "1.0.19",
     "d3-scale": "^4.0.2",
     "lodash": "^4.17.23",
-    "react": "18.3.1",
+    "react": "19.2.4",
     "react-use": "17.6.0",
     "react-virtualized-auto-sizer": "1.0.26",
     "tinycolor2": "1.6.0"
@@ -78,7 +78,7 @@
     "@types/jest": "^29.5.4",
     "@types/lodash": "4.17.20",
     "@types/node": "24.10.1",
-    "@types/react": "18.3.18",
+    "@types/react": "19.2.7",
     "@types/react-table": "^7.7.20",
     "@types/tinycolor2": "1.4.6",
     "esbuild": "0.25.8",

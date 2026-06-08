@@ -9,7 +9,7 @@ exports[`VariableQueryEditor renders correctly 1`] = `
       class="css-l4ykjo-Label"
     >
       <label
-        for=":r0:"
+        for="_r_0_"
       >
         <div
           class="css-70qvj9"
@@ -60,7 +60,7 @@ exports[`VariableQueryEditor renders correctly 1`] = `
                   autocorrect="off"
                   class=""
                   data-testid="data-testid Select container-input"
-                  id=":r0:"
+                  id="_r_0_"
                   role="combobox"
                   spellcheck="false"
                   style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"

@@ -16,7 +16,7 @@ import { type DashboardGridItem, type RepeatDirection } from './DashboardGridIte
 interface PanelWrapperProps {
   panel: VizPanel;
   isLazy: boolean;
-  containerRef?: RefObject<HTMLDivElement>;
+  containerRef?: RefObject<HTMLDivElement | null>;
   isSelected?: boolean;
 }
 

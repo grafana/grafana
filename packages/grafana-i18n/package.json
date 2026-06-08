@@ -62,7 +62,7 @@
     "react-i18next": "^15.0.0"
   },
   "devDependencies": {
-    "@types/react": "18.3.18",
+    "@types/react": "19.2.7",
     "rollup": "^4.60.1",
     "typescript": "6.0.2"
   },
