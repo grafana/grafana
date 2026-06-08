@@ -50,8 +50,8 @@ type fakeConfigClient struct {
 	mu       sync.Mutex
 	nsMapper request.NamespaceMapper
 	objects  map[string]*alertingnotifv0alpha1.Config // namespace -> object
-	getErr   map[string]error                              // namespace -> error returned by Get
-	getCalls map[string]int                                // namespace -> Get call count
+	getErr   map[string]error                         // namespace -> error returned by Get
+	getCalls map[string]int                           // namespace -> Get call count
 }
 
 func newFakeConfigClient() *fakeConfigClient {
