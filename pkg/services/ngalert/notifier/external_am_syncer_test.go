@@ -40,9 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// ptrTo returns a pointer to v.
-func ptrTo[T any](v T) *T { return &v }
-
 // fakeAdminConfigClient is an in-memory resource.ClientGenerator + resource.Client
 // that serves AdminConfig objects for the sync tests. It is the UID source: tests
 // seed a datasource UID per org via setUID, and the sync worker reads it through
@@ -106,6 +103,7 @@ func (f *fakeAdminConfigClient) totalGetCalls() int {
 // resource.ClientGenerator
 
 func (f *fakeAdminConfigClient) ClientFor(resource.Kind) (resource.Client, error) { return f, nil }
+
 func (f *fakeAdminConfigClient) GetCustomRouteClient(schema.GroupVersion, string) (resource.CustomRouteClient, error) {
 	return nil, nil
 }
@@ -183,21 +181,27 @@ func (f *fakeAdminConfigClient) UpdateInto(ctx context.Context, id resource.Iden
 func (f *fakeAdminConfigClient) Patch(_ context.Context, _ resource.Identifier, _ resource.PatchRequest, _ resource.PatchOptions) (resource.Object, error) {
 	return nil, nil
 }
+
 func (f *fakeAdminConfigClient) PatchInto(_ context.Context, _ resource.Identifier, _ resource.PatchRequest, _ resource.PatchOptions, _ resource.Object) error {
 	return nil
 }
+
 func (f *fakeAdminConfigClient) Delete(_ context.Context, _ resource.Identifier, _ resource.DeleteOptions) error {
 	return nil
 }
+
 func (f *fakeAdminConfigClient) List(_ context.Context, _ string, _ resource.ListOptions) (resource.ListObject, error) {
 	return nil, nil
 }
+
 func (f *fakeAdminConfigClient) ListInto(_ context.Context, _ string, _ resource.ListOptions, _ resource.ListObject) error {
 	return nil
 }
+
 func (f *fakeAdminConfigClient) Watch(_ context.Context, _ string, _ resource.WatchOptions) (resource.WatchResponse, error) {
 	return nil, nil
 }
+
 func (f *fakeAdminConfigClient) SubresourceRequest(_ context.Context, _ resource.Identifier, _ resource.CustomRouteRequestOptions) ([]byte, error) {
 	return nil, nil
 }
@@ -438,7 +442,6 @@ func TestSyncExternalAMs_PerOrgErrorIsolation(t *testing.T) {
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1, 2})
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1, 2})
-
 
 	// Org 1 failed — no ExtraConfig saved (default config remains).
 	assertNoExtraConfigSaved(t, cs, 1)
