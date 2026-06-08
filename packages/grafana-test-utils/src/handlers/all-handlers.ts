@@ -4,7 +4,6 @@ import accessControlHandlers from './api/access-control/handlers';
 import dashboardsHandlers from './api/dashboards/handlers';
 import folderHandlers from './api/folders/handlers';
 import pluginsHandlers from './api/plugins/handlers';
-import searchHandlers from './api/search/handlers';
 import teamsHandlers from './api/teams/handlers';
 import userHandlers from './api/user/handlers';
 import appPlatformCollectionsv1alpha1Handlers from './apis/collections.grafana.app/v1alpha1/handlers';
@@ -24,7 +23,6 @@ const allHandlers: HttpHandler[] = [
   ...dashboardsHandlers,
   ...folderHandlers,
   ...pluginsHandlers,
-  ...searchHandlers,
   ...teamsHandlers,
   ...userHandlers,
 
