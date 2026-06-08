@@ -108,7 +108,7 @@ You can find the provisioned dashboards organized in folders under **Dashboards*
 
 ### Sync targets
 
-Git Sync can place synced resources in Grafana in two ways:
+With Git Sync you can place synced resources in Grafana in two ways:
 
 - **Folder sync**: Grafana creates a folder named after the repository and places all synced resources inside it. Subdirectories in the repository become subfolders within that folder. This is the default behavior described above.
 - **Folderless sync**: Grafana places synced resources at the top level, without creating a wrapper folder. Files at the repository path root become top-level resources, and subdirectories become top-level folders.
