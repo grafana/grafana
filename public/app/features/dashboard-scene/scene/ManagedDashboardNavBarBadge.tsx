@@ -1,11 +1,9 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
-import { t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
-import { Badge, type BadgeColor, type IconName } from '@grafana/ui';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { getManagedByRepositoryTooltip, getOrphanedRepositoryTooltip } from 'app/features/provisioning/utils/tooltip';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 
 import { type DashboardScene } from './DashboardScene';
 
@@ -14,39 +12,17 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
   const id = dashboard.getManagerIdentity();
 
   const shouldSkipQuery = !config.featureToggles.provisioning || kind !== ManagerKind.Repo || !id;
+  // All other places where we check for orphaned resources (e.g. OrphanedResourceBanner) use
+  // useGetResourceRepositoryView. We don't here because it's much heavier than what's needed and
+  // also fetches folder data.
   const { data: repoData, isError, error } = useGetRepositoryQuery(shouldSkipQuery ? skipToken : { name: id });
 
   if (!kind) {
     return null;
   }
 
-  let text;
-  let color: BadgeColor = 'purple';
-  let icon: IconName = 'exchange-alt';
+  // Repository-managed dashboard where the repo no longer exists
+  const isOrphaned = kind === ManagerKind.Repo && isError && isFetchError(error) && error.status === 404;
 
-  switch (kind) {
-    case ManagerKind.Terraform:
-      text = t('dashboard-scene.managed-badge.terraform', 'Managed by: Terraform');
-      break;
-    case ManagerKind.Kubectl:
-      text = t('dashboard-scene.managed-badge.kubectl', 'Managed by: Kubectl');
-      break;
-    case ManagerKind.Plugin:
-      text = t('dashboard-scene.managed-badge.plugin', 'Managed by: Plugin {{id}}', { id });
-      break;
-    case ManagerKind.Repo: {
-      // Repository-managed dashboard where the repo no longer exists
-      // All other places where we check for orphaned resources (e.g. OrphanedResourceBanner) are using useGetResourceRepositoryView
-      // Reason we don't here is because useGetResourceRepositoryView its much heavier than what's needed here and that hook also fetches folder data
-      const isOrphaned = isError && isFetchError(error) && error.status === 404;
-      text = isOrphaned ? getOrphanedRepositoryTooltip() : getManagedByRepositoryTooltip(repoData?.spec?.title || id);
-      color = isOrphaned ? 'orange' : 'purple';
-      icon = isOrphaned ? 'exclamation-triangle' : 'exchange-alt';
-      break;
-    }
-    default:
-      text = t('dashboard-scene.managed-badge.provisioned', 'Provisioned');
-  }
-
-  return <Badge color={color} icon={icon} tooltip={text} key="provisioned-dashboard-button-badge" />;
+  return <ManagedBadge managerKind={kind} name={repoData?.spec?.title || id} isOrphaned={isOrphaned} />;
 };

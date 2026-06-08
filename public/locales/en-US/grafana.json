@@ -4993,9 +4993,6 @@
       "light-theme": "Light",
       "scopes": "Scopes"
     },
-    "badge": {
-      "provisioned": "Provisioned"
-    },
     "empty-state": {
       "button-title": "Search with Grafana Assistant",
       "message": "No results found"
@@ -7342,12 +7339,6 @@
       "title-controls-menu_one": "Controls menu ({{count}})",
       "title-controls-menu_other": "Controls menu ({{count}})"
     },
-    "managed-badge": {
-      "kubectl": "Managed by: Kubectl",
-      "plugin": "Managed by: Plugin {{id}}",
-      "provisioned": "Provisioned",
-      "terraform": "Managed by: Terraform"
-    },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "Dashboard is already in the selected folder.",
       "api-error": "Failed to move dashboard",
@@ -9163,8 +9154,7 @@
     "select-placeholder": "Filter by folder"
   },
   "folder-repo": {
-    "read-only-badge": "Read only",
-    "repository-not-found-tooltip": "Repository not found"
+    "read-only-badge": "Read only"
   },
   "folders": {
     "api": {
@@ -13662,6 +13652,13 @@
       "path-description": "Local file system path to the repository",
       "path-label": "Repository Path",
       "path-required": "Repository path is required"
+    },
+    "managed-badge": {
+      "classic-file-provisioning": "Managed by: File provisioning",
+      "kubectl": "Managed by: Kubectl",
+      "plugin": "Managed by: Plugin {{id}}",
+      "provisioned": "Provisioned",
+      "terraform": "Managed by: Terraform"
     },
     "managed-by-repository-tooltip": "Managed by: Repository",
     "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",
