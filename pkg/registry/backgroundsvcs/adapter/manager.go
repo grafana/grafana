@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/grafana/dskit/services"
@@ -87,16 +88,13 @@ func (m *ManagerAdapter) starting(ctx context.Context) error {
 		return err
 	}
 	if err := m.manager.AwaitRunning(ctx); err != nil {
-		// If our context was cancelled while waiting for the inner manager
-		// to reach Running (i.e. Shutdown was called mid-startup), return
-		// nil so dskit's BasicService.main detects the cancellation via
-		// serviceContext.Err() and routes through stoppingFn. Without this,
-		// BasicService transitions directly from Starting to Failed and
-		// skips stoppingFn entirely, leaving m.manager and its background
-		// services running and racing with test cleanup (e.g. t.TempDir()
-		// removal).
-		if ctx.Err() != nil {
-			return nil
+		if failure := m.manager.FailureCase(); failure != nil {
+			err = failure
+		}
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), stopTimeout)
+		defer cancel()
+		if shutdownErr := m.manager.Shutdown(shutdownCtx, err.Error()); shutdownErr != nil {
+			return errors.Join(err, shutdownErr)
 		}
 		return err
 	}

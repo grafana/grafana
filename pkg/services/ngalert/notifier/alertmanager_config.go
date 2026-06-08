@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"maps"
 	"time"
 
 	"github.com/go-openapi/strfmt"
@@ -85,76 +84,35 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 		return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to parse Alertmanager config: %w", err)
 	}
 
-	if err := moa.Crypto.DecryptExtraConfigs(ctx, prepared); err != nil {
-		return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) && moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
+		if err := moa.Crypto.DecryptExtraConfigs(ctx, prepared); err != nil {
+			return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
+		}
+		mergeResult, err := merge.MergeExtraConfig(ctx, prepared)
+		if err != nil {
+			return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to merge external configuration: %w", err)
+		}
+		prepared = &mergeResult.Config
 	}
 
-	mergeResult, err := merge.MergeExtraConfig(ctx, prepared)
-	if err != nil {
-		return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to get full alertmanager configuration: %w", err)
-	}
-	if logInfo := mergeResult.LogContext(); len(logInfo) > 0 {
-		moa.logger.Info("Configurations merged successfully but some resources were renamed", logInfo...)
-	}
-	preparedConfig := mergeResult.Config.AlertmanagerConfig
-	converted, failed := 0, 0
-	for idx, recv := range preparedConfig.Receivers {
-		if !recv.HasMimirIntegrations() {
-			continue
-		}
-		grafana, err := v1.PostableMimirReceiverToPostableGrafanaReceiver(recv)
-		if err != nil {
-			moa.logger.Warn("Failed to convert Mimir receiver to Grafana receiver. Ignoring receiver ", "identifier", mergeResult.Identifier, "receiver", recv.Name, "err", err)
-			failed++
-			continue
-		}
-		preparedConfig.Receivers[idx] = grafana
-		converted++
-	}
-	if converted > 0 || failed > 0 {
-		moa.logger.Info("Converted Mimir receivers to Grafana receivers", "identifier", mergeResult.Identifier, "converted", converted, "failed", failed)
-	}
+	config := prepared.AlertmanagerConfig
+	templates := prepared.SortedTemplates(false) // templates are already merged
 
 	// Add managed routes and extra route as managed route to the configuration.
 	// Also add extra inhibition rules to the configuration if extra route exists and doesn't conflict with existing
 	// route
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
-		managedRoutes := maps.Clone(prepared.ManagedRoutes)
-		if managedRoutes == nil {
-			managedRoutes = make(map[string]*v1.Route)
-		}
-
-		managedInhibitionRules := maps.Clone(prepared.ManagedInhibitionRules)
-		if managedInhibitionRules == nil {
-			managedInhibitionRules = make(v1.ManagedInhibitionRules)
-		}
-
-		if mergeResult.ExtraRoute != nil {
-			if _, ok := managedRoutes[mergeResult.Identifier]; ok {
-				moa.logger.Warn("Imported configuration name conflicts with existing managed routes, skipping adding imported config.", "identifier", mergeResult.Identifier)
-			} else {
-				managedRoutes[mergeResult.Identifier] = mergeResult.ExtraRoute
-
-				importedRules, err := merge.BuildManagedInhibitionRules(mergeResult.Identifier, mergeResult.ExtraInhibitRules)
-				if err != nil {
-					moa.logger.Warn("failed to build managed inhibition rules for imported configuration", "identifier", mergeResult.Identifier, "err", err)
-				} else {
-					maps.Copy(managedInhibitionRules, importedRules)
-				}
-			}
-		}
-		preparedConfig.Route = legacy_storage.WithManagedRoutes(preparedConfig.Route, managedRoutes)
-		preparedConfig.InhibitRules = legacy_storage.WithManagedInhibitionRules(preparedConfig.InhibitRules, managedInhibitionRules)
+		config.Route = legacy_storage.WithManagedRoutes(config.Route, prepared.ManagedRoutes)
+		config.InhibitRules = legacy_storage.WithManagedInhibitionRules(config.InhibitRules, prepared.ManagedInhibitionRules)
 	}
 
-	if err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, &preparedConfig, onInvalid, moa.featureManager); err != nil {
+	if err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, &config, onInvalid, moa.featureManager); err != nil {
 		return alertingNotify.NotificationsConfiguration{}, err
 	}
 
-	prepared.AlertmanagerConfig = preparedConfig
-
-	return PostableAPIConfigToNotificationsConfiguration(prepared, moa.limits)
+	return PostableAPIConfigToNotificationsConfiguration(config, templates, moa.limits)
 }
 
 func (moa *MultiOrgAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context, orgId int64) error {

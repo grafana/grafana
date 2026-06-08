@@ -19,6 +19,7 @@ const config: KnipConfig = {
   ],
   ignore: ['**/*.gen.ts*', '**/*_gen.ts*'],
   ignoreBinaries: ['make'],
+  tags: ['-lintignore'],
   workspaces: {
     '.': {
       // TODO figure out how to properly include webpack/jest configs

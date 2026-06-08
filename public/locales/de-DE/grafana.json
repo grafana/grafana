@@ -3312,6 +3312,10 @@
         "tooltip-description": "Stummschaltungen nach Matcher suchen. Führt eine exakte Übereinstimmung mit Label-Name, -Wert und -Operator durch.",
         "tooltip-example": "Beispiel: <1>env=~\"prod.*\"</1> findet Stummschaltungen mit dem Matcher <4>env=~\"prod.*\"</4>."
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "Es werden nur Warninstanzen im Auslösezustand angezeigt.",
       "operator": {
         "equals": "Gleich",
@@ -5501,9 +5505,6 @@
       "aria-label-dashboard-name": "{{dashboardName}} Dashboard",
       "label-no-dashboards-found": "Keine Dashboards gefunden"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Laden des Dashboards abbrechen"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5773,11 +5774,6 @@
         "label": "Dashboardmenü exportieren"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Dashboard konnte nicht abgerufen werden"
-      }
-    },
     "filters-overview": {
       "apply": "Anwenden",
       "apply-close": "Anwenden und schließen",
@@ -5934,11 +5930,6 @@
       "title-get-help-with-this-panel": "Hilfe für dieses Panel erhalten",
       "troubleshooting-docs": "Dokumente zur Fehlerbehebung"
     },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Dashboard-Modell konnte nicht erstellt werden"
-      }
-    },
     "inspect": {
       "data-tab": "Daten",
       "error-tab": "Fehler",
@@ -6027,13 +6018,6 @@
       },
       "ungroup-nested-text": "Dadurch wird die Gruppierung aller verschachtelten Gruppen aufgehoben.",
       "ungroup-nested-title": "Gruppierung verschachtelter Gruppen aufheben?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Dashboard nicht gefunden"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Dashboard nicht bearbeitbar",
@@ -6353,10 +6337,6 @@
       },
       "undo": "Rückgängig machen"
     },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Laden und Initialisieren des Dashboards",
-      "title-not-found": "Das Panel mit der ID {{panelId}} wurde nicht gefunden"
-    },
     "source-link": {
       "title": "Quelle ({{provider}})",
       "tooltip": "Quelldatei im Repository anzeigen"
@@ -6626,8 +6606,8 @@
     "version-history-comparison": {
       "button-restore": "Auf Version {{version}} wiederherstellen",
       "label-view-json-diff": "JSON-Diff anzeigen",
-      "new-updated-by": "<0>Version {{version}}</0> aktualisiert von {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Version {{version}}</0> aktualisiert von {{editor}} {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Auswahl der Version {{version}} umschalten",
@@ -7869,8 +7849,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "JSON-Diff anzeigen",
-      "new-version-updated": "<0>Version {{version}}</0> aktualisiert von {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Version {{version}}</0> aktualisiert von {{editor}} {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "Vergleich von {{baseVersion}} <3></3> {{newVersion}}",
@@ -10229,7 +10209,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Hilfe <1></1>",
-      "access-help-details": "Der Zugriffsmodus steuert, wie Anfragen an die Datenquelle behandelt werden.<1><i>Server</i></1> sollte die bevorzugte Methode sein, wenn nichts anderes angegeben ist.",
+      "access-help-details": "",
       "access-help-title": "Hilfe öffnen",
       "access-label": "Zugang",
       "allowed-cookies": "Erlaubte Cookies ",
@@ -10915,6 +10895,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -13197,8 +13181,8 @@
       "label-branch": "Branch",
       "label-comment": "Kommentar",
       "label-filename": "Dateiname",
-      "label-folder": "Ordner",
       "label-path": "Pfad",
+      "label-repository-folder": "",
       "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Ordnerpfad auswählen oder eingeben",
@@ -13601,6 +13585,21 @@
       "request-failed": "",
       "resource-not-found": ""
     },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
+    },
     "instance-sync-deprecation": {
       "message": "Die Instanzensynchronisierung wird zurzeit nicht vollständig unterstützt und unterbricht Bibliotheks-Panels und Warnungen. Um Bibliotheks-Panels und Warnungen zu nutzen, trennen Sie Ihr Repository und verbinden Sie es stattdessen erneut mithilfe der Ordnersynchronisierung.",
       "title": "Die Instanzensynchronisierung wird nicht vollständig unterstützt"
@@ -13887,7 +13886,8 @@
     "sync-job": {
       "error-no-job-id": "Auftrag konnte nicht gestartet werden",
       "error-no-repository-name": "Kein Repository-Name angegeben",
-      "error-starting-job": "Fehler beim Starten des Auftrags"
+      "error-starting-job": "Fehler beim Starten des Auftrags",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "Fehler beim Abrufen von Ressourcen",
@@ -16608,7 +16608,7 @@
       "message": "Keine Benutzer gefunden"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Ihr Sitzungstoken wurde automatisch widerrufen, weil Sie <2>die maximale Anzahl von {{numSessions}} gleichzeitigen Sitzungen</2> für Ihren Account erreicht haben.",
+      "auto-revoked": "",
       "resume-message": "<strong>Melden Sie sich zur Fortsetzung Ihrer Sitzung erneut an.</strong>Kontaktieren Sie Ihren Administrator oder besuchen Sie die Lizenzseite, um Ihr Kontingent zu prüfen, wenn Sie wiederholt automatisch abgemeldet werden.",
       "sign-in": "Anmelden",
       "title-you-have-been-automatically-signed-out": "Sie wurden automatisch abgemeldet"
