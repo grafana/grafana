@@ -36,14 +36,10 @@ export interface UseSelectionStateResult {
 }
 
 /**
- * Returns the new ordered selection after a Shift+Click (range-select) in multi-select.
+ * Returns the contiguous ids between `anchorId` and `clickedId` (inclusive), in list order.
+ * Returns null when either id is not present in `orderedIds`.
  */
-function computeRangeSelection(
-  orderedIds: string[],
-  existingSelection: string[],
-  anchorId: string,
-  clickedId: string
-): string[] | null {
+function getContiguousRange(orderedIds: string[], anchorId: string, clickedId: string): string[] | null {
   const anchorIdx = orderedIds.indexOf(anchorId);
   const clickedIdx = orderedIds.indexOf(clickedId);
 
@@ -53,11 +49,16 @@ function computeRangeSelection(
 
   const start = Math.min(anchorIdx, clickedIdx);
   const end = Math.max(anchorIdx, clickedIdx);
-  const rangeIds = orderedIds.slice(start, end + 1);
+  return orderedIds.slice(start, end + 1);
+}
 
-  const rangeSet = new Set(rangeIds);
-  const existingWithoutRange = existingSelection.filter((id) => !rangeSet.has(id));
-  return [...existingWithoutRange, ...rangeIds];
+/**
+ * Merges the stable "range base" (selections made before the current Shift sequence, e.g. via
+ * Ctrl+Click) with the freshly computed contiguous range, preserving order and de-duplicating.
+ */
+function mergeRangeWithBase(base: string[], range: string[]): string[] {
+  const baseSet = new Set(base);
+  return [...base, ...range.filter((id) => !baseSet.has(id))];
 }
 
 /**
@@ -100,6 +101,23 @@ export function useSelectionState({
   const selectedTransformationIdsRef = useRef(selectedTransformationIds);
   selectedTransformationIdsRef.current = selectedTransformationIds;
 
+  // Range-select anchors. The anchor is pinned by the last non-range action (plain or
+  // Ctrl/Cmd toggle) and stays fixed across consecutive Shift+Clicks, so each Shift+Click
+  // re-derives the range from the same origin (e.g. anchor 1: Shift+3 → 1-3, Shift+2 → 1-2).
+  // The matching "range base" holds the selections that existed when the anchor was set so
+  // independent Ctrl picks survive a later Shift-range.
+  const queryAnchorRef = useRef<string | null>(null);
+  const queryRangeBaseRef = useRef<string[]>([]);
+  const transformationAnchorRef = useRef<string | null>(null);
+  const transformationRangeBaseRef = useRef<string[]>([]);
+
+  const resetSelectionAnchors = useCallback(() => {
+    queryAnchorRef.current = null;
+    queryRangeBaseRef.current = [];
+    transformationAnchorRef.current = null;
+    transformationRangeBaseRef.current = [];
+  }, []);
+
   // Reconcile active ids when the underlying lists change (e.g. after a delete propagates
   // from the Scene). Without this, activeQueryRefId / activeTransformationId can reference
   // items that no longer exist, causing downstream consumers like selectActiveInMultiSelection
@@ -120,20 +138,27 @@ export function useSelectionState({
     (queryRefId: string | null, transformationId: string | null, options?: { seedBulk?: boolean }) => {
       setActiveQueryRefId(queryRefId);
       setActiveTransformationId(transformationId);
+      resetSelectionAnchors();
       if (options?.seedBulk) {
         setSelectedQueryRefIds(queryRefId ? [queryRefId] : []);
         setSelectedTransformationIds(transformationId ? [transformationId] : []);
+        queryAnchorRef.current = queryRefId;
+        transformationAnchorRef.current = transformationId;
       } else {
         setSelectedQueryRefIds([]);
         setSelectedTransformationIds([]);
       }
     },
-    []
+    [resetSelectionAnchors]
   );
 
   const trackQueryRename = useCallback((originalRefId: string, updatedRefId: string) => {
     setActiveQueryRefId((current) => (current === originalRefId ? updatedRefId : current));
     setSelectedQueryRefIds((current) => current.map((id) => (id === originalRefId ? updatedRefId : id)));
+    if (queryAnchorRef.current === originalRefId) {
+      queryAnchorRef.current = updatedRefId;
+    }
+    queryRangeBaseRef.current = queryRangeBaseRef.current.map((id) => (id === originalRefId ? updatedRefId : id));
   }, []);
 
   const activateQuery = useCallback((query: DataQuery | ExpressionQuery) => {
@@ -150,73 +175,89 @@ export function useSelectionState({
 
   const toggleQuerySelection = useCallback((query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => {
     setSelectedTransformationIds([]);
+    transformationAnchorRef.current = null;
+    transformationRangeBaseRef.current = [];
 
+    const orderedIds = queriesRef.current.map(({ refId }) => refId);
     const currentSelection = selectedQueryRefIdsRef.current;
-    // When a transformation is active and there's no current query selection, fall through
-    // to plain-click instead of range-selecting from queries[0] — avoids surprising ranges
-    // that cross card types.
-    const hasActiveTransformation = activeTransformationIdRef.current !== null;
-    const anchorRefId =
-      currentSelection.at(-1) ??
-      activeQueryRefIdRef.current ??
-      (hasActiveTransformation ? undefined : queriesRef.current[0]?.refId);
 
-    if (modifiers?.range && anchorRefId) {
-      const rangeSelection = computeRangeSelection(
-        queriesRef.current.map(({ refId }) => refId),
-        currentSelection,
-        anchorRefId,
-        query.refId
-      );
-      if (rangeSelection) {
-        setSelectedQueryRefIds(rangeSelection);
-        return;
+    if (modifiers?.range) {
+      // When a transformation is active and there's no pinned query anchor, fall through to
+      // plain-click instead of range-selecting from queries[0] — avoids surprising ranges
+      // that cross card types.
+      const hasActiveTransformation = activeTransformationIdRef.current !== null;
+      const anchorRefId =
+        queryAnchorRef.current ??
+        activeQueryRefIdRef.current ??
+        (hasActiveTransformation ? null : (orderedIds[0] ?? null));
+
+      if (anchorRefId !== null) {
+        const range = getContiguousRange(orderedIds, anchorRefId, query.refId);
+        if (range) {
+          // Anchor and base stay fixed so consecutive Shift+Clicks grow/shrink from the origin.
+          setSelectedQueryRefIds(mergeRangeWithBase(queryRangeBaseRef.current, range));
+          return;
+        }
       }
+      // No usable anchor — treat as a plain selection below.
     }
 
     if (modifiers?.multi) {
-      setSelectedQueryRefIds((prev) => {
-        const idx = prev.indexOf(query.refId);
-        if (idx === -1) {
-          return [...prev, query.refId];
-        }
-        return prev.length === 1 ? prev : prev.filter((id) => id !== query.refId);
-      });
-    } else {
-      setSelectedQueryRefIds([query.refId]);
+      const next =
+        currentSelection.includes(query.refId)
+          ? currentSelection.length === 1
+            ? currentSelection
+            : currentSelection.filter((id) => id !== query.refId)
+          : [...currentSelection, query.refId];
+      setSelectedQueryRefIds(next);
+      // Pin the anchor to the toggled card; everything else becomes the base a later Shift extends.
+      queryAnchorRef.current = query.refId;
+      queryRangeBaseRef.current = next.filter((id) => id !== query.refId);
+      return;
     }
+
+    setSelectedQueryRefIds([query.refId]);
+    queryAnchorRef.current = query.refId;
+    queryRangeBaseRef.current = [];
   }, []);
 
   const toggleTransformationSelection = useCallback(
     (transformation: Transformation, modifiers?: SelectionModifiers) => {
       setSelectedQueryRefIds([]);
+      queryAnchorRef.current = null;
+      queryRangeBaseRef.current = [];
 
+      const orderedIds = transformationsRef.current.map((t) => t.transformId);
       const currentSelection = selectedTransformationIdsRef.current;
-      if (modifiers?.range && currentSelection.length > 0) {
-        const anchorId = currentSelection.at(-1)!;
-        const rangeSelection = computeRangeSelection(
-          transformationsRef.current.map((t) => t.transformId),
-          currentSelection,
-          anchorId,
-          transformation.transformId
-        );
-        if (rangeSelection) {
-          setSelectedTransformationIds(rangeSelection);
-          return;
+
+      if (modifiers?.range) {
+        const anchorId = transformationAnchorRef.current ?? activeTransformationIdRef.current;
+        if (anchorId !== null) {
+          const range = getContiguousRange(orderedIds, anchorId, transformation.transformId);
+          if (range) {
+            setSelectedTransformationIds(mergeRangeWithBase(transformationRangeBaseRef.current, range));
+            return;
+          }
         }
+        // No usable anchor — treat as a plain selection below.
       }
 
       if (modifiers?.multi) {
-        setSelectedTransformationIds((prev) => {
-          const idx = prev.indexOf(transformation.transformId);
-          if (idx === -1) {
-            return [...prev, transformation.transformId];
-          }
-          return prev.length === 1 ? prev : prev.filter((id) => id !== transformation.transformId);
-        });
-      } else {
-        setSelectedTransformationIds([transformation.transformId]);
+        const next =
+          currentSelection.includes(transformation.transformId)
+            ? currentSelection.length === 1
+              ? currentSelection
+              : currentSelection.filter((id) => id !== transformation.transformId)
+            : [...currentSelection, transformation.transformId];
+        setSelectedTransformationIds(next);
+        transformationAnchorRef.current = transformation.transformId;
+        transformationRangeBaseRef.current = next.filter((id) => id !== transformation.transformId);
+        return;
       }
+
+      setSelectedTransformationIds([transformation.transformId]);
+      transformationAnchorRef.current = transformation.transformId;
+      transformationRangeBaseRef.current = [];
     },
     []
   );
@@ -224,13 +265,17 @@ export function useSelectionState({
   const clearMultiSelection = useCallback(() => {
     setSelectedQueryRefIds([]);
     setSelectedTransformationIds([]);
-  }, []);
+    resetSelectionAnchors();
+  }, [resetSelectionAnchors]);
 
   const selectActiveInMultiSelection = useCallback(() => {
+    resetSelectionAnchors();
+
     const transformationId = activeTransformationIdRef.current;
     if (transformationId) {
       setSelectedQueryRefIds([]);
       setSelectedTransformationIds([transformationId]);
+      transformationAnchorRef.current = transformationId;
       return;
     }
 
@@ -238,8 +283,9 @@ export function useSelectionState({
     if (queryRefId) {
       setSelectedTransformationIds([]);
       setSelectedQueryRefIds([queryRefId]);
+      queryAnchorRef.current = queryRefId;
     }
-  }, []);
+  }, [resetSelectionAnchors]);
 
   const clearSelection = useCallback(() => {
     const firstQueryRefId = queriesRef.current[0]?.refId ?? null;
@@ -257,11 +303,19 @@ export function useSelectionState({
       }
       return queriesRef.current[0]?.refId ?? null;
     });
+    if (queryAnchorRef.current === refId) {
+      queryAnchorRef.current = null;
+    }
+    queryRangeBaseRef.current = queryRangeBaseRef.current.filter((id) => id !== refId);
   }, []);
 
   const removeTransformationFromSelection = useCallback((transformId: string) => {
     setSelectedTransformationIds((current) => current.filter((id) => id !== transformId));
     setActiveTransformationId((current) => (current === transformId ? null : current));
+    if (transformationAnchorRef.current === transformId) {
+      transformationAnchorRef.current = null;
+    }
+    transformationRangeBaseRef.current = transformationRangeBaseRef.current.filter((id) => id !== transformId);
   }, []);
 
   return {

@@ -150,16 +150,19 @@ describe('BulkActionsBar', () => {
     });
 
     describe('hide / show', () => {
-      it('calls bulkToggleQueriesHide(refIds, true) when no queries are hidden', async () => {
+      it('calls bulkToggleQueriesHide(refIds, true) and stays in multi-select mode when no queries are hidden', async () => {
         const bulkToggleQueriesHide = jest.fn();
+        const setMultiSelectMode = jest.fn();
         const { user } = renderBar({
-          uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+          uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'], setMultiSelectMode },
           actionsOverrides: { bulkToggleQueriesHide },
         });
 
         // None of the selected queries have hide:true so the button says "Hide"
         await user.click(screen.getByRole('button', { name: /hide/i }));
         expect(bulkToggleQueriesHide).toHaveBeenCalledWith(['A', 'B'], true);
+        // Hide/Show is an in-place toggle — the selection stays so the user can keep acting on it.
+        expect(setMultiSelectMode).not.toHaveBeenCalled();
       });
 
       it('calls bulkToggleQueriesHide(refIds, false) when all selected queries are hidden', async () => {
@@ -204,7 +207,9 @@ describe('BulkActionsBar', () => {
         expect(screen.getByTestId('datasource-modal')).toBeInTheDocument();
       });
 
-      it('calls bulkChangeDataSource and exits multi-select mode when a DS is chosen', async () => {
+      it('calls bulkChangeDataSource and stays in multi-select mode when a DS is chosen', async () => {
+        // Data source change is an in-place modification — the selection stays valid, so the
+        // toolbar and multi-select mode persist for further bulk actions. Only Delete exits.
         const bulkChangeDataSource = jest.fn();
         const setMultiSelectMode = jest.fn();
         const { user } = renderBar({
@@ -220,7 +225,7 @@ describe('BulkActionsBar', () => {
         await user.click(screen.getByRole('button', { name: /select ds/i }));
 
         expect(bulkChangeDataSource).toHaveBeenCalledWith(['A', 'B'], expect.objectContaining({ uid: 'new-ds' }));
-        expect(setMultiSelectMode).toHaveBeenCalledWith(false);
+        expect(setMultiSelectMode).not.toHaveBeenCalled();
       });
 
       it('closes the DataSourceModal after selecting a datasource', async () => {
@@ -297,16 +302,19 @@ describe('BulkActionsBar', () => {
     });
 
     describe('enable / disable', () => {
-      it('calls bulkToggleTransformationsDisabled(ids, true) when all are enabled', async () => {
+      it('calls bulkToggleTransformationsDisabled(ids, true) and stays in multi-select mode when all are enabled', async () => {
         const bulkToggleTransformationsDisabled = jest.fn();
+        const setMultiSelectMode = jest.fn();
         const { user } = renderBar({
-          uiStateOverrides: { multiSelectMode: true, selectedTransformationIds: ['tx-0', 'tx-1'] },
+          uiStateOverrides: { multiSelectMode: true, selectedTransformationIds: ['tx-0', 'tx-1'], setMultiSelectMode },
           actionsOverrides: { bulkToggleTransformationsDisabled },
         });
 
         // Transformations are enabled (no disabled flag), so button says "Disable all"
         await user.click(screen.getByRole('button', { name: /disable all/i }));
         expect(bulkToggleTransformationsDisabled).toHaveBeenCalledWith(['tx-0', 'tx-1'], true);
+        // Enable/Disable is an in-place toggle — the selection persists.
+        expect(setMultiSelectMode).not.toHaveBeenCalled();
       });
 
       it('calls bulkToggleTransformationsDisabled(ids, false) when all are disabled', async () => {

@@ -168,6 +168,39 @@ describe('useSelectionState', () => {
       act(() => result.current.toggleQuerySelection({ refId: 'C' }, { range: true }));
       expect(result.current.selectedQueryRefIds).toEqual(['C']);
     });
+
+    it('keeps the anchor pinned so a later Shift+Click shrinks the range (A, Shift+C, Shift+B → A,B)', () => {
+      const { result } = setup();
+      // Anchor on A, expand to C, then shrink back to B. The anchor must stay on A rather
+      // than drifting to the last-clicked id, otherwise B-C would linger.
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }));
+      act(() => result.current.toggleQuerySelection({ refId: 'C' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'B', 'C']);
+
+      act(() => result.current.toggleQuerySelection({ refId: 'B' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
+    });
+
+    it('re-derives the range from the pinned anchor when crossing sides', () => {
+      const { result } = setup();
+      act(() => result.current.toggleQuerySelection({ refId: 'C' }));
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'B', 'C']);
+
+      // Shift+Click past the anchor on the other side — range is still measured from C.
+      act(() => result.current.toggleQuerySelection({ refId: 'D' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['C', 'D']);
+    });
+
+    it('preserves Ctrl-added selections outside the Shift range', () => {
+      const { result } = setup();
+      // Independently pick A, then Ctrl+pick C (anchor moves to C). Shift+Click D extends from
+      // the new anchor C while the independent A survives.
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }));
+      act(() => result.current.toggleQuerySelection({ refId: 'C' }, { multi: true }));
+      act(() => result.current.toggleQuerySelection({ refId: 'D' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'C', 'D']);
+    });
   });
 
   describe('transformation selection — plain click', () => {
@@ -240,6 +273,16 @@ describe('useSelectionState', () => {
       // Range with no existing selection: anchor lookup fails, falls through to plain click
       act(() => result.current.toggleTransformationSelection(mockTransformations[1], { range: true }));
       expect(result.current.selectedTransformationIds).toEqual(['tx-1']);
+    });
+
+    it('keeps the anchor pinned so a later Shift+Click shrinks the range', () => {
+      const { result } = setup();
+      act(() => result.current.toggleTransformationSelection(mockTransformations[0]));
+      act(() => result.current.toggleTransformationSelection(mockTransformations[2], { range: true }));
+      expect(result.current.selectedTransformationIds).toEqual(['tx-0', 'tx-1', 'tx-2']);
+
+      act(() => result.current.toggleTransformationSelection(mockTransformations[1], { range: true }));
+      expect(result.current.selectedTransformationIds).toEqual(['tx-0', 'tx-1']);
     });
   });
 

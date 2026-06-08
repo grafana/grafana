@@ -126,9 +126,8 @@ export const SidebarCard = ({
     <div className={styles.wrapper}>
       <div className={styles.cardRow}>
         {multiSelectMode && onToggleMultiSelect && (
-          <div className={styles.bulkCheckbox} onMouseDownCapture={handleBulkCheckboxMouseDownCapture}>
+          <div onMouseDownCapture={handleBulkCheckboxMouseDownCapture}>
             <Checkbox
-              className={styles.roundedCheckbox}
               value={isMultiSelected}
               onChange={handleCheckboxChange}
               aria-label={t('query-editor-next.sidebar.card-multi-select', 'Include card {{id}} in bulk selection', {
@@ -175,7 +174,9 @@ export const SidebarCard = ({
           )}
         </div>
       </div>
-      <AddCardButton variant={addVariant} afterId={id} />
+      {/* The inline add button is absolutely positioned into the left gutter, which the bulk
+          checkbox occupies in multi-select mode. Hide it there to avoid the visual collision. */}
+      {!multiSelectMode && <AddCardButton variant={addVariant} afterId={id} />}
     </div>
   );
 };
@@ -368,26 +369,14 @@ function getStyles(
     cardRow: css({
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(0.75),
+      gap: theme.spacing(1.25),
     }),
-    bulkCheckbox: css({
-      display: 'flex',
-      flexShrink: 0,
-    }),
-    roundedCheckbox: css({
-      '& span': {
-        borderRadius: theme.shape.radius.circle,
-      },
-      '& input:checked + span:after': {
-        left: '50%',
-        top: '45%',
-        width: theme.spacing(0.5),
-        height: theme.spacing(1),
-        transform: 'translate(-50%, -50%) rotate(45deg)',
-        borderWidth: '0 1.5px 1.5px 0',
-      },
-    }),
-
+    // bulkCheckbox: css({
+    //   display: 'flex',
+    //   alignItems: 'center',
+    //   justifyContent: 'center',
+    //   flexShrink: 0,
+    // }),
     ghostCard: css({
       border: `1px solid ${ghostBorderColor}`,
       background: ghostBackgroundColor,

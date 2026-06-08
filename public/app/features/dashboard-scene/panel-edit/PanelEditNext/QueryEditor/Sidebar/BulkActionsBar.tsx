@@ -78,10 +78,11 @@ function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
     setMultiSelectMode(false);
   };
 
+  // In-place modifications (data source change, hide/show) keep the selection and toolbar so the
+  // user can keep operating on the same set. Only destructive Delete exits multi-select mode.
   const handleDatasourceChange = async (settings: DataSourceInstanceSettings) => {
     await bulkChangeDataSource(selectedQueryRefIds, settings);
     setShowDsModal(false);
-    setMultiSelectMode(false);
   };
 
   return (
