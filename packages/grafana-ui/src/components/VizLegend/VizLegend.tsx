@@ -8,7 +8,7 @@ import { SeriesVisibilityChangeMode, usePanelContext } from '../PanelChrome';
 
 import { VizLegendList } from './VizLegendList';
 import { VizLegendTable } from './VizLegendTable';
-import { type LegendProps, SeriesVisibilityChangeBehavior, type VizLegendItem } from './types';
+import { SeriesVisibilityChangeBehavior, type VizLegendProps, type VizLegendItem } from './types';
 import { mapMouseEventToMode } from './utils';
 
 /**
@@ -31,7 +31,7 @@ export function VizLegend<T>({
   isSortable,
   limit,
   filterAction,
-}: LegendProps<T>) {
+}: VizLegendProps<T>) {
   const { eventBus, onToggleSeriesVisibility, onToggleLegendSort } = usePanelContext();
 
   const onMouseOver = useCallback(

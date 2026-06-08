@@ -54,7 +54,7 @@ export interface VizLegendTableProps<T>
   onToggleSort?: PanelContext['onToggleLegendSort'];
 }
 
-export interface LegendProps<T = any> extends VizLegendBaseProps<T>, VizLegendTableSortProps {
+export interface VizLegendProps<T = any> extends VizLegendBaseProps<T>, VizLegendTableSortProps {
   displayMode?: LegendDisplayMode;
 }
 
