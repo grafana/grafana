@@ -220,6 +220,8 @@ storage_type = unified
 [grpc_server_authentication]
 signing_keys_url = http://localhost:3011/api/signing-keys/keys
 mode = "on-prem"
+; for local dev only
+unsafe = true
 
 [feature_toggles]
 unifiedStorageHistoryPruner = true
@@ -245,10 +247,14 @@ The GRPC service will listen on port 10000
 
 #### Use GRPC server
 
-To run grafana against the storage-server, override the `storage_type` setting:
+To run grafana against the storage-server, override the `storage_type` setting and enable the App Platform gRPC client auth so grafana sends authlib tokens (paired with the storage-server's `unsafe = true` for signature bypass):
 ```sh
-GF_GRAFANA_APISERVER_STORAGE_TYPE=unified-grpc ./bin/grafana server
+GF_GRAFANA_APISERVER_STORAGE_TYPE=unified-grpc \
+GF_FEATURE_TOGGLES_ENABLE=appPlatformGrpcClientAuth \
+./bin/grafana server
 ```
+
+Leave `[grpc_client_authentication]` unset in grafana's ini. With `TokenExchangeURL` empty, the client falls back to the in-process static token exchanger and creates a service-identity token that the storage server's unsafe authenticator accepts.
 
 You can then list the previously-created playlists with:
 ```sh
