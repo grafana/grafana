@@ -2028,8 +2028,9 @@ export type SyncOptions = {
     
     Possible enum values:
      - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
+     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment. NOTE: This target is not supported yet. The value is reserved in the API, but repositories that use it are currently rejected during validation.
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
-  target: 'folder' | 'instance';
+  target: 'folder' | 'folderless' | 'instance';
 };
 export type WebhookConfig = {
   /** Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL. */
@@ -2305,8 +2306,9 @@ export type RepositoryView = {
     
     Possible enum values:
      - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
+     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment. NOTE: This target is not supported yet. The value is reserved in the API, but repositories that use it are currently rejected during validation.
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
-  target: 'folder' | 'instance';
+  target: 'folder' | 'folderless' | 'instance';
   /** Repository display */
   title: string;
   /** The repository type
@@ -2328,7 +2330,7 @@ export type RepositoryViewList = {
   /** Whether image rendering is allowed for dashboard previews */
   allowImageRendering: boolean;
   /** The valid targets (can disable instance or folder types) */
-  allowedTargets?: ('folder' | 'instance')[];
+  allowedTargets?: ('folder' | 'folderless' | 'instance')[];
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */

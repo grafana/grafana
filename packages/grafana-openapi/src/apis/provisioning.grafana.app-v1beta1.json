@@ -5106,10 +5106,10 @@
             "type": "string"
           },
           "target": {
-            "description": "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
+            "description": "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"folderless\"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment. NOTE: This target is not supported yet. The value is reserved in the API, but repositories that use it are currently rejected during validation.\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
             "type": "string",
             "default": "",
-            "enum": ["folder", "instance"]
+            "enum": ["folder", "folderless", "instance"]
           },
           "title": {
             "description": "Repository display",
@@ -5153,7 +5153,7 @@
             "items": {
               "type": "string",
               "default": "",
-              "enum": ["folder", "instance"]
+              "enum": ["folder", "folderless", "instance"]
             }
           },
           "apiVersion": {
@@ -5554,10 +5554,10 @@
             "format": "int64"
           },
           "target": {
-            "description": "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
+            "description": "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"folderless\"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment. NOTE: This target is not supported yet. The value is reserved in the API, but repositories that use it are currently rejected during validation.\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
             "type": "string",
             "default": "",
-            "enum": ["folder", "instance"]
+            "enum": ["folder", "folderless", "instance"]
           }
         }
       },

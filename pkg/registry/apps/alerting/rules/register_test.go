@@ -25,7 +25,7 @@ func TestRegisterAppInstaller_UnifiedAlertingEnabled(t *testing.T) {
 			cfg := &setting.Cfg{UnifiedAlerting: setting.UnifiedAlertingSettings{Enabled: &enabled}}
 			ng := &ngalert.AlertNG{Cfg: cfg}
 
-			inst, err := RegisterAppInstaller(cfg, ng)
+			inst, err := RegisterAppInstaller(cfg, ng, nil)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}

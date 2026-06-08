@@ -430,10 +430,20 @@ func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveI
 	if err != nil {
 		return false, fmt.Errorf("reading snapshot mutation count for %v: %w", key, err)
 	}
-	if mutationCount < int64(b.opts.Snapshot.MinDocChanges) {
+	if mutationCount >= int64(b.opts.Snapshot.MinDocChanges) {
+		return true, nil
+	}
+
+	if b.opts.Snapshot.MaxIndexAge <= 0 {
 		return false, nil
 	}
-	return true, nil
+
+	// Refresh stable indexes well before cleanup can age out the remote snapshot.
+	refreshInterval := b.opts.Snapshot.MaxIndexAge / 3
+	if refreshInterval <= 0 {
+		refreshInterval = b.opts.Snapshot.MaxIndexAge
+	}
+	return now.Sub(lastUploadTime) >= refreshInterval, nil
 }
 
 func (b *bleveBackend) setUploadTracking(key resource.NamespacedResource, uploadedAt time.Time) {

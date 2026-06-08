@@ -178,6 +178,14 @@ func (c *ExtraConfiguration) GetAlertmanagerConfig() (PostableApiAlertingConfig,
 	if err != nil {
 		return PostableApiAlertingConfig{}, err
 	}
+	cfg, _, err := alertmanagerConfigFromPrometheus(prometheusConfig)
+	return cfg, err
+}
+
+// alertmanagerConfigFromPrometheus converts a parsed Prometheus/Mimir config to
+// Grafana's PostableApiAlertingConfig. It also returns the intermediate
+// definition-format receivers (index-aligned) so callers can reuse the conversion.
+func alertmanagerConfigFromPrometheus(prometheusConfig config.Config) (PostableApiAlertingConfig, []definition.Receiver, error) {
 	config := PostableApiAlertingConfig{
 		Config: Config{
 			Global:            prometheusConfig.Global,
@@ -189,15 +197,17 @@ func (c *ExtraConfiguration) GetAlertmanagerConfig() (PostableApiAlertingConfig,
 		},
 		Receivers: make([]*PostableApiReceiver, 0, len(prometheusConfig.Receivers)),
 	}
+	defs := make([]definition.Receiver, 0, len(prometheusConfig.Receivers))
 	for _, receiver := range prometheusConfig.Receivers {
-		recv := &PostableApiReceiver{Receiver: compat.UpstreamReceiverToDefinitionReceiver(receiver)}
-		grafana, err := PostableMimirReceiverToPostableGrafanaReceiver(recv)
+		def := compat.UpstreamReceiverToDefinitionReceiver(receiver)
+		defs = append(defs, def)
+		grafana, err := PostableMimirReceiverToPostableGrafanaReceiver(&PostableApiReceiver{Receiver: def})
 		if err != nil {
-			return PostableApiAlertingConfig{}, fmt.Errorf("failed to convert Mimir receiver %s to Grafana receiver: %w", recv.Name, err)
+			return PostableApiAlertingConfig{}, nil, fmt.Errorf("failed to convert Mimir receiver %s to Grafana receiver: %w", def.Name, err)
 		}
 		config.Receivers = append(config.Receivers, grafana)
 	}
-	return config, nil
+	return config, defs, nil
 }
 
 func (c *ExtraConfiguration) parsePrometheusConfig() (config.Config, error) {
@@ -234,15 +244,35 @@ func (c ExtraConfiguration) Validate() error {
 		return errors.New("identifier is required")
 	}
 
-	cfg, err := c.GetAlertmanagerConfig()
+	prometheusConfig, err := c.parsePrometheusConfig()
 	if err != nil {
 		return errInvalidExtraConfiguration(fmt.Errorf("failed to parse alertmanager config: %w", err))
+	}
+
+	cfg, defs, err := alertmanagerConfigFromPrometheus(prometheusConfig)
+	if err != nil {
+		return errInvalidExtraConfiguration(fmt.Errorf("failed to parse alertmanager config: %w", err))
+	}
+
+	// Reject fields Grafana can't represent (e.g. *_file / *_ref) that conversion
+	// would silently drop. Collect across all receivers to report them at once.
+	var unsupported []unsupportedReceiverFields
+	for i, def := range defs {
+		fields, err := findUnsupportedReceiverFields(prometheusConfig.Receivers[i], def)
+		if err != nil {
+			return errInvalidExtraConfiguration(err)
+		}
+		if len(fields) > 0 {
+			unsupported = append(unsupported, unsupportedReceiverFields{Receiver: def.Name, Fields: fields})
+		}
+	}
+	if len(unsupported) > 0 {
+		return errUnsupportedReceiverFields(unsupported)
 	}
 	err = cfg.Validate()
 	if err != nil {
 		return errInvalidExtraConfiguration(fmt.Errorf("invalid alertmanager config: %w", err))
 	}
-
 	return nil
 }
 
