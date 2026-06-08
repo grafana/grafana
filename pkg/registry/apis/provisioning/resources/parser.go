@@ -211,33 +211,6 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		obj.SetName(obj.GetGenerateName() + util.GenerateShortUID())
 	}
 
-	// Calculate folder identifier from the file path
-	if info.Path != "" {
-		dirPath := safepath.Dir(info.Path)
-		// _folder.json represents the directory it lives in, so its parent is one level above.
-		if r.folderMetadataEnabled && IsFolderMetadataFile(info.Path) {
-			dirPath = safepath.Dir(dirPath)
-		}
-		if dirPath != "" {
-			folderID := ParseFolder(dirPath, r.repo.Name).ID
-			// When folder metadata is enabled and the parent folder has a _folder.json,
-			// use the stable UID from that file instead of the hash-derived one.
-			if r.folderMetadataEnabled && r.reader != nil {
-				if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, info.Ref); err == nil && meta.Name != "" {
-					folderID = meta.Name
-				} else if err != nil && errors.Is(err, repository.ErrRefNotFound) {
-					// Target branch doesn't exist yet (e.g. new PR branch). Fall back to
-					// the configured branch where _folder.json is already committed.
-					if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, ""); err == nil && meta.Name != "" {
-						folderID = meta.Name
-					}
-				}
-			}
-			parsed.Meta.SetFolder(folderID)
-		} else {
-			parsed.Meta.SetFolder(RootFolder(r.config))
-		}
-	}
 	obj.SetUID("")             // clear identifiers
 	obj.SetResourceVersion("") // clear identifiers
 
@@ -252,7 +225,46 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		return nil, NewResourceValidationError(fmt.Errorf("get client for kind: %w", err))
 	}
 
+	// Calculate the folder identifier from the file path, but only for resources that
+	// are contained in folders. Org-scoped resources (those not folder-scoped in the
+	// configured supported set) must not have a folder annotation stamped onto them:
+	// it would be meaningless and possibly dangling.
+	if info.Path != "" && supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK) {
+		parsed.Meta.SetFolder(r.resolveFolderID(ctx, info))
+	}
+
 	return parsed, nil
+}
+
+// resolveFolderID derives the folder annotation value for a folder-contained
+// resource from its file path. When folder metadata is enabled and the parent
+// directory has a _folder.json, its stable UID is preferred over the
+// hash-derived ID.
+func (r *parser) resolveFolderID(ctx context.Context, info *repository.FileInfo) string {
+	dirPath := safepath.Dir(info.Path)
+	// _folder.json represents the directory it lives in, so its parent is one level above.
+	if r.folderMetadataEnabled && IsFolderMetadataFile(info.Path) {
+		dirPath = safepath.Dir(dirPath)
+	}
+	if dirPath == "" {
+		return RootFolder(r.config)
+	}
+
+	folderID := ParseFolder(dirPath, r.repo.Name).ID
+	// When folder metadata is enabled and the parent folder has a _folder.json,
+	// use the stable UID from that file instead of the hash-derived one.
+	if r.folderMetadataEnabled && r.reader != nil {
+		if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, info.Ref); err == nil && meta.Name != "" {
+			folderID = meta.Name
+		} else if err != nil && errors.Is(err, repository.ErrRefNotFound) {
+			// Target branch doesn't exist yet (e.g. new PR branch). Fall back to
+			// the configured branch where _folder.json is already committed.
+			if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, ""); err == nil && meta.Name != "" {
+				folderID = meta.Name
+			}
+		}
+	}
+	return folderID
 }
 
 // SameIdentity reports whether f and other refer to the same Kubernetes

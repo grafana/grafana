@@ -682,11 +682,48 @@ func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint
 		}
 	}
 	e.Type = string(iType)
+	if err := validateSecretFields(e); err != nil {
+		return err
+	}
 	integration, err := EmbeddedContactPointToGrafanaIntegrationConfig(e)
 	if err != nil {
 		return err
 	}
 	return models.ValidateIntegration(ctx, integration, decryptFunc)
+}
+
+// validateSecretFields rejects duplicate keys that differ only by case in secret fields to avoid ambiguity in secret redaction
+func validateSecretFields(e *apimodels.EmbeddedContactPoint) error {
+	typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(schema.IntegrationType(e.Type), schema.V1)
+	if !ok {
+		return fmt.Errorf("failed to get schema for contact point type %s", e.Type)
+	}
+	for _, secretPath := range typeSchema.GetSecretFieldsPaths() {
+		node := e.Settings
+		for _, segment := range secretPath {
+			if node == nil {
+				break
+			}
+			m, err := node.Map()
+			if err != nil {
+				break
+			}
+			var matches []string
+			for k := range m {
+				if strings.EqualFold(k, segment) {
+					matches = append(matches, k)
+				}
+			}
+			if len(matches) == 0 {
+				break
+			}
+			if len(matches) > 1 {
+				return fmt.Errorf("duplicate keys found for secret field %s", secretPath.String())
+			}
+			node = node.Get(matches[0])
+		}
+	}
+	return nil
 }
 
 // RemoveSecretsForContactPoint removes all secrets from the contact point's settings and returns them as a map. Returns error if contact point type is not known.
@@ -739,7 +776,7 @@ func extractCaseInsensitive(jsonObj *simplejson.Json, key string) (string, error
 
 	node := jsonObj
 	for idx, segment := range path {
-		_, value, err := getNodeCaseInsensitive(node, segment)
+		k, value, err := getNodeCaseInsensitive(node, segment)
 		if err != nil {
 			return "", err
 		}
@@ -748,7 +785,7 @@ func extractCaseInsensitive(jsonObj *simplejson.Json, key string) (string, error
 		}
 		if idx == len(path)-1 {
 			resultValue := value.MustString()
-			node.Del(segment)
+			node.Del(k)
 			return resultValue, nil
 		}
 		node = value

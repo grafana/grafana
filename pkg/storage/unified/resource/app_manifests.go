@@ -8,7 +8,7 @@ import (
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis"
 	alerting_historian "github.com/grafana/grafana/apps/alerting/historian/pkg/apis"
 	alerting_notifications "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
-	alerting_rules "github.com/grafana/grafana/apps/alerting/rules/pkg/apis"
+	alerting_rules "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	annotation "github.com/grafana/grafana/apps/annotation/pkg/apis"
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/manifestdata"
 	correlations "github.com/grafana/grafana/apps/correlations/pkg/apis"

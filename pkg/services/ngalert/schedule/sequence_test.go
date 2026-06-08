@@ -155,8 +155,8 @@ func TestSequence(t *testing.T) {
 		require.Equal(t, []string{"3", "4"}, prevByGroup["rg2"])
 	})
 
-	t.Run("chain group with multiple rules evaluates sequentially", func(t *testing.T) {
-		chainGroup := chainGroupName(t, "chain-123")
+	t.Run("sequence group with multiple rules evaluates sequentially", func(t *testing.T) {
+		seqGroup := sequenceGroupName(t, "seq-123")
 		nextByGroup := map[string][]string{}
 		prevByGroup := map[string][]string{}
 		callback := func(next readyToRunItem, prev ...readyToRunItem) func() {
@@ -172,34 +172,34 @@ func TestSequence(t *testing.T) {
 
 		items := []readyToRunItem{
 			{
-				ruleRoutine: &fakeSequenceRule{UID: "c1", Group: chainGroup},
+				ruleRoutine: &fakeSequenceRule{UID: "c1", Group: seqGroup},
 				Evaluation: Evaluation{
 					rule: gen.With(
 						models.RuleGen.WithUID("c1"),
 						models.RuleGen.WithGroupIndex(1),
-						models.RuleGen.WithGroupName(chainGroup),
+						models.RuleGen.WithGroupName(seqGroup),
 					).GenerateRef(),
 					folderTitle: "folder1",
 				},
 			},
 			{
-				ruleRoutine: &fakeSequenceRule{UID: "c2", Group: chainGroup},
+				ruleRoutine: &fakeSequenceRule{UID: "c2", Group: seqGroup},
 				Evaluation: Evaluation{
 					rule: gen.With(
 						models.RuleGen.WithUID("c2"),
 						models.RuleGen.WithGroupIndex(2),
-						models.RuleGen.WithGroupName(chainGroup),
+						models.RuleGen.WithGroupName(seqGroup),
 					).GenerateRef(),
 					folderTitle: "folder1",
 				},
 			},
 			{
-				ruleRoutine: &fakeSequenceRule{UID: "c3", Group: chainGroup},
+				ruleRoutine: &fakeSequenceRule{UID: "c3", Group: seqGroup},
 				Evaluation: Evaluation{
 					rule: gen.With(
 						models.RuleGen.WithUID("c3"),
 						models.RuleGen.WithGroupIndex(3),
-						models.RuleGen.WithGroupName(chainGroup),
+						models.RuleGen.WithGroupName(seqGroup),
 					).GenerateRef(),
 					folderTitle: "folder1",
 				},
@@ -207,15 +207,15 @@ func TestSequence(t *testing.T) {
 		}
 
 		sequences := sch.buildSequences(items, callback)
-		// Three chain rules should produce one sequence (chained).
+		// Three sequence rules should produce one sequence (linked).
 		require.Equal(t, 1, len(sequences))
 		require.Equal(t, "c1", sequences[0].rule.UID)
 
 		// Run the sequence.
 		sequences[0].ruleRoutine.Eval(&sequences[0].Evaluation)
 
-		require.Equal(t, []string{"c2", "c3"}, nextByGroup[chainGroup])
-		require.Equal(t, []string{"c1", "c2"}, prevByGroup[chainGroup])
+		require.Equal(t, []string{"c2", "c3"}, nextByGroup[seqGroup])
+		require.Equal(t, []string{"c1", "c2"}, prevByGroup[seqGroup])
 	})
 }
 
@@ -249,43 +249,43 @@ func TestShouldEvaluateSequentially(t *testing.T) {
 		}
 	}
 
-	t.Run("chain group with two rules returns true", func(t *testing.T) {
+	t.Run("sequence group with two rules returns true", func(t *testing.T) {
 		sch := setupScheduler(t, newFakeRulesStore(), nil, nil, nil, nil, nil)
-		chainGroup := chainGroupName(t, "my-chain")
+		seqGroup := sequenceGroupName(t, "my-seq")
 		items := []readyToRunItem{
-			makeItem("a", chainGroup),
-			makeItem("b", chainGroup),
+			makeItem("a", seqGroup),
+			makeItem("b", seqGroup),
 		}
 		require.True(t, sch.shouldEvaluateSequentially(items))
 	})
 
-	t.Run("chain group with one rule returns false", func(t *testing.T) {
+	t.Run("sequence group with one rule returns false", func(t *testing.T) {
 		sch := setupScheduler(t, newFakeRulesStore(), nil, nil, nil, nil, nil)
-		chainGroup := chainGroupName(t, "solo")
+		seqGroup := sequenceGroupName(t, "solo")
 		items := []readyToRunItem{
-			makeItem("a", chainGroup),
+			makeItem("a", seqGroup),
 		}
 		require.False(t, sch.shouldEvaluateSequentially(items))
 	})
 
-	t.Run("chain group is independent of jitter setting", func(t *testing.T) {
+	t.Run("sequence group is independent of jitter setting", func(t *testing.T) {
 		sch := setupScheduler(t, newFakeRulesStore(), nil, nil, nil, nil, nil)
 		sch.jitterEvaluations = JitterByGroup
-		chainGroup := chainGroupName(t, "jitter-test")
+		seqGroup := sequenceGroupName(t, "jitter-test")
 		items := []readyToRunItem{
-			makeItem("a", chainGroup),
-			makeItem("b", chainGroup),
+			makeItem("a", seqGroup),
+			makeItem("b", seqGroup),
 		}
 		require.True(t, sch.shouldEvaluateSequentially(items))
 	})
 
-	t.Run("chain group returns false when jitter by rule is enabled", func(t *testing.T) {
+	t.Run("sequence group returns false when jitter by rule is enabled", func(t *testing.T) {
 		sch := setupScheduler(t, newFakeRulesStore(), nil, nil, nil, nil, nil)
 		sch.jitterEvaluations = JitterByRule
-		chainGroup := chainGroupName(t, "jitter-rule")
+		seqGroup := sequenceGroupName(t, "jitter-rule")
 		items := []readyToRunItem{
-			makeItem("a", chainGroup),
-			makeItem("b", chainGroup),
+			makeItem("a", seqGroup),
+			makeItem("b", seqGroup),
 		}
 		require.False(t, sch.shouldEvaluateSequentially(items))
 	})
@@ -299,11 +299,11 @@ func TestShouldEvaluateSequentially(t *testing.T) {
 		require.False(t, sch.shouldEvaluateSequentially(items))
 	})
 
-	t.Run("unpadded chain prefix is not treated as chain group", func(t *testing.T) {
+	t.Run("unpadded sequence prefix is not treated as sequence group", func(t *testing.T) {
 		sch := setupScheduler(t, newFakeRulesStore(), nil, nil, nil, nil, nil)
 		// A user-creatable group name that happens to start with the prefix
 		// but is not padded to sentinel length should NOT be sequential.
-		fakeGroup := models.RuleChainGroupPrefix + "user-created"
+		fakeGroup := models.RuleSequenceGroupPrefix + "user-created"
 		items := []readyToRunItem{
 			makeItem("a", fakeGroup),
 			makeItem("b", fakeGroup),

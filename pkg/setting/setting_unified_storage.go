@@ -273,6 +273,16 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	}
 	cfg.IndexSnapshotCleanupGracePeriod = section.Key("index_snapshot_cleanup_grace_period").MustDuration(30 * time.Minute)
 
+	// Periodic on-disk cleanup of leftover bleve index folders.
+	// disk_index_cleanup_interval = 0 disables the loop (default).
+	cfg.DiskIndexCleanupInterval = section.Key("disk_index_cleanup_interval").MustDuration(0)
+	cfg.DiskIndexCleanupGracePeriod = section.Key("disk_index_cleanup_grace_period").MustDuration(time.Hour)
+	// disk_index_cleanup_unopened_grace_period only applies to the newest on-disk
+	// index for a resource this pod owns but has not opened in this process.
+	// Keeping it longer lets a later BuildIndex for that resource reuse the
+	// existing index instead of rebuilding from scratch.
+	cfg.DiskIndexCleanupUnopenedGracePeriod = section.Key("disk_index_cleanup_unopened_grace_period").MustDuration(24 * time.Hour)
+
 	// Vector storage (separate pgvector database)
 	vectorSection := cfg.Raw.Section("database_vector")
 	cfg.VectorDBHost = vectorSection.Key("db_host").String()

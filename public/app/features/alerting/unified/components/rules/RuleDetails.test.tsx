@@ -15,6 +15,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   usePluginLinks: jest.fn(),
   useReturnToPrevious: jest.fn(),
+  useAppPluginEnabled: jest.fn().mockReturnValue({ loading: false, error: undefined, value: false }),
 }));
 
 jest.mock('../../hooks/useIsRuleEditable');

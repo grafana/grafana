@@ -467,6 +467,10 @@ export type Status = {
 };
 export type Patch = object;
 export type FolderAccessInfo = {
+  /** AccessControl is a flat map of folder-domain action strings to bool, reflecting permissions after parent-chain inheritance has been resolved by the authorization system. Mirrors the shape of legacy dtos.Folder.AccessControl so clients can drop their dual call to /api/folders/{uid}?accesscontrol=true. Only keys for actions the user is granted appear here; absent keys mean "not granted". */
+  accessControl?: {
+    [key: string]: boolean;
+  };
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   canAdmin: boolean;

@@ -148,7 +148,7 @@ export function ContentHeader({
     return (
       <PendingPickerHeader
         editorType={QueryEditorType.Expression}
-        label={<Trans i18nKey="query-editor-next.header.pending-expression">Select an Expression</Trans>}
+        label={<Trans i18nKey="query-editor-next.header.pending-expression">Select an expression</Trans>}
         onCancel={onCancelPendingExpression}
         cancelLabel={<Trans i18nKey="query-editor-next.header.pending-expression-cancel">Cancel</Trans>}
         styles={styles}
@@ -161,7 +161,7 @@ export function ContentHeader({
     return (
       <PendingPickerHeader
         editorType={QueryEditorType.Transformation}
-        label={<Trans i18nKey="query-editor-next.header.pending-transformation">Select a Transformation</Trans>}
+        label={<Trans i18nKey="query-editor-next.header.pending-transformation">Select a transformation</Trans>}
         onCancel={onCancelPendingTransformation}
         cancelLabel={<Trans i18nKey="query-editor-next.header.pending-transformation-cancel">Cancel</Trans>}
         styles={styles}
