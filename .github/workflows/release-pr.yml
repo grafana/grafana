@@ -150,15 +150,20 @@ jobs:
       - name: Create branch
         run: git checkout -b "release/${{ github.run_number }}/$VERSION"
       # Pre-create the new branch on the remote pointing at the release branch's HEAD.
-      # This gives GitHub's pre-receive workflow-file scan a known base point on
-      # subsequent pushes (only the *new* commits are walked, instead of the entire
-      # divergence from main). Without this, a brand-new branch can hit a scan
-      # timeout that GitHub reports as "workflows scope may be required" even when
-      # no workflow files were modified.
+      # Using the REST API rather than `git push` because git push triggers the
+      # "Restricts updates to workflow files" pre-receive scan, which times out on
+      # branches that diverge significantly from the default branch. The API path
+      # may bypass that scan since it's a direct ref creation pointing at an
+      # already-existing commit.
       - name: Pre-create branch on remote
+        env:
+          GH_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
         run: |
           BASE_SHA=$(git rev-parse "origin/${RELEASE_BRANCH}")
-          git push origin "${BASE_SHA}:refs/heads/release/${{ github.run_number }}/${VERSION}"
+          gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
+            --method POST \
+            -f "ref=refs/heads/release/${{ github.run_number }}/${VERSION}" \
+            -f "sha=${BASE_SHA}"
 
       - name: Generate changelog
         id: changelog
