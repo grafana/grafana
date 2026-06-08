@@ -33,9 +33,9 @@ func TestMain(m *testing.M) {
 		goleak.IgnoreTopFunction("go.opentelemetry.io/otel/sdk/trace.(*batchSpanProcessor).processQueue"), // OTel span processor from test infra.
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),                                   // database/sql background goroutines from test DB setup.
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionCleaner"),
-		goleak.IgnoreTopFunction("github.com/go-sql-driver/mysql.(*mysqlConn).startWatcher.func1"), // MySQL driver connection watcher from test DB setup.
-		goleak.IgnoreTopFunction("github.com/grafana/dskit/runtimeconfig.(*Manager).loop"),         // dskit runtime config manager from test infra.
-		goleak.IgnoreTopFunction("github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...].func1"), // expirable LRU cleanup goroutine.
+		goleak.IgnoreTopFunction("github.com/go-sql-driver/mysql.(*mysqlConn).startWatcher.func1"),                                             // MySQL driver connection watcher from test DB setup.
+		goleak.IgnoreTopFunction("github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...].func1"),                                             // expirable LRU cleanup goroutine.
+		goleak.IgnoreTopFunction("github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager.(*ResourceVersionManager).startBatchProcessor"), // ResourceVersionManager has no shutdown hook; compat tests intentionally exercise it.
 	)
 }
 
@@ -774,7 +774,7 @@ func TestSubtractDurationFromSnowflake(t *testing.T) {
 			baseSnowflake := snowflakeFromTime(baseTime)
 
 			// Subtract the duration
-			resultSnowflake := subtractDurationFromSnowflake(baseSnowflake, tt.addTime)
+			resultSnowflake := SubtractDurationFromSnowflake(baseSnowflake, tt.addTime)
 
 			// Convert back to timestamp and verify
 			// Extract timestamp from the result snowflake
@@ -848,8 +848,8 @@ func testListKeysSinceWithSnowflakeTime(t *testing.T, ctx context.Context, store
 		require.NoError(t, err)
 	}
 
-	// List events since 90 minutes ago using subtractDurationFromSnowflake
-	sinceRV := subtractDurationFromSnowflake(snowflakeFromTime(now), 90*time.Minute)
+	// List events since 90 minutes ago using SubtractDurationFromSnowflake
+	sinceRV := SubtractDurationFromSnowflake(snowflakeFromTime(now), 90*time.Minute)
 	retrievedEvents := make([]string, 0) //nolint:prealloc
 	for eventKey, err := range store.ListKeysSince(ctx, sinceRV, SortOrderAsc) {
 		require.NoError(t, err)
@@ -865,8 +865,8 @@ func testListKeysSinceWithSnowflakeTime(t *testing.T, ctx context.Context, store
 	require.NoError(t, err)
 	assert.Equal(t, "test-3", evt2.Name)
 
-	// List events since 30 minutes ago using subtractDurationFromSnowflake
-	sinceRV = subtractDurationFromSnowflake(snowflakeFromTime(now), 30*time.Minute)
+	// List events since 30 minutes ago using SubtractDurationFromSnowflake
+	sinceRV = SubtractDurationFromSnowflake(snowflakeFromTime(now), 30*time.Minute)
 	retrievedEvents = make([]string, 0) //nolint:prealloc
 	for eventKey, err := range store.ListKeysSince(ctx, sinceRV, SortOrderAsc) {
 		require.NoError(t, err)

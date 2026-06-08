@@ -89,7 +89,11 @@ const EnumMappingRow = ({
         <tr key={index} ref={provided.innerRef} {...provided.draggableProps}>
           <td>
             <div className={styles.dragHandle} {...provided.dragHandleProps}>
-              <Icon name="draggabledots" size="lg" />
+              <Icon
+                name="draggabledots"
+                size="lg"
+                title={t('transformers.enum-mapping-row.drag-handle-label', 'Reorder enum mapping row')}
+              />
             </div>
           </td>
           {isEditing ? (

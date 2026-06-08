@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -11,13 +12,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	grafanautils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 )
 
-// Use a GVR not in SupportsFolderAnnotation to avoid FolderManager dependency
+// Use a GVR not in EnableFolderSupport to avoid FolderManager dependency
 // in tests that go through WriteResourceFromFile.
 var (
 	replaceTestGVK = schema.GroupVersionKind{Group: "alerting.grafana.app", Version: "v0alpha1", Kind: "AlertRule"}
@@ -66,6 +70,66 @@ func newWritableParsedResource(name string) (*ParsedResource, *MockDynamicResour
 	return mustBuildParsedResource(name, client), client
 }
 
+func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
+	// replaceTestGVR (alertrules) is used as the resource under test; whether it
+	// carries the folder annotation is driven entirely by what the clients report
+	// as supported, so the same resource exercises both branches.
+
+	t.Run("does not set the folder annotation for resources that do not support folders", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+
+		clients := NewMockResourceClients(t)
+		clients.EXPECT().SupportedResources().Return([]SupportedResource{
+			{GroupKind: replaceTestGVK.GroupKind(), Capabilities: sets.New[string]()},
+		})
+
+		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
+		repo.On("Read", mock.Anything, "alerts/rule.json", "").Return(fileInfo, nil)
+		parsed, _ := newWritableParsedResource("rule-1")
+		mockParser.On("Parse", mock.Anything, fileInfo).Return(parsed, nil)
+
+		// folders is nil on purpose: if the folder-annotation branch were taken it
+		// would dereference the nil FolderManager and panic, so a clean run proves
+		// the branch was skipped.
+		mgr := NewResourcesManager(repo, nil, mockParser, clients)
+		_, _, err := mgr.WriteResourceFromFile(context.Background(), "alerts/rule.json", "")
+
+		require.NoError(t, err)
+		require.Empty(t, parsed.Meta.GetFolder(), "no folder annotation should be written for a resource that does not support folders")
+	})
+
+	t.Run("sets the folder annotation for resources that support folders", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+
+		config := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: testRepoName, Namespace: "default"},
+			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
+		}
+		repo.On("Config").Return(config)
+
+		clients := NewMockResourceClients(t)
+		clients.EXPECT().SupportedResources().Return([]SupportedResource{
+			{GroupKind: replaceTestGVK.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+		})
+
+		// Root-level file: EnsureFolderPathExist resolves to the repository root
+		// folder without needing a folder client or pre-populated tree.
+		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "rule.json"}
+		repo.On("Read", mock.Anything, "rule.json", "").Return(fileInfo, nil)
+		parsed, _ := newWritableParsedResource("rule-1")
+		mockParser.On("Parse", mock.Anything, fileInfo).Return(parsed, nil)
+
+		folderMgr := NewFolderManager(repo, nil, NewEmptyFolderTree(), FolderKind)
+		mgr := NewResourcesManager(repo, folderMgr, mockParser, clients)
+		_, _, err := mgr.WriteResourceFromFile(context.Background(), "rule.json", "")
+
+		require.NoError(t, err)
+		require.Equal(t, RootFolder(config), parsed.Meta.GetFolder(), "the resource should be annotated with the resolved folder")
+	})
+}
+
 func TestReplaceResourceFromFile(t *testing.T) {
 	t.Run("name unchanged skips delete", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
@@ -76,7 +140,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		parsed, _ := newWritableParsedResource("same-uid")
 		mockParser.On("Parse", mock.Anything, fileInfo).Return(parsed, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, gvk, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "same-uid", replaceTestGVR)
 
 		require.NoError(t, err)
@@ -93,7 +157,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		parsed, _ := newWritableParsedResource("new-uid")
 		mockParser.On("Parse", mock.Anything, fileInfo).Return(parsed, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, gvk, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "", replaceTestGVR)
 
 		require.NoError(t, err)
@@ -105,6 +169,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClients := NewMockResourceClients(t)
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		deleteClient := &MockDynamicResourceInterface{}
 
 		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
@@ -134,7 +199,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		repo.On("Read", mock.Anything, "alerts/rule.json", "").
 			Return((*repository.FileInfo)(nil), fmt.Errorf("file not found"))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "old-uid", replaceTestGVR)
 
 		require.Error(t, err)
@@ -145,6 +210,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClients := NewMockResourceClients(t)
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		deleteClient := &MockDynamicResourceInterface{}
 
 		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
@@ -172,6 +238,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClients := NewMockResourceClients(t)
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 
 		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
 		repo.On("Read", mock.Anything, "alerts/rule.json", "").Return(fileInfo, nil)
@@ -204,7 +271,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(oldParsed, nil)
 		mockParser.On("Parse", mock.Anything, newFileInfo).Return(newParsed, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, gvk, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)
@@ -216,6 +283,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClients := NewMockResourceClients(t)
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		deleteClient := &MockDynamicResourceInterface{}
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{"old": true}`), Path: "alerts/rule.json"}
@@ -250,7 +318,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		repo.On("Read", mock.Anything, "alerts/rule.json", "old-ref").
 			Return((*repository.FileInfo)(nil), fmt.Errorf("ref not found"))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.Error(t, err)
@@ -266,7 +334,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, oldFileInfo).
 			Return(nil, fmt.Errorf("invalid JSON"))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.Error(t, err)
@@ -285,7 +353,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		oldParsed := mustBuildParsedResource("old-uid", nil)
 		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(oldParsed, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.Error(t, err)
@@ -296,6 +364,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClients := NewMockResourceClients(t)
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		deleteClient := &MockDynamicResourceInterface{}
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{"old": true}`), Path: "alerts/rule.json"}
@@ -338,7 +407,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(oldParsed, nil)
 		mockParser.On("Parse", mock.Anything, newFileInfo).Return(newParsed, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)
@@ -350,6 +419,7 @@ func TestDeleteOldResource(t *testing.T) {
 	t.Run("successful delete", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		mockClient := &MockDynamicResourceInterface{}
 
 		repo.On("Config").Return(replaceRepoConfig())
@@ -371,6 +441,7 @@ func TestDeleteOldResource(t *testing.T) {
 	t.Run("ForResource error is propagated", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 
 		mockClients.On("ForResource", mock.Anything, replaceTestGVR).
 			Return(nil, schema.GroupVersionKind{}, fmt.Errorf("unknown resource"))
@@ -386,6 +457,7 @@ func TestDeleteOldResource(t *testing.T) {
 	t.Run("sets correct namespace from repo config", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		mockClient := &MockDynamicResourceInterface{}
 
 		cfg := &provisioning.Repository{
@@ -409,6 +481,7 @@ func TestDeleteOldResource(t *testing.T) {
 	t.Run("ownership check failure wraps error", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		mockClient := &MockDynamicResourceInterface{}
 
 		repo.On("Config").Return(replaceRepoConfig())
@@ -437,6 +510,7 @@ func TestDeleteOldResource(t *testing.T) {
 	t.Run("skips delete when sourcePath points to a different file", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		mockClient := &MockDynamicResourceInterface{}
 
 		repo.On("Config").Return(replaceRepoConfig())
@@ -459,6 +533,7 @@ func TestDeleteOldResource(t *testing.T) {
 	t.Run("proceeds with delete when sourcePath is empty", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		mockClient := &MockDynamicResourceInterface{}
 
 		repo.On("Config").Return(replaceRepoConfig())
@@ -474,4 +549,145 @@ func TestDeleteOldResource(t *testing.T) {
 		require.NoError(t, err)
 		mockClient.AssertCalled(t, "Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything)
 	})
+}
+
+// TestWrapAsValidationErrorIfNeeded pins the classification that decides
+// whether an error produced while writing a resource becomes a job-level
+// warning (non-fatal, the sync continues) or a hard error (fails the sync).
+// Anything wrapped as *ResourceValidationError is later surfaced as a warning
+// by jobs.classifyWarning.
+func TestWrapAsValidationErrorIfNeeded(t *testing.T) {
+	dashboardGK := schema.GroupKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
+
+	t.Run("nil passes through", func(t *testing.T) {
+		require.NoError(t, wrapAsValidationErrorIfNeeded(nil))
+	})
+
+	t.Run("already a ResourceValidationError is returned unchanged", func(t *testing.T) {
+		original := NewResourceValidationError(errors.New("boom"))
+		got := wrapAsValidationErrorIfNeeded(original)
+		require.Same(t, original, got, "should return the same instance, not rewrap")
+	})
+
+	t.Run("field.Error is wrapped as a warning", func(t *testing.T) {
+		fieldErr := field.Required(field.NewPath("metadata", "name"), "missing name")
+		got := wrapAsValidationErrorIfNeeded(fieldErr)
+		requireWrappedAsValidation(t, got)
+	})
+
+	t.Run("apierrors BadRequest is wrapped as a warning", func(t *testing.T) {
+		badReq := apierrors.NewBadRequest("bad payload")
+		got := wrapAsValidationErrorIfNeeded(badReq)
+		requireWrappedAsValidation(t, got)
+	})
+
+	t.Run("apierrors Invalid (schema type mismatch) is wrapped as a warning", func(t *testing.T) {
+		// Mirrors the dashboard apiserver's strict validation path, which
+		// returns StatusReasonInvalid for CUE "conflicting values" failures.
+		invalid := apierrors.NewInvalid(dashboardGK, "AWSLambda", field.ErrorList{
+			field.Invalid(
+				field.NewPath("spec", "refresh"),
+				field.OmitValueType{},
+				`conflicting values false and string (mismatched types bool and string)`,
+			),
+		})
+		got := wrapAsValidationErrorIfNeeded(invalid)
+		requireWrappedAsValidation(t, got)
+		// The warning message should preserve the apiserver details so
+		// operators can locate the offending field in the file.
+		require.Contains(t, got.Error(), `Dashboard.dashboard.grafana.app "AWSLambda" is invalid`)
+		require.Contains(t, got.Error(), "spec.refresh")
+	})
+
+	t.Run("apierrors Invalid (immutable metadata.name) is wrapped as a warning", func(t *testing.T) {
+		// metadata.name immutability is enforced by apimachinery and returned
+		// as StatusReasonInvalid. This is the "field is immutable" variant
+		// seen when a file changes the name of an existing resource.
+		invalid := apierrors.NewInvalid(dashboardGK, "API-initiation-monitor", field.ErrorList{
+			field.Invalid(
+				field.NewPath("metadata", "name"),
+				"API-initiation-monitor",
+				"field is immutable",
+			),
+		})
+		got := wrapAsValidationErrorIfNeeded(invalid)
+		requireWrappedAsValidation(t, got)
+		require.Contains(t, got.Error(), "metadata.name")
+		require.Contains(t, got.Error(), "field is immutable")
+	})
+
+	t.Run("apierrors Invalid wrapped with fmt.Errorf is still wrapped as a warning", func(t *testing.T) {
+		// The sync path wraps the raw apiserver error with fmt.Errorf(%w).
+		// errors.As / IsInvalid must still traverse the chain.
+		invalid := apierrors.NewInvalid(dashboardGK, "dash", field.ErrorList{
+			field.Invalid(field.NewPath("spec", "refresh"), field.OmitValueType{}, "mismatched types"),
+		})
+		wrapped := fmt.Errorf("writing resource: %w", invalid)
+		got := wrapAsValidationErrorIfNeeded(wrapped)
+		requireWrappedAsValidation(t, got)
+	})
+
+	t.Run("DashboardErr is wrapped as a warning", func(t *testing.T) {
+		dErr := dashboardaccess.DashboardErr{
+			StatusCode: 400,
+			Status:     "bad-request",
+			Reason:     "Dashboard refresh interval is too low",
+		}
+		got := wrapAsValidationErrorIfNeeded(dErr)
+		requireWrappedAsValidation(t, got)
+	})
+
+	t.Run("ErrDuplicateName is wrapped as a warning", func(t *testing.T) {
+		got := wrapAsValidationErrorIfNeeded(fmt.Errorf("dup: %w", ErrDuplicateName))
+		requireWrappedAsValidation(t, got)
+	})
+
+	t.Run("ErrAlreadyInRepository is wrapped as a warning", func(t *testing.T) {
+		got := wrapAsValidationErrorIfNeeded(fmt.Errorf("dup: %w", ErrAlreadyInRepository))
+		requireWrappedAsValidation(t, got)
+	})
+
+	// The following are explicitly NOT wrapped: they represent transient or
+	// authorization issues, or internal failures, where the whole sync should
+	// surface as an error rather than being quietly downgraded to a warning.
+	t.Run("apierrors Forbidden is not wrapped", func(t *testing.T) {
+		forbidden := apierrors.NewForbidden(schema.GroupResource{Group: "g", Resource: "r"}, "foo", errors.New("nope"))
+		got := wrapAsValidationErrorIfNeeded(forbidden)
+		requireNotWrapped(t, got, forbidden)
+	})
+
+	t.Run("apierrors Conflict is not wrapped", func(t *testing.T) {
+		conflict := apierrors.NewConflict(schema.GroupResource{Group: "g", Resource: "r"}, "foo", errors.New("version mismatch"))
+		got := wrapAsValidationErrorIfNeeded(conflict)
+		requireNotWrapped(t, got, conflict)
+	})
+
+	t.Run("apierrors InternalError is not wrapped", func(t *testing.T) {
+		internal := apierrors.NewInternalError(errors.New("kaboom"))
+		got := wrapAsValidationErrorIfNeeded(internal)
+		requireNotWrapped(t, got, internal)
+	})
+
+	t.Run("arbitrary non-apimachinery errors are not wrapped", func(t *testing.T) {
+		plain := errors.New("network timeout")
+		got := wrapAsValidationErrorIfNeeded(plain)
+		requireNotWrapped(t, got, plain)
+	})
+}
+
+func requireWrappedAsValidation(t *testing.T, err error) {
+	t.Helper()
+	require.Error(t, err)
+	var validationErr *ResourceValidationError
+	require.True(t, errors.As(err, &validationErr),
+		"error %q should be wrapped as *ResourceValidationError to become a job warning", err)
+}
+
+func requireNotWrapped(t *testing.T, got, original error) {
+	t.Helper()
+	require.Error(t, got)
+	var validationErr *ResourceValidationError
+	require.False(t, errors.As(got, &validationErr),
+		"error %q should NOT be wrapped as *ResourceValidationError (would incorrectly become a warning)", got)
+	require.Same(t, original, got, "non-wrapped errors should be returned unchanged")
 }

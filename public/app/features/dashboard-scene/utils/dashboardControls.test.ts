@@ -1,34 +1,30 @@
 import { type DataQuery, type DataSourceApi, type DataSourceJsonData } from '@grafana/data';
-import { type DataSourceSrv, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
 import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
-import { defaultDataQueryKind, type QueryVariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { reportPerformance } from 'app/core/services/echo/EchoSrv';
+import {
+  defaultDataQueryKind,
+  type QueryVariableKind,
+  type VariableKind,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { loadDefaultControlsFromDatasources } from './dashboardControls';
+import {
+  loadDefaultControlsShared$,
+  loadDefaultLinks$,
+  loadDefaultVariables$,
+  type DefaultControlEvent,
+} from './dashboardControls';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
   return {
     ...actual,
     getDataSourceSrv: jest.fn(),
-    reportInteraction: jest.fn(),
   };
 });
-
-jest.mock('app/core/services/echo/EchoSrv', () => ({
-  reportPerformance: jest.fn(),
-}));
-
-jest.mock('nanoid', () => ({
-  nanoid: jest.fn(() => 'mock-trace-id'),
-}));
 
 jest.mock('../serialization/layoutSerializers/utils', () => ({
   getRuntimePanelDataSource: jest.fn(),
 }));
-
-const reportInteractionMock = reportInteraction as jest.MockedFunction<typeof reportInteraction>;
-const reportPerformanceMock = reportPerformance as jest.MockedFunction<typeof reportPerformance>;
 
 const getDataSourceSrvMock = getDataSourceSrv as jest.MockedFunction<typeof getDataSourceSrv>;
 
@@ -114,57 +110,25 @@ const mockLink1: DashboardLink = {
   keepTime: false,
 };
 
-const mockLink2: DashboardLink = {
-  title: 'Link 2',
-  url: 'https://example2.com',
-  type: 'link',
-  icon: 'external',
-  tooltip: 'Tooltip 2',
-  asDropdown: false,
-  tags: [],
-  targetBlank: false,
-  includeVars: false,
-  keepTime: false,
-};
-
 describe('dashboardControls', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('loadDefaultControlsFromDatasources', () => {
-    it('should return empty arrays and not track when refs is empty', async () => {
-      reportInteractionMock.mockClear();
+  describe('loadDefaultControlsShared$', () => {
+    it('should complete immediately when refs is empty', (done) => {
+      const events: DefaultControlEvent[] = [];
 
-      const result = await loadDefaultControlsFromDatasources([]);
-
-      expect(result).toEqual({ defaultVariables: [], defaultLinks: [] });
-      expect(reportInteractionMock).not.toHaveBeenCalled();
+      loadDefaultControlsShared$([]).subscribe({
+        next: (event) => events.push(event),
+        complete: () => {
+          expect(events).toEqual([]);
+          done();
+        },
+      });
     });
 
-    it('should return empty arrays when datasources have no default controls', async () => {
-      const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'prometheus' }];
-
-      const mockDs = createMockDatasource({
-        uid: 'ds-1',
-        type: 'prometheus',
-        getDefaultVariables: undefined,
-        getDefaultLinks: undefined,
-      });
-
-      const mockSrv = createMockDataSourceSrv({
-        get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
-      });
-
-      getDataSourceSrvMock.mockReturnValue(mockSrv);
-
-      const result = await loadDefaultControlsFromDatasources(refs);
-
-      expect(result.defaultVariables).toEqual([]);
-      expect(result.defaultLinks).toEqual([]);
-    });
-
-    it('should collect default variables from datasources', async () => {
+    it('should emit variables and links per-datasource and then complete', (done) => {
       const refs: DataSourceRef[] = [
         { uid: 'ds-1', type: 'prometheus' },
         { uid: 'ds-2', type: 'loki' },
@@ -174,8 +138,7 @@ describe('dashboardControls', () => {
         uid: 'ds-1',
         type: 'prometheus',
         getDefaultVariables: () => Promise.resolve([mockVariable1]),
-        getDefaultLinks: undefined,
-        getRef: jest.fn(() => ({ uid: 'ds-1', type: 'prometheus' })),
+        getDefaultLinks: () => Promise.resolve([mockLink1]),
       });
 
       const mockDs2 = createMockDatasource({
@@ -183,7 +146,6 @@ describe('dashboardControls', () => {
         type: 'loki',
         getDefaultVariables: () => Promise.resolve([mockVariable2]),
         getDefaultLinks: undefined,
-        getRef: jest.fn(() => ({ uid: 'ds-2', type: 'loki' })),
       });
 
       const mockSrv = createMockDataSourceSrv({
@@ -191,124 +153,74 @@ describe('dashboardControls', () => {
           if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === 'ds-1') {
             return Promise.resolve(mockDs1);
           }
-          if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === 'ds-2') {
-            return Promise.resolve(mockDs2);
-          }
-          return Promise.reject(new Error('Unknown datasource'));
+          return Promise.resolve(mockDs2);
         }),
       });
 
       getDataSourceSrvMock.mockReturnValue(mockSrv);
 
-      const result = await loadDefaultControlsFromDatasources(refs);
+      const events: DefaultControlEvent[] = [];
 
-      expect(result.defaultVariables).toHaveLength(2);
-      expect(result.defaultVariables[0]).toMatchObject({
-        ...mockVariable1,
-        spec: {
-          ...mockVariable1.spec,
-          name: 'prometheus_var1',
-          label: 'Variable 1',
-          origin: {
-            type: 'datasource',
-            group: 'prometheus',
-          },
-        },
-      });
-      expect(result.defaultVariables[1]).toMatchObject({
-        ...mockVariable2,
-        spec: {
-          ...mockVariable2.spec,
-          name: 'loki_var2',
-          label: 'Variable 2',
-          origin: {
-            type: 'datasource',
-            group: 'loki',
-          },
-        },
-      });
-      expect(result.defaultLinks).toEqual([]);
-    });
+      loadDefaultControlsShared$(refs).subscribe({
+        next: (event) => events.push(event),
+        complete: () => {
+          const variableEvents = events.filter((e) => e.type === 'variables');
+          const linkEvents = events.filter((e) => e.type === 'links');
 
-    it('should preserve default variable descriptions from datasources', async () => {
-      const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'prometheus' }];
-      const describedVariable: QueryVariableKind = {
-        ...mockVariable1,
-        spec: {
-          ...mockVariable1.spec,
-          description: 'Read docs at https://grafana.com/docs',
-        },
-      };
-
-      const mockDs = createMockDatasource({
-        uid: 'ds-1',
-        type: 'prometheus',
-        getDefaultVariables: () => Promise.resolve([describedVariable]),
-        getDefaultLinks: undefined,
-        getRef: jest.fn(() => ({ uid: 'ds-1', type: 'prometheus' })),
-      });
-
-      const mockSrv = createMockDataSourceSrv({
-        get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
-      });
-
-      getDataSourceSrvMock.mockReturnValue(mockSrv);
-
-      const result = await loadDefaultControlsFromDatasources(refs);
-
-      expect(result.defaultVariables[0]).toMatchObject({
-        spec: {
-          description: 'Read docs at https://grafana.com/docs',
+          expect(variableEvents).toHaveLength(2);
+          expect(linkEvents).toHaveLength(1);
+          done();
         },
       });
     });
 
-    it('should collect default links from datasources', async () => {
-      const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'prometheus' }];
+    it('should continue emitting from other datasources when one fails to load', (done) => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const refs: DataSourceRef[] = [
+        { uid: 'ds-fail', type: 'broken' },
+        { uid: 'ds-ok', type: 'prometheus' },
+      ];
 
       const mockDs = createMockDatasource({
-        uid: 'ds-1',
-        type: 'prometheus',
-        getDefaultVariables: undefined,
-        getDefaultLinks: () => Promise.resolve([mockLink1, mockLink2]),
-        getRef: jest.fn(() => ({ uid: 'ds-1', type: 'prometheus' })),
-      });
-
-      const mockSrv = createMockDataSourceSrv({
-        get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
-      });
-
-      getDataSourceSrvMock.mockReturnValue(mockSrv);
-
-      const result = await loadDefaultControlsFromDatasources(refs);
-
-      expect(result.defaultVariables).toEqual([]);
-      expect(result.defaultLinks).toHaveLength(2);
-      expect(result.defaultLinks[0]).toMatchObject({
-        ...mockLink1,
-        origin: {
-          type: 'datasource',
-          group: 'prometheus',
-        },
-      });
-      expect(result.defaultLinks[1]).toMatchObject({
-        ...mockLink2,
-        origin: {
-          type: 'datasource',
-          group: 'prometheus',
-        },
-      });
-    });
-
-    it('should handle datasources with both variables and links', async () => {
-      const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'prometheus' }];
-
-      const mockDs = createMockDatasource({
-        uid: 'ds-1',
+        uid: 'ds-ok',
         type: 'prometheus',
         getDefaultVariables: () => Promise.resolve([mockVariable1]),
+        getDefaultLinks: undefined,
+      });
+
+      const mockSrv = createMockDataSourceSrv({
+        get: jest.fn((ref) => {
+          if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === 'ds-fail') {
+            return Promise.reject(new Error('Datasource not found'));
+          }
+          return Promise.resolve(mockDs);
+        }),
+      });
+
+      getDataSourceSrvMock.mockReturnValue(mockSrv);
+
+      const events: DefaultControlEvent[] = [];
+
+      loadDefaultControlsShared$(refs).subscribe({
+        next: (event) => events.push(event),
+        complete: () => {
+          expect(events).toHaveLength(1);
+          expect(events[0].type).toBe('variables');
+          warnSpy.mockRestore();
+          done();
+        },
+      });
+    });
+
+    it('should continue emitting links when getDefaultVariables throws', (done) => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'prometheus' }];
+
+      const mockDs = createMockDatasource({
+        uid: 'ds-1',
+        type: 'prometheus',
+        getDefaultVariables: () => Promise.reject(new Error('variables error')),
         getDefaultLinks: () => Promise.resolve([mockLink1]),
-        getRef: jest.fn(() => ({ uid: 'ds-1', type: 'prometheus' })),
       });
 
       const mockSrv = createMockDataSourceSrv({
@@ -317,69 +229,200 @@ describe('dashboardControls', () => {
 
       getDataSourceSrvMock.mockReturnValue(mockSrv);
 
-      const result = await loadDefaultControlsFromDatasources(refs);
+      const events: DefaultControlEvent[] = [];
 
-      expect(result.defaultVariables).toHaveLength(1);
-      expect(result.defaultLinks).toHaveLength(1);
+      loadDefaultControlsShared$(refs).subscribe({
+        next: (event) => events.push(event),
+        complete: () => {
+          expect(events).toHaveLength(1);
+          expect(events[0].type).toBe('links');
+          warnSpy.mockRestore();
+          done();
+        },
+      });
     });
 
-    it('should use original name as label when no label is set', async () => {
+    it('should stop emitting when unsubscribed', () => {
       const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'prometheus' }];
 
-      const variableWithoutLabel: QueryVariableKind = {
-        ...mockVariable1,
-        spec: { ...mockVariable1.spec, name: 'region', label: '' },
-      };
+      // Use a deferred promise so we can control when the datasource resolves
+      let resolveDs: (ds: DataSourceApi) => void;
+      const dsPromise = new Promise<DataSourceApi>((resolve) => {
+        resolveDs = resolve;
+      });
 
+      const mockSrv = createMockDataSourceSrv({
+        get: jest.fn(() => dsPromise),
+      });
+
+      getDataSourceSrvMock.mockReturnValue(mockSrv);
+
+      const events: DefaultControlEvent[] = [];
+      const subscription = loadDefaultControlsShared$(refs).subscribe({
+        next: (event) => events.push(event),
+      });
+
+      // Unsubscribe before the datasource resolves
+      subscription.unsubscribe();
+
+      // Resolve the datasource after unsubscription
       const mockDs = createMockDatasource({
         uid: 'ds-1',
         type: 'prometheus',
-        getDefaultVariables: () => Promise.resolve([variableWithoutLabel]),
-        getDefaultLinks: undefined,
-        getRef: jest.fn(() => ({ uid: 'ds-1', type: 'prometheus' })),
+        getDefaultVariables: () => Promise.resolve([mockVariable1]),
       });
+      resolveDs!(mockDs);
 
-      const mockSrv = createMockDataSourceSrv({
-        get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
-      });
-
-      getDataSourceSrvMock.mockReturnValue(mockSrv);
-
-      const result = await loadDefaultControlsFromDatasources(refs);
-
-      expect(result.defaultVariables[0].spec.name).toBe('prometheus_region');
-      expect(result.defaultVariables[0].spec.label).toBe('region');
+      // No events should have been emitted
+      expect(events).toEqual([]);
     });
+  });
 
-    it('should sanitize hyphenated datasource types in variable name prefix', async () => {
-      const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'grafana-testdata-datasource' }];
+  describe('loadDefaultVariables$', () => {
+    it('should accumulate and sort variables by origin.group then name', (done) => {
+      const refs: DataSourceRef[] = [
+        { uid: 'ds-1', type: 'zulu' },
+        { uid: 'ds-2', type: 'alpha' },
+      ];
 
-      const mockDs = createMockDatasource({
+      const mockDs1 = createMockDatasource({
         uid: 'ds-1',
-        type: 'grafana-testdata-datasource',
+        type: 'zulu',
+        getDefaultVariables: () => Promise.resolve([mockVariable2, mockVariable1]),
+        getDefaultLinks: undefined,
+      });
+
+      const mockDs2 = createMockDatasource({
+        uid: 'ds-2',
+        type: 'alpha',
         getDefaultVariables: () => Promise.resolve([mockVariable1]),
         getDefaultLinks: undefined,
-        getRef: jest.fn(() => ({ uid: 'ds-1', type: 'grafana-testdata-datasource' })),
       });
 
       const mockSrv = createMockDataSourceSrv({
-        get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
+        get: jest.fn((ref) => {
+          if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === 'ds-1') {
+            return Promise.resolve(mockDs1);
+          }
+          return Promise.resolve(mockDs2);
+        }),
       });
 
       getDataSourceSrvMock.mockReturnValue(mockSrv);
 
-      const result = await loadDefaultControlsFromDatasources(refs);
+      const emissions: VariableKind[][] = [];
+      const shared$ = loadDefaultControlsShared$(refs);
 
-      expect(result.defaultVariables[0].spec.name).toBe('grafana_testdata_datasource_var1');
+      loadDefaultVariables$(shared$).subscribe({
+        next: (vars) => emissions.push(vars),
+        complete: () => {
+          // The final emission should contain all 3 variables sorted by group then name
+          const finalVars = emissions[emissions.length - 1];
+          expect(finalVars).toHaveLength(3);
+
+          // alpha group should come before zulu group
+          expect(finalVars[0].spec.origin?.group).toBe('alpha');
+          expect(finalVars[1].spec.origin?.group).toBe('zulu');
+          expect(finalVars[2].spec.origin?.group).toBe('zulu');
+
+          // Within zulu group, var1 should come before var2
+          expect(finalVars[1].spec.name).toBe('zulu_var1');
+          expect(finalVars[2].spec.name).toBe('zulu_var2');
+          done();
+        },
+      });
     });
 
-    it('should handle datasources that return null or undefined from getDefaultVariables', async () => {
+    it('should not emit when there are no variable events', (done) => {
       const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'prometheus' }];
 
       const mockDs = createMockDatasource({
         uid: 'ds-1',
         type: 'prometheus',
         getDefaultVariables: undefined,
+        getDefaultLinks: () => Promise.resolve([mockLink1]),
+      });
+
+      const mockSrv = createMockDataSourceSrv({
+        get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
+      });
+
+      getDataSourceSrvMock.mockReturnValue(mockSrv);
+
+      const emissions: VariableKind[][] = [];
+      const shared$ = loadDefaultControlsShared$(refs);
+
+      loadDefaultVariables$(shared$).subscribe({
+        next: (vars) => emissions.push(vars),
+        complete: () => {
+          expect(emissions).toHaveLength(0);
+          done();
+        },
+      });
+    });
+  });
+
+  describe('loadDefaultLinks$', () => {
+    it('should accumulate and sort links by origin.group then title', (done) => {
+      const refs: DataSourceRef[] = [
+        { uid: 'ds-1', type: 'zulu' },
+        { uid: 'ds-2', type: 'alpha' },
+      ];
+
+      const mockLink2: DashboardLink = {
+        ...mockLink1,
+        title: 'Alpha Link',
+      };
+
+      const mockDs1 = createMockDatasource({
+        uid: 'ds-1',
+        type: 'zulu',
+        getDefaultVariables: undefined,
+        getDefaultLinks: () => Promise.resolve([mockLink1]),
+      });
+
+      const mockDs2 = createMockDatasource({
+        uid: 'ds-2',
+        type: 'alpha',
+        getDefaultVariables: undefined,
+        getDefaultLinks: () => Promise.resolve([mockLink2]),
+      });
+
+      const mockSrv = createMockDataSourceSrv({
+        get: jest.fn((ref) => {
+          if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === 'ds-1') {
+            return Promise.resolve(mockDs1);
+          }
+          return Promise.resolve(mockDs2);
+        }),
+      });
+
+      getDataSourceSrvMock.mockReturnValue(mockSrv);
+
+      const emissions: DashboardLink[][] = [];
+      const shared$ = loadDefaultControlsShared$(refs);
+
+      loadDefaultLinks$(shared$).subscribe({
+        next: (links) => emissions.push(links),
+        complete: () => {
+          const finalLinks = emissions[emissions.length - 1];
+          expect(finalLinks).toHaveLength(2);
+
+          // alpha group should come before zulu group
+          expect(finalLinks[0].origin?.group).toBe('alpha');
+          expect(finalLinks[1].origin?.group).toBe('zulu');
+          done();
+        },
+      });
+    });
+
+    it('should not emit when there are no link events', (done) => {
+      const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'prometheus' }];
+
+      const mockDs = createMockDatasource({
+        uid: 'ds-1',
+        type: 'prometheus',
+        getDefaultVariables: () => Promise.resolve([mockVariable1]),
         getDefaultLinks: undefined,
       });
 
@@ -389,108 +432,15 @@ describe('dashboardControls', () => {
 
       getDataSourceSrvMock.mockReturnValue(mockSrv);
 
-      const result = await loadDefaultControlsFromDatasources(refs);
+      const emissions: DashboardLink[][] = [];
+      const shared$ = loadDefaultControlsShared$(refs);
 
-      expect(result.defaultVariables).toEqual([]);
-      expect(result.defaultLinks).toEqual([]);
-    });
-
-    describe('tracking', () => {
-      it('should report interaction events with same traceId and correct event name', async () => {
-        const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'prometheus' }];
-        const mockDs = createMockDatasource({
-          uid: 'ds-1',
-          type: 'prometheus',
-          getDefaultVariables: undefined,
-          getDefaultLinks: undefined,
-        });
-        const mockSrv = createMockDataSourceSrv({
-          get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
-        });
-        getDataSourceSrvMock.mockReturnValue(mockSrv);
-        reportInteractionMock.mockClear();
-        reportPerformanceMock.mockClear();
-
-        await loadDefaultControlsFromDatasources(refs);
-
-        expect(reportInteractionMock).toHaveBeenCalledWith(
-          'dashboards_load_default_controls',
-          expect.objectContaining({
-            traceId: 'mock-trace-id',
-            phase: 'load_datasources',
-            duration_ms: expect.any(Number),
-          })
-        );
-        expect(reportInteractionMock).toHaveBeenCalledWith(
-          'dashboards_load_default_controls',
-          expect.objectContaining({
-            traceId: 'mock-trace-id',
-            phase: 'total',
-            duration_ms: expect.any(Number),
-          })
-        );
-        const traceIds = reportInteractionMock.mock.calls.map((c) => c[1]?.traceId);
-        expect(traceIds.every((id) => id === 'mock-trace-id')).toBe(true);
-      });
-
-      it('should report exactly one performance event with total duration', async () => {
-        const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'prometheus' }];
-        const mockDs = createMockDatasource({
-          uid: 'ds-1',
-          type: 'prometheus',
-          getDefaultVariables: undefined,
-          getDefaultLinks: undefined,
-        });
-        const mockSrv = createMockDataSourceSrv({
-          get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
-        });
-        getDataSourceSrvMock.mockReturnValue(mockSrv);
-        reportPerformanceMock.mockClear();
-
-        await loadDefaultControlsFromDatasources(refs);
-
-        expect(reportPerformanceMock).toHaveBeenCalledTimes(1);
-        expect(reportPerformanceMock).toHaveBeenCalledWith(
-          'dashboards_default_controls_load_total_ms',
-          expect.any(Number)
-        );
-      });
-
-      it('should report get_default_variables and get_default_links with datasourceType when datasource has both', async () => {
-        const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'prometheus' }];
-        const mockDs = createMockDatasource({
-          uid: 'ds-1',
-          type: 'prometheus',
-          getDefaultVariables: () => Promise.resolve([mockVariable1]),
-          getDefaultLinks: () => Promise.resolve([mockLink1]),
-          getRef: jest.fn(() => ({ uid: 'ds-1', type: 'prometheus' })),
-        });
-        const mockSrv = createMockDataSourceSrv({
-          get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
-        });
-        getDataSourceSrvMock.mockReturnValue(mockSrv);
-        reportInteractionMock.mockClear();
-
-        await loadDefaultControlsFromDatasources(refs);
-
-        expect(reportInteractionMock).toHaveBeenCalledWith(
-          'dashboards_load_default_controls',
-          expect.objectContaining({
-            traceId: 'mock-trace-id',
-            phase: 'default_variables',
-            duration_ms: expect.any(Number),
-            datasourceType: 'prometheus',
-          })
-        );
-        expect(reportInteractionMock).toHaveBeenCalledWith(
-          'dashboards_load_default_controls',
-          expect.objectContaining({
-            traceId: 'mock-trace-id',
-            phase: 'default_links',
-            duration_ms: expect.any(Number),
-            datasourceType: 'prometheus',
-          })
-        );
+      loadDefaultLinks$(shared$).subscribe({
+        next: (links) => emissions.push(links),
+        complete: () => {
+          expect(emissions).toHaveLength(0);
+          done();
+        },
       });
     });
   });

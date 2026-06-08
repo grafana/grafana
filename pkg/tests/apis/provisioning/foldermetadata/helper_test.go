@@ -7,7 +7,6 @@ import (
 )
 
 var env = common.NewSharedGitEnv(
-	common.WithProvisioningFolderMetadata,
 	common.WithRepositoryTypes([]string{"git", "local"}),
 )
 

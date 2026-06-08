@@ -79,9 +79,7 @@ describe('ValueMappingsEditorModal', () => {
       setup(onChangeSpy);
 
       await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));
-      const selectComponent = await screen.findByLabelText(
-        selectors.components.ValuePicker.select('Add a new mapping')
-      );
+      const selectComponent = await screen.findByTestId(selectors.components.ValuePicker.select('Add a new mapping'));
 
       await selectOptionInTest(selectComponent, 'Value');
 
@@ -129,9 +127,7 @@ describe('ValueMappingsEditorModal', () => {
       await userEvent.click(screen.getAllByTestId('remove-value-mapping')[0]);
 
       await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));
-      const selectComponent = await screen.findByLabelText(
-        selectors.components.ValuePicker.select('Add a new mapping')
-      );
+      const selectComponent = await screen.findByTestId(selectors.components.ValuePicker.select('Add a new mapping'));
       await selectOptionInTest(selectComponent, 'Range');
 
       await userEvent.clear(screen.getByPlaceholderText('From'));
@@ -168,9 +164,7 @@ describe('ValueMappingsEditorModal', () => {
       await userEvent.click(screen.getAllByTestId('remove-value-mapping')[0]);
 
       await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));
-      const selectComponent = await screen.findByLabelText(
-        selectors.components.ValuePicker.select('Add a new mapping')
-      );
+      const selectComponent = await screen.findByTestId(selectors.components.ValuePicker.select('Add a new mapping'));
       await selectOptionInTest(selectComponent, 'Regex');
 
       await userEvent.clear(screen.getByPlaceholderText('Regular expression'));

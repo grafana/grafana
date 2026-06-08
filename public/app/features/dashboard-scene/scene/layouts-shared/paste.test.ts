@@ -305,4 +305,38 @@ describe('getDashboardGridItemFromClipboard(dashboardScene, gridCell)', () => {
       );
     }
   });
+
+  describe('legacy v1 panel clipboard (e.g. copied with Dynamic Dashboards off)', () => {
+    const v1PanelClipboard = {
+      id: 99,
+      type: 'timeseries',
+      title: 'Copied V1',
+      gridPos: { x: 0, y: 0, w: 12, h: 8 },
+      fieldConfig: { defaults: {}, overrides: [] },
+      options: {},
+    };
+
+    test('getAutoGridItemFromClipboard wraps v1 panel in AutoGridItem', () => {
+      const dashboardScene = buildDashboardScene();
+      store.set(LS_PANEL_COPY_KEY, JSON.stringify(v1PanelClipboard));
+
+      const result = getAutoGridItemFromClipboard(dashboardScene);
+
+      expect(result).toBeInstanceOf(AutoGridItem);
+      expect(result.state.body.state.title).toBe('Copied V1');
+      expect(result.state.body.state.pluginId).toBe('timeseries');
+    });
+
+    test('getDashboardGridItemFromClipboard maps v1 panel to DashboardGridItem', () => {
+      const dashboardScene = buildDashboardScene();
+      store.set(LS_PANEL_COPY_KEY, JSON.stringify(v1PanelClipboard));
+
+      const result = getDashboardGridItemFromClipboard(dashboardScene, { x: 3, y: 4, width: 0, height: 0 });
+
+      expect(result).toBeInstanceOf(DashboardGridItem);
+      expect(result.state.x).toBe(3);
+      expect(result.state.y).toBe(4);
+      expect(result.state.body.state.title).toBe('Copied V1');
+    });
+  });
 });

@@ -89,10 +89,9 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
         {!hideRefId && !isEditing && (
           <button
             className={styles.queryNameWrapper}
-            aria-label={selectors.components.QueryEditorRow.title(query.refId)}
+            data-testid={selectors.components.QueryEditorRow.title(query.refId)}
             title={t('query.query-editor-row-header.query-name-div-title-edit-query-name', 'Edit query name')}
             onClick={onEditQuery}
-            data-testid="query-name-div"
             type="button"
           >
             <span className={styles.queryName}>{query.refId}</span>

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -15,16 +16,16 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-// foldersAndDashboardsTestCase tests the "folders-dashboards" ResourceMigration
+// foldersAndDashboardsTestCase tests the folders-dashboards ResourceMigration.
 type foldersAndDashboardsTestCase struct {
 	parentFolderUID   string
 	childFolderUID    string
@@ -44,7 +45,7 @@ func NewFoldersAndDashboardsTestCase() ResourceMigratorTestCase {
 }
 
 func (tc *foldersAndDashboardsTestCase) Name() string {
-	return "folders-dashboards"
+	return migrations.FoldersDashboardsMigrationID
 }
 
 func (tc *foldersAndDashboardsTestCase) FeatureToggles() []string {
@@ -79,21 +80,17 @@ func (tc *foldersAndDashboardsTestCase) AddLegacySQLMigrations(mg *migrator.Migr
 func (tc *foldersAndDashboardsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 	t.Helper()
 
-	db := helper.GetEnv().SQLStore
+	sqlDB := helper.GetEnv().SQLStore
 	cfg := helper.GetEnv().Cfg
-	features := featuremgmt.WithFeatures()
-	legacyDashboards, err := database.ProvideDashboardStore(
-		db, cfg, features, tagimpl.ProvideService(db))
-	require.NoError(t, err)
 
-	libraryElements := libraryelements.ProvideService(cfg, db, nil, nil, features,
+	libraryElements := libraryelements.ProvideService(cfg, sqlDB, nil, nil, nil,
 		&alwaysYesAccessControl{}, nil, nil, nil)
 
 	// Create parent folder
-	parent := createTestFolder(t, helper, legacyDashboards, tc.parentFolderUID, "parent-folder", "")
+	parent := createTestFolder(t, helper, tc.parentFolderUID, "parent-folder", "")
 
 	// Create child folder (nested under parent)
-	child := createTestFolder(t, helper, legacyDashboards, tc.childFolderUID, "child-folder", parent)
+	child := createTestFolder(t, helper, tc.childFolderUID, "child-folder", parent)
 
 	// Create library panel in child folder
 	tc.libPanelUID = createTestLibraryPanel(t, helper, libraryElements, "Test Library Panel", child)
@@ -101,10 +98,10 @@ func (tc *foldersAndDashboardsTestCase) Setup(t *testing.T, helper *apis.K8sTest
 	// Create a large dashboard (~3MB) to test migration performance with big resources.
 	// On SQLite without sufficient cache_size, large inserts cause cache spills that
 	// escalate to EXCLUSIVE locks and deadlock with concurrent readers.
-	tc.largeDashboardUID = createLargeDashboard(t, helper, legacyDashboards, child, 3*1024*1024)
+	tc.largeDashboardUID = createLargeDashboard(t, helper, "large-dashboard-for-migration-test", child, 3*1024*1024)
 
 	// Create dashboard with library panel in child folder
-	tc.dashboardUID = createTestDashboardWithLibraryPanel(t, helper, legacyDashboards, "dashboard-with-library-panel",
+	tc.dashboardUID = createTestDashboardWithLibraryPanel(t, helper, "dashboard-with-library-panel",
 		tc.libPanelUID, "Test LP in dashboard", child)
 
 	return false // mode0 is not supported
@@ -159,25 +156,31 @@ func (tc *foldersAndDashboardsTestCase) Verify(t *testing.T, helper *apis.K8sTes
 	}
 }
 
-// createTestFolder creates a folder with specified UID and optional parent
-func createTestFolder(t *testing.T, helper *apis.K8sTestHelper, store dashboards.Store, uid, title, parentUID string) string {
+// createTestFolder inserts a folder directly into the legacy dashboard table.
+// We write directly to the DB here because we are testing migration FROM legacy storage —
+// the folder must exist in the legacy table so the migrator can read and migrate it.
+func createTestFolder(t *testing.T, helper *apis.K8sTestHelper, uid, title, parentUID string) string {
 	t.Helper()
 
-	f, err := store.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+	now := time.Now()
+	dash := &dashboards.Dashboard{
+		UID:       uid,
 		OrgID:     helper.Org1.OrgID,
+		Title:     title,
 		IsFolder:  true,
 		FolderUID: parentUID,
-		Overwrite: true,
-		Dashboard: simplejson.MustJson(fmt.Appendf([]byte{}, `{
-			"title": "%s",
-			"uid": "%s"
-		}`, title, uid)),
+		Version:   1,
+		Created:   now,
+		Updated:   now,
+		Data:      simplejson.MustJson(fmt.Appendf([]byte{}, `{"title": "%s", "uid": "%s"}`, title, uid)),
+	}
+	err := helper.GetEnv().SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		_, err := sess.Insert(dash)
+		return err
 	})
-
 	require.NoError(t, err)
-	require.Equal(t, uid, f.UID)
 
-	return f.UID
+	return uid
 }
 
 // createTestLibraryPanel creates a library panel in a folder
@@ -202,8 +205,10 @@ func createTestLibraryPanel(t *testing.T, helper *apis.K8sTestHelper, store libr
 	return dto.UID
 }
 
-// createTestDashboardWithLibraryPanel creates a dashboard that uses a library panel
-func createTestDashboardWithLibraryPanel(t *testing.T, helper *apis.K8sTestHelper, store dashboards.Store, dashTitle, libPanelUID, libPanelName, folderUID string) string {
+// createTestDashboardWithLibraryPanel inserts a dashboard directly into the legacy dashboard table.
+// We write directly to the DB here because we are testing migration FROM legacy storage —
+// the dashboard must exist in the legacy table so the migrator can read and migrate it.
+func createTestDashboardWithLibraryPanel(t *testing.T, helper *apis.K8sTestHelper, dashTitle, libPanelUID, libPanelName, folderUID string) string {
 	t.Helper()
 
 	dashPayload := fmt.Sprintf(`{
@@ -220,54 +225,68 @@ func createTestDashboardWithLibraryPanel(t *testing.T, helper *apis.K8sTestHelpe
 	userID, err := helper.Org1.Admin.Identity.GetInternalID()
 	require.NoError(t, err)
 
-	rsp, err := store.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+	now := time.Now()
+	dash := &dashboards.Dashboard{
+		UID:       util.GenerateShortUID(),
 		OrgID:     helper.Org1.OrgID,
-		UserID:    userID,
-		Dashboard: simplejson.MustJson([]byte(dashPayload)),
-		Overwrite: false,
+		CreatedBy: userID,
 		FolderUID: folderUID,
+		Version:   1,
+		Created:   now,
+		Updated:   now,
+		Data:      simplejson.MustJson([]byte(dashPayload)),
+	}
+	err = helper.GetEnv().SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		_, err := sess.Insert(dash)
+		return err
 	})
 	require.NoError(t, err)
-	require.NotEmpty(t, rsp.UID)
-	return rsp.UID
+	require.NotEmpty(t, dash.UID)
+	return dash.UID
 }
 
-// createLargeDashboard creates a dashboard with padded description to reach targetBytes.
-func createLargeDashboard(t *testing.T, helper *apis.K8sTestHelper, store dashboards.Store, folderUID string, targetBytes int) string {
+// createLargeDashboard inserts a large dashboard directly into the legacy dashboard table.
+// We write directly to the DB here because we are testing migration FROM legacy storage —
+// the dashboard must exist in the legacy table so the migrator can read and migrate it.
+// The large size (~3MB) also exercises the migrator's handling of big payloads.
+func createLargeDashboard(t *testing.T, helper *apis.K8sTestHelper, title, folderUID string, targetBytes int) string {
 	t.Helper()
 
 	// Generate padding to reach the target size. Each panel has ~100 bytes of overhead,
 	// so we use a single panel with a large description field.
 	padding := strings.Repeat("x", targetBytes)
 	dashPayload := fmt.Sprintf(`{
-		"title": "large-dashboard-for-migration-test",
+		"title": "%s",
 		"panels": [{
 			"id": 1,
 			"type": "text",
 			"title": "padding",
 			"options": {"content": "%s"}
 		}]
-	}`, padding)
+	}`, title, padding)
 
 	userID, err := helper.Org1.Admin.Identity.GetInternalID()
 	require.NoError(t, err)
 
-	rsp, err := store.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+	now := time.Now()
+	dash := &dashboards.Dashboard{
+		UID:       util.GenerateShortUID(),
 		OrgID:     helper.Org1.OrgID,
-		UserID:    userID,
-		Dashboard: simplejson.MustJson([]byte(dashPayload)),
-		Overwrite: false,
+		CreatedBy: userID,
 		FolderUID: folderUID,
+		Version:   1,
+		Created:   now,
+		Updated:   now,
+		Data:      simplejson.MustJson([]byte(dashPayload)),
+	}
+	err = helper.GetEnv().SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		_, err := sess.Insert(dash)
+		return err
 	})
 	require.NoError(t, err)
-
-	// require.NotNil(t, dashCreate.Response)
-	// require.Equal(t, http.StatusOK, dashCreate.Response.StatusCode,
-	// 	"failed to create large dashboard (%d bytes)", targetBytes)
-
-	require.NotEmpty(t, rsp.UID)
-	t.Logf("Created large dashboard %s (%d bytes)", rsp.UID, targetBytes)
-	return rsp.UID
+	require.NotEmpty(t, dash.UID)
+	t.Logf("Created large dashboard %s (%d bytes)", dash.UID, targetBytes)
+	return dash.UID
 }
 
 var (

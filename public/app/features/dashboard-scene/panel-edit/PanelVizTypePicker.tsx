@@ -6,7 +6,7 @@ import { useMedia, useSessionStorage } from 'react-use';
 import { type GrafanaTheme2, type PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import {
   Button,
@@ -49,9 +49,7 @@ const getTabs = (): Array<{ label: string; value: VisualizationSelectPaneTab }> 
     label: t('dashboard-scene.panel-viz-type-picker.radio-options.label.all-visualizations', 'All visualizations'),
     value: VisualizationSelectPaneTab.Visualizations,
   };
-  return config.featureToggles.newVizSuggestions
-    ? [suggestionsTab, allVisualizationsTab]
-    : [allVisualizationsTab, suggestionsTab];
+  return [suggestionsTab, allVisualizationsTab];
 };
 
 export function PanelVizTypePicker({
@@ -94,8 +92,7 @@ export function PanelVizTypePicker({
   const [storedListMode, setStoredListMode] = useSessionStorage(LS_VISUALIZATION_SELECT_TAB_KEY, defaultTab);
 
   const shouldDefaultToSuggestions =
-    (isNewPanel && !hasPickedViz && config.featureToggles.newVizSuggestions) ||
-    storedListMode === VisualizationSelectPaneTab.Suggestions;
+    (isNewPanel && !hasPickedViz) || storedListMode === VisualizationSelectPaneTab.Suggestions;
   const initialTab = shouldDefaultToSuggestions ? VisualizationSelectPaneTab.Suggestions : storedListMode;
   const [listMode, setListMode] = useState(initialTab);
 

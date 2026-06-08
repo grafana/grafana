@@ -2,8 +2,10 @@ import { useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 import { type dataLayers } from '@grafana/scenes';
+import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { type DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
@@ -106,14 +108,48 @@ export class AnnotationEditableElement implements EditableDashboardElement {
 
   public useEditPaneOptions = useEditPaneOptions.bind(this);
 
+  public onDuplicate() {
+    const dataLayerSet = this.layer.parent;
+    if (!(dataLayerSet instanceof DashboardDataLayerSet)) {
+      return;
+    }
+
+    annotationEditActions.addAnnotation({
+      source: dataLayerSet,
+      addedObject: this.layer.clone({
+        key: undefined,
+        name: `${this.layer.state.name} - Copy`,
+      }),
+    });
+  }
+
+  public onConfirmDelete() {
+    const name = this.layer.state.name;
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard-scene.annotation-editable-element.delete-title', 'Delete annotation query'),
+        text: t(
+          'dashboard-scene.annotation-editable-element.delete-text',
+          'Are you sure you want to delete: {{name}}?',
+          { name }
+        ),
+        yesText: t('dashboard-scene.annotation-editable-element.delete-confirm', 'Delete annotation query'),
+        onConfirm: () => {
+          this.onDelete();
+        },
+      })
+    );
+  }
+
   public onDelete() {
     const dataLayerSet = this.layer.parent;
-
-    if (dataLayerSet instanceof DashboardDataLayerSet) {
-      annotationEditActions.removeAnnotation({
-        source: dataLayerSet,
-        removedObject: this.layer,
-      });
+    if (!(dataLayerSet instanceof DashboardDataLayerSet)) {
+      return;
     }
+
+    annotationEditActions.removeAnnotation({
+      source: dataLayerSet,
+      removedObject: this.layer,
+    });
   }
 }

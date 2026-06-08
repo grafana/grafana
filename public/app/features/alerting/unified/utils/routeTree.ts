@@ -5,7 +5,7 @@
 import { produce } from 'immer';
 import { omit } from 'lodash';
 
-import { type RoutingTree, type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { type RoutingTree, type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { arrayUtils } from '@grafana/data';
 import { ROUTES_META_SYMBOL, type Route, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 

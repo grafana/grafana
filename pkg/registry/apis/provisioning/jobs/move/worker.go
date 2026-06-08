@@ -162,6 +162,15 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 		// Construct the target path by combining the job's target path with the file/folder name
 		targetPath := w.constructTargetPath(opts.TargetPath, path)
 
+		if path == targetPath {
+			progress.SetMessage(ctx, "Skipping "+path+" because it is already in "+opts.TargetPath)
+			progress.Record(ctx, jobs.NewPathOnlyResult(path).WithAction(repository.FileActionIgnored).Build())
+			if err := progress.TooManyErrors(); err != nil {
+				return err
+			}
+			continue
+		}
+
 		progress.SetMessage(ctx, "Moving "+path+" to "+targetPath)
 		if err := rw.Move(ctx, path, targetPath, opts.Ref, "Move "+path+" to "+targetPath); err != nil {
 			resultBuilder.WithError(fmt.Errorf("moving file %s to %s: %w", path, targetPath, err))

@@ -14,7 +14,8 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 import { LogMessages, logInfo, trackAlertRuleFilterEvent } from '../../../Analytics';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
-import { type RulesFilterProps } from '../../../rule-list/filter/RulesFilter';
+import { type RulesFilterProps as RulesFilterV2Props } from '../../../rule-list/filter/RulesFilter.v2';
+type RulesFilterProps = RulesFilterV2Props & { onClear?: () => void };
 import { RuleHealth, getSearchFilterFromQuery } from '../../../search/rulesSearchParser';
 import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';

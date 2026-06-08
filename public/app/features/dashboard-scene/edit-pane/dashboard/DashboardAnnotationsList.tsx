@@ -36,7 +36,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
 
   const onClickAnnotation = useCallback((a: DashboardAnnotationsDataLayer) => {
     const { editPane } = getDashboardSceneFor(a).state;
-    editPane.selectObject(a, a.state.key!);
+    editPane.selectObject(a);
   }, []);
 
   const onDragEnd = useCallback(
@@ -101,32 +101,32 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
         <DraggableList
           items={visible}
           droppableId={ID_VISIBLE_LIST}
-          title={t(
-            'dashboard-scene.dashboard-annotations-list.title-above-dashboard-count',
-            'Above dashboard ({{count}})',
-            { count: visible.length }
-          )}
+          title={t('dashboard-scene.dashboard-annotations-list.title-above-dashboard-count', '', {
+            count: visible.length,
+            defaultValue_one: 'Above dashboard ({{count}})',
+            defaultValue_other: 'Above dashboard ({{count}})',
+          })}
           onClickItem={onClickAnnotation}
           renderItemLabel={renderItemLabel}
         />
         <DraggableList
           items={controlsMenu}
           droppableId={ID_CONTROLS_MENU_LIST}
-          title={t(
-            'dashboard-scene.dashboard-annotations-list.title-controls-menu-count',
-            'Controls menu ({{count}})',
-            {
-              count: controlsMenu.length,
-            }
-          )}
+          title={t('dashboard-scene.dashboard-annotations-list.title-controls-menu-count', '', {
+            count: controlsMenu.length,
+            defaultValue_one: 'Controls menu ({{count}})',
+            defaultValue_other: 'Controls menu ({{count}})',
+          })}
           onClickItem={onClickAnnotation}
           renderItemLabel={renderItemLabel}
         />
         <DraggableList
           items={hidden}
           droppableId={ID_HIDDEN_LIST}
-          title={t('dashboard-scene.dashboard-annotations-list.title-hidden-count', 'Hidden ({{count}})', {
+          title={t('dashboard-scene.dashboard-annotations-list.title-hidden-count', '', {
             count: hidden.length,
+            defaultValue_one: 'Hidden ({{count}})',
+            defaultValue_other: 'Hidden ({{count}})',
           })}
           onClickItem={onClickAnnotation}
           renderItemLabel={renderItemLabel}

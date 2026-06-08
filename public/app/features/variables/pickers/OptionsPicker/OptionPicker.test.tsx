@@ -138,7 +138,7 @@ describe('OptionPicker', () => {
       expect(screen.getByRole('textbox')).toBeInTheDocument();
       expect(screen.getByRole('textbox')).toHaveValue('');
       expect(
-        screen.getByLabelText(selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown)
+        screen.getByTestId(selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown)
       ).toBeInTheDocument();
       expect(getOption('A')).toBeInTheDocument();
       expect(getOption('B')).toBeInTheDocument();

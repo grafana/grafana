@@ -5,66 +5,42 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"time"
+	"iter"
 
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
-const (
-	pendingDeleteSection  = kvpkg.PendingDeleteSection
-	pendingDeleteCacheTTL = 5 * time.Minute
-)
+const pendingDeleteSection = kvpkg.PendingDeleteSection
 
 // PendingDeleteRecord is the JSON blob stored in the KV store for a tenant
 // that has been marked as pending deletion. The record is created before
 // labelling begins so that cleanup can proceed even after partial failures.
 //
-// When Force is true, the record cannot be removed by the tenant watcher.
+// When Orphaned is true, the record cannot be removed by the tenant watcher.
 // This is used for manually-seeded records that clean up orphaned tenants
 // which the tenant API considers active but are actually deleted in GCOM.
 type PendingDeleteRecord struct {
 	DeleteAfter      string `json:"deleteAfter"`
 	LabelingComplete bool   `json:"labelingComplete"`
-	Force            bool   `json:"force,omitempty"`
+	Orphaned         bool   `json:"orphaned,omitempty"`
+	// DeletedAt is set to an RFC3339 timestamp after all tenant data has been
+	// successfully deleted. Records with this field set are skipped by the
+	// tenant deleter.
+	DeletedAt string `json:"deletedAt,omitempty"`
 }
 
-// PendingDeleteStore manages pending-delete records in the KV store and keeps
-// an in-memory cache of which tenants have records so that the common-path
-// "tenant is not pending delete" check is a map lookup with no I/O.
+// PendingDeleteStore manages pending-delete records in the KV store.
 type PendingDeleteStore struct {
-	kv          KV
-	cachedSet   map[string]struct{}
-	cacheExpiry time.Time
+	kv KV
 }
 
 func newPendingDeleteStore(kv KV) *PendingDeleteStore {
 	return &PendingDeleteStore{kv: kv}
 }
 
-// RefreshCache reloads the set of pending-delete tenant names from the KV
-// store if the cache has expired.
-func (s *PendingDeleteStore) RefreshCache(ctx context.Context) {
-	if time.Now().Before(s.cacheExpiry) {
-		return
-	}
-
-	set := make(map[string]struct{})
-	for key, err := range s.kv.Keys(ctx, pendingDeleteSection, ListOptions{}) {
-		if err != nil {
-			return
-		}
-		set[key] = struct{}{}
-	}
-
-	s.cachedSet = set
-	s.cacheExpiry = time.Now().Add(pendingDeleteCacheTTL)
-}
-
-// Has returns whether a tenant has a pending-delete record according to the
-// in-memory cache.
-func (s *PendingDeleteStore) Has(name string) bool {
-	_, ok := s.cachedSet[name]
-	return ok
+// Names streams tenant names that currently have pending-delete records.
+func (s *PendingDeleteStore) Names(ctx context.Context) iter.Seq2[string, error] {
+	return s.kv.Keys(ctx, pendingDeleteSection, ListOptions{})
 }
 
 // Get retrieves the PendingDeleteRecord for a tenant. Returns ErrNotFound if
@@ -87,8 +63,7 @@ func (s *PendingDeleteStore) Get(ctx context.Context, name string) (PendingDelet
 	return record, nil
 }
 
-// Upsert creates or replaces the PendingDeleteRecord for a tenant and adds it
-// to the cache.
+// Upsert creates or replaces the PendingDeleteRecord for a tenant.
 func (s *PendingDeleteStore) Upsert(ctx context.Context, name string, record PendingDeleteRecord) error {
 	writer, err := s.kv.Save(ctx, pendingDeleteSection, name)
 	if err != nil {
@@ -101,23 +76,10 @@ func (s *PendingDeleteStore) Upsert(ctx context.Context, name string, record Pen
 	if err := writer.Close(); err != nil {
 		return fmt.Errorf("closing writer: %w", err)
 	}
-
-	if s.cachedSet == nil {
-		s.cachedSet = make(map[string]struct{})
-	}
-	s.cachedSet[name] = struct{}{}
-
 	return nil
 }
 
-// Delete removes the PendingDeleteRecord for a tenant and removes it from the
-// cache.
+// Delete removes the PendingDeleteRecord for a tenant.
 func (s *PendingDeleteStore) Delete(ctx context.Context, name string) error {
-	if err := s.kv.Delete(ctx, pendingDeleteSection, name); err != nil {
-		return err
-	}
-
-	delete(s.cachedSet, name)
-
-	return nil
+	return s.kv.Delete(ctx, pendingDeleteSection, name)
 }

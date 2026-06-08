@@ -171,6 +171,12 @@ export interface FieldColorConfigSettings {
    * This will enable the Color by series UI option that sets the `color.seriesBy` option.
    */
   bySeriesSupport?: boolean;
+  /**
+   * Set to true if the visualization supports the Gradient color scheme.
+   * When false (default), the Gradient option is hidden from the color picker.
+   * Currently only the pie chart panel supports this mode.
+   */
+  gradientSupport?: boolean;
 }
 
 export interface StatsPickerConfigSettings {

@@ -73,14 +73,6 @@ function getDataLayers(scene: DashboardScene): DashboardDataLayerSet {
   return data;
 }
 
-function getAllSelectedObjects(scene: SceneObject): SceneObject[] {
-  return (
-    getDashboardSceneFor(scene)
-      .state.editPane.state.selection?.getSelectionEntries()
-      .map(([, ref]) => ref.resolve()) ?? []
-  );
-}
-
 export function getCursorSync(scene: DashboardScene) {
   const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
 
@@ -121,7 +113,6 @@ export const dashboardSceneGraph = {
   getPanelLinks,
   getVizPanels,
   getDataLayers,
-  getAllSelectedObjects,
   getCursorSync,
   getLayoutManagerFor,
   getNextPanelId,

@@ -15,6 +15,7 @@ import { VisualizationCardGrid } from 'app/features/panel/components/VizTypePick
 import { VizSuggestionsInteractions } from 'app/features/panel/components/VizTypePicker/interactions';
 import { getPluginPresets } from 'app/features/panel/presets/getPresets';
 import { MIN_MULTI_COLUMN_SIZE } from 'app/features/panel/suggestions/constants';
+import { hasData } from 'app/features/panel/suggestions/utils';
 
 export interface PanelStylesSectionProps {
   panel: VizPanel;
@@ -66,7 +67,7 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
     );
   };
 
-  if (!presets || presets.length === 0 || !data || data.series.length === 0) {
+  if (!presets || presets.length === 0 || !data || !hasData(data)) {
     return null;
   }
 

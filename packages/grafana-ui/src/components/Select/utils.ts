@@ -53,3 +53,8 @@ export const findSelectedValue = (
 export const omitDescriptions = (options: SelectableValue[]): SelectableValue[] => {
   return options.map(({ description, ...rest }) => rest);
 };
+
+export const getLabelFromValue = (value: unknown): string | undefined => {
+  const label = value !== null && typeof value === 'object' && 'label' in value ? value.label : value;
+  return label != null ? String(label) : undefined;
+};

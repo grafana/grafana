@@ -317,6 +317,41 @@ func (a apiClient) AssignReceiverPermission(t *testing.T, receiverUID string, cm
 	return resp.StatusCode, string(b)
 }
 
+func (a apiClient) AssignRoutePermission(t *testing.T, routeUID string, cmd accesscontrol.SetResourcePermissionCommand) (int, string) {
+	t.Helper()
+
+	var assignment string
+	var assignTo string
+	if cmd.UserID != 0 {
+		assignment = "users"
+		assignTo = fmt.Sprintf("%d", cmd.UserID)
+	} else if cmd.TeamID != 0 {
+		assignment = "teams"
+		assignTo = fmt.Sprintf("%d", cmd.TeamID)
+	} else {
+		assignment = "builtInRoles"
+		assignTo = cmd.BuiltinRole
+	}
+
+	body := strings.NewReader(fmt.Sprintf(`{"permission": "%s"}`, cmd.Permission))
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/access-control/%s/%s/%s/%s", a.url, accesscontrol.AlertingRoutesResource, routeUID, assignment, assignTo), body)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp.StatusCode, string(b)
+}
+
 // CreateFolder creates a folder for storing our alerts, and then refreshes the permission cache to make sure that following requests will be accepted
 func (a apiClient) CreateFolder(t *testing.T, uID string, title string, parentUID ...string) {
 	t.Helper()
@@ -1651,18 +1686,4 @@ func (a apiClient) GetProvisioningAlertRuleExport(t *testing.T, ruleUID string, 
 	require.NoError(t, err)
 
 	return resp.StatusCode, string(b)
-}
-
-func (a apiClient) TestReceiver(t *testing.T, params apimodels.TestReceiversConfigBodyParams) ([]byte, int, error) {
-	t.Helper()
-	buf := bytes.Buffer{}
-	enc := json.NewEncoder(&buf)
-	err := enc.Encode(params)
-	require.NoError(t, err)
-
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/alertmanager/grafana/config/api/v1/receivers/test", a.url), &buf)
-	require.NoError(t, err)
-	req.Header.Set("Content-Type", "application/json")
-
-	return sendRequestRaw(t, req)
 }

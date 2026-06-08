@@ -1,10 +1,11 @@
+import { renderHook } from '@testing-library/react';
 import { cloneDeep } from 'lodash';
 import { of } from 'rxjs';
 
 import { config } from '../config';
 import { type BackendSrvRequest, type FetchError, type FetchResponse, type BackendSrv } from '../services';
 
-import { usePluginUserStorage, _clearStorageCache } from './userStorage';
+import { usePluginUserStorage, useUserStorage, _clearStorageCache } from './userStorage';
 
 const request = jest.fn<Promise<FetchResponse | FetchError>, BackendSrvRequest[]>();
 
@@ -388,5 +389,23 @@ describe('userStorage', () => {
       // Should have made 1 GET and 2 PATCH requests
       expect(request).toHaveBeenCalledTimes(3);
     });
+  });
+});
+
+describe('useUserStorage', () => {
+  it('returns the same instance across re-renders', () => {
+    const { result, rerender } = renderHook(() => useUserStorage('my-service'));
+    const first = result.current;
+    rerender();
+    expect(result.current).toBe(first);
+  });
+
+  it('returns a new instance when the service name changes', () => {
+    const { result, rerender } = renderHook(({ service }) => useUserStorage(service), {
+      initialProps: { service: 'service-a' },
+    });
+    const first = result.current;
+    rerender({ service: 'service-b' });
+    expect(result.current).not.toBe(first);
   });
 });

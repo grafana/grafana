@@ -61,10 +61,10 @@ func verifyResourceCount(t *testing.T, client *apis.K8sResourceClient, expectedC
 func verifyResource(t *testing.T, client *apis.K8sResourceClient, uid string, shouldExist bool) {
 	t.Helper()
 
-	_, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+	v, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
 	if shouldExist {
-		require.NoError(t, err)
+		require.NoError(t, err, "expecting to find: "+uid)
 	} else {
-		require.Error(t, err)
+		require.Error(t, err, "should not find: %+v", v)
 	}
 }

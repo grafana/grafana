@@ -264,10 +264,32 @@ describe('DeleteProvisionedFolderForm', () => {
       await waitFor(() => {
         expect(mockDeleteRepoFile).toHaveBeenCalledWith({
           name: 'test-repo',
-          path: 'folders/test-folder.json/',
+          path: 'folders/test-folder.json',
           ref: 'main', // branch workflow sets ref
           message: 'Custom delete message',
         });
+      });
+    });
+
+    it('renders the message from the repo commit template when comment is empty', async () => {
+      const { mockDeleteRepoFile, clickDeleteButton } = setup(
+        {},
+        {
+          ...defaultHookData,
+          repository: {
+            ...defaultHookData.repository!,
+            commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
+          },
+          initialValues: { ...mockFormData, workflow: 'branch' as const, comment: '' },
+        }
+      );
+
+      await clickDeleteButton();
+
+      await waitFor(() => {
+        expect(mockDeleteRepoFile).toHaveBeenCalledWith(
+          expect.objectContaining({ message: 'chore(folders): delete Test Folder' })
+        );
       });
     });
 

@@ -8,6 +8,7 @@ test.use({
     alertingListViewV2: true,
     alertingFilterV2: true,
     alertingSavedSearches: true,
+    dashboardNewLayouts: false,
   },
 });
 

@@ -166,6 +166,35 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 			expectedError: "",
 		},
 		{
+			name: "should skip namespace cleanup for folderless-type repositories",
+			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
+				rw.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "test-namespace",
+					},
+					Spec: provisioning.RepositorySpec{
+						Sync: provisioning.SyncOptions{
+							Target: provisioning.SyncTargetTypeFolderless,
+						},
+					},
+				})
+				// Export should run for folderless-type repositories
+				pr.On("SetMessage", mock.Anything, "export resources").Return()
+				pr.On("StrictMaxErrors", 1).Return()
+				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
+					return job.Spec.Push != nil
+				}), mock.Anything).Return(nil)
+				pr.On("ResetResults", false).Return()
+				// Cleaner should be skipped - folderless coexists with unmanaged resources
+				pr.On("SetMessage", mock.Anything, "pull resources").Return()
+				sw.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
+					return job.Spec.Pull != nil && !job.Spec.Pull.Incremental
+				}), pr).Return(nil)
+			},
+			expectedError: "",
+		},
+		{
 			name: "should fail when sync job fails for folder-type repositories",
 			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
@@ -452,6 +481,83 @@ func TestUnifiedStorageMigrator_TakeoverAllowlist(t *testing.T) {
 
 		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
 		err := migrator.Migrate(context.Background(), repo, provisioning.MigrateJobOptions{}, pr)
+		require.NoError(t, err)
+	})
+}
+
+func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
+	selected := []provisioning.ResourceRef{
+		{Name: "dash-1", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+		{Name: "dash-2", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+	}
+
+	t.Run("forwards Resources to the inner export job", func(t *testing.T) {
+		exportWorker := jobs.NewMockWorker(t)
+		syncWorker := jobs.NewMockWorker(t)
+		pr := jobs.NewMockJobProgressRecorder(t)
+		repo := repository.NewMockRepository(t)
+		nc := NewMockNamespaceCleaner(t)
+
+		repo.On("Config").Return(&provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
+			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
+		})
+		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+		pr.On("StrictMaxErrors", 1).Return()
+		pr.On("ResetResults", false).Return()
+
+		exportWorker.On("Process", mock.Anything, repo, mock.MatchedBy(func(job provisioning.Job) bool {
+			if job.Spec.Push == nil {
+				return false
+			}
+			if len(job.Spec.Push.Resources) != len(selected) {
+				return false
+			}
+			for i := range selected {
+				if job.Spec.Push.Resources[i] != selected[i] {
+					return false
+				}
+			}
+			return true
+		}), mock.Anything).Return(nil)
+
+		syncWorker.On("Process", mock.Anything, repo, mock.MatchedBy(func(job provisioning.Job) bool {
+			return job.Spec.Pull != nil
+		}), pr).Return(nil)
+
+		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
+		err := migrator.Migrate(context.Background(), repo, provisioning.MigrateJobOptions{Resources: selected}, pr)
+		require.NoError(t, err)
+	})
+
+	t.Run("skips namespace cleanup when Resources is set on instance-target repos", func(t *testing.T) {
+		exportWorker := jobs.NewMockWorker(t)
+		syncWorker := jobs.NewMockWorker(t)
+		pr := jobs.NewMockJobProgressRecorder(t)
+		repo := repository.NewMockRepository(t)
+		nc := NewMockNamespaceCleaner(t)
+
+		repo.On("Config").Return(&provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
+			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
+		})
+		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+		pr.On("StrictMaxErrors", 1).Return()
+		pr.On("ResetResults", false).Return()
+
+		exportWorker.On("Process", mock.Anything, repo, mock.MatchedBy(func(job provisioning.Job) bool {
+			return job.Spec.Push != nil
+		}), mock.Anything).Return(nil)
+
+		syncWorker.On("Process", mock.Anything, repo, mock.MatchedBy(func(job provisioning.Job) bool {
+			return job.Spec.Pull != nil
+		}), pr).Return(nil)
+
+		// Cleaner.Clean must NOT be called for selective migrate; mockery would fail the
+		// test if it were, since we never registered an expectation for it.
+
+		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
+		err := migrator.Migrate(context.Background(), repo, provisioning.MigrateJobOptions{Resources: selected}, pr)
 		require.NoError(t, err)
 	})
 }

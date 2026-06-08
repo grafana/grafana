@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	grpccodes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -31,6 +32,12 @@ type batchCheckItem struct {
 }
 
 func (s *Server) BatchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (*authzv1.BatchCheckResponse, error) {
+	release, err := s.acquireSlot("BatchCheck", r.GetNamespace())
+	if err != nil {
+		return nil, err
+	}
+	defer release()
+
 	ctx, span := s.tracer.Start(ctx, "server.BatchCheck")
 	defer span.End()
 	span.SetAttributes(
@@ -92,7 +99,7 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest, n
 		return nil, fmt.Errorf("failed to get openfga store: %w", err)
 	}
 
-	contextuals, err := s.getContextuals(r.GetSubject())
+	contextuals, err := s.getContextuals(r.GetSubject(), r.GetTeams())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get contextual tuples: %w", err)
 	}
@@ -218,8 +225,7 @@ func (s *Server) runGroupResourcePhase(
 				Relation: item.relation,
 				Object:   item.resource.GroupResourceIdent(),
 			},
-			ContextualTuples: contextuals,
-			CorrelationId:    checkID,
+			CorrelationId: checkID,
 		})
 	}
 
@@ -227,7 +233,7 @@ func (s *Server) runGroupResourcePhase(
 		return 0, nil
 	}
 
-	results, err := s.doBatchCheck(ctx, store, checks)
+	results, err := s.doBatchCheck(ctx, store, checks, contextuals)
 	if err != nil {
 		return len(checks), err
 	}
@@ -249,8 +255,276 @@ func (s *Server) runGroupResourcePhase(
 	return len(checks), nil
 }
 
-// runFolderPermissionPhase checks folder permission inheritance.
-// This applies to generic resources that support folder-based permissions (like dashboards).
+// folderCheckEntry is one OpenFGA folder tuple check (relation + folder object + context).
+type folderCheckEntry struct {
+	correlationID string
+	relation      string
+	folderIdent   string
+	groupResource string
+	resource      common.ResourceInfo
+}
+
+func collectFolderPermissionChecks(items map[string]*batchCheckItem) []folderCheckEntry {
+	var entries []folderCheckEntry
+	for _, item := range items {
+		if item.resolved || !item.resource.IsGeneric() {
+			continue
+		}
+		folderIdent := item.resource.FolderIdent()
+		if folderIdent == "" {
+			continue
+		}
+		if !isFolderPermissionBasedResource(item.resource.GroupResource()) {
+			continue
+		}
+		relation := common.FolderPermissionRelation(item.relation)
+		entries = append(entries, folderCheckEntry{
+			correlationID: item.correlationID,
+			relation:      relation,
+			folderIdent:   folderIdent,
+			groupResource: item.resource.GroupResource(),
+			resource:      item.resource,
+		})
+	}
+	return entries
+}
+
+func collectFolderSubresourceChecks(items map[string]*batchCheckItem) []folderCheckEntry {
+	var entries []folderCheckEntry
+	for _, item := range items {
+		if item.resolved || !item.resource.IsGeneric() {
+			continue
+		}
+		folderIdent := item.resource.FolderIdent()
+		if folderIdent == "" {
+			continue
+		}
+		folderRelation := common.SubresourceRelation(item.relation)
+		if !common.IsSubresourceRelation(folderRelation) {
+			continue
+		}
+		for _, relation := range expandedSubresourcePermissionRelations(folderRelation) {
+			entries = append(entries, folderCheckEntry{
+				correlationID: item.correlationID,
+				relation:      relation,
+				folderIdent:   folderIdent,
+				groupResource: item.resource.GroupResource(),
+				resource:      item.resource,
+			})
+		}
+	}
+	return entries
+}
+
+// folderDedupKey identifies a unique OpenFGA folder check after deduplication.
+type folderDedupKey struct {
+	relation      string
+	folderIdent   string
+	groupResource string
+}
+
+func uniqueFolderCheckCount(entries []folderCheckEntry) int {
+	if len(entries) == 0 {
+		return 0
+	}
+	seen := make(map[folderDedupKey]struct{}, len(entries))
+	for _, e := range entries {
+		seen[folderDedupKey{relation: e.relation, folderIdent: e.folderIdent, groupResource: e.groupResource}] = struct{}{}
+	}
+	return len(seen)
+}
+
+// resolveFolderChecks runs folder permission or subresource checks, using BatchCheck when the
+// number of unique folder tuples is small and ListObjects when it exceeds FolderCheckBatchThreshold.
+func (s *Server) resolveFolderChecks(
+	ctx context.Context,
+	store *zanzana.StoreInfo,
+	subject string,
+	items map[string]*batchCheckItem,
+	entries []folderCheckEntry,
+	contextuals *openfgav1.ContextualTupleKeys,
+) (int, error) {
+	if len(entries) == 0 {
+		return 0, nil
+	}
+	if uniqueFolderCheckCount(entries) > s.getFolderCheckBatchThreshold() {
+		return s.resolveFolderChecksByList(ctx, store, subject, items, entries, contextuals)
+	}
+	return s.resolveFolderChecksByBatch(ctx, store, subject, items, entries, contextuals)
+}
+
+func (s *Server) getFolderCheckBatchThreshold() int {
+	if s.cfg.FolderCheckBatchThreshold > 0 {
+		return s.cfg.FolderCheckBatchThreshold
+	}
+	return 20
+}
+
+func (s *Server) resolveFolderChecksByList(
+	ctx context.Context,
+	store *zanzana.StoreInfo,
+	subject string,
+	items map[string]*batchCheckItem,
+	entries []folderCheckEntry,
+	contextuals *openfgav1.ContextualTupleKeys,
+) (int, error) {
+	type listGroupKey struct {
+		relation      string
+		groupResource string
+	}
+	groups := make(map[listGroupKey][]folderCheckEntry)
+	for _, e := range entries {
+		k := listGroupKey{relation: e.relation, groupResource: e.groupResource}
+		groups[k] = append(groups[k], e)
+	}
+
+	unique := uniqueFolderCheckCount(entries)
+
+	for key, groupEntries := range groups {
+		sample := groupEntries[0]
+		allowed := make(map[string]bool)
+		if err := s.collectAllowedObjects(ctx, allowed, &openfgav1.ListObjectsRequest{
+			StoreId:              store.ID,
+			AuthorizationModelId: store.ModelID,
+			Type:                 common.TypeFolder,
+			Relation:             key.relation,
+			User:                 subject,
+			Context:              sample.resource.Context(),
+		}, contextuals); err != nil {
+			return unique, err
+		}
+		for _, e := range groupEntries {
+			if !allowed[e.folderIdent] {
+				continue
+			}
+			item := items[e.correlationID]
+			if item.allowed {
+				continue
+			}
+			item.allowed = true
+			item.resolved = true
+			item.err = ""
+		}
+	}
+
+	return unique, nil
+}
+
+// --- Dedup batcher (BatchCheck path): groups identical OpenFGA folder checks so each unique
+// (relation, folder, context) tuple is only checked once. ---
+
+type dedupGroup struct {
+	check          *openfgav1.BatchCheckItem
+	correlationIDs []string
+}
+
+type dedupBatcher struct {
+	groups []dedupGroup
+	seen   map[folderDedupKey]int // key → index into groups
+}
+
+func newDedupBatcher() *dedupBatcher {
+	return &dedupBatcher{seen: make(map[folderDedupKey]int)}
+}
+
+// add registers a correlation ID for a folder check identified by key.
+// If the key has been seen before, the correlation ID is appended to the
+// existing group and the check is discarded. Otherwise the check is stored
+// and assigned a unique internal correlation ID.
+func (b *dedupBatcher) add(key folderDedupKey, correlationID string, check *openfgav1.BatchCheckItem) {
+	if idx, ok := b.seen[key]; ok {
+		b.groups[idx].correlationIDs = append(b.groups[idx].correlationIDs, correlationID)
+		return
+	}
+	check.CorrelationId = fmt.Sprintf("dedup_%d", len(b.groups))
+	b.seen[key] = len(b.groups)
+	b.groups = append(b.groups, dedupGroup{
+		check:          check,
+		correlationIDs: []string{correlationID},
+	})
+}
+
+func (b *dedupBatcher) checks() []*openfgav1.BatchCheckItem {
+	out := make([]*openfgav1.BatchCheckItem, len(b.groups))
+	for i := range b.groups {
+		out[i] = b.groups[i].check
+	}
+	return out
+}
+
+// resolve fans out OpenFGA results to all batch items that share each check.
+// A correlation ID may appear in multiple groups (e.g. subresource expansion);
+// if ANY group returns allowed the item is allowed. Items that only received
+// errors are resolved with the first error.
+func (b *dedupBatcher) resolve(results map[string]*openfgav1.BatchCheckSingleResult, items map[string]*batchCheckItem) {
+	for i := range b.groups {
+		g := &b.groups[i]
+		result, ok := results[g.check.CorrelationId]
+		if !ok {
+			continue
+		}
+		for _, cid := range g.correlationIDs {
+			item := items[cid]
+			if item.allowed {
+				continue
+			}
+			if result.GetAllowed() {
+				item.allowed = true
+				item.resolved = true
+				item.err = ""
+			} else if err := result.GetError(); err != nil && item.err == "" {
+				item.err = err.GetMessage()
+			}
+		}
+	}
+
+	for i := range b.groups {
+		for _, cid := range b.groups[i].correlationIDs {
+			item := items[cid]
+			if !item.resolved && item.err != "" {
+				item.resolved = true
+			}
+		}
+	}
+}
+
+func (s *Server) resolveFolderChecksByBatch(
+	ctx context.Context,
+	store *zanzana.StoreInfo,
+	subject string,
+	items map[string]*batchCheckItem,
+	entries []folderCheckEntry,
+	contextuals *openfgav1.ContextualTupleKeys,
+) (int, error) {
+	batcher := newDedupBatcher()
+	for _, e := range entries {
+		key := folderDedupKey{relation: e.relation, folderIdent: e.folderIdent, groupResource: e.groupResource}
+		batcher.add(key, e.correlationID, &openfgav1.BatchCheckItem{
+			TupleKey: &openfgav1.CheckRequestTupleKey{
+				User:     subject,
+				Relation: e.relation,
+				Object:   e.folderIdent,
+			},
+			Context: e.resource.Context(),
+		})
+	}
+
+	checks := batcher.checks()
+	if len(checks) == 0 {
+		return 0, nil
+	}
+
+	results, err := s.doBatchCheck(ctx, store, checks, contextuals)
+	if err != nil {
+		return len(checks), err
+	}
+
+	batcher.resolve(results, items)
+	return len(checks), nil
+}
+
+// runFolderPermissionPhase checks folder permission inheritance (e.g. can_get on a folder
+// grants access to all dashboards in that folder). Identical folder checks are deduplicated.
 func (s *Server) runFolderPermissionPhase(
 	ctx context.Context,
 	store *zanzana.StoreInfo,
@@ -258,72 +532,13 @@ func (s *Server) runFolderPermissionPhase(
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
 ) (int, error) {
-	checks := make([]*openfgav1.BatchCheckItem, 0, len(items))
-	checkIDToCorrelation := make(map[string]string, len(items))
-
-	for _, item := range items {
-		if item.resolved {
-			continue
-		}
-
-		// Only applies to generic resources with folder support
-		if !item.resource.IsGeneric() {
-			continue
-		}
-
-		folderIdent := item.resource.FolderIdent()
-		if folderIdent == "" {
-			continue
-		}
-
-		// Only check folder permission for resources that inherit folder permissions
-		if !isFolderPermissionBasedResource(item.resource.GroupResource()) {
-			continue
-		}
-
-		folderCheckRelation := common.FolderPermissionRelation(item.relation)
-		checkID := fmt.Sprintf("%s_fp", item.correlationID)
-		checkIDToCorrelation[checkID] = item.correlationID
-		checks = append(checks, &openfgav1.BatchCheckItem{
-			TupleKey: &openfgav1.CheckRequestTupleKey{
-				User:     subject,
-				Relation: folderCheckRelation,
-				Object:   folderIdent,
-			},
-			ContextualTuples: contextuals,
-			Context:          item.resource.Context(),
-			CorrelationId:    checkID,
-		})
-	}
-
-	if len(checks) == 0 {
-		return 0, nil
-	}
-
-	results, err := s.doBatchCheck(ctx, store, checks)
-	if err != nil {
-		return len(checks), err
-	}
-
-	// Process results
-	for checkID, result := range results {
-		correlationID := checkIDToCorrelation[checkID]
-		item := items[correlationID]
-
-		if err := result.GetError(); err != nil {
-			item.err = err.GetMessage()
-			item.resolved = true
-		} else if result.GetAllowed() {
-			item.allowed = true
-			item.resolved = true
-		}
-	}
-
-	return len(checks), nil
+	entries := collectFolderPermissionChecks(items)
+	return s.resolveFolderChecks(ctx, store, subject, items, entries, contextuals)
 }
 
-// runFolderSubresourcePhase checks folder subresource access.
-// This handles cases where access is granted via folder subresource relations.
+// runFolderSubresourcePhase checks folder subresource access (e.g. folder_get, folder_set_edit).
+// Each item may expand into multiple relations; identical checks are deduplicated, and an item
+// is allowed if ANY of its expanded checks returns allowed.
 func (s *Server) runFolderSubresourcePhase(
 	ctx context.Context,
 	store *zanzana.StoreInfo,
@@ -331,91 +546,8 @@ func (s *Server) runFolderSubresourcePhase(
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
 ) (int, error) {
-	checks := make([]*openfgav1.BatchCheckItem, 0, len(items))
-	checkIDToCorrelation := make(map[string]string, len(items))
-
-	for _, item := range items {
-		if item.resolved {
-			continue
-		}
-
-		// Only applies to generic resources
-		if !item.resource.IsGeneric() {
-			continue
-		}
-
-		folderIdent := item.resource.FolderIdent()
-		if folderIdent == "" {
-			continue
-		}
-
-		folderRelation := common.SubresourceRelation(item.relation)
-		if !common.IsSubresourceRelation(folderRelation) {
-			continue
-		}
-
-		for idx, relation := range expandedSubresourcePermissionRelations(folderRelation) {
-			checkID := fmt.Sprintf("%s_fs_%d", item.correlationID, idx)
-			checkIDToCorrelation[checkID] = item.correlationID
-			checks = append(checks, &openfgav1.BatchCheckItem{
-				TupleKey: &openfgav1.CheckRequestTupleKey{
-					User:     subject,
-					Relation: relation,
-					Object:   folderIdent,
-				},
-				ContextualTuples: contextuals,
-				Context:          item.resource.Context(),
-				CorrelationId:    checkID,
-			})
-		}
-	}
-
-	if len(checks) == 0 {
-		return 0, nil
-	}
-
-	results, err := s.doBatchCheck(ctx, store, checks)
-	if err != nil {
-		return len(checks), err
-	}
-
-	// Aggregate results per original correlation ID. A single allowed relation
-	// should allow the item; otherwise first OpenFGA error (if any) is surfaced.
-	type relationResult struct {
-		allowed bool
-		err     string
-	}
-	agg := make(map[string]relationResult, len(items))
-
-	for checkID, result := range results {
-		correlationID := checkIDToCorrelation[checkID]
-		cur := agg[correlationID]
-		if cur.allowed {
-			continue
-		}
-		if err := result.GetError(); err != nil {
-			if cur.err == "" {
-				cur.err = err.GetMessage()
-			}
-		} else if result.GetAllowed() {
-			cur.allowed = true
-			cur.err = ""
-		}
-		agg[correlationID] = cur
-	}
-
-	for correlationID, res := range agg {
-		item := items[correlationID]
-		if res.allowed {
-			item.allowed = true
-			item.resolved = true
-		} else if res.err != "" {
-			item.err = res.err
-			item.resolved = true
-		}
-	}
-
-	return len(checks), nil
+	entries := collectFolderSubresourceChecks(items)
+	return s.resolveFolderChecks(ctx, store, subject, items, entries, contextuals)
 }
 
 func expandedSubresourcePermissionRelations(relation string) []string {
@@ -538,8 +670,7 @@ func (s *Server) resolveGenericItems(
 				Relation:             key.relation,
 				User:                 subject,
 				Context:              sample.resource.Context(),
-				ContextualTuples:     contextuals,
-			}); err != nil {
+			}, contextuals); err != nil {
 				return err
 			}
 		}
@@ -582,8 +713,7 @@ func (s *Server) resolveTypedItems(
 				Relation:             common.SubresourcePermissionRelation(subresourceRelation),
 				User:                 subject,
 				Context:              sample.resource.Context(),
-				ContextualTuples:     contextuals,
-			}); err != nil {
+			}, contextuals); err != nil {
 				return err
 			}
 		}
@@ -599,8 +729,7 @@ func (s *Server) resolveTypedItems(
 				Type:                 key.typ,
 				Relation:             listRelation,
 				User:                 subject,
-				ContextualTuples:     contextuals,
-			}); err != nil {
+			}, contextuals); err != nil {
 				return err
 			}
 		}
@@ -612,8 +741,13 @@ func (s *Server) resolveTypedItems(
 }
 
 // collectAllowedObjects calls ListObjects and adds the results to the allowed set.
-func (s *Server) collectAllowedObjects(ctx context.Context, allowed map[string]bool, req *openfgav1.ListObjectsRequest) error {
-	res, err := s.listObjects(ctx, req)
+func (s *Server) collectAllowedObjects(
+	ctx context.Context,
+	allowed map[string]bool,
+	req *openfgav1.ListObjectsRequest,
+	contextuals *openfgav1.ContextualTupleKeys,
+) error {
+	res, err := s.listObjects(ctx, req, contextuals)
 	if err != nil {
 		return err
 	}
@@ -632,9 +766,90 @@ func resolveByMembership(items []*batchCheckItem, allowed map[string]bool) {
 	}
 }
 
-// doBatchCheck executes a batch check against OpenFGA, splitting into
-// sub-batches if the number of checks exceeds the configured MaxChecksPerBatchCheck limit.
 func (s *Server) doBatchCheck(
+	ctx context.Context,
+	store *zanzana.StoreInfo,
+	checks []*openfgav1.BatchCheckItem,
+	contextuals *openfgav1.ContextualTupleKeys,
+) (map[string]*openfgav1.BatchCheckSingleResult, error) {
+	if len(checks) == 0 {
+		return nil, nil
+	}
+
+	// Shallow-copy each item so that setBatchCheckItemsContextualTuples does not
+	// mutate the caller's slice when it sets ContextualTuples.
+	checks = copyBatchCheckItems(checks)
+
+	chunks := contextualTupleChunks(contextuals)
+	if len(chunks) == 0 {
+		setBatchCheckItemsContextualTuples(checks, nil)
+		return s.doOpenFGABatchCheck(ctx, store, checks)
+	}
+	if len(chunks) == 1 {
+		setBatchCheckItemsContextualTuples(checks, chunks[0])
+		return s.doOpenFGABatchCheck(ctx, store, checks)
+	}
+
+	var merged map[string]*openfgav1.BatchCheckSingleResult
+	for _, chunk := range chunks {
+		setBatchCheckItemsContextualTuples(checks, chunk)
+		partial, err := s.doOpenFGABatchCheck(ctx, store, checks)
+		if err != nil {
+			return nil, err
+		}
+		if merged == nil {
+			merged = partial
+			continue
+		}
+		for id, result := range partial {
+			merged[id] = orBatchCheckSingleResult(merged[id], result)
+		}
+	}
+	return merged, nil
+}
+
+func copyBatchCheckItems(checks []*openfgav1.BatchCheckItem) []*openfgav1.BatchCheckItem {
+	copied := make([]*openfgav1.BatchCheckItem, len(checks))
+	for i, c := range checks {
+		if c == nil {
+			copied[i] = nil
+			continue
+		}
+		copied[i] = proto.Clone(c).(*openfgav1.BatchCheckItem)
+	}
+	return copied
+}
+
+func setBatchCheckItemsContextualTuples(checks []*openfgav1.BatchCheckItem, contextuals *openfgav1.ContextualTupleKeys) {
+	for _, check := range checks {
+		if check != nil {
+			check.ContextualTuples = contextuals
+		}
+	}
+}
+
+func orBatchCheckSingleResult(a, b *openfgav1.BatchCheckSingleResult) *openfgav1.BatchCheckSingleResult {
+	if a == nil {
+		return b
+	}
+	if b == nil {
+		return a
+	}
+	if a.GetAllowed() || b.GetAllowed() {
+		return &openfgav1.BatchCheckSingleResult{CheckResult: &openfgav1.BatchCheckSingleResult_Allowed{Allowed: true}}
+	}
+	if a.GetError() != nil {
+		return a
+	}
+	if b.GetError() != nil {
+		return b
+	}
+	return a
+}
+
+// doOpenFGABatchCheck executes a batch check against OpenFGA, splitting into
+// sub-batches if the number of checks exceeds the configured MaxChecksPerBatchCheck limit.
+func (s *Server) doOpenFGABatchCheck(
 	ctx context.Context,
 	store *zanzana.StoreInfo,
 	checks []*openfgav1.BatchCheckItem,

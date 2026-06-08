@@ -9,7 +9,7 @@ import { mockCombinedRule } from 'app/features/alerting/unified/mocks';
 import { type PanelDataPaneNext } from '../PanelDataPaneNext';
 
 import { useActionsContext, useQueryEditorUIContext } from './QueryEditorContext';
-import { QueryEditorContextWrapper, getNextSelectedQueryRefIds } from './QueryEditorContextWrapper';
+import { QueryEditorContextWrapper } from './QueryEditorContextWrapper';
 import { type AlertRule, type Transformation } from './types';
 
 jest.mock('../../../utils/utils', () => ({
@@ -106,28 +106,6 @@ function renderWithWrapper(dataPane: PanelDataPaneNext) {
 
 // ---- Tests ----
 
-describe('getNextSelectedQueryRefIds', () => {
-  it('updates the renamed refId in the selection array', () => {
-    expect(getNextSelectedQueryRefIds(['A', 'X', 'B'], 'X', 'Z')).toEqual(['A', 'Z', 'B']);
-  });
-
-  it('keeps all refIds unchanged when the renamed query is not in the selection', () => {
-    expect(getNextSelectedQueryRefIds(['A', 'B'], 'Y', 'Z')).toEqual(['A', 'B']);
-  });
-
-  it('returns an empty array when selection is empty', () => {
-    expect(getNextSelectedQueryRefIds([], 'Y', 'Z')).toEqual([]);
-  });
-
-  it('handles a single-element selection of the renamed query', () => {
-    expect(getNextSelectedQueryRefIds(['X'], 'X', 'Z')).toEqual(['Z']);
-  });
-
-  it('updates all occurrences when the same refId appears multiple times', () => {
-    expect(getNextSelectedQueryRefIds(['A', 'A', 'B'], 'A', 'Z')).toEqual(['Z', 'Z', 'B']);
-  });
-});
-
 describe('QueryEditorContextWrapper - side effect clearing', () => {
   beforeEach(() => {
     mockUseAlertRulesForPanel.mockReturnValue({
@@ -214,6 +192,91 @@ function renderWithBothContexts(dataPane: PanelDataPaneNext) {
     }
   );
 }
+
+describe('QueryEditorContextWrapper - delete confirmation', () => {
+  beforeEach(() => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [],
+      loading: false,
+      isDashboardSaved: true,
+    });
+  });
+
+  it('starts with no action in the intermediate confirmation state', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+
+  it('records the most recently set action key and clears it on null', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:query:A'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:query:A');
+
+    act(() => result.current.setConfirmingDeleteActionKey('content_header:query:B'));
+    expect(result.current.confirmingDeleteActionKey).toBe('content_header:query:B');
+
+    act(() => result.current.setConfirmingDeleteActionKey(null));
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+
+  it('dismisses an open confirmation when the selected query changes', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:query:A'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:query:A');
+
+    act(() => result.current.setSelectedQuery({ refId: 'A' } as DataQuery));
+
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+
+  it('dismisses an open confirmation when the selected transformation changes', () => {
+    const { useTransformations } = require('./hooks/useTransformations');
+    const mockTransformation: Transformation = {
+      registryItem: undefined,
+      transformId: 'reduce-0',
+      transformConfig: { id: 'reduce', options: {} },
+    };
+    useTransformations.mockReturnValue([mockTransformation]);
+
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:transformation:reduce-0'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:transformation:reduce-0');
+
+    act(() => result.current.setSelectedTransformation(mockTransformation));
+
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+
+  it('dismisses an open confirmation when the selected alert changes', () => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [mockAlert],
+      loading: false,
+      isDashboardSaved: true,
+    });
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:query:A'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:query:A');
+
+    act(() => result.current.setSelectedAlert(mockAlert));
+
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+
+  it('dismisses an open confirmation when selection is cleared', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:query:A'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:query:A');
+
+    act(() => result.current.clearSelection());
+
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+});
 
 describe('QueryEditorContextWrapper - delete actions', () => {
   beforeEach(() => {

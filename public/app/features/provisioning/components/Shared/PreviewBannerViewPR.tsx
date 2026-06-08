@@ -52,7 +52,11 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
   const linkUrl = prURL || branchInfo?.repoBaseUrl || repoUrl;
 
   const actionText =
-    action === 'delete' ? getDeleteBannerText(capitalizedRepoType) : getCreateBannerText(isNewPr, capitalizedRepoType);
+    action === 'delete'
+      ? getDeleteBannerText(capitalizedRepoType)
+      : action === 'update'
+        ? getUpdateBannerText(capitalizedRepoType)
+        : getCreateBannerText(isNewPr, capitalizedRepoType);
 
   if (behindBranch) {
     return (
@@ -160,6 +164,25 @@ function getDeleteBannerText(repoType: string): BannerText {
     body: t(
       'provisioned-resource-preview-banner.preview-banner.delete-from-branch',
       'The rest of Grafana users in your organization will still see this resource until this branch is merged'
+    ),
+    button: t(
+      'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
+      'Open pull request in {{repoType}}',
+      { repoType }
+    ),
+  };
+}
+
+function getUpdateBannerText(repoType: string): BannerText {
+  return {
+    title: t(
+      'provisioned-resource-preview-banner.title-updated-resource-in-branch',
+      'A resource has been updated in a branch in {{repoType}}.',
+      { repoType }
+    ),
+    body: t(
+      'provisioned-resource-preview-banner.preview-banner.update-from-branch',
+      'The rest of Grafana users in your organization will still see the current version until this branch is merged'
     ),
     button: t(
       'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',

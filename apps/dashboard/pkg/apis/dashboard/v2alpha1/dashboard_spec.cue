@@ -783,8 +783,8 @@ VariableSort: "disabled" | "alphabeticalAsc" | "alphabeticalDesc" | "numericalAs
 VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 
 // Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
-VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
+VariableHide: *"dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu"
 
 // Determine whether regex applies to variable value or display text
 // Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)

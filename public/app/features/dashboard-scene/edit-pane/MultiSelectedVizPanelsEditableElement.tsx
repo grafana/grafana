@@ -1,23 +1,21 @@
-import { v4 as uuidv4 } from 'uuid';
-
+import { generateUUID } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { appEvents } from 'app/core/app_events';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { type BulkActionElement } from '../scene/types/BulkActionElement';
 import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../scene/types/EditableDashboardElement';
 
-import { type VizPanelEditableElement } from './VizPanelEditableElement';
-
 export class MultiSelectedVizPanelsEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
   public readonly key: string;
 
-  constructor(private _panels: VizPanelEditableElement[]) {
-    this.key = uuidv4();
+  constructor(private _panels: BulkActionElement[]) {
+    this.key = generateUUID();
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
@@ -25,12 +23,7 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    const header = new OptionsPaneCategoryDescriptor({
-      title: ``,
-      id: '',
-    });
-
-    return [header];
+    return [];
   }
 
   public onConfirmDelete() {

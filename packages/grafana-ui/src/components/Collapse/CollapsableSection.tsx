@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { uniqueId } from 'lodash';
-import { type ReactNode, useRef, useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -63,7 +62,7 @@ export const CollapsableSection = ({
       toggleInternalOpenState(!internalOpenState);
     }
   };
-  const { current: id } = useRef(uniqueId());
+  const id = useId();
 
   const buttonLabelId = labelId ?? `collapse-label-${id}`;
 

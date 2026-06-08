@@ -30,7 +30,7 @@ import { PanelTimeRange, type PanelTimeRangeState } from '../../scene/panel-time
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
-import { findVizPanelByKey } from '../../utils/utils';
+import { activateSceneObjectAndParentTree, findVizPanelByKey } from '../../utils/utils';
 import { buildPanelEditScene } from '../PanelEditor';
 import {
   testDashboard,
@@ -407,7 +407,7 @@ describe('PanelDataQueriesTab', () => {
       const modelMock = await createModelMock();
       render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
 
-      expect(await screen.findAllByTestId('query-editor-row')).toHaveLength(1);
+      expect(await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(1);
     });
 
     it('allow to add a new query when user clicks on add new', async () => {
@@ -995,7 +995,9 @@ async function setupScene(panelId: string) {
   const panelEditor = buildPanelEditScene(panel);
   dashboard.setState({ editPanel: panelEditor });
 
-  deactivators.push(dashboard.activate());
+  const deactivate = activateSceneObjectAndParentTree(panel);
+
+  deactivators.push(deactivate!);
   deactivators.push(panelEditor.activate());
 
   const dataPane = panelEditor.state.dataPane;
@@ -1020,7 +1022,9 @@ async function setupV2Scene(panelKey: string) {
   const panelEditor = buildPanelEditScene(panel);
   dashboard.setState({ editPanel: panelEditor });
 
-  deactivators.push(dashboard.activate());
+  const deactivate = activateSceneObjectAndParentTree(panel);
+
+  deactivators.push(deactivate!);
   deactivators.push(panelEditor.activate());
 
   const dataPane = panelEditor.state.dataPane;

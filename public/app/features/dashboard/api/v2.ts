@@ -20,6 +20,7 @@ import { convertSpecToWireFormat } from 'app/features/dashboard-scene/serializat
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
+import { isRootFolderUID } from 'app/features/search/constants';
 import { type DashboardDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -33,7 +34,7 @@ import {
   type ListDashboardHistoryOptions,
   type ListDeletedDashboardsOptions,
 } from './types';
-import { isV0V1StoredVersion } from './utils';
+import { buildRestorePayload, isV0V1StoredVersion } from './utils';
 
 export function getK8sV2DashboardApiConfig() {
   return {
@@ -62,10 +63,14 @@ export class K8sDashboardV2API
         throw new DashboardVersionError(dashboard.status.conversion.storedVersion, dashboard.status.conversion.error);
       }
 
-      // load folder info if available
-      if (dashboard.metadata.annotations && dashboard.metadata.annotations[AnnoKeyFolder]) {
+      // Load folder info for non-root dashboards. Root-parented dashboards
+      // ("", "general", or missing annotation) have no folder resource to
+      // fetch — normalise the annotation to "" so NestedFolderPicker treats
+      // them as living at the root.
+      const folderAnnotation = dashboard.metadata.annotations?.[AnnoKeyFolder];
+      if (dashboard.metadata.annotations && folderAnnotation && !isRootFolderUID(folderAnnotation)) {
         try {
-          const folder = await getFolderByUidFacade(dashboard.metadata.annotations[AnnoKeyFolder]);
+          const folder = await getFolderByUidFacade(folderAnnotation);
           dashboard.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
           dashboard.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
         } catch (e) {
@@ -74,10 +79,7 @@ export class K8sDashboardV2API
             throw new Error('Failed to load folder');
           }
         }
-      } else if (dashboard.metadata.annotations && !dashboard.metadata.annotations[AnnoKeyFolder]) {
-        // Set AnnoKeyFolder to empty string for top-level dashboards
-        // This ensures NestedFolderPicker correctly identifies it as being in the "Dashboard" root folder
-        // AnnoKeyFolder undefined -> top-level dashboard -> empty string
+      } else if (dashboard.metadata.annotations) {
         dashboard.metadata.annotations[AnnoKeyFolder] = '';
       }
 
@@ -147,16 +149,18 @@ export class K8sDashboardV2API
       };
     }
 
+    obj.metadata.annotations = {
+      ...obj.metadata.annotations,
+      [AnnoKeyGrantPermissions]: 'default',
+    };
+
     if (obj.metadata.name) {
       // remove resource version when updating
       delete obj.metadata.resourceVersion;
       delete obj.metadata.labels?.[DeprecatedInternalId];
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
-    obj.metadata.annotations = {
-      ...obj.metadata.annotations,
-      [AnnoKeyGrantPermissions]: 'default',
-    };
+
     // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
     delete obj.metadata.labels?.[DeprecatedInternalId];
     return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
@@ -233,14 +237,18 @@ export class K8sDashboardV2API
 
   async restoreDashboardVersion(uid: string, version: number): Promise<SaveDashboardResponseDTO> {
     // get version to restore to, and save as new one
-    const [historicalVersion] = await this.getDashboardHistoryVersions(uid, [version]);
+    // fetch current dashboard in parallel to preserve its folder location
+    const [historicalVersion, currentDashboard] = await Promise.all([
+      this.getDashboardHistoryVersions(uid, [version]).then((v) => v[0]),
+      this.client.get(uid),
+    ]);
     return await this.saveDashboard({
       dashboard: historicalVersion.spec,
       k8s: {
         name: uid,
       },
       message: `Restored from version ${version}`,
-      folderUid: historicalVersion.metadata?.annotations?.[AnnoKeyFolder],
+      folderUid: currentDashboard.metadata?.annotations?.[AnnoKeyFolder],
     });
   }
 
@@ -249,12 +257,6 @@ export class K8sDashboardV2API
   }
 
   restoreDashboard(dashboard: Resource<DashboardV2Spec>) {
-    // reset the resource version to create a new resource
-    dashboard.metadata.resourceVersion = '';
-    dashboard.metadata.annotations = {
-      ...dashboard.metadata.annotations,
-      [AnnoKeyGrantPermissions]: 'default',
-    };
-    return this.client.create(dashboard);
+    return this.client.create(buildRestorePayload(dashboard));
   }
 }

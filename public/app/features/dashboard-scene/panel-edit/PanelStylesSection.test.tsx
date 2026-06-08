@@ -192,6 +192,22 @@ describe('PanelStylesSection', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('renders null when series exist but all frames have zero rows', () => {
+    setupDataMock({
+      ...mockData,
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [] },
+            { name: 'value', type: FieldType.number, values: [] },
+          ],
+        }),
+      ],
+    });
+    const { container } = render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it('renders preset cards when presets and data are available', () => {
     render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     expect(screen.getByTestId('preset-default-hash')).toBeInTheDocument();

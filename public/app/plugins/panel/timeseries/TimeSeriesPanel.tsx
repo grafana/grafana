@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   alignTimeRangeCompareData,
@@ -27,7 +27,6 @@ import { type Options } from './panelcfg.gen';
 import { AnnotationsPlugin } from './plugins/AnnotationPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
-import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getXAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getGroupedFilters, getTimezones, prepareGraphableFields } from './utils';
@@ -43,6 +42,7 @@ export const TimeSeriesPanel = ({
   options,
   fieldConfig,
   onChangeTimeRange,
+  onOptionsChange,
   replaceVariables,
   id,
 }: TimeSeriesPanelProps) => {
@@ -50,9 +50,6 @@ export const TimeSeriesPanel = ({
     sync,
     eventsScope,
     canAddAnnotations,
-    onThresholdsChange,
-    canEditThresholds,
-    showThresholds,
     eventBus,
     canExecuteActions,
     getFiltersBasedOnGrouping,
@@ -112,6 +109,13 @@ export const TimeSeriesPanel = ({
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
+  const onPinnedToSidebarChange = useCallback(
+    (pinned: boolean) => {
+      onOptionsChange({ ...options, legend: { ...options.legend, facetedFilterPinned: pinned } });
+    },
+    [onOptionsChange, options]
+  );
+
   if (!frames || suggestions) {
     return (
       <PanelDataErrorView
@@ -140,6 +144,7 @@ export const TimeSeriesPanel = ({
       dataLinkPostProcessor={dataLinkPostProcessor}
       cursorSync={cursorSync}
       annotationLanes={options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined}
+      onPinnedToSidebarChange={onPinnedToSidebarChange}
     >
       {(uplotConfig, alignedFrame) => {
         return (
@@ -177,7 +182,10 @@ export const TimeSeriesPanel = ({
                   };
 
                   const groupingFilters =
-                    seriesIdx !== null && config.featureToggles.perPanelFiltering && getFiltersBasedOnGrouping
+                    seriesIdx !== null &&
+                    (config.featureToggles.perPanelFiltering ||
+                      config.featureToggles.dashboardUnifiedDrilldownControls) &&
+                    getFiltersBasedOnGrouping
                       ? getGroupedFilters(alignedFrame, seriesIdx, getFiltersBasedOnGrouping)
                       : [];
 
@@ -196,13 +204,19 @@ export const TimeSeriesPanel = ({
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       filterByGroupedLabels={
-                        config.featureToggles.perPanelFiltering && groupingFilters.length && onAddAdHocFilters
+                        (config.featureToggles.perPanelFiltering ||
+                          config.featureToggles.dashboardUnifiedDrilldownControls) &&
+                        groupingFilters.length &&
+                        onAddAdHocFilters
                           ? {
-                              onFilterForGroupedLabels: () => onAddAdHocFilters(groupingFilters),
-                              onFilterOutGroupedLabels: () =>
+                              onFilterForGroupedLabels: () => {
+                                onAddAdHocFilters(groupingFilters);
+                              },
+                              onFilterOutGroupedLabels: () => {
                                 onAddAdHocFilters(
                                   groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
-                                ),
+                                );
+                              },
                             }
                           : undefined
                       }
@@ -234,13 +248,6 @@ export const TimeSeriesPanel = ({
                     timeZone={timeZone}
                     maxHeight={options.tooltip.maxHeight}
                     maxWidth={options.tooltip.maxWidth}
-                  />
-                )}
-                {((canEditThresholds && onThresholdsChange) || showThresholds) && (
-                  <ThresholdControlsPlugin
-                    config={uplotConfig}
-                    fieldConfig={fieldConfig}
-                    onThresholdsChange={canEditThresholds ? onThresholdsChange : undefined}
                   />
                 )}
               </>

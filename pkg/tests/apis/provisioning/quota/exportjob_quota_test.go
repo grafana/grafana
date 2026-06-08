@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	foldersV1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -34,12 +34,13 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		const repo = "export-quota-success"
 		testRepo := common.TestRepo{
 			Name:               repo,
-			Target:             "instance",
+			SyncTarget:         "instance",
+			Workflows:          []string{"write"},
 			Copies:             map[string]string{},
 			ExpectedDashboards: 2,
 			ExpectedFolders:    0,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 
 		// Wait for quota reconciliation to confirm limits are set on the repository
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
@@ -77,12 +78,13 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		const repo = "export-quota-resources-exceeded"
 		testRepo := common.TestRepo{
 			Name:               repo,
-			Target:             "instance",
+			SyncTarget:         "instance",
+			Workflows:          []string{"write"},
 			Copies:             map[string]string{},
 			ExpectedDashboards: 2,
 			ExpectedFolders:    0,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
@@ -126,8 +128,8 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		for i, name := range []string{"export-test-folder-1", "export-test-folder-2"} {
 			folderObj := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
-					"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
+					"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+					"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
 					"metadata": map[string]interface{}{
 						"name": name,
 					},
@@ -143,12 +145,13 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		const repo = "export-quota-folders-exceeded"
 		testRepo := common.TestRepo{
 			Name:               repo,
-			Target:             "instance",
+			SyncTarget:         "instance",
+			Workflows:          []string{"write"},
 			Copies:             map[string]string{},
 			ExpectedDashboards: 1,
 			ExpectedFolders:    2,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 

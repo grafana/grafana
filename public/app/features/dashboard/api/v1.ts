@@ -23,6 +23,7 @@ import {
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
+import { isRootFolderUID } from 'app/features/search/constants';
 import { type DashboardDataDTO, type DashboardDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -36,7 +37,7 @@ import {
   type ListDashboardHistoryOptions,
   type ListDeletedDashboardsOptions,
 } from './types';
-import { isV2StoredVersion } from './utils';
+import { buildRestorePayload, isV2StoredVersion } from './utils';
 
 export function getK8sV1DashboardApiConfig() {
   return {
@@ -86,6 +87,11 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     // and the api server will throw an error
     delete obj.metadata.resourceVersion;
 
+    obj.metadata.annotations = {
+      ...obj.metadata.annotations,
+      [AnnoKeyGrantPermissions]: 'default',
+    };
+
     // for v1 in g12, we will ignore the schema version validation from all default clients,
     // as we implement the necessary backend conversions, we will drop this query param
     if (dashboard.uid) {
@@ -94,10 +100,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
       return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
-    obj.metadata.annotations = {
-      ...obj.metadata.annotations,
-      [AnnoKeyGrantPermissions]: 'default',
-    };
+
     // non-scene dashboard will have obj.metadata.name when trying to save a dashboard copy
     delete obj.metadata.name;
     // on create, always clear the id to prevent duplicate ids
@@ -198,9 +201,13 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
         result.dashboard.id = parseInt(dash.metadata.labels[DeprecatedInternalId], 10);
       }
 
-      if (dash.metadata.annotations?.[AnnoKeyFolder]) {
+      const folderAnnotation = dash.metadata.annotations?.[AnnoKeyFolder];
+      // Root-parented dashboards carry "" or "general" — there is no folder
+      // resource to fetch. Leave folder fields unset so the UI renders the
+      // dashboard at the root.
+      if (folderAnnotation && !isRootFolderUID(folderAnnotation)) {
         try {
-          const folder = await getFolderByUidFacade(dash.metadata.annotations[AnnoKeyFolder]);
+          const folder = await getFolderByUidFacade(folderAnnotation);
           result.meta.folderTitle = folder.title;
           result.meta.folderUrl = folder.url;
           result.meta.folderUid = folder.uid;
@@ -212,7 +219,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           }
           // we still want to save the folder uid so that we can properly handle disabling the folder picker in Settings -> General
           // this is an edge case when user has edit access to a dashboard but doesn't have access to the folder
-          result.meta.folderUid = dash.metadata.annotations?.[AnnoKeyFolder];
+          result.meta.folderUid = folderAnnotation;
         }
       }
 
@@ -282,7 +289,11 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
   async restoreDashboardVersion(uid: string, version: number): Promise<SaveDashboardResponseDTO> {
     // get version to restore to, and save as new one
-    const [historicalVersion] = await this.getDashboardHistoryVersions(uid, [version]);
+    // fetch current dashboard in parallel to preserve its folder location
+    const [historicalVersion, currentDashboard] = await Promise.all([
+      this.getDashboardHistoryVersions(uid, [version]).then((v) => v[0]),
+      this.client.get(uid),
+    ]);
     return await this.saveDashboard({
       dashboard: {
         ...historicalVersion.spec,
@@ -292,7 +303,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
         name: uid,
       },
       message: `Restored from version ${version}`,
-      folderUid: historicalVersion.metadata?.annotations?.[AnnoKeyFolder],
+      folderUid: currentDashboard.metadata?.annotations?.[AnnoKeyFolder],
     });
   }
 
@@ -301,12 +312,6 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   }
 
   restoreDashboard(dashboard: Resource<DashboardDataDTO>) {
-    // reset the resource version to create a new resource
-    dashboard.metadata.resourceVersion = '';
-    dashboard.metadata.annotations = {
-      ...dashboard.metadata.annotations,
-      [AnnoKeyGrantPermissions]: 'default',
-    };
-    return this.client.create(dashboard);
+    return this.client.create(buildRestorePayload(dashboard));
   }
 }

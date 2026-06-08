@@ -18,10 +18,10 @@ Learn how to create and manage multiple dashboards represented as JSON source co
 
 Before you begin, ensure you have the following:
 
-- A Grafana Cloud account, as shown in [Get started](/docs/grafana-cloud/get-started/)
+- A Grafana Cloud account, as shown in [Get started](https://grafana.com/docs/grafana-cloud/get-started/)
 - A [GitHub](https://github.com/) repository
 
-## Add Dashboards to a GitHub repository
+## Add dashboards to a GitHub repository
 
 This guide shows you how to add dashboards for ElasticSearch, InfluxDB, and AWS EC2. You can use different dashboards according to your configured data sources.
 
@@ -36,8 +36,8 @@ This guide shows you how to add dashboards for ElasticSearch, InfluxDB, and AWS 
 This Terraform configuration configures the [Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) to provide necessary authentication when creating folders and dashboards in the Grafana instance.
 
 1. Create a service account and token in the Grafana instance by following these steps:
-   1. [Create a service account in Grafana](/docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/#create-a-service-account-in-grafana)
-   1. [Add a token to a service account](/docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/#add-a-token-to-a-service-account-in-grafana)
+   1. [Create a service account in Grafana](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/#create-a-service-account-in-grafana)
+   1. [Add a token to a service account](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/#add-a-token-to-a-service-account-in-grafana)
 
 1. Create a file named `main.tf` in the Git root directory and add the following code block:
 
@@ -91,7 +91,10 @@ resource "grafana_folder" "AWS" {
 
 ## Terraform configuration for dashboards
 
-This Terraform configuration iterates through the Json files in the three folders (`elasticsearch`, `influxdb` and `aws`) you created in the GitHub repository and adds them to the respective folders in the Grafana instance using [grafana_dashboard (Resource)](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/dashboard).
+This Terraform configuration iterates through the JSON files in the three folders (`elasticsearch`, `influxdb` and `aws`) you created in the GitHub repository and adds them to the respective folders in the Grafana instance using a Grafana dashboard resource. Available resources include:
+
+- [`grafana_dashboard` (Resource)](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/dashboard).
+- For Kubernetes-style dashboards in Grafana v13 or later, use the appropriate resource depending on your dashboard's Kubernetes version. Refer to [Grafana resources](https://github.com/grafana/terraform-provider-grafana/blob/main/docs/resources) for details on the available resources, such as `grafana_apps_dashboard_dashboard_v1beta1`, `grafana_apps_dashboard_dashboard_v1`, or `grafana_apps_dashboard_dashboard_v2`.
 
 For example, the dashboard represented as JSON source code in the `elasticsearch` folder in the GitHub repository will be created in the `ElasticSearch` folder in the Grafana instance.
 

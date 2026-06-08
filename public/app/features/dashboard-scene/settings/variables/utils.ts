@@ -50,6 +50,9 @@ export function isEditableVariableType(type: VariableType): type is EditableVari
   return type !== 'system' && type !== 'snapshot';
 }
 
+export const getDefaultTopPlacementLabel = () =>
+  t('dashboard-scene.variables-list.top-placement.default', 'Above dashboard');
+
 export const getEditableVariables: () => Record<EditableVariableType, EditableVariableConfig> = () => ({
   custom: {
     name: t('dashboard-scene.get-editable-variables.name.custom', 'Custom'),
@@ -182,6 +185,7 @@ export function getVariableEditor(type: EditableVariableType) {
 export interface CommonVariableProperties {
   name: string;
   label?: string;
+  key?: string;
 }
 
 function getDefaultDatasourceRef(): DataSourceRef | undefined {
@@ -210,7 +214,6 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'adhoc':
       return new AdHocFiltersVariable({
         ...initialState,
-        layout: 'combobox',
       });
     case 'groupby':
       return new GroupByVariable(initialState);
@@ -224,6 +227,10 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
 export function getVariableDefault(variables: Array<SceneVariable<SceneVariableState>>) {
   const nextVariableIdName = getNextAvailableId('query', variables);
   return getVariableScene('query', { name: nextVariableIdName });
+}
+
+export function getVariableNamePrefix(type: EditableVariableType): string {
+  return type === 'adhoc' ? 'filter' : type;
 }
 
 export function getNextAvailableId(

@@ -53,7 +53,7 @@ func TestGdevReadSummaries(t *testing.T) {
 
 				if !bytes.Equal(out, golden) {
 					failed = append(failed, uid)
-					err = os.WriteFile(gpath, out, 0600)
+					err = os.WriteFile(gpath, out, 0600) // #nosec G122 -- test golden-file regeneration on operator-controlled paths
 					if err != nil {
 						return err
 					}

@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 
 import { FieldType } from '@grafana/data';
+import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
 import {
   buildInstanceStateQueryExpr,
@@ -80,20 +81,21 @@ describe('instanceStateUtils', () => {
       expect(getInstanceStateFromMetricSeries([])).toBe(null);
     });
 
-    it('returns "nodata" when grafana_alertstate is nodata', () => {
-      expect(getInstanceStateFromMetricSeries(makeSeries('nodata'))).toBe('nodata');
-      expect(getInstanceStateFromMetricSeries(makeSeries('NoData'))).toBe('nodata');
+    it('returns NoData when grafana_alertstate is nodata', () => {
+      expect(getInstanceStateFromMetricSeries(makeSeries('nodata'))).toBe(GrafanaAlertState.NoData);
+      expect(getInstanceStateFromMetricSeries(makeSeries('NoData'))).toBe(GrafanaAlertState.NoData);
     });
 
-    it('returns "error" when grafana_alertstate is error', () => {
-      expect(getInstanceStateFromMetricSeries(makeSeries('error'))).toBe('error');
-      expect(getInstanceStateFromMetricSeries(makeSeries('Error'))).toBe('error');
+    it('returns Error when grafana_alertstate is error', () => {
+      expect(getInstanceStateFromMetricSeries(makeSeries('error'))).toBe(GrafanaAlertState.Error);
+      expect(getInstanceStateFromMetricSeries(makeSeries('Error'))).toBe(GrafanaAlertState.Error);
     });
 
-    it('returns null for other states (alerting, pending, recovering)', () => {
-      expect(getInstanceStateFromMetricSeries(makeSeries('alerting'))).toBe(null);
-      expect(getInstanceStateFromMetricSeries(makeSeries('pending'))).toBe(null);
-      expect(getInstanceStateFromMetricSeries(makeSeries('recovering'))).toBe(null);
+    it('returns the correct GrafanaAlertState for all states', () => {
+      expect(getInstanceStateFromMetricSeries(makeSeries('alerting'))).toBe(GrafanaAlertState.Alerting);
+      expect(getInstanceStateFromMetricSeries(makeSeries('pending'))).toBe(GrafanaAlertState.Pending);
+      expect(getInstanceStateFromMetricSeries(makeSeries('recovering'))).toBe(GrafanaAlertState.Recovering);
+      expect(getInstanceStateFromMetricSeries(makeSeries('normal'))).toBe(GrafanaAlertState.Normal);
     });
 
     it('returns null when value field has no grafana_alertstate label', () => {
@@ -129,7 +131,7 @@ describe('instanceStateUtils', () => {
       expect(result.current).toBe(null);
     });
 
-    it('returns nodata when series has grafana_alertstate nodata', () => {
+    it('returns GrafanaAlertState.NoData when series has grafana_alertstate nodata', () => {
       mockUseQueryRunner.mockReturnValue({
         useState: () => ({
           data: {
@@ -152,10 +154,10 @@ describe('instanceStateUtils', () => {
         }),
       });
       const { result } = renderHook(() => useInstanceAlertState('rule-1', {}));
-      expect(result.current).toBe('nodata');
+      expect(result.current).toBe(GrafanaAlertState.NoData);
     });
 
-    it('returns error when series has grafana_alertstate error', () => {
+    it('returns GrafanaAlertState.Error when series has grafana_alertstate error', () => {
       mockUseQueryRunner.mockReturnValue({
         useState: () => ({
           data: {
@@ -178,7 +180,7 @@ describe('instanceStateUtils', () => {
         }),
       });
       const { result } = renderHook(() => useInstanceAlertState('rule-1', {}));
-      expect(result.current).toBe('error');
+      expect(result.current).toBe(GrafanaAlertState.Error);
     });
   });
 });

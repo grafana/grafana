@@ -9,19 +9,13 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -245,136 +239,6 @@ func TestScanRow(t *testing.T) {
 		contentStr, ok := content.(string)
 		require.True(t, ok, "content should be a string")
 		require.Equal(t, string(badData), contentStr, "content should match bad json data")
-	})
-}
-
-func TestBuildSaveDashboardCommand(t *testing.T) {
-	testCases := []struct {
-		name          string
-		schemaVersion int
-		expectedAPI   string
-	}{
-		{
-			name:          "with schema version 36 should save as v0",
-			schemaVersion: 36,
-			expectedAPI:   dashboardV0.VERSION,
-		},
-		// {
-		// 	name:          "with schema version 41 should save as v1",
-		// 	schemaVersion: 41,
-		// 	expectedAPI:   dashboardV1.VERSION,
-		// },
-		// {
-		// 	name:          "with empty schema version should save as v0",
-		// 	schemaVersion: 0,
-		// 	expectedAPI:   dashboardV0.VERSION,
-		// },
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			mockStore := &dashboards.FakeDashboardStore{}
-			access := &dashboardSqlAccess{
-				dashStore: mockStore,
-				log:       log.New("test"),
-			}
-
-			dashSpec := map[string]interface{}{
-				"title": "Test Dashboard",
-				"id":    123,
-			}
-
-			if tc.schemaVersion > 0 {
-				dashSpec["schemaVersion"] = tc.schemaVersion
-			}
-
-			dash := &dashboardV1.Dashboard{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: dashboardV1.APIVERSION,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-dash",
-				},
-				Spec: common.Unstructured{
-					Object: dashSpec,
-				},
-			}
-
-			// fail if no user in context
-			_, _, err := access.buildSaveDashboardCommand(context.Background(), 1, dash)
-			require.Error(t, err)
-
-			ctx := identity.WithRequester(context.Background(), &user.SignedInUser{
-				OrgID:   1,
-				OrgRole: "Admin",
-			})
-			// create new dashboard
-			mockStore.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, nil).Once()
-			cmd, created, err := access.buildSaveDashboardCommand(ctx, 1, dash)
-			require.NoError(t, err)
-			require.Equal(t, true, created)
-			require.NotNil(t, cmd)
-			require.Equal(t, "test-dash", cmd.Dashboard.Get("uid").MustString())
-			_, exists := cmd.Dashboard.CheckGet("id")
-			require.False(t, exists) // id should be removed
-			require.Equal(t, cmd.OrgID, int64(1))
-			require.True(t, cmd.Overwrite)
-			require.Equal(t, tc.expectedAPI, cmd.APIVersion) // verify expected API version
-
-			// now update existing dashboard
-			mockStore.On("GetDashboard", mock.Anything, mock.Anything).Return(
-				&dashboards.Dashboard{
-					ID:         1234,
-					Version:    2,
-					APIVersion: dashboardV1.VERSION,
-				}, nil).Once()
-			cmd, created, err = access.buildSaveDashboardCommand(ctx, 1, dash)
-			require.NoError(t, err)
-			require.Equal(t, false, created)
-			require.NotNil(t, cmd)
-			require.Equal(t, "test-dash", cmd.Dashboard.Get("uid").MustString())
-			require.Equal(t, cmd.Dashboard.Get("id").MustInt64(), int64(1234))       // should set to existing ID
-			require.Equal(t, cmd.Dashboard.Get("version").MustFloat64(), float64(2)) // version must be set - otherwise seen as a new dashboard in NewDashboardFromJson
-			require.Equal(t, tc.expectedAPI, cmd.APIVersion)                         // verify expected API version
-			require.Equal(t, cmd.OrgID, int64(1))
-			require.True(t, cmd.Overwrite)
-		})
-	}
-
-	t.Run("service account should have userID set", func(t *testing.T) {
-		mockStore := &dashboards.FakeDashboardStore{}
-		access := &dashboardSqlAccess{
-			dashStore: mockStore,
-			log:       log.New("test"),
-		}
-
-		dash := &dashboardV1.Dashboard{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: dashboardV1.APIVERSION,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test-dash",
-			},
-			Spec: common.Unstructured{
-				Object: map[string]interface{}{
-					"title": "Test Dashboard",
-				},
-			},
-		}
-
-		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{
-			UserID:           123,
-			OrgID:            1,
-			OrgRole:          "Editor",
-			IsServiceAccount: true,
-		})
-
-		mockStore.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, nil).Once()
-		cmd, created, err := access.buildSaveDashboardCommand(ctx, 1, dash)
-		require.NoError(t, err)
-		require.True(t, created)
-		require.NotNil(t, cmd)
-		require.Equal(t, int64(123), cmd.UserID, "service account user ID should be set correctly")
 	})
 }
 

@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"strings"
+	"math"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	commonv11 "github.com/grafana/tempo/pkg/tempopb/common/v1"
@@ -123,7 +123,6 @@ func spanToSpanRow(span *tracev11.Span, libraryTags *commonv11.InstrumentationSc
 	// If the id representation changed from hexstring to something else we need to change the transformBase64IDToHexString in the frontend code
 	traceID := span.TraceId
 	traceIDHex := hex.EncodeToString(traceID[:])
-	traceIDHex = strings.TrimPrefix(traceIDHex, strings.Repeat("0", 16))
 
 	spanID := span.SpanId
 	spanIDHex := hex.EncodeToString(spanID[:])
@@ -233,7 +232,17 @@ func getAttributeVal(attr *commonv11.AnyValue) (any, error) {
 	case *commonv11.AnyValue_BoolValue:
 		return attr.GetBoolValue(), nil
 	case *commonv11.AnyValue_DoubleValue:
-		return attr.GetDoubleValue(), nil
+		f := attr.GetDoubleValue()
+		switch {
+		case math.IsNaN(f):
+			return "NaN", nil
+		case math.IsInf(f, 1):
+			return "Inf", nil
+		case math.IsInf(f, -1):
+			return "-Inf", nil
+		default:
+			return f, nil
+		}
 	case *commonv11.AnyValue_KvlistValue:
 		return kvListAsString(attr.GetKvlistValue())
 	case *commonv11.AnyValue_ArrayValue:
@@ -364,7 +373,6 @@ func spanLinksToReferences(links []*tracev11.Span_Link) []*TraceReference {
 
 		traceID := link.TraceId
 		traceIDHex := hex.EncodeToString(traceID[:])
-		traceIDHex = strings.TrimLeft(traceIDHex, "0")
 
 		spanID := link.SpanId
 		spanIDHex := hex.EncodeToString(spanID[:])

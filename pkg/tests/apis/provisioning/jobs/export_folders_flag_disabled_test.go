@@ -18,7 +18,7 @@ func createUnmanagedFolder(t *testing.T, helper *common.ProvisioningTestHelper, 
 	t.Helper()
 	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": "folder.grafana.app/v1beta1",
+			"apiVersion": "folder.grafana.app/v1",
 			"kind":       "Folder",
 			"metadata": map[string]interface{}{
 				"name":      name,
@@ -37,7 +37,7 @@ func createUnmanagedFolderWithParent(t *testing.T, helper *common.ProvisioningTe
 	t.Helper()
 	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": "folder.grafana.app/v1beta1",
+			"apiVersion": "folder.grafana.app/v1",
 			"kind":       "Folder",
 			"metadata": map[string]interface{}{
 				"name":      name,
@@ -74,9 +74,10 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlagDisabled(t *testing
 		helper := sharedHelper(t)
 
 		const repo = "export-no-meta-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -98,9 +99,10 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlagDisabled(t *testing
 		helper := sharedHelper(t)
 
 		const repo = "nested-no-meta-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})

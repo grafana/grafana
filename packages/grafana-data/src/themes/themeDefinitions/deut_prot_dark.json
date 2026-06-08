@@ -1,0 +1,84 @@
+{
+  "name": "Deuteranopia/Protanopia Dark",
+  "id": "deut_prot_dark",
+  "colors": {
+    "mode": "dark",
+    "success": {
+      "main": "#2EC4B6"
+    },
+    "error": {
+      "main": "#E8467C",
+      "text": "#F57098"
+    },
+    "warning": {
+      "main": "#FADE2A"
+    },
+    "contrastThreshold": 4.5
+  },
+  "visualization": {
+    "hues": [
+      {
+        "name": "red",
+        "shades": [
+          { "color": "#FFB8CC", "name": "super-light-red" },
+          { "color": "#F57098", "name": "light-red" },
+          { "color": "#E8467C", "name": "red", "primary": true },
+          { "color": "#B82B5A", "name": "semi-dark-red" },
+          { "color": "#8C1842", "name": "dark-red" }
+        ]
+      },
+      {
+        "name": "green",
+        "shades": [
+          { "color": "#B8F0E8", "name": "super-light-green" },
+          { "color": "#6CDCD0", "name": "light-green" },
+          { "color": "#2EC4B6", "name": "green", "primary": true },
+          { "color": "#1A8A7E", "name": "semi-dark-green" },
+          { "color": "#005045", "name": "dark-green" }
+        ]
+      },
+      {
+        "name": "purple",
+        "shades": [
+          { "color": "#D8A0D8", "name": "super-light-purple" },
+          { "color": "#CF88D2", "name": "light-purple" },
+          { "color": "#BE6BBF", "name": "purple", "primary": true },
+          { "color": "#8A3A8C", "name": "semi-dark-purple" },
+          { "color": "#5E2060", "name": "dark-purple" }
+        ]
+      }
+    ],
+    "palette": [
+      "blue",
+      "yellow",
+      "purple",
+      "orange",
+      "green",
+      "red",
+      "light-blue",
+      "semi-dark-yellow",
+      "light-purple",
+      "semi-dark-orange",
+      "light-green",
+      "semi-dark-red",
+      "dark-blue",
+      "super-light-yellow",
+      "dark-purple",
+      "dark-orange",
+      "dark-green",
+      "dark-red",
+      "super-light-blue",
+      "light-yellow",
+      "super-light-purple",
+      "light-orange",
+      "super-light-green",
+      "light-red",
+      "semi-dark-blue",
+      "dark-yellow",
+      "semi-dark-purple",
+      "super-light-orange",
+      "semi-dark-green",
+      "super-light-red"
+    ]
+  }
+}

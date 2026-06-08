@@ -1,5 +1,5 @@
 import { type SelectableValue } from '@grafana/data';
-import { type AdHocFilterWithLabels, OPERATORS } from '@grafana/scenes';
+import { type AdHocFilterWithLabels, GROUP_BY_OPERATOR, OPERATORS } from '@grafana/scenes';
 
 export const MULTI_OPERATOR_VALUES = new Set(OPERATORS.filter((op) => op.isMulti).map((op) => op.value));
 
@@ -77,6 +77,30 @@ export function buildGroupByUpdate(
   const nextText = nextValues.map((value) => keyLabels.get(value) ?? value);
 
   return { nextValues, nextText };
+}
+
+export function buildUnifiedGroupByFilters(
+  keys: Array<SelectableValue<string>>,
+  isGrouped: Record<string, boolean>
+): AdHocFilterWithLabels[] {
+  const result: AdHocFilterWithLabels[] = [];
+
+  for (const keyOption of keys) {
+    const keyValue = keyOption.value ?? keyOption.label;
+    if (!keyValue || !isGrouped[keyValue]) {
+      continue;
+    }
+
+    result.push({
+      key: keyValue,
+      keyLabel: keyOption.label ?? keyValue,
+      operator: GROUP_BY_OPERATOR,
+      value: '',
+      condition: '',
+    });
+  }
+
+  return result;
 }
 
 export interface ApplyFiltersInput {

@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // Test-only wildcard pattern; not used in the real mapper.
@@ -18,16 +20,26 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 
 	// Real config: groups matching *.datasource.grafana.app get the datasources mapping
 	for _, group := range []string{"loki.datasource.grafana.app", "mimir.datasource.grafana.app"} {
-		mapping, ok := reg.Get(group, "datasources")
+		mapping, ok := reg.Get(group, "datasources", "")
 		require.True(t, ok, "Get(%q, \"datasources\") should find mapping", group)
 		require.NotNil(t, mapping)
 		assert.Equal(t, "datasources:uid:", mapping.Prefix())
+
+		// The datasources/query subresource is also mapped to a query action.
+		queryMapping, ok := reg.Get(group, "datasources", "query")
+		require.True(t, ok, "Get(%q, \"datasources\", \"query\") should find mapping", group)
+		require.NotNil(t, queryMapping)
+		action, ok := queryMapping.Action(utils.VerbCreate)
+		assert.True(t, ok)
+		assert.Equal(t, "datasources:query", action)
+
+		// The group exposes both the datasources resource and its query subresource.
 		all := reg.GetAll(group)
-		require.Len(t, all, 1)
+		require.Len(t, all, 2)
 	}
 
 	// Security: wildcard-matched group must not resolve to resources from other groups
-	_, ok := reg.Get("loki.datasource.grafana.app", "dashboards")
+	_, ok := reg.Get("loki.datasource.grafana.app", "dashboards", "")
 	assert.False(t, ok, "Get(datasource group, \"dashboards\") must not return a mapping")
 }
 
@@ -86,7 +98,7 @@ func TestMapperRegistry_WildcardGroup(t *testing.T) {
 	// Matching groups get the mapping
 	for _, group := range []string{"foo.test.grafana.app", "bar.test.grafana.app", "baz.test.grafana.app"} {
 		t.Run("matches_"+group, func(t *testing.T) {
-			mapping, ok := reg.Get(group, "testresources")
+			mapping, ok := reg.Get(group, "testresources", "")
 			require.True(t, ok, "Get(%q, \"testresources\") should find mapping", group)
 			require.NotNil(t, mapping)
 			assert.Equal(t, "testresources:uid:", mapping.Prefix())
@@ -108,7 +120,7 @@ func TestMapperRegistry_WildcardGroup(t *testing.T) {
 	}
 	for _, tc := range denyCases {
 		t.Run("deny_"+tc.name, func(t *testing.T) {
-			_, ok := reg.Get(tc.group, "testresources")
+			_, ok := reg.Get(tc.group, "testresources", "")
 			assert.False(t, ok, "Get(%q) must not return a mapping", tc.group)
 			all := reg.GetAll(tc.group)
 			assert.Empty(t, all, "GetAll(%q) must not return any mappings", tc.group)
@@ -120,8 +132,132 @@ func TestMapperRegistry_ExactMatchPreferred(t *testing.T) {
 	reg := NewMapperRegistry()
 
 	// Exact group keys still work
-	mapping, ok := reg.Get("dashboard.grafana.app", "dashboards")
+	mapping, ok := reg.Get("dashboard.grafana.app", "dashboards", "")
 	require.True(t, ok)
 	require.NotNil(t, mapping)
 	assert.Equal(t, "dashboards:uid:", mapping.Prefix())
+}
+
+func TestMapperRegistry_SubresourceLookup(t *testing.T) {
+	parentTr := newResourceTranslation("widgets", "uid", true, nil)
+	subTr := translation{
+		resource:  "widgets",
+		attribute: "uid",
+		verbMapping: map[string]string{
+			"get":    "widgets.status:read",
+			"update": "widgets.status:write",
+		},
+		folderSupport: false,
+	}
+
+	m := mapper{
+		"example.grafana.app": {
+			"widgets":        parentTr,
+			"widgets/status": subTr,
+		},
+	}
+	var reg MapperRegistry = m
+
+	t.Run("empty subresource returns parent resource", func(t *testing.T) {
+		mapping, ok := reg.Get("example.grafana.app", "widgets", "")
+		require.True(t, ok)
+		action, ok := mapping.Action("get")
+		assert.True(t, ok)
+		assert.Equal(t, "widgets:read", action)
+	})
+
+	t.Run("subresource returns subresource mapping", func(t *testing.T) {
+		mapping, ok := reg.Get("example.grafana.app", "widgets", "status")
+		require.True(t, ok)
+		action, ok := mapping.Action("get")
+		assert.True(t, ok)
+		assert.Equal(t, "widgets.status:read", action)
+	})
+
+	t.Run("subresource uses same scope prefix as parent", func(t *testing.T) {
+		mapping, ok := reg.Get("example.grafana.app", "widgets", "status")
+		require.True(t, ok)
+		assert.Equal(t, "widgets:uid:", mapping.Prefix())
+		assert.Equal(t, "widgets:uid:abc", mapping.Scope("abc"))
+	})
+
+	t.Run("unknown subresource returns false", func(t *testing.T) {
+		_, ok := reg.Get("example.grafana.app", "widgets", "nonexistent")
+		assert.False(t, ok)
+	})
+
+	t.Run("unknown group with subresource returns false", func(t *testing.T) {
+		_, ok := reg.Get("unknown.grafana.app", "widgets", "status")
+		assert.False(t, ok)
+	})
+
+	t.Run("subresource name alone is not a valid resource", func(t *testing.T) {
+		_, ok := reg.Get("example.grafana.app", "status", "")
+		assert.False(t, ok)
+	})
+}
+
+// TestMapper_ServiceAccountTranslation_ActionSets verifies that service account verbs map to the
+// correct action sets. There is no View level — Edit verbs map to both edit+admin, and admin-only
+// verbs (delete, permissions) map to admin only.
+func TestMapper_ServiceAccountTranslation_ActionSets(t *testing.T) {
+	reg := NewMapperRegistry()
+	mapping, ok := reg.Get("iam.grafana.app", "serviceaccounts", "")
+	require.True(t, ok)
+
+	editAndAdmin := []string{"serviceaccounts:edit", "serviceaccounts:admin"}
+	adminOnly := []string{"serviceaccounts:admin"}
+	empty := []string(nil)
+
+	tests := []struct {
+		verb     string
+		expected []string
+	}{
+		{utils.VerbGet, editAndAdmin},
+		{utils.VerbList, editAndAdmin},
+		{utils.VerbWatch, editAndAdmin},
+		{utils.VerbUpdate, editAndAdmin},
+		{utils.VerbPatch, editAndAdmin},
+		{utils.VerbDelete, adminOnly},
+		{utils.VerbDeleteCollection, adminOnly},
+		{utils.VerbGetPermissions, adminOnly},
+		{utils.VerbSetPermissions, adminOnly},
+		{utils.VerbCreate, empty},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.verb, func(t *testing.T) {
+			assert.Equal(t, tt.expected, mapping.ActionSets(tt.verb))
+		})
+	}
+}
+
+// TestMapper_AnnotationSubresource_ActionSets verifies that managed roles (dashboards:view etc.)
+// flow through to annotation verbs via the subresource action set mapping.
+func TestMapper_AnnotationSubresource_ActionSets(t *testing.T) {
+	mapper := NewMapperRegistry()
+	mapping, ok := mapper.Get("dashboard.grafana.app", "dashboards", "annotations")
+	require.True(t, ok)
+
+	readActionSets := []string{"dashboards:view", "folders:view", "dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"}
+	writeActionSets := []string{"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"}
+
+	tests := []struct {
+		verb     string
+		expected []string
+	}{
+		{utils.VerbGet, readActionSets},
+		{utils.VerbList, readActionSets},
+		{utils.VerbWatch, readActionSets},
+		{utils.VerbCreate, writeActionSets},
+		{utils.VerbUpdate, writeActionSets},
+		{utils.VerbPatch, writeActionSets},
+		{utils.VerbDelete, writeActionSets},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.verb, func(t *testing.T) {
+			assert.ElementsMatch(t, tt.expected, mapping.ActionSets(tt.verb))
+		})
+	}
 }

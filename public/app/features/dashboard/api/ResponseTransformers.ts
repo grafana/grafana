@@ -1272,7 +1272,7 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
   };
 
   if (fieldConfig.defaults.mappings && fieldConfig.defaults.mappings.length > 0) {
-    transformedDefaults.mappings = fieldConfig.defaults.mappings.map((mapping) => {
+    transformedDefaults.mappings = fieldConfig.defaults.mappings.flatMap((mapping) => {
       switch (mapping.type) {
         case 'value':
           return {
@@ -1289,15 +1289,20 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
             ...mapping,
             type: MappingTypeV1.RegexToText,
           };
-        case 'special':
+        case 'special': {
+          const v1Match = transformSpecialValueMatchToV1(mapping.options.match);
+          if (v1Match === undefined) {
+            return [];
+          }
           return {
             ...mapping,
             options: {
               ...mapping.options,
-              match: transformSpecialValueMatchToV1(mapping.options.match),
+              match: v1Match,
             },
             type: MappingTypeV1.SpecialValue,
           };
+        }
         default:
           return mapping;
       }
@@ -1371,7 +1376,7 @@ function colorIdToEnumv1(colorId: FieldColorModeId): FieldColorModeIdV1 {
   }
 }
 
-function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueMatchV1 {
+function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueMatchV1 | undefined {
   switch (match) {
     case 'true':
       return SpecialValueMatchV1.True;
@@ -1386,7 +1391,8 @@ function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueM
     case 'empty':
       return SpecialValueMatchV1.Empty;
     default:
-      throw new Error(`Unknown match type: ${match}`);
+      console.warn(`Skipping special value mapping with unknown match type: "${match}"`);
+      return undefined;
   }
 }
 

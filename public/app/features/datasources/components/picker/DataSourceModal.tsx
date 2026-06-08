@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { once } from 'lodash';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceInstanceSettings, type DataSourceRef, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -68,6 +68,7 @@ export function DataSourceModal({
   const [search, setSearch] = useState('');
   const analyticsInteractionSrc = reportedInteractionFrom || 'modal';
   const favoriteDataSources = useFavoriteDatasources();
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const onDismissModal = () => {
     onDismiss();
@@ -166,7 +167,7 @@ export function DataSourceModal({
             reportSearchUsageOnce();
           }}
         />
-        <ScrollContainer>
+        <ScrollContainer ref={scrollRef}>
           <DataSourceList
             onChange={onChangeDataSource}
             current={current}
@@ -189,6 +190,7 @@ export function DataSourceModal({
             mixed={mixed}
             dataSources={dataSources}
             favoriteDataSources={favoriteDataSources}
+            scrollRef={scrollRef}
           />
           <BuiltInList className={styles.appendBuiltInDataSourcesList} />
         </ScrollContainer>

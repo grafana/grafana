@@ -1,9 +1,10 @@
 import { type AnyAction } from '@reduxjs/toolkit';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import * as React from 'react';
 
 import {
   DataSourcePluginContextProvider,
+  type DataSourceConfigValidationAPI,
   type DataSourcePluginMeta,
   type DataSourceSettings as DataSourceSettingsType,
   PluginExtensionPoints,
@@ -16,6 +17,7 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DataSourceSettingsState } from 'app/types/datasources';
 import { useDispatch } from 'app/types/store';
 
+import { useRetryDatasourceAdvisorCheck } from '../../connections/hooks/useDatasourceAdvisorChecks';
 import {
   useDataSource,
   useDataSourceExploreUrl,
@@ -27,13 +29,13 @@ import {
   useTestDataSource,
   useUpdateDatasource,
 } from '../state/hooks';
-import { setIsDefault, setDataSourceName, dataSourceLoaded } from '../state/reducers';
+import { dataSourceLoaded, testDataSourceFailed } from '../state/reducers';
 import { trackDsConfigClicked, trackDsConfigUpdated } from '../tracking';
 import { type DataSourceRights } from '../types';
 
-import { BasicSettings } from './BasicSettings';
 import { ButtonRow } from './ButtonRow';
 import { CloudInfoBox } from './CloudInfoBox';
+import { DataSourceDefaultButton } from './DataSourceDefaultButton';
 import { DataSourceLoadError } from './DataSourceLoadError';
 import { DataSourceMissingRightsMessage } from './DataSourceMissingRightsMessage';
 import { DataSourcePluginConfigPage } from './DataSourcePluginConfigPage';
@@ -61,8 +63,6 @@ export function EditDataSource({ uid, pageId }: Props) {
   const onDelete = useDeleteLoadedDataSource();
   const onTest = useTestDataSource(uid);
   const onUpdate = useUpdateDatasource();
-  const onDefaultChange = (value: boolean) => dispatch(setIsDefault(value));
-  const onNameChange = (name: string) => dispatch(setDataSourceName(name));
   const onOptionsChange = (ds: DataSourceSettingsType) => dispatch(dataSourceLoaded(ds));
 
   return (
@@ -74,8 +74,6 @@ export function EditDataSource({ uid, pageId }: Props) {
       dataSourceRights={dataSourceRights}
       exploreUrl={exploreUrl}
       onDelete={onDelete}
-      onDefaultChange={onDefaultChange}
-      onNameChange={onNameChange}
       onOptionsChange={onOptionsChange}
       onTest={onTest}
       onUpdate={onUpdate}
@@ -91,8 +89,6 @@ export type ViewProps = {
   dataSourceRights: DataSourceRights;
   exploreUrl: string;
   onDelete: () => void;
-  onDefaultChange: (isDefault: boolean) => AnyAction;
-  onNameChange: (name: string) => AnyAction;
   onOptionsChange: (dataSource: DataSourceSettingsType) => AnyAction;
   onTest: () => void;
   onUpdate: (dataSource: DataSourceSettingsType) => Promise<DataSourceSettingsType>;
@@ -106,16 +102,55 @@ export function EditDataSourceView({
   dataSourceRights,
   exploreUrl,
   onDelete,
-  onDefaultChange,
-  onNameChange,
   onOptionsChange,
   onTest,
   onUpdate,
 }: ViewProps) {
+  const dispatch = useDispatch();
   const { plugin, loadError, testingStatus, loading } = dataSourceSettings;
   const { readOnly, hasWriteRights, hasDeleteRights } = dataSourceRights;
   const hasDataSource = dataSource.id > 0 && dataSource.uid;
   const { components, isLoading } = useDataSourceConfigPluginExtensions();
+
+  // Validation API passed to the config editor. validate() is called in onSubmit
+  // — if it returns false the save and health check are both skipped.
+  // Errors are stored in a ref so the validation object stays stable (same
+  // reference across renders). Inline error display in the plugin uses its own
+  // local useState — it does not depend on this store for re-renders.
+  const validators = useRef(new Set<() => Promise<boolean> | boolean>());
+  const validationErrorsRef = useRef<Record<string, string>>({});
+
+  const validationRef = useRef<DataSourceConfigValidationAPI | null>(null);
+  if (!validationRef.current) {
+    validationRef.current = {
+      registerValidation(validator) {
+        validators.current.add(validator);
+        return () => validators.current.delete(validator);
+      },
+      async validate() {
+        const results = await Promise.all(Array.from(validators.current).map((v) => Promise.resolve(v())));
+        return results.every(Boolean);
+      },
+      isValid() {
+        return Object.keys(validationErrorsRef.current).length === 0;
+      },
+      getErrors() {
+        return validationErrorsRef.current;
+      },
+      setError(field, message) {
+        validationErrorsRef.current = { ...validationErrorsRef.current, [field]: message };
+      },
+      clearError(field) {
+        if (field in validationErrorsRef.current) {
+          const next = { ...validationErrorsRef.current };
+          delete next[field];
+          validationErrorsRef.current = next;
+        }
+      },
+    };
+  }
+  const validation = validationRef.current;
+  const retryAdvisorCheck = useRetryDatasourceAdvisorCheck();
   // This is a workaround to avoid race-conditions between the `setSecureJsonData()` and `setJsonData()` calls instantiated by the extension components.
   // Both those exposed functions are calling `onOptionsChange()` with the new jsonData and secureJsonData, and if they are called in the same tick, the Redux store
   // (which provides the `datasource` object) won't be updated yet, and they override each others `jsonData` value.
@@ -134,21 +169,37 @@ export function EditDataSourceView({
 
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
 
-  const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    trackDsConfigClicked('save_and_test');
+  const onSubmit = useCallback(
+    async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      trackDsConfigClicked('save_and_test');
 
-    try {
-      await onUpdate({ ...dataSource });
-      trackDsConfigUpdated({ item: 'success' });
-      appEvents.publish(new DataSourceUpdatedSuccessfully());
-    } catch (error) {
-      trackDsConfigUpdated({ item: 'fail' });
-      return;
-    }
+      const valid = await validation.validate();
+      if (!valid) {
+        // Inline errors are already shown via validation.setError calls inside the
+        // registered validators. Also surface a summary in the standard testing-status
+        // slot so the user knows why save was blocked.
+        const errors = validation.getErrors();
+        const message = Object.values(errors).join(' · ') || 'Please fill in all required fields.';
+        dispatch(testDataSourceFailed({ message, status: 'error' }));
+        return;
+      }
 
-    onTest();
-  };
+      try {
+        await onUpdate({ ...dataSource });
+        trackDsConfigUpdated({ item: 'success' });
+        appEvents.publish(new DataSourceUpdatedSuccessfully());
+      } catch (error) {
+        trackDsConfigUpdated({ item: 'fail' });
+        return;
+      }
+      retryAdvisorCheck(dataSource.uid).catch((error) => {
+        console.warn('Error retrying datasource advisor check', error);
+      });
+      onTest();
+    },
+    [validation, onUpdate, dataSource, onTest, dispatch, retryAdvisorCheck]
+  );
 
   if (loading || isLoading) {
     return <PageLoader />;
@@ -158,6 +209,7 @@ export function EditDataSourceView({
     return (
       <DataSourceLoadError
         notFound={!hasDataSource || !dsi}
+        errorMsg={loadError}
         dataSourceRights={dataSourceRights}
         onDelete={() => {
           trackDsConfigClicked('delete');
@@ -183,14 +235,6 @@ export function EditDataSourceView({
 
       <CloudInfoBox dataSource={dataSource} />
 
-      <BasicSettings
-        dataSourceName={dataSource.name}
-        isDefault={dataSource.isDefault}
-        onDefaultChange={onDefaultChange}
-        onNameChange={onNameChange}
-        disabled={readOnly || !hasWriteRights}
-      />
-
       {plugin && (
         <DataSourcePluginContextProvider instanceSettings={dsi}>
           <DataSourcePluginSettings
@@ -198,6 +242,7 @@ export function EditDataSourceView({
             dataSource={dataSourceWithIsPDCInjected}
             dataSourceMeta={dataSourceMeta}
             onModelChange={onOptionsChange}
+            validation={validation}
           />
         </DataSourcePluginContextProvider>
       )}
@@ -247,7 +292,9 @@ export function EditDataSourceView({
         }}
         canDelete={!readOnly && hasDeleteRights}
         canSave={!readOnly && hasWriteRights}
-      />
+      >
+        <DataSourceDefaultButton uid={dataSource.uid} />
+      </ButtonRow>
     </form>
   );
 }

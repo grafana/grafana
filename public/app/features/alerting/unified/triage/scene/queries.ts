@@ -115,9 +115,23 @@ export function summaryRuleCountQuery(filter: string): SceneDataQuery {
   });
 }
 
-/** Instance timeseries for a specific alert rule */
-export function alertRuleInstancesQuery(ruleUID: string, filter: string): SceneDataQuery {
-  const selectors = buildMetricSelectors(filter, [{ name: 'grafana_rule_uid', operator: '=', value: ruleUID }]);
+/** Instance timeseries for a specific alert rule, optionally scoped to parent group labels. */
+export function alertRuleInstancesQuery(
+  ruleUID: string,
+  filter: string,
+  groupLabels: Record<string, string> = {}
+): SceneDataQuery {
+  const groupMatchers: MatcherExpr[] = Object.entries(groupLabels).map(([name, value]) => ({
+    name,
+    operator: '=' as const,
+    value,
+  }));
+
+  const selectors = buildMetricSelectors(filter, [
+    { name: 'grafana_rule_uid', operator: '=', value: ruleUID },
+    ...groupMatchers,
+  ]);
+
   return getDataQuery(
     `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${orSelectors(selectors)})`,
     { format: 'timeseries', legendFormat: '{{alertstate}}' }

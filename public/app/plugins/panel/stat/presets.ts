@@ -1,6 +1,7 @@
 import {
   FieldColorModeId,
   type FieldConfigSource,
+  FieldType,
   type VisualizationPresetsSupplier,
   type VisualizationSuggestion,
   VizOrientation,
@@ -16,14 +17,13 @@ import {
 } from '@grafana/schema';
 
 import { defaultOptions, type Options } from './panelcfg.gen';
-
-const MAX_PREVIEW_SERIES = 6;
+import { MAX_STAT_PREVIEW_SERIES, STAT_CARD_OPTIONS } from './suggestions';
 
 const PRESET_CARD_OPTIONS: VisualizationSuggestion<Options, GraphFieldConfig>['cardOptions'] = {
-  maxSeries: MAX_PREVIEW_SERIES,
+  ...STAT_CARD_OPTIONS,
   previewModifier: (s) => {
     if (s.options?.reduceOptions?.values) {
-      s.options.reduceOptions.limit = MAX_PREVIEW_SERIES;
+      s.options.reduceOptions.limit = MAX_STAT_PREVIEW_SERIES;
     }
   },
 };
@@ -207,7 +207,11 @@ const horizontalThresholdValueSparklinePreset = () =>
 const FEW_SERIES_THRESHOLD = 5;
 
 export const statPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = ({ dataSummary }) => {
-  const frameCount = dataSummary?.frameCount ?? 0;
+  if (!dataSummary?.hasData || !dataSummary.hasFieldType(FieldType.number)) {
+    return [];
+  }
+
+  const frameCount = dataSummary.frameCount;
   const hasSingleSeries = frameCount === 1;
   const hasFewSeries = frameCount > 1 && frameCount < FEW_SERIES_THRESHOLD;
   const hasMultiSeries = frameCount >= FEW_SERIES_THRESHOLD;

@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -10,12 +11,15 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// ValidateJob performs validation on the Job specification and returns an error if validation fails
-func ValidateJob(job *provisioning.Job) error {
+// ValidateJob performs validation on the Job specification and returns an error if validation fails.
+// supportedResources is the configured set of resource types provisioning can manage; export-style
+// job options (push and migrate) are validated against it.
+func ValidateJob(job *provisioning.Job, supportedResources []provisioning.SupportedResource) error {
 	list := field.ErrorList{}
 
 	// Validate action is specified
@@ -41,7 +45,7 @@ func ValidateJob(job *provisioning.Job) error {
 		if job.Spec.Push == nil {
 			list = append(list, field.Required(field.NewPath("spec", "push"), "push options required for push action"))
 		} else {
-			list = append(list, validateExportJobOptions(job.Spec.Push)...)
+			list = append(list, validateExportJobOptions(job.Spec.Push, supportedResources)...)
 		}
 
 	case provisioning.JobActionPullRequest:
@@ -53,8 +57,9 @@ func ValidateJob(job *provisioning.Job) error {
 	case provisioning.JobActionMigrate:
 		if job.Spec.Migrate == nil {
 			list = append(list, field.Required(field.NewPath("spec", "migrate"), "migrate options required for migrate action"))
+		} else {
+			list = append(list, validateMigrateJobOptions(job.Spec.Migrate, supportedResources)...)
 		}
-		// Migrate options are simple - no further validation needed
 
 	case provisioning.JobActionDelete:
 		if job.Spec.Delete == nil {
@@ -96,7 +101,7 @@ func toError(name string, list field.ErrorList) error {
 }
 
 // validateExportJobOptions validates export (push) job options
-func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorList {
+func validateExportJobOptions(opts *provisioning.ExportJobOptions, supportedResources []provisioning.SupportedResource) field.ErrorList {
 	list := field.ErrorList{}
 
 	// Validate branch name if specified
@@ -113,7 +118,90 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorLi
 		}
 	}
 
+	// Empty Resources is valid: the worker falls back to exporting every
+	// unmanaged resource (legacy behavior).
+	list = append(list, validateExportResourceRefs(field.NewPath("spec", "push", "resources"), opts.Resources, supportedResources)...)
+
 	return list
+}
+
+// validateMigrateJobOptions validates migrate job options
+func validateMigrateJobOptions(opts *provisioning.MigrateJobOptions, supportedResources []provisioning.SupportedResource) field.ErrorList {
+	list := field.ErrorList{} //nolint:prealloc
+
+	// Empty Resources is valid: the worker falls back to migrating every
+	// unmanaged resource (legacy behavior).
+	list = append(list, validateExportResourceRefs(field.NewPath("spec", "migrate", "resources"), opts.Resources, supportedResources)...)
+
+	return list
+}
+
+// validateExportResourceRefs enforces the rules shared by export-style resource
+// lists (push and migrate): name + kind are required, and each kind/group must
+// match an active entry in the configured supported-resource set.
+func validateExportResourceRefs(base *field.Path, refs []provisioning.ResourceRef, supportedResources []provisioning.SupportedResource) field.ErrorList {
+	list := field.ErrorList{}
+	supported := activeExportResources(supportedResources)
+	for i, r := range refs {
+		path := base.Index(i)
+		if r.Name == "" {
+			list = append(list, field.Required(path.Child("name"), "resource name is required"))
+		}
+		if r.Kind == "" {
+			list = append(list, field.Required(path.Child("kind"), "resource kind is required"))
+			continue
+		}
+
+		// A non-empty group must match the group registered for that kind.
+		var kindOK, groupOK bool
+		for _, s := range supported {
+			if s.Kind != r.Kind {
+				continue
+			}
+			kindOK = true
+			if r.Group == "" || r.Group == s.Group {
+				groupOK = true
+				break
+			}
+		}
+		switch {
+		case !kindOK:
+			list = append(list, field.Invalid(path.Child("kind"), r.Kind,
+				fmt.Sprintf("kind is not supported for export; supported kinds: %s", strings.Join(supportedKinds(supported), ", "))))
+		case !groupOK:
+			list = append(list, field.Invalid(path.Child("group"), r.Group,
+				fmt.Sprintf("group %q is not supported for kind %s", r.Group, r.Kind)))
+		}
+	}
+	return list
+}
+
+// activeExportResources returns the active subset of the configured supported
+// resources. When none are configured it falls back to the dashboard-only
+// default, preserving the legacy export behavior.
+func activeExportResources(supportedResources []provisioning.SupportedResource) []provisioning.SupportedResource {
+	active := make([]provisioning.SupportedResource, 0, len(supportedResources))
+	for _, r := range supportedResources {
+		if !r.Disabled {
+			active = append(active, r)
+		}
+	}
+	if len(active) == 0 {
+		return []provisioning.SupportedResource{{
+			Group: resources.DashboardResource.Group,
+			Kind:  resources.DashboardKind.Kind,
+		}}
+	}
+	return active
+}
+
+// supportedKinds returns the kinds in supported, for use in error messages.
+func supportedKinds(supported []provisioning.SupportedResource) []string {
+	kinds := make([]string, 0, len(supported))
+	for _, r := range supported {
+		kinds = append(kinds, r.Kind)
+	}
+	return kinds
 }
 
 // validateDeleteJobOptions validates delete job options
@@ -186,11 +274,16 @@ func validateMoveJobOptions(opts *provisioning.MoveJobOptions) field.ErrorList {
 }
 
 // AdmissionValidator handles validation for Job resources during admission
-type AdmissionValidator struct{}
+type AdmissionValidator struct {
+	// supportedResources is the configured set of resource types provisioning can manage,
+	// used to validate export-style (push and migrate) job options.
+	supportedResources []provisioning.SupportedResource
+}
 
-// NewAdmissionValidator creates a new job admission validator
-func NewAdmissionValidator() *AdmissionValidator {
-	return &AdmissionValidator{}
+// NewAdmissionValidator creates a new job admission validator. supportedResources is the
+// configured set of resource types provisioning can manage.
+func NewAdmissionValidator(supportedResources []provisioning.SupportedResource) *AdmissionValidator {
+	return &AdmissionValidator{supportedResources: supportedResources}
 }
 
 // Validate validates Job resources during admission
@@ -211,7 +304,7 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return fmt.Errorf("expected job, got %T", obj)
 	}
 
-	return ValidateJob(job)
+	return ValidateJob(job, v.supportedResources)
 }
 
 // HistoricJobAdmissionValidator handles validation for HistoricJob resources during admission.

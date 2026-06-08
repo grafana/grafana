@@ -1,8 +1,9 @@
-import { GENERAL_FOLDER_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
+import { TEAM_FOLDERS_UID, isRootFolderUID } from 'app/features/search/constants';
 import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 import { createAsyncThunk } from 'app/types/store';
 
-import { listDashboards, listFolders, listTeamFolders, PAGE_SIZE } from '../api/services';
+import { PAGE_SIZE } from '../api/constants';
+import { listDashboards, listFolders, listTeamFolders } from '../api/services';
 import { type DashboardViewItemWithUIItems, type UIDashboardViewItem } from '../types';
 import { addTeamFolderPrefix, removeTeamFolderPrefix } from '../utils/dashboards';
 
@@ -63,6 +64,13 @@ export const refreshParents = createAsyncThunk(
   }
 );
 
+/**
+ * Refetches children of a folder after changes that should be reflected in the redux state which is then rendered
+ * in the dashboard browse page.
+ *
+ * For this to work properly the requests have to be uncached themselves here so make sure any RTK query used here
+ * does not use builtin cache.
+ */
 export const refetchChildren = createAsyncThunk(
   'browseDashboards/refetchChildren',
   async ({ parentUID, pageSize }: RefetchChildrenArgs): Promise<RefetchChildrenResult> => {
@@ -72,7 +80,7 @@ export const refetchChildren = createAsyncThunk(
     }
 
     const strippedUID = parentUID ? removeTeamFolderPrefix(parentUID) : parentUID;
-    const uid = strippedUID === GENERAL_FOLDER_UID ? undefined : strippedUID;
+    const uid = isRootFolderUID(strippedUID) ? undefined : strippedUID;
 
     // At the moment this will just clear out all loaded children and refetch the first page.
     // If user has scrolled beyond the first page, then InfiniteLoader will probably trigger
@@ -133,10 +141,10 @@ export const fetchNextChildrenPage = createAsyncThunk(
     const loadDashboards = !excludeKinds.includes('dashboard');
 
     const strippedUID = parentUID ? removeTeamFolderPrefix(parentUID) : parentUID;
-    const uid = strippedUID === GENERAL_FOLDER_UID ? undefined : strippedUID;
+    const uid = isRootFolderUID(strippedUID) ? undefined : strippedUID;
 
     const state = thunkAPI.getState().browseDashboards;
-    const collectionKey = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
+    const collectionKey = isRootFolderUID(parentUID) ? undefined : parentUID;
     const collection = collectionKey ? state.childrenByParentUID[collectionKey] : state.rootItems;
 
     let page = 1;

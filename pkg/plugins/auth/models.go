@@ -24,3 +24,8 @@ type ExternalServiceRegistry interface {
 	RegisterExternalService(ctx context.Context, pluginID string, pType string, svc *IAM) (*ExternalService, error)
 	RemoveExternalService(ctx context.Context, pluginID string) error
 }
+
+// RBACCleanered to clean up RBAC data associated with plugins when they are uninstalled.
+type RBACCleaner interface {
+	CleanupPluginRBAC(ctx context.Context, pluginIDs ...string) error
+}

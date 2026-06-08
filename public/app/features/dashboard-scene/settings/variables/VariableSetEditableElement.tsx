@@ -5,7 +5,8 @@ import { useCallback, useId, useMemo } from 'react';
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { type SceneObject, type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import { type SceneObject, type SceneVariable, type SceneVariableSet, sceneUtils } from '@grafana/scenes';
 import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -22,7 +23,7 @@ import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
-import { openAddVariablePane } from './VariableAddEditableElement';
+import { openAddVariablePane } from './VariableTypeSelectionPane';
 import { isEditableVariableType } from './utils';
 
 function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
@@ -56,11 +57,15 @@ export class VariableSetEditableElement implements EditableDashboardElement {
   }
 
   public getOutlineChildren() {
-    const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(
-      filterSectionRepeatLocalVariables(this.set.state.variables, this.set)
-        // filter out system and snapshot variables
-        .filter((variable) => isEditableVariableType(variable.state.type))
+    let variables = filterSectionRepeatLocalVariables(this.set.state.variables, this.set).filter((variable) =>
+      isEditableVariableType(variable.state.type)
     );
+
+    if (config.featureToggles.dashboardUnifiedDrilldownControls) {
+      variables = variables.filter((variable) => !sceneUtils.isAdHocVariable(variable));
+    }
+
+    const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(variables);
     return [...visible, ...controlsMenu, ...hidden];
   }
 
@@ -91,28 +96,26 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
   const onEditVariable = useCallback(
     (variable: SceneVariable) => {
       const { editPane } = getDashboardSceneFor(set).state;
-      editPane.selectObject(variable, variable.state.key!);
+      editPane.selectObject(variable);
     },
     [set]
   );
 
-  const { editableVariables, nonEditableVariables } = useMemo(() => {
-    const editableVariables: SceneVariable[] = [];
-    const nonEditableVariables: SceneVariable[] = [];
-    filterSectionRepeatLocalVariables(variables, set).forEach((variable) => {
-      if (isEditableVariableType(variable.state.type)) {
-        editableVariables.push(variable);
-      } else {
-        nonEditableVariables.push(variable);
+  const editableVariables = useMemo(() => {
+    return filterSectionRepeatLocalVariables(variables, set).filter((variable) => {
+      if (!isEditableVariableType(variable.state.type)) {
+        return false;
       }
+      if (config.featureToggles.dashboardUnifiedDrilldownControls && sceneUtils.isAdHocVariable(variable)) {
+        return false;
+      }
+      return true;
     });
-    return {
-      editableVariables,
-      nonEditableVariables,
-    };
   }, [variables, set]);
 
   const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(editableVariables);
+
+  const editableSet = useMemo(() => new Set(editableVariables), [editableVariables]);
 
   const createDragEndHandler = useCallback(
     (sourceList: SceneVariable[], mergeLists: (updatedList: SceneVariable[]) => SceneVariable[]) => {
@@ -136,9 +139,11 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
             const [movedVariable] = updatedList.splice(result.source.index, 1);
             updatedList.splice(result.destination.index, 0, movedVariable);
 
-            set.setState({
-              variables: [...nonEditableVariables, ...mergeLists(updatedList)],
-            });
+            const reordered = mergeLists(updatedList);
+            let reorderedIdx = 0;
+            const merged = currentList.map((v) => (editableSet.has(v) ? reordered[reorderedIdx++] : v));
+
+            set.setState({ variables: merged });
           },
           undo: () => {
             set.setState({ variables: currentList });
@@ -146,7 +151,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
         });
       };
     },
-    [nonEditableVariables, set]
+    [editableSet, set]
   );
 
   const onVisibleDragEnd = useMemo(

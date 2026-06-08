@@ -187,7 +187,11 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
         <tr className={styles.dragRow} ref={provided.innerRef} {...provided.draggableProps}>
           <td>
             <div className={styles.dragHandle} {...provided.dragHandleProps}>
-              <Icon name="draggabledots" size="lg" />
+              <Icon
+                name="draggabledots"
+                size="lg"
+                title={t('dimensions.value-mapping-edit-row.drag-handle-label', 'Reorder value mapping row')}
+              />
             </div>
           </td>
           <td className={styles.typeColumn}>{mapping.type}</td>

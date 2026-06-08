@@ -94,6 +94,25 @@ func MakeParseError(refID string, err error) error {
 	return ParseError.Build(data)
 }
 
+var missingDependentNodeErrString = "did not execute [{{ .Public.refId }}]: could not find dependent node [{{ .Public.depRefId }}]"
+
+var MissingDependentNodeError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.missingDependentNode").MustTemplate(
+	missingDependentNodeErrString,
+	errutil.WithPublic(missingDependentNodeErrString))
+
+func MakeMissingDependentNodeError(refID, depRefID string) error {
+	data := errutil.TemplateData{
+		Public: map[string]any{
+			"refId":    refID,
+			"depRefId": depRefID,
+		},
+		Error: fmt.Errorf("did not execute %v: could not find dependent node %v", refID, depRefID),
+	}
+
+	return MissingDependentNodeError.Build(data)
+}
+
 var unexpectedNodeTypeErrString = "expected executable node type but got node type [{{ .Public.nodeType }} for refid [{{ .Public.refId}}]"
 
 var UnexpectedNodeTypeError = errutil.NewBase(

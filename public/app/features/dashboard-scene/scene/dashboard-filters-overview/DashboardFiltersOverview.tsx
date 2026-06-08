@@ -9,6 +9,7 @@ import { type AdHocFiltersVariable, type GroupByVariable } from '@grafana/scenes
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { FilterRow, GroupHeader } from './FiltersOverviewRow';
+import { reportFiltersOverviewInteraction } from './interactions';
 import { useFiltersOverviewState } from './useFiltersOverviewState';
 import { MULTI_OPERATOR_VALUES } from './utils';
 
@@ -33,11 +34,12 @@ export const DashboardFiltersOverview = ({
   const styles = useStyles2(getStyles);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { state, listItems, operatorConfig, actions, loading, hasKeys, hasAdhocFilters } = useFiltersOverviewState({
-    adhocFilters,
-    groupByVariable,
-    searchQuery,
-  });
+  const { state, listItems, operatorConfig, actions, loading, hasKeys, hasAdhocFilters, hasGroupBy } =
+    useFiltersOverviewState({
+      adhocFilters,
+      groupByVariable,
+      searchQuery,
+    });
 
   const virtualizer = useVirtualizer({
     count: listItems.length,
@@ -128,7 +130,7 @@ export const DashboardFiltersOverview = ({
                     (state.isOriginByKey[keyValue] ?? false) &&
                     (state.singleValuesByKey[keyValue] ?? '') !== (state.defaultValuesByKey[keyValue] ?? '')
                   }
-                  hasGroupByVariable={Boolean(groupByVariable)}
+                  hasGroupByVariable={hasGroupBy}
                   operatorOptions={operatorConfig.options}
                   onOperatorChange={actions.setOperator}
                   onSingleValueChange={actions.setSingleValue}
@@ -144,12 +146,19 @@ export const DashboardFiltersOverview = ({
       </div>
 
       <Footer
-        onApply={actions.applyChanges}
+        onApply={() => {
+          const counts = actions.applyChanges();
+          reportFiltersOverviewInteraction('applied', { action: 'apply', ...counts });
+        }}
         onApplyAndClose={() => {
-          actions.applyChanges();
+          const counts = actions.applyChanges();
+          reportFiltersOverviewInteraction('applied', { action: 'apply_and_close', ...counts });
           onClose();
         }}
-        onClose={onClose}
+        onClose={() => {
+          reportFiltersOverviewInteraction('closed');
+          onClose();
+        }}
       />
     </div>
   );

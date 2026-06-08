@@ -4,8 +4,8 @@ import { type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 
 import { type GrafanaTheme2, type PanelData, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { Tooltip, useStyles2 } from '@grafana/ui';
-import { LTTB_THRESHOLD, lttbPreviewData } from 'app/plugins/panel/timeseries/utils';
 
 import { PanelRenderer } from '../PanelRenderer';
 
@@ -45,14 +45,9 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
       suggestion.cardOptions.previewModifier(preview);
     }
 
-    const maxSeries = cardOptions.maxSeries;
+    const maxSeries = Math.min(cardOptions.maxSeries ?? Infinity, config.panelSeriesLimit || Infinity);
     const maxRows = cardOptions.maxRows;
-    let previewData = maxSeries ? { ...data, series: data.series.slice(0, maxSeries) } : data;
-
-    const lttbTarget = maxRows ?? LTTB_THRESHOLD;
-    if (previewData.series.some((frame) => frame.length > lttbTarget)) {
-      previewData = lttbPreviewData(previewData, lttbTarget);
-    }
+    let previewData = Number.isFinite(maxSeries) ? { ...data, series: data.series.slice(0, maxSeries) } : data;
 
     if (maxRows && previewData.series.some((frame) => frame.length > maxRows)) {
       previewData = {

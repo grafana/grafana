@@ -1,6 +1,7 @@
 import {
   FieldColorModeId,
   type FieldConfigSource,
+  FieldType,
   ThresholdsMode,
   type VisualizationPresetsSupplier,
   type VisualizationSuggestion,
@@ -15,10 +16,10 @@ import {
   StackingMode,
   VisibilityMode,
 } from '@grafana/schema';
-import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
 import { defaultGraphConfig } from './config';
 import { type Options } from './panelcfg.gen';
+import { TIMESERIES_CARD_OPTIONS } from './suggestions';
 
 /**
  * Default values
@@ -35,11 +36,7 @@ const PRESET_STYLE_DEFAULTS: Partial<GraphFieldConfig> = {
 };
 
 const previewModifier = (s: VisualizationSuggestion<Options, GraphFieldConfig>) => {
-  s.options!.disableKeyboardEvents = true;
-  s.options!.legend = SUGGESTIONS_LEGEND_OPTIONS;
-  if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
-    s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
-  }
+  TIMESERIES_CARD_OPTIONS?.previewModifier?.(s);
   s.fieldConfig!.defaults.custom!.axisPlacement = AxisPlacement.Hidden;
 };
 
@@ -57,7 +54,7 @@ function makePreset(
       },
       overrides: fieldConfig.overrides,
     },
-    cardOptions: { previewModifier, maxRows },
+    cardOptions: { ...TIMESERIES_CARD_OPTIONS, previewModifier, maxRows },
   };
 }
 
@@ -248,6 +245,14 @@ const FEW_POINTS_THRESHOLD = 80;
 const MAX_PREVIEW_BAR_ROWS = 30;
 
 export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = ({ dataSummary }) => {
+  if (
+    !dataSummary?.hasData ||
+    !dataSummary.hasFieldType(FieldType.time) ||
+    !dataSummary.hasFieldType(FieldType.number)
+  ) {
+    return [];
+  }
+
   const isSingleSeries = (dataSummary?.frameCount ?? 0) === 1;
   const isMultiSeries = (dataSummary?.frameCount ?? 0) > 1;
   const hasFewPoints = (dataSummary?.rowCountMax ?? 0) < FEW_POINTS_THRESHOLD;

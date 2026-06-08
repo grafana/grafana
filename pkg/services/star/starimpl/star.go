@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/star"
 )
 
@@ -17,13 +16,6 @@ type Service struct {
 
 func ProvideService(db db.DB) star.Service {
 	starLogger := log.New("stars")
-	// fill out dashboard_uid, org_id and updated columns for stars
-	// need to run this at startup in case any downgrade happened after
-	// the initial migration
-	err := migrations.RunStarMigrations(db.GetEngine().NewSession(), db.GetDialect().DriverName())
-	if err != nil {
-		starLogger.Error("Failed to run star migrations", "err", err)
-	}
 	return &Service{
 		store: &sqlStore{
 			db: db,
@@ -49,10 +41,6 @@ func (s *Service) Delete(ctx context.Context, cmd *star.UnstarDashboardCommand) 
 		return err
 	}
 	return s.store.Delete(ctx, cmd)
-}
-
-func (s *Service) IsStarredByUser(ctx context.Context, query *star.IsStarredByUserQuery) (bool, error) {
-	return s.store.Get(ctx, query)
 }
 
 func (s *Service) GetByUser(ctx context.Context, cmd *star.GetUserStarsQuery) (*star.GetUserStarsResult, error) {

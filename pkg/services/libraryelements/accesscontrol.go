@@ -73,24 +73,24 @@ func LibraryPanelUIDScopeResolver(l *LibraryElementService, folderSvc folder.Ser
 		if tree != nil {
 			inheritedScopes = getInheritedScopesFromTree(libElDTO.FolderUID, tree)
 		} else {
-			inheritedScopes, err = dashboards.GetInheritedScopes(ctx, orgID, libElDTO.FolderUID, folderSvc)
+			inheritedScopes, err = folder.GetInheritedScopes(ctx, orgID, libElDTO.FolderUID, folderSvc)
 			if err != nil {
 				return nil, err
 			}
 		}
-		return append(inheritedScopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(libElDTO.FolderUID), ScopeLibraryPanelsProvider.GetResourceScopeUID(uid)), nil
+		return append(inheritedScopes, folder.ScopeFoldersProvider.GetResourceScopeUID(libElDTO.FolderUID), ScopeLibraryPanelsProvider.GetResourceScopeUID(uid)), nil
 	})
 }
 
 // getInheritedScopesFromTree returns ancestor scopes using a pre-built folder tree.
 func getInheritedScopesFromTree(folderUID string, tree *folder.FolderTree) []string {
-	if folderUID == ac.GeneralFolderUID || folderUID == "" {
+	if folder.IsRootFolderUID(folderUID) {
 		return nil
 	}
 
 	result := make([]string, 0)
 	for ancestor := range tree.Ancestors(folderUID) {
-		result = append(result, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ancestor.UID))
+		result = append(result, folder.ScopeFoldersProvider.GetResourceScopeUID(ancestor.UID))
 	}
 	return result
 }

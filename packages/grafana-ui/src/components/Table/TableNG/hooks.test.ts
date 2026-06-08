@@ -6,6 +6,7 @@ import { TableCellDisplayMode } from '@grafana/schema';
 import { TABLE } from './constants';
 import {
   useFilteredRows,
+  useNestedColWidths,
   usePaginatedRows,
   useSortedRows,
   useHeaderHeight,
@@ -15,7 +16,9 @@ import {
   useNestedRows,
 } from './hooks';
 import { type TableRow } from './types';
-import { createTypographyContext, compileFrameToRecords } from './utils';
+import { applyFilter, createTypographyContext, compileFrameToRecords } from './utils';
+
+const emptyFilterResult = applyFilter([], {}, []);
 
 describe('TableNG hooks', () => {
   function setupData() {
@@ -412,17 +415,23 @@ describe('TableNG hooks', () => {
 
       const frameToRecords = compileFrameToRecords(frame, 'nested');
 
+      // parentIndex must be set on the filter entry — this is how the UI always scopes filters
+      // for nested tables. Without it the filter is silently skipped (regression test).
       const { result } = renderHook(() =>
         useNestedRows(
           frameToRecords(frame),
           frame.fields[1].values[0],
           true,
           'nested',
-          { name: { filteredSet: new Set(['Alice', 'Bob']), displayName: 'name' } },
+          { 'name-0': { filteredSet: new Set(['Alice', 'Bob']), displayName: 'name', parentIndex: 0 } },
           [{ columnKey: 'age', direction: 'ASC' }]
         )
       );
-      expect(result.current).toMatchSnapshot();
+
+      // filtering reduced raw (3 rows) to final (2 rows: Alice + Bob), sorted by age ASC
+      expect(result.current[0].raw).toHaveLength(3);
+      expect(result.current[0].final).toHaveLength(2);
+      expect(result.current[0].final.map((r) => r['name'])).toEqual(['Bob', 'Alice']);
     });
   });
 
@@ -615,7 +624,7 @@ describe('TableNG hooks', () => {
               defaultNestedHeight: 40,
               typographyCtx: typographyCtx,
               hasNestedFrames: true,
-              nestedRows: [{ raw: nestedRows, final: nestedRows }],
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
               nestedFields: fields,
               nestedColWidths: [100, 100, 100],
               visibleNestedRowCounts: [null],
@@ -647,7 +656,7 @@ describe('TableNG hooks', () => {
               defaultNestedHeight: 40,
               typographyCtx: typographyCtx,
               hasNestedFrames: true,
-              nestedRows: [{ raw: nestedRows, final: nestedRows }],
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
               nestedFields: fields,
               nestedColWidths: [100, 100, 100],
               visibleNestedRowCounts: [0],
@@ -662,6 +671,76 @@ describe('TableNG hooks', () => {
             });
           }).result.current
         ).toBe(TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2);
+      });
+
+      it('includes nestedFooterHeight in expanded row height', () => {
+        const { fields } = setupData();
+        const frame = createDataFrame({ fields });
+        const frameToRecords = compileFrameToRecords(frame, 'nested');
+        const nestedRows = frameToRecords(frame);
+        const defaultHeight = 40;
+        const nestedFooterHeight = 34; // equivalent to 1 reducer: LINE_HEIGHT + CELL_PADDING * 2
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              nestedData: [frame],
+              fields: [
+                { name: 'id', type: FieldType.string, values: ['1'], config: {} },
+                { name: 'nested', type: FieldType.nestedFrames, values: [frame], config: {} },
+              ],
+              columnWidths: [100],
+              defaultHeight,
+              defaultNestedHeight: defaultHeight,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
+              nestedFields: fields,
+              nestedColWidths: [100, 100, 100],
+              visibleNestedRowCounts: [3],
+              nestedFooterHeight,
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({ __index: 0, __depth: 1, data: frame });
+          }).result.current
+          // 3 nested rows + header + footer + padding + scrollbar
+        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE + nestedFooterHeight);
+      });
+
+      it('includes nestedFooterHeight in the no-data expanded row height', () => {
+        const { fields } = setupData();
+        const frame = createDataFrame({ fields });
+        const frameToRecords = compileFrameToRecords(frame, 'nested');
+        const nestedRows = frameToRecords(frame);
+        const nestedFooterHeight = 34;
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              nestedData: [frame],
+              fields: [
+                { name: 'id', type: FieldType.string, values: ['1'], config: {} },
+                { name: 'nested', type: FieldType.nestedFrames, values: [frame], config: {} },
+              ],
+              columnWidths: [100],
+              defaultHeight: 40,
+              defaultNestedHeight: 40,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
+              nestedFields: fields,
+              nestedColWidths: [100, 100, 100],
+              visibleNestedRowCounts: [0],
+              nestedFooterHeight,
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({ __depth: 1, data: undefined, __index: 0 });
+          }).result.current
+        ).toBe(TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2 + nestedFooterHeight);
       });
 
       it('calculates the height to return using default height', () => {
@@ -684,7 +763,7 @@ describe('TableNG hooks', () => {
               defaultNestedHeight: defaultHeight,
               typographyCtx: typographyCtx,
               hasNestedFrames: true,
-              nestedRows: [{ raw: nestedRows, final: nestedRows }],
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
               nestedFields: fields,
               nestedColWidths: [100, 100, 100],
               visibleNestedRowCounts: [3],
@@ -698,7 +777,7 @@ describe('TableNG hooks', () => {
               data: frame,
             });
           }).result.current
-        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + 16); // 3 rows + header + padding + scrollbar
+        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE); // 3 rows + header + padding + scrollbar
       });
 
       it('uses defaultNestedHeight (not defaultHeight) for the nested sub-table header', () => {
@@ -721,7 +800,7 @@ describe('TableNG hooks', () => {
               defaultNestedHeight,
               typographyCtx: typographyCtx,
               hasNestedFrames: true,
-              nestedRows: [{ raw: nestedRows, final: nestedRows }],
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
               nestedFields: fields,
               nestedColWidths: [100, 100, 100],
               visibleNestedRowCounts: [3],
@@ -736,7 +815,7 @@ describe('TableNG hooks', () => {
             });
           }).result.current
           // 3 nested rows + nested header (uses defaultNestedHeight, not parent defaultHeight) + padding + scrollbar
-        ).toBe(defaultNestedHeight * 4 + TABLE.CELL_PADDING * 2 + 16);
+        ).toBe(defaultNestedHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE);
       });
 
       it('uses a string-based default height for the nested rows', () => {
@@ -758,7 +837,7 @@ describe('TableNG hooks', () => {
               defaultNestedHeight: 'min-content',
               typographyCtx: typographyCtx,
               hasNestedFrames: true,
-              nestedRows: [{ raw: nestedRows, final: nestedRows }],
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
               nestedFields: fields,
               nestedColWidths: [100, 100, 100],
               visibleNestedRowCounts: [3],
@@ -789,6 +868,7 @@ describe('TableNG hooks', () => {
                 {
                   raw: nestedRecords,
                   final: nestedRecords,
+                  filterResult: emptyFilterResult,
                 },
               ],
               nestedFields: fields,
@@ -940,7 +1020,7 @@ describe('TableNG hooks', () => {
             typographyCtx: { ...typographyCtx, measureHeight: measureHeightFn, estimateHeight: estimateHeightFn },
             hasNestedFrames: true,
             visibleNestedRowCounts: [3],
-            nestedRows: [{ raw: nestedRows, final: nestedRows }],
+            nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
             nestedFields: fieldsWithWrappedText,
             nestedColWidths: [100, 100, 100],
           });
@@ -1001,7 +1081,7 @@ describe('TableNG hooks', () => {
             typographyCtx: { ...typographyCtx, measureHeight: measureHeightFn, estimateHeight: estimateHeightFn },
             hasNestedFrames: true,
             visibleNestedRowCounts: [3],
-            nestedRows: [{ raw: nestedRows, final: nestedRows }],
+            nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
             nestedFields: nestedFieldsWithTime,
             nestedColWidths: [200],
           });
@@ -1161,6 +1241,131 @@ describe('TableNG hooks', () => {
         [reducerId, '3'],
         [ReducerID.first, '30 years'],
       ]);
+    });
+  });
+
+  describe('useNestedColWidths', () => {
+    function makeFields(names: string[], width = 100): Field[] {
+      return names.map((name) => ({
+        name,
+        type: FieldType.string,
+        config: { custom: { width } },
+        values: [],
+      }));
+    }
+
+    it('initializes nestedFieldWidths and nestedColWidths from schema', () => {
+      const fields = makeFields(['a', 'b']);
+      const { result } = renderHook(() => useNestedColWidths({ nestedVisibleFields: fields, availableWidth: 300 }));
+
+      expect(result.current.nestedFieldWidths).toEqual([100, 100]);
+      expect(result.current.nestedColWidths.get('a')).toEqual({ type: 'resized', width: 100 });
+      expect(result.current.nestedColWidths.get('b')).toEqual({ type: 'resized', width: 100 });
+    });
+
+    it('handleNestedColumnWidthsChange updates nestedFieldWidths and nestedColWidths', () => {
+      const fields = makeFields(['a', 'b']);
+      const { result } = renderHook(() => useNestedColWidths({ nestedVisibleFields: fields, availableWidth: 300 }));
+
+      act(() => {
+        result.current.handleNestedColumnWidthsChange(
+          new Map([
+            ['a', { type: 'resized', width: 200 }],
+            ['b', { type: 'resized', width: 150 }],
+          ])
+        );
+      });
+
+      expect(result.current.nestedFieldWidths).toEqual([200, 150]);
+      expect(result.current.nestedColWidths.get('a')).toEqual({ type: 'resized', width: 200 });
+      expect(result.current.nestedColWidths.get('b')).toEqual({ type: 'resized', width: 150 });
+    });
+
+    it('handleNestedColumnWidthsChange preserves existing width for missing columns', () => {
+      const fields = makeFields(['a', 'b']);
+      const { result } = renderHook(() => useNestedColWidths({ nestedVisibleFields: fields, availableWidth: 300 }));
+
+      act(() => {
+        // only update 'a', leave 'b' absent from the map
+        result.current.handleNestedColumnWidthsChange(new Map([['a', { type: 'resized', width: 250 }]]));
+      });
+
+      expect(result.current.nestedFieldWidths).toEqual([250, 100]);
+    });
+
+    it('resets to schema widths when field schema changes', () => {
+      const fields = makeFields(['a', 'b']);
+      const { result, rerender } = renderHook(
+        ({ nestedVisibleFields, structureRev }: { nestedVisibleFields: Field[]; structureRev: number }) =>
+          useNestedColWidths({ nestedVisibleFields, availableWidth: 300, structureRev }),
+        { initialProps: { nestedVisibleFields: fields, structureRev: 1 } }
+      );
+
+      // simulate a user drag
+      act(() => {
+        result.current.handleNestedColumnWidthsChange(
+          new Map([
+            ['a', { type: 'resized', width: 200 }],
+            ['b', { type: 'resized', width: 200 }],
+          ])
+        );
+      });
+      expect(result.current.nestedFieldWidths).toEqual([200, 200]);
+
+      // now the field schema changes (different configured width) — structureRev bumped to signal the change
+      const newFields = makeFields(['a', 'b'], 120);
+      rerender({ nestedVisibleFields: newFields, structureRev: 2 });
+
+      expect(result.current.nestedFieldWidths).toEqual([120, 120]);
+    });
+
+    it('resets when a new field is added', () => {
+      const fields = makeFields(['a', 'b']);
+      const { result, rerender } = renderHook(
+        ({ nestedVisibleFields, structureRev }: { nestedVisibleFields: Field[]; structureRev: number }) =>
+          useNestedColWidths({ nestedVisibleFields, availableWidth: 300, structureRev }),
+        { initialProps: { nestedVisibleFields: fields, structureRev: 1 } }
+      );
+
+      // simulate a user drag on the original columns
+      act(() => {
+        result.current.handleNestedColumnWidthsChange(
+          new Map([
+            ['a', { type: 'resized', width: 200 }],
+            ['b', { type: 'resized', width: 200 }],
+          ])
+        );
+      });
+
+      const fieldsWithExtra = makeFields(['a', 'b', 'c']);
+      rerender({ nestedVisibleFields: fieldsWithExtra, structureRev: 2 });
+
+      expect(result.current.nestedFieldWidths).toHaveLength(3);
+      expect(result.current.nestedFieldWidths).toEqual([100, 100, 100]);
+    });
+
+    it('does not reset on re-render if schema is unchanged (stable between drags)', () => {
+      const fields = makeFields(['a', 'b']);
+      const { result, rerender } = renderHook(
+        ({ nestedVisibleFields, availableWidth }: { nestedVisibleFields: Field[]; availableWidth: number }) =>
+          useNestedColWidths({ nestedVisibleFields, availableWidth }),
+        { initialProps: { nestedVisibleFields: fields, availableWidth: 300 } }
+      );
+
+      act(() => {
+        result.current.handleNestedColumnWidthsChange(
+          new Map([
+            ['a', { type: 'resized', width: 200 }],
+            ['b', { type: 'resized', width: 200 }],
+          ])
+        );
+      });
+      expect(result.current.nestedFieldWidths).toEqual([200, 200]);
+
+      // rerender with same fields reference — state must be preserved
+      rerender({ nestedVisibleFields: fields, availableWidth: 300 });
+
+      expect(result.current.nestedFieldWidths).toEqual([200, 200]);
     });
   });
 });

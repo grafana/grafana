@@ -19,7 +19,7 @@ export function DashboardLinksControls({ links, dashboard }: Props) {
   const styles = useStyles2(getStyles);
   const linksToDisplay = excludeControlMenuLinks(links);
 
-  if (!uid || linksToDisplay.length === 0) {
+  if (linksToDisplay.length === 0) {
     return null;
   }
 
@@ -31,6 +31,7 @@ export function DashboardLinksControls({ links, dashboard }: Props) {
           dashboardUID={uid}
           key={`${link.title}-$${index}`}
           linkIndex={links.indexOf(link)}
+          dashboard={dashboard}
         />
       ))}
     </div>

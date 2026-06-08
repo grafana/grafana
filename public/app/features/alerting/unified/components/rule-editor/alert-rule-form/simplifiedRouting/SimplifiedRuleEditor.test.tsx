@@ -7,6 +7,7 @@ import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils
 import { byRole } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
@@ -67,18 +68,7 @@ const server = setupMswServer();
 
 // combobox hack
 beforeEach(() => {
-  const mockGetBoundingClientRect = jest.fn(() => ({
-    width: 120,
-    height: 120,
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-  }));
-
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: mockGetBoundingClientRect,
-  });
+  mockComboboxRect();
 
   mockPreviewApiResponse(server, []);
 });
@@ -173,10 +163,10 @@ describe('Can create a new grafana managed alert using simplified routing', () =
   it('does not show contact points with canUse=false (imported) in the dropdown', async () => {
     // Override the receivers handler to include a contact point that cannot be used (e.g., imported)
     server.use(
-      http.get('/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers', () => {
+      http.get('/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers', () => {
         return HttpResponse.json({
           kind: 'ReceiverList',
-          apiVersion: 'notifications.alerting.grafana.app/v1beta1',
+          apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
           metadata: {},
           items: [
             {

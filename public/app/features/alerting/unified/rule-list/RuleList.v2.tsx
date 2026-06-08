@@ -13,6 +13,7 @@ import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelecto
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
+import { useImportEntrypointState } from '../hooks/useImportEntrypointState';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { getRulesDataSources } from '../utils/datasource';
 import { isAdmin } from '../utils/misc';
@@ -21,7 +22,7 @@ import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
-import RulesFilter from './filter/RulesFilter';
+import RulesFilter from './filter/RulesFilter.v2';
 import { RulesFilterSidebar } from './filter/RulesFilterSidebar';
 import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 
@@ -29,16 +30,14 @@ function RuleList() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
 
-  const filterV2Enabled = config.featureToggles.alertingFilterV2;
-
   return (
     <Stack direction="column">
       <AlertsActivityBanner />
       <Stack direction="column" gap={2}>
         <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
         <Stack direction="row" grow={1} minHeight={0}>
-          {filterV2Enabled && <RulesFilterSidebar />}
-          <Box flex={1} minWidth={0} paddingLeft={filterV2Enabled ? 2 : undefined}>
+          <RulesFilterSidebar />
+          <Box flex={1} minWidth={0} paddingLeft={2}>
             {viewMode === 'list' ? (
               <FilterView filterState={filterState} />
             ) : (
@@ -74,6 +73,8 @@ export function RuleListActions() {
 
   const canAccessMigrationWizardUI = config.featureToggles.alertingMigrationWizardUI && isAdmin();
 
+  const { disabled: importDisabled, reason: importDisabledReason } = useImportEntrypointState();
+
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
 
   const moreActionsMenu = useMemo(
@@ -97,6 +98,8 @@ export function RuleListActions() {
               label={t('alerting.rule-list-v2.import-to-gma', 'Import alert rules')}
               icon="upload"
               url="/alerting/import-datasource-managed-rules"
+              disabled={importDisabled}
+              description={importDisabled ? importDisabledReason : undefined}
             />
           )}
           {canAccessMigrationWizardUI && (
@@ -104,6 +107,8 @@ export function RuleListActions() {
               label={t('alerting.rule-list-v2.import-to-gma-tool', 'Import to Grafana Alerting')}
               icon="exchange-alt"
               url="/alerting/import-to-gma"
+              disabled={importDisabled}
+              description={importDisabled ? importDisabledReason : undefined}
             />
           )}
         </Menu.Group>
@@ -132,6 +137,8 @@ export function RuleListActions() {
       canAccessMigrationWizardUI,
       canExportRules,
       toggleShowExportDrawer,
+      importDisabled,
+      importDisabledReason,
     ]
   );
 

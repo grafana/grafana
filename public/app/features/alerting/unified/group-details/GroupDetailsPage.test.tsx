@@ -9,6 +9,7 @@ import { setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type GrafanaPromRuleGroupDTO, type GrafanaPromRulesResponse } from 'app/types/unified-alerting-dto';
 
+import { RULER_CONFIG_API_PROBE_GROUP, RULER_CONFIG_API_PROBE_NAMESPACE } from '../api/ruler';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockGrafanaPromAlertingRule, mockRulerGrafanaRule, mockRulerRuleGroup } from '../mocks';
 import {
@@ -329,6 +330,12 @@ describe('GroupDetailsPage', () => {
 
       const group = alertingFactory.ruler.group.build({ name: 'test-group-cpu', interval: '11m40s' });
       setRulerRuleGroupResolver((req) => {
+        if (
+          req.params.namespace === RULER_CONFIG_API_PROBE_NAMESPACE &&
+          req.params.groupName === RULER_CONFIG_API_PROBE_GROUP
+        ) {
+          return HttpResponse.json({ message: 'group does not exist' }, { status: 404 });
+        }
         if (req.params.namespace === 'test-mimir-namespace' && req.params.groupName === 'test-group-cpu') {
           return HttpResponse.json(group);
         }
@@ -347,6 +354,19 @@ describe('GroupDetailsPage', () => {
         'href',
         `/alerting/mimir/namespaces/test-mimir-namespace/groups/test-group-cpu/edit?returnTo=%2Falerting%2Fmimir%2Fnamespaces%2Ftest-mimir-namespace%2Fgroups%2Ftest-group-cpu%2Fview`
       );
+      expect(ui.exportButton.query()).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Ungrouped rules', () => {
+    it('shows EntityNotFound for ungrouped artificial group names', async () => {
+      const ruleUid = 'dfkgj15gwrawwa';
+      const artificialGroupName = `no_group_for_rule_${ruleUid}`.padEnd(200, '*');
+
+      renderGroupDetailsPage('grafana', 'test-folder-uid', artificialGroupName);
+
+      expect(await screen.findByText('Group not found')).toBeInTheDocument();
+      expect(ui.editLink.query()).not.toBeInTheDocument();
       expect(ui.exportButton.query()).not.toBeInTheDocument();
     });
   });

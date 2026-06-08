@@ -1,5 +1,6 @@
 import {
   FieldColorModeId,
+  FieldType,
   ThresholdsMode,
   type VisualizationPresetsSupplier,
   type VisualizationSuggestion,
@@ -278,7 +279,11 @@ const gradientVerticalPreset = (): VisualizationSuggestion<Options> => {
   };
 };
 
-export const barGaugePresetsSupplier: VisualizationPresetsSupplier<Options> = () => {
+export const barGaugePresetsSupplier: VisualizationPresetsSupplier<Options> = ({ dataSummary }) => {
+  if (!dataSummary?.hasData || !dataSummary.hasFieldType(FieldType.number)) {
+    return [];
+  }
+
   return [
     basicHorizontalPreset(),
     basicVerticalPreset(),

@@ -1,3 +1,4 @@
+import { merge } from 'lodash';
 import { useEffect, useState } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 import { lastValueFrom } from 'rxjs';
@@ -9,7 +10,7 @@ import { type LogsFrame } from 'app/features/logs/logsFrame';
 import { LOG_LINE_BODY_FIELD_NAME } from '../../../../features/logs/components/fieldSelector/logFields';
 import { LogsTableCustomCellRenderer } from '../cells/LogsTableCustomCellRenderer';
 import { getLogLevelColumnEnhancements } from '../fields/defaultLogLevelColumnConfig';
-import { getFieldWidth } from '../fields/getFieldWidth';
+import { getTimeFieldWidth } from '../fields/getFieldWidth';
 import { normalizeLogLevelFieldInPlace } from '../fields/normalizeLogLevelField';
 import { doesFieldSupportAdHocFiltering, doesFieldSupportInspector } from '../fields/supports';
 import { getDisplayedFields } from '../options/getDisplayedFields';
@@ -130,10 +131,8 @@ const organizeFields = async (
 
     for (const [fieldIndex, field] of frame.fields.entries()) {
       const isFirstField = (!isLevelFirstField && fieldIndex === 0) || (isLevelFirstField && fieldIndex === 1);
-      const baseConfig = {
-        ...fieldConfig.defaults,
-        ...field.config,
-      };
+      // Deep-merge so panel defaults (e.g. custom.filterable) survive when the field already has custom.* from applyFieldOverrides.
+      const baseConfig = merge({}, fieldConfig.defaults, field.config);
 
       const levelEnhancements = getLogLevelColumnEnhancements(field, levelFieldName, baseConfig);
 
@@ -149,7 +148,7 @@ const organizeFields = async (
 
       // We are mutating fields. Would it be possible to avoid it?
       if (configAfterLevel.custom?.cellOptions?.cellComponent) {
-        configAfterLevel.custom.cellOptions.cellComponent = undefined;
+        configAfterLevel.custom.cellOptions = undefined;
       }
 
       field.config = {
@@ -157,10 +156,13 @@ const organizeFields = async (
         filterable: field.config?.filterable ?? doesFieldSupportAdHocFiltering(field, timeFieldName, bodyFieldName),
         custom: {
           ...configAfterLevel.custom,
-          width: getFieldWidth(configAfterLevel.custom?.width, fieldIndex, options),
+          width:
+            field.name === timeFieldName
+              ? getTimeFieldWidth(configAfterLevel.custom?.width, fieldIndex, options)
+              : configAfterLevel.custom?.width,
           inspect: configAfterLevel.custom?.inspect ?? doesFieldSupportInspector(field),
           cellOptions:
-            isFirstField && bodyFieldName && (supportsPermalink || options.showInspectLogLine)
+            isFirstField && bodyFieldName && (supportsPermalink || options.enableLogDetails)
               ? {
                   type: TableCellDisplayMode.Custom,
                   cellComponent: (cellProps: CustomCellRendererProps) => (

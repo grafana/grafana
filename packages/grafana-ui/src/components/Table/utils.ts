@@ -183,7 +183,7 @@ export function getColumns(
   return columns;
 }
 
-export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
+function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
   switch (displayMode) {
     case TableCellDisplayMode.Custom:
     case TableCellDisplayMode.ColorText:
@@ -494,8 +494,9 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
         mode: mode,
       };
     default:
+      // @ts-ignore TSGO / TS7
       return {
-        // @ts-ignore
+        // @ts-ignore TS5 / TS6
         type: displayMode,
       };
   }

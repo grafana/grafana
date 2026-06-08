@@ -4,9 +4,15 @@ import {
   EmailIntegrationFactory,
   GenericIntegrationFactory,
   SlackIntegrationFactory,
-} from '../api/notifications/v1beta1/mocks/fakes/Receivers';
+} from '../api/notifications/v0alpha1/mocks/fakes/Receivers';
 
-import { getContactPointDescription, isUsableContactPoint } from './utils';
+import {
+  getContactPointDescription,
+  getContactPointInUse,
+  getContactPointInUseRoutes,
+  getContactPointInUseRules,
+  isUsableContactPoint,
+} from './utils';
 
 describe('getContactPointDescription', () => {
   it('should show description for single integration', () => {
@@ -46,6 +52,72 @@ describe('getContactPointDescription', () => {
       spec: { integrations: [GenericIntegrationFactory.build({ type: 'generic' })] },
     });
     expect(getContactPointDescription(contactPoint)).toBe('generic');
+  });
+});
+
+describe('getContactPointInUseRoutes', () => {
+  it('returns the route count from the annotation', () => {
+    const cp = ContactPointFactory.build({
+      metadata: {
+        annotations: ContactPointMetadataAnnotationsFactory.build({ 'grafana.com/inUse/routes': '3' }),
+      },
+    });
+    expect(getContactPointInUseRoutes(cp)).toBe(3);
+  });
+
+  it('returns 0 when the annotation is absent', () => {
+    const cp = ContactPointFactory.build({
+      metadata: {
+        annotations: ContactPointMetadataAnnotationsFactory.build({ 'grafana.com/inUse/routes': undefined }),
+      },
+    });
+    expect(getContactPointInUseRoutes(cp)).toBe(0);
+  });
+});
+
+describe('getContactPointInUseRules', () => {
+  it('returns the rules count from the annotation', () => {
+    const cp = ContactPointFactory.build({
+      metadata: {
+        annotations: ContactPointMetadataAnnotationsFactory.build({ 'grafana.com/inUse/rules': '5' }),
+      },
+    });
+    expect(getContactPointInUseRules(cp)).toBe(5);
+  });
+
+  it('returns 0 when the annotation is absent', () => {
+    const cp = ContactPointFactory.build({
+      metadata: {
+        annotations: ContactPointMetadataAnnotationsFactory.build({ 'grafana.com/inUse/rules': undefined }),
+      },
+    });
+    expect(getContactPointInUseRules(cp)).toBe(0);
+  });
+});
+
+describe('getContactPointInUse', () => {
+  it('returns both counts', () => {
+    const cp = ContactPointFactory.build({
+      metadata: {
+        annotations: ContactPointMetadataAnnotationsFactory.build({
+          'grafana.com/inUse/routes': '2',
+          'grafana.com/inUse/rules': '7',
+        }),
+      },
+    });
+    expect(getContactPointInUse(cp)).toEqual({ routes: 2, rules: 7 });
+  });
+
+  it('returns zeros when both annotations are absent', () => {
+    const cp = ContactPointFactory.build({
+      metadata: {
+        annotations: ContactPointMetadataAnnotationsFactory.build({
+          'grafana.com/inUse/routes': undefined,
+          'grafana.com/inUse/rules': undefined,
+        }),
+      },
+    });
+    expect(getContactPointInUse(cp)).toEqual({ routes: 0, rules: 0 });
   });
 });
 

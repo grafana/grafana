@@ -74,9 +74,16 @@ func (_c *MockRepositoryResources_EnsureFolderExists_Call) RunAndReturn(run func
 	return _c
 }
 
-// EnsureFolderPathExist provides a mock function with given fields: ctx, filePath, ref
-func (_m *MockRepositoryResources) EnsureFolderPathExist(ctx context.Context, filePath string, ref string) (string, error) {
-	ret := _m.Called(ctx, filePath, ref)
+// EnsureFolderPathExist provides a mock function with given fields: ctx, filePath, ref, opts
+func (_m *MockRepositoryResources) EnsureFolderPathExist(ctx context.Context, filePath string, ref string, opts ...EnsurePathOption) (string, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, filePath, ref)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EnsureFolderPathExist")
@@ -84,17 +91,17 @@ func (_m *MockRepositoryResources) EnsureFolderPathExist(ctx context.Context, fi
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (string, error)); ok {
-		return rf(ctx, filePath, ref)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, ...EnsurePathOption) (string, error)); ok {
+		return rf(ctx, filePath, ref, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) string); ok {
-		r0 = rf(ctx, filePath, ref)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, ...EnsurePathOption) string); ok {
+		r0 = rf(ctx, filePath, ref, opts...)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, filePath, ref)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, ...EnsurePathOption) error); ok {
+		r1 = rf(ctx, filePath, ref, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -111,13 +118,20 @@ type MockRepositoryResources_EnsureFolderPathExist_Call struct {
 //   - ctx context.Context
 //   - filePath string
 //   - ref string
-func (_e *MockRepositoryResources_Expecter) EnsureFolderPathExist(ctx interface{}, filePath interface{}, ref interface{}) *MockRepositoryResources_EnsureFolderPathExist_Call {
-	return &MockRepositoryResources_EnsureFolderPathExist_Call{Call: _e.mock.On("EnsureFolderPathExist", ctx, filePath, ref)}
+//   - opts ...EnsurePathOption
+func (_e *MockRepositoryResources_Expecter) EnsureFolderPathExist(ctx interface{}, filePath interface{}, ref interface{}, opts ...interface{}) *MockRepositoryResources_EnsureFolderPathExist_Call {
+	return &MockRepositoryResources_EnsureFolderPathExist_Call{Call: _e.mock.On("EnsureFolderPathExist", append([]interface{}{ctx, filePath, ref}, opts...)...)}
 }
 
-func (_c *MockRepositoryResources_EnsureFolderPathExist_Call) Run(run func(ctx context.Context, filePath string, ref string)) *MockRepositoryResources_EnsureFolderPathExist_Call {
+func (_c *MockRepositoryResources_EnsureFolderPathExist_Call) Run(run func(ctx context.Context, filePath string, ref string, opts ...EnsurePathOption)) *MockRepositoryResources_EnsureFolderPathExist_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		variadicArgs := make([]EnsurePathOption, len(args)-3)
+		for i, a := range args[3:] {
+			if a != nil {
+				variadicArgs[i] = a.(EnsurePathOption)
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), args[2].(string), variadicArgs...)
 	})
 	return _c
 }
@@ -127,7 +141,7 @@ func (_c *MockRepositoryResources_EnsureFolderPathExist_Call) Return(parent stri
 	return _c
 }
 
-func (_c *MockRepositoryResources_EnsureFolderPathExist_Call) RunAndReturn(run func(context.Context, string, string) (string, error)) *MockRepositoryResources_EnsureFolderPathExist_Call {
+func (_c *MockRepositoryResources_EnsureFolderPathExist_Call) RunAndReturn(run func(context.Context, string, string, ...EnsurePathOption) (string, error)) *MockRepositoryResources_EnsureFolderPathExist_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -345,9 +359,16 @@ func (_c *MockRepositoryResources_RemoveFolder_Call) RunAndReturn(run func(conte
 	return _c
 }
 
-// RenameFolderPath provides a mock function with given fields: ctx, previousPath, previousRef, newPath, newRef
-func (_m *MockRepositoryResources) RenameFolderPath(ctx context.Context, previousPath string, previousRef string, newPath string, newRef string) (string, error) {
-	ret := _m.Called(ctx, previousPath, previousRef, newPath, newRef)
+// RenameFolderPath provides a mock function with given fields: ctx, previousPath, previousRef, newPath, newRef, opts
+func (_m *MockRepositoryResources) RenameFolderPath(ctx context.Context, previousPath string, previousRef string, newPath string, newRef string, opts ...EnsurePathOption) (string, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, previousPath, previousRef, newPath, newRef)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RenameFolderPath")
@@ -355,17 +376,17 @@ func (_m *MockRepositoryResources) RenameFolderPath(ctx context.Context, previou
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (string, error)); ok {
-		return rf(ctx, previousPath, previousRef, newPath, newRef)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, ...EnsurePathOption) (string, error)); ok {
+		return rf(ctx, previousPath, previousRef, newPath, newRef, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) string); ok {
-		r0 = rf(ctx, previousPath, previousRef, newPath, newRef)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, ...EnsurePathOption) string); ok {
+		r0 = rf(ctx, previousPath, previousRef, newPath, newRef, opts...)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
-		r1 = rf(ctx, previousPath, previousRef, newPath, newRef)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string, ...EnsurePathOption) error); ok {
+		r1 = rf(ctx, previousPath, previousRef, newPath, newRef, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -384,13 +405,20 @@ type MockRepositoryResources_RenameFolderPath_Call struct {
 //   - previousRef string
 //   - newPath string
 //   - newRef string
-func (_e *MockRepositoryResources_Expecter) RenameFolderPath(ctx interface{}, previousPath interface{}, previousRef interface{}, newPath interface{}, newRef interface{}) *MockRepositoryResources_RenameFolderPath_Call {
-	return &MockRepositoryResources_RenameFolderPath_Call{Call: _e.mock.On("RenameFolderPath", ctx, previousPath, previousRef, newPath, newRef)}
+//   - opts ...EnsurePathOption
+func (_e *MockRepositoryResources_Expecter) RenameFolderPath(ctx interface{}, previousPath interface{}, previousRef interface{}, newPath interface{}, newRef interface{}, opts ...interface{}) *MockRepositoryResources_RenameFolderPath_Call {
+	return &MockRepositoryResources_RenameFolderPath_Call{Call: _e.mock.On("RenameFolderPath", append([]interface{}{ctx, previousPath, previousRef, newPath, newRef}, opts...)...)}
 }
 
-func (_c *MockRepositoryResources_RenameFolderPath_Call) Run(run func(ctx context.Context, previousPath string, previousRef string, newPath string, newRef string)) *MockRepositoryResources_RenameFolderPath_Call {
+func (_c *MockRepositoryResources_RenameFolderPath_Call) Run(run func(ctx context.Context, previousPath string, previousRef string, newPath string, newRef string, opts ...EnsurePathOption)) *MockRepositoryResources_RenameFolderPath_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		variadicArgs := make([]EnsurePathOption, len(args)-5)
+		for i, a := range args[5:] {
+			if a != nil {
+				variadicArgs[i] = a.(EnsurePathOption)
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string), variadicArgs...)
 	})
 	return _c
 }
@@ -400,7 +428,7 @@ func (_c *MockRepositoryResources_RenameFolderPath_Call) Return(_a0 string, _a1 
 	return _c
 }
 
-func (_c *MockRepositoryResources_RenameFolderPath_Call) RunAndReturn(run func(context.Context, string, string, string, string) (string, error)) *MockRepositoryResources_RenameFolderPath_Call {
+func (_c *MockRepositoryResources_RenameFolderPath_Call) RunAndReturn(run func(context.Context, string, string, string, string, ...EnsurePathOption) (string, error)) *MockRepositoryResources_RenameFolderPath_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -510,9 +538,16 @@ func (_c *MockRepositoryResources_RemoveResourceFromFile_Call) RunAndReturn(run 
 	return _c
 }
 
-// RenameResourceFile provides a mock function with given fields: ctx, path, previousRef, newPath, newRef
-func (_m *MockRepositoryResources) RenameResourceFile(ctx context.Context, path string, previousRef string, newPath string, newRef string) (string, string, schema.GroupVersionKind, error) {
-	ret := _m.Called(ctx, path, previousRef, newPath, newRef)
+// RenameResourceFile provides a mock function with given fields: ctx, path, previousRef, newPath, newRef, folderOpts
+func (_m *MockRepositoryResources) RenameResourceFile(ctx context.Context, path string, previousRef string, newPath string, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, error) {
+	_va := make([]interface{}, len(folderOpts))
+	for _i := range folderOpts {
+		_va[_i] = folderOpts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, path, previousRef, newPath, newRef)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RenameResourceFile")
@@ -522,29 +557,29 @@ func (_m *MockRepositoryResources) RenameResourceFile(ctx context.Context, path 
 	var r1 string
 	var r2 schema.GroupVersionKind
 	var r3 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (string, string, schema.GroupVersionKind, error)); ok {
-		return rf(ctx, path, previousRef, newPath, newRef)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, ...EnsurePathOption) (string, string, schema.GroupVersionKind, error)); ok {
+		return rf(ctx, path, previousRef, newPath, newRef, folderOpts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) string); ok {
-		r0 = rf(ctx, path, previousRef, newPath, newRef)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, ...EnsurePathOption) string); ok {
+		r0 = rf(ctx, path, previousRef, newPath, newRef, folderOpts...)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) string); ok {
-		r1 = rf(ctx, path, previousRef, newPath, newRef)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string, ...EnsurePathOption) string); ok {
+		r1 = rf(ctx, path, previousRef, newPath, newRef, folderOpts...)
 	} else {
 		r1 = ret.Get(1).(string)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, string, string, string, string) schema.GroupVersionKind); ok {
-		r2 = rf(ctx, path, previousRef, newPath, newRef)
+	if rf, ok := ret.Get(2).(func(context.Context, string, string, string, string, ...EnsurePathOption) schema.GroupVersionKind); ok {
+		r2 = rf(ctx, path, previousRef, newPath, newRef, folderOpts...)
 	} else {
 		r2 = ret.Get(2).(schema.GroupVersionKind)
 	}
 
-	if rf, ok := ret.Get(3).(func(context.Context, string, string, string, string) error); ok {
-		r3 = rf(ctx, path, previousRef, newPath, newRef)
+	if rf, ok := ret.Get(3).(func(context.Context, string, string, string, string, ...EnsurePathOption) error); ok {
+		r3 = rf(ctx, path, previousRef, newPath, newRef, folderOpts...)
 	} else {
 		r3 = ret.Error(3)
 	}
@@ -563,13 +598,20 @@ type MockRepositoryResources_RenameResourceFile_Call struct {
 //   - previousRef string
 //   - newPath string
 //   - newRef string
-func (_e *MockRepositoryResources_Expecter) RenameResourceFile(ctx interface{}, path interface{}, previousRef interface{}, newPath interface{}, newRef interface{}) *MockRepositoryResources_RenameResourceFile_Call {
-	return &MockRepositoryResources_RenameResourceFile_Call{Call: _e.mock.On("RenameResourceFile", ctx, path, previousRef, newPath, newRef)}
+//   - folderOpts ...EnsurePathOption
+func (_e *MockRepositoryResources_Expecter) RenameResourceFile(ctx interface{}, path interface{}, previousRef interface{}, newPath interface{}, newRef interface{}, folderOpts ...interface{}) *MockRepositoryResources_RenameResourceFile_Call {
+	return &MockRepositoryResources_RenameResourceFile_Call{Call: _e.mock.On("RenameResourceFile", append([]interface{}{ctx, path, previousRef, newPath, newRef}, folderOpts...)...)}
 }
 
-func (_c *MockRepositoryResources_RenameResourceFile_Call) Run(run func(ctx context.Context, path string, previousRef string, newPath string, newRef string)) *MockRepositoryResources_RenameResourceFile_Call {
+func (_c *MockRepositoryResources_RenameResourceFile_Call) Run(run func(ctx context.Context, path string, previousRef string, newPath string, newRef string, folderOpts ...EnsurePathOption)) *MockRepositoryResources_RenameResourceFile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		variadicArgs := make([]EnsurePathOption, len(args)-5)
+		for i, a := range args[5:] {
+			if a != nil {
+				variadicArgs[i] = a.(EnsurePathOption)
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string), variadicArgs...)
 	})
 	return _c
 }
@@ -579,14 +621,18 @@ func (_c *MockRepositoryResources_RenameResourceFile_Call) Return(_a0 string, _a
 	return _c
 }
 
-func (_c *MockRepositoryResources_RenameResourceFile_Call) RunAndReturn(run func(context.Context, string, string, string, string) (string, string, schema.GroupVersionKind, error)) *MockRepositoryResources_RenameResourceFile_Call {
+func (_c *MockRepositoryResources_RenameResourceFile_Call) RunAndReturn(run func(context.Context, string, string, string, string, ...EnsurePathOption) (string, string, schema.GroupVersionKind, error)) *MockRepositoryResources_RenameResourceFile_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ReplaceResourceFromFile provides a mock function with given fields: ctx, path, ref, oldName, oldGVR
-func (_m *MockRepositoryResources) ReplaceResourceFromFile(ctx context.Context, path string, ref string, oldName string, oldGVR schema.GroupVersionResource) (string, schema.GroupVersionKind, error) {
-	ret := _m.Called(ctx, path, ref, oldName, oldGVR)
+// ReplaceResourceFromFile provides a mock function with given fields: ctx, path, ref, oldName, oldGVR, opts
+func (_m *MockRepositoryResources) ReplaceResourceFromFile(ctx context.Context, path string, ref string, oldName string, oldGVR schema.GroupVersionResource, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error) {
+	_ca := []interface{}{ctx, path, ref, oldName, oldGVR}
+	for _, opt := range opts {
+		_ca = append(_ca, opt)
+	}
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ReplaceResourceFromFile")
@@ -595,23 +641,23 @@ func (_m *MockRepositoryResources) ReplaceResourceFromFile(ctx context.Context, 
 	var r0 string
 	var r1 schema.GroupVersionKind
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, schema.GroupVersionResource) (string, schema.GroupVersionKind, error)); ok {
-		return rf(ctx, path, ref, oldName, oldGVR)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, schema.GroupVersionResource, ...WriteResourceOption) (string, schema.GroupVersionKind, error)); ok {
+		return rf(ctx, path, ref, oldName, oldGVR, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, schema.GroupVersionResource) string); ok {
-		r0 = rf(ctx, path, ref, oldName, oldGVR)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, schema.GroupVersionResource, ...WriteResourceOption) string); ok {
+		r0 = rf(ctx, path, ref, oldName, oldGVR, opts...)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, schema.GroupVersionResource) schema.GroupVersionKind); ok {
-		r1 = rf(ctx, path, ref, oldName, oldGVR)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, schema.GroupVersionResource, ...WriteResourceOption) schema.GroupVersionKind); ok {
+		r1 = rf(ctx, path, ref, oldName, oldGVR, opts...)
 	} else {
 		r1 = ret.Get(1).(schema.GroupVersionKind)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, string, string, string, schema.GroupVersionResource) error); ok {
-		r2 = rf(ctx, path, ref, oldName, oldGVR)
+	if rf, ok := ret.Get(2).(func(context.Context, string, string, string, schema.GroupVersionResource, ...WriteResourceOption) error); ok {
+		r2 = rf(ctx, path, ref, oldName, oldGVR, opts...)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -624,13 +670,26 @@ type MockRepositoryResources_ReplaceResourceFromFile_Call struct {
 	*mock.Call
 }
 
-func (_e *MockRepositoryResources_Expecter) ReplaceResourceFromFile(ctx interface{}, path interface{}, ref interface{}, oldName interface{}, oldGVR interface{}) *MockRepositoryResources_ReplaceResourceFromFile_Call {
-	return &MockRepositoryResources_ReplaceResourceFromFile_Call{Call: _e.mock.On("ReplaceResourceFromFile", ctx, path, ref, oldName, oldGVR)}
+// ReplaceResourceFromFile is a helper method to define mock.On call
+//   - ctx context.Context
+//   - path string
+//   - ref string
+//   - oldName string
+//   - oldGVR schema.GroupVersionResource
+//   - opts ...WriteResourceOption
+func (_e *MockRepositoryResources_Expecter) ReplaceResourceFromFile(ctx interface{}, path interface{}, ref interface{}, oldName interface{}, oldGVR interface{}, opts ...interface{}) *MockRepositoryResources_ReplaceResourceFromFile_Call {
+	return &MockRepositoryResources_ReplaceResourceFromFile_Call{Call: _e.mock.On("ReplaceResourceFromFile", append([]interface{}{ctx, path, ref, oldName, oldGVR}, opts...)...)}
 }
 
-func (_c *MockRepositoryResources_ReplaceResourceFromFile_Call) Run(run func(ctx context.Context, path string, ref string, oldName string, oldGVR schema.GroupVersionResource)) *MockRepositoryResources_ReplaceResourceFromFile_Call {
+func (_c *MockRepositoryResources_ReplaceResourceFromFile_Call) Run(run func(ctx context.Context, path string, ref string, oldName string, oldGVR schema.GroupVersionResource, opts ...WriteResourceOption)) *MockRepositoryResources_ReplaceResourceFromFile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(schema.GroupVersionResource))
+		variadicArgs := make([]WriteResourceOption, len(args)-5)
+		for i, a := range args[5:] {
+			if a != nil {
+				variadicArgs[i] = a.(WriteResourceOption)
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(schema.GroupVersionResource), variadicArgs...)
 	})
 	return _c
 }
@@ -640,14 +699,18 @@ func (_c *MockRepositoryResources_ReplaceResourceFromFile_Call) Return(_a0 strin
 	return _c
 }
 
-func (_c *MockRepositoryResources_ReplaceResourceFromFile_Call) RunAndReturn(run func(context.Context, string, string, string, schema.GroupVersionResource) (string, schema.GroupVersionKind, error)) *MockRepositoryResources_ReplaceResourceFromFile_Call {
+func (_c *MockRepositoryResources_ReplaceResourceFromFile_Call) RunAndReturn(run func(context.Context, string, string, string, schema.GroupVersionResource, ...WriteResourceOption) (string, schema.GroupVersionKind, error)) *MockRepositoryResources_ReplaceResourceFromFile_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ReplaceResourceFromFileByRef provides a mock function with given fields: ctx, path, ref, previousRef
-func (_m *MockRepositoryResources) ReplaceResourceFromFileByRef(ctx context.Context, path string, ref string, previousRef string) (string, schema.GroupVersionKind, error) {
-	ret := _m.Called(ctx, path, ref, previousRef)
+// ReplaceResourceFromFileByRef provides a mock function with given fields: ctx, path, ref, previousRef, opts
+func (_m *MockRepositoryResources) ReplaceResourceFromFileByRef(ctx context.Context, path string, ref string, previousRef string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error) {
+	_ca := []interface{}{ctx, path, ref, previousRef}
+	for _, opt := range opts {
+		_ca = append(_ca, opt)
+	}
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ReplaceResourceFromFileByRef")
@@ -656,23 +719,23 @@ func (_m *MockRepositoryResources) ReplaceResourceFromFileByRef(ctx context.Cont
 	var r0 string
 	var r1 schema.GroupVersionKind
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (string, schema.GroupVersionKind, error)); ok {
-		return rf(ctx, path, ref, previousRef)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, ...WriteResourceOption) (string, schema.GroupVersionKind, error)); ok {
+		return rf(ctx, path, ref, previousRef, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) string); ok {
-		r0 = rf(ctx, path, ref, previousRef)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, ...WriteResourceOption) string); ok {
+		r0 = rf(ctx, path, ref, previousRef, opts...)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) schema.GroupVersionKind); ok {
-		r1 = rf(ctx, path, ref, previousRef)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, ...WriteResourceOption) schema.GroupVersionKind); ok {
+		r1 = rf(ctx, path, ref, previousRef, opts...)
 	} else {
 		r1 = ret.Get(1).(schema.GroupVersionKind)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, string, string, string) error); ok {
-		r2 = rf(ctx, path, ref, previousRef)
+	if rf, ok := ret.Get(2).(func(context.Context, string, string, string, ...WriteResourceOption) error); ok {
+		r2 = rf(ctx, path, ref, previousRef, opts...)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -685,13 +748,25 @@ type MockRepositoryResources_ReplaceResourceFromFileByRef_Call struct {
 	*mock.Call
 }
 
-func (_e *MockRepositoryResources_Expecter) ReplaceResourceFromFileByRef(ctx interface{}, path interface{}, ref interface{}, previousRef interface{}) *MockRepositoryResources_ReplaceResourceFromFileByRef_Call {
-	return &MockRepositoryResources_ReplaceResourceFromFileByRef_Call{Call: _e.mock.On("ReplaceResourceFromFileByRef", ctx, path, ref, previousRef)}
+// ReplaceResourceFromFileByRef is a helper method to define mock.On call
+//   - ctx context.Context
+//   - path string
+//   - ref string
+//   - previousRef string
+//   - opts ...WriteResourceOption
+func (_e *MockRepositoryResources_Expecter) ReplaceResourceFromFileByRef(ctx interface{}, path interface{}, ref interface{}, previousRef interface{}, opts ...interface{}) *MockRepositoryResources_ReplaceResourceFromFileByRef_Call {
+	return &MockRepositoryResources_ReplaceResourceFromFileByRef_Call{Call: _e.mock.On("ReplaceResourceFromFileByRef", append([]interface{}{ctx, path, ref, previousRef}, opts...)...)}
 }
 
-func (_c *MockRepositoryResources_ReplaceResourceFromFileByRef_Call) Run(run func(ctx context.Context, path string, ref string, previousRef string)) *MockRepositoryResources_ReplaceResourceFromFileByRef_Call {
+func (_c *MockRepositoryResources_ReplaceResourceFromFileByRef_Call) Run(run func(ctx context.Context, path string, ref string, previousRef string, opts ...WriteResourceOption)) *MockRepositoryResources_ReplaceResourceFromFileByRef_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		variadicArgs := make([]WriteResourceOption, len(args)-4)
+		for i, a := range args[4:] {
+			if a != nil {
+				variadicArgs[i] = a.(WriteResourceOption)
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), variadicArgs...)
 	})
 	return _c
 }
@@ -701,7 +776,7 @@ func (_c *MockRepositoryResources_ReplaceResourceFromFileByRef_Call) Return(_a0 
 	return _c
 }
 
-func (_c *MockRepositoryResources_ReplaceResourceFromFileByRef_Call) RunAndReturn(run func(context.Context, string, string, string) (string, schema.GroupVersionKind, error)) *MockRepositoryResources_ReplaceResourceFromFileByRef_Call {
+func (_c *MockRepositoryResources_ReplaceResourceFromFileByRef_Call) RunAndReturn(run func(context.Context, string, string, string, ...WriteResourceOption) (string, schema.GroupVersionKind, error)) *MockRepositoryResources_ReplaceResourceFromFileByRef_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -855,9 +930,13 @@ func (_c *MockRepositoryResources_WriteResourceFileFromObject_Call) RunAndReturn
 	return _c
 }
 
-// WriteResourceFromFile provides a mock function with given fields: ctx, path, ref
-func (_m *MockRepositoryResources) WriteResourceFromFile(ctx context.Context, path string, ref string) (string, schema.GroupVersionKind, error) {
-	ret := _m.Called(ctx, path, ref)
+// WriteResourceFromFile provides a mock function with given fields: ctx, path, ref, opts
+func (_m *MockRepositoryResources) WriteResourceFromFile(ctx context.Context, path string, ref string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error) {
+	_ca := []interface{}{ctx, path, ref}
+	for _, opt := range opts {
+		_ca = append(_ca, opt)
+	}
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for WriteResourceFromFile")
@@ -866,23 +945,23 @@ func (_m *MockRepositoryResources) WriteResourceFromFile(ctx context.Context, pa
 	var r0 string
 	var r1 schema.GroupVersionKind
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (string, schema.GroupVersionKind, error)); ok {
-		return rf(ctx, path, ref)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, ...WriteResourceOption) (string, schema.GroupVersionKind, error)); ok {
+		return rf(ctx, path, ref, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) string); ok {
-		r0 = rf(ctx, path, ref)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, ...WriteResourceOption) string); ok {
+		r0 = rf(ctx, path, ref, opts...)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) schema.GroupVersionKind); ok {
-		r1 = rf(ctx, path, ref)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, ...WriteResourceOption) schema.GroupVersionKind); ok {
+		r1 = rf(ctx, path, ref, opts...)
 	} else {
 		r1 = ret.Get(1).(schema.GroupVersionKind)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, string, string) error); ok {
-		r2 = rf(ctx, path, ref)
+	if rf, ok := ret.Get(2).(func(context.Context, string, string, ...WriteResourceOption) error); ok {
+		r2 = rf(ctx, path, ref, opts...)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -899,13 +978,20 @@ type MockRepositoryResources_WriteResourceFromFile_Call struct {
 //   - ctx context.Context
 //   - path string
 //   - ref string
-func (_e *MockRepositoryResources_Expecter) WriteResourceFromFile(ctx interface{}, path interface{}, ref interface{}) *MockRepositoryResources_WriteResourceFromFile_Call {
-	return &MockRepositoryResources_WriteResourceFromFile_Call{Call: _e.mock.On("WriteResourceFromFile", ctx, path, ref)}
+//   - opts ...WriteResourceOption
+func (_e *MockRepositoryResources_Expecter) WriteResourceFromFile(ctx interface{}, path interface{}, ref interface{}, opts ...interface{}) *MockRepositoryResources_WriteResourceFromFile_Call {
+	return &MockRepositoryResources_WriteResourceFromFile_Call{Call: _e.mock.On("WriteResourceFromFile", append([]interface{}{ctx, path, ref}, opts...)...)}
 }
 
-func (_c *MockRepositoryResources_WriteResourceFromFile_Call) Run(run func(ctx context.Context, path string, ref string)) *MockRepositoryResources_WriteResourceFromFile_Call {
+func (_c *MockRepositoryResources_WriteResourceFromFile_Call) Run(run func(ctx context.Context, path string, ref string, opts ...WriteResourceOption)) *MockRepositoryResources_WriteResourceFromFile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		variadicArgs := make([]WriteResourceOption, len(args)-3)
+		for i, a := range args[3:] {
+			if a != nil {
+				variadicArgs[i] = a.(WriteResourceOption)
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), args[2].(string), variadicArgs...)
 	})
 	return _c
 }
@@ -915,7 +1001,7 @@ func (_c *MockRepositoryResources_WriteResourceFromFile_Call) Return(_a0 string,
 	return _c
 }
 
-func (_c *MockRepositoryResources_WriteResourceFromFile_Call) RunAndReturn(run func(context.Context, string, string) (string, schema.GroupVersionKind, error)) *MockRepositoryResources_WriteResourceFromFile_Call {
+func (_c *MockRepositoryResources_WriteResourceFromFile_Call) RunAndReturn(run func(context.Context, string, string, ...WriteResourceOption) (string, schema.GroupVersionKind, error)) *MockRepositoryResources_WriteResourceFromFile_Call {
 	_c.Call.Return(run)
 	return _c
 }

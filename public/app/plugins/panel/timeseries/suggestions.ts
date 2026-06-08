@@ -10,23 +10,27 @@ import {
   type VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import {
-  GraphDrawStyle,
-  type GraphFieldConfig,
-  GraphGradientMode,
-  LineInterpolation,
-  StackingMode,
-} from '@grafana/schema';
+import { GraphDrawStyle, type GraphFieldConfig, GraphGradientMode, StackingMode } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
 import { type Options } from './panelcfg.gen';
 
 const MAX_BARS = 100;
-const MAX_ROWS_SMOOTH_CHART = 200;
 
 const MAX_PREVIEW_SERIES = 8;
 const MAX_PREVIEW_BAR_ROWS = 30;
+
+export const TIMESERIES_CARD_OPTIONS: VisualizationSuggestion<Options, GraphFieldConfig>['cardOptions'] = {
+  maxSeries: MAX_PREVIEW_SERIES,
+  previewModifier: (s) => {
+    s.options!.disableKeyboardEvents = true;
+    s.options!.legend = SUGGESTIONS_LEGEND_OPTIONS;
+    if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
+      s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
+    }
+  },
+};
 
 const withDefaults = (
   suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
@@ -38,16 +42,7 @@ const withDefaults = (
       },
       overrides: [],
     },
-    cardOptions: {
-      maxSeries: MAX_PREVIEW_SERIES,
-      previewModifier: (s) => {
-        s.options!.disableKeyboardEvents = true;
-        s.options!.legend = SUGGESTIONS_LEGEND_OPTIONS;
-        if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
-          s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
-        }
-      },
-    },
+    cardOptions: TIMESERIES_CARD_OPTIONS,
   } satisfies VisualizationSuggestion<Options, GraphFieldConfig>);
 
 const areaChart = (name: string, stacking?: StackingMode) => ({
@@ -112,20 +107,6 @@ export const timeseriesSuggestionsSupplier: VisualizationSuggestionsSupplier<Opt
       name: t('timeseries.suggestions.line', 'Line chart'),
     },
   ];
-
-  if (dataSummary.rowCountMax < MAX_ROWS_SMOOTH_CHART) {
-    suggestions.push({
-      name: t('timeseries.suggestions.line-smooth', 'Line chart - smooth'),
-      fieldConfig: {
-        defaults: {
-          custom: {
-            lineInterpolation: LineInterpolation.Smooth,
-          },
-        },
-        overrides: [],
-      },
-    });
-  }
 
   // Single-series suggestions
   if (dataSummary.fieldCountByType(FieldType.number) === 1) {

@@ -6,7 +6,7 @@ export type User = {
   avatarUrl?: string;
 };
 
-export type OnSelectQueryType = (query: DataQuery) => void;
+export type OnSelectQueryType = (query: DataQuery, title?: string) => void;
 
 export type QueryLibraryEventsPropertyMap = Record<string, string | boolean | undefined>;
 

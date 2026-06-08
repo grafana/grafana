@@ -21,7 +21,6 @@ import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
 import { generateUniqueTitle, GridLayoutType, mapIdToGridLayoutType, ungroupLayout } from '../layouts-shared/utils';
@@ -73,6 +72,10 @@ export class RowsLayoutManager
 
   public setIsDropTarget(isDropTarget: boolean): void {
     this.setState({ isDropTarget });
+  }
+
+  public getAllGridTypes(): string[] {
+    return this.state.rows.flatMap((row) => row.getLayout().getAllGridTypes());
   }
 
   public draggedGridItemInside(gridItem: SceneGridItemLike): void {
@@ -142,7 +145,13 @@ export class RowsLayoutManager
     dashboardEditActions.addElement({
       addedObject: newRow,
       source: this,
-      perform: () => this.setState({ rows: [...this.state.rows, newRow] }),
+      perform: () => {
+        this.setState({ rows: [...this.state.rows, newRow] });
+        const dashboard = getDashboardSceneFor(this);
+        if (dashboard.state.isEditing) {
+          newRow.getLayout().editModeChanged?.(true);
+        }
+      },
       undo: () => this.setState({ rows: this.state.rows.filter((r) => r !== newRow) }),
     });
 
@@ -157,10 +166,6 @@ export class RowsLayoutManager
     const scene = getDashboardSceneFor(this);
     const row = getRowFromClipboard(scene);
     this.addNewRow(row);
-  }
-
-  public shouldUngroup(): boolean {
-    return this.state.rows.length === 1;
   }
 
   public getOutlineChildren() {
@@ -198,7 +203,7 @@ export class RowsLayoutManager
 
   public ungroupRows() {
     const hasNonGridLayout = this.state.rows.some((row) => !row.getLayout().descriptor.isGridLayout);
-    const gridTypes = new Set(findAllGridTypes(this));
+    const gridTypes = new Set(this.getAllGridTypes());
 
     showUngroupConfirmation({
       hasNonGridLayout,
@@ -332,7 +337,7 @@ export class RowsLayoutManager
     }
 
     const editPane = getDashboardSceneFor(this).state.editPane;
-    editPane.selectObject(row!, rowKey, { force: true, multi: false });
+    editPane.selectObject(row!, { force: true, multi: false });
   }
 
   public static createEmpty(): RowsLayoutManager {

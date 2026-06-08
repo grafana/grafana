@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
-import { type RoutingTree, type RoutingTreeList } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { type RoutingTree, type RoutingTreeList } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import {
   deleteRoutingTree,
   getRoutingTree,

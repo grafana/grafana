@@ -15,14 +15,17 @@ import { type MapLayerState } from '../types';
 import { getMapLayerState } from './layers';
 
 export const setTooltipListeners = (panel: GeomapPanel) => {
-  // Tooltip listener
+  panel.tooltipPointerMoveDebounced?.cancel();
+
+  const debouncedMove = debounce((evt: MapBrowserEvent) => pointerMoveListener(evt, panel), 200);
+  panel.tooltipPointerMoveDebounced = debouncedMove;
+
   panel.map?.on('singleclick', (evt) => pointerClickListener(evt, panel));
-  panel.map?.on(
-    'pointermove',
-    debounce((evt) => pointerMoveListener(evt, panel), 200)
-  );
-  panel.map?.getViewport().addEventListener('mouseout', (evt: MouseEvent) => {
+  panel.map?.on('pointermove', debouncedMove);
+  panel.map?.getViewport().addEventListener('pointerleave', () => {
+    debouncedMove.cancel();
     panel.props.eventBus.publish(new DataHoverClearEvent());
+    panel.clearTooltip();
   });
 };
 

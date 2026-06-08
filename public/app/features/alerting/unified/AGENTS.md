@@ -121,12 +121,12 @@ const { data, isLoading, error } = useGetAlertRulesQuery(params);
 
 **IMPORTANT**: When consuming an API endpoint, always prefer the auto-generated clients from `@grafana/api-clients` over creating custom RTK Query endpoints manually. Do not create new RTKQ endpoints by hand — use the generated ones instead.
 
-The auto-generated clients are available under `@grafana/api-clients/rtkq/<api-group>/<version>` (e.g., `@grafana/api-clients/rtkq/notifications.alerting/v1beta1`).
+The auto-generated clients are available under `@grafana/api-clients/rtkq/<api-group>/<version>` (e.g., `@grafana/api-clients/rtkq/notifications.alerting/v0alpha1`).
 
 **When the auto-generated client works as-is** — just import and use it directly:
 
 ```typescript
-import { generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
 const { data } = generatedAPI.useListReceiversQuery(params);
 ```
@@ -134,7 +134,7 @@ const { data } = generatedAPI.useListReceiversQuery(params);
 **When the auto-generated client is incomplete** (e.g., missing request body types), use `enhanceEndpoints` to override the endpoint while still using the generated client as base. This avoids creating a fully manual RTKQ endpoint:
 
 ```typescript
-import { CreateReceiverTestApiArg, generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { CreateReceiverTestApiArg, generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
 // Define the missing body type
 interface TestReceiverIntegrationBody {
@@ -245,8 +245,8 @@ Located in `testSetup/datasources.ts` for data source mocking patterns
 
 For Kubernetes APIs and new schemas – use the `@grafana/alerting` package.
 
-Mock factories are defined in `packages/grafana-alerting/src/grafana/api/notifications/v1beta1/mocks/fakes`
-MSW handlers in `packages/grafana-alerting/src/grafana/api/notifications/v1beta1/mocks/handlers`
+Mock factories are defined in `packages/grafana-alerting/src/grafana/api/notifications/v0alpha1/mocks/fakes`
+MSW handlers in `packages/grafana-alerting/src/grafana/api/notifications/v0alpha1/mocks/handlers`
 
 And there are "scenarios" that combine the two above. An example of such is `packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.test.scenario.ts` and is used for integration tests.
 
@@ -563,6 +563,15 @@ Skip proposing an update if the correction is:
 - Already documented in this file
 - A personal preference rather than a project convention
 
+## Dependency Security
+
+- **No new dependencies without explicit approval**: Do NOT run `yarn add` or otherwise introduce new packages. If a task would benefit from a new dependency, stop and ask the user for approval first — explain what package you want, why, and its publish date.
+- **7-day quarantine**: Even with approval, never add a dependency whose latest version was published less than 7 days ago. Check publish date with `npm view <package> time --json` before proposing.
+- **Prefer established packages**: Favor well-known, actively maintained packages. Avoid packages with very few downloads or no recent maintenance.
+- **No postinstall script overrides**: The repo has `enableScripts: false`. Do not add per-package script overrides without approval from @grafana/frontend-ops.
+- **Lock file integrity**: Always use `yarn install --immutable`. Never manually edit `yarn.lock`.
+- **Report suspicious packages**: If a dependency shows signs of compromise (unexpected scripts, obfuscated code, ownership transfer), flag it in the PR and tag @grafana/frontend-ops.
+
 ## Getting Help
 
 - Check patterns in existing `components/` code
@@ -575,5 +584,5 @@ Skip proposing an update if the correction is:
 
 ---
 
-**Last Updated**: 2026-02-23
+**Last Updated**: 2026-03-31
 **Maintained By**: Alerting Squad

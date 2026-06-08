@@ -15,6 +15,36 @@
         "fr_notify": true,
         "fr_weekly": true
       }
+    },
+    {
+      "name": "dashboards",
+      "kickoff_date": "2026-04-16",
+      "adoption_date": "2025-04-16",
+      "codeowners_teams": [
+        "@grafana/dashboards-squad"
+      ],
+      "area_labels": ["area/dashboard"],
+      "enabled": {
+        "pr_notify": false,
+        "pr_weekly": true,
+        "fr_notify": false,
+        "fr_weekly": true
+      }
+    },
+    {
+      "name": "frontend-platform",
+      "kickoff_date": "2026-05-27",
+      "adoption_date": "2025-05-27",
+      "codeowners_teams": [
+        "@grafana/grafana-frontend-platform"
+      ],
+      "area_labels": ["area/internationalization", "area/panel/text"],
+      "enabled": {
+        "pr_notify": true,
+        "pr_weekly": true,
+        "fr_notify": true,
+        "fr_weekly": true
+      }
     }
   ]
 }
