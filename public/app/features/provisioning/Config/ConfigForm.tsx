@@ -380,18 +380,18 @@ export function ConfigForm({ data }: ConfigFormProps) {
           />
         )}
         {isGitBased && (
-          <BranchOptionsSection<RepositoryFormData>
-            register={register}
-            nameTemplateName="branchOptions.nameTemplate"
-            enforceTemplateName="branchOptions.enforceTemplate"
-          />
-        )}
-        {isGitBased && (
-          <CommitOptionsSection<RepositoryFormData>
-            register={register}
-            messageTemplateName="commit.singleResourceMessageTemplate"
-            enforceTemplateName="commit.enforceTemplate"
-          />
+          <>
+            <BranchOptionsSection<RepositoryFormData>
+              register={register}
+              nameTemplateName="branchOptions.nameTemplate"
+              enforceTemplateName="branchOptions.enforceTemplate"
+            />
+            <CommitOptionsSection<RepositoryFormData>
+              register={register}
+              messageTemplateName="commit.singleResourceMessageTemplate"
+              enforceTemplateName="commit.enforceTemplate"
+            />
+          </>
         )}
         {type === 'github' && <ConfigFormGithubCollapse register={register} />}
 
