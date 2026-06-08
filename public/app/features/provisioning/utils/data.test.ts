@@ -319,6 +319,100 @@ describe('provisioning data mapping', () => {
       expect(data.branchOptions?.nameTemplate).toBe('grafana/{{title}}');
       expect(data.branchOptions?.enforceTemplate).toBe(true);
     });
+
+    it('writes signerName and signerEmail to spec when provided', () => {
+      const formData = makeFormData('github');
+      formData.commit = { signerName: 'Jane Doe', signerEmail: 'jane@example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.signerName).toBe('Jane Doe');
+      expect(spec.commit?.signerEmail).toBe('jane@example.com');
+    });
+
+    it('trims author fields before writing to spec', () => {
+      const formData = makeFormData('github');
+      formData.commit = { signerName: '  Jane Doe  ', signerEmail: '  jane@example.com  ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.signerName).toBe('Jane Doe');
+      expect(spec.commit?.signerEmail).toBe('jane@example.com');
+    });
+
+    it('omits author fields from spec when whitespace-only', () => {
+      const formData = makeFormData('github');
+      formData.commit = { signerName: '   ', signerEmail: '   ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).toBeUndefined();
+    });
+
+    it('writes only the author fields that are set', () => {
+      const formData = makeFormData('github');
+      formData.commit = { signerName: 'Jane Doe' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.signerName).toBe('Jane Doe');
+      expect(spec.commit).not.toHaveProperty('signerEmail');
+      expect(spec.commit).not.toHaveProperty('singleResourceMessageTemplate');
+    });
+
+    it('reads author fields from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        commit: { signerName: 'Jane Doe', signerEmail: 'jane@example.com' },
+      };
+      const data = specToData(spec);
+      expect(data.commit?.signerName).toBe('Jane Doe');
+      expect(data.commit?.signerEmail).toBe('jane@example.com');
+    });
+
+    it('writes signingMethod to spec when signing is configured', () => {
+      const formData = makeFormData('github');
+      formData.signingMethod = 'ssh';
+      formData.commit = { signerName: 'Jane Doe', signerEmail: 'jane@example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.signingMethod).toBe('ssh');
+    });
+
+    it('omits signingMethod when format is none', () => {
+      const formData = makeFormData('github');
+      formData.signingMethod = 'none';
+      formData.commit = { signerName: 'Jane Doe', signerEmail: 'jane@example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).not.toHaveProperty('signingMethod');
+    });
+
+    it('omits signingMethod when no author is set', () => {
+      const formData = makeFormData('github');
+      formData.signingMethod = 'ssh';
+      const spec = dataToSpec(formData);
+      expect(spec.commit).toBeUndefined();
+    });
+
+    it('reads signingMethod from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        commit: { signerName: 'Jane Doe', signerEmail: 'jane@example.com', signingMethod: 'smime' },
+      };
+      const data = specToData(spec);
+      expect(data.signingMethod).toBe('smime');
+    });
+
+    it('defaults signingMethod to none when spec has no signing format', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+      };
+      const data = specToData(spec);
+      expect(data.signingMethod).toBe('none');
+    });
   });
 
   describe('empty branch sends empty string for backend auto-detection', () => {

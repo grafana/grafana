@@ -19,6 +19,7 @@ export const FinishStep = memo(function FinishStep() {
   const { setStepStatusInfo, hasStepError } = useStepStatus();
   const {
     register,
+    control,
     watch,
     setValue,
     formState: { errors },
@@ -123,11 +124,22 @@ export const FinishStep = memo(function FinishStep() {
             nameTemplateName="repository.branchOptions.nameTemplate"
             enforceTemplateName="repository.branchOptions.enforceTemplate"
           />
-          <CommitOptionsSection<WizardFormData>
-            register={register}
-            messageTemplateName="repository.commit.singleResourceMessageTemplate"
-            enforceTemplateName="repository.commit.enforceTemplate"
-          />
+          {gitFields && (
+            <CommitOptionsSection<WizardFormData>
+              register={register}
+              control={control}
+              setValue={setValue}
+              messageTemplateName="repository.commit.singleResourceMessageTemplate"
+              enforceTemplateName="repository.commit.enforceTemplate"
+              type={type}
+              gitFields={gitFields}
+              signingMethodName="repository.signingMethod"
+              signingKeyName="repository.commitSigningKey"
+              smimeCertificateName="repository.smimeCertificate"
+              signerNameName="repository.commit.signerName"
+              signerEmailName="repository.commit.signerEmail"
+            />
+          )}
         </>
       )}
 

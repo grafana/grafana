@@ -24,6 +24,36 @@ export interface FieldConfig {
 const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => {
   // Shared field descriptions used across multiple providers
   const shared = {
+    signingMethod: {
+      label: t('provisioning.shared.signing-method-label', 'Commit signing'),
+      description: t(
+        'provisioning.shared.signing-method-description',
+        'Sign commits so their author can be cryptographically verified.'
+      ),
+    },
+    commitSigningKey: {
+      label: t('provisioning.shared.signing-key-label', 'Signing key'),
+      description: t('provisioning.shared.signing-key-description', 'Private key used to sign commits. No passphrase.'),
+    },
+    smimeCertificate: {
+      label: t('provisioning.shared.smime-certificate-label', 'S/MIME certificate'),
+      description: t(
+        'provisioning.shared.smime-certificate-description',
+        'X.509 certificate paired with the signing key.'
+      ),
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      placeholder: '-----BEGIN CERTIFICATE-----',
+    },
+    commitSignerName: {
+      label: t('provisioning.shared.commit-signer-name-label', 'Signer name'),
+      description: t('provisioning.shared.commit-signer-name-description', 'Name of the commit signer.'),
+      placeholder: t('provisioning.shared.commit-signer-name-placeholder', 'Grafana'),
+    },
+    commitSignerEmail: {
+      label: t('provisioning.shared.commit-signer-email-label', 'Signer email'),
+      description: t('provisioning.shared.commit-signer-email-description', 'Must match the signing key identity.'),
+      placeholder: t('provisioning.shared.commit-signer-email-placeholder', 'noreply@grafana.com'),
+    },
     branch: {
       label: t('provisioning.shared.branch-label', 'Branch'),
       description: t('provisioning.shared.branch-description', 'The branch to use for provisioning'),
@@ -99,6 +129,11 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
         ),
       },
+      signingMethod: shared.signingMethod,
+      commitSigningKey: shared.commitSigningKey,
+      smimeCertificate: shared.smimeCertificate,
+      commitSignerName: shared.commitSignerName,
+      commitSignerEmail: shared.commitSignerEmail,
     },
     gitlab: {
       token: {
@@ -150,6 +185,11 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a merge request when saving changes. If the repository does not allow direct changes to the main branch, a merge request may still be required.'
         ),
       },
+      signingMethod: shared.signingMethod,
+      commitSigningKey: shared.commitSigningKey,
+      smimeCertificate: shared.smimeCertificate,
+      commitSignerName: shared.commitSignerName,
+      commitSignerEmail: shared.commitSignerEmail,
     },
     bitbucket: {
       token: {
@@ -209,6 +249,11 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
         ),
       },
+      signingMethod: shared.signingMethod,
+      commitSigningKey: shared.commitSigningKey,
+      smimeCertificate: shared.smimeCertificate,
+      commitSignerName: shared.commitSignerName,
+      commitSignerEmail: shared.commitSignerEmail,
     },
     git: {
       token: {
@@ -265,6 +310,11 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
         ),
       },
+      signingMethod: shared.signingMethod,
+      commitSigningKey: shared.commitSigningKey,
+      smimeCertificate: shared.smimeCertificate,
+      commitSignerName: shared.commitSignerName,
+      commitSignerEmail: shared.commitSignerEmail,
     },
     local: {
       path: {
@@ -292,6 +342,11 @@ export const getGitProviderFields = (
   | {
       tokenConfig: FieldConfig;
       tokenUserConfig?: FieldConfig;
+      signingMethodConfig?: FieldConfig;
+      signingKeyConfig?: FieldConfig;
+      smimeCertificateConfig?: FieldConfig;
+      commitSignerNameConfig?: FieldConfig;
+      commitSignerEmailConfig?: FieldConfig;
       urlConfig: FieldConfig;
       branchConfig: FieldConfig;
       pathConfig: FieldConfig;
@@ -306,6 +361,11 @@ export const getGitProviderFields = (
   // For git providers, these fields are guaranteed to exist
   const tokenConfig = configs.token;
   const tokenUserConfig = configs.tokenUser; // Optional field, only for some providers
+  const signingMethodConfig = configs.signingMethod; // Optional, only for git-based providers
+  const signingKeyConfig = configs.commitSigningKey; // Optional, only for git-based providers
+  const smimeCertificateConfig = configs.smimeCertificate; // Paired with commitSigningKey when format is smime
+  const commitSignerNameConfig = configs.commitSignerName; // Paired with commitSigningKey
+  const commitSignerEmailConfig = configs.commitSignerEmail; // Paired with commitSigningKey
   const urlConfig = configs.url;
   const branchConfig = configs.branch;
   const pathConfig = configs.path;
@@ -318,11 +378,42 @@ export const getGitProviderFields = (
   return {
     tokenConfig,
     tokenUserConfig,
+    signingMethodConfig,
+    signingKeyConfig,
+    smimeCertificateConfig,
+    commitSignerNameConfig,
+    commitSignerEmailConfig,
     urlConfig,
     branchConfig,
     pathConfig,
     prWorkflowConfig,
   };
+};
+
+export const getSignerRequiredMessage = () =>
+  t('provisioning.shared.commit-signer-required', 'Required when a signing key is set.');
+
+export type SigningMethod = 'none' | 'gpg' | 'ssh' | 'smime';
+
+export const getSigningMethodOptions = (): Array<{ label: string; value: SigningMethod }> => [
+  { label: t('provisioning.shared.signing-method-none', 'None'), value: 'none' },
+  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+  { label: 'GPG', value: 'gpg' },
+  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+  { label: 'SSH', value: 'ssh' },
+  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+  { label: 'S/MIME', value: 'smime' },
+];
+
+export const getSigningKeyPlaceholder = (format?: string): string => {
+  switch (format) {
+    case 'ssh':
+      return '-----BEGIN OPENSSH PRIVATE KEY-----';
+    case 'smime':
+      return '-----BEGIN PRIVATE KEY-----';
+    default:
+      return '-----BEGIN PGP PRIVATE KEY BLOCK-----';
+  }
 };
 
 /**

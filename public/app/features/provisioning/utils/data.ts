@@ -7,8 +7,11 @@ import { type RepositoryFormData } from '../types';
 const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined => {
   const singleResourceMessageTemplate = data.commit?.singleResourceMessageTemplate?.trim();
   const enforceTemplate = data.commit?.enforceTemplate;
+  const signerName = data.commit?.signerName?.trim();
+  const signerEmail = data.commit?.signerEmail?.trim();
+  const signingMethod = data.signingMethod && data.signingMethod !== 'none' ? data.signingMethod : undefined;
 
-  if (!singleResourceMessageTemplate && !enforceTemplate) {
+  if (!singleResourceMessageTemplate && !enforceTemplate && !signerName && !signerEmail) {
     return undefined;
   }
 
@@ -18,6 +21,18 @@ const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined
   }
   if (enforceTemplate) {
     commit.enforceTemplate = enforceTemplate;
+  }
+  if (signerName) {
+    commit.signerName = signerName;
+  }
+  if (signerEmail) {
+    commit.signerEmail = signerEmail;
+  }
+  if (signingMethod && (signerName || signerEmail)) {
+    commit.signingMethod = signingMethod;
+    if (signingMethod === 'smime' && data.smimeCertificate) {
+      commit.smimeCertificate = data.smimeCertificate;
+    }
   }
   return commit;
 };
@@ -139,6 +154,8 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     prWorkflow: spec.workflows.includes('branch'),
     enablePushToConfiguredBranch: spec.workflows.includes('write'),
     connectionName: spec.connection?.name,
+    signingMethod: spec.commit?.signingMethod ?? 'none',
+    smimeCertificate: spec.commit?.smimeCertificate ?? '',
   });
 };
 

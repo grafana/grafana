@@ -14,8 +14,17 @@ export function useCreateOrUpdateRepository(name?: string) {
   const [testConfig, testRequest] = useCreateRepositoryTestMutation();
 
   const updateOrCreate = useCallback(
-    async (data: RepositorySpec, token?: string) => {
-      const secure = token?.length ? { token: { create: token } } : undefined;
+    async (data: RepositorySpec, token?: string, commitSigningKey?: string, removeSigningKey?: boolean) => {
+      const secureEntries: Record<string, { create: string } | { remove: true }> = {};
+      if (token?.length) {
+        secureEntries.token = { create: token };
+      }
+      if (commitSigningKey?.length) {
+        secureEntries.commitSigningKey = { create: commitSigningKey };
+      } else if (removeSigningKey) {
+        secureEntries.commitSigningKey = { remove: true };
+      }
+      const secure = Object.keys(secureEntries).length ? secureEntries : undefined;
 
       // First test the config and wait for the result
       // unwrap will throw an error if the test fails

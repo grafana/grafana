@@ -138,7 +138,9 @@ export function ConfigForm({ data }: ConfigFormProps) {
     setSubmitError(undefined);
     try {
       const spec = dataToSpec(form);
-      await submitData(spec, form.token);
+      const signing = form.signingMethod && form.signingMethod !== 'none';
+      const removeSigningKey = !signing && Boolean(data?.secure?.commitSigningKey?.name);
+      await submitData(spec, form.token, signing ? form.commitSigningKey : undefined, removeSigningKey);
     } catch (err) {
       if (isFetchError(err)) {
         const fieldErrors = getConfigFormErrors(err.data);
@@ -387,11 +389,23 @@ export function ConfigForm({ data }: ConfigFormProps) {
               nameTemplateName="branchOptions.nameTemplate"
               enforceTemplateName="branchOptions.enforceTemplate"
             />
-            <CommitOptionsSection<RepositoryFormData>
-              register={register}
-              messageTemplateName="commit.singleResourceMessageTemplate"
-              enforceTemplateName="commit.enforceTemplate"
-            />
+            {gitFields && (
+              <CommitOptionsSection<RepositoryFormData>
+                register={register}
+                control={control}
+                setValue={setValue}
+                messageTemplateName="commit.singleResourceMessageTemplate"
+                enforceTemplateName="commit.enforceTemplate"
+                type={type}
+                gitFields={gitFields}
+                signingMethodName="signingMethod"
+                signingKeyName="commitSigningKey"
+                smimeCertificateName="smimeCertificate"
+                signerNameName="commit.signerName"
+                signerEmailName="commit.signerEmail"
+                defaultSigningKeyConfigured={Boolean(data?.secure?.commitSigningKey?.name)}
+              />
+            )}
           </>
         )}
         {type === 'github' && <ConfigFormGithubCollapse register={register} />}

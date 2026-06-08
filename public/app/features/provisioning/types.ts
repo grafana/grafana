@@ -29,6 +29,9 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | 'branch'> &
     enablePushToConfiguredBranch: boolean;
     // top-level inline secure value
     token?: string;
+    signingMethod?: 'none' | 'gpg' | 'ssh' | 'smime';
+    commitSigningKey?: string;
+    smimeCertificate?: string;
     // GitHub App connection name (when using app-based auth instead of PAT)
     connectionName?: string;
     // Spec-level branch naming options (maps to RepositorySpec.branch)
