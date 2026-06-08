@@ -17,6 +17,7 @@ permissions: {}
 jobs:
   setup:
     name: Setup opted-in teams
+    if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-x64-small
     outputs:
       # NOTE: Only checks test coverage for opted-in codeowners.
@@ -35,6 +36,7 @@ jobs:
 
   detect-changes:
     name: Detect changed files
+    if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-x64-small
     permissions:
       contents: read
