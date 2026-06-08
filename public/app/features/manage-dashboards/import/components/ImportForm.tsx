@@ -109,7 +109,10 @@ export function ImportForm({
             {!uidReset ? (
               <Input
                 disabled
-                {...register('uid', { validate: async (v: string) => await validateUid(v) })}
+                {...register('uid', {
+                  setValueAs: (v: string) => (typeof v === 'string' ? v.trim() : v),
+                  validate: async (v: string) => await validateUid(v),
+                })}
                 addonAfter={
                   !uidReset && (
                     <Button onClick={onUidReset}>
@@ -119,7 +122,13 @@ export function ImportForm({
                 }
               />
             ) : (
-              <Input {...register('uid', { required: true, validate: async (v: string) => await validateUid(v) })} />
+              <Input
+                {...register('uid', {
+                  required: true,
+                  setValueAs: (v: string) => (typeof v === 'string' ? v.trim() : v),
+                  validate: async (v: string) => await validateUid(v),
+                })}
+              />
             )}
           </>
         </Field>
