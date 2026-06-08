@@ -7,6 +7,9 @@ export class Parser {
   lexer: Lexer;
   tokens: AstNode[];
   index: number;
+  // True when the parsed expression used Graphite's pipe syntax (e.g. `metric | scale(2)`),
+  // which getAst() rewrites into the equivalent nested form (`scale(metric, 2)`).
+  hasPipe = false;
 
   constructor(expression: string) {
     this.expression = expression;
@@ -21,7 +24,11 @@ export class Parser {
 
   start(): AstNode | null {
     try {
-      return this.functionCall() || this.metricExpression();
+      const node = this.functionCall() || this.metricExpression();
+      if (node === null) {
+        return null;
+      }
+      return this.pipedFunctionCall(node);
     } catch (e) {
       if (isGraphiteParserError(e)) {
         return {
@@ -171,6 +178,26 @@ export class Parser {
     return node;
   }
 
+  // Graphite supports a pipe syntax where `seriesList | func(args)` is equivalent to
+  // `func(seriesList, args)`. We rewrite each piped call into the nested form so the rest
+  // of the query builder (which only understands nested functions) can handle it unchanged.
+  pipedFunctionCall(node: AstNode): AstNode {
+    while (this.match('|')) {
+      this.consumeToken();
+
+      const funcNode = this.functionCall();
+      if (!funcNode) {
+        this.errorMark('Expected function after pipe');
+      }
+
+      this.hasPipe = true;
+      funcNode.params = [node, ...(funcNode.params ?? [])];
+      node = funcNode;
+    }
+
+    return node;
+  }
+
   boolExpression(): AstNode | null {
     if (!this.match('bool')) {
       return null;
@@ -260,7 +287,7 @@ export class Parser {
     };
   }
 
-  errorMark(text: string) {
+  errorMark(text: string): never {
     const currentToken = this.tokens[this.index];
     const type = currentToken ? currentToken.type : 'end of string';
     const error: GraphiteParserError = {
