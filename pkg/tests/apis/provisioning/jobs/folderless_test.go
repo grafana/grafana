@@ -401,8 +401,7 @@ func TestIntegrationProvisioning_FolderlessFileMove(t *testing.T) {
 		OriginalPath: "dashboard.json",
 		Message:      "move dashboard into a subfolder",
 	})
-	// nolint:errcheck
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	require.Equal(t, 200, resp.StatusCode, "move into subfolder should succeed")
 
 	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "team-y", "dashboard.json")
@@ -427,8 +426,7 @@ func TestIntegrationProvisioning_FolderlessFileMove(t *testing.T) {
 		OriginalPath: "team-y/dashboard.json",
 		Message:      "move dashboard back to the top level",
 	})
-	// nolint:errcheck
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	require.Equal(t, 200, resp.StatusCode, "move back to root should succeed")
 
 	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard.json")
