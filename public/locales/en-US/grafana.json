@@ -6946,6 +6946,18 @@
         "dashboard-not-found": "Dashboard not found"
       }
     },
+    "dashboard-settings": {
+      "annotations": {
+        "button-moved": "Take me there",
+        "description-moved": "Annotation settings have been moved to the dashboard's sidebar.",
+        "title-moved": "Looking for annotations?"
+      },
+      "variables": {
+        "button-moved": "Take me there",
+        "description-moved": "Variable settings has been moved to the dashboard's sidebar.",
+        "title-moved": "Looking for variable settings?"
+      }
+    },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Dashboard controls"
     },
@@ -7793,10 +7805,7 @@
   },
   "dashboard-settings": {
     "annotations": {
-      "button-moved": "Take me there",
-      "description-moved": "Annotation settings have moved to the dashboard's sidebar.",
-      "title": "Annotations",
-      "title-moved": "Looking for annotation settings?"
+      "title": "Annotations"
     },
     "dashboard-delete-button": "Delete dashboard",
     "delete-modal": {
@@ -7859,10 +7868,7 @@
       "week-start-label": "Week start"
     },
     "variables": {
-      "button-moved": "Take me there",
-      "description-moved": "Variable settings have moved to the dashboard's sidebar.",
-      "title": "Variables",
-      "title-moved": "Looking for variable settings?"
+      "title": "Variables"
     },
     "versions": {
       "provisioned-warning": "This dashboard is managed by a repository. Version history is not available for provisioned dashboards.",
