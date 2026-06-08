@@ -151,6 +151,115 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 			},
 			expectedErr: "spec.migrate: Required value: migrate options required for migrate action",
 		},
+		{
+			// Playlist is declared but disabled in the default config, so it is not part of
+			// the active supported set and must be rejected for export.
+			name: "push job with disabled resource kind",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{"name": "playlist-1", "kind": "Playlist"},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[0].kind: Invalid value: \"Playlist\": kind is not supported for export",
+		},
+		{
+			name: "push job with wrong group for supported kind",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{"name": "dash-1", "kind": "Dashboard", "group": "folder.grafana.app"},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[0].group: Invalid value: \"folder.grafana.app\": group \"folder.grafana.app\" is not supported for kind Dashboard",
+		},
+		{
+			name: "push job with resource missing name",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{"kind": "Dashboard"},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[0].name: Required value: resource name is required",
+		},
+		{
+			name: "push job with resource missing kind",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{"name": "dash-1"},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[0].kind: Required value: resource kind is required",
+		},
+		{
+			name: "push job with empty resource ref",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[0].name: Required value",
+		},
+		{
+			name: "push job reports index of bad resource in a mixed list",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{"name": "dash-1", "kind": "Dashboard"},
+						{"name": "playlist-1", "kind": "Playlist"},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[1].kind: Invalid value: \"Playlist\": kind is not supported for export",
+		},
+		{
+			// Kind matching is case-sensitive: "dashboard" does not match the supported "Dashboard".
+			name: "push job with lowercase dashboard kind",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{"name": "dash-1", "kind": "dashboard"},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[0].kind: Invalid value: \"dashboard\": kind is not supported for export",
+		},
+		{
+			// LibraryPanel is declared but disabled in the default config.
+			name: "push job with LibraryPanel kind",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{"name": "panel-1", "kind": "LibraryPanel"},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[0].kind: Invalid value: \"LibraryPanel\": kind is not supported for export",
+		},
 	}
 
 	for i, tt := range tests {

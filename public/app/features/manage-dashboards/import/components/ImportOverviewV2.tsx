@@ -6,7 +6,7 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
-import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/constants';
 import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { useDispatch } from 'app/types/store';
@@ -27,10 +27,20 @@ type Props = {
   meta: { updatedAt: string; orgName: string };
   source: DashboardSource;
   folderUid: string;
+  onFolderChange?: (uid: string) => void;
   onCancel: () => void;
 };
 
-export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source, folderUid, onCancel }: Props) {
+export function ImportOverviewV2({
+  dashboard,
+  dashboardUid,
+  inputs,
+  meta,
+  source,
+  folderUid,
+  onFolderChange,
+  onCancel,
+}: Props) {
   const dispatch = useDispatch();
   const { layout: normalizedLayout, modified: hasFloatGridItems } = useMemo(
     () => truncateFloatGridItems(dashboard.layout),
@@ -101,6 +111,7 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
             onSubmit={onSubmit}
             watch={watch}
             hasFloatGridItems={hasFloatGridItems}
+            onFolderChange={onFolderChange}
           />
         )}
       </Form>

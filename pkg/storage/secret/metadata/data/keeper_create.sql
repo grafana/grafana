@@ -11,7 +11,8 @@ INSERT INTO {{ .Ident "secret_keeper" }} (
   {{ .Ident "description" }},
   {{ .Ident "type" }},
   {{ .Ident "payload" }}
-) VALUES (
+)
+SELECT
   {{ .Arg .Row.GUID }},
   {{ .Arg .Row.Name }},
   {{ .Arg .Row.Namespace }},
@@ -24,4 +25,21 @@ INSERT INTO {{ .Ident "secret_keeper" }} (
   {{ .Arg .Row.Description }},
   {{ .Arg .Row.Type }},
   {{ .Arg .Row.Payload }}
-);
+FROM
+  (SELECT 1) AS {{ .Ident "keeper_insert_check" }}
+WHERE
+{{- if .UsedSecureValues }}
+  (
+    SELECT COUNT(*) FROM (
+      SELECT 1 FROM {{ .Ident "secret_secure_value" }}
+      WHERE {{ .Ident "namespace" }} = {{ .Arg .Row.Namespace }}
+        AND {{ .Ident "name" }} IN ({{ .ArgList .UsedSecureValues }})
+        AND {{ .Ident "active" }} = true
+        AND {{ .Ident "keeper" }} = {{ .Arg .SystemKeeperName }}
+      {{ .SelectFor "UPDATE" }}
+    ) AS {{ .Ident "sv_check" }}
+  ) = {{ .Arg (len .UsedSecureValues) }}
+{{- else }}
+  1 = 1
+{{- end }}
+;

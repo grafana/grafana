@@ -35,42 +35,36 @@ on:
         description: 'The repository to create the security branch in (e.g., grafana/grafana-security-mirror)'
         required: true
 
-permissions:
-  contents: write
-  id-token: write
+permissions: {}
 
 jobs:
   main:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
+    permissions:
+      # Pushes use the app token via actions/checkout; GITHUB_TOKEN needs only OIDC for Vault.
+      contents: read
+      id-token: write
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
     steps:
-      - name: "Get vault secrets"
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-
-      - name: "Generate token"
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          github_app: ${{ inputs.repository == 'grafana/grafana-security-mirror' && 'grafana-security-mirror-writer' || 'grafana-pr-automation' }}
+          permission_set: ${{ startsWith(github.ref_name, 'release-') && 'writer-release' || 'writer-main' }}
 
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ steps.get-github-app-token.outputs.token }}
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.release_branch }}
 
       - name: Create security branch
         id: branch
         env:
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
           INPUT_RELEASE_BRANCH: ${{ inputs.release_branch }}
           INPUT_SECURITY_BRANCH_NUMBER: ${{ inputs.security_branch_number }}
           INPUT_REPOSITORY: ${{ inputs.repository }}

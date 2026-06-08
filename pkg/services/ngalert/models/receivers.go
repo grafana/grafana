@@ -412,10 +412,8 @@ func ValidateIntegration(ctx context.Context, integration models.IntegrationConf
 		return fmt.Errorf("settings should not be empty")
 	}
 
-	_, err := alertingNotify.BuildReceiverConfiguration(ctx, &alertingNotify.APIReceiver{
-		ReceiverConfig: models.ReceiverConfig{
-			Integrations: []*models.IntegrationConfig{&integration},
-		},
+	_, err := alertingNotify.BuildReceiverConfiguration(ctx, models.ReceiverConfig{
+		Integrations: []*models.IntegrationConfig{&integration},
 	}, alertingNotify.DecodeSecretsFromBase64, decryptFunc)
 	if err != nil {
 		return err

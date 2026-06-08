@@ -6,7 +6,8 @@ import { ThresholdsMode, VariableFormatID, type MatcherScope } from '@grafana/sc
 
 import { NullValueMode } from '../../src/types/data';
 import { compareArrayValues, compareDataFrameStructures } from '../dataframe/frameComparisons';
-import { createDataFrame, guessFieldTypeForField } from '../dataframe/processDataFrame';
+import { guessFieldTypeForField } from '../dataframe/guessFieldType';
+import { createDataFrame } from '../dataframe/processDataFrame';
 import { type PanelPlugin } from '../panel/PanelPlugin';
 import { asHexString } from '../themes/colorManipulator';
 import { type GrafanaTheme2 } from '../themes/types';

@@ -75,6 +75,28 @@ func TestCreateMetricsQuery_URLParseError(t *testing.T) {
 	assert.Nil(t, req)
 }
 
+func TestRunTraceQlQuery_NilQuery_ReturnsError(t *testing.T) {
+	service := &Service{logger: backend.NewLoggerWith("logger", "tsdb.tempo.test")}
+	query := backend.DataQuery{JSON: []byte(`{}`)}
+
+	res, err := service.runTraceQlQuery(context.Background(), backend.PluginContext{}, query)
+
+	assert.Nil(t, res)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "query is required")
+}
+
+func TestRunTraceQlQuery_EmptyQuery_ReturnsError(t *testing.T) {
+	service := &Service{logger: backend.NewLoggerWith("logger", "tsdb.tempo.test")}
+	query := backend.DataQuery{JSON: []byte(`{"query": ""}`)}
+
+	res, err := service.runTraceQlQuery(context.Background(), backend.PluginContext{}, query)
+
+	assert.Nil(t, res)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "query is required")
+}
+
 func TestEmptyQueryString_ReturnsFalse(t *testing.T) {
 	result := isMetricsQuery("")
 	assert.False(t, result)

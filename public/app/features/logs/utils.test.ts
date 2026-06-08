@@ -10,11 +10,15 @@ import {
   LogsSortOrder,
   MutableDataFrame,
   type DataFrame,
-  standardTransformers,
   toDataFrame,
   DataFrameType,
 } from '@grafana/data';
-import { mockTransformationsRegistry } from '@grafana/data/internal';
+import {
+  filterFieldsByNameTransformer,
+  mockTransformationsRegistry,
+  organizeFieldsTransformer,
+} from '@grafana/data/internal';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { getMockFrames } from 'app/plugins/datasource/loki/mocks/frames';
 
@@ -32,6 +36,8 @@ import {
   getLogLevel,
   getLogLevelFromKey,
   getLogsVolumeMaximumRange,
+  isMissingStringField,
+  isMissingTimeField,
   logRowsToReadableJson,
   mergeLogsVolumeDataFrames,
   sortLogsResult,
@@ -40,6 +46,18 @@ import {
   DownloadFormat,
 } from './utils';
 
+const mockGetBooleanValue = jest.fn((key: string, defaultValue: boolean) => defaultValue);
+
+jest.mock('@grafana/runtime/internal', () => {
+  const actual = jest.requireActual('@grafana/runtime/internal');
+  return {
+    ...actual,
+    getFeatureFlagClient: jest.fn(() => ({
+      getBooleanValue: mockGetBooleanValue,
+    })),
+  };
+});
+
 jest.mock('file-saver', () => jest.fn());
 
 jest.mock('../inspector/utils/download', () => ({
@@ -47,33 +65,47 @@ jest.mock('../inspector/utils/download', () => ({
   downloadDataFrameAsCsv: jest.fn(),
 }));
 
-describe('getLoglevel()', () => {
-  it('returns no log level on empty line', () => {
-    expect(getLogLevel('')).toBe(LogLevel.unknown);
+describe('deprecated getLoglevel()', () => {
+  describe('with grafana.logLevelInference enabled', () => {
+    beforeEach(() => {
+      mockGetBooleanValue.mockImplementation((key, def) => (key === FlagKeys.GrafanaLogLevelInference ? true : def));
+    });
+
+    afterEach(() => {
+      mockGetBooleanValue.mockImplementation((key, def) => def);
+    });
+
+    it('returns no log level on empty line', () => {
+      expect(getLogLevel('')).toBe(LogLevel.unknown);
+    });
+
+    it('returns no log level on when level is part of a word', () => {
+      expect(getLogLevel('who warns us')).toBe(LogLevel.unknown);
+    });
+
+    it('returns same log level for long and short version', () => {
+      expect(getLogLevel('[Warn]')).toBe(LogLevel.warning);
+      expect(getLogLevel('[Warning]')).toBe(LogLevel.warning);
+      expect(getLogLevel('[Warn]')).toBe('warning');
+    });
+
+    it('returns correct log level when level is capitalized', () => {
+      expect(getLogLevel('WARN')).toBe(LogLevel.warn);
+    });
+
+    it('returns log level on line contains a log level', () => {
+      expect(getLogLevel('warn: it is looking bad')).toBe(LogLevel.warn);
+      expect(getLogLevel('2007-12-12 12:12:12 [WARN]: it is looking bad')).toBe(LogLevel.warn);
+    });
+
+    it('returns first log level found', () => {
+      expect(getLogLevel('WARN this could be a debug message')).toBe(LogLevel.warn);
+      expect(getLogLevel('WARN this is a non-critical message')).toBe(LogLevel.warn);
+    });
   });
 
-  it('returns no log level on when level is part of a word', () => {
-    expect(getLogLevel('who warns us')).toBe(LogLevel.unknown);
-  });
-
-  it('returns same log level for long and short version', () => {
-    expect(getLogLevel('[Warn]')).toBe(LogLevel.warning);
-    expect(getLogLevel('[Warning]')).toBe(LogLevel.warning);
-    expect(getLogLevel('[Warn]')).toBe('warning');
-  });
-
-  it('returns correct log level when level is capitalized', () => {
-    expect(getLogLevel('WARN')).toBe(LogLevel.warn);
-  });
-
-  it('returns log level on line contains a log level', () => {
-    expect(getLogLevel('warn: it is looking bad')).toBe(LogLevel.warn);
-    expect(getLogLevel('2007-12-12 12:12:12 [WARN]: it is looking bad')).toBe(LogLevel.warn);
-  });
-
-  it('returns first log level found', () => {
-    expect(getLogLevel('WARN this could be a debug message')).toBe(LogLevel.warn);
-    expect(getLogLevel('WARN this is a non-critical message')).toBe(LogLevel.warn);
+  describe('with grafana.logLevelInference disaabled', () => {
+    expect(getLogLevel('error warn info')).toBe(LogLevel.unknown);
   });
 });
 
@@ -682,11 +714,7 @@ describe('downloadLogs', () => {
 
   describe('CSV format', () => {
     beforeAll(() => {
-      mockTransformationsRegistry([
-        extractFieldsTransformer,
-        standardTransformers.organizeFieldsTransformer,
-        standardTransformers.filterFieldsByNameTransformer,
-      ]);
+      mockTransformationsRegistry([extractFieldsTransformer, organizeFieldsTransformer, filterFieldsByNameTransformer]);
     });
 
     beforeEach(() => {
@@ -749,5 +777,93 @@ describe('downloadLogs', () => {
       expect(lineField).toBeDefined();
       expect(lineField?.values).toContain('test entry');
     });
+  });
+});
+
+describe('isMissingTimeField', () => {
+  it('returns false when series is undefined', () => {
+    expect(isMissingTimeField(undefined)).toBe(false);
+  });
+
+  it('returns false when series is empty', () => {
+    expect(isMissingTimeField([])).toBe(false);
+  });
+
+  it('returns false when frames have rows and a time field', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'timestamp', type: FieldType.time, values: [1, 2] },
+        { name: 'message', type: FieldType.string, values: ['a', 'b'] },
+      ],
+    });
+    expect(isMissingTimeField([frame])).toBe(false);
+  });
+
+  it('returns false when frames are empty (no rows) even without a time field', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'message', type: FieldType.string, values: [] }],
+    });
+    expect(isMissingTimeField([frame])).toBe(false);
+  });
+
+  it('returns true when frames have rows but no time field', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'message', type: FieldType.string, values: ['a', 'b'] }],
+    });
+    expect(isMissingTimeField([frame])).toBe(true);
+  });
+
+  it('returns true when only a number field is present (no time, no string)', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'count', type: FieldType.number, values: [1, 2] }],
+    });
+    expect(isMissingTimeField([frame])).toBe(true);
+  });
+
+  it('returns false if any frame has a time field', () => {
+    const frameWithTime = toDataFrame({
+      fields: [
+        { name: 'timestamp', type: FieldType.time, values: [1] },
+        { name: 'message', type: FieldType.string, values: ['a'] },
+      ],
+    });
+    const frameWithoutTime = toDataFrame({
+      fields: [{ name: 'message', type: FieldType.string, values: ['b'] }],
+    });
+    expect(isMissingTimeField([frameWithTime, frameWithoutTime])).toBe(false);
+  });
+});
+
+describe('isMissingStringField', () => {
+  it('returns false when series is undefined', () => {
+    expect(isMissingStringField(undefined)).toBe(false);
+  });
+
+  it('returns false when series is empty', () => {
+    expect(isMissingStringField([])).toBe(false);
+  });
+
+  it('returns false when frames have rows and a string field', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'timestamp', type: FieldType.time, values: [1, 2] },
+        { name: 'message', type: FieldType.string, values: ['a', 'b'] },
+      ],
+    });
+    expect(isMissingStringField([frame])).toBe(false);
+  });
+
+  it('returns false when frames are empty (no rows) even without a string field', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'timestamp', type: FieldType.time, values: [] }],
+    });
+    expect(isMissingStringField([frame])).toBe(false);
+  });
+
+  it('returns true when frames have rows but no string field', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'timestamp', type: FieldType.time, values: [1, 2] }],
+    });
+    expect(isMissingStringField([frame])).toBe(true);
   });
 });

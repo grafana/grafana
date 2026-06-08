@@ -6,7 +6,7 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
-import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/constants';
 import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -28,10 +28,11 @@ type Props = {
   meta: { updatedAt: string; orgName: string };
   source: DashboardSource;
   folderUid: string;
+  onFolderChange?: (uid: string) => void;
   onCancel: () => void;
 };
 
-export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, onCancel }: Props) {
+export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, onFolderChange, onCancel }: Props) {
   const dispatch = useDispatch();
   const [uidReset, setUidReset] = useState(false);
   const folder = { uid: folderUid };
@@ -122,6 +123,7 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
             onUidReset={() => setUidReset(true)}
             onSubmit={onSubmit}
             watch={watch}
+            onFolderChange={onFolderChange}
           />
         )}
       </Form>

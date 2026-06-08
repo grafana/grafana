@@ -49,10 +49,6 @@ func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider, mappers 
 		schema.GroupResource{Group: "iam.grafana.app", Resource: "users"},
 		NewIDScopedMapper("users", defaultLevels), nil,
 	)
-	mappers.RegisterMapper(
-		schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"},
-		NewIDScopedMapper("serviceaccounts", []string{"Edit", "Admin"}), nil,
-	)
 	return &ResourcePermSqlBackend{
 		dbProvider:    dbProvider,
 		identityStore: store,

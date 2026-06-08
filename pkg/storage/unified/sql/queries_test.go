@@ -149,6 +149,17 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						LatestRv:    20000,
 					},
 				},
+				{
+					Name: "cross-namespace",
+					Data: &sqlResourceListModifiedSinceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "",
+						Group:       "group",
+						Resource:    "res",
+						SinceRv:     10000,
+						LatestRv:    20000,
+					},
+				},
 			},
 			sqlResourceHistoryGarbageGetCandidates: {
 				{
@@ -478,8 +489,16 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Data: &sqlStatsRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "default",
-						Folder:      "folder",
+						Folders:     []string{"folder"},
 						MinCount:    10, // Not yet used in query (only response filter)
+					},
+				},
+				{
+					Name: "folders",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Folders:     []string{"a", "b", "c"},
 					},
 				},
 				{

@@ -163,15 +163,6 @@ export function isSegmentVisible(
   return false;
 }
 
-export const isUrl = (url: string) => {
-  try {
-    const newUrl = new URL(url);
-    return newUrl.protocol.includes('http');
-  } catch (_) {
-    return false;
-  }
-};
-
 /**
  * Checks if a layer has data to display
  * @param layer The OpenLayers layer to check

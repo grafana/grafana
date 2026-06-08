@@ -8,60 +8,17 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
-// POST /api/preferences/set-home-dash
-func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Response {
-	cmd := pref.SavePreferenceCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-
-	userID, err := identity.UserIdentifier(c.GetID())
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to set home dashboard", err)
-	}
-
-	cmd.UserID = userID
-	cmd.OrgID = c.GetOrgID()
-
-	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
-	// nolint:staticcheck
-	dashboardID := cmd.HomeDashboardID
-	if cmd.HomeDashboardUID != nil {
-		query := dashboards.GetDashboardQuery{UID: *cmd.HomeDashboardUID}
-		if query.UID == "" {
-			dashboardID = 0 // clear the value
-		} else {
-			queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
-			if err != nil {
-				return response.Error(http.StatusNotFound, "Dashboard not found", err)
-			}
-			dashboardID = queryResult.ID
-		}
-	} else if cmd.HomeDashboardID != 0 { // nolint:staticcheck
-		// make sure uid is always set if id is set
-		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dashboards.GetDashboardQuery{ID: cmd.HomeDashboardID, OrgID: cmd.OrgID}) // nolint:staticcheck
-		if err != nil {
-			return response.Error(http.StatusNotFound, "Dashboard not found", err)
-		}
-		cmd.HomeDashboardUID = &queryResult.UID
-	}
-
-	// nolint:staticcheck
-	cmd.HomeDashboardID = dashboardID
-
-	if err := hs.preferenceService.Save(c.Req.Context(), &cmd); err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to set home dashboard", err)
-	}
-
-	return response.Success("Home dashboard set")
-}
+var ofClient = openfeature.NewDefaultClient()
 
 // swagger:route GET /user/preferences signed_in_user preferences getUserPreferences
 //
@@ -72,6 +29,11 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Response {
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
+		return hs.preferenceK8sHandler.GetPreferences(c, prefutils.UserOwner(c.GetIdentifier()))
+	}
+
 	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
 		return response.Error(http.StatusUnauthorized, "Not a valid identity", err)
@@ -97,6 +59,11 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
+		return hs.preferenceK8sHandler.UpdatePreferences(c, prefutils.UserOwner(c.GetIdentifier()), &dtoCmd)
+	}
+
 	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", err)
@@ -119,6 +86,11 @@ func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.
 	dtoCmd := dtos.PatchPrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
+		return hs.preferenceK8sHandler.PatchPreferences(c, prefutils.UserOwner(c.GetIdentifier()), &dtoCmd)
 	}
 
 	userID, err := identity.UserIdentifier(c.GetID())
@@ -176,7 +148,6 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		HomeDashboardID:  dtoCmd.HomeDashboardID, // nolint:staticcheck
 		HomeDashboardUID: dtoCmd.HomeDashboardUID,
 		Language:         dtoCmd.Language,
-		RegionalFormat:   dtoCmd.RegionalFormat,
 		QueryHistory:     dtoCmd.QueryHistory,
 		Navbar:           dtoCmd.Navbar,
 	}
@@ -198,7 +169,11 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgPreferences(c *contextmodel.ReqContext) response.Response {
-	return prefapi.GetPreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0)
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
+		return hs.preferenceK8sHandler.GetPreferences(c, prefutils.NamespaceOwner())
+	}
+	return prefapi.GetPreferencesFor(ctx, hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0)
 }
 
 // swagger:route PUT /org/preferences org preferences updateOrgPreferences
@@ -217,7 +192,12 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	return prefapi.UpdatePreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0, &dtoCmd)
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
+		return hs.preferenceK8sHandler.UpdatePreferences(c, prefutils.NamespaceOwner(), &dtoCmd)
+	}
+
+	return prefapi.UpdatePreferencesFor(ctx, hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0, &dtoCmd)
 }
 
 // swagger:route PATCH /org/preferences org preferences patchOrgPreferences
@@ -235,7 +215,13 @@ func (hs *HTTPServer) PatchOrgPreferences(c *contextmodel.ReqContext) response.R
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return hs.patchPreferencesFor(c.Req.Context(), c.GetOrgID(), 0, 0, &dtoCmd)
+
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
+		return hs.preferenceK8sHandler.PatchPreferences(c, prefutils.NamespaceOwner(), &dtoCmd)
+	}
+
+	return hs.patchPreferencesFor(ctx, c.GetOrgID(), 0, 0, &dtoCmd)
 }
 
 // swagger:parameters  updateUserPreferences

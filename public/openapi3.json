@@ -4325,6 +4325,12 @@
           },
           "subject": {
             "type": "string"
+          },
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/ReportURLItem"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -8285,9 +8291,6 @@
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
           },
-          "regionalFormat": {
-            "type": "string"
-          },
           "theme": {
             "enum": [
               "light",
@@ -8943,8 +8946,12 @@
             "description": "UID for the home dashboard",
             "type": "string"
           },
+          "homeURL": {
+            "description": "Explicit home URL (NOTE: this can only be modified in the system settings)",
+            "type": "string"
+          },
           "language": {
-            "description": "Selected language (beta)",
+            "description": "Selected language",
             "type": "string"
           },
           "navbar": {
@@ -8953,16 +8960,12 @@
           "queryHistory": {
             "$ref": "#/components/schemas/PreferencesQueryHistoryPreference"
           },
-          "regionalFormat": {
-            "description": "Selected locale (beta)",
-            "type": "string"
-          },
           "theme": {
-            "description": "light, dark, empty is default",
+            "description": "user interface theme",
             "type": "string"
           },
           "timezone": {
-            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+            "description": "The timezone selection",
             "type": "string"
           },
           "weekStart": {
@@ -9980,6 +9983,12 @@
             "format": "date-time",
             "type": "string"
           },
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/ReportURLItem"
+            },
+            "type": "array"
+          },
           "userId": {
             "format": "int64",
             "type": "integer"
@@ -10159,6 +10168,17 @@
             "type": "string"
           },
           "to": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReportURLItem": {
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "url": {
             "type": "string"
           }
         },
@@ -11644,6 +11664,7 @@
             "type": "string"
           },
           "uid": {
+            "description": "Deprecated: always empty; no per-entry id.",
             "type": "string"
           }
         },
@@ -12493,9 +12514,6 @@
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
-          },
-          "regionalFormat": {
-            "type": "string"
           },
           "theme": {
             "enum": [

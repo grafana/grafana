@@ -22,16 +22,18 @@ weight: 495
 ## Technical notes
 
 {{< admonition type="warning" >}}
-**GitSync early adopters:** If you upgraded to Grafana v13.0.0 with GitSync enabled from Grafana v12.x.x, a migration bug might have caused dashboards and folders to be lost or reverted during the upgrade. This issue is fixed in Grafana v13.0.1.
+**Git Sync early adopters:** A migration bug in Grafana v13.0.0 might cause dashboards and folders to be lost or reverted when upgrading from Grafana v12.x.x with Git Sync enabled. Upgrading from v13.0.0 to v13.0.1 does **not** recover lost data, and if you already upgraded, you must restore your database first, then upgrade to v13.0.1.
 
-This bug only affects self-managed instances that enabled the GitSync feature flags (`provisioning`, `kubernetesClientDashboardsFolders`, `kubernetesDashboards`, and `grafanaAPIServerEnsureKubectlAccess`) before GitSync reached general availability.
+The bug only affects self-managed instances with Git Sync feature flags (`provisioning`, `kubernetesClientDashboardsFolders`, `kubernetesDashboards`, and `grafanaAPIServerEnsureKubectlAccess`) enabled on Grafana v12.x.x.
 
-Grafana v13.0.0 was removed from distribution and a fix is included in Grafana v13.0.1.
+Grafana v13.0.0 has been removed from distribution and the fix has shipped in Grafana v13.0.1.
 
-If you are affected, recovery might require restoring from backup or resyncing from Git, depending on whether your instance used mixed local and GitSync content or full-instance sync.
+If you're affected, use the following recovery paths:
 
-We recommend using your database backup to restore and then upgrading to v13.0.1.
-{{< /admonition >}}
+- **If your instance used mixed local and Git Sync content:** restore from the database backup you took before upgrading, then upgrade to Grafana v13.0.1.
+- **If your instance used full-instance Git Sync:** upgrade to Grafana v13.0.1 and resync from your Git repository.
+- **If unsure:** restore from your database backup before upgrading to v13.0.1.
+  {{< /admonition >}}
 
 ### React 19 related updates
 
@@ -53,77 +55,11 @@ Finally you can continue your upgrade to Grafana 13.
 
 ### Legacy `/api` endpoints are now deprecated
 
-The new Kubernetes-style API for dashboards, folders, and annotations is generally available in Grafana v13.0. The legacy `/api` endpoints are deprecated and will be removed in a future major release.
+Grafana is migrating existing APIs to the new `/apis` model, a Kubernetes-style API layer which follows a standardized API structure alongside consistent API versioning. Refer to the [New API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis) documentation for more details.
 
-The new API is built on the Grafana App Platform (Kubernetes resource model) and provides versioned, consistent, and schema-based endpoints. The legacy `/api` endpoints remain functional but won't receive new features.
+**Legacy APIs are not being disabled for the moment**. Removal of legacy APIs is planned for a future major release, and any breaking changes will be announced well in advance to avoid disruptions.
 
-#### Namespace values
-
-The new API paths include a `{namespace}` parameter. The value depends on your deployment type:
-
-- **Grafana Cloud:** Your stack slug (for example, `my-stack`).
-- **Grafana OSS / Enterprise:** Your org ID (for example, `org-1`).
-
-#### Dashboards
-
-The dashboards API is deprecated in Grafana v13.0. The new v1 API is available now.
-
-New API reference: `{your-instance}/swagger?api=dashboard.grafana.app-v1`
-
-| Operation          | Legacy endpoint                          | New endpoint                                                                                                                                                                                                                                                                                                           |
-| ------------------ | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Get dashboard      | `GET /api/dashboards/uid/{uid}`          | `GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`                                                                                                                                                                                                                                           |
-| Create or update   | `POST /api/dashboards/db`                | `POST /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards`                                                                                                                                                                                                                                                |
-| Delete dashboard   | `DELETE /api/dashboards/uid/{uid}`       | `DELETE /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`                                                                                                                                                                                                                                        |
-| List dashboards    | `GET /api/search`                        | `GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards`                                                                                                                                                                                                                                                 |
-| Dashboard versions | `GET /api/dashboards/uid/{uid}/versions` | Version history is now managed through resource metadata, consistent with the Kubernetes resource model. Use label and field selectors on the dashboards resource: `GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards?labelSelector=grafana.app/get-history=true&fieldSelector=metadata.name={uid}` |
-| Dashboard tags     | `GET /api/dashboards/tags`               | Deprecated, no replacement planned.                                                                                                                                                                                                                                                                                    |
-
-#### Folders
-
-The folders API is deprecated in Grafana v13.0. The new v1 API is available now.
-
-New API reference: `{your-instance}/swagger?api=folder.grafana.app-v1`
-
-| Operation     | Legacy endpoint                | New endpoint                                                              |
-| ------------- | ------------------------------ | ------------------------------------------------------------------------- |
-| List folders  | `GET /api/folders`             | `GET /apis/folder.grafana.app/v1/namespaces/{namespace}/folders`          |
-| Get folder    | `GET /api/folders/{uid}`       | `GET /apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}`    |
-| Create folder | `POST /api/folders`            | `POST /apis/folder.grafana.app/v1/namespaces/{namespace}/folders`         |
-| Update folder | `PUT /api/folders/{uid}`       | `PUT /apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}`    |
-| Move folder   | `POST /api/folders/{uid}/move` | `PUT /apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}`    |
-| Delete folder | `DELETE /api/folders/{uid}`    | `DELETE /apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}` |
-
-To move a folder, set the `grafana.app/folder` annotation to the parent folder UID in the `PUT` request body.
-
-#### Annotations
-
-The annotations API deprecation is in progress. The new annotations API isn't available yet, and the migration path will be announced when it's ready.
-
-- **Resource-based API:** Annotation operations will move to a new endpoint following the pattern `/apis/annotation.grafana.app/{apiVersion}/namespaces/{namespace}/annotations`. The endpoint mapping will be published when the new API is available.
-- **Mass delete:** `POST /api/annotations/mass-delete` isn't supported in the new API and has no equivalent UI feature. Use the new TTL (time to live) configuration to define how long annotations are retained instead of performing bulk deletes.
-- **Tags:** `GET /api/annotations/tags` is preserved through a dedicated `/tags` route with the same prefix-based filtering.
-
-Audit your current annotation API usage now, particularly any use of mass-delete.
-
-#### Query history
-
-The query history API is deprecated in Grafana v13.0 and will be removed in a future release.
-
-Query history APIs won't be migrated to the Grafana App Platform. Instead, Grafana will revert to using local on-device storage for this functionality.
-
-| Operation            | Legacy endpoint                       | New endpoint                        |
-| -------------------- | ------------------------------------- | ----------------------------------- |
-| Create query history | `POST /api/query-history`             | Deprecated, no replacement planned. |
-| Fetch query history  | `GET /api/query-history?{params}`     | Deprecated, no replacement planned. |
-| Delete a query       | `DELETE /api/query-history/{id}`      | Deprecated, no replacement planned. |
-| Update a comment     | `PATCH /api/query-history/{id}`       | Deprecated, no replacement planned. |
-| Star a query         | `POST /api/query-history/star/{id}`   | Deprecated, no replacement planned. |
-| Unstar a query       | `DELETE /api/query-history/star/{id}` | Deprecated, no replacement planned. |
-
-If you consume the query history APIs directly, adopt a local on-device storage approach. A sample implementation will be provided in a future Grafana release that you can use as a reference.
-
-The legacy endpoints continue to work for now. No immediate action is required, but early migration is recommended.
+For more information and migration guidance, refer to [Migrate to the new APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration).
 
 ### Deprecated data source APIs disabled
 
@@ -253,3 +189,28 @@ The `GET /api/alertmanager/grafana/api/v2/status` endpoint previously required t
 #### Migration
 
 If you have custom roles that need access to this endpoint, add the `alert.notifications.system-status:read` action to those roles. Admin users are unaffected as they receive this permission automatically through the built-in alerting notifications writer role.
+
+### RBAC enforcement changes for custom roles
+
+Grafana v13.0 tightens RBAC enforcement for custom roles, Terraform-managed roles, and role provisioning. Roles that contain deprecated permissions may fail during create, update, delete, or assignment operations. We recommend reviewing and updating affected roles proactively.
+
+#### You are affected if
+
+You manage custom RBAC roles through Terraform, the API, or provisioning, and those roles contain any of the following:
+
+- Data source UID-scoped permissions (`datasources:uid:<uid>`) on a global role
+- `fixed:annotations.dashboard:writer` or `fixed:annotations.dashboard:reader`
+- `annotations:type:dashboard`
+- `annotations:*`
+
+#### Migration
+
+**Data source permissions on global roles:** If a Terraform-managed `grafana_role` combines `global = true` with `datasources:uid:<uid>`, recreate the role as a non-global role with a new UID. Grafana can't change the scope of an existing role in place. Set `datasource_type` on data source permission resources when possible.
+
+**Dashboard annotation fixed roles:** Remove `fixed:annotations.dashboard:writer` and `fixed:annotations.dashboard:reader` from your configurations. Use dashboard or folder permissions (View, Edit, Admin) to control dashboard annotation access instead. Use `annotations:type:organization` for organization-level annotations.
+
+**`annotations:*` wildcard scope:** Replace with specific scopes: `annotations:type:organization` for organization annotations, and dashboard or folder permissions for dashboard annotations. Don't recreate `annotations:*` in Terraform after it has been removed.
+
+If a role is stuck because Grafana refuses to update or delete it, the role may contain a deprecated permission that must be removed before Terraform or API updates can succeed. Contact Grafana support for assistance.
+
+For detailed examples and troubleshooting, refer to [RBAC behavior changes with Grafana 13](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v13-0/#rbac-behavior-changes-with-grafana-13).

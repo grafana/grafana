@@ -1,4 +1,3 @@
-import { DEFAULT_LANGUAGE } from '@grafana/i18n';
 import { addResourceBundle } from '@grafana/i18n/internal';
 
 import { SystemJS } from '../loader/systemjs';
@@ -17,10 +16,6 @@ export async function addTranslationsToI18n({
   pluginId,
   translations,
 }: AddTranslationsToI18nOptions): Promise<void> {
-  if (resolvedLanguage === DEFAULT_LANGUAGE) {
-    return;
-  }
-
   const resolvedPath = translations[resolvedLanguage];
   const fallbackPath = translations[fallbackLanguage];
   const path = resolvedPath ?? fallbackPath;

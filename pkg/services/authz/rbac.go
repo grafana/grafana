@@ -73,14 +73,6 @@ func ProvideAuthZClient(
 		return zanzanaClient, nil
 	}
 
-	// Provisioning uses mode 4 (read+write only to unified storage)
-	// For G12 launch, we can disable caching for this and find a more scalable solution soon
-	// most likely this would involve passing the RV (timestamp!) in each check method
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
-		authCfg.cacheTTL = 0
-	}
-
 	switch authCfg.mode {
 	case clientModeCloud:
 		rbacClient, err := newRemoteRBACClient(authCfg, tracer, reg)

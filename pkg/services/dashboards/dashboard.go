@@ -3,16 +3,15 @@ package dashboards
 import (
 	"context"
 
-	authtypes "github.com/grafana/authlib/types"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // DashboardService is a service for operating on dashboards.
@@ -25,7 +24,7 @@ type DashboardService interface {
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	// GetDashboard fetches a dashboard.
 	// To fetch a dashboard under root by title should set the folder UID to point to an empty string
-	// eg. util.Pointer("")
+	// eg. new("")
 	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
 	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error) // use sparely only if you truly need dashboard.Data
 	GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) ([]*DashboardTagCloudItem, error)

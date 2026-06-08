@@ -1,6 +1,5 @@
 import WKT from 'ol/format/WKT';
 import { type Geometry, Point } from 'ol/geom';
-import { type SortColumn } from 'react-data-grid';
 
 import {
   createDataFrame,
@@ -15,6 +14,7 @@ import {
   type LinkModel,
   type ValueLinkConfig,
 } from '@grafana/data';
+import { type SortColumn } from '@grafana/react-data-grid';
 import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { TableCellDisplayMode } from '../types';
@@ -27,6 +27,7 @@ import {
   buildCellHeightMeasurers,
   buildHeaderHeightMeasurers,
   buildInspectValue,
+  buildNestedColumnWidthsMap,
   calculateFooterHeight,
   compileFrameToRecords,
   computeColWidths,
@@ -273,6 +274,34 @@ describe('TableNG utils', () => {
       expect(records).toHaveLength(2);
       expect(records[0]).toEqual({ __depth: 0, __index: 0, __parentIndex: 3, time: 1, value: 10 });
       expect(records[1]).toEqual({ __depth: 0, __index: 1, __parentIndex: 3, time: 2, value: 20 });
+    });
+
+    it('should infer length from field values when frame.length is not set', () => {
+      const frame: DataFrame = {
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3], config: {} },
+          { name: 'value', type: FieldType.number, values: [10, 20, 30], config: {} },
+        ],
+      } as unknown as DataFrame;
+
+      const frameToRecords = compileFrameToRecords(frame);
+      const records = frameToRecords(frame);
+
+      expect(records).toHaveLength(3);
+      expect(records[0]).toEqual({ __depth: 0, __index: 0, time: 1, value: 10 });
+      expect(records[1]).toEqual({ __depth: 0, __index: 1, time: 2, value: 20 });
+      expect(records[2]).toEqual({ __depth: 0, __index: 2, time: 3, value: 30 });
+    });
+
+    it('should produce no rows when frame.length is not set and the nested frame has no fields', () => {
+      const frame: DataFrame = {
+        fields: [],
+      } as unknown as DataFrame;
+
+      const frameToRecords = compileFrameToRecords(frame);
+      const records = frameToRecords(frame, 3);
+
+      expect(records).toHaveLength(0);
     });
   });
 
@@ -1533,6 +1562,43 @@ describe('TableNG utils', () => {
           COLUMN.DEFAULT_WIDTH
         )
       ).toEqual([COLUMN.DEFAULT_WIDTH, COLUMN.DEFAULT_WIDTH]);
+    });
+  });
+
+  describe('buildNestedColumnWidthsMap', () => {
+    it('maps field display names to ColumnWidth entries', () => {
+      const fields: Field[] = [
+        { name: 'Time', type: FieldType.time, values: [], config: {}, state: { displayName: 'Time' } },
+        { name: 'Value', type: FieldType.number, values: [], config: {}, state: { displayName: 'Value' } },
+      ];
+      const widths = [120, 200];
+
+      const result = buildNestedColumnWidthsMap(fields, widths);
+
+      expect(result.get('Time')).toEqual({ type: 'resized', width: 120 });
+      expect(result.get('Value')).toEqual({ type: 'resized', width: 200 });
+      expect(result.size).toBe(2);
+    });
+
+    it('uses the field display name (from state.displayName) as the map key', () => {
+      const fields: Field[] = [
+        {
+          name: 'raw_name',
+          type: FieldType.string,
+          values: [],
+          config: {},
+          state: { displayName: 'Pretty Name' },
+        },
+      ];
+
+      const result = buildNestedColumnWidthsMap(fields, [150]);
+
+      expect(result.has('Pretty Name')).toBe(true);
+      expect(result.has('raw_name')).toBe(false);
+    });
+
+    it('returns an empty map for empty inputs', () => {
+      expect(buildNestedColumnWidthsMap([], []).size).toBe(0);
     });
   });
 

@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect } from 'react';
-import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
-import { Sidebar, useStyles2, useSidebarContext, useTheme2 } from '@grafana/ui';
+import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -15,6 +14,7 @@ import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButt
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
 import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
 import { type ToolbarActionProps } from '../scene/new-toolbar/types';
+import { DashboardInteractions } from '../utils/interactions';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardCodePane } from './DashboardCodePane';
@@ -33,7 +33,7 @@ export interface Props {
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
 export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
-  const { openPane, selectionContext } = useSceneObjectState(editPane, {
+  const { openPane, selectionContext, outlinePane } = useSceneObjectState(editPane, {
     shouldActivateOrKeepAlive: true,
   });
   const { isEditing, meta, uid } = dashboard.useState();
@@ -41,15 +41,14 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
   const selectedObject = editPane.getSelectedObject();
-  const theme = useTheme2();
-  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   const sidebarContext = useSidebarContext();
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
-      sidebarContext?.onToggleIsHidden();
+      editPane.closePane();
+      sidebarContext?.setIsHidden(true);
       e.currentTarget.blur();
     },
-    [sidebarContext]
+    [editPane, sidebarContext]
   );
 
   /**
@@ -57,14 +56,18 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
    */
   useEffect(() => {
     if (!selectedObject && selectionContext.selected.length > 0) {
-      editPane.clearSelection();
+      editPane.fixSelectionOfRemovedObject();
       return;
     }
   }, [selectedObject, selectionContext.selected, editPane]);
 
   return (
     <>
-      {openPane && <Sidebar.OpenPane>{openPane && <openPane.Component model={openPane} />}</Sidebar.OpenPane>}
+      {openPane && (
+        <Sidebar.OpenPane>
+          <openPane.Component key={openPane.state.key} model={openPane} />
+        </Sidebar.OpenPane>
+      )}
       <Sidebar.Toolbar>
         {isEditing && (
           <div className={styles.editGroup}>
@@ -84,7 +87,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               title={t('dashboard.sidebar.dashboard-options.title', 'Options')}
               tooltip={t('dashboard.sidebar.dashboard-options.tooltip', 'Dashboard options')}
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
-              active={selectedObject === dashboard ? true : false}
+              active={selectedObject === dashboard && openPane?.getId() === 'element' ? true : false}
             />
             {config.featureToggles.feedbackButton && (
               <Sidebar.Button
@@ -126,7 +129,10 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
           {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
           <Sidebar.Button
             icon="list-ui-alt"
-            onClick={() => editPane.openPane(new DashboardOutline({}))}
+            onClick={() => {
+              DashboardInteractions.dashboardOutlineClicked();
+              editPane.openPane(outlinePane!);
+            }}
             title={t('dashboard.sidebar.outline.title', 'Outline')}
             tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
@@ -148,17 +154,13 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               onClick={() => onOpenSnapshotOriginalDashboard(dashboard.getSnapshotUrl())}
             />
           )}
-          {isMobile && !isEditing && (
-            <>
-              <Sidebar.Divider />
-              <Sidebar.Button
-                icon={'arrow-to-right'}
-                onClick={onClickHideSidebar}
-                title={t('grafana-ui.sidebar.hide', 'Hide')}
-                data-testid={selectors.components.Sidebar.showHideToggle}
-              />
-            </>
-          )}
+          <Sidebar.Divider />
+          <Sidebar.Button
+            icon={'arrow-to-right'}
+            onClick={onClickHideSidebar}
+            title={t('grafana-ui.sidebar.hide', 'Hide')}
+            data-testid={selectors.components.Sidebar.showHideToggle}
+          />
         </div>
       </Sidebar.Toolbar>
     </>

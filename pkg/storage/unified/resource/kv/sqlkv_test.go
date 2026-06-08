@@ -31,11 +31,11 @@ func setupSQLKVMock(t *testing.T, driverName string) (*SqlKV, *sql.DB, sqlmock.S
 
 func buildDataImportRows(count int) []DataImportRow {
 	rows := make([]DataImportRow, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		rows[i] = DataImportRow{
 			GUID:    fmt.Sprintf("guid-%d", i),
 			KeyPath: fmt.Sprintf("unified/data/group/resource/ns/name-%04d/1~created~", i),
-			Value:   []byte(fmt.Sprintf(`{"name":"item-%04d"}`, i)),
+			Value:   fmt.Appendf(nil, `{"name":"item-%04d"}`, i),
 		}
 	}
 
@@ -248,6 +248,17 @@ func TestSQLKVInsertDataImportBatchUsesLegacyFields(t *testing.T) {
 
 	err := sqlKV.InsertDataImportBatch(context.Background(), rows)
 	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSQLKV_Batch_RejectsDataSection(t *testing.T) {
+	sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
+
+	err := sqlKV.Batch(context.Background(), DataSection, []BatchOp{
+		{Mode: BatchOpPut, Key: "k", Value: []byte("v")},
+	})
+	require.ErrorIs(t, err, ErrBatchNotSupportedOnDataSection)
+	// Reject must short-circuit before touching the DB.
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 

@@ -72,6 +72,11 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
     </td>
   </tr>
   <tr>
+    <td style="vertical-align: top"><code>gcx</code></td>
+    <td>
+      A command-line tool that enables users to authenticate, manage multiple environments, and perform administrative tasks through Grafana's REST API. It's compatible with AI agents.
+  </tr>
+  <tr>
     <td style="vertical-align: top">Integration (Grafana Cloud)</td>
     <td>
       Each Integration in Grafana Cloud uses the cloud agent to connect your data source to Grafana Cloud for visualizing. Note: Prometheus uses the word “integrations” to refer to software that exposes Prometheus metrics without needing an exporter, which is a different use of the same word we use here.

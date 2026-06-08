@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"k8s.io/component-base/tracing"
+	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana/pkg/aggregator/apiserver/plugin/admission"
 	"github.com/grafana/grafana/pkg/aggregator/apiserver/util"
 	grafanasemconv "github.com/grafana/grafana/pkg/semconv"
-	"k8s.io/component-base/tracing"
-	"k8s.io/klog/v2"
 )
 
 func (h *PluginHandler) AdmissionMutationHandler() http.Handler {
@@ -40,7 +41,7 @@ func (h *PluginHandler) AdmissionMutationHandler() http.Handler {
 			return
 		}
 
-		ctx = backend.WithGrafanaConfig(ctx, pluginContext.GrafanaConfig)
+		ctx = config.WithGrafanaConfig(ctx, pluginContext.GrafanaConfig)
 		span.AddEvent("MutateAdmission start")
 		rsp, err := h.client.MutateAdmission(ctx, req)
 		if err != nil {
@@ -99,7 +100,7 @@ func (h *PluginHandler) AdmissionValidationHandler() http.Handler {
 			return
 		}
 
-		ctx = backend.WithGrafanaConfig(ctx, pluginContext.GrafanaConfig)
+		ctx = config.WithGrafanaConfig(ctx, pluginContext.GrafanaConfig)
 		span.AddEvent("ValidateAdmission start")
 		rsp, err := h.client.ValidateAdmission(ctx, req)
 		if err != nil {

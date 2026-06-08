@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -21,7 +19,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-func RunJobController(deps server.OperatorDependencies) error {
+func RunJobController(ctx context.Context, deps server.OperatorDependencies) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "provisioning-job-controller")
@@ -36,17 +34,6 @@ func RunJobController(deps server.OperatorDependencies) error {
 	if err != nil {
 		return fmt.Errorf("failed to provide tracing service: %w", err)
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		<-sigChan
-		logger.Info("Received shutdown signal, stopping controllers")
-		cancel()
-	}()
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {

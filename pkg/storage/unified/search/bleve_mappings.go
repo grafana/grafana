@@ -38,7 +38,7 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 	}
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_NAME, nameMapping)
 
-	// for sorting by title full phrase
+	// for exact title matching and sorting. Keyword mapping means Bleve indexes the whole value as one token.
 	titlePhraseMapping := bleve.NewKeywordFieldMapping()
 	titlePhraseMapping.Store = false // already stored in title
 	titlePhraseMapping.IncludeTermVectors = false
@@ -53,30 +53,13 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 	titleNgramMapping.IncludeTermVectors = false
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE_NGRAM, titleNgramMapping)
 
-	// for searching by title - uses ngram token filter
-	// TODO: remove this once all clients query title_ngram directly
-	titleSearchMapping := bleve.NewTextFieldMapping()
-	titleSearchMapping.Analyzer = TITLE_ANALYZER
-	titleSearchMapping.Store = false // already stored in title
-	titleSearchMapping.DocValues = false
-	titleSearchMapping.IncludeTermVectors = false
-
-	// mapping for title to search on words/tokens larger than the ngram size
-	titleWordMapping := bleve.NewTextFieldMapping()
-	titleWordMapping.Analyzer = standard.Name
-	titleWordMapping.Store = true
-	titleWordMapping.DocValues = false
-	titleWordMapping.IncludeTermVectors = false
-
-	// separate keyword mapping for title (no DocValues — only the standalone title_phrase needs them)
-	titleKeywordMapping := bleve.NewKeywordFieldMapping()
-	titleKeywordMapping.Store = false
-	titleKeywordMapping.DocValues = false
-	titleKeywordMapping.IncludeTermVectors = false
-	titleKeywordMapping.SkipFreqNorm = true
-
-	// NOTE: this causes 3 title fields in the response
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE, titleWordMapping, titleSearchMapping, titleKeywordMapping)
+	// for full-token title search; partial matches use title_ngram
+	titleMapping := bleve.NewTextFieldMapping()
+	titleMapping.Analyzer = standard.Name
+	titleMapping.Store = true
+	titleMapping.DocValues = false
+	titleMapping.IncludeTermVectors = false
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE, titleMapping)
 
 	descriptionMapping := &mapping.FieldMapping{
 		Name:               resource.SEARCH_FIELD_DESCRIPTION,

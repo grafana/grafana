@@ -3186,7 +3186,7 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 
 	t.Run("batch get with some non-existent keys", func(t *testing.T) {
 		// Create 3 existing keys
-		existingKeys := make([]DataKey, 3)
+		existingKeys := make([]DataKey, 3) //nolint:prealloc
 		for i := 0; i < 3; i++ {
 			rv := node.Generate().Int64()
 			existingKeys[i] = DataKey{

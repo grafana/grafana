@@ -183,7 +183,7 @@ export function getColumns(
   return columns;
 }
 
-export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
+function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
   switch (displayMode) {
     case TableCellDisplayMode.Custom:
     case TableCellDisplayMode.ColorText:

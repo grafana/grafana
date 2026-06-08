@@ -17,9 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -31,8 +29,6 @@ func NewAccessControlAPI(
 	accesscontrol ac.AccessControl,
 	service ac.Service,
 	userSvc user.Service,
-	features featuremgmt.FeatureToggles,
-	zanzanaClient zanzana.Client,
 ) *AccessControlAPI {
 	api := &AccessControlAPI{
 		RouteRegister: router,
@@ -41,20 +37,14 @@ func NewAccessControlAPI(
 		AccessControl: accesscontrol,
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features != nil && features.IsEnabledGlobally(featuremgmt.FlagZanzanaSearchUsersPermissions) && zanzanaClient != nil {
-		api.zanzanaResolver = newZanzanaPermissionResolver(zanzanaClient, userSvc)
-	}
-
 	return api
 }
 
 type AccessControlAPI struct {
-	Service         ac.Service
-	AccessControl   ac.AccessControl
-	RouteRegister   routing.RouteRegister
-	userSvc         user.Service
-	zanzanaResolver *zanzanaPermissionResolver
+	Service       ac.Service
+	AccessControl ac.AccessControl
+	RouteRegister routing.RouteRegister
+	userSvc       user.Service
 }
 
 func (api *AccessControlAPI) RegisterAPIEndpoints() {
@@ -145,55 +135,12 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 		return response.Error(http.StatusInternalServerError, "could not get org user permissions", err)
 	}
 
-	// When Zanzana is enabled, merge in its permissions so that migrated
-	// resources are authoritative in Zanzana while non-migrated ones still
-	// come from legacy.
-	if api.zanzanaResolver != nil {
-		zanzanaPerms, zanzanaErr := api.zanzanaResolver.searchUsersPermissions(ctx, c.SignedInUser, c.GetOrgID(), searchOptions)
-		if zanzanaErr == nil {
-			permissions = mergePermissions(permissions, zanzanaPerms)
-		} else {
-			logger.Warn("could not get zanzana user permissions, using legacy only", "error", zanzanaErr)
-		}
-	}
-
 	permsByAction := map[int64]map[string][]string{}
 	for userID, userPerms := range permissions {
 		permsByAction[userID] = ac.Reduce(userPerms)
 	}
 
 	return response.JSON(http.StatusOK, permsByAction)
-}
-
-// mergePermissions unions permissions from two sources, deduplicating by action+scope per user.
-func mergePermissions(a, b map[int64][]ac.Permission) map[int64][]ac.Permission {
-	result := make(map[int64][]ac.Permission, len(a))
-	for userID, perms := range a {
-		result[userID] = append([]ac.Permission(nil), perms...)
-	}
-
-	for userID, perms := range b {
-		existing := result[userID]
-		if len(existing) == 0 {
-			result[userID] = perms
-			continue
-		}
-
-		seen := make(map[string]struct{}, len(existing))
-		for _, p := range existing {
-			seen[p.Action+"|"+p.Scope] = struct{}{}
-		}
-		for _, p := range perms {
-			key := p.Action + "|" + p.Scope
-			if _, ok := seen[key]; !ok {
-				existing = append(existing, p)
-				seen[key] = struct{}{}
-			}
-		}
-		result[userID] = existing
-	}
-
-	return result
 }
 
 func (api *AccessControlAPI) ComputeUserID(ctx context.Context, typedID string) (int64, error) {

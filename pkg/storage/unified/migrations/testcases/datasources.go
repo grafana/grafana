@@ -30,7 +30,7 @@ func (tc *datasourcesTestCase) Name() string {
 
 func (tc *datasourcesTestCase) FeatureToggles() []string {
 	return []string{
-		featuremgmt.FlagQueryServiceWithConnections, // required for CRUD
+		featuremgmt.FlagDatasourceUseNewCRUDAPIs, // required for CRUD
 	}
 }
 

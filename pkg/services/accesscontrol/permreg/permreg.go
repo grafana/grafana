@@ -103,6 +103,7 @@ func newPermissionRegistry() *permissionRegistry {
 		"secret.securevalues":            "secret.securevalues:uid:",
 		"secret.keepers":                 "secret.keepers:uid:",
 		accesscontrol.AlertingRoutesKind: accesscontrol.AlertingRoutesKind + ":uid:",
+		accesscontrol.AlertingAlertmanagerImportsKind: accesscontrol.AlertingAlertmanagerImportsKind + ":uid:",
 	}
 	return &permissionRegistry{
 		actionScopePrefixes: make(map[string]PrefixSet, 200),

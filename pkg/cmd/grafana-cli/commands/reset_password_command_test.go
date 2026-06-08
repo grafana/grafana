@@ -9,6 +9,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
 
+func TestAdminFilterWhereCondition(t *testing.T) {
+	// "is_admin = 1" is invalid on PostgreSQL where is_admin is a boolean column.
+	// Condition must use a placeholder with Params: true.
+	f := &adminFilter{}
+	wc := f.WhereCondition()
+	require.NotNil(t, wc)
+	require.Contains(t, wc.Condition, "?", "condition must use a parameter placeholder, not a hardcoded integer")
+	require.Equal(t, true, wc.Params)
+}
+
 func TestResetPassword(t *testing.T) {
 	tests := map[string]struct {
 		UserID    int64

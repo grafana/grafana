@@ -57,7 +57,7 @@ export type SearchMetrics = {
   totalBlockBytes?: number;
 };
 
-export enum SpanKind {
+enum SpanKind {
   UNSPECIFIED,
   INTERNAL,
   SERVER,
@@ -99,11 +99,6 @@ export type Span = {
 export type Spanset = {
   attributes?: SpanAttributes[];
   spans: Span[];
-};
-
-export type SearchResponse = {
-  traces: TraceSearchMetadata[];
-  metrics: SearchMetrics;
 };
 
 export type Scope = {
