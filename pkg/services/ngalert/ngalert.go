@@ -316,6 +316,7 @@ func (ng *AlertNG) init() error {
 		moaLogger,
 		ng.clientGenerator,
 		request.GetNamespaceMapper(ng.Cfg),
+		ng.store,
 	)
 
 	moa, err := notifier.NewMultiOrgAlertmanager(

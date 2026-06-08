@@ -245,3 +245,65 @@ func TestClassifySaveError(t *testing.T) {
 		assert.Same(t, original, got, "should not re-wrap a *SyncError")
 	})
 }
+
+func TestComputeCommittedStatus(t *testing.T) {
+	now := time.Date(2026, 5, 20, 12, 0, 0, 0, time.UTC)
+	earlier := time.Date(2026, 5, 19, 9, 0, 0, 0, time.UTC)
+	nowRFC := now.UTC().Format(time.RFC3339)
+	earlRFC := earlier.UTC().Format(time.RFC3339)
+	strPtr := func(s string) *string { return &s }
+
+	findSynced := func(t *testing.T, st alertingnotifv0alpha1.ConfigStatus) alertingnotifv0alpha1.ConfigCondition {
+		t.Helper()
+		for _, c := range st.Conditions {
+			if c.Type == conditionTypeExternalAlertmanagerSynced {
+				return c
+			}
+		}
+		t.Fatalf("expected Synced condition, got: %+v", st.Conditions)
+		return alertingnotifv0alpha1.ConfigCondition{}
+	}
+
+	t.Run("from clean state: True/MergeCommitted with datasource, message and current timestamp", func(t *testing.T) {
+		got := computeCommittedStatus(nil, "ds-1", originAPI, now)
+
+		require.NotNil(t, got.ExternalAlertmanagerSync)
+		assert.Equal(t, strPtr("ds-1"), got.ExternalAlertmanagerSync.DatasourceUid)
+
+		c := findSynced(t, got)
+		assert.Equal(t, alertingnotifv0alpha1.ConfigConditionStatusTrue, c.Status)
+		assert.Equal(t, conditionReasonMergeCommitted, c.Reason)
+		assert.Equal(t, nowRFC, c.LastTransitionTime)
+		require.NotNil(t, c.Message)
+	})
+
+	t.Run("after SyncSucceeded: keeps timestamp, only the reason flips to MergeCommitted", func(t *testing.T) {
+		prev := &alertingnotifv0alpha1.ConfigStatus{
+			Conditions: []alertingnotifv0alpha1.ConfigCondition{{
+				Type:               conditionTypeExternalAlertmanagerSynced,
+				Status:             alertingnotifv0alpha1.ConfigConditionStatusTrue,
+				LastTransitionTime: earlRFC,
+				Reason:             conditionReasonSyncSucceeded,
+			}},
+		}
+
+		c := findSynced(t, computeCommittedStatus(prev, "ds-1", originAPI, now))
+		assert.Equal(t, alertingnotifv0alpha1.ConfigConditionStatusTrue, c.Status)
+		assert.Equal(t, conditionReasonMergeCommitted, c.Reason)
+		assert.Equal(t, earlRFC, c.LastTransitionTime, "status stayed True, so the synced-at timestamp is preserved")
+	})
+
+	t.Run("after a failure: advances timestamp on flip False->True", func(t *testing.T) {
+		prev := &alertingnotifv0alpha1.ConfigStatus{
+			Conditions: []alertingnotifv0alpha1.ConfigCondition{{
+				Type:               conditionTypeExternalAlertmanagerSynced,
+				Status:             alertingnotifv0alpha1.ConfigConditionStatusFalse,
+				LastTransitionTime: earlRFC,
+				Reason:             "MimirFetchFailed",
+			}},
+		}
+
+		c := findSynced(t, computeCommittedStatus(prev, "ds-1", originAPI, now))
+		assert.Equal(t, nowRFC, c.LastTransitionTime, "flip False->True advances the timestamp")
+	})
+}

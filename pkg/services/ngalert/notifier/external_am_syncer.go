@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -59,6 +60,12 @@ const conditionTypeExternalAlertmanagerSynced = "ExternalAlertmanagerSynced"
 // reasons come from SyncReason.ConditionReason().
 const conditionReasonSyncSucceeded = "SyncSucceeded"
 
+// conditionReasonMergeCommitted is the terminal reason once the config was
+// imported as a managed route: sync stops and the admin owns it from here.
+const conditionReasonMergeCommitted = "MergeCommitted"
+
+const mergeCommittedMessage = "External Alertmanager configuration imported; it is now managed in Grafana and no longer synced from the datasource."
+
 // SyncReason categorises a sync failure. snake_case constant → Prometheus
 // `reason` label (ExternalAMConfigSyncFailures); PascalCase via
 // ConditionReason() → k8s Condition reason. Single source of truth: wrap
@@ -74,6 +81,9 @@ const (
 	// ReasonNoUpstreamConfig: Mimir returned an empty alertmanager_config.
 	// Distinct from ReasonSave — nothing was attempted to persist.
 	ReasonNoUpstreamConfig SyncReason = "no_upstream_config"
+	// ReasonConfigRead: couldn't read the org's config to check if it was already
+	// merged; the tick is skipped rather than risk overwriting it.
+	ReasonConfigRead SyncReason = "config_read"
 	// ReasonUnclassified is the safety net for errors not tagged with
 	// *SyncError. Keeps Prometheus label cardinality bounded.
 	ReasonUnclassified SyncReason = "unclassified"
@@ -102,6 +112,8 @@ func (r SyncReason) ConditionReason() string {
 		return "IdentifierMismatch"
 	case ReasonNoUpstreamConfig:
 		return "NoUpstreamConfig"
+	case ReasonConfigRead:
+		return "ConfigReadFailed"
 	default:
 		return "SyncFailed"
 	}
@@ -152,6 +164,13 @@ func ClassifySaveError(err error) *SyncError {
 	return &SyncError{Reason: ReasonSave, Cause: err}
 }
 
+// amConfigReader reads an org's current Alertmanager configuration. Satisfied by
+// the Alertmanager config store; used to detect whether the external config was
+// already merged (a managed route keyed by the datasource UID).
+type amConfigReader interface {
+	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
+}
+
 // ExternalAMSyncer fetches the alertmanager configuration from an org's external
 // Mimir/Cortex datasource. It does not own persistence — callers (MultiOrgAlertmanager
 // per-org sync loop) take the returned ExtraConfiguration and persist via
@@ -180,14 +199,18 @@ type ExternalAMSyncer struct {
 	clientGenerator resource.ClientGenerator
 	namespaceMapper request.NamespaceMapper
 
+	// configReader reads the org's current Alertmanager config to detect whether
+	// the external config was already merged.
+	configReader amConfigReader
+
 	cfgClientMu sync.Mutex
 	cfgClient   *alertingnotifv0alpha1.ConfigClient
 }
 
 // NewExternalAMSyncer constructs an ExternalAMSyncer. requestValidator may
 // not be nil — pass &validations.OSSDataSourceRequestValidator{} for the
-// no-op default. Nil clientGenerator/namespaceMapper (test paths) falls
-// back to the legacy admin_config store and skips status writes.
+// no-op default. Nil clientGenerator/namespaceMapper (test paths) skips status
+// writes.
 func NewExternalAMSyncer(
 	datasourceService datasources.DataSourceService,
 	httpClientProvider httpclient.Provider,
@@ -197,6 +220,7 @@ func NewExternalAMSyncer(
 	logger log.Logger,
 	clientGenerator resource.ClientGenerator,
 	namespaceMapper request.NamespaceMapper,
+	configReader amConfigReader,
 ) *ExternalAMSyncer {
 	return &ExternalAMSyncer{
 		datasourceService:  datasourceService,
@@ -208,6 +232,7 @@ func NewExternalAMSyncer(
 		lastSyncHash:       make(map[int64]uint64),
 		clientGenerator:    clientGenerator,
 		namespaceMapper:    namespaceMapper,
+		configReader:       configReader,
 	}
 }
 
@@ -275,6 +300,23 @@ func (s *ExternalAMSyncer) FetchExtraConfig(ctx context.Context, orgID int64) (*
 	}
 
 	orgIDStr := fmt.Sprintf("%d", orgID)
+
+	// Stop once the merge is committed: the imported config becomes a managed
+	// route keyed by the datasource UID. Record the terminal status and skip.
+	// A read failure skips the tick but is still surfaced as a failure.
+	committed, err := s.isMergeCommitted(ctx, orgID, uid)
+	if err != nil {
+		readErr := &SyncError{Reason: ReasonConfigRead, Cause: err}
+		s.logger.Warn("Failed to check external AM merge state; skipping sync", "org_id", orgID, "error", err)
+		s.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, ReasonConfigRead.Label()).Inc()
+		s.recordSyncResult(ctx, orgID, uid, origin, readErr)
+		return nil, 0
+	}
+	if committed {
+		s.recordMergeCommitted(ctx, orgID, uid, origin)
+		return nil, 0
+	}
+
 	start := time.Now()
 
 	ec, newHash, fetchErr := s.fetchExtraConfig(ctx, orgID, uid)
@@ -352,14 +394,28 @@ func (s *ExternalAMSyncer) writeSyncStatusFor(ctx context.Context, orgID int64, 
 	s.recordSyncResult(ctx, orgID, uid, origin, syncErr)
 }
 
-// recordSyncResult writes the latest sync outcome onto the org's
-// Config.status, upserting an empty-spec resource if none exists
-// (lets operator-ini-driven sync surface status before any admin write).
-// Concurrency: optimistic via RetryOnConflict; each retry re-reads and
-// touches only fields we own, so concurrent spec/status edits coexist.
-// Best-effort — failures are logged. Steady-state-healthy sync produces no
-// physical writes thanks to unified storage's byte-equality dedup.
+// recordSyncResult writes the latest sync outcome (nil = success) onto the org's
+// Config.status.
 func (s *ExternalAMSyncer) recordSyncResult(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, syncErr error) {
+	now := time.Now()
+	s.writeStatus(ctx, orgID, func(prev *alertingnotifv0alpha1.ConfigStatus) alertingnotifv0alpha1.ConfigStatus {
+		return computeSyncStatus(prev, uid, origin, syncErr, now)
+	})
+}
+
+// recordMergeCommitted writes the terminal MergeCommitted status once the
+// external config has been merged into the org's Grafana config (sync stops).
+func (s *ExternalAMSyncer) recordMergeCommitted(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin) {
+	now := time.Now()
+	s.writeStatus(ctx, orgID, func(prev *alertingnotifv0alpha1.ConfigStatus) alertingnotifv0alpha1.ConfigStatus {
+		return computeCommittedStatus(prev, uid, origin, now)
+	})
+}
+
+// writeStatus upserts the org's Config.status using compute(prev), creating the
+// resource if absent. Optimistic via RetryOnConflict; best-effort (failures are
+// logged). Unchanged status produces no physical write (unified storage dedup).
+func (s *ExternalAMSyncer) writeStatus(ctx context.Context, orgID int64, compute func(prev *alertingnotifv0alpha1.ConfigStatus) alertingnotifv0alpha1.ConfigStatus) {
 	c, err := s.resolveCfgClient()
 	if err != nil {
 		s.logger.Warn("Failed to resolve Config client for status write", "org_id", orgID, "error", err)
@@ -370,7 +426,6 @@ func (s *ExternalAMSyncer) recordSyncResult(ctx context.Context, orgID int64, ui
 		return
 	}
 	id := resource.Identifier{Namespace: ns, Name: alertingnotifv0alpha1.ConfigSingletonName}
-	now := time.Now()
 
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		existing, getErr := c.Get(nsCtx, id)
@@ -378,10 +433,9 @@ func (s *ExternalAMSyncer) recordSyncResult(ctx context.Context, orgID int64, ui
 			// Seed .Status on Create. Unified storage persists the whole object
 			// on Create today; a future migration to a real /status subresource
 			// would silently drop this — at that point swap to UpdateStatus.
-			newStatus := computeSyncStatus(nil, uid, origin, syncErr, now)
 			r := &alertingnotifv0alpha1.Config{
 				ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: alertingnotifv0alpha1.ConfigSingletonName},
-				Status:     newStatus,
+				Status:     compute(nil),
 			}
 			if _, createErr := c.Create(nsCtx, r, resource.CreateOptions{}); createErr != nil {
 				// AlreadyExists → another writer raced us. Surface as a conflict
@@ -396,8 +450,7 @@ func (s *ExternalAMSyncer) recordSyncResult(ctx context.Context, orgID int64, ui
 		if getErr != nil {
 			return getErr
 		}
-		newStatus := computeSyncStatus(&existing.Status, uid, origin, syncErr, now)
-		_, updateErr := c.UpdateStatus(nsCtx, id, newStatus, resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
+		_, updateErr := c.UpdateStatus(nsCtx, id, compute(&existing.Status), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
 		return updateErr
 	})
 	if err != nil {
@@ -405,14 +458,25 @@ func (s *ExternalAMSyncer) recordSyncResult(ctx context.Context, orgID int64, ui
 	}
 }
 
-// computeSyncStatus folds the current sync outcome into prev and returns
-// the new status. Implements the standard k8s condition FSM (lastTransitionTime
-// advances only on status flip); hand-rolled because the codegen'd
-// ConfigCondition isn't metav1.Condition. Preserves other condition
-// types so future controllers don't get clobbered. Heartbeat data
-// (lastSuccessAt) lives on metrics, not the resource, to keep the per-
-// resource history budget meaningful.
+// computeSyncStatus maps a sync outcome (nil = success) to the
+// ExternalAlertmanagerSynced condition and folds it into prev.
 func computeSyncStatus(prev *alertingnotifv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, syncErr error, now time.Time) alertingnotifv0alpha1.ConfigStatus {
+	if syncErr == nil {
+		return buildSyncStatus(prev, uid, origin, alertingnotifv0alpha1.ConfigConditionStatusTrue, conditionReasonSyncSucceeded, "", now)
+	}
+	return buildSyncStatus(prev, uid, origin, alertingnotifv0alpha1.ConfigConditionStatusFalse, reasonOf(syncErr).ConditionReason(), syncErr.Error(), now)
+}
+
+// computeCommittedStatus is the terminal status once the config was merged:
+// stays True (so the synced-at timestamp is kept), reason flips to MergeCommitted.
+func computeCommittedStatus(prev *alertingnotifv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, now time.Time) alertingnotifv0alpha1.ConfigStatus {
+	return buildSyncStatus(prev, uid, origin, alertingnotifv0alpha1.ConfigConditionStatusTrue, conditionReasonMergeCommitted, mergeCommittedMessage, now)
+}
+
+// buildSyncStatus folds an ExternalAlertmanagerSynced condition into prev. k8s
+// condition FSM: lastTransitionTime advances only on status flip. Preserves
+// other condition types so future controllers aren't clobbered.
+func buildSyncStatus(prev *alertingnotifv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, condStatus alertingnotifv0alpha1.ConfigConditionStatus, reason, message string, now time.Time) alertingnotifv0alpha1.ConfigStatus {
 	uidCopy := uid
 	originCopy := origin
 	st := alertingnotifv0alpha1.ConfigStatus{
@@ -422,22 +486,11 @@ func computeSyncStatus(prev *alertingnotifv0alpha1.ConfigStatus, uid string, ori
 		},
 	}
 
-	var newStatus alertingnotifv0alpha1.ConfigConditionStatus
-	var newReason, newMessage string
-	if syncErr == nil {
-		newStatus = alertingnotifv0alpha1.ConfigConditionStatusTrue
-		newReason = conditionReasonSyncSucceeded
-	} else {
-		newStatus = alertingnotifv0alpha1.ConfigConditionStatusFalse
-		newReason = reasonOf(syncErr).ConditionReason()
-		newMessage = syncErr.Error()
-	}
-
 	// lastTransitionTime advances only when status flips.
 	transitionTime := now.UTC().Format(time.RFC3339)
 	for _, c := range prevConditions(prev) {
 		if c.Type == conditionTypeExternalAlertmanagerSynced {
-			if c.Status == newStatus {
+			if c.Status == condStatus {
 				transitionTime = c.LastTransitionTime
 			}
 			break
@@ -446,12 +499,12 @@ func computeSyncStatus(prev *alertingnotifv0alpha1.ConfigStatus, uid string, ori
 
 	synced := alertingnotifv0alpha1.ConfigCondition{
 		Type:               conditionTypeExternalAlertmanagerSynced,
-		Status:             newStatus,
+		Status:             condStatus,
 		LastTransitionTime: transitionTime,
-		Reason:             newReason,
+		Reason:             reason,
 	}
-	if newMessage != "" {
-		synced.Message = &newMessage
+	if message != "" {
+		synced.Message = &message
 	}
 
 	// Preserve other condition types, then upsert Synced.
@@ -519,6 +572,21 @@ func externalSyncDatasourceUIDFromConfig(c *alertingnotifv0alpha1.Config) string
 		return ""
 	}
 	return *c.Spec.ExternalAlertmanagerSync.DatasourceUid
+}
+
+// isMergeCommitted reports whether the org's config already contains a managed
+// route keyed by identifier — i.e. the external config was already imported.
+func (s *ExternalAMSyncer) isMergeCommitted(ctx context.Context, orgID int64, identifier string) (bool, error) {
+	raw, err := s.configReader.GetLatestAlertmanagerConfiguration(ctx, orgID)
+	if err != nil {
+		return false, err
+	}
+	cfg, err := Load([]byte(raw.AlertmanagerConfiguration))
+	if err != nil {
+		return false, fmt.Errorf("parse alertmanager configuration: %w", err)
+	}
+	_, ok := cfg.ManagedRoutes[identifier]
+	return ok, nil
 }
 
 // resolveExternalAMUIDForOrg returns the datasource UID to use for external AM
