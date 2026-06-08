@@ -1,6 +1,5 @@
 import { defaults } from 'lodash';
 import { Observable, throwError } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   type DataQueryRequest,
@@ -17,6 +16,7 @@ import {
   addRow,
   getDisplayProcessor,
   createTheme,
+  generateUUID,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 
@@ -51,7 +51,7 @@ export function runStream(
   throw new Error(`Unknown Stream Type: ${query.type}`);
 }
 
-export function runSignalStream(
+function runSignalStream(
   target: TestDataDataQuery,
   query: StreamingQuery,
   req: DataQueryRequest<TestDataDataQuery>
@@ -131,7 +131,7 @@ export function runSignalStream(
   });
 }
 
-export function runLogsStream(
+function runLogsStream(
   target: TestDataDataQuery,
   query: StreamingQuery,
   req: DataQueryRequest<TestDataDataQuery>
@@ -183,7 +183,7 @@ interface StreamMessage {
   value: number;
 }
 
-export function runWatchStream(
+function runWatchStream(
   target: TestDataDataQuery,
   query: StreamingQuery,
   req: DataQueryRequest<TestDataDataQuery>
@@ -260,7 +260,7 @@ export function runWatchStream(
   });
 }
 
-export function runFetchStream(
+function runFetchStream(
   target: TestDataDataQuery,
   query: StreamingQuery,
   req: DataQueryRequest<TestDataDataQuery>
@@ -340,7 +340,7 @@ export function runFetchStream(
   });
 }
 
-export function runTracesStream(
+function runTracesStream(
   target: TestDataDataQuery,
   query: StreamingQuery,
   req: DataQueryRequest<TestDataDataQuery>
@@ -352,8 +352,8 @@ export function runTracesStream(
 
     const pushNextEvent = () => {
       const subframe = createTraceSubFrame();
-      addRow(subframe, [uuidv4(), Date.now(), 'Grafana', 1500]);
-      addRow(data, [uuidv4(), Date.now(), 'Grafana', 'HTTP GET /explore', 1500, [subframe]]);
+      addRow(subframe, [generateUUID(), Date.now(), 'Grafana', 1500]);
+      addRow(data, [generateUUID(), Date.now(), 'Grafana', 'HTTP GET /explore', 1500, [subframe]]);
 
       subscriber.next({
         data: [data],

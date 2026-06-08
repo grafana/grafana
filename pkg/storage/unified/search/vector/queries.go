@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"reflect"
 	"text/template"
+	"time"
+
+	pgvector "github.com/pgvector/pgvector-go"
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -36,6 +39,12 @@ var (
 	sqlVectorBackfillJobsUpdate          = mustTemplate("vector_backfill_jobs_update.sql")
 	sqlVectorBackfillJobsSetError        = mustTemplate("vector_backfill_jobs_set_error.sql")
 	sqlVectorBackfillJobsComplete        = mustTemplate("vector_backfill_jobs_complete.sql")
+	sqlQueryCacheGet                     = mustTemplate("query_cache_get.sql")
+	sqlQueryCacheCount                   = mustTemplate("query_cache_count.sql")
+	sqlQueryCacheEvictOldest             = mustTemplate("query_cache_evict_oldest.sql")
+	sqlQueryCacheInsert                  = mustTemplate("query_cache_insert.sql")
+	sqlRateBucketIncrement               = mustTemplate("rate_bucket_increment.sql")
+	sqlRateBucketSweep                   = mustTemplate("rate_bucket_sweep.sql")
 )
 
 // All queries target `embeddings` and include `resource = $1 AND
@@ -275,4 +284,122 @@ func (r *sqlVectorCollectionSearchRequest) FolderFilter() bool {
 
 func (r *sqlVectorCollectionSearchRequest) FolderFilterSlice() reflect.Value {
 	return reflect.ValueOf(r.FolderValues)
+}
+
+type sqlQueryCacheGetResponse struct {
+	Embedding pgvector.HalfVector
+}
+
+type sqlQueryCacheGetRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Model     string
+	QueryHash string
+	Response  *sqlQueryCacheGetResponse
+}
+
+func (r *sqlQueryCacheGetRequest) Validate() error {
+	if r.Namespace == "" || r.Model == "" || r.QueryHash == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	return nil
+}
+
+func (r *sqlQueryCacheGetRequest) Results() (*sqlQueryCacheGetResponse, error) {
+	cp := *r.Response
+	return &cp, nil
+}
+
+type sqlQueryCacheCountResponse struct {
+	Count int64
+}
+
+type sqlQueryCacheCountRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Response  *sqlQueryCacheCountResponse
+}
+
+func (r *sqlQueryCacheCountRequest) Validate() error {
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	return nil
+}
+
+func (r *sqlQueryCacheCountRequest) Results() (*sqlQueryCacheCountResponse, error) {
+	cp := *r.Response
+	return &cp, nil
+}
+
+type sqlQueryCacheEvictOldestRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Limit     int64
+}
+
+func (r *sqlQueryCacheEvictOldestRequest) Validate() error {
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.Limit <= 0 {
+		return fmt.Errorf("limit must be positive")
+	}
+	return nil
+}
+
+type sqlQueryCacheInsertRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Model     string
+	QueryHash string
+	Embedding any // pgvector.HalfVector
+}
+
+func (r *sqlQueryCacheInsertRequest) Validate() error {
+	if r.Namespace == "" || r.Model == "" || r.QueryHash == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	if r.Embedding == nil {
+		return fmt.Errorf("missing embedding")
+	}
+	return nil
+}
+
+type sqlRateBucketIncrementResponse struct {
+	Count int64
+}
+
+type sqlRateBucketIncrementRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace   string
+	WindowStart time.Time
+	Response    *sqlRateBucketIncrementResponse
+}
+
+func (r *sqlRateBucketIncrementRequest) Validate() error {
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.WindowStart.IsZero() {
+		return fmt.Errorf("missing window_start")
+	}
+	return nil
+}
+
+func (r *sqlRateBucketIncrementRequest) Results() (*sqlRateBucketIncrementResponse, error) {
+	cp := *r.Response
+	return &cp, nil
+}
+
+type sqlRateBucketSweepRequest struct {
+	sqltemplate.SQLTemplate
+	Cutoff time.Time
+}
+
+func (r *sqlRateBucketSweepRequest) Validate() error {
+	if r.Cutoff.IsZero() {
+		return fmt.Errorf("missing cutoff")
+	}
+	return nil
 }

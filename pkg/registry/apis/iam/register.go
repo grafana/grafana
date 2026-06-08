@@ -130,8 +130,6 @@ func RegisterAPIService(
 		resourcePermsSearchAuthorizer = iamauthorizer.NewResourcePermissionsAuthorizer(accessClient, resourceParentProvider)
 	}
 
-	displayProvider := display.NewLegacyDisplayProvider(store)
-
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                             store,
 		userLegacyStore:                   user.NewLegacyStore(store, accessClient, tracing),
@@ -157,7 +155,6 @@ func RegisterAPIService(
 		ac:                                ac,
 		zClient:                           zClient,
 		zTickets:                          make(chan bool, MaxConcurrentZanzanaWrites),
-		display:                           display.NewDisplayHandler(displayProvider),
 		reg:                               reg,
 		logger:                            log.New("iam.apis"),
 		features:                          features,
@@ -172,6 +169,10 @@ func RegisterAPIService(
 		apiConfig: Config{
 			SingleOrganization: cfg.RBAC.SingleOrganization,
 		},
+		display: display.NewDisplayHandler(
+			display.NewLegacyDisplayProvider(store),   // Do legacy first
+			display.NewSearchDisplayProvider(unified), // then use search index
+		),
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, features, cfg, accessClient)
 
@@ -212,14 +213,15 @@ func NewAPIService(
 		iamauthorizer.Versions,
 	)
 
-	displayProvider := display.NewLegacyDisplayProvider(store)
-
 	return &IdentityAccessManagementAPIBuilder{
-		store:                      store,
-		userLegacyStore:            user.NewLegacyStore(store, accessClient, tracingService),
-		saLegacyStore:              serviceaccount.NewLegacyStore(store, accessClient, tracingService),
-		teamBindingLegacyStore:     teambinding.NewLegacyBindingStore(store, tracingService),
-		display:                    display.NewDisplayHandler(displayProvider),
+		store:                  store,
+		userLegacyStore:        user.NewLegacyStore(store, accessClient, tracingService),
+		saLegacyStore:          serviceaccount.NewLegacyStore(store, accessClient, tracingService),
+		teamBindingLegacyStore: teambinding.NewLegacyBindingStore(store, tracingService),
+		display: display.NewDisplayHandler(
+			display.NewLegacyDisplayProvider(store),
+			// TODO: include the search client here
+		),
 		tracing:                    tracingService,
 		resourcePermissionsStorage: resourcePermissionsStorage,
 		mappers:                    mappers,
@@ -390,11 +392,34 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
-		MaximumNameLength: 80,
+		MaximumNameLength:    80,
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
 	})
 	opts.StorageOptsRegister(iamv0.UserResourceInfo.GroupResource(), apistore.StorageOptions{
-		MaximumNameLength:           80,
-		RequireDeprecatedInternalID: true,
+		MaximumNameLength:    80,
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
+	})
+	opts.StorageOptsRegister(iamv0.ServiceAccountResourceInfo.GroupResource(), apistore.StorageOptions{
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
+	})
+	opts.StorageOptsRegister(iamv0.TeamBindingResourceInfo.GroupResource(), apistore.StorageOptions{
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Optional,
+	})
+	// Cap the apiserver name at 253 characters so callers get a clear
+	// validation error instead of a silent truncation/error at the storage
+	// layer. 253 is the Kubernetes DNS-1123 subdomain limit for metadata.name
+	// and also matches the size of the `name` column in the unified storage
+	// `resource`/`resource_history` tables, as well as the `role.uid` column
+	// expansion done by the legacy migration in this PR.
+	opts.StorageOptsRegister(iamv0.RoleInfo.GroupResource(), apistore.StorageOptions{
+		MaximumNameLength: 253,
+	})
+	opts.StorageOptsRegister(iamv0.GlobalRoleInfo.GroupResource(), apistore.StorageOptions{
+		MaximumNameLength: 253,
 	})
 
 	if enableTeamsApi {

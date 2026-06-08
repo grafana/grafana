@@ -12,6 +12,7 @@ interface GetResourceRepositoryArgs {
   name?: string; // the repository name
   folderName?: string; // folder we are targeting
   skipQuery?: boolean;
+  includeInstance?: boolean;
 }
 
 export enum RepoViewStatus {
@@ -39,9 +40,13 @@ export const useGetResourceRepositoryView = ({
   name,
   folderName,
   skipQuery,
+  includeInstance,
 }: GetResourceRepositoryArgs): RepositoryViewData => {
   const provisioningEnabled = config.featureToggles.provisioning;
-  const shouldSkipSettings = !provisioningEnabled || skipQuery || (!name && !folderName);
+  // Skip when caller has no target. This query is shared across many
+  // components, so a failing fetch would cycle all of them through retries.
+  // `includeInstance` overrides the skip for root-level instance lookups.
+  const shouldSkipSettings = !provisioningEnabled || skipQuery || (!name && !folderName && !includeInstance);
   const settingsQueryArg = shouldSkipSettings ? skipToken : undefined;
 
   const {

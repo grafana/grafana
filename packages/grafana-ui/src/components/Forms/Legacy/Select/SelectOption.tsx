@@ -26,5 +26,3 @@ export const SelectOption = (props: ExtendedOptionProps) => {
     </components.Option>
   );
 };
-
-export default SelectOption;

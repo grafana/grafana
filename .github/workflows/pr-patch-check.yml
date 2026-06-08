@@ -31,7 +31,7 @@ jobs:
       SENDER: ${{ github.event.sender.login }}
       SHA: ${{ github.sha }}
       PR_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       id-token: write
       contents: read
@@ -133,7 +133,7 @@ jobs:
     if: ${{ github.event.pull_request.head.repo.fork }}
     permissions:
       statuses: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     steps:
       - name: All good
         run: |

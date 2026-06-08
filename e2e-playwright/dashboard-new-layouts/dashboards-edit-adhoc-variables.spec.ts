@@ -7,6 +7,7 @@ test.use({
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
     groupByVariable: true,
+    dashboardUnifiedDrilldownControls: false,
   },
 });
 

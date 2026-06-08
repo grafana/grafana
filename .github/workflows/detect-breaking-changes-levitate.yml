@@ -20,13 +20,12 @@ on:
 jobs:
   buildPR:
     name: Build PR packages artifacts
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
     defaults:
       run:
         working-directory: './pr'
     permissions:
       contents: read
-      id-token: write
 
     steps:
       - uses: actions/checkout@v5
@@ -61,10 +60,9 @@ jobs:
 
   buildBase:
     name: Build Base packages artifacts
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
     permissions:
       contents: read
-      id-token: write
     defaults:
       run:
         working-directory: './base'
@@ -109,7 +107,7 @@ jobs:
 
   Detect:
     name: Detect breaking changes between PR and base
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
     needs: ['buildPR', 'buildBase']
     env:
       GITHUB_STEP_NUMBER: 8
@@ -124,6 +122,9 @@ jobs:
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
+
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
 
       - name: Get built packages from pr
         uses: actions/download-artifact@v8
@@ -159,7 +160,7 @@ jobs:
 
       - name: Detect breaking changes
         id: breaking-changes
-        run: ./scripts/check-breaking-changes.sh
+        run: ./.github/workflows/scripts/levitate/check-breaking-changes.sh
         env:
           FORCE_COLOR: 3
           IS_FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }} # used in check-breaking-changes.sh and levitate-parse-json-report.js
@@ -182,7 +183,7 @@ jobs:
 
   Report:
     name: Report breaking changes in PR comment
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
     needs: ['Detect']
     permissions:
       contents: read
@@ -211,7 +212,7 @@ jobs:
         with:
           script: |
             const filePath = 'result.json';
-            const script = require('./.github/workflows/scripts/json-file-to-job-output.js');
+            const script = require('./.github/workflows/scripts/levitate/json-file-to-job-output.js');
             await script({ core, filePath });
 
       # Check if label exists
@@ -345,6 +346,8 @@ jobs:
       - name: Add "grafana/grafana-frontend-platform" as a reviewer
         if: steps.levitate-run.outputs.exit_code == 1
         uses: actions/github-script@v8
+        # FIXME: GATB doesn't seem to grant us necessary pull_requests write permissions
+        continue-on-error: true
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
@@ -362,6 +365,8 @@ jobs:
       - name: Remove "grafana/grafana-frontend-platform" from the list of reviewers
         if: steps.levitate-run.outputs.exit_code == 0
         uses: actions/github-script@v8
+        # FIXME: GATB doesn't seem to grant us necessary pull_requests write permissions
+        continue-on-error: true
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:

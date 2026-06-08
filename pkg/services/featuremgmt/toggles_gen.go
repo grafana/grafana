@@ -135,10 +135,6 @@ const (
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
 	FlagKubernetesFolderCascadeDelete = "kubernetesFolderCascadeDelete"
 
-	// FlagKubernetesAnnotationsClient
-	// Enables usage of the new annotations API client
-	FlagKubernetesAnnotationsClient = "kubernetesAnnotationsClient"
-
 	// FlagKubernetesShortURLs
 	// Enables k8s short URL API and uses it under the hood when handling legacy /api
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
@@ -877,10 +873,6 @@ const (
 	// FlagAdvisorDatasourceIntegration
 	// Enables the advisor report integration with datasource pages
 	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
-
-	// FlagColorblindThemes
-	// Enables the new colorblind-friendly themes
-	FlagColorblindThemes = "colorblindThemes"
 
 	// FlagLogsTablePanelNG
 	// Enables the logs tableNG panel to replace existing tableRT

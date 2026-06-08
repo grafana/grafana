@@ -9,8 +9,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-const metricsNamespace = "lease_manager"
-
 // Outcome labels.
 const (
 	outcomeSuccess     = "success"
@@ -26,9 +24,7 @@ const (
 )
 
 // Metrics holds Prometheus collectors for the lease manager and its
-// background garbage collector. All recording methods are nil-safe so that
-// callers can omit metrics wiring (e.g. in tests) without sprinkling
-// conditionals at the call sites.
+// background garbage collector.
 type Metrics struct {
 	AcquireDuration    *prometheus.HistogramVec
 	AcquireRetries     prometheus.Histogram
@@ -40,14 +36,15 @@ type Metrics struct {
 	GCKeysDeletedTotal prometheus.Counter
 }
 
-// NewMetrics creates and registers the lease manager metrics with reg. A nil
-// registerer is accepted and causes the collectors to be unregistered (useful
-// for tests).
+// NewMetrics creates the lease manager metrics and registers them with reg.
+// A nil registerer is accepted and causes the collectors to remain
+// unregistered — callers that don't care about exposing metrics (e.g. tests
+// exercising unrelated behavior) can pass nil rather than wiring up a
+// throwaway registry.
 func NewMetrics(reg prometheus.Registerer) *Metrics {
 	m := &Metrics{
 		AcquireDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Namespace:                       metricsNamespace,
-			Name:                            "acquire_duration_seconds",
+			Name:                            "lease_manager_acquire_duration_seconds",
 			Help:                            "Time (in seconds) spent in Acquire calls, labeled by outcome.",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
@@ -55,14 +52,12 @@ func NewMetrics(reg prometheus.Registerer) *Metrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"outcome"}),
 		AcquireRetries: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
-			Namespace: metricsNamespace,
-			Name:      "acquire_retries",
-			Help:      "Number of retries performed by Acquire calls that needed at least one retry.",
-			Buckets:   []float64{1, 2, 3},
+			Name:    "lease_manager_acquire_retries",
+			Help:    "Number of retries performed by Acquire calls that needed at least one retry.",
+			Buckets: []float64{1, 2, 3},
 		}),
 		ReleaseDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Namespace:                       metricsNamespace,
-			Name:                            "release_duration_seconds",
+			Name:                            "lease_manager_release_duration_seconds",
 			Help:                            "Time (in seconds) spent in Release calls, labeled by outcome.",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
@@ -70,18 +65,15 @@ func NewMetrics(reg prometheus.Registerer) *Metrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"outcome"}),
 		RenewalsTotal: promauto.With(reg).NewCounter(prometheus.CounterOpts{
-			Namespace: metricsNamespace,
-			Name:      "renewals_total",
-			Help:      "Total number of successful auto-renewals.",
+			Name: "lease_manager_renewals_total",
+			Help: "Total number of successful auto-renewals.",
 		}),
 		LossesTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Namespace: metricsNamespace,
-			Name:      "losses_total",
-			Help:      "Total number of leases lost involuntarily, labeled by reason (expired, lost, error).",
+			Name: "lease_manager_losses_total",
+			Help: "Total number of leases lost involuntarily, labeled by reason (expired, lost, error).",
 		}, []string{"reason"}),
 		GCDurationSeconds: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Namespace:                       metricsNamespace,
-			Name:                            "gc_duration_seconds",
+			Name:                            "lease_manager_gc_duration_seconds",
 			Help:                            "Wall-clock duration (in seconds) of a single garbage collection run, labeled by outcome.",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
@@ -89,14 +81,12 @@ func NewMetrics(reg prometheus.Registerer) *Metrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"outcome"}),
 		GCKeysScannedTotal: promauto.With(reg).NewCounter(prometheus.CounterOpts{
-			Namespace: metricsNamespace,
-			Name:      "gc_keys_scanned_total",
-			Help:      "Total number of lease keys scanned by garbage collection.",
+			Name: "lease_manager_gc_keys_scanned_total",
+			Help: "Total number of lease keys scanned by garbage collection.",
 		}),
 		GCKeysDeletedTotal: promauto.With(reg).NewCounter(prometheus.CounterOpts{
-			Namespace: metricsNamespace,
-			Name:      "gc_keys_deleted_total",
-			Help:      "Total number of lease keys deleted by garbage collection.",
+			Name: "lease_manager_gc_keys_deleted_total",
+			Help: "Total number of lease keys deleted by garbage collection.",
 		}),
 	}
 
@@ -118,58 +108,43 @@ func NewMetrics(reg prometheus.Registerer) *Metrics {
 }
 
 func (m *Metrics) observeAcquireDuration(d time.Duration, outcome string) {
-	if m == nil {
-		return
-	}
 	m.AcquireDuration.WithLabelValues(outcome).Observe(d.Seconds())
 }
 
 func (m *Metrics) observeAcquireRetries(attempts int) {
-	if m == nil || attempts <= 0 {
+	if attempts <= 0 {
 		return
 	}
 	m.AcquireRetries.Observe(float64(attempts))
 }
 
 func (m *Metrics) observeReleaseDuration(d time.Duration, outcome string) {
-	if m == nil {
-		return
-	}
 	m.ReleaseDuration.WithLabelValues(outcome).Observe(d.Seconds())
 }
 
 func (m *Metrics) recordRenewal() {
-	if m == nil {
-		return
-	}
 	m.RenewalsTotal.Inc()
 }
 
 func (m *Metrics) recordLoss(reason string) {
-	if m == nil {
-		return
-	}
 	m.LossesTotal.WithLabelValues(reason).Inc()
 }
 
 func (m *Metrics) addGCKeysScanned(n int) {
-	if m == nil || n == 0 {
+	if n == 0 {
 		return
 	}
 	m.GCKeysScannedTotal.Add(float64(n))
 }
 
 func (m *Metrics) addGCKeysDeleted(n int) {
-	if m == nil || n == 0 {
+	if n == 0 {
 		return
 	}
 	m.GCKeysDeletedTotal.Add(float64(n))
 }
 
 func (m *Metrics) observeGCDuration(d time.Duration, outcome string) {
-	if m == nil {
-		return
-	}
 	m.GCDurationSeconds.WithLabelValues(outcome).Observe(d.Seconds())
 }
 
