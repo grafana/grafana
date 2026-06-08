@@ -3050,6 +3050,9 @@
         "results-loading": "Searching – found {{numberOfRules}} rules",
         "results-with-cancellation": "Search cancelled – found {{numberOfRules}} rules"
       },
+      "import-disabled-tooltip": {
+        "auto-sync": "Imports are unavailable while Mimir Alertmanager auto-sync is active"
+      },
       "import-to-gma": {
         "new-badge": "New!",
         "text": "Import to Grafana-managed rules"
@@ -3304,6 +3307,30 @@
       "tooltip-content": "Not finding the data source you want? Some data sources are not supported for alerting. Click on the icon for more information."
     },
     "settings": {
+      "auto-sync": {
+        "action-disable": "Disable sync",
+        "add-datasource-link": "Add Mimir datasource",
+        "badge-active": "Active",
+        "badge-not-configured": "Not configured",
+        "badge-operator-managed": "Managed by operator",
+        "description": "Continuously sync alert configuration from a Mimir or Cortex Alertmanager datasource into Grafana.",
+        "disable-confirm-action": "Disable sync",
+        "disable-confirm-body": "Disabling will stop continuous sync from datasource {{uid}}. You can re-enable it later by selecting a datasource again.",
+        "disable-confirm-body-generic": "Disabling will stop continuous sync. You can re-enable it later by selecting a datasource again.",
+        "disable-confirm-title": "Disable Mimir Alertmanager auto-sync?",
+        "disable-success": "Mimir Alertmanager auto-sync disabled",
+        "operator-managed-info": "This value is set by the <1>[unified_alerting] external_alertmanager_uid</1> key in grafana.ini and cannot be changed from the UI. Edit the configuration file and restart Grafana, or remove the key to manage sync from here.",
+        "operator-managed-title": "Managed by operator",
+        "orphan-warning": "The configured datasource UID {{uid}} is not available. Disable sync or restore the datasource to continue.",
+        "orphan-warning-title": "Configured datasource not found",
+        "picker-empty": "No Mimir or Cortex datasources available",
+        "picker-label": "Datasource",
+        "picker-placeholder": "Select a Mimir or Cortex Alertmanager datasource…",
+        "save-disabled-no-selection": "Select a Mimir or Cortex Alertmanager datasource to enable saving.",
+        "save-error": "Failed to save Mimir Alertmanager auto-sync",
+        "save-success": "Mimir Alertmanager auto-sync enabled",
+        "title": "Auto-sync configuration"
+      },
       "tabs": {
         "alert-managers": "Alert managers"
       }
@@ -8187,14 +8214,19 @@
     "data-sources-list-card": {
       "explore": "Explore"
     },
+    "default-button": {
+      "active": "This data source is currently set as the default.",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "error": "Failed to update default data source",
+      "make": "Make default",
+      "make-confirm": "Are you sure you want to set this data source as the default for all users?",
+      "remove": "Remove default",
+      "remove-confirm": "Are you sure you want to remove the default status from this data source for all users?",
+      "tooltip": "The default data source is preselected in new panels."
+    },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
-      "default-active": "This data source is currently set as the default.",
-      "default-error": "Failed to update default data source",
-      "default-label": "Default",
-      "default-make-button": "Make default",
-      "default-remove-button": "Remove default",
-      "default-tooltip": "The default data source is preselected in new panels.",
       "explore-data": "Explore data",
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
