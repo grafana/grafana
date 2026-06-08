@@ -203,12 +203,11 @@ export function useSelectionState({
     }
 
     if (modifiers?.multi) {
-      const next =
-        currentSelection.includes(query.refId)
-          ? currentSelection.length === 1
-            ? currentSelection
-            : currentSelection.filter((id) => id !== query.refId)
-          : [...currentSelection, query.refId];
+      const next = currentSelection.includes(query.refId)
+        ? currentSelection.length === 1
+          ? currentSelection
+          : currentSelection.filter((id) => id !== query.refId)
+        : [...currentSelection, query.refId];
       setSelectedQueryRefIds(next);
       // Pin the anchor to the toggled card; everything else becomes the base a later Shift extends.
       queryAnchorRef.current = query.refId;
@@ -243,12 +242,11 @@ export function useSelectionState({
       }
 
       if (modifiers?.multi) {
-        const next =
-          currentSelection.includes(transformation.transformId)
-            ? currentSelection.length === 1
-              ? currentSelection
-              : currentSelection.filter((id) => id !== transformation.transformId)
-            : [...currentSelection, transformation.transformId];
+        const next = currentSelection.includes(transformation.transformId)
+          ? currentSelection.length === 1
+            ? currentSelection
+            : currentSelection.filter((id) => id !== transformation.transformId)
+          : [...currentSelection, transformation.transformId];
         setSelectedTransformationIds(next);
         transformationAnchorRef.current = transformation.transformId;
         transformationRangeBaseRef.current = next.filter((id) => id !== transformation.transformId);
