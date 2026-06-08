@@ -586,9 +586,9 @@ func toZanzanaSubject(kind string, name string) (string, error) {
 	return "", errUnknownKind
 }
 
-// GetTeamBindingTuple maps a team binding subject, team name, and permission to the corresponding
+// GetTeamMemberTuple maps a team binding subject, team name, and permission to the corresponding
 // Zanzana tuple. This is the canonical mapping used throughout the system.
-func GetTeamBindingTuple(subject string, team string, permission string) (*openfgav1.TupleKey, error) {
+func GetTeamMemberTuple(subject string, team string, permission string) (*openfgav1.TupleKey, error) {
 	if subject == "" {
 		return nil, errors.New("subject name cannot be empty")
 	}
