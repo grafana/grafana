@@ -28,6 +28,7 @@ import {
 } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
+import { findAdjacentVizPanel, focusVizPanel } from '../layouts-shared/utils';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -184,6 +185,9 @@ export class AutoGridLayoutManager
     }
 
     const gridItemIndex = this.state.layout.state.children.indexOf(gridItem);
+    const adjacentPanel = findAdjacentVizPanel(gridItem, this.state.layout.state.children, (item) =>
+      item instanceof AutoGridItem ? item.state.body : undefined
+    );
 
     dashboardEditActions.removeElement({
       removedObject: panel,
@@ -203,6 +207,7 @@ export class AutoGridLayoutManager
         });
       },
     });
+    focusVizPanel(adjacentPanel);
   }
 
   // panelIdGenerator is a shared counter to ensure unique panel IDs across siblings.

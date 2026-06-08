@@ -49,6 +49,7 @@ import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
+import { findAdjacentVizPanel, focusVizPanel } from '../layouts-shared/utils';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -241,15 +242,22 @@ export class DefaultGridLayoutManager
       row = undefined;
     }
 
+    const siblings = row ? row.state.children : layout.state.children;
+    const adjacentPanel = findAdjacentVizPanel(gridItem, siblings, (item) =>
+      item instanceof DashboardGridItem ? item.state.body : undefined
+    );
+
     if (row) {
       row.setState({ children: row.state.children.filter((child) => child !== gridItem) });
       layout.forceRender();
+      focusVizPanel(adjacentPanel);
       return;
     }
 
     if (!config.featureToggles.dashboardNewLayouts) {
       // No undo/redo support in legacy edit mode
       layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
+      focusVizPanel(adjacentPanel);
       return;
     }
 
@@ -259,6 +267,7 @@ export class DefaultGridLayoutManager
       perform: () => layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) }),
       undo: () => layout.setState({ children: [...layout.state.children, gridItem] }),
     });
+    focusVizPanel(adjacentPanel);
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
