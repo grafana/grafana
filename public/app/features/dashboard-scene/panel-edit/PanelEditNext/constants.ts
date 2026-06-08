@@ -71,25 +71,25 @@ export function getQueryEditorTypeConfig(theme: GrafanaTheme2): Record<QueryEdit
     [QueryEditorType.Query]: {
       icon: 'database',
       color: theme.colors.warning.main,
-      getLabel: () => t('query-editor-next.labels.query', 'Query'),
+      getLabel: () => t('query-editor-next.labels.query', 'query'),
       deleteConfirmation: true,
     },
     [QueryEditorType.Expression]: {
       icon: 'calculator-alt',
       color: theme.colors.tertiary.main,
-      getLabel: () => t('query-editor-next.labels.expression', 'Expression'),
+      getLabel: () => t('query-editor-next.labels.expression', 'expression'),
       deleteConfirmation: true,
     },
     [QueryEditorType.Transformation]: {
       icon: 'process',
       color: theme.colors.success.main,
-      getLabel: () => t('query-editor-next.labels.transformation', 'Transformation'),
+      getLabel: () => t('query-editor-next.labels.transformation', 'transformation'),
       deleteConfirmation: true,
     },
     [QueryEditorType.Alert]: {
       icon: 'bell',
       color: theme.colors.text.secondary, // Alerts use dynamic state-based colors via getAlertStateColor()
-      getLabel: () => t('query-editor-next.labels.alert', 'Alert'),
+      getLabel: () => t('query-editor-next.labels.alert', 'alert'),
       deleteConfirmation: false,
     },
   };

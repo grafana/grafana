@@ -76,7 +76,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 		mockClient.On("Get", mock.Anything, "my-dashboard", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 		mockClient.On("Delete", mock.Anything, "my-dashboard", metav1.DeleteOptions{}, mock.Anything).Return(nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, folderName, gvk, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/my-dashboard.json", "abc123")
 
 		require.NoError(t, err)
@@ -95,7 +95,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, fileInfo).
 			Return(nil, NewResourceValidationError(errors.New("cannot declare folders through files")))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, _, err := mgr.RemoveResourceFromFile(context.Background(), "folders/my-folder.json", "abc123")
 
 		require.Error(t, err)
@@ -115,7 +115,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, fileInfo).
 			Return(nil, NewResourceValidationError(fmt.Errorf("file does not contain a valid resource")))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, _, err := mgr.RemoveResourceFromFile(context.Background(), "config/settings.json", "abc123")
 
 		require.Error(t, err)
@@ -132,7 +132,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 		repo.On("Read", mock.Anything, "dashboards/missing.json", "abc123").
 			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, _, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/missing.json", "abc123")
 
 		require.Error(t, err)
@@ -162,7 +162,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 		mockClient.On("Get", mock.Anything, "deleted-dashboard", metav1.GetOptions{}, mock.Anything).
 			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "deleted-dashboard"))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, _, gvk, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/deleted.json", "abc123")
 
 		require.NoError(t, err)
@@ -197,7 +197,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 		mockClient.On("Delete", mock.Anything, "fail-dashboard", metav1.DeleteOptions{}, mock.Anything).
 			Return(fmt.Errorf("Folder cannot be deleted: folder is not empty"))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, folderName, gvk, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/fail.json", "abc123")
 
 		require.Error(t, err)
@@ -259,7 +259,7 @@ func TestRenameResourceFile(t *testing.T) {
 		})
 		mockClient.On("Get", mock.Anything, "same-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, folderName, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
 
 		require.Error(t, err, "write step is expected to fail (no client)")
@@ -314,7 +314,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mockClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 		mockClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, folderName, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
 
 		require.Error(t, err, "write step fails (no client)")
@@ -349,7 +349,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, newFileInfo).
 			Return(nil, fmt.Errorf("invalid json"))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
 
 		require.Error(t, err)
@@ -365,7 +365,7 @@ func TestRenameResourceFile(t *testing.T) {
 		repo.On("Read", mock.Anything, "old-path/dash.json", "old-ref").
 			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
 
 		require.Error(t, err)
@@ -411,7 +411,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mockClient.On("Get", mock.Anything, "dash-uid", metav1.GetOptions{}, mock.Anything).
 			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "dash-uid"))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, folderName, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
 
 		require.Error(t, err, "write step fails (no client on newParsed)")
@@ -473,7 +473,7 @@ func TestRenameResourceFile(t *testing.T) {
 		dashClient.On("Get", mock.Anything, "dash-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 		dashClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(newObj, nil)
 
-		mgr := NewResourcesManager(repo, folderMgr, mockParser, nil)
+		mgr := NewResourcesManager(repo, folderMgr, mockParser, authTestClients(t))
 		name, folderName, gvk, err := mgr.RenameResourceFile(context.Background(), "team/old-dash.json", "old-ref", "team/new-dash.json", "new-ref")
 
 		require.NoError(t, err)
@@ -536,7 +536,7 @@ func TestRenameResourceFile(t *testing.T) {
 		dashClient.On("Get", mock.Anything, "dash-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 		dashClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(newObj, nil)
 
-		mgr := NewResourcesManager(repo, folderMgr, mockParser, nil)
+		mgr := NewResourcesManager(repo, folderMgr, mockParser, authTestClients(t))
 		name, folderName, gvk, err := mgr.RenameResourceFile(context.Background(), "a-team/dash.json", "old-ref", "b-team/dash.json", "new-ref")
 
 		require.NoError(t, err)
@@ -549,7 +549,7 @@ func TestRenameResourceFile(t *testing.T) {
 	// Pure path-only renames (git blob hash unchanged) skip strict server-side
 	// validation: the spec already lives in the cluster and may legitimately
 	// fail rules introduced after it was first persisted. A synthetic GVR is
-	// used so the SupportsFolderAnnotation path and the v1-dashboard exemption
+	// used so the EnableFolderSupport path and the v1-dashboard exemption
 	// do not interfere with the assertion.
 	fakeGVK := schema.GroupVersionKind{Group: "fake.grafana.app", Version: "v1", Kind: "Fake"}
 	fakeGVR := schema.GroupVersionResource{Group: "fake.grafana.app", Version: "v1", Resource: "fakes"}
@@ -602,7 +602,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything).
 			Return(newObj, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref")
 
 		require.NoError(t, err)
@@ -616,7 +616,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
 			Return(newObj, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref")
 
 		require.NoError(t, err)
@@ -632,7 +632,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
 			Return(newObj, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref")
 
 		require.NoError(t, err)
@@ -684,7 +684,7 @@ func TestWriteResourceFromFile_ExistingHashSkipsValidation(t *testing.T) {
 		mockClient.On("Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything).
 			Return(obj, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash("content-hash"))
 
 		require.NoError(t, err)
@@ -697,7 +697,7 @@ func TestWriteResourceFromFile_ExistingHashSkipsValidation(t *testing.T) {
 		mockClient.On("Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
 			Return(obj, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash("old-hash"))
 
 		require.NoError(t, err)
@@ -710,7 +710,7 @@ func TestWriteResourceFromFile_ExistingHashSkipsValidation(t *testing.T) {
 		mockClient.On("Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
 			Return(obj, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref")
 
 		require.NoError(t, err)
@@ -723,7 +723,7 @@ func TestWriteResourceFromFile_ExistingHashSkipsValidation(t *testing.T) {
 		mockClient.On("Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
 			Return(obj, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash(""))
 
 		require.NoError(t, err)
@@ -789,7 +789,7 @@ func TestReplaceResourceFromFileByRef_HashComparison(t *testing.T) {
 		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything).
 			Return(newObj, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)
@@ -802,7 +802,7 @@ func TestReplaceResourceFromFileByRef_HashComparison(t *testing.T) {
 		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
 			Return(newObj, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)
@@ -815,7 +815,7 @@ func TestReplaceResourceFromFileByRef_HashComparison(t *testing.T) {
 		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
 			Return(newObj, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		name, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)
@@ -858,7 +858,7 @@ func TestReplaceResourceFromFile_PassesExistingHash(t *testing.T) {
 	mockClient.On("Update", mock.Anything, obj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything).
 		Return(obj, nil)
 
-	mgr := NewResourcesManager(repo, nil, mockParser, nil)
+	mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 	name, _, err := mgr.ReplaceResourceFromFile(context.Background(), "resource.json", "ref", "my-resource", fakeGVR, WithExistingHash("matching-hash"))
 
 	require.NoError(t, err)
