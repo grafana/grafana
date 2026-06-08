@@ -97,8 +97,13 @@ func TestIntegrationRuleSequenceUnifiedStorageOnly(t *testing.T) {
 		require.NoError(t, err, "RuleSequence should be creatable with unified storage only")
 		require.NotEmpty(t, created.Name)
 
-		got, err := seqClient.Get(ctx, created.Name, v1.GetOptions{})
-		require.NoError(t, err)
+		// The app-sdk OpinionatedWatcher adds a finalizer in the background.
+		// Wait for it to land so Delete doesn't race with the patch.
+		var got *v0alpha1.RuleSequence
+		require.Eventually(t, func() bool {
+			got, err = seqClient.Get(ctx, created.Name, v1.GetOptions{})
+			return err == nil && len(got.Finalizers) > 0
+		}, 2*time.Second, 100*time.Millisecond, "finalizer was not added to RuleSequence")
 		require.Equal(t, created.Name, got.Name)
 		require.Equal(t, seq.Spec.Trigger.Interval, got.Spec.Trigger.Interval)
 		require.Len(t, got.Spec.RecordingRules, 1)

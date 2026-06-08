@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAsync, useAsyncFn } from 'react-use';
+import { useMemo } from 'react';
+import { useAsync } from 'react-use';
 
 import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
 
@@ -23,11 +23,7 @@ export interface UseDataSourceInstanceSettingsResult {
 export interface UseDataSourceInstanceSettingsListResult {
   isLoading: boolean;
   error?: Error;
-  /** Flattened items across all pages fetched so far. */
   items: DataSourceInstanceSettings[];
-  hasMore: boolean;
-  /** Fetch the next page and append to items. */
-  fetchMore: () => void;
 }
 
 /**
@@ -70,8 +66,7 @@ export function useDataSourceInstanceSettings(
 }
 
 /**
- * React hook wrapping {@link getDataSourceInstanceSettingsList}. Items are flattened
- * across pages; call `fetchMore` to load additional pages. Items reset when
+ * React hook wrapping {@link getDataSourceInstanceSettingsList}. Re-fetches when
  * `filters` changes (compared by value, so inline objects are safe).
  * When `filters.filter` (a callback) is set, the hook re-fetches when the
  * function reference changes. Wrap inline filter callbacks in `useCallback`
@@ -92,42 +87,13 @@ export function useDataSourceInstanceSettingsList(
     return null;
   }, [filterFunc]);
 
-  const [items, setItems] = useState<DataSourceInstanceSettings[]>([]);
-  const [cursor, setCursor] = useState<string | undefined>(undefined);
-  const [hasMore, setHasMore] = useState(true);
-
-  const [fetchState, fetchPage] = useAsyncFn(
-    (nextCursor?: string) => getDataSourceInstanceSettingsList({ filters, cursor: nextCursor }),
+  const { loading, error, value } = useAsync(
+    () => getDataSourceInstanceSettingsList(filters),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [filterValuesKey, filterFuncKey],
-    { loading: true }
+    [filterValuesKey, filterFuncKey]
   );
 
-  useEffect(() => {
-    if (!fetchState.value) {
-      return;
-    }
-    const page = fetchState.value;
-    setItems((prev) => prev.concat(page.items));
-    setCursor(page.nextCursor);
-    setHasMore(page.hasMore);
-  }, [fetchState.value]);
-
-  useEffect(() => {
-    setItems([]);
-    setCursor(undefined);
-    setHasMore(true);
-    fetchPage();
-  }, [fetchPage]);
-
-  const fetchMore = useCallback(() => {
-    if (!hasMore || fetchState.loading) {
-      return;
-    }
-    fetchPage(cursor);
-  }, [fetchPage, cursor, hasMore, fetchState.loading]);
-
-  return { isLoading: fetchState.loading, error: fetchState.error, items, hasMore, fetchMore };
+  return { isLoading: loading, error, items: value ?? [] };
 }
 
 /**

@@ -2028,7 +2028,7 @@ export type SyncOptions = {
     
     Possible enum values:
      - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
-     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment. NOTE: This target is not supported yet. The value is reserved in the API, but repositories that use it are currently rejected during validation.
+     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment. NOTE: The folderless target is not fully implemented yet. It is gated by the provisioning `allowed_targets` setting (which defaults to `folder`), so it must be explicitly enabled, and its behavior may still change.
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'folderless' | 'instance';
 };
@@ -2285,6 +2285,14 @@ export type WebhookResponse = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
 };
+export type SupportedResource = {
+  /** Disabled reports whether the resource is declared but not acted on by provisioning. Active resources omit this field. */
+  disabled?: boolean;
+  /** Group is the API group of the resource (e.g. "dashboard.grafana.app"). */
+  group: string;
+  /** Kind is the kind of the resource (e.g. "Dashboard"). */
+  kind: string;
+};
 export type RepositoryView = {
   /** For git, this is the target branch */
   branch?: string;
@@ -2298,7 +2306,7 @@ export type RepositoryView = {
     
     Possible enum values:
      - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
-     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment. NOTE: This target is not supported yet. The value is reserved in the API, but repositories that use it are currently rejected during validation.
+     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment. NOTE: The folderless target is not fully implemented yet. It is gated by the provisioning `allowed_targets` setting (which defaults to `folder`), so it must be explicitly enabled, and its behavior may still change.
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'folderless' | 'instance';
   /** Repository display */
@@ -2327,6 +2335,8 @@ export type RepositoryViewList = {
   apiVersion?: string;
   /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */
   availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local')[];
+  /** AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Disabled). */
+  availableResources?: SupportedResource[];
   items: RepositoryView[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;

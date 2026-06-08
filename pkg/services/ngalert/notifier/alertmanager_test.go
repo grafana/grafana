@@ -171,12 +171,14 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 	grafanaTmpl := v1.NewTemplateGroup("grafana-template", "{{ define \"grafana.title\" }}Alert{{ end }}", v1.TemplateKindGrafana, ngmodels.ProvenanceNone)
 	testCases := []struct {
 		name          string
+		features      featuremgmt.FeatureToggles
 		config        *v1.AMConfigV1
 		expectedError string
 		skipInvalid   bool
 	}{
 		{
-			name: "basic config",
+			name:     "basic config",
+			features: featuremgmt.WithFeatures(),
 			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
 				Templates: map[v1.ResourceUID]v1.TemplateGroup{
@@ -186,7 +188,8 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 			skipInvalid: false,
 		},
 		{
-			name: "with mimir config",
+			name:     "with mimir config",
+			features: featuremgmt.WithFeatures(),
 			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
 				Templates: map[v1.ResourceUID]v1.TemplateGroup{
@@ -215,7 +218,8 @@ receivers:
 			skipInvalid: false,
 		},
 		{
-			name: "invalid config fails",
+			name:     "invalid config fails",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies),
 			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
 				ExtraConfigs: []v1.ExtraConfiguration{
@@ -228,14 +232,14 @@ receivers:
 					},
 				},
 			},
-			expectedError: "failed to get full alertmanager configuration",
+			expectedError: "invalid extra configuration: identifier is required",
 			skipInvalid:   false,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			moa := NewTestMultiOrgAlertmanager(t)
+			moa := NewTestMultiOrgAlertmanager(t, WithFeatureToggles(tc.features))
 			am, err := moa.AlertmanagerFor(1)
 			require.NoError(t, err)
 			ctx := context.Background()
@@ -245,16 +249,15 @@ receivers:
 			if tc.expectedError != "" {
 				require.Error(t, err)
 				require.ErrorContains(t, err, tc.expectedError)
-			} else {
-				require.NoError(t, err)
-
-				templateDefs := tc.config.SortedTemplates(true)
-				expectedTemplateCount := len(tc.config.Templates)
-				if len(tc.config.ExtraConfigs) > 0 {
-					expectedTemplateCount += len(tc.config.ExtraConfigs[0].TemplateFiles)
-				}
-				require.Len(t, templateDefs, expectedTemplateCount)
+				return
 			}
+			require.NoError(t, err)
+			templateDefs := tc.config.SortedTemplates(true)
+			expectedTemplateCount := len(tc.config.Templates)
+			if len(tc.config.ExtraConfigs) > 0 {
+				expectedTemplateCount += len(tc.config.ExtraConfigs[0].TemplateFiles)
+			}
+			require.Len(t, templateDefs, expectedTemplateCount)
 		})
 	}
 }
@@ -345,7 +348,7 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 		},
 		{
 			name:     "extra config changes affect hash",
-			features: featuremgmt.WithFeatures(),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies),
 			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "extra-receiver")
 				cfg.ExtraConfigs = []v1.ExtraConfiguration{
@@ -428,7 +431,7 @@ receivers:
 		},
 		{
 			name:     "extra config with v0mimir email config",
-			features: featuremgmt.WithFeatures(),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies),
 			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "extra-receiver")
 				cfg.ExtraConfigs = []v1.ExtraConfiguration{
