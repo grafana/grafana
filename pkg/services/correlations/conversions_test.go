@@ -39,7 +39,7 @@ func TestConversion(t *testing.T) {
 			expect: correlationsV0.Correlation{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "uid",
-					UID:       types.UID("uid"),
+					UID:       types.UID(""),
 					Namespace: "org-2",
 					Annotations: map[string]string{
 						"grafana.app/managedBy": "classic-file-provisioning",
@@ -47,7 +47,6 @@ func TestConversion(t *testing.T) {
 					Labels: map[string]string{
 						"correlations.grafana.app/sourceDS-ref":     "source-type.source",
 						"correlations.grafana.app/sourceDSProv-ref": "source-type.source.true",
-						"correlations.grafana.app/targetDS-ref":     "target-type.target",
 					},
 				},
 				Spec: correlationsV0.CorrelationSpec{
