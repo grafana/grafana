@@ -3843,11 +3843,28 @@
           }
         }
       },
+      "BranchOptions": {
+        "type": "object",
+        "properties": {
+          "enforceTemplate": {
+            "description": "When true, the branch name field in Save drawers is read-only.",
+            "type": "boolean"
+          },
+          "nameTemplate": {
+            "description": "Template for the branch name created in branch workflow. Supports variables: {{action}}, {{resourceKind}}, {{title}}, {{userLogin}}, {{random}}. {{random}} is a 6-character alphanumeric token generated at render time to avoid collisions. The result is sanitised to a valid git ref (lowercase, alphanumeric + dashes, max 100 chars). When empty, the current auto-generated name is preserved.",
+            "type": "string"
+          }
+        }
+      },
       "CommitOptions": {
         "type": "object",
         "properties": {
+          "enforceTemplate": {
+            "description": "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. The Grafana-saved-by trailer is always appended regardless of this setting.",
+            "type": "boolean"
+          },
           "singleResourceMessageTemplate": {
-            "description": "Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}. When empty, a built-in default is used (e.g. \"Save dashboard: <title>\").",
+            "description": "Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}, {{userName}}, {{userLogin}}, {{userEmail}}. When empty, a built-in default is used (e.g. \"Save dashboard: <title>\").",
             "type": "string"
           }
         }
@@ -4164,7 +4181,7 @@
             "type": "string"
           },
           "message": {
-            "description": "Message to use when committing the changes in a single commit",
+            "description": "Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty.",
             "type": "string"
           },
           "path": {
@@ -4794,6 +4811,10 @@
               }
             ]
           },
+          "message": {
+            "description": "Commit message for this job. Applies to job actions that produce commits (delete, move, migrate, push, fixFolderMetadata). When empty, the backend falls back to the action-specific message field (ExportJobOptions.Message, MigrateJobOptions.Message) for backwards compatibility, then to a built-in default.",
+            "type": "string"
+          },
           "migrate": {
             "description": "Required when the action is `migrate`",
             "allOf": [
@@ -4933,7 +4954,7 @@
         "type": "object",
         "properties": {
           "message": {
-            "description": "Message to use when committing the changes in a single commit",
+            "description": "Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty.",
             "type": "string"
           },
           "resources": {
@@ -5001,6 +5022,19 @@
           },
           "url": {
             "description": "URL to the originator (eg, PR URL)",
+            "type": "string"
+          }
+        }
+      },
+      "PullRequestOptions": {
+        "type": "object",
+        "properties": {
+          "enforceTemplate": {
+            "description": "When true, the PR title field in Save drawers is read-only.",
+            "type": "boolean"
+          },
+          "titleTemplate": {
+            "description": "Template for pull request titles. Supports the same variables as BranchOptions.NameTemplate ({{random}} is available but rarely useful here). When empty, the first line of the commit message is used.",
             "type": "string"
           }
         }
@@ -5191,6 +5225,14 @@
               }
             ]
           },
+          "branch": {
+            "description": "Branch naming options. Only meaningful when Workflows includes \"branch\".",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BranchOptions"
+              }
+            ]
+          },
           "commit": {
             "description": "Commit message options. Currently only contains the template used by single-resource UI operations; future siblings (bulk, sync) can live here.",
             "allOf": [
@@ -5248,6 +5290,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/LocalRepositoryConfig"
+              }
+            ]
+          },
+          "pullRequest": {
+            "description": "Pull request options. Only meaningful when Workflows includes \"branch\".",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PullRequestOptions"
               }
             ]
           },
@@ -5440,10 +5490,10 @@
             "type": "string"
           },
           "target": {
-            "description": "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
+            "description": "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"folderless\"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment. NOTE: This target is not supported yet. The value is reserved in the API, but repositories that use it are currently rejected during validation.\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
             "type": "string",
             "default": "",
-            "enum": ["folder", "instance"]
+            "enum": ["folder", "folderless", "instance"]
           },
           "title": {
             "description": "Repository display",
@@ -5487,7 +5537,7 @@
             "items": {
               "type": "string",
               "default": "",
-              "enum": ["folder", "instance"]
+              "enum": ["folder", "folderless", "instance"]
             }
           },
           "apiVersion": {
@@ -5921,10 +5971,10 @@
             "format": "int64"
           },
           "target": {
-            "description": "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
+            "description": "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"folderless\"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment. NOTE: This target is not supported yet. The value is reserved in the API, but repositories that use it are currently rejected during validation.\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
             "type": "string",
             "default": "",
-            "enum": ["folder", "instance"]
+            "enum": ["folder", "folderless", "instance"]
           }
         }
       },

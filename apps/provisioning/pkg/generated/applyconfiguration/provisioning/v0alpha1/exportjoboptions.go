@@ -7,7 +7,9 @@ package v0alpha1
 // ExportJobOptionsApplyConfiguration represents a declarative configuration of the ExportJobOptions type for use
 // with apply.
 type ExportJobOptionsApplyConfiguration struct {
-	// Message to use when committing the changes in a single commit
+	// Message to use when committing the changes in a single commit.
+	// Deprecated: set JobSpec.Message instead. This field is kept for
+	// backwards compatibility and is only used when JobSpec.Message is empty.
 	Message *string `json:"message,omitempty"`
 	// The source folder (or empty) to export
 	Folder *string `json:"folder,omitempty"`

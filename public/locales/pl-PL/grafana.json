@@ -3354,6 +3354,10 @@
         "tooltip-description": "Znajdź okresy wyciszenia według kryterium dopasowania. Jest to dopasowywanie dokładne na podstawie nazwy etykiety, wartości i operatora.",
         "tooltip-example": "Przykład: <1>env=~\"prod.*\"</1> wyszukuje okresy wyciszenia za pomocą reguły dopasowania <4>env=~\"prod.*\"</4>."
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "Wyświetlane są tylko uruchomione instancje alertów.",
       "operator": {
         "equals": "Równa się",
@@ -5565,9 +5569,6 @@
       "aria-label-dashboard-name": "Pulpit {{dashboardName}}",
       "label-no-dashboards-found": "Nie znaleziono pulpitów"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Anuluj wczytywanie pulpitu"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5837,11 +5838,6 @@
         "label": "Menu eksportu pulpitu"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Nie udało się pobrać pulpitu"
-      }
-    },
     "filters-overview": {
       "apply": "Zastosuj",
       "apply-close": "Zastosuj i zamknij",
@@ -5998,11 +5994,6 @@
       "title-get-help-with-this-panel": "Uzyskaj pomoc dotyczącą tego panelu",
       "troubleshooting-docs": "Dokumenty dotyczące rozwiązywania problemów"
     },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Nie udało się utworzyć modelu pulpitu"
-      }
-    },
     "inspect": {
       "data-tab": "Dane",
       "error-tab": "Błąd",
@@ -6091,13 +6082,6 @@
       },
       "ungroup-nested-text": "Spowoduje to rozgrupowanie wszystkich zagnieżdżonych grup.",
       "ungroup-nested-title": "Rozgrupować zagnieżdżone grupy?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Nie znaleziono pulpitu"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Nie można edytować pulpitu",
@@ -6419,10 +6403,6 @@
       },
       "undo": "Cofnij"
     },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Wczytywanie i inicjowanie pulpitu",
-      "title-not-found": "Nie znaleziono panelu o identyfikatorze {{panelId}}"
-    },
     "source-link": {
       "title": "Źródło ({{provider}})",
       "tooltip": "Wyświetl plik źródłowy w repozytorium"
@@ -6692,8 +6672,8 @@
     "version-history-comparison": {
       "button-restore": "Przywróć do wersji {{version}}",
       "label-view-json-diff": "Wyświetl plik diff JSON",
-      "new-updated-by": "<0>Wersja {{version}}</0> zaktualizowana przez: {{editor}}, {{timeAgo}}",
-      "old-updated-by": "<0>Wersja {{version}}</0> zaktualizowana przez: {{editor}}, {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Przełącz wybór wersji {{version}}",
@@ -7965,8 +7945,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "Wyświetl plik diff JSON",
-      "new-version-updated": "<0>Wersja {{version}}</0> zaktualizowana przez: {{editor}}, {{timeAgo}}",
-      "old-version-updated": "<0>Wersja {{version}}</0> zaktualizowana przez: {{editor}}, {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "Porównanie: {{baseVersion}} <3></3> {{newVersion}}",
@@ -10349,7 +10329,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Pomoc <1></1>",
-      "access-help-details": "Tryb dostępu kontroluje sposób obsługi żądań do źródła danych. Jeśli nie określono inaczej, preferowanym trybem powinien być <1><i>Serwer</i></1>.",
+      "access-help-details": "",
       "access-help-title": "Uzyskaj dostęp do pomocy",
       "access-label": "Dostęp",
       "allowed-cookies": "Dozwolone pliki cookie",
@@ -11035,6 +11015,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -13339,8 +13323,8 @@
       "label-branch": "Gałąź",
       "label-comment": "Uwagi",
       "label-filename": "Nazwa pliku",
-      "label-folder": "Folder",
       "label-path": "Ścieżka",
+      "label-repository-folder": "",
       "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Wybierz lub podaj ścieżkę do folderu",
@@ -13755,6 +13739,21 @@
       "request-failed": "",
       "resource-not-found": ""
     },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
+    },
     "instance-sync-deprecation": {
       "message": "Synchronizacja instancji nie jest obecnie w pełni obsługiwana i powoduje przerwanie działania paneli biblioteki i alertów. Aby korzystać z paneli biblioteki i alertów, odłącz repozytorium i podłącz je ponownie za pomocą synchronizacji folderów.",
       "title": "Synchronizacja instancji nie jest w pełni obsługiwana"
@@ -14057,7 +14056,8 @@
     "sync-job": {
       "error-no-job-id": "Nie udało się uruchomić zadania",
       "error-no-repository-name": "Nie wprowadzono nazwy repozytorium",
-      "error-starting-job": "Błąd uruchamiania zadania"
+      "error-starting-job": "Błąd uruchamiania zadania",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "Błąd pobierania zasobów",
@@ -16798,7 +16798,7 @@
       "message": "Nie znaleziono użytkowników"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Token sesji został automatycznie unieważniony, ponieważ osiągnięto <2>maksymalną liczbę {{numSessions}} jednoczesnych sesji</2> na koncie.",
+      "auto-revoked": "",
       "resume-message": "<strong>Aby wznowić sesję, zaloguj się ponownie.</strong> Jeśli automatyczne wylogowywanie się powtarza, skontaktuj się z administratorem lub przejdź na stronę licencji, aby sprawdzić swój limit.",
       "sign-in": "Zaloguj się",
       "title-you-have-been-automatically-signed-out": "Nastąpiło automatyczne wylogowanie"

@@ -770,9 +770,10 @@ func validateDashboardTags(obj runtime.Object) error {
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storageOpts := apistore.StorageOptions{
-		Scheme:                      opts.Scheme,
-		EnableFolderSupport:         true,
-		RequireDeprecatedInternalID: true,
+		Scheme:               opts.Scheme,
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
+		EnableFolderSupport:  true,
 	}
 
 	if b.isStandalone {

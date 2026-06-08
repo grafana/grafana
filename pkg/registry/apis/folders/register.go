@@ -218,10 +218,11 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	opts.StorageOptsRegister(foldersv1.FolderResourceInfo.GroupResource(), apistore.StorageOptions{
 		// Preserve apiVersion/kind from the client on write. Without Scheme, apistore.encode
 		// uses the global LegacyCodec and converts to a single preferred external version.
-		Scheme:                      opts.Scheme,
-		EnableFolderSupport:         true,
-		RequireDeprecatedInternalID: true,
-		Permissions:                 b.setDefaultFolderPermissions,
+		Scheme:               opts.Scheme,
+		Index:                b.searcher,
+		EnableFolderSupport:  true,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
+		Permissions:          b.setDefaultFolderPermissions,
 	})
 
 	// v1

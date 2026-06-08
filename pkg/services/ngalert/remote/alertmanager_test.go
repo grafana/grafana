@@ -208,9 +208,9 @@ func TestGetRemoteState(t *testing.T) {
 			expErr:  "failed to base64-decode remote state: illegal base64 data at input byte 7",
 		},
 		{
-			name:    "error from the Mimir API",
+			name:    "error from the Alertmanager",
 			handler: errorHandler,
-			expErr:  "failed to pull remote state: Response content-type is not application/json: text/html; charset=utf-8",
+			expErr:  "failed to pull remote state: received status code 500 from the remote Alertmanager",
 		},
 		{
 			name:    "invalid state, base64-encoded",
