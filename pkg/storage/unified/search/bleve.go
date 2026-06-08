@@ -263,6 +263,9 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 	be.bgTasksWg.Add(1)
 	go be.evictExpiredOrUnownedIndexesPeriodically(ctx)
 
+	be.bgTasksWg.Add(1)
+	go be.writeOpenIndexListPeriodically(ctx)
+
 	if opts.Snapshot.Store != nil {
 		// Initialise snapshot metric label series only on instances where the
 		// feature is actually wired up; ProvideIndexMetrics deliberately skips
@@ -1516,10 +1519,15 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 
 // Stop closes all indexes and stops background tasks.
 func (b *bleveBackend) Stop() {
-	b.closeAllIndexes()
-
 	b.bgTasksCancel()
 	b.bgTasksWg.Wait()
+
+	// Stop the periodic writer before the final write so shutdown writes one stable list.
+	if err := b.WriteOpenIndexStats(time.Now()); err != nil {
+		b.log.Warn("failed to write open index stats during shutdown", "err", err)
+	}
+
+	b.closeAllIndexes()
 }
 
 func (b *bleveBackend) closeAllIndexes() {
