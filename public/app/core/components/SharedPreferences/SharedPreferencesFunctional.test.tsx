@@ -2,6 +2,7 @@ import { HttpResponse } from 'msw';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { render, screen, userEvent, waitFor, within, testWithFeatureToggles } from 'test/test-utils';
 
+import { getBuiltInThemes } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { preferencesHandlers } from '@grafana/test-utils/handlers';
@@ -11,6 +12,10 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
 import { SharedPreferencesFunctional } from './SharedPreferencesFunctional';
+
+// File-level testWithFeatureToggles({ enable: ['grafanaconThemes'] }) means useSelectableThemes
+// would include the grafanacon extras at runtime — mirror that here.
+const TEST_THEMES = getBuiltInThemes(['desertbloom', 'gildedgrove', 'sapphiredusk', 'tron', 'gloom']);
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -30,7 +35,7 @@ const selectComboboxOptionInTest = async (input: HTMLElement, optionOrOptions: s
 };
 
 const setup = async () => {
-  const view = render(<SharedPreferencesFunctional resourceUri="user" preferenceType="user" />);
+  const view = render(<SharedPreferencesFunctional themes={TEST_THEMES} resourceUri="user" preferenceType="user" />);
   const themeSelect = await screen.findByRole('combobox', { name: /Interface theme/ });
   await waitFor(() => expect(themeSelect).not.toBeDisabled());
   return view;
@@ -193,7 +198,7 @@ describe('SharedPreferencesFunctional', () => {
     server.use(
       preferencesHandlers.listPreferencesHandler(HttpResponse.json({ message: 'Server error' }, { status: 500 }))
     );
-    render(<SharedPreferencesFunctional resourceUri="user" preferenceType="user" />);
+    render(<SharedPreferencesFunctional themes={TEST_THEMES} resourceUri="user" preferenceType="user" />);
     expect(await screen.findByText('Error loading preferences')).toBeInTheDocument();
   });
   it('shows an error alert when saving preferences fails', async () => {
@@ -209,7 +214,14 @@ describe('SharedPreferencesFunctional', () => {
     const onConfirm = jest.fn().mockResolvedValue(false);
     const capture = captureRequests((r) => r.url.includes('/preferences') && r.method === 'PATCH');
 
-    render(<SharedPreferencesFunctional resourceUri="user" preferenceType="user" onConfirm={onConfirm} />);
+    render(
+      <SharedPreferencesFunctional
+        themes={TEST_THEMES}
+        resourceUri="user"
+        preferenceType="user"
+        onConfirm={onConfirm}
+      />
+    );
     const themeSelect = await screen.findByRole('combobox', { name: /Interface theme/ });
     await waitFor(() => expect(themeSelect).not.toBeDisabled());
 
@@ -221,7 +233,7 @@ describe('SharedPreferencesFunctional', () => {
     expect(mockReload).not.toHaveBeenCalled();
   });
   it('renders all form fields as disabled when disabled prop is true', async () => {
-    render(<SharedPreferencesFunctional resourceUri="user" preferenceType="user" disabled />);
+    render(<SharedPreferencesFunctional themes={TEST_THEMES} resourceUri="user" preferenceType="user" disabled />);
     const themeSelect = await screen.findByRole('combobox', { name: /Interface theme/ });
     await waitFor(() => expect(themeSelect).toBeDisabled());
 

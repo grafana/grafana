@@ -1,10 +1,10 @@
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
@@ -179,5 +179,29 @@ describe('SharedPreferences', () => {
     const { user } = await setup();
     await user.click(screen.getByText('Save preferences'));
     expect(mockReload).toHaveBeenCalled();
+  });
+
+  describe('with OpenFeature flags', () => {
+    afterEach(async () => {
+      // Wrap in act() — setTestFlags fires OpenFeature events that trigger React state
+      // updates while the component is still mounted.
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
+
+    it('renders colorblind themes in the picker when both grafana.newPreferencesPage and colorblindThemes are on', async () => {
+      setTestFlags({
+        'grafana.newPreferencesPage': true, // forces wrapper → Functional path
+        colorblindThemes: true, // exercises useSelectableThemes via wrapper
+      });
+      const { user } = render(<SharedPreferences resourceUri="user" preferenceType="user" />);
+      const themeSelect = await screen.findByRole('combobox', { name: 'Interface theme' });
+      await waitFor(() => expect(themeSelect).not.toBeDisabled());
+
+      await user.click(themeSelect);
+      const colorblindOptions = await screen.findAllByRole('option', { name: /protanopia|tritanopia/i });
+      expect(colorblindOptions).toHaveLength(4);
+    });
   });
 });

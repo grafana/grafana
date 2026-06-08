@@ -10,7 +10,7 @@ export const SharedPreferences = (props: Props) => {
   const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
   const themes = useSelectableThemes();
   return newPrefsEnabled ? (
-    <SharedPreferencesFunctional {...props} />
+    <SharedPreferencesFunctional {...props} themes={themes} />
   ) : (
     <SharedPreferencesOld {...props} themes={themes} />
   );

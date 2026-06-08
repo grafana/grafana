@@ -1,7 +1,7 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { memo, useState, useEffect } from 'react';
 
-import { FeatureState } from '@grafana/data';
+import { FeatureState, type ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -26,14 +26,15 @@ import {
 import { changeTheme } from 'app/core/services/theme';
 
 import { DashboardPicker } from '../Select/DashboardPicker';
-import { useSelectableThemes } from '../ThemeSelector/useSelectableThemes';
 
 import { languageChanged, saveButtonClicked, themeChanged } from './analytics/main';
 import { useSharedPreferences } from './useSharedPreferences';
 import { getLanguageOptions, getStyles, getTranslatedThemeName, type PrefsState, type Props } from './utils';
 
-export const SharedPreferencesFunctional = memo((props: Props) => {
-  const { resourceUri } = props;
+type FunctionalProps = Props & { themes: ThemeRegistryItem[] };
+
+export const SharedPreferencesFunctional = memo((props: FunctionalProps) => {
+  const { resourceUri, themes } = props;
 
   const [updatePreferences, { preferences: prefs, isLoading, isError, isUpdating, isUpdateError }] =
     useSharedPreferences(resourceUri);
@@ -49,7 +50,6 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     homeDashboardUID: '',
   });
 
-  const themes = useSelectableThemes();
   const styles = useStyles2(getStyles);
 
   // Options are translated, so must be called after init but call them
