@@ -30,13 +30,13 @@
         }
       }
     },
-    "/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/{namespace}/adminconfigs": {
+    "/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/{namespace}/configs": {
       "get": {
         "tags": [
-          "AdminConfig"
+          "Config"
         ],
-        "description": "list or watch objects of kind AdminConfig",
-        "operationId": "listAdminConfig",
+        "description": "list or watch objects of kind Config",
+        "operationId": "listConfig",
         "parameters": [
           {
             "name": "allowWatchBookmarks",
@@ -144,17 +144,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfigList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ConfigList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfigList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ConfigList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfigList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ConfigList"
                 }
               }
             }
@@ -164,15 +164,15 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "post": {
         "tags": [
-          "AdminConfig"
+          "Config"
         ],
-        "description": "create an AdminConfig",
-        "operationId": "createAdminConfig",
+        "description": "create a Config",
+        "operationId": "createConfig",
         "parameters": [
           {
             "name": "dryRun",
@@ -206,12 +206,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
               }
             }
           },
@@ -223,12 +223,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               }
             }
@@ -238,12 +238,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               }
             }
@@ -253,12 +253,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               }
             }
@@ -268,15 +268,15 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "delete": {
         "tags": [
-          "AdminConfig"
+          "Config"
         ],
-        "description": "delete collection of AdminConfig",
-        "operationId": "deletecollectionAdminConfig",
+        "description": "delete collection of Config",
+        "operationId": "deletecollectionConfig",
         "parameters": [
           {
             "name": "continue",
@@ -426,7 +426,7 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "parameters": [
@@ -451,25 +451,25 @@
         }
       ]
     },
-    "/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/{namespace}/adminconfigs/{name}": {
+    "/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/{namespace}/configs/{name}": {
       "get": {
         "tags": [
-          "AdminConfig"
+          "Config"
         ],
-        "description": "read the specified AdminConfig",
-        "operationId": "getAdminConfig",
+        "description": "read the specified Config",
+        "operationId": "getConfig",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               }
             }
@@ -479,15 +479,15 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "put": {
         "tags": [
-          "AdminConfig"
+          "Config"
         ],
-        "description": "replace the specified AdminConfig",
-        "operationId": "replaceAdminConfig",
+        "description": "replace the specified Config",
+        "operationId": "replaceConfig",
         "parameters": [
           {
             "name": "dryRun",
@@ -521,12 +521,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
               }
             }
           },
@@ -538,12 +538,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               }
             }
@@ -553,12 +553,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               }
             }
@@ -568,15 +568,15 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "delete": {
         "tags": [
-          "AdminConfig"
+          "Config"
         ],
-        "description": "delete an AdminConfig",
-        "operationId": "deleteAdminConfig",
+        "description": "delete a Config",
+        "operationId": "deleteConfig",
         "parameters": [
           {
             "name": "dryRun",
@@ -660,15 +660,15 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "patch": {
         "tags": [
-          "AdminConfig"
+          "Config"
         ],
-        "description": "partially update the specified AdminConfig",
-        "operationId": "updateAdminConfig",
+        "description": "partially update the specified Config",
+        "operationId": "updateConfig",
         "parameters": [
           {
             "name": "dryRun",
@@ -738,12 +738,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               }
             }
@@ -753,12 +753,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               }
             }
@@ -768,14 +768,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the AdminConfig",
+          "description": "name of the Config",
           "required": true,
           "schema": {
             "type": "string",
@@ -803,25 +803,25 @@
         }
       ]
     },
-    "/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/{namespace}/adminconfigs/{name}/status": {
+    "/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/{namespace}/configs/{name}/status": {
       "get": {
         "tags": [
-          "AdminConfig"
+          "Config"
         ],
-        "description": "read status of the specified AdminConfig",
-        "operationId": "getAdminConfigStatus",
+        "description": "read status of the specified Config",
+        "operationId": "getConfigStatus",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               }
             }
@@ -831,15 +831,15 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "put": {
         "tags": [
-          "AdminConfig"
+          "Config"
         ],
-        "description": "replace status of the specified AdminConfig",
-        "operationId": "replaceAdminConfigStatus",
+        "description": "replace status of the specified Config",
+        "operationId": "replaceConfigStatus",
         "parameters": [
           {
             "name": "dryRun",
@@ -873,12 +873,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
               }
             }
           },
@@ -890,12 +890,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               }
             }
@@ -905,12 +905,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               }
             }
@@ -920,15 +920,15 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "patch": {
         "tags": [
-          "AdminConfig"
+          "Config"
         ],
-        "description": "partially update status of the specified AdminConfig",
-        "operationId": "updateAdminConfigStatus",
+        "description": "partially update status of the specified Config",
+        "operationId": "updateConfigStatus",
         "parameters": [
           {
             "name": "dryRun",
@@ -998,12 +998,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               }
             }
@@ -1013,12 +1013,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               }
             }
@@ -1028,14 +1028,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
           "version": "v0alpha1",
-          "kind": "AdminConfig"
+          "kind": "Config"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the AdminConfig",
+          "description": "name of the Config",
           "required": true,
           "schema": {
             "type": "string",
@@ -4839,7 +4839,7 @@
   },
   "components": {
     "schemas": {
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config": {
         "type": "object",
         "required": [
           "kind",
@@ -4865,64 +4865,21 @@
             ]
           },
           "spec": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfigSpec"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ConfigSpec"
           },
           "status": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfigStatus"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ConfigStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
           {
             "group": "notifications.alerting.grafana.app",
-            "kind": "AdminConfig",
+            "kind": "Config",
             "version": "v0alpha1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfigAlertmanagerSpec": {
-        "description": "AlertmanagerSpec groups admin config for the current org's Alertmanager.",
-        "type": "object",
-        "properties": {
-          "externalSync": {
-            "description": "externalSync configures syncing the Alertmanager configuration from a\nMimir/Cortex datasource into the current org. The worker periodically\nfetches the upstream configuration and merges it into the current org's\nGrafana alertmanager configuration.",
-            "type": "object",
-            "properties": {
-              "datasourceUid": {
-                "description": "datasourceUid is the UID of the Mimir/Cortex Alertmanager datasource\nto sync from. Empty means no sync is configured for the current org.\nThe operator ini setting `unified_alerting.external_alertmanager_uid`\noverrides this when set; see status.alertmanager.externalSync.origin.",
-                "type": "string"
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfigAlertmanagerStatus": {
-        "description": "AlertmanagerStatus mirrors #AlertmanagerSpec with runtime observation.",
-        "type": "object",
-        "properties": {
-          "externalSync": {
-            "type": "object",
-            "properties": {
-              "datasourceUid": {
-                "description": "datasourceUid is the UID actually used on the last sync attempt; may\nlag spec until the next tick. When origin=ini, this is the ini\noverride value.",
-                "type": "string"
-              },
-              "origin": {
-                "description": "origin records which source supplied datasourceUid on the last run.\n\"ini\" (grafana.ini's unified_alerting.external_alertmanager_uid) wins\nover \"api\" (spec.alertmanager.externalSync.datasourceUid).",
-                "type": "string",
-                "enum": [
-                  "api",
-                  "ini"
-                ]
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfigCondition": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ConfigCondition": {
         "description": "Condition mirrors metav1.Condition. Inlined because the app-sdk codegen\nhere can't reference metav1.Condition from CUE. Field semantics are\nk8s-standard; reason values are produced by SyncReason in the syncer.",
         "type": "object",
         "required": [
@@ -4959,7 +4916,7 @@
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfigList": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ConfigList": {
         "type": "object",
         "required": [
           "metadata",
@@ -4976,7 +4933,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
                 }
               ]
             }
@@ -4997,32 +4954,54 @@
         "x-kubernetes-group-version-kind": [
           {
             "group": "notifications.alerting.grafana.app",
-            "kind": "AdminConfigList",
+            "kind": "ConfigList",
             "version": "v0alpha1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfigSpec": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ConfigSpec": {
         "type": "object",
         "properties": {
-          "alertmanager": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfigAlertmanagerSpec"
+          "externalAlertmanagerSync": {
+            "type": "object",
+            "properties": {
+              "datasourceUid": {
+                "description": "datasourceUid is the UID of the Mimir/Cortex Alertmanager datasource to\nsync from. Empty means no sync is configured for the current org. The\noperator ini setting `unified_alerting.external_alertmanager_uid`\noverrides this when set; see status.externalAlertmanagerSync.origin.",
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfigStatus": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ConfigStatus": {
         "type": "object",
         "properties": {
-          "alertmanager": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfigAlertmanagerStatus"
-          },
           "conditions": {
             "description": "Standard k8s-style condition list. Each binary-state feature owns one\ncondition type. Current types:\n  - ExternalAlertmanagerSynced: True after a successful sync, False\n    after a failed attempt, Unknown until the first attempt.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfigCondition"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ConfigCondition"
             }
+          },
+          "externalAlertmanagerSync": {
+            "type": "object",
+            "properties": {
+              "datasourceUid": {
+                "description": "datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.",
+                "type": "string"
+              },
+              "origin": {
+                "description": "origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_alertmanager_uid) wins over \"api\"\n(spec.externalAlertmanagerSync.datasourceUid).",
+                "type": "string",
+                "enum": [
+                  "api",
+                  "ini"
+                ]
+              }
+            },
+            "additionalProperties": false
           },
           "observedGeneration": {
             "description": "observedGeneration is the spec.generation last evaluated by the\ncontrollers writing this status.",

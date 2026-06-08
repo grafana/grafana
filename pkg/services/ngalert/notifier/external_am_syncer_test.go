@@ -40,42 +40,40 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// fakeAdminConfigClient is an in-memory resource.ClientGenerator + resource.Client
-// that serves AdminConfig objects for the sync tests. It is the UID source: tests
+// fakeConfigClient is an in-memory resource.ClientGenerator + resource.Client
+// that serves Config objects for the sync tests. It is the UID source: tests
 // seed a datasource UID per org via setUID, and the sync worker reads it through
-// the typed AdminConfigClient. Only the read/write paths the worker exercises
+// the typed ConfigClient. Only the read/write paths the worker exercises
 // (Get, Create, Update) are meaningful; the rest are inert stubs. Status writes
 // (Update) merge into the seeded object so the spec UID survives across ticks.
-type fakeAdminConfigClient struct {
+type fakeConfigClient struct {
 	mu       sync.Mutex
 	nsMapper request.NamespaceMapper
-	objects  map[string]*alertingnotifv0alpha1.AdminConfig // namespace -> object
+	objects  map[string]*alertingnotifv0alpha1.Config // namespace -> object
 	getErr   map[string]error                              // namespace -> error returned by Get
 	getCalls map[string]int                                // namespace -> Get call count
 }
 
-func newFakeAdminConfigClient() *fakeAdminConfigClient {
-	return &fakeAdminConfigClient{
+func newFakeConfigClient() *fakeConfigClient {
+	return &fakeConfigClient{
 		nsMapper: func(orgID int64) string { return fmt.Sprintf("org-%d", orgID) },
-		objects:  map[string]*alertingnotifv0alpha1.AdminConfig{},
+		objects:  map[string]*alertingnotifv0alpha1.Config{},
 		getErr:   map[string]error{},
 		getCalls: map[string]int{},
 	}
 }
 
-// setUID seeds an AdminConfig for orgID carrying the given external-sync
+// setUID seeds an Config for orgID carrying the given external-sync
 // datasource UID. An empty uid seeds a config with no externalSync set, which
 // the worker resolves to "" and skips.
-func (f *fakeAdminConfigClient) setUID(orgID int64, uid string) {
-	obj := &alertingnotifv0alpha1.AdminConfig{}
+func (f *fakeConfigClient) setUID(orgID int64, uid string) {
+	obj := &alertingnotifv0alpha1.Config{}
 	obj.SetNamespace(f.nsMapper(orgID))
-	obj.SetName(alertingnotifv0alpha1.AdminConfigSingletonName)
+	obj.SetName(alertingnotifv0alpha1.ConfigSingletonName)
 	obj.SetResourceVersion("1")
 	if uid != "" {
 		u := uid
-		obj.Spec.Alertmanager = &alertingnotifv0alpha1.AdminConfigAlertmanagerSpec{
-			ExternalSync: &alertingnotifv0alpha1.AdminConfigV0alpha1AlertmanagerSpecExternalSync{DatasourceUid: &u},
-		}
+		obj.Spec.ExternalAlertmanagerSync = &alertingnotifv0alpha1.ConfigV0alpha1SpecExternalAlertmanagerSync{DatasourceUid: &u}
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -83,14 +81,14 @@ func (f *fakeAdminConfigClient) setUID(orgID int64, uid string) {
 }
 
 // setErr makes Get for orgID return err (simulating a storage failure).
-func (f *fakeAdminConfigClient) setErr(orgID int64, err error) {
+func (f *fakeConfigClient) setErr(orgID int64, err error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.getErr[f.nsMapper(orgID)] = err
 }
 
 // totalGetCalls reports how many Get calls the worker made across all orgs.
-func (f *fakeAdminConfigClient) totalGetCalls() int {
+func (f *fakeConfigClient) totalGetCalls() int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	n := 0
@@ -102,16 +100,16 @@ func (f *fakeAdminConfigClient) totalGetCalls() int {
 
 // resource.ClientGenerator
 
-func (f *fakeAdminConfigClient) ClientFor(resource.Kind) (resource.Client, error) { return f, nil }
+func (f *fakeConfigClient) ClientFor(resource.Kind) (resource.Client, error) { return f, nil }
 
-func (f *fakeAdminConfigClient) GetCustomRouteClient(schema.GroupVersion, string) (resource.CustomRouteClient, error) {
+func (f *fakeConfigClient) GetCustomRouteClient(schema.GroupVersion, string) (resource.CustomRouteClient, error) {
 	return nil, nil
 }
-func (f *fakeAdminConfigClient) DiscoveryClient() (resource.DiscoveryClient, error) { return nil, nil }
+func (f *fakeConfigClient) DiscoveryClient() (resource.DiscoveryClient, error) { return nil, nil }
 
 // resource.Client — only Get/Create/Update (and their *Into variants) are meaningful.
 
-func (f *fakeAdminConfigClient) lookup(ns string) (*alertingnotifv0alpha1.AdminConfig, error) {
+func (f *fakeConfigClient) lookup(ns string) (*alertingnotifv0alpha1.Config, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.getCalls[ns]++
@@ -120,15 +118,15 @@ func (f *fakeAdminConfigClient) lookup(ns string) (*alertingnotifv0alpha1.AdminC
 	}
 	obj, ok := f.objects[ns]
 	if !ok {
-		return nil, k8serrors.NewNotFound(alertingnotifv0alpha1.AdminConfigKind().GroupVersionResource().GroupResource(), alertingnotifv0alpha1.AdminConfigSingletonName)
+		return nil, k8serrors.NewNotFound(alertingnotifv0alpha1.ConfigKind().GroupVersionResource().GroupResource(), alertingnotifv0alpha1.ConfigSingletonName)
 	}
 	return obj, nil
 }
 
 // apply stores obj, merging an incoming status onto any existing object so a
 // status write doesn't clobber the seeded spec UID.
-func (f *fakeAdminConfigClient) apply(obj resource.Object) resource.Object {
-	ac, ok := obj.(*alertingnotifv0alpha1.AdminConfig)
+func (f *fakeConfigClient) apply(obj resource.Object) resource.Object {
+	ac, ok := obj.(*alertingnotifv0alpha1.Config)
 	if !ok {
 		return obj
 	}
@@ -145,64 +143,64 @@ func (f *fakeAdminConfigClient) apply(obj resource.Object) resource.Object {
 	return &cp
 }
 
-func (f *fakeAdminConfigClient) Get(_ context.Context, id resource.Identifier) (resource.Object, error) {
+func (f *fakeConfigClient) Get(_ context.Context, id resource.Identifier) (resource.Object, error) {
 	return f.lookup(id.Namespace)
 }
 
-func (f *fakeAdminConfigClient) GetInto(_ context.Context, id resource.Identifier, into resource.Object) error {
+func (f *fakeConfigClient) GetInto(_ context.Context, id resource.Identifier, into resource.Object) error {
 	obj, err := f.lookup(id.Namespace)
 	if err != nil {
 		return err
 	}
-	if t, ok := into.(*alertingnotifv0alpha1.AdminConfig); ok {
+	if t, ok := into.(*alertingnotifv0alpha1.Config); ok {
 		*t = *obj
 	}
 	return nil
 }
 
-func (f *fakeAdminConfigClient) Create(_ context.Context, _ resource.Identifier, obj resource.Object, _ resource.CreateOptions) (resource.Object, error) {
+func (f *fakeConfigClient) Create(_ context.Context, _ resource.Identifier, obj resource.Object, _ resource.CreateOptions) (resource.Object, error) {
 	return f.apply(obj), nil
 }
 
-func (f *fakeAdminConfigClient) CreateInto(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions, _ resource.Object) error {
+func (f *fakeConfigClient) CreateInto(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions, _ resource.Object) error {
 	_, err := f.Create(ctx, id, obj, opts)
 	return err
 }
 
-func (f *fakeAdminConfigClient) Update(_ context.Context, _ resource.Identifier, obj resource.Object, _ resource.UpdateOptions) (resource.Object, error) {
+func (f *fakeConfigClient) Update(_ context.Context, _ resource.Identifier, obj resource.Object, _ resource.UpdateOptions) (resource.Object, error) {
 	return f.apply(obj), nil
 }
 
-func (f *fakeAdminConfigClient) UpdateInto(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions, _ resource.Object) error {
+func (f *fakeConfigClient) UpdateInto(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions, _ resource.Object) error {
 	_, err := f.Update(ctx, id, obj, opts)
 	return err
 }
 
-func (f *fakeAdminConfigClient) Patch(_ context.Context, _ resource.Identifier, _ resource.PatchRequest, _ resource.PatchOptions) (resource.Object, error) {
+func (f *fakeConfigClient) Patch(_ context.Context, _ resource.Identifier, _ resource.PatchRequest, _ resource.PatchOptions) (resource.Object, error) {
 	return nil, nil
 }
 
-func (f *fakeAdminConfigClient) PatchInto(_ context.Context, _ resource.Identifier, _ resource.PatchRequest, _ resource.PatchOptions, _ resource.Object) error {
+func (f *fakeConfigClient) PatchInto(_ context.Context, _ resource.Identifier, _ resource.PatchRequest, _ resource.PatchOptions, _ resource.Object) error {
 	return nil
 }
 
-func (f *fakeAdminConfigClient) Delete(_ context.Context, _ resource.Identifier, _ resource.DeleteOptions) error {
+func (f *fakeConfigClient) Delete(_ context.Context, _ resource.Identifier, _ resource.DeleteOptions) error {
 	return nil
 }
 
-func (f *fakeAdminConfigClient) List(_ context.Context, _ string, _ resource.ListOptions) (resource.ListObject, error) {
+func (f *fakeConfigClient) List(_ context.Context, _ string, _ resource.ListOptions) (resource.ListObject, error) {
 	return nil, nil
 }
 
-func (f *fakeAdminConfigClient) ListInto(_ context.Context, _ string, _ resource.ListOptions, _ resource.ListObject) error {
+func (f *fakeConfigClient) ListInto(_ context.Context, _ string, _ resource.ListOptions, _ resource.ListObject) error {
 	return nil
 }
 
-func (f *fakeAdminConfigClient) Watch(_ context.Context, _ string, _ resource.WatchOptions) (resource.WatchResponse, error) {
+func (f *fakeConfigClient) Watch(_ context.Context, _ string, _ resource.WatchOptions) (resource.WatchResponse, error) {
 	return nil, nil
 }
 
-func (f *fakeAdminConfigClient) SubresourceRequest(_ context.Context, _ resource.Identifier, _ resource.CustomRouteRequestOptions) ([]byte, error) {
+func (f *fakeConfigClient) SubresourceRequest(_ context.Context, _ resource.Identifier, _ resource.CustomRouteRequestOptions) ([]byte, error) {
 	return nil, nil
 }
 
@@ -215,7 +213,7 @@ func (f *fakeAdminConfigClient) SubresourceRequest(_ context.Context, _ resource
 // trigger admin-config-store mock expectations.
 func buildSyncTestMOA(
 	t *testing.T,
-	adminCfg *fakeAdminConfigClient,
+	adminCfg *fakeConfigClient,
 	dsService datasources.DataSourceService,
 	featureEnabled bool,
 	operatorUID string,
@@ -329,7 +327,7 @@ func startMimirServer(t *testing.T, alertmanagerConfig string) *httptest.Server 
 }
 
 func TestSyncExternalAMs_FeatureFlagDisabled(t *testing.T) {
-	adminCfg := newFakeAdminConfigClient()
+	adminCfg := newFakeConfigClient()
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, false, "", []int64{1})
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
@@ -340,7 +338,7 @@ func TestSyncExternalAMs_FeatureFlagDisabled(t *testing.T) {
 }
 
 func TestSyncExternalAMs_NoUID_Skipped(t *testing.T) {
-	adminCfg := newFakeAdminConfigClient()
+	adminCfg := newFakeConfigClient()
 	adminCfg.setUID(1, "")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, true, "", []int64{1})
@@ -360,7 +358,7 @@ func TestSyncExternalAMs_DisabledOrgSkipped(t *testing.T) {
 	ds1 := makeMimirDS("uid-1", 1, mimirSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds1}}
 
-	adminCfg := newFakeAdminConfigClient()
+	adminCfg := newFakeConfigClient()
 	adminCfg.setUID(1, "uid-1")
 	adminCfg.setUID(2, "uid-2")
 
@@ -390,7 +388,7 @@ func TestSyncExternalAMs_OperatorUIDOverridesDB(t *testing.T) {
 	ds := makeMimirDS("operator-uid", 1, mimirSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := newFakeAdminConfigClient()
+	adminCfg := newFakeConfigClient()
 	// Operator UID short-circuits the admin-config lookup; Maybe in case the
 	// resolver gets called via a different path during the bootstrap.
 	adminCfg.setUID(1, "db-uid")
@@ -406,8 +404,8 @@ func TestSyncExternalAMs_OperatorUIDOverridesDB(t *testing.T) {
 	assert.Equal(t, "operator-uid", cfg.ExtraConfigs[0].Identifier)
 }
 
-func TestSyncExternalAMs_GetAdminConfigurationError(t *testing.T) {
-	adminCfg := newFakeAdminConfigClient()
+func TestSyncExternalAMs_GetConfigurationError(t *testing.T) {
+	adminCfg := newFakeConfigClient()
 	adminCfg.setErr(1, fmt.Errorf("admin config client error"))
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, true, "", []int64{1})
@@ -436,7 +434,7 @@ func TestSyncExternalAMs_PerOrgErrorIsolation(t *testing.T) {
 
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds1, ds2}}
 
-	adminCfg := newFakeAdminConfigClient()
+	adminCfg := newFakeConfigClient()
 	adminCfg.setUID(1, "ds-1")
 	adminCfg.setUID(2, "ds-2")
 
@@ -469,7 +467,7 @@ func TestSyncExternalAMs_HTTPTimeout(t *testing.T) {
 	ds := makeMimirDS("slow-uid", 1, blockSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := newFakeAdminConfigClient()
+	adminCfg := newFakeConfigClient()
 	adminCfg.setUID(1, "slow-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
@@ -496,7 +494,7 @@ func TestSyncExternalAMs_SuccessPath(t *testing.T) {
 	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := newFakeAdminConfigClient()
+	adminCfg := newFakeConfigClient()
 	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
@@ -521,7 +519,7 @@ func TestSyncExternalAMs_DedupOnIdenticalResponse(t *testing.T) {
 	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := newFakeAdminConfigClient()
+	adminCfg := newFakeConfigClient()
 	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
@@ -567,7 +565,7 @@ func TestSyncExternalAMs_SavesWhenResponseChanges(t *testing.T) {
 	ds := makeMimirDS("mimir-uid", 1, srv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := newFakeAdminConfigClient()
+	adminCfg := newFakeConfigClient()
 	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
@@ -594,7 +592,7 @@ func TestSyncExternalAMs_IdentifierMismatchClassifiedOnMetric(t *testing.T) {
 	ds := makeMimirDS("different-uid", 1, mimirSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := newFakeAdminConfigClient()
+	adminCfg := newFakeConfigClient()
 	adminCfg.setUID(1, "different-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
@@ -629,7 +627,7 @@ func TestSyncExternalAMs_NoUpstreamConfigClassifiedOnMetric(t *testing.T) {
 	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := newFakeAdminConfigClient()
+	adminCfg := newFakeConfigClient()
 	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
@@ -661,7 +659,7 @@ func TestSyncExternalAMs_Mimir404ClassifiedAsNoUpstreamConfig(t *testing.T) {
 	ds := makeMimirDS("mimir-uid", 1, srv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := newFakeAdminConfigClient()
+	adminCfg := newFakeConfigClient()
 	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
@@ -687,7 +685,7 @@ func TestSyncExternalAMs_RejectedByValidator(t *testing.T) {
 	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := newFakeAdminConfigClient()
+	adminCfg := newFakeConfigClient()
 	adminCfg.setUID(1, "mimir-uid")
 
 	rejecting := &rejectingValidator{err: fmt.Errorf("egress denied")}
@@ -720,7 +718,7 @@ receivers:
 	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
-	adminCfg := newFakeAdminConfigClient()
+	adminCfg := newFakeConfigClient()
 	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
@@ -791,7 +789,7 @@ func (g *flakyClientGenerator) GetCustomRouteClient(schema.GroupVersion, string)
 func (g *flakyClientGenerator) DiscoveryClient() (resource.DiscoveryClient, error) { return nil, nil }
 
 func TestResolveCfgClient_RetriesOnFailureAndCachesSuccess(t *testing.T) {
-	gen := &flakyClientGenerator{failN: 1, delegate: newFakeAdminConfigClient()}
+	gen := &flakyClientGenerator{failN: 1, delegate: newFakeConfigClient()}
 	s := &ExternalAMSyncer{clientGenerator: gen}
 
 	// First call: the generator errors. The failure must NOT be cached.

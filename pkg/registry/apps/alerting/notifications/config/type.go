@@ -1,4 +1,4 @@
-package adminconfig
+package config
 
 import (
 	"strings"
@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-var kind = model.AdminConfigKind()
+var kind = model.ConfigKind()
 
 var ResourceInfo = utils.NewResourceInfo(kind.Group(), kind.Version(),
 	kind.GroupVersionResource().Resource, strings.ToLower(kind.Kind()), kind.Kind(),

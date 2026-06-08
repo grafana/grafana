@@ -25,7 +25,7 @@ import (
 	notificationsApp "github.com/grafana/grafana/apps/alerting/notifications/pkg/app"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/adminconfig"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/config"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/inhibitionrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/integrationtypeschema"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/receiver"
@@ -61,7 +61,7 @@ type AppInstaller struct {
 }
 
 // newExternalSyncDatasourceValidator builds the admission check for the
-// AdminConfig kind's spec.alertmanager.externalSync.datasourceUid. Mirrors the
+// Config kind's spec.externalAlertmanagerSync.datasourceUid. Mirrors the
 // legacy admin_config HTTP API (pkg/services/ngalert/api/api_configuration.go:138)
 // so both surfaces accept the same inputs during the transition window.
 //
@@ -162,8 +162,8 @@ func (a AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				return receiver.Authorize(ctx, ac.NewReceiverAccess[*ngmodels.Receiver](authz, false), a)
 			case routingtree.ResourceInfo.GroupResource().Resource:
 				return routingtree.Authorize(ctx, ac.NewRouteAccess[*legacy_storage.ManagedRoute](authz, routesPermissions, false), a)
-			case adminconfig.ResourceInfo.GroupResource().Resource:
-				return adminconfig.Authorize(ctx, authz, a)
+			case config.ResourceInfo.GroupResource().Resource:
+				return config.Authorize(ctx, authz, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		})
@@ -197,8 +197,8 @@ func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanar
 		return templategroup.NewStorage(srv, namespacer)
 	case routingtree.ResourceInfo.GroupResource().Resource:
 		return routingtree.NewStorage(api.RouteService, namespacer, api.RouteService)
-	case adminconfig.ResourceInfo.GroupResource().Resource:
-		// AdminConfig has no legacy backend — returning nil makes the apiserver
+	case config.ResourceInfo.GroupResource().Resource:
+		// Config has no legacy backend — returning nil makes the apiserver
 		// serve it directly from unified storage (no dual writer).
 		return nil
 	}

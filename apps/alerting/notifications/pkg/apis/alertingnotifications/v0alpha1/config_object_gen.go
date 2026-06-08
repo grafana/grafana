@@ -15,29 +15,29 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type AdminConfig struct {
+type Config struct {
 	metav1.TypeMeta   `json:",inline" yaml:",inline"`
 	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
 
-	// Spec is the spec of the AdminConfig
-	Spec AdminConfigSpec `json:"spec" yaml:"spec"`
+	// Spec is the spec of the Config
+	Spec ConfigSpec `json:"spec" yaml:"spec"`
 
-	Status AdminConfigStatus `json:"status" yaml:"status"`
+	Status ConfigStatus `json:"status" yaml:"status"`
 }
 
-func NewAdminConfig() *AdminConfig {
-	return &AdminConfig{
-		Spec:   *NewAdminConfigSpec(),
-		Status: *NewAdminConfigStatus(),
+func NewConfig() *Config {
+	return &Config{
+		Spec:   *NewConfigSpec(),
+		Status: *NewConfigStatus(),
 	}
 }
 
-func (o *AdminConfig) GetSpec() any {
+func (o *Config) GetSpec() any {
 	return o.Spec
 }
 
-func (o *AdminConfig) SetSpec(spec any) error {
-	cast, ok := spec.(AdminConfigSpec)
+func (o *Config) SetSpec(spec any) error {
+	cast, ok := spec.(ConfigSpec)
 	if !ok {
 		return fmt.Errorf("cannot set spec type %#v, not of type Spec", spec)
 	}
@@ -45,13 +45,13 @@ func (o *AdminConfig) SetSpec(spec any) error {
 	return nil
 }
 
-func (o *AdminConfig) GetSubresources() map[string]any {
+func (o *Config) GetSubresources() map[string]any {
 	return map[string]any{
 		"status": o.Status,
 	}
 }
 
-func (o *AdminConfig) GetSubresource(name string) (any, bool) {
+func (o *Config) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
 		return o.Status, true
@@ -60,12 +60,12 @@ func (o *AdminConfig) GetSubresource(name string) (any, bool) {
 	}
 }
 
-func (o *AdminConfig) SetSubresource(name string, value any) error {
+func (o *Config) SetSubresource(name string, value any) error {
 	switch name {
 	case "status":
-		cast, ok := value.(AdminConfigStatus)
+		cast, ok := value.(ConfigStatus)
 		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type AdminConfigStatus", value)
+			return fmt.Errorf("cannot set status type %#v, not of type ConfigStatus", value)
 		}
 		o.Status = cast
 		return nil
@@ -74,7 +74,7 @@ func (o *AdminConfig) SetSubresource(name string, value any) error {
 	}
 }
 
-func (o *AdminConfig) GetStaticMetadata() resource.StaticMetadata {
+func (o *Config) GetStaticMetadata() resource.StaticMetadata {
 	gvk := o.GroupVersionKind()
 	return resource.StaticMetadata{
 		Name:      o.ObjectMeta.Name,
@@ -85,7 +85,7 @@ func (o *AdminConfig) GetStaticMetadata() resource.StaticMetadata {
 	}
 }
 
-func (o *AdminConfig) SetStaticMetadata(metadata resource.StaticMetadata) {
+func (o *Config) SetStaticMetadata(metadata resource.StaticMetadata) {
 	o.Name = metadata.Name
 	o.Namespace = metadata.Namespace
 	o.SetGroupVersionKind(schema.GroupVersionKind{
@@ -95,7 +95,7 @@ func (o *AdminConfig) SetStaticMetadata(metadata resource.StaticMetadata) {
 	})
 }
 
-func (o *AdminConfig) GetCommonMetadata() resource.CommonMetadata {
+func (o *Config) GetCommonMetadata() resource.CommonMetadata {
 	dt := o.DeletionTimestamp
 	var deletionTimestamp *time.Time
 	if dt != nil {
@@ -127,7 +127,7 @@ func (o *AdminConfig) GetCommonMetadata() resource.CommonMetadata {
 	}
 }
 
-func (o *AdminConfig) SetCommonMetadata(metadata resource.CommonMetadata) {
+func (o *Config) SetCommonMetadata(metadata resource.CommonMetadata) {
 	o.UID = types.UID(metadata.UID)
 	o.ResourceVersion = metadata.ResourceVersion
 	o.Generation = metadata.Generation
@@ -172,7 +172,7 @@ func (o *AdminConfig) SetCommonMetadata(metadata resource.CommonMetadata) {
 	}
 }
 
-func (o *AdminConfig) GetCreatedBy() string {
+func (o *Config) GetCreatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -180,7 +180,7 @@ func (o *AdminConfig) GetCreatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/createdBy"]
 }
 
-func (o *AdminConfig) SetCreatedBy(createdBy string) {
+func (o *Config) SetCreatedBy(createdBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -188,7 +188,7 @@ func (o *AdminConfig) SetCreatedBy(createdBy string) {
 	o.ObjectMeta.Annotations["grafana.com/createdBy"] = createdBy
 }
 
-func (o *AdminConfig) GetUpdateTimestamp() time.Time {
+func (o *Config) GetUpdateTimestamp() time.Time {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -197,7 +197,7 @@ func (o *AdminConfig) GetUpdateTimestamp() time.Time {
 	return parsed
 }
 
-func (o *AdminConfig) SetUpdateTimestamp(updateTimestamp time.Time) {
+func (o *Config) SetUpdateTimestamp(updateTimestamp time.Time) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -205,7 +205,7 @@ func (o *AdminConfig) SetUpdateTimestamp(updateTimestamp time.Time) {
 	o.ObjectMeta.Annotations["grafana.com/updateTimestamp"] = updateTimestamp.Format(time.RFC3339)
 }
 
-func (o *AdminConfig) GetUpdatedBy() string {
+func (o *Config) GetUpdatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -213,7 +213,7 @@ func (o *AdminConfig) GetUpdatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/updatedBy"]
 }
 
-func (o *AdminConfig) SetUpdatedBy(updatedBy string) {
+func (o *Config) SetUpdatedBy(updatedBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -221,21 +221,21 @@ func (o *AdminConfig) SetUpdatedBy(updatedBy string) {
 	o.ObjectMeta.Annotations["grafana.com/updatedBy"] = updatedBy
 }
 
-func (o *AdminConfig) Copy() resource.Object {
+func (o *Config) Copy() resource.Object {
 	return resource.CopyObject(o)
 }
 
-func (o *AdminConfig) DeepCopyObject() runtime.Object {
+func (o *Config) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *AdminConfig) DeepCopy() *AdminConfig {
-	cpy := &AdminConfig{}
+func (o *Config) DeepCopy() *Config {
+	cpy := &Config{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *AdminConfig) DeepCopyInto(dst *AdminConfig) {
+func (o *Config) DeepCopyInto(dst *Config) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
@@ -243,39 +243,39 @@ func (o *AdminConfig) DeepCopyInto(dst *AdminConfig) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
-func (AdminConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfig"
+func (Config) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Config"
 }
 
 // Interface compliance compile-time check
-var _ resource.Object = &AdminConfig{}
+var _ resource.Object = &Config{}
 
 // +k8s:openapi-gen=true
-type AdminConfigList struct {
+type ConfigList struct {
 	metav1.TypeMeta `json:",inline" yaml:",inline"`
 	metav1.ListMeta `json:"metadata" yaml:"metadata"`
-	Items           []AdminConfig `json:"items" yaml:"items"`
+	Items           []Config `json:"items" yaml:"items"`
 }
 
-func (o *AdminConfigList) DeepCopyObject() runtime.Object {
+func (o *ConfigList) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *AdminConfigList) Copy() resource.ListObject {
-	cpy := &AdminConfigList{
+func (o *ConfigList) Copy() resource.ListObject {
+	cpy := &ConfigList{
 		TypeMeta: o.TypeMeta,
-		Items:    make([]AdminConfig, len(o.Items)),
+		Items:    make([]Config, len(o.Items)),
 	}
 	o.ListMeta.DeepCopyInto(&cpy.ListMeta)
 	for i := 0; i < len(o.Items); i++ {
-		if item, ok := o.Items[i].Copy().(*AdminConfig); ok {
+		if item, ok := o.Items[i].Copy().(*Config); ok {
 			cpy.Items[i] = *item
 		}
 	}
 	return cpy
 }
 
-func (o *AdminConfigList) GetItems() []resource.Object {
+func (o *ConfigList) GetItems() []resource.Object {
 	items := make([]resource.Object, len(o.Items))
 	for i := 0; i < len(o.Items); i++ {
 		items[i] = &o.Items[i]
@@ -283,52 +283,52 @@ func (o *AdminConfigList) GetItems() []resource.Object {
 	return items
 }
 
-func (o *AdminConfigList) SetItems(items []resource.Object) {
-	o.Items = make([]AdminConfig, len(items))
+func (o *ConfigList) SetItems(items []resource.Object) {
+	o.Items = make([]Config, len(items))
 	for i := 0; i < len(items); i++ {
-		o.Items[i] = *items[i].(*AdminConfig)
+		o.Items[i] = *items[i].(*Config)
 	}
 }
 
-func (o *AdminConfigList) DeepCopy() *AdminConfigList {
-	cpy := &AdminConfigList{}
+func (o *ConfigList) DeepCopy() *ConfigList {
+	cpy := &ConfigList{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *AdminConfigList) DeepCopyInto(dst *AdminConfigList) {
+func (o *ConfigList) DeepCopyInto(dst *ConfigList) {
 	resource.CopyObjectInto(dst, o)
 }
 
-func (AdminConfigList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.AdminConfigList"
+func (ConfigList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ConfigList"
 }
 
 // Interface compliance compile-time check
-var _ resource.ListObject = &AdminConfigList{}
+var _ resource.ListObject = &ConfigList{}
 
 // Copy methods for all subresource types
 
 // DeepCopy creates a full deep copy of Spec
-func (s *AdminConfigSpec) DeepCopy() *AdminConfigSpec {
-	cpy := &AdminConfigSpec{}
+func (s *ConfigSpec) DeepCopy() *ConfigSpec {
+	cpy := &ConfigSpec{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
 // DeepCopyInto deep copies Spec into another Spec object
-func (s *AdminConfigSpec) DeepCopyInto(dst *AdminConfigSpec) {
+func (s *ConfigSpec) DeepCopyInto(dst *ConfigSpec) {
 	resource.CopyObjectInto(dst, s)
 }
 
-// DeepCopy creates a full deep copy of AdminConfigStatus
-func (s *AdminConfigStatus) DeepCopy() *AdminConfigStatus {
-	cpy := &AdminConfigStatus{}
+// DeepCopy creates a full deep copy of ConfigStatus
+func (s *ConfigStatus) DeepCopy() *ConfigStatus {
+	cpy := &ConfigStatus{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
-// DeepCopyInto deep copies AdminConfigStatus into another AdminConfigStatus object
-func (s *AdminConfigStatus) DeepCopyInto(dst *AdminConfigStatus) {
+// DeepCopyInto deep copies ConfigStatus into another ConfigStatus object
+func (s *ConfigStatus) DeepCopyInto(dst *ConfigStatus) {
 	resource.CopyObjectInto(dst, s)
 }
