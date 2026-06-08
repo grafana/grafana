@@ -1,9 +1,13 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { type NavModelItem } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
+import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { configureStore } from 'app/store/configureStore';
 
 import { QuickAdd } from './QuickAdd';
@@ -14,6 +18,21 @@ jest.mock('@grafana/runtime', () => {
     reportInteraction: jest.fn(),
   };
 });
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: jest.fn(),
+}));
+
+jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/analytics/main', () => ({
+  NewDashboardLibraryInteractions: { entryPointClicked: jest.fn() },
+}));
+
+jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/interactions', () => ({
+  DashboardLibraryInteractions: { entryPointClicked: jest.fn() },
+}));
+
+const useBooleanFlagValueMock = jest.mocked(useBooleanFlagValue);
 
 const setup = ({ hasTestDataSource }: { hasTestDataSource?: boolean } = {}) => {
   const navBarTree: NavModelItem[] = [
@@ -55,6 +74,12 @@ describe('QuickAdd', () => {
           matches: true,
         }) as unknown as MediaQueryList
     );
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // analyticsFramework defaults to enabled in production
+    useBooleanFlagValueMock.mockReturnValue(true);
   });
 
   it('renders a `New` button', () => {
@@ -146,6 +171,40 @@ describe('QuickAdd', () => {
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
       const link = screen.getByRole('menuitem', { name: 'Use template' });
       expect(link).toHaveAttribute('href', '/dashboards?templateDashboards=true&source=quickAdd');
+    });
+
+    it('reports the new analytics framework interaction when clicked and the framework is enabled', async () => {
+      // Clicking the menu item navigates via its href, which jsdom logs as unimplemented
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+      useBooleanFlagValueMock.mockReturnValue(true);
+      setup({ hasTestDataSource: true });
+
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+      await userEvent.click(screen.getByRole('menuitem', { name: 'Use template' }));
+
+      expect(NewDashboardLibraryInteractions.entryPointClicked).toHaveBeenCalledWith({
+        entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
+        contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+      });
+      expect(DashboardLibraryInteractions.entryPointClicked).not.toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+
+    it('reports the legacy interaction when clicked and the analytics framework is disabled', async () => {
+      // Clicking the menu item navigates via its href, which jsdom logs as unimplemented
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+      useBooleanFlagValueMock.mockReturnValue(false);
+      setup({ hasTestDataSource: true });
+
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+      await userEvent.click(screen.getByRole('menuitem', { name: 'Use template' }));
+
+      expect(DashboardLibraryInteractions.entryPointClicked).toHaveBeenCalledWith({
+        entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
+        contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+      });
+      expect(NewDashboardLibraryInteractions.entryPointClicked).not.toHaveBeenCalled();
+      errorSpy.mockRestore();
     });
   });
 });
