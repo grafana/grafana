@@ -8,9 +8,7 @@ import { InlineList } from '../List/InlineList';
 import { List } from '../List/List';
 
 import { VizLegendListItem } from './VizLegendListItem';
-import { type VizLegendItem, type VizLegendPropsWithHandlers } from './types';
-
-export interface Props<T> extends VizLegendPropsWithHandlers<T> {}
+import type { VizLegendItem, VizLegendListProps } from './types';
 
 /**
  * @internal
@@ -26,7 +24,7 @@ export const VizLegendList = <T extends unknown>({
   readonly,
   limit = 0,
   filterAction,
-}: Props<T>) => {
+}: VizLegendListProps<T>) => {
   const styles = useStyles2(getStyles);
 
   const allItemsSelected = useMemo(() => !items.some((item) => item.disabled), [items]);

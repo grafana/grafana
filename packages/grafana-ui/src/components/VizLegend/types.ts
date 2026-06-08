@@ -11,7 +11,7 @@ export enum SeriesVisibilityChangeBehavior {
   Hide,
 }
 
-export interface VizLegendBaseProps<T> {
+interface VizLegendBaseProps<T> {
   placement: LegendPlacement;
   className?: string;
   items: Array<VizLegendItem<T>>;
@@ -27,7 +27,7 @@ export interface VizLegendBaseProps<T> {
 // Label-interaction handlers that VizLegend generates internally (hover -> eventBus,
 // click -> series visibility) and forwards to the list/table children. They are not
 // part of VizLegend's own public props, so they live on a separate interface.
-export interface VizLegendPropsWithHandlers<T> extends VizLegendBaseProps<T> {
+interface VizLegendHandlersProps<T> {
   onLabelClick?: (item: VizLegendItem<T>, event: React.MouseEvent<HTMLButtonElement>) => void;
   onLabelMouseOver?: (
     item: VizLegendItem,
@@ -45,7 +45,12 @@ interface VizLegendTableSortProps {
   isSortable?: boolean;
 }
 
-export interface VizLegendTableProps<T> extends VizLegendPropsWithHandlers<T>, VizLegendTableSortProps {
+export interface VizLegendListProps<T> extends VizLegendBaseProps<T>, VizLegendHandlersProps<T> {}
+
+export interface VizLegendTableProps<T>
+  extends VizLegendBaseProps<T>,
+    VizLegendHandlersProps<T>,
+    VizLegendTableSortProps {
   onToggleSort?: PanelContext['onToggleLegendSort'];
 }
 
