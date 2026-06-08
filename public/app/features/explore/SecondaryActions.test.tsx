@@ -1,6 +1,8 @@
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
+
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { render } from '../../../test/test-utils';
 import { contextSrv } from '../../core/services/context_srv';
@@ -8,13 +10,6 @@ import { contextSrv } from '../../core/services/context_srv';
 import { QueriesDrawerContextProviderMock } from './QueriesDrawer/mocks';
 import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
 import { SecondaryActions } from './SecondaryActions';
-
-const useBooleanFlagValueMock = jest.fn().mockReturnValue(false);
-
-jest.mock('@openfeature/react-sdk', () => ({
-  ...jest.requireActual('@openfeature/react-sdk'),
-  useBooleanFlagValue: (...args: Parameters<typeof useBooleanFlagValueMock>) => useBooleanFlagValueMock(...args),
-}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -41,6 +36,9 @@ const mockContextSrv = contextSrv as jest.Mocked<typeof contextSrv>;
 
 describe('SecondaryActions', () => {
   afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
     jest.clearAllMocks();
     jest.resetAllMocks();
   });
@@ -161,8 +159,8 @@ describe('SecondaryActions', () => {
     expect(screen.queryByRole('button', { name: /Add from saved queries/i })).not.toBeInTheDocument();
   });
 
-  it('should render Recent queries button when recentQueriesUI is enabled and queryLibrary is disabled', () => {
-    useBooleanFlagValueMock.mockReturnValue(true);
+  it('should render Recent queries button when recentQueriesUI is enabled and queryLibrary is disabled', async () => {
+    setTestFlags({ 'queryHistory.recentQueriesUI': true });
 
     render(
       <QueryLibraryContextProviderMock queryLibraryEnabled={false}>
@@ -174,12 +172,12 @@ describe('SecondaryActions', () => {
       </QueryLibraryContextProviderMock>
     );
 
-    expect(screen.getByRole('button', { name: /Recent queries/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Recent queries/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Query history/i })).not.toBeInTheDocument();
   });
 
-  it('should not render Recent queries button when recentQueriesUI is enabled and queryLibrary is also enabled', () => {
-    useBooleanFlagValueMock.mockReturnValue(true);
+  it('should not render Recent queries button when recentQueriesUI is enabled and queryLibrary is also enabled', async () => {
+    setTestFlags({ 'queryHistory.recentQueriesUI': true });
 
     render(
       <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
@@ -191,6 +189,7 @@ describe('SecondaryActions', () => {
       </QueryLibraryContextProviderMock>
     );
 
+    expect(await screen.findByRole('button', { name: /Add from saved queries/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Recent queries/i })).not.toBeInTheDocument();
   });
 });
