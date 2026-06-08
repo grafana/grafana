@@ -1,7 +1,6 @@
 import { type SceneComponentProps } from '@grafana/scenes';
 
 import { UnlinkModal } from '../scene/UnlinkModal';
-import { getLibraryPanelBehavior } from '../utils/utils';
 
 import { type PanelEditor } from './PanelEditor';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
@@ -10,8 +9,7 @@ import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 // PanelEditor, so they render here to avoid code duplication.
 export function LibraryPanelEditModals({ model }: SceneComponentProps<PanelEditor>) {
   const { showLibraryPanelSaveModal, showLibraryPanelUnlinkModal } = model.useState();
-  const panel = model.getPanel();
-  const libraryPanel = getLibraryPanelBehavior(panel);
+  const libraryPanel = model.getLibraryPanelBehavior();
 
   if (!libraryPanel) {
     return null;
