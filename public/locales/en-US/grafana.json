@@ -4966,9 +4966,6 @@
       "light-theme": "Light",
       "scopes": "Scopes"
     },
-    "badge": {
-      "provisioned": "Provisioned"
-    },
     "empty-state": {
       "button-title": "Search with Grafana Assistant",
       "message": "No results found"
