@@ -22,6 +22,9 @@ export const DEFAULT_FOLDERS: FolderDTO[] = [
   }),
 ];
 
+/** Title of the "happy path" folder used across alerting rule-editor tests. Derived from DEFAULT_FOLDERS[1]. */
+export const FOLDER_TITLE_HAPPY_PATH = DEFAULT_FOLDERS[1].title;
+
 export const getFolderHandler = (responseOverride?: FolderDTO) =>
   http.get<{ folderUid: string }>(`/api/folders/:folderUid`, ({ request, params }) => {
     const matchingFolder = DEFAULT_FOLDERS.find((folder) => folder.uid === params.folderUid);
