@@ -453,10 +453,6 @@ const (
 	// repository path root become top-level resources and subdirectories become
 	// top-level folders. Ownership is tracked per-resource via manager
 	// annotations rather than by folder containment.
-	//
-	// NOTE: The folderless target is not fully implemented yet. It is gated by
-	// the provisioning `allowed_targets` setting (which defaults to `folder`),
-	// so it must be explicitly enabled, and its behavior may still change.
 	SyncTargetTypeFolderless SyncTargetType = "folderless"
 )
 
