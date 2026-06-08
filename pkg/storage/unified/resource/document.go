@@ -251,7 +251,7 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 func isFolderResource(key *resourcepb.ResourceKey) bool {
 	switch key.Group {
 	// All resources in dashboards and folders should have the folder annotation set
-	case "folders.grafana.app", "dashboards.grafana.app":
+	case "folder.grafana.app", "dashboard.grafana.app":
 		return true
 	}
 	return false
