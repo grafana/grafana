@@ -116,8 +116,8 @@ Use the following options to refine how your visualization displays the value:
 | ------ | ----------- |
 | Show | Set how Grafana displays your data. Choose from:<ul><li>**Calculate** - Show a calculated value based on all rows.</li><li>**All values** - Show a separate value for every row. If you select this option, then you can also limit the number of rows to display.</li></ul> |
 | Calculation | If you chose **Calculate** as your **Show** option, select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types). |
-| Limit | If you chose **All values** as your **Show** option, enter the maximum number of rows to display. The default is 5,000. |
-| Fields | Select the fields display in the panel. |
+| Limit | If you chose **All values** as your **Show** option, enter the maximum number of rows to display. The default is 25. |
+| Fields | Select the fields to display in the panel. Choose **Numeric Fields**, **All Fields**, or field names and patterns from your data. |
 
 <!-- prettier-ignore-end -->
 
@@ -129,7 +129,7 @@ Adjust how the gauge is displayed.
 
 | Option | Description |
 | ------ | ----------- |
-| Orientation | Choose a stacking direction:<ul><li>**Auto** - Grafana determines the best orientation.</li><li>**Horizontal** - Bars stretch horizontally, left to right.</li><li>**Vertical** - Bars stretch vertically, bottom to top.</li></ul> |
+| Orientation | Choose a bar layout orientation:<ul><li>**Auto** - Grafana determines the best orientation.</li><li>**Horizontal** - Bars stretch horizontally, left to right.</li><li>**Vertical** - Bars stretch vertically, bottom to top.</li></ul> |
 | Display mode | Choose a display mode:<ul><li>**Gradient** - Threshold levels define a gradient.</li><li>**Retro LCD** - The bar is split into sections that are lit or unlit.</li><li>**Basic** - Single color based on the matching threshold.</li></ul> |
 | Value display | Choose a value display mode:<ul><li>**Value color** - Value color is determined by value.</li><li>**Text color** - Value color is default text color.</li><li>**Hidden** - Values are hidden.</li></ul> |
 | Name placement | Set the name placement mode when the bar gauge orientation is **Auto** or **Horizontal**. Choose from:<ul><li>**Auto** - Grafana determines the best placement.</li><li>**Top** - Names are placed on top of each bar gauge.</li><li>**Left** - Names are placed to the left of each bar gauge.</li><li>**Hidden** - Names are hidden.</li></ul> <p>When the bar gauge is in the vertical orientation, choose from **Auto** (names are always placed at the bottom of each bar) or **Hidden**.</p>|

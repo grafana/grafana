@@ -58,4 +58,4 @@ The news visualization supports RSS and Atom feeds.
 Use the following options to refine your news visualization:
 
 - **URL** - The URL of the RSS or Atom feed.
-- **Show image** - Controls if the news social image is displayed beside the text content.
+- **Show image** - Controls if the news social image is displayed above the text content by default and beside the text content on wide panels.

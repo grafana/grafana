@@ -71,7 +71,8 @@ Use the following options to refine your alert list visualization.
 | ---------- | --------------------------------------------------------------------------------------------------------- |
 | View mode  | Choose between **List** to display alerts in a detailed list format with comprehensive information, or **Stat** to show alerts as a summarized single-value statistic.  |
 | Group mode | Choose between **Default grouping** to show alert instances grouped by their alert rule, or **Custom grouping** to show alert instances grouped by a custom set of labels. |
-| Max items | Sets the maximum number of alerts to list. By default, Grafana sets this value to 10. |
+| Group by | When **Group mode** is set to **Custom grouping**, select the label keys used to group alert instances. |
+| Max items | Sets the maximum number of alerts to list. By default, Grafana sets this value to 20. This option doesn't apply when **Group mode** is set to **Custom grouping**. |
 | [Sort order](#sort-order) | Select how to order the alerts displayed. |
 | Alerts linked to this dashboard | Toggle the switch on to only show alerts from the dashboard the alert list is in. |
 
@@ -83,16 +84,9 @@ Select how to order the alerts displayed. Choose from:
 
 - **Alphabetical (asc)** - Alphabetical order.
 - **Alphabetical (desc)** - Reverse alphabetical order.
-- **Importance** - By importance according to the following values, with 1 being the highest:
-  - alerting: 1
-  - firing: 1
-  - no_data: 2
-  - pending: 3
-  - ok: 4
-  - paused: 5
-  - inactive: 5
-- **Time (asc)** - Newest active alert instances first.
-- **Time (desc)** - Oldest active alert instances first.
+- **Importance** - By importance. Alert rule groups are ordered by `alerting`, `pending`, `no_data`, `ok`, `paused`, and `inactive` state. Alert instances are ordered by `error`, `recovering`, `pending`, `no_data`, `normal`, and `inactive` state.
+- **Time (asc)** - Oldest active alert instances first.
+- **Time (desc)** - Newest active alert instances first.
 
 ### Filter options
 
@@ -105,7 +99,7 @@ These options allow you to limit alerts shown to only those that match the query
 | Alert name | Filter alerts by name. |
 | Alert instance label | Filter alert instances using [label](ref:alert-label) querying. For example,`{severity="critical", instance=~"cluster-us-.+"}`. |
 | Datasource | Filter alerts from the selected data source. |
-| Folder | Filter alerts by the selected folder. Only alerts from dashboards in this folder are displayed. |
+| Folder | Filter Grafana-managed alert rules by the selected rule folder or namespace. This option is available when **Datasource** is set to **Grafana** or left empty. |
 | Show alerts with 0 instances | Filter for alert rules with no instances. Alert rules with 0 (zero) instances are hidden by default. You can choose to show them by toggling this switch. Because these rules have no instances, they remain hidden if the **Alert instance label** filter is configured. |
 
 ### Alert state filter options
@@ -121,5 +115,6 @@ Choose which alert states to display in this visualization.
 | No Data | Shows alerts where the data source is not returning any data, which could indicate an issue with data collection. |
 | Normal | Shows alerts that are in a normal or resolved state, where no alert condition is currently met. |
 | Error | Shows alerts where an error has occurred, typically related to an issue in the alerting process. |
+| Recovering | Shows alerts that are recovering after previously triggering an alert condition. |
 
 <!-- prettier-ignore-end -->

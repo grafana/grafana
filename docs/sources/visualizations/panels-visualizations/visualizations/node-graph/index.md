@@ -94,7 +94,7 @@ Both nodes and edges can have associated metadata or statistics. The data source
 #### Nodes
 
 {{< admonition type="note" >}}
-Node graphs can show only 1,500 nodes. If this limit is crossed a warning will be visible in upper right corner, and some nodes will be hidden. You can expand hidden parts of the graph by clicking on the "Hidden nodes" markers in the graph.
+Node graphs can show only 200 nodes. If this limit is crossed a warning is visible at the top of the panel, and some nodes are hidden. You can expand hidden parts of the graph by clicking the **Hidden nodes** markers in the graph.
 {{< /admonition >}}
 
 Usually, nodes show two statistical values inside the node and two identifiers just below the node, usually name and type. Nodes can also show another set of values as a color circle around the node, with sections of different color represents different values that should add up to 1.
@@ -165,7 +165,7 @@ Use the following options to refine your node graph visualization.
 
 Choose how the node graph should handle zoom and scroll events:
 
-- **Cooperative** - Allows you to scroll the visualization normally.
+- **Cooperative** - Allows you to scroll the page normally.
 - **Greedy** - Reacts to all zoom gestures.
 
 #### Layout algorithm

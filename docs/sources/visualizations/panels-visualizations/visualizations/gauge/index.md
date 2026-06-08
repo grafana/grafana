@@ -119,8 +119,8 @@ Use the following options to refine how your visualization displays the value:
 | ------ | ----------- |
 | Show | Set how Grafana displays your data. Choose from:<ul><li>**Calculate** - Show a calculated value based on all rows.</li><li>**All values** - Show a separate value for every row. If you select this option, then you can also limit the number of rows to display.</li></ul> |
 | Calculation | If you chose **Calculate** as your **Show** option, select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types). |
-| Limit | If you chose **All values** as your **Show** option, enter the maximum number of rows to display. The default is 5,000. |
-| Fields | Select the fields display in the panel. |
+| Limit | If you chose **All values** as your **Show** option, enter the maximum number of rows to display. The default is 25. |
+| Fields | Select the fields to display in the panel. Choose **Numeric Fields**, **All Fields**, or field names and patterns from your data. |
 
 <!-- prettier-ignore-end -->
 
@@ -137,9 +137,11 @@ Adjust how the gauge is displayed.
 | Gauge size | Choose a gauge size mode:<ul><li>**Auto** - Grafana determines the best gauge size.</li><li>**Manual** - Manually configure the gauge size.</li></ul>This option only applies when **Orientation** is set to **Horizontal** or **Vertical**. |
 | Min width | Set the minimum width of vertically-oriented gauges. If you set a minimum width, the x-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
 | Min height | Set the minimum height of horizontally-oriented gauges. If you set a minimum height, the y-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
-| Bar width | Set a factor between 0.1 and 1 to control the width of the gauge bar relative to the total gauge area. |
+| Bar width factor | Set a factor between 0.1 and 1 to control the width of the gauge bar relative to the total gauge area. |
 | Segments | Enter a value between 1 and 100 to break the gauge into equal segments. Segments are always fully filled, even if the gauge's current value falls within a segment. |
-| Segment spacing | Enter a value between 0 and 1 to set the factor that controls the size of the gap between each segment. This option is only applies when the **Segments** value is more than `1`. |
+| Segment spacing | Enter a value between 0 and 1 to set the factor that controls the size of the gap between each segment. This option only applies when the **Segments** value is more than `1`. |
+| Bar Style | Choose **Flat** or **Rounded** for single-segment gauges. This option appears when **Segments** is set to `1`. |
+| Endpoint marker | Choose **Point**, **Glow**, or **None** for the end of the gauge bar. This option appears when **Segments** is set to `1` and **Bar Style** is set to **Rounded**. |
 | Text mode | Choose what text to render in the gauge:<ul><li>**Auto** - Grafana determines the text to show.</li><li>**Value and name** - Renders both the value and series name.</li><li>**Value** - Renders only the value.</li><li>**Name** - Renders only the series name.</li><li>**None** - Renders the gauge with no labels.</li></ul> |
 | [Neutral value](#neutral-value) | Set the starting value from which every gauge will be filled. |
 | [Show sparkline](#show-sparkline) | Toggle on the switch to render a sparkline containing the series data for the gauge. |

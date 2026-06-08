@@ -62,8 +62,8 @@ The following options let you control how data is displayed in an xy chart:
 | Option | Description |
 | ------ | ----------- |
 | [Series mapping](#series-mapping) | Set how series data is mapped in the chart. Choose from: **Auto** and **Manual**. Depending on your series mapping selection, the **Frame**, **X-field**, and **Y-field** options differ. For information on setting these specific fields, refer to the [Series mapping section](#series-mapping). |
-| Size field | Set which field's values control the size of the points in the chart. This value is relative to the min and max of all the values in the data frame. When you select this option, you can then set the **Min point size** and **Max point size** options. Required in **Manual** mode. |
-| Color field | Set which field's values control the color of the points in the chart. To use the color value options under the **Standard** options, you must set this field. Typically, this field is used when you only have one series displayed in the chart. Required in **Manual** mode. Only supports `number` fields.  |
+| Size field | Set which field's values control the size of the points in the chart. This value is relative to the min and max of all the values in the data frame. When you select this option, you can then set the **Min point size** and **Max point size** options. |
+| Color field | Set which field's values control the color of the points in the chart. To use the color value options under the **Standard** options, you must set this field. Typically, this field is used when you only have one series displayed in the chart. Only supports `number` fields.  |
 | [Show](#show) | Set how values are represented in the visualization. Choose from: **Points**, **Lines**, or **Both**. |
 | Point size | Set the size of all points in the chart, from one to one hundred pixels in diameter. The default size is five pixels. You can set an [override](ref:configure-field-overrides) to set the pixel size by series (y-field). |
 | Min/Max point size | Use these options to control the minimum or maximum point size when you've set the **Size field** option. You can [override](ref:configure-field-overrides) these options for specific series. |
@@ -104,7 +104,7 @@ When you select **Auto** as your series mapping mode, the following options are 
 {{< tab-content name="Manual series mapping options" >}}
 
 When you select **Manual** as your series mode, you can add, edit, and delete series.
-To manage a series, click the **Series** field; to rename the series, click the series name.
+Click **Add series** to add a series, select a series from the series list to manage it, or click the series name to rename it.
 
 In **Manual** mode, these fields are required:
 
@@ -195,9 +195,8 @@ Tooltip options control the information overlay that appears when you hover over
 
 **Standard options** in the panel editor pane let you change how field data is displayed in your visualizations. When you set a standard option, the change is applied to all fields or series. For more granular control over the display of fields, refer to [Configure field overrides](ref:configure-field-overrides).
 
-You can customize the following standard options:
+You can customize the following standard option:
 
-- **Field min/max** - Enable **Field min/max** to have Grafana calculate the min or max of each field individually, based on the minimum or maximum value of the field.
 - **Color scheme** - Set single or multiple colors for your entire visualization. To learn more about color schemes, refer to [Configure standard options](ref:configure-standard-options).
 
 ### Data links and actions

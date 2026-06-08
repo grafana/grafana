@@ -103,11 +103,8 @@ The following options control how data in the heatmap is calculated and grouped.
 | X Bucket | This setting determines how the x-axis is split into buckets. You can specify a time interval in the **Size** input. For example, a time range of `1h` makes the cells 1-hour wide on the x-axis. You can also set an interval based on **Count**.  |
 | Y Bucket | This setting determines how the y-axis is split into buckets. Choose from **Size** or **Count**. |
 | Y Bucket scale | When **Calculate from data** is **Yes**. Select one of the following y-axis value scales:<ul><li>**Linear** - Linear scale.</li><li>**Logarithmic** - Choose a **Log base** of **2** or **10**.</li><li>**Symlog** - Symlog scale. Choose a **Log base** of **2** or **10** and enter a value for the **Linear threshold**.</li></ul> |
-| Y Bucket scale | When **Calculate from data** is **No**. Set the y-axis scale for pre-bucketed data in the wide, one-field-per-bucket data structure (not available when the response uses the heatmap-cells data frame type). Choose from:<ul><li>**Auto** - Uses the default scale behavior.</li><li>**Linear** - Linear scale.</li><li>**Log** - Logarithmic scale. Choose a **Log base** of **2** or **10**.</li><li>**Symlog** - Symmetrical logarithmic scale. Choose a **Log base** of **2** or **10** and enter a value for the **Linear threshold**.</li></ul> |
 
 <!-- prettier-ignore-end -->
-
-{{< docs/public-preview product="The **Y Bucket scale** option for pre-bucketed data" featureFlag="`heatmapRowsAxisOptions`" >}}
 
 ### Y-Axis options
 
@@ -157,12 +154,12 @@ Set a value between `1` and `128`.
 
 Toggle the switch to reverse the color scheme. This option only applies the **Scheme** color mode.
 
-#### Start/end color scale from value
+#### Start and end color scale values
 
-By default, Grafana calculates cell colors based on minimum and maximum bucket values. With Min and Max you can overwrite those values. Consider a bucket value as a Z-axis and Min and Max as Z-Min and Z-Max, respectively.
+By default, Grafana calculates cell colors based on minimum and maximum bucket values. With the color scale start and end values, you can overwrite those values. Consider a bucket value as a Z-axis and the start and end values as Z-Min and Z-Max, respectively.
 
-- **Start** - Minimum value using for cell color calculation. If the bucket value is less than Min, then it is mapped to the "minimum" color. The series min value is the default value.
-- **End** - Maximum value using for cell color calculation. If the bucket value is greater than Max, then it is mapped to the "maximum" color. The series max value is the default value.
+- **Start color scale from value** - Minimum value used for cell color calculation. If the bucket value is less than this value, then it's mapped to the "minimum" color. The series minimum value is the default value.
+- **End color scale at value** - Maximum value used for cell color calculation. If the bucket value is greater than this value, then it's mapped to the "maximum" color. The series maximum value is the default value.
 
 ### Cell display options
 
@@ -174,6 +171,7 @@ Use these settings to control the display of heatmap cells.
 | ------ | ----------- |
 | Unit | Unit configuration. |
 | Decimals | This setting determines decimal configuration. |
+| Value name | Set the name used for values when **Calculate from data** is set to **No**. |
 | Cell gap | Set how much space there is between cells. |
 | Hide cells with values <= | Enter a value. |
 | Hide cells with values >= | Enter a value. |
@@ -190,7 +188,7 @@ Tooltip options control the information overlay that appears when you hover over
 | Show histogram (Y axis)               | When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis. |
 | [Show color scale](#show-color-scale) | This option controls whether or not the tooltip includes the color scale that's also represented in the legend.                                                          |
 | Max width                             | Set the maximum width of the tooltip box.                                                                                                                                |
-| Max height                            | Set the maximum height of the tooltip box. The default is 600 pixels.                                                                                                    |
+| Max height                            | Set the maximum height of the tooltip box. This option is shown when **Tooltip mode** is set to **All** or when exemplar annotations are available.                      |
 
 #### Tooltip mode
 

@@ -226,7 +226,7 @@ You can add multiple layers of data to a single geomap in order to create rich, 
 
 #### Layer type
 
-There are eight map layer types to choose from in a geomap.
+There are several data and basemap layer types to choose from in a geomap.
 
 - [Markers](#markers-layer) renders a marker at each data point.
 - [Heatmap](#heatmap-layer) visualizes a heatmap of the data.
@@ -239,7 +239,7 @@ There are eight map layer types to choose from in a geomap.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
-- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
+- [MapLibre layer](#maplibre-layer) adds a map from a MapLibre/Mapbox style URL.
 
 There are also two experimental (or alpha) layer types.
 
@@ -289,8 +289,8 @@ The markers layer allows you to display data points as different marker shapes s
 | Location | Configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
 | Size | Configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
 | Symbol | Allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
-| Symbol Vertical Align | Configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
-| Symbol Horizontal Align | Configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
+| Symbol vertical align | Configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
+| Symbol horizontal align | Configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
 | Color | Configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
 | Fill opacity | Configures the transparency of each marker. |
 | Rotation angle | Configures the rotation angle of each marker in degrees. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
@@ -304,7 +304,7 @@ The markers layer allows you to display data points as different marker shapes s
 The heatmap layer clusters various data points to visualize locations with different densities.
 To add a heatmap layer:
 
-Click on the drop-down menu under Data Layer and choose `Heatmap`.
+Click **Add layer** and choose **Heatmap** from the layer type selector.
 
 Similar to `Markers`, you are prompted with various options to determine which data points to visualize and how you want to visualize them.
 
@@ -315,7 +315,7 @@ Similar to `Markers`, you are prompted with various options to determine which d
 | ------ | ----------- |
 | Data | Configure the data settings for the layer. For more information, refer to [Data](#data). |
 | Location | Configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
-| Weight values | Configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Weight values | Configures heat intensity by scaling values from `0` to `1`. Use a fixed value or select a field whose values control each point's heat weight. |
 | Radius | Configures the size of the heatmap clusters. |
 | Blur | Configures the amount of blur on each cluster. |
 | Opacity | Configures the opacity of each cluster. |
@@ -363,7 +363,7 @@ The Night / Day layer displays night and day regions based on the current time r
 | Option | Description |
 | ------ | ----------- |
 | Data | Configures the data set for the layer. For more information, refer to [Data](#data). |
-| Show | Toggles the time source from panel time range. |
+| Show | Choose whether the layer uses the **From** or **To** value from the panel time range. |
 | Night region color | Picks the color for the night region. |
 | Display sun | Toggles the sun icon. |
 | Opacity | Set the opacity from `0` (transparent) to `1` (opaque). |
@@ -536,12 +536,12 @@ The XYZ Tile layer is a map from a generic tile layer.
 - [Tiled Web Map Wikipedia](https://en.wikipedia.org/wiki/Tiled_web_map)
 - [List of OpenStreetMap Tile Servers](https://wiki.openstreetmap.org/wiki/Tile_servers)
 
-#### MapLibre Style layer
+#### MapLibre layer
 
-The MapLibre Style Layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
+The MapLibre layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
 
 - **URL template** - Set a valid style URL. For example: `https://demotiles.maplibre.org/style.json`
-- **Access Token** - An API token for mapbox maps. Only works for `mapbox://` URLs. Refer to [mapbox access tokens documentation](https://docs.mapbox.com/help/dive-deeper/access-tokens/) for more information. In other cases, you might have to include the token in the URL. For example: `https://example.com/map/style.json?key=XXX`.
+- **Public access token** - An API token for mapbox maps. Only works for `mapbox://` URLs. Refer to [mapbox access tokens documentation](https://docs.mapbox.com/help/dive-deeper/access-tokens/) for more information. In other cases, you might have to include the token in the URL. For example: `https://example.com/map/style.json?key=XXX`.
 
 ### Basemap layer options
 
@@ -556,7 +556,7 @@ There are five basemap layer types to choose from in a geomap.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
-- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
+- [MapLibre layer](#maplibre-layer) adds a map from a MapLibre/Mapbox style URL.
 
 The default basemap layer uses the CARTO map. You can define custom default base layers in the `.ini` configuration file.
 

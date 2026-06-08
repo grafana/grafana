@@ -498,20 +498,9 @@ It has the following options:
 
 #### Actions
 
-The cell displays a button that triggers a basic, unauthenticated API call when clicked.
-Configure the API call with the following options:
-
-<!-- prettier-ignore-start -->
-| Option             | Description  |
-| ------------------ | ------------ |
-| Endpoint           | Enter the endpoint URL. |
-| Method             | Choose from **GET**, **POST**, and **PUT**. |
-| Content-Type       | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
-| Query parameters   | Enter as many **Key**, **Value** pairs as you need. |
-| Header parameters  | Enter as many **Key**, **Value** pairs as you need. |
-| Payload            | Enter the body of the API call. |
-| Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
-<!-- prettier-ignore-end -->
+The **Actions** cell type displays action buttons configured for the field.
+It doesn't add separate cell-level options.
+To configure actions, use [Data links and actions](#data-links-and-actions), where you can set the connection, URL, method, query parameters, headers, content type, and body for each action.
 
 #### Tooltip from field
 

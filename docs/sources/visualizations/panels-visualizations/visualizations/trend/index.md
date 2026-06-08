@@ -66,6 +66,8 @@ The options under the **Graph styles** section let you control the general appea
 
 {{< docs/shared lookup="visualizations/graph-styles-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+In a trend visualization, **Connect null values** and **Disconnect values** thresholds use numeric x-axis gap values instead of time durations.
+
 ### Axis options
 
 {{< docs/shared lookup="visualizations/axis-options-2.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}

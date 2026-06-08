@@ -118,10 +118,6 @@ Use these options to refine the visualization.
 | Align values | Controls value alignment inside state regions. Choose from **Left**, **Center**, and **Right**. |
 | Row height | Controls how much space between rows there are. 1 = no space = 0.5 = 50% space. |
 | [Page size](#page-size-enable-pagination) | The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once.  |
-| Line width | Controls line width of state regions. |
-| Fill opacity | Controls value alignment inside state regions. |
-| [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
-| [Disconnect null values](#disconnect-values) | Choose whether to set a threshold above which values in the data should be disconnected. |
 
 <!-- prettier-ignore-end -->
 
@@ -130,6 +126,17 @@ Use these options to refine the visualization.
 The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once. This is useful when you have many series. With paginated results, the visualization displays a subset of all series on each page:
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/screen-recording-grafana-11-2-state-timeline-pagination-dark.mp4" >}}
+
+### State timeline field options
+
+Use these field options and overrides to refine how state regions appear.
+
+| Option | Description |
+| ------ | ----------- |
+| Line width | Controls line width of state regions. |
+| Fill opacity | Controls fill opacity of state regions from 0 to 100. |
+| [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
+| [Disconnect null values](#disconnect-values) | Choose whether to set a threshold above which values in the data should be disconnected. |
 
 {{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 

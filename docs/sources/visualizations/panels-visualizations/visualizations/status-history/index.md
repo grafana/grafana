@@ -105,14 +105,21 @@ Use these options to refine the visualization.
 
 | Option | Description                                                                                     |
 | ------ | ----------------------------------------------------------------------------------------------- |
-| Show values  | Controls whether values are rendered inside the state regions. Choose from **Auto**, **Always**, and **Never**. **Auto** renders values if there is sufficient space. |
+| Show values  | Controls whether values are rendered inside the status boxes. Choose from **Auto**, **Always**, and **Never**. **Auto** renders values if there is sufficient space. |
 | Row height  | Controls the height of boxes. 1 = maximum space and 0 = minimum space. |
 | Column width | Controls the width of boxes. 1 = maximum space and 0 = minimum space. |
 | Page size (enable pagination) | The **Page size** option lets you paginate the status history visualization to limit how many series are visible at once. This is useful when you have many series. |
-| Line width | Controls line width of state regions. |
-| Fill opacity | Controls value alignment inside state regions. |
 
 <!-- prettier-ignore-end -->
+
+### Status history field options
+
+Use these field options and overrides to refine how status boxes appear.
+
+| Option | Description |
+| ------ | ----------- |
+| Line width | Controls line width of status boxes. |
+| Fill opacity | Controls fill opacity of status boxes from 0 to 100. |
 
 ### Legend options
 
