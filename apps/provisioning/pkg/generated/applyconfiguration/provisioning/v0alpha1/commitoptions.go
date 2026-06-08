@@ -33,6 +33,10 @@ type CommitOptionsApplyConfiguration struct {
 	// Format of the key in secure.signingKey. One of "gpg", "ssh", or "smime".
 	// When empty, defaults to "gpg".
 	SigningFormat *provisioningv0alpha1.SigningFormat `json:"signingFormat,omitempty"`
+	// PEM-encoded X.509 certificate paired with secure.signingKey when
+	// signingFormat is "smime". This is public (not a secret) and is embedded
+	// in the commit signature. Unused for the gpg and ssh formats.
+	SMIMECertificate *string `json:"smimeCertificate,omitempty"`
 }
 
 // CommitOptionsApplyConfiguration constructs a declarative configuration of the CommitOptions type for use with
@@ -78,5 +82,13 @@ func (b *CommitOptionsApplyConfiguration) WithAuthorEmail(value string) *CommitO
 // If called multiple times, the SigningFormat field is set to the value of the last call.
 func (b *CommitOptionsApplyConfiguration) WithSigningFormat(value provisioningv0alpha1.SigningFormat) *CommitOptionsApplyConfiguration {
 	b.SigningFormat = &value
+	return b
+}
+
+// WithSMIMECertificate sets the SMIMECertificate field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the SMIMECertificate field is set to the value of the last call.
+func (b *CommitOptionsApplyConfiguration) WithSMIMECertificate(value string) *CommitOptionsApplyConfiguration {
+	b.SMIMECertificate = &value
 	return b
 }

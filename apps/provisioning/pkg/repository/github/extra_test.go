@@ -23,8 +23,6 @@ type mockSecureValues struct {
 	webhookErr    error
 	signingKey    common.RawSecureValue
 	signingErr    error
-	smimeCert     common.RawSecureValue
-	smimeErr      error
 }
 
 func (m *mockSecureValues) Token(_ context.Context) (common.RawSecureValue, error) {
@@ -37,10 +35,6 @@ func (m *mockSecureValues) WebhookSecret(_ context.Context) (common.RawSecureVal
 
 func (m *mockSecureValues) SigningKey(_ context.Context) (common.RawSecureValue, error) {
 	return m.signingKey, m.signingErr
-}
-
-func (m *mockSecureValues) SMIMECertificate(_ context.Context) (common.RawSecureValue, error) {
-	return m.smimeCert, m.smimeErr
 }
 
 func TestExtra_Type(t *testing.T) {

@@ -13,10 +13,9 @@ import (
 type secretTypeLabel string
 
 const (
-	secretTypeToken            secretTypeLabel = "token"
-	secretTypeWebhookSecret    secretTypeLabel = "webhook_secret"
-	secretTypeSigningKey       secretTypeLabel = "signing_key"
-	secretTypeSMIMECertificate secretTypeLabel = "smime_certificate"
+	secretTypeToken         secretTypeLabel = "token"
+	secretTypeWebhookSecret secretTypeLabel = "webhook_secret"
+	secretTypeSigningKey    secretTypeLabel = "signing_key"
 )
 
 type Decrypter = func(r *provisioning.Repository) SecureValues
@@ -25,7 +24,6 @@ type SecureValues interface {
 	Token(ctx context.Context) (common.RawSecureValue, error)
 	WebhookSecret(ctx context.Context) (common.RawSecureValue, error)
 	SigningKey(ctx context.Context) (common.RawSecureValue, error)
-	SMIMECertificate(ctx context.Context) (common.RawSecureValue, error)
 }
 
 type secureValues struct {
@@ -79,10 +77,6 @@ func (s *secureValues) WebhookSecret(ctx context.Context) (common.RawSecureValue
 
 func (s *secureValues) SigningKey(ctx context.Context) (common.RawSecureValue, error) {
 	return s.get(ctx, s.names.SigningKey, secretTypeSigningKey)
-}
-
-func (s *secureValues) SMIMECertificate(ctx context.Context) (common.RawSecureValue, error) {
-	return s.get(ctx, s.names.SMIMECertificate, secretTypeSMIMECertificate)
 }
 
 func ProvideDecrypter(svc decrypt.DecryptService, metrics *DecryptMetrics) Decrypter {

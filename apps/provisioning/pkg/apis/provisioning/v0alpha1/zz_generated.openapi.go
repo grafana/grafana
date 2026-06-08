@@ -253,6 +253,13 @@ func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCal
 							Enum:        []interface{}{"gpg", "smime", "ssh"},
 						},
 					},
+					"smimeCertificate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PEM-encoded X.509 certificate paired with secure.signingKey when signingFormat is \"smime\". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
@@ -3302,13 +3309,6 @@ func schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref common.ReferenceCall
 					"signingKey": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingFormat. When unset, commits are unsigned.",
-							Default:     map[string]interface{}{},
-							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
-						},
-					},
-					"smimeCertificate": {
-						SchemaProps: spec.SchemaProps{
-							Description: "X.509 certificate paired with SigningKey when signingFormat is \"smime\". Unused for the gpg and ssh formats.",
 							Default:     map[string]interface{}{},
 							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
 						},

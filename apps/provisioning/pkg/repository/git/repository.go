@@ -49,7 +49,7 @@ type RepositoryConfig struct {
 	Token            common.RawSecureValue
 	SigningKey       common.RawSecureValue
 	SigningFormat    provisioning.SigningFormat
-	SMIMECertificate common.RawSecureValue
+	SMIMECertificate string
 	Path             string
 	SkipGitSuffix    bool
 }

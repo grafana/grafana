@@ -17,6 +17,15 @@ func SigningFormatFromSpec(r *provisioning.Repository) provisioning.SigningForma
 	return ""
 }
 
+// SMIMECertificateFromSpec returns the public S/MIME certificate from the
+// repository spec, or an empty string when no commit options are set.
+func SMIMECertificateFromSpec(r *provisioning.Repository) string {
+	if r.Spec.Commit != nil {
+		return r.Spec.Commit.SMIMECertificate
+	}
+	return ""
+}
+
 // signingOption returns the nanogit writer option that signs commits with the
 // configured key. The format selects which signer is used; an empty format
 // defaults to GPG.
