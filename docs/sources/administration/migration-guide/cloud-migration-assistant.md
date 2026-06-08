@@ -40,11 +40,17 @@ The following resources are supported by the migration assistant:
 - Library Panels
 - Grafana Alerting resources
 
+Support for these resources has expanded over recent Grafana releases:
+
+- **Grafana 11.2**: Dashboards, folders, and data sources.
+- **Grafana 11.5**: All plugins (data sources, app plugins, and panel plugins), library panels, and Grafana Alerting resources.
+- **Grafana 12**: The migration assistant is generally available.
+
 ## Before you begin
 
 To use the Grafana migration assistant, you need:
 
-- A self-managed Grafana instance.
+- A self-managed Grafana instance running Grafana 11.2 or later. In Grafana 12 and later, the migration assistant is generally available. In Grafana 11.2 through 11.6, the migration assistant is available in public preview and requires the `onPremToCloudMigrations` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) to be enabled. This toggle is enabled by default in Grafana 11.5 and later.
 - A [Grafana Cloud Stack](https://grafana.com/docs/grafana-cloud/get-started/) you intend to migrate your resources to.
 - [`Admin`](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/) access to the Grafana Cloud Stack. To check your access level, go to `https://grafana.com/orgs/<YOUR-ORG-NAME>/members`.
 - [Grafana server administrator](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators) access to your existing self-managed Grafana instance. To check your access level, go to `https://<GRAFANA-ONPREM-URL>/admin/users`.
@@ -56,11 +62,15 @@ To use the Grafana migration assistant, you need:
   - [AWS IP address ranges](https://docs.aws.amazon.com/en_us/vpc/latest/userguide/aws-ip-ranges.html) for the S3 service
   - `*.grafana.net`
 
+If you upgrade your self-managed instance to meet the minimum version requirement, resolve any dashboards or data sources broken by the upgrade before you migrate. Fixing resources on your self-managed instance first helps prevent the same errors from appearing in Grafana Cloud.
+
 ## Access the migration assistant
 
 In Grafana OSS, access to the migration assistant is limited to the server administrator.
 
 In Grafana Enterprise, the server administrator has access to the migration assistant by default. You can also grant access to other Admins using a role-based access control (RBAC) role that enables other admins on the Grafana instance to view, build snapshots, and upload resources to Grafana Cloud.
+
+If you can't access **Home** > **Administration** > **General** > **Migrate to Grafana Cloud**, confirm that the `onPremToCloudMigrations` feature toggle is enabled on your self-managed instance. For more information, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
 ### Grant access in Grafana Enterprise
 
@@ -144,13 +154,65 @@ After a snapshot is created, a list of resources appears with resource Type and 
 
 1. Review error details for any issues that need manual resolution.
 
-## Snapshots created by the migration assistant
+## Validate your migration
 
-The migration assistant currently supports a subset of all resources available in Grafana. Refer to [Supported Resources](#supported-resources) for more details.
+After you upload a snapshot, use the migration assistant UI to verify that your resources were copied successfully.
+
+The snapshot information panel shows:
+
+- **Total resources**: The number of resources contained in the snapshot.
+- **Errors**: The number of errors that occurred while copying resources to Grafana Cloud.
+- **Successfully migrated**: The number of resources successfully copied to Grafana Cloud.
+- **Uploading to**: The slug of the destination Grafana Cloud stack.
+
+The resource list shows each resource's name, type, and upload status. Use the **Status** column to confirm whether individual resources were copied successfully or require attention.
+
+## Snapshots and migration timelines
+
+The migration assistant currently supports a subset of all resources available in Grafana. Refer to [Supported resources](#supported-resources) for more details.
 
 When you create a snapshot, the migration assistant makes a copy of all the resources you select and saves them in the snapshot. The snapshot reflects the current state of the resources when the snapshot is built and is stored locally on your instance, ready to be uploaded in the last stage.
 
 Resources saved in the snapshot are strictly limited to the resources stored within an organization. This is important to note if there are multiple organizations used in your Grafana instance. If you want to migrate multiple organizations, refer to [Migrate multiple organizations](#migrate-multiple-organizations) for more information and guidance.
+
+Upload time depends primarily on the volume of data you're migrating. The process is optimized for speed and typically takes seconds to minutes rather than hours. In production migrations, the tool has demonstrated 100% success rates with data sets as large as 4,000 objects.
+
+Most migration operations run asynchronously, so you aren't blocked while a migration is pending and you can perform other tasks on your self-managed instance.
+
+## Rollback and recovery procedures
+
+If issues occur during or after a migration, the following recovery and rollback constraints apply.
+
+### No automated rollback
+
+There is no tool to automatically undo or roll back a migration. If you need to start fresh, you must manually delete the migrated dashboards, folders, and data sources from your Grafana Cloud instance. On a typical migration path, customers migrate to a new Grafana Cloud stack that has not had previous usage.
+
+### Snapshot limitations
+
+While the tool takes a snapshot, its utility for recovery is limited:
+
+- **Single snapshot only**: Only the latest snapshot is available; the system doesn't maintain a history of previous snapshots.
+- **One snapshot at a time**: At most one snapshot exists on your self-managed instance at any given time.
+
+### Handling errors and partial migrations
+
+If a migration results in errors, resolve the issues on your self-managed instance, take a new snapshot, and upload it again. Resources on your Grafana Cloud instance are overwritten by the latest snapshot data.
+
+The migration process is non-destructive to the source. Resources on your self-managed instance aren't modified, which serves as an inherent safety measure.
+
+## Disaster recovery and resilience
+
+The Grafana Migration Service (GMS) is designed to recover gracefully from failures during migration.
+
+Resilience to crashes
+: GMS uses AWS SQS to distribute work and creates snapshot checkpoints in DynamoDB, allowing it to efficiently pick up where it left off if a crash occurs during a migration.
+
+High availability
+: The service runs multiple replicas and depends on highly available AWS services to minimize the likelihood of downtime.
+
+## Data privacy and security
+
+Snapshots created on your self-managed instance are encrypted on the filesystem using a key provided by the Grafana Migration Service (GMS). The snapshot is then securely transferred to Grafana Labs cloud infrastructure, where GMS decrypts the data for processing.
 
 ## Resource migration details
 
@@ -164,9 +226,17 @@ Dashboard names and UIDs are preserved along with references to data sources. Fo
 
 Your data sources, including credentials, are migrated securely and seamlessly to your Grafana Cloud instance, so you don't need to find and enter all your data source credentials again.
 
+Resolve any data source configuration errors on your self-managed instance before you migrate. This helps ensure that error-free data sources appear in Grafana Cloud.
+
+If your dashboards use data sources on a private network that aren't accessible over the public internet, configure [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) after migration. PDC lets Grafana Cloud query data sources in your private network without opening inbound access. Confirm that your data source type supports PDC, and configure each applicable data source to connect through PDC after the migration completes.
+
 ### Plugins
 
 The migration assistant supports any plugins found in the plugins catalog. As long as the plugin is signed or is a core plugin built into Grafana, you can migrate it. Due to security reasons, Grafana Cloud doesn't support unsigned plugins. If you're using any unsigned private plugins, seek an alternative plugin from the catalog or work on a strategy to deprecate certain functionality from your self-managed instance.
+
+Only plugins available in the [Grafana plugins catalog](https://grafana.com/grafana/plugins/) can be installed on Grafana Cloud. The migration assistant doesn't support private, custom-built, or third-party plugins that require manual uploading or modifications to Grafana backend files.
+
+If a plugin doesn't appear in the resource list on the **Migrate to Grafana Cloud** page, it isn't supported by the migration assistant and you must install it manually on your Grafana Cloud instance.
 
 Upgrade any plugins you intend to migrate before using the migration assistant as any migrated plugins will be configured on the Grafana Cloud instance as the latest version of that plugin.
 
@@ -221,7 +291,90 @@ When you are ready to start using your alert rules and notifications from your G
 
 ### Resource permissions
 
-Because the migration assistant doesn't yet migrate teams or RBAC permissions, your resources migrate with default permissions. Reconfigure permissions in your cloud stack as needed after a migration. For more information, refer to [Grafana Cloud user roles and permissions](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/).
+Because the migration assistant doesn't yet migrate teams or RBAC permissions, your resources migrate with default permissions. Reconfigure permissions in your cloud stack as needed after a migration. The migration assistant also doesn't migrate users. For more information, refer to [Grafana Cloud user roles and permissions](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/).
+
+## Troubleshoot common migration issues
+
+The following sections describe common migration issues and steps to resolve them.
+
+### Cannot access the migration assistant
+
+If you can't navigate to **Home** > **Administration** > **General** > **Migrate to Grafana Cloud**, confirm the following:
+
+1. You're signed in as a Grafana server administrator on your self-managed instance.
+1. Your self-managed instance runs Grafana 11.2 or later.
+1. The `onPremToCloudMigrations` feature toggle is enabled. For more information, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
+
+### Errors connecting to a cloud stack
+
+If you receive an **Error saving token** message when connecting your self-managed instance to Grafana Cloud, check the following:
+
+1. **Migration token**: Confirm that the migration token exists on your Grafana Cloud stack and that you copied it correctly. The token is only shown once when you first generate it. If you no longer have a copy, generate a new token on your cloud stack.
+1. **Network connectivity**: Confirm that your self-managed instance can access the internet and that firewall or network rules allow connections to Grafana Cloud. Refer to the allowlist requirements in [Before you begin](#before-you-begin).
+
+If the issue persists, check your self-managed instance logs for messages such as `token could not be decoded` or HTTP 500 responses on `/api/cloudmigration/migration`.
+
+### Error creating a snapshot
+
+If you receive an **Error creating snapshot** message, the migration token on your self-managed instance likely no longer matches the token on your Grafana Cloud stack. This can happen if the token was deleted or regenerated on the cloud stack after you connected.
+
+To resolve this:
+
+1. Confirm that a migration token exists on your Grafana Cloud stack. If a token already exists but was regenerated, delete the existing token on the cloud stack.
+1. Generate a new migration token on your Grafana Cloud stack and copy it to your clipboard.
+1. On your self-managed instance, disconnect from the cloud stack.
+1. Click **Migrate this instance to Cloud**, enter the new migration token, and click **Connect to this Stack**.
+1. Create a new snapshot.
+
+Your self-managed instance logs may show `authentication error: invalid token` or HTTP 401 responses from the Grafana Migration Service.
+
+### Data source not working after migration
+
+If migrated dashboards show panel errors in Grafana Cloud but worked on your self-managed instance, check the following:
+
+1. **Data source connectivity**: Confirm whether the error is a data source connection issue. Data sources on private networks aren't accessible over the public internet from Grafana Cloud.
+1. **Private data source connect (PDC)**: If the data source runs on a private network, confirm that the data source type supports PDC and [configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/) in your network.
+1. **Migration errors**: Review the resource status in the migration assistant to confirm the data source was copied without errors.
+
+### Plugins not migrated
+
+If plugins are missing from your Grafana Cloud instance or don't appear in the resource list on the **Migrate to Grafana Cloud** page, the migration assistant doesn't support those plugins. Only plugins available in the [Grafana plugins catalog](https://grafana.com/grafana/plugins/) can be migrated. Install unsupported plugins manually on your Grafana Cloud instance.
+
+Refer to [Plugins](#plugins) for more information about plugin migration limitations.
+
+### Resource migration errors
+
+If some resources fail to migrate or the migration stalls during upload:
+
+1. Review the **Status** column in the migration assistant for error details on affected resources.
+1. Resolve the underlying issue on your self-managed instance, such as corrupt dashboard JSON or unsupported query formats.
+1. Build a new snapshot and upload it again. Resources on your Grafana Cloud instance are overwritten by the latest snapshot.
+
+Large volumes of data can occasionally cause timeouts or rate limiting. If errors persist after you resolve individual resource issues, retry the upload or migrate resources in smaller batches by selecting fewer resource types when you build the snapshot.
+
+### Dashboard migration failures
+
+If specific dashboards fail to migrate:
+
+1. Review the error details in the migration assistant to identify unsupported features or visualizations.
+1. Modify the dashboard on your self-managed instance by removing or replacing unsupported elements, then build and upload a new snapshot.
+1. Test the dashboard locally on your self-managed instance before you attempt migration again.
+
+## Multi-environment migration strategy
+
+If you operate separate self-managed instances for development, staging, and production, plan your Grafana Cloud stack layout before you migrate.
+
+- **Production**: We recommend a single Grafana Cloud stack for production. For guidance on structuring users and data, refer to [Structuring users and data in Grafana Cloud](https://grafana.com/docs/grafana-cloud/account-management/organize-your-stack/).
+- **Development and staging**: Separate Grafana Cloud stacks for development and staging environments are acceptable. Consider whether you need dedicated dev and staging stacks before you create them.
+
+To migrate each environment:
+
+1. Create a Grafana Cloud stack for each environment you want to migrate.
+1. Upgrade each self-managed instance to Grafana 11.2 or later.
+1. Generate a migration token on each target cloud stack.
+1. Connect each self-managed instance to its corresponding cloud stack using the correct migration token.
+
+The migration assistant doesn't synchronize configurations between environments. Each upload copies resources in one direction only, from your self-managed instance to Grafana Cloud. Re-uploading a snapshot overwrites previously migrated resources on the target cloud stack.
 
 ## Migrate multiple organizations
 
