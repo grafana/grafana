@@ -131,11 +131,11 @@ The **Page size** option lets you paginate the state timeline visualization to l
 
 Use these field options and overrides to refine how state regions appear.
 
-| Option | Description |
-| ------ | ----------- |
-| Line width | Controls line width of state regions. |
-| Fill opacity | Controls fill opacity of state regions from 0 to 100. |
-| [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
+| Option                                       | Description                                                                              |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Line width                                   | Controls line width of state regions.                                                    |
+| Fill opacity                                 | Controls fill opacity of state regions from 0 to 100.                                    |
+| [Connect null values](#connect-null-values)  | Choose how null values, which are gaps in the data, appear on the graph.                 |
 | [Disconnect null values](#disconnect-values) | Choose whether to set a threshold above which values in the data should be disconnected. |
 
 {{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}

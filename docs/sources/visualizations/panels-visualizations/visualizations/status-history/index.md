@@ -116,9 +116,9 @@ Use these options to refine the visualization.
 
 Use these field options and overrides to refine how status boxes appear.
 
-| Option | Description |
-| ------ | ----------- |
-| Line width | Controls line width of status boxes. |
+| Option       | Description                                          |
+| ------------ | ---------------------------------------------------- |
+| Line width   | Controls line width of status boxes.                 |
 | Fill opacity | Controls fill opacity of status boxes from 0 to 100. |
 
 ### Legend options
