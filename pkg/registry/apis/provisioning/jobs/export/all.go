@@ -29,12 +29,17 @@ func exportAll(ctx context.Context, repoName string, options provisioning.Export
 		return err
 	}
 
-	if err := ExportFolders(ctx, repoName, options, folderClient, repositoryResources, progress); err != nil {
-		return err
+	// Selective exports materialize only the folders required by the
+	// requested resources (ancestor chain of named dashboards, plus the
+	// folder + descendants of each named folder). The full-namespace folder
+	// walk only runs for the bulk path so unrelated folder directories are
+	// not written to the repository.
+	if len(options.Resources) > 0 {
+		return ExportSpecificResources(ctx, options, clients, folderClient, repositoryResources, progress, generateNewUIDs)
 	}
 
-	if len(options.Resources) > 0 {
-		return ExportSpecificResources(ctx, options, clients, repositoryResources, progress, generateNewUIDs)
+	if err := ExportFolders(ctx, repoName, options, folderClient, repositoryResources, progress); err != nil {
+		return err
 	}
 
 	return ExportResources(ctx, options, clients, repositoryResources, progress, generateNewUIDs)

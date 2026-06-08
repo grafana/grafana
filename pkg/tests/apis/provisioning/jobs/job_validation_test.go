@@ -152,20 +152,7 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 			expectedErr: "spec.migrate: Required value: migrate options required for migrate action",
 		},
 		{
-			name: "push job with non-Dashboard resource kind",
-			jobSpec: map[string]interface{}{
-				"action":     string(provisioning.JobActionPush),
-				"repository": repo,
-				"push": map[string]interface{}{
-					"resources": []map[string]interface{}{
-						{"name": "some-folder", "kind": "Folder"},
-					},
-				},
-			},
-			expectedErr: "spec.push.resources[0].kind: Invalid value: \"Folder\": only Dashboard is supported for export",
-		},
-		{
-			name: "push job with non-dashboard resource group",
+			name: "push job with Dashboard kind and folder group",
 			jobSpec: map[string]interface{}{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
@@ -175,7 +162,20 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "spec.push.resources[0].group: Invalid value: \"folder.grafana.app\": only dashboard.grafana.app is supported for export",
+			expectedErr: "spec.push.resources[0].group: Invalid value: \"folder.grafana.app\": only dashboard.grafana.app is supported for Dashboard export",
+		},
+		{
+			name: "push job with Folder kind and dashboard group",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{"name": "some-folder", "kind": "Folder", "group": "dashboard.grafana.app"},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[0].group: Invalid value: \"dashboard.grafana.app\": only folder.grafana.app is supported for Folder export",
 		},
 		{
 			name: "push job with resource missing name",
@@ -224,11 +224,11 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 				"push": map[string]interface{}{
 					"resources": []map[string]interface{}{
 						{"name": "dash-1", "kind": "Dashboard"},
-						{"name": "some-folder", "kind": "Folder"},
+						{"name": "panel-1", "kind": "LibraryPanel"},
 					},
 				},
 			},
-			expectedErr: "spec.push.resources[1].kind: Invalid value: \"Folder\": only Dashboard is supported for export",
+			expectedErr: "spec.push.resources[1].kind: Invalid value: \"LibraryPanel\": only Dashboard and Folder are supported for export",
 		},
 		{
 			name: "push job with lowercase dashboard kind",
@@ -241,7 +241,7 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "spec.push.resources[0].kind: Invalid value: \"dashboard\": only Dashboard is supported for export",
+			expectedErr: "spec.push.resources[0].kind: Invalid value: \"dashboard\": only Dashboard and Folder are supported for export",
 		},
 		{
 			name: "push job with LibraryPanel kind",
@@ -254,7 +254,7 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "spec.push.resources[0].kind: Invalid value: \"LibraryPanel\": only Dashboard is supported for export",
+			expectedErr: "spec.push.resources[0].kind: Invalid value: \"LibraryPanel\": only Dashboard and Folder are supported for export",
 		},
 	}
 

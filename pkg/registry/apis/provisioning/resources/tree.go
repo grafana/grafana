@@ -236,6 +236,96 @@ func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {
 	return nil
 }
 
+// CollectAncestorIDs walks the parent chain from id up to the root and
+// returns every folder UID encountered, including id itself, in deepest-first
+// order. UIDs not present in src terminate the walk so a missing or managed
+// ancestor stops collection without returning an error — the caller is
+// responsible for verifying the chain reached an empty parent if it requires
+// a fully-resolvable path.
+func CollectAncestorIDs(src FolderTree, id string) []string {
+	if id == "" {
+		return nil
+	}
+	var ancestors []string
+	visited := make(map[string]struct{})
+	for cur := id; cur != ""; {
+		if _, seen := visited[cur]; seen {
+			break
+		}
+		visited[cur] = struct{}{}
+		f, ok := src.Get(cur)
+		if !ok {
+			break
+		}
+		ancestors = append(ancestors, cur)
+		cur = f.ParentID
+	}
+	return ancestors
+}
+
+// ProjectSubset returns a new FolderTree containing only the folders whose
+// UIDs appear in include. Parent pointers are preserved from src; UIDs not in
+// src are silently dropped. The caller is responsible for ensuring include
+// covers every ancestor of every folder it wants in the result so paths
+// resolve fully when the new tree is walked.
+func ProjectSubset(src FolderTree, include map[string]struct{}) FolderTree {
+	out := NewEmptyFolderTree()
+	for id := range include {
+		f, ok := src.Get(id)
+		if !ok {
+			continue
+		}
+		out.Add(f, f.ParentID)
+	}
+	return out
+}
+
+// CollectSubtreeIDs returns the set of folder UIDs reachable by walking down
+// from any of the requested rootIDs in src (each root and all of its
+// descendants). Roots that are not present in src are reported via the
+// missing return value so the caller can record per-resource errors;
+// overlapping roots are deduplicated.
+func CollectSubtreeIDs(ctx context.Context, src FolderTree, rootIDs []string) (subtree map[string]struct{}, missing []string, err error) {
+	// Build a parent->children adjacency list once so the BFS below is O(n+e)
+	// instead of O(n*queue_length): a previous version rescanned every parent
+	// pair on each queued node, which devolves to O(n^2) at MaxNumberOfFolders
+	// (~10k) and ~100M iterations per export.
+	children := make(map[string][]string)
+	known := make(map[string]struct{}, src.Count())
+	if walkErr := src.Walk(ctx, func(_ context.Context, f Folder, parent string) error {
+		known[f.ID] = struct{}{}
+		children[parent] = append(children[parent], f.ID)
+		return nil
+	}); walkErr != nil {
+		return nil, nil, fmt.Errorf("walk source folder tree: %w", walkErr)
+	}
+
+	subtree = make(map[string]struct{}, len(rootIDs))
+	queue := make([]string, 0, len(rootIDs))
+	for _, id := range rootIDs {
+		if _, ok := known[id]; !ok {
+			missing = append(missing, id)
+			continue
+		}
+		if _, seen := subtree[id]; seen {
+			continue
+		}
+		subtree[id] = struct{}{}
+		queue = append(queue, id)
+	}
+
+	for i := 0; i < len(queue); i++ {
+		for _, child := range children[queue[i]] {
+			if _, seen := subtree[child]; seen {
+				continue
+			}
+			subtree[child] = struct{}{}
+			queue = append(queue, child)
+		}
+	}
+	return subtree, missing, nil
+}
+
 // NewFolderTreeFromResourceList seeds a tree from the current managed resource listing.
 func NewFolderTreeFromResourceList(resources *provisioning.ResourceList) FolderTree {
 	tree := make(map[string]string, len(resources.Items))

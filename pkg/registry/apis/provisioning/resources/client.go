@@ -10,20 +10,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
 
-// Dashboard GVR/GVK values are re-exported from apps/provisioning/pkg/resources
-// so there is a single source of truth. Folder and User live here because
-// pkg/registry/apis/provisioning is the only caller for those.
+// Dashboard and Folder GVR/GVK values are re-exported from
+// apps/provisioning/pkg/resources so there is a single source of truth.
+// User lives here because pkg/registry/apis/provisioning is the only caller.
 var (
 	UserResource              = iam.UserResourceInfo.GroupVersionResource()
-	FolderResource            = folders.FolderResourceInfo.GroupVersionResource()
-	FolderKind                = folders.FolderResourceInfo.GroupVersionKind()
+	FolderResource            = provisioningresources.FolderResource
+	FolderKind                = provisioningresources.FolderKind
 	DashboardResource         = provisioningresources.DashboardResource
 	DashboardKind             = provisioningresources.DashboardKind
 	DashboardResourceV2       = provisioningresources.DashboardResourceV2
