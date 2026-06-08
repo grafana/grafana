@@ -624,18 +624,22 @@ func TestKVRemoteIndexStore_RejectsInvalidNsResource(t *testing.T) {
 	store := newTestKVRemoteIndexStore(t)
 	ctx := t.Context()
 
+	// Each fixture flips exactly one field to an invalid value so the
+	// rejection is attributable to a specific invariant rather than e.g.
+	// length on a different field.
+	valid := newTestNsResource()
 	bad := []struct {
 		name string
 		ns   resource.NamespacedResource
 	}{
-		{"empty namespace", resource.NamespacedResource{Group: "g.app", Resource: "r"}},
-		{"slash in namespace", resource.NamespacedResource{Namespace: "a/b", Group: "g.app", Resource: "r"}},
-		{"tilde in namespace", resource.NamespacedResource{Namespace: "a~b", Group: "g.app", Resource: "r"}},
-		{"empty resource", resource.NamespacedResource{Namespace: "ns", Group: "g.app"}},
-		{"dot in resource", resource.NamespacedResource{Namespace: "ns", Resource: "a.b", Group: "g.app"}},
-		{"slash in resource", resource.NamespacedResource{Namespace: "ns", Resource: "a/b", Group: "g.app"}},
-		{"empty group", resource.NamespacedResource{Namespace: "ns", Resource: "r"}},
-		{"slash in group", resource.NamespacedResource{Namespace: "ns", Resource: "r", Group: "a/b"}},
+		{"empty namespace", resource.NamespacedResource{Namespace: "", Group: valid.Group, Resource: valid.Resource}},
+		{"slash in namespace", resource.NamespacedResource{Namespace: "ns/x", Group: valid.Group, Resource: valid.Resource}},
+		{"tilde in namespace", resource.NamespacedResource{Namespace: "ns~x", Group: valid.Group, Resource: valid.Resource}},
+		{"empty resource", resource.NamespacedResource{Namespace: valid.Namespace, Group: valid.Group, Resource: ""}},
+		{"slash in resource", resource.NamespacedResource{Namespace: valid.Namespace, Group: valid.Group, Resource: "a/b"}},
+		{"dot in resource", resource.NamespacedResource{Namespace: valid.Namespace, Group: valid.Group, Resource: "a.b"}},
+		{"empty group", resource.NamespacedResource{Namespace: valid.Namespace, Group: "", Resource: valid.Resource}},
+		{"slash in group", resource.NamespacedResource{Namespace: valid.Namespace, Group: "grp/x", Resource: valid.Resource}},
 	}
 	for _, tt := range bad {
 		t.Run(tt.name, func(t *testing.T) {
@@ -651,7 +655,7 @@ func TestKVRemoteIndexStore_RejectsInvalidNsResource(t *testing.T) {
 	}
 
 	t.Run("slash in namespace via LockNamespaceForCleanup", func(t *testing.T) {
-		_, err := store.LockNamespaceForCleanup(ctx, "a/b")
+		_, err := store.LockNamespaceForCleanup(ctx, "ns/x")
 		require.Error(t, err)
 	})
 	t.Run("empty namespace via ListNamespaceResources", func(t *testing.T) {

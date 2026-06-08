@@ -1263,6 +1263,9 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 		// Allow both folder and instance sync targets for tests
 		// (instance is needed for export jobs, folder for most operations)
 		ProvisioningAllowedTargets: []string{"folder", "instance"},
+		// Tests use a local Gitea server over http:// with a token, so permit the
+		// otherwise-rejected http:// + token combination.
+		ProvisioningAllowInsecure: true,
 	}
 }
 

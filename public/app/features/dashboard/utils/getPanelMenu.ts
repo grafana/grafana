@@ -1,11 +1,14 @@
-import { type PanelMenuItem, urlUtil, type PluginExtensionLink } from '@grafana/data';
+import { type PanelMenuItem, type PluginExtensionLink, urlUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
+import { appEvents } from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { LogMessages, logInfo, trackCreateRuleFromPanelDrawerOpened } from 'app/features/alerting/unified/Analytics';
+import { PanelAlertRuleDrawer } from 'app/features/alerting/unified/components/PanelAlertRuleDrawer';
 import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { panelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -23,6 +26,7 @@ import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { dispatch } from 'app/store/store';
+import { ShowModalReactEvent } from 'app/types/events';
 
 import { getCreateAlertInMenuAvailability } from '../../alerting/unified/utils/access-control';
 import { navigateToExplore } from '../../explore/state/main';
@@ -182,12 +186,49 @@ export function getPanelMenu(
       dispatch(notifyApp(createErrorNotification(message)));
       return;
     }
-    const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
-      defaults: JSON.stringify(formValues),
-      returnTo: window.location.pathname + window.location.search,
-    });
 
-    locationService.push(ruleFormUrl);
+    // When the drawer flow is disabled, fall back to the legacy full-page rule editor.
+    // This preserves the historical behaviour of navigating with whatever defaults are available
+    // (including undefined, which simply lands the user in a blank form).
+    if (!config.featureToggles.createAlertRuleFromPanel) {
+      const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
+        defaults: JSON.stringify(formValues),
+        returnTo: window.location.pathname + window.location.search,
+      });
+      locationService.push(ruleFormUrl);
+      return;
+    }
+
+    // The drawer is intentionally narrower than the full rule editor and has no datasource picker,
+    // so a blank drawer would leave the user with no way to recover. Surface the same info as the
+    // edit-panel button's inline Alert and skip opening the drawer.
+    if (!formValues) {
+      dispatch(
+        notifyApp(
+          createErrorNotification(
+            t(
+              'alerting.new-rule-from-panel-button.title-no-alerting-capable-query-found',
+              'No alerting capable query found'
+            ),
+            t(
+              'alerting.new-rule-from-panel-button.body-no-alerting-capable-query-found',
+              'Cannot create alerts from this panel because no query to an alerting capable datasource is found.'
+            )
+          )
+        )
+      );
+      return;
+    }
+
+    logInfo(LogMessages.alertRuleFromPanel);
+    trackCreateRuleFromPanelDrawerOpened();
+
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: PanelAlertRuleDrawer,
+        props: { prefill: formValues },
+      })
+    );
   };
 
   const onCreateAlert = (event: React.MouseEvent) => {

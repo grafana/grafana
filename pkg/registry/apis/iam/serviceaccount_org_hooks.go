@@ -89,22 +89,22 @@ func (b *IdentityAccessManagementAPIBuilder) AfterServiceAccountCreate(obj runti
 // It compares old and new roles and performs the zanzana write after K8s update succeeds
 func (b *IdentityAccessManagementAPIBuilder) BeginServiceAccountUpdate(ctx context.Context, obj, oldObj runtime.Object, options *metav1.UpdateOptions) (registry.FinishFunc, error) {
 	if b.zClient == nil {
-		return nil, nil
+		return noopFinishUpdate, nil
 	}
 
 	oldSA, ok := oldObj.(*iamv0.ServiceAccount)
 	if !ok {
-		return nil, nil
+		return noopFinishUpdate, nil
 	}
 
 	newSA, ok := obj.(*iamv0.ServiceAccount)
 	if !ok {
-		return nil, nil
+		return noopFinishUpdate, nil
 	}
 
 	// If role hasn't changed, no need to update
 	if oldSA.Spec.Role == newSA.Spec.Role {
-		return nil, nil
+		return noopFinishUpdate, nil
 	}
 
 	resourceType := "service_account"

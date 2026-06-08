@@ -2407,11 +2407,14 @@
     {
       "metadata": {
         "name": "grafana.panelEditNextFeedbackEvent",
-        "resourceVersion": "1779903372415",
-        "creationTimestamp": "2026-05-27T17:36:12Z"
+        "resourceVersion": "1780592255785",
+        "creationTimestamp": "2026-05-27T17:36:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-04 16:57:35.785848 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Replaces the Intercom survey for PanelEditNext feedback with an event that triggers an in-house survey",
+        "description": "Enables firing an event for PanelEditNext feedback that triggers an in-house survey",
         "stage": "experimental",
         "codeowner": "@grafana/datapro",
         "frontend": true,

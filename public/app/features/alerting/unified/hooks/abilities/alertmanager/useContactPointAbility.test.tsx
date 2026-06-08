@@ -128,11 +128,12 @@ describe('useContactPointAbility', () => {
           wrapper: createAlertmanagerWrapper(amSource),
         });
 
-        // Without any permissions the Grafana AM does not resolve in context (the visibility
-        // permission AlertingNotificationsRead is also a View permission), so the hook returns
-        // NotSupported rather than InsufficientPermissions.
+        // Without any permissions the Grafana AM does not resolve in the available alertmanagers
+        // list (AlertingNotificationsRead is the visibility gate). The hook therefore sees no
+        // selected AM and falls back to EXTERNAL_AM_PERMISSIONS, which requires external read.
+        // View is always supported, so the result is InsufficientPermissions, not NotSupported.
         expect(result.current.granted).toBe(false);
-        expect(isNotSupported(result.current)).toBe(true);
+        expect(isInsufficientPermissions(result.current)).toBe(true);
       });
     });
 
@@ -281,10 +282,11 @@ describe('useContactPointAbility', () => {
   });
 
   describe('vanilla Prometheus alertmanager', () => {
-    it('should return NotSupported for all actions — no configuration API available', () => {
+    it('should return NotSupported for write actions — no configuration API available', () => {
       const amSource = setupVanillaPrometheusAlertmanager();
-      // Intentionally empty: the result is NotSupported regardless of permissions because
-      // vanilla Prometheus has no configuration API (hasConfigurationAPI is false).
+      // Intentionally empty: write actions return NotSupported because vanilla Prometheus has
+      // no configuration API (hasConfigurationAPI is false). View is always supported but
+      // returns InsufficientPermissions when no permission is held.
       // Granting the Grafana AM visibility permission would cause the Grafana AM context to
       // resolve instead of the vanilla Prometheus AM, so we deliberately leave this empty.
       grantUserPermissions([]);
@@ -301,7 +303,8 @@ describe('useContactPointAbility', () => {
         { wrapper: createAlertmanagerWrapper(amSource) }
       );
 
-      expect(isNotSupported(result.current.view)).toBe(true);
+      // View is always supported — returned as InsufficientPermissions when no perm is held.
+      expect(isInsufficientPermissions(result.current.view)).toBe(true);
       expect(isNotSupported(result.current.create)).toBe(true);
       expect(isNotSupported(result.current.bulkExport)).toBe(true);
       expect(isNotSupported(result.current.update)).toBe(true);
@@ -311,9 +314,9 @@ describe('useContactPointAbility', () => {
   });
 
   describe('external (Mimir) alertmanager', () => {
-    it('should deny View / Create / Export and list the expected required permissions', () => {
-      // The contact point hooks only check Grafana-AM-specific permissions, so external
-      // permissions are never sufficient. The snapshot captures the anyOfPermissions list.
+    it('should grant View / Create / Export when external AM permissions are held', () => {
+      // The hook now selects EXTERNAL_AM_PERMISSIONS for non-Grafana AMs, so external
+      // permissions are correctly recognised and grant the corresponding abilities.
       setupMimirAlertmanager(MIMIR_DATASOURCE_UID);
       grantUserPermissions([
         EXTERNAL_AM_VISIBILITY_PERMISSION,
@@ -330,10 +333,9 @@ describe('useContactPointAbility', () => {
         { wrapper: createAlertmanagerWrapper(MIMIR_DATASOURCE_UID) }
       );
 
-      expect(result.current.view.granted).toBe(false);
-      expect(result.current.create.granted).toBe(false);
-      expect(result.current.export.granted).toBe(false);
-      expect(result.current).toMatchSnapshot();
+      expect(result.current.view.granted).toBe(true);
+      expect(result.current.create.granted).toBe(true);
+      expect(result.current.export.granted).toBe(true);
     });
   });
 });
