@@ -117,19 +117,18 @@ export const FinishStep = memo(function FinishStep() {
       )}
 
       {isGitBased && (
-        <BranchOptionsSection<WizardFormData>
-          register={register}
-          nameTemplateName="repository.branchOptions.nameTemplate"
-          enforceTemplateName="repository.branchOptions.enforceTemplate"
-        />
-      )}
-
-      {isGitBased && (
-        <CommitOptionsSection<WizardFormData>
-          register={register}
-          messageTemplateName="repository.commit.singleResourceMessageTemplate"
-          enforceTemplateName="repository.commit.enforceTemplate"
-        />
+        <>
+          <BranchOptionsSection<WizardFormData>
+            register={register}
+            nameTemplateName="repository.branchOptions.nameTemplate"
+            enforceTemplateName="repository.branchOptions.enforceTemplate"
+          />
+          <CommitOptionsSection<WizardFormData>
+            register={register}
+            messageTemplateName="repository.commit.singleResourceMessageTemplate"
+            enforceTemplateName="repository.commit.enforceTemplate"
+          />
+        </>
       )}
 
       {isGithub && imageRenderingAllowed && (
