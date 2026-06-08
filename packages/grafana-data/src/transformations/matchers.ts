@@ -1,17 +1,14 @@
 // Load the Builtin matchers
-import {
-  type FieldMatcherInfo,
-  type MatcherConfig,
-  type FrameMatcherInfo,
-  type FieldMatcher,
-  type FrameMatcher,
-  type ValueMatcherInfo,
-  type ValueMatcher,
-} from '../types/transformations';
-import { Registry } from '../utils/Registry';
-
 import { getFieldTypeMatchers } from './matchers/fieldTypeMatcher';
 import { fieldValueMatcherInfo } from './matchers/fieldValueMatcher';
+import {
+  fieldMatchers,
+  frameMatchers,
+  getFieldMatcher,
+  getFrameMatchers,
+  getValueMatcher,
+  valueMatchers,
+} from './matchers/matcherRegistries';
 import { getFieldNameMatchers, getFrameNameMatchers } from './matchers/nameMatcher';
 import { getFieldPredicateMatchers, getFramePredicateMatchers } from './matchers/predicates';
 import { getRefIdMatchers } from './matchers/refIdMatcher';
@@ -23,11 +20,7 @@ import { getRangeValueMatchers } from './matchers/valueMatchers/rangeMatchers';
 import { getRegexValueMatcher } from './matchers/valueMatchers/regexMatchers';
 import { getSubstringValueMatchers } from './matchers/valueMatchers/substringMatchers';
 
-/**
- * Registry that contains all of the built in field matchers.
- * @public
- */
-export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
+fieldMatchers.setInit(() => {
   return [
     ...getFieldPredicateMatchers(), // Predicates
     ...getFieldTypeMatchers(), // by type
@@ -37,11 +30,7 @@ export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
   ];
 });
 
-/**
- * Registry that contains all of the built in frame matchers.
- * @public
- */
-export const frameMatchers = new Registry<FrameMatcherInfo>(() => {
+frameMatchers.setInit(() => {
   return [
     ...getFramePredicateMatchers(), // Predicates
     ...getFrameNameMatchers(), // by name
@@ -49,11 +38,7 @@ export const frameMatchers = new Registry<FrameMatcherInfo>(() => {
   ];
 });
 
-/**
- * Registry that contains all of the built in value matchers.
- * @public
- */
-export const valueMatchers = new Registry<ValueMatcherInfo>(() => {
+valueMatchers.setInit(() => {
   return [
     ...getNullValueMatchers(),
     ...getNumericValueMatchers(),
@@ -64,41 +49,4 @@ export const valueMatchers = new Registry<ValueMatcherInfo>(() => {
   ];
 });
 
-/**
- * Resolves a field matcher from the registry for given config.
- * Will throw an error if matcher can not be resolved.
- * @public
- */
-export function getFieldMatcher(config: MatcherConfig): FieldMatcher {
-  const info = fieldMatchers.get(config.id);
-  if (!info) {
-    throw new Error('Unknown field matcher: ' + config.id);
-  }
-  return info.get(config.options);
-}
-
-/**
- * Resolves a frame matcher from the registry for given config.
- * Will throw an error if matcher can not be resolved.
- * @public
- */
-export function getFrameMatchers(config: MatcherConfig): FrameMatcher {
-  const info = frameMatchers.get(config.id);
-  if (!info) {
-    throw new Error('Unknown frame matcher: ' + config.id);
-  }
-  return info.get(config.options);
-}
-
-/**
- * Resolves a value matcher from the registry for given config.
- * Will throw an error if matcher can not be resolved.
- * @public
- */
-export function getValueMatcher(config: MatcherConfig): ValueMatcher {
-  const info = valueMatchers.get(config.id);
-  if (!info) {
-    throw new Error('Unknown value matcher: ' + config.id);
-  }
-  return info.get(config.options);
-}
+export { fieldMatchers, frameMatchers, valueMatchers, getFieldMatcher, getFrameMatchers, getValueMatcher };
