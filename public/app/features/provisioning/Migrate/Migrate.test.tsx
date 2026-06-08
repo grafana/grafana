@@ -1,15 +1,15 @@
+import { HttpResponse, delay, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 
-import { type ResourceStats, useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
+import { type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
+
+import { setupProvisioningMswServer } from '../mocks/server';
 
 import { Migrate } from './Migrate';
 
-jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
-  ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
-  useGetResourceStatsQuery: jest.fn(),
-}));
-
-const mockUseGetResourceStatsQuery = jest.mocked(useGetResourceStatsQuery);
+setupProvisioningMswServer();
 
 // 100 dashboards total, 40 managed by Git Sync, 10 by Terraform => 50 managed,
 // 50 unmanaged. 8 folders total, 6 managed (4 git sync + 2 terraform).
@@ -36,56 +36,50 @@ const stats: ResourceStats = {
   ],
 };
 
-function mockQuery(overrides: Partial<ReturnType<typeof useGetResourceStatsQuery>>) {
-  mockUseGetResourceStatsQuery.mockReturnValue({
-    data: undefined,
-    isLoading: false,
-    isError: false,
-    error: undefined,
-    refetch: jest.fn(),
-    ...overrides,
-  } as ReturnType<typeof useGetResourceStatsQuery>);
+function respondWithStats(response: ResourceStats) {
+  server.use(http.get(`${BASE}/stats`, () => HttpResponse.json(response)));
 }
 
 describe('Migrate', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('renders a loading spinner while stats are loading', () => {
-    mockQuery({ isLoading: true });
+    server.use(
+      http.get(`${BASE}/stats`, async () => {
+        await delay('infinite');
+        return HttpResponse.json(stats);
+      })
+    );
 
     render(<Migrate />);
 
     expect(screen.getByText(/loading stats/i)).toBeInTheDocument();
   });
 
-  it('renders an error alert when the stats query fails', () => {
-    mockQuery({ isError: true, error: { message: 'boom' } });
+  it('renders an error alert when the stats query fails', async () => {
+    server.use(http.get(`${BASE}/stats`, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
 
     render(<Migrate />);
 
-    expect(screen.getByText(/failed to load provisioning stats/i)).toBeInTheDocument();
+    expect(await screen.findByText(/failed to load provisioning stats/i)).toBeInTheDocument();
   });
 
-  it('renders an empty state when there are no dashboards', () => {
-    mockQuery({ data: { instance: [], managed: [] } });
+  it('renders an empty state when there are no resources', async () => {
+    respondWithStats({ instance: [], managed: [] });
 
     render(<Migrate />);
 
+    expect(await screen.findByText(/no provisioned resources yet/i)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /migrate to gitops/i })).toBeInTheDocument();
-    expect(screen.getByText(/no provisioned resources yet/i)).toBeInTheDocument();
   });
 
   describe('with stats', () => {
     beforeEach(() => {
-      mockQuery({ data: stats });
+      respondWithStats(stats);
     });
 
-    it('renders the header with an experimental badge', () => {
+    it('renders the header with an experimental badge', async () => {
       render(<Migrate />);
 
-      expect(screen.getByRole('heading', { name: /migrate to gitops/i })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: /migrate to gitops/i })).toBeInTheDocument();
       expect(screen.getByText(/^experimental$/i)).toBeInTheDocument();
     });
 
@@ -93,7 +87,7 @@ describe('Migrate', () => {
       const { user } = render(<Migrate />);
 
       // Overall progress bar across all resource types (56 of 108 => 52%).
-      expect(screen.getByText('Progress to GitOps')).toBeInTheDocument();
+      expect(await screen.findByText('Progress to GitOps')).toBeInTheDocument();
       expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '52');
 
       // Breakdown cards are collapsed by default.
@@ -108,10 +102,10 @@ describe('Migrate', () => {
       expect(screen.getByText('6 of 8 managed')).toBeInTheDocument();
     });
 
-    it('keeps the migration guide note linking to the provisioning docs', () => {
+    it('keeps the migration guide note linking to the provisioning docs', async () => {
       render(<Migrate />);
 
-      expect(screen.getByText(/the guided migration workflow is on its way/i)).toBeInTheDocument();
+      expect(await screen.findByText(/the guided migration workflow is on its way/i)).toBeInTheDocument();
       const docsLink = screen.getByRole('link', { name: /provisioning documentation/i });
       expect(docsLink).toHaveAttribute('href', expect.stringContaining('grafana.com/docs'));
     });
