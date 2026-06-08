@@ -84,7 +84,9 @@ func (m MergeResult) LogContext() []any {
 //
 //  3. Inhibit Rule Merging:
 //     - All inhibit rules from the extra configuration are copied to the result
-func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (MergeResult, error) {
+//
+// provenance is applied to templates and inhibition rules produced by the merge.
+func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1, provenance models.Provenance) (MergeResult, error) {
 	if len(cfg.ExtraConfigs) == 0 {
 		return MergeResult{Config: *cfg}, nil
 	}
@@ -128,7 +130,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (MergeResult, error
 	managedInhibitionRules := make(v1.ManagedInhibitionRules, len(mcfg.InhibitRules)+len(cfg.ManagedInhibitionRules))
 	{
 		maps.Copy(managedInhibitionRules, cfg.ManagedInhibitionRules)
-		importedRules, err := BuildManagedInhibitionRules(mimirCfg.Identifier, mcfg.InhibitRules)
+		importedRules, err := BuildManagedInhibitionRules(mimirCfg.Identifier, mcfg.InhibitRules, v1.Provenance(provenance))
 		if err != nil {
 			return MergeResult{}, fmt.Errorf("failed to build managed inhibition rules for imported configuration: %w", err)
 		}
@@ -139,7 +141,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (MergeResult, error
 	{
 		maps.Copy(templates, cfg.Templates)
 		for name, content := range mimirCfg.TemplateFiles {
-			tmpl := v1.NewTemplateGroup(name, content, v1.TemplateKindMimir, models.ProvenanceConvertedPrometheus)
+			tmpl := v1.NewTemplateGroup(name, content, v1.TemplateKindMimir, provenance)
 			if _, ok := templates[tmpl.UID]; ok {
 				return MergeResult{}, fmt.Errorf("template [%s] of %s kind already exists", name, v1.TemplateKindMimir)
 			}
@@ -306,7 +308,7 @@ func createIndexReceivers(existing, incoming []*v1.PostableApiReceiver) map[stri
 	return usedNames
 }
 
-func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule) (v1.ManagedInhibitionRules, error) {
+func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule, provenance v1.Provenance) (v1.ManagedInhibitionRules, error) {
 	scopedRules := applyManagedRouteMatcher(identifier, rules)
 
 	res := make(v1.ManagedInhibitionRules, len(scopedRules))
@@ -319,7 +321,7 @@ func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule) 
 		}
 		name := fmt.Sprintf(namePrefix+intFmt, i)
 
-		ir, err := v1.InhibitRuleToInhibitionRule(name, rule, v1.Provenance(models.ProvenanceConvertedPrometheus))
+		ir, err := v1.InhibitRuleToInhibitionRule(name, rule, provenance)
 		if err != nil {
 			return nil, err
 		}
