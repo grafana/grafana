@@ -6,6 +6,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -32,12 +33,12 @@ func (c *namespaceCleaner) Clean(ctx context.Context, namespace string, progress
 		return fmt.Errorf("get clients: %w", err)
 	}
 
-	for _, kind := range resources.SupportedProvisioningResources {
-		progress.SetMessage(ctx, fmt.Sprintf("remove unprovisioned %s", kind.Resource))
-		client, _, err := clients.ForResource(ctx, kind)
+	for _, supported := range clients.SupportedResources() {
+		client, gvr, err := clients.ForKind(ctx, schema.GroupVersionKind{Group: supported.Group, Kind: supported.Kind})
 		if err != nil {
 			return fmt.Errorf("get resource client: %w", err)
 		}
+		progress.SetMessage(ctx, fmt.Sprintf("remove unprovisioned %s", gvr.Resource))
 
 		if err = resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
 			gvk := item.GroupVersionKind()
