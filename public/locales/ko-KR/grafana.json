@@ -3291,6 +3291,10 @@
         "tooltip-description": "일치 조건으로 알림 끄기를 찾습니다. 라벨 이름, 값, 연산자와 정확히 일치합니다.",
         "tooltip-example": "예: <1>env=~\"prod.*\"</1>은(는) <4>env=~\"prod.*\"</4> 일치 조건이 있는 알림 끄기를 찾습니다."
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "발생 상태의 경고 인스턴스만 표시됩니다.",
       "operator": {
         "equals": "동일함",
@@ -5469,9 +5473,6 @@
       "aria-label-dashboard-name": "{{dashboardName}} 대시보드",
       "label-no-dashboards-found": "검색된 대시보드 없음"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "대시보드 로딩 취소"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5741,11 +5742,6 @@
         "label": "대시보드 메뉴 내보내기"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "대시보드 가져오기 실패"
-      }
-    },
     "filters-overview": {
       "apply": "적용",
       "apply-close": "적용 및 닫기",
@@ -5902,11 +5898,6 @@
       "title-get-help-with-this-panel": "이 패널에 대한 도움말 확인",
       "troubleshooting-docs": "문제 해결 문서"
     },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "대시보드 모델 생성 실패"
-      }
-    },
     "inspect": {
       "data-tab": "데이터",
       "error-tab": "오류",
@@ -5995,13 +5986,6 @@
       },
       "ungroup-nested-text": "중첩된 모든 그룹이 해제됩니다.",
       "ungroup-nested-title": "중첩된 그룹을 해제하시겠습니까?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "대시보드를 찾을 수 없습니다."
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "대시보드를 편집할 수 없습니다",
@@ -6320,10 +6304,6 @@
       },
       "undo": "실행 취소"
     },
-    "solo-panel": {
-      "loading-initializing-dashboard": "대시보드 로딩 및 초기화",
-      "title-not-found": "ID가 {{panelId}}인 패널을 찾을 수 없음"
-    },
     "source-link": {
       "title": "소스({{provider}})",
       "tooltip": "리포지토리에서 소스 파일 보기"
@@ -6593,8 +6573,8 @@
     "version-history-comparison": {
       "button-restore": "{{version}} 버전으로 복구",
       "label-view-json-diff": "JSON 차이 보기",
-      "new-updated-by": "<0>{{version}} 버전</0>이 {{editor}}에 의해 {{timeAgo}}에 업데이트됨",
-      "old-updated-by": "<0>{{version}} 버전</0>이 {{editor}}에 의해 {{timeAgo}}에 업데이트됨"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "{{version}} 버전 선택 토글",
@@ -7821,8 +7801,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "JSON 차이 보기",
-      "new-version-updated": "<0>{{version}} 버전</0>이 {{editor}}에 의해 {{timeAgo}}에 업데이트됨",
-      "old-version-updated": "<0>{{version}} 버전</0>이 {{editor}}에 의해 {{timeAgo}}에 업데이트됨"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "{{baseVersion}} <3></3> {{newVersion}} 비교 중",
@@ -10169,7 +10149,7 @@
     },
     "data-source-http-settings": {
       "access-help": "도움말 <1></1>",
-      "access-help-details": "액세스 모드는 데이터 소스 요청 처리 방식을 제어합니다. 별도 안내가 없으면 <1><i>서버</i></1> 방식을 권장합니다.",
+      "access-help-details": "",
       "access-help-title": "액세스 권한 도움말",
       "access-label": "액세스 권한",
       "allowed-cookies": "허용된 쿠키",
@@ -10855,6 +10835,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -13126,8 +13110,8 @@
       "label-branch": "브랜치",
       "label-comment": "댓글",
       "label-filename": "파일 이름",
-      "label-folder": "폴더",
       "label-path": "경로",
+      "label-repository-folder": "",
       "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "폴더 경로 선택 또는 입력",
@@ -13524,6 +13508,21 @@
       "request-failed": "",
       "resource-not-found": ""
     },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
+    },
     "instance-sync-deprecation": {
       "message": "인스턴스 동기화는 현재 완전히 지원되지 않으며 라이브러리 패널 및 알림이 정상적으로 작동하지 않을 수도 있습니다. 라이브러리 패널 및 알림을 사용하려면 리포지토리의 연결을 해제한 후 폴더 동기화를 사용하여 다시 연결하세요.",
       "title": "인스턴스 동기화가 완벽하게 지원되지 않습니다"
@@ -13802,7 +13801,8 @@
     "sync-job": {
       "error-no-job-id": "작업을 시작하지 못했습니다",
       "error-no-repository-name": "제공된 리포지토리 이름 없음",
-      "error-starting-job": "작업 시작 중 오류 발생"
+      "error-starting-job": "작업 시작 중 오류 발생",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "리소스를 가져오는 중 오류 발생",
@@ -16513,7 +16513,7 @@
       "message": "찾은 사용자 없음"
     },
     "token-revoked-modal": {
-      "auto-revoked": "계정의 <2>최대 동시 세션 수인 {{numSessions}}개</2>에 도달했기 때문에 세션 토큰이 자동으로 취소되었습니다.",
+      "auto-revoked": "",
       "resume-message": "<strong>세션을 다시 시작하려면 다시 로그인하세요.</strong>자동 로그아웃이 반복되는 경우, 관리자에게 문의하거나 라이선스 페이지에서 할당량을 확인하세요.",
       "sign-in": "로그인",
       "title-you-have-been-automatically-signed-out": "자동으로 로그아웃되었습니다"

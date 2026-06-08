@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
+import { Provider } from 'react-redux';
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
@@ -20,6 +21,7 @@ import { config, getAppEvents } from '@grafana/runtime';
 import * as grafanaUI from '@grafana/ui';
 import * as styles from 'app/features/logs/components/getLogRowStyles';
 import { type LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
+import { configureStore } from 'app/store/configureStore';
 
 import { LogsPanel } from './LogsPanel';
 
@@ -157,6 +159,41 @@ beforeAll(() => {
     subscribe: jest.fn(),
     removeAllListeners: jest.fn(),
     newScopedBus: jest.fn(),
+  });
+});
+
+describe('LogsPanel missing time field', () => {
+  it('shows "Data is missing a time field" when frames have rows but no time field', async () => {
+    setupWithStore({
+      data: {
+        ...defaultProps.data,
+        series: [
+          createDataFrame({
+            refId: 'A',
+            fields: [{ name: 'body', type: FieldType.string, values: ['logline text'] }],
+          }),
+        ],
+      },
+    });
+
+    expect(await screen.findByText('Data is missing a time field')).toBeInTheDocument();
+  });
+
+  it('shows "No data" instead when frames have no rows', async () => {
+    setupWithStore({
+      data: {
+        ...defaultProps.data,
+        series: [
+          createDataFrame({
+            refId: 'A',
+            fields: [{ name: 'body', type: FieldType.string, values: [] }],
+          }),
+        ],
+      },
+    });
+
+    expect(await screen.findByText('No data')).toBeInTheDocument();
+    expect(screen.queryByText('Data is missing a time field')).not.toBeInTheDocument();
   });
 });
 
@@ -1089,4 +1126,25 @@ const setup = (propsOverrides?: Partial<LogsPanelProps>, showControls = false) =
   };
 
   return { ...render(<LogsPanel {...props} />), props };
+};
+
+const setupWithStore = (propsOverrides?: Partial<LogsPanelProps>) => {
+  const props: LogsPanelProps = {
+    ...defaultProps,
+    ...propsOverrides,
+    data: {
+      ...(propsOverrides?.data || defaultProps.data),
+    },
+    options: propsOverrides?.options || defaultProps.options,
+  };
+
+  const store = configureStore();
+  return {
+    ...render(
+      <Provider store={store}>
+        <LogsPanel {...props} />
+      </Provider>
+    ),
+    props,
+  };
 };

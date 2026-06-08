@@ -8,6 +8,7 @@
 import { chain, compact } from 'lodash';
 
 import { type LabelMatcher } from '@grafana/alerting/unstable';
+import { parseFlags } from '@grafana/data';
 import {
   type Matcher,
   MatcherOperator,
@@ -266,6 +267,18 @@ export function convertObjectMatcherToAlertingPackageMatcher(matcher: ObjectMatc
     type,
     value,
   };
+}
+
+export function isValidRE2Regex(value: string): boolean {
+  // parseFlags converts RE2 inline flag groups like (?i), (?im), (?-i) to their JS flag equivalents,
+  // allowing new RegExp() to correctly validate patterns that use RE2-only flag syntax.
+  const { cleaned, flags } = parseFlags(value);
+  try {
+    new RegExp(cleaned, flags);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function labelsToMatchersParam(labels: Labels): string | undefined {

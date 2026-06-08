@@ -103,13 +103,13 @@ describe('NewActionsButton', () => {
     expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
   });
 
-  it('should hide Import button when folder is provisioned', async () => {
+  it('should show Import dashboard button when folder is provisioned', async () => {
     const provisionedFolder = mockFolderDTO(1, { managedBy: ManagerKind.Repo });
     await renderAndOpen(provisionedFolder);
 
     expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Import dashboard' })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
   });
 
   it('should show Import dashboard button when folder is not provisioned', async () => {
@@ -121,24 +121,24 @@ describe('NewActionsButton', () => {
     expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
   });
 
-  it('should hide Import dashboard button when entire instance is provisioned', async () => {
+  it('should show Import dashboard button when entire instance is provisioned', async () => {
     mockUseIsProvisionedInstance.mockReturnValue(true);
     const regularFolder = mockFolderDTO(1, { managedBy: undefined });
     await renderAndOpen(regularFolder);
 
     expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Import dashboard' })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
   });
 
-  it('should hide Import dashboard button when both instance and folder are provisioned', async () => {
+  it('should show Import dashboard button when both instance and folder are provisioned', async () => {
     mockUseIsProvisionedInstance.mockReturnValue(true);
     const provisionedFolder = mockFolderDTO(1, { managedBy: ManagerKind.Repo });
     await renderAndOpen(provisionedFolder);
 
     expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Import dashboard' })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
   });
 
   describe('Dashboard from template button', () => {

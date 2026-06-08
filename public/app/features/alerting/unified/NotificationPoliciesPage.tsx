@@ -19,7 +19,12 @@ import {
   useCreatePolicyAction,
   useListNotificationPolicyRoutes,
 } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
-import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
+import { isGranted } from 'app/features/alerting/unified/hooks/abilities/abilityUtils';
+import {
+  AlertGroupAction,
+  NotificationPolicyAction,
+  TimeIntervalAction,
+} from 'app/features/alerting/unified/hooks/abilities/types';
 import { useRouteGroupsMatcher } from 'app/features/alerting/unified/useRouteGroupsMatcher';
 import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
@@ -35,6 +40,9 @@ import {
   trackNotificationPoliciesFilterPolicyTree,
   trackNotificationPoliciesToggledAll,
 } from './components/notification-policies/notificationPolicyAnalytics';
+import { useAlertGroupAbility } from './hooks/abilities/alertmanager/useAlertGroupAbility';
+import { useNotificationPolicyAbility } from './hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import { useTimeIntervalAbility } from './hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { useNotificationPoliciesNav } from './navigation/useNotificationConfigNav';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { ROOT_ROUTE_NAME } from './utils/k8s/constants';
@@ -55,15 +63,19 @@ const NotificationPoliciesTabs = () => {
 
   // Alertmanager logic and data hooks
   const { selectedAlertmanager = '' } = useAlertmanager();
-  const [policiesSupported, canSeePoliciesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationPolicyTree);
-  const [timingsSupported, canSeeTimingsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewTimeInterval);
+  const policiesAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.ViewTree });
+  const timingsAbility = useTimeIntervalAbility({ action: TimeIntervalAction.View });
+  const canAccessPolicies = isGranted(policiesAbility);
+  const canAccessTimings = isGranted(timingsAbility);
+
   const availableTabs = [
-    canSeePoliciesTab && ActiveTab.NotificationPolicies,
-    canSeeTimingsTab && ActiveTab.TimeIntervals,
+    canAccessPolicies && ActiveTab.NotificationPolicies,
+    canAccessTimings && ActiveTab.TimeIntervals,
   ].filter((tab) => !!tab);
+
   const { data: muteTimings = [] } = useMuteTimings({
     alertmanager: selectedAlertmanager,
-    skip: !canSeeTimingsTab,
+    skip: !canAccessTimings,
   });
 
   // Tab state management
@@ -93,7 +105,7 @@ const NotificationPoliciesTabs = () => {
       <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
       <InhibitionRulesAlert alertmanagerSourceName={selectedAlertmanager} />
       <TabsBar>
-        {policiesSupported && canSeePoliciesTab && (
+        {canAccessPolicies && (
           <Tab
             label={t('alerting.notification-policies-tabs.label-notification-policies', 'Notification Policies')}
             active={policyTreeTabActive}
@@ -103,7 +115,7 @@ const NotificationPoliciesTabs = () => {
             }}
           />
         )}
-        {timingsSupported && canSeeTimingsTab && (
+        {canAccessTimings && (
           <Tab
             label={t('alerting.notification-policies-tabs.label-time-intervals', 'Time intervals')}
             active={muteTimingsTabActive}
@@ -133,7 +145,7 @@ const NotificationPoliciesTabs = () => {
  */
 function PolicyTreeTab() {
   const { selectedAlertmanager = '', isGrafanaAlertmanager } = useAlertmanager();
-  const [, canSeeAlertGroups] = useAlertmanagerAbility(AlertmanagerAction.ViewAlertGroups);
+  const { granted: canSeeAlertGroups } = useAlertGroupAbility(AlertGroupAction.View);
 
   // Single worker + alert groups query shared by all PoliciesTree instances
   const { getRouteGroupsMap } = useRouteGroupsMatcher();

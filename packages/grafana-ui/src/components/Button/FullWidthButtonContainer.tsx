@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
-export interface Props {
+interface Props {
   className?: string;
 }
 

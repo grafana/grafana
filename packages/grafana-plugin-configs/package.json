@@ -5,8 +5,7 @@
   "version": "13.1.0-pre",
   "dependencies": {
     "react": "18.3.1",
-    "terser-webpack-plugin": "^5.4.0",
-    "tslib": "2.8.1"
+    "terser-webpack-plugin": "^5.4.0"
   },
   "type": "module",
   "devDependencies": {
