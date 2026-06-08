@@ -16,12 +16,9 @@ import (
 )
 
 // preferencesCountValidation enforces strict count parity between the legacy
-// preferences table and unified storage. It mirrors migrations.CountValidator
-// but uses a bespoke query that counts exactly what the migrator emits:
-// namespace rows (user_id = 0 AND team_id = 0), user-prefs whose user still
-// exists, and team-prefs whose team still exists. Orphan rows are skipped on
-// the read side (see listPreferences), so they must not be counted here
-// either, or the validator would false-fail.
+// preferences table and unified storage, counting exactly what the migrator
+// emits: distinct owners (namespace, valid user, valid team), excluding
+// orphans. See countLegacy.
 func preferencesCountValidation(resource schema.GroupResource) migrations.ValidatorFactory {
 	return func(client resourcepb.ResourceIndexClient, driverName string) migrations.Validator {
 		return &preferencesCountValidator{
@@ -110,25 +107,18 @@ func (v *preferencesCountValidator) countRejected(response *resourcepb.BulkRespo
 	return n
 }
 
-// ownerRow holds the columns needed to derive a preference's resource name,
-// scanned from the same joined query the read path uses.
+// ownerRow holds the columns needed to derive a preference's resource name.
 type ownerRow struct {
 	UserUID sql.NullString `xorm:"user_uid"`
 	TeamUID sql.NullString `xorm:"team_uid"`
 }
 
-// countLegacy mirrors the listPreferences read path: include namespace rows
-// (user_id = 0 AND team_id = 0), user rows whose user still exists, and team
-// rows whose team still exists. The LEFT JOINs let us keep namespace rows in
-// the result while still being able to test for user/team existence.
-//
-// It counts *distinct resource names* rather than raw rows. The migrator emits
-// one resource per row, but the resource name is derived solely from the owner
-// (team uid, else user uid, else namespace) — see asPreferencesResource. When
-// the legacy table holds duplicate rows for the same owner (no unique
-// constraint enforces one row per org/user/team), they collapse to a single
-// resource in unified storage, which dedups by name. Counting raw rows here
-// would over-count and false-fail the strict parity check.
+// countLegacy counts distinct resource names, mirroring the listPreferences
+// read path (LEFT JOINs exclude orphan user/team rows). Counting distinct
+// names rather than raw rows matters because the name derives solely from the
+// owner (see asPreferencesResource): duplicate legacy rows for the same owner
+// — nothing enforces one row per org/user/team — collapse to a single resource
+// in unified storage, which dedups by name. Raw-row counts would false-fail.
 func (v *preferencesCountValidator) countLegacy(sess *xorm.Session, orgID int64) (int64, error) {
 	var rows []ownerRow
 	err := sess.Table("preferences").
