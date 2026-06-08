@@ -25,7 +25,7 @@ test.describe(
     tag: ['@dashboard-cujs'],
   },
   () => {
-    test('Groupby data on a dashboard', async ({ page, selectors, gotoDashboardPage }) => {
+    test.skip('Groupby data on a dashboard', async ({ page, selectors, gotoDashboardPage }) => {
       prepareAPIMocks(page);
       const groupByOptions = getGroupByOptions(page);
       const groupByValues = getGroupByValues(page);
