@@ -43,7 +43,7 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 		require.Error(t, err, "folder sync repository should be rejected when instance sync exists")
 
 		statusError := helper.RequireApiErrorStatus(err, metav1.StatusReasonInvalid, http.StatusUnprocessableEntity)
-		require.Contains(t, statusError.Message, "Cannot create folder repository when instance repository exists: "+originalName)
+		require.Contains(t, statusError.Message, "Cannot create repository when instance repository exists: "+originalName)
 	})
 
 	t.Run("change between folder and instance sync for the same repository if no previous sync happened", func(t *testing.T) {

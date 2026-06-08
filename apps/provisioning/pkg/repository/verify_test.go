@@ -76,7 +76,72 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				},
 			},
 			wantErr:         true,
-			wantErrContains: "Cannot create folder repository when instance repository exists",
+			wantErrContains: "Cannot create repository when instance repository exists",
+			maxRepositories: 10,
+		},
+		{
+			name: "forbids folderless sync when instance repo exists",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolderless},
+				},
+			},
+			existingRepos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "instance-repo"},
+					Spec: provisioning.RepositorySpec{
+						Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+					},
+				},
+			},
+			wantErr:         true,
+			wantErrContains: "Cannot create repository when instance repository exists",
+			maxRepositories: 10,
+		},
+		{
+			name: "forbids instance sync when folderless repo exists",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+				},
+			},
+			existingRepos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "folderless-repo"},
+					Spec: provisioning.RepositorySpec{
+						Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolderless},
+					},
+				},
+			},
+			wantErr:         true,
+			wantErrContains: "Instance repository can only be created when no other repositories exist",
+			maxRepositories: 10,
+		},
+		{
+			name: "allows folderless sync coexisting with folder and folderless repos",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolderless},
+				},
+			},
+			existingRepos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "folder-repo"},
+					Spec: provisioning.RepositorySpec{
+						Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "folderless-repo"},
+					Spec: provisioning.RepositorySpec{
+						Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolderless},
+					},
+				},
+			},
+			wantErr:         false,
 			maxRepositories: 10,
 		},
 		{

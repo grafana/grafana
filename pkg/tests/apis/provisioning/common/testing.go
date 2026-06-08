@@ -1260,9 +1260,10 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 		// Longer batched RV WithTx deadline via [unified_storage] resource_version_batch_transaction_timeout.
 		UnifiedStorageResourceVersionBatchTransactionTimeout: 60 * time.Second,
 		PermittedProvisioningPaths:                           ".|" + provisioningPath,
-		// Allow both folder and instance sync targets for tests
-		// (instance is needed for export jobs, folder for most operations)
-		ProvisioningAllowedTargets: []string{"folder", "instance"},
+		// Allow folder, instance, and folderless sync targets for tests
+		// (instance is needed for export jobs, folder for most operations,
+		// folderless for top-level sync without a wrapper folder)
+		ProvisioningAllowedTargets: []string{"folder", "instance", "folderless"},
 		// Tests use a local Gitea server over http:// with a token, so permit the
 		// otherwise-rejected http:// + token combination.
 		ProvisioningAllowInsecure: true,
