@@ -66,11 +66,14 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 	// Configure staging options to commit everything at once
 	stageOptions := repository.StageOptions{
-		Ref:                   ref,
-		Timeout:               5 * time.Minute,
-		PushOnWrites:          false,
-		Mode:                  repository.StageModeCommitOnlyOnce,
-		CommitOnlyOnceMessage: jobs.CommitMessage(job, fmt.Sprintf("Add folder metadata files\n\nTriggered by job %s at %s", job.Name, time.Now().UTC().Format(time.RFC3339))),
+		Ref:          ref,
+		Timeout:      5 * time.Minute,
+		PushOnWrites: false,
+		Mode:         repository.StageModeCommitOnlyOnce,
+		CommitOnlyOnceMessage: jobs.CommitMessage(
+			job,
+			fmt.Sprintf("Add folder metadata files\n\nTriggered by job %s at %s", job.Name, time.Now().UTC().Format(time.RFC3339)),
+		),
 	}
 
 	fn := func(stagedRepo repository.Repository, staged bool) error {
