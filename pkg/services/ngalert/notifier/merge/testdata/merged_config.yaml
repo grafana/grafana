@@ -97,7 +97,6 @@ receivers:
             max_alerts: 0
             timeout: 0s
             url: http://localhost
-            url_file: ""
 inhibit_rules:
     - source_matchers:
         - alertname="test"
