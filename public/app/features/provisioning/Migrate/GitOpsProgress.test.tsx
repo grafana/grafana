@@ -3,7 +3,7 @@ import { render, screen } from 'test/test-utils';
 import { GitOpsProgress } from './GitOpsProgress';
 
 describe('GitOpsProgress', () => {
-  it('shows overall managed progress and is collapsed by default', () => {
+  it('shows overall managed progress with the breakdown cards open by default', () => {
     render(
       <GitOpsProgress
         totals={{ instanceTotal: 100, managed: 50, unmanaged: 50, gitSync: 40 }}
@@ -17,11 +17,12 @@ describe('GitOpsProgress', () => {
     expect(screen.getByText('56 of 108 resources managed')).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '52');
 
-    // Breakdown cards are hidden until expanded.
-    expect(screen.queryByText('Dashboards')).not.toBeInTheDocument();
+    // Breakdown cards are visible by default.
+    expect(screen.getByText('Dashboards')).toBeInTheDocument();
+    expect(screen.getByText('Folders')).toBeInTheDocument();
   });
 
-  it('reveals the per-resource cards when expanded', async () => {
+  it('collapses the per-resource cards when toggled', async () => {
     const { user } = render(
       <GitOpsProgress
         totals={{ instanceTotal: 100, managed: 50, unmanaged: 50, gitSync: 40 }}
@@ -31,7 +32,7 @@ describe('GitOpsProgress', () => {
 
     await user.click(screen.getByRole('button', { name: /toggle migration details/i }));
 
-    expect(screen.getByText('Dashboards')).toBeInTheDocument();
-    expect(screen.getByText('Folders')).toBeInTheDocument();
+    expect(screen.queryByText('Dashboards')).not.toBeInTheDocument();
+    expect(screen.queryByText('Folders')).not.toBeInTheDocument();
   });
 });

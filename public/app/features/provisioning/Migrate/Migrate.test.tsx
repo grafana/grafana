@@ -83,19 +83,15 @@ describe('Migrate', () => {
       expect(screen.getByText(/^experimental$/i)).toBeInTheDocument();
     });
 
-    it('shows overall progress and reveals one status card per resource type when expanded', async () => {
-      const { user } = render(<Migrate />);
+    it('shows overall progress and one status card per resource type', async () => {
+      render(<Migrate />);
 
       // Overall progress bar across all resource types (56 of 108 => 52%).
       expect(await screen.findByText('Progress to GitOps')).toBeInTheDocument();
       expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '52');
 
-      // Breakdown cards are collapsed by default.
-      expect(screen.queryByText('Dashboards')).not.toBeInTheDocument();
-
-      await user.click(screen.getByRole('button', { name: /toggle migration details/i }));
-
-      // Dashboards: 50 of 100 managed; Folders: 6 of 8 managed.
+      // Breakdown cards are open by default. Dashboards: 50 of 100 managed;
+      // Folders: 6 of 8 managed.
       expect(screen.getByText('Dashboards')).toBeInTheDocument();
       expect(screen.getByText('50 of 100 managed')).toBeInTheDocument();
       expect(screen.getByText('Folders')).toBeInTheDocument();

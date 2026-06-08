@@ -15,15 +15,15 @@ interface GitOpsProgressProps {
 
 /**
  * Overall migration progress across every resource type (dashboards, folders,
- * …). The progress bar is the collapse header — clicking it expands the
- * per-type breakdown cards (collapsed by default). The bar and percentage are
+ * …). The progress bar is the collapse header — clicking it collapses the
+ * per-type breakdown cards (open by default). The bar and percentage are
  * warning-coloured until everything is managed, then turn success-green at
  * 100%. The bar always shows a small amount of fill so it reads as a bar even
  * at 0%.
  */
 export function GitOpsProgress({ totals, folderCounts }: GitOpsProgressProps) {
   const styles = useStyles2(getStyles);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   const total = totals.instanceTotal + folderCounts.total;
   const managed = totals.managed + folderCounts.managed;
