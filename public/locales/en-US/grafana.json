@@ -13588,7 +13588,7 @@
       "url-required": "Repository URL is required"
     },
     "gpg-signing-key-info": {
-      "description": "To enable verified commits, <2>generate a GPG key</2> and <6>add it to your account</6>."
+      "description": "To enable verified commits, <2>set up commit signing</2> for your account."
     },
     "history-view": {
       "not-found": "Not found"

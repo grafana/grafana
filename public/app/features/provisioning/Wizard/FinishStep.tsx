@@ -184,7 +184,6 @@ export const FinishStep = memo(function FinishStep() {
         gitFields.commitAuthorEmailConfig && (
           <>
             <Divider spacing={0} />
-            {hasTokenInstructions && signingFormat === 'gpg' && <GPGSigningKeyInfo type={type} />}
             <Field
               noMargin
               label={gitFields.signingFormatConfig.label}
@@ -194,12 +193,23 @@ export const FinishStep = memo(function FinishStep() {
                 name="repository.signingFormat"
                 control={control}
                 render={({ field: { ref, ...field } }) => (
-                  <RadioButtonGroup {...field} options={getSigningFormatOptions()} />
+                  <RadioButtonGroup
+                    {...field}
+                    options={getSigningFormatOptions()}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      setValue('repository.signingKey', '');
+                      setValue('repository.smimeCertificate', '');
+                      setSigningKeyConfigured(false);
+                      setSmimeCertConfigured(false);
+                    }}
+                  />
                 )}
               />
             </Field>
             {signingEnabled && (
               <>
+                {hasTokenInstructions && <GPGSigningKeyInfo type={type} />}
                 <Field
                   noMargin
                   htmlFor="signingKey"
