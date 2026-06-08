@@ -102,6 +102,23 @@ func (s *Service) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery) (*use
 }
 
 func (s *Service) GetByUID(ctx context.Context, cmd *user.GetUserByUIDQuery) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.wrapper.GetByUID", trace.WithAttributes(
+		attribute.String("userUID", cmd.UID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		result, err := s.k8sService.GetByUID(s.k8sCtxWithIdentity(ctx), cmd)
+		if err == nil {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return result, nil
+		}
+		ctxLogger.Warn("k8s GetByUID failed, falling back to legacy", "userUID", cmd.UID, "err", err)
+	}
+
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetByUID(ctx, cmd)
 }
 

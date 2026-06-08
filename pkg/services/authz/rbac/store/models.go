@@ -11,8 +11,9 @@ type BasicRole struct {
 }
 
 type BasicRoleQuery struct {
-	UserID int64
-	OrgID  int64
+	UserID  int64
+	UserUID string
+	OrgID   int64
 }
 
 type UserIdentifierQuery struct {
