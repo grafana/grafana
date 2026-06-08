@@ -11,6 +11,7 @@ package merge
 import (
 	"context"
 	"fmt"
+	"maps"
 	"math"
 	"slices"
 	"strings"
@@ -25,17 +26,10 @@ import (
 
 // MergeResult represents the result of merging two Alertmanager configurations.
 // It contains the unified configuration and maps of renamed receivers and time intervals.
-//
-// Identifier, ExtraRoute and ExtraInhibitRules are populated by MergeExtraConfig
-// when the merge consumed an imported (Mimir-format) configuration; they expose the
-// imported route subtree and inhibit rules separately so callers can register them as
-// managed routes / managed inhibit rules.
 type MergeResult struct {
 	Config v1.AMConfigV1
 	RenameResources
-	Identifier        string
-	ExtraRoute        *v1.Route
-	ExtraInhibitRules []config.InhibitRule
+	Identifier string
 }
 
 type RenameResources struct {
@@ -103,6 +97,11 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (MergeResult, error
 	if err != nil {
 		return MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
 	}
+
+	if _, ok := cfg.ManagedRoutes[mimirCfg.Identifier]; ok || mimirCfg.Identifier == models.DefaultRoutingTreeName {
+		return MergeResult{}, fmt.Errorf("cannot merge because config %s because it conflicts with existing managed route", mimirCfg.Identifier)
+	}
+
 	mergedReceivers, renamedReceivers := Receivers(cfg.AlertmanagerConfig.Receivers, mcfg.Receivers, mimirCfg.Identifier)
 
 	mergedTimeIntervals, renamedTimeIntervals := TimeIntervals(
@@ -118,36 +117,55 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (MergeResult, error
 		TimeIntervals: renamedTimeIntervals,
 	}
 
-	extraRoute := mcfg.Route
-	RenameResourceUsagesInRoutes([]*v1.Route{extraRoute}, renamed)
+	managedRoutes := make(v1.ManagedRoutes, len(cfg.ManagedRoutes)+1)
+	{
+		maps.Copy(managedRoutes, cfg.ManagedRoutes)
+		extraRoute := mcfg.Route
+		RenameResourceUsagesInRoutes([]*v1.Route{extraRoute}, renamed)
+		managedRoutes[mimirCfg.Identifier] = extraRoute
+	}
 
-	route := cfg.AlertmanagerConfig.Route
-	inhibitRules := cfg.AlertmanagerConfig.InhibitRules
-	// TODO move adding managed routes and managed inhibit rules to cfg here
+	managedInhibitionRules := make(v1.ManagedInhibitionRules, len(mcfg.InhibitRules)+len(cfg.ManagedInhibitionRules))
+	{
+		maps.Copy(managedInhibitionRules, cfg.ManagedInhibitionRules)
+		importedRules, err := BuildManagedInhibitionRules(mimirCfg.Identifier, mcfg.InhibitRules)
+		if err != nil {
+			return MergeResult{}, fmt.Errorf("failed to build managed inhibition rules for imported configuration: %w", err)
+		}
+		maps.Copy(managedInhibitionRules, importedRules)
+	}
 
-	mergedConfig := v1.AMConfigV1{
-		Templates: cfg.Templates,
-		AlertmanagerConfig: v1.PostableApiAlertingConfig{
-			Config: v1.Config{
-				Global:            nil, // Grafana does not have global.
-				Route:             route,
-				InhibitRules:      inhibitRules,
-				MuteTimeIntervals: cfg.AlertmanagerConfig.MuteTimeIntervals,
-				TimeIntervals:     mergedTimeIntervals,
-				Templates:         nil, // we do not use this.
-			},
-			Receivers: mergedReceivers,
-		},
-		ManagedRoutes:          cfg.ManagedRoutes,
-		ManagedInhibitionRules: cfg.ManagedInhibitionRules,
+	templates := make(map[v1.ResourceUID]v1.TemplateGroup, len(cfg.Templates)+len(mimirCfg.TemplateFiles))
+	{
+		maps.Copy(templates, cfg.Templates)
+		for name, content := range mimirCfg.TemplateFiles {
+			tmpl := v1.NewTemplateGroup(name, content, v1.TemplateKindMimir, models.ProvenanceConvertedPrometheus)
+			if _, ok := templates[tmpl.UID]; ok {
+				return MergeResult{}, fmt.Errorf("template [%s] of %s kind already exists", name, v1.TemplateKindMimir)
+			}
+			templates[tmpl.UID] = tmpl
+		}
 	}
 
 	return MergeResult{
-		Config:            mergedConfig,
-		RenameResources:   renamed,
-		Identifier:        mimirCfg.Identifier,
-		ExtraRoute:        extraRoute,
-		ExtraInhibitRules: mcfg.InhibitRules,
+		Config: v1.AMConfigV1{
+			ExtraConfigs: cfg.ExtraConfigs[1:],
+			Templates:    templates,
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Global:        nil, // Grafana does not use global. The Global settings are set to the respective integrations at parse time.
+					Route:         cfg.AlertmanagerConfig.Route,
+					InhibitRules:  cfg.AlertmanagerConfig.InhibitRules,
+					TimeIntervals: mergedTimeIntervals,
+					Templates:     nil, // Grafana does not use this.
+				},
+				Receivers: mergedReceivers,
+			},
+			ManagedRoutes:          managedRoutes,
+			ManagedInhibitionRules: managedInhibitionRules,
+		},
+		RenameResources: renamed,
+		Identifier:      mimirCfg.Identifier,
 	}, nil
 }
 
@@ -179,12 +197,16 @@ func TimeIntervals(
 ) ([]v1.TimeInterval, map[string]string) {
 	// combine all incoming intervals into a single list
 	incomingAll := make([]v1.TimeInterval, 0, len(incomingTimeIntervals)+len(incomingMuteIntervals))
-	incomingAll = append(incomingAll, incomingTimeIntervals...)
 	for _, interval := range incomingMuteIntervals {
 		incomingAll = append(incomingAll, v1.TimeInterval(interval))
 	}
+	incomingAll = append(incomingAll, incomingTimeIntervals...)
 	usedNames := createIndexTimeIntervals(existingMuteIntervals, existingTimeIntervals, incomingAll)
-	result := make([]v1.TimeInterval, 0, len(existingTimeIntervals)+len(incomingMuteIntervals)+len(incomingTimeIntervals))
+	result := make([]v1.TimeInterval, 0, len(existingMuteIntervals)+len(existingTimeIntervals)+len(incomingMuteIntervals)+len(incomingTimeIntervals))
+	// fold mute time intervals into time intervals. The order is important here because during the applying time intervals with the same name win
+	for _, interval := range existingMuteIntervals {
+		result = append(result, v1.TimeInterval(interval))
+	}
 	result = append(result, existingTimeIntervals...)
 	renames := make(map[string]string)
 	for idx, interval := range incomingAll {

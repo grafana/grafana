@@ -185,6 +185,42 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 			requireStatusCode(t, http.StatusBadRequest, status, "")
 		})
 
+		t.Run("POST with unsupported receiver fields should fail", func(t *testing.T) {
+			headers := map[string]string{
+				"Content-Type":                         "application/yaml",
+				"X-Grafana-Alerting-Config-Identifier": "test-unsupported-fields",
+			}
+
+			// auth_password_file references the filesystem, which Grafana's
+			// Alertmanager cannot represent; the import must be rejected rather
+			// than silently dropping it.
+			amConfig := apimodels.AlertmanagerUserConfig{
+				AlertmanagerConfig: `
+global:
+  smtp_smarthost: 'localhost:25'
+  smtp_from: 'alerts@example.com'
+route:
+  receiver: a
+receivers:
+  - name: a
+    email_configs:
+      - to: someone@example.com
+        auth_password_file: /etc/smtp-password
+`,
+			}
+
+			_, status, body := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, amConfig, headers)
+			requireStatusCode(t, http.StatusBadRequest, status, body)
+			require.Contains(t, body, "alerting.unsupportedReceiverFields")
+			require.Contains(t, body, "email_configs[0].auth_password_file")
+
+			// The rejected config must not have been stored.
+			_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, map[string]string{
+				"X-Grafana-Alerting-Config-Identifier": "test-unsupported-fields",
+			})
+			requireStatusCode(t, http.StatusNotFound, status, "")
+		})
+
 		t.Run("DELETE without config identifier header should use default identifier", func(t *testing.T) {
 			createHeaders := map[string]string{
 				"Content-Type": "application/yaml",

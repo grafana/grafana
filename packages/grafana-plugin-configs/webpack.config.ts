@@ -65,8 +65,8 @@ export type Env = {
   [key: string]: true | string | Env;
 };
 
-const config = async (env: Env): Promise<Configuration> => {
-  const pluginJson = getPluginJson();
+const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuration> => {
+  const pluginJson = getPluginJson(pluginDir);
   // Inject module
   const virtualPublicPath = new VirtualModulesPlugin({
     'node_modules/grafana-public-path.js': `
@@ -96,7 +96,7 @@ const config = async (env: Env): Promise<Configuration> => {
 
     devtool: env.production ? 'source-map' : 'eval-source-map',
 
-    entry: await getEntries(),
+    entry: await getEntries(pluginDir),
 
     externals: [
       // Required for dynamic publicPath resolution
@@ -253,7 +253,7 @@ const config = async (env: Env): Promise<Configuration> => {
           // To `compiler.options.output`
           { from: 'README.md', to: '.', force: true },
           { from: 'plugin.json', to: '.' },
-          { from: hasLicense() ? 'LICENSE' : '../../../../../LICENSE', to: '.' }, // Point to Grafana License by default
+          { from: hasLicense(pluginDir) ? 'LICENSE' : '../../../../../LICENSE', to: '.' }, // Point to Grafana License by default
           { from: 'CHANGELOG.md', to: '.', force: true },
           { from: '**/*.json', to: '.', filter: skipFiles }, // TODO<Add an error for checking the basic structure of the repo>
           { from: '**/*.svg', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
@@ -273,7 +273,9 @@ const config = async (env: Env): Promise<Configuration> => {
           rules: [
             {
               search: /\%VERSION\%/g,
-              replace: env.commit ? `${getPackageJson().version}-${env.commit}` : getPackageJson().version,
+              replace: env.commit
+                ? `${getPackageJson(pluginDir).version}-${env.commit}`
+                : getPackageJson(pluginDir).version,
             },
             {
               search: /\%TODAY\%/g,

@@ -51,7 +51,8 @@ jobs:
         id: get-github-app-token
         uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          github_app: grafana-delivery-bot
+          github_app: ${{ inputs.repository == 'grafana/grafana-security-mirror' && 'grafana-security-mirror-writer' || 'grafana-pr-automation' }}
+          permission_set: ${{ startsWith(github.ref_name, 'release-') && 'writer-release' || 'writer-main' }}
 
       - name: Checkout repository
         uses: actions/checkout@v5

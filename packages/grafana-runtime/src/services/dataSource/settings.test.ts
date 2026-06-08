@@ -206,18 +206,16 @@ describe('instanceSettings', () => {
   });
 
   describe('getDataSourceInstanceSettingsList', () => {
-    it('returns a paginated response shape', async () => {
+    it('returns an array of instance settings', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
-      const page = await getDataSourceInstanceSettingsList();
-      expect(page.hasMore).toBe(false);
-      expect(page.nextCursor).toBeUndefined();
-      expect(Array.isArray(page.items)).toBe(true);
+      const items = await getDataSourceInstanceSettingsList();
+      expect(Array.isArray(items)).toBe(true);
     });
 
     it('filters out built-in grafana / mixed / dashboard by default', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
-      const page = await getDataSourceInstanceSettingsList();
-      const names = page.items.map((x) => x.name);
+      const items = await getDataSourceInstanceSettingsList();
+      const names = items.map((x) => x.name);
       expect(names).not.toContain('-- Mixed --');
       expect(names).not.toContain('-- Dashboard --');
       expect(names).toContain('Alpha');
@@ -226,21 +224,21 @@ describe('instanceSettings', () => {
 
     it('honours the `mixed` filter', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
-      const page = await getDataSourceInstanceSettingsList({ filters: { mixed: true } });
-      expect(page.items.some((x) => x.name === '-- Mixed --')).toBe(true);
+      const items = await getDataSourceInstanceSettingsList({ mixed: true });
+      expect(items.some((x) => x.name === '-- Mixed --')).toBe(true);
     });
 
     it('honours the `tracing` filter and excludes metrics-only sources', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
-      const page = await getDataSourceInstanceSettingsList({ filters: { tracing: true } });
-      const names = page.items.map((x) => x.name);
+      const items = await getDataSourceInstanceSettingsList({ tracing: true });
+      const names = items.map((x) => x.name);
       expect(names).toEqual(['Charlie']);
     });
 
     it('honours the `metrics` filter', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
-      const page = await getDataSourceInstanceSettingsList({ filters: { metrics: true } });
-      const names = page.items.map((x) => x.name);
+      const items = await getDataSourceInstanceSettingsList({ metrics: true });
+      const names = items.map((x) => x.name);
       expect(names).toContain('Alpha');
       expect(names).not.toContain('Charlie');
     });
@@ -257,8 +255,8 @@ describe('instanceSettings', () => {
         Alpha: fixtures.Alpha,
       };
       initDataSourceInstanceSettings(withLogs, 'Alpha');
-      const page = await getDataSourceInstanceSettingsList({ filters: { logs: true } });
-      const names = page.items.map((x) => x.name);
+      const items = await getDataSourceInstanceSettingsList({ logs: true });
+      const names = items.map((x) => x.name);
       expect(names).toContain('Loki');
       expect(names).not.toContain('Alpha');
     });
@@ -275,8 +273,8 @@ describe('instanceSettings', () => {
         Alpha: fixtures.Alpha,
       };
       initDataSourceInstanceSettings(withAnnotations, 'Alpha');
-      const page = await getDataSourceInstanceSettingsList({ filters: { annotations: true } });
-      const names = page.items.map((x) => x.name);
+      const items = await getDataSourceInstanceSettingsList({ annotations: true });
+      const names = items.map((x) => x.name);
       expect(names).toContain('Annotator');
       expect(names).not.toContain('Alpha');
     });
@@ -293,17 +291,17 @@ describe('instanceSettings', () => {
         Alpha: fixtures.Alpha,
       };
       initDataSourceInstanceSettings(withAlerting, 'Alpha');
-      const page = await getDataSourceInstanceSettingsList({ filters: { alerting: true } });
-      const names = page.items.map((x) => x.name);
+      const items = await getDataSourceInstanceSettingsList({ alerting: true });
+      const names = items.map((x) => x.name);
       expect(names).toContain('Alerter');
       expect(names).not.toContain('Alpha');
     });
 
     it('honours the `type` filter with a string', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
-      const page = await getDataSourceInstanceSettingsList({ filters: { type: 'test-db' } });
+      const items = await getDataSourceInstanceSettingsList({ type: 'test-db' });
       // Grafana DS is always appended, so filter the base items.
-      const baseItems = page.items.filter((x) => x.meta.id !== 'grafana');
+      const baseItems = items.filter((x) => x.meta.id !== 'grafana');
       expect(baseItems.every((x) => x.type === 'test-db')).toBe(true);
       expect(baseItems.length).toBeGreaterThan(0);
     });
@@ -320,16 +318,14 @@ describe('instanceSettings', () => {
         Alpha: fixtures.Alpha,
       };
       initDataSourceInstanceSettings(mixed, 'Alpha');
-      const page = await getDataSourceInstanceSettingsList({ filters: { type: ['prometheus', 'test-db'] } });
-      expect(page.items.length).toBe(2);
+      const items = await getDataSourceInstanceSettingsList({ type: ['prometheus', 'test-db'] });
+      expect(items.length).toBe(2);
     });
 
     it('honours a custom `filter` function', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
-      const page = await getDataSourceInstanceSettingsList({
-        filters: { filter: (x) => x.name === 'Alpha' },
-      });
-      const names = page.items.map((x) => x.name);
+      const items = await getDataSourceInstanceSettingsList({ filter: (x) => x.name === 'Alpha' });
+      const names = items.map((x) => x.name);
       expect(names).toEqual(['Alpha']);
     });
 
@@ -355,26 +351,26 @@ describe('instanceSettings', () => {
       initDataSourceInstanceSettings(noCapability, 'Alpha');
 
       const withoutAll = await getDataSourceInstanceSettingsList();
-      expect(withoutAll.items.map((x) => x.name)).not.toContain('NoOp');
+      expect(withoutAll.map((x) => x.name)).not.toContain('NoOp');
 
-      const withAll = await getDataSourceInstanceSettingsList({ filters: { all: true } });
-      expect(withAll.items.map((x) => x.name)).toContain('NoOp');
+      const withAll = await getDataSourceInstanceSettingsList({ all: true });
+      expect(withAll.map((x) => x.name)).toContain('NoOp');
     });
 
     it('honours the `dashboard` filter', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
-      const page = await getDataSourceInstanceSettingsList({ filters: { dashboard: true } });
-      expect(page.items.some((x) => x.name === '-- Dashboard --')).toBe(true);
+      const items = await getDataSourceInstanceSettingsList({ dashboard: true });
+      expect(items.some((x) => x.name === '-- Dashboard --')).toBe(true);
     });
 
     it('includes Grafana DS by default but excludes it when tracing filter is set', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
 
-      const defaultPage = await getDataSourceInstanceSettingsList();
-      expect(defaultPage.items.some((x) => x.name === '-- Grafana --')).toBe(true);
+      const defaultItems = await getDataSourceInstanceSettingsList();
+      expect(defaultItems.some((x) => x.name === '-- Grafana --')).toBe(true);
 
-      const tracingPage = await getDataSourceInstanceSettingsList({ filters: { tracing: true } });
-      expect(tracingPage.items.some((x) => x.name === '-- Grafana --')).toBe(false);
+      const tracingItems = await getDataSourceInstanceSettingsList({ tracing: true });
+      expect(tracingItems.some((x) => x.name === '-- Grafana --')).toBe(false);
     });
 
     it('does not add built-in datasources when alerting filter is set', async () => {
@@ -389,17 +385,17 @@ describe('instanceSettings', () => {
         }),
       };
       initDataSourceInstanceSettings(withAlerting, 'Bravo');
-      const page = await getDataSourceInstanceSettingsList({ filters: { alerting: true, mixed: true } });
-      expect(page.items.some((x) => x.name === '-- Mixed --')).toBe(false);
-      expect(page.items.some((x) => x.name === '-- Grafana --')).toBe(false);
+      const items = await getDataSourceInstanceSettingsList({ alerting: true, mixed: true });
+      expect(items.some((x) => x.name === '-- Mixed --')).toBe(false);
+      expect(items.some((x) => x.name === '-- Grafana --')).toBe(false);
     });
 
     it('does not include runtime datasources in list results', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
       upsertRuntimeDataSourceInstanceSettings(ds({ uid: 'runtime-ds', name: 'Runtime', type: 'runtime' }));
 
-      const page = await getDataSourceInstanceSettingsList({ filters: { all: true } });
-      expect(page.items.some((x) => x.uid === 'runtime-ds')).toBe(false);
+      const items = await getDataSourceInstanceSettingsList({ all: true });
+      expect(items.some((x) => x.uid === 'runtime-ds')).toBe(false);
     });
 
     it('injects datasource variables when `variables` filter is set', async () => {
@@ -409,8 +405,8 @@ describe('instanceSettings', () => {
       } as unknown as TemplateSrv);
 
       initDataSourceInstanceSettings(fixtures, 'Bravo');
-      const page = await getDataSourceInstanceSettingsList({ filters: { variables: true } });
-      const names = page.items.map((x) => x.name);
+      const items = await getDataSourceInstanceSettingsList({ variables: true });
+      const names = items.map((x) => x.name);
       expect(names).toContain('${dsVar}');
 
       // Restore original templateSrv
@@ -419,8 +415,8 @@ describe('instanceSettings', () => {
 
     it('returns items sorted alphabetically by name', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
-      const page = await getDataSourceInstanceSettingsList();
-      const names = page.items.filter((x) => x.name !== '-- Grafana --').map((x) => x.name);
+      const items = await getDataSourceInstanceSettingsList();
+      const names = items.filter((x) => x.name !== '-- Grafana --').map((x) => x.name);
       const sorted = [...names].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
       expect(names).toEqual(sorted);
     });
