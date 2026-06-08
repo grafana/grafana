@@ -7,11 +7,13 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestHasCascadeFinalizer(t *testing.T) {
@@ -167,4 +169,73 @@ func TestEnsureTerminationMetadata(t *testing.T) {
 		store := &fakeFolderStore{getErr: errors.New("boom")}
 		require.Error(t, ensureTerminationMetadata(context.Background(), store, "f"))
 	})
+}
+
+// fakeChildSearcher implements only Search (over an embedded ResourceIndexClient) and returns
+// children per parent UID, mirroring the folder parent index.
+type fakeChildSearcher struct {
+	resourcepb.ResourceIndexClient
+	childrenByParent map[string][]string
+}
+
+func (f *fakeChildSearcher) Search(_ context.Context, in *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	parent := in.Options.Fields[0].Values[0]
+	rows := make([]*resourcepb.ResourceTableRow, 0)
+	for _, name := range f.childrenByParent[parent] {
+		rows = append(rows, &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: name}})
+	}
+	return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{Rows: rows}}, nil
+}
+
+// fakeMultiStore is a folderStore serving several folders by name and recording deletes.
+type fakeMultiStore struct {
+	folders map[string]*foldersv1.Folder
+	deleted []string
+}
+
+func (s *fakeMultiStore) New() runtime.Object { return &foldersv1.Folder{} }
+
+func (s *fakeMultiStore) Get(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
+	f, ok := s.folders[name]
+	if !ok {
+		return nil, errors.New("not found: " + name)
+	}
+	return f, nil
+}
+
+func (s *fakeMultiStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	updated, err := objInfo.UpdatedObject(ctx, s.folders[name])
+	if err != nil {
+		return nil, false, err
+	}
+	s.folders[name] = updated.(*foldersv1.Folder)
+	return updated, false, nil
+}
+
+func (s *fakeMultiStore) Delete(_ context.Context, name string, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	s.deleted = append(s.deleted, name)
+	return nil, true, nil
+}
+
+func TestMarkDescendants(t *testing.T) {
+	// root -> { a -> { b }, c }
+	store := &fakeMultiStore{folders: map[string]*foldersv1.Folder{
+		"a": {ObjectMeta: metav1.ObjectMeta{Name: "a"}},
+		"b": {ObjectMeta: metav1.ObjectMeta{Name: "b"}},
+		"c": {ObjectMeta: metav1.ObjectMeta{Name: "c"}},
+	}}
+	searcher := &fakeChildSearcher{childrenByParent: map[string][]string{
+		"root": {"a", "c"},
+		"a":    {"b"},
+	}}
+
+	require.NoError(t, markDescendants(context.Background(), store, searcher, "ns", "root", 0))
+
+	// Every descendant is marked (finalizer + terminating label) and deleted (deletion timestamp);
+	// the root itself is left to the caller.
+	require.ElementsMatch(t, []string{"a", "b", "c"}, store.deleted)
+	for _, name := range []string{"a", "b", "c"} {
+		require.Equal(t, TerminatingLabelValue, store.folders[name].Labels[TerminatingLabel], "label on %s", name)
+		require.Contains(t, store.folders[name].Finalizers, CascadeDeleteFinalizer, "finalizer on %s", name)
+	}
 }

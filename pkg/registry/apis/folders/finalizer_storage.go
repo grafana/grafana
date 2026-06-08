@@ -8,22 +8,32 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/util/dryrun"
 	"k8s.io/client-go/util/retry"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// finalizerStorage wraps a folder registry store and ensures the cascade-delete finalizer
-// and terminating label are persisted before delete proceeds. Legacy folders created before
-// admission defaulting may not have the finalizer until the first delete, and the terminating
-// label is only ever stamped here, on delete.
+// maxCascadeMarkDepth bounds the recursive subtree mark so a corrupt parent/child cycle (which
+// folder validation already prevents) can never spin forever.
+const maxCascadeMarkDepth = 100
+
+// finalizerStorage wraps a folder registry store and drives cascade deletion at delete time: it
+// stamps the cascade-delete finalizer and terminating label, and recursively marks the whole
+// subtree of the deleted folder terminating. The in-process cascade poller then sweeps every
+// terminating folder and removes the finalizer so it can be garbage-collected. Legacy folders
+// created before admission defaulting may not have the finalizer until the first delete, and the
+// terminating label is only ever stamped here, on delete.
 type finalizerStorage struct {
 	*registry.Store
+	searcher resourcepb.ResourceIndexClient
 }
 
-func newFinalizerStorage(store *registry.Store) *finalizerStorage {
-	return &finalizerStorage{Store: store}
+func newFinalizerStorage(store *registry.Store, searcher resourcepb.ResourceIndexClient) *finalizerStorage {
+	return &finalizerStorage{Store: store, searcher: searcher}
 }
 
 func (s *finalizerStorage) Delete(
@@ -33,6 +43,12 @@ func (s *finalizerStorage) Delete(
 	options *metav1.DeleteOptions,
 ) (runtime.Object, bool, error) {
 	if options == nil || !dryrun.IsDryRun(options.DryRun) {
+		// Mark the whole subtree terminating up front, then mark this folder, so the cascade
+		// poller only has to remove finalizers (in any order) rather than walk the tree itself.
+		namespace := genericapirequest.NamespaceValue(ctx)
+		if err := markDescendants(ctx, s.Store, s.searcher, namespace, name, 0); err != nil {
+			return nil, false, err
+		}
 		if err := ensureTerminationMetadata(ctx, s.Store, name); err != nil {
 			return nil, false, err
 		}
@@ -40,10 +56,61 @@ func (s *finalizerStorage) Delete(
 	return s.Store.Delete(ctx, name, deleteValidation, options)
 }
 
+// folderStore is the subset of the folder registry store used to mark a subtree terminating.
+type folderStore interface {
+	folderGetUpdater
+	rest.GracefulDeleter
+}
+
 // folderGetUpdater is the subset of the folder store used to backfill termination metadata.
 type folderGetUpdater interface {
 	rest.Getter
 	rest.Updater
+}
+
+// markDescendants recursively marks every folder under parent terminating: it stamps the cascade
+// finalizer and terminating label and sets a deletion timestamp (via a graceful delete, which the
+// finalizer turns into "marked, not removed"). It does not mark parent itself -- the caller does.
+func markDescendants(ctx context.Context, store folderStore, searcher resourcepb.ResourceIndexClient, namespace, parent string, depth int) error {
+	if depth >= maxCascadeMarkDepth {
+		return fmt.Errorf("folder cascade exceeded max depth (%d) at %q", maxCascadeMarkDepth, parent)
+	}
+
+	children, err := directChildFolders(ctx, searcher, namespace, parent)
+	if err != nil {
+		return err
+	}
+
+	zero := int64(0)
+	for _, child := range children {
+		if err := markDescendants(ctx, store, searcher, namespace, child, depth+1); err != nil {
+			return err
+		}
+		if err := ensureTerminationMetadata(ctx, store, child); err != nil {
+			return err
+		}
+		if _, _, err := store.Delete(ctx, child, rest.ValidateAllObjectFunc, &metav1.DeleteOptions{GracePeriodSeconds: &zero}); err != nil && !apierrors.IsNotFound(err) {
+			return err
+		}
+	}
+	return nil
+}
+
+// directChildFolders returns the UIDs of folders whose parent is parentUID, paging through search.
+func directChildFolders(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace, parentUID string) ([]string, error) {
+	const pageSize int64 = 1000
+	var all []string
+	for offset := int64(0); ; {
+		children, hasMore, err := getChildrenBatch(ctx, searcher, namespace, []string{parentUID}, pageSize, offset)
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, children...)
+		if !hasMore {
+			return all, nil
+		}
+		offset += pageSize
+	}
 }
 
 // ensureTerminationMetadata stamps the cascade finalizer and terminating label before delete

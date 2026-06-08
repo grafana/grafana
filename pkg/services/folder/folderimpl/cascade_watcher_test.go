@@ -2,10 +2,10 @@ package folderimpl
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -24,33 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
-
-func TestIsTerminatingForCascade(t *testing.T) {
-	now := metav1.NewTime(time.Now())
-
-	require.False(t, isTerminatingForCascade(&foldersv1.Folder{}))
-	require.False(t, isTerminatingForCascade(&foldersv1.Folder{
-		ObjectMeta: metav1.ObjectMeta{DeletionTimestamp: &now},
-	}))
-	require.False(t, isTerminatingForCascade(&foldersv1.Folder{
-		ObjectMeta: metav1.ObjectMeta{Finalizers: []string{folders.CascadeDeleteFinalizer}},
-	}))
-	require.True(t, isTerminatingForCascade(&foldersv1.Folder{
-		ObjectMeta: metav1.ObjectMeta{
-			DeletionTimestamp: &now,
-			Finalizers:        []string{folders.CascadeDeleteFinalizer},
-		},
-	}))
-}
-
-func TestOrgIDFromNamespace(t *testing.T) {
-	orgID, err := orgIDFromNamespace("org-12")
-	require.NoError(t, err)
-	require.Equal(t, int64(12), orgID)
-
-	_, err = orgIDFromNamespace("invalid")
-	require.Error(t, err)
-}
 
 type mockFolderSearcher struct {
 	search func(ctx context.Context, orgID int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)
@@ -169,150 +142,77 @@ func (m *recordingFolderMutator) deletedNames() []string {
 	return out
 }
 
-func newTerminatingFolder(name string) *foldersv1.Folder {
-	now := metav1.NewTime(time.Now())
-	return &foldersv1.Folder{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              name,
-			Namespace:         "org-12",
-			DeletionTimestamp: &now,
-			Finalizers:        []string{folders.CascadeDeleteFinalizer},
-		},
-	}
-}
-
-func TestCascadeWatcher_onFolder_deletesChildren(t *testing.T) {
-	searcher := &mockFolderSearcher{
+// childSearch returns a mock searcher whose child search (listDirectChildFolders) reports the
+// given children with their terminating state.
+func childSearch(children map[string]bool) *mockFolderSearcher {
+	return &mockFolderSearcher{
 		search: func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-			return &resourcepb.ResourceSearchResponse{
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{
-						{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-					},
-					Rows: []*resourcepb.ResourceTableRow{
-						{Key: &resourcepb.ResourceKey{Name: "child-a", Resource: "folder"}, Cells: [][]byte{[]byte("parent")}},
-						{Key: &resourcepb.ResourceKey{Name: "child-b", Resource: "folder"}, Cells: [][]byte{[]byte("parent")}},
-					},
+			rows := make([]*resourcepb.ResourceTableRow, 0, len(children))
+			for name, terminating := range children {
+				var cell []byte
+				if terminating {
+					cell = []byte(folders.TerminatingLabelValue)
+				}
+				rows = append(rows, &resourcepb.ResourceTableRow{
+					Key:   &resourcepb.ResourceKey{Name: name, Resource: "folder"},
+					Cells: [][]byte{cell},
+				})
+			}
+			return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: terminatingLabelField, Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				},
-			}, nil
+				Rows: rows,
+			}}, nil
 		},
 	}
-	mut := &recordingFolderMutator{}
-	w := &CascadeWatcher{
-		folderSearch:  searcher,
-		folderMutator: mut,
-		log:           slog.Default(),
-	}
-
-	require.NoError(t, w.reconcileFolder(context.Background(), newTerminatingFolder("parent")))
-
-	require.Equal(t, []string{"child-a", "child-b"}, mut.deletedNames())
-	require.Nil(t, mut.deleted[0].gracePeriod)
-	require.Empty(t, mut.finalizerRemove)
 }
 
-func TestCascadeWatcher_onFolder_propagatesGracePeriodToChildren(t *testing.T) {
-	searcher := &mockFolderSearcher{
-		search: func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-			return &resourcepb.ResourceSearchResponse{
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{
-						{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-					},
-					Rows: []*resourcepb.ResourceTableRow{
-						{Key: &resourcepb.ResourceKey{Name: "child-a", Resource: "folder"}, Cells: [][]byte{[]byte("parent")}},
-					},
-				},
-			}, nil
-		},
-	}
+func TestCascadeWatcher_finalizeTerminatingFolder_removesFinalizer(t *testing.T) {
+	// Children already marked terminating (the API server fan-out did its job): no backstop
+	// deletes, just remove the folder's own finalizer.
 	mut := &recordingFolderMutator{}
 	w := &CascadeWatcher{
-		folderSearch:  searcher,
+		folderSearch:  childSearch(map[string]bool{"child-a": true, "child-b": true}),
 		folderMutator: mut,
 		log:           slog.Default(),
 	}
 
-	parent := newTerminatingFolder("parent")
-	zero := int64(0)
-	parent.DeletionGracePeriodSeconds = &zero
-
-	require.NoError(t, w.reconcileFolder(context.Background(), parent))
-
-	require.Len(t, mut.deleted, 1)
-	require.NotNil(t, mut.deleted[0].gracePeriod)
-	require.Equal(t, int64(0), *mut.deleted[0].gracePeriod)
-}
-
-func TestCascadeWatcher_onFolder_removesFinalizerWhenEmpty(t *testing.T) {
-	searcher := &mockFolderSearcher{
-		search: func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-			return &resourcepb.ResourceSearchResponse{
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{
-						{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-					},
-				},
-			}, nil
-		},
-	}
-	mut := &recordingFolderMutator{}
-	w := &CascadeWatcher{
-		folderSearch:  searcher,
-		folderMutator: mut,
-		log:           slog.Default(),
-	}
-
-	require.NoError(t, w.reconcileFolder(context.Background(), newTerminatingFolder("leaf")))
-
-	require.Empty(t, mut.deleted)
-	require.Equal(t, []string{"leaf"}, mut.finalizerRemove)
-}
-
-func TestCascadeWatcher_onFolder_skipsAlreadyTerminatingChildren(t *testing.T) {
-	searcher := &mockFolderSearcher{
-		search: func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-			return &resourcepb.ResourceSearchResponse{
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{
-						{Name: terminatingLabelField, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-					},
-					Rows: []*resourcepb.ResourceTableRow{
-						{Key: &resourcepb.ResourceKey{Name: "live-child", Resource: "folder"}, Cells: [][]byte{nil}},
-						{Key: &resourcepb.ResourceKey{Name: "terminating-child", Resource: "folder"}, Cells: [][]byte{[]byte(folders.TerminatingLabelValue)}},
-					},
-				},
-			}, nil
-		},
-	}
-	mut := &recordingFolderMutator{}
-	w := &CascadeWatcher{
-		folderSearch:  searcher,
-		folderMutator: mut,
-		log:           slog.Default(),
-	}
-
-	require.NoError(t, w.reconcileFolder(context.Background(), newTerminatingFolder("parent")))
-
-	// Only the non-terminating child is (re-)deleted; the terminating one is already draining.
-	require.Equal(t, []string{"live-child"}, mut.deletedNames())
-	// Both children still exist, so the parent keeps its finalizer.
-	require.Empty(t, mut.finalizerRemove)
-}
-
-func TestCascadeWatcher_onFolder_skipsWhenNotTerminating(t *testing.T) {
-	mut := &recordingFolderMutator{}
-	w := &CascadeWatcher{
-		folderSearch: &mockFolderSearcher{search: func(context.Context, int64, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-			return nil, nil
-		}},
-		folderMutator: mut,
-		log:           slog.Default(),
-	}
-
-	require.NoError(t, w.reconcileFolder(context.Background(), &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "alive", Namespace: "org-12"}}))
+	w.finalizeTerminatingFolder(context.Background(), 12, "org-12", "parent")
 
 	require.Empty(t, mut.deletedNames())
+	require.Equal(t, []string{"parent"}, mut.finalizerRemove)
+}
+
+func TestCascadeWatcher_finalizeTerminatingFolder_backstopMarksUnmarkedChild(t *testing.T) {
+	// A child the fan-out missed is marked terminating (backstop) before the parent's finalizer
+	// is removed.
+	mut := &recordingFolderMutator{}
+	w := &CascadeWatcher{
+		folderSearch:  childSearch(map[string]bool{"unmarked": false, "marked": true}),
+		folderMutator: mut,
+		log:           slog.Default(),
+	}
+
+	w.finalizeTerminatingFolder(context.Background(), 12, "org-12", "parent")
+
+	require.Equal(t, []string{"unmarked"}, mut.deletedNames())
+	require.NotNil(t, mut.deleted[0].gracePeriod)
+	require.Equal(t, int64(0), *mut.deleted[0].gracePeriod)
+	require.Equal(t, []string{"parent"}, mut.finalizerRemove)
+}
+
+func TestCascadeWatcher_finalizeTerminatingFolder_keepsFinalizerOnChildError(t *testing.T) {
+	// If a backstop delete fails, the parent's finalizer is left in place to retry next tick.
+	mut := &recordingFolderMutator{deleteErr: errors.New("boom")}
+	w := &CascadeWatcher{
+		folderSearch:  childSearch(map[string]bool{"unmarked": false}),
+		folderMutator: mut,
+		log:           slog.Default(),
+	}
+
+	w.finalizeTerminatingFolder(context.Background(), 12, "org-12", "parent")
+
 	require.Empty(t, mut.finalizerRemove)
 }
 
@@ -354,31 +254,30 @@ func (f *fakeOrgLister) Search(context.Context, *org.SearchOrgsQuery) ([]*org.Or
 	return f.orgs, f.err
 }
 
-type fakeFolderGetter struct {
-	folders map[string]*foldersv1.Folder
-}
-
-func (f *fakeFolderGetter) Get(_ context.Context, _, name string) (*foldersv1.Folder, error) {
-	folder, ok := f.folders[name]
-	if !ok {
-		return nil, apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), name)
-	}
-	return folder, nil
-}
-
 func TestCascadeWatcher_pollOnce(t *testing.T) {
-	// Discovery search (label filter) returns a terminating leaf; its child search (parent
-	// filter) returns nothing, so the poller should remove the leaf's finalizer.
+	// Discovery (label filter) returns two already-marked terminating folders; the poller sweeps
+	// both, removing their finalizers. No backstop deletes since children are already terminating.
+	term := []byte(folders.TerminatingLabelValue)
+	cols := []*resourcepb.ResourceTableColumnDefinition{
+		{Name: terminatingLabelField, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+	}
 	searcher := &mockFolderSearcher{
 		search: func(_ context.Context, _ int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-			cols := []*resourcepb.ResourceTableColumnDefinition{
-				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			}
 			if len(in.Options.Labels) > 0 {
 				return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
 					Columns: cols,
 					Rows: []*resourcepb.ResourceTableRow{
-						{Key: &resourcepb.ResourceKey{Name: "leaf", Resource: "folder"}, Cells: [][]byte{nil}},
+						{Key: &resourcepb.ResourceKey{Name: "parent", Resource: "folder"}, Cells: [][]byte{term}},
+						{Key: &resourcepb.ResourceKey{Name: "child", Resource: "folder"}, Cells: [][]byte{term}},
+					},
+				}}, nil
+			}
+			// Child search: "parent" still has the (terminating) child; "child" is a leaf.
+			if in.Options.Fields[0].Values[0] == "parent" {
+				return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
+					Columns: cols,
+					Rows: []*resourcepb.ResourceTableRow{
+						{Key: &resourcepb.ResourceKey{Name: "child", Resource: "folder"}, Cells: [][]byte{term}},
 					},
 				}}, nil
 			}
@@ -391,162 +290,13 @@ func TestCascadeWatcher_pollOnce(t *testing.T) {
 		namespaceMapper: func(int64) string { return "org-12" },
 		folderSearch:    searcher,
 		folderMutator:   mut,
-		getter:          &fakeFolderGetter{folders: map[string]*foldersv1.Folder{"leaf": newTerminatingFolder("leaf")}},
 		log:             slog.Default(),
 	}
 
 	w.pollOnce(context.Background())
 
-	require.Equal(t, []string{"leaf"}, mut.finalizerRemove)
+	require.ElementsMatch(t, []string{"parent", "child"}, mut.finalizerRemove)
 	require.Empty(t, mut.deletedNames())
-}
-
-// fakeFolderTree is an in-memory model of a folder subtree that implements both folderSearcher
-// and folderMutator, so the cascade recursion can be exercised end to end without an apiserver.
-// It mirrors the real lifecycle: deleting a folder that has the cascade finalizer marks it
-// terminating (sets a deletion timestamp) rather than removing it; removing the finalizer is what
-// actually garbage-collects it, which in turn re-enqueues its parent (as the informer DeleteFunc
-// would).
-type fakeFolderTree struct {
-	folders     map[string]*fakeFolder // name -> folder; absent means garbage-collected
-	enqueue     func(name string)      // mirrors the workqueue: schedules a reconcile
-	deleteOrder []string               // folders garbage-collected, in order
-	violations  []string               // folders whose finalizer was removed while children remained
-}
-
-type fakeFolder struct {
-	parent      string
-	terminating bool
-	finalizer   bool
-}
-
-func (ft *fakeFolderTree) Search(_ context.Context, _ int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-	parent := in.Options.Fields[0].Values[0]
-	rows := make([]*resourcepb.ResourceTableRow, 0)
-	for name, f := range ft.folders {
-		if f.parent != parent {
-			continue
-		}
-		var cell []byte
-		if f.terminating {
-			cell = []byte(folders.TerminatingLabelValue)
-		}
-		rows = append(rows, &resourcepb.ResourceTableRow{
-			Key:   &resourcepb.ResourceKey{Name: name, Resource: "folder"},
-			Cells: [][]byte{cell},
-		})
-	}
-	return &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: terminatingLabelField, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			},
-			Rows: rows,
-		},
-	}, nil
-}
-
-func (ft *fakeFolderTree) Delete(_ context.Context, _, name string, _ *int64) error {
-	f, ok := ft.folders[name]
-	if !ok {
-		return nil
-	}
-	if !f.terminating {
-		// Folder carries the cascade finalizer, so delete only starts termination.
-		f.terminating = true
-		ft.enqueue(name)
-	}
-	return nil
-}
-
-func (ft *fakeFolderTree) RemoveCascadeFinalizer(_ context.Context, _, name string) error {
-	f, ok := ft.folders[name]
-	if !ok {
-		return nil
-	}
-	if ft.childrenOf(name) > 0 {
-		ft.violations = append(ft.violations, name)
-	}
-	delete(ft.folders, name)
-	ft.deleteOrder = append(ft.deleteOrder, name)
-	if f.parent != "" {
-		ft.enqueue(f.parent) // mirrors the informer DeleteFunc -> enqueueParent
-	}
-	return nil
-}
-
-func (ft *fakeFolderTree) childrenOf(name string) int {
-	n := 0
-	for _, f := range ft.folders {
-		if f.parent == name {
-			n++
-		}
-	}
-	return n
-}
-
-func (ft *fakeFolderTree) folderCR(name string) *foldersv1.Folder {
-	f := ft.folders[name]
-	obj := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "org-12"}}
-	if f.finalizer {
-		obj.Finalizers = []string{folders.CascadeDeleteFinalizer}
-	}
-	if f.terminating {
-		now := metav1.NewTime(time.Now())
-		obj.DeletionTimestamp = &now
-	}
-	return obj
-}
-
-func TestCascadeWatcher_reconcileFolder_cascadesWholeSubtree(t *testing.T) {
-	// root
-	// |- a
-	// |  |- a1
-	// |  |- a2
-	// |     |- a2x
-	// |- b
-	//    |- b1
-	parents := map[string]string{
-		"root": "",
-		"a":    "root",
-		"b":    "root",
-		"a1":   "a",
-		"a2":   "a",
-		"a2x":  "a2",
-		"b1":   "b",
-	}
-	ft := &fakeFolderTree{folders: map[string]*fakeFolder{}}
-	for name, parent := range parents {
-		// Every folder was created with the flag on, so it already carries the finalizer.
-		ft.folders[name] = &fakeFolder{parent: parent, finalizer: true}
-	}
-
-	var queue []string
-	ft.enqueue = func(name string) { queue = append(queue, name) }
-
-	w := &CascadeWatcher{
-		folderSearch:  ft,
-		folderMutator: ft,
-		log:           slog.Default(),
-	}
-
-	// User force-deletes the root: it starts terminating and is scheduled for reconcile.
-	ft.folders["root"].terminating = true
-	ft.enqueue("root")
-
-	for i := 0; len(queue) > 0; i++ {
-		require.Less(t, i, 1000, "cascade did not converge")
-		name := queue[0]
-		queue = queue[1:]
-		if _, ok := ft.folders[name]; !ok {
-			continue // already garbage-collected
-		}
-		require.NoError(t, w.reconcileFolder(context.Background(), ft.folderCR(name)))
-	}
-
-	require.Empty(t, ft.folders, "entire subtree should be garbage-collected")
-	require.Empty(t, ft.violations, "a folder's finalizer must only be removed once it has no children")
-	require.ElementsMatch(t, []string{"root", "a", "b", "a1", "a2", "a2x", "b1"}, ft.deleteOrder)
 }
 
 func newFakeFolderClient(t *testing.T, obj *unstructured.Unstructured) dynamic.NamespaceableResourceInterface {
