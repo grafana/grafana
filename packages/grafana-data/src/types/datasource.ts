@@ -765,7 +765,10 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   database: string;
   basicAuth: boolean;
   basicAuthUser: string;
+  /** @deprecated Will gradually be replaced by `ordinal`. */
   isDefault: boolean;
+  /** Sort order; lower comes first. Present only when the backend supports it. */
+  ordinal?: number;
   jsonData: T;
   secureJsonData?: S;
   secureJsonFields: KeyValue<boolean>;

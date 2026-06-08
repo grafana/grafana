@@ -1633,12 +1633,17 @@
             "type": "string"
           },
           "isDefault": {
+            "description": "Deprecated: use ordinal=1",
             "type": "boolean"
           },
           "jsonData": {
             "type": "object",
             "additionalProperties": true,
             "x-kubernetes-preserve-unknown-fields": true
+          },
+          "ordinal": {
+            "type": "integer",
+            "format": "int64"
           },
           "readOnly": {
             "type": "boolean"

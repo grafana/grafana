@@ -23,6 +23,7 @@ type DataSource struct {
 	BasicAuthUser    string                 `json:"basicAuthUser"`
 	WithCredentials  bool                   `json:"withCredentials"`
 	IsDefault        bool                   `json:"isDefault"`
+	Ordinal          int64                  `json:"ordinal,omitzero"`
 	JsonData         *simplejson.Json       `json:"jsonData,omitempty"`
 	SecureJsonFields map[string]bool        `json:"secureJsonFields"`
 	Version          int                    `json:"version"`
@@ -45,7 +46,8 @@ type DataSourceListItemDTO struct {
 	User        string               `json:"user"`
 	Database    string               `json:"database"`
 	BasicAuth   bool                 `json:"basicAuth"`
-	IsDefault   bool                 `json:"isDefault"`
+	IsDefault   bool                 `json:"isDefault"` // will be replaced with ordinal
+	Ordinal     int64                `json:"ordinal,omitempty"`
 	JsonData    *simplejson.Json     `json:"jsonData,omitempty"`
 	ReadOnly    bool                 `json:"readOnly"`
 }

@@ -308,6 +308,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			User:            cmd.User,
 			Database:        cmd.Database,
 			IsDefault:       cmd.IsDefault,
+			Ordinal:         cmd.Ordinal,
 			BasicAuth:       cmd.BasicAuth,
 			BasicAuthUser:   cmd.BasicAuthUser,
 			WithCredentials: cmd.WithCredentials,
@@ -345,8 +346,9 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 func updateIsDefaultFlag(ds *datasources.DataSource, sess *db.Session) error {
 	// Handle is default flag
 	if ds.IsDefault {
-		rawSQL := "UPDATE data_source SET is_default=? WHERE org_id=? AND id <> ?"
-		if _, err := sess.Exec(rawSQL, false, ds.OrgID, ds.ID); err != nil {
+		// When changing the default, also update the ordinal value
+		rawSQL := "UPDATE data_source SET is_default=?, ordinal=2 WHERE is_default=? AND org_id=? AND id <> ?"
+		if _, err := sess.Exec(rawSQL, false, true, ds.OrgID, ds.ID); err != nil {
 			return err
 		}
 	}
@@ -371,6 +373,12 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			}
 		}
 
+		if cmd.Ordinal == 1 {
+			cmd.IsDefault = true
+		} else if cmd.IsDefault {
+			cmd.Ordinal = 1 // the default value
+		}
+
 		ds = &datasources.DataSource{
 			ID:              cmd.ID,
 			OrgID:           cmd.OrgID,
@@ -381,6 +389,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			User:            cmd.User,
 			Database:        cmd.Database,
 			IsDefault:       cmd.IsDefault,
+			Ordinal:         cmd.Ordinal,
 			BasicAuth:       cmd.BasicAuth,
 			BasicAuthUser:   cmd.BasicAuthUser,
 			WithCredentials: cmd.WithCredentials,
@@ -399,6 +408,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		sess.UseBool("with_credentials")
 		sess.UseBool("read_only")
 		sess.UseBool("is_prunable")
+		sess.MustCols("ordinal")
 		// Make sure database field is zeroed out if empty. We want to migrate away from this field.
 		sess.MustCols("database")
 		// Make sure password are zeroed out if empty. We do this as we want to migrate passwords from

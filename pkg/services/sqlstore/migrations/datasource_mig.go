@@ -150,4 +150,13 @@ func addDataSourceMigration(mg *Migrator) {
 	mg.AddMigration("Update json_data column to MediumText", NewRawSQLMigration("").
 		Mysql("ALTER TABLE data_source MODIFY COLUMN json_data MEDIUMTEXT;"),
 	)
+
+	mg.AddMigration("Add ordinal column", NewAddColumnMigration(tableV2, &Column{
+		Name: "ordinal", Type: DB_BigInt, Nullable: true, Default: "0",
+	}))
+
+	mg.AddMigration(
+		"Update ordinal values",
+		NewRawSQLMigration("UPDATE data_source SET ordinal=1 WHERE is_default=TRUE"),
+	)
 }
