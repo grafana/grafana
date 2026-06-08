@@ -12158,9 +12158,6 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
-    "groupsync": {
-      "subtitle": "Kimlik Sağlayıcı gruplarının Grafana Rolleri ile eşlemelerini yönetin"
-    },
     "help": {
       "title": "Yardım"
     },

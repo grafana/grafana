@@ -12158,9 +12158,6 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
-    "groupsync": {
-      "subtitle": "Hantera mappningar av identitetsleverantörsgrupper till Grafana-roller"
-    },
     "help": {
       "title": "Hjälp"
     },

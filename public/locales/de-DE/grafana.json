@@ -12158,9 +12158,6 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
-    "groupsync": {
-      "subtitle": "Verwalten Sie Zuordnungen von Identitätsanbietergruppen zu Grafana-Rollen"
-    },
     "help": {
       "title": "Hilfe"
     },

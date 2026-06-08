@@ -12158,9 +12158,6 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
-    "groupsync": {
-      "subtitle": "Gerir mapeamentos de grupos de fornecedores de identidade para funções da Grafana"
-    },
     "help": {
       "title": "Ajuda"
     },

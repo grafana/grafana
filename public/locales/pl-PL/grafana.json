@@ -12294,9 +12294,6 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
-    "groupsync": {
-      "subtitle": "Zarządzaj mapowaniami grup dostawców tożsamości do ról w usłudze Grafana"
-    },
     "help": {
       "title": "Pomoc"
     },
