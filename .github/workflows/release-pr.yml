@@ -101,6 +101,7 @@ jobs:
       VERSION: ${{ inputs.version }}
       LATEST: ${{ inputs.latest }}
       DRY_RUN: ${{ inputs.dry_run }}
+      RUN_NUMBER: ${{ github.run_number }}
     steps:
       - name: Get GitHub App token
         id: get-github-app-token
@@ -148,7 +149,7 @@ jobs:
           git config --local --add --bool push.autoSetupRemote true
 
       - name: Create branch
-        run: git checkout -b "release/${{ github.run_number }}/$VERSION"
+        run: git checkout -b "release/${RUN_NUMBER}/${VERSION}"
       # Pre-create the new branch on the remote pointing at the release branch's HEAD.
       # Using the REST API rather than `git push` because git push triggers the
       # "Restricts updates to workflow files" pre-receive scan, which times out on
@@ -162,7 +163,7 @@ jobs:
           BASE_SHA=$(git rev-parse "origin/${RELEASE_BRANCH}")
           gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
             --method POST \
-            -f "ref=refs/heads/release/${{ github.run_number }}/${VERSION}" \
+            -f "ref=refs/heads/release/${RUN_NUMBER}/${VERSION}" \
             -f "sha=${BASE_SHA}"
 
       - name: Generate changelog
