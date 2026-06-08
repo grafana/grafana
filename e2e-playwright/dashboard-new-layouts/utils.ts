@@ -5,47 +5,21 @@ import { type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plu
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
-const deselectPanels = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
-  await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Controls).click({
-    position: { x: 0, y: 0 },
-  });
-};
+import { Panel, Sidebar } from './page-objects';
 
 export const flows = {
-  deselectPanels,
   async changePanelTitle(
     dashboardPage: DashboardPage,
     selectors: E2ESelectorGroups,
     oldPanelTitle: string,
     newPanelTitle: string
   ) {
-    await deselectPanels(dashboardPage, selectors);
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-      .filter({ hasText: oldPanelTitle })
-      .first()
-      .click();
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
-      .fill(newPanelTitle);
-  },
-  async changePanelDescription(
-    dashboardPage: DashboardPage,
-    selectors: E2ESelectorGroups,
-    panelTitle: string,
-    newDescription: string
-  ) {
-    await deselectPanels(dashboardPage, selectors);
-    const panelTitleRegex = new RegExp(`^${panelTitle}$`);
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-      .filter({ hasText: panelTitleRegex })
-      .first()
-      .click();
-    const descriptionTextArea = dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description'))
-      .locator('textarea');
-    await descriptionTextArea.fill(newDescription);
+    const page = dashboardPage.ctx.page;
+    const panel = new Panel(page, dashboardPage, selectors);
+    const sidebar = new Sidebar(page, dashboardPage, selectors);
+    await panel.deselectAll();
+    await panel.selectByTitle(oldPanelTitle);
+    await sidebar.panelOptions.getTitleInput().fill(newPanelTitle);
   },
   async newEditPaneVariableClick(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();

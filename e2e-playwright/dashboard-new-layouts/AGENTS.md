@@ -13,8 +13,10 @@ All page objects live in `page-objects/` and are re-exported from `page-objects/
 | `PageObject`       | `PageObject.ts`        | _(abstract base — not used directly)_     | Shared constructor (`page`, `dashboardPage`, `selectors`) |
 | `Controls`         | `Controls.ts`          | Top nav bar (edit, save, ...)             | `enterEditMode()`                                         |
 | `Toolbar`          | `Toolbar.ts`           | Vertical icon bar (options, outline, add) | `openDashboardOptions()`                                  |
-| `Sidebar`          | `Sidebar.ts`           | Slide-out container                       | `.dashboardOptions` sub-object                            |
+| `Sidebar`          | `Sidebar.ts`           | Slide-out container                       | `.dashboardOptions`, `.panelOptions` sub-objects          |
 | `DashboardOptions` | `Sidebar.ts` (private) | Dashboard options pane inside sidebar     | `getTitleInput()`, `getDescriptionTextarea()`             |
+| `PanelOptions`     | `Sidebar.ts` (private) | Panel options pane inside sidebar         | `getTitleInput()`, `getDescriptionTextarea()`             |
+| `Panel`            | `Panel.ts`             | A dashboard panel in the edit canvas      | `getHeaderByTitle()`, `selectByTitle()`, `deselectAll()`  |
 
 > This table grows as specs are migrated — only methods needed by migrated specs exist.
 
@@ -130,9 +132,10 @@ await expect(titleInput).toHaveValue(newTitle);
 
 ## Migration Status
 
-| Spec                                   | Status      |
-| -------------------------------------- | ----------- |
-| `dashboards-title-description.spec.ts` | Migrated    |
-| 25 remaining specs                     | Not started |
+| Spec                                              | Status      |
+| ------------------------------------------------- | ----------- |
+| `dashboards-title-description.spec.ts`            | Migrated    |
+| `dashboards-edit-panel-title-description.spec.ts` | Migrated    |
+| 24 remaining specs                                | Not started |
 
 See [`_page_objects_strategy.md`](./_page_objects_strategy.md) for the full migration plan.
