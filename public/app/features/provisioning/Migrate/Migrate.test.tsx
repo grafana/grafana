@@ -83,19 +83,20 @@ describe('Migrate', () => {
       expect(screen.getByText(/^experimental$/i)).toBeInTheDocument();
     });
 
-    it('shows overall progress and one status card per resource type', async () => {
+    it('renders a status card per resource type plus a combined "All resources" card', async () => {
       render(<Migrate />);
 
-      // Overall progress bar across all resource types (56 of 108 => 52%).
-      expect(await screen.findByText('Progress to GitOps')).toBeInTheDocument();
-      expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '52');
-
-      // Breakdown cards are open by default. Dashboards: 50 of 100 managed;
-      // Folders: 6 of 8 managed.
-      expect(screen.getByText('Dashboards')).toBeInTheDocument();
+      // Dashboards: 50 of 100 managed.
+      expect(await screen.findByText('Dashboards')).toBeInTheDocument();
       expect(screen.getByText('50 of 100 managed')).toBeInTheDocument();
+
+      // Folders: 6 of 8 managed.
       expect(screen.getByText('Folders')).toBeInTheDocument();
       expect(screen.getByText('6 of 8 managed')).toBeInTheDocument();
+
+      // All resources: 56 of 108 managed.
+      expect(screen.getByText('All resources')).toBeInTheDocument();
+      expect(screen.getByText('56 of 108 managed')).toBeInTheDocument();
     });
 
     it('keeps the migration guide note linking to the provisioning docs', async () => {

@@ -26,6 +26,11 @@ export function OverviewStatCards({ totals, folderCounts }: OverviewStatCardsPro
         managed={folderCounts.managed}
         total={folderCounts.total}
       />
+      <ResourceStatusCard
+        label={t('provisioning.migrate.all-resources', 'All resources')}
+        managed={totals.managed + folderCounts.managed}
+        total={totals.instanceTotal + folderCounts.total}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { render, screen } from 'test/test-utils';
 import { OverviewStatCards } from './OverviewStatCards';
 
 describe('OverviewStatCards', () => {
-  it('renders one status card per resource type with totals and managed counts', () => {
+  it('renders a status card per resource type plus a combined "All resources" card', () => {
     render(
       <OverviewStatCards
         totals={{ instanceTotal: 100, managed: 50, unmanaged: 50, gitSync: 40 }}
@@ -13,13 +13,17 @@ describe('OverviewStatCards', () => {
 
     // Dashboards card: 50 of 100 managed => 50%.
     expect(screen.getByText('Dashboards')).toBeInTheDocument();
-    expect(screen.getByText('50%')).toBeInTheDocument();
     expect(screen.getByText('50 of 100 managed')).toBeInTheDocument();
 
     // Folders card: 6 of 8 managed => 75%.
     expect(screen.getByText('Folders')).toBeInTheDocument();
     expect(screen.getByText('75%')).toBeInTheDocument();
     expect(screen.getByText('6 of 8 managed')).toBeInTheDocument();
+
+    // All resources card: 56 of 108 managed => 52%.
+    expect(screen.getByText('All resources')).toBeInTheDocument();
+    expect(screen.getByText('52%')).toBeInTheDocument();
+    expect(screen.getByText('56 of 108 managed')).toBeInTheDocument();
   });
 
   it('omits the folders card when there are no folders', () => {
