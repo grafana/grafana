@@ -4,8 +4,9 @@ import { Trans, t } from '@grafana/i18n';
 import { Badge, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
 import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
 
-import { Authorize } from '../../components/Authorize';
-import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { isAvailable, isGranted } from '../../hooks/abilities/abilityUtils';
+import { useTimeIntervalAbility } from '../../hooks/abilities/alertmanager/useTimeIntervalAbility';
+import { TimeIntervalAction } from '../../hooks/abilities/types';
 import { isLoading } from '../../hooks/useAsync';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
@@ -24,7 +25,9 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
   });
   const [showDeleteDrawer, setShowDeleteDrawer] = useState(false);
   const [ExportDrawer, showExportDrawer] = useExportMuteTimingsDrawer();
-  const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportTimeIntervals);
+  const updateAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Update, context: muteTiming });
+  const deleteAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Delete, context: muteTiming });
+  const exportAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Export });
 
   const closeDeleteModal = () => setShowDeleteDrawer(false);
 
@@ -55,33 +58,31 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
         {!isGrafanaDataSource && isDisabled(muteTiming) && (
           <Badge text={t('alerting.mute-timing-actions-buttons.text-disabled', 'Disabled')} color="orange" />
         )}
-        <Authorize actions={[AlertmanagerAction.UpdateTimeInterval]}>{viewOrEditButton}</Authorize>
+        {isAvailable(updateAbility) && viewOrEditButton}
 
-        {exportSupported && (
+        {isAvailable(exportAbility) && (
           <LinkButton
             icon="download-alt"
             variant="secondary"
             size="sm"
             data-testid="export"
-            disabled={!exportAllowed || isLoading(deleteMuteTimingRequestState)}
+            disabled={!exportAbility.granted || isLoading(deleteMuteTimingRequestState)}
             onClick={() => showExportDrawer(muteTiming.name)}
           >
             <Trans i18nKey="alerting.common.export">Export</Trans>
           </LinkButton>
         )}
 
-        {!muteTiming.provisioned && (
-          <Authorize actions={[AlertmanagerAction.DeleteTimeInterval]}>
-            <LinkButton
-              icon="trash-alt"
-              variant="secondary"
-              size="sm"
-              onClick={() => setShowDeleteDrawer(true)}
-              disabled={isLoading(deleteMuteTimingRequestState)}
-            >
-              <Trans i18nKey="alerting.common.delete">Delete</Trans>
-            </LinkButton>
-          </Authorize>
+        {!muteTiming.provisioned && isGranted(deleteAbility) && (
+          <LinkButton
+            icon="trash-alt"
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowDeleteDrawer(true)}
+            disabled={isLoading(deleteMuteTimingRequestState)}
+          >
+            <Trans i18nKey="alerting.common.delete">Delete</Trans>
+          </LinkButton>
         )}
       </Stack>
       <ConfirmModal
