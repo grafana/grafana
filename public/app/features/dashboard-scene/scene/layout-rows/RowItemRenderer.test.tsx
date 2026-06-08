@@ -1,5 +1,5 @@
-import { act, screen } from '@testing-library/react';
-import { render } from 'test/test-utils';
+import { screen } from '@testing-library/react';
+import { render, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneTimeRange } from '@grafana/scenes';
@@ -40,19 +40,15 @@ describe('RowItemRenderer', () => {
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('updates aria-expanded when the row is toggled', () => {
+  it('updates aria-expanded when the row is toggled', async () => {
     const { row } = renderRow({ collapse: false });
     const toggle = screen.getByTestId(selectors.components.DashboardRow.toggle(row.state.title!));
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
 
-    act(() => {
-      row.onCollapseToggle();
-    });
+    await userEvent.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
 
-    act(() => {
-      row.onCollapseToggle();
-    });
+    await userEvent.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
   });
 });
