@@ -50,4 +50,3 @@ func (b *SecureValuesApplyConfiguration) WithSigningKey(value commonv0alpha1.Inl
 	b.SigningKey = &value
 	return b
 }
-
