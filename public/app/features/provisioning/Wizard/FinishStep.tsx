@@ -2,11 +2,10 @@ import { memo, useEffect, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Checkbox, Divider, Field, Input, RadioButtonGroup, SecretTextArea, Stack, Text, TextLink } from '@grafana/ui';
+import { Checkbox, ControlledCollapse, Field, Input, RadioButtonGroup, SecretTextArea, Stack, Text, TextLink } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { BranchOptionsSection } from '../Config/BranchOptionsSection';
-import { CommitOptionsSection } from '../Config/CommitOptionsSection';
 import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfiguredBranchOption';
 import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
 import { GPGSigningKeyInfo } from '../Shared/GPGSigningKeyInfo';
@@ -139,11 +138,181 @@ export const FinishStep = memo(function FinishStep() {
             nameTemplateName="repository.branchOptions.nameTemplate"
             enforceTemplateName="repository.branchOptions.enforceTemplate"
           />
-          <CommitOptionsSection<WizardFormData>
-            register={register}
-            messageTemplateName="repository.commit.singleResourceMessageTemplate"
-            enforceTemplateName="repository.commit.enforceTemplate"
-          />
+          <ControlledCollapse
+            label={t('provisioning.commit-options.label-commit-options', 'Commit options (advanced)')}
+            isOpen={false}
+          >
+            <Stack direction="column" gap={2}>
+              <Field
+                noMargin
+                label={t('provisioning.config-form.label-commit-message-template', 'Commit message template')}
+                description={t(
+                  'provisioning.config-form.description-commit-message-template',
+                  'Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. A "Grafana-saved-by: <name> (<login>)" trailer is appended automatically. Leave empty to use the built-in defaults.',
+                  {
+                    actionVar: '{{action}}',
+                    kindVar: '{{resourceKind}}',
+                    idVar: '{{resourceID}}',
+                    titleVar: '{{title}}',
+                    userNameVar: '{{userName}}',
+                    userLoginVar: '{{userLogin}}',
+                    userEmailVar: '{{userEmail}}',
+                  }
+                )}
+              >
+                <Input
+                  id="commit-message-template"
+                  {...register('repository.commit.singleResourceMessageTemplate')}
+                  placeholder={t(
+                    'provisioning.config-form.placeholder-commit-message-template',
+                    'feat(dashboards): {{actionVar}} {{titleVar}}',
+                    { actionVar: '{{action}}', titleVar: '{{title}}' }
+                  )}
+                />
+              </Field>
+              <Field noMargin>
+                <Checkbox
+                  {...register('repository.commit.enforceTemplate')}
+                  label={t('provisioning.commit-options.label-enforce-template', 'Enforce commit message template')}
+                  description={t(
+                    'provisioning.commit-options.description-enforce-template',
+                    'Pre-fill the commit message in save dialogs from the template above and make it read-only. The "Grafana-saved-by" trailer is always appended.'
+                  )}
+                />
+              </Field>
+              {gitFields?.signingFormatConfig && (
+                <Field
+                  noMargin
+                  label={gitFields.signingFormatConfig.label}
+                  description={gitFields.signingFormatConfig.description}
+                >
+                  <Controller
+                    name="repository.signingFormat"
+                    control={control}
+                    render={({ field: { ref, ...field } }) => (
+                      <RadioButtonGroup
+                        {...field}
+                        options={getSigningFormatOptions()}
+                        onChange={(value) => {
+                          field.onChange(value);
+                          setValue('repository.signingKey', '');
+                          setValue('repository.smimeCertificate', '');
+                          setSigningKeyConfigured(false);
+                          setSmimeCertConfigured(false);
+                        }}
+                      />
+                    )}
+                  />
+                </Field>
+              )}
+              {signingEnabled && gitFields?.signingKeyConfig && (
+                <>
+                  {hasTokenInstructions && <GPGSigningKeyInfo type={type} />}
+                  <Field
+                    noMargin
+                    htmlFor="signingKey"
+                    label={gitFields.signingKeyConfig.label}
+                    description={gitFields.signingKeyConfig.description}
+                    error={errors?.repository?.signingKey?.message}
+                    invalid={!!errors?.repository?.signingKey}
+                  >
+                    <Controller
+                      name="repository.signingKey"
+                      control={control}
+                      render={({ field: { ref, ...field } }) => (
+                        <SecretTextArea
+                          {...field}
+                          id="signingKey"
+                          invalid={!!errors?.repository?.signingKey}
+                          placeholder={getSigningKeyPlaceholder(signingFormat)}
+                          isConfigured={signingKeyConfigured}
+                          onReset={() => {
+                            setValue('repository.signingKey', '');
+                            setValue('repository.commit.authorName', '');
+                            setValue('repository.commit.authorEmail', '');
+                            setSigningKeyConfigured(false);
+                          }}
+                          rows={8}
+                          grow
+                        />
+                      )}
+                    />
+                  </Field>
+                  {signingFormat === 'smime' && gitFields.smimeCertificateConfig && (
+                    <Field
+                      noMargin
+                      htmlFor="smimeCertificate"
+                      label={gitFields.smimeCertificateConfig.label}
+                      description={gitFields.smimeCertificateConfig.description}
+                      error={errors?.repository?.smimeCertificate?.message}
+                      invalid={!!errors?.repository?.smimeCertificate}
+                    >
+                      <Controller
+                        name="repository.smimeCertificate"
+                        control={control}
+                        render={({ field: { ref, ...field } }) => (
+                          <SecretTextArea
+                            {...field}
+                            id="smimeCertificate"
+                            invalid={!!errors?.repository?.smimeCertificate}
+                            placeholder={gitFields.smimeCertificateConfig?.placeholder}
+                            isConfigured={smimeCertConfigured}
+                            onReset={() => {
+                              setValue('repository.smimeCertificate', '');
+                              setSmimeCertConfigured(false);
+                            }}
+                            rows={8}
+                            grow
+                          />
+                        )}
+                      />
+                    </Field>
+                  )}
+                  {gitFields.commitAuthorNameConfig && (
+                    <Field
+                      noMargin
+                      htmlFor="commit-author-name"
+                      required={requireAuthor}
+                      label={gitFields.commitAuthorNameConfig.label}
+                      description={gitFields.commitAuthorNameConfig.description}
+                      error={errors?.repository?.commit?.authorName?.message}
+                      invalid={!!errors?.repository?.commit?.authorName}
+                    >
+                      <Input
+                        id="commit-author-name"
+                        disabled={!signingKeyValue}
+                        {...register('repository.commit.authorName', {
+                          validate: (val) => !requireAuthor || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
+                        })}
+                        placeholder={gitFields.commitAuthorNameConfig.placeholder}
+                      />
+                    </Field>
+                  )}
+                  {gitFields.commitAuthorEmailConfig && (
+                    <Field
+                      noMargin
+                      htmlFor="commit-author-email"
+                      required={requireAuthor}
+                      label={gitFields.commitAuthorEmailConfig.label}
+                      description={gitFields.commitAuthorEmailConfig.description}
+                      error={errors?.repository?.commit?.authorEmail?.message}
+                      invalid={!!errors?.repository?.commit?.authorEmail}
+                    >
+                      <Input
+                        id="commit-author-email"
+                        type="email"
+                        disabled={!signingKeyValue}
+                        {...register('repository.commit.authorEmail', {
+                          validate: (val) => !requireAuthor || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
+                        })}
+                        placeholder={gitFields.commitAuthorEmailConfig.placeholder}
+                      />
+                    </Field>
+                  )}
+                </>
+              )}
+            </Stack>
+          </ControlledCollapse>
         </>
       )}
 
@@ -194,140 +363,6 @@ export const FinishStep = memo(function FinishStep() {
         </Field>
       )}
 
-      {gitFields?.signingKeyConfig &&
-        gitFields.signingFormatConfig &&
-        gitFields.smimeCertificateConfig &&
-        gitFields.commitAuthorNameConfig &&
-        gitFields.commitAuthorEmailConfig && (
-          <>
-            <Divider spacing={0} />
-            <Field
-              noMargin
-              label={gitFields.signingFormatConfig.label}
-              description={gitFields.signingFormatConfig.description}
-            >
-              <Controller
-                name="repository.signingFormat"
-                control={control}
-                render={({ field: { ref, ...field } }) => (
-                  <RadioButtonGroup
-                    {...field}
-                    options={getSigningFormatOptions()}
-                    onChange={(value) => {
-                      field.onChange(value);
-                      setValue('repository.signingKey', '');
-                      setValue('repository.smimeCertificate', '');
-                      setSigningKeyConfigured(false);
-                      setSmimeCertConfigured(false);
-                    }}
-                  />
-                )}
-              />
-            </Field>
-            {signingEnabled && (
-              <>
-                {hasTokenInstructions && <GPGSigningKeyInfo type={type} />}
-                <Field
-                  noMargin
-                  htmlFor="signingKey"
-                  label={gitFields.signingKeyConfig.label}
-                  description={gitFields.signingKeyConfig.description}
-                  error={errors?.repository?.signingKey?.message}
-                  invalid={!!errors?.repository?.signingKey}
-                >
-                  <Controller
-                    name="repository.signingKey"
-                    control={control}
-                    render={({ field: { ref, ...field } }) => (
-                      <SecretTextArea
-                        {...field}
-                        id="signingKey"
-                        invalid={!!errors?.repository?.signingKey}
-                        placeholder={getSigningKeyPlaceholder(signingFormat)}
-                        isConfigured={signingKeyConfigured}
-                        onReset={() => {
-                          setValue('repository.signingKey', '');
-                          setValue('repository.commit.authorName', '');
-                          setValue('repository.commit.authorEmail', '');
-                          setSigningKeyConfigured(false);
-                        }}
-                        rows={8}
-                        grow
-                      />
-                    )}
-                  />
-                </Field>
-                {signingFormat === 'smime' && (
-                  <Field
-                    noMargin
-                    htmlFor="smimeCertificate"
-                    label={gitFields.smimeCertificateConfig.label}
-                    description={gitFields.smimeCertificateConfig.description}
-                    error={errors?.repository?.smimeCertificate?.message}
-                    invalid={!!errors?.repository?.smimeCertificate}
-                  >
-                    <Controller
-                      name="repository.smimeCertificate"
-                      control={control}
-                      render={({ field: { ref, ...field } }) => (
-                        <SecretTextArea
-                          {...field}
-                          id="smimeCertificate"
-                          invalid={!!errors?.repository?.smimeCertificate}
-                          placeholder={gitFields.smimeCertificateConfig?.placeholder}
-                          isConfigured={smimeCertConfigured}
-                          onReset={() => {
-                            setValue('repository.smimeCertificate', '');
-                            setSmimeCertConfigured(false);
-                          }}
-                          rows={8}
-                          grow
-                        />
-                      )}
-                    />
-                  </Field>
-                )}
-                <Field
-                  noMargin
-                  htmlFor="commit-author-name"
-                  required={requireAuthor}
-                  label={gitFields.commitAuthorNameConfig.label}
-                  description={gitFields.commitAuthorNameConfig.description}
-                  error={errors?.repository?.commit?.authorName?.message}
-                  invalid={!!errors?.repository?.commit?.authorName}
-                >
-                  <Input
-                    id="commit-author-name"
-                    disabled={!signingKeyValue}
-                    {...register('repository.commit.authorName', {
-                      validate: (val) => !requireAuthor || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
-                    })}
-                    placeholder={gitFields.commitAuthorNameConfig.placeholder}
-                  />
-                </Field>
-                <Field
-                  noMargin
-                  htmlFor="commit-author-email"
-                  required={requireAuthor}
-                  label={gitFields.commitAuthorEmailConfig.label}
-                  description={gitFields.commitAuthorEmailConfig.description}
-                  error={errors?.repository?.commit?.authorEmail?.message}
-                  invalid={!!errors?.repository?.commit?.authorEmail}
-                >
-                  <Input
-                    id="commit-author-email"
-                    type="email"
-                    disabled={!signingKeyValue}
-                    {...register('repository.commit.authorEmail', {
-                      validate: (val) => !requireAuthor || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
-                    })}
-                    placeholder={gitFields.commitAuthorEmailConfig.placeholder}
-                  />
-                </Field>
-              </>
-            )}
-          </>
-        )}
     </Stack>
   );
 });
