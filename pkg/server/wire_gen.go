@@ -857,7 +857,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	notificationsAppInstaller, err := notifications2.RegisterAppInstaller(cfg, alertNG, service13)
+	notificationsAppInstaller, err := notifications2.RegisterAppInstaller(cfg, alertNG)
 	if err != nil {
 		return nil, err
 	}
@@ -1591,7 +1591,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	notificationsAppInstaller, err := notifications2.RegisterAppInstaller(cfg, alertNG, service13)
+	notificationsAppInstaller, err := notifications2.RegisterAppInstaller(cfg, alertNG)
 	if err != nil {
 		return nil, err
 	}

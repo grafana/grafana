@@ -111,7 +111,6 @@ func newExternalSyncDatasourceValidator(cfg *setting.Cfg, ds datasources.DataSou
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
-	datasourceService datasources.DataSourceService,
 ) (*AppInstaller, error) {
 	if ng.IsDisabled() {
 		log.New("app-registry").Info("Skipping Kubernetes Alerting Notifications API server (notifications.alerting.grafana.app): Unified Alerting is disabled")
@@ -125,7 +124,7 @@ func RegisterAppInstaller(
 	customCfg := notificationsApp.Config{
 		ReceiverTestingHandler:         receiver.New(ng.Api.ReceiverTestService),
 		IntegrationTypeSchemaHandler:   integrationtypeschema.New(ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false), cfg.UnifiedAlerting.AllowedIntegrations),
-		ValidateExternalSyncDatasource: newExternalSyncDatasourceValidator(cfg, datasourceService),
+		ValidateExternalSyncDatasource: newExternalSyncDatasourceValidator(cfg, ng.DataSourceService),
 	}
 
 	localManifest := apis.LocalManifest()
