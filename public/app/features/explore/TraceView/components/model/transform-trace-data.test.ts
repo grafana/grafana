@@ -14,9 +14,25 @@
 
 import { type TraceKeyValuePair } from '@grafana/data';
 
-import { type TraceResponse } from '../types/trace';
+import { type Trace, type TraceResponse } from '../types/trace';
 
+import {
+  mixedTrace,
+  summaryAsObservedInOps,
+  summaryDefaultsOnly,
+  summaryNoOptionalAttrs,
+  summaryWithConditionalAttrs,
+  summaryWithPreservedOutliers,
+} from './pruned-spans.fixture';
 import transformTraceData, { orderTags, deduplicateTags } from './transform-trace-data';
+
+function spanById(trace: Trace, spanID: string) {
+  const span = trace.spans.find((s) => s.spanID === spanID);
+  if (!span) {
+    throw new Error(`span ${spanID} not found in transformed trace`);
+  }
+  return span;
+}
 
 describe('orderTags()', () => {
   it('correctly orders tags', () => {
@@ -176,5 +192,85 @@ describe('transformTraceData()', () => {
     } as unknown as TraceResponse;
 
     expect(transformTraceData(traceData)!.traceName).toEqual(`${serviceName}: ${rootOperationName}`);
+  });
+});
+
+describe('transformTraceData() pruned span detection', () => {
+  it('detects a summary span and extracts its default aggregation values', () => {
+    const trace = transformTraceData(summaryDefaultsOnly)!;
+    const summary = spanById(trace, 'summ00000000a101');
+
+    expect(summary.aggregation).toEqual({
+      isSummary: true,
+      isPreservedOutlier: false,
+      spanCount: 8,
+      durationMinNs: 4_000_000,
+      durationMaxNs: 60_000_000,
+      durationAvgNs: 17_375_000,
+    });
+    // median is conditional and absent here
+    expect(summary.aggregation?.durationMedianNs).toBeUndefined();
+  });
+
+  it('leaves normal spans untouched (aggregation undefined)', () => {
+    const trace = transformTraceData(summaryDefaultsOnly)!;
+    expect(spanById(trace, 'root00000000a101').aggregation).toBeUndefined();
+  });
+
+  it('extracts the conditional median when present', () => {
+    const trace = transformTraceData(summaryWithConditionalAttrs)!;
+    expect(spanById(trace, 'summ00000000b201').aggregation?.durationMedianNs).toBe(9_000_000);
+  });
+
+  it('detects a summary span carrying only default attributes', () => {
+    const trace = transformTraceData(summaryNoOptionalAttrs)!;
+    const summary = spanById(trace, 'summ00000000c301');
+
+    expect(summary.aggregation?.isSummary).toBe(true);
+    expect(summary.aggregation?.spanCount).toBe(2);
+    expect(summary.aggregation?.durationMedianNs).toBeUndefined();
+  });
+
+  it('detects preserved outlier spans and links them back to the summary', () => {
+    const trace = transformTraceData(summaryWithPreservedOutliers)!;
+
+    expect(spanById(trace, 'summ00000000d401').aggregation?.isSummary).toBe(true);
+
+    for (const outlierID of ['outl00000000d401', 'outl00000000d402']) {
+      const outlier = spanById(trace, outlierID);
+      expect(outlier.aggregation).toEqual({
+        isSummary: false,
+        isPreservedOutlier: true,
+        summarySpanId: 'summ00000000d401',
+      });
+    }
+  });
+
+  it('detects summary and outlier spans in a mixed trace while leaving normal spans unaffected', () => {
+    const trace = transformTraceData(mixedTrace)!;
+
+    expect(spanById(trace, 'norm00000000e501').aggregation).toBeUndefined();
+    expect(spanById(trace, 'norm00000000e502').aggregation).toBeUndefined();
+    expect(spanById(trace, 'summ00000000e501').aggregation?.isSummary).toBe(true);
+    expect(spanById(trace, 'summ00000000e501').aggregation?.spanCount).toBe(5);
+
+    const outlier = spanById(trace, 'outl00000000e501');
+    expect(outlier.aggregation?.isPreservedOutlier).toBe(true);
+    expect(outlier.aggregation?.summarySpanId).toBe('summ00000000e501');
+  });
+
+  it('extracts aggregation values from a real-data-derived summary span', () => {
+    const trace = transformTraceData(summaryAsObservedInOps)!;
+    const summary = spanById(trace, 'a1aggsamplerpub1');
+
+    expect(summary.aggregation).toEqual({
+      isSummary: true,
+      isPreservedOutlier: false,
+      spanCount: 5,
+      durationMinNs: 164304113,
+      durationMaxNs: 215615080,
+      durationAvgNs: 195028772,
+      durationMedianNs: 215118016,
+    });
   });
 });

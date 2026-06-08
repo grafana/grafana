@@ -63,6 +63,43 @@ export type TraceSpanData = {
   childSpanIds?: string[];
 };
 
+/**
+ * Aggregation metadata extracted from a pruned span's `aggregation.*` tags.
+ *
+ * The span pruning processor replaces a group of similar spans with a single
+ * "summary span" carrying these attributes, and reparents any preserved
+ * outliers as siblings of the summary span. See the spanpruningprocessor:
+ * https://github.com/grafana/opentelemetry-collector-extras/tree/main/processor/spanpruningprocessor
+ *
+ * Present only on spans that carry at least one `aggregation.*` tag; normal
+ * spans leave `TraceSpan.aggregation` undefined.
+ *
+ * Durations are kept in raw nanoseconds (the processor's `duration_*_ns`
+ * units) rather than converted to the microseconds used by `startTime` /
+ * `duration`, so display formatting stays lossless and source-faithful.
+ */
+export type SpanAggregation = {
+  // True on summary spans (`aggregation.is_summary`).
+  isSummary: boolean;
+  // True on preserved outlier spans (`aggregation.is_preserved_outlier`).
+  isPreservedOutlier: boolean;
+  // Number of spans collapsed into this summary (`aggregation.span_count`).
+  spanCount?: number;
+  // Min/max/avg duration across the group, in nanoseconds. Always emitted on summary spans.
+  durationMinNs?: number;
+  durationMaxNs?: number;
+  durationAvgNs?: number;
+  // Median duration, in nanoseconds. Conditional: only set when outlier analysis is enabled.
+  durationMedianNs?: number;
+  // On a preserved outlier span, the spanID of the summary span it was preserved from
+  // (`aggregation.summary_span_id`).
+  summarySpanId?: string;
+  // TODO: Tier 2 stats display may also surface `duration_total_ns` and the histogram
+  // attributes (`histogram_bucket_bounds_s` / `histogram_bucket_counts`). They are left
+  // unextracted here because Tier 1 has no use for them, and histograms are config-gated
+  // in the processor (not emitted by ops today). (grafana/grafana-adaptivetraces-app#1018)
+};
+
 export type TraceSpan = TraceSpanData & {
   depth: number;
   hasChildren: boolean;
@@ -74,6 +111,8 @@ export type TraceSpan = TraceSpanData & {
   warnings: NonNullable<TraceSpanData['warnings']>;
   childSpanIds: NonNullable<TraceSpanData['childSpanIds']>;
   subsidiarilyReferencedBy: TraceSpanReference[];
+  // Aggregation metadata for pruned (summary / preserved-outlier) spans; undefined for normal spans.
+  aggregation?: SpanAggregation;
 };
 
 export type TraceData = {
