@@ -5774,11 +5774,6 @@
         "label": "Menyn Exportera kontrollpanel"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Det gick inte att hämta instrumentpanel"
-      }
-    },
     "filters-overview": {
       "apply": "Tillämpa",
       "apply-close": "Tillämpa och stäng",
@@ -5934,11 +5929,6 @@
       "title-complete-git-hub-comment-clipboard": "Kopiera en fullständig GitHub-kommentar till urklippet",
       "title-get-help-with-this-panel": "Få hjälp med denna panel",
       "troubleshooting-docs": "Felsökningsdokument"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Det gick inte att skapa instrumentpanelsmodell"
-      }
     },
     "inspect": {
       "data-tab": "Data",
@@ -6346,10 +6336,6 @@
         "tooltip": "Öppna ursprunglig instrumentpanel"
       },
       "undo": "Ångra"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Laddar och initierar instrumentpanel",
-      "title-not-found": "Panel med ID {{panelId}} hittades inte"
     },
     "source-link": {
       "title": "Källa ({{provider}})",

@@ -22,18 +22,22 @@ route:
           group_wait: 0s
           group_interval: 1m
           repeat_interval: 1m
-mute_time_intervals:
+time_intervals:
     - name: mti-1
       time_intervals:
         - times:
             - start_time: "00:00"
               end_time: "12:00"
-time_intervals:
     - name: ti-1
       time_intervals:
         - weekdays:
           - saturday
           - sunday
+    - name: mti-2
+      time_intervals:
+        - times:
+            - start_time: "00:00"
+              end_time: "12:00"
     - name: ti-2
       time_intervals:
         - weekdays:
@@ -42,11 +46,6 @@ time_intervals:
           - wednesday
           - thursday
           - friday
-    - name: mti-2
-      time_intervals:
-        - times:
-            - start_time: "00:00"
-              end_time: "12:00"
 receivers:
     - name: grafana-default-email
       grafana_managed_receiver_configs:
@@ -97,7 +96,6 @@ receivers:
             max_alerts: 0
             timeout: 0s
             url: http://localhost
-            url_file: ""
 inhibit_rules:
     - source_matchers:
         - alertname="test"

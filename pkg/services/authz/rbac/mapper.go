@@ -29,6 +29,7 @@ type Mapping interface {
 	SkipScope(verb string) bool
 	// Resource returns the K8s resource name for this mapping.
 	Resource() string
+	SkipWildcard() bool
 }
 
 type translation struct {
@@ -41,6 +42,7 @@ type translation struct {
 	skipScopeOnVerb map[string]bool
 	// use this option if you need to limit access to users that can access all resources
 	useWildcardScope bool
+	skipWildcard     bool
 }
 
 func (t translation) Action(verb string) (string, bool) {
@@ -90,6 +92,10 @@ func (t translation) SkipScope(verb string) bool {
 
 func (t translation) Resource() string {
 	return t.resource
+}
+
+func (t translation) SkipWildcard() bool {
+	return t.skipWildcard
 }
 
 // MapperRegistry is a registry of mappers that maps a group and resource to a translation.
@@ -288,6 +294,17 @@ func NewMapperRegistry() MapperRegistry {
 			"folders": newFolderTranslation(),
 		},
 		"iam.grafana.app": {
+			"permissions": translation{
+				resource:  "permissions",
+				attribute: "type",
+				verbMapping: map[string]string{
+					utils.VerbCreate: "roles:write",
+					utils.VerbUpdate: "roles:write",
+					utils.VerbPatch:  "roles:write",
+				},
+				folderSupport: false,
+				skipWildcard:  true,
+			},
 			// Users is a special case. We translate user permissions from id to uid based.
 			"users": translation{
 				resource:  "users",

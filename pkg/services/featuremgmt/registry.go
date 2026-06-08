@@ -431,6 +431,7 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Expression:  "true",
 		},
+
 		{
 			Name:            "kubernetesCorrelations",
 			Description:     "Adds support for Kubernetes correlations",
@@ -3181,7 +3182,7 @@ var (
 		},
 		{
 			Name:         "grafana.panelEditNextFeedbackEvent",
-			Description:  "Replaces the Intercom survey for PanelEditNext feedback with an event that triggers an in-house survey",
+			Description:  "Enables firing an event for PanelEditNext feedback that triggers an in-house survey",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDataProSquad,
 			HideFromDocs: true,

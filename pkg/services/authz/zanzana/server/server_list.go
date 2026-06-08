@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
+	"sort"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -56,7 +58,7 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 		return nil, fmt.Errorf("failed to get openfga store: %w", err)
 	}
 
-	contextuals, err := s.getContextuals(r.GetSubject())
+	contextuals, err := s.getContextuals(r.GetSubject(), r.GetTeams())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get contextual tuples: %w", err)
 	}
@@ -109,8 +111,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 			Relation:             common.SubresourcePermissionRelation(subresourceRelation),
 			User:                 subject,
 			Context:              resourceCtx,
-			ContextualTuples:     contextuals,
-		})
+		}, contextuals)
 
 		if err != nil {
 			return nil, err
@@ -126,8 +127,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 		Type:                 resource.Type(),
 		Relation:             listRelation,
 		User:                 subject,
-		ContextualTuples:     contextuals,
-	})
+	}, contextuals)
 	if err != nil {
 		return nil, err
 	}
@@ -158,8 +158,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			Relation:             common.SubresourcePermissionRelation(folderRelation),
 			User:                 subject,
 			Context:              resourceCtx,
-			ContextualTuples:     contextuals,
-		})
+		}, contextuals)
 
 		if err != nil {
 			return nil, err
@@ -177,8 +176,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			Relation:             folderListRelation,
 			User:                 subject,
 			Context:              resourceCtx,
-			ContextualTuples:     contextuals,
-		})
+		}, contextuals)
 
 		if err != nil {
 			return nil, err
@@ -197,8 +195,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			Relation:             relation,
 			User:                 subject,
 			Context:              resourceCtx,
-			ContextualTuples:     contextuals,
-		})
+		}, contextuals)
 		if err != nil {
 			return nil, err
 		}
@@ -212,9 +209,47 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 	}, nil
 }
 
-// listObjects resolves ListObjects via OpenFGA's StreamedListObjects RPC (see streamedListObjects),
+func (s *Server) listObjects(
+	ctx context.Context,
+	req *openfgav1.ListObjectsRequest,
+	contextuals *openfgav1.ContextualTupleKeys,
+) (*openfgav1.ListObjectsResponse, error) {
+	chunks := contextualTupleChunks(contextuals)
+	if len(chunks) == 0 {
+		return s.doOpenFGAListObjects(ctx, cloneListObjectsRequestWithContextualTuples(req, nil))
+	}
+	if len(chunks) == 1 {
+		return s.doOpenFGAListObjects(ctx, cloneListObjectsRequestWithContextualTuples(req, chunks[0]))
+	}
+
+	seen := make(map[string]struct{})
+	var objects []string
+	for _, chunk := range chunks {
+		res, err := s.doOpenFGAListObjects(ctx, cloneListObjectsRequestWithContextualTuples(req, chunk))
+		if err != nil {
+			return nil, err
+		}
+		for _, object := range res.GetObjects() {
+			if _, ok := seen[object]; ok {
+				continue
+			}
+			seen[object] = struct{}{}
+			objects = append(objects, object)
+		}
+	}
+	sort.Strings(objects)
+	return &openfgav1.ListObjectsResponse{Objects: objects}, nil
+}
+
+func cloneListObjectsRequestWithContextualTuples(req *openfgav1.ListObjectsRequest, contextuals *openfgav1.ContextualTupleKeys) *openfgav1.ListObjectsRequest {
+	out := proto.Clone(req).(*openfgav1.ListObjectsRequest)
+	out.ContextualTuples = contextuals
+	return out
+}
+
+// doOpenFGAListObjects resolves ListObjects via OpenFGA's StreamedListObjects RPC (see streamedListObjects),
 // aggregating all streamed objects. That avoids unary ListObjects max-result truncation for large sets.
-func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+func (s *Server) doOpenFGAListObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
 	fn := s.streamedListObjects
 
 	if s.cfg.CacheSettings.CheckQueryCacheEnabled {

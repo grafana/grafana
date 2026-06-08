@@ -5774,11 +5774,6 @@
         "label": "Menú de exportación de dashboard"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Error al obtener el dashboard"
-      }
-    },
     "filters-overview": {
       "apply": "Aplicar",
       "apply-close": "Aplicar y cerrar",
@@ -5934,11 +5929,6 @@
       "title-complete-git-hub-comment-clipboard": "Copiar un comentario completo de GitHub en el portapapeles",
       "title-get-help-with-this-panel": "Obtener ayuda para este panel",
       "troubleshooting-docs": "Documentos de resolución de problemas"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Error al crear el modelo de dashboard"
-      }
     },
     "inspect": {
       "data-tab": "Datos",
@@ -6346,10 +6336,6 @@
         "tooltip": "Abrir el dashboard original"
       },
       "undo": "Deshacer"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Cargando e iniciando el dashboard",
-      "title-not-found": "Panel con ID {{panelId}} no encontrado"
     },
     "source-link": {
       "title": "Fuente ({{provider}})",

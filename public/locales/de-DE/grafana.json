@@ -5774,11 +5774,6 @@
         "label": "Dashboardmenü exportieren"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Dashboard konnte nicht abgerufen werden"
-      }
-    },
     "filters-overview": {
       "apply": "Anwenden",
       "apply-close": "Anwenden und schließen",
@@ -5934,11 +5929,6 @@
       "title-complete-git-hub-comment-clipboard": "Kopieren Sie einen kompletten GitHub-Kommentar in die Zwischenablage",
       "title-get-help-with-this-panel": "Hilfe für dieses Panel erhalten",
       "troubleshooting-docs": "Dokumente zur Fehlerbehebung"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Dashboard-Modell konnte nicht erstellt werden"
-      }
     },
     "inspect": {
       "data-tab": "Daten",
@@ -6346,10 +6336,6 @@
         "tooltip": "Original-Dashboard öffnen"
       },
       "undo": "Rückgängig machen"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Laden und Initialisieren des Dashboards",
-      "title-not-found": "Das Panel mit der ID {{panelId}} wurde nicht gefunden"
     },
     "source-link": {
       "title": "Quelle ({{provider}})",

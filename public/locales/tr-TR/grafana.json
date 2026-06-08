@@ -5774,11 +5774,6 @@
         "label": "Pano menüsünü dışa aktar"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Pano alınamadı"
-      }
-    },
     "filters-overview": {
       "apply": "Uygula",
       "apply-close": "Uygula ve kapat",
@@ -5934,11 +5929,6 @@
       "title-complete-git-hub-comment-clipboard": "Tam bir GitHub yorumunu panoya kopyala",
       "title-get-help-with-this-panel": "Bu panel için yardım al",
       "troubleshooting-docs": "Sorun giderme belgeleri"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Pano modeli oluşturulamadı"
-      }
     },
     "inspect": {
       "data-tab": "Veri",
@@ -6346,10 +6336,6 @@
         "tooltip": "Orijinal panoyu aç"
       },
       "undo": "Geri al"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Pano yükleniyor ve başlatılıyor",
-      "title-not-found": "{{panelId}} kimliğine sahip panel bulunamadı"
     },
     "source-link": {
       "title": "Kaynak ({{provider}})",

@@ -5742,11 +5742,6 @@
         "label": "Ekspor menu dasbor"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Gagal mengambil dasbor"
-      }
-    },
     "filters-overview": {
       "apply": "Terapkan",
       "apply-close": "Terapkan dan tutup",
@@ -5902,11 +5897,6 @@
       "title-complete-git-hub-comment-clipboard": "Salin komentar GitHub lengkap ke papan klip",
       "title-get-help-with-this-panel": "Dapatkan bantuan dengan panel ini",
       "troubleshooting-docs": "Dokumen pemecahan masalah"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Gagal membuat model dasbor"
-      }
     },
     "inspect": {
       "data-tab": "Data",
@@ -6313,10 +6303,6 @@
         "tooltip": "Buka dasbor asli"
       },
       "undo": "Batalkan"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Memuat & menginisialisasi dasbor",
-      "title-not-found": "Panel dengan id {{panelId}} tidak ditemukan"
     },
     "source-link": {
       "title": "Sumber ({{provider}})",

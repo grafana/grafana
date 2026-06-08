@@ -36,6 +36,8 @@ import {
   getLogLevel,
   getLogLevelFromKey,
   getLogsVolumeMaximumRange,
+  isMissingStringField,
+  isMissingTimeField,
   logRowsToReadableJson,
   mergeLogsVolumeDataFrames,
   sortLogsResult,
@@ -775,5 +777,93 @@ describe('downloadLogs', () => {
       expect(lineField).toBeDefined();
       expect(lineField?.values).toContain('test entry');
     });
+  });
+});
+
+describe('isMissingTimeField', () => {
+  it('returns false when series is undefined', () => {
+    expect(isMissingTimeField(undefined)).toBe(false);
+  });
+
+  it('returns false when series is empty', () => {
+    expect(isMissingTimeField([])).toBe(false);
+  });
+
+  it('returns false when frames have rows and a time field', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'timestamp', type: FieldType.time, values: [1, 2] },
+        { name: 'message', type: FieldType.string, values: ['a', 'b'] },
+      ],
+    });
+    expect(isMissingTimeField([frame])).toBe(false);
+  });
+
+  it('returns false when frames are empty (no rows) even without a time field', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'message', type: FieldType.string, values: [] }],
+    });
+    expect(isMissingTimeField([frame])).toBe(false);
+  });
+
+  it('returns true when frames have rows but no time field', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'message', type: FieldType.string, values: ['a', 'b'] }],
+    });
+    expect(isMissingTimeField([frame])).toBe(true);
+  });
+
+  it('returns true when only a number field is present (no time, no string)', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'count', type: FieldType.number, values: [1, 2] }],
+    });
+    expect(isMissingTimeField([frame])).toBe(true);
+  });
+
+  it('returns false if any frame has a time field', () => {
+    const frameWithTime = toDataFrame({
+      fields: [
+        { name: 'timestamp', type: FieldType.time, values: [1] },
+        { name: 'message', type: FieldType.string, values: ['a'] },
+      ],
+    });
+    const frameWithoutTime = toDataFrame({
+      fields: [{ name: 'message', type: FieldType.string, values: ['b'] }],
+    });
+    expect(isMissingTimeField([frameWithTime, frameWithoutTime])).toBe(false);
+  });
+});
+
+describe('isMissingStringField', () => {
+  it('returns false when series is undefined', () => {
+    expect(isMissingStringField(undefined)).toBe(false);
+  });
+
+  it('returns false when series is empty', () => {
+    expect(isMissingStringField([])).toBe(false);
+  });
+
+  it('returns false when frames have rows and a string field', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'timestamp', type: FieldType.time, values: [1, 2] },
+        { name: 'message', type: FieldType.string, values: ['a', 'b'] },
+      ],
+    });
+    expect(isMissingStringField([frame])).toBe(false);
+  });
+
+  it('returns false when frames are empty (no rows) even without a string field', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'timestamp', type: FieldType.time, values: [] }],
+    });
+    expect(isMissingStringField([frame])).toBe(false);
+  });
+
+  it('returns true when frames have rows but no string field', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'timestamp', type: FieldType.time, values: [1, 2] }],
+    });
+    expect(isMissingStringField([frame])).toBe(true);
   });
 });

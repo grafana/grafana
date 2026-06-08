@@ -5742,11 +5742,6 @@
         "label": "匯出儀表板功能表"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "擷取儀表板失敗"
-      }
-    },
     "filters-overview": {
       "apply": "套用",
       "apply-close": "套用並關閉",
@@ -5902,11 +5897,6 @@
       "title-complete-git-hub-comment-clipboard": "將完整的 GitHub 評論複製到剪貼簿",
       "title-get-help-with-this-panel": "取得此面板的相關說明",
       "troubleshooting-docs": "疑難排解文件"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "無法建立儀表板模型"
-      }
     },
     "inspect": {
       "data-tab": "資料",
@@ -6313,10 +6303,6 @@
         "tooltip": "開啟原始儀表板"
       },
       "undo": "還原"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "正在載入並初始化儀表板",
-      "title-not-found": "未找到 ID 為 {{panelId}} 的面板"
     },
     "source-link": {
       "title": "來源（{{provider}}）",
