@@ -30,6 +30,11 @@ func New(cfg app.Config) (app.App, error) {
 				Mutator:   buildKindMutator(kind, runtimeCfg),
 				Watcher:   buildKindWatcher(kind, runtimeCfg),
 			}
+			// Only kinds with a watcher run an informer (RuleSequence), so this
+			// scopes that watch to WatchNamespace; empty means all namespaces.
+			if managedKind.Watcher != nil && runtimeCfg.WatchNamespace != "" {
+				managedKind.ReconcileOptions.Namespace = runtimeCfg.WatchNamespace
+			}
 			managedKinds = append(managedKinds, managedKind)
 		}
 	}

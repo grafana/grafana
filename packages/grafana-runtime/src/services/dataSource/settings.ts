@@ -13,9 +13,6 @@ import { type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
 
 import { clearPluginCache } from './pluginCache';
-import { type DataSourceInstanceSettingsPage, type GetDataSourceInstanceSettingsListOptions } from './types';
-
-export type { DataSourceInstanceSettingsPage, GetDataSourceInstanceSettingsListOptions };
 
 let byName: Record<string, DataSourceInstanceSettings> = {};
 let byUid: Record<string, DataSourceInstanceSettings> = {};
@@ -99,16 +96,13 @@ export async function getDataSourceInstanceSettings(
 
 /**
  * Search and filter data source instance settings from the in-memory cache.
- * Returns a paginated response; the initial implementation always returns
- * every matching item in a single page.
  *
  * @internal
  */
 export async function getDataSourceInstanceSettingsList(
-  options?: GetDataSourceInstanceSettingsListOptions
-): Promise<DataSourceInstanceSettingsPage> {
-  const items = applyFilters(options?.filters);
-  return { items, hasMore: false, nextCursor: undefined };
+  filters?: GetDataSourceListFilters
+): Promise<DataSourceInstanceSettings[]> {
+  return applyFilters(filters);
 }
 
 /**

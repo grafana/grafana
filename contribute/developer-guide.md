@@ -192,7 +192,7 @@ make build
 
 The Grafana binaries will be installed in `bin\\windows-amd64`.
 
-Alternatively, if you are on Windows and want to use the `make` command, install [Make for Windows](http://gnuwin32.sourceforge.net/packages/make.htm) and use it in a UNIX shell (for example, Git Bash).
+Alternatively, if you are on Windows and want to use the `make` command, install [Make for Windows](https://gnuwin32.sourceforge.net/packages/make.htm) and use it in a UNIX shell (for example, Git Bash).
 
 ## Test Grafana
 
