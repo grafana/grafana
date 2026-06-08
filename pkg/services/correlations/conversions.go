@@ -23,8 +23,7 @@ func ToResource(orig Correlation) (*correlationsV0.Correlation, error) {
 	}
 	obj := &correlationsV0.Correlation{
 		ObjectMeta: v1.ObjectMeta{
-			Name: orig.UID,
-			// TODO retest with legacy UID:       types.UID(orig.UID), // required for PATCH to work in legacy storage
+			Name:      orig.UID,
 			Namespace: authlib.OrgNamespaceFormatter(orig.OrgID),
 		},
 		Spec: correlationsV0.CorrelationSpec{

@@ -38,7 +38,6 @@ func ProvideService(ctx context.Context, sqlStore db.DB, routeRegister routing.R
 			RouteRegister:     routeRegister,
 			log:               logger,
 			AccessControl:     ac,
-			QuotaService:      qs,
 			clientGen:         clientGen,
 			k8sClient:         k8sHandler,
 			DataSourceService: ds,
@@ -46,19 +45,6 @@ func ProvideService(ctx context.Context, sqlStore db.DB, routeRegister routing.R
 
 		s.registerAPIEndpoints()
 		bus.AddEventListener(s.handleDatasourceDeletion)
-
-		defaultLimits, err := readQuotaConfig(cfg)
-		if err != nil {
-			return s, err
-		}
-
-		if err := qs.RegisterQuotaReporter(&quota.NewUsageReporter{
-			TargetSrv:     QuotaTargetSrv,
-			DefaultLimits: defaultLimits,
-			Reporter:      s.Usage,
-		}); err != nil {
-			return s, err
-		}
 
 		return s, nil
 	} else {
@@ -92,8 +78,7 @@ func ProvideService(ctx context.Context, sqlStore db.DB, routeRegister routing.R
 	}
 }
 
-// this is for K8s to use if the dual write mode requires writing to legacy
-// all endpoints, quotas, etc is handled from the K8s service called in the first place, so it's not needed here
+// this is for K8s to call through if the dual write mode requires writing to legacy
 func ProvideLegacyService(
 	sqlStore db.DB,
 	routeRegister routing.RouteRegister,

@@ -134,22 +134,12 @@ type CorrelationsK8sService struct {
 	RouteRegister     routing.RouteRegister
 	log               log.Logger
 	AccessControl     accesscontrol.AccessControl
-	QuotaService      quota.Service
 	clientGen         resource.ClientGenerator
 	k8sClient         client.K8sHandler
 	DataSourceService datasources.DataSourceService
 }
 
 func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error) {
-	quotaReached, err := s.QuotaService.CheckQuotaReached(ctx, QuotaTargetSrv, nil)
-	if err != nil {
-		logger.Warn("Error getting correlation quota.", "error", err)
-		return Correlation{}, ErrCorrelationsQuotaFailed
-	}
-	if quotaReached {
-		return Correlation{}, ErrCorrelationsQuotaReached
-	}
-
 	sourceType := cmd.SourceType
 
 	if sourceType == "" {
@@ -365,10 +355,4 @@ func (s *CorrelationsK8sService) handleDatasourceDeletion(ctx context.Context, e
 		return err
 	}
 	return s.DeleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{OrgId: event.OrgID, TargetUID: event.UID, TargetType: event.Type})
-}
-
-// what's the best way to return just a count of records
-func (s *CorrelationsK8sService) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
-	// TODO
-	return &quota.Map{}, nil
 }
