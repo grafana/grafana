@@ -2,6 +2,11 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import testDashboard from '../dashboards/TestDashboard.json';
 
+// Unique suffix to avoid UID/title collisions with parallel specs that share this fixture.
+const SUFFIX = Date.now().toString(36);
+const dashName = `E2E Test - Import Dashboard ${SUFFIX}`;
+const dashUid = `e2e-browse-${SUFFIX}`;
+
 test.use({
   featureToggles: {
     dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
@@ -20,7 +25,7 @@ test.describe(
       // Import the test dashboard
       const response = await request.post('/api/dashboards/import', {
         data: {
-          dashboard: testDashboard,
+          dashboard: { ...testDashboard, uid: dashUid, title: dashName },
           folderUid: '',
           overwrite: true,
           inputs: [],
@@ -43,9 +48,7 @@ test.describe(
 
       // Folders and dashboards should be visible
       await expect(page.getByTestId(selectors.pages.BrowseDashboards.table.row('gdev dashboards'))).toBeVisible();
-      await expect(
-        page.getByTestId(selectors.pages.BrowseDashboards.table.row('E2E Test - Import Dashboard'))
-      ).toBeVisible();
+      await expect(page.getByTestId(selectors.pages.BrowseDashboards.table.row(dashName))).toBeVisible();
 
       // gdev dashboards folder is collapsed - its content should not be visible
       await expect(page.getByTestId(selectors.pages.BrowseDashboards.table.row('Bar Gauge Demo'))).toBeHidden();
@@ -90,7 +93,7 @@ test.describe(
 
       // Select the imported dashboard using checkbox
       await page
-        .getByTestId(selectors.pages.BrowseDashboards.table.row('E2E Test - Import Dashboard'))
+        .getByTestId(selectors.pages.BrowseDashboards.table.row(dashName))
         .getByRole('checkbox')
         .click({ force: true });
 
@@ -100,9 +103,7 @@ test.describe(
       // Confirm deletion in modal
       await page.getByPlaceholder('Type "Delete" to confirm').fill('Delete');
       await page.getByTestId(selectors.pages.ConfirmModal.delete).click();
-      await expect(
-        page.getByTestId(selectors.pages.BrowseDashboards.table.row('E2E Test - Import Dashboard'))
-      ).toBeHidden();
+      await expect(page.getByTestId(selectors.pages.BrowseDashboards.table.row(dashName))).toBeHidden();
     });
   }
 );

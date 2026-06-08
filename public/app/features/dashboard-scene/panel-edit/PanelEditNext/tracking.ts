@@ -1,6 +1,8 @@
 import { debounce } from 'lodash';
 
-import { reportInteraction } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { PanelEditNextFeedbackEvent } from 'app/types/events';
 
 import { QueryEditorType } from './constants';
 
@@ -135,6 +137,12 @@ export function trackQueryOptionsToggle(open: boolean) {
   });
 }
 
+export function trackSelectButtonClick() {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'click_multi_select',
+  });
+}
+
 export function trackRenameInitiated() {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action: 'rename_initiated',
@@ -181,7 +189,17 @@ function ensureIntercomLoaded(): Promise<void> {
   return intercomLoadPromise;
 }
 
-export function startIntercomSurvey(): void {
+export function startFeedbackSurvey(): void {
+  const isPanelEditNextFeedbackEventEnabled = getFeatureFlagClient().getBooleanValue(
+    FlagKeys.GrafanaPanelEditNextFeedbackEvent,
+    false
+  );
+  if (isPanelEditNextFeedbackEventEnabled) {
+    // Fire an event for grafana-setupguide-app to detect, which replaces Intercom with an in-house survey.
+    getAppEvents().publish(new PanelEditNextFeedbackEvent());
+    return;
+  }
+
   ensureIntercomLoaded()
     .then(() => {
       getIntercom()?.('startSurvey', INTERCOM_SURVEY_ID);

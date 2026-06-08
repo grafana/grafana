@@ -90,9 +90,9 @@ import (
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -107,7 +107,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/star"
 	starApi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/stats"
-	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/team"
 	tempUser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -161,7 +160,6 @@ type HTTPServer struct {
 	CorrelationsService          correlations.Service
 	Live                         *live.GrafanaLive
 	LivePushGateway              *pushhttp.Gateway
-	StorageService               store.StorageService
 	ContextHandler               *contexthandler.ContextHandler
 	LoggerMiddleware             loggermw.Logger
 	SQLStore                     db.DB
@@ -170,9 +168,9 @@ type HTTPServer struct {
 	SocialService                social.Service
 	Listener                     net.Listener
 	EncryptionService            encryption.Internal
-	SecretsService               secrets.Service
+	SecretsService               secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsStore                 secretsKV.SecretsKVStore
-	SecretsMigrator              secrets.Migrator
+	SecretsMigrator              secrets.Migrator //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretMigrationProvider      spm.SecretMigrationProvider
 	DataSourcesService           datasources.DataSourceService
 	cleanUpService               *cleanup.CleanUpService
@@ -192,11 +190,12 @@ type HTTPServer struct {
 	PluginSettings               pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
 	preferenceService            pref.Service
+	preferenceK8sHandler         *prefapi.K8sHandler
 	Csrf                         csrf.Service
 	folderPermissionsService     accesscontrol.FolderPermissionsService
 	dashboardPermissionsService  accesscontrol.DashboardPermissionsService
 	dashboardVersionService      dashver.Service
-	PublicDashboardsApi          *publicdashboardsApi.Api
+	PublicDashboardsApi          *publicdashboards.Api
 	starService                  star.Service
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
@@ -260,19 +259,21 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginsUpdateChecker *updatemanager.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService query.Service, pluginFileStore plugins.FileStore,
 	serviceaccountsService serviceaccounts.Service, pluginAssets *pluginassets.Service,
-	authInfoService login.AuthInfoService, storageService store.StorageService,
+	authInfoService login.AuthInfoService,
 	notificationService notifications.Service, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
 	dsGuardian guardian.DatasourceGuardianProvider,
 	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
+	preferenceK8sHandler *prefapi.K8sHandler,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
 	apiKeyService apikey.Service, kvStore kvstore.KVStore,
-	secretsMigrator secrets.Migrator, secretsService secrets.Service,
+	secretsMigrator secrets.Migrator, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretMigrationProvider spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
-	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
+	pubdashApi *publicdashboards.Api, userService user.Service, tempUserService tempUser.Service,
 	loginAttemptService loginAttempt.Service, orgService org.Service, orgDeletionService org.DeletionService, teamService team.Service,
 	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, oauthTokenService oauthtoken.OAuthTokenService,
@@ -313,7 +314,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		QueryHistoryService:          queryHistoryService,
 		CorrelationsService:          correlationsService,
 		Features:                     features, // a read only view of the managers state
-		StorageService:               storageService,
 		RemoteCacheService:           remoteCache,
 		ProvisioningService:          provisioningService,
 		AccessControl:                accessControl,
@@ -351,6 +351,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		PluginSettings:               pluginSettings,
 		AvatarCacheServer:            avatarCacheServer,
 		preferenceService:            preferenceService,
+		preferenceK8sHandler:         preferenceK8sHandler,
 		Csrf:                         csrfService,
 		folderPermissionsService:     folderPermissionsService,
 		dashboardPermissionsService:  dashboardPermissionsService,
@@ -358,7 +359,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		starService:                  starService,
 		apiKeyService:                apiKeyService,
 		kvStore:                      kvStore,
-		PublicDashboardsApi:          publicDashboardsApi,
+		PublicDashboardsApi:          pubdashApi,
 		userService:                  userService,
 		tempUserService:              tempUserService,
 		loginAttemptService:          loginAttemptService,

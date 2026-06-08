@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
+	promlabels "github.com/prometheus/prometheus/model/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -376,7 +377,7 @@ func waitForClusterSettled(t *testing.T, grafanas []*haGrafana) {
 			pos := getPeerPosition(t, g.Addr)
 			positions[pos] = true
 		}
-		for i := 0; i < n; i++ {
+		for i := range n {
 			assert.True(c, positions[i], "Position %d should be assigned", i)
 		}
 	}, 30*time.Second, 1*time.Second)
@@ -449,6 +450,7 @@ func assertConsistentRuleMetadata(t *testing.T, grafanas []*haGrafana) {
 			return a.Labels.Get("alertname") < b.Labels.Get("alertname")
 		}),
 		cmpopts.IgnoreFields(apimodels.AlertingRule{}, "LastEvaluation", "EvaluationTime"),
+		cmpopts.EquateComparable(promlabels.Labels{}),
 	}
 
 	var refRules map[string]apimodels.AlertingRule

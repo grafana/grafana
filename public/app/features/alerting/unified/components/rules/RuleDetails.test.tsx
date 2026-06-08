@@ -1,4 +1,4 @@
-import { render } from 'test/test-utils';
+import { render, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
@@ -66,6 +66,7 @@ describe('RuleDetails RBAC', () => {
 
       // Act
       render(<RuleDetails rule={grafanaRule} />);
+      await waitFor(() => {});
 
       // Assert
       expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
@@ -77,6 +78,7 @@ describe('RuleDetails RBAC', () => {
 
       // Act
       render(<RuleDetails rule={grafanaRule} />);
+      await waitFor(() => {});
 
       // Assert
       expect(ui.actionButtons.delete.query()).not.toBeInTheDocument();
@@ -92,6 +94,7 @@ describe('RuleDetails RBAC', () => {
 
       // Act
       render(<RuleDetails rule={cloudRule} />);
+      await waitFor(() => {});
 
       // Assert
       expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
@@ -103,6 +106,7 @@ describe('RuleDetails RBAC', () => {
 
       // Act
       render(<RuleDetails rule={cloudRule} />);
+      await waitFor(() => {});
 
       // Assert
       expect(ui.actionButtons.delete.query()).not.toBeInTheDocument();

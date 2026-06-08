@@ -218,5 +218,3 @@ export const CustomHeadersSettings = memo<Props>(({ dataSourceConfig, onChange }
 });
 
 CustomHeadersSettings.displayName = 'CustomHeadersSettings';
-
-export default CustomHeadersSettings;

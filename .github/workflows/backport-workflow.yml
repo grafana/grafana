@@ -14,27 +14,17 @@ jobs:
   backport:
     # Only run this job if the triggering workflow was not skipped (and on grafana repo)
     if: github.event.workflow_run.head_repository.fork == false && github.repository == 'grafana/grafana' && github.event.workflow_run.conclusion == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
     permissions:
       contents: read
       id-token: write
       actions: read
     steps:
-      - name: Get vault secrets
-        id: secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          export_env: false
-          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
-          repo_secrets: |
-            APP_PEM=delivery-bot-app:PRIVATE_KEY
-
-      - name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ fromJSON(steps.secrets.outputs.secrets).APP_PEM }}
+          github_app: grafana-pr-automation
 
       - name: Download PR info artifact
         uses: actions/download-artifact@v8
@@ -68,19 +58,12 @@ jobs:
           ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 2
           fetch-tags: false
-          token: ${{ steps.generate_token.outputs.token }}
-          persist-credentials: true
-
-      - name: Configure git user
-        run: |
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local --add --bool push.autoSetupRemote true
+          persist-credentials: false
 
       - name: Run backport
-        uses: grafana/grafana-github-actions-go/backport@dev
+        uses: grafana/grafana-github-actions-go/backport@6782bcaa01680648bdbba76cce1847e1862dbb22
         with:
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ steps.get-github-app-token.outputs.token }}
           # If triggered by being labelled, only backport that label.
           # Otherwise, the action will backport all labels.
           pr_label: ${{ steps.pr-info.outputs.action == 'labeled' && steps.pr-info.outputs.label || '' }}

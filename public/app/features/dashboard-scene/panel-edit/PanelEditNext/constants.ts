@@ -72,13 +72,13 @@ export function getQueryEditorTypeConfig(theme: GrafanaTheme2): Record<QueryEdit
       icon: 'database',
       color: theme.colors.warning.main,
       getLabel: () => t('query-editor-next.labels.query', 'Query'),
-      deleteConfirmation: false,
+      deleteConfirmation: true,
     },
     [QueryEditorType.Expression]: {
       icon: 'calculator-alt',
       color: theme.colors.tertiary.main,
       getLabel: () => t('query-editor-next.labels.expression', 'Expression'),
-      deleteConfirmation: false,
+      deleteConfirmation: true,
     },
     [QueryEditorType.Transformation]: {
       icon: 'process',

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { formatDistanceToNowStrict } from 'date-fns';
+import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { groupBy, uniqueId } from 'lodash';
 import { Fragment, memo, useEffect, useRef } from 'react';
 

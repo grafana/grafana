@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import { t } from '@grafana/i18n';
 import {
   type SceneComponentProps,
-  sceneGraph,
   type SceneObject,
   SceneObjectBase,
   type SceneObjectRef,
@@ -14,7 +13,7 @@ import { type ConditionalRenderingGroupKind } from '@grafana/schema/apis/dashboa
 import { Stack } from '@grafana/ui';
 
 import { ConditionalRenderingChangedEvent, dashboardEditActions } from '../../edit-pane/shared';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { getUserDefinedVariables, useUserDefinedVariables } from '../../utils/variables';
 import { ConditionalRenderingData } from '../conditions/ConditionalRenderingData';
 import { ConditionalRenderingTimeRangeSize } from '../conditions/ConditionalRenderingTimeRangeSize';
 import { ConditionalRenderingVariable } from '../conditions/ConditionalRenderingVariable';
@@ -121,9 +120,10 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
         return ConditionalRenderingTimeRangeSize.createEmpty();
 
       case 'variable':
-        return ConditionalRenderingVariable.createEmpty(
-          sceneGraph.getVariables(getDashboardSceneFor(this)).state.variables[0].state.name
-        );
+        const variables = getUserDefinedVariables(this);
+        // The code should not be hit when variables.length === 0 because we grey out the form if there are no variables
+        // but was added to avoid potential runtime errors if the UX changes and the section is not disabled.
+        return ConditionalRenderingVariable.createEmpty(variables.length ? variables[0].state.name : '');
     }
   }
 
@@ -207,7 +207,8 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
 
 function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<ConditionalRenderingGroup>) {
   const { condition, visibility, conditions } = model.useState();
-  const { variables } = sceneGraph.getVariables(model).useState();
+  const variables = useUserDefinedVariables(model);
+
   const objectType = useMemo(() => extractObjectType(model.parent), [model]);
 
   return (

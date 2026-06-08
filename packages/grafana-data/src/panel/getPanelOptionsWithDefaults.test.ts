@@ -1,4 +1,5 @@
-import { getPanelPlugin, mockStandardFieldConfigOptions } from '../../test';
+import { mockStandardFieldConfigOptions } from '../../test/helpers/fieldConfig';
+import { getPanelPlugin } from '../../test/helpers/pluginMocks';
 import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '../field/standardFieldConfigEditorRegistry';
 import { type FieldConfig } from '../types/dataFrame';
 import { FieldColorModeId } from '../types/fieldColor';

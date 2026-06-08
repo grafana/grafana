@@ -22,6 +22,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import kbn from 'app/core/utils/kbn';
 import { dispatch } from 'app/store/store';
 
+import { isRootFolderUID } from '../constants';
+
 import { deletedDashboardsCache } from './deletedDashboardsCache';
 import {
   type DashboardQueryResult,
@@ -33,17 +35,12 @@ import {
 } from './types';
 import { appendFrame, filterSearchResults, replaceCurrentFolderQuery } from './utils';
 
-// The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
-// and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
-const loadingFrameName = 'Loading';
-
 const searchURI = `${v0alphaBaseURL}/search`;
 
 export type SearchHit = {
   resource: string; // dashboards | folders
   name: string;
   title: string;
-  location: string;
   folder: string;
   tags: string[];
 
@@ -72,7 +69,7 @@ const folderViewSort = 'name_sort';
 export class UnifiedSearcher implements GrafanaSearcher {
   locationInfo: Promise<Record<string, LocationInfo>>;
 
-  constructor(private fallbackSearcher: GrafanaSearcher) {
+  constructor() {
     this.locationInfo = loadLocationInfo();
   }
 
@@ -161,9 +158,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     const first = toDashboardResults(rsp, query.sort ?? '');
-    if (first.name === loadingFrameName) {
-      return this.fallbackSearcher.search(query);
-    }
 
     // We add parent folder information into meta.custom of the data frame. This is loaded separately in
     // loadLocationInfo. Used to show parent information upstream.
@@ -236,11 +230,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       // This will be mutated when loadMoreItems is called.
       view,
 
-      // Not using the startIndex because it is required to satisfy the typing that is shared between this and SQL
-      // searcher. The SQL searcher though does not support loadMoreItems at all though so I guess it's just weird.
-      // TODO: maybe we can just remove it. SearchResultsTable seems to be using it but obviously it does not do
-      //  anything.
-      loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+      loadMoreItems: async (stopIndex: number): Promise<void> => {
         loadMax = Math.max(loadMax, stopIndex + 1);
         if (!pending) {
           pending = getNextPage();
@@ -277,13 +267,16 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
     const locationInfo = await this.locationInfo;
     const hits = rsp.hits.map((hit) => {
-      if (hit.folder === undefined) {
-        return { ...hit, location: 'general', folder: 'general' };
+      // Root-parented hits arrive with "" or "general" — neither lives in
+      // locationInfo, since the root folder is synthetic. Collapse to
+      // "general" so the UI renders the hit under the root.
+      if (isRootFolderUID(hit.folder)) {
+        return { ...hit, folder: 'general' };
       }
 
       // this means a user has permission to see this dashboard, but not the folder contents
       if (locationInfo[hit.folder] === undefined) {
-        return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
+        return { ...hit, folder: 'sharedwithme' };
       }
 
       return hit;
@@ -296,7 +289,12 @@ export class UnifiedSearcher implements GrafanaSearcher {
   async isFolderCacheStale(hits: SearchHit[]): Promise<boolean> {
     const locationInfo = await this.locationInfo;
     return hits.some((hit) => {
-      return hit.folder !== undefined && locationInfo[hit.folder] === undefined;
+      // Root-parented hits ("" or "general") never appear in locationInfo —
+      // skip them so we don't reload the cache and remap them to "Shared with me".
+      if (isRootFolderUID(hit.folder)) {
+        return false;
+      }
+      return locationInfo[hit.folder] === undefined;
     });
   }
 
@@ -390,7 +388,7 @@ function noDataResponse(): QueryResponse | PromiseLike<QueryResponse> {
   return {
     view: new DataFrameView({ length: 0, fields: [] }),
     totalRows: 0,
-    loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+    loadMoreItems: async (stopIndex: number): Promise<void> => {
       return;
     },
     isItemLoaded: (index: number): boolean => {
@@ -415,10 +413,11 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
     return { fields: [], length: 0 };
   }
   const dashboardHits = hits.map((hit) => {
-    let location = hit.folder;
-    if (hit.resource === 'dashboards' && isEmpty(location)) {
-      location = 'general';
-    }
+    // Collapse root-parented dashboards ("" or "general") into the "general"
+    // UID the rest of the search UI uses as the parent for root items.
+    const isRoot = hit.resource === 'dashboards' && isRootFolderUID(hit.folder);
+    const location = isRoot ? 'general' : hit.folder;
+    const folder = isRoot ? 'general' : hit.folder || 'general';
 
     // display null field values as "-"
     const field = Object.fromEntries(
@@ -432,7 +431,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
       // Sort tags so we aren't reliant on the backend having done this for us
       // Sorting order can be different between APIs/search implementations
       tags: (hit.tags || []).sort(),
-      folder: hit.folder || 'general',
+      folder,
       location,
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
       kind: hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural

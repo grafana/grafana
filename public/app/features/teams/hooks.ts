@@ -147,6 +147,8 @@ export function teamDtoToTeam(dto: TeamDto): Team {
       email: dto.email ?? '',
       externalUID: dto.externalUID ?? '',
       provisioned: dto.isProvisioned,
+      // FIXME: Legacy API does not return team members, so this will always be an empty array. We should either update the legacy API to include members or make a separate call to fetch them.
+      members: [],
     },
   };
 }

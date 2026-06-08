@@ -53,11 +53,7 @@ export {
 } from './services/QueryRunner';
 export { PluginPage } from './components/PluginPage';
 export type { PluginPageType, PluginPageProps, PluginPageBackground } from './components/PluginPage';
-export {
-  DataSourcePicker,
-  type DataSourcePickerProps,
-  type DataSourcePickerState,
-} from './components/DataSourcePicker';
+export { DataSourcePicker, type DataSourcePickerProps } from './components/DataSourcePicker';
 export {
   type PluginEventProperties,
   createPluginEventProperties,
@@ -84,6 +80,12 @@ export {
   getCorrelationsService,
   setCorrelationsService,
 } from './services/CorrelationsService';
+export {
+  type PanelScreenshotService,
+  type PanelScreenshotOptions,
+  getPanelScreenshotService,
+  setPanelScreenshotService,
+} from './services/PanelScreenshotService';
 export { getAppPluginVersion, isAppPluginInstalled } from './services/pluginMeta/apps';
 export {
   useAppPluginInstalled,
@@ -93,3 +95,5 @@ export {
   usePanelPluginVersion,
 } from './services/pluginMeta/hooks';
 export { getListedPanelPluginIds, getPanelPluginVersion, isPanelPluginInstalled } from './services/pluginMeta/panels';
+export { isAppPluginEnabled } from './services/pluginSettings/settings';
+export { useAppPluginEnabled } from './services/pluginSettings/hooks';

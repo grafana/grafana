@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func (s *standardStorageService) sanitizeUploadRequest(ctx context.Context, user *user.SignedInUser, req *UploadRequest, storagePath string) (*filestorage.UpsertFileCommand, error) {
+func (s *standardStorageService) sanitizeUploadRequest(_ context.Context, _ *user.SignedInUser, req *UploadRequest, storagePath string) (*filestorage.UpsertFileCommand, error) {
 	if req.EntityType == EntityTypeImage {
 		ext := filepath.Ext(req.Path)
 		if ext == ".svg" && !s.cfg.AllowUnsanitizedSvgUpload {

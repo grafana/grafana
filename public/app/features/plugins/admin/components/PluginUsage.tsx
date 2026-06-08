@@ -6,8 +6,7 @@ import { of } from 'rxjs';
 
 import { type GrafanaTheme2, type PluginMeta, PluginType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Alert, Spinner, useStyles2 } from '@grafana/ui';
+import { Spinner, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
@@ -73,23 +72,6 @@ export function PluginUsage({ plugin }: Props) {
 
   if (results.loading) {
     return <Spinner />;
-  }
-
-  if (!config.featureToggles.unifiedStorageSearchUI) {
-    return (
-      <Alert
-        title={t(
-          'plugins.plugin-usage.title-missing-feature-toggle-panel-title-search',
-          'Missing feature toggle: {{toggle}}',
-          { toggle: 'unifiedStorageSearchUI' }
-        )}
-        severity="warning"
-      >
-        <Trans i18nKey="plugins.plugin-usage.body-missing-feature-toggle-panel-title-search">
-          Plugin usage requires the new search index to find usage across dashboards. Please enable the feature toggle
-        </Trans>
-      </Alert>
-    );
   }
 
   return (

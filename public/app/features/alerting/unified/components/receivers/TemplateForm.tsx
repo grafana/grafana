@@ -1,5 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { addMinutes, subDays, subHours } from 'date-fns';
+import { addMinutes } from 'date-fns/addMinutes';
+import { subDays } from 'date-fns/subDays';
+import { subHours } from 'date-fns/subHours';
 import { type Location } from 'history';
 import { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';

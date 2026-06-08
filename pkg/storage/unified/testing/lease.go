@@ -1,0 +1,1048 @@
+package test
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"math/rand"
+	"os"
+	"reflect"
+	"strconv"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"testing"
+	"testing/quick"
+	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
+)
+
+// RunLeaseTest runs the lease contract suite against any kv.KV produced by
+// newKV. The suite is shared between unit tests (using an in-memory map KV)
+// and integration tests (Badger and sqlkv).
+func RunLeaseTest(t *testing.T, newKV NewKVFunc) {
+	t.Helper()
+
+	store := newKV(t.Context())
+	t.Cleanup(func() { validateLeaseStore(t, store) })
+
+	t.Run("happy path", func(t *testing.T) { runLeaseHappyPath(t, store) })
+	t.Run("contention", func(t *testing.T) { runLeaseContention(t, store) })
+	t.Run("concurrency", func(t *testing.T) { runLeaseConcurrency(t, store) })
+	t.Run("expiration", func(t *testing.T) { runLeaseExpiration(t, store) })
+	t.Run("release semantics", func(t *testing.T) { runLeaseReleaseSemantics(t, store) })
+	t.Run("auto-renew", func(t *testing.T) { runLeaseAutoRenew(t, store) })
+	t.Run("notifying loss", func(t *testing.T) { runLeaseLoss(t, store) })
+	t.Run("kv errors", func(t *testing.T) { runLeaseKVErrors(t, &leaseFailingKV{KV: store}) })
+	t.Run("garbage collection", func(t *testing.T) { runLeaseGarbageCollection(t, store) })
+	t.Run("property-based testing", func(t *testing.T) { runLeasePBT(t, store) })
+}
+
+func newLeaseManagerNoGC(store kv.KV, holder string, opts ...lease.ManagerOption) *lease.Manager {
+	opts = append(opts, lease.WithGarbageCollectionDisabled)
+	return lease.NewManager(store, holder, nil, opts...)
+}
+
+func runLeaseHappyPath(t *testing.T, store kv.KV) {
+	ctx := t.Context()
+	m := newLeaseManagerNoGC(store, "holder-happy")
+
+	t.Run("acquire then release", func(t *testing.T) {
+		l, err := m.Acquire(ctx, "happy/basic")
+		require.NoError(t, err)
+		require.NotNil(t, l)
+
+		require.NoError(t, m.Release(ctx, l))
+	})
+
+	t.Run("acquire after release", func(t *testing.T) {
+		l, err := m.Acquire(ctx, "happy/reacquire")
+		require.NoError(t, err)
+		require.NoError(t, m.Release(ctx, l))
+
+		l2, err := m.Acquire(ctx, "happy/reacquire")
+		require.NoError(t, err)
+		require.NotNil(t, l2)
+		require.NoError(t, m.Release(ctx, l2))
+	})
+}
+
+func runLeaseContention(t *testing.T, store kv.KV) {
+	ctx := t.Context()
+
+	t.Run("different holders", func(t *testing.T) {
+		a := newLeaseManagerNoGC(store, "holder-a")
+		b := newLeaseManagerNoGC(store, "holder-b")
+
+		l, err := a.Acquire(ctx, "contention/different-holders")
+		require.NoError(t, err)
+
+		_, err = b.Acquire(ctx, "contention/different-holders")
+		require.ErrorIs(t, err, lease.ErrLeaseAlreadyHeld)
+
+		require.NoError(t, a.Release(ctx, l))
+	})
+
+	t.Run("same holder twice", func(t *testing.T) {
+		m := newLeaseManagerNoGC(store, "holder-same")
+
+		l, err := m.Acquire(ctx, "contention/same-holder")
+		require.NoError(t, err)
+
+		_, err = m.Acquire(ctx, "contention/same-holder")
+		require.ErrorIs(t, err, lease.ErrLeaseAlreadyHeld)
+
+		require.NoError(t, m.Release(ctx, l))
+	})
+
+	t.Run("different names do not interfere", func(t *testing.T) {
+		m := newLeaseManagerNoGC(store, "holder-multi")
+
+		leaseA, err := m.Acquire(ctx, "contention/name-a")
+		require.NoError(t, err)
+
+		leaseB, err := m.Acquire(ctx, "contention/name-b")
+		require.NoError(t, err)
+
+		require.NotNil(t, leaseA)
+		require.NotNil(t, leaseB)
+
+		require.NoError(t, m.Release(ctx, leaseA))
+		require.NoError(t, m.Release(ctx, leaseB))
+	})
+
+	t.Run("names sharing a prefix do not interfere", func(t *testing.T) {
+		m := newLeaseManagerNoGC(store, "holder-shared-prefix")
+		shortName := "contention/shared-prefix/a/b"
+		longName := "contention/shared-prefix/a/b/c"
+
+		short, err := m.Acquire(ctx, shortName)
+		require.NoError(t, err)
+		long, err := m.Acquire(ctx, longName)
+		require.NoError(t, err)
+		require.NoError(t, m.Release(ctx, short))
+		require.NoError(t, m.Release(ctx, long))
+
+		long, err = m.Acquire(ctx, longName)
+		require.NoError(t, err)
+		short, err = m.Acquire(ctx, shortName)
+		require.NoError(t, err)
+		require.NoError(t, m.Release(ctx, short))
+		require.NoError(t, m.Release(ctx, long))
+	})
+}
+
+func runLeaseConcurrency(t *testing.T, store kv.KV) {
+	const goroutines = 5
+	ctx := t.Context()
+
+	t.Run("same name, one winner", func(t *testing.T) {
+		name := "concurrency/same-name"
+
+		var (
+			wg    sync.WaitGroup
+			start = make(chan struct{})
+
+			mu        sync.Mutex
+			winner    *lease.Lease
+			winnerM   *lease.Manager
+			otherErrs []error
+		)
+
+		for i := range goroutines {
+			holder := fmt.Sprintf("holder-race-%d", i)
+			m := newLeaseManagerNoGC(store, holder)
+			wg.Go(func() {
+				<-start
+				l, err := m.Acquire(ctx, name)
+
+				mu.Lock()
+				defer mu.Unlock()
+				switch {
+				case err == nil:
+					if winner != nil {
+						otherErrs = append(otherErrs, fmt.Errorf("multiple winners: holder %s", holder))
+						return
+					}
+					winner = l
+					winnerM = m
+				case errors.Is(err, lease.ErrLeaseAlreadyHeld):
+					// expected error
+				default:
+					otherErrs = append(otherErrs, err)
+				}
+			})
+		}
+		close(start)
+		wg.Wait()
+
+		require.Empty(t, otherErrs, "unexpected errors from racing acquires")
+		require.NotNil(t, winner, "no goroutine acquired the lease")
+
+		require.NoError(t, winnerM.Release(ctx, winner))
+	})
+
+	t.Run("distinct names all succeed", func(t *testing.T) {
+		var (
+			wg    sync.WaitGroup
+			start = make(chan struct{})
+
+			mu      sync.Mutex
+			leases  []*lease.Lease
+			holders []*lease.Manager
+			errs    []error
+		)
+
+		for i := range goroutines {
+			m := newLeaseManagerNoGC(store, fmt.Sprintf("holder-distinct-%d", i))
+			name := fmt.Sprintf("concurrency/distinct-%d", i)
+			wg.Go(func() {
+				<-start
+				l, err := m.Acquire(ctx, name)
+
+				mu.Lock()
+				defer mu.Unlock()
+				if err != nil {
+					errs = append(errs, err)
+					return
+				}
+				leases = append(leases, l)
+				holders = append(holders, m)
+			})
+		}
+		close(start)
+		wg.Wait()
+
+		require.Empty(t, errs, "all distinct-name acquires should succeed")
+		require.Len(t, leases, goroutines)
+
+		for i, l := range leases {
+			require.NoError(t, holders[i].Release(ctx, l))
+		}
+	})
+}
+
+func runLeaseExpiration(t *testing.T, store kv.KV) {
+	const ttl = 50 * time.Millisecond
+	ctx := t.Context()
+
+	t.Run("different holder can acquire after TTL", func(t *testing.T) {
+		a := newLeaseManagerNoGC(store, "holder-expire-a", lease.WithInternalMinTTL(ttl))
+		b := newLeaseManagerNoGC(store, "holder-expire-b", lease.WithInternalMinTTL(ttl))
+
+		_, err := a.Acquire(ctx, "expiration/handoff", lease.WithTTL(ttl))
+		require.NoError(t, err)
+
+		// Wait past TTL with a small buffer for timer slack.
+		time.Sleep(ttl + 50*time.Millisecond)
+
+		leaseB, err := b.Acquire(ctx, "expiration/handoff", lease.WithTTL(ttl))
+		require.NoError(t, err, "second holder should be able to acquire after TTL elapsed")
+		require.NotNil(t, leaseB)
+		require.NoError(t, b.Release(ctx, leaseB))
+	})
+
+	t.Run("original release after TTL returns ErrLeaseLost", func(t *testing.T) {
+		m := newLeaseManagerNoGC(store, "holder-expire-self", lease.WithInternalMinTTL(ttl))
+
+		l, err := m.Acquire(ctx, "expiration/self-release", lease.WithTTL(ttl))
+		require.NoError(t, err)
+
+		time.Sleep(ttl + 50*time.Millisecond)
+
+		err = m.Release(ctx, l)
+		require.ErrorIs(t, err, lease.ErrLeaseLost)
+	})
+}
+
+func runLeaseReleaseSemantics(t *testing.T, store kv.KV) {
+	ctx := t.Context()
+
+	t.Run("double release returns ErrLeaseLost", func(t *testing.T) {
+		m := newLeaseManagerNoGC(store, "holder-double-release")
+
+		l, err := m.Acquire(ctx, "release/double")
+		require.NoError(t, err)
+
+		require.NoError(t, m.Release(ctx, l))
+		err = m.Release(ctx, l)
+		require.ErrorIs(t, err, lease.ErrLeaseLost)
+	})
+
+	t.Run("release after expiry returns ErrLeaseLost", func(t *testing.T) {
+		const ttl = 50 * time.Millisecond
+		m := newLeaseManagerNoGC(store, "holder-release-expired", lease.WithInternalMinTTL(ttl))
+
+		l, err := m.Acquire(ctx, "release/expired", lease.WithTTL(ttl))
+		require.NoError(t, err)
+
+		time.Sleep(ttl + 50*time.Millisecond)
+
+		err = m.Release(ctx, l)
+		require.ErrorIs(t, err, lease.ErrLeaseLost)
+	})
+}
+
+func runLeaseAutoRenew(t *testing.T, store kv.KV) {
+	const ttl = 500 * time.Millisecond
+	ctx := t.Context()
+
+	t.Run("keeps lease alive past TTL", func(t *testing.T) {
+		a := newLeaseManagerNoGC(store, "holder-renew-a", lease.WithInternalMinTTL(ttl))
+		b := newLeaseManagerNoGC(store, "holder-renew-b", lease.WithInternalMinTTL(ttl))
+
+		l, err := a.Acquire(ctx, "renew/alive", lease.WithTTL(ttl), lease.WithAutoRenew())
+		require.NoError(t, err)
+
+		// Sleep well past the original TTL — auto-renewal should keep it alive.
+		time.Sleep(ttl * 3)
+
+		_, err = b.Acquire(ctx, "renew/alive", lease.WithTTL(ttl))
+		require.ErrorIs(t, err, lease.ErrLeaseAlreadyHeld)
+
+		select {
+		case <-l.Lost():
+			t.Fatal("Lost() fired despite auto-renewal")
+		default:
+		}
+
+		require.NoError(t, a.Release(ctx, l))
+	})
+
+	t.Run("Lost fires on Release", func(t *testing.T) {
+		m := newLeaseManagerNoGC(store, "holder-renew-release", lease.WithInternalMinTTL(ttl))
+
+		l, err := m.Acquire(ctx, "renew/release", lease.WithTTL(ttl), lease.WithAutoRenew())
+		require.NoError(t, err)
+
+		require.NoError(t, m.Release(ctx, l))
+
+		select {
+		case <-l.Lost():
+		case <-time.After(time.Second):
+			t.Fatal("Lost() did not close after Release")
+		}
+	})
+}
+
+func runLeaseLoss(t *testing.T, store kv.KV) {
+	t.Run("Lost() closes when TTL elapses", func(t *testing.T) {
+		const ttl = 50 * time.Millisecond
+		m := newLeaseManagerNoGC(store, "holder-lost-ttl", lease.WithInternalMinTTL(ttl))
+
+		l, err := m.Acquire(t.Context(), "ctx/lost-on-ttl", lease.WithTTL(ttl))
+		require.NoError(t, err)
+		require.NotNil(t, l)
+
+		select {
+		case <-l.Lost():
+			// success
+		case <-time.After(ttl + 500*time.Millisecond):
+			t.Fatal("Lost() did not close after TTL elapsed")
+		}
+	})
+
+	t.Run("Lost() closes after successful Release", func(t *testing.T) {
+		m := newLeaseManagerNoGC(store, "holder-lost-on-release")
+
+		l, err := m.Acquire(t.Context(), "ctx/lost-on-release")
+		require.NoError(t, err)
+		require.NoError(t, m.Release(t.Context(), l))
+
+		select {
+		case <-l.Lost():
+			// success
+		case <-time.After(time.Second):
+			t.Fatal("Lost() did not close after successful Release")
+		}
+	})
+
+	t.Run("Acquire with cancelled context returns error", func(t *testing.T) {
+		m := newLeaseManagerNoGC(store, "holder-ctx-acquire-cancelled")
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		_, err := m.Acquire(ctx, "ctx/acquire-cancelled")
+		require.Error(t, err)
+		require.ErrorIs(t, err, context.Canceled)
+	})
+
+	t.Run("Release with cancelled context returns error", func(t *testing.T) {
+		m := newLeaseManagerNoGC(store, "holder-ctx-release-cancelled")
+		l, err := m.Acquire(t.Context(), "ctx/release-cancelled")
+		require.NoError(t, err)
+
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		err = m.Release(ctx, l)
+		require.Error(t, err)
+		require.ErrorIs(t, err, context.Canceled)
+
+		require.NoError(t, m.Release(t.Context(), l))
+	})
+}
+
+func runLeaseKVErrors(t *testing.T, failing *leaseFailingKV) {
+	ctx := t.Context()
+
+	t.Run("Batch failure surfaces from Acquire", func(t *testing.T) {
+		injected := errors.New("injected acquire failure")
+		failing.injectedError = injected
+		t.Cleanup(failing.Reset)
+
+		m := newLeaseManagerNoGC(failing, "holder-kv-acquire")
+		_, err := m.Acquire(ctx, "kv-errors/acquire")
+		require.Error(t, err)
+		require.ErrorIs(t, err, injected)
+	})
+
+	t.Run("Batch failure surfaces from Release", func(t *testing.T) {
+		// Acquire cleanly first, then inject failure for the Release call.
+		m := newLeaseManagerNoGC(failing, "holder-kv-release")
+		l, err := m.Acquire(ctx, "kv-errors/release")
+		require.NoError(t, err)
+
+		injected := errors.New("injected release failure")
+		failing.injectedError = injected
+		t.Cleanup(failing.Reset)
+
+		err = m.Release(ctx, l)
+		require.Error(t, err)
+		require.ErrorIs(t, err, injected)
+
+		failing.Reset()
+		require.NoError(t, m.Release(t.Context(), l))
+	})
+}
+
+func runLeaseGarbageCollection(t *testing.T, store kv.KV) {
+	t.Run("deletes eligible leases", func(t *testing.T) {
+		const shortTTL = time.Millisecond
+		ctx := t.Context()
+
+		base := time.Now().Add(-10 * time.Minute)
+		now := base
+		nowFunc := func() time.Time { return now }
+
+		m := newLeaseManagerNoGC(store, "holder-gc", lease.WithInternalMinTTL(shortTTL), lease.WithInternalNowFunc(nowFunc))
+
+		acquire := func(name string, opts ...lease.AcquireOption) *lease.Lease {
+			t.Helper()
+			l, err := m.Acquire(ctx, name, opts...)
+			require.NoError(t, err)
+			require.NotNil(t, l)
+			return l
+		}
+
+		release := func(l *lease.Lease) {
+			t.Helper()
+			require.NoError(t, m.Release(ctx, l))
+		}
+
+		// Create leases far enough in the past that released and expired records
+		// should be eligible once GC runs at finalNow.
+		oldReleasedName := "gc/old-released"
+		oldReleased := acquire(oldReleasedName)
+		oldReleasedKey := requireSingleLeaseKey(t, store, oldReleasedName)
+		release(oldReleased)
+
+		oldExpiredName := "gc/old-expired"
+		_ = acquire(oldExpiredName, lease.WithTTL(shortTTL))
+		oldExpiredKey := requireSingleLeaseKey(t, store, oldExpiredName)
+
+		multiGenerationName := "gc/multi-generation"
+		firstGeneration := acquire(multiGenerationName)
+		firstGenerationKey := requireSingleLeaseKey(t, store, multiGenerationName)
+		release(firstGeneration)
+
+		finalNow := base.Add(2 * time.Minute)
+		now = finalNow.Add(-30 * time.Second)
+
+		// Create leases inside the GC grace period. GC should retain them even if
+		// they are already released or expired.
+		recentReleasedName := "gc/recent-released"
+		recentReleased := acquire(recentReleasedName)
+		recentReleasedKey := requireSingleLeaseKey(t, store, recentReleasedName)
+		release(recentReleased)
+
+		recentExpiredName := "gc/recent-expired"
+		_ = acquire(recentExpiredName, lease.WithTTL(shortTTL))
+		recentExpiredKey := requireSingleLeaseKey(t, store, recentExpiredName)
+
+		secondGeneration := acquire(multiGenerationName)
+		multiGenerationKeys := leaseKeys(t, store, multiGenerationName)
+		require.Len(t, multiGenerationKeys, 2)
+		require.Equal(t, firstGenerationKey, multiGenerationKeys[0])
+		secondGenerationKey := multiGenerationKeys[1]
+		release(secondGeneration)
+
+		now = finalNow
+
+		// Create an active lease at GC time to verify live records are preserved.
+		activeName := "gc/active"
+		active := acquire(activeName)
+		activeKey := requireSingleLeaseKey(t, store, activeName)
+
+		deleted, err := m.RunGarbageCollection(ctx)
+		require.NoError(t, err)
+		require.Equal(t, 3, deleted)
+
+		// GC should remove only records that are older than the grace period.
+		requireKeyMissing(t, store, oldReleasedKey)
+		requireKeyMissing(t, store, oldExpiredKey)
+		requireKeyMissing(t, store, firstGenerationKey)
+
+		requireKeyPresent(t, store, recentReleasedKey)
+		requireKeyPresent(t, store, recentExpiredKey)
+		requireKeyPresent(t, store, secondGenerationKey)
+		requireKeyPresent(t, store, activeKey)
+
+		require.NoError(t, m.Release(ctx, active))
+
+		// A lease whose only generation was collected can be acquired again.
+		reacquired := acquire(oldReleasedName)
+		require.NoError(t, m.Release(ctx, reacquired))
+	})
+
+	t.Run("concurrent runs are safe", func(t *testing.T) {
+		const (
+			numLeases   = 100
+			concurrency = 5
+		)
+		ctx := t.Context()
+
+		now := time.Now().Add(-10 * time.Minute)
+		nowFunc := func() time.Time { return now }
+		m := newLeaseManagerNoGC(store, "holder-gc-concurrent", lease.WithInternalNowFunc(nowFunc))
+
+		for i := range numLeases {
+			l, err := m.Acquire(ctx, fmt.Sprintf("gc/concurrent/%03d", i))
+			require.NoError(t, err)
+			require.NotNil(t, l)
+		}
+
+		now = time.Now()
+
+		var (
+			wg      sync.WaitGroup
+			errs    = make(chan error, concurrency)
+			deleted = make(chan int, concurrency)
+		)
+
+		for range concurrency {
+			wg.Go(func() {
+				count, err := m.RunGarbageCollection(ctx)
+				if err != nil {
+					errs <- err
+				}
+				deleted <- count
+			})
+		}
+
+		wg.Wait()
+		close(errs)
+		close(deleted)
+
+		for err := range errs {
+			require.NoError(t, err)
+		}
+
+		totalDeleted := 0
+		for count := range deleted {
+			totalDeleted += count
+		}
+		require.GreaterOrEqual(t, totalDeleted, numLeases)
+
+		for i := range numLeases {
+			require.Empty(t, leaseKeys(t, store, fmt.Sprintf("gc/concurrent/%03d", i)))
+		}
+	})
+
+	t.Run("expired internal key permits next run", func(t *testing.T) {
+		const numLeases = 2
+		ctx := t.Context()
+
+		present := time.Now()
+		now := present.Add(-20 * time.Minute)
+		nowFunc := func() time.Time { return now }
+		m := newLeaseManagerNoGC(store, "holder-gc-stale-internal-key", lease.WithInternalNowFunc(nowFunc))
+
+		// Create leases far enough in the past that the second GC run should
+		// delete them once the stale internal key is cleared.
+		leaseNames := make([]string, 0, numLeases)
+		for i := range numLeases {
+			name := fmt.Sprintf("gc/stale-internal-key/%d", i)
+			l, err := m.Acquire(ctx, name)
+			require.NoError(t, err)
+			require.NotNil(t, l)
+			leaseNames = append(leaseNames, name)
+		}
+
+		// Simulate a GC run that crashed before deleting its internal key.
+		gcExpiresAt := present.Add(-5 * time.Minute)
+		data, err := json.Marshal(struct {
+			Expires int64 `json:"expires"`
+		}{Expires: gcExpiresAt.UnixNano()})
+		require.NoError(t, err)
+		saveKVHelper(t, store, ctx, kv.LeasesSection, "lease-internal/gc", strings.NewReader(string(data)))
+
+		// Before the internal key expires, GC should treat another run as active.
+		now = gcExpiresAt.Add(-time.Minute)
+		deleted, err := m.RunGarbageCollection(ctx)
+		require.NoError(t, err)
+		require.Zero(t, deleted)
+		requireKeyPresent(t, store, "lease-internal/gc")
+		for _, name := range leaseNames {
+			require.NotEmpty(t, leaseKeys(t, store, name))
+		}
+
+		// Once the internal key expires, GC should delete it and run normally.
+		now = present
+		deleted, err = m.RunGarbageCollection(ctx)
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, deleted, numLeases)
+		requireKeyMissing(t, store, "lease-internal/gc")
+		for _, name := range leaseNames {
+			require.Empty(t, leaseKeys(t, store, name))
+		}
+	})
+}
+
+func requireSingleLeaseKey(t *testing.T, store kv.KV, name string) string {
+	t.Helper()
+	keys := leaseKeys(t, store, name)
+	require.Len(t, keys, 1)
+	return keys[0]
+}
+
+func leaseKeys(t *testing.T, store kv.KV, name string) []string {
+	t.Helper()
+	prefix := name + "~"
+	opts := kv.ListOptions{
+		Sort:     kv.SortOrderAsc,
+		StartKey: prefix,
+		EndKey:   kv.PrefixRangeEnd(prefix),
+	}
+
+	var keys []string
+	for key, err := range store.Keys(t.Context(), kv.LeasesSection, opts) {
+		require.NoError(t, err)
+		keys = append(keys, key)
+	}
+
+	return keys
+}
+
+func requireKeyPresent(t *testing.T, store kv.KV, key string) {
+	t.Helper()
+	r, err := store.Get(t.Context(), kv.LeasesSection, key)
+	require.NoError(t, err)
+	require.NoError(t, r.Close())
+}
+
+func requireKeyMissing(t *testing.T, store kv.KV, key string) {
+	t.Helper()
+	r, err := store.Get(t.Context(), kv.LeasesSection, key)
+	if r != nil {
+		require.NoError(t, r.Close())
+	}
+	require.ErrorIs(t, err, kv.ErrNotFound)
+}
+
+// opKind tags each operation in a property-based workload.
+type opKind int
+
+const (
+	opAcquire opKind = iota
+	opRelease
+)
+
+// operation is one randomized operation in a property-based workload.
+type operation struct {
+	kind      opKind
+	serverIdx int // index into the manager array
+	leaseIdx  int // index into the lease-name array
+}
+
+// model records, based on observed Acquire/Release responses, which servers
+// currently believe they hold each lease. The invariant — at most one
+// believer per lease — is enforced on every successful Acquire by
+// model.acquired's return value.
+type model struct {
+	mu      sync.Mutex
+	holders map[int]map[int]struct{} // leaseIdx -> set of serverIdx
+}
+
+// acquired records that serverIdx now believes it holds leaseIdx, and
+// returns true if the model's invariant (≤1 holder per lease) still holds.
+// A false return means a violation was just observed.
+func (m *model) acquired(serverIdx, leaseIdx int) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.holders[leaseIdx] == nil {
+		m.holders[leaseIdx] = make(map[int]struct{})
+	}
+	m.holders[leaseIdx][serverIdx] = struct{}{}
+	return len(m.holders[leaseIdx]) <= 1
+}
+
+// released drops serverIdx from the believed-holders of leaseIdx.
+func (m *model) released(serverIdx, leaseIdx int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.holders[leaseIdx], serverIdx)
+}
+
+const (
+	executeSequential = 0
+	executeConcurrent = 1
+)
+
+// pbtTTL is large relative to any plausible iteration length so that no
+// lease expires mid-workload. The model does not track per-lease expiration so,
+// without this margin, a real expiration plus reacquire would look like a
+// violation.
+const pbtTTL = 3 * time.Minute
+
+// newRNG returns the random source used by the property-based test, seeded
+// from KV_LEASES_SEED if set so failing runs can be reproduced.
+func newRNG(t *testing.T) *rand.Rand {
+	seed := time.Now().UnixNano()
+	if seedStr := os.Getenv("KV_LEASES_SEED"); seedStr != "" {
+		var err error
+		seed, err = strconv.ParseInt(seedStr, 10, 64)
+		require.NoError(t, err, "parsing seed from KV_LEASES_SEED")
+	}
+	t.Logf("using random seed: %d", seed)
+	return rand.New(rand.NewSource(seed))
+}
+
+// numBetween returns a uniformly-random int in [low, high].
+func numBetween(rng *rand.Rand, low, high int) int {
+	return low + rng.Intn(high-low+1)
+}
+
+// candidateReleases lists currently-held (server, lease) pairs from the
+// generator's optimistic model as candidate Release ops, in deterministic order.
+func candidateReleases(numLeases int, heldByLease map[int]int) []operation {
+	var out []operation
+	for leaseIdx := range numLeases {
+		if serverIdx, ok := heldByLease[leaseIdx]; ok {
+			out = append(out, operation{
+				kind:      opRelease,
+				serverIdx: serverIdx,
+				leaseIdx:  leaseIdx,
+			})
+		}
+	}
+	return out
+}
+
+// leasePBT carries the state shared by the generator and the workload runner
+// across quick.Check iterations.
+type leasePBT struct {
+	t          *testing.T
+	ctx        context.Context
+	managers   []*lease.Manager
+	numServers int
+	numLeases  int
+
+	// Per-iteration state, reset at the top of RunWorkload.
+	iteration int
+	held      []map[int]*lease.Lease
+	m         *model
+}
+
+func newLeasePBT(t *testing.T, store kv.KV, rng *rand.Rand) *leasePBT {
+	numServers := numBetween(rng, 3, 10)
+	numLeases := numBetween(rng, 1, 10)
+	t.Logf("servers: %d, leases: %d", numServers, numLeases)
+
+	managers := make([]*lease.Manager, numServers)
+	for i := range numServers {
+		managers[i] = newLeaseManagerNoGC(store, fmt.Sprintf("server-%d", i))
+	}
+	return &leasePBT{
+		t:          t,
+		ctx:        t.Context(),
+		managers:   managers,
+		numServers: numServers,
+		numLeases:  numLeases,
+	}
+}
+
+// Generator picks ops + mode randomly and feeds them to quick.Check.
+//
+// Generator-side optimistic model: leaseIdx -> serverIdx for leases the
+// generator believes are currently held. Lets us pick Release ops against
+// pairs that have a real chance of being held by the runner. Without this,
+// ~half of all ops would be no-op Releases on (server, lease) pairs that
+// were never Acquired — those don't exercise the protocol.
+//
+// In sequential mode this prediction matches the runner exactly. In
+// concurrent mode races may invalidate some predictions; the runner skips
+// Releases without a matching local handle.
+func (p *leasePBT) Generator(values []reflect.Value, rng *rand.Rand) {
+	numOps := numBetween(rng, 5, 10)
+	mode := executeConcurrent
+	if rng.Float64() < 0.5 {
+		mode = executeSequential
+	}
+
+	heldByLease := make(map[int]int)
+
+	ops := make([]operation, numOps)
+	for i := range numOps {
+		if opKind(rng.Intn(2)) == opRelease {
+			if held := candidateReleases(p.numLeases, heldByLease); len(held) > 0 {
+				ops[i] = held[rng.Intn(len(held))]
+				delete(heldByLease, ops[i].leaseIdx)
+				continue
+			}
+			// Nothing held yet: fall through to an Acquire instead of
+			// emitting a guaranteed-no-op Release.
+		}
+
+		op := operation{
+			kind:      opAcquire,
+			serverIdx: rng.Intn(p.numServers),
+			leaseIdx:  rng.Intn(p.numLeases),
+		}
+		ops[i] = op
+		// Optimistic update: only record as held if no other server
+		// already holds the lease in our model.
+		if _, taken := heldByLease[op.leaseIdx]; !taken {
+			heldByLease[op.leaseIdx] = op.serverIdx
+		}
+	}
+
+	values[0] = reflect.ValueOf(mode)
+	values[1] = reflect.ValueOf(ops)
+}
+
+// leaseName is the KV-side name of the leaseIdx-th lease in the current
+// iteration. The iteration prefix isolates rounds of quick.Check from each
+// other.
+func (p *leasePBT) leaseName(leaseIdx int) string {
+	return fmt.Sprintf("iter-%d/lease-%d", p.iteration, leaseIdx)
+}
+
+// RunWorkload runs ops against the managers (sequentially or per-server
+// concurrent) and returns true if no violation was observed. Called by
+// quick.Check once per iteration.
+func (p *leasePBT) RunWorkload(mode int, ops []operation) bool {
+	p.iteration++
+	p.t.Logf("iteration %d: mode=%d ops=%d", p.iteration, mode, len(ops))
+
+	// Per-server held-lease handles. Each server's map is touched only by
+	// the goroutine running that server's ops (or by the single
+	// sequential-mode goroutine), so it needs no synchronization.
+	p.held = make([]map[int]*lease.Lease, p.numServers)
+	for i := range p.numServers {
+		p.held[i] = make(map[int]*lease.Lease)
+	}
+	p.m = &model{holders: make(map[int]map[int]struct{})}
+
+	var violated atomic.Bool
+	if mode == executeSequential {
+		// Walk the trace in generated order.
+		for _, op := range ops {
+			if p.runOp(op.serverIdx, op) {
+				violated.Store(true)
+				break
+			}
+		}
+	} else {
+		// Per-server goroutines: ops within a server run in generated
+		// order; servers race each other.
+		opsByServer := make([][]operation, p.numServers)
+		for _, op := range ops {
+			opsByServer[op.serverIdx] = append(opsByServer[op.serverIdx], op)
+		}
+		var wg sync.WaitGroup
+		for i := range p.numServers {
+			wg.Go(func() {
+				for _, op := range opsByServer[i] {
+					if p.runOp(i, op) {
+						violated.Store(true)
+						return
+					}
+				}
+			})
+		}
+		wg.Wait()
+	}
+
+	// Drain anything still held so the next iteration starts clean, even
+	// if the test failed mid-run.
+	for serverIdx, leases := range p.held {
+		for _, l := range leases {
+			_ = p.managers[serverIdx].Release(p.ctx, l)
+		}
+	}
+
+	return !violated.Load()
+}
+
+// runOp executes one operation against the given server, updates the model,
+// and returns whether a violation was observed. Safe to call concurrently
+// as long as no two callers share a serverIdx (model's mutations are
+// mutex-protected; held[serverIdx] is touched only by serverIdx's caller).
+func (p *leasePBT) runOp(serverIdx int, op operation) (violation bool) {
+	switch op.kind {
+	case opAcquire:
+		l, err := p.managers[serverIdx].Acquire(p.ctx, p.leaseName(op.leaseIdx), lease.WithTTL(pbtTTL))
+		if err != nil {
+			// Errors are only expected if the lease is already held by
+			// another server.
+			if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+				return false
+			}
+			p.t.Logf("violation: server %d failed to acquire lease %d with unexpected error: %v",
+				serverIdx, op.leaseIdx, err)
+			return true
+		}
+		p.held[serverIdx][op.leaseIdx] = l
+		if !p.m.acquired(serverIdx, op.leaseIdx) {
+			p.t.Logf("violation: server %d acquired lease %d while another server still holds it",
+				serverIdx, op.leaseIdx)
+			return true
+		}
+	case opRelease:
+		l, ok := p.held[serverIdx][op.leaseIdx]
+		if !ok {
+			// This server doesn't believe it holds the lease, so there's
+			// nothing to release.
+			return false
+		}
+		p.m.released(serverIdx, op.leaseIdx)
+		if err := p.managers[serverIdx].Release(p.ctx, l); err != nil {
+			p.t.Logf("violation: server %d failed to release: %v",
+				serverIdx, err)
+			return true
+		}
+		delete(p.held[serverIdx], op.leaseIdx)
+	}
+	return false
+}
+
+func runLeasePBT(t *testing.T, store kv.KV) {
+	t.Run("randomized workload", func(t *testing.T) {
+		rng := newRNG(t)
+		pbt := newLeasePBT(t, store, rng)
+
+		require.NoError(t, quick.Check(
+			pbt.RunWorkload, &quick.Config{
+				MaxCount: 50,
+				Rand:     rng,
+				Values:   pbt.Generator,
+			}),
+		)
+	})
+}
+
+type leaseFailingKV struct {
+	kv.KV
+	injectedError error
+}
+
+func (f *leaseFailingKV) Save(ctx context.Context, section, key string) (io.WriteCloser, error) {
+	if f.injectedError != nil {
+		return nil, f.injectedError
+	}
+	return f.KV.Save(ctx, section, key)
+}
+
+func (f *leaseFailingKV) Batch(ctx context.Context, section string, ops []kv.BatchOp) error {
+	if f.injectedError != nil {
+		return f.injectedError
+	}
+	return f.KV.Batch(ctx, section, ops)
+}
+
+func (f *leaseFailingKV) Reset() {
+	f.injectedError = nil
+}
+
+// validateLeaseStore checks store-wide invariants once all subtests have
+// finished: every entry has a non-empty holder and an Expires within 30
+// minutes of current time, and for every lease name a non-latest entry
+// may have ReleasedAt == 0 only if it has already expired.
+func validateLeaseStore(t *testing.T, store kv.KV) {
+	type meta struct {
+		Holder     string `json:"holder"`
+		Expires    int64  `json:"expires"`
+		ReleasedAt int64  `json:"released_at,omitempty"`
+	}
+
+	type entry struct {
+		generation int64
+		expires    int64
+		releasedAt int64
+	}
+
+	ctx, stop := context.WithTimeout(context.Background(), 10*time.Second)
+	defer stop()
+	now := time.Now()
+	const window = 30 * time.Minute
+
+	byName := make(map[string][]entry)
+
+	for key, err := range store.Keys(ctx, kv.LeasesSection, kv.ListOptions{Sort: kv.SortOrderAsc}) {
+		require.NoError(t, err)
+
+		idx := strings.LastIndex(key, "~")
+		require.GreaterOrEqual(t, idx, 0)
+		name := key[:idx]
+		generation, err := strconv.ParseInt(key[idx+1:], 10, 64)
+		require.NoError(t, err)
+
+		r, err := store.Get(ctx, kv.LeasesSection, key)
+		require.NoError(t, err)
+		data, err := io.ReadAll(r)
+		require.NoError(t, r.Close())
+		require.NoError(t, err)
+
+		var m meta
+		require.NoError(t, json.Unmarshal(data, &m))
+
+		// Every lease has a non-empty holder.
+		require.NotEmpty(t, m.Holder)
+
+		// Every lease's expiration is within a given `window`.
+		expires := time.Unix(0, m.Expires)
+		delta := expires.Sub(now)
+		if delta < 0 {
+			delta = -delta
+		}
+		require.LessOrEqual(t, delta, window)
+
+		byName[name] = append(byName[name], entry{
+			generation: generation,
+			expires:    m.Expires,
+			releasedAt: m.ReleasedAt,
+		})
+	}
+
+	for name, entries := range byName {
+		last := len(entries) - 1
+		latest := entries[last].generation
+		for _, e := range entries[:last] {
+			if e.releasedAt != 0 {
+				continue
+			}
+			// Non-latest, non-tombstoned: only valid if already expired.
+			expiresAt := time.Unix(0, e.expires)
+			require.LessOrEqual(t, expiresAt, now,
+				"lease %q generation %d is not the latest (%d), has ReleasedAt == 0, and is not yet expired (Expires=%s, now=%s)",
+				name, e.generation, latest, expiresAt, now)
+		}
+	}
+}

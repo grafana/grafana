@@ -2,8 +2,8 @@ import React from 'react';
 
 import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { logWarning } from '@grafana/runtime';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { config, logWarning } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
   sceneGraph,
@@ -17,17 +17,17 @@ import {
 import { type RowsLayoutRowKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
-import kbn from 'app/core/utils/kbn';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
+import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
 import { removeRepeatLocalVariableFromSet } from '../../utils/clone';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
-import { getDashboardSceneFor, interpolateSectionTitle } from '../../utils/utils';
+import { getDashboardSceneFor, getSlugForRowOrTab, interpolateSectionTitle } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -72,7 +72,9 @@ export class RowItem
 
   public readonly isEditableDashboardElement = true;
   public readonly isDashboardDropTarget = true;
+  public readonly dashboardLayoutItemType = 'row';
   public containerRef: React.MutableRefObject<HTMLDivElement | null> = React.createRef<HTMLDivElement>();
+  private _filtersSet?: SectionFiltersSet;
 
   public constructor(state?: Partial<RowItemState>) {
     super({
@@ -105,14 +107,30 @@ export class RowItem
     };
   }
 
+  private getFiltersSet(): SectionFiltersSet {
+    if (!this._filtersSet) {
+      this._filtersSet = new SectionFiltersSet({ sectionRef: this.getRef() });
+    }
+    return this._filtersSet;
+  }
+
   public getOutlineChildren(isEditing?: boolean): SceneObject[] {
     const layoutChildren = this.state.layout.getOutlineChildren();
     if (
       isEditing &&
-      getFeatureFlagClient().getBooleanValue('dashboardSectionVariables', false) &&
+      // OpenFeature is not initialized for anonymous users, so fall back to
+      // the static feature toggle to ensure section variables work without auth.
+      getFeatureFlagClient().getBooleanValue(
+        FlagKeys.DashboardSectionVariables,
+        Boolean(config.featureToggles.dashboardSectionVariables)
+      ) &&
       this.state.$variables
     ) {
-      return [this.state.$variables, ...layoutChildren];
+      return [
+        ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [this.getFiltersSet()] : []),
+        this.state.$variables,
+        ...layoutChildren,
+      ];
     }
     return layoutChildren;
   }
@@ -122,7 +140,12 @@ export class RowItem
   }
 
   public getSlug(): string {
-    return kbn.slugifyForUrl(interpolateSectionTitle(this, this.state.title ?? 'Row'));
+    const siblings = this.parent
+      ? this.getParentLayout()
+          .getOutlineChildren()
+          .filter((item): item is RowItem => item instanceof RowItem)
+      : [];
+    return getSlugForRowOrTab(this, siblings);
   }
 
   public switchLayout(layout: DashboardLayoutManager) {

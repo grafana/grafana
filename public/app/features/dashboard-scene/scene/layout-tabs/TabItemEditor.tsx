@@ -3,6 +3,7 @@ import { useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, Field, Input, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -11,6 +12,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../edit-pane/SectionFiltersList';
 import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../edit-pane/SectionVariablesList';
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { getQueryRunnerFor } from '../../utils/utils';
@@ -57,7 +59,12 @@ export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPan
 
   const layoutCategory = useLayoutCategory(layout);
 
-  const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
+  // OpenFeature is not initialized for anonymous users, so fall back to
+  // the static feature toggle to ensure section variables work without auth.
+  const sectionVariablesEnabled = useBooleanFlagValue(
+    'dashboardSectionVariables',
+    Boolean(config.featureToggles.dashboardSectionVariables)
+  );
   const sectionVariablesCategory = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.tabs-layout.tab-options.section-variables.title', 'Variables'),
@@ -80,8 +87,34 @@ export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPan
     return category;
   }, [model]);
 
+  const sectionFiltersCategory = useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.tabs-layout.tab-options.section-filters.title', 'Filters'),
+      id: 'tab-section-filters',
+      isOpenDefault: true,
+      renderTitle: () => <SectionFiltersCategoryTitle />,
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: 'tab-section-filters-list',
+        skipField: true,
+        render: () => <SectionFiltersList sectionOwner={model} />,
+      })
+    );
+
+    return category;
+  }, [model]);
+
   const editOptions = sectionVariablesEnabled
-    ? [tabCategory, sectionVariablesCategory, ...layoutCategory, repeatCategory]
+    ? [
+        tabCategory,
+        ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [sectionFiltersCategory] : []),
+        sectionVariablesCategory,
+        ...layoutCategory,
+        repeatCategory,
+      ]
     : [tabCategory, ...layoutCategory, repeatCategory];
 
   const conditionalRenderingCategory = useMemo(

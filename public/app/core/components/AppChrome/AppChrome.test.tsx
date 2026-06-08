@@ -4,12 +4,12 @@ import { type ReactNode } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { render, screen, waitFor, act, getWrapper } from 'test/test-utils';
 
-import { type DataFrame, DataFrameView, FieldType } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { type DashboardQueryResult, type QueryResponse } from 'app/features/search/service/types';
 
+import { backendSrv } from '../../services/backend_srv';
 import { Page } from '../Page/Page';
 
 import { AppChrome } from './AppChrome';
@@ -19,24 +19,8 @@ jest.mock('@grafana/runtime', () => ({
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
-const searchData: DataFrame = {
-  fields: [
-    { name: 'kind', type: FieldType.string, config: {}, values: [] },
-    { name: 'name', type: FieldType.string, config: {}, values: [] },
-    { name: 'uid', type: FieldType.string, config: {}, values: [] },
-    { name: 'url', type: FieldType.string, config: {}, values: [] },
-    { name: 'tags', type: FieldType.other, config: {}, values: [] },
-    { name: 'location', type: FieldType.string, config: {}, values: [] },
-  ],
-  length: 0,
-};
-
-const mockSearchResult: QueryResponse = {
-  isItemLoaded: jest.fn(),
-  loadMoreItems: jest.fn(),
-  totalRows: searchData.length,
-  view: new DataFrameView<DashboardQueryResult>(searchData),
-};
+setBackendSrv(backendSrv);
+setupMockServer();
 
 const setup = (children: ReactNode) => {
   config.bootData.navTree = [
@@ -75,9 +59,8 @@ const setup = (children: ReactNode) => {
 };
 
 describe('AppChrome', () => {
-  beforeAll(() => {
-    // need to mock out the search service since kbar calls it to fetch recent dashboards
-    jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockSearchResult);
+  beforeEach(() => {
+    server.use(getCustomSearchHandler([]));
   });
 
   afterEach(() => {

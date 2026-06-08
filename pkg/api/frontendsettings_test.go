@@ -99,8 +99,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		Features:     features,
 		License:      &licensing.OSSLicensingService{Cfg: cfg},
 		RenderService: &rendering.RenderingService{
-			Cfg:                   cfg,
-			RendererPluginManager: &fakeRendererPluginManager{},
+			Cfg: cfg,
 		},
 		SQLStore:              db.InitTestDB(t),
 		SettingsProvider:      setting.ProvideProvider(cfg),

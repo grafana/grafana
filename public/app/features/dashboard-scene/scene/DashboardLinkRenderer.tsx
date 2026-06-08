@@ -21,7 +21,7 @@ import { type DashboardScene } from './DashboardScene';
 
 export interface Props {
   link: DashboardLink;
-  dashboardUID: string;
+  dashboardUID?: string;
   inMenu?: boolean;
   linkIndex: number;
   dashboard: DashboardScene;

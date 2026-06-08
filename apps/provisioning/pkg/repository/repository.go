@@ -76,6 +76,11 @@ var ErrTooManyItems error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Message: "maximum number of items exceeded",
 }}
 
+var ErrRepositoryMismatch = apierrors.NewBadRequest("repository mismatch")
+
+// ErrInvalidRef indicates that a provided git ref (branch or commit SHA) failed validation.
+var ErrInvalidRef = apierrors.NewBadRequest("invalid ref")
+
 type FileInfo struct {
 	// Path to the file on disk.
 	// No leading or trailing slashes will be contained within.
@@ -167,6 +172,13 @@ type Hooks interface {
 	OnCreate(ctx context.Context) ([]map[string]interface{}, error)
 	OnUpdate(ctx context.Context) ([]map[string]interface{}, error)
 	OnDelete(ctx context.Context) error
+}
+
+// WebhookSecretRotator is implemented by repositories that support periodic
+// webhook secret rotation. The controller calls RotateWebhookSecret when the
+// secret is due for rotation based on the configured interval.
+type WebhookSecretRotator interface {
+	RotateWebhookSecret(ctx context.Context) ([]map[string]any, error)
 }
 
 type FileAction string

@@ -50,6 +50,7 @@ export { getAllFieldTypeIconOptions } from '../components/MatchersUI/FieldTypeMa
 export { getStyles as getSliderStyles } from '../components/Slider/styles';
 export { getSelectStyles } from '../components/Select/getSelectStyles';
 export type { Props as InputProps } from '../components/Input/Input';
+export { getLabelStyles } from '../components/Forms/Label';
 export type { ModalsContextState } from '../components/Modal/ModalsContext';
 export { ModalBase, type ModalBaseProps } from '../components/Modal/ModalBase';
 export { getModalStyles } from '../components/Modal/getModalStyles';

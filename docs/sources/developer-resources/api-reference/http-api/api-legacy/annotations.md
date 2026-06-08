@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/annotations/ # /docs/grafana/next/http_api/annotations/
-  - ../../../developers/http_api/annotations/ # /docs/grafana/next/developers/http_api/annotations/
+  - ../../../../http_api/annotations/ # /docs/grafana/next/http_api/annotations/
+  - ../../../../developers/http_api/annotations/ # /docs/grafana/next/developers/http_api/annotations/
   - ../../../../developer-resources/api-reference/http-api/api-legacy/annotations/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/annotations/
 description: Grafana Annotations HTTP API

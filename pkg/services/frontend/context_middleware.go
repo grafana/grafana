@@ -70,6 +70,11 @@ func setRequestContext(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		reqContext.Logger = reqContext.Logger.New("hostname", hostname)
 	}
 
+	// add user agent to logger context
+	if userAgent := r.UserAgent(); userAgent != "" {
+		reqContext.Logger = reqContext.Logger.New("user_agent", userAgent)
+	}
+
 	// Parse namespace from W3C baggage header
 	var namespace string
 	if baggageHeader := r.Header.Get("baggage"); baggageHeader != "" {

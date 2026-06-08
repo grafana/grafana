@@ -63,7 +63,7 @@ func RegisterAppInstaller(
 	}
 	customCfg := notificationsApp.Config{
 		ReceiverTestingHandler:       receiver.New(ng.Api.ReceiverTestService),
-		IntegrationTypeSchemaHandler: integrationtypeschema.New(ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false)),
+		IntegrationTypeSchemaHandler: integrationtypeschema.New(ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false), cfg.UnifiedAlerting.AllowedIntegrations),
 	}
 
 	localManifest := apis.LocalManifest()
@@ -119,14 +119,16 @@ func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanar
 	case timeinterval.ResourceInfo.GroupResource().Resource:
 		srv := api.MuteTimings
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		if a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+		if a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) &&
+			a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 			srv = srv.WithIncludeImported()
 		}
 		return timeinterval.NewStorage(srv, namespacer)
 	case templategroup.ResourceInfo.GroupResource().Resource:
 		srv := api.Templates
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		if a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+		if a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) &&
+			a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 			srv = srv.WithIncludeImported()
 		}
 		return templategroup.NewStorage(srv, namespacer)

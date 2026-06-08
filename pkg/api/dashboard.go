@@ -35,7 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -84,11 +84,11 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	// If public dashboards is enabled and we have a public dashboard, update meta values
 	if hs.Cfg.PublicDashboardsEnabled {
 		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(ctx, c.GetOrgID(), dash.UID)
-		if err != nil && !errors.Is(err, publicdashboardModels.ErrPublicDashboardNotFound) {
+		if err != nil && !errors.Is(err, publicdashboards.ErrPublicDashboardNotFound) {
 			return response.Error(http.StatusInternalServerError, "Error while retrieving public dashboards", err)
 		}
 
-		if publicDashboard != nil && (hs.License.FeatureEnabled(publicdashboardModels.FeaturePublicDashboardsEmailSharing) || publicDashboard.Share != publicdashboardModels.EmailShareType) {
+		if publicDashboard != nil && (hs.License.FeatureEnabled(publicdashboards.FeaturePublicDashboardsEmailSharing) || publicDashboard.Share != publicdashboards.EmailShareType) {
 			publicDashboardEnabled = publicDashboard.IsEnabled
 		}
 	}
@@ -702,19 +702,67 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 		}
 	}()
 
+	doc := simplejson.New()
+	jsonParser := json.NewDecoder(file)
+	if err := jsonParser.Decode(doc); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to load home dashboard", err)
+	}
+
+	// If the configured home dashboard file is a Kubernetes-style Grafana
+	// dashboard resource, return it to the client as that style, with the
+	// injected access shape so that frontend can use the same translator it
+	// already consumes (/dto format)
+	if isK8sDashboardResource(doc) {
+		// Getting-started panel injection still runs against the spec body so
+		// v0/v1 resources behave the same as classic home dashboards if the
+		// existing guards in addGettingStartedPanelToHomeDashboard allow it.
+		if spec, ok := doc.CheckGet("spec"); ok {
+			hs.addGettingStartedPanelToHomeDashboard(c, spec)
+		}
+		doc.Set("access", map[string]any{
+			"canSave":   false,
+			"canShare":  false,
+			"canStar":   false,
+			"canEdit":   false,
+			"canDelete": false,
+			"canAdmin":  false,
+		})
+		return response.JSON(http.StatusOK, doc)
+	}
+
 	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.CanEdit = c.HasRole(org.RoleEditor)
 	dash.Meta.FolderTitle = "General"
-	dash.Dashboard = simplejson.New()
-
-	jsonParser := json.NewDecoder(file)
-	if err := jsonParser.Decode(dash.Dashboard); err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to load home dashboard", err)
-	}
+	dash.Dashboard = doc
 
 	hs.addGettingStartedPanelToHomeDashboard(c, dash.Dashboard)
 
 	return response.JSON(http.StatusOK, &dash)
+}
+
+// isK8sDashboardResource reports whether the given JSON document is a
+// Kubernetes-style Grafana dashboard resource (apiVersion in the
+// dashboard.grafana.app group, kind=Dashboard, and an object-valued spec).
+func isK8sDashboardResource(doc *simplejson.Json) bool {
+	if doc == nil {
+		return false
+	}
+
+	apiVersion, _ := doc.Get("apiVersion").String()
+	kind, _ := doc.Get("kind").String()
+	spec, hasSpec := doc.CheckGet("spec")
+	if apiVersion == "" || kind != "Dashboard" || !hasSpec {
+		return false
+	}
+	if _, err := spec.Map(); err != nil {
+		return false
+	}
+
+	group, version, ok := strings.Cut(apiVersion, "/")
+	if !ok || group != dashboardsV1.APIGroup || version == "" {
+		return false
+	}
+	return true
 }
 
 func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqContext, dash *simplejson.Json) {

@@ -68,6 +68,13 @@ func TestFeatureToggleFiles(t *testing.T) {
 				generateOpenFeatureReact(t),
 			)
 		})
+
+		t.Run("react openfeature typings", func(t *testing.T) {
+			verifyAndGenerateFile(t,
+				"../../../packages/grafana-runtime/src/internal/openFeature/openfeature-types.gen.d.ts",
+				generateOpenFeatureReactTypings(),
+			)
+		})
 	})
 }
 
@@ -612,4 +619,53 @@ func generateOpenFeatureReact(t *testing.T) string {
 	}), "failed to execute openfeature template")
 
 	return buf.String()
+}
+
+func getReactTypingsKeys(keys []string) string {
+	if len(keys) == 0 {
+		return " never"
+	}
+
+	var s strings.Builder
+	for _, key := range keys {
+		s.WriteString("\n    | \"")
+		s.WriteString(key)
+		s.WriteString("\"")
+	}
+	return s.String()
+}
+
+func generateOpenFeatureReactTypings() string {
+	type ofFlagset struct {
+		Boolean []string
+		Number  []string
+		String  []string
+		Object  []string
+	}
+
+	flagSet := ofFlagset{}
+	for _, flag := range standardFeatureFlags {
+		if !flag.Generate.React {
+			continue
+		}
+		flagSet.Boolean = append(flagSet.Boolean, flag.Name)
+	}
+
+	return fmt.Sprintf(`/**
+ * NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
+ * To change feature flags, edit:
+ *  pkg/services/featuremgmt/registry.go
+ * Then run:
+ *  make gen-feature-toggles
+ */
+
+import "@openfeature/core";
+
+declare module "@openfeature/core" {
+  export type BooleanFlagKey =%s;
+  export type NumberFlagKey =%s;
+  export type StringFlagKey =%s;
+  export type ObjectFlagKey =%s;
+}
+`, getReactTypingsKeys(flagSet.Boolean), getReactTypingsKeys(flagSet.Number), getReactTypingsKeys(flagSet.String), getReactTypingsKeys(flagSet.Object))
 }

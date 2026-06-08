@@ -1,5 +1,5 @@
 import { type MonitoringLogger } from '@grafana/runtime';
-import { getAppPluginMetas, invalidateCache } from '@grafana/runtime/internal';
+import { getAppPluginMetas, invalidateCachedPromisesCache } from '@grafana/runtime/internal';
 import { mockLogger } from '@grafana/test-utils/unstable';
 
 import { getPluginExtensionRegistries } from './setup';
@@ -15,7 +15,7 @@ describe('getPluginExtensionRegistries', () => {
   let logger: MonitoringLogger;
   beforeEach(() => {
     jest.resetAllMocks();
-    invalidateCache();
+    invalidateCachedPromisesCache();
     getAppPluginMetasMock.mockResolvedValue([]);
     logger = mockLogger('grafana/runtime.utils.getCachedPromise');
   });
@@ -62,7 +62,7 @@ describe('getPluginExtensionRegistries', () => {
       {
         message: 'Some error',
         stack: expect.any(String),
-        key: 'initPluginExtensionRegistries',
+        key: expect.stringMatching(/^initPluginExtensionRegistries:-?\d+$/),
       }
     );
   });

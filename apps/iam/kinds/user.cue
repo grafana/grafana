@@ -35,6 +35,7 @@ userv0alpha1: userKind & {
 					}
 					items: [...#UserTeam]
 				}
+				responseMetadata: listMeta: true
 			}
 		}
 	}

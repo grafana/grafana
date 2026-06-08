@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 import { type SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { Stack, Switch } from '@grafana/ui';
@@ -14,6 +16,7 @@ export interface Props {
 }
 
 export const GraphPeriod = ({ refId, onChange, graphPeriod, variableOptionGroup }: Props) => {
+  const switchId = useId();
   return (
     <EditorRow>
       <EditorField
@@ -28,6 +31,7 @@ export const GraphPeriod = ({ refId, onChange, graphPeriod, variableOptionGroup 
       >
         <Stack gap={1}>
           <Switch
+            id={switchId}
             data-testid={`${refId}-switch-graph-period`}
             value={graphPeriod !== 'disabled'}
             onChange={(e) => onChange(e.currentTarget.checked ? '' : 'disabled')}

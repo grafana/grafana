@@ -11,9 +11,11 @@ import { default as AsyncCreatable } from 'react-select/async-creatable';
 import Creatable from 'react-select/creatable';
 
 import { type SelectableValue, toOption } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { useFieldContext } from '../Forms/FieldContext';
 import { Icon } from '../Icon/Icon';
 import { getPortalContainer } from '../Portal/Portal';
 
@@ -102,18 +104,18 @@ export function SelectBase<T, Rest = {}>({
   createOptionPosition = 'last',
   defaultOptions,
   defaultValue,
-  disabled = false,
+  disabled: disabledProp = false,
   filterOption,
   formatCreateLabel,
   getOptionLabel,
   getOptionValue,
   inputValue,
-  invalid,
+  invalid: invalidProp,
   isClearable = false,
   id,
   isLoading = false,
   isMulti = false,
-  inputId,
+  inputId: inputIdProp,
   isOpen,
   isOptionDisabled,
   isSearchable = true,
@@ -156,6 +158,11 @@ export function SelectBase<T, Rest = {}>({
 }: SelectBaseProps<T> & Rest) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
+
+  const fieldContext = useFieldContext();
+  const inputId = inputIdProp ?? fieldContext.id;
+  const disabled = disabledProp ?? fieldContext.disabled;
+  const invalid = invalidProp ?? fieldContext.invalid;
 
   const reactSelectRef = useRef<HTMLElement & { controlRef: HTMLElement }>(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
@@ -246,7 +253,7 @@ export function SelectBase<T, Rest = {}>({
 
   const commonSelectProps = {
     'aria-label': ariaLabel,
-    'data-testid': dataTestid,
+    'data-testid': dataTestid ?? selectors.components.Select.container,
     autoFocus,
     backspaceRemovesValue,
     blurInputOnSelect,

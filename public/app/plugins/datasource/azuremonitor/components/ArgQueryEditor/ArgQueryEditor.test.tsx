@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { mockComboboxRect } from '@grafana/test-utils';
+
 import { ARGScope } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
 import createMockDatasource from '../../mocks/datasource';
@@ -32,18 +34,7 @@ const defaultProps = {
 
 describe('ArgQueryEditor', () => {
   beforeAll(() => {
-    const mockGetBoundingClientRect = jest.fn(() => ({
-      width: 120,
-      height: 120,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-    }));
-
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: mockGetBoundingClientRect,
-    });
+    mockComboboxRect();
   });
   it('should render', async () => {
     render(<ArgQueryEditor {...defaultProps} />);

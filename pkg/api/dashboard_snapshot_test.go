@@ -157,7 +157,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 
 				assert.Equal(t, http.MethodGet, externalRequest.Method)
 				assert.Equal(t, ts.URL, fmt.Sprintf("http://%s", externalRequest.Host))
-				assert.Equal(t, "/", externalRequest.URL.EscapedPath())
+				assert.Equal(t, "/api/snapshots-delete/54321", externalRequest.URL.EscapedPath())
 			})
 	})
 
@@ -404,7 +404,8 @@ func setUpSnapshotTest(t *testing.T, userId int64, deleteUrl string) dashboardsn
 	}
 	if deleteUrl != "" {
 		res.External = true
-		res.ExternalDeleteURL = deleteUrl
+		// Stored URL must include a deleteKey path segment; the function rebuilds the path.
+		res.ExternalDeleteURL = deleteUrl + "/api/snapshots-delete/" + res.DeleteKey
 	}
 	dashSnapSvc.On("GetDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.GetDashboardSnapshotQuery")).Return(res, nil).Maybe()
 	dashSnapSvc.On("DeleteDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.DeleteDashboardSnapshotCommand")).Return(nil).Maybe()

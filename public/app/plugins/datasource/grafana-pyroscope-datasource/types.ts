@@ -18,18 +18,18 @@ export interface PyroscopeDataSourceOptions extends DataSourceJsonData {
   minStep?: string;
 }
 
-export type ProfileTypeQuery = {
+type ProfileTypeQuery = {
   type: 'profileType';
   refId: string;
 };
 
-export type LabelQuery = {
+type LabelQuery = {
   type: 'label';
   profileTypeId?: string;
   refId: string;
 };
 
-export type LabelValueQuery = {
+type LabelValueQuery = {
   type: 'labelValue';
   profileTypeId?: string;
   labelName?: string;

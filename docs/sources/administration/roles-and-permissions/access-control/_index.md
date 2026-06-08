@@ -16,9 +16,9 @@ weight: 120
 refs:
   api-rbac:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/access_control/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/access_control/
+      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/api-legacy/access_control/
   rbac-role-definitions:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/
@@ -103,7 +103,7 @@ refs:
 # Role-based access control (RBAC) overview
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com//docs/grafana-cloud).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud).
 {{< /admonition >}}
 
 Role-based access control (RBAC) provides a standardized way of granting, changing, and revoking access so that users can view and modify Grafana resources such as dashboards, reports, and administrative settings. RBAC extends the permissions of basic roles included in Grafana OSS, and enables more granular control of users’ actions.
