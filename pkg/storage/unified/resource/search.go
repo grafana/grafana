@@ -1093,6 +1093,8 @@ func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, 
 	if err != nil {
 		s.log.FromContext(ctx).Warn("failed to load open index stats, falling back to resource stats", "error", err)
 	} else if len(stats) > 0 {
+		// Do not apply initMinSize here: open index stats restore indexes that were recently open on this node,
+		// rather than discovering resources from storage.
 		s.log.FromContext(ctx).Info("using open index stats", "indexes", len(stats))
 		return stats, nil
 	} else {

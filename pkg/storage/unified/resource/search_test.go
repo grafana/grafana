@@ -229,7 +229,7 @@ func TestBuildIndexesUsesOpenIndexStats(t *testing.T) {
 		resourceStats: []ResourceStats{{NamespacedResource: NamespacedResource{Namespace: "fallback", Group: "group", Resource: "resource"}, Count: 50}},
 	}
 	search := &manifestSearchBackend{
-		stats: []ResourceStats{{NamespacedResource: key, Count: 0}},
+		stats: []ResourceStats{{NamespacedResource: key, Count: 5}},
 		ok:    true,
 	}
 	supplier := &TestDocumentBuilderSupplier{
@@ -250,7 +250,7 @@ func TestBuildIndexesUsesOpenIndexStats(t *testing.T) {
 	require.Zero(t, storage.statsCalls.Load())
 	require.Len(t, search.buildIndexCalls, 1)
 	require.Equal(t, key, search.buildIndexCalls[0].key)
-	require.Equal(t, int64(0), search.buildIndexCalls[0].size)
+	require.Equal(t, int64(5), search.buildIndexCalls[0].size)
 }
 
 func TestBuildIndexesFallsBackToResourceStats(t *testing.T) {
