@@ -577,12 +577,20 @@ func TestDryRunDeletePopulatesExisting(t *testing.T) {
 }
 
 func TestSkipsStrictValidation(t *testing.T) {
-	// Behaviour must be identical to the previous hardcoded dashboard check:
-	// only the dashboard resource is exempt from strict validation.
-	require.True(t, skipsStrictValidation(DashboardResource.GroupResource()),
-		"dashboard resource must be exempt from strict validation")
-	require.False(t, skipsStrictValidation(FolderResource.GroupResource()),
+	// Behaviour must be identical to the previous hardcoded dashboard check
+	// (f.GVR == DashboardResource): only the v1 dashboard GVR is exempt.
+	require.True(t, skipsStrictValidation(DashboardResource),
+		"v1 dashboard resource must be exempt from strict validation")
+	require.False(t, skipsStrictValidation(FolderResource),
 		"non-dashboard resources must use strict validation")
+	// The exemption is version-specific: v2 dashboards keep strict validation so
+	// their CUE schema is enforced by apiserver admission.
+	require.False(t, skipsStrictValidation(DashboardResourceV2),
+		"v2 dashboard resource must keep strict validation")
+	require.False(t, skipsStrictValidation(DashboardResourceV2alpha1),
+		"v2alpha1 dashboard resource must keep strict validation")
+	require.False(t, skipsStrictValidation(DashboardResourceV2beta1),
+		"v2beta1 dashboard resource must keep strict validation")
 }
 
 func TestParsedResource_DryRun_FieldValidation(t *testing.T) {
@@ -595,9 +603,14 @@ func TestParsedResource_DryRun_FieldValidation(t *testing.T) {
 		wantFieldValidation string
 	}{
 		{
-			name:                "dashboard resource is exempt and uses Ignore",
+			name:                "v1 dashboard resource is exempt and uses Ignore",
 			gvr:                 DashboardResource,
 			wantFieldValidation: "Ignore",
+		},
+		{
+			name:                "v2 dashboard resource is not exempt and uses Strict",
+			gvr:                 DashboardResourceV2,
+			wantFieldValidation: "Strict",
 		},
 		{
 			name:                "non-dashboard resource uses Strict",

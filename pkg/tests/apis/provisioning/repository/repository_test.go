@@ -932,14 +932,14 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 }
 
 // TestIntegrationProvisioning_DashboardStrictValidationExempted verifies the
-// strict-validation exemption end to end. Dashboards are written with
-// FieldValidation=Ignore (see resources.skipsStrictValidation), so a dashboard
+// strict-validation exemption end to end. The v1 dashboard is written with
+// FieldValidation=Ignore (see resources.skipsStrictValidation), so a v1 dashboard
 // file carrying an unknown field must still provision successfully — the unknown
 // field is dropped rather than rejected. Under FieldValidation=Strict the same
 // file is rejected with a "strict decoding error: unknown field" from the
-// apiserver, so removing the dashboard GroupResource from the exemption list
-// would make both the dry run and the sync below fail. That makes this test a
-// regression guard for the exemption, not just a happy-path check.
+// apiserver, so removing the v1 dashboard GVR from the exemption list would make
+// both the dry run and the sync below fail. That makes this test a regression
+// guard for the exemption, not just a happy-path check.
 func TestIntegrationProvisioning_DashboardStrictValidationExempted(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()

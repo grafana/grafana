@@ -34,20 +34,24 @@ type ParserFactory interface {
 	GetParser(ctx context.Context, repo repository.Reader) (Parser, error)
 }
 
-// strictValidationExemptions lists the GroupResources that receive
+// strictValidationExemptions lists the GroupVersionResources that receive
 // FieldValidation=Ignore on apiserver writes instead of the default Strict.
+//
+// The exemption is version-specific on purpose: only the legacy v1 dashboard is
+// exempt. Newer dashboard versions (v2*) must keep strict validation so their
+// CUE schema is enforced by apiserver admission.
 //
 // FIXME: the dashboard exemption is temporary while we improve validation.
 // New resources must be added here deliberately rather than relying on a
 // hardcoded equality check.
-var strictValidationExemptions = map[schema.GroupResource]struct{}{
-	DashboardResource.GroupResource(): {},
+var strictValidationExemptions = map[schema.GroupVersionResource]struct{}{
+	DashboardResource: {},
 }
 
-// skipsStrictValidation reports whether the given GroupResource is exempt from
-// strict field validation and should be written with FieldValidation=Ignore.
-func skipsStrictValidation(gr schema.GroupResource) bool {
-	_, ok := strictValidationExemptions[gr]
+// skipsStrictValidation reports whether the given GroupVersionResource is exempt
+// from strict field validation and should be written with FieldValidation=Ignore.
+func skipsStrictValidation(gvr schema.GroupVersionResource) bool {
+	_, ok := strictValidationExemptions[gvr]
 	return ok
 }
 
@@ -325,7 +329,7 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 	}
 
 	fieldValidation := "Strict"
-	if f.SkipStrictValidation || skipsStrictValidation(f.GVR.GroupResource()) {
+	if f.SkipStrictValidation || skipsStrictValidation(f.GVR) {
 		fieldValidation = "Ignore"
 	}
 
@@ -407,7 +411,7 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	identitySpan.End()
 
 	fieldValidation := "Strict"
-	if f.SkipStrictValidation || skipsStrictValidation(f.GVR.GroupResource()) {
+	if f.SkipStrictValidation || skipsStrictValidation(f.GVR) {
 		fieldValidation = "Ignore"
 	}
 
