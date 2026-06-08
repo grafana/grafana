@@ -307,6 +307,10 @@ func (f *fakeVector) SetLatestRV(_ context.Context, rv int64) error {
 func (f *fakeVector) ListIncompleteBackfillJobs(context.Context, string) ([]vector.BackfillJob, error) {
 	return nil, nil
 }
+func (f *fakeVector) EnsureResourcePartition(context.Context, string) error { return nil }
+func (f *fakeVector) CreateBackfillJob(context.Context, string, string, int64) error {
+	return nil
+}
 func (f *fakeVector) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {
 	return nil
 }

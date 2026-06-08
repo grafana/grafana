@@ -103,6 +103,10 @@ func (f *fakeVectorBackend) TryAcquireReconcilerLock(context.Context) (func(), b
 func (f *fakeVectorBackend) ListIncompleteBackfillJobs(context.Context, string) ([]vector.BackfillJob, error) {
 	return nil, nil
 }
+func (f *fakeVectorBackend) EnsureResourcePartition(context.Context, string) error { return nil }
+func (f *fakeVectorBackend) CreateBackfillJob(_ context.Context, _, _ string, _ int64) error {
+	return nil
+}
 func (f *fakeVectorBackend) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {
 	return nil
 }
