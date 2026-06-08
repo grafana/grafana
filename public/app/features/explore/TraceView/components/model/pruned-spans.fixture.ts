@@ -4,6 +4,11 @@
 // TraceView test pattern. Deterministic (handcrafted) rather than Chance.js-generated,
 // so assertions on extracted aggregation values are stable.
 //
+// These are module-level singletons and transformTraceData() mutates its input in place.
+// Callers MUST clone (e.g. structuredClone) before transforming, or reuse across tests
+// will share mutated state. Clone the raw fixture, never a transformed trace: post-transform
+// spans hold circular `ref.span` references that break structuredClone.
+//
 // IMPORTANT unit split:
 //   - span.startTime / span.duration are MICROSECONDS (Grafana trace model; see types/trace.ts).
 //   - aggregation.duration_*_ns tag values are NANOSECONDS (raw processor attribute values).

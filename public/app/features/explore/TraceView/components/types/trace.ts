@@ -71,8 +71,9 @@ export type TraceSpanData = {
  * outliers as siblings of the summary span. See the spanpruningprocessor:
  * https://github.com/grafana/opentelemetry-collector-extras/tree/main/processor/spanpruningprocessor
  *
- * Present only on spans that carry at least one `aggregation.*` tag; normal
- * spans leave `TraceSpan.aggregation` undefined.
+ * Present only on summary spans (`aggregation.is_summary`) and preserved-outlier
+ * spans (`aggregation.is_preserved_outlier`); all other spans leave
+ * `TraceSpan.aggregation` undefined, even if they carry other `aggregation.*` tags.
  *
  * Durations are kept in raw nanoseconds (the processor's `duration_*_ns`
  * units) rather than converted to the microseconds used by `startTime` /

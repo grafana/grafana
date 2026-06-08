@@ -197,7 +197,7 @@ describe('transformTraceData()', () => {
 
 describe('transformTraceData() pruned span detection', () => {
   it('detects a summary span and extracts its default aggregation values', () => {
-    const trace = transformTraceData(summaryDefaultsOnly)!;
+    const trace = transformTraceData(structuredClone(summaryDefaultsOnly))!;
     const summary = spanById(trace, 'summ00000000a101');
 
     expect(summary.aggregation).toEqual({
@@ -213,17 +213,17 @@ describe('transformTraceData() pruned span detection', () => {
   });
 
   it('leaves normal spans untouched (aggregation undefined)', () => {
-    const trace = transformTraceData(summaryDefaultsOnly)!;
+    const trace = transformTraceData(structuredClone(summaryDefaultsOnly))!;
     expect(spanById(trace, 'root00000000a101').aggregation).toBeUndefined();
   });
 
   it('extracts the conditional median when present', () => {
-    const trace = transformTraceData(summaryWithConditionalAttrs)!;
+    const trace = transformTraceData(structuredClone(summaryWithConditionalAttrs))!;
     expect(spanById(trace, 'summ00000000b201').aggregation?.durationMedianNs).toBe(9_000_000);
   });
 
   it('detects a summary span carrying only default attributes', () => {
-    const trace = transformTraceData(summaryNoOptionalAttrs)!;
+    const trace = transformTraceData(structuredClone(summaryNoOptionalAttrs))!;
     const summary = spanById(trace, 'summ00000000c301');
 
     expect(summary.aggregation?.isSummary).toBe(true);
@@ -232,7 +232,7 @@ describe('transformTraceData() pruned span detection', () => {
   });
 
   it('detects preserved outlier spans and links them back to the summary', () => {
-    const trace = transformTraceData(summaryWithPreservedOutliers)!;
+    const trace = transformTraceData(structuredClone(summaryWithPreservedOutliers))!;
 
     expect(spanById(trace, 'summ00000000d401').aggregation?.isSummary).toBe(true);
 
@@ -247,7 +247,7 @@ describe('transformTraceData() pruned span detection', () => {
   });
 
   it('detects summary and outlier spans in a mixed trace while leaving normal spans unaffected', () => {
-    const trace = transformTraceData(mixedTrace)!;
+    const trace = transformTraceData(structuredClone(mixedTrace))!;
 
     expect(spanById(trace, 'norm00000000e501').aggregation).toBeUndefined();
     expect(spanById(trace, 'norm00000000e502').aggregation).toBeUndefined();
@@ -260,7 +260,7 @@ describe('transformTraceData() pruned span detection', () => {
   });
 
   it('extracts aggregation values from a real-data-derived summary span', () => {
-    const trace = transformTraceData(summaryAsObservedInOps)!;
+    const trace = transformTraceData(structuredClone(summaryAsObservedInOps))!;
     const summary = spanById(trace, 'a1aggsamplerpub1');
 
     expect(summary.aggregation).toEqual({
