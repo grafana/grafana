@@ -229,6 +229,27 @@ describe('provisioning data mapping', () => {
       expect(spec.commit).toBeUndefined();
     });
 
+    it('writes enforceTemplate to spec without a message template', () => {
+      const formData = makeFormData('github');
+      formData.commit = { enforceTemplate: true };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).toEqual({ enforceTemplate: true });
+    });
+
+    it('writes both message template and enforceTemplate to spec', () => {
+      const formData = makeFormData('github');
+      formData.commit = { singleResourceMessageTemplate: 'feat: {{title}}', enforceTemplate: true };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).toEqual({ singleResourceMessageTemplate: 'feat: {{title}}', enforceTemplate: true });
+    });
+
+    it('omits commit when template is whitespace-only and enforce is false', () => {
+      const formData = makeFormData('github');
+      formData.commit = { singleResourceMessageTemplate: '   ', enforceTemplate: false };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).toBeUndefined();
+    });
+
     it('reads commit from spec to form data', () => {
       const spec: RepositorySpec = {
         type: 'github',
@@ -236,10 +257,161 @@ describe('provisioning data mapping', () => {
         sync: baseSync,
         workflows: [],
         github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
-        commit: { singleResourceMessageTemplate: 'feat: {{title}}' },
+        commit: { singleResourceMessageTemplate: 'feat: {{title}}', enforceTemplate: true },
       };
       const data = specToData(spec);
       expect(data.commit?.singleResourceMessageTemplate).toBe('feat: {{title}}');
+      expect(data.commit?.enforceTemplate).toBe(true);
+    });
+  });
+
+  describe('branch options', () => {
+    it('writes nameTemplate to spec when provided', () => {
+      const formData = makeFormData('github');
+      formData.branchOptions = { nameTemplate: 'grafana/{{action}}-{{title}}' };
+      const spec = dataToSpec(formData);
+      expect(spec.branch?.nameTemplate).toBe('grafana/{{action}}-{{title}}');
+    });
+
+    it('trims surrounding whitespace before writing to spec', () => {
+      const formData = makeFormData('github');
+      formData.branchOptions = { nameTemplate: '  grafana/{{title}}  ' };
+      const spec = dataToSpec(formData);
+      expect(spec.branch?.nameTemplate).toBe('grafana/{{title}}');
+    });
+
+    it('writes enforceTemplate to spec without a name template', () => {
+      const formData = makeFormData('github');
+      formData.branchOptions = { enforceTemplate: true };
+      const spec = dataToSpec(formData);
+      expect(spec.branch).toEqual({ enforceTemplate: true });
+    });
+
+    it('writes both name template and enforceTemplate to spec', () => {
+      const formData = makeFormData('github');
+      formData.branchOptions = { nameTemplate: 'grafana/{{title}}', enforceTemplate: true };
+      const spec = dataToSpec(formData);
+      expect(spec.branch).toEqual({ nameTemplate: 'grafana/{{title}}', enforceTemplate: true });
+    });
+
+    it('omits branch options when name template is whitespace-only and enforce is false', () => {
+      const formData = makeFormData('github');
+      formData.branchOptions = { nameTemplate: '   ', enforceTemplate: false };
+      const spec = dataToSpec(formData);
+      expect(spec.branch).toBeUndefined();
+    });
+
+    it('omits branch options from spec when not set', () => {
+      const spec = dataToSpec(makeFormData('github'));
+      expect(spec.branch).toBeUndefined();
+    });
+
+    it('reads branch options from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        branch: { nameTemplate: 'grafana/{{title}}', enforceTemplate: true },
+      };
+      const data = specToData(spec);
+      expect(data.branchOptions?.nameTemplate).toBe('grafana/{{title}}');
+      expect(data.branchOptions?.enforceTemplate).toBe(true);
+    });
+
+    it('writes authorName and authorEmail to spec when provided', () => {
+      const formData = makeFormData('github');
+      formData.commit = { authorName: 'Jane Doe', authorEmail: 'jane@example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.authorName).toBe('Jane Doe');
+      expect(spec.commit?.authorEmail).toBe('jane@example.com');
+    });
+
+    it('trims author fields before writing to spec', () => {
+      const formData = makeFormData('github');
+      formData.commit = { authorName: '  Jane Doe  ', authorEmail: '  jane@example.com  ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.authorName).toBe('Jane Doe');
+      expect(spec.commit?.authorEmail).toBe('jane@example.com');
+    });
+
+    it('omits author fields from spec when whitespace-only', () => {
+      const formData = makeFormData('github');
+      formData.commit = { authorName: '   ', authorEmail: '   ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).toBeUndefined();
+    });
+
+    it('writes only the author fields that are set', () => {
+      const formData = makeFormData('github');
+      formData.commit = { authorName: 'Jane Doe' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.authorName).toBe('Jane Doe');
+      expect(spec.commit).not.toHaveProperty('authorEmail');
+      expect(spec.commit).not.toHaveProperty('singleResourceMessageTemplate');
+    });
+
+    it('reads author fields from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        commit: { authorName: 'Jane Doe', authorEmail: 'jane@example.com' },
+      };
+      const data = specToData(spec);
+      expect(data.commit?.authorName).toBe('Jane Doe');
+      expect(data.commit?.authorEmail).toBe('jane@example.com');
+    });
+
+    it('writes signingFormat to spec when signing is configured', () => {
+      const formData = makeFormData('github');
+      formData.signingFormat = 'ssh';
+      formData.commit = { authorName: 'Jane Doe', authorEmail: 'jane@example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.signingFormat).toBe('ssh');
+    });
+
+    it('omits signingFormat when format is none', () => {
+      const formData = makeFormData('github');
+      formData.signingFormat = 'none';
+      formData.commit = { authorName: 'Jane Doe', authorEmail: 'jane@example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).not.toHaveProperty('signingFormat');
+    });
+
+    it('omits signingFormat when no author is set', () => {
+      const formData = makeFormData('github');
+      formData.signingFormat = 'ssh';
+      const spec = dataToSpec(formData);
+      expect(spec.commit).toBeUndefined();
+    });
+
+    it('reads signingFormat from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        commit: { authorName: 'Jane Doe', authorEmail: 'jane@example.com', signingFormat: 'smime' },
+      };
+      const data = specToData(spec);
+      expect(data.signingFormat).toBe('smime');
+    });
+
+    it('defaults signingFormat to none when spec has no signing format', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+      };
+      const data = specToData(spec);
+      expect(data.signingFormat).toBe('none');
     });
   });
 

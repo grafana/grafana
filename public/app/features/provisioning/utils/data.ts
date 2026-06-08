@@ -1,6 +1,58 @@
-import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { type BranchOptions, type CommitOptions, type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type RepositoryFormData } from '../types';
+
+// Build the spec-level commit options from the form, omitting empty values so we
+// don't persist blank templates. Returns undefined when nothing is configured.
+const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined => {
+  const singleResourceMessageTemplate = data.commit?.singleResourceMessageTemplate?.trim();
+  const enforceTemplate = data.commit?.enforceTemplate;
+  const authorName = data.commit?.authorName?.trim();
+  const authorEmail = data.commit?.authorEmail?.trim();
+  const signingFormat = data.signingFormat && data.signingFormat !== 'none' ? data.signingFormat : undefined;
+
+  if (!singleResourceMessageTemplate && !enforceTemplate && !authorName && !authorEmail) {
+    return undefined;
+  }
+
+  const commit: CommitOptions = {};
+  if (singleResourceMessageTemplate) {
+    commit.singleResourceMessageTemplate = singleResourceMessageTemplate;
+  }
+  if (enforceTemplate) {
+    commit.enforceTemplate = enforceTemplate;
+  }
+  if (authorName) {
+    commit.authorName = authorName;
+  }
+  if (authorEmail) {
+    commit.authorEmail = authorEmail;
+  }
+  if (signingFormat && (authorName || authorEmail)) {
+    commit.signingFormat = signingFormat;
+  }
+  return commit;
+};
+
+// Build the spec-level branch naming options from the form, omitting empty
+// values. Returns undefined when nothing is configured.
+const buildBranchOptions = (data: RepositoryFormData): BranchOptions | undefined => {
+  const nameTemplate = data.branchOptions?.nameTemplate?.trim();
+  const enforceTemplate = data.branchOptions?.enforceTemplate;
+
+  if (!nameTemplate && !enforceTemplate) {
+    return undefined;
+  }
+
+  const branch: BranchOptions = {};
+  if (nameTemplate) {
+    branch.nameTemplate = nameTemplate;
+  }
+  if (enforceTemplate) {
+    branch.enforceTemplate = enforceTemplate;
+  }
+  return branch;
+};
 
 export const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflows'] => {
   if (data.readOnly) {
@@ -23,9 +75,14 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
     workflows: getWorkflows(data),
   };
 
-  const singleResourceMessageTemplate = data.commit?.singleResourceMessageTemplate?.trim();
-  if (singleResourceMessageTemplate) {
-    spec.commit = { singleResourceMessageTemplate };
+  const commit = buildCommitOptions(data);
+  if (commit) {
+    spec.commit = commit;
+  }
+
+  const branch = buildBranchOptions(data);
+  if (branch) {
+    spec.branch = branch;
   }
 
   if (data.webhook?.baseUrl) {
@@ -86,6 +143,7 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     ...remoteConfig,
     ...spec.local,
     branch: remoteConfig?.branch || '',
+    branchOptions: spec.branch,
     url: remoteConfig?.url || '',
     tokenUser: tokenUser || '',
     generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
@@ -93,6 +151,7 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     prWorkflow: spec.workflows.includes('branch'),
     enablePushToConfiguredBranch: spec.workflows.includes('write'),
     connectionName: spec.connection?.name,
+    signingFormat: spec.commit?.signingFormat ?? 'none',
   });
 };
 

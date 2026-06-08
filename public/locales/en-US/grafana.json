@@ -6630,8 +6630,8 @@
     "version-history-comparison": {
       "button-restore": "Restore to version {{version}}",
       "label-view-json-diff": "View JSON diff",
-      "new-updated-by": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}",
-      "old-updated-by": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}"
+      "new-updated-by": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}",
+      "old-updated-by": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}"
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Toggle selection of version {{version}}",
@@ -7867,8 +7867,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "View JSON diff",
-      "new-version-updated": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}",
-      "old-version-updated": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}"
+      "new-version-updated": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}",
+      "old-version-updated": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}"
     },
     "version-history-header": {
       "compare-versions": "Comparing {{baseVersion}} <3></3> {{newVersion}}",
@@ -10234,7 +10234,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Help <1></1>",
-      "access-help-details": "Access mode controls how requests to the data source will be handled.<strong><i>Server</i></strong> should be the preferred way if nothing else is stated.",
+      "access-help-details": "Access mode controls how requests to the data source will be handled.<1><i>Server</i></1> should be the preferred way if nothing else is stated.",
       "access-help-title": "Access help",
       "access-label": "Access",
       "allowed-cookies": "Allowed cookies",
@@ -13281,6 +13281,14 @@
       "update-configuration-action": "View configuration docs",
       "upgrade-action": "Upgrade account"
     },
+    "branch-options": {
+      "description-enforce-template": "Make the branch name read-only in save dialogs so users cannot override the generated name.",
+      "description-name-template": "Template for the branch created by the branch (pull request) workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}, {{randomVar}} (a short random token to avoid collisions). The result is sanitised into a valid Git branch name. Leave empty to use the auto-generated name.",
+      "label-branch-options": "Branch options (advanced)",
+      "label-enforce-template": "Enforce branch name template",
+      "label-name-template": "Branch name template",
+      "placeholder-name-template": "grafana/{{actionVar}}-{{titleVar}}-{{randomVar}}"
+    },
     "cloud-info-box": {
       "body": "Skip the setup and get Git Sync fully managed and hosted on Grafana Cloud with the <2>free-forever Grafana Cloud plan</2>.",
       "title": "You can also use Git Sync on Grafana Cloud"
@@ -13299,6 +13307,11 @@
       "folder-move-default": "Move folder: {{title}}",
       "folder-rename-default": "Rename folder: {{title}}",
       "folder-update-default": "Save folder: {{title}}"
+    },
+    "commit-options": {
+      "description-enforce-template": "Pre-fill the commit message in save dialogs from the template above and make it read-only. The \"Grafana-saved-by\" trailer is always appended.",
+      "label-commit-options": "Commit options (advanced)",
+      "label-enforce-template": "Enforce commit message template"
     },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
@@ -13586,6 +13599,9 @@
       "url-description": "The GitLab repository URL",
       "url-pattern": "Must be a valid repository URL (https://hostname/group/repository or https://hostname/group/subgroup/repository)",
       "url-required": "Repository URL is required"
+    },
+    "gpg-signing-key-info": {
+      "description": "To enable verified commits, <2>set up commit signing</2> for your account."
     },
     "history-view": {
       "not-found": "Not found"
@@ -13895,11 +13911,25 @@
     "shared": {
       "branch-description": "The branch to use for provisioning",
       "branch-label": "Branch",
+      "commit-author-email-description": "Must match the signing key identity.",
+      "commit-author-email-label": "Commit author email",
+      "commit-author-email-placeholder": "noreply@grafana.com",
+      "commit-author-name-description": "Used as the commit author and committer.",
+      "commit-author-name-label": "Commit author name",
+      "commit-author-name-placeholder": "Grafana",
+      "commit-author-required": "Required when a signing key is set.",
       "path-description": "Optional. Path to the subdirectory with the resources you want to sync.",
       "path-label": "Path",
       "progress-bar": {
         "aria-label": "Progress Bar"
       },
+      "signing-format-description": "Format of the signing key.",
+      "signing-format-label": "Signing format",
+      "signing-format-none": "None",
+      "signing-key-description": "Private key used to sign commits. No passphrase.",
+      "signing-key-label": "Signing key",
+      "smime-certificate-description": "X.509 certificate paired with the signing key.",
+      "smime-certificate-label": "S/MIME certificate",
       "token-user-label": "Username",
       "url-label": "Repository URL",
       "url-pattern": "Must be a valid repository URL (https://hostname/owner/repo)"
@@ -16647,7 +16677,7 @@
       "message": "No users found"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Your session token was automatically revoked because you have reached <strong>the maximum number of {{numSessions}} concurrent sessions</strong> for your account.",
+      "auto-revoked": "Your session token was automatically revoked because you have reached <2>the maximum number of {{numSessions}} concurrent sessions</2> for your account.",
       "resume-message": "<strong>To resume your session, sign in again.</strong>Contact your administrator or visit the license page to review your quota if you are repeatedly signed out automatically.",
       "sign-in": "Sign in",
       "title-you-have-been-automatically-signed-out": "You have been automatically signed out"

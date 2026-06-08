@@ -1932,6 +1932,10 @@ export type JobList = {
   metadata?: ListMeta;
 };
 export type SecureValues = {
+  /** Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingFormat. When unset, commits are unsigned. */
+  signingKey?: InlineSecureValue;
+  /** X.509 certificate paired with SigningKey when signingFormat is "smime". Unused for the gpg and ssh formats. */
+  smimeCertificate?: InlineSecureValue;
   /** Token used to connect the configured repository */
   token?: InlineSecureValue;
   /** Some webhooks (including github) require a secret key value */
@@ -1956,8 +1960,19 @@ export type BranchOptions = {
   nameTemplate?: string;
 };
 export type CommitOptions = {
+  /** Email used as the commit author and committer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to "noreply@grafana.com". */
+  authorEmail?: string;
+  /** Name used as the commit author and committer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to "Grafana". */
+  authorName?: string;
   /** When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. The Grafana-saved-by trailer is always appended regardless of this setting. */
   enforceTemplate?: boolean;
+  /** Format of the key in secure.signingKey. One of "gpg", "ssh", or "smime". When empty, defaults to "gpg".
+    
+    Possible enum values:
+     - `"gpg"`
+     - `"smime"`
+     - `"ssh"` */
+  signingFormat?: 'gpg' | 'smime' | 'ssh';
   /** Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}, {{userName}}, {{userLogin}}, {{userEmail}}. When empty, a built-in default is used (e.g. "Save dashboard: <title>"). */
   singleResourceMessageTemplate?: string;
 };
