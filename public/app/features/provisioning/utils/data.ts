@@ -28,6 +28,9 @@ const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined
   }
   if (signingFormat && (authorName || authorEmail)) {
     commit.signingFormat = signingFormat;
+    if (signingFormat === 'smime' && data.smimeCertificate) {
+      commit.smimeCertificate = data.smimeCertificate;
+    }
   }
   return commit;
 };
@@ -148,6 +151,7 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     enablePushToConfiguredBranch: spec.workflows.includes('write'),
     connectionName: spec.connection?.name,
     signingFormat: spec.commit?.signingFormat ?? 'none',
+    smimeCertificate: spec.commit?.smimeCertificate ?? '',
   });
 };
 

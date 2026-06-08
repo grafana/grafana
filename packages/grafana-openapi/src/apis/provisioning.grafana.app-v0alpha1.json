@@ -3879,6 +3879,10 @@
           "singleResourceMessageTemplate": {
             "description": "Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}, {{userName}}, {{userLogin}}, {{userEmail}}. When empty, a built-in default is used (e.g. \"Save dashboard: <title>\").",
             "type": "string"
+          },
+          "smimeCertificate": {
+            "description": "PEM-encoded X.509 certificate paired with secure.signingKey when signingFormat is \"smime\". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats.",
+            "type": "string"
           }
         }
       },
@@ -5951,15 +5955,6 @@
         "properties": {
           "signingKey": {
             "description": "Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingFormat. When unset, commits are unsigned.",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/InlineSecureValue"
-              }
-            ]
-          },
-          "smimeCertificate": {
-            "description": "X.509 certificate paired with SigningKey when signingFormat is \"smime\". Unused for the gpg and ssh formats.",
             "default": {},
             "allOf": [
               {

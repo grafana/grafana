@@ -11,6 +11,7 @@ import {
   SecretTextArea,
   Stack,
   Text,
+  TextArea,
   TextLink,
 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
@@ -42,7 +43,6 @@ export const FinishStep = memo(function FinishStep() {
   } = useFormContext<WizardFormData>();
   const settings = useGetFrontendSettingsQuery();
   const [signingKeyConfigured, setSigningKeyConfigured] = useState(false);
-  const [smimeCertConfigured, setSmimeCertConfigured] = useState(false);
 
   const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
   const signingKeyValue = watch('repository.signingKey');
@@ -208,7 +208,6 @@ export const FinishStep = memo(function FinishStep() {
                           setValue('repository.signingKey', '');
                           setValue('repository.smimeCertificate', '');
                           setSigningKeyConfigured(false);
-                          setSmimeCertConfigured(false);
                         }}
                       />
                     )}
@@ -261,18 +260,12 @@ export const FinishStep = memo(function FinishStep() {
                         name="repository.smimeCertificate"
                         control={control}
                         render={({ field: { ref, ...field } }) => (
-                          <SecretTextArea
+                          <TextArea
                             {...field}
                             id="smimeCertificate"
                             invalid={!!errors?.repository?.smimeCertificate}
                             placeholder={gitFields.smimeCertificateConfig?.placeholder}
-                            isConfigured={smimeCertConfigured}
-                            onReset={() => {
-                              setValue('repository.smimeCertificate', '');
-                              setSmimeCertConfigured(false);
-                            }}
                             rows={8}
-                            grow
                           />
                         )}
                       />

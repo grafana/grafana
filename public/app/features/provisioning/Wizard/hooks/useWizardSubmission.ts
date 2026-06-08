@@ -17,8 +17,7 @@ export interface UseWizardSubmissionParams {
   submitData: (
     spec: RepositorySpec,
     token?: string,
-    signingKey?: string,
-    smimeCertificate?: string
+    signingKey?: string
   ) => Promise<{ data?: { metadata?: { name?: string } }; error?: unknown }>;
   setStepStatusInfo: (info: StepStatusInfo) => void;
   onSuccess: () => void;
@@ -75,10 +74,8 @@ export function useWizardSubmission({
         const signingFormat = formData.repository.signingFormat;
         const signing = signingFormat && signingFormat !== 'none';
         const signingKey = signing ? formData.repository.signingKey : undefined;
-        const smimeCertificate =
-          signing && signingFormat === 'smime' ? formData.repository.smimeCertificate : undefined;
 
-        const rsp = await submitData(spec, token, signingKey, smimeCertificate);
+        const rsp = await submitData(spec, token, signingKey);
         if (rsp.error) {
           if (isFetchError(rsp.error)) {
             setStepStatusInfo({

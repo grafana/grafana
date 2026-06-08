@@ -72,21 +72,6 @@ describe('useCreateOrUpdateRepository', () => {
     expect(captured.create?.secure).toEqual({ signingKey: { create: 'PGP-KEY' } });
   });
 
-  it('includes signingKey and smimeCertificate in secure payload when provided', async () => {
-    const captured = captureRequests();
-    const { result } = renderHook(() => useCreateOrUpdateRepository(), { wrapper: getWrapper({}) });
-
-    await act(async () => {
-      await result.current[0](baseSpec, undefined, 'SMIME-KEY', 'SMIME-CERT');
-    });
-
-    await waitFor(() => expect(captured.create).toBeDefined());
-    expect(captured.create?.secure).toEqual({
-      signingKey: { create: 'SMIME-KEY' },
-      smimeCertificate: { create: 'SMIME-CERT' },
-    });
-  });
-
   it('includes both token and signingKey when both provided', async () => {
     const captured = captureRequests();
     const { result } = renderHook(() => useCreateOrUpdateRepository(), { wrapper: getWrapper({}) });

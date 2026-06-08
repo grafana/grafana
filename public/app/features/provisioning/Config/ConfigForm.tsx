@@ -19,6 +19,7 @@ import {
   SecretTextArea,
   Stack,
   Switch,
+  TextArea,
 } from '@grafana/ui';
 import {
   type Repository,
@@ -89,7 +90,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const isEdit = Boolean(repositoryName);
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const [signingKeyConfigured, setSigningKeyConfigured] = useState(Boolean(data?.secure?.signingKey?.name));
-  const [smimeCertConfigured, setSmimeCertConfigured] = useState(Boolean(data?.secure?.smimeCertificate?.name));
   const signingKeyValue = watch('signingKey');
   const signingFormat = watch('signingFormat') ?? 'none';
   const signingEnabled = signingFormat !== 'none';
@@ -152,12 +152,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
     try {
       const spec = dataToSpec(form);
       const signing = form.signingFormat && form.signingFormat !== 'none';
-      await submitData(
-        spec,
-        form.token,
-        signing ? form.signingKey : undefined,
-        signing && form.signingFormat === 'smime' ? form.smimeCertificate : undefined
-      );
+      await submitData(spec, form.token, signing ? form.signingKey : undefined);
     } catch (err) {
       if (isFetchError(err)) {
         const fieldErrors = getConfigFormErrors(err.data);
@@ -466,7 +461,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
                             setValue('signingKey', '');
                             setValue('smimeCertificate', '');
                             setSigningKeyConfigured(false);
-                            setSmimeCertConfigured(false);
                           }}
                         />
                       )}
@@ -519,18 +513,12 @@ export function ConfigForm({ data }: ConfigFormProps) {
                           name="smimeCertificate"
                           control={control}
                           render={({ field: { ref, ...field } }) => (
-                            <SecretTextArea
+                            <TextArea
                               {...field}
                               id="smimeCertificate"
                               invalid={!!errors.smimeCertificate}
                               placeholder={gitFields.smimeCertificateConfig?.placeholder}
-                              isConfigured={smimeCertConfigured}
-                              onReset={() => {
-                                setValue('smimeCertificate', '');
-                                setSmimeCertConfigured(false);
-                              }}
                               rows={8}
-                              grow
                             />
                           )}
                         />
