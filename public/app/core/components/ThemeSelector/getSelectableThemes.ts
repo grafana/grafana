@@ -11,13 +11,11 @@ export function getSelectableThemes() {
     allowedExtraThemes.push('tritanopia_light');
   }
 
-  if (config.featureToggles.grafanaconThemes) {
-    allowedExtraThemes.push('desertbloom');
-    allowedExtraThemes.push('gildedgrove');
-    allowedExtraThemes.push('sapphiredusk');
-    allowedExtraThemes.push('tron');
-    allowedExtraThemes.push('gloom');
-  }
+  allowedExtraThemes.push('desertbloom');
+  allowedExtraThemes.push('gildedgrove');
+  allowedExtraThemes.push('sapphiredusk');
+  allowedExtraThemes.push('tron');
+  allowedExtraThemes.push('gloom');
 
   return getBuiltInThemes(allowedExtraThemes);
 }
