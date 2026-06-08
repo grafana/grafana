@@ -30,7 +30,7 @@ export function DataSourceLoadError({ dataSourceRights, onDelete, notFound, erro
           ) : (
             <Alert
               severity="error"
-              title={t('datasources.data-source-load-error.load-error-title', errorMsg || 'Error loading plugin')}
+              title={errorMsg ?? t('datasources.data-source-load-error.load-error-title', 'Error loading plugin')}
             >
               <Trans i18nKey="datasources.data-source-load-error.check-updates">
                 An unknown error occurred while loading the plugin. Please check for updates.
