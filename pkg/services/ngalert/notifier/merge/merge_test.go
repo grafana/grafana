@@ -394,7 +394,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		require.NoError(t, err)
 		route := mcfg.Route
 		RenameResourceUsagesInRoutes([]*v1.Route{route}, renames)
-		inhibitRules, err := BuildManagedInhibitionRules(identifier, mcfg.InhibitRules)
+		inhibitRules, err := BuildManagedInhibitionRules(identifier, mcfg.InhibitRules, v1.Provenance(models.ProvenanceConvertedPrometheus))
 		require.NoError(t, err)
 		return v1.ManagedRoutes{identifier: route}, inhibitRules
 	}
@@ -428,7 +428,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should merge all resources, no renames", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		result, err := MergeExtraConfig(context.Background(), &input)
+		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.NoError(t, err)
 
 		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirConfig, RenameResources{})
@@ -444,7 +444,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should populate intervals by defaults", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirNoIntervals)
-		result, err := MergeExtraConfig(context.Background(), &input)
+		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.NoError(t, err)
 
 		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirNoIntervals, RenameResources{})
@@ -460,7 +460,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should rename receivers and refactor usages", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirWithExtraReceiver)
-		result, err := MergeExtraConfig(context.Background(), &input)
+		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.NoError(t, err)
 
 		renames := RenameResources{Receivers: map[string]string{"grafana-default-email": "grafana-default-email" + identifier}}
@@ -488,7 +488,7 @@ func TestMergeExtraConfig(t *testing.T) {
 			})
 		})
 		input := withExtra(t, grafana, fullMimirWithOnlyExtraReceiver)
-		result, err := MergeExtraConfig(context.Background(), &input)
+		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.NoError(t, err)
 
 		renames := RenameResources{Receivers: map[string]string{"grafana-default-email": "grafana-default-email" + identifier + "_01"}}
@@ -514,7 +514,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		// fullMimirSwappedIntervals has mute_time_intervals=[ti-1] and time_intervals=[ti-2, mti-1],
 		// intentionally swapping names to verify uniqueness is enforced across both fields.
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirSwappedIntervals)
-		result, err := MergeExtraConfig(context.Background(), &input)
+		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.NoError(t, err)
 
 		renames := RenameResources{TimeIntervals: map[string]string{"ti-1": "ti-1" + identifier, "mti-1": "mti-1" + identifier}}
@@ -544,14 +544,14 @@ func TestMergeExtraConfig(t *testing.T) {
 	t.Run("should not modify the base Grafana config", func(t *testing.T) {
 		g := load(t, fullGrafanaConfig)
 		input := withExtra(t, g, fullMimirConfig)
-		_, err := MergeExtraConfig(context.Background(), &input)
+		_, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.NoError(t, err)
 		assert.Equal(t, load(t, fullGrafanaConfig), g)
 	})
 
 	t.Run("should return base config unchanged if no extra configs", func(t *testing.T) {
 		input := v1.AMConfigV1{AlertmanagerConfig: *load(t, fullGrafanaConfig)}
-		result, err := MergeExtraConfig(context.Background(), &input)
+		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.NoError(t, err)
 		assert.Equal(t, input, result.Config)
 	})
@@ -560,14 +560,14 @@ func TestMergeExtraConfig(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
 			e.Identifier = ""
 		})
-		_, err := MergeExtraConfig(context.Background(), &input)
+		_, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.ErrorContains(t, err, "identifier is required")
 	})
 
 	t.Run("should fail if identifier conflicts with existing managed route", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
 		input.ManagedRoutes = v1.ManagedRoutes{identifier: nil}
-		_, err := MergeExtraConfig(context.Background(), &input)
+		_, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.ErrorContains(t, err, identifier)
 	})
 
@@ -575,13 +575,13 @@ func TestMergeExtraConfig(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
 			e.Identifier = models.DefaultRoutingTreeName
 		})
-		_, err := MergeExtraConfig(context.Background(), &input)
+		_, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.ErrorContains(t, err, models.DefaultRoutingTreeName)
 	})
 
 	t.Run("should add extra route to ManagedRoutes", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		result, err := MergeExtraConfig(context.Background(), &input)
+		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.NoError(t, err)
 
 		require.Contains(t, result.Config.ManagedRoutes, identifier)
@@ -591,7 +591,7 @@ func TestMergeExtraConfig(t *testing.T) {
 	t.Run("should preserve existing managed routes in result", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
 		input.ManagedRoutes = v1.ManagedRoutes{"existing-managed": {Receiver: "existing"}}
-		result, err := MergeExtraConfig(context.Background(), &input)
+		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.NoError(t, err)
 
 		assert.Contains(t, result.Config.ManagedRoutes, "existing-managed")
@@ -600,7 +600,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should add inhibition rules to ManagedInhibitionRules with identifier scope", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		result, err := MergeExtraConfig(context.Background(), &input)
+		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.NoError(t, err)
 
 		require.Len(t, result.Config.ManagedInhibitionRules, 1)
@@ -631,7 +631,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
 			e.TemplateFiles = map[string]string{templateName: templateContent}
 		})
-		result, err := MergeExtraConfig(context.Background(), &input)
+		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.NoError(t, err)
 
 		expectedUID := v1.TemplateUID(v1.TemplateKindMimir, templateName)
@@ -649,7 +649,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		input.Templates = map[v1.ResourceUID]v1.TemplateGroup{
 			existingUID: v1.NewTemplateGroup(templateName, templateContent, v1.TemplateKindMimir, models.ProvenanceNone),
 		}
-		_, err := MergeExtraConfig(context.Background(), &input)
+		_, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.ErrorContains(t, err, templateName)
 	})
 }
