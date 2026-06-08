@@ -4,6 +4,8 @@ import type { JSX, ReactNode } from 'react';
 import { type DataFrameFieldIndex, type DisplayValue } from '@grafana/data';
 import { type LegendDisplayMode, type LegendPlacement, type LineStyle } from '@grafana/schema';
 
+import type { PanelContext } from '../PanelChrome';
+
 export enum SeriesVisibilityChangeBehavior {
   Isolate,
   Hide,
@@ -16,8 +18,17 @@ export interface VizLegendBaseProps<T> {
   thresholdItems?: Array<VizLegendItem<T>>;
   mappingItems?: Array<VizLegendItem<T>>;
   seriesVisibilityChangeBehavior?: SeriesVisibilityChangeBehavior;
-  onLabelClick?: (item: VizLegendItem<T>, event: React.MouseEvent<HTMLButtonElement>) => void;
   itemRenderer?: (item: VizLegendItem<T>, index: number) => JSX.Element;
+  readonly?: boolean;
+  limit?: number;
+  filterAction?: ReactNode;
+}
+
+// Label-interaction handlers that VizLegend generates internally (hover -> eventBus,
+// click -> series visibility) and forwards to the list/table children. They are not
+// part of VizLegend's own public props, so they live on a separate interface.
+export interface VizLegendPropsWithHandlers<T> extends VizLegendBaseProps<T> {
+  onLabelClick?: (item: VizLegendItem<T>, event: React.MouseEvent<HTMLButtonElement>) => void;
   onLabelMouseOver?: (
     item: VizLegendItem,
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
@@ -26,19 +37,19 @@ export interface VizLegendBaseProps<T> {
     item: VizLegendItem,
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
-  readonly?: boolean;
-  limit?: number;
-  filterAction?: ReactNode;
 }
 
-export interface VizLegendTableProps<T> extends VizLegendBaseProps<T> {
+interface VizLegendTableSortProps {
   sortBy?: string;
   sortDesc?: boolean;
-  onToggleSort?: (sortBy: string) => void;
   isSortable?: boolean;
 }
 
-export interface LegendProps<T = any> extends VizLegendBaseProps<T>, VizLegendTableProps<T> {
+export interface VizLegendTableProps<T> extends VizLegendPropsWithHandlers<T>, VizLegendTableSortProps {
+  onToggleSort?: PanelContext['onToggleLegendSort'];
+}
+
+export interface LegendProps<T = any> extends VizLegendBaseProps<T>, VizLegendTableSortProps {
   displayMode?: LegendDisplayMode;
 }
 

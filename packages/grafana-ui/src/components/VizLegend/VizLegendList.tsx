@@ -8,9 +8,9 @@ import { InlineList } from '../List/InlineList';
 import { List } from '../List/List';
 
 import { VizLegendListItem } from './VizLegendListItem';
-import { type VizLegendBaseProps, type VizLegendItem } from './types';
+import { type VizLegendItem, type VizLegendPropsWithHandlers } from './types';
 
-export interface Props<T> extends VizLegendBaseProps<T> {}
+export interface Props<T> extends VizLegendPropsWithHandlers<T> {}
 
 /**
  * @internal
