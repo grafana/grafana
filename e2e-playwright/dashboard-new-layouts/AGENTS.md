@@ -8,15 +8,15 @@ This suite contains Playwright E2E tests for the V2 dashboard layout system. Tes
 
 All page objects live in `page-objects/` and are re-exported from `page-objects/index.ts`. Every page object extends the abstract `PageObject` base class (`PageObject.ts`), which holds the shared `page`, `dashboardPage`, and `selectors` dependencies as `protected` fields.
 
-| Class              | File                   | UI Region                                 | Key Methods / Getters                                     |
-| ------------------ | ---------------------- | ----------------------------------------- | --------------------------------------------------------- |
-| `PageObject`       | `PageObject.ts`        | _(abstract base — not used directly)_     | Shared constructor (`page`, `dashboardPage`, `selectors`) |
-| `Controls`         | `Controls.ts`          | Top nav bar (edit, save, ...)             | `enterEditMode()`                                         |
-| `Toolbar`          | `Toolbar.ts`           | Vertical icon bar (options, outline, add) | `openDashboardOptions()`                                  |
-| `Sidebar`          | `Sidebar.ts`           | Slide-out container                       | `.dashboardOptions`, `.panelOptions` sub-objects          |
-| `DashboardOptions` | `Sidebar.ts` (private) | Dashboard options pane inside sidebar     | `getTitleInput()`, `getDescriptionTextarea()`             |
-| `PanelOptions`     | `Sidebar.ts` (private) | Panel options pane inside sidebar         | `getTitleInput()`, `getDescriptionTextarea()`             |
-| `Panel`            | `Panel.ts`             | A dashboard panel in the edit canvas      | `getHeaderByTitle()`, `selectByTitle()`, `deselectAll()`  |
+| Class              | File                   | UI Region                                 | Key Methods / Getters                                                             |
+| ------------------ | ---------------------- | ----------------------------------------- | --------------------------------------------------------------------------------- |
+| `PageObject`       | `PageObject.ts`        | _(abstract base — not used directly)_     | Shared constructor (`page`, `dashboardPage`, `selectors`)                         |
+| `Controls`         | `Controls.ts`          | Top nav bar (edit, save, ...)             | `enterEditMode()`                                                                 |
+| `Toolbar`          | `Toolbar.ts`           | Vertical icon bar (options, outline, add) | `openDashboardOptions()`                                                          |
+| `Sidebar`          | `Sidebar.ts`           | Slide-out container                       | `.dashboardOptions`, `.panelOptions` sub-objects                                  |
+| `DashboardOptions` | `Sidebar.ts` (private) | Dashboard options pane inside sidebar     | `getTitleInput()`, `getDescriptionTextarea()`                                     |
+| `PanelOptions`     | `Sidebar.ts` (private) | Panel options pane inside sidebar         | `getTitleInput()`, `getDescriptionTextarea()`, `toggleTransparentBackground()`    |
+| `Panel`            | `Panel.ts`             | A dashboard panel in the edit canvas      | `getContainerByTitle()`, `getHeaderByTitle()`, `selectByTitle()`, `deselectAll()` |
 
 > This table grows as specs are migrated — only methods needed by migrated specs exist.
 
@@ -84,7 +84,7 @@ test.describe(
 );
 ```
 
-3. **Verify locally:**
+1. **Verify locally:**
 
 ```bash
 yarn e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <spec-filename>
@@ -136,6 +136,7 @@ await expect(titleInput).toHaveValue(newTitle);
 | ------------------------------------------------- | ----------- |
 | `dashboards-title-description.spec.ts`            | Migrated    |
 | `dashboards-edit-panel-title-description.spec.ts` | Migrated    |
-| 24 remaining specs                                | Not started |
+| `dashboards-edit-panel-transparent-bg.spec.ts`    | Migrated    |
+| 23 remaining specs                                | Not started |
 
 See [`_page_objects_strategy.md`](./_page_objects_strategy.md) for the full migration plan.
