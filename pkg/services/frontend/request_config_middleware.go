@@ -41,33 +41,46 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 			ofClient := openfeature.NewDefaultClient()
 			settingsEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceUseSettingsService, false, openfeature.TransactionContext(ctx))
 
-			if settingsEnabled {
-				if namespace, ok := request.NamespaceFrom(ctx); ok {
-					if namespace != "" && settingsService != nil {
-						// Fetch tenant overrides for relevant sections only
-						selector := metav1.LabelSelector{
-							MatchExpressions: []metav1.LabelSelectorRequirement{{
-								Key:      "section",
-								Operator: metav1.LabelSelectorOpIn,
-								Values:   []string{"security", "analytics"},
-							}, {
-								// don't return values from defaults.ini as they conflict with the services's own defaults
-								Key:      "source",
-								Operator: metav1.LabelSelectorOpNotIn,
-								Values:   []string{"defaults"},
-							}},
-						}
+			if settingsService != nil && settingsEnabled {
+				namespace, ok := request.NamespaceFrom(ctx)
 
-						settings, err := settingsService.ListAsIni(ctx, selector)
-						if err != nil {
-							settingsFetchMetric.WithLabelValues("error").Inc()
-							logger.Error("failed to fetch tenant settings", "namespace", namespace, "err", err)
-							// Fall back to base config
-						} else {
-							settingsFetchMetric.WithLabelValues("success").Inc()
-							// Merge tenant overrides with base config
-							requestConfig.ApplyOverrides(settings, logger)
+				if ok && namespace != "" {
+					// Fetch tenant overrides for relevant sections only
+					sourceFilterEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceSettingsSourceFilter, false, openfeature.TransactionContext(ctx))
+
+					var sourceExpression metav1.LabelSelectorRequirement
+					if sourceFilterEnabled {
+						sourceExpression = metav1.LabelSelectorRequirement{
+							Key:      "source",
+							Operator: metav1.LabelSelectorOpIn,
+							Values:   []string{"us"},
 						}
+					} else {
+						// don't return values from defaults.ini as they conflict with the service's own defaults
+						sourceExpression = metav1.LabelSelectorRequirement{
+							Key:      "source",
+							Operator: metav1.LabelSelectorOpNotIn,
+							Values:   []string{"defaults"},
+						}
+					}
+
+					selector := metav1.LabelSelector{
+						MatchExpressions: []metav1.LabelSelectorRequirement{{
+							Key:      "section",
+							Operator: metav1.LabelSelectorOpIn,
+							Values:   []string{"security", "analytics"},
+						}, sourceExpression},
+					}
+
+					settings, err := settingsService.ListAsIni(ctx, selector)
+					if err != nil {
+						settingsFetchMetric.WithLabelValues("error").Inc()
+						logger.Error("failed to fetch tenant settings", "namespace", namespace, "err", err)
+						// Fall back to base config
+					} else {
+						settingsFetchMetric.WithLabelValues("success").Inc()
+						// Merge tenant overrides with base config
+						requestConfig.ApplyOverrides(settings, logger)
 					}
 				}
 			}

@@ -33,9 +33,9 @@ func exportAll(ctx context.Context, repoName string, options provisioning.Export
 		return err
 	}
 
-	if err := ExportResources(ctx, options, clients, repositoryResources, progress, generateNewUIDs); err != nil {
-		return err
+	if len(options.Resources) > 0 {
+		return ExportSpecificResources(ctx, options, clients, repositoryResources, progress, generateNewUIDs)
 	}
 
-	return nil
+	return ExportResources(ctx, options, clients, repositoryResources, progress, generateNewUIDs)
 }

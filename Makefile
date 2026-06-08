@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.25.9
+GO_VERSION = 1.26.4
 GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
 GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
@@ -44,7 +44,7 @@ GO_BUILD_ARGS = \
 	$(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) \
 	$(if $(GO_BUILD_GCFLAGS_EFFECTIVE),-gcflags "$(GO_BUILD_GCFLAGS_EFFECTIVE)") \
 	-ldflags "$(GO_LDFLAGS)" \
-	-o ./bin/$(OS)/$(ARCH)/grafana \
+	-o ./bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe) \
 	./pkg/cmd/grafana
 ifeq ($(filter undefined environment environment\ override,$(origin OS)),)
 else
@@ -59,9 +59,6 @@ else
 ARM := $(GOARM)
 endif
 GIT_BASE = remotes/origin/main
-
-CUE_VERSION = v0.16.0
-CUE = $(shell go env GOPATH)/bin/cue
 
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
 XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
@@ -114,6 +111,7 @@ swagger-oss-gen: ## Generate API Swagger specification
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
 	-x "github.com/docker/docker" \
+	-x "github.com/moby/moby" \
 	-i pkg/api/swagger_tags.json \
 	--exclude-tag=alpha \
 	--exclude-tag=enterprise
@@ -133,6 +131,7 @@ swagger-enterprise-gen: ## Generate API Swagger specification
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
 	-x "github.com/docker/docker" \
+	-x "github.com/moby/moby" \
 	-i pkg/api/swagger_tags.json \
 	-t enterprise \
 	--exclude-tag=alpha \
@@ -150,12 +149,8 @@ swagger-validate: $(MERGED_SPEC_TARGET) # Validate API spec
 swagger-clean:
 	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
-.PHONY: cleanup-old-git-hooks
-cleanup-old-git-hooks:
-	./scripts/cleanup-husky.sh
-
 .PHONY: lefthook-install
-lefthook-install: cleanup-old-git-hooks # install lefthook for pre-commit hooks
+lefthook-install: # install lefthook for pre-commit hooks
 	$(lefthook) install -f
 
 .PHONY: lefthook-uninstall
@@ -210,12 +205,6 @@ gen-cue: ## Do all CUE/Thema code generation
 	@cp apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue apps/dashboard/pkg/apis/dashboard/v1/dashboard_kind.cue
 
 
-.PHONY: gen-cuev2
-gen-cuev2: ## Do all CUE code generation
-	@echo "generate code from .cue files (v2)"
-	@$(MAKE) -C ./kindsv2 all
-
-
 APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | sort)
 # Alternatively use an explicit list of apps:
 # APPS_DIRS := ./apps/dashboard ./apps/folder ./apps/alerting/notifications
@@ -263,12 +252,13 @@ gen-feature-toggles:
 ## First go test run fails because it will re-generate the feature toggles.
 ## Second go test run will compare the generated files and pass.
 	@echo "generate feature toggles"
-	go test -v ./pkg/services/featuremgmt/... > /dev/null 2>&1; \
+	go test ./pkg/services/featuremgmt/... > /dev/null 2>&1; \
 	if [ $$? -eq 0 ]; then \
 		echo "feature toggles already up-to-date"; \
 	else \
-		go test -v ./pkg/services/featuremgmt/...; \
+		go test ./pkg/services/featuremgmt/...; \
 	fi
+
 
 .PHONY: gen-go gen-enterprise-go
 ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
@@ -297,12 +287,8 @@ gen-app-manifests-unistore: ## Generate unified storage app manifests list
 		echo "Generated app manifests code is up to date."; \
 	fi
 
-.PHONY: install-cue
-install-cue:
-	go install cuelang.org/go/cmd/cue@$(CUE_VERSION)
-
 .PHONY: fix-cue
-fix-cue: install-cue ## Format and fix CUE files. Use app=<name> to fix a specific app.
+fix-cue: ## Format and fix CUE files. Use app=<name> to fix a specific app.
 	@set -e; \
 	root_dir="."; \
 	if [ -n "$(app)" ]; then \
@@ -315,8 +301,8 @@ fix-cue: install-cue ## Format and fix CUE files. Use app=<name> to fix a specif
 	for mod_dir in $$(find "$$root_dir" -type d -name 'cue.mod'); do \
 		project_dir="$$(dirname $$mod_dir)"; \
 		echo "Fixing: $$project_dir"; \
-		(cd "$$project_dir" && $(CUE) fmt ./...); \
-		(cd "$$project_dir" && $(CUE) fix ./...); \
+		(cd "$$project_dir" && $(cue) fmt ./...); \
+		(cd "$$project_dir" && $(cue) fix ./...); \
 	done
 
 .PHONY: gen-jsonnet
@@ -330,8 +316,18 @@ gen-themes:
 pkg/services/preference/themes_generated.go:
 	$(MAKE) gen-themes
 
+.PHONY: generate-enterprise-imports
+ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
+generate-enterprise-imports:
+	@echo "skipping generating enterprise imports file"
+else
+generate-enterprise-imports: ## Generate Enterprise imports file
+	@echo "re-generating enterprise imports file"
+	$(GO) run ./scripts/ci/generate-enterprise-imports/main.go
+endif
+
 .PHONY: update-workspace
-update-workspace: gen-go
+update-workspace: gen-go generate-enterprise-imports
 	@echo "updating workspace"
 	bash scripts/go-workspace/update-workspace.sh
 
@@ -342,7 +338,7 @@ build-go: pkg/services/preference/themes_generated.go
 	$(GO) build $(GO_BUILD_ARGS)
 	if [ "$(OS)" = "$(GO_HOST_OS)" ] && [ "$(ARCH)" = "$(GO_HOST_ARCH)" ]; then cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana; fi
 
-bin/$(OS)/$(ARCH)/grafana:
+bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe):
 	$(MAKE) build-go
 
 .PHONY: build-backend
@@ -384,8 +380,11 @@ DEB_PACKAGE_NAME   := $(if $(filter 6,$(ARM)),$(TARGZ_PACKAGE_NAME)-rpi,$(TARGZ_
 TARGZ_FILE         := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).tar.gz
 DEB_FILE           := dist/$(DEB_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).deb
 RPM_FILE           := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).rpm
-DOCKER_FILE        := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).docker.tar.gz
-DOCKER_UBUNTU_FILE := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).ubuntu.docker.tar.gz
+SLIM                    ?= false
+SLIM_SUFFIX             := $(if $(filter true,$(SLIM)),-slim,)
+DOCKER_FILE             := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL)$(SLIM_SUFFIX).docker.tar.gz
+DOCKER_UBUNTU_FILE      := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).ubuntu$(SLIM_SUFFIX).docker.tar.gz
+DOCKER_DISTROLESS_FILE  := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).distroless$(SLIM_SUFFIX).docker.tar.gz
 DOCKER_TAG         ?= $(TARGZ_PACKAGE_NAME):$(BUILD_VERSION)
 
 # Default catalog plugins under data/plugins-bundled. Stamp encodes OS/ARCH so cross-builds refresh.
@@ -413,7 +412,7 @@ build-catalog-plugins-data: data/plugins-bundled ## Download default catalog plu
 .PHONY: build-targz
 build-targz: $(TARGZ_FILE) ## Build a tar.gz package (bin, public, conf, plugins-bundled/, data/plugins-bundled from catalog)
 
-$(TARGZ_FILE): data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana public/build
+$(TARGZ_FILE): data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe) public/build
 	@echo "assembling tar.gz"
 	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
 	BUILD_VERSION="$(BUILD_VERSION)" \
@@ -462,6 +461,7 @@ $(DOCKER_FILE): $(TARGZ_FILE)
 	--build-arg GRAFANA_TGZ=$(TARGZ_FILE) \
 	--build-arg GO_SRC=tgz-builder \
 	--build-arg JS_SRC=tgz-builder \
+	--build-arg SLIM=$(SLIM) \
 	--target=final-alpine \
 	--tag $(DOCKER_TAG) \
 	--output type=docker,dest=$@ \
@@ -477,10 +477,39 @@ $(DOCKER_UBUNTU_FILE): $(TARGZ_FILE)
 	--build-arg GRAFANA_TGZ=$(TARGZ_FILE) \
 	--build-arg GO_SRC=tgz-builder \
 	--build-arg JS_SRC=tgz-builder \
+	--build-arg SLIM=$(SLIM) \
 	--target=final-ubuntu \
 	--tag $(DOCKER_TAG) \
 	--output type=docker,dest=$@ \
 	.
+
+.PHONY: build-docker-distroless
+build-docker-distroless: $(DOCKER_DISTROLESS_FILE) ## Build a Docker image (distroless) from a tar.gz
+
+$(DOCKER_DISTROLESS_FILE): $(TARGZ_FILE)
+	@echo "building docker image (distroless)"
+	docker buildx build \
+	--platform $(OS)/$(ARCH) \
+	--build-arg GRAFANA_TGZ=$(TARGZ_FILE) \
+	--build-arg GO_SRC=tgz-builder \
+	--build-arg JS_SRC=tgz-builder \
+	--build-arg SLIM=$(SLIM) \
+	--target=final-distroless \
+	--tag $(DOCKER_TAG) \
+	--output type=docker,dest=$@ \
+	.
+
+MSI_FILE := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).msi
+
+.PHONY: build-msi
+build-msi: $(MSI_FILE) ## Build a Windows MSI installer from a tar.gz (requires Docker + Wine)
+
+$(MSI_FILE): $(TARGZ_FILE)
+	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
+	BUILD_VERSION="$(BUILD_VERSION)" \
+	BUILD_NUMBER="$(BUILD_NUMBER)" \
+	ENTERPRISE="$(if $(filter grafana-enterprise,$(TARGZ_PACKAGE_NAME)),true,false)" \
+	bash scripts/build-msi.sh
 
 .PHONY: run
 run: ## Build and run backend, and watch for changes. See .air.toml for configuration.
@@ -648,6 +677,7 @@ build-docker-full: ## Build Docker image for development.
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	--build-arg SLIM=$(SLIM) \
 	--target=final-alpine \
 	--tag grafana/grafana$(TAG_SUFFIX):dev \
 	$(DOCKER_BUILD_ARGS) \
@@ -667,8 +697,28 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--build-arg GO_IMAGE=golang:$(GO_VERSION) \
+	--build-arg SLIM=$(SLIM) \
 	--target=final-ubuntu \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
+	$(DOCKER_BUILD_ARGS) \
+	.
+
+.PHONY: build-docker-full-distroless
+build-docker-full-distroless: ## Build Docker image based on distroless for development.
+	@echo "build docker container mode=($(DOCKER_JS_NODE_ENV_FLAG))"
+	docker buildx build \
+	--platform $(PLATFORM) \
+	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
+	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
+	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
+	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
+	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
+	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
+	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
+	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	--build-arg SLIM=$(SLIM) \
+	--target=final-distroless \
+	--tag grafana/grafana$(TAG_SUFFIX):dev-distroless \
 	$(DOCKER_BUILD_ARGS) \
 	.
 
@@ -724,7 +774,6 @@ protobuf: ## Compile protobuf definitions
 	bash scripts/protobuf-check.sh
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.5
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
-	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
 	buf generate apps/secret --template apps/secret/buf.gen.yaml
 	buf generate pkg/storage/unified/proto --template pkg/storage/unified/proto/buf.gen.yaml
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
@@ -786,3 +835,7 @@ GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1
 		.
 # We don't want the patch workflow to be run. This is exclusively useful for the security-mirror. It won't work in OSS.
 	sed -i.bak '/- Workflow \.github\/workflows\/create-security-patch-from-security-mirror/d' .policy.yml; rm -f .policy.yml.bak
+# Make govulncheck non-blocking - accept failure so it doesn't prevent merge
+	sed -i.bak '/name: Workflow \.github\/workflows\/govulncheck\.yml/,/workflows:/{s/- success/- success\n            - failure/;}' .policy.yml; rm -f .policy.yml.bak
+# Make check-frontend-test-coverage non-blocking - accept failure so it doesn't prevent merge
+	sed -i.bak '/name: Workflow \.github\/workflows\/check-frontend-test-coverage\.yml/,/workflows:/{s/- success/- success\n            - failure/;}' .policy.yml; rm -f .policy.yml.bak

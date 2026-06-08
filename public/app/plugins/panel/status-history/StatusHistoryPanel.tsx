@@ -81,7 +81,16 @@ export const StatusHistoryPanel = ({
     return (
       <div className="panel-empty">
         <p>
-          <Trans i18nKey="status-history.status-history-panel.too-many-points" count={paginatedFrames[0].length}>
+          <Trans
+            i18nKey="status-history.status-history-panel.too-many-points"
+            count={paginatedFrames[0].length}
+            tOptions={{
+              defaultValue_one:
+                'Too many points to visualize properly. <br/>Update the query to return fewer points. <br/>({{count}} points received)',
+              defaultValue_other:
+                'Too many points to visualize properly. <br/>Update the query to return fewer points. <br/>({{count}} points received)',
+            }}
+          >
             Too many points to visualize properly. <br />
             Update the query to return fewer points. <br />({'{{count}}'} points received)
           </Trans>

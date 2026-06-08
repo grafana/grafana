@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { type SceneComponentProps, type VizPanel } from '@grafana/scenes';
+import { type SceneComponentProps } from '@grafana/scenes';
 import { Button, Spinner, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
@@ -13,6 +13,7 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
+import { PanelEditPanelWrapper } from './PanelEditPanelWrapper';
 import { type PanelEditor } from './PanelEditor';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
@@ -104,6 +105,8 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
     primaryProps.style.flexGrow = 1;
   }
 
+  primaryProps.className = cx(primaryProps.className, styles.viz, isScrollingLayout && styles.fixedSizeViz);
+
   return (
     <div className={cx(styles.pageContainer, controls && styles.pageContainerWithControls)}>
       {controls && (
@@ -112,8 +115,8 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
         </div>
       )}
       <div {...containerProps}>
-        <div {...primaryProps} className={cx(primaryProps.className, isScrollingLayout && styles.fixedSizeViz)}>
-          <VizWrapper panel={panel} tableView={tableView} />
+        <div {...primaryProps}>
+          <PanelEditPanelWrapper panel={panel} tableView={tableView} dashboard={dashboard} />
         </div>
         {showLibraryPanelSaveModal && libraryPanel && (
           <SaveLibraryVizPanelModal
@@ -156,22 +159,6 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
           </>
         )}
       </div>
-    </div>
-  );
-}
-
-interface VizWrapperProps {
-  panel: VizPanel;
-  tableView?: VizPanel;
-}
-
-function VizWrapper({ panel, tableView }: VizWrapperProps) {
-  const styles = useStyles2(getStyles);
-  const panelToShow = tableView ?? panel;
-
-  return (
-    <div className={styles.vizWrapper}>
-      <panelToShow.Component model={panelToShow} />
     </div>
   );
 }
@@ -270,9 +257,7 @@ function getStyles(theme: GrafanaTheme2) {
         rotate: '-90deg',
       },
     }),
-    vizWrapper: css({
-      height: '100%',
-      width: '100%',
+    viz: css({
       paddingLeft: theme.spacing(2),
     }),
     fixedSizeViz: css({

@@ -5,9 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/alerting/definition"
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -21,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -71,21 +69,18 @@ func createServiceSut(
 
 func configRevisionWithImportedRoute() *legacy_storage.ConfigRevision {
 	return &legacy_storage.ConfigRevision{
-		Config: &definitions.PostableUserConfig{
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
-					Route: &definitions.Route{Receiver: "grafana-default"},
+		Config: &v1.AMConfigV1{
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{Receiver: "grafana-default"},
 				},
-				Receivers: []*definitions.PostableApiReceiver{
+				Receivers: []*v1.PostableApiReceiver{
 					{Receiver: definitions.Receiver{Name: "grafana-default"}},
 				},
 			},
-			ExtraConfigs: []definitions.ExtraConfiguration{
+			ExtraConfigs: []v1.ExtraConfiguration{
 				{
-					Identifier: "imported",
-					MergeMatchers: config.Matchers{
-						&labels.Matcher{Type: labels.MatchEqual, Name: "__imported", Value: "true"},
-					},
+					Identifier:         "imported",
 					AlertmanagerConfig: importedConfigYaml,
 				},
 			},
@@ -96,19 +91,19 @@ func configRevisionWithImportedRoute() *legacy_storage.ConfigRevision {
 
 func configRevisionWithManagedRoutes() *legacy_storage.ConfigRevision {
 	return &legacy_storage.ConfigRevision{
-		Config: &definitions.PostableUserConfig{
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
-					Route: &definitions.Route{Receiver: "grafana-default"},
+		Config: &v1.AMConfigV1{
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{Receiver: "grafana-default"},
 				},
-				Receivers: []*definitions.PostableApiReceiver{
+				Receivers: []*v1.PostableApiReceiver{
 					{Receiver: definitions.Receiver{Name: "grafana-default"}},
 					{Receiver: definitions.Receiver{Name: "empty"}},
 				},
 			},
-			ManagedRoutes: definitions.ManagedRoutes{
-				"route-a": &definition.Route{Receiver: "grafana-default"},
-				"route-b": &definition.Route{Receiver: "grafana-default"},
+			ManagedRoutes: v1.ManagedRoutes{
+				"route-a": &v1.Route{Receiver: "grafana-default"},
+				"route-b": &v1.Route{Receiver: "grafana-default"},
 			},
 		},
 		ConcurrencyToken: "test-token",
@@ -369,7 +364,7 @@ func TestCreateManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*legacy_storage.ManagedRoute]())
 
-		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", definitions.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
+		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 	t.Run("sets default permissions when create", func(t *testing.T) {
@@ -390,7 +385,7 @@ func TestCreateManagedRoute(t *testing.T) {
 		}
 		sut := createServiceSut(configStore, provStore, features, authz)
 
-		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", definitions.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
+		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
 		require.NoError(t, err)
 		assert.Equal(t, []string{"AuthorizeCreate", "SetDefaultPermissions"}, authz.Calls.Methods())
 	})
@@ -406,7 +401,7 @@ func TestUpdateManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*legacy_storage.ManagedRoute]())
 
-		_, err := sut.UpdateManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, definitions.Route{Receiver: "grafana-default"}, models.ProvenanceNone, "v1", user)
+		_, err := sut.UpdateManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, "v1", user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 }

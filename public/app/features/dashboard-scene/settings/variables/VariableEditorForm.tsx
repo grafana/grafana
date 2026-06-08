@@ -20,6 +20,9 @@ import {
 } from 'app/features/dashboard-scene/settings/variables/components/VariableValuesPreview';
 import { VariableNameConstraints } from 'app/features/variables/editor/types';
 
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
+
 import { VariableTypeSelect } from './components/VariableTypeSelect';
 import {
   type EditableVariableType,
@@ -73,6 +76,8 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
   const onDescriptionBlur = (e: FormEvent<HTMLTextAreaElement>) =>
     variable.setState({ description: e.currentTarget.value });
   const onDisplayChange = (display: VariableHide) => variable.setState({ hide: display });
+  const sectionOwner = dashboardSceneGraph.findSectionOwner(variable);
+  const topPlacementLabel = sectionOwner ? getTopPlacementLabel(sectionOwner) : undefined;
 
   const isHasVariableOptions = hasVariableOptions(variable);
 
@@ -129,7 +134,12 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
         width={52}
       />
 
-      <VariableDisplaySelect onChange={onDisplayChange} display={display || defaultVariableModel.hide!} type={type} />
+      <VariableDisplaySelect
+        onChange={onDisplayChange}
+        display={display || defaultVariableModel.hide!}
+        type={type}
+        topPlacementLabel={topPlacementLabel}
+      />
 
       {EditorToRender && <EditorToRender variable={variable} onRunQuery={onRunQuery} />}
 

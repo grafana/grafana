@@ -72,6 +72,7 @@ export class GeomapPanel extends Component<Props, State> {
 
   map?: OpenLayersMap;
   mapDiv?: HTMLDivElement;
+  tooltipPointerMoveDebounced?: { cancel: () => void };
   layers: MapLayerState[] = [];
   readonly byName = new Map<string, MapLayerState>();
 
@@ -296,6 +297,7 @@ export class GeomapPanel extends Component<Props, State> {
       return;
     }
     this.mapDiv = div;
+    this.tooltipPointerMoveDebounced?.cancel();
     if (this.map) {
       this.map.dispose();
     }
@@ -357,6 +359,7 @@ export class GeomapPanel extends Component<Props, State> {
   };
 
   clearTooltip = () => {
+    this.tooltipPointerMoveDebounced?.cancel();
     if (this.state.ttip && !this.state.ttipOpen) {
       this.tooltipPopupClosed();
     }

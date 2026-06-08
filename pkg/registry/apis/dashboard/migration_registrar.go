@@ -14,7 +14,7 @@ func FoldersDashboardsMigration(migrator migrator.FoldersDashboardsMigrator) mig
 	dashboardGR := schema.GroupResource{Group: v1.GROUP, Resource: v1.DASHBOARD_RESOURCE}
 
 	return migrations.MigrationDefinition{
-		ID:          "folders-dashboards",
+		ID:          migrations.FoldersDashboardsMigrationID,
 		MigrationID: "folders and dashboards migration",
 		Resources: []migrations.ResourceInfo{
 			{GroupResource: folderGR, LockTables: []string{"dashboard", "dashboard_version", "dashboard_provisioning"}},

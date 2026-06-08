@@ -117,6 +117,34 @@ describe('DeleteProvisionedDashboardForm', () => {
       expect(capturedRequest!.url.searchParams.get('message')).toBe('Delete dashboard: Test Dashboard');
     });
 
+    it('renders the message from the repo commit template when comment is empty', async () => {
+      let capturedRequest: { url: URL } | null = null;
+      server.use(
+        http.delete(`${BASE}/repositories/:name/files/*`, ({ request }) => {
+          capturedRequest = { url: new URL(request.url) };
+          return HttpResponse.json({ resource: {} });
+        })
+      );
+
+      const { user } = setup({
+        repository: {
+          name: 'test-repo',
+          target: 'folder' as const,
+          title: 'Test Repository',
+          type: 'github' as const,
+          workflows: ['branch', 'write'] as Array<'branch' | 'write'>,
+          commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
+        },
+      });
+
+      await user.click(screen.getByRole('button', { name: /delete dashboard/i }));
+
+      await waitFor(() => {
+        expect(capturedRequest).not.toBeNull();
+      });
+      expect(capturedRequest!.url.searchParams.get('message')).toBe('chore(dashboards): delete Test Dashboard');
+    });
+
     it('should handle missing repository name', async () => {
       const { user } = setup({
         defaultValues: {

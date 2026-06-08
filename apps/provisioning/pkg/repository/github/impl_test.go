@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -39,51 +41,51 @@ func TestGithubClient_GetCommits(t *testing.T) {
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						commits := []*github.RepositoryCommit{
 							{
-								SHA: github.Ptr("abc123"),
+								SHA: new("abc123"),
 								Commit: &github.Commit{
-									Message: github.Ptr("First commit"),
+									Message: new("First commit"),
 									Author: &github.CommitAuthor{
-										Name:  github.Ptr("Test User"),
-										Email: github.Ptr("test@example.com"),
+										Name:  new("Test User"),
+										Email: new("test@example.com"),
 										Date:  &github.Timestamp{Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)},
 									},
 									Committer: &github.CommitAuthor{
-										Name:  github.Ptr("Test User"),
-										Email: github.Ptr("test@example.com"),
+										Name:  new("Test User"),
+										Email: new("test@example.com"),
 										Date:  &github.Timestamp{Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)},
 									},
 								},
 								Author: &github.User{
-									Login:     github.Ptr("test-user"),
-									AvatarURL: github.Ptr("https://avatar.url"),
+									Login:     new("test-user"),
+									AvatarURL: new("https://avatar.url"),
 								},
 								Committer: &github.User{
-									Login:     github.Ptr("test-user"),
-									AvatarURL: github.Ptr("https://avatar.url"),
+									Login:     new("test-user"),
+									AvatarURL: new("https://avatar.url"),
 								},
 							},
 							{
-								SHA: github.Ptr("def456"),
+								SHA: new("def456"),
 								Commit: &github.Commit{
-									Message: github.Ptr("Second commit"),
+									Message: new("Second commit"),
 									Author: &github.CommitAuthor{
-										Name:  github.Ptr("Another User"),
-										Email: github.Ptr("another@example.com"),
+										Name:  new("Another User"),
+										Email: new("another@example.com"),
 										Date:  &github.Timestamp{Time: time.Date(2023, 1, 2, 12, 0, 0, 0, time.UTC)},
 									},
 									Committer: &github.CommitAuthor{
-										Name:  github.Ptr("Another User"),
-										Email: github.Ptr("another@example.com"),
+										Name:  new("Another User"),
+										Email: new("another@example.com"),
 										Date:  &github.Timestamp{Time: time.Date(2023, 1, 2, 12, 0, 0, 0, time.UTC)},
 									},
 								},
 								Author: &github.User{
-									Login:     github.Ptr("another-user"),
-									AvatarURL: github.Ptr("https://another.avatar.url"),
+									Login:     new("another-user"),
+									AvatarURL: new("https://another.avatar.url"),
 								},
 								Committer: &github.User{
-									Login:     github.Ptr("another-user"),
-									AvatarURL: github.Ptr("https://another.avatar.url"),
+									Login:     new("another-user"),
+									AvatarURL: new("https://another.avatar.url"),
 								},
 							},
 						}
@@ -165,44 +167,44 @@ func TestGithubClient_GetCommits(t *testing.T) {
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						commits := []*github.RepositoryCommit{
 							{
-								SHA: github.Ptr("abc123"),
+								SHA: new("abc123"),
 								Commit: &github.Commit{
-									Message: github.Ptr("First commit"),
+									Message: new("First commit"),
 									Author: &github.CommitAuthor{
-										Name:  github.Ptr("Test User"),
+										Name:  new("Test User"),
 										Date:  &github.Timestamp{Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)},
-										Email: github.Ptr("test@example.com"),
+										Email: new("test@example.com"),
 									},
 									Committer: &github.CommitAuthor{
-										Name:  github.Ptr("Test User"),
+										Name:  new("Test User"),
 										Date:  &github.Timestamp{Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)},
-										Email: github.Ptr("test@example.com"),
+										Email: new("test@example.com"),
 									},
 								},
 								// Author is nil
 								Committer: &github.User{
-									Login:     github.Ptr("test-user"),
-									AvatarURL: github.Ptr("https://avatar.url"),
+									Login:     new("test-user"),
+									AvatarURL: new("https://avatar.url"),
 								},
 							},
 							{
-								SHA: github.Ptr("def456"),
+								SHA: new("def456"),
 								Commit: &github.Commit{
-									Message: github.Ptr("Second commit"),
+									Message: new("Second commit"),
 									// Missing Author in Commit
 									Committer: &github.CommitAuthor{
-										Name:  github.Ptr("Another User"),
+										Name:  new("Another User"),
 										Date:  &github.Timestamp{Time: time.Date(2023, 1, 2, 12, 0, 0, 0, time.UTC)},
-										Email: github.Ptr("another@example.com"),
+										Email: new("another@example.com"),
 									},
 								},
 								Author: &github.User{
-									Login:     github.Ptr("another-user"),
-									AvatarURL: github.Ptr("https://another.avatar.url"),
+									Login:     new("another-user"),
+									AvatarURL: new("https://another.avatar.url"),
 								},
 								Committer: &github.User{
-									Login:     github.Ptr("another-user"),
-									AvatarURL: github.Ptr("https://another.avatar.url"),
+									Login:     new("another-user"),
+									AvatarURL: new("https://another.avatar.url"),
 								},
 							},
 						}
@@ -254,18 +256,18 @@ func TestGithubClient_GetCommits(t *testing.T) {
 						commits := make([]*github.RepositoryCommit, maxCommits+1)
 						for i := 0; i < maxCommits+1; i++ {
 							commits[i] = &github.RepositoryCommit{
-								SHA: github.Ptr(fmt.Sprintf("commit%d", i)),
+								SHA: new(fmt.Sprintf("commit%d", i)),
 								Commit: &github.Commit{
-									Message: github.Ptr(fmt.Sprintf("Commit %d", i)),
+									Message: new(fmt.Sprintf("Commit %d", i)),
 									Author: &github.CommitAuthor{
-										Name:  github.Ptr("Test User"),
+										Name:  new("Test User"),
 										Date:  &github.Timestamp{Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)},
-										Email: github.Ptr("test@example.com"),
+										Email: new("test@example.com"),
 									},
 								},
 								Author: &github.User{
-									Login:     github.Ptr("test-user"),
-									AvatarURL: github.Ptr("https://avatar.url"),
+									Login:     new("test-user"),
+									AvatarURL: new("https://avatar.url"),
 								},
 							}
 						}
@@ -378,21 +380,21 @@ func TestGithubClient_ListWebhooks(t *testing.T) {
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						hooks := []*github.Hook{
 							{
-								ID:     github.Ptr(int64(1)),
+								ID:     new(int64(1)),
 								Events: []string{"push", "pull_request"},
-								Active: github.Ptr(true),
+								Active: new(true),
 								Config: &github.HookConfig{
-									URL:         github.Ptr("https://example.com/webhook1"),
-									ContentType: github.Ptr("json"),
+									URL:         new("https://example.com/webhook1"),
+									ContentType: new("json"),
 								},
 							},
 							{
-								ID:     github.Ptr(int64(2)),
+								ID:     new(int64(2)),
 								Events: []string{"issues"},
-								Active: github.Ptr(false),
+								Active: new(false),
 								Config: &github.HookConfig{
-									URL:         github.Ptr("https://example.com/webhook2"),
-									ContentType: github.Ptr(""),
+									URL:         new("https://example.com/webhook2"),
+									ContentType: new(""),
 								},
 							},
 						}
@@ -448,12 +450,12 @@ func TestGithubClient_ListWebhooks(t *testing.T) {
 						hooks := make([]*github.Hook, maxWebhooks+1)
 						for i := 0; i < maxWebhooks+1; i++ {
 							hooks[i] = &github.Hook{
-								ID:     github.Ptr(int64(i + 1)),
+								ID:     new(int64(i + 1)),
 								Events: []string{"push"},
-								Active: github.Ptr(true),
+								Active: new(true),
 								Config: &github.HookConfig{
-									URL:         github.Ptr(fmt.Sprintf("https://example.com/webhook%d", i+1)),
-									ContentType: github.Ptr("json"),
+									URL:         new(fmt.Sprintf("https://example.com/webhook%d", i+1)),
+									ContentType: new("json"),
 								},
 							}
 						}
@@ -574,12 +576,12 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 
 						// Return a created hook
 						createdHook := &github.Hook{
-							ID:     github.Ptr(int64(123)),
+							ID:     new(int64(123)),
 							Events: []string{"push", "pull_request"},
-							Active: github.Ptr(true),
+							Active: new(true),
 							Config: &github.HookConfig{
-								URL:         github.Ptr("https://example.com/webhook"),
-								ContentType: github.Ptr("json"),
+								URL:         new("https://example.com/webhook"),
+								ContentType: new("json"),
 								// Secret is not returned by GitHub API
 							},
 						}
@@ -624,12 +626,12 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 						assert.Equal(t, "form", hook.Config.GetContentType())
 
 						createdHook := &github.Hook{
-							ID:     github.Ptr(int64(123)),
+							ID:     new(int64(123)),
 							Events: []string{"push"},
-							Active: github.Ptr(true),
+							Active: new(true),
 							Config: &github.HookConfig{
-								URL:         github.Ptr("https://example.com/webhook"),
-								ContentType: github.Ptr("form"),
+								URL:         new("https://example.com/webhook"),
+								ContentType: new("form"),
 							},
 						}
 
@@ -764,12 +766,12 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 					mockhub.GetReposHooksByOwnerByRepoByHookId,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						hook := &github.Hook{
-							ID:     github.Ptr(int64(123)),
+							ID:     new(int64(123)),
 							Events: []string{"push", "pull_request"},
-							Active: github.Ptr(true),
+							Active: new(true),
 							Config: &github.HookConfig{
-								URL:         github.Ptr("https://example.com/webhook"),
-								ContentType: github.Ptr("json"),
+								URL:         new("https://example.com/webhook"),
+								ContentType: new("json"),
 								// Secret is not returned by GitHub API
 							},
 						}
@@ -798,12 +800,12 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 					mockhub.GetReposHooksByOwnerByRepoByHookId,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						hook := &github.Hook{
-							ID:     github.Ptr(int64(456)),
+							ID:     new(int64(456)),
 							Events: []string{"push"},
-							Active: github.Ptr(true),
+							Active: new(true),
 							Config: &github.HookConfig{
-								URL:         github.Ptr("https://example.com/webhook-empty-content"),
-								ContentType: github.Ptr(""), // Empty content type
+								URL:         new("https://example.com/webhook-empty-content"),
+								ContentType: new(""), // Empty content type
 							},
 						}
 						w.WriteHeader(http.StatusOK)
@@ -1092,12 +1094,12 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 
 						// Return the updated hook
 						updatedHook := &github.Hook{
-							ID:     github.Ptr(int64(123)),
+							ID:     new(int64(123)),
 							Events: []string{"push", "pull_request", "issues"},
-							Active: github.Ptr(true),
+							Active: new(true),
 							Config: &github.HookConfig{
-								URL:         github.Ptr("https://example.com/webhook-updated"),
-								ContentType: github.Ptr("json"),
+								URL:         new("https://example.com/webhook-updated"),
+								ContentType: new("json"),
 								// Secret is not returned by GitHub API
 							},
 						}
@@ -1141,12 +1143,12 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 
 						// Return the updated hook
 						updatedHook := &github.Hook{
-							ID:     github.Ptr(int64(123)),
+							ID:     new(int64(123)),
 							Events: []string{"push"},
-							Active: github.Ptr(true),
+							Active: new(true),
 							Config: &github.HookConfig{
-								URL:         github.Ptr("https://example.com/webhook"),
-								ContentType: github.Ptr("form"),
+								URL:         new("https://example.com/webhook"),
+								ContentType: new("form"),
 								// Secret is not returned by GitHub API
 							},
 						}
@@ -1273,20 +1275,20 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						files := []*github.CommitFile{
 							{
-								Filename:  github.Ptr("file1.txt"),
-								Additions: github.Ptr(10),
-								Deletions: github.Ptr(5),
-								Changes:   github.Ptr(15),
-								Status:    github.Ptr("modified"),
-								Patch:     github.Ptr("@@ -1,5 +1,10 @@"),
+								Filename:  new("file1.txt"),
+								Additions: new(10),
+								Deletions: new(5),
+								Changes:   new(15),
+								Status:    new("modified"),
+								Patch:     new("@@ -1,5 +1,10 @@"),
 							},
 							{
-								Filename:  github.Ptr("file2.txt"),
-								Additions: github.Ptr(20),
-								Deletions: github.Ptr(0),
-								Changes:   github.Ptr(20),
-								Status:    github.Ptr("added"),
-								Patch:     github.Ptr("@@ -0,0 +1,20 @@"),
+								Filename:  new("file2.txt"),
+								Additions: new(20),
+								Deletions: new(0),
+								Changes:   new(20),
+								Status:    new("added"),
+								Patch:     new("@@ -0,0 +1,20 @@"),
 							},
 						}
 						w.WriteHeader(http.StatusOK)
@@ -1299,20 +1301,20 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 			number:     123,
 			wantFiles: []CommitFile{
 				&github.CommitFile{
-					Filename:  github.Ptr("file1.txt"),
-					Additions: github.Ptr(10),
-					Deletions: github.Ptr(5),
-					Changes:   github.Ptr(15),
-					Status:    github.Ptr("modified"),
-					Patch:     github.Ptr("@@ -1,5 +1,10 @@"),
+					Filename:  new("file1.txt"),
+					Additions: new(10),
+					Deletions: new(5),
+					Changes:   new(15),
+					Status:    new("modified"),
+					Patch:     new("@@ -1,5 +1,10 @@"),
 				},
 				&github.CommitFile{
-					Filename:  github.Ptr("file2.txt"),
-					Additions: github.Ptr(20),
-					Deletions: github.Ptr(0),
-					Changes:   github.Ptr(20),
-					Status:    github.Ptr("added"),
-					Patch:     github.Ptr("@@ -0,0 +1,20 @@"),
+					Filename:  new("file2.txt"),
+					Additions: new(20),
+					Deletions: new(0),
+					Changes:   new(20),
+					Status:    new("added"),
+					Patch:     new("@@ -0,0 +1,20 @@"),
 				},
 			},
 			wantErr: nil,
@@ -1345,11 +1347,11 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 						files := make([]*github.CommitFile, maxPRFiles+1)
 						for i := 0; i < maxPRFiles+1; i++ {
 							files[i] = &github.CommitFile{
-								Filename:  github.Ptr(fmt.Sprintf("file%d.txt", i+1)),
-								Additions: github.Ptr(i + 1),
-								Deletions: github.Ptr(0),
-								Changes:   github.Ptr(i + 1),
-								Status:    github.Ptr("added"),
+								Filename:  new(fmt.Sprintf("file%d.txt", i+1)),
+								Additions: new(i + 1),
+								Deletions: new(0),
+								Changes:   new(i + 1),
+								Status:    new("added"),
 							}
 						}
 						w.WriteHeader(http.StatusOK)
@@ -1467,8 +1469,8 @@ func TestCreatePullRequestComment(t *testing.T) {
 
 						// Return the created comment
 						createdComment := &github.IssueComment{
-							ID:   github.Ptr(int64(123)),
-							Body: github.Ptr("Test comment"),
+							ID:   new(int64(123)),
+							Body: new("Test comment"),
 						}
 
 						w.WriteHeader(http.StatusCreated)
@@ -1780,7 +1782,7 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 			wantErr:      nil,
 		},
 		{
-			name: "pull request rule is active",
+			name: "pull request rule is active and not bypassable",
 			mockHandler: mockhub.NewMockedHTTPClient(
 				mockhub.WithRequestMatchHandler(
 					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
@@ -1792,6 +1794,373 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 								"ruleset_source_type": "Repository",
 								"ruleset_source":      "test-owner/test-repo",
 								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+							"id":                      1,
+							"name":                    "test-ruleset",
+							"source":                  "test-owner/test-repo",
+							"enforcement":             "active",
+							"current_user_can_bypass": "never",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "pull request rule with bypass mode always returns no block",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+							"id":                      1,
+							"name":                    "test-ruleset",
+							"source":                  "test-owner/test-repo",
+							"enforcement":             "active",
+							"current_user_can_bypass": "always",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "pull request rule with bypass mode exempt returns no block",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+							"id":                      1,
+							"name":                    "test-ruleset",
+							"source":                  "test-owner/test-repo",
+							"enforcement":             "active",
+							"current_user_can_bypass": "exempt",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "pull request rule with bypass mode pull_request still blocks direct push",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+							"id":                      1,
+							"name":                    "test-ruleset",
+							"source":                  "test-owner/test-repo",
+							"enforcement":             "active",
+							"current_user_can_bypass": "pull_request",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "pull request rule without current_user_can_bypass field still blocks",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+							"id":          1,
+							"name":        "test-ruleset",
+							"source":      "test-owner/test-repo",
+							"enforcement": "active",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "multiple PR rules across rulesets where one is not bypassable still blocks",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Organization",
+								"ruleset_source":      "test-owner",
+								"ruleset_id":          2,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Both rulesets are queried. Return "always" for one and
+						// "never" for the other so the overall result blocks.
+						bypass := "always"
+						if strings.HasSuffix(r.URL.Path, "/2") {
+							bypass = "never"
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+							"name":                    "ruleset",
+							"source":                  "test-owner/test-repo",
+							"enforcement":             "active",
+							"current_user_can_bypass": bypass,
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "GetRuleset returns 403 treats as blocking",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusForbidden)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusForbidden},
+							Message:  "Forbidden",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "GetRuleset returns 404 treats as blocking",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusNotFound},
+							Message:  "Not Found",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "GetRuleset returns 500 treats as blocking",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusInternalServerError},
+							Message:  "Internal Server Error",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "PR rule with zero ruleset_id is treated as blocking",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          0,
 								"parameters":          map[string]interface{}{},
 							},
 						}
@@ -1943,6 +2312,56 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 	}
 }
 
+func TestGithubClient_GetRulesets_DeduplicatesParentRulesetFetch(t *testing.T) {
+	var rulesetCalls int32
+	mockHandler := mockhub.NewMockedHTTPClient(
+		mockhub.WithRequestMatchHandler(
+			mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				rules := []map[string]interface{}{
+					{
+						"type":                "pull_request",
+						"ruleset_source_type": "Repository",
+						"ruleset_source":      "test-owner/test-repo",
+						"ruleset_id":          1,
+						"parameters":          map[string]interface{}{},
+					},
+					{
+						"type":                "pull_request",
+						"ruleset_source_type": "Repository",
+						"ruleset_source":      "test-owner/test-repo",
+						"ruleset_id":          1,
+						"parameters":          map[string]interface{}{},
+					},
+				}
+				w.WriteHeader(http.StatusOK)
+				require.NoError(t, json.NewEncoder(w).Encode(rules))
+			}),
+		),
+		mockhub.WithRequestMatchHandler(
+			mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				atomic.AddInt32(&rulesetCalls, 1)
+				w.WriteHeader(http.StatusOK)
+				require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+					"id":                      1,
+					"name":                    "test-ruleset",
+					"source":                  "test-owner/test-repo",
+					"enforcement":             "active",
+					"current_user_can_bypass": "always",
+				}))
+			}),
+		),
+	)
+
+	client := &githubClient{gh: github.NewClient(mockHandler)}
+	got, err := client.GetRulesets(context.Background(), "test-owner", "test-repo", "main")
+
+	require.NoError(t, err)
+	assert.Nil(t, got)
+	assert.Equal(t, int32(1), atomic.LoadInt32(&rulesetCalls), "GetRuleset should be called once per unique RulesetID")
+}
+
 func TestGithubClient_GetRepository(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -1959,9 +2378,9 @@ func TestGithubClient_GetRepository(t *testing.T) {
 					mockhub.GetReposByOwnerByRepo,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						repo := &github.Repository{
-							ID:            github.Ptr(int64(12345)),
-							Name:          github.Ptr("test-repo"),
-							DefaultBranch: github.Ptr("main"),
+							ID:            new(int64(12345)),
+							Name:          new("test-repo"),
+							DefaultBranch: new("main"),
 						}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(repo))
@@ -1984,9 +2403,9 @@ func TestGithubClient_GetRepository(t *testing.T) {
 					mockhub.GetReposByOwnerByRepo,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						repo := &github.Repository{
-							ID:            github.Ptr(int64(67890)),
-							Name:          github.Ptr("legacy-repo"),
-							DefaultBranch: github.Ptr("master"),
+							ID:            new(int64(67890)),
+							Name:          new("legacy-repo"),
+							DefaultBranch: new("master"),
 						}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(repo))
@@ -2009,9 +2428,9 @@ func TestGithubClient_GetRepository(t *testing.T) {
 					mockhub.GetReposByOwnerByRepo,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						repo := &github.Repository{
-							ID:            github.Ptr(int64(11111)),
-							Name:          github.Ptr("dev-repo"),
-							DefaultBranch: github.Ptr("develop"),
+							ID:            new(int64(11111)),
+							Name:          new("dev-repo"),
+							DefaultBranch: new("develop"),
 						}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(repo))
@@ -2186,9 +2605,9 @@ func TestGithubClient_GetRepository(t *testing.T) {
 					mockhub.GetReposByOwnerByRepo,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						repo := &github.Repository{
-							ID:            github.Ptr(int64(99999)),
-							Name:          github.Ptr("test-repo-with-dashes_and_underscores"),
-							DefaultBranch: github.Ptr("main"),
+							ID:            new(int64(99999)),
+							Name:          new("test-repo-with-dashes_and_underscores"),
+							DefaultBranch: new("main"),
 						}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(repo))

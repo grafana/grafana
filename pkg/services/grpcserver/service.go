@@ -20,7 +20,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -44,24 +43,28 @@ type gPRCServerService struct {
 	enabled          bool
 	startedChan      chan struct{}
 	separateShutdown bool
+	// listener, when non-nil, is served instead of dialing cfg.Address at start
+	// time. Used by tests to pass a pre-bound listener through, avoiding a
+	// close/re-bind race on the reserved port.
+	listener net.Listener
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer) (Provider, error) {
-	return provideService(cfg, features, authenticator, tracer, registerer, false)
+func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer) (Provider, error) {
+	return provideService(cfg, authenticator, tracer, registerer, false, nil)
 }
 
-func provideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer, separateShutdown bool) (*gPRCServerService, error) {
+func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer, separateShutdown bool, listener net.Listener) (*gPRCServerService, error) {
 	s := &gPRCServerService{
-		cfg:    cfg.GRPCServer,
-		logger: log.New("grpc-server"),
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		enabled:          features.IsEnabledGlobally(featuremgmt.FlagGrpcServer), // TODO: replace with cfg.GRPCServer.Enabled when we remove feature toggle.
+		cfg:              cfg.GRPCServer,
+		logger:           log.New("grpc-server"),
+		enabled:          cfg.GRPCServer.Enabled,
 		startedChan:      make(chan struct{}),
 		separateShutdown: separateShutdown,
+		listener:         listener,
 	}
 
 	// Register the metric here instead of an init() function so that we do
-	// nothing unless the feature is actually enabled.
+	// nothing unless the gRPC server is actually enabled.
 	if grpcRequestDuration == nil {
 		grpcRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace:                       "grafana",
@@ -78,11 +81,16 @@ func provideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		}
 	}
 
+	// Recovery is listed first so it is outermost and catches panics in every
+	// subsequent interceptor and in the handlers themselves. Without it an
+	// unrecovered panic crashes the whole process.
 	unaryInterceptors := []grpc.UnaryServerInterceptor{
+		interceptors.UnaryPanicRecoveryInterceptor(),
 		interceptors.LoggingUnaryInterceptor(s.logger, s.cfg.EnableLogging), // needs to be registered after tracing interceptor to get trace id
 		middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
 	}
 	streamInterceptors := []grpc.StreamServerInterceptor{
+		interceptors.StreamPanicRecoveryInterceptor(),
 		interceptors.TracingStreamInterceptor(tracer),
 		interceptors.LoggingStreamInterceptor(s.logger, s.cfg.EnableLogging),
 		middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
@@ -152,9 +160,13 @@ func (s *gPRCServerService) Run(ctx context.Context) error {
 		"keepalive_timeout", s.cfg.KeepaliveTimeout,
 		"keepalive_min_time", s.cfg.KeepaliveMinTime)
 
-	listener, err := net.Listen(s.cfg.Network, s.cfg.Address)
-	if err != nil {
-		return fmt.Errorf("GRPC server: failed to listen: %w", err)
+	listener := s.listener
+	if listener == nil {
+		var err error
+		listener, err = net.Listen(s.cfg.Network, s.cfg.Address)
+		if err != nil {
+			return fmt.Errorf("GRPC server: failed to listen: %w", err)
+		}
 	}
 
 	s.address = listener.Addr().String()
@@ -224,17 +236,32 @@ type DSKitService struct {
 // ProvideDSKitService wraps a Provider into a dskit BasicService.
 func ProvideDSKitService(
 	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
 	tracer trace.Tracer,
 	registerer prometheus.Registerer,
 	serviceName string,
+) (*DSKitService, error) {
+	return ProvideDSKitServiceWithListener(cfg, tracer, registerer, serviceName, nil)
+}
+
+// ProvideDSKitServiceWithListener is like ProvideDSKitService but serves the
+// gRPC server on a caller-supplied listener instead of dialing cfg.Address at
+// start time. Tests use this to reserve an ephemeral port and pass the live
+// listener straight through, avoiding a close/re-bind race where a parallel
+// process could claim the port in between. A nil listener falls back to the
+// configured address.
+func ProvideDSKitServiceWithListener(
+	cfg *setting.Cfg,
+	tracer trace.Tracer,
+	registerer prometheus.Registerer,
+	serviceName string,
+	listener net.Listener,
 ) (*DSKitService, error) {
 	// Use a passthrough authenticator so the grpc_auth interceptor is
 	// registered. This enables per-service auth via ServiceAuthFuncOverride.
 	passthrough := interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
 		return ctx, nil
 	})
-	grpcService, err := provideService(cfg, features, passthrough, tracer, registerer, true)
+	grpcService, err := provideService(cfg, passthrough, tracer, registerer, true, listener)
 	if err != nil {
 		return nil, err
 	}

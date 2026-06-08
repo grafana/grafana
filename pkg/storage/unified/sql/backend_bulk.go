@@ -322,7 +322,7 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 			}
 		} else {
 			// Make sure the collection RV is above our last written event
-			_, err = b.rvManager.ExecWithRV(ctx, key, func(tx db.Tx) (string, error) {
+			_, err = b.rvManager.ExecWithRV(ctx, key, func(_ context.Context, _ db.Tx) (string, error) {
 				return "", nil
 			})
 			if err != nil {
@@ -363,7 +363,7 @@ func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, b
 			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
 				Key:    req.Key,
 				Action: req.Action,
-				Error:  "unable to unmarshal json",
+				Error:  fmt.Sprintf("unable to unmarshal json (bulk): %s", err.Error()),
 			})
 			continue
 		}

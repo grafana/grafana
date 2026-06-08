@@ -169,6 +169,19 @@ describe('prepare timeseries graph', () => {
     expect(frames![0].length).toEqual(6);
   });
 
+  it('converts string time values to numeric', () => {
+    const df = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: ['2020-01-01T00:00:00Z', '2020-01-02T00:00:00Z'] },
+        { name: 'value', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+
+    const frames = prepareGraphableFields([df], createTheme());
+    expect(frames).not.toBeNull();
+    expect(typeof frames![0].fields[0].values[0]).toBe('number');
+  });
+
   describe('boolean fields', () => {
     it('will set line interpolation to an appropriate mode for boolean fields', () => {
       const df = createDataFrame({
@@ -201,6 +214,85 @@ describe('prepare timeseries graph', () => {
       const frames = prepareGraphableFields([df], createTheme());
       expect(df.fields[1].config.custom.lineInterpolation).toEqual(LineInterpolation.Smooth);
       expect(frames![0].fields[1].config.custom.lineInterpolation).toEqual(LineInterpolation.StepAfter);
+    });
+
+    it('preserves StepBefore interpolation', () => {
+      const df = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          {
+            name: 'flag',
+            type: FieldType.boolean,
+            values: [true, false, true],
+            config: { custom: { lineInterpolation: LineInterpolation.StepBefore } },
+          },
+        ],
+      });
+
+      const frames = prepareGraphableFields([df], createTheme());
+      expect(frames![0].fields[1].config.custom.lineInterpolation).toBe(LineInterpolation.StepBefore);
+    });
+
+    it('converts null values correctly', () => {
+      const df = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'flag', type: FieldType.boolean, values: [true, null, false] },
+        ],
+      });
+
+      const frames = prepareGraphableFields([df], createTheme());
+      expect(frames![0].fields[1].values).toEqual([1, null, 0]);
+    });
+  });
+
+  describe('enum fields', () => {
+    it('handles a single enum field', () => {
+      const df = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          {
+            name: 'status',
+            type: FieldType.enum,
+            values: [0, 1, 0],
+            config: { type: { enum: { text: ['ok', 'error'] } } },
+          },
+        ],
+      });
+
+      const frames = prepareGraphableFields([df], createTheme());
+      expect(frames).not.toBeNull();
+      expect(frames![0].fields[1].type).toBe(FieldType.enum);
+    });
+
+    it('re-enumerates multiple enum fields across frames', () => {
+      const df1 = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2] },
+          {
+            name: 'e1',
+            type: FieldType.enum,
+            values: [0, 1],
+            config: { type: { enum: { text: ['a', 'b'] } } },
+          },
+        ],
+      });
+      const df2 = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [3, 4] },
+          {
+            name: 'e2',
+            type: FieldType.enum,
+            values: [0, 1],
+            config: { type: { enum: { text: ['c', 'd'] } } },
+          },
+        ],
+      });
+
+      const frames = prepareGraphableFields([df1, df2], createTheme());
+      expect(frames).not.toBeNull();
+      // Second enum field values should be offset by the length of the first enum's text
+      expect(frames![1].fields[1].values).toEqual([2, 3]);
     });
   });
 
@@ -371,6 +463,131 @@ describe('setClassicPaletteIdxs', () => {
     expect(mainFrame.fields[1].state?.seriesIndex).toBe(0);
     // Compare frame should match the main frame's series index
     expect(compareFrame.fields[1].state?.seriesIndex).toBe(0);
+  });
+
+  it('assigns sequential indices across multiple frames', () => {
+    const frame1 = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'a', type: FieldType.number, values: [1, 2] },
+      ],
+    });
+    const frame2 = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'b', type: FieldType.number, values: [3, 4] },
+      ],
+    });
+    setClassicPaletteIdxs([frame1, frame2], createTheme(), 0);
+    expect(frame1.fields[1].state?.seriesIndex).toBe(0);
+    expect(frame2.fields[1].state?.seriesIndex).toBe(1);
+  });
+
+  it('falls back to sequential indices for compare frame without matching main', () => {
+    const compareFrame = toDataFrame({
+      refId: 'B-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'value', type: FieldType.number, values: [5, 15] },
+      ],
+    });
+
+    setClassicPaletteIdxs([compareFrame], createTheme(), 0);
+    expect(compareFrame.fields[1].state?.seriesIndex).toBe(0);
+  });
+
+  it('falls back to sequential indices when compare frame has mismatched field count', () => {
+    const mainFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'val1', type: FieldType.number, values: [10, 20] },
+        { name: 'val2', type: FieldType.number, values: [30, 40] },
+      ],
+    });
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'val1', type: FieldType.number, values: [5, 15] },
+      ],
+    });
+
+    setClassicPaletteIdxs([mainFrame, compareFrame], createTheme(), 0);
+    expect(mainFrame.fields[1].state?.seriesIndex).toBe(0);
+    expect(mainFrame.fields[2].state?.seriesIndex).toBe(1);
+    expect(compareFrame.fields[1].state?.seriesIndex).toBe(2);
+  });
+
+  it('falls back to sequential indices for compare frame without refId', () => {
+    const compareFrame = toDataFrame({
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'val', type: FieldType.number, values: [5, 15] },
+      ],
+    });
+    compareFrame.refId = undefined;
+
+    setClassicPaletteIdxs([compareFrame], createTheme(), 0);
+    expect(compareFrame.fields[1].state?.seriesIndex).toBe(0);
+  });
+
+  it('matches multiple compare frames to their respective main frames by index', () => {
+    const main1 = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'v1', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+    const main2 = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'v2', type: FieldType.number, values: [30, 40] },
+      ],
+    });
+    const compare1 = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'v1', type: FieldType.number, values: [5, 15] },
+      ],
+    });
+    const compare2 = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'v2', type: FieldType.number, values: [25, 35] },
+      ],
+    });
+
+    setClassicPaletteIdxs([main1, main2, compare1, compare2], createTheme(), 0);
+    expect(main1.fields[1].state?.seriesIndex).toBe(0);
+    expect(main2.fields[1].state?.seriesIndex).toBe(1);
+    expect(compare1.fields[1].state?.seriesIndex).toBe(0);
+    expect(compare2.fields[1].state?.seriesIndex).toBe(1);
+  });
+
+  it('does not assign seriesIndex to string or time fields', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2] },
+          { name: 'label', type: FieldType.string, values: ['a', 'b'] },
+          { name: 'value', type: FieldType.number, values: [10, 20] },
+        ],
+      }),
+    ];
+    setClassicPaletteIdxs(frames, createTheme(), 0);
+    expect(frames[0].fields[0].state?.seriesIndex).toBeUndefined();
+    expect(frames[0].fields[1].state?.seriesIndex).toBeUndefined();
+    expect(frames[0].fields[2].state?.seriesIndex).toBe(0);
   });
 });
 

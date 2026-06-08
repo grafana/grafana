@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -207,6 +208,15 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 
 func TestIntegrationSetProvenance_DeadlockScenarios(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+
+	// The deadlock class this test targets is specific to MySQL's gap/insert-intention locks
+	// (see setProvenanceWithLocking, gated by FlagAlertingProvenanceLockWrites). On SQLite,
+	// SELECT ... FOR UPDATE is a no-op and the single-writer model makes 20 concurrent
+	// transactions contend on busy_timeout, producing SQLITE_BUSY rather than exercising
+	// the fix.
+	if db.IsTestDbSQLite() {
+		t.Skip("DeadlockScenarios targets MySQL gap-lock semantics; skipped on SQLite")
+	}
 
 	ng, dbStore := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
 	dbStore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingProvenanceLockWrites)

@@ -103,6 +103,7 @@ func NewAuthzLimitedClient(client claims.AccessClient, opts AuthzOptions) claims
 		allowlist: groupResource{
 			"dashboard.grafana.app": map[string]interface{}{"dashboards": nil},
 			"folder.grafana.app":    map[string]interface{}{"folders": nil},
+			"iam.grafana.app":       map[string]interface{}{"users": nil},
 		},
 		logger:  logger,
 		metrics: newMetrics(opts.Registry),

@@ -2,16 +2,16 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
-
-	"github.com/grafana/alerting/definition"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -58,12 +58,13 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 		return definitions.Route{}, "", err
 	}
 	result := *rev.Config.AlertmanagerConfig.Route
-	result.Provenance = definitions.Provenance(provenance)
+	result.Provenance = v1.Provenance(provenance)
 	version := calculateRouteFingerprint(result)
-	return result, version, nil
+	return *notifier.RouteToAPI(&result), version, nil
 }
 
-func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
+func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, route definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
+	tree := v1.RouteToModel(&route)
 	err := tree.Validate()
 	if err != nil {
 		return definitions.Route{}, "", models.MakeErrRouteInvalidFormat(err)
@@ -80,7 +81,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	}
 
 	// check that provenance is not changed in an invalid way
-	storedProvenance, err := nps.provenanceStore.GetProvenance(ctx, &tree, orgID)
+	storedProvenance, err := nps.provenanceStore.GetProvenance(ctx, tree, orgID)
 	if err != nil {
 		return definitions.Route{}, "", err
 	}
@@ -88,18 +89,14 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return definitions.Route{}, "", err
 	}
 
-	if err := revision.ValidateRoute(tree); err != nil {
+	if err := revision.ValidateRoute(*tree); err != nil {
 		return definitions.Route{}, "", models.MakeErrRouteInvalidFormat(err)
 	}
 
-	revision.Config.AlertmanagerConfig.Route = &tree
+	revision.Config.AlertmanagerConfig.Route = tree
 
-	_, err = revision.Config.GetMergedAlertmanagerConfig()
+	_, err = merge.MergeExtraConfig(ctx, revision.Config)
 	if err != nil {
-		if errors.Is(err, definition.ErrSubtreeMatchersConflict) {
-			// TODO temporarily get the conflicting matchers
-			return definitions.Route{}, "", models.MakeErrRouteConflictingMatchers(fmt.Sprintf("%s", revision.Config.ExtraConfigs[0].MergeMatchers))
-		}
 		nps.log.Warn("Unable to validate the combined routing tree because of an error during merging. This could be a sign of broken external configuration. Skipping", "error", err)
 	}
 
@@ -107,12 +104,12 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return nps.provenanceStore.SetProvenance(ctx, &tree, orgID, p)
+		return nps.provenanceStore.SetProvenance(ctx, tree, orgID, p)
 	})
 	if err != nil {
 		return definitions.Route{}, "", err
 	}
-	return tree, calculateRouteFingerprint(tree), nil
+	return *notifier.RouteToAPI(tree), calculateRouteFingerprint(*tree), nil
 }
 
 func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
@@ -124,7 +121,7 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 		return definitions.Route{}, err
 	}
 
-	defaultCfg, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(nps.settings.DefaultConfiguration))
+	defaultCfg, err := notifier.Load([]byte(nps.settings.DefaultConfiguration))
 	if err != nil {
 		nps.log.Error("Failed to parse default alertmanager config: %w", err)
 		return definitions.Route{}, fmt.Errorf("failed to parse default alertmanager config: %w", err)
@@ -151,14 +148,14 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 		return definitions.Route{}, nil
 	} // TODO should be error?
 
-	return *route, nil
+	return *notifier.RouteToAPI(route), nil
 }
 
-func calculateRouteFingerprint(route definitions.Route) string {
+func calculateRouteFingerprint(route v1.Route) string {
 	return legacy_storage.CalculateRouteFingerprint(route)
 }
 
-func (nps *NotificationPolicyService) checkOptimisticConcurrency(current definitions.Route, provenance models.Provenance, desiredVersion string, action string) error {
+func (nps *NotificationPolicyService) checkOptimisticConcurrency(current v1.Route, provenance models.Provenance, desiredVersion string, action string) error {
 	if desiredVersion == "" {
 		if provenance != models.ProvenanceFile {
 			// if version is not specified and it's not a file provisioning, emit a log message to reflect that optimistic concurrency is disabled for this request

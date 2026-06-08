@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestSyncRuleStatePersister_Sync(t *testing.T) {
@@ -34,7 +33,7 @@ func TestSyncRuleStatePersister_Sync(t *testing.T) {
 						Labels: data.Labels{
 							"label-1": "value-1",
 						},
-						FiredAt:            util.Pointer(time.Now()),
+						FiredAt:            new(time.Now()),
 						LastEvaluationTime: time.Now(),
 						StartsAt:           time.Now(),
 						EndsAt:             time.Now(),

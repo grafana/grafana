@@ -193,6 +193,91 @@ function renderWithBothContexts(dataPane: PanelDataPaneNext) {
   );
 }
 
+describe('QueryEditorContextWrapper - delete confirmation', () => {
+  beforeEach(() => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [],
+      loading: false,
+      isDashboardSaved: true,
+    });
+  });
+
+  it('starts with no action in the intermediate confirmation state', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+
+  it('records the most recently set action key and clears it on null', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:query:A'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:query:A');
+
+    act(() => result.current.setConfirmingDeleteActionKey('content_header:query:B'));
+    expect(result.current.confirmingDeleteActionKey).toBe('content_header:query:B');
+
+    act(() => result.current.setConfirmingDeleteActionKey(null));
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+
+  it('dismisses an open confirmation when the selected query changes', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:query:A'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:query:A');
+
+    act(() => result.current.setSelectedQuery({ refId: 'A' } as DataQuery));
+
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+
+  it('dismisses an open confirmation when the selected transformation changes', () => {
+    const { useTransformations } = require('./hooks/useTransformations');
+    const mockTransformation: Transformation = {
+      registryItem: undefined,
+      transformId: 'reduce-0',
+      transformConfig: { id: 'reduce', options: {} },
+    };
+    useTransformations.mockReturnValue([mockTransformation]);
+
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:transformation:reduce-0'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:transformation:reduce-0');
+
+    act(() => result.current.setSelectedTransformation(mockTransformation));
+
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+
+  it('dismisses an open confirmation when the selected alert changes', () => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [mockAlert],
+      loading: false,
+      isDashboardSaved: true,
+    });
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:query:A'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:query:A');
+
+    act(() => result.current.setSelectedAlert(mockAlert));
+
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+
+  it('dismisses an open confirmation when selection is cleared', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:query:A'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:query:A');
+
+    act(() => result.current.clearSelection());
+
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+});
+
 describe('QueryEditorContextWrapper - delete actions', () => {
   beforeEach(() => {
     mockUseAlertRulesForPanel.mockReturnValue({

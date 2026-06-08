@@ -86,6 +86,14 @@ func New(cfg app.Config) (app.App, error) {
 				Validator:  playlistValidator,
 			},
 		},
+		// Conversion for kinds is defined for all versions of a kind at once.
+		// This interface may change in the future, see https://github.com/grafana/grafana-app-sdk/issues/617
+		Converters: map[schema.GroupKind]simple.Converter{
+			{
+				Group: cfg.ManifestData.Group,
+				Kind:  playlistv0alpha1.PlaylistKind().Kind(),
+			}: NewExampleConverter(),
+		},
 	}
 
 	a, err := simple.NewApp(simpleConfig)

@@ -30,6 +30,8 @@ interface PlotLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, '
   data: DataFrame[];
   config: UPlotConfigBuilder;
   enableFacetedFilter?: boolean;
+  facetedFilterPinned?: boolean;
+  onPinnedToSidebarChange?: (pinned: boolean) => void;
 }
 
 /**
@@ -63,6 +65,8 @@ export const PlotLegend = memo(function PlotLegend({
   displayMode,
   limit,
   enableFacetedFilter = false,
+  facetedFilterPinned = false,
+  onPinnedToSidebarChange,
   ...vizLayoutLegendProps
 }: PlotLegendProps) {
   const theme = useTheme2();
@@ -70,7 +74,6 @@ export const PlotLegend = memo(function PlotLegend({
   const { onToggleSeriesVisibility } = usePanelContext();
 
   const [selectedLabels, setSelectedLabels] = useState<Record<string, string[]>>({});
-  const [filterDocked, setFilterDocked] = useState(false);
 
   const facetedLabels = useMemo(
     () => (enableFacetedFilter && onToggleSeriesVisibility ? extractFacetedLabels(data) : {}),
@@ -148,8 +151,8 @@ export const PlotLegend = memo(function PlotLegend({
   }, [onToggleSeriesVisibility]);
 
   const handleToggleFilterDock = useCallback(() => {
-    setFilterDocked((prev) => !prev);
-  }, []);
+    onPinnedToSidebarChange?.(!facetedFilterPinned);
+  }, [onPinnedToSidebarChange, facetedFilterPinned]);
 
   const facetedFilter = hasFacetedLabels ? (
     <FacetedLabelsFilter
@@ -200,11 +203,11 @@ export const PlotLegend = memo(function PlotLegend({
       sortDesc={vizLayoutLegendProps.sortDesc}
       isSortable={true}
       limit={limit}
-      filterAction={!filterDocked ? filterToggle : undefined}
+      filterAction={!facetedFilterPinned ? filterToggle : undefined}
     />
   );
 
-  if (filterDocked && facetedFilter) {
+  if (facetedFilterPinned && facetedFilter) {
     return (
       <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>
         <div className={styles.legendWithFilter}>

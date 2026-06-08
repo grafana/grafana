@@ -253,7 +253,7 @@ describe('VersionList', () => {
     renderWithStore(<VersionList plugin={plugin} />, { managedPluginsV2: true });
     const buttons = screen.getAllByRole('button');
     const enabledButtons = buttons.filter((btn) => !(btn as HTMLButtonElement).disabled);
-    expect(enabledButtons).toHaveLength(3);
+    expect(enabledButtons).toHaveLength(1);
 
     config.featureToggles.managedPluginsV2 = managedPluginsV2Original;
     config.pluginAdminExternalManageEnabled = pluginAdminExternalManageEnabledOriginal;

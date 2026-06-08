@@ -11,10 +11,12 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	gocache "github.com/patrickmn/go-cache"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	gocache "github.com/patrickmn/go-cache"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -189,7 +191,7 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 		if err != nil {
 			return nil, fmt.Errorf("failed to get plugin context: %w", err)
 		}
-		httpClientCtx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+		httpClientCtx = config.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 	} else {
 		// This should not happen, but if the plugin context provider is not set, log a warning.
 		w.l.Warn("Plugin context provider is not set for the data source writer, PDC-enabled data sources may not work correctly", "datasource_uid", dsUID, "datasource_type", ds.Type)

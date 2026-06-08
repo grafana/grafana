@@ -2,6 +2,9 @@ package apistore
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/go-jose/go-jose/v4/jwt"
@@ -9,6 +12,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	clientrest "k8s.io/client-go/rest"
 
 	authnlib "github.com/grafana/authlib/authn"
 	authtypes "github.com/grafana/authlib/types"
@@ -18,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	serviceauthn "github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestManagedAuthorizer(t *testing.T) {
@@ -189,6 +194,96 @@ func TestManagedAuthorizer(t *testing.T) {
 			},
 		},
 		{
+			name: "terraform: legacy (User-Agent) → new (simple ID) allowed (migration)",
+			auth: user,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "grafana-terraform-provider",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane",
+					},
+				},
+			},
+		},
+		{
+			name: "terraform: new (simple ID) → new (different simple ID) blocked",
+			auth: user,
+			err:  "Cannot change Terraform manager ID; stable custom IDs are immutable",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "my-terraform-provider-v2",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "my-terraform-provider",
+					},
+				},
+			},
+		},
+		{
+			name: "terraform: legacy (User-Agent) → legacy (different User-Agent) allowed",
+			auth: user,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/1.6.0 (+https://www.terraform.io) terraform-provider-grafana/v4.0.0",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane",
+					},
+				},
+			},
+		},
+		{
+			name: "terraform: new (simple ID) → legacy (User-Agent) blocked (no reverting)",
+			auth: user,
+			err:  "Cannot change Terraform manager ID back to User-Agent format",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "grafana-terraform-provider",
+					},
+				},
+			},
+		},
+		{
 			name: "audience includes provisioning group",
 			auth: &serviceauthn.Identity{
 				Type: authtypes.TypeAccessPolicy,
@@ -303,6 +398,189 @@ func TestManagedAuthorizer(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestManagedResourceCommitMessage(t *testing.T) {
+	tests := []struct {
+		name        string
+		objectName  string
+		annotations map[string]string
+		action      resourcepb.WatchEvent_Type
+		want        string
+	}{
+		{
+			name:       "uses grafana.app/message annotation when set (MODIFIED)",
+			objectName: "dash-uid",
+			annotations: map[string]string{
+				utils.AnnoKeyMessage: "Custom commit message",
+			},
+			action: resourcepb.WatchEvent_MODIFIED,
+			want:   "Custom commit message",
+		},
+		{
+			name:       "annotation wins over action-specific fallback (DELETED)",
+			objectName: "dash-uid",
+			annotations: map[string]string{
+				utils.AnnoKeyMessage: "Custom delete message",
+			},
+			action: resourcepb.WatchEvent_DELETED,
+			want:   "Custom delete message",
+		},
+		{
+			name:        "MODIFIED falls back to 'Update <name>' when annotation is absent",
+			objectName:  "dash-uid",
+			annotations: nil,
+			action:      resourcepb.WatchEvent_MODIFIED,
+			want:        "Update dash-uid",
+		},
+		{
+			name:        "ADDED falls back to 'Create <name>' when annotation is absent",
+			objectName:  "dash-uid",
+			annotations: nil,
+			action:      resourcepb.WatchEvent_ADDED,
+			want:        "Create dash-uid",
+		},
+		{
+			name:        "DELETED falls back to 'Delete <name>' when annotation is absent",
+			objectName:  "dash-uid",
+			annotations: nil,
+			action:      resourcepb.WatchEvent_DELETED,
+			want:        "Delete dash-uid",
+		},
+		{
+			name:       "MODIFIED falls back to 'Update <name>' when annotation is an empty string",
+			objectName: "dash-uid",
+			annotations: map[string]string{
+				utils.AnnoKeyMessage: "",
+			},
+			action: resourcepb.WatchEvent_MODIFIED,
+			want:   "Update dash-uid",
+		},
+		{
+			name:       "preserves whitespace-only annotation verbatim",
+			objectName: "dash-uid",
+			annotations: map[string]string{
+				utils.AnnoKeyMessage: "   ",
+			},
+			action: resourcepb.WatchEvent_MODIFIED,
+			want:   "   ",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			obj := &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Name:        tt.objectName,
+					Annotations: tt.annotations,
+				},
+			}
+			accessor, err := utils.MetaAccessor(obj)
+			require.NoError(t, err)
+			require.Equal(t, tt.want, managedResourceCommitMessage(accessor, tt.action))
+		})
+	}
+}
+
+// fakeRestConfigProvider returns a rest.Config pointing at an arbitrary host,
+// used so tests can capture proxied REST requests with an httptest.Server.
+type fakeRestConfigProvider struct {
+	host string
+}
+
+func (f *fakeRestConfigProvider) GetRestConfig(_ context.Context) (*clientrest.Config, error) {
+	return &clientrest.Config{Host: f.host}, nil
+}
+
+func TestHandleManagedResourceRouting_ForwardsCommitMessage(t *testing.T) {
+	tests := []struct {
+		name        string
+		action      resourcepb.WatchEvent_Type
+		annotations map[string]string
+		wantMethod  string
+		wantMessage string
+	}{
+		{
+			name:   "MODIFIED uses grafana.app/message annotation",
+			action: resourcepb.WatchEvent_MODIFIED,
+			annotations: map[string]string{
+				utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+				utils.AnnoKeyManagerIdentity: "my-repo",
+				utils.AnnoKeySourcePath:      "dashboards/dash.json",
+				utils.AnnoKeyMessage:         "Custom commit message",
+			},
+			wantMethod:  http.MethodPut,
+			wantMessage: "Custom commit message",
+		},
+		{
+			name:   "MODIFIED falls back to 'Update <name>' when annotation is absent",
+			action: resourcepb.WatchEvent_MODIFIED,
+			annotations: map[string]string{
+				utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+				utils.AnnoKeyManagerIdentity: "my-repo",
+				utils.AnnoKeySourcePath:      "dashboards/dash.json",
+			},
+			wantMethod:  http.MethodPut,
+			wantMessage: "Update dash-uid",
+		},
+		{
+			name:   "ADDED also forwards the commit message",
+			action: resourcepb.WatchEvent_ADDED,
+			annotations: map[string]string{
+				utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+				utils.AnnoKeyManagerIdentity: "my-repo",
+				utils.AnnoKeySourcePath:      "dashboards/dash.json",
+				utils.AnnoKeyMessage:         "Create dash.json",
+			},
+			wantMethod:  http.MethodPost,
+			wantMessage: "Create dash.json",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var captured struct {
+				method string
+				path   string
+				query  url.Values
+			}
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				captured.method = r.Method
+				captured.path = r.URL.Path
+				captured.query = r.URL.Query()
+				// Return a 5xx so the caller short-circuits before reaching
+				// the post-write s.Get call (which would need a full store).
+				http.Error(w, "intentional test failure", http.StatusInternalServerError)
+			}))
+			t.Cleanup(server.Close)
+
+			s := &Storage{configProvider: &fakeRestConfigProvider{host: server.URL}}
+			obj := &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Name:        "dash-uid",
+					Namespace:   "default",
+					Annotations: tt.annotations,
+				},
+			}
+
+			err := s.handleManagedResourceRouting(
+				context.Background(),
+				errResourceIsManagedInRepository,
+				tt.action,
+				"/default/dashboards/dash-uid",
+				obj,
+				&dashboard.Dashboard{},
+			)
+			// The test server returns 500; surface that as a non-nil error.
+			require.Error(t, err)
+
+			require.Equal(t, tt.wantMethod, captured.method, "HTTP method")
+			require.Contains(t, captured.path, "/namespaces/default/repositories/my-repo/files/dashboards/dash.json",
+				"request path should target the provisioning files endpoint")
+			require.Equal(t, tt.wantMessage, captured.query.Get("message"), "message query parameter")
+			require.Equal(t, "true", captured.query.Get("skipDryRun"), "skipDryRun query parameter should be forwarded")
 		})
 	}
 }

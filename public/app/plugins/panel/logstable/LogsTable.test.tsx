@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
 
 import {
   type AbsoluteTimeRange,
@@ -8,15 +9,18 @@ import {
   type EventBus,
   EventBusSrv,
   type FieldConfigSource,
+  FieldType,
   LogSortOrderChangeEvent,
   LogsSortOrder,
   type ScopedVars,
+  toDataFrame,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { defaultTableOptions } from '@grafana/schema';
-import { PanelContextProvider } from '@grafana/ui';
+import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
+import { configureStore } from 'app/store/configureStore';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../../../features/logs/components/fieldSelector/logFields';
 
@@ -24,6 +28,10 @@ import { LogsTable } from './LogsTable';
 import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 import { getPanelData } from './testsUtils';
+
+jest.mock('@openfeature/react-sdk', () => ({
+  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+}));
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
@@ -56,19 +64,29 @@ jest.mock('@grafana/runtime', () => ({
   getAppEvents: jest.fn(() => ({
     publish: publishMockFn,
   })),
+  getDataSourceSrv: jest.fn(() => ({
+    get: () => Promise.resolve(null),
+  })),
+  usePluginLinks: jest.fn().mockReturnValue({
+    links: [],
+    isLoading: false,
+  }),
 }));
 
 const setUp = (
   props?: Partial<React.ComponentProps<typeof LogsTable>>,
   options?: Partial<Options>,
-  app = CoreApp.Dashboard
+  app = CoreApp.Dashboard,
+  panelContext?: Partial<PanelContext>
 ) => {
+  const store = configureStore();
   return render(
     <PanelContextProvider
       value={{
         app,
         eventsScope: 'test',
         eventBus: new EventBusSrv(),
+        ...panelContext,
       }}
     >
       <LogsTable
@@ -103,7 +121,8 @@ const setUp = (
         }}
         {...props}
       />
-    </PanelContextProvider>
+    </PanelContextProvider>,
+    { wrapper: ({ children }) => <Provider store={store}>{children}</Provider> }
   );
 };
 
@@ -283,7 +302,7 @@ describe('LogsTable', () => {
       const { container } = setUp(
         { onOptionsChange },
         {
-          showInspectLogLine: true,
+          enableLogDetails: true,
         }
       );
       await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
@@ -293,8 +312,8 @@ describe('LogsTable', () => {
       expect(headers[0].textContent).toEqual('timestamp');
       expect(headers[1].textContent).toEqual('level');
 
-      // Two log rows; inspect control exists only in the custom timestamp column (one per row).
-      expect(screen.getAllByLabelText('View log line')).toHaveLength(2);
+      // Two log rows; show details exists only in the custom timestamp column (one per row).
+      expect(screen.getAllByLabelText('Show details')).toHaveLength(2);
     });
 
     it('when level is the first column, renders exactly one custom cell per data row', async () => {
@@ -302,7 +321,7 @@ describe('LogsTable', () => {
       const { container } = setUp(
         { onOptionsChange },
         {
-          showInspectLogLine: true,
+          enableLogDetails: true,
           displayedFields: ['level', LOGS_DATAPLANE_TIMESTAMP_NAME, LOGS_DATAPLANE_BODY_NAME],
         }
       );
@@ -313,7 +332,64 @@ describe('LogsTable', () => {
       expect(headers[0].textContent).toEqual('level');
       expect(headers[1].textContent).toEqual('timestamp');
 
-      expect(screen.getAllByLabelText('View log line')).toHaveLength(2);
+      expect(screen.getAllByLabelText('Show details')).toHaveLength(2);
+    });
+  });
+
+  describe('Log details', () => {
+    it('opens the log details view when "Show details" is clicked', async () => {
+      setUp(undefined, { enableLogDetails: true });
+      await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+      expect(screen.queryByLabelText('Close log details sidebar')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getAllByLabelText('Show details')[0]);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Close log details sidebar')).toBeInTheDocument();
+      });
+    });
+
+    it('calls onAddAdHocFilter when using filter-for from log details', async () => {
+      const onAddAdHocFilter = jest.fn();
+      setUp(undefined, { enableLogDetails: true }, CoreApp.Dashboard, { onAddAdHocFilter });
+      await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+      await userEvent.click(screen.getAllByLabelText('Show details')[0]);
+
+      await userEvent.click(screen.getAllByLabelText('Filter for value')[0]);
+
+      expect(onAddAdHocFilter).toHaveBeenCalledTimes(1);
+      expect(onAddAdHocFilter).toHaveBeenCalledWith({
+        key: 'level',
+        value: 'info',
+        operator: '=',
+      });
+
+      await userEvent.click(screen.getAllByLabelText('Filter out value')[0]);
+
+      expect(onAddAdHocFilter).toHaveBeenCalledTimes(2);
+      expect(onAddAdHocFilter).toHaveBeenCalledWith({
+        key: 'level',
+        value: 'info',
+        operator: '!=',
+      });
+    });
+  });
+
+  describe('Missing time field', () => {
+    it('shows "Data is missing a time field" when frames have rows but no time field', async () => {
+      setUp({
+        data: getPanelData({
+          series: [
+            toDataFrame({
+              fields: [{ name: LOGS_DATAPLANE_BODY_NAME, type: FieldType.string, values: ['log 1', 'log 2'] }],
+            }),
+          ],
+        }),
+      });
+
+      expect(await screen.findByText('Data is missing a time field')).toBeInTheDocument();
     });
   });
 });

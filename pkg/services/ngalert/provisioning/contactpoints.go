@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/alerting/definition"
+	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
 
@@ -19,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
@@ -41,16 +44,22 @@ type AlertRuleNotificationSettingsStore interface {
 	ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
 }
 
+type emailIntegrationValidator interface {
+	ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error
+}
+
 type ContactPointService struct {
 	authz                     receiverAuthz
 	configStore               alertmanagerConfigStore
-	encryptionService         secrets.Service
+	encryptionService         secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	provenanceStore           ProvisioningStore
 	notificationSettingsStore AlertRuleNotificationSettingsStore
 	xact                      TransactionManager
 	receiverService           receiverService
 	log                       log.Logger
 	resourcePermissions       ac.ReceiverPermissionsService
+	allowedIntegrations       map[schema.IntegrationType]struct{}
+	emailValidator            emailIntegrationValidator
 }
 
 type receiverService interface {
@@ -62,13 +71,15 @@ type receiverService interface {
 func NewContactPointService(
 	authz receiverAuthz,
 	store alertmanagerConfigStore,
-	encryptionService secrets.Service,
+	encryptionService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	provenanceStore ProvisioningStore,
 	xact TransactionManager,
 	receiverService receiverService,
 	log log.Logger,
 	nsStore AlertRuleNotificationSettingsStore,
 	resourcePermissions ac.ReceiverPermissionsService,
+	allowedIntegrations map[schema.IntegrationType]struct{},
+	emailValidator emailIntegrationValidator,
 ) *ContactPointService {
 	return &ContactPointService{
 		authz:                     authz,
@@ -80,6 +91,8 @@ func NewContactPointService(
 		log:                       log,
 		notificationSettingsStore: nsStore,
 		resourcePermissions:       resourcePermissions,
+		allowedIntegrations:       allowedIntegrations,
+		emailValidator:            emailValidator,
 	}
 }
 
@@ -147,7 +160,7 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 			continue
 		}
 		embeddedContactPoint, err := PostableGrafanaReceiverToEmbeddedContactPoint(
-			receiver,
+			new(definition.PostableGrafanaReceiver(*receiver)),
 			models.ProvenanceNone, // TODO should be correct provenance?
 			ecp.decryptValueOrRedacted(true, receiver.UID),
 		)
@@ -166,7 +179,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 	contactPoint apimodels.EmbeddedContactPoint,
 	provenance models.Provenance,
 ) (apimodels.EmbeddedContactPoint, error) {
-	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
+	if err := ecp.validateContactPoint(ctx, orgID, &contactPoint); err != nil {
 		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -199,10 +212,11 @@ func (ecp *ContactPointService) CreateContactPoint(
 		return apimodels.EmbeddedContactPoint{}, err
 	}
 
-	grafanaReceiver := &apimodels.PostableGrafanaReceiver{
+	grafanaReceiver := &v1.PostableGrafanaReceiver{
 		UID:                   contactPoint.UID,
 		Name:                  contactPoint.Name,
 		Type:                  contactPoint.Type,
+		Version:               string(schema.V1),
 		DisableResolveMessage: contactPoint.DisableResolveMessage,
 		Settings:              jsonData,
 		SecureSettings:        extractedSecrets,
@@ -229,12 +243,12 @@ func (ecp *ContactPointService) CreateContactPoint(
 		if err := ecp.authz.AuthorizeCreate(ctx, user); err != nil {
 			return apimodels.EmbeddedContactPoint{}, err
 		}
-		revision.Config.AlertmanagerConfig.Receivers = append(revision.Config.AlertmanagerConfig.Receivers, &apimodels.PostableApiReceiver{
+		revision.Config.AlertmanagerConfig.Receivers = append(revision.Config.AlertmanagerConfig.Receivers, &v1.PostableApiReceiver{
 			Receiver: apimodels.Receiver{
 				Name: grafanaReceiver.Name,
 			},
-			PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{grafanaReceiver},
+			PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{grafanaReceiver},
 			},
 		})
 	}
@@ -287,7 +301,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 
 	// validate merged values
-	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
+	if err := ecp.validateContactPoint(ctx, orgID, &contactPoint); err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -321,10 +335,11 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if err != nil {
 		return err
 	}
-	mergedReceiver := &apimodels.PostableGrafanaReceiver{
+	mergedReceiver := &v1.PostableGrafanaReceiver{
 		UID:                   contactPoint.UID,
 		Name:                  contactPoint.Name,
 		Type:                  contactPoint.Type,
+		Version:               string(schema.V1),
 		DisableResolveMessage: contactPoint.DisableResolveMessage,
 		Settings:              jsonData,
 		SecureSettings:        extractedSecrets,
@@ -563,7 +578,7 @@ func (ecp *ContactPointService) checkProtectedFields(
 // stitchReceiver modifies a receiver, target, in an alertmanager configStore. It modifies the given configStore in-place.
 // Returns true if the configStore was altered in any way, and false otherwise.
 // If integration was moved to another group and it was the last in the previous group, the second parameter contains the name of the old group that is gone
-func stitchReceiver(cfg *apimodels.PostableUserConfig, target *apimodels.PostableGrafanaReceiver) (oldReceiverName *string, fullRemoval bool, newReceiverCreated bool) {
+func stitchReceiver(cfg *v1.AMConfigV1, target *v1.PostableGrafanaReceiver) (oldReceiverName *string, fullRemoval bool, newReceiverCreated bool) {
 	// Algorithm to fix up receivers. Receivers are very complex and depend heavily on internal consistency.
 	// All receivers in a given receiver group have the same name. We must maintain this across renames.
 groupLoop:
@@ -618,12 +633,12 @@ groupLoop:
 				}
 
 				// Doesn't exist? Create a new group just for the receiver.
-				newGroup := &apimodels.PostableApiReceiver{
+				newGroup := &v1.PostableApiReceiver{
 					Receiver: apimodels.Receiver{
 						Name: target.Name,
 					},
-					PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+					PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
 							target,
 						},
 					},
@@ -639,13 +654,32 @@ groupLoop:
 	return oldReceiverName, fullRemoval, newReceiverCreated
 }
 
-func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn) error {
+func (ecp *ContactPointService) validateContactPoint(ctx context.Context, orgID int64, e *apimodels.EmbeddedContactPoint) error {
+	if err := ValidateContactPoint(ctx, e, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations); err != nil {
+		return err
+	}
+	if e.Type != string(schema.EmailType) {
+		return nil
+	}
+	integration, err := EmbeddedContactPointToGrafanaIntegrationConfig(e)
+	if err != nil {
+		return err
+	}
+	return ecp.emailValidator.ValidateIntegrationConfig(ctx, orgID, integration, ecp.log.FromContext(ctx))
+}
+
+func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn, allowedIntegrations map[schema.IntegrationType]struct{}) error {
 	if e.Name == "" {
 		return errors.New("name is required")
 	}
 	iType, err := alertingNotify.IntegrationTypeFromString(e.Type)
 	if err != nil {
 		return err
+	}
+	if allowedIntegrations != nil {
+		if _, allowed := allowedIntegrations[iType]; !allowed {
+			return fmt.Errorf("integration type %s is not allowed", iType)
+		}
 	}
 	e.Type = string(iType)
 	integration, err := EmbeddedContactPointToGrafanaIntegrationConfig(e)

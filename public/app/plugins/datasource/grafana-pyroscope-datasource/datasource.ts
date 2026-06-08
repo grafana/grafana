@@ -20,6 +20,7 @@ import { defaultGrafanaPyroscopeDataQuery, defaultPyroscopeQueryType } from './d
 import { type PyroscopeDataSourceOptions, type Query, type ProfileTypeMessage } from './types';
 import {
   addLabelToQuery,
+  formatLabelName,
   extractLabelMatchers,
   grammar,
   toPromLikeExpr,
@@ -100,7 +101,8 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
   private adhocFilterData(options: DataSourceGetTagKeysOptions<Query> | DataSourceGetTagValuesOptions<Query>) {
     const from = options.timeRange?.from.valueOf() ?? Date.now() - 1000 * 60 * 60 * 24;
     const to = options.timeRange?.to.valueOf() ?? Date.now();
-    const query = '{' + options.filters.map((f) => `${f.key}${f.operator}"${f.value}"`).join(',') + '}';
+    const query =
+      '{' + options.filters.map((f) => `${formatLabelName(f.key)}${f.operator}"${f.value}"`).join(',') + '}';
     return { from, to, query };
   }
 
@@ -130,6 +132,8 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
       profileTypeId: '',
       groupBy: [],
       includeExemplars: false,
+      includeHeatmap: false,
+      heatmapType: 'individual',
     };
   }
 
@@ -154,7 +158,7 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
   }
 }
 
-export const defaultQuery: Partial<Query> = {
+const defaultQuery: Partial<Query> = {
   ...defaultGrafanaPyroscopeDataQuery,
   queryType: defaultPyroscopeQueryType,
 };

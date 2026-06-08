@@ -7,11 +7,13 @@ import {
   type TabsLayoutTabKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { LS_PANEL_COPY_KEY, LS_ROW_COPY_KEY, LS_STYLES_COPY_KEY, LS_TAB_COPY_KEY } from 'app/core/constants';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { deserializeAutoGridItem } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { deserializeGridItem } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { deserializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { deserializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
+import { buildGridItemForPanel } from '../../serialization/transformSaveModelToScene';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { type DashboardScene } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
@@ -40,6 +42,23 @@ export interface TabStore {
 export interface PanelStore {
   elements: DashboardV2Spec['elements'];
   gridItem: GridLayoutItemKind | AutoGridLayoutItemKind;
+}
+
+/** Dynamic Dashboards copy format: element map + layout item kind (dashboard schema v2). */
+function isV2DynamicDashboardsPanelClipboard(obj: unknown): obj is PanelStore {
+  if (typeof obj !== 'object' || obj === null) {
+    return false;
+  }
+  const elements = Reflect.get(obj, 'elements');
+  if (elements === null || typeof elements !== 'object') {
+    return false;
+  }
+  const gridItem = Reflect.get(obj, 'gridItem');
+  if (gridItem === null || typeof gridItem !== 'object') {
+    return false;
+  }
+  const kind = Reflect.get(gridItem, 'kind');
+  return kind === 'GridLayoutItem' || kind === 'AutoGridLayoutItem';
 }
 
 export function getRowFromClipboard(scene: DashboardScene): RowItem {
@@ -79,15 +98,20 @@ export function getTabFromClipboard(scene: DashboardScene): TabItem {
 
 function getGridItemFromClipboard(scene: DashboardScene) {
   const jsonData = store.get(LS_PANEL_COPY_KEY);
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const { elements, gridItem }: PanelStore = JSON.parse(jsonData) as PanelStore;
+  const parsed: unknown = JSON.parse(jsonData);
 
   let deserializedGridItem;
   try {
-    deserializedGridItem =
-      gridItem.kind === 'GridLayoutItem'
-        ? deserializeGridItem(gridItem, elements, dashboardSceneGraph.getPanelIdGenerator(scene))
-        : deserializeAutoGridItem(gridItem, elements, dashboardSceneGraph.getPanelIdGenerator(scene));
+    if (isV2DynamicDashboardsPanelClipboard(parsed)) {
+      const { elements, gridItem } = parsed;
+      deserializedGridItem =
+        gridItem.kind === 'GridLayoutItem'
+          ? deserializeGridItem(gridItem, elements, dashboardSceneGraph.getPanelIdGenerator(scene))
+          : deserializeAutoGridItem(gridItem, elements, dashboardSceneGraph.getPanelIdGenerator(scene));
+    } else {
+      const panelModel = new PanelModel(parsed);
+      deserializedGridItem = buildGridItemForPanel(panelModel);
+    }
   } catch (error) {
     throw new Error('Error pasting panel from clipboard, please try to copy again.', { cause: error });
   }

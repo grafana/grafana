@@ -1,4 +1,4 @@
-Hey there! 🎉
+Hey there! 👋
 Grafana spotted some changes to your dashboard.
 
 ### Preview of file.json

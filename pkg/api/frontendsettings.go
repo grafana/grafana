@@ -230,6 +230,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ProfileEnabled:                       hs.Cfg.ProfileEnabled,
 		NewsFeedEnabled:                      hs.Cfg.NewsFeedEnabled,
 		QueryHistoryEnabled:                  hs.Cfg.QueryHistoryEnabled,
+		AnnotationAppPlatformEnabled:         hs.Cfg.AnnotationAppPlatform.Enabled,
 		GoogleAnalyticsId:                    hs.Cfg.GoogleAnalyticsID,
 		GoogleAnalytics4Id:                   hs.Cfg.GoogleAnalytics4ID,
 		GoogleAnalytics4SendManualPageViews:  hs.Cfg.GoogleAnalytics4SendManualPageViews,
@@ -534,11 +535,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			Translations:              plugin.Translations,
 		}
 
-		if ds.JsonData == nil {
-			dsDTO.JSONData = make(map[string]any)
-		} else {
-			dsDTO.JSONData = ds.JsonData.MustMap()
-		}
+		dsDTO.JSONData = ds.JsonDataMap()
 
 		if ds.Access == datasources.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {

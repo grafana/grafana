@@ -2,6 +2,8 @@ package meta
 
 import (
 	"context"
+	"path"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -16,7 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
@@ -27,31 +31,44 @@ const (
 
 // CoreProvider retrieves plugin metadata for core plugins.
 type CoreProvider struct {
-	mu              sync.RWMutex
-	loadedPlugins   map[string]pluginsv0alpha1.MetaSpec
-	initialized     bool
-	ttl             time.Duration
-	loader          pluginsLoader.Service
-	pluginsPathFunc func() (string, error)
-	logger          logging.Logger
+	mu             sync.RWMutex
+	loadedPlugins  map[string]pluginsv0alpha1.MetaSpec
+	initialized    bool
+	ttl            time.Duration
+	loader         pluginsLoader.Service
+	staticRootPath string
+	logger         logging.Logger
+}
+
+type CoreProviderOpts struct {
+	// StaticRootPath is a function returning the absolute path to the static root
+	// (i.e. the "public/" directory). Core plugins are expected at <StaticRootPath>/app/plugins.
+	StaticRootPath func() (string, error)
+	// CDNAssets controls whether asset paths are returned relative to StaticRootPath
+	// so that the frontend can prepend a CDN domain. Set to true when running in
+	// standalone (MT apiserver) mode.
+	CDNAssets bool
 }
 
 // NewCoreProvider creates a new CoreProvider for core plugins.
-func NewCoreProvider(logger logging.Logger, pluginsPath func() (string, error)) *CoreProvider {
-	return NewCoreProviderWithTTL(logger, pluginsPath, defaultCoreTTL)
+func NewCoreProvider(logger logging.Logger, opts CoreProviderOpts) (*CoreProvider, error) {
+	staticRootPath, err := opts.StaticRootPath()
+	if err != nil {
+		logger.Warn("Could not get static root path", "error", err)
+		return nil, err
+	}
+
+	return NewCoreProviderWithTTL(logger, staticRootPath, opts.CDNAssets, defaultCoreTTL), nil
 }
 
 // NewCoreProviderWithTTL creates a new CoreProvider with a custom TTL.
-func NewCoreProviderWithTTL(logger logging.Logger, pluginsPathFunc func() (string, error), ttl time.Duration) *CoreProvider {
-	cfg := &config.PluginManagementCfg{
-		Features: config.Features{},
-	}
+func NewCoreProviderWithTTL(logger logging.Logger, staticRootPath string, cdnAssets bool, ttl time.Duration) *CoreProvider {
 	return &CoreProvider{
-		loadedPlugins:   make(map[string]pluginsv0alpha1.MetaSpec),
-		ttl:             ttl,
-		loader:          createLoader(cfg),
-		pluginsPathFunc: pluginsPathFunc,
-		logger:          logger,
+		loadedPlugins:  make(map[string]pluginsv0alpha1.MetaSpec),
+		ttl:            ttl,
+		loader:         createLoader(cdnAssets, staticRootPath),
+		staticRootPath: staticRootPath,
+		logger:         logger,
 	}
 }
 
@@ -114,12 +131,7 @@ func (p *CoreProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, err
 // This error will be handled gracefully by GetMeta, which will return ErrMetaNotFound
 // to allow other providers to handle the request.
 func (p *CoreProvider) loadPlugins(ctx context.Context) error {
-	pluginsPath, err := p.pluginsPathFunc()
-	if err != nil {
-		p.logger.WithContext(ctx).Warn("Could not get core plugins path", "error", err)
-		return err
-	}
-
+	pluginsPath := filepath.Join(p.staticRootPath, "app", "plugins")
 	src := sources.NewLocalSource(plugins.ClassCore, []string{pluginsPath})
 	loadedPlugins, err := p.loader.Load(ctx, src)
 	if err != nil {
@@ -140,13 +152,15 @@ func (p *CoreProvider) loadPlugins(ctx context.Context) error {
 }
 
 // createLoader creates a loader service configured for core plugins.
-func createLoader(cfg *config.PluginManagementCfg) pluginsLoader.Service {
+func createLoader(cdnAssets bool, staticRootPath string) pluginsLoader.Service {
+	cfg := &config.PluginManagementCfg{}
 	d := discovery.New(cfg, discovery.Opts{
 		FilterFuncs: []discovery.FilterFunc{
 			// Allow all plugin types for core plugins
 		},
 	})
 	b := bootstrap.New(cfg, bootstrap.Opts{
+		ConstructFunc: bootstrap.DefaultConstructFunc(cfg, signature.DefaultCalculator(cfg), newAssetProvider(cdnAssets, staticRootPath)),
 		DecorateFuncs: []bootstrap.DecorateFunc{
 			bootstrap.LoadingStrategyDecorateFunc(cfg, pluginscdn.ProvideService(cfg)),
 		}, // no decoration required for metadata
@@ -170,4 +184,37 @@ func createLoader(cfg *config.PluginManagementCfg) pluginsLoader.Service {
 	et := pluginerrs.ProvideErrorTracker()
 
 	return pluginsLoader.New(cfg, d, b, v, i, t, et)
+}
+
+type assetProvider struct {
+	// cdnAssets controls whether to return paths relative to staticRootPath (CDN)
+	// or in "plugins/<id>/..." format (on-prem, frontend prepends "public/").
+	cdnAssets bool
+	// staticRootPath is the absolute path to the static root ("public/" directory).
+	staticRootPath string
+}
+
+func newAssetProvider(cdnAssets bool, staticRootPath string) *assetProvider {
+	return &assetProvider{cdnAssets: cdnAssets, staticRootPath: staticRootPath}
+}
+
+func (p *assetProvider) Module(pi pluginassets.PluginInfo) (string, error) {
+	if filepath.Base(pi.FS.Base()) != "dist" {
+		return path.Join("core:plugin", filepath.Base(pi.FS.Base())), nil
+	}
+
+	return p.AssetPath(pi, "module.js")
+}
+
+func (p *assetProvider) AssetPath(pi pluginassets.PluginInfo, assetPath ...string) (string, error) {
+	if !p.cdnAssets {
+		// frontend will prepend `public/` instead
+		return path.Join("plugins", pi.JsonData.ID, path.Join(assetPath...)), nil
+	}
+	absPath := filepath.Join(pi.FS.Base(), filepath.Join(assetPath...))
+	rel, err := filepath.Rel(p.staticRootPath, absPath)
+	if err != nil {
+		return absPath, nil
+	}
+	return filepath.ToSlash(rel), nil
 }

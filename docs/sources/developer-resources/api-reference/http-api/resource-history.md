@@ -14,21 +14,23 @@ labels:
     - oss
     - cloud
 title: Resource history HTTP API
-menuTitle: Resource History
-weight: 01
+menuTitle: Resource History API
+weight: 100
 ---
 
 # Resource History HTTP API
 
 {{< admonition type="note" >}}
-Resource history is available on all stable (GA) API versions (for example, `v1`, `v2`). Alpha or beta versions may not support it.
+Available in Grafana 12 and later.
+
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
 {{< /admonition >}}
 
 The new Grafana APIs track version history for resources. You can retrieve the history of any resource by using the standard List endpoint with specific query parameters. This page documents how to list resource history, using dashboards as an example. The same pattern applies to any resource.
 
-To learn more about the API structure, refer to [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+**Resource history is available on all stable (GA) API versions (for example, `v1`, `v2`)**. Alpha or beta versions may not support it.
 
-## List Resource History
+## List resource history
 
 `GET /apis/<group>/<version>/namespaces/<namespace>/<resource>?labelSelector=grafana.app/get-history=true&fieldSelector=metadata.name=<NAME>`
 
@@ -44,7 +46,7 @@ You can control pagination through additional query parameters:
 
 History entries are returned in reverse chronological order (newest first).
 
-### Dashboard Example
+### Dashboard example
 
 The following request retrieves the version history for a dashboard with `metadata.name` of `production-overview` in the `default` namespace:
 
@@ -150,7 +152,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-## Retrieve a Specific Version
+## Retrieve a specific version
 
 To retrieve the full resource at a specific historical version, use the standard Get endpoint with the `resourceVersion` query parameter set to the `metadata.resourceVersion` from the history list.
 

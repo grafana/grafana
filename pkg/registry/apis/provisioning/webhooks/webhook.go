@@ -73,10 +73,7 @@ func (*webhookConnector) ProducesObject(verb string) any {
 }
 
 func (*webhookConnector) ConnectMethods() []string {
-	return []string{
-		http.MethodPost,
-		http.MethodGet, // only useful for browser testing, should be removed
-	}
+	return []string{http.MethodPost}
 }
 
 func (*webhookConnector) NewConnectOptions() (runtime.Object, bool, string) {
@@ -103,8 +100,11 @@ func (s *webhookConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 	root := "/apis/" + s.core.GetGroupVersion().String() + "/"
 	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 	sub := oas.Paths.Paths[repoprefix+"/webhook"]
-	if sub != nil && sub.Get != nil {
-		sub.Post.Description = "Currently only supports github webhooks"
+	if sub != nil {
+		sub.Get = nil
+		if sub.Post != nil {
+			sub.Post.Description = "Currently only supports github webhooks"
+		}
 	}
 
 	return nil
@@ -195,6 +195,11 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 	}), 30*time.Second), nil
 }
 
+// statusPatcher is the subset of the status patcher API used by updateLastEvent.
+type statusPatcher interface {
+	Patch(ctx context.Context, repo *provisioning.Repository, patchOperations ...map[string]interface{}) error
+}
+
 // updateLastEvent updates the last event time for the webhook
 // This is to provide some visibility that the webhook is still active and working
 // It's not a good idea to update the webhook status too often, so we only update it if it's been a while
@@ -205,19 +210,27 @@ func (s *webhookConnector) updateLastEvent(ctx context.Context, repo repository.
 		return fmt.Errorf("status patcher is nil")
 	}
 
-	lastEvent := time.UnixMilli(repo.Config().Status.Webhook.LastEvent)
-	eventAge := time.Since(lastEvent)
+	return updateLastEvent(ctx, repo.Config(), patcher)
+}
 
-	if repo.Config().Status.Webhook != nil && (eventAge > time.Minute) {
-		patchOp := map[string]any{
-			"op":    "replace",
-			"path":  "/status/webhook/lastEvent",
-			"value": time.Now().UnixMilli(),
-		}
+func updateLastEvent(ctx context.Context, cfg *provisioning.Repository, patcher statusPatcher) error {
+	if cfg.Status.Webhook == nil {
+		return nil
+	}
 
-		if err := patcher.Patch(ctx, repo.Config(), patchOp); err != nil {
-			return fmt.Errorf("patch status: %w", err)
-		}
+	lastEvent := time.UnixMilli(cfg.Status.Webhook.LastEvent)
+	if time.Since(lastEvent) <= time.Minute {
+		return nil
+	}
+
+	patchOp := map[string]any{
+		"op":    "replace",
+		"path":  "/status/webhook/lastEvent",
+		"value": time.Now().UnixMilli(),
+	}
+
+	if err := patcher.Patch(ctx, cfg, patchOp); err != nil {
+		return fmt.Errorf("patch status: %w", err)
 	}
 
 	return nil

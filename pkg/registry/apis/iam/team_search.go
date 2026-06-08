@@ -14,12 +14,12 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
-	"k8s.io/apimachinery/pkg/fields"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
-	common "k8s.io/kube-openapi/pkg/common"
+	k8scommon "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	teamsearch "github.com/grafana/grafana/pkg/services/team/search"
@@ -60,16 +61,16 @@ var teamAccessControlChecks = []teamAccessControlCheck{
 }
 
 type TeamSearchHandler struct {
-	log              log.Logger
-	client           resourcepb.ResourceIndexClient
-	tracer           trace.Tracer
-	features         featuremgmt.FeatureToggles
-	accessClient     authlib.AccessClient
-	teamBindingStore k8srest.Lister
+	log          log.Logger
+	client       resourcepb.ResourceIndexClient
+	tracer       trace.Tracer
+	features     featuremgmt.FeatureToggles
+	accessClient authlib.AccessClient
+	teamGetter   k8srest.Getter
 }
 
 func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTeamSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles, accessClient authlib.AccessClient) *TeamSearchHandler {
-	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), resourceClient, legacyTeamSearcher, features)
+	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), resourceClient, legacyTeamSearcher)
 
 	return &TeamSearchHandler{
 		client:       searchClient,
@@ -80,7 +81,7 @@ func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTea
 	}
 }
 
-func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
+func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes {
 	searchResults := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchTeams"].Schema
 
 	return &builder.APIRoutes{
@@ -270,7 +271,7 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	limit := 50
+	limit := common.DefaultListLimit
 	offset := 0
 	page := 1
 	if queryParams.Has("limit") {
@@ -284,6 +285,15 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 	} else if queryParams.Has("page") {
 		page, _ = strconv.Atoi(queryParams.Get("page"))
 		offset = (page - 1) * limit
+	}
+
+	if limit > common.MaxListLimit {
+		http.Error(w, fmt.Sprintf("limit parameter exceeds maximum of %d", common.MaxListLimit), http.StatusBadRequest)
+		return
+	}
+
+	if limit < 1 {
+		limit = common.DefaultListLimit
 	}
 
 	searchRequest := &resourcepb.ResourceSearchRequest{
@@ -341,7 +351,7 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		}
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      resource.SEARCH_FIELD_TITLE,
-			Operator: string(selection.Equals),
+			Operator: string(selection.DoubleEquals), // exact match on title
 			Values:   []string{title},
 		})
 	}
@@ -396,7 +406,7 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if queryParams.Get("membercount") == "true" && s.teamBindingStore != nil {
+	if queryParams.Get("membercount") == "true" && s.teamGetter != nil {
 		if err := s.enrichWithMemberCounts(ctx, requester.GetNamespace(), searchResults.Hits); err != nil {
 			errhttp.Write(ctx, err, w)
 			return
@@ -459,7 +469,8 @@ func (s *TeamSearchHandler) stampAccessControl(ctx context.Context, requester id
 	return nil
 }
 
-// enrichWithMemberCounts fetches member counts for each team hit concurrently.
+// enrichWithMemberCounts fetches each team concurrently and sets MemberCount
+// from len(team.Spec.Members) — the team is the source of truth for membership.
 // errgroup is used as a bounded concurrency pool (SetLimit); the first error
 // from any goroutine is propagated to the caller.
 func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespace string, hits []iamv0alpha1.GetSearchTeamsTeamHit) error {
@@ -473,17 +484,18 @@ func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespac
 	for i := range hits {
 		g.Go(func() error {
 			outgoingCtx := request.WithNamespace(ctx, namespace)
-			obj, err := s.teamBindingStore.List(outgoingCtx, &internalversion.ListOptions{
-				FieldSelector: fields.OneTermEqualSelector("spec.teamRef.name", hits[i].Name),
-			})
+			obj, err := s.teamGetter.Get(outgoingCtx, hits[i].Name, &metav1.GetOptions{})
 			if err != nil {
-				return fmt.Errorf("failed to list team bindings for team %s: %w", hits[i].Name, err)
+				if apierrors.IsNotFound(err) {
+					return nil
+				}
+				return fmt.Errorf("failed to get team %s: %w", hits[i].Name, err)
 			}
-			list, ok := obj.(*iamv0alpha1.TeamBindingList)
+			team, ok := obj.(*iamv0alpha1.Team)
 			if !ok {
-				return fmt.Errorf("unexpected type from team binding list for team %s: %T", hits[i].Name, obj)
+				return fmt.Errorf("unexpected type from team get for team %s: %T", hits[i].Name, obj)
 			}
-			count := int64(len(list.Items))
+			count := int64(len(team.Spec.Members))
 			hits[i].MemberCount = &count
 			return nil
 		})

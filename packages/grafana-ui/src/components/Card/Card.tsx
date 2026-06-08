@@ -14,7 +14,8 @@ import { CardContainer, type CardContainerProps, getCardContainerStyles } from '
 /**
  * @public
  */
-export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disableHover'> {
+export interface Props
+  extends Omit<CardContainerProps, 'disableEvents' | 'disableHover' | 'hasDescriptionComponent' | 'hasTagsComponent'> {
   /** Indicates if the card and all its actions can be interacted with */
   disabled?: boolean;
   /** Link to redirect to on card click. If provided, the Card inner content will be rendered inside `a` */
@@ -74,6 +75,10 @@ export const Card: CardInterface = ({
     () => React.Children.toArray(children).some((c) => React.isValidElement(c) && c.type === Description),
     [children]
   );
+  const hasTagsComponent = useMemo(
+    () => React.Children.toArray(children).some((c) => React.isValidElement(c) && c.type === Tags),
+    [children]
+  );
 
   const disableHover = disabled || (!onClick && !href);
   const onCardClick = onClick && !disabled ? onClick : undefined;
@@ -82,6 +87,7 @@ export const Card: CardInterface = ({
     disabled,
     disableHover,
     hasDescriptionComponent,
+    hasTagsComponent,
     isSelected,
     isCompact,
     noMargin
@@ -95,6 +101,7 @@ export const Card: CardInterface = ({
       className={cx(styles.container, className)}
       noMargin={noMargin}
       hasDescriptionComponent={hasDescriptionComponent}
+      hasTagsComponent={hasTagsComponent}
       {...htmlProps}
     >
       <CardContext.Provider value={{ href, onClick: onCardClick, disabled, isSelected }}>

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
@@ -180,6 +182,31 @@ func TestIntegrationServerList(t *testing.T) {
 		assert.Contains(t, res.GetFolders(), "5")
 		assert.Contains(t, res.GetFolders(), "6")
 	})
+
+	t.Run("user should list dashboard access through teams from request", func(t *testing.T) {
+		req := newList("user:contextual", dashboardGroup, dashboardResource, "")
+		req.Teams = []string{"ctx-list"}
+		res, err := server.List(newContextWithNamespace(), req)
+		require.NoError(t, err)
+		assert.Contains(t, res.GetItems(), "ctx-list-dashboard")
+		assert.NotContains(t, res.GetItems(), "ctx-check-dashboard")
+		assert.False(t, res.GetAll())
+	})
+
+	t.Run("user should list dashboard access with one thousand request teams", func(t *testing.T) {
+		groups := make([]string, 1000)
+		for i := range groups {
+			groups[i] = fmt.Sprintf("irrelevant-%04d", i)
+		}
+		groups[999] = "ctx-1000"
+
+		req := newList("user:contextual-1000", dashboardGroup, dashboardResource, "")
+		req.Teams = groups
+		res, err := server.List(newContextWithNamespace(), req)
+		require.NoError(t, err)
+		assert.Contains(t, res.GetItems(), "ctx-1000-dashboard")
+		assert.False(t, res.GetAll())
+	})
 }
 
 func TestIntegrationServerListStreaming(t *testing.T) {
@@ -187,11 +214,6 @@ func TestIntegrationServerListStreaming(t *testing.T) {
 
 	server := setupOpenFGAServer(t)
 	setup(t, server)
-	server.cfg.UseStreamedListObjects = true
-
-	t.Cleanup(func() {
-		server.cfg.UseStreamedListObjects = false
-	})
 
 	newList := func(subject, group, resource, subresource string) *authzv1.ListRequest {
 		return &authzv1.ListRequest{
@@ -401,7 +423,7 @@ func TestIntegrationServerListStreamDeadline(t *testing.T) {
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(t, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil)
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector())
 	require.NoError(t, err)
 	t.Cleanup(func() { srv.Close() })
 

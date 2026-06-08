@@ -96,7 +96,7 @@ func loginUser(t *testing.T, addr, username, password string) *http.Cookie {
 		Password string `json:"password"`
 	}
 
-	data, err := json.Marshal(&body{username, password})
+	data, err := json.Marshal(&body{username, password}) // #nosec G117 -- test login request marshal
 	require.NoError(t, err)
 
 	request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/login", addr), bytes.NewReader(data))
