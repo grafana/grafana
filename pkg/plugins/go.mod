@@ -4,7 +4,7 @@ go 1.26.4
 
 require (
 	github.com/Machiel/slugify v1.0.1
-	github.com/Masterminds/semver/v3 v3.4.0
+	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/ProtonMail/go-crypto v1.4.1
 	github.com/go-json-experiment/json v0.0.0-20260214004413-d219187c3433
 	github.com/gobwas/glob v0.2.3
