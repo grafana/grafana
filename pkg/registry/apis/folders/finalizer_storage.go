@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,6 +16,7 @@ import (
 	"k8s.io/apiserver/pkg/util/dryrun"
 	"k8s.io/client-go/util/retry"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -21,12 +24,13 @@ import (
 // folder validation already prevents) can never spin forever.
 const maxCascadeMarkDepth = 100
 
-// finalizerStorage wraps a folder registry store and drives cascade deletion at delete time: it
-// stamps the cascade-delete finalizer and terminating label, and recursively marks the whole
-// subtree of the deleted folder terminating. The in-process cascade poller then sweeps every
-// terminating folder and removes the finalizer so it can be garbage-collected. Legacy folders
-// created before admission defaulting may not have the finalizer until the first delete, and the
-// terminating label is only ever stamped here, on delete.
+// finalizerStorage wraps a folder registry store and starts cascade deletion at delete time: it
+// stamps the cascade-delete finalizer and terminating label on the deleted folder, then kicks off
+// an asynchronous best-effort DFS that marks its subtree terminating. The cascade poller is the
+// source of truth for completion: it marks any still-unmarked children of terminating folders and
+// removes the finalizer once a folder has no children left. Legacy folders created before admission
+// defaulting may not have the finalizer until the first delete, and the terminating label is only
+// ever stamped here, on delete.
 type finalizerStorage struct {
 	*registry.Store
 	searcher resourcepb.ResourceIndexClient
@@ -43,17 +47,33 @@ func (s *finalizerStorage) Delete(
 	options *metav1.DeleteOptions,
 ) (runtime.Object, bool, error) {
 	if options == nil || !dryrun.IsDryRun(options.DryRun) {
-		// Mark the whole subtree terminating up front, then mark this folder, so the cascade
-		// poller only has to remove finalizers (in any order) rather than walk the tree itself.
-		namespace := genericapirequest.NamespaceValue(ctx)
-		if err := markDescendants(ctx, s.Store, s.searcher, namespace, name, 0); err != nil {
-			return nil, false, err
-		}
+		// Mark this folder terminating synchronously, then mark its subtree asynchronously off
+		// the request path -- deleting a large tree must not block (or time out) the request. The
+		// cascade poller is the backstop: it completes any marking this best-effort pass does not
+		// finish and removes finalizers once a folder has no children left.
 		if err := ensureTerminationMetadata(ctx, s.Store, name); err != nil {
 			return nil, false, err
 		}
+		s.markSubtreeAsync(genericapirequest.NamespaceValue(ctx), name)
 	}
 	return s.Store.Delete(ctx, name, deleteValidation, options)
+}
+
+// markSubtreeAsync launches a detached, best-effort DFS that marks every descendant of name
+// terminating. It runs under the service identity on a background context, so a crash or shutdown
+// just leaves a partial mark that the cascade poller finishes.
+func (s *finalizerStorage) markSubtreeAsync(namespace, name string) {
+	go func() {
+		ctx := context.Background()
+		if info, err := claims.ParseNamespace(namespace); err == nil {
+			ctx = identity.WithServiceIdentityContext(ctx, info.OrgID)
+		}
+		ctx = genericapirequest.WithNamespace(ctx, namespace)
+		if err := markDescendants(ctx, s.Store, s.searcher, namespace, name, 0); err != nil {
+			logging.FromContext(ctx).Warn("folder cascade: async subtree marking failed; poller will complete it",
+				"namespace", namespace, "folder", name, "error", err)
+		}
+	}()
 }
 
 // folderStore is the subset of the folder registry store used to mark a subtree terminating.
