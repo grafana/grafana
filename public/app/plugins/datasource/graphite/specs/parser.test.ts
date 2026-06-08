@@ -248,4 +248,58 @@ describe('when parsing', () => {
       expect(rootNode.segments[3].value).toBe('5');
     }
   });
+
+  it('rewrites a single piped function into the equivalent nested function', () => {
+    const parser = new Parser('devices.air_temperature | scale(1.8)');
+    const rootNode = parser.getAst();
+
+    expect(parser.hasPipe).toBe(true);
+    expect(rootNode?.type).toBe('function');
+    expect(rootNode?.name).toBe('scale');
+    expect(rootNode?.params?.length).toBe(2);
+    expect(rootNode?.params?.[0].type).toBe('metric');
+    expect(rootNode?.params?.[1].type).toBe('number');
+    expect(rootNode?.params?.[1].value).toBe(1.8);
+  });
+
+  it('rewrites a chain of piped functions into nested functions', () => {
+    const parser = new Parser('devices.air_temperature | scale(1.8) | offset(32)');
+    const rootNode = parser.getAst();
+
+    // devices.air_temperature | scale(1.8) | offset(32) === offset(scale(devices.air_temperature, 1.8), 32)
+    expect(parser.hasPipe).toBe(true);
+    expect(rootNode?.type).toBe('function');
+    expect(rootNode?.name).toBe('offset');
+    expect(rootNode?.params?.[1].value).toBe(32);
+
+    const inner = rootNode?.params?.[0];
+    expect(inner?.type).toBe('function');
+    expect(inner?.name).toBe('scale');
+    expect(inner?.params?.[0].type).toBe('metric');
+    expect(inner?.params?.[1].value).toBe(1.8);
+  });
+
+  it('supports piping the result of a function into another function', () => {
+    const parser = new Parser('sumSeries(devices.*) | scale(2)');
+    const rootNode = parser.getAst();
+
+    expect(rootNode?.type).toBe('function');
+    expect(rootNode?.name).toBe('scale');
+    expect(rootNode?.params?.[0].type).toBe('function');
+    expect(rootNode?.params?.[0].name).toBe('sumSeries');
+  });
+
+  it('errors when a pipe is not followed by a function', () => {
+    const parser = new Parser('devices.air_temperature | ');
+    const rootNode = parser.getAst();
+
+    expect(rootNode?.type).toBe('error');
+  });
+
+  it('does not set hasPipe for plain nested functions', () => {
+    const parser = new Parser('offset(scale(devices.air_temperature, 1.8), 32)');
+    parser.getAst();
+
+    expect(parser.hasPipe).toBe(false);
+  });
 });

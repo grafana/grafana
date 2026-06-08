@@ -105,6 +105,26 @@ describe('Graphite query model', () => {
     });
   });
 
+  describe('when query uses Graphite pipe syntax', () => {
+    beforeEach(() => {
+      ctx.target = { refId: 'A', target: 'devices.air_temperature | scale(1.8) | offset(32)' };
+      ctx.targets = [ctx.target];
+      ctx.queryModel = new GraphiteQuery(ctx.datasource, ctx.target, ctx.templateSrv);
+    });
+
+    it('populates the visual builder with segments and functions instead of falling back to the text editor', () => {
+      expect(ctx.queryModel.error).toBe(null);
+      expect(ctx.queryModel.target.textEditor).toBeFalsy();
+      expect(ctx.queryModel.segments.map((s: { value: string }) => s.value)).toEqual(['devices', 'air_temperature']);
+      expect(ctx.queryModel.functions.map((f: { def: { name: string } }) => f.def.name)).toEqual(['scale', 'offset']);
+    });
+
+    it('rewrites the target into the equivalent nested form', () => {
+      ctx.queryModel.updateModelTarget(ctx.targets);
+      expect(ctx.queryModel.target.target).toBe('offset(scale(devices.air_temperature, 1.8), 32)');
+    });
+  });
+
   describe('when query is generated from segments', () => {
     beforeEach(() => {
       ctx.target = { refId: 'A', target: '' };
