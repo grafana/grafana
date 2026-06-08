@@ -99,6 +99,14 @@ type legacyConnectionClientImpl struct {
 
 var _ ConnectionClient = (*legacyConnectionClientImpl)(nil)
 
+// builtinGrafanaDatasourceUID and builtinGrafanaDatasourceType identify the built-in
+// "-- Grafana --" datasource. They mirror grafanads.DatasourceUID / its plugin type, kept
+// local here to avoid importing the tsdb package into this central API package.
+const (
+	builtinGrafanaDatasourceUID  = "grafana"
+	builtinGrafanaDatasourceType = "grafana"
+)
+
 // NewLegacyConnectionClient creates a new ConnectionClient that relies on the legacy datasource service.
 func NewLegacyConnectionClient(datasourceService datasourceservice.DataSourceRetriever) ConnectionClient {
 	return &legacyConnectionClientImpl{
@@ -107,6 +115,23 @@ func NewLegacyConnectionClient(datasourceService datasourceservice.DataSourceRet
 }
 
 func (cl *legacyConnectionClientImpl) GetConnectionByUID(ctx context.Context, orgID int64, uid string) (*dsV0.DataSourceConnectionList, error) {
+	// The built-in "-- Grafana --" datasource has no row in the datasource table, so a store
+	// lookup can never resolve its type and fails outright when no org is set (e.g. global RBAC
+	// roles, which carry a seeded datasources:uid:grafana grant). Its UID and type are fixed and
+	// identical across orgs, so resolve it directly.
+	if uid == builtinGrafanaDatasourceUID {
+		return &dsV0.DataSourceConnectionList{
+			Items: []dsV0.DataSourceConnection{
+				{
+					APIGroup:   builtinGrafanaDatasourceType + ".datasource.grafana.app",
+					APIVersion: "v0alpha1",
+					Name:       uid,
+					Plugin:     builtinGrafanaDatasourceType,
+				},
+			},
+		}, nil
+	}
+
 	query := datasources.GetDataSourceQuery{
 		UID:   uid,
 		OrgID: orgID,

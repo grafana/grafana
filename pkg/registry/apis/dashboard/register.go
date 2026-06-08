@@ -121,7 +121,6 @@ type DashboardsAPIBuilder struct {
 	minRefreshInterval       string
 	dualWriter               dualwrite.Service
 	folderClientProvider     client.K8sHandlerProvider
-	variableClientProvider   client.K8sHandlerProvider
 	libraryPanels            libraryelements.Service // for legacy library panels
 	libraryPanelsEnabled     bool
 	publicDashboardService   publicdashboards.Service
@@ -168,7 +167,6 @@ func RegisterAPIService(
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	folderClient := client.NewK8sHandler(request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
-	variableClient := client.NewK8sHandler(namespacer, dashv2beta1.VariableResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
 	dashboardClient := client.NewK8sHandler(namespacer, dashv1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
 
 	snapshotOptions := dashv0.SnapshotSharingOptions{
@@ -195,7 +193,6 @@ func RegisterAPIService(
 		dualWriter:               dual,
 		dashboardK8sClient:       dashboardClient,
 		folderClientProvider:     newSimpleClientProvider(folderClient),
-		variableClientProvider:   newSimpleClientProvider(variableClient),
 		libraryPanels:            libraryPanels,
 		libraryPanelsEnabled:     features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs), // nolint:staticcheck
 		publicDashboardService:   publicDashboardService,
@@ -588,6 +585,10 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 		return fmt.Errorf("error getting variable meta accessor: %w", err)
 	}
 
+	if err := validateVariableMetadataName(variable.GetName(), getVariableName(variable.Spec), accessor.GetFolder()); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
 	if !a.IsDryRun() && accessor.GetFolder() != "" {
 		id, err := identity.GetRequester(ctx)
 		if err != nil {
@@ -600,17 +601,6 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 
 		if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
 			return err
-		}
-	}
-
-	if !a.IsDryRun() {
-		namespace := accessor.GetNamespace()
-		if namespace == "" {
-			namespace = a.GetNamespace()
-		}
-
-		if err := b.validateVariableNameUniqueness(ctx, namespace, variable, variable.GetName()); err != nil {
-			return apierrors.NewBadRequest(err.Error())
 		}
 	}
 
@@ -646,35 +636,12 @@ func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a adm
 		return fmt.Errorf("error getting new variable meta accessor: %w", err)
 	}
 
-	if !a.IsDryRun() && newAccessor.GetFolder() != oldAccessor.GetFolder() && newAccessor.GetFolder() != "" {
-		id, err := identity.GetRequester(ctx)
-		if err != nil {
-			return fmt.Errorf("error getting requester: %w", err)
-		}
-
-		if err := b.verifyFolderAccessPermissions(ctx, id, newAccessor.GetFolder()); err != nil {
-			return err
-		}
-
-		nsInfo, err := authlib.ParseNamespace(newAccessor.GetNamespace())
-		if err != nil {
-			return fmt.Errorf("failed to parse namespace: %w", err)
-		}
-
-		if _, err := b.validateFolderExists(ctx, newAccessor.GetFolder(), nsInfo.OrgID); err != nil {
-			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), newAccessor.GetFolder())
-		}
+	if getVariableName(newVariable.Spec) != getVariableName(oldVariable.Spec) {
+		return apierrors.NewBadRequest("spec.spec.name cannot be changed; delete the variable and create a new one")
 	}
 
-	if !a.IsDryRun() {
-		namespace := newAccessor.GetNamespace()
-		if namespace == "" {
-			namespace = a.GetNamespace()
-		}
-
-		if err := b.validateVariableNameUniqueness(ctx, namespace, newVariable, newVariable.GetName()); err != nil {
-			return apierrors.NewBadRequest(err.Error())
-		}
+	if newAccessor.GetFolder() != oldAccessor.GetFolder() {
+		return apierrors.NewBadRequest("folder scope cannot be changed; delete the variable and create a new one")
 	}
 
 	return nil
@@ -803,9 +770,10 @@ func validateDashboardTags(obj runtime.Object) error {
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storageOpts := apistore.StorageOptions{
-		Scheme:                      opts.Scheme,
-		EnableFolderSupport:         true,
-		RequireDeprecatedInternalID: true,
+		Scheme:               opts.Scheme,
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
+		EnableFolderSupport:  true,
 	}
 
 	if b.isStandalone {
@@ -948,7 +916,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		}
 
 		storage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
-		storage[dashv2beta1.VariableResourceInfo.StoragePath()] = newVariableStorage(gvStore, b.variableClientProvider)
+		storage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
 	}
 
 	return nil

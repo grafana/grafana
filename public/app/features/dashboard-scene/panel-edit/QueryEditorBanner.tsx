@@ -2,9 +2,10 @@ import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaPanelEditNextFeedbackEvent } from '@grafana/runtime/internal';
 import { Button, Icon, IconButton, useStyles2 } from '@grafana/ui';
 
-import { startIntercomSurvey, trackBannerDismiss, trackFeedbackClick } from './PanelEditNext/tracking';
+import { startFeedbackSurvey, trackBannerDismiss, trackFeedbackClick } from './PanelEditNext/tracking';
 
 interface Props {
   useQueryExperienceNext: boolean;
@@ -15,6 +16,7 @@ interface Props {
 
 export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss, className }: Props) {
   const styles = useStyles2(getStyles);
+  const feedbackEventEnabled = useFlagGrafanaPanelEditNextFeedbackEvent();
 
   return (
     <div className={cx(styles.banner, className)}>
@@ -38,7 +40,7 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
         </span>
       </div>
       <div className={styles.right}>
-        {useQueryExperienceNext && (
+        {useQueryExperienceNext && feedbackEventEnabled && (
           <Button
             variant="primary"
             fill="text"
@@ -46,7 +48,7 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
             icon="comment-alt-message"
             onClick={() => {
               trackFeedbackClick();
-              startIntercomSurvey();
+              startFeedbackSurvey();
             }}
           >
             {t('dashboard-scene.query-editor-banner.give-feedback', 'Give feedback')}
@@ -59,7 +61,7 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
             size="sm"
             icon="arrow-left"
             onClick={() => {
-              startIntercomSurvey();
+              startFeedbackSurvey();
               onToggle();
             }}
           >

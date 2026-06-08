@@ -102,7 +102,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 		if !recv.HasMimirIntegrations() {
 			continue
 		}
-		grafana, err := legacy_storage.PostableMimirReceiverToPostableGrafanaReceiver(recv)
+		grafana, err := v1.PostableMimirReceiverToPostableGrafanaReceiver(recv)
 		if err != nil {
 			moa.logger.Warn("Failed to convert Mimir receiver to Grafana receiver. Ignoring receiver ", "identifier", mergeResult.Identifier, "receiver", recv.Name, "err", err)
 			failed++
@@ -136,7 +136,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 			} else {
 				managedRoutes[mergeResult.Identifier] = mergeResult.ExtraRoute
 
-				importedRules, err := legacy_storage.BuildManagedInhibitionRules(mergeResult.Identifier, mergeResult.ExtraInhibitRules)
+				importedRules, err := merge.BuildManagedInhibitionRules(mergeResult.Identifier, mergeResult.ExtraInhibitRules)
 				if err != nil {
 					moa.logger.Warn("failed to build managed inhibition rules for imported configuration", "identifier", mergeResult.Identifier, "err", err)
 				} else {
@@ -154,7 +154,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 
 	prepared.AlertmanagerConfig = preparedConfig
 
-	return PostableAPIConfigToNotificationsConfiguration(prepared, moa.limits)
+	return PostableAPIConfigToNotificationsConfiguration(prepared.AlertmanagerConfig, prepared.SortedTemplates(true), moa.limits)
 }
 
 func (moa *MultiOrgAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context, orgId int64) error {

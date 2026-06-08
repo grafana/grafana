@@ -139,7 +139,6 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             page: queryArg.page,
             offset: queryArg.offset,
-            sort: queryArg.sort,
           },
         }),
         invalidatesTags: ['Search'],
@@ -800,8 +799,6 @@ export type SearchExternalGroupMappingsApiArg = {
   page?: number;
   /** number of results to skip */
   offset?: number;
-  /** sortable field */
-  sort?: string;
   body: {
     externalGroups?: string[];
   };

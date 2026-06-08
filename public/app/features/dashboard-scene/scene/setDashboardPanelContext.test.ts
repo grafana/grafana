@@ -1,22 +1,64 @@
-import { type AdHocVariableModel, EventBusSrv, type GroupByVariableModel, type VariableModel } from '@grafana/data';
+import {
+  type AdHocVariableModel,
+  EventBusSrv,
+  type GroupByVariableModel,
+  type Scope,
+  type VariableModel,
+} from '@grafana/data';
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 
+import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
 
 import { getAdHocFilterVariableFor, setDashboardPanelContext } from './setDashboardPanelContext';
 
+jest.mock('../../annotations/isAnnotationApiAvailable');
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: jest.fn(),
+}));
+
+const mockIsAnnotationApiAvailable = jest.mocked(isAnnotationApiAvailable);
+const mockGetFeatureFlagClient = jest.mocked(getFeatureFlagClient);
+const getBooleanValueFn = jest.fn();
+
+function stubFFEnabled(enabled: boolean) {
+  getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
+    key === FlagKeys.GrafanaKubernetesAnnotationsClient ? enabled : defaultValue
+  );
+}
+
 const postFn = jest.fn();
 const putFn = jest.fn();
+const patchFn = jest.fn();
 const deleteFn = jest.fn();
+const getFn = jest.fn();
 
 setBackendSrv({
   post: postFn,
   put: putFn,
+  patch: patchFn,
   delete: deleteFn,
+  get: getFn,
 } as unknown as BackendSrv);
+mockGetFeatureFlagClient.mockReturnValue({ getBooleanValue: getBooleanValueFn } as unknown as ReturnType<
+  typeof getFeatureFlagClient
+>);
+
+beforeEach(() => {
+  postFn.mockReset();
+  putFn.mockReset();
+  patchFn.mockReset();
+  deleteFn.mockReset();
+  getFn.mockReset();
+  mockIsAnnotationApiAvailable.mockReset();
+  getBooleanValueFn.mockReset();
+  stubFFEnabled(false);
+});
 
 describe('setDashboardPanelContext', () => {
   describe('canAddAnnotations', () => {
@@ -81,10 +123,10 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onAnnotationCreate', () => {
-    it('should create annotation', () => {
+    it('should create annotation', async () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
-      context.onAnnotationCreate!({ from: 100, to: 200, description: 'save it', tags: [] });
+      await context.onAnnotationCreate!({ from: 100, to: 200, description: 'save it', tags: [] });
 
       expect(postFn).toHaveBeenCalledWith('/api/annotations', {
         dashboardUID: 'dash-1',
@@ -96,13 +138,60 @@ describe('setDashboardPanelContext', () => {
         timeEnd: 200,
       });
     });
+
+    it('should POST to the k8s endpoint when the k8s annotation client is enabled and the API is discovered', async () => {
+      stubFFEnabled(true);
+      config.namespace = 'stack-1';
+      mockIsAnnotationApiAvailable.mockResolvedValue(true);
+      postFn.mockResolvedValue({});
+
+      const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
+
+      await context.onAnnotationCreate!({ from: 100, to: 200, description: 'save it', tags: ['t'] });
+
+      expect(postFn).toHaveBeenCalledWith(
+        '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1/annotations',
+        expect.objectContaining({
+          kind: 'Annotation',
+          spec: expect.objectContaining({
+            dashboardUID: 'dash-1',
+            panelID: 4,
+            text: 'save it',
+            time: 100,
+            timeEnd: 200,
+            tags: ['t'],
+          }),
+        }),
+        expect.anything()
+      );
+    });
+
+    it('should include active scopes in k8s create request', async () => {
+      stubFFEnabled(true);
+      config.namespace = 'stack-1';
+      mockIsAnnotationApiAvailable.mockResolvedValue(true);
+      postFn.mockResolvedValue({});
+
+      const mockScope: Scope = { metadata: { name: 'scope-a' }, spec: { title: 'Scope A' } };
+      jest.spyOn(sceneGraph, 'getScopes').mockReturnValue([mockScope]);
+
+      try {
+        const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
+        await context.onAnnotationCreate!({ from: 100, to: 200, description: 'with scope', tags: [] });
+
+        const [, body] = postFn.mock.calls[0];
+        expect(body.spec.scopes).toEqual(['scope-a']);
+      } finally {
+        jest.restoreAllMocks();
+      }
+    });
   });
 
   describe('onAnnotationUpdate', () => {
-    it('should update annotation', () => {
+    it('should update annotation', async () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
-      context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'updated', tags: [] });
+      await context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'updated', tags: [] });
 
       expect(putFn).toHaveBeenCalledWith('/api/annotations/event-id-123', {
         id: 'event-id-123',
@@ -115,15 +204,81 @@ describe('setDashboardPanelContext', () => {
         timeEnd: 200,
       });
     });
+
+    it('should PATCH the k8s endpoint when the k8s annotation client is enabled and the API is discovered', async () => {
+      stubFFEnabled(true);
+      config.namespace = 'stack-1';
+      mockIsAnnotationApiAvailable.mockResolvedValue(true);
+      patchFn.mockResolvedValue({});
+
+      const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
+
+      await context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'updated', tags: [] });
+
+      expect(getFn).not.toHaveBeenCalled();
+      expect(putFn).not.toHaveBeenCalled();
+      expect(patchFn).toHaveBeenCalledWith(
+        '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1/annotations/event-id-123',
+        expect.objectContaining({
+          spec: expect.objectContaining({ text: 'updated', time: 100, timeEnd: 200 }),
+        }),
+        expect.objectContaining({ headers: { 'Content-Type': 'application/merge-patch+json' } })
+      );
+    });
+
+    it('should include active scopes in k8s update request', async () => {
+      stubFFEnabled(true);
+      config.namespace = 'stack-1';
+      mockIsAnnotationApiAvailable.mockResolvedValue(true);
+      patchFn.mockResolvedValue({});
+
+      const mockScope: Scope = { metadata: { name: 'scope-b' }, spec: { title: 'Scope B' } };
+      jest.spyOn(sceneGraph, 'getScopes').mockReturnValue([mockScope]);
+
+      try {
+        const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
+        await context.onAnnotationUpdate!({
+          from: 100,
+          to: 200,
+          id: 'event-id-123',
+          description: 'scoped update',
+          tags: [],
+        });
+
+        const [, body] = patchFn.mock.calls[0];
+        expect(body.spec.scopes).toEqual(['scope-b']);
+      } finally {
+        jest.restoreAllMocks();
+      }
+    });
   });
 
   describe('onAnnotationDelete', () => {
-    it('should update annotation', () => {
+    it('should update annotation', async () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
-      context.onAnnotationDelete!('I-do-not-want-you');
+      await context.onAnnotationDelete!('I-do-not-want-you');
 
       expect(deleteFn).toHaveBeenCalledWith('/api/annotations/I-do-not-want-you');
+    });
+
+    it('should DELETE the k8s resource when the k8s annotation client is enabled and the API is discovered', async () => {
+      stubFFEnabled(true);
+      config.namespace = 'stack-1';
+      mockIsAnnotationApiAvailable.mockResolvedValue(true);
+      deleteFn.mockResolvedValue({});
+
+      const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
+
+      // Bare numeric id from the legacy /api/annotations response — the k8s client
+      // is responsible for prefixing it with "a-" before hitting the new endpoint.
+      await context.onAnnotationDelete!('123');
+
+      expect(deleteFn).toHaveBeenCalledWith(
+        '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1/annotations/a-123',
+        undefined,
+        { showSuccessAlert: false }
+      );
     });
   });
 

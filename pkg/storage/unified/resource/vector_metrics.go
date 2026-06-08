@@ -16,6 +16,11 @@ type VectorMetrics struct {
 	ReconcilerRetriesTotal       *prometheus.CounterVec
 	ReconcilerEventsDroppedTotal *prometheus.CounterVec
 	BackfillItemDuration         *prometheus.HistogramVec
+	QueryCacheHitsTotal          *prometheus.CounterVec
+	QueryCacheMissesTotal        *prometheus.CounterVec
+	QueryCacheEvictionsTotal     prometheus.Counter
+	RateLimitedRequestsTotal     prometheus.Counter
+	RateLimiterErrorsTotal       prometheus.Counter
 }
 
 func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
@@ -64,5 +69,25 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"group", "resource", "status"}),
+		QueryCacheHitsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_query_cache_hits_total",
+			Help: "Total number of VectorSearch query-embedding cache hits, labeled by model.",
+		}, []string{"model"}),
+		QueryCacheMissesTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_query_cache_misses_total",
+			Help: "Total number of VectorSearch query-embedding cache misses (i.e. requests that went to the embedder), labeled by model.",
+		}, []string{"model"}),
+		QueryCacheEvictionsTotal: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "vector_storage_query_cache_evictions_total",
+			Help: "Total number of evictions from the query-embedding cache (FIFO by created_at).",
+		}),
+		RateLimitedRequestsTotal: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "vector_storage_rate_limited_total",
+			Help: "Total number of VectorSearch requests rejected by the per-tenant rate limiter.",
+		}),
+		RateLimiterErrorsTotal: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "vector_storage_rate_limiter_errors_total",
+			Help: "Total number of fail-closed VectorSearch rejections caused by the rate-limiter backend being unavailable. Distinct from rate_limited_total (genuine over-quota rejections).",
+		}),
 	}
 }

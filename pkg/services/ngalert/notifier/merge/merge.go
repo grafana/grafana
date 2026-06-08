@@ -12,11 +12,15 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // MergeResult represents the result of merging two Alertmanager configurations.
@@ -99,9 +103,9 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (MergeResult, error
 	if err != nil {
 		return MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
 	}
-	mergedReceivers, renamedReceivers := MergeReceivers(cfg.AlertmanagerConfig.Receivers, mcfg.Receivers, mimirCfg.Identifier)
+	mergedReceivers, renamedReceivers := Receivers(cfg.AlertmanagerConfig.Receivers, mcfg.Receivers, mimirCfg.Identifier)
 
-	mergedTimeIntervals, renamedTimeIntervals := MergeTimeIntervals(
+	mergedTimeIntervals, renamedTimeIntervals := TimeIntervals(
 		cfg.AlertmanagerConfig.MuteTimeIntervals,
 		cfg.AlertmanagerConfig.TimeIntervals,
 		mcfg.MuteTimeIntervals,
@@ -128,7 +132,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (MergeResult, error
 				Global:            nil, // Grafana does not have global.
 				Route:             route,
 				InhibitRules:      inhibitRules,
-				MuteTimeIntervals: cfg.AlertmanagerConfig.MuteTimeIntervals,
+				MuteTimeIntervals: nil, // folded into TimeIntervals above
 				TimeIntervals:     mergedTimeIntervals,
 				Templates:         nil, // we do not use this.
 			},
@@ -149,9 +153,9 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (MergeResult, error
 
 // DeduplicateResources merges existing and incoming resources (receivers and time intervals) and ensures unique names by applying suffixes. Returns renamed resources for tracking adjustments made.
 func DeduplicateResources(a, b v1.PostableApiAlertingConfig, suffix string) RenameResources {
-	_, renamedReceivers := MergeReceivers(a.Receivers, b.Receivers, suffix)
+	_, renamedReceivers := Receivers(a.Receivers, b.Receivers, suffix)
 
-	_, renamedTimeIntervals := MergeTimeIntervals(
+	_, renamedTimeIntervals := TimeIntervals(
 		a.MuteTimeIntervals,
 		a.TimeIntervals,
 		b.MuteTimeIntervals,
@@ -164,9 +168,9 @@ func DeduplicateResources(a, b v1.PostableApiAlertingConfig, suffix string) Rena
 	}
 }
 
-// MergeTimeIntervals merges existing and incoming time intervals and mute intervals, ensuring unique names by applying suffixes.
+// TimeIntervals merges existing and incoming time intervals and mute intervals, ensuring unique names by applying suffixes.
 // It returns a merged list of time intervals and a map of renamed interval names for tracking adjustments made. Mute time intervals are converted to time intervals.
-func MergeTimeIntervals(
+func TimeIntervals(
 	existingMuteIntervals []v1.MuteTimeInterval,
 	existingTimeIntervals []v1.TimeInterval,
 	incomingMuteIntervals []v1.MuteTimeInterval,
@@ -175,12 +179,16 @@ func MergeTimeIntervals(
 ) ([]v1.TimeInterval, map[string]string) {
 	// combine all incoming intervals into a single list
 	incomingAll := make([]v1.TimeInterval, 0, len(incomingTimeIntervals)+len(incomingMuteIntervals))
-	incomingAll = append(incomingAll, incomingTimeIntervals...)
 	for _, interval := range incomingMuteIntervals {
 		incomingAll = append(incomingAll, v1.TimeInterval(interval))
 	}
+	incomingAll = append(incomingAll, incomingTimeIntervals...)
 	usedNames := createIndexTimeIntervals(existingMuteIntervals, existingTimeIntervals, incomingAll)
-	result := make([]v1.TimeInterval, 0, len(existingTimeIntervals)+len(incomingMuteIntervals)+len(incomingTimeIntervals))
+	result := make([]v1.TimeInterval, 0, len(existingMuteIntervals)+len(existingTimeIntervals)+len(incomingMuteIntervals)+len(incomingTimeIntervals))
+	// fold mute time intervals into time intervals. The order is important here because during the applying time intervals with the same name win
+	for _, interval := range existingMuteIntervals {
+		result = append(result, v1.TimeInterval(interval))
+	}
 	result = append(result, existingTimeIntervals...)
 	renames := make(map[string]string)
 	for idx, interval := range incomingAll {
@@ -242,11 +250,11 @@ func RenameResourceUsagesInRoutes(routes []*v1.Route, renames RenameResources) {
 	}
 }
 
-// MergeReceivers merges two lists of PostableApiReceiver objects, ensuring unique names by appending a suffix if necessary.
+// Receivers merges two lists of PostableApiReceiver objects, ensuring unique names by appending a suffix if necessary.
 // It returns the combined list of receivers and a map of renamed original names to their new unique names.
 // The items of the existing list are added to the result list as is whereas the items of incoming list are copied (shallow copy)
 // and renamed if necessary.
-func MergeReceivers(existing, incoming []*v1.PostableApiReceiver, suffix string) ([]*v1.PostableApiReceiver, map[string]string) {
+func Receivers(existing, incoming []*v1.PostableApiReceiver, suffix string) ([]*v1.PostableApiReceiver, map[string]string) {
 	result := make([]*v1.PostableApiReceiver, 0, len(existing)+len(incoming))
 	result = append(result, existing...)
 	usedNames := createIndexReceivers(existing, incoming)
@@ -278,6 +286,55 @@ func createIndexReceivers(existing, incoming []*v1.PostableApiReceiver) map[stri
 		}
 	}
 	return usedNames
+}
+
+func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule) (v1.ManagedInhibitionRules, error) {
+	scopedRules := applyManagedRouteMatcher(identifier, rules)
+
+	res := make(v1.ManagedInhibitionRules, len(scopedRules))
+	for i, rule := range scopedRules {
+		namePrefix := fmt.Sprintf("%s-imported-inhibition-rule-", identifier)
+
+		intFmt := "%d"
+		if padLength := util.MaxUIDLength - len(namePrefix); padLength >= 0 {
+			intFmt = fmt.Sprintf("%%0%dd", padLength+1)
+		}
+		name := fmt.Sprintf(namePrefix+intFmt, i)
+
+		ir, err := v1.InhibitRuleToInhibitionRule(name, rule, v1.Provenance(models.ProvenanceConvertedPrometheus))
+		if err != nil {
+			return nil, err
+		}
+		res[name] = ir
+	}
+
+	return res, nil
+}
+
+func applyManagedRouteMatcher(identifier string, rules []config.InhibitRule) []config.InhibitRule {
+	result := make([]config.InhibitRule, 0, len(rules))
+	matcher := &labels.Matcher{
+		Type:  labels.MatchEqual,
+		Name:  models.NamedRouteLabel,
+		Value: identifier,
+	}
+
+	for _, rule := range rules {
+		sm := make(config.Matchers, 0, len(rule.SourceMatchers)+1)
+		sm = append(sm, matcher)
+		sm = append(sm, rule.SourceMatchers...)
+
+		tm := make(config.Matchers, 0, len(rule.TargetMatchers)+1)
+		tm = append(tm, matcher)
+		tm = append(tm, rule.TargetMatchers...)
+
+		result = append(result, config.InhibitRule{
+			SourceMatchers: sm,
+			TargetMatchers: tm,
+			Equal:          slices.Clone(rule.Equal),
+		})
+	}
+	return result
 }
 
 func getUniqueName[T any](name string, suffix string, usedNames map[string]T) string {

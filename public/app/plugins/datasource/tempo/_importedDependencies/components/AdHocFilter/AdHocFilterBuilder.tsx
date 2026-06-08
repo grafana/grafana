@@ -17,7 +17,7 @@ interface Props {
 // Reassign t() so i18next-parser doesn't warn on dynamic key, and we can have 'failOnWarnings' enabled
 const tFunc = i18n.t;
 
-export const t = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
+const t = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
   return tFunc(id, defaultMessage, values);
 };
 

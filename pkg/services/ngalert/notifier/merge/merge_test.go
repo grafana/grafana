@@ -3,12 +3,12 @@ package merge
 import (
 	"context"
 	_ "embed"
+	"encoding/json"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/alerting/definition"
-	httpcfg "github.com/grafana/alerting/http/v0mimir"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +18,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
-func TestMergeReceivers(t *testing.T) {
+func TestReceivers(t *testing.T) {
 	r := func(name string) *v1.PostableApiReceiver {
 		return &v1.PostableApiReceiver{
 			Receiver: definition.Receiver{
@@ -122,7 +122,7 @@ func TestMergeReceivers(t *testing.T) {
 				incomingNames = append(incomingNames, r.Name)
 			}
 
-			actual, actualRenames := MergeReceivers(tc.existing, tc.incoming, suffix)
+			actual, actualRenames := Receivers(tc.existing, tc.incoming, suffix)
 			require.Len(t, actual, len(tc.expected))
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
 			for i := range tc.expected {
@@ -151,7 +151,7 @@ func TestMergeReceivers(t *testing.T) {
 	}
 }
 
-func TestMergeTimeIntervals(t *testing.T) {
+func TestTimeIntervals(t *testing.T) {
 	ti := func(name string) v1.TimeInterval {
 		return v1.TimeInterval{
 			Name: name,
@@ -189,9 +189,10 @@ func TestMergeTimeIntervals(t *testing.T) {
 				mti("mti3"),
 			},
 			expected: []v1.TimeInterval{
+				ti("mti1"),
 				ti("ti2"),
-				ti("ti4"),
 				ti("mti3"),
+				ti("ti4"),
 			},
 			expectedRenames: map[string]string{},
 		},
@@ -210,9 +211,10 @@ func TestMergeTimeIntervals(t *testing.T) {
 				mti("ti2"),
 			},
 			expected: []v1.TimeInterval{
+				ti("mti1"),
 				ti("ti2"),
-				ti("mti1" + suffix),
 				ti("ti2" + suffix),
+				ti("mti1" + suffix),
 			},
 			expectedRenames: map[string]string{
 				"ti2":  "ti2" + suffix,
@@ -234,9 +236,10 @@ func TestMergeTimeIntervals(t *testing.T) {
 				mti("ti1"),
 			},
 			expected: []v1.TimeInterval{
+				ti("ti1"),
 				ti("ti1" + suffix),
-				ti("ti1" + suffix + suffix),
 				ti("ti1" + suffix + "_01"),
+				ti("ti1" + suffix + suffix),
 			},
 			expectedRenames: map[string]string{
 				"ti1" + suffix: "ti1" + suffix + suffix,
@@ -279,10 +282,11 @@ func TestMergeTimeIntervals(t *testing.T) {
 				mti("ti1" + suffix + "_01"),
 			},
 			expected: []v1.TimeInterval{
+				ti("ti1"),
 				ti("ti1" + suffix),
+				ti("ti1" + suffix + "_01"),
 				ti("ti1" + suffix + "_02"),
 				ti("ti2"),
-				ti("ti1" + suffix + "_01"),
 			},
 			expectedRenames: map[string]string{
 				"ti1": "ti1" + suffix + "_02",
@@ -305,7 +309,7 @@ func TestMergeTimeIntervals(t *testing.T) {
 				incomingNames = append(incomingNames, r.Name)
 			}
 
-			actualTimeIntervals, actualRenames := MergeTimeIntervals(tc.existingMuteIntervals, tc.existingTimeIntervals, tc.incomingMuteIntervals, tc.incomingTimeIntervals, suffix)
+			actualTimeIntervals, actualRenames := TimeIntervals(tc.existingMuteIntervals, tc.existingTimeIntervals, tc.incomingMuteIntervals, tc.incomingTimeIntervals, suffix)
 			assert.Equal(t, tc.expected, actualTimeIntervals)
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
 
@@ -385,11 +389,23 @@ func TestMergeExtraConfig(t *testing.T) {
 	assertResult := func(t *testing.T, expected, actual MergeResult) {
 		t.Helper()
 		diff := cmp.Diff(expected, actual,
-			cmpopts.IgnoreUnexported(commoncfg.ProxyConfig{}, httpcfg.ProxyConfig{}, labels.Matcher{}, v1.AMConfigV1{}),
+			cmpopts.IgnoreUnexported(commoncfg.ProxyConfig{}, labels.Matcher{}, v1.AMConfigV1{}),
 			cmpopts.SortSlices(func(a, b *labels.Matcher) bool { return a.Name < b.Name }),
 			cmpopts.SortSlices(func(a, b *v1.PostableApiReceiver) bool { return a.Name < b.Name }),
 			cmpopts.EquateEmpty(),
 			cmpopts.IgnoreFields(MergeResult{}, "ExtraRoute", "ExtraInhibitRules"),
+			cmp.Comparer(func(a, b definition.RawMessage) bool {
+				var va, vb any
+				if err := json.Unmarshal(a, &va); err != nil {
+					return string(a) == string(b)
+				}
+				if err := json.Unmarshal(b, &vb); err != nil {
+					return string(a) == string(b)
+				}
+				ba, _ := json.Marshal(va)
+				bb, _ := json.Marshal(vb)
+				return string(ba) == string(bb)
+			}),
 		)
 		if !assert.Empty(t, diff) {
 			data, err := yaml.Marshal(actual.Config)
@@ -474,11 +490,15 @@ func TestMergeExtraConfig(t *testing.T) {
 		assertResult(t, MergeResult{
 			Config: v1.AMConfigV1{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) {
 				p.Global = nil
-				// remove mti-2 (absent from fullMimirSwappedIntervals) and add the renamed intervals
-				expected := p.TimeIntervals[:len(p.TimeIntervals)-1]
-				expected = append(expected, v1.TimeInterval{Name: "mti-1" + identifier})
-				expected = append(expected, v1.TimeInterval{Name: "ti-1" + identifier})
-				p.TimeIntervals = expected
+				// Keep mti-1 and ti-1 from base; mti-2 is absent in fullMimirSwappedIntervals.
+				// Incoming: mute ti-1 (renamed) → ti-1+id, time ti-2 (no conflict), time mti-1 (renamed) → mti-1+id.
+				p.TimeIntervals = []v1.TimeInterval{
+					p.TimeIntervals[0], // mti-1 (existing mute, folded)
+					p.TimeIntervals[1], // ti-1
+					{Name: "ti-1" + identifier},
+					p.TimeIntervals[3], // ti-2 (incoming time, no conflict)
+					{Name: "mti-1" + identifier},
+				}
 			})},
 			RenameResources: RenameResources{
 				TimeIntervals: map[string]string{
