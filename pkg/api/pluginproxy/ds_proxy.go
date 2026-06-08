@@ -14,13 +14,16 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/api/datasource"
 	datasourcesV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/models/usertoken"
+
+	"github.com/grafana/grafana/pkg/api/datasource/validation"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -40,19 +43,28 @@ var (
 // appended to the data proxy User-Agent when forward_user_agent is enabled.
 const maxForwardedUserAgentLen = 255
 
+type HTTPContext struct {
+	Req  *http.Request
+	Resp http.ResponseWriter
+
+	// TODO? eventually this should come from the user in the request context
+	UserToken *usertoken.UserToken
+}
+
 type DataSourceProxy struct {
-	ds                 *datasources.DataSource
-	ctx                *contextmodel.ReqContext
-	targetUrl          *url.URL
-	proxyPath          string
-	matchedRoute       *plugins.Route
-	pluginRoutes       []*plugins.Route
-	settings           *DataSourceProxySettings
-	clientProvider     httpclient.Provider
-	oAuthTokenService  oauthtoken.OAuthTokenService
-	dataSourcesService datasources.DataSourceService
-	tracer             tracing.Tracer
-	features           featuremgmt.FeatureToggles
+	ds                *datasourcesV0.DataSource
+	requester         identity.Requester
+	dataSource        DataSourceLoader
+	ctx               HTTPContext
+	targetUrl         *url.URL
+	proxyPath         string
+	matchedRoute      *plugins.Route
+	pluginRoutes      []*plugins.Route
+	settings          *DataSourceProxySettings
+	clientProvider    httpclient.Provider
+	oAuthTokenService oauthtoken.OAuthTokenService
+	tracer            tracing.Tracer
+	features          featuremgmt.FeatureToggles
 }
 
 type httpClient interface {
@@ -60,28 +72,40 @@ type httpClient interface {
 }
 
 // NewDataSourceProxy creates a new Datasource proxy
-func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Route, ctx *contextmodel.ReqContext,
+func NewDataSourceProxy(dataSource DataSourceLoader,
+	pluginRoutes []*plugins.Route, ctx HTTPContext,
 	proxyPath string, settings *DataSourceProxySettings, clientProvider httpclient.Provider,
-	oAuthTokenService oauthtoken.OAuthTokenService, dsService datasources.DataSourceService,
+	oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer, features featuremgmt.FeatureToggles,
 ) (*DataSourceProxy, error) {
-	targetURL, err := datasource.ValidateURL(ds.Type, ds.URL)
+	ds, err := dataSource.DataSource(ctx.Req.Context())
+	if err != nil {
+		return nil, fmt.Errorf("failed to load datasource: %w", err)
+	}
+
+	targetURL, err := validation.ValidateURL(dataSource.PluginType(), ds.Spec.URL())
 	if err != nil {
 		return nil, err
 	}
 
+	requester, err := identity.GetRequester(ctx.Req.Context())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get requester from context: %w", err)
+	}
+
 	return &DataSourceProxy{
-		ds:                 ds,
-		pluginRoutes:       pluginRoutes,
-		ctx:                ctx,
-		proxyPath:          proxyPath,
-		targetUrl:          targetURL,
-		settings:           settings,
-		clientProvider:     clientProvider,
-		oAuthTokenService:  oAuthTokenService,
-		dataSourcesService: dsService,
-		tracer:             tracer,
-		features:           features,
+		ds:                ds,
+		requester:         requester,
+		dataSource:        dataSource,
+		pluginRoutes:      pluginRoutes,
+		ctx:               ctx,
+		proxyPath:         proxyPath,
+		targetUrl:         targetURL,
+		settings:          settings,
+		clientProvider:    clientProvider,
+		oAuthTokenService: oAuthTokenService,
+		tracer:            tracer,
+		features:          features,
 	}, nil
 }
 
@@ -94,22 +118,23 @@ func newHTTPClient() httpClient {
 
 func (proxy *DataSourceProxy) HandleRequest() {
 	if err := proxy.validateRequest(); err != nil {
-		proxy.ctx.JsonApiErr(403, err.Error(), nil)
+		writeJSONErr(proxy.ctx.Resp, proxy.ctx.Req, 403, err.Error(), nil)
 		return
 	}
 
+	userid, _ := proxy.requester.GetInternalID()
 	proxyErrorLogger := logger.New(
-		"userId", proxy.ctx.UserID,
-		"orgId", proxy.ctx.OrgID,
-		"uname", proxy.ctx.Login,
+		"userId", userid,
+		"orgId", proxy.requester.GetOrgID(),
+		"uname", proxy.requester.GetLogin(),
 		"path", proxy.ctx.Req.URL.Path,
-		"remote_addr", proxy.ctx.RemoteAddr(),
+		"remote_addr", proxy.ctx.Req.RemoteAddr,
 		"referer", proxy.ctx.Req.Referer(),
 	)
 
-	transport, err := proxy.dataSourcesService.GetHTTPTransport(proxy.ctx.Req.Context(), proxy.ds, proxy.clientProvider)
+	transport, err := proxy.dataSource.GetHTTPTransport(proxy.ctx.Req.Context(), proxy.clientProvider)
 	if err != nil {
-		proxy.ctx.JsonApiErr(400, "Unable to load TLS certificate", err)
+		writeJSONErr(proxy.ctx.Resp, proxy.ctx.Req, 400, "Unable to load TLS certificate", err)
 		return
 	}
 
@@ -152,10 +177,10 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	proxy.ctx.Req = proxy.ctx.Req.WithContext(ctx)
 
 	span.SetAttributes(
-		attribute.String("datasource_name", proxy.ds.Name),
-		attribute.String("datasource_type", proxy.ds.Type),
-		attribute.String("user", proxy.ctx.Login),
-		attribute.Int64("org_id", proxy.ctx.OrgID),
+		attribute.String("datasource_name", proxy.ds.Spec.Title()),
+		attribute.String("datasource_type", proxy.dataSource.PluginType()),
+		attribute.String("user", proxy.requester.GetLogin()),
+		attribute.Int64("org_id", proxy.requester.GetOrgID()),
 	)
 
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
@@ -182,31 +207,32 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	reqQueryVals := req.URL.Query()
 
 	ctxLogger := logger.FromContext(req.Context())
+	ds := proxy.ds
 
-	switch proxy.ds.Type {
+	switch proxy.dataSource.PluginType() {
 	case datasources.DS_INFLUXDB_08:
-		password, err := proxy.dataSourcesService.DecryptedPassword(req.Context(), proxy.ds)
+		password, err := proxy.dataSource.DecryptedPassword(req.Context())
 		if err != nil {
 			ctxLogger.Error("Error interpolating proxy url", "error", err)
 			return
 		}
 
-		req.URL.RawPath = util.JoinURLFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Database+"/"+proxy.proxyPath)
-		reqQueryVals.Add("u", proxy.ds.User)
+		req.URL.RawPath = util.JoinURLFragments(proxy.targetUrl.Path, "db/"+ds.Spec.Database()+"/"+proxy.proxyPath)
+		reqQueryVals.Add("u", ds.Spec.User())
 		reqQueryVals.Add("p", password)
 		req.URL.RawQuery = reqQueryVals.Encode()
 	case datasources.DS_INFLUXDB:
-		password, err := proxy.dataSourcesService.DecryptedPassword(req.Context(), proxy.ds)
+		password, err := proxy.dataSource.DecryptedPassword(req.Context())
 		if err != nil {
 			ctxLogger.Error("Error interpolating proxy url", "error", err)
 			return
 		}
 		req.URL.RawPath = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 		req.URL.RawQuery = reqQueryVals.Encode()
-		if !proxy.ds.BasicAuth {
+		if !ds.Spec.BasicAuth() {
 			req.Header.Set(
 				"Authorization",
-				util.GetBasicAuthHeader(proxy.ds.User, password),
+				util.GetBasicAuthHeader(ds.Spec.User(), password),
 			)
 		}
 	default:
@@ -221,13 +247,13 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	req.URL.Path = unescapedPath
 
-	if proxy.ds.BasicAuth {
-		password, err := proxy.dataSourcesService.DecryptedBasicAuthPassword(req.Context(), proxy.ds)
+	if ds.Spec.BasicAuth() {
+		password, err := proxy.dataSource.DecryptedBasicAuthPassword(req.Context())
 		if err != nil {
 			ctxLogger.Error("Error interpolating proxy url", "error", err)
 			return
 		}
-		req.Header.Set("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser,
+		req.Header.Set("Authorization", util.GetBasicAuthHeader(ds.Spec.BasicAuthUser(),
 			password))
 	}
 
@@ -237,23 +263,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		req.Header.Set("Authorization", dsAuth)
 	}
 
-	jsonData := make(map[string]any)
-	if proxy.ds.JsonData != nil {
-		jsonData, err = proxy.ds.JsonData.Map()
-		if err != nil {
-			ctxLogger.Error("Failed to get json data as map", "jsonData", proxy.ds.JsonData, "error", err)
-			return
-		}
-	}
-
-	// Temporary while we transition to using this as the first class type
-	ds := datasourcesV0.DataSource{
-		Spec: datasourcesV0.UnstructuredSpec{
-			Object: map[string]any{"jsonData": jsonData},
-		},
-	}
-
-	proxyutil.ApplyUserHeader(proxy.settings.SendUserHeader, req, proxy.ctx.SignedInUser)
+	proxyutil.ApplyUserHeader(proxy.settings.SendUserHeader, req, proxy.requester)
 
 	proxyutil.ClearCookieHeader(req, ds.Spec.KeepCookies(), []string{proxy.settings.LoginCookieName})
 	ua := proxy.settings.DataProxyUserAgent
@@ -272,23 +282,17 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	req.Header.Set("User-Agent", ua)
 
 	if proxy.matchedRoute != nil {
-		decryptedValues, err := proxy.dataSourcesService.DecryptedValues(req.Context(), proxy.ds)
+		decryptedValues, err := proxy.dataSource.DecryptedValues(req.Context())
 		if err != nil {
 			ctxLogger.Error("Error interpolating proxy url", "error", err)
 			return
 		}
 
-		ApplyRoute(req.Context(), req, proxy.proxyPath, proxy.matchedRoute, DSInfo{
-			ID:                      proxy.ds.ID,
-			URL:                     proxy.ds.URL,
-			Updated:                 proxy.ds.Updated,
-			JSONData:                jsonData,
-			DecryptedSecureJSONData: decryptedValues,
-		}, proxy.settings)
+		ApplyRoute(req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo(ds, decryptedValues), proxy.settings)
 	}
 
 	if ds.Spec.IsOAuthPassThruEnabled() {
-		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.ctx.SignedInUser, proxy.ctx.UserToken); token != nil {
+		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.requester, proxy.ctx.UserToken); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 
 			idToken, ok := token.Extra("id_token").(string)
@@ -298,7 +302,31 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
+	proxyutil.ApplyForwardIDHeader(req, proxy.requester)
+}
+
+// dsInfo builds the DSInfo that ApplyRoute needs from a v0 datasource.
+func dsInfo(ds *datasourcesV0.DataSource, decryptedValues map[string]string) DSInfo {
+	// JSONData may be absent or stored as a non-map value; ApplyRoute requires a non-nil map, so fall back to empty.
+	jsonData, ok := ds.Spec.JSONData().(map[string]any)
+	if !ok {
+		jsonData = make(map[string]any)
+	}
+
+	meta, _ := utils.MetaAccessor(ds)
+	updated := ds.CreationTimestamp.Time
+	if ts, _ := meta.GetUpdatedTimestamp(); ts != nil {
+		updated = *ts
+	}
+
+	return DSInfo{
+		ID: meta.GetDeprecatedInternalID(), // nolint:staticcheck
+
+		URL:                     ds.Spec.URL(),
+		Updated:                 updated,
+		JSONData:                jsonData,
+		DecryptedSecureJSONData: decryptedValues,
+	}
 }
 
 func (proxy *DataSourceProxy) validateRequest() error {
@@ -306,7 +334,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		return errors.New("target URL is not a valid target")
 	}
 
-	if proxy.ds.Type == datasources.DS_ES {
+	if proxy.dataSource.PluginType() == datasources.DS_ES {
 		if proxy.ctx.Req.Method == "DELETE" {
 			return errors.New("deletes not allowed on proxied Elasticsearch datasource")
 		}
@@ -355,16 +383,20 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		return nil
 	}
 
+	proxy.ds.Type = proxy.dataSource.PluginType()
+
 	// Trailing validation below this point for routes that were not matched
-	if proxy.ds.Type == datasources.DS_PROMETHEUS || proxy.ds.Type == datasources.DS_AMAZON_PROMETHEUS || proxy.ds.Type == datasources.DS_AZURE_PROMETHEUS {
+	if proxy.ds.Type == datasources.DS_PROMETHEUS || proxy.ds.Type == datasources.DS_AMAZON_PROMETHEUS || proxy.ds.Type == datasources.DS_AZURE_PROMETHEUS || proxy.ds.Type == datasources.DS_LOKI {
+		ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
+		ctxLogger.Error("plugin route is not covered by RBAC and disabled default falling back to 403", "route", proxy.ctx.Req.URL.Path, "method", proxy.ctx.Req.Method, "datasource", proxy.ds.Type)
 		if proxy.ctx.Req.Method == "DELETE" {
-			return errors.New("non allow-listed DELETEs not allowed on proxied Prometheus datasource")
+			return errors.New("non allow-listed DELETEs not allowed on proxied Prometheus or Loki datasource")
 		}
 		if proxy.ctx.Req.Method == "PUT" {
-			return errors.New("non allow-listed PUTs not allowed on proxied Prometheus datasource")
+			return errors.New("non allow-listed PUTs not allowed on proxied Prometheus or Loki datasource")
 		}
 		if proxy.ctx.Req.Method == "POST" {
-			return errors.New("non allow-listed POSTs not allowed on proxied Prometheus datasource")
+			return errors.New("non allow-listed POSTs not allowed on proxied Prometheus or Loki datasource")
 		}
 	}
 
@@ -374,15 +406,15 @@ func (proxy *DataSourceProxy) validateRequest() error {
 func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 	if route.ReqAction != "" {
-		routeEval := pluginac.GetDataSourceRouteEvaluator(proxy.ds.UID, route.ReqAction)
-		hasAccess := routeEval.Evaluate(proxy.ctx.GetPermissions())
+		routeEval := pluginac.GetDataSourceRouteEvaluator(proxy.ds.Name, route.ReqAction)
+		hasAccess := routeEval.Evaluate(proxy.requester.GetPermissions())
 		if !hasAccess {
 			ctxLogger.Debug("plugin route is covered by RBAC, user doesn't have access", "route", proxy.ctx.Req.URL.Path, "action", route.ReqAction, "path", route.Path, "method", route.Method)
 		}
 		return hasAccess
 	}
 	if route.ReqRole.IsValid() {
-		if hasUserRole := proxy.ctx.HasUserRole(route.ReqRole); !hasUserRole {
+		if hasUserRole := proxy.requester.GetOrgRole().Includes(route.ReqRole); !hasUserRole {
 			ctxLogger.Debug("plugin route is covered by org role, user doesn't have access", "route", proxy.ctx.Req.URL.Path, "role", route.ReqRole, "path", route.Path, "method", route.Method)
 			return false
 		}
@@ -404,19 +436,21 @@ func (proxy *DataSourceProxy) logRequest() {
 		}
 	}
 
+	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 	panelPluginId := proxy.ctx.Req.Header.Get("X-Panel-Plugin-Id")
 
 	uri, err := util.SanitizeURI(proxy.ctx.Req.RequestURI)
 	if err != nil {
-		proxy.ctx.Logger.Error("Could not sanitize RequestURI", "error", err)
+		ctxLogger.Error("Could not sanitize RequestURI", "error", err)
 	}
 
-	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
+	userid, _ := proxy.requester.GetInternalID()
+
 	ctxLogger.Info("Proxying incoming request",
-		"userid", proxy.ctx.UserID,
-		"orgid", proxy.ctx.OrgID,
-		"username", proxy.ctx.Login,
-		"datasource", proxy.ds.Type,
+		"userid", userid,
+		"orgid", proxy.requester.GetOrgID(),
+		"username", proxy.requester.GetLogin(),
+		"datasource", proxy.dataSource.PluginType(),
 		"uri", uri,
 		"method", proxy.ctx.Req.Method,
 		"panelPluginId", panelPluginId,
@@ -426,7 +460,7 @@ func (proxy *DataSourceProxy) logRequest() {
 func (proxy *DataSourceProxy) checkWhiteList() bool {
 	if proxy.targetUrl.Host != "" && len(proxy.settings.DataProxyWhiteList) > 0 {
 		if _, exists := proxy.settings.DataProxyWhiteList[proxy.targetUrl.Host]; !exists {
-			proxy.ctx.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)
+			writeJSONErr(proxy.ctx.Resp, proxy.ctx.Req, 403, "Data proxy hostname and ip are not included in whitelist", nil)
 			return false
 		}
 	}
