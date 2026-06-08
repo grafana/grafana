@@ -48,8 +48,10 @@ export class PostHogBackend implements EchoBackend<PageviewEchoEvent, PostHogBac
     if (!(window.posthog && window.posthog.__loaded)) {
       // loadScript is not awaited (constructors can't be async), so init/identify/capture
       // are called before the SDK has loaded. These stubs queue calls for the real SDK to replay.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
       const tempPosthog: any[] = ((window as Record<string, any>).posthog = []);
       for (const method of ['init', 'identify', 'capture']) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
         (tempPosthog as Record<string, any>)[method] = function (...args: unknown[]) {
           tempPosthog.push([method, ...args]);
         };
