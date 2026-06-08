@@ -38,10 +38,11 @@ func TestComputeSyncStatus(t *testing.T) {
 		return alertingnotifv0alpha1.AdminConfigCondition{}
 	}
 
-	externalSync := func(t *testing.T, st alertingnotifv0alpha1.AdminConfigStatus) *alertingnotifv0alpha1.AdminConfigV0alpha1StatusExternalAlertmanagerSync {
+	externalSync := func(t *testing.T, st alertingnotifv0alpha1.AdminConfigStatus) *alertingnotifv0alpha1.AdminConfigV0alpha1AlertmanagerStatusExternalSync {
 		t.Helper()
-		require.NotNil(t, st.ExternalAlertmanagerSync, "externalAlertmanagerSync sub-tree should be populated")
-		return st.ExternalAlertmanagerSync
+		require.NotNil(t, st.Alertmanager, "alertmanager status sub-tree should be populated")
+		require.NotNil(t, st.Alertmanager.ExternalSync, "alertmanager.externalSync sub-tree should be populated")
+		return st.Alertmanager.ExternalSync
 	}
 
 	t.Run("success from clean state emits Synced=True with current timestamp", func(t *testing.T) {
@@ -139,8 +140,10 @@ func TestComputeSyncStatus(t *testing.T) {
 
 	t.Run("datasourceUid reflects the attempted UID, not any prior one", func(t *testing.T) {
 		prev := &alertingnotifv0alpha1.AdminConfigStatus{
-			ExternalAlertmanagerSync: &alertingnotifv0alpha1.AdminConfigV0alpha1StatusExternalAlertmanagerSync{
-				DatasourceUid: strPtr("old-uid"),
+			Alertmanager: &alertingnotifv0alpha1.AdminConfigAlertmanagerStatus{
+				ExternalSync: &alertingnotifv0alpha1.AdminConfigV0alpha1AlertmanagerStatusExternalSync{
+					DatasourceUid: strPtr("old-uid"),
+				},
 			},
 		}
 

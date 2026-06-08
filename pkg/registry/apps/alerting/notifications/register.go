@@ -61,7 +61,7 @@ type AppInstaller struct {
 }
 
 // newExternalSyncDatasourceValidator builds the admission check for the
-// AdminConfig kind's spec.externalAlertmanagerSync.datasourceUid. Mirrors the
+// AdminConfig kind's spec.alertmanager.externalSync.datasourceUid. Mirrors the
 // legacy admin_config HTTP API (pkg/services/ngalert/api/api_configuration.go:138)
 // so both surfaces accept the same inputs during the transition window.
 //

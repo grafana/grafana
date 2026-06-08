@@ -34,19 +34,15 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// AdminConfig is singleton-per-org. Per-org namespacing means each org
-// has exactly one resource at this fixed name.
-const configSingletonName = "default"
-
 // externalSyncOrigin aliases the codegen-emitted enum for the auxiliary
-// origin field on AdminConfig.status.externalAlertmanagerSync. The
+// origin field on AdminConfig.status.alertmanager.externalSync. The
 // generated name is unwieldy in expressions; the alias keeps call sites
 // readable without obscuring the underlying type.
-type externalSyncOrigin = alertingnotifv0alpha1.AdminConfigV0alpha1StatusExternalAlertmanagerSyncOrigin
+type externalSyncOrigin = alertingnotifv0alpha1.AdminConfigV0alpha1AlertmanagerStatusExternalSyncOrigin
 
 const (
-	originAPI = alertingnotifv0alpha1.AdminConfigV0alpha1StatusExternalAlertmanagerSyncOriginApi
-	originIni = alertingnotifv0alpha1.AdminConfigV0alpha1StatusExternalAlertmanagerSyncOriginIni
+	originAPI = alertingnotifv0alpha1.AdminConfigV0alpha1AlertmanagerStatusExternalSyncOriginApi
+	originIni = alertingnotifv0alpha1.AdminConfigV0alpha1AlertmanagerStatusExternalSyncOriginIni
 )
 
 // mimirConfigResponse is the Mimir/Cortex alertmanager configuration API response.
@@ -374,7 +370,7 @@ func (s *ExternalAMSyncer) recordSyncResult(ctx context.Context, orgID int64, ui
 	if ns == "" {
 		return
 	}
-	id := resource.Identifier{Namespace: ns, Name: configSingletonName}
+	id := resource.Identifier{Namespace: ns, Name: alertingnotifv0alpha1.AdminConfigSingletonName}
 	now := time.Now()
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
@@ -385,7 +381,7 @@ func (s *ExternalAMSyncer) recordSyncResult(ctx context.Context, orgID int64, ui
 			// would silently drop this — at that point swap to UpdateStatus.
 			newStatus := computeSyncStatus(nil, uid, origin, syncErr, now)
 			r := &alertingnotifv0alpha1.AdminConfig{
-				ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: configSingletonName},
+				ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: alertingnotifv0alpha1.AdminConfigSingletonName},
 				Status:     newStatus,
 			}
 			if _, createErr := c.Create(nsCtx, r, resource.CreateOptions{}); createErr != nil {
@@ -421,9 +417,11 @@ func computeSyncStatus(prev *alertingnotifv0alpha1.AdminConfigStatus, uid string
 	uidCopy := uid
 	originCopy := origin
 	st := alertingnotifv0alpha1.AdminConfigStatus{
-		ExternalAlertmanagerSync: &alertingnotifv0alpha1.AdminConfigV0alpha1StatusExternalAlertmanagerSync{
-			DatasourceUid: &uidCopy,
-			Origin:        &originCopy,
+		Alertmanager: &alertingnotifv0alpha1.AdminConfigAlertmanagerStatus{
+			ExternalSync: &alertingnotifv0alpha1.AdminConfigV0alpha1AlertmanagerStatusExternalSync{
+				DatasourceUid: &uidCopy,
+				Origin:        &originCopy,
+			},
 		},
 	}
 
@@ -519,11 +517,12 @@ func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, ui
 // when any level in the nested optional chain is unset.
 func externalSyncDatasourceUIDFromConfig(c *alertingnotifv0alpha1.AdminConfig) string {
 	if c == nil ||
-		c.Spec.ExternalAlertmanagerSync == nil ||
-		c.Spec.ExternalAlertmanagerSync.DatasourceUid == nil {
+		c.Spec.Alertmanager == nil ||
+		c.Spec.Alertmanager.ExternalSync == nil ||
+		c.Spec.Alertmanager.ExternalSync.DatasourceUid == nil {
 		return ""
 	}
-	return *c.Spec.ExternalAlertmanagerSync.DatasourceUid
+	return *c.Spec.Alertmanager.ExternalSync.DatasourceUid
 }
 
 // resolveExternalAMUIDForOrg returns the datasource UID to use for external AM
@@ -540,7 +539,7 @@ func (s *ExternalAMSyncer) resolveExternalAMUIDForOrg(ctx context.Context, orgID
 
 	if c := s.resolveCfgClient(); c != nil {
 		nsCtx, ns := s.orgServiceContext(ctx, orgID)
-		ac, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: configSingletonName})
+		ac, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingnotifv0alpha1.AdminConfigSingletonName})
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
 				return "", originAPI, nil
@@ -575,7 +574,7 @@ func (s *ExternalAMSyncer) IsConfiguredForOrg(ctx context.Context, orgID int64) 
 
 	if c := s.resolveCfgClient(); c != nil {
 		nsCtx, ns := s.orgServiceContext(ctx, orgID)
-		ac, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: configSingletonName})
+		ac, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingnotifv0alpha1.AdminConfigSingletonName})
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
 				return false, nil
