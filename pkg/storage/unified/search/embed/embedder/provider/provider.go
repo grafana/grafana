@@ -7,6 +7,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"os"
 
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/azure"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/bedrock"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/vertex"
 )
@@ -27,9 +29,9 @@ import (
 // wired into the constructed Embedder so each provider call is timed.
 //
 // The configured provider's connection fields (project ID for Vertex, region
-// + credentials for Bedrock) must be present when the provider is set;
-// missing required fields return an error so misconfiguration fails at
-// startup, not at first request.
+// + credentials for Bedrock, endpoint + AZURE_OPENAI_API_KEY for Azure) must
+// be present when the provider is set; missing required fields return an error
+// so misconfiguration fails at startup, not at first request.
 func ProvideEmbedder(cfg *setting.Cfg, vectorMetrics *resource.VectorMetrics) (*embedder.Embedder, error) {
 	var hist *prometheus.HistogramVec
 	if vectorMetrics != nil {
@@ -42,8 +44,10 @@ func ProvideEmbedder(cfg *setting.Cfg, vectorMetrics *resource.VectorMetrics) (*
 		return newVertexEmbedder(cfg, hist)
 	case "bedrock":
 		return newBedrockEmbedder(cfg, hist)
+	case "azure":
+		return newAzureEmbedder(cfg, hist)
 	default:
-		return nil, fmt.Errorf("unknown embedding provider %q (expected vertex, bedrock, or empty)", cfg.EmbeddingProvider)
+		return nil, fmt.Errorf("unknown embedding provider %q (expected vertex, bedrock, azure, or empty)", cfg.EmbeddingProvider)
 	}
 }
 
@@ -85,5 +89,29 @@ func newBedrockEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*e
 		Metric:       embedder.CosineDistance,
 		Dimensions:   uint32(cfg.BedrockDimensions),
 		Normalized:   false, // Cohere on Bedrock returns un-normalized vectors
+	}, nil
+}
+
+func newAzureEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*embedder.Embedder, error) {
+	if cfg.AzureEndpoint == "" {
+		return nil, fmt.Errorf("vector_embedder.provider=azure requires azure_endpoint")
+	}
+	apiKey := os.Getenv("AZURE_OPENAI_API_KEY")
+	if apiKey == "" {
+		return nil, fmt.Errorf("vector_embedder.provider=azure requires the AZURE_OPENAI_API_KEY env var")
+	}
+	client, err := azure.NewClient(cfg.AzureEndpoint, cfg.AzureDeployment, cfg.AzureAPIVersion, apiKey)
+	if err != nil {
+		return nil, fmt.Errorf("azure client: %w", err)
+	}
+	model := "azure/" + cfg.AzureDeployment
+	dense := azure.NewDenseEmbedder(client, cfg.AzureDimensions, cfg.AzureBatchSize)
+	return &embedder.Embedder{
+		TextEmbedder: embedder.Instrument(dense, model, duration),
+		Model:        model,
+		VectorType:   embedder.VectorTypeDense,
+		Metric:       embedder.CosineDistance,
+		Dimensions:   uint32(cfg.AzureDimensions),
+		Normalized:   false, // Azure OpenAI vectors aren't guaranteed unit-norm after dimension reduction
 	}, nil
 }
