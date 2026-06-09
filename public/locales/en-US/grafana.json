@@ -14263,6 +14263,7 @@
       "alerts_other": "Alerts ({{count}})",
       "alerts-loading": "Alerts",
       "card-click": "Select card {{id}}",
+      "card-multi-select": "Include card {{id}} in bulk selection",
       "data": "Data",
       "enter-stacked-view": "Enter stacked view",
       "exit-stacked-view": "Exit stacked view",
