@@ -7,6 +7,7 @@
  */
 
 import type {
+  AnnotationQueryKind,
   AutoGridLayoutItemKind,
   Element,
   GridLayoutItemKind,
@@ -50,4 +51,8 @@ export interface PanelElementsData {
 
 export interface ListVariablesData {
   variables: VariableKind[];
+}
+
+export interface ListAnnotationsData {
+  annotations: AnnotationQueryKind[];
 }

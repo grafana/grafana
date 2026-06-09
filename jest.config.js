@@ -26,7 +26,7 @@ const esModules = [
   'lodash-es',
   'vscode-languageserver-types',
   '@bsull/augurs',
-  'react-data-grid',
+  '@grafana/react-data-grid',
   '@grafana/llm',
   'pkce-challenge',
   'quickselect',
@@ -34,6 +34,7 @@ const esModules = [
   'earcut',
   'pbf',
   'geotiff',
+  'uuid',
 ].join('|');
 
 module.exports = {
@@ -73,6 +74,8 @@ module.exports = {
     '@bsull/augurs': '<rootDir>/public/test/mocks/augurs.ts',
     // Mock @grafana/assistant to prevent initialization errors in tests
     '^@grafana/assistant$': '<rootDir>/public/test/mocks/assistant.ts',
+    // Mock measureText to prevent invalid calculations with uPlot
+    '^@grafana/ui/src/utils/measureText$': '<rootDir>/packages/grafana-ui/src/utils/measureText.ts',
   },
   // Log the test results with dynamic Loki tags. Drone CI only
   reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],
@@ -94,7 +97,5 @@ module.exports = {
     '<rootDir>/public/app/plugins/datasource/opentsdb',
     '<rootDir>/public/app/plugins/datasource/parca',
     '<rootDir>/public/app/plugins/datasource/tempo',
-    '<rootDir>/public/app/plugins/datasource/zipkin',
   ],
-  projects: ['<rootDir>'],
 };

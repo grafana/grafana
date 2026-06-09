@@ -27,6 +27,7 @@ import { DashboardConversionWarningBanner } from '../components/DashboardConvers
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
+import { useScenesFlickeringFix } from '../utils/utils';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 import { shouldHideDashboardKioskFooter } from './utils';
@@ -47,6 +48,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
   const prevParams = useRef<Params<string>>(params);
 
+  useScenesFlickeringFix();
+
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
       stateManager.loadSnapshot(slug!);
@@ -60,6 +63,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
         slug,
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
+        dashboardTemplateUid: queryParams.dashboardTemplateUid,
+        editTemplate: queryParams.editTemplate === true,
       });
     }
 
@@ -83,6 +88,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     type,
     queryParams.path,
     queryParams.gnetId,
+    queryParams.dashboardTemplateUid,
+    queryParams.editTemplate,
   ]);
 
   useEffect(() => {

@@ -302,7 +302,13 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    ### Configure no data and error handling
 
-   {{< docs/shared lookup="alerts/table-configure-no-data-and-error.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+   Configure the behavior when the evaluation returns no data:
+
+   {{< docs/shared lookup="alerts/modify-nodata-state.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+   You can also configure the behavior when the evaluation returns an error:
+
+   {{< docs/shared lookup="alerts/modify-error-state.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
    For more details, refer to [alert instance states](ref:alert-instance-state) and [modify the no data or error state](ref:modify-the-no-data-or-error-state).
 
@@ -327,6 +333,8 @@ The **Default** option allows to select a [contact point](ref:contact-points) to
 {{< collapse title="Advanced options" >}}
 
 With this option, all notifications for this alert rule are managed by the [notification policy tree](ref:notification-policies), which routes alerts based on their labels.
+
+Click **Change** to change the routing from the default policy to another policy.
 
 You can preview which notification policy would handle notifications from this alert rule.
 

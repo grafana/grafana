@@ -26,10 +26,7 @@ func TestK8sRESTAdapter_Create(t *testing.T) {
 	})
 
 	store := NewMemoryStore()
-	adapter := &k8sRESTAdapter{
-		store:        store,
-		accessClient: authtypes.FixedAccessClient(true),
-	}
+	adapter := newTestAdapter(store, authtypes.FixedAccessClient(true))
 
 	expectedCreatedBy := authtypes.NewTypeID(authtypes.TypeUser, userUID)
 
@@ -142,10 +139,7 @@ func TestK8sRESTAdapter_Create(t *testing.T) {
 
 func TestK8sRESTAdapter_TenantIsolation(t *testing.T) {
 	store := NewMemoryStore()
-	adapter := &k8sRESTAdapter{
-		store:        store,
-		accessClient: authtypes.FixedAccessClient(true),
-	}
+	adapter := newTestAdapter(store, authtypes.FixedAccessClient(true))
 
 	// Create annotations in different namespaces (tenants)
 	namespace1 := "org-1"
@@ -293,12 +287,51 @@ func TestK8sRESTAdapter_TenantIsolation(t *testing.T) {
 	})
 }
 
+func TestK8sRESTAdapter_UIDIsSet(t *testing.T) {
+	store := NewMemoryStore()
+	adapter := newTestAdapter(store, authtypes.FixedAccessClient(true))
+
+	ctx := k8srequest.WithNamespace(identity.WithRequester(t.Context(), &identity.StaticRequester{
+		Type:    authtypes.TypeUser,
+		UserUID: "test-user",
+		OrgID:   1,
+	}), "default")
+
+	// Create an annotation
+	anno := &annotationV0.Annotation{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "uid-test",
+			Namespace: "default",
+		},
+		Spec: annotationV0.AnnotationSpec{
+			Text: "test annotation",
+			Time: 12345,
+		},
+	}
+	_, err := adapter.Create(ctx, anno, nil, nil)
+	require.NoError(t, err)
+
+	t.Run("get returns annotation with non-empty UID", func(t *testing.T) {
+		obj, err := adapter.Get(ctx, "uid-test", nil)
+		require.NoError(t, err)
+		result := obj.(*annotationV0.Annotation)
+		assert.NotEmpty(t, result.UID)
+	})
+
+	t.Run("list returns annotations with non-empty UID", func(t *testing.T) {
+		obj, err := adapter.List(ctx, &metainternalversion.ListOptions{})
+		require.NoError(t, err)
+		list := obj.(*annotationV0.AnnotationList)
+		require.NotEmpty(t, list.Items)
+		for _, item := range list.Items {
+			assert.NotEmpty(t, item.UID)
+		}
+	})
+}
+
 func TestK8sRESTAdapter_NotFound(t *testing.T) {
 	store := NewMemoryStore()
-	adapter := &k8sRESTAdapter{
-		store:        store,
-		accessClient: authtypes.FixedAccessClient(true),
-	}
+	adapter := newTestAdapter(store, authtypes.FixedAccessClient(true))
 
 	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), "default")
 

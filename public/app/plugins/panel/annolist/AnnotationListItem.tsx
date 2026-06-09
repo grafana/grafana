@@ -3,7 +3,7 @@ import { type MouseEvent } from 'react';
 
 import { type AnnotationEvent, type DateTimeInput, type GrafanaTheme2, type PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Card, RenderUserContentAsHTML, TagList, Tooltip, useStyles2 } from '@grafana/ui';
+import { RenderUserContentAsHTML, TagList, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { type Options } from './panelcfg.gen';
 
@@ -30,18 +30,30 @@ export const AnnotationListItem = ({ options, annotation, formatDate, onClick, o
   const showTimeStampEnd = timeEnd && timeEnd !== time && showTime;
 
   return (
-    <Card noMargin className={styles.card} onClick={onItemClick}>
-      <Card.Heading>
-        <RenderUserContentAsHTML
-          className={styles.heading}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          content={text}
-        />
-      </Card.Heading>
+    // Plain-div row rather than <Card>: Card's grid layout puts Description on its
+    // own row and makes Heading span across columns, which the panel's single-row
+    // layout can't override cleanly. Visual styling kept close to a Card.
+    <div
+      role="button"
+      tabIndex={0}
+      className={styles.row}
+      onClick={onItemClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onItemClick();
+        }
+      }}
+    >
+      <RenderUserContentAsHTML
+        className={styles.heading}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+        content={text}
+      />
       {showTimeStamp && (
-        <Card.Description className={styles.timestamp}>
+        <div className={styles.timestamp}>
           <TimeStamp formatDate={formatDate} time={time!} />
           {showTimeStampEnd && (
             <>
@@ -49,19 +61,19 @@ export const AnnotationListItem = ({ options, annotation, formatDate, onClick, o
               <TimeStamp formatDate={formatDate} time={timeEnd!} />{' '}
             </>
           )}
-        </Card.Description>
+        </div>
       )}
       {showAvatar && (
-        <Card.Meta className={styles.meta}>
+        <div className={styles.meta}>
           <Avatar email={email} login={login!} avatarUrl={avatarUrl} onClick={onLoginClick} />
-        </Card.Meta>
+        </div>
       )}
       {showTags && tags && (
-        <Card.Tags>
+        <div className={styles.tagList}>
           <TagList tags={tags} onClick={(tag) => onTagClick(tag, false)} />
-        </Card.Tags>
+        </div>
       )}
-    </Card>
+    </div>
   );
 };
 
@@ -113,17 +125,34 @@ const TimeStamp = ({ time, formatDate }: TimeStampProps) => {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    card: css({
-      gridTemplateAreas: `"Heading Description Meta Tags"`,
-      gridTemplateColumns: 'auto 1fr auto auto',
+    row: css({
+      display: 'grid',
+      gridTemplateColumns: 'minmax(0, max-content) 1fr auto auto',
+      alignItems: 'center',
+      gap: theme.spacing(1),
       padding: theme.spacing(1),
       margin: theme.spacing(0.5),
-      width: 'inherit',
+      background: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      cursor: 'pointer',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
+      '&:hover': {
+        background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+      },
     }),
     heading: css({
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      color: theme.colors.text.primary,
+      fontSize: theme.typography.size.md,
+      fontWeight: theme.typography.fontWeightMedium,
       a: {
-        zIndex: 1,
-        position: 'relative',
         color: theme.colors.text.link,
         '&:hover': {
           textDecoration: 'underline',
@@ -132,12 +161,13 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     meta: css({
       margin: 0,
-      position: 'relative',
-      justifyContent: 'end',
+      justifySelf: 'end',
     }),
     timestamp: css({
       margin: 0,
-      alignSelf: 'center',
+    }),
+    tagList: css({
+      justifySelf: 'end',
     }),
     time: css({
       marginLeft: theme.spacing(1),

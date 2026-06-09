@@ -285,6 +285,10 @@ type CreateTeamCommand struct {
 	// populated here from the team row that was just inserted, so if the
 	// team insert rolls back the member inserts roll back with it.
 	MemberCreates []CreateTeamMemberCommand
+
+	// Reconciled in the same tx as the team row insert.
+	ExternalGroupReconciler ExternalGroupReconciler
+	DesiredExternalGroups   []string
 }
 
 type CreateTeamResult struct {
@@ -366,6 +370,12 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 			}
 		}
 
+		if cmd.ExternalGroupReconciler != nil {
+			if err := cmd.ExternalGroupReconciler.Reconcile(ctx, st, ns.OrgID, teamID, cmd.DesiredExternalGroups); err != nil {
+				return fmt.Errorf("failed to reconcile team external groups: %w", err)
+			}
+		}
+
 		createdTeam = team.Team{
 			ID:            teamID,
 			UID:           cmd.UID,
@@ -397,6 +407,12 @@ type UpdateTeamCommand struct {
 	IsProvisioned bool
 	ExternalUID   string
 
+	// PreviousUpdated is the team row's `updated` value the caller observed
+	// when it built this Update. When set, the SQL UPDATE is gated on
+	// `updated = ?`; a stale match returns ErrTeamUpdateConflict. Zero
+	// means no gating (legacy callers).
+	PreviousUpdated legacysql.DBTime
+
 	// MemberDeletes / MemberUpdates / MemberCreates reconcile the team's
 	// members in the same SQL transaction as the team row update. Callers
 	// must pre-resolve both TeamID and UserID on MemberCreates entries;
@@ -404,6 +420,16 @@ type UpdateTeamCommand struct {
 	MemberDeletes []DeleteTeamMemberCommand
 	MemberUpdates []UpdateTeamMemberCommand
 	MemberCreates []CreateTeamMemberCommand
+
+	// Reconciled in the same tx as the team row update.
+	ExternalGroupReconciler ExternalGroupReconciler
+	DesiredExternalGroups   []string
+}
+
+// HasPreviousUpdated drives the conditional `AND updated = ?` clause in
+// update_team.sql.
+func (c UpdateTeamCommand) HasPreviousUpdated() bool {
+	return !c.PreviousUpdated.IsZero()
 }
 
 type UpdateTeamResult struct {
@@ -445,9 +471,11 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 	// Resolve the team's internal ID before opening the write transaction. Doing
 	// the read inside WithTransaction would acquire a second DB connection while
 	// the tx holds the write lock, which deadlocks on SQLite.
-	if _, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{OrgID: ns.OrgID, UID: cmd.UID}); err != nil {
+	existing, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{OrgID: ns.OrgID, UID: cmd.UID})
+	if err != nil {
 		return nil, fmt.Errorf("team not found: %w", err)
 	}
+	teamID := existing.ID
 
 	teamReq := newUpdateTeam(sql, &cmd)
 	var updatedTeam team.Team
@@ -457,8 +485,19 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 		if err != nil {
 			return fmt.Errorf("failed to execute team update template %q: %w", sqlUpdateTeamTemplate.Name(), err)
 		}
-		if _, err := st.Exec(ctx, teamQuery, teamReq.GetArgs()...); err != nil {
+		res, err := st.Exec(ctx, teamQuery, teamReq.GetArgs()...)
+		if err != nil {
 			return fmt.Errorf("failed to update team: %w", err)
+		}
+		// 0 rows = stale RV (when gated) or the team was deleted between the
+		// GetTeamInternalID pre-flight and this tx. Surface as conflict so
+		// the reconciler below doesn't INSERT orphan team_group rows.
+		n, rowsErr := res.RowsAffected()
+		if rowsErr != nil {
+			return fmt.Errorf("rows affected: %w", rowsErr)
+		}
+		if n == 0 {
+			return team.ErrTeamUpdateConflict
 		}
 
 		if len(cmd.MemberDeletes) > 0 {
@@ -513,6 +552,12 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 			}
 		}
 
+		if cmd.ExternalGroupReconciler != nil {
+			if err := cmd.ExternalGroupReconciler.Reconcile(ctx, st, ns.OrgID, teamID, cmd.DesiredExternalGroups); err != nil {
+				return fmt.Errorf("failed to reconcile team external groups: %w", err)
+			}
+		}
+
 		updatedTeam = team.Team{
 			UID:           cmd.UID,
 			Name:          cmd.Name,
@@ -532,6 +577,9 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 
 type DeleteTeamCommand struct {
 	UID string
+
+	// Cleans up team_group rows in the same tx as the team row delete.
+	ExternalGroupReconciler ExternalGroupReconciler
 }
 
 var sqlDeleteTeamTemplate = mustTemplate("delete_team.sql")
@@ -560,23 +608,28 @@ func (s *legacySQLStore) DeleteTeam(ctx context.Context, ns claims.NamespaceInfo
 		return err
 	}
 
-	req := newDeleteTeam(sql, &cmd)
-	if err := req.Validate(); err != nil {
+	teamDeleteReq := newDeleteTeam(sql, &cmd)
+	if err := teamDeleteReq.Validate(); err != nil {
 		return err
 	}
 
-	return sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
-		_, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{
-			OrgID: ns.OrgID,
-			UID:   cmd.UID,
-		})
-		if err != nil {
-			return err
-		}
+	// Resolve the team's internal ID before opening the write transaction. Doing
+	// the read inside WithTransaction would acquire a second DB connection while
+	// the tx holds the write lock, which deadlocks on SQLite.
+	existing, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{
+		OrgID: ns.OrgID,
+		UID:   cmd.UID,
+	})
+	if err != nil {
+		return err
+	}
+	teamID := existing.ID
 
-		teamDeleteReq := newDeleteTeam(sql, &cmd)
-		if err := teamDeleteReq.Validate(); err != nil {
-			return err
+	return sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		if cmd.ExternalGroupReconciler != nil {
+			if err := cmd.ExternalGroupReconciler.DeleteAll(ctx, st, ns.OrgID, teamID); err != nil {
+				return fmt.Errorf("failed to delete team external groups: %w", err)
+			}
 		}
 
 		teamDeleteQuery, err := sqltemplate.Execute(sqlDeleteTeamTemplate, teamDeleteReq)

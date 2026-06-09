@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, keyframes } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -13,12 +13,14 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from '../../QueryEditorContext';
+import { BulkActionsBar, getBulkActionsVisibility } from '../BulkActionsBar';
 
 export function SidebarFooter() {
   const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
   const { alertRules } = useAlertingContext();
-  const { cardType, setMultiSelectMode } = useQueryEditorUIContext();
+  const { cardType, setMultiSelectMode, selectedQueryRefIds, selectedTransformationIds, multiSelectMode } =
+    useQueryEditorUIContext();
   const isMultiSelectEnabled = useBooleanFlagValue('queryEditorNextMultiSelect', false);
   const styles = useStyles2(getStyles);
 
@@ -30,8 +32,26 @@ export function SidebarFooter() {
   const visible = total - hidden;
 
   const suffixText = isAlertView
-    ? t('query-editor-next.sidebar.footer-items-alert', '{{count}} alerts', { count: total })
-    : t('query-editor-next.sidebar.footer-items', '{{count}} items', { count: total });
+    ? t('query-editor-next.sidebar.footer-items-alert', '', {
+        count: total,
+        defaultValue_one: '{{count}} alerts',
+        defaultValue_other: '{{count}} alerts',
+      })
+    : t('query-editor-next.sidebar.footer-items', '', {
+        count: total,
+        defaultValue_one: '{{count}} items',
+        defaultValue_other: '{{count}} items',
+      });
+
+  // Render the bar OR the counts — never both. Keeping both in the DOM at
+  // once would leave the obscured count Stack (incl. the Select… button) in
+  // tab order and screen-reader output, even though the overlay covers it.
+  const { shouldRender } = getBulkActionsVisibility({
+    selectedQueryCount: selectedQueryRefIds.length,
+    selectedTransformationCount: selectedTransformationIds.length,
+    multiSelectMode,
+  });
+  const hasBulkActions = !isAlertView && shouldRender;
 
   const handleSelectClick = () => {
     setMultiSelectMode(true);
@@ -40,42 +60,54 @@ export function SidebarFooter() {
 
   return (
     <div className={styles.footer}>
-      <Stack direction="row" alignItems="center" gap={0.5}>
-        <Text weight="medium" variant="bodySmall">
-          {suffixText}
-        </Text>
-        {!isAlertView && isMultiSelectEnabled && (
-          <Button
-            fill="text"
-            size="sm"
-            variant="secondary"
-            icon="checkbox-multiple"
-            onClick={handleSelectClick}
-            aria-label={t('query-editor-next.sidebar.footer-select-label', 'Select multiple items')}
-          >
-            {t('query-editor-next.sidebar.footer-select', 'Select...')}
-          </Button>
-        )}
-      </Stack>
-      {!isAlertView && (
-        <Stack direction="row" alignItems="center" gap={1}>
+      {hasBulkActions ? (
+        <BulkActionsBar className={styles.bulkActionsBar} />
+      ) : (
+        <>
           <Stack direction="row" alignItems="center" gap={0.5}>
-            <Icon name="eye" size="sm" className={styles.icon} />
             <Text weight="medium" variant="bodySmall">
-              {visible}
+              {suffixText}
             </Text>
+            {!isAlertView && isMultiSelectEnabled && (
+              <Button
+                fill="text"
+                size="sm"
+                variant="secondary"
+                icon="checkbox-multiple"
+                onClick={handleSelectClick}
+                aria-label={t('query-editor-next.sidebar.footer-select-label', 'Select multiple items')}
+              >
+                {t('query-editor-next.sidebar.footer-select', 'Select...')}
+              </Button>
+            )}
           </Stack>
-          <Stack direction="row" alignItems="center" gap={0.5}>
-            <Icon name="eye-slash" size="sm" className={styles.icon} />
-            <Text weight="medium" variant="bodySmall">
-              {hidden}
-            </Text>
-          </Stack>
-        </Stack>
+          {!isAlertView && (
+            <Stack direction="row" alignItems="center" gap={1}>
+              <Stack direction="row" alignItems="center" gap={0.5}>
+                <Icon name="eye" size="sm" className={styles.icon} />
+                <Text weight="medium" variant="bodySmall">
+                  {visible}
+                </Text>
+              </Stack>
+              <Stack direction="row" alignItems="center" gap={0.5}>
+                <Icon name="eye-slash" size="sm" className={styles.icon} />
+                <Text weight="medium" variant="bodySmall">
+                  {hidden}
+                </Text>
+              </Stack>
+            </Stack>
+          )}
+        </>
       )}
     </div>
   );
 }
+
+// Keep the keyframes outside getStyles so the same animation name is reused across renders.
+const slideInFromRight = keyframes({
+  from: { transform: 'translateX(8px)', opacity: 0 },
+  to: { transform: 'translateX(0)', opacity: 1 },
+});
 
 function getStyles(theme: GrafanaTheme2) {
   return {
@@ -92,6 +124,11 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     icon: css({
       color: theme.colors.text.secondary,
+    }),
+    bulkActionsBar: css({
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${slideInFromRight} ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeOut} both`,
+      },
     }),
   };
 }

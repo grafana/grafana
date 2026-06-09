@@ -8,6 +8,7 @@ import (
 )
 
 func TestApiKeyValidation(t *testing.T) {
+	// #nosec G101 -- test fixture, not a real credential
 	result := KeyGenResult{
 		ClientSecret: "glsa_iNValIdinValiDinvalidinvalidinva_5b582697",
 		HashedKey:    "c59a6e547944ef768df51d1fc8b2a9810bc777a0bd2e5daa9ef8590f300c884e0ab9470c22c6f789414fdb6485b531166ded",

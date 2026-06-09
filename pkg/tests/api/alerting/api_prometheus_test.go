@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -198,7 +197,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 									}`),
 							},
 						},
-						IsPaused: util.Pointer(true),
+						IsPaused: new(true),
 					},
 				},
 			},

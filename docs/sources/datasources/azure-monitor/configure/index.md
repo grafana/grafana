@@ -353,10 +353,6 @@ datasources:
 
 Forward the logged-in Grafana user's Azure credentials to the data source for user-level access control.
 
-{{< admonition type="warning" >}}
-Current User authentication is an [experimental feature](/docs/release-life-cycle/). Engineering and on-call support is not available. Documentation is limited. No SLA is provided. Contact Grafana Support to enable this feature in Grafana Cloud.
-{{< /admonition >}}
-
 #### Current User prerequisites
 
 Your Grafana instance must be configured with Microsoft Entra ID authentication. Refer to the [Microsoft Entra ID authentication documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/azuread/).

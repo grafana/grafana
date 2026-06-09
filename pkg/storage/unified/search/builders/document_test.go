@@ -39,7 +39,7 @@ func doSnapshotTests(t *testing.T, builder resource.DocumentBuilder, kind string
 			// nolint:gosec
 			expect, _ := os.ReadFile(outpath)
 			if !assert.JSONEq(t, string(expect), string(out)) {
-				err = os.WriteFile(outpath, out, 0600)
+				err = os.WriteFile(outpath, out, 0600) // #nosec G703 -- test golden-file regeneration on controlled path
 				require.NoError(t, err)
 			}
 		})

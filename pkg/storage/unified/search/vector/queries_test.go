@@ -1,9 +1,11 @@
 package vector
 
 import (
+	"database/sql"
 	"encoding/json"
 	"testing"
 	"text/template"
+	"time"
 
 	pgvector "github.com/pgvector/pgvector-go"
 
@@ -75,6 +77,123 @@ func TestVectorQueries(t *testing.T) {
 						Model:       "text-embedding-005",
 						UID:         "abc-uid",
 						Response:    &sqlVectorCollectionGetContentResponse{},
+					},
+				},
+			},
+			sqlVectorCollectionExists: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCollectionExistsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "dashboards",
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						UID:         "abc-uid",
+						Response:    &sqlVectorCollectionExistsResponse{},
+					},
+				},
+			},
+			sqlVectorBackfillJobsList: {
+				{
+					Name: "simple",
+					Data: &sqlVectorBackfillJobsListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Model:       "text-embedding-005",
+						Response:    &sqlVectorBackfillJobsListResponse{},
+					},
+				},
+			},
+			sqlVectorBackfillJobsUpdate: {
+				{
+					Name: "simple",
+					Data: &sqlVectorBackfillJobsUpdateRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						ID:          7,
+						LastSeenKey: sql.NullString{String: "tok-42", Valid: true},
+						LastError:   sql.NullString{},
+					},
+				},
+			},
+			sqlVectorBackfillJobsSetError: {
+				{
+					Name: "simple",
+					Data: &sqlVectorBackfillJobsSetErrorRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						ID:          7,
+						LastError:   sql.NullString{String: "boom", Valid: true},
+					},
+				},
+			},
+			sqlVectorBackfillJobsComplete: {
+				{
+					Name: "simple",
+					Data: &sqlVectorBackfillJobsCompleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						ID:          7,
+					},
+				},
+			},
+			sqlQueryCacheGet: {
+				{
+					Name: "simple",
+					Data: &sqlQueryCacheGetRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						QueryHash:   "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+						Response:    &sqlQueryCacheGetResponse{},
+					},
+				},
+			},
+			sqlQueryCacheCount: {
+				{
+					Name: "simple",
+					Data: &sqlQueryCacheCountRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+						Response:    &sqlQueryCacheCountResponse{},
+					},
+				},
+			},
+			sqlQueryCacheEvictOldest: {
+				{
+					Name: "simple",
+					Data: &sqlQueryCacheEvictOldestRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+						Limit:       5,
+					},
+				},
+			},
+			sqlQueryCacheInsert: {
+				{
+					Name: "simple",
+					Data: &sqlQueryCacheInsertRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						QueryHash:   "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+						Embedding:   pgvector.NewHalfVector([]float32{0.1, 0.2, 0.3}),
+					},
+				},
+			},
+			sqlRateBucketIncrement: {
+				{
+					Name: "simple",
+					Data: &sqlRateBucketIncrementRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+						WindowStart: time.Date(2026, 5, 20, 12, 0, 0, 0, time.UTC),
+						Response:    &sqlRateBucketIncrementResponse{},
+					},
+				},
+			},
+			sqlRateBucketSweep: {
+				{
+					Name: "simple",
+					Data: &sqlRateBucketSweepRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Cutoff:      time.Date(2026, 5, 20, 11, 58, 0, 0, time.UTC),
 					},
 				},
 			},

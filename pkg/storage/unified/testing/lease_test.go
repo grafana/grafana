@@ -16,7 +16,6 @@ import (
 )
 
 func TestIntegrationLeaseBadger(t *testing.T) {
-	t.Skip("not implemented yet")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	RunLeaseTest(t, func(ctx context.Context) resource.KV {
@@ -33,7 +32,6 @@ func TestIntegrationLeaseBadger(t *testing.T) {
 }
 
 func TestIntegrationLeaseSQLKV(t *testing.T) {
-	t.Skip("not implemented yet")
 	testutil.SkipIntegrationTestInShortMode(t)
 	t.Cleanup(db.CleanupTestDB)
 

@@ -10,7 +10,7 @@ permissions: {}
 jobs:
   detect-changes:
     name: Detect whether code changed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:
@@ -19,7 +19,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 2
+          fetch-depth: 0
+          filter: blob:none
       - name: Detect changes
         id: detect-changes
         uses: ./.github/actions/change-detection
@@ -30,7 +31,7 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
     name: Go Workspace Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
 
     permissions:
       contents: read
@@ -42,9 +43,17 @@ jobs:
       with:
         persist-credentials: false
 
+    - name: Get GitHub App token
+      if: github.event.pull_request.head.repo.fork == false
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      with:
+        github_app: grafana-ci-bot
     - name: Setup Enterprise
       if: github.event.pull_request.head.repo.fork == false
       uses: ./.github/actions/setup-enterprise
+      with:
+        token: ${{ steps.get-github-app-token.outputs.token }}
 
     # Enterprise must be cloned before setup-go so that enterprise
     # modules are visible when the Go cache key is computed.
@@ -58,17 +67,11 @@ jobs:
 
     - name: Check for go mod & workspace changes
       run: |
-        if ! git diff --exit-code --quiet -- go.mod go.sum '**/go.mod' '**/go.sum' go.work go.work.sum; then
+        if ! git diff --exit-code --quiet -- go.mod go.sum '**/go.mod' '**/go.sum' go.work go.work.sum pkg/extensions/enterprise_imports*.go; then
           echo "Changes detected:"
-          git diff -- go.mod go.sum '**/go.mod' '**/go.sum' go.work go.work.sum
+          git diff -- go.mod go.sum '**/go.mod' '**/go.sum' go.work go.work.sum pkg/extensions/enterprise_imports*.go
           echo ""
           echo "Please run 'make update-workspace' and commit the changes."
-          echo ""
-          echo "If you are adding or removing a dependency used **only** by Enterprise code,"
-          echo "please update pkg/extensions/enterprise_imports.go or pkg/extensions/enterprise_imports_test.go"
-          echo ""
-          echo "You should add blank imports for dependencies that are used in enterprise code but isn't in OSS."
-          echo "If this is a test-only dependency, add it to enterprise_imports_test.go instead"
           exit 1
         fi
 
@@ -76,7 +79,7 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
     name: Check Wire Changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
 
     permissions:
       contents: read
@@ -88,9 +91,17 @@ jobs:
       with:
         persist-credentials: false
 
+    - name: Get GitHub App token
+      if: github.event.pull_request.head.repo.fork == false
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      with:
+        github_app: grafana-ci-bot
     - name: Setup Enterprise
       if: github.event.pull_request.head.repo.fork == false
       uses: ./.github/actions/setup-enterprise
+      with:
+        token: ${{ steps.get-github-app-token.outputs.token }}
 
     # Enterprise must be cloned before setup-go so that enterprise
     # modules are visible when the Go cache key is computed.
@@ -134,7 +145,7 @@ jobs:
             echo "Uncomitted changes detected in pkg/server/enterprise_wire_gen.go"
           fi
         fi
-        
+
         if [ "$OSS_WIRE_CHANGED" = "false" ] && [ "$ENTERPRISE_WIRE_CHANGED" = "false" ]; then
           echo "No changes in generated Go files"
         else
@@ -167,7 +178,7 @@ jobs:
     if: always()
 
     name: All Go Workspace Checks complete
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     steps:
       - name: Check the checks
         env:

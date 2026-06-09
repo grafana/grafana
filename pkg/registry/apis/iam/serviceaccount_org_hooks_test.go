@@ -296,7 +296,7 @@ func TestBeginServiceAccountUpdate(t *testing.T) {
 
 		finishFunc, err := b.BeginServiceAccountUpdate(context.Background(), &newSA, &oldSA, nil)
 		require.NoError(t, err)
-		require.Nil(t, finishFunc)
+		require.NotNil(t, finishFunc) // Hooks must always return a non-nil FinishFunc
 	})
 
 	t.Run("should not call zanzana when update fails", func(t *testing.T) {
@@ -365,7 +365,7 @@ func TestBeginServiceAccountUpdate(t *testing.T) {
 
 		finishFunc, err := builder.BeginServiceAccountUpdate(context.Background(), &newSA, &oldSA, nil)
 		require.NoError(t, err)
-		require.Nil(t, finishFunc)
+		require.NotNil(t, finishFunc) // Hooks must always return a non-nil FinishFunc
 	})
 }
 

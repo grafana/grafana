@@ -65,4 +65,13 @@ describe('TextLink', () => {
     await userEvent.click(screen.getByRole('link'));
     expect(onClick).toHaveBeenCalled();
   });
+
+  it('sanitizes javascript: URLs in href', () => {
+    render(
+      <TextLink href="javascript:alert(1)" external>
+        Click me
+      </TextLink>
+    );
+    expect(screen.getByRole('link')).toHaveAttribute('href', 'about:blank');
+  });
 });

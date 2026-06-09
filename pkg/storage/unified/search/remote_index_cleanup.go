@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/oklog/ulid/v2"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -33,7 +33,7 @@ const (
 // snapshotDeleteOutcome labels for the index_server_snapshot_deleted_total
 // counter. Cleaned-up incomplete-upload prefixes are tracked in a separate
 // metric (IndexSnapshotIncompleteUploadsCleaned) since they have no
-// outcome=error series — CleanupIncompleteUploads short-circuits on internal
+// outcome=error series — CleanupIncompleteIndexSnapshots short-circuits on internal
 // errors and only reports successful prefix deletes.
 const (
 	snapshotDeleteOutcomeSuccess = "success"
@@ -41,7 +41,7 @@ const (
 )
 
 // cleanupIncompleteUploadsMinAge is the minimum age of a partial upload prefix
-// before CleanupIncompleteUploads will delete it. Set generously above the
+// before CleanupIncompleteIndexSnapshots will delete it. Set generously above the
 // realistic upper bound for snapshot upload duration so a slow but live upload
 // is never killed mid-flight by cleanup.
 const cleanupIncompleteUploadsMinAge = 24 * time.Hour
@@ -94,7 +94,9 @@ func (b *bleveBackend) runCleanup(ctx context.Context) {
 	defer span.End()
 
 	store := b.opts.Snapshot.Store
-	namespaces, err := store.ListNamespaces(ctx)
+	namespaces, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListNamespaces, b.log, func() ([]string, error) {
+		return store.ListNamespaces(ctx)
+	})
 	if err != nil {
 		// We can't attribute this error to any single namespace, so it shows up
 		// as a single "error" cleanup. Logged at warn so operators see it.
@@ -227,7 +229,9 @@ func (b *bleveBackend) runNamespaceCleanup(ctx context.Context, namespace string
 		span.AddEvent("snapshot.lock.release.completed", oteltrace.WithAttributes(lockAttrs...))
 	}()
 
-	resources, err := store.ListNamespaceIndexes(nsCtx, namespace)
+	resources, err := retryRemoteIndexStoreValue(nsCtx, snapshotStoreOpListNamespaceResources, nsLogger, func() ([]resource.NamespacedResource, error) {
+		return store.ListNamespaceResources(nsCtx, namespace)
+	})
 	if err != nil {
 		return snapshotNamespaceCleanupStatusError, fmt.Errorf("listing namespace indexes: %w", err)
 	}
@@ -278,7 +282,7 @@ func (b *bleveBackend) runNamespaceCleanup(ctx context.Context, namespace string
 func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.NamespacedResource, logger log.Logger) error {
 	store := b.opts.Snapshot.Store
 
-	metas, err := store.ListIndexes(ctx, res)
+	metas, err := ListIndexSnapshots(ctx, store, res, logger)
 	if err != nil {
 		return fmt.Errorf("listing snapshots: %w", err)
 	}
@@ -289,20 +293,23 @@ func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.Name
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		if err := store.DeleteIndex(ctx, res, key); err != nil {
-			logger.Warn("deleting snapshot", "resource", res, "snapshot", key.String(), "err", err)
+		if err := retryRemoteIndexStore(ctx, snapshotStoreOpDeleteIndex, logger, func() error {
+			return store.DeleteIndex(ctx, res, key)
+		}); err != nil {
+			logger.Warn("deleting index snapshot", "resource", res, "snapshot", key.String(), "err", err)
 			b.recordSnapshotDeleted(snapshotDeleteOutcomeError)
 			deleteFailures++
 			continue
 		}
+		logger.Info("deleted index snapshot", "resource", res, "snapshot", key.String(), "uploaded", metas[key].UploadTimestamp, "age", time.Since(metas[key].UploadTimestamp))
 		b.recordSnapshotDeleted(snapshotDeleteOutcomeSuccess)
 	}
 
-	// CleanupIncompleteUploads returns a partial cleaned count even on error;
+	// CleanupIncompleteIndexSnapshots returns a partial cleaned count even on error;
 	// record successes before checking the error so metrics don't undercount
 	// on transient bucket failures. Treated symmetrically with the per-snapshot
 	// delete loop above: log, flag, continue — don't short-circuit the resource.
-	cleaned, incompleteErr := store.CleanupIncompleteUploads(ctx, res, cleanupIncompleteUploadsMinAge)
+	cleaned, incompleteErr := CleanupIncompleteIndexSnapshots(ctx, store, res, time.Now().Add(-cleanupIncompleteUploadsMinAge), logger)
 	for range cleaned {
 		b.recordIncompleteUploadCleaned()
 	}
@@ -327,15 +334,16 @@ func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.Name
 // that should be deleted. Two independent rules; a snapshot is deletable if
 // either fires:
 //
-//	A. Age cutoff: anything older than maxAge, regardless of group/successor.
-//	B. Superseded with stable replacement: within a Grafana-version group, all
-//	   snapshots except the newest are deletable once the newest has lived
-//	   beyond gracePeriod.
+//	rule A — age cutoff: anything older than maxAge, regardless of group/successor.
+//	rule B — within a Grafana-version group, an older snapshot is deleted
+//	         once a newer same-version snapshot has existed for longer than
+//	         gracePeriod (the grace period gives in-flight downloaders that
+//	         picked the older snapshot time to finish before it goes away).
 //
-// Snapshots with an unparseable GrafanaBuildVersion are excluded from any
+// Snapshots with an unparseable BuildVersion are excluded from any
 // version group; rule A still applies, but otherwise they are left untouched.
-// CleanupIncompleteUploads does NOT pick them up — it only targets prefixes
-// with missing or syntactically invalid meta.json, and an unparseable version
+// CleanupIncompleteIndexSnapshots does NOT pick them up — it only targets prefixes
+// with missing or syntactically invalid snapshot manifest, and an unparseable version
 // string lives inside a structurally valid manifest. Rule A's age cutoff is
 // therefore the only mechanism that bounds their lifetime.
 //
@@ -357,7 +365,7 @@ func selectSnapshotsToDelete(metas map[ulid.ULID]*IndexMeta, now time.Time, maxA
 			toDelete = append(toDelete, k)
 			continue
 		}
-		v, err := semver.NewVersion(m.GrafanaBuildVersion)
+		v, err := semver.NewVersion(m.BuildVersion)
 		if err != nil {
 			continue
 		}
