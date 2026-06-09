@@ -195,8 +195,8 @@ describe('functions', () => {
           expanded: true,
           label: '',
           options: [
-            { label: 'foo', value: 'foo' },
-            { label: 'bar', value: 'bar' },
+            { label: 'Foo', value: 'foo' },
+            { label: 'Bar', value: 'bar' },
           ],
         },
       ]);
@@ -207,12 +207,22 @@ describe('functions', () => {
         {
           expanded: true,
           label: 'Foo Bar',
-          options: [{ label: 'foo.bar', value: 'foo.bar' }],
+          options: [{ label: 'Bar', value: 'foo.bar' }],
         },
         {
           expanded: true,
           label: '',
-          options: [{ label: 'foobar', value: 'foobar' }],
+          options: [{ label: 'Foobar', value: 'foobar' }],
+        },
+      ]);
+    });
+
+    it('should use only the last segment as the display label', () => {
+      expect(labelsToGroupedOptions(['metadata.system_labels.cloud_account'])).toEqual([
+        {
+          expanded: true,
+          label: 'Metadata System Labels',
+          options: [{ label: 'Cloud Account', value: 'metadata.system_labels.cloud_account' }],
         },
       ]);
     });
