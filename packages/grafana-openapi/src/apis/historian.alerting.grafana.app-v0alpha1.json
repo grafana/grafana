@@ -115,6 +115,15 @@
               "type": "integer",
               "uniqueItems": true
             }
+          },
+          {
+            "name": "watch",
+            "in": "query",
+            "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
           }
         ],
         "responses": {

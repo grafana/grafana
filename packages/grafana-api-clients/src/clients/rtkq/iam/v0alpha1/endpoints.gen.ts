@@ -39,6 +39,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['ExternalGroupMapping'],
@@ -181,6 +182,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['ServiceAccount'],
@@ -301,6 +303,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['TeamBinding'],
@@ -383,6 +386,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['Team'],
@@ -495,6 +499,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['User'],
@@ -647,6 +652,8 @@ export type ListExternalGroupMappingApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateExternalGroupMappingApiResponse = /** status 200 OK */
   | ExternalGroupMapping
@@ -792,6 +799,8 @@ export type ListServiceAccountApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateServiceAccountApiResponse = /** status 200 OK */
   | ServiceAccount
@@ -917,6 +926,8 @@ export type ListTeamBindingApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateTeamBindingApiResponse = /** status 200 OK */
   | TeamBinding
@@ -1009,6 +1020,8 @@ export type ListTeamApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateTeamApiResponse = /** status 200 OK */
   | Team
@@ -1136,6 +1149,8 @@ export type ListUserApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateUserApiResponse = /** status 200 OK */
   | User

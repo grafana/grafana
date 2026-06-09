@@ -28,6 +28,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['InhibitionRule'],
@@ -140,6 +141,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['Receiver'],
@@ -250,6 +252,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['RoutingTree'],
@@ -359,6 +362,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['TemplateGroup'],
@@ -468,6 +472,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['TimeInterval'],
@@ -594,6 +599,8 @@ export type ListInhibitionRuleApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateInhibitionRuleApiResponse = /** status 200 OK */
   | InhibitionRule
@@ -766,6 +773,8 @@ export type ListReceiverApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateReceiverApiResponse = /** status 200 OK */
   | Receiver
@@ -937,6 +946,8 @@ export type ListRoutingTreeApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateRoutingTreeApiResponse = /** status 200 OK */
   | RoutingTree
@@ -1103,6 +1114,8 @@ export type ListTemplateGroupApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateTemplateGroupApiResponse = /** status 200 OK */
   | TemplateGroup
@@ -1273,6 +1286,8 @@ export type ListTimeIntervalApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateTimeIntervalApiResponse = /** status 200 OK */
   | TimeInterval

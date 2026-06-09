@@ -21,6 +21,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['Dashboard'],
@@ -107,6 +108,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['LibraryPanel'],
@@ -298,6 +300,8 @@ export type ListDashboardApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateDashboardApiResponse = /** status 200 OK */
   | Dashboard
@@ -395,6 +399,8 @@ export type ListLibraryPanelApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateLibraryPanelApiResponse = /** status 200 OK */
   | LibraryPanel

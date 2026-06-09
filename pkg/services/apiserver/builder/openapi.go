@@ -190,7 +190,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 							params := make([]*spec3.Parameter, 0, len(v.Get.Parameters))
 							for _, p := range v.Get.Parameters {
 								switch p.Name {
-								case "watch",
+								case
 									"allowWatchBookmarks",
 									"resourceVersionMatch",
 									"sendInitialEvents",

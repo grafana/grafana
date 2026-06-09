@@ -21,6 +21,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['AlertRule'],
@@ -141,6 +142,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['RecordingRule'],
@@ -291,6 +293,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['RuleSequence'],
@@ -455,6 +458,8 @@ export type ListAlertRuleApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateAlertRuleApiResponse = /** status 200 OK */
   | AlertRule
@@ -584,6 +589,8 @@ export type ListRecordingRuleApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateRecordingRuleApiResponse = /** status 200 OK */
   | RecordingRule
@@ -795,6 +802,8 @@ export type ListRuleSequenceApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateRuleSequenceApiResponse = /** status 200 OK */
   | RuleSequence

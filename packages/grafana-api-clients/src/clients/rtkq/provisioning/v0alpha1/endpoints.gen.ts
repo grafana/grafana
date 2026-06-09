@@ -21,6 +21,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['Connection'],
@@ -172,6 +173,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['Job'],
@@ -278,6 +280,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
             timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
           },
         }),
         providesTags: ['Repository'],
@@ -574,6 +577,8 @@ export type ListConnectionApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateConnectionApiResponse = /** status 200 OK */
   | Connection
@@ -789,6 +794,8 @@ export type ListJobApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateJobApiResponse = /** status 200 OK */
   | Job
@@ -955,6 +962,8 @@ export type ListRepositoryApiArg = {
   resourceVersion?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
 };
 export type CreateRepositoryApiResponse = /** status 200 OK */
   | Repository
