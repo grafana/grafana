@@ -281,7 +281,7 @@ describe('transformTraceData() pruned span detection', () => {
   it('does not detect a summary span when is_summary is the string "true" (strict boolean match)', () => {
     const fixture = structuredClone(summaryDefaultsOnly);
     const summarySpan = fixture.spans.find((s) => s.spanID === 'summ00000000a101')!;
-    const flag = summarySpan.tags.find((t) => t.key === 'aggregation.is_summary')!;
+    const flag = summarySpan.tags!.find((t) => t.key === 'aggregation.is_summary')!;
     flag.value = 'true';
 
     const trace = transformTraceData(fixture)!;
