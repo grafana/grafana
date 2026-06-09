@@ -1180,6 +1180,84 @@ func WaitForResourcesDeleted(t *testing.T, ctx context.Context, client dynamic.R
 	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %s to be deleted", resourceKind)
 }
 
+// RequireResource polls until the named resource is gettable via client and returns it.
+// Use after a write/sync to assert a resource has been provisioned into Grafana.
+func RequireResource(t *testing.T, ctx context.Context, client dynamic.ResourceInterface, name string) *unstructured.Unstructured {
+	t.Helper()
+	var got *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := client.Get(ctx, name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "get %q", name) {
+			return
+		}
+		got = obj
+	}, WaitTimeoutDefault, WaitIntervalDefault, "resource %q should be provisioned", name)
+	return got
+}
+
+// ResourceToJSON marshals an unstructured resource to JSON, e.g. for a files-endpoint write.
+func ResourceToJSON(t *testing.T, obj *unstructured.Unstructured) []byte {
+	t.Helper()
+	data, err := json.Marshal(obj.Object)
+	require.NoError(t, err)
+	return data
+}
+
+// ExportedResourceFiles walks the repository directory and returns the paths of files whose
+// apiVersion has the given group prefix (e.g. "playlist.grafana.app/"). It lets export tests
+// assert what was written without hard-coding the generated file names.
+func (h *ProvisioningTestHelper) ExportedResourceFiles(t *testing.T, groupPrefix string) []string {
+	t.Helper()
+	var matches []string
+	err := filepath.WalkDir(h.ProvisioningPath, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		switch strings.ToLower(filepath.Ext(p)) {
+		case ".json", ".yaml", ".yml":
+		default:
+			return nil
+		}
+		apiVersion, _, _ := unstructured.NestedString(h.LoadYAMLOrJSONFile(p).Object, "apiVersion")
+		if strings.HasPrefix(apiVersion, groupPrefix) {
+			matches = append(matches, p)
+		}
+		return nil
+	})
+	require.NoError(t, err)
+	return matches
+}
+
+// PlaylistGVR is the playlist resource served by the App SDK apiserver.
+var PlaylistGVR = schema.GroupVersionResource{
+	Group:    "playlist.grafana.app",
+	Version:  "v1",
+	Resource: "playlists",
+}
+
+// NewPlaylist builds a minimal playlist resource for provisioning tests.
+func NewPlaylist(name, title string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": PlaylistGVR.GroupVersion().String(),
+			"kind":       "Playlist",
+			"metadata": map[string]any{
+				"name": name,
+			},
+			"spec": map[string]any{
+				"title":    title,
+				"interval": "5m",
+				"items": []any{
+					map[string]any{"type": "dashboard_by_tag", "value": "provisioning"},
+				},
+			},
+		},
+	}
+}
+
 // GrafanaOption is a functional option for RunGrafana.
 type GrafanaOption func(opts *testinfra.GrafanaOpts)
 

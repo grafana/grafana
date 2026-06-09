@@ -2,11 +2,6 @@ package playlists
 
 import (
 	"context"
-	"encoding/json"
-	"io/fs"
-	"os"
-	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,35 +12,10 @@ import (
 	"sigs.k8s.io/yaml"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-func newPlaylist(name, title string) *unstructured.Unstructured {
-	return &unstructured.Unstructured{
-		Object: map[string]any{
-			"apiVersion": playlistGVR.Group + "/" + playlistGVR.Version,
-			"kind":       "Playlist",
-			"metadata": map[string]any{
-				"name": name,
-			},
-			"spec": map[string]any{
-				"title":    title,
-				"interval": "5m",
-				"items": []any{
-					map[string]any{"type": "dashboard_by_tag", "value": "provisioning"},
-				},
-			},
-		},
-	}
-}
-
-func playlistJSON(t *testing.T, name, title string) []byte {
-	t.Helper()
-	body, err := json.Marshal(newPlaylist(name, title).Object)
-	require.NoError(t, err)
-	return body
-}
+const playlistGroupPrefix = "playlist.grafana.app/"
 
 // TestIntegrationProvisioning_ExportPlaylist verifies that a full instance export (push)
 // succeeds with Playlist enabled as an active resource and writes the playlist to the
@@ -58,7 +28,7 @@ func TestIntegrationProvisioning_ExportPlaylist(t *testing.T) {
 
 	playlists := playlistClient(t, helper)
 
-	created, err := playlists.Resource.Create(ctx, newPlaylist("export-playlist", "Export Playlist"), metav1.CreateOptions{})
+	created, err := playlists.Resource.Create(ctx, common.NewPlaylist("export-playlist", "Export Playlist"), metav1.CreateOptions{})
 	require.NoError(t, err, "provisioning identity context should allow creating a playlist")
 	t.Cleanup(func() { _ = playlists.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
 
@@ -82,14 +52,14 @@ func TestIntegrationProvisioning_ExportPlaylist(t *testing.T) {
 	helper.DebugState(t, repo, "AFTER EXPORT")
 	common.PrintFileTree(t, helper.ProvisioningPath)
 
-	playlistFiles := exportedPlaylistFiles(t, helper.ProvisioningPath)
+	playlistFiles := helper.ExportedResourceFiles(t, playlistGroupPrefix)
 	require.NotEmpty(t, playlistFiles, "the playlist should be exported to the repository")
 
-	obj := readFileFromDisk(t, playlistFiles[0])
-	title, _, err := unstructured.NestedString(obj, "spec", "title")
+	obj := helper.LoadYAMLOrJSONFile(playlistFiles[0])
+	title, _, err := unstructured.NestedString(obj.Object, "spec", "title")
 	require.NoError(t, err)
 	require.Equal(t, "Export Playlist", title)
-	require.Nil(t, obj["status"], "exported file should not carry a status")
+	require.Nil(t, obj.Object["status"], "exported file should not carry a status")
 }
 
 // TestIntegrationProvisioning_SyncPlaylist verifies the import (pull) direction: a playlist
@@ -107,7 +77,7 @@ func TestIntegrationProvisioning_SyncPlaylist(t *testing.T) {
 		SkipResourceAssertions: true,
 	})
 
-	body, err := yaml.Marshal(newPlaylist("synced-playlist", "Synced Playlist").Object)
+	body, err := yaml.Marshal(common.NewPlaylist("synced-playlist", "Synced Playlist").Object)
 	require.NoError(t, err)
 	helper.WriteToProvisioningPath(t, "synced-playlist.yaml", body)
 	t.Cleanup(func() { _ = playlists.Resource.Delete(ctx, "synced-playlist", metav1.DeleteOptions{}) })
@@ -115,7 +85,7 @@ func TestIntegrationProvisioning_SyncPlaylist(t *testing.T) {
 	helper.SyncAndWait(t, repo, nil)
 	helper.DebugState(t, repo, "AFTER PLAYLIST SYNC")
 
-	got := requirePlaylist(t, ctx, playlists, "synced-playlist")
+	got := common.RequireResource(t, ctx, playlists.Resource, "synced-playlist")
 	title, _, err := unstructured.NestedString(got.Object, "spec", "title")
 	require.NoError(t, err)
 	require.Equal(t, "Synced Playlist", title)
@@ -155,7 +125,7 @@ func TestIntegrationProvisioning_PlaylistFilesEndpoint(t *testing.T) {
 		Resource("repositories").
 		Name(repo).
 		SubResource("files", path).
-		Body(playlistJSON(t, name, "Files Playlist")).
+		Body(common.ResourceToJSON(t, common.NewPlaylist(name, "Files Playlist"))).
 		SetHeader("Content-Type", "application/json").
 		Do(ctx)
 	require.NoError(t, result.Error(), "creating a playlist via the files endpoint should succeed")
@@ -163,7 +133,7 @@ func TestIntegrationProvisioning_PlaylistFilesEndpoint(t *testing.T) {
 	// The write both stores the file in the repo and provisions the playlist into Grafana.
 	require.Contains(t, repositoryFilePaths(t, ctx, helper, repo), path, "the playlist file should exist in the repository")
 
-	got := requirePlaylist(t, ctx, playlists, name)
+	got := common.RequireResource(t, ctx, playlists.Resource, name)
 	title, _, err := unstructured.NestedString(got.Object, "spec", "title")
 	require.NoError(t, err)
 	require.Equal(t, "Files Playlist", title)
@@ -193,56 +163,4 @@ func repositoryFilePaths(t *testing.T, ctx context.Context, helper *common.Provi
 		paths = append(paths, item.Path)
 	}
 	return paths
-}
-
-// requirePlaylist waits until the named playlist is readable in Grafana and returns it.
-func requirePlaylist(t *testing.T, ctx context.Context, playlists *apis.K8sResourceClient, name string) *unstructured.Unstructured {
-	t.Helper()
-	var got *unstructured.Unstructured
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		obj, err := playlists.Resource.Get(ctx, name, metav1.GetOptions{})
-		if !assert.NoError(collect, err) {
-			return
-		}
-		got = obj
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "playlist %q should be provisioned", name)
-	return got
-}
-
-// exportedPlaylistFiles walks the repository directory and returns the files that contain
-// playlist resources, so tests can assert on what was exported without hard-coding the
-// generated file names.
-func exportedPlaylistFiles(t *testing.T, root string) []string {
-	t.Helper()
-	var playlists []string
-	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			return nil
-		}
-		ext := strings.ToLower(filepath.Ext(p))
-		if ext != ".json" && ext != ".yaml" && ext != ".yml" {
-			return nil
-		}
-		apiVersion, _, _ := unstructured.NestedString(readFileFromDisk(t, p), "apiVersion")
-		if strings.HasPrefix(apiVersion, "playlist.grafana.app/") {
-			playlists = append(playlists, p)
-		}
-		return nil
-	})
-	require.NoError(t, err)
-	return playlists
-}
-
-func readFileFromDisk(t *testing.T, path string) map[string]any {
-	t.Helper()
-	//nolint:gosec // reading files we just exported under a test temp dir
-	body, err := os.ReadFile(path)
-	require.NoError(t, err)
-	obj := map[string]any{}
-	// sigs.k8s.io/yaml handles both JSON and YAML exports.
-	require.NoError(t, yaml.Unmarshal(body, &obj), "exported file %s should be valid JSON/YAML", path)
-	return obj
 }

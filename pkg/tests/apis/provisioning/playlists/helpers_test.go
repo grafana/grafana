@@ -4,20 +4,12 @@ import (
 	"testing"
 
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
-
-// playlistGVR is the playlist resource served by the App SDK apiserver.
-var playlistGVR = schema.GroupVersionResource{
-	Group:    "playlist.grafana.app",
-	Version:  "v1",
-	Resource: "playlists",
-}
 
 // env runs a single shared Grafana server for the package with Playlist enabled as an
 // active provisioning resource. Playlist ships ":disabled" by default; enabling it here
@@ -53,7 +45,7 @@ func playlistClient(t *testing.T, helper *common.ProvisioningTestHelper) *apis.K
 	return helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default",
-		GVR:       playlistGVR,
+		GVR:       common.PlaylistGVR,
 	})
 }
 
