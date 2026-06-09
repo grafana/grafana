@@ -44,7 +44,6 @@ The following resources are supported by the migration assistant:
 
 To use the Grafana migration assistant, you need:
 
-- A self-managed Grafana instance running Grafana 11.2 or later. In Grafana 12 and later, the migration assistant is generally available. In Grafana 11.2 through 11.6, the migration assistant is available in public preview and requires the `onPremToCloudMigrations` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) to be enabled. This toggle is enabled by default in Grafana 11.5 and later.
 - A [Grafana Cloud Stack](https://grafana.com/docs/grafana-cloud/get-started/) you intend to migrate your resources to.
 - [`Admin`](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/) access to the Grafana Cloud Stack. To check your access level, go to `https://grafana.com/orgs/<YOUR-ORG-NAME>/members`.
 - [Grafana server administrator](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators) access to your existing self-managed Grafana instance. To check your access level, go to `https://<GRAFANA-ONPREM-URL>/admin/users`.
@@ -161,17 +160,15 @@ The snapshot information panel shows:
 
 The resource list shows each resource's name, type, and upload status. Use the **Status** column to confirm whether individual resources were copied successfully or require attention.
 
-## Snapshots and migration timelines
+## Snapshots and upload performance
 
 The migration assistant currently supports a subset of all resources available in Grafana. Refer to [Supported resources](#supported-resources) for more details.
 
-When you create a snapshot, the migration assistant makes a copy of all the resources you select and saves them in the snapshot. The snapshot reflects the current state of the resources when the snapshot is built and is stored locally on your instance, ready to be uploaded in the last stage.
+When you create a snapshot, the migration assistant makes a copy of all the resources you select and saves them in the snapshot. The snapshot reflects the current state of the resources when the snapshot is built and is stored locally on your instance, ready to be uploaded in the last stage. Snapshots are encrypted on the filesystem of your self-managed instance. The migration assistant transfers the snapshot to the Grafana Labs cloud infrastructure and decrypts the data for processing.
 
 Resources saved in the snapshot are strictly limited to the resources stored within an organization. This is important to note if there are multiple organizations used in your Grafana instance. If you want to migrate multiple organizations, refer to [Migrate multiple organizations](#migrate-multiple-organizations).
 
-Upload time depends primarily on the volume of data you're migrating. The process is optimized for speed and typically takes seconds to minutes rather than hours. In production migrations, the tool has demonstrated 100% success rates with datasets as large as 4,000 objects.
-
-Most migration operations run asynchronously, so you aren't blocked while a migration is pending and you can perform other tasks on your self-managed instance.
+Upload time depends primarily on the volume of data you're migrating with most migration operations running asynchronously, so you aren't blocked while a migration is pending and you can perform other tasks on your self-managed instance.
 
 ## Rollback and recovery procedures
 
@@ -203,10 +200,6 @@ Resilience to crashes
 
 High availability
 : The service runs multiple replicas and depends on highly available AWS services to minimize the likelihood of downtime.
-
-## Data privacy and security
-
-The migration assistant encrypts snapshots on the filesystem of your self-managed instance. The migration assistant transfers the snapshot to the Grafana Labs cloud infrastructure and decrypts the data for processing.
 
 ## Resource migration details
 
