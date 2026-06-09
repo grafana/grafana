@@ -2332,7 +2332,7 @@ func TestUserSync_createUser_PassesOrgRoleAsDefaultOrgRole(t *testing.T) {
 	}
 }
 
-func TestUserSync_SyncUserHook_AuthProxyAlignsOrgIDForK8sRole(t *testing.T) {
+func TestUserSync_SyncUserHook_AlignsOrgIDForK8sRole(t *testing.T) {
 	tests := []struct {
 		name                    string
 		authenticatedBy         string
@@ -2344,6 +2344,18 @@ func TestUserSync_SyncUserHook_AuthProxyAlignsOrgIDForK8sRole(t *testing.T) {
 			authenticatedBy:         login.AuthProxyAuthModule,
 			kubernetesUsersRedirect: true,
 			wantDefaultOrgRole:      "Editor",
+		},
+		{
+			name:                    "ldap with flag enabled aligns OrgID so the asserted role is written",
+			authenticatedBy:         login.LDAPAuthModule,
+			kubernetesUsersRedirect: true,
+			wantDefaultOrgRole:      "Editor",
+		},
+		{
+			name:                    "ldap with flag disabled leaves OrgID unaligned so the role resolves to None",
+			authenticatedBy:         login.LDAPAuthModule,
+			kubernetesUsersRedirect: false,
+			wantDefaultOrgRole:      "None",
 		},
 		{
 			name:                    "auth proxy with flag disabled leaves OrgID unaligned so the role resolves to None",
