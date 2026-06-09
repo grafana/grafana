@@ -1,3 +1,5 @@
+import { forwardRef } from 'react';
+
 import { Icon } from '../Icon/Icon';
 
 interface Props {
@@ -5,7 +7,7 @@ interface Props {
   isOpen: boolean;
 }
 
-export const SuffixIcon = ({ isLoading, isOpen }: Props) => {
+export const SuffixIcon = forwardRef<SVGElement, Props>(({ isLoading, isOpen, ...rest }, ref) => {
   const suffixIcon = isLoading
     ? 'spinner'
     : // If it's loading, show loading icon. Otherwise, icon indicating menu state
@@ -13,5 +15,7 @@ export const SuffixIcon = ({ isLoading, isOpen }: Props) => {
       ? 'search'
       : 'angle-down';
 
-  return <Icon name={suffixIcon} />;
-};
+  return <Icon name={suffixIcon} {...rest} ref={ref} />;
+});
+
+SuffixIcon.displayName = 'SuffixIcon';
