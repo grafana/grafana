@@ -58,13 +58,6 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 			list = append(list, field.Required(field.NewPath("spec", "sync", "target"),
 				"The target type is required when sync is enabled"))
 		}
-
-		// The folderless target is defined in the API but not supported yet.
-		// Reject it until the feature is fully implemented.
-		if cfg.Spec.Sync.Target == provisioning.SyncTargetTypeFolderless {
-			list = append(list, field.Invalid(field.NewPath("spec", "sync", "target"),
-				cfg.Spec.Sync.Target, "The folderless sync target is not supported yet"))
-		}
 	}
 
 	// Reserved names (for now)

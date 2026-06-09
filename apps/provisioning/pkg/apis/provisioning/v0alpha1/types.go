@@ -453,9 +453,6 @@ const (
 	// repository path root become top-level resources and subdirectories become
 	// top-level folders. Ownership is tracked per-resource via manager
 	// annotations rather than by folder containment.
-	//
-	// NOTE: This target is not supported yet. The value is reserved in the API,
-	// but repositories that use it are currently rejected during validation.
 	SyncTargetTypeFolderless SyncTargetType = "folderless"
 )
 

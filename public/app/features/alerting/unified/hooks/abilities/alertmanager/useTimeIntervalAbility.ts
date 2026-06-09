@@ -32,6 +32,13 @@ const PERMISSIONS: Record<TimeIntervalAction, AccessControlAction[]> = {
   [TimeIntervalAction.Export]: [notificationsPermissions.read.grafana],
 };
 
+export const PERMISSIONS_TIME_INTERVALS_READ: AccessControlAction[] = [AccessControlAction.AlertingTimeIntervalsRead];
+
+export const PERMISSIONS_TIME_INTERVALS_MODIFY: AccessControlAction[] = [
+  ...PERMISSIONS[TimeIntervalAction.Create],
+  ...PERMISSIONS[TimeIntervalAction.Update],
+];
+
 export const PERMISSIONS_TIME_INTERVALS: AccessControlAction[] = Object.values(PERMISSIONS).flatMap(
   (permissions) => permissions
 );
