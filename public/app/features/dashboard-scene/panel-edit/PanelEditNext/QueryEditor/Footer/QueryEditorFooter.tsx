@@ -105,10 +105,10 @@ export function QueryEditorFooter() {
           fill="text"
           size="sm"
           onClick={(e) => handleItemClick(e)}
-          aria-label={t('query-editor-next.footer.query-options', 'Query Options')}
+          aria-label={t('query-editor-next.footer.query-options', 'Query options')}
         >
           <Stack direction="row" alignItems="center" gap={0.5}>
-            <Trans i18nKey="query-editor-next.footer.query-options">Query Options</Trans>
+            <Trans i18nKey="query-editor-next.footer.query-options">Query options</Trans>
             <Icon name="angle-down" className={cx(styles.chevron, { [styles.chevronOpen]: isQueryOptionsOpen })} />
           </Stack>
         </Button>

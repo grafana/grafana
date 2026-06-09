@@ -78,6 +78,31 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		assert.Equal(t, 5, cfg.IndexMinCount)
 	})
 
+	t.Run("search_ring_extend_replica_set", func(t *testing.T) {
+		setSectionKey := func(cfg *Cfg, value string) {
+			section := cfg.Raw.Section("unified_storage")
+			_, err := section.NewKey("search_ring_extend_replica_set", value)
+			assert.NoError(t, err)
+		}
+
+		t.Run("defaults to true", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.setUnifiedStorageConfig()
+			assert.True(t, cfg.SearchRingExtendReplicaSet)
+		})
+
+		t.Run("reads configured value", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			setSectionKey(cfg, "false")
+			cfg.setUnifiedStorageConfig()
+			assert.False(t, cfg.SearchRingExtendReplicaSet)
+		})
+	})
+
 	t.Run("search_inject_failures_percent", func(t *testing.T) {
 		setSectionKey := func(cfg *Cfg, key, value string) {
 			section := cfg.Raw.Section("unified_storage")

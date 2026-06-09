@@ -20,13 +20,12 @@ on:
 jobs:
   buildPR:
     name: Build PR packages artifacts
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
     defaults:
       run:
         working-directory: './pr'
     permissions:
       contents: read
-      id-token: write
 
     steps:
       - uses: actions/checkout@v5
@@ -61,10 +60,9 @@ jobs:
 
   buildBase:
     name: Build Base packages artifacts
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
     permissions:
       contents: read
-      id-token: write
     defaults:
       run:
         working-directory: './base'
@@ -109,7 +107,7 @@ jobs:
 
   Detect:
     name: Detect breaking changes between PR and base
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
     needs: ['buildPR', 'buildBase']
     env:
       GITHUB_STEP_NUMBER: 8
@@ -124,6 +122,9 @@ jobs:
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
+
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
 
       - name: Get built packages from pr
         uses: actions/download-artifact@v8
@@ -159,7 +160,7 @@ jobs:
 
       - name: Detect breaking changes
         id: breaking-changes
-        run: ./scripts/check-breaking-changes.sh
+        run: ./.github/workflows/scripts/levitate/check-breaking-changes.sh
         env:
           FORCE_COLOR: 3
           IS_FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }} # used in check-breaking-changes.sh and levitate-parse-json-report.js
@@ -182,7 +183,7 @@ jobs:
 
   Report:
     name: Report breaking changes in PR comment
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
     needs: ['Detect']
     permissions:
       contents: read
@@ -190,20 +191,11 @@ jobs:
     if: github.event.pull_request.head.repo.full_name == github.repository
 
     steps:
-      - id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@28361cdb22223e5f1e34358c86c20908e7248760 # get-vault-secrets-v1.1.0
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          # Secrets placed in the ci/repo/grafana/grafana in vault
-          repo_secrets: |
-            GITHUB_APP_ID=grafana_pr_automation_app:app_id
-            GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
-
-      - name: Generate token
-        id: generate_token
-        uses: actions/create-github-app-token@3ff1caaa28b64c9cc276ce0a02e2ff584f3900c5 # v2.0.2
-        with:
-          app-id: ${{ env.GITHUB_APP_ID }}
-          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+          github_app: grafana-pr-automation
 
       - uses: actions/checkout@v5
         with:
@@ -220,7 +212,7 @@ jobs:
         with:
           script: |
             const filePath = 'result.json';
-            const script = require('./.github/workflows/scripts/json-file-to-job-output.js');
+            const script = require('./.github/workflows/scripts/levitate/json-file-to-job-output.js');
             await script({ core, filePath });
 
       # Check if label exists
@@ -268,7 +260,7 @@ jobs:
             [Read our guideline](https://github.com/grafana/grafana/blob/main/contribute/breaking-changes-guide/breaking-changes-guide.md)
 
             * Your pull request merge won't be blocked.
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
 
       # Remove comment from the PR (no more breaking changes)
       - name: Remove comment from PR
@@ -278,7 +270,7 @@ jobs:
           header: levitate-breaking-change-comment
           number: ${{ github.event.pull_request.number }}
           delete: true
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
 
       - name: Send Slack Message via Payload
         id: slack
@@ -323,7 +315,7 @@ jobs:
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
-          github-token: ${{ steps.generate_token.outputs.token }}
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             await github.rest.issues.addLabels({
               issue_number: process.env.PR_NUMBER,
@@ -339,7 +331,7 @@ jobs:
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
-          github-token: ${{ steps.generate_token.outputs.token }}
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             await github.rest.issues.removeLabel({
               issue_number: process.env.PR_NUMBER,
@@ -354,10 +346,12 @@ jobs:
       - name: Add "grafana/grafana-frontend-platform" as a reviewer
         if: steps.levitate-run.outputs.exit_code == 1
         uses: actions/github-script@v8
+        # FIXME: GATB doesn't seem to grant us necessary pull_requests write permissions
+        continue-on-error: true
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
-          github-token: ${{ steps.generate_token.outputs.token }}
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             await github.rest.pulls.requestReviewers({
               pull_number: process.env.PR_NUMBER,
@@ -371,10 +365,12 @@ jobs:
       - name: Remove "grafana/grafana-frontend-platform" from the list of reviewers
         if: steps.levitate-run.outputs.exit_code == 0
         uses: actions/github-script@v8
+        # FIXME: GATB doesn't seem to grant us necessary pull_requests write permissions
+        continue-on-error: true
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
-          github-token: ${{ steps.generate_token.outputs.token }}
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             await github.rest.pulls.removeRequestedReviewers({
               pull_number: process.env.PR_NUMBER,

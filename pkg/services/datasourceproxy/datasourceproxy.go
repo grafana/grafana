@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -35,7 +35,7 @@ func ProvideService(dataSourceCache datasources.CacheService, datasourceReqValid
 		DataSourceCache:            dataSourceCache,
 		DataSourceRequestValidator: datasourceReqValidator,
 		pluginStore:                pluginStore,
-		Cfg:                        cfg,
+		proxyCfg:                   pluginproxy.NewDataSourceProxySettings(cfg),
 		HTTPClientProvider:         httpClientProvider,
 		OAuthTokenService:          oauthTokenService,
 		DataSourcesService:         dsService,
@@ -49,7 +49,7 @@ type DataSourceProxyService struct {
 	DataSourceCache            datasources.CacheService
 	DataSourceRequestValidator validations.DataSourceRequestValidator
 	pluginStore                pluginstore.Store
-	Cfg                        *setting.Cfg
+	proxyCfg                   *pluginproxy.DataSourceProxySettings
 	HTTPClientProvider         httpclient.Provider
 	OAuthTokenService          *oauthtoken.Service
 	DataSourcesService         datasources.DataSourceService
@@ -111,7 +111,7 @@ func toAPIError(c *contextmodel.ReqContext, err error) {
 }
 
 func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqContext, ds *datasources.DataSource) {
-	err := p.DataSourceRequestValidator.Validate(ds.URL, ds.JsonData, c.Req)
+	err := p.DataSourceRequestValidator.Validate(ds.URL, ds.JsonDataMap(), c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return
@@ -124,11 +124,24 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 		return
 	}
 
-	proxyPath := getProxyPath(c)
-	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
-		p.OAuthTokenService, p.DataSourcesService, p.tracer, p.features)
+	loader, err := pluginproxy.NewDataSourceLoader(ds, p.DataSourcesService)
 	if err != nil {
-		var urlValidationError datasource.URLValidationError
+		c.JsonApiErr(http.StatusInternalServerError, "Failed creating data source loader", err)
+		return
+	}
+
+	hc := pluginproxy.HTTPContext{
+		Req:  c.Req,
+		Resp: c.Resp,
+
+		UserToken: c.UserToken,
+	}
+
+	proxyPath := getProxyPath(c)
+	proxy, err := pluginproxy.NewDataSourceProxy(loader, plugin.Routes, hc, proxyPath, p.proxyCfg,
+		p.HTTPClientProvider, p.OAuthTokenService, p.tracer, p.features)
+	if err != nil {
+		var urlValidationError validation.URLValidationError
 		if errors.As(err, &urlValidationError) {
 			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.URL), err)
 		} else {

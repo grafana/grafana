@@ -12,6 +12,8 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
@@ -19,6 +21,26 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
+
+// newSupportedResourceClients returns a MockResourceClients exposing dashboards + folders
+// as the supported set and resolving them to their GVR via ForKind, as the export pipeline
+// and quota counter expect.
+func newSupportedResourceClients(t *testing.T) *resources.MockResourceClients {
+	c := resources.NewMockResourceClients(t)
+	c.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
+	c.EXPECT().ForKind(mock.Anything, mock.Anything).RunAndReturn(
+		func(_ context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
+			switch gvk.GroupKind() {
+			case resources.DashboardKind.GroupKind():
+				return nil, resources.DashboardResource, nil
+			case resources.FolderKind.GroupKind():
+				return nil, resources.FolderResource, nil
+			default:
+				return nil, schema.GroupVersionResource{}, fmt.Errorf("unexpected kind %v", gvk)
+			}
+		}).Maybe()
+	return c
+}
 
 func TestExportWorker_IsSupported(t *testing.T) {
 	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
@@ -146,12 +168,8 @@ func TestExportWorker_ProcessFailedToCreateClients(t *testing.T) {
 	mockClients := resources.NewMockClientFactory(t)
 
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(nil, errors.New("failed to create clients"))
-	mockStageFn := NewMockWrapWithStageFn(t)
-	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
-		return fn(repo, true)
-	})
 
-	r := NewExportWorker(mockClients, nil, nil, nil, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true, "v1beta1")
+	r := NewExportWorker(mockClients, nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true, "v1beta1")
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
@@ -428,7 +446,10 @@ func TestExportWorker_ProcessWrapWithStageFnError(t *testing.T) {
 	mockStageFn := NewMockWrapWithStageFn(t)
 	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(errors.New("stage failed"))
 
-	r := NewExportWorker(nil, nil, nil, nil, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true, "v1beta1")
+	mockClients := resources.NewMockClientFactory(t)
+	mockClients.On("Clients", mock.Anything, "test-namespace").Return(resources.NewMockResourceClients(t), nil)
+
+	r := NewExportWorker(mockClients, nil, nil, nil, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true, "v1beta1")
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "stage failed")
 }
@@ -796,7 +817,8 @@ func TestCountSupportedResources(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := countSupportedResources(tt.stats)
+			got, err := countSupportedResources(context.Background(), tt.stats, newSupportedResourceClients(t))
+			require.NoError(t, err)
 			assert.Equal(t, tt.expected, got)
 		})
 	}
@@ -939,7 +961,9 @@ func TestCheckExportQuota(t *testing.T) {
 				lister = mockLister
 			}
 
-			err := checkExportQuota(context.Background(), cfg, lister)
+			mockClients := newSupportedResourceClients(t)
+
+			err := checkExportQuota(context.Background(), cfg, lister, mockClients)
 			if tt.expectError {
 				require.Error(t, err)
 				var quotaErr *quotas.QuotaExceededError
@@ -989,7 +1013,11 @@ func TestExportWorker_ProcessQuotaExceeded(t *testing.T) {
 		return errors.As(err, &quotaErr)
 	})).Return(v0alpha1.JobStatus{})
 
-	r := NewExportWorker(nil, nil, mockLister, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true, "v1beta1")
+	mockResourceClients := newSupportedResourceClients(t)
+	mockClients := resources.NewMockClientFactory(t)
+	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
+
+	r := NewExportWorker(mockClients, nil, mockLister, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true, "v1beta1")
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 
 	require.Error(t, err)
@@ -1035,7 +1063,7 @@ func TestExportWorker_ProcessQuotaNotExceeded(t *testing.T) {
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
 
 	mockClients := resources.NewMockClientFactory(t)
-	mockResourceClients := resources.NewMockResourceClients(t)
+	mockResourceClients := newSupportedResourceClients(t)
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
 
 	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)

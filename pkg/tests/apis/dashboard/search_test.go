@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -36,13 +37,8 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 	ctx := context.Background()
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction:    true,
-		DisableAnonymous:     true,
-		APIServerStorageType: "unified",
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
-			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
-		},
+		AppModeProduction: true,
+		DisableAnonymous:  true,
 	})
 	defer helper.Shutdown()
 
@@ -678,6 +674,11 @@ func setFolderPermissions(t *testing.T, helper *apis.K8sTestHelper, actingUser a
 	require.Equal(t, http.StatusOK, resp.Response.StatusCode, "Failed to set permissions for folder %s", folderUID)
 }
 
+// bleveInternalDocIDRegex matches the 8-byte internal segment doc ID that bleve
+// includes in explain messages (e.g. "in \x00\x00\x00\x00\x00\x00\x00\r)").
+// The value depends on segment layout and is not stable across runs.
+var bleveInternalDocIDRegex = regexp.MustCompile(` in \x00[^)]*\)`)
+
 func roundExplainValues(obj map[string]any, decimals uint32) {
 	for k, val := range obj {
 		switch k {
@@ -685,6 +686,11 @@ func roundExplainValues(obj map[string]any, decimals uint32) {
 			v, ok := val.(float64)
 			if ok {
 				obj[k] = roundTo(v, decimals)
+			}
+		case "message":
+			s, ok := val.(string)
+			if ok {
+				obj[k] = bleveInternalDocIDRegex.ReplaceAllString(s, " in <docID>)")
 			}
 		case "children":
 			children, ok := val.([]any)

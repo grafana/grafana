@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/blevesearch/bleve/v2"
 	"github.com/oklog/ulid/v2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -658,6 +658,164 @@ func TestBuildIndex_RebuildFallsBackToBuilder(t *testing.T) {
 	assert.Zero(t, store.downloadCalls.Load(), "older snapshot must not be downloaded on the rebuild path")
 }
 
+// TestBuildIndex_RebuildLeaderUploads verifies that a periodic rebuild leader
+// holds the remote build lock through the rebuild and uploads the fresh snapshot
+// immediately so waiting replicas can download it.
+func TestBuildIndex_RebuildLeaderUploads(t *testing.T) {
+	store := newHookableStore(t)
+	ns := newTestNsResource()
+	be, metrics := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		MaxIndexAge: 24 * time.Hour,
+	})
+
+	builderCalled := atomic.Int32{}
+	idx, err := be.BuildIndex(t.Context(), ns, 10, nil, "rebuild",
+		func(index resource.ResourceIndex) (int64, error) {
+			builderCalled.Add(1)
+			return 7, nil
+		},
+		nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+
+	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run on the leader path")
+	assert.Equal(t, int32(1), store.lockAcquireCalls.Load(), "leader must acquire the build lock")
+	assert.Equal(t, int32(1), store.uploadCalls.Load(), "leader must upload immediately")
+	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(), "leader must release the build lock")
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowRebuild, snapshotBuildOutcomeAcquiredLock)))
+}
+
+// TestBuildIndex_RebuildLeaderLockLostDuringBuild verifies that if the rebuild
+// leader's lock is lost during the build, the immediate upload is skipped but
+// the rebuild itself still completes — lock-lost is coordination, not fatal.
+func TestBuildIndex_RebuildLeaderLockLostDuringBuild(t *testing.T) {
+	store := newHookableStore(t)
+	ns := newTestNsResource()
+	be, metrics := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		MaxIndexAge: 24 * time.Hour,
+	})
+
+	builderCalled := atomic.Int32{}
+	idx, err := be.BuildIndex(t.Context(), ns, 10, nil, "rebuild",
+		func(resource.ResourceIndex) (int64, error) {
+			builderCalled.Add(1)
+			store.signalLockLost()
+			return 7, nil
+		},
+		nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+
+	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run on the leader path")
+	assert.Zero(t, store.uploadCalls.Load(), "leader must skip immediate upload after lock loss")
+	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(), "leader still releases the build lock")
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSkipLockLost)))
+	assert.Zero(t, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
+}
+
+func TestBuildIndex_RebuildWaiterDownloadsFreshSnapshot(t *testing.T) {
+	store := newHookableStore(t)
+	ns := newTestNsResource()
+	be, _ := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		MaxIndexAge: 24 * time.Hour,
+	})
+	withSnapshotBuildPollInterval(t, 5*time.Millisecond)
+
+	heldLock, err := store.inner.LockBuildIndex(t.Context(), ns, "11.5.0")
+	require.NoError(t, err)
+	defer func() { require.NoError(t, heldLock.Release()) }()
+
+	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
+	defer cancel()
+
+	builderCalled := atomic.Int32{}
+	type buildResult struct {
+		idx resource.ResourceIndex
+		err error
+	}
+	resultCh := make(chan buildResult, 1)
+	go func() {
+		idx, err := be.BuildIndex(ctx, ns, 10, nil, "rebuild",
+			func(resource.ResourceIndex) (int64, error) {
+				builderCalled.Add(1)
+				return 1, nil
+			},
+			nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+		resultCh <- buildResult{idx: idx, err: err}
+	}()
+
+	require.Eventually(t, func() bool {
+		return store.lockAcquireCalls.Load() > 0
+	}, time.Second, 5*time.Millisecond)
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
+
+	select {
+	case result := <-resultCh:
+		require.NoError(t, result.err)
+		require.NotNil(t, result.idx)
+	case <-ctx.Done():
+		t.Fatal("timed out waiting for rebuild waiter")
+	}
+
+	assert.Zero(t, builderCalled.Load(), "waiter must not rebuild when a fresh snapshot appears")
+	assert.Positive(t, store.downloadCalls.Load(), "waiter must download the fresh snapshot")
+}
+
+// TestBuildIndex_RebuildWaiterRecordsDownloadedAfterWait verifies that the
+// rebuild waiter records the downloaded_after_wait outcome under the rebuild
+// flow on the shared build-coordination metric.
+func TestBuildIndex_RebuildWaiterRecordsDownloadedAfterWait(t *testing.T) {
+	store := newHookableStore(t)
+	ns := newTestNsResource()
+	be, metrics := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		MaxIndexAge: 24 * time.Hour,
+	})
+	withSnapshotBuildPollInterval(t, 5*time.Millisecond)
+
+	heldLock, err := store.inner.LockBuildIndex(t.Context(), ns, "11.5.0")
+	require.NoError(t, err)
+	defer func() { require.NoError(t, heldLock.Release()) }()
+
+	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
+	defer cancel()
+
+	type buildResult struct {
+		idx resource.ResourceIndex
+		err error
+	}
+	resultCh := make(chan buildResult, 1)
+	go func() {
+		idx, err := be.BuildIndex(ctx, ns, 10, nil, "rebuild",
+			func(resource.ResourceIndex) (int64, error) { return 1, nil },
+			nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+		resultCh <- buildResult{idx: idx, err: err}
+	}()
+
+	require.Eventually(t, func() bool {
+		return store.lockAcquireCalls.Load() > 0
+	}, time.Second, 5*time.Millisecond)
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
+
+	select {
+	case result := <-resultCh:
+		require.NoError(t, result.err)
+		require.NotNil(t, result.idx)
+	case <-ctx.Done():
+		t.Fatal("timed out waiting for rebuild waiter")
+	}
+
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowRebuild, snapshotBuildOutcomeDownloadedAfterWait)))
+}
+
 // TestBuildIndex_RebuildSkipsFastPathWhenDisabled verifies that passing
 // maxFreshSnapshotAge=0 disables the rebuild-path fast path entirely (no
 // list/get calls against the store).
@@ -682,6 +840,7 @@ func TestBuildIndex_RebuildSkipsFastPathWhenDisabled(t *testing.T) {
 	require.NotNil(t, idx)
 	assert.Equal(t, int32(1), builderCalled.Load())
 	assert.Zero(t, store.downloadCalls.Load())
+	assert.Zero(t, store.lockAcquireCalls.Load())
 }
 
 // TestBuildIndex_SkipsDownloadBelowMinDocCount ensures ListIndexSnapshots is not called
@@ -745,6 +904,42 @@ func TestShouldUpload(t *testing.T) {
 		be.setUploadTracking(key, time.Now().Add(-2*time.Minute))
 
 		should, err := be.shouldUpload(key, idx, time.Now())
+		require.NoError(t, err)
+		assert.False(t, should)
+	})
+
+	t.Run("skips when mutation count is below threshold and snapshot is still fresh", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, MaxIndexAge: 8 * time.Hour, UploadInterval: time.Minute, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		now := time.Now()
+		be.setUploadTracking(key, now.Add(-2*time.Hour))
+
+		should, err := be.shouldUpload(key, idx, now)
+		require.NoError(t, err)
+		assert.False(t, should)
+	})
+
+	t.Run("uploads when mutation count is below threshold but snapshot is stale", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, MaxIndexAge: 8 * time.Hour, UploadInterval: time.Minute, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		now := time.Now()
+		be.setUploadTracking(key, now.Add(-5*time.Hour))
+
+		should, err := be.shouldUpload(key, idx, now)
+		require.NoError(t, err)
+		assert.True(t, should)
+	})
+
+	t.Run("skips stale snapshot when upload interval has not elapsed", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, MaxIndexAge: 2 * time.Hour, UploadInterval: 4 * time.Hour, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		now := time.Now()
+		be.setUploadTracking(key, now.Add(-2*time.Hour))
+
+		should, err := be.shouldUpload(key, idx, now)
 		require.NoError(t, err)
 		assert.False(t, should)
 	})
@@ -1213,16 +1408,26 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 	})
 }
 
-// withColdStartTimings overrides the package-level wait-loop timings for the
+// withSnapshotBuildPollInterval overrides snapshotBuildPollInterval for the
+// duration of the test. Restored via t.Cleanup.
+func withSnapshotBuildPollInterval(t *testing.T, poll time.Duration) {
+	t.Helper()
+	prev := snapshotBuildPollInterval
+	snapshotBuildPollInterval = poll
+	t.Cleanup(func() {
+		snapshotBuildPollInterval = prev
+	})
+}
+
+// withColdStartTimings overrides the cold-start wait-loop timings for the
 // duration of the test. Restored via t.Cleanup.
 func withColdStartTimings(t *testing.T, poll, total time.Duration) {
 	t.Helper()
-	prevPoll, prevTotal := coldStartPollInterval, coldStartTotalWait
-	coldStartPollInterval = poll
+	withSnapshotBuildPollInterval(t, poll)
+	prev := coldStartTotalWait
 	coldStartTotalWait = total
 	t.Cleanup(func() {
-		coldStartPollInterval = prevPoll
-		coldStartTotalWait = prevTotal
+		coldStartTotalWait = prev
 	})
 }
 
@@ -1268,7 +1473,7 @@ func (ct coldStartTest) coordinate(ctx context.Context, lastImportTime time.Time
 }
 
 func (ct coldStartTest) coldStartCounter(outcome string) float64 {
-	return testutil.ToFloat64(ct.metrics.IndexSnapshotColdStarts.WithLabelValues(outcome))
+	return testutil.ToFloat64(ct.metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, outcome))
 }
 
 func TestColdStart_BecameLeader(t *testing.T) {
@@ -1280,7 +1485,7 @@ func TestColdStart_BecameLeader(t *testing.T) {
 	assert.Equal(t, "leader", role)
 	require.NotNil(t, lock)
 	assert.Equal(t, int32(1), store.lockAcquireCalls.Load())
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeAcquiredLock))
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeAcquiredLock))
 
 	require.NoError(t, lock.Release())
 	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(),
@@ -1318,7 +1523,7 @@ func TestColdStart_WaitedForLeader(t *testing.T) {
 	// zero (no Release was invoked because no Acquire ever succeeded).
 	assert.Zero(t, store.lockReleaseCalls.Load(),
 		"waiter must not acquire the lock when a snapshot becomes available")
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeDownloadedAfterWait))
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeDownloadedAfterWait))
 }
 
 func TestColdStart_WaitTimeout(t *testing.T) {
@@ -1331,7 +1536,7 @@ func TestColdStart_WaitTimeout(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "build_alone", role)
 	assert.Nil(t, lock)
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeWaitTimedOut))
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeWaitTimedOut))
 	// We retried the lock at least a couple times before giving up.
 	assert.GreaterOrEqual(t, store.lockAcquireCalls.Load(), int32(2))
 }
@@ -1355,7 +1560,7 @@ func TestColdStart_AcquiresLockAfterLeaderRelease(t *testing.T) {
 	assert.Equal(t, "leader", role)
 	require.NotNil(t, lock)
 	t.Cleanup(func() { _ = lock.Release() })
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeAcquiredLock))
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeAcquiredLock))
 }
 
 func TestColdStart_LockBackendErrorBuildsAlone(t *testing.T) {
@@ -1367,7 +1572,7 @@ func TestColdStart_LockBackendErrorBuildsAlone(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "build_alone", role)
 	assert.Nil(t, lock)
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeLockError))
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeLockError))
 }
 
 // TestColdStart_LockBackendContextErrorPropagates verifies that a context
@@ -1383,9 +1588,9 @@ func TestColdStart_LockBackendContextErrorPropagates(t *testing.T) {
 
 	_, _, err := ct.coordinate(ctx, time.Time{})
 	require.ErrorIs(t, err, context.Canceled)
-	assert.Zero(t, ct.coldStartCounter(coldStartOutcomeLockError), "context cancel must not be recorded as lock_error")
-	assert.Zero(t, ct.coldStartCounter(coldStartOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeContextCanceled))
+	assert.Zero(t, ct.coldStartCounter(snapshotBuildOutcomeLockError), "context cancel must not be recorded as lock_error")
+	assert.Zero(t, ct.coldStartCounter(snapshotBuildOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeContextCanceled))
 }
 
 func TestColdStart_ContextCancelInWaitLoop(t *testing.T) {
@@ -1402,8 +1607,8 @@ func TestColdStart_ContextCancelInWaitLoop(t *testing.T) {
 
 	_, _, err := ct.coordinate(ctx, time.Time{})
 	require.ErrorIs(t, err, context.Canceled)
-	assert.Zero(t, ct.coldStartCounter(coldStartOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeContextCanceled))
+	assert.Zero(t, ct.coldStartCounter(snapshotBuildOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeContextCanceled))
 }
 
 // runBuildIndexColdStart wires a bleveBackend around store and calls
@@ -1466,7 +1671,7 @@ func TestBuildIndex_ColdStartLeaderUploads(t *testing.T) {
 	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run on the leader path")
 	assert.Equal(t, int32(1), store.uploadCalls.Load(), "leader must upload immediately")
 	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(), "leader must release the build lock")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeAcquiredLock)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, snapshotBuildOutcomeAcquiredLock)))
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
 }
 
@@ -1502,7 +1707,7 @@ func TestBuildIndex_ColdStartTimeoutBuildsAlone(t *testing.T) {
 
 	assert.Equal(t, int32(1), builderCalled.Load(), "build alone after timeout")
 	assert.Zero(t, store.uploadCalls.Load(), "no leader upload on timeout path")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeWaitTimedOut)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, snapshotBuildOutcomeWaitTimedOut)))
 }
 
 // TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero verifies that
@@ -1531,7 +1736,7 @@ func TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero(t *testing.T) {
 	assert.Equal(t, int32(1), store.lockAcquireCalls.Load(), "cold-start must attempt the lock even when MaxIndexAge=0")
 	assert.Equal(t, int32(1), store.uploadCalls.Load(), "leader must upload immediately")
 	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(), "leader must release the build lock")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeAcquiredLock)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, snapshotBuildOutcomeAcquiredLock)))
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
 }
 

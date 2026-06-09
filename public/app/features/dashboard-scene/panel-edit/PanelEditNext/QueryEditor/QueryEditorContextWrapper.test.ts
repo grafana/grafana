@@ -7,8 +7,9 @@ import { type DataQuery } from '@grafana/schema';
 import { mockCombinedRule } from 'app/features/alerting/unified/mocks';
 
 import { type PanelDataPaneNext } from '../PanelDataPaneNext';
+import { QueryEditorType } from '../constants';
 
-import { useActionsContext, useQueryEditorUIContext } from './QueryEditorContext';
+import { type StackedEditorItem, useActionsContext, useQueryEditorUIContext } from './QueryEditorContext';
 import { QueryEditorContextWrapper } from './QueryEditorContextWrapper';
 import { type AlertRule, type Transformation } from './types';
 
@@ -100,7 +101,11 @@ function makeMockDataPane(): PanelDataPaneNext {
 
 function renderWithWrapper(dataPane: PanelDataPaneNext) {
   return renderHook(() => useQueryEditorUIContext(), {
-    wrapper: ({ children }) => React.createElement(QueryEditorContextWrapper, { dataPane, children }),
+    wrapper: ({ children }) =>
+      React.createElement(QueryEditorContextWrapper, {
+        dataPane,
+        children,
+      }),
   });
 }
 
@@ -193,6 +198,91 @@ function renderWithBothContexts(dataPane: PanelDataPaneNext) {
   );
 }
 
+describe('QueryEditorContextWrapper - delete confirmation', () => {
+  beforeEach(() => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [],
+      loading: false,
+      isDashboardSaved: true,
+    });
+  });
+
+  it('starts with no action in the intermediate confirmation state', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+
+  it('records the most recently set action key and clears it on null', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:query:A'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:query:A');
+
+    act(() => result.current.setConfirmingDeleteActionKey('content_header:query:B'));
+    expect(result.current.confirmingDeleteActionKey).toBe('content_header:query:B');
+
+    act(() => result.current.setConfirmingDeleteActionKey(null));
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+
+  it('dismisses an open confirmation when the selected query changes', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:query:A'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:query:A');
+
+    act(() => result.current.setSelectedQuery({ refId: 'A' } as DataQuery));
+
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+
+  it('dismisses an open confirmation when the selected transformation changes', () => {
+    const { useTransformations } = require('./hooks/useTransformations');
+    const mockTransformation: Transformation = {
+      registryItem: undefined,
+      transformId: 'reduce-0',
+      transformConfig: { id: 'reduce', options: {} },
+    };
+    useTransformations.mockReturnValue([mockTransformation]);
+
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:transformation:reduce-0'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:transformation:reduce-0');
+
+    act(() => result.current.setSelectedTransformation(mockTransformation));
+
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+
+  it('dismisses an open confirmation when the selected alert changes', () => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [mockAlert],
+      loading: false,
+      isDashboardSaved: true,
+    });
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:query:A'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:query:A');
+
+    act(() => result.current.setSelectedAlert(mockAlert));
+
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+
+  it('dismisses an open confirmation when selection is cleared', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setConfirmingDeleteActionKey('sidebar_card:query:A'));
+    expect(result.current.confirmingDeleteActionKey).toBe('sidebar_card:query:A');
+
+    act(() => result.current.clearSelection());
+
+    expect(result.current.confirmingDeleteActionKey).toBeNull();
+  });
+});
+
 describe('QueryEditorContextWrapper - delete actions', () => {
   beforeEach(() => {
     mockUseAlertRulesForPanel.mockReturnValue({
@@ -232,5 +322,124 @@ describe('QueryEditorContextWrapper - delete actions', () => {
     act(() => result.current.actions.deleteTransformation('reduce-0'));
 
     expect(result.current.ui.selectedTransformationIds).toEqual([]);
+  });
+});
+
+type PickerResult = Pick<
+  ReturnType<typeof useQueryEditorUIContext>,
+  'setPendingExpression' | 'setPendingTransformation' | 'setPendingSavedQuery'
+>;
+
+describe('QueryEditorContextWrapper - stacked mode', () => {
+  beforeEach(() => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [],
+      loading: false,
+      isDashboardSaved: true,
+    });
+  });
+
+  it('selects a clicked query as a single selection in stacked mode (scrolling is the renderer’s job)', () => {
+    const dataPane = makeMockDataPane();
+    const { result } = renderWithWrapper(dataPane);
+
+    act(() => result.current.stackedMode.enter());
+    act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery));
+
+    expect(result.current.selectedQueryRefIds).toEqual(['B']);
+  });
+
+  it('selects a clicked transformation as a single selection in stacked mode', () => {
+    const { useTransformations } = require('./hooks/useTransformations');
+    const mockTransformation: Transformation = {
+      registryItem: undefined,
+      transformId: 'reduce-0',
+      transformConfig: { id: 'reduce', options: {} },
+    };
+    useTransformations.mockReturnValue([mockTransformation]);
+
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.stackedMode.enter());
+    act(() => result.current.toggleTransformationSelection(mockTransformation));
+
+    expect(result.current.selectedTransformationIds).toEqual(['reduce-0']);
+  });
+
+  it('syncStackedActiveItem mirrors observer-driven activations into the card selection', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    const queryItem: StackedEditorItem = { type: QueryEditorType.Query, id: 'A' };
+    act(() => result.current.stackedMode.syncActiveItem(queryItem));
+    expect(result.current.selectedQueryRefIds).toEqual(['A']);
+    expect(result.current.selectedTransformationIds).toEqual([]);
+
+    const transformItem: StackedEditorItem = { type: QueryEditorType.Transformation, id: 'reduce-0' };
+    act(() => result.current.stackedMode.syncActiveItem(transformItem));
+    expect(result.current.selectedQueryRefIds).toEqual([]);
+    expect(result.current.selectedTransformationIds).toEqual(['reduce-0']);
+  });
+
+  it('exits stacked mode when an alert is selected', () => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [mockAlert],
+      loading: false,
+      isDashboardSaved: true,
+    });
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.stackedMode.enter());
+    expect(result.current.stackedMode.enabled).toBe(true);
+
+    act(() => result.current.setSelectedAlert(mockAlert));
+
+    expect(result.current.stackedMode.enabled).toBe(false);
+  });
+
+  it('entering stacked mode collapses existing multi-selection to the primary item', () => {
+    const dataPane = makeMockDataPane();
+    const { result } = renderWithWrapper(dataPane);
+
+    act(() => result.current.toggleQuerySelection({ refId: 'A' } as DataQuery));
+    act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
+    act(() => result.current.setMultiSelectMode(true));
+
+    expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
+    expect(result.current.multiSelectMode).toBe(true);
+
+    act(() => result.current.stackedMode.enter());
+
+    expect(result.current.multiSelectMode).toBe(false);
+    expect(result.current.selectedQueryRefIds).toEqual(['B']);
+  });
+
+  it('entering multi-select mode exits stacked mode', () => {
+    const dataPane = makeMockDataPane();
+    const { result } = renderWithWrapper(dataPane);
+
+    act(() => result.current.stackedMode.enter());
+    expect(result.current.stackedMode.enabled).toBe(true);
+
+    act(() => result.current.setMultiSelectMode(true));
+
+    expect(result.current.multiSelectMode).toBe(true);
+    expect(result.current.stackedMode.enabled).toBe(false);
+  });
+
+  // Opening a picker temporarily swaps to the single pane (expression/transformation) or a
+  // drawer (saved query); stacked mode must survive so the stack resumes once it resolves.
+  it.each([
+    { kind: 'expression', open: (r: PickerResult) => r.setPendingExpression({ insertAfter: 'A' }) },
+    { kind: 'transformation', open: (r: PickerResult) => r.setPendingTransformation({ insertAfter: 'A' }) },
+    { kind: 'saved query', open: (r: PickerResult) => r.setPendingSavedQuery({ insertAfter: 'A' }) },
+  ])('keeps stacked mode on when the $kind picker opens', ({ open }) => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.stackedMode.enter());
+    expect(result.current.stackedMode.enabled).toBe(true);
+
+    act(() => open(result.current));
+
+    expect(result.current.stackedMode.enabled).toBe(true);
   });
 });

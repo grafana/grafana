@@ -50,6 +50,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
+      width: '100%',
     }),
   };
 }

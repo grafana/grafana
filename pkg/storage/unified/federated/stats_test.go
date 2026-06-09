@@ -83,7 +83,7 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 
 		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: "default",
-			Folder:    folder1UID,
+			Folder:    []string{folder1UID},
 		})
 		require.NoError(t, err)
 
@@ -106,7 +106,35 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 
 		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: "default",
-			Folder:    folder2UID,
+			Folder:    []string{folder2UID},
+		})
+		require.NoError(t, err)
+
+		jj, _ := json.MarshalIndent(stats.Stats, "", "  ")
+		require.JSONEq(t, `[
+			{
+				"group": "sql-fallback",
+				"resource": "alertrules",
+				"count": 1
+			},
+			{
+				"group": "sql-fallback",
+				"resource": "library_elements"
+			}
+		]`, string(jj))
+	})
+
+	// Folder1 has no rules directly but folder2 (its child) does. With
+	// the descendant subtree pre-expanded by the caller, the legacy count
+	// must include the child folder's rule — same recursive semantics as
+	// the unified path.
+	t.Run("GetStatsForFolder1Recursive", func(t *testing.T) {
+		ctx := context.Background()
+		ctx = request.WithNamespace(ctx, "default")
+
+		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+			Namespace: "default",
+			Folder:    []string{folder1UID, folder2UID},
 		})
 		require.NoError(t, err)
 

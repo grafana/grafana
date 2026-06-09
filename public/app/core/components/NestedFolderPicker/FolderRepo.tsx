@@ -3,12 +3,13 @@ import { memo } from 'react';
 import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 import {
   RepoViewStatus,
   useGetResourceRepositoryView,
 } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
-import { getManagedByRepositoryTooltip, getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { type FolderDTO } from 'app/types/folders';
 
@@ -36,16 +37,8 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   const isOrphaned = status === RepoViewStatus.Orphaned;
 
   if (isOrphaned) {
-    return (
-      <Badge
-        color="orange"
-        icon="exclamation-triangle"
-        tooltip={t('folder-repo.repository-not-found-tooltip', 'Repository not found')}
-      />
-    );
+    return <ManagedBadge managerKind={ManagerKind.Repo} isOrphaned />;
   }
-
-  const repoTooltipText = getManagedByRepositoryTooltip(repository?.title || repository?.name);
 
   return (
     // badge with text and icon only has different height, we will need to adjust the layout using stretch
@@ -57,7 +50,7 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
           tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })}
         />
       )}
-      <Badge color="purple" icon="exchange-alt" tooltip={repoTooltipText} />
+      <ManagedBadge managerKind={ManagerKind.Repo} name={repository?.title || repository?.name} />
     </Stack>
   );
 });

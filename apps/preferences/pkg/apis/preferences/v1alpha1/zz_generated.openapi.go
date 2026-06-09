@@ -164,6 +164,13 @@ func schema_pkg_apis_preferences_v1alpha1_PreferencesSpec(ref common.ReferenceCa
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"homeURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Explicit home URL (NOTE: this can only be modified in the system settings)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"homeDashboardUID": {
 						SchemaProps: spec.SchemaProps{
 							Description: "UID for the home dashboard",

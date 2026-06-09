@@ -174,6 +174,17 @@ const (
 
 	// PluginGrafanaOriginLabel is a label that indicates that the alert rule originated from a plugin.
 	PluginGrafanaOriginLabel = "__grafana_origin"
+	// PluginGrafanaOriginUIDLabel is an optional label carrying the UID of the resource within the
+	// origin plugin that owns this rule. When present it is appended to the X-Rule-Origin header
+	// as "<origin>|<uid>". Plugins that cannot set this label may use a plugin-specific fallback
+	// (see PluginGrafanaSLOUUIDLabel).
+	PluginGrafanaOriginUIDLabel = "__grafana_origin_uid"
+
+	// PluginGrafanaSLOOrigin is the __grafana_origin value set by the Grafana SLO plugin.
+	PluginGrafanaSLOOrigin = "plugin/grafana-slo-app"
+	// PluginGrafanaSLOUUIDLabel is the SLO-specific label used as a fallback source for the
+	// resource UID when PluginGrafanaOriginUIDLabel is absent.
+	PluginGrafanaSLOUUIDLabel = "grafana_slo_uuid"
 )
 
 const (
@@ -581,6 +592,17 @@ func (alertRule *AlertRule) GetEvalCondition() Condition {
 		"Uid":     alertRule.UID,
 		"Type":    string(alertRule.Type()),
 		"Version": strconv.FormatInt(alertRule.Version, 10),
+	}
+	if origin := alertRule.Labels[PluginGrafanaOriginLabel]; origin != "" {
+		uid := alertRule.Labels[PluginGrafanaOriginUIDLabel]
+		if uid == "" && origin == PluginGrafanaSLOOrigin {
+			uid = alertRule.Labels[PluginGrafanaSLOUUIDLabel]
+		}
+		if uid != "" {
+			meta["Origin"] = origin + "|" + uid
+		} else {
+			meta["Origin"] = origin
+		}
 	}
 	if alertRule.Type() == RuleTypeRecording {
 		return Condition{
