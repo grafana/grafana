@@ -137,6 +137,12 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				logger.Error("Querying SelectSeries()", "err", err, "function", logEntrypoint())
 				return err
 			}
+			// Make profile exemplars clickable: each exemplar links to its individual profile's flame graph.
+			for _, f := range frames {
+				if f.Name == "exemplar" {
+					exemplar.AddProfileDataLink(f, pCtx.DataSourceInstanceSettings.UID, pCtx.DataSourceInstanceSettings.Name, labelSelector, profileTypeId)
+				}
+			}
 			response.Frames = append(response.Frames, frames...)
 
 			return nil

@@ -109,3 +109,36 @@ func CreateExemplarFrame(labels map[string]string, exemplars []*Exemplar, exempl
 	}
 	return frame
 }
+
+// AddProfileDataLink attaches an internal data link to the "Id" field of a profile exemplar frame so that
+// clicking an exemplar in Explore opens the individual profile as a flame graph in a split pane. The clicked
+// exemplar's profile id is resolved at navigation time via the ${__value.raw} interpolation variable.
+//
+// The link only manifests in consumers that render exemplars with Grafana's standard timeseries panel (Explore,
+// dashboards). The Profiles Drilldown app builds its own exemplar interactions and does not read these links.
+func AddProfileDataLink(frame *data.Frame, datasourceUID, datasourceName, labelSelector, profileTypeID string) {
+	idField, _ := frame.FieldByName("Id")
+	if idField == nil {
+		return
+	}
+	if idField.Config == nil {
+		idField.Config = &data.FieldConfig{}
+	}
+	idField.Config.Links = append(idField.Config.Links, data.DataLink{
+		Title: "View profile",
+		Internal: &data.InternalDataLink{
+			DatasourceUID:  datasourceUID,
+			DatasourceName: datasourceName,
+			Query: map[string]any{
+				"queryType":         "profile",
+				"labelSelector":     labelSelector,
+				"profileTypeId":     profileTypeID,
+				"profileIdSelector": []string{"${__value.raw}"},
+				"groupBy":           []string{},
+				"heatmapType":       "individual",
+				"includeExemplars":  false,
+				"includeHeatmap":    false,
+			},
+		},
+	})
+}
