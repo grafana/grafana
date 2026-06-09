@@ -108,6 +108,7 @@ export const ImportDashboardFormV2 = ({
             <Input
               disabled
               {...register('k8s.name', {
+                setValueAs: (v) => (typeof v === 'string' ? v.trim() : v),
                 validate: async (v) => (!v ? true : await validateUid(String(v))),
               })}
               addonAfter={
@@ -121,6 +122,7 @@ export const ImportDashboardFormV2 = ({
           ) : (
             <Input
               {...register('k8s.name', {
+                setValueAs: (v) => (typeof v === 'string' ? v.trim() : v),
                 validate: async (v) => (!v ? true : await validateUid(String(v))),
               })}
             />

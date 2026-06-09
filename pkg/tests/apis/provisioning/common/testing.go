@@ -2764,14 +2764,20 @@ func (h *GitTestHelper) CleanupAllResources(t *testing.T, ctx context.Context) {
 // CreateGitRepo creates a git repository with sync target "instance" and registers
 // it with Grafana provisioning. workflows is optional; defaults to ["write"].
 func (h *GitTestHelper) CreateGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
-	return h.createGitRepo(t, repoName, "instance", initialFiles, workflows...)
+	return h.createGitRepo(t, repoName, "instance", createRepoOpts{
+		initialFiles: initialFiles,
+		workflows:    workflows,
+	})
 }
 
 // CreateFolderTargetGitRepo creates a git repository with sync target "folder" and
 // registers it with Grafana provisioning. Unlike "instance" repos, multiple "folder"
 // repos can coexist on the same Grafana server. workflows is optional; defaults to ["write"].
 func (h *GitTestHelper) CreateFolderTargetGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
-	return h.createGitRepo(t, repoName, "folder", initialFiles, workflows...)
+	return h.createGitRepo(t, repoName, "folder", createRepoOpts{
+		initialFiles: initialFiles,
+		workflows:    workflows,
+	})
 }
 
 // CreateSyncEnabledGitRepo creates a git repository with sync target "instance"
@@ -2781,9 +2787,14 @@ func (h *GitTestHelper) CreateFolderTargetGitRepo(t *testing.T, repoName string,
 // inside handleManagedResourceRouting with KeyNotFound.
 // workflows is optional; defaults to ["write"].
 func (h *GitTestHelper) CreateSyncEnabledGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
-	return h.createRepo(t, repoName, "git", "instance", true, initialFiles, map[string]any{
-		"SyncEnabled": true,
-	}, workflows...)
+	return h.createRepo(t, repoName, "git", "instance", createRepoOpts{
+		waitForReady: true,
+		initialFiles: initialFiles,
+		templateVariables: map[string]any{
+			"SyncEnabled": true,
+		},
+		workflows: workflows,
+	})
 }
 
 // CreateGithubRepo creates a github-type repository backed by the gittest server.
@@ -2797,25 +2808,38 @@ func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialF
 	if webhookBaseURL != "" {
 		extraValues["WebhookBaseURL"] = webhookBaseURL
 	}
-	return h.createRepo(t, repoName, "github", "instance", false, initialFiles, extraValues, workflows...)
+	return h.createRepo(t, repoName, "github", "instance", createRepoOpts{
+		waitForReady:      false,
+		initialFiles:      initialFiles,
+		templateVariables: extraValues,
+		workflows:         workflows,
+	})
 }
 
-func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
-	return h.createRepo(t, repoName, "git", syncTarget, true, initialFiles, nil, workflows...)
+func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget string, opts createRepoOpts,
+) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	opts.waitForReady = true
+	return h.createRepo(t, repoName, "git", syncTarget, opts)
 }
 
 // createRepo is the shared implementation for creating git-backed repositories.
 // repoType is "git" or "github", which determines the template used.
 // waitForReady controls whether to wait for the repo to become healthy.
+
+type createRepoOpts struct {
+	waitForReady      bool
+	exportRepo        bool
+	initialFiles      map[string][]byte
+	templateVariables map[string]any
+	workflows         []string
+}
+
 func (h *GitTestHelper) createRepo(
 	t *testing.T,
 	repoName string,
 	repoType string,
 	syncTarget string,
-	waitForReady bool,
-	initialFiles map[string][]byte,
-	extraTemplateValues map[string]any,
-	workflows ...string,
+	opts createRepoOpts,
 ) (*gittest.RemoteRepository, *gittest.LocalRepo) {
 	t.Helper()
 
@@ -2826,6 +2850,10 @@ func (h *GitTestHelper) createRepo(
 
 	remote, err := h.gitServer.CreateRepo(ctx, repoName, user)
 	require.NoError(t, err, "failed to create remote repository")
+
+	if opts.exportRepo {
+		h.exportRepoInfos[repoName] = &exportRepoInfo{user: user, remote: remote}
+	}
 
 	local, err := gittest.NewLocalRepo(ctx)
 	require.NoError(t, err, "failed to create local repository")
@@ -2838,12 +2866,12 @@ func (h *GitTestHelper) createRepo(
 	_, err = local.InitWithRemote(user, remote)
 	require.NoError(t, err, "failed to initialize local repo with remote")
 
-	for filePath, content := range initialFiles {
+	for filePath, content := range opts.initialFiles {
 		err = local.CreateFile(filePath, string(content))
 		require.NoError(t, err, "failed to create file %s", filePath)
 	}
 
-	if len(initialFiles) > 0 {
+	if len(opts.initialFiles) > 0 {
 		_, err = local.Git("add", ".")
 		require.NoError(t, err, "failed to add files")
 		_, err = local.Git("commit", "-m", "Add initial files")
@@ -2852,8 +2880,9 @@ func (h *GitTestHelper) createRepo(
 		require.NoError(t, err, "failed to push files")
 	}
 
-	if len(workflows) == 0 {
-		workflows = []string{"write"}
+	workflows := []string{"write"}
+	if len(opts.workflows) > 0 {
+		workflows = opts.workflows
 	}
 	workflowsJSON, err := json.Marshal(workflows)
 	require.NoError(t, err)
@@ -2868,7 +2897,7 @@ func (h *GitTestHelper) createRepo(
 		"Token":         user.Password,
 		"WorkflowsJSON": string(workflowsJSON),
 	}
-	for k, v := range extraTemplateValues {
+	for k, v := range opts.templateVariables {
 		templateValues[k] = v
 	}
 
@@ -2878,7 +2907,7 @@ func (h *GitTestHelper) createRepo(
 	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
 	require.NoError(t, err, "failed to create repository")
 
-	if waitForReady {
+	if opts.waitForReady {
 		h.waitForReadyRepository(t, repoName)
 	}
 
@@ -3056,45 +3085,14 @@ func RequireJobWarningContains(t *testing.T, jobObj *provisioning.Job, substr st
 
 // CreateExportGitRepo creates a git repository configured for export (push)
 // workflows: sync disabled, target "instance", workflow "write".
-func (h *GitTestHelper) CreateExportGitRepo(t *testing.T, repoName string) {
+func (h *GitTestHelper) CreateExportGitRepo(t *testing.T, repoName string, initFiles map[string][]byte) (*gittest.RemoteRepository, *gittest.LocalRepo) {
 	t.Helper()
 
-	ctx := context.Background()
-
-	user, err := h.gitServer.CreateUser(ctx)
-	require.NoError(t, err, "failed to create git user")
-
-	remote, err := h.gitServer.CreateRepo(ctx, repoName, user)
-	require.NoError(t, err, "failed to create remote git repository")
-
-	h.exportRepoInfos[repoName] = &exportRepoInfo{user: user, remote: remote}
-
-	local, err := gittest.NewLocalRepo(ctx)
-	require.NoError(t, err, "failed to create local git repository")
-	t.Cleanup(func() {
-		if err := local.Cleanup(); err != nil {
-			t.Logf("failed to cleanup local repo: %v", err)
-		}
+	return h.createGitRepo(t, repoName, "instance", createRepoOpts{
+		waitForReady: true,
+		initialFiles: initFiles,
+		exportRepo:   true,
 	})
-
-	_, err = local.InitWithRemote(user, remote)
-	require.NoError(t, err, "failed to initialize local repo with remote")
-
-	repoObj := h.RenderObject(t, TestdataPath("git.json.tmpl"), map[string]any{
-		"Name":          repoName,
-		"Title":         repoName,
-		"URL":           remote.URL,
-		"Branch":        "main",
-		"TokenUser":     user.Username,
-		"SyncTarget":    "instance",
-		"Token":         user.Password,
-		"WorkflowsJSON": `["write"]`,
-	})
-
-	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
-	require.NoError(t, err, "failed to register export git repository %q with Grafana", repoName)
-
-	h.waitForReadyRepository(t, repoName)
 }
 
 func (h *GitTestHelper) cloneExportRepo(t *testing.T, ctx context.Context, repoName string) (string, func()) {
@@ -3266,4 +3264,13 @@ func RetryOnConflict(t *testing.T, fn func() error) error {
 		}
 	}, WaitTimeoutDefault, 200*time.Millisecond, "operation failed with persistent 409 Conflict")
 	return lastErr
+}
+
+func LatestCommitSubject(t *testing.T, local *gittest.LocalRepo, ref string) string {
+	t.Helper()
+	_, err := local.Git("fetch", "origin", ref)
+	require.NoError(t, err, fmt.Sprintf("git fetch origin %s should succeed", ref))
+	out, err := local.Git("log", "-1", "--format=%s", fmt.Sprintf("origin/%s", ref))
+	require.NoError(t, err, "git log should succeed")
+	return strings.TrimSpace(out)
 }
