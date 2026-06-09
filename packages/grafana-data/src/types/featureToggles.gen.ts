@@ -1406,11 +1406,6 @@ export interface FeatureToggles {
   */
   queryEditorNext?: boolean;
   /**
-  * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
-  * @default false
-  */
-  queryEditorNextMultiSelect?: boolean;
-  /**
   * Enables team APIs in the app platform
   * @default false
   */
