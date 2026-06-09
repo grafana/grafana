@@ -150,7 +150,7 @@ func TestIntegrationProvisioning_SyncPlaylist(t *testing.T) {
 // Update (PUT) and move (POST with originalPath) are also exercised, but they currently fail
 // for playlists: both re-provision the resource as an update, and the playlist apiserver
 // rejects an update without metadata.resourceVersion (which a repository file does not
-// carry). This is a playlist round-trip limitation tracked under #1166; the assertions below
+// carry). This is a playlist round-trip limitation tracked under grafana/git-ui-sync-project#1199; the assertions below
 // pin the current behavior so this test will flag it if the limitation is ever lifted.
 func TestIntegrationProvisioning_PlaylistFilesEndpoint(t *testing.T) {
 	helper := sharedHelper(t)
@@ -185,7 +185,7 @@ func TestIntegrationProvisioning_PlaylistFilesEndpoint(t *testing.T) {
 		Body(common.ResourceToJSON(t, common.NewPlaylist(name, "Files Playlist Updated"))).
 		SetHeader("Content-Type", "application/json").
 		Do(ctx).Error()
-	require.ErrorContains(t, updateErr, "resourceVersion", "playlist update via files PUT is a known #1166 limitation")
+	require.ErrorContains(t, updateErr, "resourceVersion", "playlist update via files PUT is a known limitation (git-ui-sync-project#1199)")
 
 	// Move (known limitation): the move re-provisions as an update and is rejected (HTTP 422).
 	moveResp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
@@ -193,7 +193,7 @@ func TestIntegrationProvisioning_PlaylistFilesEndpoint(t *testing.T) {
 		OriginalPath: path,
 		Message:      "move playlist",
 	})
-	require.Equal(t, 422, moveResp.StatusCode, "playlist move via files endpoint is a known #1166 limitation")
+	require.Equal(t, 422, moveResp.StatusCode, "playlist move via files endpoint is a known limitation (git-ui-sync-project#1199)")
 	require.NoError(t, moveResp.Body.Close())
 
 	// Delete: removes the file and deprovisions the playlist.
@@ -257,7 +257,7 @@ func TestIntegrationProvisioning_PlaylistDeleteJob(t *testing.T) {
 //
 // Note: the move job moves the files and then runs a full sync to reconcile. Updating the
 // moved playlist's source path is a no-op for now (the apiserver rejects the RV-less update,
-// reported as a job warning) — the playlist round-trip limitation tracked under #1166. The
+// reported as a job warning) — the playlist round-trip limitation tracked under grafana/git-ui-sync-project#1199. The
 // assertions therefore cover the repository file moves and the continued existence of the
 // playlists, not the refreshed source-path annotation.
 func TestIntegrationProvisioning_PlaylistMoveJob(t *testing.T) {
@@ -292,7 +292,7 @@ func TestIntegrationProvisioning_PlaylistMoveJob(t *testing.T) {
 	for i := range paths {
 		require.NotContains(t, repoFiles, paths[i], "%s should no longer be at its original path", paths[i])
 		require.Contains(t, repoFiles, "archived/"+paths[i], "%s should be moved under archived/", paths[i])
-		// The playlist resource survives the move (its source path is not refreshed; see #1166).
+		// The playlist resource survives the move (its source path is not refreshed; see git-ui-sync-project#1199).
 		_, err := playlists.Resource.Get(ctx, names[i], metav1.GetOptions{})
 		require.NoError(t, err, "%s should still exist in Grafana after the move job", names[i])
 	}
