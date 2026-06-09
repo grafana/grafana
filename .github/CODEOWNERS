@@ -932,7 +932,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/CorsSharedWorker.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/CorsWorker.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/dag* @grafana/grafana-frontend-platform
-/public/app/core/utils/docsLinks.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/errors* @grafana/grafana-frontend-platform
 /public/app/core/utils/explore* @grafana/datapro
 /public/app/core/utils/factors.ts @grafana/dashboards-squad
@@ -975,7 +974,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/scopes/ @grafana/grafana-operator-experience-squad
 /public/app/features/datasources/ @grafana/grafana-catalog
 /public/app/features/dimensions/ @grafana/dataviz-squad
-/public/app/features/dataframe-import/ @grafana/dataviz-squad
 /public/app/features/explore/ @grafana/datapro
 /public/app/features/expressions/ @grafana/datapro
 /public/app/features/folders/ @grafana/grafana-frontend-navigation
