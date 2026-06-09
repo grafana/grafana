@@ -204,6 +204,9 @@ func (r *stagedGitRepository) Move(ctx context.Context, oldPath, newPath, ref, m
 }
 
 func (r *stagedGitRepository) Push(ctx context.Context) error {
+	ctx, logger := r.withGitContext(ctx, "")
+	logger.Info("outbound git operation", "operation", "push")
+
 	if r.opts.Timeout > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, r.opts.Timeout)
