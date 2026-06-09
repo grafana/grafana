@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 	"testing"
 
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -200,5 +202,54 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 		require.NoError(t, err, "IsHealthy should pass per-service auth")
 		require.Equal(t, resourcepb.HealthCheckResponse_SERVING, resp.Status)
 		require.Greater(t, authCalled.Load(), int32(0))
+	})
+}
+
+func TestNewGrpcAuthenticator(t *testing.T) {
+	tracer := noop.NewTracerProvider().Tracer("")
+
+	// Mint a token using the same in-proc exchanger that clients use for local
+	// multi-process dev. This is what NewAuthnGrpcClientInterceptor sends when
+	// TokenExchangeURL is empty.
+	tokenResp, err := resource.ProvideInProcExchanger().Exchange(context.Background(), authnlib.TokenExchangeRequest{
+		Namespace: "*",
+		Audiences: []string{"resourceStore"},
+	})
+	require.NoError(t, err)
+
+	// authlib reads the access token from this metadata key on inbound calls.
+	ctxWithToken := metadata.NewIncomingContext(
+		context.Background(),
+		metadata.Pairs("X-Access-Token", tokenResp.Token),
+	)
+
+	t.Run("unsafe=true in dev accepts in-proc token", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.Env = setting.Dev
+		cfg.Raw.Section("grpc_server_authentication").Key("unsafe").SetValue("true")
+
+		authn := newGrpcAuthenticator(cfg, tracer)
+		gotCtx, err := authn(ctxWithToken)
+		require.NoError(t, err)
+		require.NotNil(t, gotCtx)
+	})
+
+	t.Run("unsafe=true outside dev does not enable unsafe authenticator", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.Env = "production"
+		cfg.Raw.Section("grpc_server_authentication").Key("unsafe").SetValue("true")
+
+		authn := newGrpcAuthenticator(cfg, tracer)
+		_, err := authn(ctxWithToken)
+		require.Error(t, err, "unsafe must not bypass real auth outside dev mode")
+	})
+
+	t.Run("unsafe=false rejects token with no signing keys configured", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.Env = setting.Dev
+
+		authn := newGrpcAuthenticator(cfg, tracer)
+		_, err := authn(ctxWithToken)
+		require.Error(t, err)
 	})
 }

@@ -31,6 +31,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,provisioningFolderMetadata,GA,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-22,provisioningExport,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-22,provisioning.readmes,experimental,@grafana/grafana-app-platform-squad,false,false,true
+2026-06-09,provisioning.gitConventions,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2023-12-06,grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2023-07-21,awsAsyncQueryCaching,GA,@grafana/data-sources-plugins,false,false,false
 2023-07-26,configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
@@ -328,7 +329,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,flameGraphWithCallTree,preview,@grafana/observability-traces-and-profiling,false,false,true
 2026-05-22,advisorDatasourceIntegration,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-22,inlineLogDetailsNoScrolls,experimental,@grafana/observability-logs,false,false,true
-2026-05-22,colorblindThemes,GA,@grafana/grafana-frontend-platform,false,true,false
 2026-05-22,yAxisTickControl,experimental,@grafana/dataviz-squad,false,false,true
 2026-05-22,logsTablePanelNG,experimental,@grafana/observability-logs,false,false,false
 2026-05-22,plugins.useMTPluginSettings,experimental,@grafana/grafana-frontend-platform,false,false,true
