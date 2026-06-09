@@ -206,7 +206,7 @@ High availability
 
 ## Data privacy and security
 
-Snapshots created on your self-managed instance are encrypted on the filesystem using a key provided by the Grafana Migration Service (GMS). The snapshot is then securely transferred to Grafana Labs cloud infrastructure, where GMS decrypts the data for processing.
+The migration assistant encrypts snapshots on the filesystem of your self-managed instance. The migration assistant transfers the snapshot to the Grafana Labs cloud infrastructure and decrypts the data for processing.
 
 ## Resource migration details
 
