@@ -10051,21 +10051,6 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
-    "helpFlagResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "properties": {
-          "helpFlags1": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
-      }
-    },
     "importDashboardResponse": {
       "description": "",
       "schema": {
