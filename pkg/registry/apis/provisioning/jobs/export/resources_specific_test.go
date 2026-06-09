@@ -72,6 +72,17 @@ func dashboardGVK() schema.GroupVersionKind {
 	}
 }
 
+// supportedDashboardAndFolder mirrors the default provisioning configuration:
+// Folder and Dashboard are supported. Selective export must resolve Dashboard
+// refs against this set and reject Folder refs (folders are exported via
+// ExportFolders, not as individual resources).
+func supportedDashboardAndFolder() []resources.SupportedResource {
+	return []resources.SupportedResource{
+		{GroupKind: resources.FolderKind.GroupKind()},
+		{GroupKind: resources.DashboardKind.GroupKind()},
+	}
+}
+
 func TestExportSpecificResources_Success(t *testing.T) {
 	dashClient := &mockGetByName{items: map[string]*unstructured.Unstructured{
 		"dash-1": dashboardObject("dash-1"),
@@ -79,6 +90,7 @@ func TestExportSpecificResources_Success(t *testing.T) {
 	}}
 
 	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("SupportedResources").Return(supportedDashboardAndFolder())
 	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
 		Return(dashClient, resources.DashboardResource, nil)
 
@@ -120,6 +132,7 @@ func TestExportSpecificResources_ManagedDashboardError(t *testing.T) {
 	}}
 
 	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("SupportedResources").Return(supportedDashboardAndFolder())
 	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
 		Return(dashClient, resources.DashboardResource, nil)
 
@@ -152,6 +165,7 @@ func TestExportSpecificResources_NotFoundRecordsError(t *testing.T) {
 	dashClient := &mockGetByName{items: map[string]*unstructured.Unstructured{}}
 
 	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("SupportedResources").Return(supportedDashboardAndFolder())
 	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
 		Return(dashClient, resources.DashboardResource, nil)
 
@@ -185,6 +199,7 @@ func TestExportSpecificResources_GetErrorRecordsError(t *testing.T) {
 	}
 
 	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("SupportedResources").Return(supportedDashboardAndFolder())
 	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
 		Return(dashClient, resources.DashboardResource, nil)
 
@@ -211,6 +226,7 @@ func TestExportSpecificResources_NewUIDsSetsRandomName(t *testing.T) {
 	}}
 
 	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("SupportedResources").Return(supportedDashboardAndFolder())
 	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
 		Return(dashClient, resources.DashboardResource, nil)
 
@@ -236,23 +252,23 @@ func TestExportSpecificResources_NewUIDsSetsRandomName(t *testing.T) {
 	require.NotEqual(t, "original-uid", writtenName, "generateNewUIDs=true should have rewritten the object name")
 }
 
-func TestExportSpecificResources_NonDashboardKindIsErroredAndSkipped(t *testing.T) {
-	// ForKind still gets called once at the top of ExportSpecificResources so
-	// the shim can be prepared, even though no dashboards end up being fetched.
+func TestExportSpecificResources_FolderKindIsErroredAndSkipped(t *testing.T) {
+	// Folders are a supported provisioning kind but are exported via
+	// ExportFolders, not selectively as individual resources. A Folder ref is
+	// rejected before any client is resolved, so ForKind is never called.
 	resourceClients := resources.NewMockResourceClients(t)
-	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
-		Return(&mockGetByName{items: map[string]*unstructured.Unstructured{}}, resources.DashboardResource, nil)
+	resourceClients.On("SupportedResources").Return(supportedDashboardAndFolder())
 
 	repoResources := resources.NewMockRepositoryResources(t)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		// A non-Dashboard kind is a caller mistake (admission would normally
-		// reject it); if it still reaches the worker, fail the item rather
-		// than quietly warn so the job surfaces the bad input. The action is
-		// NOT Ignored because the recorder silently discards errors on
-		// ignored results — we need this one to escalate the job state.
+		// A folder ref is a caller mistake (admission would normally reject
+		// it); if it still reaches the worker, fail the item rather than
+		// quietly warn so the job surfaces the bad input. The action is NOT
+		// Ignored because the recorder silently discards errors on ignored
+		// results — we need this one to escalate the job state.
 		return r.Name() == "folder-ref" && r.Action() != repository.FileActionIgnored && r.Error() != nil
 	})).Return()
 	progress.On("TooManyErrors").Return(nil).Once()
@@ -263,5 +279,75 @@ func TestExportSpecificResources_NonDashboardKindIsErroredAndSkipped(t *testing.
 
 	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
+	resourceClients.AssertNotCalled(t, "ForKind", mock.Anything, mock.Anything)
 	repoResources.AssertNotCalled(t, "WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestExportSpecificResources_UnsupportedKindIsErroredAndSkipped(t *testing.T) {
+	// A kind that is not in the supported set (e.g. Playlist when only
+	// dashboards and folders are configured) is rejected without resolving a
+	// client.
+	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("SupportedResources").Return(supportedDashboardAndFolder())
+
+	repoResources := resources.NewMockRepositoryResources(t)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Name() == "playlist-1" && r.Action() != repository.FileActionIgnored && r.Error() != nil
+	})).Return()
+	progress.On("TooManyErrors").Return(nil).Once()
+
+	options := provisioningV0.ExportJobOptions{
+		Resources: []provisioningV0.ResourceRef{{Name: "playlist-1", Kind: "Playlist", Group: "playlist.grafana.app"}},
+	}
+
+	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, false)
+	require.NoError(t, err)
+	resourceClients.AssertNotCalled(t, "ForKind", mock.Anything, mock.Anything)
+	repoResources.AssertNotCalled(t, "WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestExportSpecificResources_SupportedNonDashboardKind(t *testing.T) {
+	// A non-dashboard supported kind resolves its own client (no conversion
+	// shim) and is exported like any other resource.
+	const group = "playlist.grafana.app"
+	playlistGVK := schema.GroupVersionKind{Group: group, Kind: "Playlist"}
+	playlistGVR := schema.GroupVersionResource{Group: group, Version: "v0alpha1", Resource: "playlists"}
+
+	playlist := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": group + "/v0alpha1",
+		"kind":       "Playlist",
+		"metadata":   map[string]any{"name": "playlist-1"},
+	}}
+	playlistClient := &mockGetByName{items: map[string]*unstructured.Unstructured{"playlist-1": playlist}}
+
+	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("SupportedResources").Return([]resources.SupportedResource{
+		{GroupKind: resources.FolderKind.GroupKind()},
+		{GroupKind: resources.DashboardKind.GroupKind()},
+		{GroupKind: playlistGVK.GroupKind()},
+	})
+	resourceClients.On("ForKind", mock.Anything, playlistGVK).
+		Return(playlistClient, playlistGVR, nil)
+
+	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+		return obj.GetName() == "playlist-1"
+	}), mock.Anything).Return("playlist-1.json", nil)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Name() == "playlist-1" && r.Action() == repository.FileActionCreated
+	})).Return()
+	progress.On("TooManyErrors").Return(nil).Once()
+
+	options := provisioningV0.ExportJobOptions{
+		Resources: []provisioningV0.ResourceRef{{Name: "playlist-1", Kind: "Playlist", Group: group}},
+	}
+
+	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, false)
+	require.NoError(t, err)
 }

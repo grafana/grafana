@@ -60,32 +60,30 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 // (manager-identity skip, conversion shim, UID regeneration) but resolves
 // items via Get rather than listing the namespace.
 //
-// The admission validator restricts Resources to unmanaged Dashboards; this
-// function trusts that constraint and short-circuits anything else with a
-// recorded warning so a misconfigured caller surfaces in the job summary
-// rather than silently failing.
+// Each reference is resolved against the configured set of supported kinds, so
+// any provisioning-managed kind can be exported, not just dashboards. The
+// admission validator (P0.9) is expected to reject unsupported references up
+// front; if one still reaches the worker it is recorded as an error so a
+// misconfigured caller surfaces in the job summary rather than silently
+// failing.
 func ExportSpecificResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
 	progress.SetMessage(ctx, "start selective resource export")
 
-	// ForKind resolves the preferred version when Version is empty.
-	dashboardGVK := schema.GroupVersionKind{
-		Group: resources.DashboardKind.Group,
-		Kind:  resources.DashboardKind.Kind,
-	}
-	dashClient, dashGVR, err := clients.ForKind(ctx, dashboardGVK)
-	if err != nil {
-		return fmt.Errorf("get dashboard client: %w", err)
-	}
-	shim := newDashboardConversionShim(dashGVR, clients)
+	supported := clients.SupportedResources()
+
+	// The dashboard conversion shim is built lazily on first use so exports that
+	// contain no dashboards don't pay for a dashboard discovery lookup.
+	var dashboardShim conversionShim
 
 	for _, ref := range options.Resources {
+		gvk, ok := resolveSupportedKind(supported, ref)
 		// Leave the action unset on the error paths below: the recorder
 		// treats FileActionIgnored results as non-fatal, and we want the
 		// caller's bad/unresolvable reference to escalate the job state.
-		result := jobs.NewGroupKindResult(ref.Name, resources.DashboardKind.Group, resources.DashboardKind.Kind)
+		result := jobs.NewGroupKindResult(ref.Name, gvk.Group, gvk.Kind)
 
-		if ref.Kind != "" && ref.Kind != resources.DashboardKind.Kind {
-			result.WithError(fmt.Errorf("resource %s/%s is not a %s", ref.Kind, ref.Name, resources.DashboardKind.Kind))
+		if !ok {
+			result.WithError(fmt.Errorf("resource %s/%s has unsupported kind %q (group %q)", ref.Kind, ref.Name, ref.Kind, ref.Group))
 			progress.Record(ctx, result.Build())
 			if err := progress.TooManyErrors(); err != nil {
 				return err
@@ -93,12 +91,33 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 			continue
 		}
 
-		item, err := dashClient.Get(ctx, ref.Name, metav1.GetOptions{})
+		// ForKind resolves the preferred version when Version is empty.
+		client, gvr, err := clients.ForKind(ctx, gvk)
+		if err != nil {
+			result.WithError(fmt.Errorf("get client for %s/%s: %w", gvk.Group, gvk.Kind, err))
+			progress.Record(ctx, result.Build())
+			if err := progress.TooManyErrors(); err != nil {
+				return err
+			}
+			continue
+		}
+
+		// Dashboards need the conversion shim to preserve their original stored
+		// apiVersion; other kinds are exported as returned.
+		var shim conversionShim
+		if gvr.GroupResource() == resources.DashboardResource.GroupResource() {
+			if dashboardShim == nil {
+				dashboardShim = newDashboardConversionShim(gvr, clients)
+			}
+			shim = dashboardShim
+		}
+
+		item, err := client.Get(ctx, ref.Name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				result.WithError(fmt.Errorf("dashboard %q not found", ref.Name))
+				result.WithError(fmt.Errorf("%s %q not found", gvk.Kind, ref.Name))
 			} else {
-				result.WithError(fmt.Errorf("get dashboard %q: %w", ref.Name, err))
+				result.WithError(fmt.Errorf("get %s %q: %w", gvk.Kind, ref.Name, err))
 			}
 			progress.Record(ctx, result.Build())
 			if err := progress.TooManyErrors(); err != nil {
@@ -113,6 +132,33 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 	}
 
 	return nil
+}
+
+// resolveSupportedKind maps a ResourceRef onto a supported GroupVersionKind. The
+// Version is left empty so ForKind resolves the preferred version via discovery.
+// When the ref omits the group, the kind is matched against the supported set,
+// which keeps callers that only set Kind working. Folders are excluded because
+// they are exported separately via ExportFolders, not as individual resources.
+// The returned bool is false when no supported, non-folder resource matches.
+func resolveSupportedKind(supported []resources.SupportedResource, ref provisioning.ResourceRef) (schema.GroupVersionKind, bool) {
+	if ref.Kind == "" {
+		return schema.GroupVersionKind{Group: ref.Group, Kind: ref.Kind}, false
+	}
+
+	for _, r := range supported {
+		if r.GroupKind == resources.FolderKind.GroupKind() {
+			continue
+		}
+		if r.Kind != ref.Kind {
+			continue
+		}
+		if ref.Group != "" && ref.Group != r.Group {
+			continue
+		}
+		return schema.GroupVersionKind{Group: r.Group, Kind: r.Kind}, true
+	}
+
+	return schema.GroupVersionKind{Group: ref.Group, Kind: ref.Kind}, false
 }
 
 func exportResource(ctx context.Context,
