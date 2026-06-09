@@ -270,13 +270,13 @@ var (
 			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
-			Name:            "provisioningExport",
+			Name:            "provisioning.export",
 			Description:     "Enable export functionality for provisioned resources",
 			Stage:           FeatureStageExperimental,
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{Go: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "provisioning.readmes",

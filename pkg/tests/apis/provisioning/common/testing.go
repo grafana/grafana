@@ -1231,7 +1231,7 @@ func WithoutExportFeatureFlag(opts *testinfra.GrafanaOpts) {
 	// Remove provisioningExport from the enabled feature toggles
 	filtered := []string{}
 	for _, flag := range opts.EnableFeatureToggles {
-		if flag != "provisioningExport" {
+		if flag != featuremgmt.FlagProvisioningExport {
 			filtered = append(filtered, flag)
 		}
 	}

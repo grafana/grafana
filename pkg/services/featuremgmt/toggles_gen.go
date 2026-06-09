@@ -93,7 +93,7 @@ const (
 
 	// FlagProvisioningExport
 	// Enable export functionality for provisioned resources
-	FlagProvisioningExport = "provisioningExport"
+	FlagProvisioningExport = "provisioning.export"
 
 	// FlagProvisioningGitConventions
 	// Enable configurable commit message, branch name, and pull request title conventions for Git Sync

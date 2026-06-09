@@ -147,7 +147,7 @@ export interface FeatureToggles {
   * Enable export functionality for provisioned resources
   * @default false
   */
-  provisioningExport?: boolean;
+  ['provisioning.export']?: boolean;
   /**
   * Start an additional https handler and write kubectl options
   * @default false

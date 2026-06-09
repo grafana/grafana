@@ -4066,6 +4066,20 @@
     },
     {
       "metadata": {
+        "name": "provisioning.export",
+        "resourceVersion": "1780986482047",
+        "creationTimestamp": "2026-06-09T06:28:02Z"
+      },
+      "spec": {
+        "description": "Enable export functionality for provisioned resources",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "provisioning.gitConventions",
         "resourceVersion": "1780985056992",
         "creationTimestamp": "2026-06-09T06:04:16Z"
@@ -4096,7 +4110,8 @@
       "metadata": {
         "name": "provisioningExport",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-09T06:28:02Z"
       },
       "spec": {
         "description": "Enable export functionality for provisioned resources",

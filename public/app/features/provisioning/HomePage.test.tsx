@@ -48,18 +48,18 @@ function renderHomePage(initialEntry = '/admin/provisioning') {
 
 describe('Provisioning HomePage', () => {
   afterEach(() => {
-    config.featureToggles.provisioningExport = false;
+    config.featureToggles['provisioning.export'] = false;
   });
 
   it('hides the Migrate to GitOps tab when the feature flag is off', () => {
-    config.featureToggles.provisioningExport = false;
+    config.featureToggles['provisioning.export'] = false;
     renderHomePage();
 
     expect(screen.queryByRole('tab', { name: /migrate to gitops/i })).not.toBeInTheDocument();
   });
 
   it('shows the Migrate to GitOps tab and renders the placeholder when the flag is on', async () => {
-    config.featureToggles.provisioningExport = true;
+    config.featureToggles['provisioning.export'] = true;
     const { user } = renderHomePage();
 
     const migrateTab = screen.getByRole('tab', { name: /migrate to gitops/i });
@@ -72,14 +72,14 @@ describe('Provisioning HomePage', () => {
   });
 
   it('opens directly on the Migrate placeholder when the URL targets it and the flag is on', () => {
-    config.featureToggles.provisioningExport = true;
+    config.featureToggles['provisioning.export'] = true;
     renderHomePage('/admin/provisioning?tab=migrate');
 
     expect(screen.getByRole('heading', { name: /migrate to gitops/i })).toBeInTheDocument();
   });
 
   it('falls back to the default tab when ?tab=migrate is set but the flag is off', () => {
-    config.featureToggles.provisioningExport = false;
+    config.featureToggles['provisioning.export'] = false;
     renderHomePage('/admin/provisioning?tab=migrate');
 
     // No repos/connections → default tab is Get started. The Migrate

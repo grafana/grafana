@@ -215,7 +215,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({
           </Stack>
         </Alert>
       )}
-      {config.featureToggles.provisioningExport && (
+      {config.featureToggles['provisioning.export'] && (
         <>
           <Text element="h3">
             <Trans i18nKey="provisioning.synchronize-step.options">Options</Trans>

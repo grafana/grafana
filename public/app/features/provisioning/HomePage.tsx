@@ -24,7 +24,7 @@ export default function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isLoading = isLoadingRepos || isLoadingConnections;
-  const isMigrateTabEnabled = !!config.featureToggles.provisioningExport;
+  const isMigrateTabEnabled = !!config.featureToggles['provisioning.export'];
 
   const urlTab = searchParams.get('tab');
   const defaultTab = useMemo(() => {
