@@ -369,7 +369,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 }}
               />
             )}
-            <SuffixIcon isLoading={loading || false} isOpen={isOpen} {...getToggleButtonProps({ disabled })} />
+            <SuffixIcon
+              isLoading={loading || false}
+              isOpen={isOpen}
+              {...getToggleButtonProps({ disabled, role: 'button' })}
+            />
           </div>
         </span>
       </div>
