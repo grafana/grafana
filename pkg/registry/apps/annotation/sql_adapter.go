@@ -243,8 +243,11 @@ func (a *sqlAdapter) toK8sResource(item *annotations.ItemDTO, namespace string) 
 		anno.Spec.PanelID = &item.PanelID
 	}
 
-	if item.UserUID != "" {
-		if m, err := utils.MetaAccessor(anno); err == nil {
+	if m, err := utils.MetaAccessor(anno); err == nil {
+		if item.ID > 0 {
+			m.SetDeprecatedInternalID(item.ID)
+		}
+		if item.UserUID != "" {
 			m.SetCreatedBy(claims.NewTypeID(claims.TypeUser, item.UserUID))
 		}
 	}

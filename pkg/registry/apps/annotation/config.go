@@ -38,6 +38,10 @@ type Config struct {
 	PostgresTagCacheTTL      time.Duration
 	PostgresTagCacheSize     int
 
+	// EnableDeprecatedInternalID controls whether a grafana.app/deprecatedInternalID
+	// label is generated for new annotations and persisted in the store.
+	EnableDeprecatedInternalID bool
+
 	// CleanupSettings configures annotation pruning for the SQL backend's LifecycleManager.
 	// Zero value (all limits unset) disables cleanup. Not used by memory or gRPC backends.
 	CleanupSettings annotations.CleanupSettings
@@ -46,6 +50,7 @@ type Config struct {
 func (c *Config) AddFlags(flags *pflag.FlagSet) {
 	// TODO: add cleanup flags when the SQL backend is supported in MT.
 	flags.StringVar(&c.StoreBackend, "annotation.store-backend", "memory", "Annotation store backend: memory, grpc, postgres, legacy-sql")
+	flags.BoolVar(&c.EnableDeprecatedInternalID, "annotation.enable-deprecated-internal-id", false, "Generate and persist grafana.app/deprecatedInternalID labels for legacy API compatibility")
 
 	// General lifecycle flags
 	flags.DurationVar(&c.RetentionTTL, "annotation.retention-ttl", defaultRetentionTTL, "Retention TTL for annotations (old data will be cleaned up)")
@@ -72,8 +77,9 @@ func newConfigFromSettings(cfg *setting.Cfg) Config {
 	}
 
 	return Config{
-		StoreBackend: cfg.AnnotationAppPlatform.StoreBackend,
-		RetentionTTL: retentionTTL,
+		StoreBackend:               cfg.AnnotationAppPlatform.StoreBackend,
+		RetentionTTL:               retentionTTL,
+		EnableDeprecatedInternalID: cfg.AnnotationAppPlatform.EnableDeprecatedInternalID,
 
 		GRPCAddress:       cfg.AnnotationAppPlatform.GRPCAddress,
 		GRPCUseTLS:        cfg.AnnotationAppPlatform.GRPCUseTLS,

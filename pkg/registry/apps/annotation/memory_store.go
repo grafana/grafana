@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type memoryStore struct {
@@ -81,6 +82,12 @@ func (m *memoryStore) List(ctx context.Context, namespace string, opts ListOptio
 
 		if opts.CreatedBy != "" && anno.GetCreatedBy() != opts.CreatedBy {
 			continue
+		}
+
+		if opts.DeprecatedInternalID > 0 {
+			if meta, err := utils.MetaAccessor(anno); err != nil || meta.GetDeprecatedInternalID() != opts.DeprecatedInternalID {
+				continue
+			}
 		}
 
 		result = append(result, *anno.DeepCopy())
