@@ -50,12 +50,12 @@ To add a Microsoft SQL Server annotation to your dashboard:
 
 Your annotation query must return columns with specific names. Grafana uses these names to map query results to annotation fields.
 
-| Column    | Required | Description                                                                                                  |
-| --------- | -------- | ------------------------------------------------------------------------------------------------------------ |
-| `time`    | Yes      | The date/time of the event. Can be a native SQL date/time type or a Unix epoch value in seconds.             |
-| `timeend` | No       | The end time for region annotations. Same format as `time`. Creates a shaded region instead of a line.       |
-| `text`    | Yes      | The event description displayed in the annotation tooltip.                                                   |
-| `tags`    | No       | Comma-separated string used for event tags. Tags help categorize and filter annotations.                     |
+| Column    | Required | Description                                                                                            |
+| --------- | -------- | ------------------------------------------------------------------------------------------------------ |
+| `time`    | Yes      | The date/time of the event. Can be a native SQL date/time type or a Unix epoch value in seconds.       |
+| `timeend` | No       | The end time for region annotations. Same format as `time`. Creates a shaded region instead of a line. |
+| `text`    | Yes      | The event description displayed in the annotation tooltip.                                             |
+| `tags`    | No       | Comma-separated string used for event tags. Tags help categorize and filter annotations.               |
 
 ## Example: Annotation with epoch time
 
@@ -174,10 +174,10 @@ ORDER BY 1
 
 Use these macros in your annotation queries to filter by the dashboard time range:
 
-| Macro                        | Description                                                                    |
-| ---------------------------- | ------------------------------------------------------------------------------ |
-| `$__timeFilter(column)`      | Filters by time range using a native SQL `datetime`/`datetime2` column.        |
-| `$__unixEpochFilter(column)` | Filters by time range using a column with Unix epoch timestamps.               |
+| Macro                        | Description                                                             |
+| ---------------------------- | ----------------------------------------------------------------------- |
+| `$__timeFilter(column)`      | Filters by time range using a native SQL `datetime`/`datetime2` column. |
+| `$__unixEpochFilter(column)` | Filters by time range using a column with Unix epoch timestamps.        |
 
 For the full list of available macros, refer to the [Microsoft SQL Server query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/#macros).
 

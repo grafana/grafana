@@ -81,10 +81,10 @@ Kerberos is not supported in Grafana Cloud.
 
 **Connection:**
 
-| Setting      | Description                                                                                                                                                                                                                                                       |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setting      | Description                                                                                                                                                                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Host**     | Sets the IP address or hostname (and optional port) of your MSSQL instance. The default port is `0`, which uses the driver's default. You can include additional connection properties (for example, `ApplicationIntent`) by separating them with semicolons (`;`). |
-| **Database** | Sets the name of the MSSQL database to connect to.                                                                                                                                                                                                                |
+| **Database** | Sets the name of the MSSQL database to connect to.                                                                                                                                                                                                                  |
 
 {{< admonition type="caution" >}}
 If you add `ApplicationIntent=ReadOnly` to the Host field to route queries to a read-only replica, be aware that read-only replicas may be significantly slower than the primary. This can cause dashboard load times of several minutes. Only use `ApplicationIntent=ReadOnly` if your replica is sized for the query workload and you've tested performance.
@@ -94,30 +94,30 @@ If you add `ApplicationIntent=ReadOnly` to the Host field to route queries to a 
 
 The **Encrypt** setting determines whether and to what extent a secure TLS/SSL connection is negotiated with the server.
 
-| Encrypt setting | Description                                                                                      | When to use |
-| --------------- | ------------------------------------------------------------------------------------------------ | --- |
-| **Disable**     | Data sent between the client and server is **not encrypted**.                                     | Legacy environments where encryption isn't supported or required. Not recommended for production. |
-| **False**       | The default setting. Only the login packet is encrypted; **all other data is sent unencrypted**. | Development environments or when SQL Server doesn't have a valid certificate. |
-| **True**        | **All data** sent between the client and server is **encrypted**.                                | Production environments. Required for Azure SQL Database. |
+| Encrypt setting | Description                                                                                      | When to use                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| **Disable**     | Data sent between the client and server is **not encrypted**.                                    | Legacy environments where encryption isn't supported or required. Not recommended for production. |
+| **False**       | The default setting. Only the login packet is encrypted; **all other data is sent unencrypted**. | Development environments or when SQL Server doesn't have a valid certificate.                     |
+| **True**        | **All data** sent between the client and server is **encrypted**.                                | Production environments. Required for Azure SQL Database.                                         |
 
 When **Encrypt** is set to **True**, the following additional TLS options are available:
 
-| Setting | Description | Default |
-| --- | --- | --- |
-| **Skip TLS Verify** | If enabled, the server's certificate chain and hostname aren't validated. Equivalent to `trustServerCertificate=true` in the connection string. | Disabled |
-| **TLS/SSL Root Certificate** | Path to a PEM-encoded CA certificate file used to verify the server's certificate. Required when the SQL Server uses a certificate signed by a private CA. | System CA bundle |
+| Setting                            | Description                                                                                                                                                                                                                                    | Default                   |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| **Skip TLS Verify**                | If enabled, the server's certificate chain and hostname aren't validated. Equivalent to `trustServerCertificate=true` in the connection string.                                                                                                | Disabled                  |
+| **TLS/SSL Root Certificate**       | Path to a PEM-encoded CA certificate file used to verify the server's certificate. Required when the SQL Server uses a certificate signed by a private CA.                                                                                     | System CA bundle          |
 | **Hostname in server certificate** | The expected hostname in the server's TLS certificate. Use this when the certificate's Common Name (CN) or Subject Alternative Name (SAN) doesn't match the configured hostname (for example, when connecting through a load balancer or PDC). | Value from **Host** field |
 
 **Choosing the right encryption configuration:**
 
-| Scenario | Encrypt | Skip TLS Verify | Root Certificate | Notes |
-| --- | --- | --- | --- | --- |
-| Azure SQL Database | True | No | Not needed | Azure SQL always requires encryption and uses a publicly trusted certificate. |
-| SQL Server with public CA certificate | True | No | Not needed | Certificate is already in the system trust store. |
-| SQL Server with private/self-signed certificate | True | No | Path to CA cert | Upload or reference the CA certificate that signed the SQL Server certificate. |
-| SQL Server with unverified certificate (testing only) | True | Yes | Not needed | Skips certificate validation entirely. Don't use in production. |
-| SQL Server 2008/2008R2 without valid certificate | Disable or False | N/A | N/A | Older versions may not support TLS negotiation. |
-| Grafana Cloud with PDC | True | No | Not needed (usually) | PDC tunnels are encrypted at the SSH layer; the TLS certificate must still be valid from the PDC agent's perspective. |
+| Scenario                                              | Encrypt          | Skip TLS Verify | Root Certificate     | Notes                                                                                                                 |
+| ----------------------------------------------------- | ---------------- | --------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Azure SQL Database                                    | True             | No              | Not needed           | Azure SQL always requires encryption and uses a publicly trusted certificate.                                         |
+| SQL Server with public CA certificate                 | True             | No              | Not needed           | Certificate is already in the system trust store.                                                                     |
+| SQL Server with private/self-signed certificate       | True             | No              | Path to CA cert      | Upload or reference the CA certificate that signed the SQL Server certificate.                                        |
+| SQL Server with unverified certificate (testing only) | True             | Yes             | Not needed           | Skips certificate validation entirely. Don't use in production.                                                       |
+| SQL Server 2008/2008R2 without valid certificate      | Disable or False | N/A             | N/A                  | Older versions may not support TLS negotiation.                                                                       |
+| Grafana Cloud with PDC                                | True             | No              | Not needed (usually) | PDC tunnels are encrypted at the SSH layer; the TLS certificate must still be valid from the PDC agent's perspective. |
 
 {{< admonition type="note" >}}
 If you're using an older version of Microsoft SQL Server like 2008 or 2008R2, you may need to set Encrypt to **Disable** or **False** to connect.
