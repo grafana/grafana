@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 
 import { type Silence } from 'app/plugins/datasource/alertmanager/types';
-import { type AccessControlAction } from 'app/types/accessControl';
 
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
 import { getInstancesPermissions, instancesPermissions, silencesPermissions } from '../../../utils/access-control';
@@ -14,21 +13,27 @@ export type SilenceAbilityParam =
   | { action: SilenceAction.Preview }
   | { action: SilenceAction.Update; context?: Silence };
 
-const PERMISSIONS: Record<SilenceAction, AccessControlAction[]> = {
-  [SilenceAction.View]: [instancesPermissions.read.grafana],
-  [SilenceAction.Create]: [instancesPermissions.create.grafana],
-  [SilenceAction.Update]: [instancesPermissions.update.grafana],
-  [SilenceAction.Preview]: [instancesPermissions.read.grafana],
-};
-
 export function useSilenceAbility(payload: SilenceAbilityParam): AsyncAbility {
   const { selectedAlertmanager } = useAlertmanager();
 
   return useMemo(() => {
     switch (payload.action) {
       case SilenceAction.View:
-      case SilenceAction.Preview:
-        return makeAbility(true, PERMISSIONS[payload.action]);
+      case SilenceAction.Preview: {
+        // Permission differs between Grafana-managed and external alertmanagers.
+        // Return Loading until the selected alertmanager is resolved.
+        if (selectedAlertmanager === undefined) {
+          return Loading;
+        }
+        const permissions = getInstancesPermissions(selectedAlertmanager);
+        // For Grafana AM, also accept alert.silences:read — the backend HTTP gate
+        // accepts either action and the frontend should mirror that.
+        const acceptedPermissions =
+          permissions.read === instancesPermissions.read.grafana
+            ? [instancesPermissions.read.grafana, silencesPermissions.read.grafana]
+            : [permissions.read];
+        return makeAbility(true, acceptedPermissions);
+      }
 
       case SilenceAction.Create: {
         // Permission differs between Grafana-managed and external alertmanagers.
@@ -48,10 +53,23 @@ export function useSilenceAbility(payload: SilenceAbilityParam): AsyncAbility {
       }
 
       case SilenceAction.Update: {
-        if (payload.context?.accessControl?.write === false) {
-          return InsufficientPermissions(PERMISSIONS[SilenceAction.Update]);
+        // Permission differs between Grafana-managed and external alertmanagers.
+        // Return Loading until the selected alertmanager is resolved.
+        if (selectedAlertmanager === undefined) {
+          return Loading;
         }
-        return makeAbility(true, PERMISSIONS[SilenceAction.Update]);
+        const permissions = getInstancesPermissions(selectedAlertmanager);
+        // For Grafana AM, also accept alert.silences:write — the backend HTTP gate
+        // accepts either action and the frontend should mirror that.
+        const acceptedPermissions =
+          permissions.update === instancesPermissions.update.grafana
+            ? [instancesPermissions.update.grafana, silencesPermissions.update.grafana]
+            : [permissions.update];
+
+        if (payload.context?.accessControl?.write === false) {
+          return InsufficientPermissions(acceptedPermissions);
+        }
+        return makeAbility(true, acceptedPermissions);
       }
     }
   }, [payload, selectedAlertmanager]);
