@@ -84,7 +84,7 @@ func LegacyDatasourceScopeAndActionToK8s(datasourceType, scope, action string) (
 		// datasource type is not set for wildcard scopes, we use "*" instead
 		datasourceType = "*"
 	} else if datasourceType == "" {
-		// datasource type is not set, this should be an error
+		// TODO: datasource type is not set, this should be an error
 		return scope, action
 	}
 
