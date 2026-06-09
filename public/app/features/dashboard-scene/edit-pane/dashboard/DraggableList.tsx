@@ -26,7 +26,7 @@ export function DraggableList<T extends { state: { key?: string; name: string } 
   const styles = useStyles2(getStyles);
 
   return (
-    <DroppableCategory droppableId={droppableId} title={title}>
+    <DroppableCategory droppableId={droppableId} title={title} itemsCount={items.length}>
       <ul className={styles.list} data-testid={droppableId}>
         {items.map((item, index) => (
           <DraggableListItem
