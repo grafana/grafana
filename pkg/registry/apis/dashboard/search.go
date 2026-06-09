@@ -13,6 +13,8 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
@@ -87,6 +89,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Description: "user query string",
 										Required:    false,
 										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "semantic",
+										In:          "query",
+										Description: "run a semantic (vector) search ranked by meaning rather than keyword match. Falls back to lexical search when vector search is not configured.",
+										Required:    false,
+										Schema:      spec.BooleanProperty(),
 									},
 								},
 								{
@@ -389,6 +400,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Semantic (vector) search is opt-in via ?semantic=true. When the vector
+	// backend isn't configured the call returns Unimplemented and we fall
+	// through to lexical search so the caller always gets results.
+	if queryParams.Get("semantic") == "true" {
+		if s.doVectorSearch(ctx, w, user, queryParams) {
+			return
+		}
+	}
+
 	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, user, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
 		return s.getDashboardsUIDsSharedWithUser(ctx, user, requestedPermission)
 	})
@@ -428,6 +448,79 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.write(w, parsedResults)
+}
+
+// doVectorSearch runs a semantic search against unified storage. It returns true
+// when it has produced a response (results or a hard error already written to w),
+// and false when vector search is not configured (gRPC Unimplemented) so the caller
+// can fall back to lexical search.
+func (s *SearchHandler) doVectorSearch(ctx context.Context, w http.ResponseWriter, user identity.Requester, queryParams url.Values) bool {
+	key, err := asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return true
+	}
+
+	limit := 50
+	if queryParams.Has("limit") {
+		if l, parseErr := strconv.Atoi(queryParams.Get("limit")); parseErr == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	req := &resourcepb.VectorSearchRequest{
+		Key:   key,
+		Query: queryParams.Get("query"),
+		Limit: int64(limit),
+	}
+	// Vector search ranks by meaning, so the lexical filters/facets/sort don't
+	// apply. Only the folder constraint is carried over as an exact-match filter.
+	if folder := queryParams.Get("folder"); folder != "" {
+		req.Filters = append(req.Filters, &resourcepb.Requirement{
+			Key:      "folder",
+			Operator: string(selection.Equals),
+			Values:   []string{folder},
+		})
+	}
+
+	result, err := s.client.VectorSearch(ctx, req)
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			s.log.Debug("vector search not configured, falling back to lexical search")
+			return false
+		}
+		errhttp.Write(ctx, err, w)
+		return true
+	}
+	if result.GetError() != nil {
+		errhttp.Write(ctx, resource.GetError(result.GetError()), w)
+		return true
+	}
+
+	s.write(w, vectorSearchResultsToSearchResults(result))
+	return true
+}
+
+// vectorSearchResultsToSearchResults maps a VectorSearchResponse onto the DTO the
+// search endpoint already returns. Results are kept in backend order: Score is the
+// cosine distance (lower = closer), so the first hit is the best match.
+func vectorSearchResultsToSearchResults(result *resourcepb.VectorSearchResponse) *dashboardv0alpha1.SearchResults {
+	hits := make([]dashboardv0alpha1.DashboardHit, 0, len(result.GetResults()))
+	for _, r := range result.GetResults() {
+		hits = append(hits, dashboardv0alpha1.DashboardHit{
+			Resource: dashboardv0alpha1.DASHBOARD_RESOURCE,
+			Name:     r.GetName(),
+			Title:    r.GetTitle(),
+			Folder:   r.GetFolder(),
+			Score:    r.GetScore(),
+		})
+	}
+
+	out := &dashboardv0alpha1.SearchResults{Hits: hits, TotalHits: int64(len(hits))}
+	if len(hits) > 0 {
+		out.MaxScore = hits[0].Score
+	}
+	return out
 }
 
 // convertHttpSearchRequestToResourceSearchRequest create ResourceSearchRequest from query parameters.

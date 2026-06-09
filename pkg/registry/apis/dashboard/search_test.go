@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -41,6 +43,97 @@ func TestSearch(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
+	})
+}
+
+func TestVectorSearch(t *testing.T) {
+	newHandler := func(client *MockClient) SearchHandler {
+		return SearchHandler{
+			log:      log.New("test", "test"),
+			client:   client,
+			tracer:   tracing.NewNoopTracerService(),
+			features: featuremgmt.WithFeatures(),
+		}
+	}
+
+	doRequest := func(handler SearchHandler, rawQuery string) *httptest.ResponseRecorder {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search?"+rawQuery, nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+		handler.DoSearch(rr, req)
+		return rr
+	}
+
+	t.Run("semantic=true calls VectorSearch and maps results to hits", func(t *testing.T) {
+		mockClient := &MockClient{
+			VectorSearchResponse: &resourcepb.VectorSearchResponse{
+				Results: []*resourcepb.VectorSearchResult{
+					{Name: "d1", Title: "CPU usage", Folder: "f1", Score: 0.12},
+					{Name: "d2", Title: "Memory usage", Folder: "f2", Score: 0.34},
+				},
+			},
+		}
+		handler := newHandler(mockClient)
+
+		rr := doRequest(handler, "query=cpu&semantic=true&folder=f1&limit=10")
+
+		require.NotNil(t, mockClient.LastVectorSearchRequest)
+		assert.Equal(t, 1, mockClient.VectorSearchCallCount)
+		assert.Equal(t, 0, mockClient.CallCount, "lexical search should not be called")
+		assert.Equal(t, "cpu", mockClient.LastVectorSearchRequest.Query)
+		assert.Equal(t, int64(10), mockClient.LastVectorSearchRequest.Limit)
+		require.Len(t, mockClient.LastVectorSearchRequest.Filters, 1)
+		assert.Equal(t, "folder", mockClient.LastVectorSearchRequest.Filters[0].Key)
+		assert.Equal(t, []string{"f1"}, mockClient.LastVectorSearchRequest.Filters[0].Values)
+
+		resp := rr.Result()
+		defer func() { require.NoError(t, resp.Body.Close()) }()
+		p := &v0alpha1.SearchResults{}
+		require.NoError(t, json.NewDecoder(resp.Body).Decode(p))
+		require.Len(t, p.Hits, 2)
+		assert.Equal(t, int64(2), p.TotalHits)
+		assert.Equal(t, "CPU usage", p.Hits[0].Title)
+		assert.Equal(t, "d1", p.Hits[0].Name)
+		assert.Equal(t, "f1", p.Hits[0].Folder)
+		assert.Equal(t, "dashboards", p.Hits[0].Resource)
+		assert.Equal(t, 0.12, p.MaxScore)
+	})
+
+	t.Run("falls back to lexical search when vector search is unimplemented", func(t *testing.T) {
+		mockClient := &MockClient{
+			VectorSearchErr: status.Error(codes.Unimplemented, "vector search not configured"),
+			MockResponses: []*resourcepb.ResourceSearchResponse{{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: resource.SEARCH_FIELD_TITLE}},
+					Rows:    []*resourcepb.ResourceTableRow{},
+				},
+			}},
+		}
+		handler := newHandler(mockClient)
+
+		rr := doRequest(handler, "query=cpu&semantic=true")
+
+		assert.Equal(t, 1, mockClient.VectorSearchCallCount)
+		require.NotNil(t, mockClient.LastSearchRequest, "expected fallback to lexical Search")
+		assert.Equal(t, "cpu", mockClient.LastSearchRequest.Query)
+		assert.Equal(t, 200, rr.Result().StatusCode)
+	})
+
+	t.Run("without the flag, only lexical search is called", func(t *testing.T) {
+		mockClient := &MockClient{
+			MockResponses: []*resourcepb.ResourceSearchResponse{{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: resource.SEARCH_FIELD_TITLE}},
+					Rows:    []*resourcepb.ResourceTableRow{},
+				},
+			}},
+		}
+		handler := newHandler(mockClient)
+
+		doRequest(handler, "query=cpu")
+
+		assert.Equal(t, 0, mockClient.VectorSearchCallCount)
+		require.NotNil(t, mockClient.LastSearchRequest)
 	})
 }
 
@@ -1142,6 +1235,18 @@ type MockClient struct {
 	MockResponses []*resourcepb.ResourceSearchResponse
 	MockCalls     []*resourcepb.ResourceSearchRequest
 	CallCount     int
+
+	// Vector search
+	LastVectorSearchRequest *resourcepb.VectorSearchRequest
+	VectorSearchResponse    *resourcepb.VectorSearchResponse
+	VectorSearchErr         error
+	VectorSearchCallCount   int
+}
+
+func (m *MockClient) VectorSearch(ctx context.Context, in *resourcepb.VectorSearchRequest, opts ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
+	m.LastVectorSearchRequest = in
+	m.VectorSearchCallCount++
+	return m.VectorSearchResponse, m.VectorSearchErr
 }
 
 type MockResult struct {
