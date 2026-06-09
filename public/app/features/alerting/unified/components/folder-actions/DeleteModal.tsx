@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, Space, Text } from '@grafana/ui';
-import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { trackFolderBulkActionsDeleteFail, trackFolderBulkActionsDeleteSuccess } from '../../Analytics';
-import { stringifyErrorLike } from '../../utils/misc';
 
 export interface Props {
   isOpen: boolean;
@@ -16,7 +14,6 @@ export interface Props {
 
 export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, folderName }: Props) => {
   const [isDeleting, setIsDeleting] = useState(false);
-  const notifyApp = useAppNotification();
 
   const onDeleteConfirm = async () => {
     setIsDeleting(true);
@@ -24,13 +21,8 @@ export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, folderNam
       await onConfirm();
       trackFolderBulkActionsDeleteSuccess();
       onDismiss();
-    } catch (error) {
+    } catch {
       trackFolderBulkActionsDeleteFail();
-      notifyApp.error(
-        t('alerting.folder-bulk-actions.delete.error', 'Failed to delete folder rules'),
-        stringifyErrorLike(error)
-      );
-      onDismiss();
     } finally {
       setIsDeleting(false);
     }
