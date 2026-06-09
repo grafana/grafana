@@ -1,6 +1,8 @@
 import { render, testWithFeatureToggles, userEvent, waitFor } from 'test/test-utils';
 
 import { type AdHocVariableFilter, type DataFrame, type DataQueryRequest, type ScopedVars } from '@grafana/data';
+import { SQLEditor } from '@grafana/plugin-ui';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { dataSource } from '../../ExpressionDatasource';
 import { type ExpressionQuery, ExpressionQueryType } from '../../types';
@@ -27,6 +29,13 @@ jest.mock('@grafana/plugin-ui', () => ({
   QueryFormat: {
     Table: 'table',
   },
+  SQLEditor: jest.fn(({ query, onChange, children }) => (
+    <div>
+      <div data-testid="legacy-sql-editor">{query}</div>
+      <button onClick={() => onChange('')}>Clear SQL</button>
+      {children?.({ formatQuery: jest.fn() })}
+    </div>
+  )),
 }));
 
 jest.mock('react-virtualized-auto-sizer', () => ({
@@ -68,9 +77,19 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('SqlExpr', () => {
   const SqlEditorMock = jest.mocked(SqlEditor);
+  const SQLEditorMock = jest.mocked(SQLEditor);
+
+  beforeAll(() => {
+    setTestFlags({});
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
 
   beforeEach(() => {
     SqlEditorMock.mockClear();
+    SQLEditorMock.mockClear();
   });
 
   it('initializes new expressions with default query', async () => {
@@ -101,7 +120,45 @@ describe('SqlExpr', () => {
     });
   });
 
+  it('uses the legacy SQL editor when sqlExpressionsCodeMirror is disabled', async () => {
+    const onChange = jest.fn();
+    const refIds = [{ value: 'A' }];
+    const query = { refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery;
+
+    const { findByTestId } = render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+
+    expect(await findByTestId('legacy-sql-editor')).toHaveTextContent('SELECT * FROM A');
+    expect(SQLEditorMock.mock.calls[0][0]).toEqual(
+      expect.objectContaining({
+        language: expect.objectContaining({
+          completionProvider: expect.any(Function),
+        }),
+      })
+    );
+    expect(SqlEditorMock).not.toHaveBeenCalled();
+  });
+
+  it('uses the CodeMirror SQL editor when sqlExpressionsCodeMirror is enabled', () => {
+    setTestFlags({ sqlExpressionsCodeMirror: true });
+
+    const onChange = jest.fn();
+    const refIds = [{ value: 'A' }];
+    const query = { refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery;
+
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+
+    expect(SqlEditorMock.mock.calls[0][0]).toEqual(
+      expect.objectContaining({
+        value: 'SELECT * FROM A',
+        completionProvider: expect.any(Object),
+      })
+    );
+    expect(SQLEditorMock).not.toHaveBeenCalled();
+  });
+
   it('allows clearing an existing expression without restoring the default query', async () => {
+    setTestFlags({ sqlExpressionsCodeMirror: true });
+
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
     const existingExpression = 'SELECT 1 AS foo';
@@ -138,6 +195,8 @@ describe('SqlExpr', () => {
   });
 
   it('passes SQL completions to the editor', () => {
+    setTestFlags({ sqlExpressionsCodeMirror: true });
+
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
     const query = { refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery;
@@ -163,6 +222,8 @@ describe('SqlExpr', () => {
     });
 
     it('uses interpolated source queries for column autocomplete', async () => {
+      setTestFlags({ sqlExpressionsCodeMirror: true });
+
       const onChange = jest.fn();
       const sourceQuery = {
         refId: 'A',

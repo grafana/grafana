@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { lazy, Suspense, useCallback, useEffect, useMemo } from 'react';
 import { useLocalStorage, useMeasure } from 'react-use';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { CompletionItemKind, type LanguageDefinition, type TableIdentifier } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { formatSQL } from '@grafana/sql';
@@ -15,11 +17,18 @@ import { type SqlExpressionQuery } from '../../types';
 import { ALLOWED_FUNCTIONS, fetchSQLFields, type FetchSQLFieldsOptions } from '../../utils/metaSqlExpr';
 import { QueryToolbox } from '../QueryToolbox';
 
+import { getSqlCompletionProvider as getLegacySqlCompletionProvider } from './CompletionProvider/sqlCompletionProvider';
 import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
 import { SqlEditor } from './SqlEditor/SqlEditor';
 import { type SqlCompletionProvider } from './SqlEditor/utils';
 import { SqlQueryActions } from './SqlQueryActions';
 import { useSQLSchemas } from './hooks/useSQLSchemas';
+
+const SQLEditor = lazy(() =>
+  import('@grafana/plugin-ui').then((module) => ({
+    default: module.SQLEditor,
+  }))
+);
 
 // Account for the editor border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
@@ -41,6 +50,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   const interpolationScopedVars = metadata?.data?.request?.scopedVars;
   const interpolationFilters = metadata?.data?.request?.filters;
   const interpolationRange = metadata?.range;
+  const useCodeMirrorEditor = useBooleanFlagValue('sqlExpressionsCodeMirror', false);
 
   const completionProvider = useMemo<SqlCompletionProvider>(
     () => ({
@@ -74,6 +84,29 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
         })),
     }),
     [interpolationFilters, interpolationRange, interpolationScopedVars, queries, refIds]
+  );
+
+  const legacyCompletionProvider = useMemo(
+    () =>
+      getLegacySqlCompletionProvider({
+        getFields: (identifier: TableIdentifier) =>
+          fetchLegacyFields(identifier, queries || [], {
+            range: interpolationRange,
+            scopedVars: interpolationScopedVars,
+            filters: interpolationFilters,
+          }),
+        refIds,
+      }),
+    [interpolationFilters, interpolationRange, interpolationScopedVars, queries, refIds]
+  );
+
+  const editorLanguageDefinition = useMemo<LanguageDefinition>(
+    () => ({
+      id: 'mysql',
+      completionProvider: legacyCompletionProvider,
+      formatter: formatSQL,
+    }),
+    [legacyCompletionProvider]
   );
 
   const initialQuery = `SELECT
@@ -213,6 +246,12 @@ LIMIT
     </Stack>
   );
 
+  const renderQueryToolbox = ({ formatQuery }: { formatQuery: () => void }) => (
+    <div ref={toolboxRef}>
+      <QueryToolbox query={query} onFormatCode={formatQuery} />
+    </div>
+  );
+
   const renderMainContent = () => (
     <div
       className={cx(styles.contentContainer, {
@@ -221,24 +260,36 @@ LIMIT
     >
       <div className={styles.editorContainer}>
         <AutoSizer>
-          {({ width, height }: Size) => (
-            <div style={{ width }}>
-              <SqlEditor
-                value={query.expression ?? initialQuery}
-                onChange={onEditorChange}
-                completionProvider={completionProvider}
-                formatter={formatSQL}
-                height={height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
-                ariaLabel={t('expressions.sql-expression.editor.aria-label', 'SQL expression editor')}
-              >
-                {({ formatQuery }) => (
-                  <div ref={toolboxRef}>
-                    <QueryToolbox query={query} onFormatCode={formatQuery} />
-                  </div>
-                )}
-              </SqlEditor>
-            </div>
-          )}
+          {({ width, height }: Size) => {
+            const editorHeight = height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height;
+
+            return useCodeMirrorEditor ? (
+              <div style={{ width }}>
+                <SqlEditor
+                  value={query.expression ?? initialQuery}
+                  onChange={onEditorChange}
+                  completionProvider={completionProvider}
+                  formatter={formatSQL}
+                  height={editorHeight}
+                  ariaLabel={t('expressions.sql-expression.editor.aria-label', 'SQL expression editor')}
+                >
+                  {renderQueryToolbox}
+                </SqlEditor>
+              </div>
+            ) : (
+              <Suspense fallback={null}>
+                <SQLEditor
+                  query={query.expression ?? initialQuery}
+                  onChange={onEditorChange}
+                  language={editorLanguageDefinition}
+                  width={width}
+                  height={editorHeight}
+                >
+                  {renderQueryToolbox}
+                </SQLEditor>
+              </Suspense>
+            );
+          }}
         </AutoSizer>
       </div>
       {isSchemaInspectorOpen && isSchemasFeatureEnabled && (
@@ -301,4 +352,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
 async function fetchFields(table: string | undefined, queries: DataQuery[], options: FetchSQLFieldsOptions = {}) {
   const fields = await fetchSQLFields({ table }, queries, options);
   return fields.map((field) => ({ label: field.name, insertText: field.value, kind: 'column' as const, boost: 50 }));
+}
+
+async function fetchLegacyFields(
+  identifier: TableIdentifier,
+  queries: DataQuery[],
+  options: FetchSQLFieldsOptions = {}
+) {
+  const fields = await fetchSQLFields({ table: identifier.table }, queries, options);
+  return fields.map((field) => ({ name: field.name, completion: field.value, kind: CompletionItemKind.Field }));
 }
