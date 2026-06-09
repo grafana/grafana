@@ -4993,9 +4993,6 @@
       "light-theme": "Light",
       "scopes": "Scopes"
     },
-    "badge": {
-      "provisioned": "Provisioned"
-    },
     "empty-state": {
       "button-title": "Search with Grafana Assistant",
       "message": "No results found"
@@ -7342,12 +7339,6 @@
       "title-controls-menu_one": "Controls menu ({{count}})",
       "title-controls-menu_other": "Controls menu ({{count}})"
     },
-    "managed-badge": {
-      "kubectl": "Managed by: Kubectl",
-      "plugin": "Managed by: Plugin {{id}}",
-      "provisioned": "Provisioned",
-      "terraform": "Managed by: Terraform"
-    },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "Dashboard is already in the selected folder.",
       "api-error": "Failed to move dashboard",
@@ -9163,8 +9154,7 @@
     "select-placeholder": "Filter by folder"
   },
   "folder-repo": {
-    "read-only-badge": "Read only",
-    "repository-not-found-tooltip": "Repository not found"
+    "read-only-badge": "Read only"
   },
   "folders": {
     "api": {
@@ -13663,6 +13653,13 @@
       "path-label": "Repository Path",
       "path-required": "Repository path is required"
     },
+    "managed-badge": {
+      "classic-file-provisioning": "Managed by: File provisioning",
+      "kubectl": "Managed by: Kubectl",
+      "plugin": "Managed by: Plugin {{id}}",
+      "provisioned": "Provisioned",
+      "terraform": "Managed by: Terraform"
+    },
     "managed-by-repository-tooltip": "Managed by: Repository",
     "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",
     "message": {
@@ -14340,14 +14337,14 @@
         "no-limit": "No limit"
       },
       "query-inspector": "Query inspector",
-      "query-options": "Query Options"
+      "query-options": "Query options"
     },
     "header": {
       "alert": "Alert",
       "expression": "Expression",
-      "pending-expression": "Select an Expression",
+      "pending-expression": "Select an expression",
       "pending-expression-cancel": "Cancel",
-      "pending-transformation": "Select a Transformation",
+      "pending-transformation": "Select a transformation",
       "pending-transformation-cancel": "Cancel",
       "transformation": "Transformation"
     },
@@ -14356,10 +14353,10 @@
       "close-aria": "Close help panel"
     },
     "labels": {
-      "alert": "Alert",
-      "expression": "Expression",
-      "query": "Query",
-      "transformation": "Transformation"
+      "alert": "alert",
+      "expression": "expression",
+      "query": "query",
+      "transformation": "transformation"
     },
     "sidebar": {
       "add-below": "Add below {{id}}",
@@ -14375,6 +14372,8 @@
       "alerts-loading": "Alerts",
       "card-click": "Select card {{id}}",
       "data": "Data",
+      "enter-stacked-view": "Enter stacked view",
+      "exit-stacked-view": "Exit stacked view",
       "footer-items_one": "{{count}} items",
       "footer-items_other": "{{count}} items",
       "footer-items-alert_one": "{{count}} alerts",
@@ -14386,6 +14385,15 @@
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
       "view-toggle": "View"
+    },
+    "stacked": {
+      "exit": "Exit stacked view",
+      "exit-aria-label": "Exit stacked view",
+      "hidden-aria-label": "Hidden",
+      "scroll-area-aria-label": "Stacked editor items",
+      "showing-items_one": "Showing {{count}} items",
+      "showing-items_other": "Showing {{count}} items",
+      "transformation": "Transformation"
     },
     "transformation-debug": {
       "input-data": "Input data",
