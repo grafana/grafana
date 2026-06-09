@@ -1341,6 +1341,10 @@ func (s *hookableStore) ListIndexKeys(ctx context.Context, ns resource.Namespace
 	return s.inner.ListIndexKeys(ctx, ns)
 }
 
+func (s *hookableStore) ListIndexKeysIncludingIncomplete(ctx context.Context, ns resource.NamespacedResource) ([]ulid.ULID, error) {
+	return s.inner.ListIndexKeysIncludingIncomplete(ctx, ns)
+}
+
 func (s *hookableStore) DeleteIndex(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID) error {
 	return s.inner.DeleteIndex(ctx, ns, indexKey)
 }

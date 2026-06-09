@@ -134,15 +134,18 @@ type ProvisioningAuthorizer struct {
 	repo                  *provisioning.Repository
 	reader                repository.Reader
 	access                auth.AccessChecker
+	clients               ResourceClients
 	folderMetadataEnabled bool
 }
 
-// NewAuthorizer creates a new ProvisioningAuthorizer.
-func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, access auth.AccessChecker, folderMetadataEnabled bool) Authorizer {
+// NewAuthorizer creates a new ProvisioningAuthorizer. The clients provide the set of
+// supported resources to authorize against.
+func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, access auth.AccessChecker, clients ResourceClients, folderMetadataEnabled bool) Authorizer {
 	return &ProvisioningAuthorizer{
 		repo:                  repo,
 		reader:                reader,
 		access:                access,
+		clients:               clients,
 		folderMetadataEnabled: folderMetadataEnabled,
 	}
 }
@@ -240,11 +243,18 @@ func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path string
 
 	// Folders are authorized through their own dedicated path (authorizeFolder,
 	// authorizeDeleteFolder, authorizeMoveFolder) — skip them here.
-	for _, gvr := range SupportedProvisioningResources {
-		if gvr == FolderResource {
+	// Match on group AND kind: resources can share a group (e.g. dashboards and library
+	// panels both live in dashboard.grafana.app), so matching on group alone would
+	// mis-authorize one as the other. The plural resource is resolved via discovery.
+	for _, supported := range a.clients.SupportedResources() {
+		if supported.GroupKind == FolderKind.GroupKind() {
 			continue
 		}
-		if gvr.Group == gvk.Group {
+		if supported.Group == gvk.Group && supported.Kind == gvk.Kind {
+			_, gvr, err := a.clients.ForKind(ctx, schema.GroupVersionKind{Group: supported.Group, Kind: supported.Kind})
+			if err != nil {
+				return schema.GroupVersionResource{}, fmt.Errorf("resolve client for %s/%s: %w", supported.Group, supported.Kind, err)
+			}
 			return gvr, nil
 		}
 	}
@@ -491,10 +501,14 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveByPath(ctx context.Context, source
 // AuthorizeReadAllSupported checks if the current user has read (get) permission
 // on every supported provisioning resource type at the root level.
 func (a *ProvisioningAuthorizer) AuthorizeReadAllSupported(ctx context.Context) error {
-	for _, kind := range SupportedProvisioningResources {
+	for _, kind := range a.clients.SupportedResources() {
+		_, gvr, err := a.clients.ForKind(ctx, schema.GroupVersionKind{Group: kind.Group, Kind: kind.Kind})
+		if err != nil {
+			return fmt.Errorf("resolve client for %s/%s: %w", kind.Group, kind.Kind, err)
+		}
 		if err := a.access.Check(ctx, authlib.CheckRequest{
-			Group:    kind.Group,
-			Resource: kind.Resource,
+			Group:    gvr.Group,
+			Resource: gvr.Resource,
 			Verb:     utils.VerbGet,
 		}, ""); err != nil {
 			return err
@@ -509,10 +523,14 @@ func (a *ProvisioningAuthorizer) AuthorizeReadAllSupported(ctx context.Context) 
 func (a *ProvisioningAuthorizer) AuthorizeCreateAllSupported(ctx context.Context) error {
 	targetFolder := RootFolder(a.repo)
 
-	for _, kind := range SupportedProvisioningResources {
+	for _, kind := range a.clients.SupportedResources() {
+		_, gvr, err := a.clients.ForKind(ctx, schema.GroupVersionKind{Group: kind.Group, Kind: kind.Kind})
+		if err != nil {
+			return fmt.Errorf("resolve client for %s/%s: %w", kind.Group, kind.Kind, err)
+		}
 		if err := a.access.Check(ctx, authlib.CheckRequest{
-			Group:    kind.Group,
-			Resource: kind.Resource,
+			Group:    gvr.Group,
+			Resource: gvr.Resource,
 			Verb:     utils.VerbCreate,
 		}, targetFolder); err != nil {
 			return err

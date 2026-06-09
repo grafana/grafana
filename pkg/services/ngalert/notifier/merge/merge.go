@@ -11,6 +11,7 @@ package merge
 import (
 	"context"
 	"fmt"
+	"maps"
 	"math"
 	"slices"
 	"strings"
@@ -25,17 +26,10 @@ import (
 
 // MergeResult represents the result of merging two Alertmanager configurations.
 // It contains the unified configuration and maps of renamed receivers and time intervals.
-//
-// Identifier, ExtraRoute and ExtraInhibitRules are populated by MergeExtraConfig
-// when the merge consumed an imported (Mimir-format) configuration; they expose the
-// imported route subtree and inhibit rules separately so callers can register them as
-// managed routes / managed inhibit rules.
 type MergeResult struct {
 	Config v1.AMConfigV1
 	RenameResources
-	Identifier        string
-	ExtraRoute        *v1.Route
-	ExtraInhibitRules []config.InhibitRule
+	Identifier string
 }
 
 type RenameResources struct {
@@ -90,7 +84,9 @@ func (m MergeResult) LogContext() []any {
 //
 //  3. Inhibit Rule Merging:
 //     - All inhibit rules from the extra configuration are copied to the result
-func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (MergeResult, error) {
+//
+// provenance is applied to templates and inhibition rules produced by the merge.
+func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1, provenance models.Provenance) (MergeResult, error) {
 	if len(cfg.ExtraConfigs) == 0 {
 		return MergeResult{Config: *cfg}, nil
 	}
@@ -103,6 +99,11 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (MergeResult, error
 	if err != nil {
 		return MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
 	}
+
+	if _, ok := cfg.ManagedRoutes[mimirCfg.Identifier]; ok || mimirCfg.Identifier == models.DefaultRoutingTreeName {
+		return MergeResult{}, fmt.Errorf("cannot merge because config %s because it conflicts with existing managed route", mimirCfg.Identifier)
+	}
+
 	mergedReceivers, renamedReceivers := Receivers(cfg.AlertmanagerConfig.Receivers, mcfg.Receivers, mimirCfg.Identifier)
 
 	mergedTimeIntervals, renamedTimeIntervals := TimeIntervals(
@@ -118,36 +119,55 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (MergeResult, error
 		TimeIntervals: renamedTimeIntervals,
 	}
 
-	extraRoute := mcfg.Route
-	RenameResourceUsagesInRoutes([]*v1.Route{extraRoute}, renamed)
+	managedRoutes := make(v1.ManagedRoutes, len(cfg.ManagedRoutes)+1)
+	{
+		maps.Copy(managedRoutes, cfg.ManagedRoutes)
+		extraRoute := mcfg.Route
+		RenameResourceUsagesInRoutes([]*v1.Route{extraRoute}, renamed)
+		managedRoutes[mimirCfg.Identifier] = extraRoute
+	}
 
-	route := cfg.AlertmanagerConfig.Route
-	inhibitRules := cfg.AlertmanagerConfig.InhibitRules
-	// TODO move adding managed routes and managed inhibit rules to cfg here
+	managedInhibitionRules := make(v1.ManagedInhibitionRules, len(mcfg.InhibitRules)+len(cfg.ManagedInhibitionRules))
+	{
+		maps.Copy(managedInhibitionRules, cfg.ManagedInhibitionRules)
+		importedRules, err := BuildManagedInhibitionRules(mimirCfg.Identifier, mcfg.InhibitRules, v1.Provenance(provenance))
+		if err != nil {
+			return MergeResult{}, fmt.Errorf("failed to build managed inhibition rules for imported configuration: %w", err)
+		}
+		maps.Copy(managedInhibitionRules, importedRules)
+	}
 
-	mergedConfig := v1.AMConfigV1{
-		Templates: cfg.Templates,
-		AlertmanagerConfig: v1.PostableApiAlertingConfig{
-			Config: v1.Config{
-				Global:            nil, // Grafana does not have global.
-				Route:             route,
-				InhibitRules:      inhibitRules,
-				MuteTimeIntervals: nil, // folded into TimeIntervals above
-				TimeIntervals:     mergedTimeIntervals,
-				Templates:         nil, // we do not use this.
-			},
-			Receivers: mergedReceivers,
-		},
-		ManagedRoutes:          cfg.ManagedRoutes,
-		ManagedInhibitionRules: cfg.ManagedInhibitionRules,
+	templates := make(map[v1.ResourceUID]v1.TemplateGroup, len(cfg.Templates)+len(mimirCfg.TemplateFiles))
+	{
+		maps.Copy(templates, cfg.Templates)
+		for name, content := range mimirCfg.TemplateFiles {
+			tmpl := v1.NewTemplateGroup(name, content, v1.TemplateKindMimir, provenance)
+			if _, ok := templates[tmpl.UID]; ok {
+				return MergeResult{}, fmt.Errorf("template [%s] of %s kind already exists", name, v1.TemplateKindMimir)
+			}
+			templates[tmpl.UID] = tmpl
+		}
 	}
 
 	return MergeResult{
-		Config:            mergedConfig,
-		RenameResources:   renamed,
-		Identifier:        mimirCfg.Identifier,
-		ExtraRoute:        extraRoute,
-		ExtraInhibitRules: mcfg.InhibitRules,
+		Config: v1.AMConfigV1{
+			ExtraConfigs: cfg.ExtraConfigs[1:],
+			Templates:    templates,
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Global:        nil, // Grafana does not use global. The Global settings are set to the respective integrations at parse time.
+					Route:         cfg.AlertmanagerConfig.Route,
+					InhibitRules:  cfg.AlertmanagerConfig.InhibitRules,
+					TimeIntervals: mergedTimeIntervals,
+					Templates:     nil, // Grafana does not use this.
+				},
+				Receivers: mergedReceivers,
+			},
+			ManagedRoutes:          managedRoutes,
+			ManagedInhibitionRules: managedInhibitionRules,
+		},
+		RenameResources: renamed,
+		Identifier:      mimirCfg.Identifier,
 	}, nil
 }
 
@@ -288,7 +308,7 @@ func createIndexReceivers(existing, incoming []*v1.PostableApiReceiver) map[stri
 	return usedNames
 }
 
-func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule) (v1.ManagedInhibitionRules, error) {
+func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule, provenance v1.Provenance) (v1.ManagedInhibitionRules, error) {
 	scopedRules := applyManagedRouteMatcher(identifier, rules)
 
 	res := make(v1.ManagedInhibitionRules, len(scopedRules))
@@ -301,7 +321,7 @@ func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule) 
 		}
 		name := fmt.Sprintf(namePrefix+intFmt, i)
 
-		ir, err := v1.InhibitRuleToInhibitionRule(name, rule, v1.Provenance(models.ProvenanceConvertedPrometheus))
+		ir, err := v1.InhibitRuleToInhibitionRule(name, rule, provenance)
 		if err != nil {
 			return nil, err
 		}
