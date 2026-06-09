@@ -91,7 +91,6 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 
 	if cfg.LiveMaxConnections == 0 {
 		logger.Debug("Grafana Live is disabled (max_connections=0)")
-		return g, nil
 	}
 
 	if cfg.LiveHAPrefix != "" {
@@ -396,15 +395,16 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 		pushPipelineWSHandler.ServeHTTP(ctx.Resp, r)
 	}
 
-	routeRegister.Group("/api/live", func(group routing.RouteRegister) {
-		group.Get("/ws", g.websocketHandler)
-	}, middleware.ReqSignedIn, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
+	if cfg.LiveMaxConnections > 0 {
+		routeRegister.Group("/api/live", func(group routing.RouteRegister) {
+			group.Get("/ws", g.websocketHandler)
+		}, middleware.ReqSignedIn, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
 
-	routeRegister.Group("/api/live", func(group routing.RouteRegister) {
-		group.Get("/push/:streamId", g.pushWebsocketHandler)
-		group.Get("/pipeline/push/*", g.pushPipelineWebsocketHandler)
-	}, middleware.ReqOrgAdmin, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
-
+		routeRegister.Group("/api/live", func(group routing.RouteRegister) {
+			group.Get("/push/:streamId", g.pushWebsocketHandler)
+			group.Get("/pipeline/push/*", g.pushPipelineWebsocketHandler)
+		}, middleware.ReqOrgAdmin, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
+	}
 	g.registerUsageMetrics()
 
 	return g, nil

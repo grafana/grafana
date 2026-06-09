@@ -351,11 +351,19 @@ func Test_DisabledWhenMaxConnectionsIsZero(t *testing.T) {
 
 	g, err := setupLiveService(cfg, t)
 	require.NoError(t, err)
-	require.NotNil(t, g)
 
-	t.Run("grafana live is disabled", func(t *testing.T) {
-		assert.Equal(t, cfg, g.Cfg)
-	})
+	testPaths := []string{
+		"/api/live/ws",
+		"/api/live/push/:streamId",
+		"/api/live/pipeline/push/*",
+	}
+
+	// Because we skipped registering these endpoints they should not exist 
+	// on the router registry. Grafana's engine will natively 404 on them.
+	for _, path := range testPaths {
+		require.False(t, g.RouteRegister.HasRoute(path), 
+			"Path %s should not be registered when live is disabled", path,
+	}
 }
 
 func setupLiveService(cfg *setting.Cfg, t *testing.T) (*GrafanaLive, error) {
