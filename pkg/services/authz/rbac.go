@@ -89,9 +89,6 @@ func ProvideAuthZClient(
 		if cfg != nil {
 			rbacSettings.AnonOrgRole = cfg.Anonymous.OrgRole
 		}
-		// Resolve unified-storage identities via the IAM apiserver, gated on the
-		// kubernetesUsersRedirect toggle.
-		rbacSettings.UserIdentityConfigProvider = restConfig.GetRestConfig
 
 		// Register the server
 		server := rbac.NewService(

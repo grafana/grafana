@@ -2187,7 +2187,7 @@ func (f *fakeStore) GetBasicRoles(ctx context.Context, namespace types.Namespace
 	return f.basicRole, nil
 }
 
-func (f *fakeStore) GetUserIdentifiers(ctx context.Context, ns types.NamespaceInfo, query store.UserIdentifierQuery) (*store.UserIdentifiers, error) {
+func (f *fakeStore) GetUserIdentifiers(ctx context.Context, query store.UserIdentifierQuery) (*store.UserIdentifiers, error) {
 	if _, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && !ok {
 		return nil, fmt.Errorf("namespace not found")
 	}

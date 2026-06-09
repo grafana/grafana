@@ -14,7 +14,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/client-go/rest"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
@@ -72,9 +71,6 @@ type Settings struct {
 	// LocalFolderCacheTTL, when non-zero, adds an in-memory L1 cache in front
 	// of the remote folder cache to reduce round-trips and deserialization cost.
 	LocalFolderCacheTTL time.Duration
-	// UserIdentityConfigProvider, when set, enables resolving users from unified
-	// storage, gated on the kubernetesUsersRedirect toggle.
-	UserIdentityConfigProvider func(ctx context.Context) (*rest.Config, error)
 }
 
 func NewService(
@@ -92,7 +88,7 @@ func NewService(
 		settings.AnonOrgRole = "Viewer"
 	}
 	return &Service{
-		store:           store.NewStore(sql, tracer, settings.UserIdentityConfigProvider),
+		store:           store.NewStore(sql, tracer),
 		folderStore:     folderStore,
 		permissionStore: permissionStore,
 		identityStore:   identityStore,
@@ -774,7 +770,7 @@ func (s *Service) GetUserIdentifiers(ctx context.Context, ns types.NamespaceInfo
 	} else {
 		userIDQuery = store.UserIdentifierQuery{UserUID: userUID}
 	}
-	userIdentifiers, err := s.store.GetUserIdentifiers(ctx, ns, userIDQuery)
+	userIdentifiers, err := s.store.GetUserIdentifiers(ctx, userIDQuery)
 	if err != nil {
 		return nil, fmt.Errorf("could not get user internal id: %w", err)
 	}
@@ -828,7 +824,7 @@ func (s *Service) getUserBasicRole(ctx context.Context, ns types.NamespaceInfo, 
 		return cached, nil
 	}
 
-	basicRole, err := s.store.GetBasicRoles(ctx, ns, store.BasicRoleQuery{UserID: userIdentifiers.ID, UserUID: userIdentifiers.UID})
+	basicRole, err := s.store.GetBasicRoles(ctx, ns, store.BasicRoleQuery{UserID: userIdentifiers.ID})
 	if err != nil {
 		return store.BasicRole{}, fmt.Errorf("could not get basic roles: %w", err)
 	}
