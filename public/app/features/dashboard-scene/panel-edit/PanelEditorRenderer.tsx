@@ -10,7 +10,6 @@ import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/const
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../scene/SoloPanelContext';
 import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
@@ -188,7 +187,6 @@ function VizWrapper({ panel, tableView, dashboard }: VizWrapperProps) {
 }
 
 function getStyles(theme: GrafanaTheme2) {
-  const scrollReflowMediaQuery = '@media ' + scrollReflowMediaCondition;
   return {
     pageContainer: css({
       display: 'flex',
@@ -216,16 +214,10 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     content: css({
       width: '100%',
-      overflow: 'unset',
+      overflow: 'hidden',
       flexGrow: 1,
-      [scrollReflowMediaQuery]: {
-        height: 'auto',
-        display: 'grid',
-        gridTemplateColumns: 'minmax(470px, 1fr) 330px',
-        gridTemplateRows: '1fr',
-        gap: theme.spacing(1),
-        position: 'static',
-        width: '100%',
+      [theme.breakpoints.down('sm')]: {
+        overflow: 'unset',
       },
     }),
     body: css({

@@ -1,5 +1,7 @@
 import { useMedia } from 'react-use';
 
+import { useTheme2 } from '@grafana/ui';
+
 /**
  * Media query body "(max-height: 540px)" which matches screens small enough we have zoom reflow
  * problems.
@@ -11,5 +13,6 @@ export const scrollReflowMediaCondition = '(max-height: 540px)';
  * @returns {boolean} true when the screen is small enough to need zoom reflow handling
  */
 export function useScrollReflowLimit(): boolean {
-  return useMedia(scrollReflowMediaCondition);
+  const theme = useTheme2();
+  return useMedia(theme.breakpoints.down('sm'));
 }
