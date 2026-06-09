@@ -1,3 +1,32 @@
+<!-- 12.4.4 START -->
+
+# 12.4.4 (2026-06-09)
+
+### Features and enhancements
+
+- **Browse dashboards:** Make elements visible and flow better when zoomed [#120678](https://github.com/grafana/grafana/pull/120678), [@aocenas](https://github.com/aocenas)
+- **Docker:** Bump Alpine-based images to 3.23.4 [#123027](https://github.com/grafana/grafana/pull/123027), [@Proximyst](https://github.com/Proximyst)
+- **Go:** Update version to 1.26.3 [#124456](https://github.com/grafana/grafana/pull/124456), [@macabu](https://github.com/macabu)
+- **Graphite:** Strip tagged path from `tags.name` when `aliasSub` wrapping is detected [#122619](https://github.com/grafana/grafana/pull/122619), [@adamyeats](https://github.com/adamyeats)
+- **LibraryPanels:** Return 403 instead of 500 for insufficient permissions [#123470](https://github.com/grafana/grafana/pull/123470), [@MissingRoberto](https://github.com/MissingRoberto)
+- **Plugins:** Sanitise header values to printable ASCII for gRPC compatibility [#122474](https://github.com/grafana/grafana/pull/122474), [@adamyeats](https://github.com/adamyeats)
+
+### Bug fixes
+
+- **Alerting:** Fix AlertManagerPicker visibility to check Alertmanager datasources [#124073](https://github.com/grafana/grafana/pull/124073), [@konrad147](https://github.com/konrad147)
+- **Alerting:** Treat not found error when fetching plugins as not installed [#122989](https://github.com/grafana/grafana/pull/122989), [@rodrigopk](https://github.com/rodrigopk)
+- **DashboardDS:** Fix Mixed panels not updating on time-range change with stale upstreams [#124893](https://github.com/grafana/grafana/pull/124893), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Jaeger:** Fix log event timestamp unit conversion in trace view [#123711](https://github.com/grafana/grafana/pull/123711), [@ktw4071](https://github.com/ktw4071)
+- **PostgreSQL:** Allow sql_engine to return results for EXPLAIN queries [#123245](https://github.com/grafana/grafana/pull/123245), [@sdague](https://github.com/sdague)
+- **Security**: CVE-2026-9029
+- **Security**: CVE-2026-33382
+- **Security**: CVE-2026-42127
+- **Security**: CVE-2026-42129
+- **Security**: CVE-2026-10601
+- **Security**: CVE-2026-8609
+- **Security**: CVE-2026-8595
+
+<!-- 12.4.4 END -->
 <!-- 12.4.3 START -->
 
 # 12.4.3 (2026-04-14)
