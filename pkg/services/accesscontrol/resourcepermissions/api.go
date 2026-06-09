@@ -8,9 +8,11 @@ import (
 
 	"go.opentelemetry.io/otel"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -367,26 +369,33 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	// Teams-specific dual-write: write to Team.Spec.Members via the K8s API, then always
-	// fall through to the legacy path so both systems stay in sync during migration.
-	// On failure — including ErrRestConfigNotAvailable — the K8s error is logged but the
-	// legacy write still proceeds, matching the read path's fallback behavior and keeping
-	// the system available during transient K8s outages.
+	// Teams-specific redirect: write to Team.Spec.Members via the K8s API. In Mode4/5
+	// unified storage is authoritative, so there is no legacy fallback — return the K8s
+	// result directly (avoids turning a successful update into a 500 when the identity
+	// only exists in unified storage). In Mode0-3 we dual-write, so fall through to the
+	// legacy path below regardless of the K8s outcome.
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if a.service.options.Resource == "teams" && a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamsRedirect) {
 		err := a.setUserPermissionInTeamMembers(c, c.Namespace, resourceID, userID, cmd.Permission)
+		skipLegacy := a.cfg.UnifiedStorageConfig(iamv0.TeamResourceInfo.GroupResource().String()).DualWriterMode > grafanarest.Mode3
 		if err != nil {
 			span.RecordError(err)
 			if errors.Is(err, ErrExternalTeamMember) {
 				return response.Err(err)
 			}
 			if errors.Is(err, ErrRestConfigNotAvailable) {
-				a.logger.Debug("k8s API not available for team permissions via team members, continuing with legacy", "error", err, "resourceID", resourceID)
+				a.logger.Debug("k8s API not available for team permissions via team members", "error", err, "resourceID", resourceID)
 			} else {
-				a.logger.Warn("Failed to set user permission via team members k8s API, continuing with legacy", "error", err, "resourceID", resourceID)
+				a.logger.Warn("Failed to set user permission via team members k8s API", "error", err, "resourceID", resourceID)
+			}
+			if skipLegacy {
+				return response.Err(err)
 			}
 		} else {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "success").Inc()
+			if skipLegacy {
+				return permissionSetResponse(cmd)
+			}
 		}
 	}
 
