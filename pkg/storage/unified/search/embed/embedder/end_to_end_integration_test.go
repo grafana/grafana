@@ -48,7 +48,7 @@ import (
 func TestIntegration_EndToEndDashboardSearch(t *testing.T) {
 	providerName := os.Getenv("EMBED_PROVIDER")
 	if providerName == "" {
-		t.Skip("EMBED_PROVIDER not set (expected: vertex | bedrock)")
+		t.Skip("EMBED_PROVIDER not set (expected: vertex | bedrock | azure)")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)

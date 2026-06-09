@@ -11,35 +11,21 @@ import (
 	"strings"
 )
 
-// Doer is the subset of *http.Client we use; declaring it as an interface
-// keeps the client testable without a live Azure endpoint.
-type Doer interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
 // restClient calls the Azure OpenAI embeddings REST API for a single
 // deployment. Construct with NewClient.
 type restClient struct {
-	httpClient Doer
+	httpClient *http.Client
 	endpoint   string // base resource URL, e.g. https://my-resource.openai.azure.com
 	deployment string
 	apiVersion string
 	apiKey     string
 }
 
-// Option configures the restClient.
-type Option func(*restClient)
-
-// WithHTTPClient overrides the HTTP client (e.g. for instrumentation or tests).
-func WithHTTPClient(d Doer) Option {
-	return func(c *restClient) { c.httpClient = d }
-}
-
 // NewClient builds a Client for the given Azure OpenAI resource endpoint and
 // embeddings deployment. Authentication uses the static API key via the
 // `api-key` header (the caller populates it from the AZURE_OPENAI_API_KEY env
 // var). deployment is the Azure deployment name, not the base model name.
-func NewClient(endpoint, deployment, apiVersion, apiKey string, opts ...Option) (Client, error) {
+func NewClient(endpoint, deployment, apiVersion, apiKey string) (Client, error) {
 	if endpoint == "" {
 		return nil, fmt.Errorf("azure: endpoint is required")
 	}
@@ -52,17 +38,13 @@ func NewClient(endpoint, deployment, apiVersion, apiKey string, opts ...Option) 
 	if apiVersion == "" {
 		apiVersion = "2024-02-01"
 	}
-	c := &restClient{
-		httpClient: http.DefaultClient,
+	return &restClient{
+		httpClient: &http.Client{},
 		endpoint:   strings.TrimRight(endpoint, "/"),
 		deployment: deployment,
 		apiVersion: apiVersion,
 		apiKey:     apiKey,
-	}
-	for _, o := range opts {
-		o(c)
-	}
-	return c, nil
+	}, nil
 }
 
 // embedRequest is the JSON body the Azure OpenAI embeddings endpoint expects.
