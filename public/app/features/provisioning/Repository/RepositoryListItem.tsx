@@ -4,11 +4,12 @@ import { type ReactNode } from 'react';
 import { type GrafanaTheme2, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Badge, Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
+import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
 import { PROVISIONING_URL } from '../constants';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
@@ -67,9 +68,7 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={2} direction="row" alignItems="center" wrap>
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
-          {isReadOnlyRepo && (
-            <Badge color="darkgrey" text={t('provisioning.repository-card.read-only-badge', 'Read only')} />
-          )}
+          {isReadOnlyRepo && <ReadOnlyBadge isLocal={spec?.type === 'local'} />}
         </Stack>
       </Card.Heading>
 

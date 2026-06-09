@@ -1,10 +1,11 @@
 import { textUtil } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Badge, Button, LinkButton, Stack } from '@grafana/ui';
+import { Button, LinkButton, Stack } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StatusBadge } from '../Shared/StatusBadge';
+import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
 import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 import { getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
@@ -29,7 +30,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
 
   return (
     <Stack wrap="wrap">
-      {isReadOnlyRepo && <Badge color="darkgrey" text={t('folder-repo.read-only-badge', 'Read only')} />}
+      {isReadOnlyRepo && <ReadOnlyBadge isLocal={repoType === 'local'} />}
       <StatusBadge repo={repository} displayOnly />
       {repoHref && (
         <Button variant="secondary" icon={providerIcon} onClick={() => window.open(repoHref, '_blank')}>

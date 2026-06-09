@@ -9152,9 +9152,6 @@
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
-  "folder-repo": {
-    "read-only-badge": "Read only"
-  },
   "folders": {
     "api": {
       "anonymous-user": "Anonymous",
@@ -13781,7 +13778,6 @@
     },
     "repository-card": {
       "last-sync": "Last sync: {{date}}",
-      "read-only-badge": "Read only",
       "settings": "Settings",
       "view": "View"
     },
