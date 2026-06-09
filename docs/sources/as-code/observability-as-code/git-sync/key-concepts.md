@@ -113,6 +113,8 @@ With Git Sync you can place synced resources in Grafana in two ways:
 - **Folder sync**: Grafana creates a folder named after the repository and places all synced resources inside it. Subdirectories in the repository become subfolders within that folder. **This is the default behavior**.
 - **Folderless sync**: Grafana places synced resources at the top level, without creating a wrapper folder. Files at the repository path root become top-level resources, and subdirectories become top-level folders.
 
+Use folder sync to keep each repository's resources grouped together under a dedicated folder. Use folderless sync when you want provisioned resources to appear at the top of your Dashboards view instead of nested inside a repository folder.
+
 Both modes can coexist with each other and with resources that aren't managed by Git Sync.
 
 The following examples use the same repository to show how the same files appear with each mode.
@@ -171,8 +173,6 @@ Dashboards
 │   └── Monthly Invoices
 └── Ad-hoc dashboard           ← not managed by Git Sync
 ```
-
-Use folderless sync when you want provisioned resources to appear at the top of your Dashboards view instead of nested inside a repository folder, while still keeping other repositories and manually created resources untouched.
 
 ### Git Sync states
 
