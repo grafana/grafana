@@ -229,6 +229,7 @@ jobs:
           commit_message: "Update changelog"
           repo: ${{ github.repository }}
           branch: ${{ env.WORK_BRANCH }}
+          empty: "true"
           file_pattern: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
@@ -252,6 +253,7 @@ jobs:
           commit_message: "Update version to ${{ env.VERSION }}"
           repo: ${{ github.repository }}
           branch: ${{ env.WORK_BRANCH }}
+          empty: "true"
           file_pattern: "package.json lerna.json packages/** public/** e2e-playwright/test-plugins/**"
         env:
           GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
@@ -268,6 +270,7 @@ jobs:
           commit_message: "Update yarn.lock for ${{ env.VERSION }}"
           repo: ${{ github.repository }}
           branch: ${{ env.WORK_BRANCH }}
+          empty: "true"
           file_pattern: yarn.lock
         env:
           GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
@@ -283,6 +286,7 @@ jobs:
           commit_message: "Regenerate CUE schemas for ${{ env.VERSION }}"
           repo: ${{ github.repository }}
           branch: ${{ env.WORK_BRANCH }}
+          empty: "true"
           file_pattern: "**"
         env:
           GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}

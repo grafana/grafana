@@ -48,7 +48,7 @@ jobs:
           version: ${{ inputs.version }}
       - run: echo "WORK_BRANCH=bump-version/${RUN_ID}/${VERSION}" >> "$GITHUB_ENV"
       # Pre-create the branch on the remote so kminehart has a target ref to commit to.
-      - if: ${{ inputs.push }}
+      - if: ${{ inputs.push == true || inputs.push == 'true' }}
         name: Pre-create branch on remote
         env:
           GH_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
@@ -58,7 +58,7 @@ jobs:
             --method POST \
             -f "ref=refs/heads/${WORK_BRANCH}" \
             -f "sha=${BASE_SHA}"
-      - if: ${{ inputs.push }}
+      - if: ${{ inputs.push == true || inputs.push == 'true' }}
         name: Commit bump-version changes
         uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
         with:
@@ -68,7 +68,7 @@ jobs:
           file_pattern: "**"
         env:
           GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
-      - if: ${{ inputs.push }}
+      - if: ${{ inputs.push == true || inputs.push == 'true' }}
         name: Create PR
         env:
           GH_TOKEN: ${{ github.token }}
