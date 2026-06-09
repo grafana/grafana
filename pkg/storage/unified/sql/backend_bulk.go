@@ -356,7 +356,11 @@ func (b *backend) analyzeResourceHistoryForBackfill(ctx context.Context, tx db.C
 	if b.dialect.DialectName() != "postgres" || processed < int64(b.analyzeBulkRowThreshold) {
 		return nil
 	}
-	_, err := tx.ExecContext(ctx, `ANALYZE "resource_history"`)
+	table, err := b.dialect.Ident("resource_history")
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, "ANALYZE "+table)
 	return err
 }
 
