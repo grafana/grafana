@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -34,10 +35,11 @@ type capturedRequest struct {
 	cookies   map[string]string
 }
 
-// TestIntegrationDatasourceProxy exercises the datasource frontend proxy. Each
-// behavior is asserted per transport (see the transports slice) so the same
-// pluginproxy.DataSourceProxy machinery is covered through every route it is
-// served from.
+// TestIntegrationDatasourceProxy exercises the datasource frontend proxy through
+// both the legacy (/api/datasources/proxy/...) and the apiserver
+// (.../datasources/<uid>/proxy/...) routes. Both share the same
+// pluginproxy.DataSourceProxy machinery, so every behavior is asserted per
+// transport (see the transports slice).
 func TestIntegrationDatasourceProxy(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -87,6 +89,10 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // start the datasource api servers
+			featuremgmt.FlagDatasourceUseNewCRUDAPIs,             // register the datasource api groups
+		},
 	})
 
 	ds := helper.CreateDS(&datasources.AddDataSourceCommand{
@@ -126,6 +132,9 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 	legacyPath := func(dsUID, sub string) string {
 		return "/api/datasources/proxy/uid/" + dsUID + "/" + sub
 	}
+	apiserverPath := func(dsUID, sub string) string {
+		return "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/" + dsUID + "/proxy/" + sub
+	}
 
 	// A viewer with the query permission may reach the proxy, but the Prometheus
 	// admin (rules) routes require the Editor role.
@@ -143,6 +152,7 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 		path func(dsUID, sub string) string
 	}{
 		{"legacy", legacyPath},
+		{"apiserver", apiserverPath},
 	}
 
 	for _, transport := range transports {
