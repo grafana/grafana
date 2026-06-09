@@ -213,27 +213,6 @@ jobs:
       - name: "Prettify CHANGELOG.md"
         if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
         run: npx prettier --write CHANGELOG.md
-      # All commits go through kminehart/ghcommit-action, which uses the Git Data API.
-      # Two reasons we have to do this rather than a normal git push:
-      #   1. Commits made via the Git Data API with a GitHub App installation token are
-      #      automatically signed by GitHub under the App's identity (grafana-writer[bot]),
-      #      with a Verified signature -- satisfying upcoming required_signatures rules.
-      #   2. Regular git push to grafana/grafana hits the pre-receive workflow-file scan
-      #      timeout (the repo is too large for the scan to finish in time), causing
-      #      pushes to be rejected. The grafana-writer token's workflows:write skips that
-      #      scan; the API path piggybacks on the same authorization.
-      - name: Commit CHANGELOG.md
-        if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
-        uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
-        with:
-          commit_message: "Update changelog"
-          repo: ${{ github.repository }}
-          branch: ${{ env.WORK_BRANCH }}
-          empty: "true"
-          file_pattern: CHANGELOG.md
-        env:
-          GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
-
       # Remove the main checkout before lerna runs so nx doesn't see duplicate plugin
       # package.json files across .grafana-main and the release-branch tree.
       - name: Remove main checkout before bump
@@ -245,45 +224,30 @@ jobs:
           yarn install
           npm version patch --no-git-tag-version
           yarn run lerna version patch --no-push --no-git-tag-version --force-publish --exact --yes
+          yarn install
           yarn prettier:write
-      - name: Commit version bumps
-        if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
-        uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
-        with:
-          commit_message: "Update version to ${{ env.VERSION }}"
-          repo: ${{ github.repository }}
-          branch: ${{ env.WORK_BRANCH }}
-          empty: "true"
-          file_pattern: "package.json lerna.json packages/** public/** e2e-playwright/test-plugins/**"
-        env:
-          GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
-
-      # Second yarn install: refresh yarn.lock with the new workspace package refs
-      # produced by lerna. Committed separately to keep each commit small.
-      - name: Update yarn.lock for new package versions
-        if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
-        run: yarn install
-      - name: Commit yarn.lock
-        if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
-        uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
-        with:
-          commit_message: "Update yarn.lock for ${{ env.VERSION }}"
-          repo: ${{ github.repository }}
-          branch: ${{ env.WORK_BRANCH }}
-          empty: "true"
-          file_pattern: yarn.lock
-        env:
-          GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
-
       - name: make gen-cue
         if: ${{ !contains(inputs.version, '+security') }}
         shell: bash
         run: make gen-cue
-      - name: Commit gen-cue changes
-        if: ${{ !contains(inputs.version, '+security') }}
+
+      # Single commit for all release-PR file changes (changelog + version bumps +
+      # yarn.lock refresh + regenerated CUE schemas). ghcommit-action uses the Git Data
+      # API, which gives us two things in one shot:
+      #   1. Commits made via the API with a GitHub App installation token are auto-signed
+      #      by GitHub under grafana-writer[bot]'s identity (Verified signature),
+      #      satisfying upcoming required_signatures rules.
+      #   2. The grafana-writer token's workflows:write skips the pre-receive workflow-file
+      #      scan that otherwise times out on grafana/grafana (the repo is too large for
+      #      the scan to finish in time, causing pushes to be rejected regardless of
+      #      whether workflow files were touched).
+      # Doing it as a single commit also avoids the parent-SHA mismatch ghcommit-action
+      # hits when multiple sequential API commits are made on the same branch (each
+      # commit advances the remote ref while local HEAD doesn't).
+      - name: Commit release-PR changes
         uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
         with:
-          commit_message: "Regenerate CUE schemas for ${{ env.VERSION }}"
+          commit_message: "Release: ${{ env.VERSION }}"
           repo: ${{ github.repository }}
           branch: ${{ env.WORK_BRANCH }}
           empty: "true"
