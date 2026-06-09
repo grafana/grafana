@@ -345,6 +345,19 @@ func Test_handleOnSubscribe_IDTokenExpiration(t *testing.T) {
 	})
 }
 
+func Test_DisabledWhenMaxConnectionsIsZero(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.LiveMaxConnections = 0
+
+	g, err := setupLiveService(cfg, t)
+	require.NoError(t, err)
+	require.NotNil(t, g)
+
+	t.Run("grafana live is disabled", func(t *testing.T) {
+		assert.Equal(t, cfg, g.Cfg)
+	})
+}
+
 func setupLiveService(cfg *setting.Cfg, t *testing.T) (*GrafanaLive, error) {
 	if cfg == nil {
 		cfg = setting.NewCfg()

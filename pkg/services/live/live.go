@@ -89,6 +89,11 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 		keyPrefix:         "gf_live",
 	}
 
+	if cfg.LiveMaxConnections == 0 {
+		logger.Debug("Grafana Live is disabled (max_connections=0)")
+		return g, nil
+	}
+
 	if cfg.LiveHAPrefix != "" {
 		// Once this is deployed across all waves in grafana cloud, we can remove the configured LiveHAPrefix
 		// This is OK because the channel prefix now starts with the full stack identifier
