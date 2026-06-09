@@ -17,11 +17,10 @@ import (
 var env = common.NewSharedEnv(
 	common.WithoutProvisioningFolderMetadata,
 	func(opts *testinfra.GrafanaOpts) {
-		// Setting [provisioning] resources replaces the default set, so the
-		// always-on kinds must be listed alongside the now-active Playlist.
+		// Setting [provisioning] resources replaces the default set. This package only
+		// needs playlists; folders remain because they are foundational to provisioning.
 		opts.ProvisioningResources = []string{
 			"folder.grafana.app/Folder:folder",
-			"dashboard.grafana.app/Dashboard:folder",
 			"playlist.grafana.app/Playlist",
 		}
 		// Exercise the playlist apiserver's RBAC authorizer (playlists:read/write),
