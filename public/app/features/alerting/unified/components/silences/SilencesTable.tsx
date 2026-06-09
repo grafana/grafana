@@ -34,6 +34,7 @@ import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps 
 import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
 
 import { Matchers } from './Matchers';
+import { MissingAlertRuleWarning } from './MissingAlertRuleWarning';
 import { NoSilencesSplash } from './NoSilencesCTA';
 import { SilenceDetails } from './SilenceDetails';
 import { SilenceStateTag } from './SilenceStateTag';
@@ -301,15 +302,20 @@ function useColumns(alertManagerSourceName: string) {
         id: 'alert-rule',
         label: t('alerting.use-columns.columns.label.alert-rule-targeted', 'Alert rule targeted'),
         renderCell: function renderAlertRuleLink({ data: { metadata } }) {
-          return metadata?.rule_title ? (
-            <Link
-              href={`/alerting/grafana/${metadata?.rule_uid}/view?returnTo=${encodeURIComponent('/alerting/silences')}`}
-            >
-              {metadata.rule_title}
-            </Link>
-          ) : (
-            'None'
-          );
+          const ruleUid = metadata?.rule_uid;
+          if (!ruleUid) {
+            return 'None';
+          }
+          if (metadata.rule_title) {
+            return (
+              <Link
+                href={`/alerting/grafana/${encodeURIComponent(ruleUid)}/view?returnTo=${encodeURIComponent('/alerting/silences')}`}
+              >
+                {metadata.rule_title}
+              </Link>
+            );
+          }
+          return <MissingAlertRuleWarning ruleUid={ruleUid} />;
         },
         size: 8,
       },
