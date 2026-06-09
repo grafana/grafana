@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -87,7 +86,7 @@ func (c *jobsConnector) Connect(
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
-	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		prefix := fmt.Sprintf("/%s/jobs/", name)
 		idx := strings.Index(r.URL.Path, prefix)
 
@@ -114,7 +113,7 @@ func (c *jobsConnector) Connect(
 		}
 
 		c.handleCreateJob(ctx, r, name, spec, responder)
-	}), 30*time.Second), nil
+	}), nil
 }
 
 // handleGetJob serves GET requests for job history — either a single job by
@@ -172,7 +171,7 @@ func (c *jobsConnector) handleCreateJob(ctx context.Context, r *http.Request, na
 	}
 
 	if spec.Action == provisioning.JobActionPull {
-		if err := c.authorizeAdminJob(r.Context(), cfg); err != nil {
+		if err := c.authorizeAdminJob(ctx, cfg); err != nil {
 			responder.Error(err)
 			return
 		}
@@ -183,7 +182,7 @@ func (c *jobsConnector) handleCreateJob(ctx context.Context, r *http.Request, na
 		return
 	}
 
-	if err := c.authorizeJob(r.Context(), repo, cfg, spec); err != nil {
+	if err := c.authorizeJob(ctx, repo, cfg, spec); err != nil {
 		responder.Error(err)
 		return
 	}
@@ -277,7 +276,7 @@ func (c *jobsConnector) handleOrphanCleanupJob(ctx context.Context, r *http.Requ
 		return
 	}
 
-	if err := c.authorizeAdminJob(r.Context(), &provisioning.Repository{
+	if err := c.authorizeAdminJob(ctx, &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Namespace: ns},
 	}); err != nil {
 		responder.Error(err)

@@ -30,16 +30,15 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/selection"
 
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
-
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 const (
@@ -2147,6 +2146,32 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	// filters
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
+			// Temporarily expand a root-folder filter so it matches both the
+			// legacy empty sentinel ("") and the canonical "general" UID. This
+			// keeps results consistent whether the index was written before or
+			// after the apistore started stamping "general" on root-parented
+			// resources. Done here so every caller stays agnostic of the
+			// sentinel used on disk.
+			if v.Key == resource.SEARCH_FIELD_FOLDER &&
+				(v.Operator == string(selection.Equals) || v.Operator == string(selection.In)) {
+				expanded := false
+				values := make([]string, 0, len(v.Values)+1)
+				for _, val := range v.Values {
+					if !foldermodel.IsRootFolderUID(val) {
+						values = append(values, val)
+						continue
+					}
+					if !expanded {
+						values = append(values, "", foldermodel.GeneralFolderUID)
+						expanded = true
+					}
+				}
+				if expanded {
+					v.Operator = string(selection.In)
+					v.Values = values
+				}
+			}
+
 			// Fields should already have correct prefix (either "fields." or "selectableFields.")
 			q, err := requirementQuery(v, "")
 			if err != nil {
