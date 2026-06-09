@@ -14,9 +14,9 @@ import {
   UnknownRuleListItem,
 } from './components/AlertRuleListItem';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
-import { useChainDrawer } from './evaluation-chains/ChainDrawerContext';
-import { EvaluationChainLink } from './evaluation-chains/EvaluationChainLink';
-import { useGrafanaRuleChainMembership } from './evaluation-chains/useGrafanaRuleChainMembership';
+import { useRuleSequenceDrawer } from './rule-sequences/RuleSequenceDrawerContext';
+import { RuleSequenceLink } from './rule-sequences/RuleSequenceLink';
+import { useGrafanaRuleSequenceMembership } from './rule-sequences/useGrafanaRuleSequenceMembership';
 
 interface GrafanaRuleListItemProps {
   rule: GrafanaPromRuleDTO;
@@ -36,8 +36,8 @@ export function GrafanaRuleListItem({
   evalIntervalSeconds,
 }: GrafanaRuleListItemProps) {
   const { name, uid, labels, provenance } = rule;
-  const membership = useGrafanaRuleChainMembership(rule);
-  const { openChainDrawer } = useChainDrawer();
+  const membership = useGrafanaRuleSequenceMembership(rule);
+  const { openRuleSequenceDrawer } = useRuleSequenceDrawer();
 
   const groupUrl = groups.detailsPageLink(
     GRAFANA_RULES_SOURCE_NAME,
@@ -45,13 +45,8 @@ export function GrafanaRuleListItem({
     groupIdentifier.groupName
   );
 
-  const chainLink = membership ? (
-    <EvaluationChainLink
-      chainId={membership.id}
-      position={membership.position}
-      total={membership.total}
-      onClick={openChainDrawer}
-    />
+  const ruleSequenceLink = membership ? (
+    <RuleSequenceLink sequenceName={membership.id} ruleUid={uid} onClick={openRuleSequenceDrawer} />
   ) : undefined;
 
   const commonProps: RuleListItemCommonProps = {
@@ -85,13 +80,13 @@ export function GrafanaRuleListItem({
         instancesCount={instancesCount}
         operation={operation}
         showLocation={showLocation}
-        chainLink={chainLink}
+        ruleSequenceLink={ruleSequenceLink}
       />
     );
   }
 
   if (prometheusRuleType.grafana.recordingRule(rule)) {
-    return <RecordingRuleListItem {...commonProps} showLocation={showLocation} chainLink={chainLink} />;
+    return <RecordingRuleListItem {...commonProps} showLocation={showLocation} ruleSequenceLink={ruleSequenceLink} />;
   }
 
   return <UnknownRuleListItem ruleName={name} groupIdentifier={groupIdentifier} ruleDefinition={rule} />;

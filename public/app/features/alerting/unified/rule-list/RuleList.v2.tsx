@@ -22,17 +22,17 @@ import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
-import { ChainDrawerProvider } from './evaluation-chains/ChainDrawerContext';
 import RulesFilter from './filter/RulesFilter.v2';
 import { RulesFilterSidebar } from './filter/RulesFilterSidebar';
 import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
+import { RuleSequenceDrawerProvider } from './rule-sequences/RuleSequenceDrawerContext';
 
 function RuleList() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
 
   return (
-    <ChainDrawerProvider>
+    <RuleSequenceDrawerProvider>
       <Stack direction="column">
         <AlertsActivityBanner />
         <Stack direction="column" gap={2}>
@@ -49,7 +49,7 @@ function RuleList() {
           </Stack>
         </Stack>
       </Stack>
-    </ChainDrawerProvider>
+    </RuleSequenceDrawerProvider>
   );
 }
 

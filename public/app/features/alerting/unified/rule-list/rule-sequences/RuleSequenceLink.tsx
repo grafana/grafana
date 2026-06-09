@@ -7,19 +7,18 @@ import { useStyles2 } from '@grafana/ui';
 
 import { MetaText } from '../../components/MetaText';
 
-interface EvaluationChainLinkProps {
-  chainId: string;
-  position: number;
-  total: number;
-  onClick: (chainId: string, position: number) => void;
+interface RuleSequenceLinkProps {
+  sequenceName: string;
+  ruleUid: string;
+  onClick: (sequenceName: string, ruleUid: string) => void;
 }
 
-export function EvaluationChainLink({ chainId, position, total, onClick }: EvaluationChainLinkProps) {
+export function RuleSequenceLink({ sequenceName, ruleUid, onClick }: RuleSequenceLinkProps) {
   const styles = useStyles2(getStyles);
 
   function handleClick(event: MouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
-    onClick(chainId, position);
+    onClick(sequenceName, ruleUid);
   }
 
   return (
@@ -28,13 +27,9 @@ export function EvaluationChainLink({ chainId, position, total, onClick }: Evalu
         type="button"
         className={styles.link}
         onClick={handleClick}
-        aria-label={t(
-          'alerting.evaluation-chain.link.label',
-          'Open evaluation chain (position {{position}} of {{total}})',
-          { position, total }
-        )}
+        aria-label={t('alerting.rule-sequence.link.label', 'Open rule sequence')}
       >
-        <Trans i18nKey="alerting.evaluation-chain.link.text">Evaluation chain</Trans>
+        <Trans i18nKey="alerting.rule-sequence.link.text">Rule sequence</Trans>
       </button>
     </MetaText>
   );

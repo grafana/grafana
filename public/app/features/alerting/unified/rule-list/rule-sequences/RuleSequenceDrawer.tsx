@@ -4,22 +4,23 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Drawer, Icon, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { type Chain, type ChainStep as ChainStepType, useGetChainQuery } from '../../api/chainsApi';
+import type { RuleSequenceStep, RuleSequenceView } from './types';
+import { useRuleSequenceView } from './useRuleSequenceView';
 
-interface ChainDrawerProps {
-  chainId: string;
-  currentPosition: number;
+interface RuleSequenceDrawerProps {
+  sequenceName: string;
+  currentRuleUid: string;
   onClose: () => void;
 }
 
-export function ChainDrawer({ chainId, currentPosition, onClose }: ChainDrawerProps) {
-  const { data: chain, isLoading, error } = useGetChainQuery({ chainId });
+export function RuleSequenceDrawer({ sequenceName, currentRuleUid, onClose }: RuleSequenceDrawerProps) {
+  const { ruleSequence, isLoading, error } = useRuleSequenceView(sequenceName);
 
   const title = (
     <Stack direction="row" alignItems="center" gap={1}>
       <Icon name="link" />
       <Text element="h3" variant="h4">
-        <Trans i18nKey="alerting.evaluation-chain.drawer.title">Evaluation chain</Trans>
+        <Trans i18nKey="alerting.rule-sequence.drawer.title">Rule sequence</Trans>
       </Text>
     </Stack>
   );
@@ -27,17 +28,23 @@ export function ChainDrawer({ chainId, currentPosition, onClose }: ChainDrawerPr
   return (
     <Drawer size="sm" onClose={onClose} title={title}>
       {isLoading && (
-        <LoadingPlaceholder text={t('alerting.evaluation-chain.drawer.loading', 'Loading chain details...')} />
+        <LoadingPlaceholder text={t('alerting.rule-sequence.drawer.loading', 'Loading rule sequence details...')} />
       )}
       {Boolean(error) && (
-        <Alert severity="error" title={t('alerting.evaluation-chain.drawer.error', 'Failed to load chain')} />
+        <Alert severity="error" title={t('alerting.rule-sequence.drawer.error', 'Failed to load rule sequence')} />
       )}
-      {chain && <ChainDrawerContent chain={chain} currentPosition={currentPosition} />}
+      {ruleSequence && <RuleSequenceDrawerContent ruleSequence={ruleSequence} currentRuleUid={currentRuleUid} />}
     </Drawer>
   );
 }
 
-function ChainDrawerContent({ chain, currentPosition }: { chain: Chain; currentPosition: number }) {
+function RuleSequenceDrawerContent({
+  ruleSequence,
+  currentRuleUid,
+}: {
+  ruleSequence: RuleSequenceView;
+  currentRuleUid: string;
+}) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -45,57 +52,57 @@ function ChainDrawerContent({ chain, currentPosition }: { chain: Chain; currentP
       <div className={styles.meta}>
         <div>
           <div className={styles.eyebrow}>
-            <Trans i18nKey="alerting.evaluation-chain.drawer.mode">Mode</Trans>
+            <Trans i18nKey="alerting.rule-sequence.drawer.interval">Interval</Trans>
           </div>
-          <Text variant="body">{chain.mode}</Text>
+          <Text variant="body">{ruleSequence.interval || '—'}</Text>
         </div>
         <div>
           <div className={styles.eyebrow}>
-            <Trans i18nKey="alerting.evaluation-chain.drawer.interval">Interval</Trans>
+            <Trans i18nKey="alerting.rule-sequence.drawer.rules-count">Rules</Trans>
           </div>
-          <Text variant="body">{chain.interval || '—'}</Text>
-        </div>
-        <div>
-          <div className={styles.eyebrow}>
-            <Trans i18nKey="alerting.evaluation-chain.drawer.rules-count">Rules</Trans>
-          </div>
-          <Text variant="body">{chain.steps.length}</Text>
+          <Text variant="body">{ruleSequence.steps.length}</Text>
         </div>
       </div>
 
       <div>
         <div className={styles.eyebrow}>
-          <Trans i18nKey="alerting.evaluation-chain.drawer.evaluation-order">Evaluation order</Trans>
+          <Trans i18nKey="alerting.rule-sequence.drawer.evaluation-order">Evaluation order</Trans>
         </div>
-        <ol className={styles.steps}>
-          {chain.steps.map((step, index) => (
-            <ChainStep
-              key={`${step.name}-${index}`}
-              step={step}
-              position={index + 1}
-              isCurrent={index + 1 === currentPosition}
-            />
-          ))}
-        </ol>
+        {ruleSequence.steps.length === 0 ? (
+          <Text color="secondary">
+            <Trans i18nKey="alerting.rule-sequence.drawer.empty">No rules in this sequence</Trans>
+          </Text>
+        ) : (
+          <ol className={styles.steps}>
+            {ruleSequence.steps.map((step, index) => (
+              <RuleSequenceStepItem
+                key={step.uid}
+                step={step}
+                position={index + 1}
+                isCurrent={step.uid === currentRuleUid}
+              />
+            ))}
+          </ol>
+        )}
       </div>
     </Stack>
   );
 }
 
-interface ChainStepProps {
-  step: ChainStepType;
+interface RuleSequenceStepItemProps {
+  step: RuleSequenceStep;
   position: number;
   isCurrent: boolean;
 }
 
-function ChainStep({ step, position, isCurrent }: ChainStepProps) {
+function RuleSequenceStepItem({ step, position, isCurrent }: RuleSequenceStepItemProps) {
   const styles = useStyles2(getStyles);
   const isRecording = step.type === 'recording';
 
   const typeLabel = isRecording ? (
-    <Trans i18nKey="alerting.evaluation-chain.drawer.recording-rule">Recording rule</Trans>
+    <Trans i18nKey="alerting.rule-sequence.drawer.recording-rule">Recording rule</Trans>
   ) : (
-    <Trans i18nKey="alerting.evaluation-chain.drawer.alert-rule">Alert rule</Trans>
+    <Trans i18nKey="alerting.rule-sequence.drawer.alert-rule">Alert rule</Trans>
   );
 
   return (
@@ -108,10 +115,9 @@ function ChainStep({ step, position, isCurrent }: ChainStepProps) {
         <span>{typeLabel}</span>
       </div>
       <div className={cx(styles.stepName, isRecording && styles.stepNameMono)}>{step.name}</div>
-      {step.sub && <div className={styles.stepSub}>{step.sub}</div>}
       {isCurrent && (
         <span className={styles.youAreHere}>
-          <Trans i18nKey="alerting.evaluation-chain.drawer.you-are-here">You are here</Trans>
+          <Trans i18nKey="alerting.rule-sequence.drawer.you-are-here">You are here</Trans>
         </span>
       )}
     </li>
@@ -209,11 +215,6 @@ function getStyles(theme: GrafanaTheme2) {
     stepNameMono: css({
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
-    }),
-    stepSub: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.secondary,
-      marginTop: theme.spacing(0.5),
     }),
     youAreHere: css({
       position: 'absolute',

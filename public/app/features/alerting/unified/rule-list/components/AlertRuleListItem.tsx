@@ -69,7 +69,7 @@ export interface AlertRuleListItemProps {
   evalIntervalSeconds?: number;
   // Evaluation chain chip; surfaced when the rule is part of an evaluation chain
   // (gated on the alerting.rulesAPIV2 feature toggle and backend-provided membership).
-  chainLink?: ReactNode;
+  ruleSequenceLink?: ReactNode;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -98,7 +98,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     showLocation = true,
     querySourceUIDs = [],
     evalIntervalSeconds,
-    chainLink,
+    ruleSequenceLink,
   } = props;
 
   const listItemAriaId = useId();
@@ -164,8 +164,8 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     );
   }
 
-  if (chainLink) {
-    metadata.push(chainLink);
+  if (ruleSequenceLink) {
+    metadata.push(ruleSequenceLink);
   }
 
   const ruleHealth = normalizeHealth(health);
@@ -223,7 +223,7 @@ export function RecordingRuleListItem({
   showLocation = true,
   querySourceUIDs = [],
   evalIntervalSeconds,
-  chainLink,
+  ruleSequenceLink,
 }: RecordingRuleListItemProps) {
   const metadata: ReactNode[] = [];
   if (namespace && group && showLocation) {
@@ -244,8 +244,8 @@ export function RecordingRuleListItem({
     metadata.push(<QuerySourceIcons queriedDatasourceUIDs={querySourceUIDs} />);
   }
 
-  if (chainLink) {
-    metadata.push(chainLink);
+  if (ruleSequenceLink) {
+    metadata.push(ruleSequenceLink);
   }
 
   const ruleHealth = normalizeHealth(health);

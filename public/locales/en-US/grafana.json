@@ -1180,24 +1180,6 @@
       "label-metric": "Metric",
       "label-pending-period": "Pending period"
     },
-    "evaluation-chain": {
-      "drawer": {
-        "alert-rule": "Alert rule",
-        "error": "Failed to load chain",
-        "evaluation-order": "Evaluation order",
-        "interval": "Interval",
-        "loading": "Loading chain details...",
-        "mode": "Mode",
-        "recording-rule": "Recording rule",
-        "rules-count": "Rules",
-        "title": "Evaluation chain",
-        "you-are-here": "You are here"
-      },
-      "link": {
-        "label": "Open evaluation chain (position {{position}} of {{total}})",
-        "text": "Evaluation chain"
-      }
-    },
     "evaluation-group": {
       "label-delete": "Delete",
       "label-export": "Export",
@@ -3002,6 +2984,24 @@
       "title-cannot-load-modify-export": "Cannot load modify export",
       "title-grafanamanaged-alert": "This rule is not a Grafana-managed alert rule",
       "title-unknown-error": "Unknown error"
+    },
+    "rule-sequence": {
+      "drawer": {
+        "alert-rule": "Alert rule",
+        "empty": "No rules in this sequence",
+        "error": "Failed to load rule sequence",
+        "evaluation-order": "Evaluation order",
+        "interval": "Interval",
+        "loading": "Loading rule sequence details...",
+        "recording-rule": "Recording rule",
+        "rules-count": "Rules",
+        "title": "Rule sequence",
+        "you-are-here": "You are here"
+      },
+      "link": {
+        "label": "Open rule sequence",
+        "text": "Rule sequence"
+      }
     },
     "rule-state": {
       "creating": "Creating",
