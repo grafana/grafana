@@ -13,7 +13,7 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from '../../QueryEditorContext';
-import { BulkActionsBar, hasActionableSelection } from '../BulkActionsBar';
+import { BulkActionsBar, getBulkActionsVisibility } from '../BulkActionsBar';
 
 export function SidebarFooter() {
   const { queries } = useQueryRunnerContext();
@@ -46,10 +46,12 @@ export function SidebarFooter() {
   // Render the bar OR the counts — never both. Keeping both in the DOM at
   // once would leave the obscured count Stack (incl. the Select… button) in
   // tab order and screen-reader output, even though the overlay covers it.
-  const hasBulkActions =
-    !isAlertView &&
-    (hasActionableSelection(selectedQueryRefIds.length, multiSelectMode) ||
-      hasActionableSelection(selectedTransformationIds.length, multiSelectMode));
+  const { shouldRender } = getBulkActionsVisibility({
+    selectedQueryCount: selectedQueryRefIds.length,
+    selectedTransformationCount: selectedTransformationIds.length,
+    multiSelectMode,
+  });
+  const hasBulkActions = !isAlertView && shouldRender;
 
   const handleSelectClick = () => {
     setMultiSelectMode(true);
