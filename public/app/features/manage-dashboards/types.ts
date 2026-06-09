@@ -74,9 +74,6 @@ export interface DashboardInput {
 
 export interface DataSourceInput extends DashboardInput {
   pluginId: string;
-  // Titles of panels that reference this datasource in the exported dashboard.
-  // Surfaced as a tooltip on the import form so users can map inputs to panels.
-  usedByPanels?: string[];
   // A datasource on the importing instance whose name matches the original
   // exported datasource name. Used to pre-select the import picker so users
   // don't have to manually pick a same-named datasource.

@@ -381,144 +381,9 @@ describe('extractV2Inputs', () => {
     expect(result.dataSources).toHaveLength(2);
     expect(result.dataSources[0].name).toBe('mysql-1');
     expect(result.dataSources[0].label).toBe('mysql-1 (Production MySQL)');
-    expect(result.dataSources[0].description).toBe('mysql data source — originally "Production MySQL"');
+    expect(result.dataSources[0].description).toBe('Select a mysql data source');
     expect(result.dataSources[1].name).toBe('mysql-2');
     expect(result.dataSources[1].label).toBe('mysql-2 (Reports MySQL)');
-  });
-
-  it('collects panel titles that reference each datasource', async () => {
-    const dashboard = {
-      elements: {
-        'panel-1': {
-          kind: 'Panel',
-          spec: {
-            title: 'CPU usage',
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [
-                  {
-                    kind: 'PanelQuery',
-                    spec: {
-                      query: {
-                        group: 'mysql',
-                        labels: { [ExportLabel]: 'mysql-1' },
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        },
-        'panel-2': {
-          kind: 'Panel',
-          spec: {
-            title: 'Memory usage',
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [
-                  {
-                    kind: 'PanelQuery',
-                    spec: {
-                      query: {
-                        group: 'mysql',
-                        labels: { [ExportLabel]: 'mysql-1' },
-                      },
-                    },
-                  },
-                  // duplicate query against the same datasource — title should only appear once
-                  {
-                    kind: 'PanelQuery',
-                    spec: {
-                      query: {
-                        group: 'mysql',
-                        labels: { [ExportLabel]: 'mysql-1' },
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        },
-        'panel-3': {
-          kind: 'Panel',
-          spec: {
-            title: 'Errors',
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [
-                  {
-                    kind: 'PanelQuery',
-                    spec: {
-                      query: {
-                        group: 'mysql',
-                        labels: { [ExportLabel]: 'mysql-2' },
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        },
-      },
-    };
-
-    const result = await extractV2Inputs(dashboard);
-
-    expect(result.dataSources).toHaveLength(2);
-    expect(result.dataSources[0].name).toBe('mysql-1');
-    expect(result.dataSources[0].usedByPanels).toEqual(['CPU usage', 'Memory usage']);
-    expect(result.dataSources[1].name).toBe('mysql-2');
-    expect(result.dataSources[1].usedByPanels).toEqual(['Errors']);
-  });
-
-  it('falls back to the element key when a panel has no title', async () => {
-    const dashboard = {
-      elements: {
-        'panel-1': {
-          kind: 'Panel',
-          spec: {
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [
-                  {
-                    kind: 'PanelQuery',
-                    spec: { query: { group: 'mysql', labels: { [ExportLabel]: 'mysql-1' } } },
-                  },
-                ],
-              },
-            },
-          },
-        },
-      },
-    };
-
-    const result = await extractV2Inputs(dashboard);
-
-    expect(result.dataSources[0].usedByPanels).toEqual(['panel-1']);
-  });
-
-  it('omits usedByPanels when only variables or annotations reference the datasource', async () => {
-    const dashboard = {
-      elements: {},
-      variables: [
-        {
-          kind: 'QueryVariable',
-          spec: { name: 'var1', query: { group: 'mysql', labels: { [ExportLabel]: 'mysql-1' } } },
-        },
-      ],
-    };
-
-    const result = await extractV2Inputs(dashboard);
-
-    expect(result.dataSources).toHaveLength(1);
-    expect(result.dataSources[0].usedByPanels).toBeUndefined();
   });
 
   it('pre-selects the datasource when its name matches an existing one of the same plugin type', async () => {
@@ -607,7 +472,7 @@ describe('extractV2Inputs', () => {
 
     const result = await extractV2Inputs(dashboard);
     expect(result.dataSources[0].label).toBe('mysql-1');
-    expect(result.dataSources[0].description).toBe('mysql data source');
+    expect(result.dataSources[0].description).toBe('Select a mysql data source');
   });
 
   it('should keep distinct datasource labels', async () => {
@@ -1777,6 +1642,22 @@ describe('replaceDatasourcesInDashboard', () => {
       expect(variable).toBeDefined();
       expect(variable?.datasource?.name).toBe(expectedDs);
     });
+
+    it('strips export-only labels after replacing the datasource', () => {
+      const variable = createAdhocVariable('loki', 'old-loki-uid');
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [{ ...variable, labels: { [ExportLabel]: 'loki', [ExportDatasourceName]: 'Original Loki' } }],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, mappings);
+      const updated = getAdhocVariable(result);
+
+      expect(updated?.datasource?.name).toBe('new-loki-uid');
+      expect(updated?.labels?.[ExportLabel]).toBeUndefined();
+      expect(updated?.labels?.[ExportDatasourceName]).toBeUndefined();
+    });
   });
 
   describe('GroupBy variable', () => {
@@ -1810,6 +1691,24 @@ describe('replaceDatasourcesInDashboard', () => {
 
       expect(variable).toBeDefined();
       expect(variable?.datasource?.name).toBe(expectedDs);
+    });
+
+    it('strips export-only labels after replacing the datasource', () => {
+      const variable = createGroupByVariable('prometheus', 'old-prom-uid');
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [
+          { ...variable, labels: { [ExportLabel]: 'prometheus', [ExportDatasourceName]: 'Original Prometheus' } },
+        ],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, mappings);
+      const updated = getGroupByVariable(result);
+
+      expect(updated?.datasource?.name).toBe('new-prom-uid');
+      expect(updated?.labels?.[ExportLabel]).toBeUndefined();
+      expect(updated?.labels?.[ExportDatasourceName]).toBeUndefined();
     });
   });
 

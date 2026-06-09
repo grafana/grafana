@@ -11596,8 +11596,6 @@
     "import-dashboard-form": {
       "cancel": "Cancel",
       "change-uid": "Change uid",
-      "datasource-usage-aria-label": "Show panels that use this datasource",
-      "datasource-used-by-panels": "Used by panels:",
       "description-library-panels-imported": "List of new library panels that will get imported.",
       "description-unique-identifier-uid": "The unique identifier (UID) of a dashboard can be used to uniquely identify a dashboard between multiple Grafana installs. The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any bookmarked links to that dashboard.",
       "label-existing-library-panels": "Existing library panels",
