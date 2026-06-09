@@ -238,9 +238,9 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 		if err != nil {
 			return nil, apierrors.NewInternalError(err)
 		}
-		if meta.GetDeprecatedInternalID() == 0 {
+		if meta.GetDeprecatedInternalID() == 0 { // nolint:staticcheck
 			id := s.snowflakeNode.Generate().Int64() & maxSafeJSInt
-			meta.SetDeprecatedInternalID(id)
+			meta.SetDeprecatedInternalID(id) // nolint:staticcheck
 		}
 	}
 

@@ -69,7 +69,7 @@ func testGetDeprecatedID(t *testing.T, anno *annotationV0.Annotation) int64 {
 	t.Helper()
 	meta, err := utils.MetaAccessor(anno)
 	require.NoError(t, err)
-	return meta.GetDeprecatedInternalID()
+	return meta.GetDeprecatedInternalID() // nolint:staticcheck
 }
 
 // TestToAPIError covers the helper in isolation: each sentinel maps to the

@@ -184,7 +184,7 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 
 	var deprecatedInternalID *int64
 	if meta, err := utils.MetaAccessor(anno); err == nil {
-		if id := meta.GetDeprecatedInternalID(); id > 0 {
+		if id := meta.GetDeprecatedInternalID(); id > 0 { // nolint:staticcheck
 			deprecatedInternalID = &id
 		}
 	}
@@ -447,7 +447,7 @@ func rowToAnnotation(namespace, name string, timeMs int64, timeEnd *int64,
 	// Populate the deprecated internal ID label if the column has a value
 	if deprecatedInternalID != nil && *deprecatedInternalID != 0 {
 		if meta, err := utils.MetaAccessor(anno); err == nil {
-			meta.SetDeprecatedInternalID(*deprecatedInternalID)
+			meta.SetDeprecatedInternalID(*deprecatedInternalID) // nolint:staticcheck
 		}
 	}
 

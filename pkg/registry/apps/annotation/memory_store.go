@@ -85,7 +85,7 @@ func (m *memoryStore) List(ctx context.Context, namespace string, opts ListOptio
 		}
 
 		if opts.DeprecatedInternalID > 0 {
-			if meta, err := utils.MetaAccessor(anno); err != nil || meta.GetDeprecatedInternalID() != opts.DeprecatedInternalID {
+			if meta, err := utils.MetaAccessor(anno); err != nil || meta.GetDeprecatedInternalID() != opts.DeprecatedInternalID { // nolint:staticcheck
 				continue
 			}
 		}
