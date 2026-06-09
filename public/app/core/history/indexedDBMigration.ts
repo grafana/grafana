@@ -64,6 +64,18 @@ const REMOTE_PAGE_LIMIT = 100;
  * Path C: No data anywhere — mark migration complete immediately.
  */
 export async function migrateToIndexedDB(indexedDBStorage: IndexedDBMigrationAccess): Promise<void> {
+  // Cross-tab guard: two tabs (e.g. a browser session restore) can otherwise run
+  // the one-time migration concurrently. Path A is additionally protected by an
+  // atomic flag check inside its transaction; Path B awaits network calls and
+  // cannot be, so serialize the whole migration across tabs where the Web Locks
+  // API exists. Where it doesn't (jsdom, legacy browsers), fall through unguarded.
+  if (typeof navigator !== 'undefined' && navigator.locks) {
+    return navigator.locks.request('grafana-query-history-migration', () => runMigration(indexedDBStorage));
+  }
+  return runMigration(indexedDBStorage);
+}
+
+async function runMigration(indexedDBStorage: IndexedDBMigrationAccess): Promise<void> {
   // Support escape hatch: if the debug reset key is set, wipe IndexedDB state
   // so migration re-runs from scratch below. Semantic is "start over" — queries
   // are re-sourced from localStorage and/or the remote API.
@@ -122,14 +134,31 @@ export async function migrateToIndexedDB(indexedDBStorage: IndexedDBMigrationAcc
   const localAlreadyDone = (await indexedDBStorage.getMetadata(METADATA_LOCAL_MIGRATION_COMPLETE)) === true;
   const remoteAlreadyDone = (await indexedDBStorage.getMetadata(METADATA_REMOTE_MIGRATION_COMPLETE)) === true;
 
-  // Path A: localStorage data exists
+  // Path A: localStorage data exists. The completion flag is committed inside
+  // migrateFromLocalStorage's transaction, atomically with the entry writes.
   if (hasLocalStorageData && !localAlreadyDone) {
     try {
       await migrateFromLocalStorage(indexedDBStorage, rawData, attemptNumber);
-      await indexedDBStorage.setMetadata(METADATA_LOCAL_MIGRATION_COMPLETE, true);
     } catch (error) {
       localSuccess = false;
       // Telemetry already reported inside migrateFromLocalStorage
+    }
+  }
+
+  // Settings live in localStorage keys independent of the history entries, and the
+  // writes are idempotent. Run them outside the entry-write guard so a settings
+  // failure on a previous attempt is retried even though the entry writes are
+  // already flagged done.
+  if (hasLocalStorageData && localSuccess) {
+    try {
+      await migrateSettings(indexedDBStorage);
+    } catch (error) {
+      localSuccess = false;
+      reportInteraction('grafana_query_history_migration_failed', {
+        source: 'localStorage-settings',
+        error: error instanceof Error ? error.message : String(error),
+        attemptNumber,
+      });
     }
   }
 
@@ -170,31 +199,37 @@ async function migrateFromLocalStorage(
   try {
     const db = await indexedDBStorage.getDB();
 
-    // Batch-write valid entries
-    const tx = db.transaction('queries', 'readwrite');
-    for (const entry of validEntries) {
-      const datasource = getDataSourceSrv().getInstanceSettings(entry.datasourceName);
-      const datasourceUid = datasource?.uid || '';
+    // Single transaction over both stores: the completion-flag re-check, the entry
+    // writes, and the flag write commit atomically. IndexedDB serializes overlapping
+    // readwrite transactions across connections, so a second tab racing this one
+    // sees the flag and writes nothing. A transaction auto-commits once control
+    // returns to the event loop with no pending IDB requests — only synchronous
+    // calls and IDB awaits are allowed inside.
+    const tx = db.transaction(['queries', 'metadata'], 'readwrite');
+    const alreadyDone = (await tx.objectStore('metadata').get(METADATA_LOCAL_MIGRATION_COMPLETE)) === true;
+    if (!alreadyDone) {
+      for (const entry of validEntries) {
+        const datasource = getDataSourceSrv().getInstanceSettings(entry.datasourceName);
+        const datasourceUid = datasource?.uid || '';
 
-      const id = generateUUID();
+        const id = generateUUID();
 
-      await tx.store.put({
-        id,
-        createdAt: entry.ts,
-        datasourceUid,
-        datasourceName: entry.datasourceName,
-        starred: entry.starred ? 1 : 0,
-        comment: entry.comment,
-        queries: entry.queries,
-      });
-      itemsWritten++;
+        await tx.objectStore('queries').put({
+          id,
+          createdAt: entry.ts,
+          datasourceUid,
+          datasourceName: entry.datasourceName,
+          starred: entry.starred ? 1 : 0,
+          comment: entry.comment,
+          queries: entry.queries,
+        });
+        itemsWritten++;
+      }
+      await tx.objectStore('metadata').put(true, METADATA_LOCAL_MIGRATION_COMPLETE);
     }
     await tx.done;
 
     invalidEntriesSkipped = itemCount - validEntries.length;
-
-    // Migrate settings
-    await migrateSettings(indexedDBStorage);
 
     // Do NOT delete localStorage key — preserved for rollback
 
@@ -272,8 +307,16 @@ async function migrateFromRemoteStorage(
       // acceptable for migration.
       const DEDUP_WINDOW_MS = 5000;
       const range = IDBKeyRange.bound(createdAtMs - DEDUP_WINDOW_MS, createdAtMs + DEDUP_WINDOW_MS);
-      const existing = await tx.store.index('by-createdAt').openCursor(range);
-      if (existing && existing.value.datasourceUid === dto.datasourceUid) {
+      let cursor = await tx.store.index('by-createdAt').openCursor(range);
+      let isDuplicate = false;
+      while (cursor) {
+        if (cursor.value.datasourceUid === dto.datasourceUid) {
+          isDuplicate = true;
+          break;
+        }
+        cursor = await cursor.continue();
+      }
+      if (isDuplicate) {
         duplicatesSkipped++;
         continue;
       }

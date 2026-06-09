@@ -42,10 +42,10 @@ const getRichHistoryIndexedDBStorage = (): RichHistoryStorage => {
 /**
  * Returns the appropriate storage backend for query history operations.
  *
- * Note: When `queryHistory.localOnly` is toggled off after IndexedDB use, data stored in
- * IndexedDB remains but becomes inaccessible. If localStorage cleanup has already run,
- * the user will see empty history until the flag is re-enabled. This is expected behavior
- * for an experimental feature flag.
+ * Note: When `queryHistory.localOnly` is toggled off after IndexedDB use, history written
+ * to IndexedDB remains on disk but is no longer read. localStorage history is preserved
+ * during migration (it is the rollback path), so the user falls back to their
+ * pre-migration localStorage content rather than an empty history.
  */
 export const getRichHistoryStorage = (): RichHistoryStorage => {
   if (getFeatureFlagClient().getBooleanValue(FlagKeys.QueryHistoryLocalOnly, false)) {

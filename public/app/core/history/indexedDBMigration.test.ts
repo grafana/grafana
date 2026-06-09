@@ -218,6 +218,48 @@ describe('migrateToIndexedDB', () => {
     expect(result.total).toBe(1);
   });
 
+  it('does not duplicate entries when two migrations run concurrently', async () => {
+    store.setObject(RICH_HISTORY_KEY, [validEntry1, validEntry2]);
+
+    // Simulates two tabs racing the one-time migration (e.g. browser session restore).
+    await Promise.all([migrateToIndexedDB(indexedDBStorage), migrateToIndexedDB(indexedDBStorage)]);
+
+    const result = await indexedDBStorage.getRichHistory(queryFilters());
+    expect(result.total).toBe(2);
+  });
+
+  it('does not duplicate entries when a retry follows a settings write failure', async () => {
+    store.setObject(RICH_HISTORY_KEY, [validEntry1, validEntry2]);
+    jest.spyOn(indexedDBStorage, 'updateSettings').mockRejectedValueOnce(new Error('settings write failed'));
+
+    // Attempt 1: entry writes commit, settings write fails, migration stays incomplete.
+    await migrateToIndexedDB(indexedDBStorage);
+    expect(await indexedDBStorage.getMetadata('migrationComplete')).not.toBe(true);
+
+    // Attempt 2: must not re-import entries, must retry settings, must complete.
+    await migrateToIndexedDB(indexedDBStorage);
+
+    const result = await indexedDBStorage.getRichHistory(queryFilters());
+    expect(result.total).toBe(2);
+    expect(await indexedDBStorage.getMetadata('migrationComplete')).toBe(true);
+  });
+
+  it('serializes migration through the Web Locks API when available', async () => {
+    const request = jest.fn(async (_name: string, cb: () => Promise<void>) => cb());
+    Object.defineProperty(navigator, 'locks', { value: { request }, configurable: true });
+
+    try {
+      store.setObject(RICH_HISTORY_KEY, [validEntry1]);
+      await migrateToIndexedDB(indexedDBStorage);
+
+      expect(request).toHaveBeenCalledWith('grafana-query-history-migration', expect.any(Function));
+      const result = await indexedDBStorage.getRichHistory(queryFilters());
+      expect(result.total).toBe(1);
+    } finally {
+      Object.defineProperty(navigator, 'locks', { value: undefined, configurable: true });
+    }
+  });
+
   describe('reset escape hatch', () => {
     const RESET_KEY = 'grafana.debug.resetQueryHistoryMigration';
 
@@ -520,6 +562,47 @@ describe('migrateToIndexedDB', () => {
       };
 
       mockFetch.mockReturnValue(mockRemoteResponse([entryA, entryB]));
+
+      await migrateToIndexedDB(indexedDBStorage);
+
+      const result = await indexedDBStorage.getRichHistory(queryFilters());
+      expect(result.total).toBe(2);
+    });
+
+    it('dedups a remote entry when a different-datasource entry appears earlier in the window', async () => {
+      const T = NOW - ONE_HOUR * 3;
+      // Path A seeds two entries 1s apart; the remote entry duplicates the SECOND one.
+      // The by-createdAt cursor over the ±5s window hits the Loki entry first, so a
+      // first-record-only check misses the Prometheus duplicate.
+      store.setObject(RICH_HISTORY_KEY, [
+        {
+          ts: T,
+          datasourceName: 'Loki',
+          starred: false,
+          comment: '',
+          queries: [{ refId: 'A', expr: '{app="x"}' } as MockQuery],
+        },
+        {
+          ts: T + 1000,
+          datasourceName: 'Prometheus',
+          starred: false,
+          comment: 'prom',
+          queries: [{ refId: 'A', expr: 'up' } as MockQuery],
+        },
+      ]);
+      mockConfig.queryHistoryEnabled = true;
+      mockFetch.mockReturnValue(
+        mockRemoteResponse([
+          {
+            uid: 'r-dup',
+            createdAt: (T + 1000) / 1000,
+            datasourceUid: 'ds-prom',
+            starred: false,
+            comment: 'prom',
+            queries: [{ refId: 'A', expr: 'up' }],
+          },
+        ])
+      );
 
       await migrateToIndexedDB(indexedDBStorage);
 

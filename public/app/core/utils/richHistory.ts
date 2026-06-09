@@ -273,11 +273,11 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
   let mappedQueriesToHeadings: Record<string, RichHistoryQuery[]> = {};
 
   query.forEach((q) => {
-    let heading = createQueryHeading(q, sortOrder);
+    const heading = createQueryHeading(q, sortOrder);
     if (!(heading in mappedQueriesToHeadings)) {
       mappedQueriesToHeadings[heading] = [q];
     } else {
-      mappedQueriesToHeadings[heading] = [...mappedQueriesToHeadings[heading], q];
+      mappedQueriesToHeadings[heading].push(q);
     }
   });
 

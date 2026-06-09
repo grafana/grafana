@@ -63,7 +63,6 @@ describe('SecondaryActions', () => {
       <QueriesDrawerContextProviderMock queryLibraryEnabled={false}>
         <SecondaryActions
           addQueryRowButtonHidden={true}
-          richHistoryRowButtonHidden={true}
           onClickAddQueryRowButton={noop}
           onClickQueryInspectorButton={noop}
           onSelectQueryFromLibrary={noop}

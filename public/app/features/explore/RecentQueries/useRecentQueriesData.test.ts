@@ -33,8 +33,8 @@ const makeQuery = (overrides: Partial<RichHistoryQuery> = {}): RichHistoryQuery 
 
 const defaultSettings = { retentionPeriod: 14, starredTabAsFirstTab: false, activeDatasourcesOnly: false };
 
-const renderAndSettle = async (activeDatasources?: string[]) => {
-  const result = renderHook(() => useRecentQueriesData(activeDatasources));
+const renderAndSettle = async () => {
+  const result = renderHook(() => useRecentQueriesData());
   await act(async () => {});
   return result;
 };
@@ -190,18 +190,6 @@ describe('useRecentQueriesData', () => {
     await act(async () => result.current.setFilters({ rememberFilters: true }));
     await act(async () => result.current.setFilters({ rememberFilters: false }));
     expect(storeFilterDefaults).toHaveBeenCalledWith('recent', {});
-  });
-
-  it('returns settings from getRichHistorySettings', async () => {
-    const { result } = await renderAndSettle();
-    await waitFor(() => {
-      expect(result.current.settings).toEqual(defaultSettings);
-    });
-  });
-
-  it('uses activeDatasources parameter as initial datasourceFilters', async () => {
-    const { result } = await renderAndSettle(['loki']);
-    expect(result.current.filters.datasourceFilters).toEqual(['loki']);
   });
 
   it('debounces search before fetching', async () => {

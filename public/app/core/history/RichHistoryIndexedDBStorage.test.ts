@@ -538,6 +538,18 @@ describe('RichHistoryIndexedDBStorage', () => {
       await storage.addToRichHistory(mockItem);
       expect(reportInteraction).not.toHaveBeenCalled();
     });
+
+    it('reports the item count warning only once per session', async () => {
+      const smallThresholdStorage = new RichHistoryIndexedDBStorage(1);
+      await smallThresholdStorage.addToRichHistory(mockItem);
+      dateNowSpy.mockReturnValue(nowMs + 1);
+      await smallThresholdStorage.addToRichHistory(mockItem2);
+
+      const warningCalls = (reportInteraction as jest.Mock).mock.calls.filter(
+        ([name]) => name === 'grafana_query_history_item_count_warning'
+      );
+      expect(warningCalls).toHaveLength(1);
+    });
   });
 
   describe('total count', () => {

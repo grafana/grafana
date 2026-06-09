@@ -18,7 +18,6 @@ import { RecentQueriesModal } from './RecentQueries/RecentQueriesModal';
 type Props = {
   addQueryRowButtonDisabled?: boolean;
   addQueryRowButtonHidden?: boolean;
-  richHistoryRowButtonHidden?: boolean;
   queryInspectorButtonActive?: boolean;
 
   onClickAddQueryRowButton: () => void;

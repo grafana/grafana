@@ -4,7 +4,7 @@ import { useAsync, useDebounce } from 'react-use';
 import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getRichHistory, getRichHistorySettings, updateStarredInRichHistory } from 'app/core/utils/richHistory';
-import { type RichHistorySettings, SortOrder } from 'app/core/utils/richHistoryTypes';
+import { SortOrder } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';
 
 import { getStoredFilterDefaults, storeFilterDefaults } from './filterDefaults';
@@ -22,7 +22,6 @@ export type UseRecentQueriesDataReturn = {
   isLoading: boolean;
   isInitialLoad: boolean;
   error: unknown;
-  settings: RichHistorySettings | undefined;
   filters: RecentQueriesFilterState;
   setFilters: (update: Partial<RecentQueriesFilterState>) => void;
   starQuery: (id: string, starred: boolean) => Promise<void>;
@@ -35,13 +34,13 @@ function defaultSortingOption(): SelectableValue<SortOrder> {
   };
 }
 
-export function useRecentQueriesData(activeDatasources: string[] = []): UseRecentQueriesDataReturn {
+export function useRecentQueriesData(): UseRecentQueriesDataReturn {
   const storedDefaults = useMemo(() => getStoredFilterDefaults<RecentQueriesFilterState>('recent'), []);
 
   const [filters, setFiltersState] = useState<RecentQueriesFilterState>(() => {
     const base: RecentQueriesFilterState = {
       searchQuery: '',
-      datasourceFilters: activeDatasources,
+      datasourceFilters: [],
       sortingOption: defaultSortingOption(),
       showStarredOnly: false,
       rememberFilters: false,
@@ -136,7 +135,6 @@ export function useRecentQueriesData(activeDatasources: string[] = []): UseRecen
     isLoading,
     isInitialLoad,
     error,
-    settings,
     filters,
     setFilters,
     starQuery,

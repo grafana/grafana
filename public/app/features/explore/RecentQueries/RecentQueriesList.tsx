@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { type DataSourceApi, type GrafanaTheme2 } from '@grafana/data';
@@ -21,7 +21,14 @@ type Props = {
   onSaveQuery?: (query: RichHistoryQuery) => void;
 };
 
-export function RecentQueriesList({ queries, isLoading, sortOrder, onSelectQuery, onStarQuery, onSaveQuery }: Props) {
+export const RecentQueriesList = memo(function RecentQueriesList({
+  queries,
+  isLoading,
+  sortOrder,
+  onSelectQuery,
+  onStarQuery,
+  onSaveQuery,
+}: Props) {
   const styles = useStyles2(getStyles);
 
   // Collect unique datasource UIDs so we resolve each once (not per-row).
@@ -35,8 +42,8 @@ export function RecentQueriesList({ queries, isLoading, sortOrder, onSelectQuery
     return Array.from(uids).sort();
   }, [queries]);
 
-  // Stable key for useAsync dependency — avoids re-resolving on every Load more
-  // when the set of unique UIDs hasn't changed.
+  // Stable key for useAsync dependency — avoids re-resolving datasources when a
+  // refetch returns the same set of unique UIDs.
   const dsUidKey = uniqueDsUids.join(',');
 
   const { value: dsApiMap } = useAsync(async () => {
@@ -54,6 +61,8 @@ export function RecentQueriesList({ queries, isLoading, sortOrder, onSelectQuery
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dsUidKey]);
 
+  const mappedQueriesToHeadings = useMemo(() => mapQueriesToHeadings(queries, sortOrder), [queries, sortOrder]);
+
   if (isLoading) {
     return (
       <div className={styles.centered}>
@@ -66,8 +75,6 @@ export function RecentQueriesList({ queries, isLoading, sortOrder, onSelectQuery
   if (queries.length === 0) {
     return <EmptyState variant="not-found" message={t('recent-queries.list.empty', 'No recent queries found')} />;
   }
-
-  const mappedQueriesToHeadings = mapQueriesToHeadings(queries, sortOrder);
 
   return (
     <ScrollContainer>
@@ -99,7 +106,7 @@ export function RecentQueriesList({ queries, isLoading, sortOrder, onSelectQuery
       </div>
     </ScrollContainer>
   );
-}
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   centered: css({

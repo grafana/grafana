@@ -121,6 +121,7 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
   private migrationPromise: Promise<void> | undefined;
   private lastCleanupTime = 0;
   private readonly itemCountWarningThreshold: number;
+  private itemCountWarningReported = false;
 
   constructor(itemCountWarningThreshold = DEFAULT_ITEM_COUNT_WARNING_THRESHOLD) {
     this.itemCountWarningThreshold = itemCountWarningThreshold;
@@ -213,9 +214,11 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
     await store.put(toStoredQuery(richHistoryQuery));
     await tx.done;
 
-    // Check total count for warning (separate transaction, after write committed)
+    // Check total count for warning (separate transaction, after write committed).
+    // Latched: one report per session, not one per query execution.
     const count = await db.count(QUERIES_STORE);
-    if (count >= this.itemCountWarningThreshold) {
+    if (!this.itemCountWarningReported && count >= this.itemCountWarningThreshold) {
+      this.itemCountWarningReported = true;
       reportInteraction('grafana_query_history_item_count_warning', { itemCount: count });
     }
 
