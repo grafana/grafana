@@ -25,6 +25,13 @@
 - **PostgreSQL:** Allow sql_engine to return results for EXPLAIN queries [#123246](https://github.com/grafana/grafana/pull/123246), [@sdague](https://github.com/sdague)
 - **Provisioning:** Bump nanogit to v0.17.0 to fix pushes with repositories using git modules [#124140](https://github.com/grafana/grafana/pull/124140), [@MissingRoberto](https://github.com/MissingRoberto)
 - **RBAC:** Quick fix for global datasource permissions (Enterprise)
+- **Security**: CVE-2026-9029
+- **Security**: CVE-2026-33382
+- **Security**: CVE-2026-42127
+- **Security**: CVE-2026-42129
+- **Security**: CVE-2026-10601
+- **Security**: CVE-2026-8609
+- **Security**: CVE-2026-8595
 
 <!-- 13.0.2 END -->
 <!-- 13.0.1 START -->
