@@ -4,7 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Badge, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
 import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
 
-import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
+import { isGranted, isProvisioned, isSupported } from '../../hooks/abilities/abilityUtils';
 import { useTimeIntervalAbility } from '../../hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { TimeIntervalAction } from '../../hooks/abilities/types';
 import { isLoading } from '../../hooks/useAsync';
@@ -58,7 +58,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
         {!isGrafanaDataSource && isDisabled(muteTiming) && (
           <Badge text={t('alerting.mute-timing-actions-buttons.text-disabled', 'Disabled')} color="orange" />
         )}
-        {isSupported(updateAbility) && viewOrEditButton}
+        {(isGranted(updateAbility) || isProvisioned(updateAbility)) && viewOrEditButton}
 
         {isSupported(exportAbility) && (
           <LinkButton
@@ -66,7 +66,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
             variant="secondary"
             size="sm"
             data-testid="export"
-            disabled={!exportAbility.granted || isLoading(deleteMuteTimingRequestState)}
+            disabled={!isGranted(exportAbility) || isLoading(deleteMuteTimingRequestState)}
             onClick={() => showExportDrawer(muteTiming.name)}
           >
             <Trans i18nKey="alerting.common.export">Export</Trans>
