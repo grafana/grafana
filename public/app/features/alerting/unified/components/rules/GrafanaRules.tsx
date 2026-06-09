@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -11,8 +10,9 @@ import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { LogMessages, logInfo } from '../../Analytics';
-import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
-import { flattenGrafanaManagedRules, mergeUngroupedGrafanaRules } from '../../hooks/useCombinedRuleNamespaces';
+import { useGlobalRuleAbility } from '../../hooks/abilities/rules/ruleAbilities';
+import { RuleAction } from '../../hooks/abilities/types';
+import { flattenGrafanaManagedRules } from '../../hooks/useCombinedRuleNamespaces';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
@@ -43,8 +43,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
   const hasResult = !!prom.result || !!ruler.result;
 
   const wantsListView = queryParams.view === 'list';
-  const ungroupedMerged = useMemo(() => mergeUngroupedGrafanaRules(namespaces), [namespaces]);
-  const namespacesFormat = wantsListView ? flattenGrafanaManagedRules(ungroupedMerged) : ungroupedMerged;
+  const namespacesFormat = wantsListView ? flattenGrafanaManagedRules(namespaces) : namespaces;
 
   const groupsWithNamespaces = useCombinedGroupNamespace(namespacesFormat);
 
@@ -54,8 +53,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
     DEFAULT_PER_PAGE_PAGINATION
   );
 
-  const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
-  const canExportRules = exportRulesSupported && exportRulesAllowed;
+  const { granted: canExportRules } = useGlobalRuleAbility(RuleAction.ExportRules);
 
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
   const hasGrafanaAlerts = namespaces.length > 0;

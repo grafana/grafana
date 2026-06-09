@@ -29,6 +29,7 @@ import {
   Button,
   GraphGradientMode,
   Icon,
+  LegendDisplayMode,
   LineInterpolation,
   ScaleDistribution,
   StackingMode,
@@ -197,7 +198,7 @@ export function getEventsScenesFlexItem() {
       .setCustomFieldConfig('stacking', { mode: StackingMode.None, group: 'A' })
       .setCustomFieldConfig('gradientMode', GraphGradientMode.Hue)
       .setCustomFieldConfig('scaleDistribution', { type: ScaleDistribution.Linear })
-      .setOption('legend', { showLegend: false })
+      .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden })
       .setOption('tooltip', { mode: TooltipDisplayMode.Single })
       .setNoValue('No events found')
       .build(),

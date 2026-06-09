@@ -43,7 +43,7 @@ export const ConfirmDeletedPermanentlyModal = ({ isOpen, onDismiss, guid }: Moda
       title={title}
       confirmText={confirmText}
       modalClass={styles.modal}
-      confirmVariant="destructive"
+      confirmButtonVariant="destructive"
       body={
         <Stack direction="column" gap={2}>
           <Trans i18nKey="alerting.deleted-rules.delete-modal.body">

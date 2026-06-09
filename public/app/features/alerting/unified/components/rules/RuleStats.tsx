@@ -128,11 +128,7 @@ export function getComponentsFromStats(
       <Badge
         color="red"
         key="errors"
-        text={t('alerting.rule-stats.error', '', {
-          count: stats.error,
-          defaultValue_one: '{{count}} errors',
-          defaultValue_other: '{{count}} errors',
-        })}
+        text={t('alerting.rule-stats.error', `{{count}} errors`, { count: stats.error })}
       />
     );
   }

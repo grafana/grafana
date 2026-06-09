@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
+import { formatDistanceToNowStrict } from 'date-fns';
 import { groupBy, uniqueId } from 'lodash';
 import { Fragment, memo, useEffect, useRef } from 'react';
 
@@ -7,6 +7,7 @@ import { AlertLabel } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
+import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { AlertStateTag } from '../AlertStateTag';
 
@@ -83,6 +84,8 @@ export const LogRecordViewerByTimestamp = memo(
               {records.map(({ line }, idx) => {
                 const id = line.fingerprint ?? `${key}-${idx}`;
 
+                const isErrorRow =
+                  mapStateWithReasonToBaseState(line.current) === GrafanaAlertState.Error && Boolean(line.error);
                 return (
                   <Fragment key={id}>
                     <div className={styles.logsContainer}>
@@ -101,7 +104,7 @@ export const LogRecordViewerByTimestamp = memo(
                         )}
                       </div>
                     </div>
-                    {line.error && <ErrorMessageRow message={line.error} />}
+                    {isErrorRow && line.error && <ErrorMessageRow message={line.error} />}
                   </Fragment>
                 );
               })}

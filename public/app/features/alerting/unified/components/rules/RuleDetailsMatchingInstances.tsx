@@ -19,7 +19,7 @@ import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../../utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
-import { prometheusRuleType, rulerRuleType } from '../../utils/rules';
+import { prometheusRuleType } from '../../utils/rules';
 
 import { AlertInstancesTable } from './AlertInstancesTable';
 import { getComponentsFromStats } from './RuleStats';
@@ -171,13 +171,7 @@ export function RuleDetailsMatchingInstances(props: Props) {
         </div>
       )}
       {!enableFiltering && <div className={styles.stats}>{statsComponents}</div>}
-      <AlertInstancesTable
-        rule={rule}
-        instances={visibleInstances}
-        pagination={pagination}
-        footerRow={footerRow}
-        showNotificationColumn={rulerRuleType.grafana.alertingRule(rule.rulerRule)}
-      />
+      <AlertInstancesTable rule={rule} instances={visibleInstances} pagination={pagination} footerRow={footerRow} />
     </>
   );
 }

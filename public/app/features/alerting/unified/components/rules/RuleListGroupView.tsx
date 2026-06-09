@@ -3,9 +3,10 @@ import { useEffect, useMemo } from 'react';
 import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
-import { AlertingAction } from '../../hooks/useAbilities';
+import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useExternalGlobalRuleAbility, useGlobalRuleAbility } from '../../hooks/abilities/rules/ruleAbilities';
+import { ExternalRuleAction, RuleAction } from '../../hooks/abilities/types';
 import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
-import { Authorize } from '../Authorize';
 
 import { CloudRules } from './CloudRules';
 import { GrafanaRules } from './GrafanaRules';
@@ -16,6 +17,9 @@ interface Props {
 }
 
 export const RuleListGroupView = ({ namespaces, expandAll }: Props) => {
+  const canViewRules = isGranted(useGlobalRuleAbility(RuleAction.View));
+  const canViewExternalRules = isGranted(useExternalGlobalRuleAbility(ExternalRuleAction.ViewAlertRule));
+
   const [grafanaNamespaces, cloudNamespaces] = useMemo(() => {
     const sorted = namespaces
       .map((namespace) => ({
@@ -35,12 +39,8 @@ export const RuleListGroupView = ({ namespaces, expandAll }: Props) => {
 
   return (
     <>
-      <Authorize actions={[AlertingAction.ViewAlertRule]}>
-        <GrafanaRules namespaces={grafanaNamespaces} expandAll={expandAll} />
-      </Authorize>
-      <Authorize actions={[AlertingAction.ViewExternalAlertRule]}>
-        <CloudRules namespaces={cloudNamespaces} expandAll={expandAll} />
-      </Authorize>
+      {canViewRules && <GrafanaRules namespaces={grafanaNamespaces} expandAll={expandAll} />}
+      {canViewExternalRules && <CloudRules namespaces={cloudNamespaces} expandAll={expandAll} />}
     </>
   );
 };
