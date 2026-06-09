@@ -18,6 +18,13 @@
 - **DashboardDS:** Fix Mixed panels not updating on time-range change with stale upstreams [#124893](https://github.com/grafana/grafana/pull/124893), [@ivanortegaalba](https://github.com/ivanortegaalba)
 - **Jaeger:** Fix log event timestamp unit conversion in trace view [#123711](https://github.com/grafana/grafana/pull/123711), [@ktw4071](https://github.com/ktw4071)
 - **PostgreSQL:** Allow sql_engine to return results for EXPLAIN queries [#123245](https://github.com/grafana/grafana/pull/123245), [@sdague](https://github.com/sdague)
+- **Security**: CVE-2026-9029
+- **Security**: CVE-2026-33382
+- **Security**: CVE-2026-42127
+- **Security**: CVE-2026-42129
+- **Security**: CVE-2026-10601
+- **Security**: CVE-2026-8609
+- **Security**: CVE-2026-8595
 
 <!-- 12.4.4 END -->
 <!-- 12.4.3 START -->
