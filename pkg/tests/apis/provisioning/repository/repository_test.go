@@ -933,6 +933,44 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 	require.NoError(t, err, "should delete the resource file")
 }
 
+// TestIntegrationProvisioning_DashboardStrictValidationExempted verifies the
+// strict-validation exemption end to end. The v1 dashboard is written with
+// FieldValidation=Ignore (see resources.skipsStrictValidation), so a v1 dashboard
+// file carrying an unknown field must still provision successfully — the unknown
+// field is dropped rather than rejected. Under FieldValidation=Strict the same
+// file is rejected with a "strict decoding error: unknown field" from the
+// apiserver, so removing the v1 dashboard GVR from the exemption list would make
+// both the dry run and the sync below fail. That makes this test a regression
+// guard for the exemption, not just a happy-path check.
+func TestIntegrationProvisioning_DashboardStrictValidationExempted(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	const repo = "dashboard-strict-exempt"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
+		Copies: map[string]string{
+			"../testdata/dashboard-unknown-field.json": "dashboard-unknown-field.json",
+		},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    0,
+	})
+
+	// The dry run through the files endpoint must succeed despite the unknown
+	// field, because dashboards are exempt from strict validation.
+	_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard-unknown-field.json")
+	require.NoError(t, err, "dry run of a dashboard with an unknown field should succeed while dashboards are exempt from strict validation")
+
+	// The dashboard must exist in Grafana after sync.
+	const dashboardUID = "dashboard-unknown-field"
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		_, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		assert.NoError(collect, err, "dashboard with an unknown field should have been created via the strict-validation exemption")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard with an unknown field should exist after sync")
+}
+
 func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()

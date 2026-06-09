@@ -162,7 +162,7 @@ func newClient(opts options.StorageOptions,
 		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
 
 	default:
-		searchOptions, err := search.NewSearchOptions(features, cfg, docs, indexMetrics, nil)
+		searchOptions, err := search.NewSearchOptions(features, cfg, docs, indexMetrics, nil, nil)
 		if err != nil {
 			return nil, err
 		}

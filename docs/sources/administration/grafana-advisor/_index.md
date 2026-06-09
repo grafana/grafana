@@ -56,6 +56,8 @@ For each item, one or more buttons appear:
 - Retry the check.
 - Hide the error. If you hide an error you can see it again by clicking the **Hide/Show silenced errors** eye icon on the top right corner.
 
+For details on how to update your plugins, refer to [Manage your plugins](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/#manage-your-plugins) if you're using OSS/Enterprise, or refer to [Find and use Grafana plugins](https://grafana.com/docs/grafana-cloud/introduction/find-and-use-plugins/) if you're using Grafana Cloud.
+
 ### Investigation needed
 
 This collapsible section provides information on issues that may not require immediate action but require your attention. For example, it provides information on plugins that require an upgrade. Similar to the **Action needed** section, clicking an item opens the plugin's upgrade page. From there, you can either update to the latest version or select a specific version from the version history tab.
