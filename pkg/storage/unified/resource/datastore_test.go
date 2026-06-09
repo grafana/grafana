@@ -3441,7 +3441,7 @@ func TestToSnowflakeRVIdempotent(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.snowflake, toSnowflakeRV(tt.snowflake),
+			require.Equal(t, tt.snowflake, ToSnowflakeRV(tt.snowflake),
 				"toSnowflakeRV must not re-encode a value that is already a snowflake")
 		})
 	}
