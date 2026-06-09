@@ -167,7 +167,7 @@ The migration assistant currently supports a subset of all resources available i
 
 When you create a snapshot, the migration assistant makes a copy of all the resources you select and saves them in the snapshot. The snapshot reflects the current state of the resources when the snapshot is built and is stored locally on your instance, ready to be uploaded in the last stage.
 
-Resources saved in the snapshot are strictly limited to the resources stored within an organization. This is important to note if there are multiple organizations used in your Grafana instance. If you want to migrate multiple organizations, refer to [Migrate multiple organizations](#migrate-multiple-organizations) for more information and guidance.
+Resources saved in the snapshot are strictly limited to the resources stored within an organization. This is important to note if there are multiple organizations used in your Grafana instance. If you want to migrate multiple organizations, refer to [Migrate multiple organizations](#migrate-multiple-organizations).
 
 Upload time depends primarily on the volume of data you're migrating. The process is optimized for speed and typically takes seconds to minutes rather than hours. In production migrations, the tool has demonstrated 100% success rates with datasets as large as 4,000 objects.
 
