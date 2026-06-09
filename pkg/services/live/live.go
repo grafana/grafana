@@ -395,7 +395,7 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 		pushPipelineWSHandler.ServeHTTP(ctx.Resp, r)
 	}
 
-	if cfg.LiveMaxConnections > 0 {
+	if cfg.LiveMaxConnections != 0 {
 		routeRegister.Group("/api/live", func(group routing.RouteRegister) {
 			group.Get("/ws", g.websocketHandler)
 		}, middleware.ReqSignedIn, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
