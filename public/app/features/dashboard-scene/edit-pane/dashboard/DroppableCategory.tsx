@@ -10,16 +10,17 @@ interface DroppableCategoryProps {
   droppableId: string;
   title: string;
   children: ReactNode;
+  itemsCount?: number;
 }
 
-export function DroppableCategory({ droppableId, title, children }: DroppableCategoryProps) {
+export function DroppableCategory({ droppableId, title, children, itemsCount }: DroppableCategoryProps) {
   const styles = useStyles2(getStyles);
 
   return (
     <Droppable droppableId={droppableId} direction="vertical">
       {(provided) => (
         <div ref={provided.innerRef} {...provided.droppableProps}>
-          <OptionsPaneCategory id={droppableId} className={styles.category} title={title}>
+          <OptionsPaneCategory id={droppableId} className={styles.category} title={title} itemsCount={itemsCount}>
             {children}
             {provided.placeholder}
           </OptionsPaneCategory>
