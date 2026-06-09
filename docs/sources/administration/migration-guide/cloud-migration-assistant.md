@@ -179,7 +179,7 @@ If issues occur during or after a migration, the following recovery and rollback
 
 ### No automated rollback
 
-There is no tool to automatically undo or roll back a migration. If you need to start fresh, you must manually delete the migrated dashboards, folders, and data sources from your Grafana Cloud instance. On a typical migration path, customers migrate to a new Grafana Cloud stack that has not had previous usage.
+No tool exists to automatically undo or roll back a migration. If you need to start fresh, you must manually delete the migrated dashboards, folders, and data sources from your Grafana Cloud instance. On a typical migration path, you migrate to a new Grafana Cloud stack that doesn't contain existing resources.
 
 ### Snapshot limitations
 
