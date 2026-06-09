@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,6 +31,12 @@ import (
 )
 
 const tracePrefix = "folder.unifiedstore."
+
+var folderGVR = folderv1.FolderResourceInfo.GroupVersionResource()
+
+func recordFolderCall(verb string, start time.Time, err error) {
+	client.RecordRequest("folder_service", verb, folderGVR.Group, folderGVR.Resource, start, err)
+}
 
 type FolderUnifiedStoreImpl struct {
 	log         log.Logger
@@ -60,8 +67,10 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 	if err != nil {
 		return nil, err
 	}
+	start := time.Now()
 	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID, v1.CreateOptions{
 		FieldValidation: v1.FieldValidationIgnore})
+	recordFolderCall("create", start, err)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +88,9 @@ func (ss *FolderUnifiedStoreImpl) Delete(ctx context.Context, UIDs []string, org
 	defer span.End()
 
 	for _, uid := range UIDs {
+		start := time.Now()
 		err := ss.k8sclient.Delete(ctx, uid, orgID, v1.DeleteOptions{})
+		recordFolderCall("delete", start, err)
 		if err != nil {
 			return err
 		}
@@ -92,7 +103,9 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 	ctx, span := ss.tracer.Start(ctx, tracePrefix+"Update")
 	defer span.End()
 
+	getStart := time.Now()
 	obj, err := ss.k8sclient.Get(ctx, cmd.UID, cmd.OrgID, v1.GetOptions{})
+	recordFolderCall("get", getStart, err)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil, dashboards.ErrFolderNotFound
@@ -135,9 +148,11 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 		})
 	}
 
+	updateStart := time.Now()
 	out, err := ss.k8sclient.Update(ctx, updated, cmd.OrgID, v1.UpdateOptions{
 		FieldValidation: v1.FieldValidationIgnore,
 	})
+	recordFolderCall("update", updateStart, err)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +182,9 @@ func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQue
 	ctx, span := ss.tracer.Start(ctx, tracePrefix+"Get")
 	defer span.End()
 
+	start := time.Now()
 	out, err := ss.k8sclient.Get(ctx, *q.UID, q.OrgID, v1.GetOptions{})
+	recordFolderCall("get", start, err)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
 	} else if err != nil || out == nil {
@@ -268,7 +285,9 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 // index and returns the parsed hits along with the raw response hit count
 // (so paginating callers can detect a short final page).
 func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64, req *resourcepb.ResourceSearchRequest) ([]*folder.FolderReference, int, error) {
+	start := time.Now()
 	out, err := ss.k8sclient.Search(ctx, orgID, req)
+	recordFolderCall("search", start, err)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -483,7 +502,9 @@ func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID 
 	ctx, span := ss.tracer.Start(ctx, tracePrefix+"CountFolderContent")
 	defer span.End()
 
+	start := time.Now()
 	counts, err := ss.k8sclient.Get(ctx, ancestor_uid, orgID, v1.GetOptions{}, "counts")
+	recordFolderCall("get_counts", start, err)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil, dashboards.ErrFolderNotFound
@@ -497,7 +518,9 @@ func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID 
 }
 
 func (ss *FolderUnifiedStoreImpl) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
+	start := time.Now()
 	resp, err := ss.k8sclient.GetStats(ctx, orgID)
+	recordFolderCall("stats", start, err)
 	if err != nil {
 		return 0, err
 	}
@@ -522,7 +545,9 @@ func (ss *FolderUnifiedStoreImpl) list(ctx context.Context, orgID int64, opts v1
 	}
 
 	for {
+		start := time.Now()
 		out, err := ss.k8sclient.List(ctx, orgID, *listOpts)
+		recordFolderCall("list", start, err)
 		if err != nil {
 			return nil, err
 		}

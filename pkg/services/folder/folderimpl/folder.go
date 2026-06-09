@@ -81,6 +81,8 @@ func ProvideService(
 	ac.RegisterScopeAttributeResolver(folder.NewFolderIDScopeResolver(srv.getUIDFromLegacyID, srv))
 	ac.RegisterScopeAttributeResolver(folder.NewFolderUIDScopeResolver(srv))
 
+	client.RegisterMetrics(r)
+
 	k8sHandler := client.NewK8sHandler(
 		request.GetNamespaceMapper(cfg),
 		folderv1.FolderResourceInfo.GroupVersionResource(),
