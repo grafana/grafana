@@ -273,4 +273,19 @@ describe('transformTraceData() pruned span detection', () => {
       durationMedianNs: 215118016,
     });
   });
+
+  // Regression lock for the shared-fixture contract: transformTraceData mutates its input,
+  // so callers must clone. This proves repeated transforms are stable AND the singleton is
+  // never touched - if a future edit drops a structuredClone, the snapshot assertion fails.
+  it('is stable across repeated transforms and never mutates the shared fixture singleton', () => {
+    const before = JSON.stringify(summaryDefaultsOnly);
+
+    const first = transformTraceData(structuredClone(summaryDefaultsOnly))!;
+    const second = transformTraceData(structuredClone(summaryDefaultsOnly))!;
+
+    expect(spanById(second, 'summ00000000a101').aggregation).toEqual(
+      spanById(first, 'summ00000000a101').aggregation
+    );
+    expect(JSON.stringify(summaryDefaultsOnly)).toBe(before);
+  });
 });
