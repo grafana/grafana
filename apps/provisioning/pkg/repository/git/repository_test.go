@@ -5057,9 +5057,8 @@ func TestGitRepository_AuditLog(t *testing.T) {
 	require.NoError(t, err)
 
 	output := buf.String()
-	require.Contains(t, output, `"operation":"list_refs"`)
+	require.Contains(t, output, `"msg":"list refs"`)
 	require.Contains(t, output, `"namespace":"my-ns"`)
 	require.Contains(t, output, `"repository_name":"my-repo"`)
 	require.Contains(t, output, `"url":"https://git.example.com/owner/repo.git"`)
-	require.Contains(t, output, "outbound git operation")
 }

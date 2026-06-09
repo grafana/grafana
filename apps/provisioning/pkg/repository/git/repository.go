@@ -96,7 +96,7 @@ func (r *gitRepository) GetCurrentBranch() string {
 
 func (r *gitRepository) GetDefaultBranch(ctx context.Context) (string, error) {
 	ctx, logger := r.withGitContext(ctx, "")
-	logger.Info("outbound git operation", "operation", "get_default_branch")
+	logger.Info("get default branch")
 
 	// Get all refs to find the default branch
 	refs, err := r.client.ListRefs(ctx)
@@ -181,7 +181,7 @@ func isValidGitURL(gitURL string) bool {
 // Test implements provisioning.Repository.
 func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	ctx, logger := r.withGitContext(ctx, "")
-	logger.Info("outbound git operation", "operation", "test")
+	logger.Info("test repository connection")
 
 	t := string(r.config.Spec.Type)
 
@@ -342,7 +342,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 // Read implements provisioning.Repository.
 func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*repository.FileInfo, error) {
 	ctx, logger := r.withGitContext(ctx, ref)
-	logger.Info("outbound git operation", "operation", "read", "path", filePath)
+	logger.Info("read repository path", "path", filePath)
 	finalPath := safepath.Join(r.gitConfig.Path, filePath)
 
 	// Resolve ref to commit hash
@@ -397,7 +397,7 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 
 func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
 	ctx, logger := r.withGitContext(ctx, ref)
-	logger.Info("outbound git operation", "operation", "read_tree")
+	logger.Info("read repository tree")
 
 	// Resolve ref to commit hash
 	refHash, err := r.resolveRefToHash(ctx, ref)
@@ -446,7 +446,7 @@ func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byt
 		ref = r.gitConfig.Branch
 	}
 	ctx, logger := r.withGitContext(ctx, ref)
-	logger.Info("outbound git operation", "operation", "create", "path", path)
+	logger.Info("create repository path", "path", path)
 	branchRef, err := r.ensureBranchExists(ctx, ref)
 	if err != nil {
 		return err
@@ -492,7 +492,7 @@ func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byt
 		ref = r.gitConfig.Branch
 	}
 	ctx, logger := r.withGitContext(ctx, ref)
-	logger.Info("outbound git operation", "operation", "update", "path", path)
+	logger.Info("update repository path", "path", path)
 
 	// Check if trying to update a directory
 	if safepath.IsDir(path) {
@@ -540,7 +540,7 @@ func (r *gitRepository) Write(ctx context.Context, path string, ref string, data
 	}
 
 	ctx, logger := r.withGitContext(ctx, ref)
-	logger.Info("outbound git operation", "operation", "write", "path", path)
+	logger.Info("write repository path", "path", path)
 	info, err := r.Read(ctx, path, ref)
 	if err != nil && !(errors.Is(err, repository.ErrFileNotFound)) {
 		return fmt.Errorf("check if file exists before writing: %w", err)
@@ -561,7 +561,7 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 		ref = r.gitConfig.Branch
 	}
 	ctx, logger := r.withGitContext(ctx, ref)
-	logger.Info("outbound git operation", "operation", "delete", "path", path)
+	logger.Info("delete repository path", "path", path)
 
 	branchRef, err := r.ensureBranchExists(ctx, ref)
 	if err != nil {
@@ -585,7 +585,7 @@ func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment
 		ref = r.gitConfig.Branch
 	}
 	ctx, logger := r.withGitContext(ctx, ref)
-	logger.Info("outbound git operation", "operation", "move", "old_path", oldPath, "new_path", newPath)
+	logger.Info("move repository path", "old_path", oldPath, "new_path", newPath)
 
 	branchRef, err := r.ensureBranchExists(ctx, ref)
 	if err != nil {
@@ -677,7 +677,7 @@ func (r *gitRepository) History(_ context.Context, _ string, _ string) ([]provis
 
 func (r *gitRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem, error) {
 	ctx, logger := r.withGitContext(ctx, "")
-	logger.Info("outbound git operation", "operation", "list_refs")
+	logger.Info("list refs")
 	refs, err := r.client.ListRefs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list refs: %w", err)
@@ -700,7 +700,7 @@ func (r *gitRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem, e
 
 func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
 	ctx, logger := r.withGitContext(ctx, "")
-	logger.Info("outbound git operation", "operation", "latest_ref")
+	logger.Info("get latest ref")
 	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", r.gitConfig.Branch))
 	if err != nil {
 		return "", fmt.Errorf("get branch ref: %w", err)
@@ -718,7 +718,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 	}
 
 	ctx, logger := r.withGitContext(ctx, ref)
-	logger.Info("outbound git operation", "operation", "compare_files")
+	logger.Info("compare files")
 
 	// Resolve base ref to hash
 	var baseHash hash.Hash
@@ -852,7 +852,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 func (r *gitRepository) Stage(ctx context.Context, opts repository.StageOptions) (repository.StagedRepository, error) {
 	ctx = ensureRetryContext(ctx)
 	ctx, logger := r.withGitContext(ctx, "")
-	logger.Info("outbound git operation", "operation", "stage")
+	logger.Info("stage repository")
 	return NewStagedGitRepository(ctx, r, opts)
 }
 
