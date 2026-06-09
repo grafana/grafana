@@ -13326,6 +13326,7 @@
       "label-target": "Target",
       "label-title": "Title",
       "option-entire-instance": "Entire instance",
+      "option-folderless": "Folderless",
       "option-managed-folder": "Managed folder",
       "placeholder-commit-message-template": "feat(dashboards): {{actionVar}} {{titleVar}}",
       "placeholder-interval-seconds": "60",
@@ -13692,6 +13693,11 @@
         "description": "After setup, a new Grafana folder will be created and synced with external storage. If any resources are present in external storage, they will be provisioned to this new folder. All new resources created in this folder will be stored and versioned in external storage.",
         "label": "Sync external storage to a new Grafana folder",
         "subtitle": "Use this option to sync external resources into a new folder without affecting the rest of your instance."
+      },
+      "folderless": {
+        "description": "After setup, resources from external storage are provisioned at the top level without creating a wrapper folder. Subdirectories in external storage become top-level folders. Other repositories and resources that are not managed by this repository are left untouched.",
+        "label": "Sync external storage directly at root level without a containing folder",
+        "subtitle": "Use this option to sync external resources to the top level, with no wrapper folder, while still supporting subfolders and coexisting with other content."
       },
       "instance": {
         "description": "Resources will be synced with external storage and provisioned into this instance. Existing Grafana resources will be migrated and merged if needed. After setup, all new resources and changes will be saved to external storage and automatically provisioned back into the instance.",
@@ -14339,14 +14345,14 @@
         "no-limit": "No limit"
       },
       "query-inspector": "Query inspector",
-      "query-options": "Query Options"
+      "query-options": "Query options"
     },
     "header": {
       "alert": "Alert",
       "expression": "Expression",
-      "pending-expression": "Select an Expression",
+      "pending-expression": "Select an expression",
       "pending-expression-cancel": "Cancel",
-      "pending-transformation": "Select a Transformation",
+      "pending-transformation": "Select a transformation",
       "pending-transformation-cancel": "Cancel",
       "transformation": "Transformation"
     },
@@ -14355,10 +14361,10 @@
       "close-aria": "Close help panel"
     },
     "labels": {
-      "alert": "Alert",
-      "expression": "Expression",
-      "query": "Query",
-      "transformation": "Transformation"
+      "alert": "alert",
+      "expression": "expression",
+      "query": "query",
+      "transformation": "transformation"
     },
     "sidebar": {
       "add-below": "Add below {{id}}",
@@ -14374,6 +14380,8 @@
       "alerts-loading": "Alerts",
       "card-click": "Select card {{id}}",
       "data": "Data",
+      "enter-stacked-view": "Enter stacked view",
+      "exit-stacked-view": "Exit stacked view",
       "footer-items_one": "{{count}} items",
       "footer-items_other": "{{count}} items",
       "footer-items-alert_one": "{{count}} alerts",
@@ -14385,6 +14393,15 @@
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
       "view-toggle": "View"
+    },
+    "stacked": {
+      "exit": "Exit stacked view",
+      "exit-aria-label": "Exit stacked view",
+      "hidden-aria-label": "Hidden",
+      "scroll-area-aria-label": "Stacked editor items",
+      "showing-items_one": "Showing {{count}} items",
+      "showing-items_other": "Showing {{count}} items",
+      "transformation": "Transformation"
     },
     "transformation-debug": {
       "input-data": "Input data",
