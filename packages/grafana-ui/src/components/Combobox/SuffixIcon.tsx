@@ -2,7 +2,7 @@ import { forwardRef } from 'react';
 
 import { Icon, type IconProps } from '../Icon/Icon';
 
-interface Props extends IconProps {
+interface Props extends Omit<IconProps, 'name'> {
   isLoading: boolean;
   isOpen: boolean;
 }
