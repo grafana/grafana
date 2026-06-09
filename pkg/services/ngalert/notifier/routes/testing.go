@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 type FakeService struct {
@@ -44,6 +44,6 @@ func (f *FakeService) GetManagedRoutes(_ context.Context, _ int64, _ identity.Re
 	return routes, nil
 }
 
-func (f *FakeService) RenameTimeIntervalInRoutes(_ context.Context, rev *legacy_storage.ConfigRevision, oldName string, newName string) map[*apimodels.Route]int {
+func (f *FakeService) RenameTimeIntervalInRoutes(_ context.Context, rev *legacy_storage.ConfigRevision, oldName string, newName string) map[*v1.Route]int {
 	return rev.RenameTimeIntervalInRoutes(oldName, newName, f.IncludeManagedRoutes)
 }

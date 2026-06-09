@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
@@ -120,6 +122,32 @@ func TestReconciler_EmptyQueue_NoOp(t *testing.T) {
 	assert.Empty(t, vec.deletes)
 	assert.Equal(t, 0, text.calls)
 	assert.Equal(t, int64(0), vec.latestRV)
+}
+
+// TestReconciler_ObservesProcessDuration verifies the per-event histogram
+// fires when an event is processed. A regression here would mean the wiring
+// between processEvent and VectorMetrics is broken.
+func TestReconciler_ObservesProcessDuration(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := resource.ProvideVectorMetrics(reg)
+
+	text := &fakeText{dim: 4}
+	s, err := New(Options{
+		Storage:       &fakeStorage{},
+		VectorBackend: newFakeVector(),
+		BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(text)),
+		Builders:      []embed.Builder{dashboard.New()},
+		Interval:      time.Hour,
+		Metrics:       m,
+	})
+	require.NoError(t, err)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")))
+	s.processPending(context.Background())
+
+	// One successful observation under the (group, resource, status) labels
+	// the production code uses.
+	require.Equal(t, 1, testutil.CollectAndCount(m.ReconcilerProcessDuration, "vector_storage_reconciler_process_duration_seconds"))
 }
 
 func TestReconciler_HappyPath_PerDashboardEmbed(t *testing.T) {

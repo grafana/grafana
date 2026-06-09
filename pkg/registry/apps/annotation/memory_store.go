@@ -24,6 +24,8 @@ func NewMemoryStore() Store {
 	}
 }
 
+func (m *memoryStore) Close() error { return nil }
+
 func (m *memoryStore) Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -156,7 +158,7 @@ func (m *memoryStore) Create(ctx context.Context, anno *annotationV0.Annotation)
 	key := anno.Namespace + "/" + anno.Name
 
 	if _, exists := m.data[key]; exists {
-		return nil, fmt.Errorf("annotation already exists")
+		return nil, fmt.Errorf("%w: %s", ErrAlreadyExists, key)
 	}
 
 	created := anno.DeepCopy()

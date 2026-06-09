@@ -7,7 +7,7 @@ import { type DeepRequired, type ThemeRichColor, ThemeRichColorInputSchema } fro
 
 const ThemeColorsModeSchema = z.enum(['light', 'dark']);
 /** @internal */
-export type ThemeColorsMode = z.infer<typeof ThemeColorsModeSchema>;
+type ThemeColorsMode = z.infer<typeof ThemeColorsModeSchema>;
 
 const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
   z
@@ -87,7 +87,7 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
 
 // Need to override the zod type to include the generic properly
 /** @internal */
-export type ThemeColorsBase<TColor> = DeepRequired<
+type ThemeColorsBase<TColor> = DeepRequired<
   Omit<
     z.infer<ReturnType<typeof createThemeColorsBaseSchema>>,
     'primary' | 'secondary' | 'tertiary' | 'info' | 'error' | 'success' | 'warning'
@@ -101,8 +101,6 @@ export type ThemeColorsBase<TColor> = DeepRequired<
   success: TColor;
   warning: TColor;
 };
-
-export interface ThemeHoverStrengh {}
 
 /** @beta */
 export interface ThemeColors extends ThemeColorsBase<ThemeRichColor> {
@@ -124,9 +122,9 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   whiteBase = '204, 204, 220';
 
   border = {
-    weak: `rgba(${this.whiteBase}, 0.12)`,
-    medium: `rgba(${this.whiteBase}, 0.2)`,
-    strong: `rgba(${this.whiteBase}, 0.30)`,
+    weak: `rgb(54, 57, 64)`,
+    medium: `rgb(68, 70, 78)`,
+    strong: `rgb(85, 87, 96)`,
   };
 
   text = {
@@ -224,9 +222,9 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   border = {
-    weak: `rgba(${this.blackBase}, 0.12)`,
-    medium: `rgba(${this.blackBase}, 0.3)`,
-    strong: `rgba(${this.blackBase}, 0.4)`,
+    weak: `rgb(229, 229, 230)`,
+    medium: `rgb(189, 191, 192)`,
+    strong: `rgb(167, 169, 171)`,
   };
 
   secondary = {

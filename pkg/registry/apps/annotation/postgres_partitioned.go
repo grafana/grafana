@@ -41,6 +41,7 @@ type PostgreSQLStore struct {
 	config   PostgreSQLStoreConfig
 	tagCache *tagCache
 	logger   log.Logger
+	metrics  *Metrics
 }
 
 var _ Store = (*PostgreSQLStore)(nil)
@@ -48,7 +49,7 @@ var _ TagProvider = (*PostgreSQLStore)(nil)
 var _ LifecycleManager = (*PostgreSQLStore)(nil)
 
 // NewPostgreSQLStore creates a new PostgreSQL-backed annotation store
-func NewPostgreSQLStore(ctx context.Context, cfg PostgreSQLStoreConfig) (*PostgreSQLStore, error) {
+func NewPostgreSQLStore(ctx context.Context, cfg PostgreSQLStoreConfig, metrics *Metrics) (*PostgreSQLStore, error) {
 	if cfg.MaxConnections == 0 {
 		cfg.MaxConnections = defaultMaxConnections
 	}
@@ -108,16 +109,18 @@ func NewPostgreSQLStore(ctx context.Context, cfg PostgreSQLStoreConfig) (*Postgr
 		config:   cfg,
 		tagCache: cache,
 		logger:   logger,
+		metrics:  metrics,
 	}
 
 	return store, nil
 }
 
 // Close closes the database connection pool
-func (s *PostgreSQLStore) Close() {
+func (s *PostgreSQLStore) Close() error {
 	if s.pool != nil {
 		s.pool.Close()
 	}
+	return nil
 }
 
 // Get retrieves a single annotation by namespace and name
@@ -191,7 +194,7 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 		// Check for unique constraint violation
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return nil, fmt.Errorf("annotation with name %q already exists: %w", name, err)
+			return nil, fmt.Errorf("%w: %s/%s", ErrAlreadyExists, namespace, name)
 		}
 		return nil, fmt.Errorf("failed to insert annotation: %w", err)
 	}
@@ -434,19 +437,19 @@ func (s *PostgreSQLStore) validateAnnotation(anno *annotationV0.Annotation) erro
 	maxPast := now.Add(-s.config.RetentionTTL).UnixMilli()
 
 	if anno.Spec.Time > maxFuture {
-		return fmt.Errorf("annotation time cannot be more than 1 week in the future")
+		return fmt.Errorf("%w: time cannot be more than 1 week in the future", ErrInvalidInput)
 	}
 	if anno.Spec.Time < maxPast {
-		return fmt.Errorf("annotation time cannot be older than retention TTL (%v)", s.config.RetentionTTL)
+		return fmt.Errorf("%w: time cannot be older than retention TTL (%v)", ErrInvalidInput, s.config.RetentionTTL)
 	}
 
 	// If timeEnd is set, validate it's after time and within future bounds
 	if anno.Spec.TimeEnd != nil {
 		if *anno.Spec.TimeEnd < anno.Spec.Time {
-			return fmt.Errorf("annotation timeEnd must be after time")
+			return fmt.Errorf("%w: timeEnd must be after time", ErrInvalidInput)
 		}
 		if *anno.Spec.TimeEnd > maxFuture {
-			return fmt.Errorf("annotation timeEnd cannot be more than 1 week in the future")
+			return fmt.Errorf("%w: timeEnd cannot be more than 1 week in the future", ErrInvalidInput)
 		}
 	}
 

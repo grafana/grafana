@@ -33,8 +33,12 @@ message ResourceStatsRequest {
   // NOTE, this query may need to federate across a few storage instances
   repeated string kinds = 2;
 
-  // Limit the stats within a folder (not recursive!)
-  string folder = 3;
+  // Limit the stats to documents whose direct folder is in this set.
+  // A single UID counts that exact folder (no recursion). Callers that
+  // need recursive descendant counts (e.g. Move/Delete confirmation in
+  // the folders apiserver) pre-expand the folder subtree and pass every
+  // UID here.
+  repeated string folder = 3;
 }
 
 message ResourceStatsResponse {

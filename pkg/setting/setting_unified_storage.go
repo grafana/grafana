@@ -196,6 +196,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MemberlistClusterLabel = section.Key("memberlist_cluster_label").String()
 	cfg.MemberlistClusterLabelVerificationDisabled = section.Key("memberlist_cluster_label_verification_disabled").MustBool(false)
 	cfg.SearchRingReplicationFactor = section.Key("search_ring_replication_factor").MustInt(1)
+	cfg.SearchRingExtendReplicaSet = section.Key("search_ring_extend_replica_set").MustBool(true)
 	cfg.InstanceID = section.Key("instance_id").String()
 	cfg.IndexFileThreshold = section.Key("index_file_threshold").MustInt(10)
 	cfg.IndexMinCount = section.Key("index_min_count").MustInt(1)
@@ -272,6 +273,16 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	}
 	cfg.IndexSnapshotCleanupGracePeriod = section.Key("index_snapshot_cleanup_grace_period").MustDuration(30 * time.Minute)
 
+	// Periodic on-disk cleanup of leftover bleve index folders.
+	// disk_index_cleanup_interval = 0 disables the loop (default).
+	cfg.DiskIndexCleanupInterval = section.Key("disk_index_cleanup_interval").MustDuration(0)
+	cfg.DiskIndexCleanupGracePeriod = section.Key("disk_index_cleanup_grace_period").MustDuration(time.Hour)
+	// disk_index_cleanup_unopened_grace_period only applies to the newest on-disk
+	// index for a resource this pod owns but has not opened in this process.
+	// Keeping it longer lets a later BuildIndex for that resource reuse the
+	// existing index instead of rebuilding from scratch.
+	cfg.DiskIndexCleanupUnopenedGracePeriod = section.Key("disk_index_cleanup_unopened_grace_period").MustDuration(24 * time.Hour)
+
 	// Vector storage (separate pgvector database)
 	vectorSection := cfg.Raw.Section("database_vector")
 	cfg.VectorDBHost = vectorSection.Key("db_host").String()
@@ -283,6 +294,13 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.VectorPromotionThreshold = vectorSection.Key("promotion_threshold").MustInt(10000)
 	cfg.VectorPromoterInterval = vectorSection.Key("promoter_interval").MustDuration(0) // zero means disabled
 
+	// Per-tenant query-embedding cache + rate limit.
+	cfg.VectorQueryCacheEnabled = vectorSection.Key("query_cache_enabled").MustBool(true)
+	cfg.VectorQueryCacheMaxPerTenant = vectorSection.Key("query_cache_max_per_tenant").MustInt(1000)
+	cfg.VectorRateLimitEnabled = vectorSection.Key("rate_limit_enabled").MustBool(true)
+	cfg.VectorRateLimitPerTenant = vectorSection.Key("rate_limit_per_tenant").MustInt(60)
+	cfg.VectorRateLimitWindow = vectorSection.Key("rate_limit_window").MustDuration(time.Minute)
+
 	// Embedding provider for the VectorSearch RPC. Empty = disabled (RPC
 	// returns Unimplemented). When set, the matching provider's connection
 	// fields must also be configured.
@@ -292,9 +310,11 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.VertexLocation = embedSection.Key("vertex_location").MustString("us-central1")
 	cfg.VertexModel = embedSection.Key("vertex_model").MustString("gemini-embedding-001")
 	cfg.VertexDimensions = embedSection.Key("vertex_dimensions").MustInt(768)
+	cfg.VertexBatchSize = embedSection.Key("vertex_batch_size").MustInt(50)
 	cfg.BedrockRegion = embedSection.Key("bedrock_region").MustString("us-east-1")
 	cfg.BedrockModel = embedSection.Key("bedrock_model").MustString("cohere.embed-v4:0")
 	cfg.BedrockDimensions = embedSection.Key("bedrock_dimensions").MustInt(1024)
+	cfg.BedrockBatchSize = embedSection.Key("bedrock_batch_size").MustInt(50)
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,

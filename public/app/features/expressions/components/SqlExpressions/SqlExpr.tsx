@@ -216,7 +216,7 @@ LIMIT
           {({ width, height }: Size) => (
             <Suspense fallback={null}>
               <SQLEditor
-                query={query.expression || initialQuery}
+                query={query.expression ?? initialQuery}
                 onChange={onEditorChange}
                 language={EDITOR_LANGUAGE_DEFINITION}
                 width={width}

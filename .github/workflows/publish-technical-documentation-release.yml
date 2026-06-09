@@ -15,7 +15,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     steps:
       - uses: actions/checkout@v5
         with:

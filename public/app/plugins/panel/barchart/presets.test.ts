@@ -222,7 +222,6 @@ describe('barchartPresetsSupplier', () => {
           barWidth: 0.8,
           legend: {
             calcs: [],
-            displayMode: 'hidden',
             placement: 'right',
             showLegend: false,
           },

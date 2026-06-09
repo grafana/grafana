@@ -17,6 +17,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -45,37 +46,6 @@ func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clien
 		folderAPIVersion:      folderAPIVersion,
 		maxFileSize:           maxFileSize,
 	}
-}
-
-// sizeLimitedReaderWriter wraps a repository.ReaderWriter and rejects reads
-// that exceed maxBytes. The check fires immediately after the underlying
-// repository returns the file bytes, so callers (including DualReadWriter
-// which parses the result) never see oversized payloads.
-type sizeLimitedReaderWriter struct {
-	repository.ReaderWriter
-	maxBytes int64
-}
-
-func (s *sizeLimitedReaderWriter) Read(ctx context.Context, path, ref string) (*repository.FileInfo, error) {
-	info, err := s.ReaderWriter.Read(ctx, path, ref)
-	if err != nil {
-		return info, err
-	}
-	if s.maxBytes > 0 && info != nil && int64(len(info.Data)) > s.maxBytes {
-		return nil, apierrors.NewRequestEntityTooLargeError(
-			fmt.Sprintf("file %q is %d bytes; max allowed is %d bytes", info.Path, len(info.Data), s.maxBytes),
-		)
-	}
-	return info, nil
-}
-
-// withSizeLimit returns rw wrapped so its Read method enforces the connector's
-// configured max file size. Returns rw unchanged when the cap is disabled.
-func (c *filesConnector) withSizeLimit(rw repository.ReaderWriter) repository.ReaderWriter {
-	if c.maxFileSize <= 0 {
-		return rw
-	}
-	return &sizeLimitedReaderWriter{ReaderWriter: rw, maxBytes: c.maxFileSize}
 }
 
 func (*filesConnector) New() runtime.Object {
@@ -138,7 +108,7 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 	// Enforce max_file_size right at the repo boundary so oversized payloads
 	// are rejected before parsing/DryRun runs in DualReadWriter.Read or before
 	// the bytes are streamed back from handleGetRawFile.
-	readWriter = c.withSizeLimit(readWriter)
+	readWriter = repository.NewSizeLimitedReaderWriter(readWriter, c.maxFileSize)
 
 	dualReadWriter, authorizer, err := c.createDualReadWriter(ctx, repo, readWriter)
 	if err != nil {
@@ -213,7 +183,7 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 	}
 
 	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
-	authorizer := resources.NewAuthorizer(repo.Config(), readWriter, c.access, c.folderMetadataEnabled)
+	authorizer := resources.NewAuthorizer(repo.Config(), readWriter, c.access, clients, c.folderMetadataEnabled)
 	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled), authorizer, nil
 }
 
@@ -226,6 +196,12 @@ func (c *filesConnector) parseRequestOptions(r *http.Request, name string, repo 
 		SkipDryRun:   query.Get("skipDryRun") == "true",
 		OriginalPath: query.Get("originalPath"),
 		Branch:       repo.Config().Branch(),
+	}
+
+	// Reject unvalidated refs before they reach any backend. Empty is allowed and
+	// is defaulted to the configured branch downstream.
+	if !git.IsValidRef(opts.Ref) {
+		return opts, repository.ErrInvalidRef
 	}
 
 	path, err := pathAfterPrefix(r.URL.Path, fmt.Sprintf("/%s/files", name))

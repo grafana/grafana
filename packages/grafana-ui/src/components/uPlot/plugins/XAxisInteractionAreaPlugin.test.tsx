@@ -1,8 +1,7 @@
 import { render } from '@testing-library/react';
 import type uPlot from 'uplot';
 
-import { mockBoundingClientRect } from '@grafana/test-utils';
-
+import { mockBoundingClientRect } from '../../../test-utils/mockDom';
 import { UPlotConfigBuilder, type UPlotConfigBuilder as UPlotConfigBuilderType } from '../config/UPlotConfigBuilder';
 
 import { calculatePanRange, setupXAxisPan, XAxisInteractionAreaPlugin } from './XAxisInteractionAreaPlugin';

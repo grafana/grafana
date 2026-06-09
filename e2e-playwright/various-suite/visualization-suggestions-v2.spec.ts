@@ -2,7 +2,6 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 test.use({
   featureToggles: {
-    newVizSuggestions: true,
     dashboardNewLayouts: true,
   },
   viewport: {

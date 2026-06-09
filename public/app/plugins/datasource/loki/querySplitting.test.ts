@@ -19,9 +19,6 @@ import { trackGroupedQueries } from './tracking';
 import { type LokiQuery } from './types';
 
 jest.mock('./tracking');
-jest.mock('uuid', () => ({
-  v4: jest.fn().mockReturnValue('uuid'),
-}));
 
 const originalShardingFlagState = config.featureToggles.lokiShardSplitting;
 const originalLokiQueryLimitsContextState = config.featureToggles.lokiQueryLimitsContext;
@@ -608,7 +605,7 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
         state: LoadingState.Error,
         error: { refId: 'A', message: `${LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX} ...` },
         data: [],
-        key: 'uuid',
+        key: expect.any(String),
       })
     );
     await expect(runSplitQuery(datasource, globalRequest)).toEmitValuesWith((values) => {
@@ -645,7 +642,7 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
           {
             data: [],
             state: LoadingState.Done,
-            key: 'uuid',
+            key: expect.any(String),
           },
           [
             {
@@ -673,7 +670,7 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
           {
             data: [],
             state: LoadingState.Done,
-            key: 'uuid',
+            key: expect.any(String),
           },
           [
             {

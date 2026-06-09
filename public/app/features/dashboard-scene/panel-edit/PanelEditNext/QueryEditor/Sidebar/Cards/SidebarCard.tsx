@@ -5,8 +5,15 @@ import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Checkbox, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { type ActionItem, Actions } from '../../../Actions';
-import { QueryEditorType, SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT, SIDEBAR_CARD_SPACING } from '../../../constants';
+import { Actions } from '../../../Actions';
+import { type ActionItem } from '../../../actionItem';
+import {
+  QueryEditorType,
+  SIDEBAR_CARD_DATA_ATTR,
+  SIDEBAR_CARD_HEIGHT,
+  SIDEBAR_CARD_INDENT,
+  SIDEBAR_CARD_SPACING,
+} from '../../../constants';
 import { useQueryEditorTypeConfig, useQueryEditorUIContext } from '../../QueryEditorContext';
 import { getEditorBorderColor } from '../../utils';
 import { AddCardButton } from '../AddCardButton';
@@ -123,7 +130,7 @@ export const SidebarCard = ({
         onBlur={handleBlur}
         role="button"
         tabIndex={0}
-        data-query-sidebar-card={id}
+        {...{ [SIDEBAR_CARD_DATA_ATTR]: id }}
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
         aria-pressed={isSelected || isPartOfSelection}
       >
@@ -156,9 +163,9 @@ export const SidebarCard = ({
                 onDuplicate={onDuplicate}
                 onToggleHide={onToggleHide}
                 order={{
-                  delete: 1,
+                  delete: 2,
                   duplicate: 0,
-                  hide: 2,
+                  hide: 1,
                 }}
               />
             </div>

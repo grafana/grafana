@@ -1,11 +1,15 @@
 package conversion
 
 import (
+	"fmt"
+	"strings"
+
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
@@ -226,4 +230,40 @@ func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSo
 	}
 
 	return nil
+}
+
+func NewDashboardObject(version string) (runtime.Object, error) {
+	idx := strings.Index(version, "/")
+	if idx > 0 {
+		if dashv0.GROUP != version[:idx] {
+			return nil, fmt.Errorf("expected group: " + dashv0.GROUP)
+		}
+		version = version[idx+1:]
+	}
+
+	switch version {
+	case dashv0.VERSION:
+		return &dashv0.Dashboard{}, nil
+	case dashv1beta1.VERSION:
+		return &dashv1beta1.Dashboard{}, nil
+	case dashv1.VERSION:
+		return &dashv1.Dashboard{}, nil
+	case dashv2alpha1.VERSION:
+		return &dashv2alpha1.Dashboard{}, nil
+	case dashv2beta1.VERSION:
+		return &dashv2beta1.Dashboard{}, nil
+	case dashv2.VERSION:
+		return &dashv2.Dashboard{}, nil
+	}
+	return nil, fmt.Errorf("invalid version")
+}
+
+// Convert a dashboard from one version to another
+func Convert(s *runtime.Scheme, src runtime.Object, version string) (runtime.Object, error) {
+	out, err := NewDashboardObject(version)
+	if err != nil {
+		return nil, err
+	}
+	err = s.Convert(src, out, nil)
+	return out, err
 }
