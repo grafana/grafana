@@ -307,35 +307,6 @@ export interface AlertmanagerStatus {
   };
 }
 
-type TestReceiversAlert = Pick<AlertmanagerAlert, 'annotations' | 'labels'>;
-export type TestTemplateAlert = Pick<
-  AlertmanagerAlert,
-  'annotations' | 'labels' | 'startsAt' | 'endsAt' | 'generatorURL' | 'fingerprint'
-> & {
-  status: 'firing' | 'resolved';
-};
-
-interface TestReceiversPayload {
-  receivers?: Receiver[];
-  alert?: TestReceiversAlert;
-}
-
-interface TestReceiversResultGrafanaReceiverConfig {
-  name: string;
-  uid?: string;
-  error?: string;
-  status: 'ok' | 'failed';
-}
-
-interface TestReceiversResultReceiver {
-  name: string;
-  grafana_managed_receiver_configs: TestReceiversResultGrafanaReceiverConfig[];
-}
-interface TestReceiversResult {
-  notified_at: string;
-  receivers: TestReceiversResultReceiver[];
-}
-
 export interface ExternalAlertmanagersConnectionStatus {
   activeAlertManagers: AlertmanagerUrl[];
   droppedAlertManagers: AlertmanagerUrl[];

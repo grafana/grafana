@@ -33,12 +33,6 @@ export function assertIsQueryTypeError(
 
 export type EditFormDTO = OmitUnion<FormDTO, 'targetUID' | 'sourceUID'>;
 
-type TransformationDTO = {
-  type: SupportedTransformationType;
-  expression?: string;
-  mapValue?: string;
-};
-
 export interface TransformationFieldDetails {
   show: boolean;
   required?: boolean;

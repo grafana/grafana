@@ -45,10 +45,6 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export type Props = ConnectedProps<typeof connector>;
 
-interface State {
-  showInvites: boolean;
-}
-
 export const UsersListPageUnconnected = ({
   users,
   page,

@@ -1,5 +1,3 @@
-import { type Path } from 'react-hook-form';
-
 import {
   type BitbucketRepositoryConfig,
   type ConnectionSpec,
@@ -13,7 +11,6 @@ import {
 export type JobType = 'sync' | 'delete' | 'move' | 'fix' | 'releaseResources' | 'deleteResources';
 
 // Repository type definition - extracted from API client
-type RepositoryType = RepositorySpec['type'];
 export type RepoWorkflows = RepositorySpec['workflows'];
 
 export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySpec['type']> &
@@ -30,8 +27,6 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySp
     // GitHub App connection name (when using app-based auth instead of PAT)
     connectionName?: string;
   };
-
-type RepositorySettingsField = Path<RepositoryFormData>;
 
 // Connection type definition - extracted from API client
 type ConnectionType = ConnectionSpec['type'];

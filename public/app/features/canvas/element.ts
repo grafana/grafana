@@ -52,13 +52,6 @@ export enum ConnectionPath {
   Straight = 'straight',
 }
 
-enum ConnectionDirection {
-  Forward = 'forward',
-  Reverse = 'reverse',
-  Both = 'both',
-  None = 'none',
-}
-
 export interface CanvasConnection {
   source: ConnectionCoordinates;
   target: ConnectionCoordinates;

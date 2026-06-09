@@ -14,17 +14,6 @@ export interface SyncInfo {
   nextSync: string;
 }
 
-interface LdapUserSyncInfo {
-  nextSync?: string;
-  prevSync?: string;
-  status?: string;
-}
-
-interface FailedUser {
-  Login: string;
-  Error: string;
-}
-
 export interface LdapRole {
   orgId: number;
   orgName: string;

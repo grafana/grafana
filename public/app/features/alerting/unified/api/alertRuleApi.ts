@@ -1,13 +1,9 @@
-import { type RelativeTimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type AlertmanagerAlert, type Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { type RuleIdentifier, type RuleNamespace, type RulerDataSourceConfig } from 'app/types/unified-alerting';
 import {
   type AlertQuery,
-  type Annotations,
-  type GrafanaAlertStateDecision,
   type GrafanaRuleDefinition,
-  type Labels,
   type PostableRulerRuleGroupDTO,
   type PromRulesResponse,
   type RulerGrafanaRuleDTO,
@@ -37,11 +33,6 @@ export type PreviewResponse = Array<
   Pick<AlertmanagerAlert, 'annotations' | 'endsAt' | 'startsAt' | 'generatorURL' | 'labels'>
 >;
 
-interface Datasource {
-  type: string;
-  uid: string;
-}
-
 export const PREVIEW_URL = '/api/v1/rule/test/grafana';
 export const PROM_RULES_URL = 'api/prometheus/grafana/api/v1/rules';
 
@@ -57,28 +48,6 @@ export enum PrometheusAPIFilters {
   LimitAlerts = 'limit_alerts',
   MaxGroups = 'max_groups',
   ExcludeAlerts = 'exclude_alerts',
-}
-
-interface Data {
-  refId: string;
-  relativeTimeRange: RelativeTimeRange;
-  queryType: string;
-  datasourceUid: string;
-  model: AlertQuery;
-}
-
-interface GrafanaAlert {
-  data?: Data;
-  condition: string;
-  no_data_state: GrafanaAlertStateDecision;
-  title: string;
-}
-
-interface Rule {
-  grafana_alert: GrafanaAlert;
-  for: string;
-  labels: Labels;
-  annotations: Annotations;
 }
 
 interface ExportRulesParams {

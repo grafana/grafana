@@ -19,13 +19,6 @@ export interface UsersFetchResult {
   totalCount: number;
 }
 
-interface UsersRolesFetchResult {
-  orgUsers: OrgUser[];
-  perPage: number;
-  page: number;
-  totalCount: number;
-}
-
 const usersSlice = createSlice({
   name: 'users',
   initialState,

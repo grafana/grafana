@@ -4,17 +4,6 @@ import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { type PermissionLevel } from 'app/types/acl';
 
 import { type ManagerKind } from '../../apiserver/types';
-
-interface SortOption {
-  description: string;
-  displayName: string;
-  meta: string;
-  name: string;
-}
-interface SortOptions {
-  sortOptions: SortOption[];
-}
-
 interface FacetField {
   field: string;
   count?: number;

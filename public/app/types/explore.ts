@@ -254,13 +254,6 @@ export interface ExploreItemState {
   compact: boolean;
 }
 
-interface ExploreUpdateState {
-  datasource: boolean;
-  queries: boolean;
-  range: boolean;
-  mode: boolean;
-}
-
 export interface QueryOptions {
   minInterval?: string;
   maxDataPoints?: number;

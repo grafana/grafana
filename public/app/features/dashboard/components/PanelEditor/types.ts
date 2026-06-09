@@ -1,4 +1,4 @@
-import { type DataFrame, type FieldConfigSource, type PanelData, type PanelPlugin } from '@grafana/data';
+import { type FieldConfigSource, type PanelData, type PanelPlugin } from '@grafana/data';
 
 import { type DashboardModel } from '../../state/DashboardModel';
 import { type PanelModel } from '../../state/PanelModel';
@@ -41,15 +41,6 @@ export const panelEditTableModes = [
   },
   { value: PanelEditTableToggle.Table, label: 'Table', description: 'Show raw data in table form' },
 ];
-
-/** @internal */
-interface Props {
-  plugin: PanelPlugin;
-  config: FieldConfigSource;
-  onChange: (config: FieldConfigSource) => void;
-  /* Helpful for IntelliSense */
-  data: DataFrame[];
-}
 
 export interface OptionPaneRenderProps {
   panel: PanelModel;

@@ -3,8 +3,6 @@ export type Filter = [key: string, operator: '=' | '=!', value: string];
 
 export type WorkbenchRow = GenericGroupedRow | AlertRuleRow;
 
-type TimelineEntry = [timestamp: number, state: 'firing' | 'pending'];
-
 export interface InstanceCounts {
   firing: number;
   pending: number;

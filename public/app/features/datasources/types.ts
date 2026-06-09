@@ -16,5 +16,3 @@ export type DataSourcesRoutes = {
   List: RelativeUrl;
   Dashboards: RelativeUrl;
 };
-
-type DataSourceTestStatus = 'success' | 'warning' | 'error';

@@ -90,10 +90,6 @@ export interface AnnotationsPermissions {
   dashboard: AnnotationActions;
 }
 
-interface SnapshotSpec {
-  dashboard: DashboardDataDTO;
-}
-
 // FIXME: This should not override Dashboard types
 export interface DashboardDataDTO extends Dashboard {
   title: string;

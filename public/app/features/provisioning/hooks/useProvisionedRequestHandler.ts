@@ -50,12 +50,6 @@ interface ProvisionedRequest {
   data?: DeleteRepositoryFilesWithPathApiResponse | GetRepositoryFilesWithPathApiResponse;
 }
 
-// Resource-specific configuration for different resource types
-interface ResourceConfig {
-  defaultSuccessMessage: string;
-  supportedWorkflows: string[];
-}
-
 interface Props<T> {
   request: ProvisionedRequest;
   folderUID?: string | undefined; // this is used to refetch folder items

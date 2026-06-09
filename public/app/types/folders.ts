@@ -36,17 +36,6 @@ export interface FolderDTO extends WithAccessControlMetadata {
 /** Minimal data required to create a new folder */
 export type NewFolder = Pick<FolderDTO, 'title' | 'parentUid'>;
 
-interface FolderState {
-  id: number;
-  uid: string;
-  title: string;
-  url: string;
-  canSave: boolean;
-  canDelete: boolean;
-  hasChanged: boolean;
-  version: number;
-}
-
 /**
  * API response from `/api/folders/${folderUID}/counts`
  * Supports both the current resource-style keys and older legacy aliases, which depends on whether the unified storage
@@ -67,13 +56,3 @@ export interface DescendantCountDTO {
 type DescendantResource = 'folders' | 'dashboards' | 'library_elements' | 'alertrules';
 /** Summary of descendant counts by resource type, with keys matching the App Platform API response */
 export interface DescendantCount extends Record<DescendantResource, number> {}
-
-interface FolderInfo {
-  /**
-   * @deprecated use uid instead.
-   */
-  id?: number; // can't be totally removed as search and alerts api aren't supporting folderUids yet. It will break DashList and AlertList panel
-  uid?: string;
-  title?: string;
-  url?: string;
-}

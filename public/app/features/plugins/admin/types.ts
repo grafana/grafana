@@ -8,11 +8,8 @@ import {
   type PluginErrorCode,
   type WithAccessControlMetadata,
 } from '@grafana/data';
-import { type IconName } from '@grafana/ui';
 import { type PluginsState } from 'app/types/plugins';
 import { type StoreState } from 'app/types/store';
-
-type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
 export enum PluginAdminRoutes {
   Home = 'plugins-home',
@@ -278,32 +275,6 @@ export interface Version {
   status?: string; // Status of the version: 'active', 'deprecated'
 }
 
-interface PluginDetails {
-  remote?: RemotePlugin;
-  remoteVersions?: Version[];
-  local?: LocalPlugin;
-}
-
-interface Org {
-  slug: string;
-  name: string;
-  url: string;
-  createdAt: string;
-  updatedAt: string;
-  avatar: string;
-  avatarUrl: string;
-}
-
-type CatalogPluginsState = { loading: boolean; error?: Error; plugins: CatalogPlugin[] };
-
-export enum PluginStatus {
-  INSTALL = 'INSTALL',
-  UNINSTALL = 'UNINSTALL',
-  UPDATE = 'UPDATE',
-  REINSTALL = 'REINSTALL',
-  DOWNGRADE = 'DOWNGRADE',
-}
-
 export enum PluginTabLabels {
   OVERVIEW = 'Overview',
   VERSIONS = 'Version history',
@@ -335,7 +306,6 @@ export enum RequestStatus {
   Fulfilled = 'Fulfilled',
   Rejected = 'Rejected',
 }
-type RemotePluginResponse = { plugins: RemotePlugin[]; error?: Error };
 
 type RequestInfo = {
   status: RequestStatus;
@@ -343,13 +313,6 @@ type RequestInfo = {
   error?: any;
   // An optional error message
   errorMessage?: string;
-};
-
-type PluginDetailsTab = {
-  label: PluginTabLabels | string;
-  icon?: IconName;
-  id: PluginTabIds | string;
-  href?: string;
 };
 
 // TODO<remove `PluginsState &` when the "plugin_admin_enabled" feature flag is removed>

@@ -3,8 +3,6 @@ import { css } from '@emotion/css';
 import { Trans, t } from '@grafana/i18n';
 import { Modal, useStyles2 } from '@grafana/ui';
 
-interface Props {}
-
 export const SelectedMixResourcesMsgModal = ({ onDismiss }: { onDismiss: () => void }) => {
   const styles = useStyles2(getStyles);
   return (

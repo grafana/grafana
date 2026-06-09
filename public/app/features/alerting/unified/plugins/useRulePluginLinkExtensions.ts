@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 
 import { type PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
-import { type CombinedRule, type Rule, type RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { type Rule, type RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { getRulePluginOrigin } from '../utils/rules';
@@ -41,11 +41,6 @@ export function useRulePluginLinkExtension(rule: Rule | undefined, groupIdentifi
   const { pluginId } = ruleOrigin;
 
   return links.filter((link) => link.pluginId === pluginId);
-}
-
-interface PluginRuleExtensionParam {
-  pluginId: string;
-  rule: CombinedRule;
 }
 
 interface AlertingRuleExtensionPoint {

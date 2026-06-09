@@ -135,31 +135,6 @@ interface NotificationChannelType {
   info?: string;
 }
 
-interface NotificationChannelDTO {
-  [key: string]: string | boolean | number | SelectableValue<string>;
-  id: number;
-  name: string;
-  type: SelectableValue<string>;
-  sendReminder: boolean;
-  disableResolveMessage: boolean;
-  frequency: string;
-  settings: ChannelTypeSettings;
-  secureSettings: NotificationChannelSecureSettings;
-  secureFields: NotificationChannelSecureFields;
-  isDefault: boolean;
-}
-
-type NotificationChannelSecureSettings = Record<string, string | number>;
-export type NotificationChannelSecureFields = Record<string, boolean | ''>;
-
-interface ChannelTypeSettings {
-  [key: string]: any;
-  autoResolve: true;
-  httpMethod: string;
-  severity: string;
-  uploadImage: boolean;
-}
-
 export interface OptionMeta {
   required?: string | ValidationRule<boolean>;
   readOnly?: boolean;
@@ -241,32 +216,4 @@ export interface AlertRulesState {
   items: AlertRule[];
   searchQuery: string;
   isLoading: boolean;
-}
-
-interface AlertNotification {
-  isDefault: boolean;
-  name: string;
-  id: number;
-  type: string;
-}
-
-interface AnnotationItemDTO {
-  id: number;
-  alertId: number;
-  alertName: string;
-  dashboardId: number;
-  panelId: number;
-  userId: number;
-  newState: string;
-  prevState: string;
-  created: number;
-  updated: number;
-  time: number;
-  timeEnd: number;
-  text: string;
-  tags: string[];
-  login: string;
-  email: string;
-  avatarUrl: string;
-  data: any;
 }
