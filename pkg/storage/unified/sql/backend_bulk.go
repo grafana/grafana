@@ -353,7 +353,7 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 // so the planner still sees it as empty and picks an O(n^2) nested-loop plan that never finishes
 // on large rebuilds.
 func (b *backend) analyzeResourceHistoryForBackfill(ctx context.Context, tx db.ContextExecer, processed int64) error {
-	if b.dialect.DialectName() != "postgres" || processed < analyzeResourceHistoryRowThreshold {
+	if b.dialect.DialectName() != "postgres" || processed < int64(b.analyzeBulkRowThreshold) {
 		return nil
 	}
 	_, err := tx.ExecContext(ctx, `ANALYZE "resource_history"`)
