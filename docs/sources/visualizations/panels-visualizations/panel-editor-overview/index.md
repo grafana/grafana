@@ -41,7 +41,7 @@ The header section lists the dashboard in which the panel appears and the follow
 
 - **Back to dashboard** - Return to the dashboard with changes applied, but not yet saved.
 - **Discard panel changes** - Discard changes you have made to the panel since you last saved the dashboard.
-- **Save dashboard** - Save your changes to the dashboard.
+- **Save** - Save your changes to the dashboard.
 
 ## Visualization preview
 
@@ -79,10 +79,6 @@ When you first open the panel editor, Grafana analyzes your query results and su
 For more information about individual visualizations, refer to [Visualizations options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/).
 
 ### Panel styles
-
-{{< admonition type="note" >}}
-Panel styles is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the `vizPresets` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) to use this feature.
-{{< /admonition >}}
 
 While visualization suggestions help you choose _which_ panel type to use, panel styles help you decide _how_ that panel should look. The **Panel styles** section of the panel editor sidebar contains preconfigured options for the currently selected visualization. It appears after you've selected a visualization and the panel has data.
 

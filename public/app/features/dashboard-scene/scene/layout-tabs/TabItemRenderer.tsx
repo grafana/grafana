@@ -5,7 +5,7 @@ import { useLocation } from 'react-router';
 
 import { type GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { locationService, config } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
@@ -24,7 +24,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const { currentTabSlug, isDropTarget: isParentDropTarget } = parentLayout.useState();
   const titleInterpolated = interpolateSectionTitle(model, title);
 
-  const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
+  const { isSelected, onSelect, isSelectable } = useElementSelection(key);
   const { isSelected: isSourceSelected } = useElementSelection(repeatSourceKey);
   const { isEditing } = useDashboardState(model);
   const mySlug = model.getSlug();
@@ -64,6 +64,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
         <div
           ref={(ref) => {
             dragProvided.innerRef(ref);
+            model.containerRef.current = ref;
           }}
           className={cx(dragSnapshot.isDragging && styles.dragging)}
           {...dragProvided.draggableProps}
@@ -71,7 +72,6 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
           style={getDraggableStyle(dragProvided.draggableProps.style, dragSnapshot)}
         >
           <Tab
-            ref={model.containerRef}
             truncate
             className={cx(
               isConditionallyHidden && styles.hidden,
@@ -117,11 +117,6 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
                 return;
               }
 
-              if (!isActive) {
-                onClearSelection?.();
-                return;
-              }
-
               onSelect?.(evt);
             }}
             label={titleInterpolated}
@@ -155,7 +150,12 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
   const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
     tab.state.conditionalRendering
   );
-  const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
+  // OpenFeature is not initialized for anonymous users, so fall back to
+  // the static feature toggle to ensure section variables work without auth.
+  const sectionVariablesEnabled = useBooleanFlagValue(
+    'dashboardSectionVariables',
+    Boolean(config.featureToggles.dashboardSectionVariables)
+  );
   const tabVariablesSet = tab.state.$variables;
 
   return (

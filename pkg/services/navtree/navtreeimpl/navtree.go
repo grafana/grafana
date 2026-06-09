@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	playlistregistry "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -23,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/star"
+	starapi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -35,7 +36,7 @@ type ServiceImpl struct {
 	authnService         authn.Service
 	pluginStore          pluginstore.Store
 	pluginSettings       pluginsettings.Service
-	starService          star.Service
+	starClient           starapi.K8sClients
 	features             featuremgmt.FeatureToggles
 	dashboardService     dashboards.DashboardService
 	accesscontrolService ac.Service
@@ -57,7 +58,7 @@ type NavigationAppConfig struct {
 	IsNew      bool
 }
 
-func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
+func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starClient starapi.K8sClients,
 	features featuremgmt.FeatureToggles, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
 	license licensing.Licensing, authnService authn.Service,
 ) navtree.Service {
@@ -68,7 +69,7 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 		authnService:         authnService,
 		pluginStore:          pluginStore,
 		pluginSettings:       pluginSettings,
-		starService:          starService,
+		starClient:           starClient,
 		features:             features,
 		dashboardService:     dashboardService,
 		accesscontrolService: accesscontrolService,
@@ -160,9 +161,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		}
 	}
 
-	if connectionsSection := s.buildDataConnectionsNavLink(c); connectionsSection != nil {
-		treeRoot.AddSection(connectionsSection)
-	}
+	treeRoot.AddSection(s.buildDataConnectionsNavLink(c))
 
 	orgAdminNode, err := s.getAdminNode(c)
 
@@ -321,26 +320,29 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*navtree.NavLink, error) {
 	starredItemsChildNavs := []*navtree.NavLink{}
 
-	userID, _ := identity.UserIdentifier(c.GetID())
-	query := star.GetUserStarsQuery{
-		UserID: userID,
-	}
-
-	starredDashboardResult, err := s.starService.GetByUser(c.Req.Context(), &query)
+	// Read stars via the collections API so this works in both dual-writer
+	// mode 0 (legacy SQL `star` table) and mode 5 (stars stored as a
+	// `stars.collections.grafana.app` resource in unified storage). The legacy
+	// `starService.GetByUser` only reads the SQL table and would return
+	// nothing in mode 5, leaving this section empty.
+	uids, err := s.starClient.GetStars(c)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(starredDashboardResult.UserStars) > 0 {
-		var uids []string
-		for uid := range starredDashboardResult.UserStars {
-			uids = append(uids, uid)
-		}
-		starredDashboards, err := s.dashboardService.SearchDashboards(c.Req.Context(), &dashboards.FindPersistedDashboardsQuery{
+	if len(uids) > 0 {
+		// Use a service identity for the dashboard search: the legacy RBAC
+		// gate at the caller already authorised the user to see the Starred
+		// section, and the UIDs come from the user's own star rows. The
+		// search-side authz filter would otherwise drop dashboards whose
+		// authlib check doesn't mirror the legacy permission, leaving the
+		// menu empty even though the stars are present.
+		serviceCtx, serviceIdent := identity.WithServiceIdentity(c.Req.Context(), c.GetOrgID())
+		starredDashboards, err := s.dashboardService.SearchDashboards(serviceCtx, &dashboards.FindPersistedDashboardsQuery{
 			DashboardUIDs: uids,
 			Type:          model.TypeDashboard,
 			OrgId:         c.GetOrgID(),
-			SignedInUser:  c.SignedInUser,
+			SignedInUser:  serviceIdent,
 		})
 		if err != nil {
 			return nil, err
@@ -371,7 +373,12 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	dashboardChildNavs := []*navtree.NavLink{}
 
 	if c.IsSignedIn {
-		if c.HasRole(org.RoleViewer) {
+		showPlaylist := c.HasRole(org.RoleViewer)
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC) {
+			showPlaylist = hasAccess(ac.EvalPermission(playlistregistry.ActionPlaylistsRead))
+		}
+		if showPlaylist {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 			})
@@ -404,15 +411,12 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagRestoreDashboards) {
-			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text:     "Recently deleted",
-				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
-				Id:       "dashboards/recently-deleted",
-				Url:      s.cfg.AppSubURL + "/dashboard/recently-deleted",
-			})
-		}
+		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+			Text:     "Recently deleted",
+			SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
+			Id:       "dashboards/recently-deleted",
+			Url:      s.cfg.AppSubURL + "/dashboard/recently-deleted",
+		})
 	}
 
 	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
@@ -612,12 +616,11 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 	hasAccess := ac.HasAccess(s.accessControl, c)
 
 	var children []*navtree.NavLink
-	var navLink *navtree.NavLink
 
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
 	if hasAccess(datasources.ConfigurationPageAccess) {
-		// Add new connection
+		// Add new connection — requires create/write permissions
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-add-new-connection",
 			Text:     "Add new connection",
@@ -627,7 +630,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 			Keywords: []string{"csv", "graphite", "json", "loki", "prometheus", "sql", "tempo"},
 		})
 
-		// Data sources
+		// Data sources — also requires write permissions to be useful
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-datasources",
 			Text:     "Data sources",
@@ -637,18 +640,17 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 		})
 	}
 
-	if len(children) > 0 {
-		// Connections (main)
-		navLink = &navtree.NavLink{
-			Text:       "Connections",
-			Icon:       "adjust-circle",
-			Id:         "connections",
-			Url:        baseUrl,
-			Children:   children,
-			SortWeight: navtree.WeightDataConnections,
-		}
-
-		return navLink
+	// Always return the section so that plugin pages registered under the
+	// "connections" section ID (via addAppLinks) can be attached regardless
+	// of the user's datasource permissions. The section is pruned after all
+	// app links are processed if it still has no children (see
+	// NavTreeRoot.RemoveEmptyConnectionsSection called in setIndexViewData).
+	return &navtree.NavLink{
+		Text:       "Connections",
+		Icon:       "adjust-circle",
+		Id:         "connections",
+		Url:        baseUrl,
+		Children:   children,
+		SortWeight: navtree.WeightDataConnections,
 	}
-	return nil
 }

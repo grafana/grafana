@@ -363,7 +363,7 @@ func TestIntegrationCachingJWKHTTPResponse(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	jwkCachingScenario(t, "caches the jwk response", func(t *testing.T, sc cachingScenarioContext) {
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject}, nil)
 			_, err := sc.authJWTSvc.Verify(sc.ctx, token)
 			require.NoError(t, err, "verify call %d", i+1)

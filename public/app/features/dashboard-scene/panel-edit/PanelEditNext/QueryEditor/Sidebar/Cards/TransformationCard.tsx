@@ -1,7 +1,8 @@
 import { Icon } from '@grafana/ui';
 
-import { PENDING_CARD_ID, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../../constants';
-import { useActionsContext, useQueryEditorUIContext } from '../../QueryEditorContext';
+import { transformationToActionItem } from '../../../actionItem';
+import { PENDING_CARD_ID, QueryEditorType } from '../../../constants';
+import { useActionsContext, useQueryEditorUIContext, useQueryEditorTypeConfig } from '../../QueryEditorContext';
 import { type Transformation } from '../../types';
 
 import { CardTitle } from './CardTitle';
@@ -12,16 +13,13 @@ export const TransformationCard = ({ transformation }: { transformation: Transfo
   const { selectedTransformation, toggleTransformationSelection, selectedTransformationIds, pendingTransformation } =
     useQueryEditorUIContext();
   const { deleteTransformation, toggleTransformationDisabled } = useActionsContext();
+  const typeConfig = useQueryEditorTypeConfig();
   const isSelected = selectedTransformation?.transformId === transformation.transformId;
   const isPartOfSelection = selectedTransformationIds.includes(transformation.transformId) && !isSelected;
   const isHidden = !!transformation.transformConfig.disabled;
   const transformationName = transformation.registryItem?.name || transformation.transformConfig.id;
 
-  const item = {
-    name: transformationName,
-    type: QueryEditorType.Transformation,
-    isHidden: !!transformation.transformConfig.disabled,
-  };
+  const item = transformationToActionItem(transformation);
 
   return (
     <>
@@ -35,8 +33,8 @@ export const TransformationCard = ({ transformation }: { transformation: Transfo
         onToggleHide={() => toggleTransformationDisabled(transformation.transformId)}
       >
         <Icon
-          name={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Transformation].icon}
-          color={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Transformation].color}
+          name={typeConfig[QueryEditorType.Transformation].icon}
+          color={typeConfig[QueryEditorType.Transformation].color}
           size="sm"
         />
         <CardTitle title={transformationName} isHidden={isHidden} />

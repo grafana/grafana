@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -45,7 +44,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 				},
 				name: "general",
 			},
-			err: dashboards.ErrFolderInvalidUID,
+			err: folder.ErrInvalidUID,
 		},
 		{
 			name: "should return no error if every validation passes",
@@ -68,7 +67,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 				},
 				name: "foo",
 			},
-			err: dashboards.ErrFolderTitleEmpty,
+			err: folder.ErrTitleEmpty,
 		},
 		{
 			name: "should return error if folder is a parent of itself",
@@ -143,7 +142,6 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 
 			b := &FolderAPIBuilder{
-				namespacer:           func(_ int64) string { return "123" },
 				storage:              us,
 				parents:              newParentsGetter(us, 2),
 				maxNestedFolderDepth: setting.NewCfg().MaxNestedFolderDepth,
@@ -181,10 +179,14 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 }
 
 func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
+	zeroGrace := int64(0)
+
 	tests := []struct {
-		name          string
-		statsResponse []*resourcepb.ResourceStatsResponse_Stats
-		wantErr       bool
+		name                 string
+		statsResponse        []*resourcepb.ResourceStatsResponse_Stats
+		deleteOptions        *metav1.DeleteOptions
+		cascadeDeleteEnabled bool
+		wantErr              bool
 	}{
 		{
 			name: "should allow deletion when folder is empty",
@@ -263,6 +265,23 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{},
 			wantErr:       false,
 		},
+		{
+			name: "should reject force delete when cascade gate disabled",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Resource: "folders", Count: 1, Group: "folders.grafana.app"},
+			},
+			deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+			cascadeDeleteEnabled: false,
+			wantErr:              true,
+		},
+		{
+			name: "should allow force delete when cascade gate enabled",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Resource: "folders", Count: 1, Group: "folders.grafana.app"},
+			},
+			deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+			cascadeDeleteEnabled: true,
+		},
 	}
 
 	obj := &folders.Folder{
@@ -279,15 +298,18 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
-			sm.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: obj.Namespace, Folder: obj.Name}).Return(
-				&resourcepb.ResourceStatsResponse{Stats: tt.statsResponse},
-				nil,
-			).Once()
+			if !tt.cascadeDeleteEnabled || !forceDeleteFromDeleteOptions(tt.deleteOptions) {
+				sm.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: obj.Namespace, Kinds: countedKinds, Folder: []string{obj.Name}}).Return(
+					&resourcepb.ResourceStatsResponse{Stats: tt.statsResponse},
+					nil,
+				).Once()
+			}
+
+			setKubernetesFolderCascadeDeleteToggle(t, tt.cascadeDeleteEnabled)
 
 			b := &FolderAPIBuilder{
-				namespacer: func(_ int64) string { return "123" },
-				storage:    us,
-				searcher:   sm,
+				storage:  us,
+				searcher: sm,
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -298,8 +320,8 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 				obj.Name,
 				folders.SchemeGroupVersion.WithResource("folders"),
 				"",
-				"DELETE",
-				nil,
+				admission.Delete,
+				tt.deleteOptions,
 				true,
 				&user.SignedInUser{},
 			),
@@ -442,14 +464,11 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				m.On("Get", mock.Anything, "p1", mock.Anything).Return(
 					&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
-							Name:        "p1",
+							Name: "p1",
+							// p1 is at root: the canonical annotation is "general",
+							// and newParentsGetter must stop here without fetching
+							// "general" as a real folder (it is not a resource).
 							Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
-						},
-					}, nil)
-				m.On("Get", mock.Anything, folder.GeneralFolderUID, mock.Anything).Return(
-					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name: folder.GeneralFolderUID,
 						},
 					}, nil)
 			},
@@ -477,10 +496,9 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 			}
 
 			b := &FolderAPIBuilder{
-				namespacer: func(_ int64) string { return "123" },
-				storage:    us,
-				searcher:   sm,
-				parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+				storage:  us,
+				searcher: sm,
+				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -570,10 +588,9 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
 			b := &FolderAPIBuilder{
-				namespacer: func(_ int64) string { return "123" },
-				storage:    us,
-				searcher:   sm,
-				parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+				storage:  us,
+				searcher: sm,
+				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
 			}
 			admAttr := admission.NewAttributesRecord(
 				tt.input,
@@ -675,10 +692,9 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	us := grafanarest.NewMockStorage(t)
 	sm := resource.NewMockResourceClient(t)
 	b := &FolderAPIBuilder{
-		namespacer: func(_ int64) string { return "123" },
-		storage:    us,
-		searcher:   sm,
-		parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+		storage:  us,
+		searcher: sm,
+		parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

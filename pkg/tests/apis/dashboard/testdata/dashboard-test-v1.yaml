@@ -7,3 +7,6 @@ spec:
   uid: test-v1 # will be removed by mutation hook
   version: 1234567 # will be removed by mutation hook
   schemaVersion: 42
+  tags:
+    - bbb
+    - ccc

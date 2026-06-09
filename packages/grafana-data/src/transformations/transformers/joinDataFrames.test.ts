@@ -6,8 +6,8 @@ import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
 import { calculateFieldTransformer } from './calculateField';
-import { JoinMode } from './joinByField';
 import { isLikelyAscendingVector, joinDataFrames } from './joinDataFrames';
+import { JoinMode } from './joinShared';
 
 describe('align frames', () => {
   beforeAll(() => {

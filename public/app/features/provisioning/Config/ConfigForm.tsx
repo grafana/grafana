@@ -38,6 +38,7 @@ import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions } from '../utils/git';
 import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
 
+import { CommitMessageTemplateField } from './CommitMessageTemplateField';
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
 import { getDefaultValues } from './defaults';
@@ -47,6 +48,7 @@ const getTargetOptions = (allowedTargets: string[]) => {
   const allOptions = [
     { value: 'instance', label: t('provisioning.config-form.option-entire-instance', 'Entire instance') },
     { value: 'folder', label: t('provisioning.config-form.option-managed-folder', 'Managed folder') },
+    { value: 'folderless', label: t('provisioning.config-form.option-folderless', 'Folderless') },
   ];
 
   return allOptions.filter((option) => allowedTargets.includes(option.value));
@@ -192,6 +194,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
             placeholder={t('provisioning.config-form.placeholder-my-config', 'My config')}
           />
         </Field>
+        <CommitMessageTemplateField register={register} />
         {gitFields && (
           <>
             {usesGitHubApp ? (
@@ -286,6 +289,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 {...register('url', {
                   required: gitFields.urlConfig.validation?.required,
                   pattern: gitFields.urlConfig.validation?.pattern,
+                  validate: gitFields.urlConfig.validation?.validate,
                 })}
                 placeholder={gitFields.urlConfig.placeholder}
               />

@@ -52,7 +52,18 @@ type IndexViewData struct {
 	// Feature flag for image-renderer to check support for binding calls
 	RenderBindingSupported bool
 
+	// Options for controlling the inclusion and behavior of the Meticulous AI session recorder script.
+	MeticulousAIEnabled                   bool
+	MeticulousAIRecordingToken            string
+	MeticulousAIProductionEnvironmentFlag bool
+
 	BootScript template.JS
+
+	// Feature flag for enabling SRI checks on Grafana assets
+	AssetSriChecksEnabled bool
+
+	// Feature flag for reducing the usage of Bootdata
+	ReduceBootdataAPI bool
 }
 
 // Templates setup.
@@ -122,17 +133,27 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	ofClient := openfeature.NewDefaultClient()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	compiledBootScript, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagCompiledBootScript, false, openfeature.TransactionContext(ctx))
+	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
+	meticulousAIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaMeticulousAIMode, "off", openfeature.TransactionContext(ctx))
+	meticulousAIEnabled := meticulousAIMode == "on-prod-env" || meticulousAIMode == "on-dev-env"
+	meticulousAIProductionEnvironmentFlag := meticulousAIMode == "on-prod-env"
+	reduceBootdataAPI, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceReducedBootDataAPI, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
-		AppTitle:                   "Grafana",
-		AppSubUrl:                  p.config.AppSubURL,
-		IsDevelopmentEnv:           p.config.Env == setting.Dev,
-		Assets:                     assetsManifest,
-		DefaultUser:                dtos.CurrentUser{},
-		Nonce:                      reqCtx.RequestNonce,
-		PublicDashboardAccessToken: reqCtx.PublicDashboardAccessToken,
-		Settings:                   fsSettings,
-		RenderBindingSupported:     renderBindingSupported,
+		AppTitle:                              "Grafana",
+		AppSubUrl:                             p.config.AppSubURL,
+		IsDevelopmentEnv:                      p.config.Env == setting.Dev,
+		Assets:                                assetsManifest,
+		DefaultUser:                           dtos.CurrentUser{},
+		Nonce:                                 reqCtx.RequestNonce,
+		PublicDashboardAccessToken:            reqCtx.PublicDashboardAccessToken,
+		Settings:                              fsSettings,
+		RenderBindingSupported:                renderBindingSupported,
+		AssetSriChecksEnabled:                 grafanaAssetSriChecks,
+		MeticulousAIEnabled:                   meticulousAIEnabled,
+		MeticulousAIRecordingToken:            p.config.MeticulousAIRecordingToken,
+		MeticulousAIProductionEnvironmentFlag: meticulousAIProductionEnvironmentFlag,
+		ReduceBootdataAPI:                     reduceBootdataAPI,
 	}
 
 	if compiledBootScript {
@@ -155,6 +176,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		if p.config.AppSubURL != "" {
 			cookiePath = data.AppSubUrl
 		}
+		// #nosec G124 -- HttpOnly/Secure/SameSite are explicitly set above
 		http.SetCookie(writer, &http.Cookie{
 			Name:     "login_error",
 			Value:    "",

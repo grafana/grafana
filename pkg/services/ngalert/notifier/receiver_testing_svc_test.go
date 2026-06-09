@@ -3,15 +3,18 @@ package notifier
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"maps"
 	"slices"
 	"testing"
 
 	alertingModels "github.com/grafana/alerting/models"
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -21,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
@@ -50,11 +52,13 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 	}
 	encryptionServiceFake := secrets_fakes.NewFakeSecretsService()
 	authz := ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), false)
+	emailValidator := &FakeEmailValidator{}
 	svc := &ReceiverTestingService{
 		receiverSvc:       receiverSvcFake,
 		amProvider:        amProviderFake,
 		encryptionService: encryptionServiceFake,
 		authz:             authz,
+		emailValidator:    emailValidator,
 	}
 
 	userAuthorizedToCreate := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleNone, Permissions: map[int64]map[string][]string{
@@ -73,21 +77,43 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 		},
 	}}
 
-	integration := models.IntegrationGen(models.IntegrationMuts.WithUID(""))()
+	// Pin to a non-email type so the default integration doesn't randomly land on EmailType,
+	// which would route through emailValidator and fail with 'email address is not allowed'
+	// because the generator's random Name won't match validEmailIntegration.
+	integration := models.IntegrationGen(models.IntegrationMuts.WithUID(""), models.IntegrationMuts.WithValidConfig(schema.SlackType))()
+	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithUID(""), models.IntegrationMuts.WithValidConfig("slack"))()
+	validEmailIntegration := models.IntegrationGen(
+		models.IntegrationMuts.WithUID(""),
+		models.IntegrationMuts.WithValidConfig(schema.EmailType),
+		models.IntegrationMuts.WithSettings(map[string]any{"addresses": "alice@org.com"}),
+		models.IntegrationMuts.WithName("valid"),
+	)()
+	invalidEmailIntegration := models.IntegrationGen(
+		models.IntegrationMuts.WithUID(""),
+		models.IntegrationMuts.WithValidConfig(schema.EmailType),
+		models.IntegrationMuts.WithSettings(map[string]any{"addresses": "outsider@org.com"}),
+	)()
 
 	expectedAlert, err := convertToAlertParam(alert)
 	require.NoError(t, err)
-	// endregion setup
+
+	emailValidator.ValidateIntegrationFunc = func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
+		if integration.Name == validEmailIntegration.Name {
+			return nil
+		}
+		return fmt.Errorf("email address is not allowed")
+	}
 
 	testCases := []struct {
-		name        string
-		integration *models.Integration
-		user        identity.Requester
-		expectedErr error
+		name                string
+		integration         *models.Integration
+		user                identity.Requester
+		allowedIntegrations map[schema.IntegrationType]struct{}
+		expectedErr         error
 	}{
 		{
 			name:        "error if integration UID is not empty",
-			integration: utils.Pointer(models.IntegrationGen()()),
+			integration: new(models.IntegrationGen()()),
 			user:        userAuthorizedToCreate,
 			expectedErr: models.ErrReceiverTestingInvalidIntegrationBase,
 		},
@@ -97,8 +123,33 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 			expectedErr: ac.ErrAuthorizationBase,
 		},
 		{
-			name: "integration is tested successfully (receiverUID empty)",
-			user: userAuthorizedToCreate,
+			name:        "integration is tested successfully (receiverUID empty)",
+			integration: &slackIntegration,
+			user:        userAuthorizedToCreate,
+		},
+		{
+			name:                "integration type in allowlist is permitted",
+			integration:         &slackIntegration,
+			user:                userAuthorizedToCreate,
+			allowedIntegrations: map[schema.IntegrationType]struct{}{schema.SlackType: {}},
+		},
+		{
+			name:                "integration type not in allowlist is rejected",
+			integration:         &slackIntegration,
+			user:                userAuthorizedToCreate,
+			allowedIntegrations: map[schema.IntegrationType]struct{}{schema.EmailType: {}},
+			expectedErr:         models.ErrReceiverTestingInvalidIntegrationBase,
+		},
+		{
+			name:        "email validation passes",
+			integration: &validEmailIntegration,
+			user:        userAuthorizedToCreate,
+		},
+		{
+			name:        "email validation fails",
+			integration: &invalidEmailIntegration,
+			user:        userAuthorizedToCreate,
+			expectedErr: models.ErrReceiverInvalidBase,
 		},
 	}
 	for _, tc := range testCases {
@@ -106,6 +157,8 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 			if tc.integration == nil {
 				tc.integration = &integration
 			}
+			svc.allowedIntegrations = tc.allowedIntegrations
+			t.Cleanup(func() { svc.allowedIntegrations = nil })
 			result, err := svc.TestNewReceiverIntegration(context.Background(), tc.user, alert, *tc.integration)
 			if tc.expectedErr != nil {
 				require.ErrorIs(t, err, tc.expectedErr)
@@ -121,7 +174,6 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 }
 
 func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
-	// region setup
 	alert := Alert{
 		Labels: map[string]string{
 			"alertName": "test",
@@ -167,6 +219,7 @@ func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
 		amProvider:        amProviderFake,
 		encryptionService: encryptionServiceFake,
 		authz:             authz,
+		emailValidator:    &NoopOrgEmailValidator{},
 	}
 
 	expectedAlert, err := convertToAlertParam(alert)
@@ -179,7 +232,6 @@ func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
 			accesscontrol.ActionAlertingReceiversUpdate:     []string{models.ScopeReceiversAll},
 		},
 	}}
-	// endregion setup
 
 	testCases := []struct {
 		name           string
@@ -219,13 +271,13 @@ func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
 		{
 			name:        "error if integration does not exist in receiver",
 			receiverUID: receiverUID,
-			integration: utils.Pointer(models.IntegrationGen(models.IntegrationMuts.WithUID("other-integration"))()),
+			integration: new(models.IntegrationGen(models.IntegrationMuts.WithUID("other-integration"))()),
 			expectedErr: models.ErrReceiverTestingIntegrationNotFound,
 		},
 		{
 			name:        "error if user changes protected field (url) without permission",
 			receiverUID: receiverUID,
-			integration: utils.Pointer(models.IntegrationGen(
+			integration: new(models.IntegrationGen(
 				models.IntegrationMuts.WithUID(integrationUID),
 				models.IntegrationMuts.WithValidConfig("webhook"),
 				models.IntegrationMuts.AddSetting("url", "http://different-url.com"),

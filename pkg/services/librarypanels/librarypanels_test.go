@@ -33,7 +33,7 @@ import (
 )
 
 const userInDbName = "user_in_db"
-const userInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
+const userInDbAvatar = "/avatar/949f63d8d8631e6a689c580bc977d933a0c2d6bec94eef583b09d1da3bd1bbc4"
 
 // run tests with cleanup
 func TestMain(m *testing.M) {

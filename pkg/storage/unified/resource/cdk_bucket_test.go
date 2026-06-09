@@ -3,10 +3,11 @@ package resource
 import (
 	"context"
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob"
 )
@@ -21,6 +22,8 @@ type fakeCDKBucket struct {
 	listFunc       func(opts *blob.ListOptions) *blob.ListIterator
 	listPageFunc   func(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error)
 	deleteFunc     func(ctx context.Context, key string) error
+	uploadFunc     func(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error
+	downloadFunc   func(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error
 }
 
 func (f *fakeCDKBucket) Attributes(ctx context.Context, key string) (*blob.Attributes, error) {
@@ -72,6 +75,20 @@ func (f *fakeCDKBucket) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
+func (f *fakeCDKBucket) Upload(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error {
+	if f.uploadFunc != nil {
+		return f.uploadFunc(ctx, key, r, opts)
+	}
+	return nil
+}
+
+func (f *fakeCDKBucket) Download(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error {
+	if f.downloadFunc != nil {
+		return f.downloadFunc(ctx, key, w, opts)
+	}
+	return nil
+}
+
 func TestInstrumentedBucket(t *testing.T) {
 	operations := []struct {
 		name      string
@@ -113,8 +130,7 @@ func TestInstrumentedBucket(t *testing.T) {
 				}
 			},
 			call: func(instrumentedBucket *InstrumentedBucket) error {
-				err := instrumentedBucket.WriteAll(context.Background(), "key", []byte("data"), nil)
-				return err
+				return instrumentedBucket.WriteAll(context.Background(), "key", []byte("data"), nil)
 			},
 		},
 		{
@@ -155,6 +171,42 @@ func TestInstrumentedBucket(t *testing.T) {
 			},
 		},
 		{
+			name:      "Upload",
+			operation: "Upload",
+			setup: func(fakeBucket *fakeCDKBucket, success bool) {
+				if success {
+					fakeBucket.uploadFunc = func(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error {
+						return nil
+					}
+				} else {
+					fakeBucket.uploadFunc = func(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error {
+						return fmt.Errorf("some error")
+					}
+				}
+			},
+			call: func(instrumentedBucket *InstrumentedBucket) error {
+				return instrumentedBucket.Upload(context.Background(), "key", nil, nil)
+			},
+		},
+		{
+			name:      "Download",
+			operation: "Download",
+			setup: func(fakeBucket *fakeCDKBucket, success bool) {
+				if success {
+					fakeBucket.downloadFunc = func(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error {
+						return nil
+					}
+				} else {
+					fakeBucket.downloadFunc = func(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error {
+						return fmt.Errorf("some error")
+					}
+				}
+			},
+			call: func(instrumentedBucket *InstrumentedBucket) error {
+				return instrumentedBucket.Download(context.Background(), "key", nil, nil)
+			},
+		},
+		{
 			name:      "SignedURL",
 			operation: "SignedURL",
 			setup: func(fakeBucket *fakeCDKBucket, success bool) {
@@ -170,6 +222,25 @@ func TestInstrumentedBucket(t *testing.T) {
 			},
 			call: func(instrumentedBucket *InstrumentedBucket) error {
 				_, err := instrumentedBucket.SignedURL(context.Background(), "key", nil)
+				return err
+			},
+		},
+		{
+			name:      "ListPage",
+			operation: "ListPage",
+			setup: func(fakeBucket *fakeCDKBucket, success bool) {
+				if success {
+					fakeBucket.listPageFunc = func(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error) {
+						return []*blob.ListObject{}, nil, nil
+					}
+				} else {
+					fakeBucket.listPageFunc = func(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error) {
+						return nil, nil, fmt.Errorf("some error")
+					}
+				}
+			},
+			call: func(instrumentedBucket *InstrumentedBucket) error {
+				_, _, err := instrumentedBucket.ListPage(context.Background(), nil, 10, nil)
 				return err
 			},
 		},
@@ -206,8 +277,11 @@ func TestInstrumentedBucket(t *testing.T) {
 					require.Error(t, err)
 				}
 
-				count := testutil.ToFloat64(instrumentedBucket.requests.WithLabelValues(op.operation, tc.expectedCountLabel))
-				require.Equal(t, 1.0, count)
+				obs, err := instrumentedBucket.latency.GetMetricWithLabelValues(op.operation, tc.expectedCountLabel)
+				require.NoError(t, err)
+				m := &dto.Metric{}
+				require.NoError(t, obs.(prometheus.Metric).Write(m))
+				require.Equal(t, uint64(1), m.Histogram.GetSampleCount())
 			})
 		}
 	}

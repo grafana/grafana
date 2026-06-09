@@ -10,7 +10,7 @@ import {
   DataFrameType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { commonOptionsBuilder, getGraphFieldOptions, LegendDisplayMode } from '@grafana/ui';
+import { commonOptionsBuilder, getGraphFieldOptions } from '@grafana/ui';
 import { StackingEditor } from '@grafana/ui/internal';
 
 import { HistogramPanel } from './HistogramPanel';
@@ -167,7 +167,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
             previewModifier: (s) => {
               s.options!.legend = {
                 calcs: [],
-                displayMode: LegendDisplayMode.Hidden,
                 placement: 'bottom',
                 showLegend: false,
               };

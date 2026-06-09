@@ -1433,7 +1433,7 @@ func TestIntegrationCleanupPluginRBAC(t *testing.T) {
 	require.NotZero(t, countDBRows(t, ctx, svc.sql, "role", "name LIKE ?", "plugins:"+pluginID+":%"))
 	require.NotZero(t, countDBRows(t, ctx, svc.sql, "role", "name LIKE ?", "plugins:"+otherPluginID+":%"))
 
-	require.NoError(t, svc.CleanupPluginRBAC(ctx, []string{pluginID}))
+	require.NoError(t, svc.CleanupPluginRBAC(ctx, pluginID))
 
 	assert.Zero(t, countDBRows(t, ctx, svc.sql, "role", "name LIKE ?", "plugins:"+pluginID+":%"), "plugin role should be deleted")
 	assert.Zero(t, countDBRows(t, ctx, svc.sql, "permission", "action LIKE ?", pluginID+".%"), "plugin permissions should be deleted")

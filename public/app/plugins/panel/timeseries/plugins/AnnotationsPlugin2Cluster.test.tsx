@@ -6,6 +6,7 @@ import uPlot from 'uplot';
 import {
   applyFieldOverrides,
   arrayToDataFrame,
+  colorManipulator,
   createDataFrame,
   createTheme,
   dateTimeFormat,
@@ -126,6 +127,13 @@ describe('AnnotationsPlugin2', () => {
       });
     }
 
+    function applyDrawAxes() {
+      act(() => {
+        //@ts-ignore
+        hooks.drawAxes(new uPlot(uPlotProps));
+      });
+    }
+
     // Manually set static property
     uPlot.pxRatio = 2;
 
@@ -161,6 +169,7 @@ describe('AnnotationsPlugin2', () => {
 
     if (callReady) {
       applyReady();
+      applyDrawAxes();
     }
     return result;
   };
@@ -909,6 +918,21 @@ describe('AnnotationsPlugin2', () => {
         expect(ctx.setLineDash).toHaveBeenCalledWith([5, 5]);
         // Yes region fill
         expect(ctx.fillRect).toHaveBeenCalled();
+      });
+      it('falls back to default fill color when alpha throws for invalid annotation color', () => {
+        const alphaSpy = jest.spyOn(colorManipulator, 'alpha').mockImplementationOnce(() => {
+          throw new Error('invalid color');
+        });
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        setUp({ annotations: [mockIRMAnnotationRegion] }, config);
+        const mockU = createMockUPlot();
+        const ctx = mockU.ctx as jest.Mocked<CanvasRenderingContext2D>;
+        invokeDrawHook(hooks, mockU);
+        expect(ctx.fillRect).toHaveBeenCalled();
+        expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid color:'), expect.any(Error));
+
+        alphaSpy.mockRestore();
+        consoleErrorSpy.mockRestore();
       });
       it('multi-lane disables indicator line and rect fill', () => {
         setUp({

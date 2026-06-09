@@ -16,6 +16,7 @@ import { Select } from '../Select/Select';
 import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
 import { formatUtcOffset } from './TimeZonePicker/TimeZoneOffset';
 import { CompactTimeZoneOption, WideTimeZoneOption, type SelectableZone } from './TimeZonePicker/TimeZoneOption';
+import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
 
 export interface Props {
   onChange: (timeZone?: TimeZone) => void;
@@ -97,7 +98,7 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
           return options;
         }
 
-        const name = info.name.replace(/_/g, ' ');
+        const name = getTimeZoneTitle(info);
 
         options.push({
           label: name,

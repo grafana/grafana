@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -36,7 +35,7 @@ func (l *LibraryElementService) requireEditPermissionsOnFolderUID(ctx context.Co
 	}
 
 	if isUIDGeneralFolder(folderUID) && user.HasRole(org.RoleViewer) {
-		return dashboards.ErrFolderAccessDenied
+		return folder.ErrAccessDenied
 	}
 
 	evaluator := accesscontrol.EvalPermission(folder.ActionFoldersWrite, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
@@ -45,7 +44,7 @@ func (l *LibraryElementService) requireEditPermissionsOnFolderUID(ctx context.Co
 		return err
 	}
 	if !canEdit {
-		return dashboards.ErrFolderAccessDenied
+		return folder.ErrAccessDenied
 	}
 
 	return nil
@@ -58,7 +57,7 @@ func (l *LibraryElementService) requireViewPermissionsOnFolderUID(ctx context.Co
 		return err
 	}
 	if !canView {
-		return dashboards.ErrFolderAccessDenied
+		return folder.ErrAccessDenied
 	}
 
 	return nil

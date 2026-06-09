@@ -45,6 +45,7 @@ func getTestModes() []testMode {
 			"datasourcesRerouteLegacyCRUDAPIs",
 			"queryService",                // need query.grafana.app API group
 			"queryServiceWithConnections", // need query.grafana.app connections subresource
+			"datasource.useNewCRUDAPIs",
 		}},
 	}
 }
