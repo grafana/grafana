@@ -215,4 +215,17 @@ describe('FolderReadmePanel', () => {
     expect(screen.getByRole('link', { name: /Edit README/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Add README/i })).not.toBeInTheDocument();
   });
+
+  it('sanitizes mXSS payloads in README markdown', () => {
+    setReadmeResult({
+      markdownContent: '<div><svg><style><img src=x onerror=alert(1)></style></svg></div>',
+    });
+
+    const { container } = setup();
+    const markdownDiv = container.querySelector('.markdown-html');
+    expect(markdownDiv).not.toBeNull();
+    // DOMPurify strips the dangerous elements
+    expect(markdownDiv!.querySelector('img[onerror]')).toBeNull();
+    expect(markdownDiv!.innerHTML).not.toContain('onerror');
+  });
 });

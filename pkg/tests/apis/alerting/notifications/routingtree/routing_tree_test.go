@@ -25,6 +25,7 @@ import (
 	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1model "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1/fakes"
 	"github.com/grafana/grafana/pkg/bus"
@@ -51,7 +52,7 @@ var defaultTreeIdentifier = resource.Identifier{
 	Name:      v1beta1.UserDefinedRoutingTreeName,
 }
 
-var defaultPolicy = definitions.Route{
+var defaultPolicy = v1model.Route{
 	Receiver:   "empty",
 	GroupByStr: models.DefaultNotificationSettingsGroupBy,
 }
@@ -566,7 +567,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 
 	receiver := "empty"
 	timeInterval := "test-time-interval"
-	createRoute := func(t *testing.T, route definitions.Route) {
+	createRoute := func(t *testing.T, route v1model.Route) {
 		t.Helper()
 		routeClient, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 		require.NoError(t, err)
@@ -600,9 +601,9 @@ func TestIntegrationDataConsistency(t *testing.T) {
 
 	t.Run("all matchers are handled", func(t *testing.T) {
 		t.Run("can read all legacy matchers", func(t *testing.T) {
-			route := definitions.Route{
+			route := v1model.Route{
 				Receiver: receiver,
-				Routes: []*definitions.Route{
+				Routes: []*v1model.Route{
 					{
 						Match: map[string]string{
 							"label_match": "test-123",
@@ -613,7 +614,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 						Matchers: config.Matchers{
 							ensureMatcher(t, labels.MatchRegexp, "label_matchers", "test-321"),
 						},
-						ObjectMatchers: definitions.ObjectMatchers{
+						ObjectMatchers: v1model.ObjectMatchers{
 							ensureMatcher(t, labels.MatchNotRegexp, "object-label-matchers", "test-456"),
 						},
 					},
@@ -647,9 +648,9 @@ func TestIntegrationDataConsistency(t *testing.T) {
 			assert.ElementsMatch(t, expected, tree.Spec.Routes[0].Matchers)
 		})
 		t.Run("should save into ObjectMatchers", func(t *testing.T) {
-			route := definitions.Route{
+			route := v1model.Route{
 				Receiver: receiver,
-				Routes: []*definitions.Route{
+				Routes: []*v1model.Route{
 					{
 						Match: map[string]string{
 							"oldmatch": "123",
@@ -666,7 +667,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 						},
 					},
 					{
-						ObjectMatchers: definitions.ObjectMatchers{
+						ObjectMatchers: v1model.ObjectMatchers{
 							ensureMatcher(t, labels.MatchEqual, "t2", "v2"),
 						},
 					},
@@ -699,15 +700,15 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		})
 	})
 
-	route := definitions.Route{
+	route := v1model.Route{
 		Receiver:       receiver,
 		GroupByStr:     []string{"test-123", "test-456"},
 		GroupWait:      new(model.Duration(30 * time.Second)),
 		GroupInterval:  new(model.Duration(1 * time.Minute)),
 		RepeatInterval: new(model.Duration(24 * time.Hour)),
-		Routes: []*definitions.Route{
+		Routes: []*v1model.Route{
 			{
-				ObjectMatchers: definitions.ObjectMatchers{
+				ObjectMatchers: v1model.ObjectMatchers{
 					ensureMatcher(t, labels.MatchNotEqual, "m", "1"),
 					ensureMatcher(t, labels.MatchEqual, "n", "1"),
 					ensureMatcher(t, labels.MatchRegexp, "o", "1"),
@@ -789,9 +790,9 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	})
 
 	t.Run("unicode support in groupBy and matchers", func(t *testing.T) {
-		route := definitions.Route{
+		route := v1model.Route{
 			Receiver: receiver,
-			Routes: []*definitions.Route{
+			Routes: []*v1model.Route{
 				{
 					GroupByStr: []string{"foo🙂"},
 					Matchers: config.Matchers{{
@@ -811,7 +812,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 						Name:  "corge",
 						Value: "^[0-9]+((,[0-9]{3})*(,[0-9]{0,3})?)?$",
 					}},
-					ObjectMatchers: definitions.ObjectMatchers{{
+					ObjectMatchers: v1model.ObjectMatchers{{
 						Type:  labels.MatchEqual,
 						Name:  "Προμηθέας", // Prometheus in Greek
 						Value: "Prom",
@@ -868,7 +869,6 @@ receivers:
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",
 		"X-Grafana-Alerting-Config-Identifier": "external-system",
-		"X-Grafana-Alerting-Merge-Matchers":    "imported=true",
 	}
 
 	// Post the configuration to Grafana
@@ -877,28 +877,20 @@ receivers:
 	}, headers)
 	require.Equal(t, "success", response.Status)
 
-	current, err := client.Get(ctx, defaultTreeIdentifier)
-	require.NoError(t, err)
-	updated := current.Copy().(*v1beta1.RoutingTree)
-	updated.Spec.Routes = append(updated.Spec.Routes, v1beta1.RoutingTreeRoute{
-		Matchers: []v1beta1.RoutingTreeMatcher{
-			{
-				Label: "imported",
-				Type:  v1beta1.RoutingTreeMatcherTypeEqual,
-				Value: "true",
-			},
-		},
-	})
-
-	_, err = client.Update(ctx, updated, resource.UpdateOptions{})
+	// The imported route is named after its identifier. Creating a managed route
+	// with the same name must fail while the import exists.
+	_, err = client.Create(ctx, k8sRoute(t, "external-system", &v1model.Route{Receiver: "empty"}), resource.CreateOptions{})
 	require.Error(t, err)
-	require.Truef(t, errors.IsBadRequest(err), "Should get BadRequest error but got: %s", err)
+	require.Truef(t, errors.IsConflict(err), "Should get Conflict error but got: %s", err)
 
-	// Now delete extra config
+	// After removing the imported config the name is free.
 	legacyCli.ConvertPrometheusDeleteAlertmanagerConfig(t, headers)
 
-	// and try again
-	_, err = client.Update(ctx, updated, resource.UpdateOptions{})
+	created, err := client.Create(ctx, k8sRoute(t, "external-system", &v1model.Route{Receiver: "empty"}), resource.CreateOptions{})
+	require.NoError(t, err)
+
+	// Clean up.
+	err = client.Delete(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: created.Name}, resource.DeleteOptions{})
 	require.NoError(t, err)
 }
 
@@ -998,10 +990,10 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		t.Helper()
 		// Delete/reset any remaining routes.
 		for name := range cfg.ManagedRoutes {
-			_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "") // Just in case it was provisioned.
+			_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "") // Just in case it was provisioned.
 			_ = adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{})
 		}
-		_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(v1beta1.UserDefinedRoutingTreeName, &definitions.Route{}), org1.OrgID, "")
+		_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(v1beta1.UserDefinedRoutingTreeName, &v1model.Route{}), org1.OrgID, "")
 		_ = adminClient.Delete(ctx, nameToIdentifier(v1beta1.UserDefinedRoutingTreeName), resource.DeleteOptions{})
 
 		// Recreate them.
@@ -1019,7 +1011,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		allCreatedRoutes[v1beta1.UserDefinedRoutingTreeName] = k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy)
 
 		for name, route := range allCreatedRoutes {
-			require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
+			require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
 
 			t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 				got, err := adminClient.Get(ctx, nameToIdentifier(name))
@@ -1103,7 +1095,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		t.Run("Update on provisioned should succeed for admin", func(t *testing.T) {
 			for name := range policies {
 				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
-					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
+					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
 
 					_, err := adminClient.Update(ctx, k8sRoute(t, name, policy_exports.Empty()), resource.UpdateOptions{ResourceVersion: ""}) // Bypass version check.
 					require.NoError(t, err)
@@ -1125,14 +1117,14 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 				})
 
 				t.Run("Delete provisioned should fail", func(t *testing.T) {
-					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
+					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
 
 					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: ""}})
 					assert.Error(t, err)
 					assert.ErrorContains(t, err, "provenance")
 
 					// Reset provenance.
-					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, ""))
+					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, ""))
 				})
 
 				t.Run("Correct ResourceVersion should succeed", func(t *testing.T) {
@@ -1463,9 +1455,9 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 	ti1 := cfg.AlertmanagerConfig.TimeIntervals[1].Name
 
 	// Create routes that reference the receivers and time intervals.
-	routeDef := definitions.Route{
+	routeDef := v1model.Route{
 		Receiver: recv0,
-		Routes: []*definitions.Route{{
+		Routes: []*v1model.Route{{
 			Receiver:            recv1,
 			MuteTimeIntervals:   []string{ti0},
 			ActiveTimeIntervals: []string{ti1},
@@ -1545,7 +1537,7 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 	})
 }
 
-func k8sRoute(t *testing.T, name string, r *definitions.Route) *v1beta1.RoutingTree {
+func k8sRoute(t *testing.T, name string, r *v1model.Route) *v1beta1.RoutingTree {
 	err := r.Validate()
 	require.NoError(t, err)
 	managedRoute := legacy_storage.NewManagedRoute(name, r)
@@ -1562,7 +1554,7 @@ func k8sRoute(t *testing.T, name string, r *definitions.Route) *v1beta1.RoutingT
 	return v1Route
 }
 
-func createReceiverStubs(t *testing.T, user apis.User, receivers []*definitions.PostableApiReceiver) map[string]*v1beta1.Receiver {
+func createReceiverStubs(t *testing.T, user apis.User, receivers []*v1model.PostableApiReceiver) map[string]*v1beta1.Receiver {
 	receiverClient, err := v1beta1.NewReceiverClientFromGenerator(user.GetClientRegistry())
 	require.NoError(t, err)
 
@@ -1578,7 +1570,7 @@ func createReceiverStubs(t *testing.T, user apis.User, receivers []*definitions.
 	return res
 }
 
-func createTimeIntervalStubs(t *testing.T, user apis.User, timeIntervals []config.TimeInterval) map[string]*v1beta1.TimeInterval {
+func createTimeIntervalStubs(t *testing.T, user apis.User, timeIntervals []v1model.TimeInterval) map[string]*v1beta1.TimeInterval {
 	timeIntervalClient, err := v1beta1.NewTimeIntervalClientFromGenerator(user.GetClientRegistry())
 	require.NoError(t, err)
 

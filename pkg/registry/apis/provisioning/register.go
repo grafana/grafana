@@ -99,6 +99,7 @@ type APIBuilder struct {
 	useExclusivelyAccessCheckerForAuthz bool
 
 	allowedTargets      []provisioning.SyncTargetType
+	supportedResources  []resources.SupportedResource
 	allowImageRendering bool
 	minSyncInterval     time.Duration
 
@@ -180,6 +181,7 @@ func NewAPIBuilder(
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
+	supportedResources []resources.SupportedResource,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
 	minSyncInterval time.Duration,
@@ -190,12 +192,13 @@ func NewAPIBuilder(
 	folderMetadataEnabled bool,
 	folderAPIVersion string,
 	incrementalPolicy repository.IncrementalSyncPolicy,
+	maxFileSize int64,
 ) (*APIBuilder, error) {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
 		clients = newStandaloneClientFactoryFunc(configProvider)
 	} else {
-		clients = resources.NewClientFactory(configProvider)
+		clients = resources.NewClientFactory(configProvider, supportedResources...)
 	}
 	if gv.Version == "" {
 		return nil, fmt.Errorf("invalid provisioning group/version")
@@ -223,6 +226,7 @@ func NewAPIBuilder(
 		repoFactory:                         repoFactory,
 		connectionFactory:                   connectionFactory,
 		clients:                             clients,
+		supportedResources:                  supportedResources,
 		parsers:                             parsers,
 		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata), folderAPIVersion), //nolint:staticcheck
 		resourceLister:                      resourceLister,
@@ -242,10 +246,8 @@ func NewAPIBuilder(
 		folderMetadataEnabled:               folderMetadataEnabled,
 		folderAPIVersion:                    folderAPIVersion,
 		incrementalPolicy:                   incrementalPolicy,
-		// Default cap for the files API. Callers (e.g. RegisterAPIService)
-		// may overwrite b.maxFileSize after construction; any non-positive
-		// value (<=0) disables the cap.
-		maxFileSize: setting.ProvisioningMaxFileSizeDefault,
+		// Per-file cap for the files API. Non-positive (<=0) disables the cap.
+		maxFileSize: maxFileSize,
 	}
 
 	for _, builder := range extraBuilders {
@@ -317,6 +319,11 @@ func RegisterAPIService(
 		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
 	}
 
+	supportedResources, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
+	if err != nil {
+		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
+	}
+
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
@@ -344,6 +351,7 @@ func RegisterAPIService(
 		extraWorkers,
 		jobHistoryConfig,
 		allowedTargets,
+		supportedResources,
 		nil, // restConfigGetter - will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -354,12 +362,12 @@ func RegisterAPIService(
 		folderMetadataEnabled,
 		folderAPIVersion,
 		incrementalPolicy,
+		maxFileSize,
 	)
 	if err != nil {
 		return nil, err
 	}
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
-	builder.maxFileSize = maxFileSize
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -383,6 +391,7 @@ func RegisterAPIService(
 		extraWorkers,
 		jobHistoryConfig,
 		allowedTargets,
+		supportedResources,
 		nil, // restConfigGetter
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -393,12 +402,12 @@ func RegisterAPIService(
 		folderMetadataEnabled,
 		folderAPIVersion,
 		incrementalPolicy,
+		maxFileSize,
 	)
 	if err != nil {
 		return nil, err
 	}
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
-	v1beta1Builder.maxFileSize = maxFileSize
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
@@ -740,7 +749,15 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	b.admissionHandler.RegisterMutator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionMutator(b.connectionFactory))
 	b.admissionHandler.RegisterValidator(provisioning.ConnectionResourceInfo.GetName(), connCombinedValidator)
 	// Jobs validator (no mutator needed)
-	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator())
+	jobSupportedResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
+	for _, r := range b.supportedResources {
+		jobSupportedResources = append(jobSupportedResources, provisioning.SupportedResource{
+			Group:    r.Group,
+			Kind:     r.Kind,
+			Disabled: !r.IsActive(),
+		})
+	}
+	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator(jobSupportedResources))
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
 
 	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
@@ -1079,6 +1096,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 			if !cache.WaitForCacheSync(postStartHookCtx.Done(), connInformer.Informer().HasSynced) {
+				// WaitForCacheSync only returns false when the hook context is
+				// cancelled, which happens on apiserver shutdown. A sync aborted
+				// by shutdown is expected, not a startup failure — returning an
+				// error here escalates to klog.Fatalf and kills the process.
+				if postStartHookCtx.Err() != nil {
+					return nil
+				}
 				return fmt.Errorf("connection controller cache sync failed")
 			}
 			go connController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
@@ -1462,6 +1486,25 @@ spec:
 		},
 	}
 	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"] = schema
+
+	// availableResources is an array of SupportedResource; its $ref is stripped by the
+	// defs loop above (empty ReferenceCallback) and has to be re-attached (same pattern
+	// as RepositoryViewList.items).
+	availableResources := oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["availableResources"]
+	availableResources.Items = &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AllOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "SupportedResource"),
+						},
+					},
+				},
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["availableResources"] = availableResources
 
 	// Fix up the RepositoryView.commit ref. Schemas added via the defs loop above
 	// use an empty ReferenceCallback, so non-primitive fields like commit lose

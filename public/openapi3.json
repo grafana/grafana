@@ -8927,6 +8927,10 @@
             "description": "UID for the home dashboard",
             "type": "string"
           },
+          "homeURL": {
+            "description": "Explicit home URL (NOTE: this can only be modified in the system settings)",
+            "type": "string"
+          },
           "language": {
             "description": "Selected language",
             "type": "string"
@@ -11641,6 +11645,7 @@
             "type": "string"
           },
           "uid": {
+            "description": "Deprecated: always empty; no per-entry id.",
             "type": "string"
           }
         },

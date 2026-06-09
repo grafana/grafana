@@ -226,6 +226,13 @@ func (s *secureValueMetadataStorage) getLatestVersionAndCreated(ctx context.Cont
 }
 
 func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (secureValueDB, error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.readActiveVersion", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace.String()),
+		attribute.Bool("forUpdate", opts.ForUpdate),
+	))
+	defer span.End()
+
 	req := readSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
@@ -664,6 +671,11 @@ func (s *secureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Conte
 }
 
 func (s *secureValueMetadataStorage) acquireLeases(ctx context.Context, leaseToken string, maxBatchSize uint16) error {
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.acquireLeases", trace.WithAttributes(
+		attribute.String("leaseToken", leaseToken),
+		attribute.Int("maxBatchSize", int(maxBatchSize)),
+	))
+	defer span.End()
 	req := leaseInactiveSecureValues{
 		SQLTemplate:  sqltemplate.New(s.dialect),
 		LeaseToken:   leaseToken,
@@ -686,6 +698,11 @@ func (s *secureValueMetadataStorage) acquireLeases(ctx context.Context, leaseTok
 }
 
 func (s *secureValueMetadataStorage) listByLeaseToken(ctx context.Context, leaseToken string) ([]secretv1beta1.SecureValue, error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.listByLeaseToken", trace.WithAttributes(
+		attribute.String("leaseToken", leaseToken),
+	))
+	defer span.End()
+
 	req := listSecureValuesByLeaseToken{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		LeaseToken:  leaseToken,

@@ -36,7 +36,7 @@ jobs:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:
@@ -210,7 +210,7 @@ jobs:
           persist-credentials: false
       - name: Get GitHub App token
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
           github_app: grafana-ci-bot
       - name: Setup Enterprise
@@ -228,7 +228,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
-          go test -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -269,7 +269,7 @@ jobs:
           persist-credentials: false
       - name: Get GitHub App token
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
           github_app: grafana-ci-bot
       - name: Setup Enterprise
@@ -325,7 +325,7 @@ jobs:
           make devenv sources=postgres_tests
       - name: Get GitHub App token
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
           github_app: grafana-ci-bot
       - name: Setup Enterprise

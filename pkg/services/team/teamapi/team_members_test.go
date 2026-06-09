@@ -353,6 +353,49 @@ func Test_getTeamMembershipUpdates(t *testing.T) {
 			},
 			expectErr: true,
 		},
+		// The cases below document the legacy bulk endpoint's external-member
+		// behavior so the K8s redirect can match it. getTeamMembershipUpdates
+		// never inspects member.External — it diffs purely by email — so:
+		//   - external member omitted from the request → emitted as a removal
+		//   - external member listed with a different permission → emitted as
+		//     a permission update (the store-layer Update is column-scoped, so
+		//     External=true survives in the row)
+		//   - external member listed with the same permission → no-op
+		{
+			description: "external member omitted from request is queued for removal",
+			input: team.SetTeamMembershipsCommand{
+				Members: []string{"user1"},
+			},
+			currentMembers: []*team.TeamMemberDTO{
+				{Email: "user1", UserID: 1, Permission: team.PermissionTypeMember},
+				{Email: "user2", UserID: 2, Permission: team.PermissionTypeMember, External: true},
+			},
+			expectedUpdates: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 2, Permission: ""},
+			},
+		},
+		{
+			description: "external member listed with a different permission is queued for update",
+			input: team.SetTeamMembershipsCommand{
+				Admins: []string{"user2"},
+			},
+			currentMembers: []*team.TeamMemberDTO{
+				{Email: "user2", UserID: 2, Permission: team.PermissionTypeMember, External: true},
+			},
+			expectedUpdates: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 2, Permission: team.PermissionTypeAdmin.String()},
+			},
+		},
+		{
+			description: "external member listed with the same permission is a no-op",
+			input: team.SetTeamMembershipsCommand{
+				Members: []string{"user2"},
+			},
+			currentMembers: []*team.TeamMemberDTO{
+				{Email: "user2", UserID: 2, Permission: team.PermissionTypeMember, External: true},
+			},
+			expectedUpdates: []accesscontrol.SetResourcePermissionCommand{},
+		},
 	}
 
 	for _, tc := range testCases {

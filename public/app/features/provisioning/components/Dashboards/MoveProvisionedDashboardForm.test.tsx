@@ -269,4 +269,41 @@ describe('MoveProvisionedDashboardForm', () => {
       payload: ['Failed to move dashboard', 'Dashboard is already in the selected folder.'],
     });
   });
+
+  it('renders the message from the repo commit template when comment is empty', async () => {
+    const moveFile = jest.fn().mockReturnValue({ unwrap: jest.fn().mockResolvedValue({}) });
+    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([moveFile, mockCreateRequest]);
+    // upstream isResourceAlreadyInTarget guard requires currentSourcePath !== targetFolderPath
+    (useGetFolderQuery as jest.Mock).mockReturnValue({
+      data: { metadata: { annotations: { [AnnoKeySourcePath]: 'target-folder' } } },
+      isLoading: false,
+    });
+
+    const { user } = setup({
+      defaultValues: {
+        repo: 'test-repo',
+        path: 'folder1/dashboard.json',
+        ref: 'feature/move',
+        workflow: 'branch',
+        comment: '',
+        title: 'Test Dashboard',
+        description: '',
+        folder: { uid: '', title: '' },
+      },
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['branch', 'write'],
+        target: 'folder',
+        commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
+      },
+    });
+
+    await user.click(screen.getByRole('button', { name: /move dashboard/i }));
+
+    expect(moveFile).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'chore(dashboards): move Test Dashboard' })
+    );
+  });
 });

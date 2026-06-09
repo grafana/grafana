@@ -42,6 +42,7 @@ import { LogRowContextModal } from 'app/features/logs/components/log-context/Log
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
+import { isMissingStringField, isMissingTimeField } from 'app/features/logs/utils';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 import { combineResponses } from 'app/plugins/datasource/loki/mergeResponses';
 
@@ -538,7 +539,15 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
   }, [controlsStorageKey, data.request, id]);
 
   if (!data || logRows.length === 0) {
-    return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
+    return (
+      <PanelDataErrorView
+        fieldConfig={fieldConfig}
+        panelId={id}
+        data={data}
+        needsStringField={isMissingStringField(panelData.series)}
+        needsTimeField={isMissingTimeField(panelData.series)}
+      />
+    );
   }
 
   // Passing callbacks control the display of the filtering buttons. We want to pass it only if onAddAdHocFilter is defined.

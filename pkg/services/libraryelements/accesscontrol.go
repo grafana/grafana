@@ -84,7 +84,7 @@ func LibraryPanelUIDScopeResolver(l *LibraryElementService, folderSvc folder.Ser
 
 // getInheritedScopesFromTree returns ancestor scopes using a pre-built folder tree.
 func getInheritedScopesFromTree(folderUID string, tree *folder.FolderTree) []string {
-	if folderUID == ac.GeneralFolderUID || folderUID == "" {
+	if folder.IsRootFolderUID(folderUID) {
 		return nil
 	}
 

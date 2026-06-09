@@ -13,6 +13,7 @@ import { DashboardFiltersOverviewSearch } from './DashboardFiltersOverviewSearch
 
 export class DashboardFiltersOverviewPane extends SceneObjectBase {
   public static Component = DashboardFiltersOverviewPaneRenderer;
+  public minWidth = 500;
 
   public getId() {
     return 'filters' as const;

@@ -127,8 +127,10 @@ function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
 
       <ConfirmModal
         isOpen={showDeleteConfirm}
-        title={t('query-editor-next.bulk-actions.delete-confirm-title', 'Delete {{count}} items?', {
+        title={t('query-editor-next.bulk-actions.delete-confirm-title', '', {
           count: selectedQueryRefIds.length,
+          defaultValue_one: 'Delete {{count}} item?',
+          defaultValue_other: 'Delete {{count}} items?',
         })}
         body={undefined}
         description={t('query-editor-next.bulk-actions.delete-confirm-body', 'This action cannot be undone.')}
@@ -185,11 +187,11 @@ function BulkTransformationActions({ barWidth }: BulkTransformationActionsProps)
 
       <ConfirmModal
         isOpen={showDeleteConfirm}
-        title={t(
-          'query-editor-next.bulk-actions.delete-transformations-confirm-title',
-          'Delete {{count}} transformations?',
-          { count: selectedTransformationIds.length }
-        )}
+        title={t('query-editor-next.bulk-actions.delete-transformations-confirm-title', '', {
+          count: selectedTransformationIds.length,
+          defaultValue_one: 'Delete {{count}} transformation?',
+          defaultValue_other: 'Delete {{count}} transformations?',
+        })}
         body={undefined}
         description={t('query-editor-next.bulk-actions.delete-confirm-body', 'This action cannot be undone.')}
         confirmText={t('query-editor-next.bulk-actions.delete', 'Delete')}

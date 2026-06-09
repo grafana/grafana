@@ -1046,7 +1046,7 @@ export class ElementState implements LayerElement {
             title={t('grafana-ui.action-editor.button.confirm-action', 'Confirm action')}
             body={action.confirmation(/** TODO: implement actionVars */)}
             confirmText={t('grafana-ui.action-editor.button.confirm', 'Confirm')}
-            confirmButtonVariant="primary"
+            confirmVariant="primary"
             onConfirm={() => {
               this.showActionConfirmation = false;
               action.onClick(new MouseEvent('click'), null, this.actionVars);

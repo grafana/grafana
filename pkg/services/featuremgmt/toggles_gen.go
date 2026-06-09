@@ -95,12 +95,16 @@ const (
 	// Enable export functionality for provisioned resources
 	FlagProvisioningExport = "provisioningExport"
 
+	// FlagProvisioningGitConventions
+	// Enable configurable commit message, branch name, and pull request title conventions for Git Sync
+	FlagProvisioningGitConventions = "provisioning.gitConventions"
+
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
 
 	// FlagAwsAsyncQueryCaching
-	// Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
+	// Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
 
 	// FlagConfigurableSchedulerTick
@@ -131,12 +135,12 @@ const (
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
 
-	// FlagKubernetesAnnotationsClient
-	// Enables usage of the new annotations API client
-	FlagKubernetesAnnotationsClient = "kubernetesAnnotationsClient"
+	// FlagKubernetesFolderCascadeDelete
+	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
+	FlagKubernetesFolderCascadeDelete = "kubernetesFolderCascadeDelete"
 
 	// FlagKubernetesShortURLs
-	// Enables k8s short url api and uses it under the hood when handling legacy /api
+	// Enables k8s short URL API and uses it under the hood when handling legacy /api
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
 
 	// FlagKubernetesCorrelations
@@ -562,14 +566,6 @@ const (
 	// Enables the logs builder mode for the Azure Monitor data source
 	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"
 
-	// FlagLocaleFormatPreference
-	// Specifies the locale so the correct format for numbers and dates can be shown
-	FlagLocaleFormatPreference = "localeFormatPreference"
-
-	// FlagUnifiedStorageGrpcConnectionPool
-	// Enables the unified storage grpc connection pool
-	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
-
 	// FlagAlertingRuleRecoverDeleted
 	// Enables the UI functionality to recover and view deleted alert rules
 	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"
@@ -754,6 +750,10 @@ const (
 	// Adds support for Kubernetes alerting historian APIs
 	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
 
+	// FlagGlobalDashboardVariables
+	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app
+	FlagGlobalDashboardVariables = "globalDashboardVariables"
+
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
 	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"
@@ -878,10 +878,6 @@ const (
 	// Enables the advisor report integration with datasource pages
 	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
 
-	// FlagColorblindThemes
-	// Enables the new colorblind-friendly themes
-	FlagColorblindThemes = "colorblindThemes"
-
 	// FlagLogsTablePanelNG
 	// Enables the logs tableNG panel to replace existing tableRT
 	FlagLogsTablePanelNG = "logsTablePanelNG"
@@ -958,6 +954,10 @@ const (
 	// When true, increases the volume of data transferred before abandoning sessions for Meticulous AI session recorder.
 	FlagGrafanaMeticulousAIRecorderHighVolume = "grafana.meticulousAIRecorderHighVolume"
 
+	// FlagGrafanaMeticulousAIMode
+	// Controls the Meticulous AI session recorder. One of "off", "on-prod-env" (recorder enabled, production-environment behaviour), or "on-dev-env" (recorder enabled, high-volume/development behaviour).
+	FlagGrafanaMeticulousAIMode = "grafana.meticulousAIMode"
+
 	// FlagDatasourcesUseNewStackInfoToSettingsCache
 	// Use the new cache for datasource.StackInfoToSettings, backend flag
 	FlagDatasourcesUseNewStackInfoToSettingsCache = "datasources.useNewStackInfoToSettingsCache"
@@ -973,4 +973,8 @@ const (
 	// FlagAlertingSyncExternalAlertmanager
 	// Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
 	FlagAlertingSyncExternalAlertmanager = "alerting.syncExternalAlertmanager"
+
+	// FlagFrontendServiceReducedBootDataAPI
+	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
+	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
 )
