@@ -275,6 +275,14 @@ export interface Version {
   status?: string; // Status of the version: 'active', 'deprecated'
 }
 
+export enum PluginStatus {
+  INSTALL = 'INSTALL',
+  UNINSTALL = 'UNINSTALL',
+  UPDATE = 'UPDATE',
+  REINSTALL = 'REINSTALL',
+  DOWNGRADE = 'DOWNGRADE',
+}
+
 export enum PluginTabLabels {
   OVERVIEW = 'Overview',
   VERSIONS = 'Version history',

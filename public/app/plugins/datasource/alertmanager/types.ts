@@ -245,6 +245,13 @@ interface SilenceRuleMetadata {
   folder_uid?: string;
 }
 
+export type TestTemplateAlert = Pick<
+  AlertmanagerAlert,
+  'annotations' | 'labels' | 'startsAt' | 'endsAt' | 'generatorURL' | 'fingerprint'
+> & {
+  status: 'firing' | 'resolved';
+};
+
 export interface Silence extends WithAccessControlMetadata {
   id: string;
   matchers?: Matcher[];

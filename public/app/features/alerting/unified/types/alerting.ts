@@ -135,6 +135,8 @@ interface NotificationChannelType {
   info?: string;
 }
 
+export type NotificationChannelSecureFields = Record<string, boolean | ''>;
+
 export interface OptionMeta {
   required?: string | ValidationRule<boolean>;
   readOnly?: boolean;
