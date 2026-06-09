@@ -149,5 +149,5 @@ func (e ImportedConfigRevision) GetInhibitRules() (v1.ManagedInhibitionRules, er
 		return nil, nil
 	}
 
-	return merge.BuildManagedInhibitionRules(e.identifier, importedRules)
+	return merge.BuildManagedInhibitionRules(e.identifier, importedRules, v1.Provenance(models.ProvenanceConvertedPrometheus))
 }
