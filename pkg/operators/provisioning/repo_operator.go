@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -23,7 +21,7 @@ import (
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 )
 
-func RunRepoController(deps server.OperatorDependencies) error {
+func RunRepoController(ctx context.Context, deps server.OperatorDependencies) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "provisioning-repo-controller")
@@ -33,17 +31,6 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	if err != nil {
 		return fmt.Errorf("failed to setup provisioning controller: %w", err)
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		<-sigChan
-		fmt.Println("Received shutdown signal, stopping controllers")
-		cancel()
-	}()
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
@@ -123,9 +110,11 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(1*time.Minute),
 		controllerCfg.DrainTimeout(),
 		quotaGetter,
-		resources.IsFolderMetadataEnabled(controllerCfg.Settings),
+		repository.NewIncrementalSyncPolicy(
+			resources.IsFolderMetadataEnabled(controllerCfg.Settings),
+			controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("max_incremental_changes").MustInt(100),
+		),
 		controllerCfg.Settings.SectionWithEnvOverrides("operator").Key("folders_api_version").MustString(folderv1beta1.APIVersion),
-		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("max_incremental_changes").MustInt(100),
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),
 	)
 	if err != nil {

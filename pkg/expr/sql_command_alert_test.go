@@ -12,7 +12,7 @@ import (
 func TestExtractNumberSetFromSQLForAlerting(t *testing.T) {
 	t.Run("SingleRowNoLabels", func(t *testing.T) {
 		input := data.NewFrame("",
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(3.14)}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(3.14)}),
 		)
 
 		numbers, err := extractNumberSetFromSQLForAlerting(input)
@@ -20,30 +20,30 @@ func TestExtractNumberSetFromSQLForAlerting(t *testing.T) {
 		require.Len(t, numbers, 1)
 
 		got := numbers[0]
-		require.Equal(t, fp(3.14), got.GetFloat64Value())
+		require.Equal(t, new(3.14), got.GetFloat64Value())
 		require.Equal(t, data.Labels{}, got.GetLabels())
 	})
 
 	t.Run("TwoRowsWithLabelsAndDisplay", func(t *testing.T) {
 		input := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(2.0)}),
-			data.NewField(SQLDisplayFieldName, nil, []*string{sp("CPU A"), sp("CPU B")}),
-			data.NewField("host", nil, []*string{sp("a"), sp("b")}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(2.0)}),
+			data.NewField(SQLDisplayFieldName, nil, []*string{new("CPU A"), new("CPU B")}),
+			data.NewField("host", nil, []*string{new("a"), new("b")}),
 		)
 
 		numbers, err := extractNumberSetFromSQLForAlerting(input)
 		require.NoError(t, err)
 		require.Len(t, numbers, 2)
 
-		require.Equal(t, fp(1.0), numbers[0].GetFloat64Value())
+		require.Equal(t, new(1.0), numbers[0].GetFloat64Value())
 		require.Equal(t, data.Labels{
 			SQLMetricFieldName:  "cpu",
 			SQLDisplayFieldName: "CPU A",
 			"host":              "a",
 		}, numbers[0].GetLabels())
 
-		require.Equal(t, fp(2.0), numbers[1].GetFloat64Value())
+		require.Equal(t, new(2.0), numbers[1].GetFloat64Value())
 		require.Equal(t, data.Labels{
 			SQLMetricFieldName:  "cpu",
 			SQLDisplayFieldName: "CPU B",
@@ -54,22 +54,22 @@ func TestExtractNumberSetFromSQLForAlerting(t *testing.T) {
 	t.Run("TwoFieldsWithSparseLabels", func(t *testing.T) {
 		input := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(2.0)}),
-			data.NewField("env", nil, []*string{nil, sp("prod")}),
-			data.NewField("host", nil, []*string{sp("a"), sp("b")}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(2.0)}),
+			data.NewField("env", nil, []*string{nil, new("prod")}),
+			data.NewField("host", nil, []*string{new("a"), new("b")}),
 		)
 
 		numbers, err := extractNumberSetFromSQLForAlerting(input)
 		require.NoError(t, err)
 		require.Len(t, numbers, 2)
 
-		require.Equal(t, fp(1.0), numbers[0].GetFloat64Value())
+		require.Equal(t, new(1.0), numbers[0].GetFloat64Value())
 		require.Equal(t, data.Labels{
 			SQLMetricFieldName: "cpu",
 			"host":             "a",
 		}, numbers[0].GetLabels())
 
-		require.Equal(t, fp(2.0), numbers[1].GetFloat64Value())
+		require.Equal(t, new(2.0), numbers[1].GetFloat64Value())
 		require.Equal(t, data.Labels{
 			SQLMetricFieldName: "cpu",
 			"host":             "b",
@@ -82,8 +82,8 @@ func TestExtractNumberSetFromSQLForAlerting_Duplicates(t *testing.T) {
 	t.Run("AllDuplicates_ReturnsError", func(t *testing.T) {
 		input := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(2.0)}),
-			data.NewField("host", nil, []*string{sp("a"), sp("a")}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(2.0)}),
+			data.NewField("host", nil, []*string{new("a"), new("a")}),
 		)
 
 		numbers, err := extractNumberSetFromSQLForAlerting(input)
@@ -97,8 +97,8 @@ func TestExtractNumberSetFromSQLForAlerting_Duplicates(t *testing.T) {
 	t.Run("SomeDuplicates_ReturnsError", func(t *testing.T) {
 		input := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu", "cpu"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(2.0), fp(3.0)}),
-			data.NewField("host", nil, []*string{sp("a"), sp("a"), sp("b")}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(2.0), new(3.0)}),
+			data.NewField("host", nil, []*string{new("a"), new("a"), new("b")}),
 		)
 
 		numbers, err := extractNumberSetFromSQLForAlerting(input)
@@ -112,8 +112,8 @@ func TestExtractNumberSetFromSQLForAlerting_Duplicates(t *testing.T) {
 	t.Run("NoDuplicates_Succeeds", func(t *testing.T) {
 		input := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu"}),
-			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(2.0)}),
-			data.NewField("host", nil, []*string{sp("a"), sp("b")}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(2.0)}),
+			data.NewField("host", nil, []*string{new("a"), new("b")}),
 		)
 
 		numbers, err := extractNumberSetFromSQLForAlerting(input)
@@ -138,7 +138,7 @@ func TestExtractNumberSetFromSQLForAlerting_Duplicates(t *testing.T) {
 
 		for i := range totalRows {
 			labels[i] = "cpu"
-			values[i] = fp(float64(i + 1))
+			values[i] = new(float64(i + 1))
 			h := fmt.Sprintf("host%d", i%15) // 15 distinct combos, each duplicated
 			hosts[i] = &h
 		}

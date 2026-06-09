@@ -334,12 +334,6 @@ type RouteConvertPrometheusPostAlertmanagerConfigParams struct {
 	// This identifier is used to distinguish between different imported configurations.
 	// in: header
 	Identifier string `json:"x-grafana-alerting-config-identifier"`
-	// Comma-separated list of label matchers in 'key=value' format.
-	// These matchers determine which alerts this configuration should handle.
-	// For example: 'environment=production,team=backend' will only apply this
-	// configuration to alerts matching both environment=production AND team=backend.
-	// in: header
-	MergeMatchers string `json:"x-grafana-alerting-merge-matchers"`
 	// If true, the configuration will replace an existing configuration regardless of its identifier
 	// in: header
 	Replace bool `json:"x-grafana-alerting-config-force-replace"`

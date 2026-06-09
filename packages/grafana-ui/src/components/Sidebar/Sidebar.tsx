@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { type ReactNode } from 'react';
-import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -27,7 +26,7 @@ export interface Props {
   contextValue: SidebarContextValue;
 }
 
-export function SidebarComp({ children, contextValue }: Props) {
+function SidebarComp({ children, contextValue }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const { isDocked, position, tabsMode, hasOpenPane, edgeMargin, bottomMargin, onToggleIsHidden } = contextValue;
@@ -86,15 +85,13 @@ export function SidebarComp({ children, contextValue }: Props) {
   );
 }
 
-export interface SiderbarToolbarProps {
+interface SiderbarToolbarProps {
   children?: ReactNode;
 }
 
-export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
+function SiderbarToolbar({ children }: SiderbarToolbarProps) {
   const styles = useStyles2(getStyles);
   const sidebarContext = useSidebarContext();
-  const theme = useTheme2();
-  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
 
   if (!sidebarContext) {
     throw new Error('Sidebar.Toolbar must be used within a Sidebar component');
@@ -104,31 +101,21 @@ export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
     <div className={cx(styles.toolbar, sidebarContext.compact && styles.toolbarIconsOnly)}>
       {children}
       <div className={styles.flexGrow} />
-      {!isMobile && (
-        <SidebarButton
-          icon={'web-section-alt'}
-          onClick={sidebarContext.onToggleDock}
-          title={
-            sidebarContext.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')
-          }
-          data-testid={selectors.components.Sidebar.dockToggle}
-        />
-      )}
     </div>
   );
 }
 
-export function SidebarDivider() {
+function SidebarDivider() {
   const styles = useStyles2(getStyles);
 
   return <div className={styles.divider} />;
 }
 
-export interface SidebarOpenPaneProps {
+interface SidebarOpenPaneProps {
   children?: ReactNode;
 }
 
-export function SidebarOpenPane({ children }: SidebarOpenPaneProps) {
+function SidebarOpenPane({ children }: SidebarOpenPaneProps) {
   const styles = useStyles2(getStyles);
   const sidebarContext = useSidebarContext();
 
@@ -148,7 +135,7 @@ export function SidebarOpenPane({ children }: SidebarOpenPaneProps) {
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'flex',
@@ -223,7 +210,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     showButton: css({
       position: 'fixed',
-      top: '50%',
+      bottom: theme.spacing(2),
       zIndex: theme.zIndex.navbarFixed,
       padding: theme.spacing(1),
       backgroundColor: theme.colors.background.secondary,

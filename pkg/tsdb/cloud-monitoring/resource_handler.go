@@ -278,7 +278,7 @@ type apiResponse struct {
 }
 
 func doRequest(req *http.Request, cli *http.Client, responseFn processResponse) *apiResponse {
-	res, err := cli.Do(req)
+	res, err := cli.Do(req) // #nosec G704 -- datasource client targets operator-configured URL
 	if err != nil {
 		return &apiResponse{code: http.StatusBadRequest, err: err}
 	}
@@ -384,7 +384,7 @@ func getTarget(original string) (target string, err error) {
 
 func writeResponseBytes(rw http.ResponseWriter, code int, msg []byte) {
 	rw.WriteHeader(code)
-	_, err := rw.Write(msg)
+	_, err := rw.Write(msg) // #nosec G705 -- msg is the upstream datasource response body
 	if err != nil {
 		backend.Logger.Error("Unable to write HTTP response", "error", err, "statusSource", backend.ErrorSourceDownstream)
 	}

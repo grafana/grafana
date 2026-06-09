@@ -440,7 +440,10 @@
       "label-value": "Valore"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "Azioni"
+      "n-contact-points_one": "",
+      "n-contact-points_other": "",
+      "view-route_one": "",
+      "view-route_other": ""
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Aggiungi i dati di avviso al carico utile",
@@ -456,6 +459,7 @@
     },
     "alert-instances-table": {
       "created": "Creato",
+      "destination": "",
       "labels": "Etichette",
       "state": "Stato"
     },
@@ -515,7 +519,8 @@
         "edit-yaml": "Modifica YAML",
         "save": "Salva"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nome",
@@ -1153,6 +1158,9 @@
         "rule-viewer-section-extension": "Impossibile caricare la sezione di arricchimento del visualizzatore di regole"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Impossibile aggiornare la configurazione:",
       "title-something-went-wrong": "Si è verificato un errore"
@@ -1161,10 +1169,14 @@
       "content-show-all-errors": "Mostra tutti gli errori"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} non riuscita con {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Obbligatorio."
       }
     },
@@ -2333,6 +2345,7 @@
     },
     "notification-route": {
       "no-labels": "Nessuna etichetta",
+      "notification-policies": "",
       "notification-policy": "Criterio di notifica"
     },
     "notification-route-header": {
@@ -2869,6 +2882,11 @@
         },
         "group-name": "Nome del gruppo di valutazione",
         "group-text": "Tutte le regole nel gruppo selezionato vengono valutate ogni {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Nuovo gruppo di valutazione",
         "pause": {
           "alerting": "Attiva per mettere in pausa la valutazione per questa regola di avviso.",
@@ -3174,9 +3192,7 @@
       "deleting": "Eliminazione",
       "text-federated": "Federato",
       "text-provisioned": "Fornito",
-      "ungrouped": "Non raggruppato",
-      "ungrouped-suffix": "{{ruleName}} (non raggruppato)",
-      "unknown-rule": "Regola sconosciuta"
+      "ungrouped": "Non raggruppato"
     },
     "saved-searches": {
       "actions-aria-label": "Azioni",
@@ -3295,6 +3311,10 @@
         "search-by-matchers": "Cerca per corrispondenze",
         "tooltip-description": "Trova i silenziamenti per corrispondenza. Cerca corrispondenze esatte per nome dell'etichetta, valore e operatore.",
         "tooltip-example": "Esempio: <1>env=~\"prod.*\"</1> trova i silenziamenti con un criterio di corrispondenza <4>env=~\"prod.*\"</4>."
+      },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
       },
       "only-firing-instances": "Vengono visualizzate solo le istanze di avviso in stato di attivazione.",
       "operator": {
@@ -4322,6 +4342,7 @@
         "repository-not-found-message": "Impossibile trovare il repository per la cartella selezionata. Assicurati che la cartella sia stata fornita correttamente.",
         "repository-not-found-title": "Repository non trovato"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Errore durante lo spostamento delle risorse",
       "error-no-target-folder-path": "Il percorso della cartella di destinazione non è valido o è vuoto, prova a selezionarlo di nuovo.",
       "move-total": "In totale, questo influenzerà:",
@@ -4368,7 +4389,6 @@
       "button-cancel": "Annulla",
       "button-delete": "Elimina",
       "button-deleting": "Eliminazione in corso...",
-      "commit": "Elimina cartella",
       "delete-warning": "Questa operazione eliminerà questa cartella e tutti i suoi discendenti. In totale, questo influenzerà:",
       "missing-info": "Campi obbligatori mancanti",
       "success-message": "Cartella eliminata correttamente"
@@ -4461,6 +4481,14 @@
       "resource-detail-dashboards": "Hai creato {{usage}} di {{limit}} dashboard ({{percentage}}%).",
       "resource-detail-folders": "Hai creato {{usage}} di {{limit}} cartelle ({{percentage}}%)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Cancella cronologia",
       "error": "Impossibile caricare le dashboard visualizzate di recente.",
@@ -4474,7 +4502,6 @@
       "button-cancel": "Annulla",
       "button-rename": "Rinomina",
       "button-renaming": "Ridenominazione in corso...",
-      "commit": "Rinomina cartella",
       "error-saving": "Impossibile rinominare la cartella",
       "label-folder-name": "Nome cartella",
       "missing-info": "Campi obbligatori mancanti",
@@ -5269,7 +5296,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Impostazioni"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5478,9 +5505,6 @@
       "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
       "label-no-dashboards-found": "Nessuna dashboard trovata"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Annulla caricamento della dashboard"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5671,7 +5695,7 @@
         "title": "Variabili"
       },
       "variable": {
-        "change-type": "Modifica",
+        "change-type": "",
         "change-type-aria-label": "Modifica il tipo di variabile",
         "custom-options": {
           "apply": "Applica",
@@ -5750,11 +5774,6 @@
         "label": "Esporta menu dashboard"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Impossibile recuperare la dashboard"
-      }
-    },
     "filters-overview": {
       "apply": "Applica",
       "apply-close": "Applica e chiudi",
@@ -5769,8 +5788,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operatore",
-        "placeholder": "Seleziona operatore"
+        "aria-label": "Operatore"
       },
       "restore": "Ripristina valore predefinito",
       "search": {
@@ -5912,11 +5930,6 @@
       "title-get-help-with-this-panel": "Ottieni assistenza per questo pannello",
       "troubleshooting-docs": "Documenti per la risoluzione dei problemi"
     },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Creazione del modello di dashboard non riuscita"
-      }
-    },
     "inspect": {
       "data-tab": "Data",
       "error-tab": "Errore",
@@ -5988,7 +6001,7 @@
       "cancel": "Annulla",
       "common": {
         "copy": "Copia",
-        "copy-or-duplicate": "Copia/incolla o duplica",
+        "copy-tooltip": "",
         "delete": "Elimina",
         "duplicate": "Duplica",
         "layout": "Layout",
@@ -6006,13 +6019,6 @@
       "ungroup-nested-text": "Questa operazione separerà tutti i gruppi nidificati.",
       "ungroup-nested-title": "Separare i gruppi nidificati?"
     },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Dashboard non trovata"
-        }
-      }
-    },
     "make-editable": {
       "dashboard-not-editable": "Dashboard non modificabile",
       "make-editable": "Rendi modificabile"
@@ -6027,7 +6033,7 @@
     },
     "new-panel": {
       "aria-label": "Pannello non configurato. Premi il tasto Tab per visualizzare le opzioni di configurazione.",
-      "configure-button": "Configura",
+      "configure-button": "",
       "configure-button-menu": "Attiva/disattiva menu",
       "configure-visualization": "Configura la visualizzazione",
       "empty-state-message": "Esegui una query per visualizzarlo qui o vai a tutte le visualizzazioni per aggiungere altri tipi di pannello",
@@ -6269,10 +6275,8 @@
       "title-provisioned": "Dashboard configurata"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Esiste già una dashboard con lo stesso nome nella cartella selezionata.<br/><2>Salvare comunque questa dashboard?</2>",
       "body-version-mismatch": "Qualcun altro ha aggiornato questa dashboard<br/><2>Salvare comunque questa dashboard?</2>",
       "confirmText-save-and-overwrite": "Salva e sovrascrivi",
-      "title-name-exists": "Conflitto",
       "title-version-mismatch": "Conflitto"
     },
     "save-dashboard-form": {
@@ -6333,10 +6337,6 @@
       },
       "undo": "Annulla"
     },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Caricamento e inizializzazione della dashboard",
-      "title-not-found": "Pannello con ID {{panelId}} non trovato"
-    },
     "source-link": {
       "title": "Origine ({{provider}})",
       "tooltip": "Visualizza il file sorgente nel repository"
@@ -6365,6 +6365,8 @@
         "ungroup-tabs": "Annulla raggruppamento schede"
       },
       "name": "Schede",
+      "scroll-tabs-left": "",
+      "scroll-tabs-right": "",
       "tab": {
         "new": "Nuova scheda",
         "repeat": {
@@ -6462,6 +6464,10 @@
         },
         "save-dashboard-short": "Salva",
         "save-library-panel": "Salva pannello della libreria",
+        "save-template": {
+          "label": "",
+          "tooltip": ""
+        },
         "share": {
           "arrow": "Condividi",
           "tooltip": "Copia link"
@@ -6475,6 +6481,9 @@
       "read-only": "Solo lettura",
       "refresh": "Aggiorna dashboard",
       "save": "Salva dashboard",
+      "save-as-template": {
+        "label": ""
+      },
       "save-dashboard": {
         "label": "Salva dashboard",
         "tooltip": "Salva modifiche"
@@ -6597,8 +6606,8 @@
     "version-history-comparison": {
       "button-restore": "Ripristina alla versione {{version}} ",
       "label-view-json-diff": "Visualizza differenza JSON",
-      "new-updated-by": "<0>Versione {{version}}</0> aggiornata da {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Versione {{version}}</0> aggiornata da {{editor}} {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Toggle di selezione della versione {{version}}",
@@ -7313,6 +7322,7 @@
       "terraform": "Gestito da: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Impossibile spostare la dashboard",
       "cancel-action": "Annulla",
       "current-file-not-found": "Impossibile trovare il file della dashboard corrente",
@@ -7325,10 +7335,6 @@
       "success-message": "Dashboard spostata correttamente",
       "target-path-label": "Percorso di destinazione",
       "title-this-repository-is-read-only": "Questo repository è di sola lettura"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Esiste già una dashboard con lo stesso nome nella cartella selezionata. Desideri comunque salvare questa dashboard?",
-      "title-name-already-exists": "Nome già in uso"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -7510,7 +7516,9 @@
         "label-details": "Dettagli",
         "title": "Salva dashboard",
         "title-copy": "Salva copia dalla dashboard",
-        "title-provisioned": "Dashboard configurata"
+        "title-provisioned": "Dashboard configurata",
+        "title-template": "",
+        "title-update-template": ""
       }
     },
     "save-dashboard-form": {
@@ -7587,6 +7595,10 @@
     },
     "section-filters-list": {
       "add-filter": ""
+    },
+    "section-placement": {
+      "top-row": "",
+      "top-tab": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Consente di selezionare più valori contemporaneamente",
@@ -7727,9 +7739,6 @@
     "variable-display-select": {
       "label": "Visualizza",
       "options": {
-        "above-dashboard": {
-          "label": "Sopra la dashboard"
-        },
         "controls-menu": {
           "description": "Visibile quando il menu dei comandi è aperto",
           "label": "Menu comandi"
@@ -7738,9 +7747,9 @@
           "description": "Visibile solo in modalità di modifica",
           "label": "Nascosto"
         },
-        "hidden-label": {
-          "description": "Sopra la dashboard, ma senza mostrare il nome della variabile",
-          "label": "Sopra la dashboard, etichetta nascosta"
+        "top-placement-hidden-label": {
+          "description": "",
+          "label": ""
         }
       }
     },
@@ -7823,12 +7832,15 @@
           "reorder-variables-list": "Riordina l'elenco delle variabili"
         }
       },
-      "title-above-dashboard_one": "Sopra la dashboard ({{count}})",
-      "title-above-dashboard_other": "Sopra la dashboard ({{count}})",
+      "top-placement": {
+        "default": ""
+      },
       "title-controls-menu_one": "Menu comandi ({{count}})",
       "title-controls-menu_other": "Menu comandi ({{count}})",
       "title-hidden_one": "Nascosto ({{count}})",
-      "title-hidden_other": "Nascosti ({{count}})"
+      "title-hidden_other": "Nascosti ({{count}})",
+      "title-top-placement_one": "",
+      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -7837,8 +7849,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "Visualizza differenza JSON",
-      "new-version-updated": "<0>Versione {{version}}</0> aggiornata da {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Versione {{version}}</0> aggiornata da {{editor}} {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "Confronto in corso {{baseVersion}} <3></3> {{newVersion}}",
@@ -8037,19 +8049,6 @@
       "aria-label-explore-data": "Esplora i dati",
       "aria-label-suggested-dashboards": "Dashboard suggerite"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Avvisi non supportati",
-      "text-alerting-supported": "Avvisi supportati"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Il nome viene utilizzato quando si seleziona l'origine dei dati nei pannelli. L'origine dei dati predefinita è preselezionata nei nuovi pannelli."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Impostazioni di base della pagina delle impostazioni dell'origine dei dati",
-      "basic-settings-name-placeholder-name": "Nome",
-      "label-default": "Predefinito",
-      "label-name": "Nome"
-    },
     "build-a-dashboard-button": {
       "blank": "Vuota",
       "build-a-dashboard": "Crea una dashboard",
@@ -8144,6 +8143,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Aggiungi a Preferiti",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Esplora i dati",
       "open-in-explore": "Apri nella visualizzazione Esplora",
       "remove-favorite": "Rimuovi da Preferiti"
@@ -9036,7 +9041,6 @@
       "copy-button": "Copia negli appunti",
       "download-button": "Scarica il file",
       "download-successful_toast_message": "JSON scaricato",
-      "export-externally-label": "Esporta il dashboard da utilizzare in un'altra istanza",
       "export-format": "Formato",
       "export-mode": "Modello",
       "info-text": "Copia o scarica un file contenente la definizione della tua dashboard",
@@ -9129,6 +9133,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "Cartella eliminata",
       "folder-move-error-provisioned": "Impossibile spostare la cartella configurata. Per spostarla, trasferiscila nel repository ed esegui la sincronizzazione per applicare le modifiche.",
@@ -10204,7 +10209,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Aiuto <1></1>",
-      "access-help-details": "La modalità di accesso verifica il modo in cui verranno gestite le richieste all'origine di dati. <1><i>Server</i></1> dovrebbe essere la modalità preferita se non diversamente specificato.",
+      "access-help-details": "",
       "access-help-title": "Accedi alla Guida",
       "access-label": "Accedi",
       "allowed-cookies": "Cookie consentiti ",
@@ -10739,7 +10744,7 @@
     "name-unit": "Unità",
     "name-value-name": "Nome del valore",
     "name-y-axis-scale": "Scala asse Y",
-    "name-y-bucket-scale": "Scala bucket Y",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Automatico",
     "placeholder-axis-width": "Automatico",
     "placeholder-decimals": "Automatico",
@@ -10852,6 +10857,48 @@
     "name-gradient-mode": "Modalità gradiente",
     "name-line-width": "Larghezza linea",
     "name-stacking": "Impilabile"
+  },
+  "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -11247,7 +11294,7 @@
     "description-order": "Mostra per primi i registri più recenti o quelli più vecchi. Quando si seleziona l'opzione \"Prima i meno recenti\", la visualizzazione scorre automaticamente fino ai registri più recenti in fondo alla pagina.",
     "description-prettify-json": "Imposta le voci di registro JSON con rientro e ritorno a capo.",
     "description-show-controls": "Visualizza i controlli per passare all'ultima o alla prima riga del registro e filtra per livello di registro.",
-    "description-show-log-attributes": "Sperimentale. Quando vengono visualizzati i registri OTel, aggiungi un campo visualizzato extra con coppie chiave-valore pertinenti da etichette e metadati.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Allinea i valori utilizzando le colonne quando si usano i campi visualizzati.",
     "description-wrap-lines": "Visualizza i registri su una singola riga oppure adatta le voci più lunghe per adattarle al pannello.",
     "field-selector": {
@@ -11334,6 +11381,8 @@
       "clear-search": "Cancella",
       "close-inline-details": "Chiudi i dettagli del registro",
       "close-sidebar-details": "Chiudi la barra laterale dei dettagli del registro",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Copia shortlink",
       "copy-to-clipboard": "Copia negli appunti",
       "displayed-fields-section": "Organizza i campi visualizzati",
@@ -11382,7 +11431,8 @@
     },
     "log-line-menu": {
       "copy-link": "Copia il link alla riga del registro",
-      "copy-log": "Copia la riga del registro",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Mostra i dettagli del registro",
       "icon-label": "Menu registro",
       "log-line": "Riga registro",
@@ -11573,7 +11623,7 @@
       "line-contains-not": "Aggiungi come riga non contenente filtro",
       "search-text": "Cerca nei risultati"
     },
-    "show-log-attributes": "Visualizza gli attributi del registro per i registri OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Risoluzione marca temporale",
     "un-themed-log-details": {
       "aria-label-data-links": "Collegamenti dati",
@@ -11633,11 +11683,10 @@
       "published-by": "Pubblicato da",
       "updated-on": "Aggiornato il"
     },
-    "import-resource-format-error": {
-      "cancel": "Annulla",
-      "title": "Formato non supportato",
-      "v1-message": "Questa dashboard è nel formato di risorsa Kubernetes v1 e non può essere importata quando la funzionalità delle dashboard di Kubernetes è disabilitata. Abilita l'opzione della funzionalità kubernetesDashboards per importare questa dashboard.",
-      "v2-message": "Questa dashboard è in formato risorsa v2 e non può essere importata quando la funzionalità delle dashboard di Kubernetes è disabilitata. Abilita l'opzione della kubernetesDashboards di Kubernetes per importare questa dashboard."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Vuoi davvero eliminare \"{{snapshotToRemove}}\"?",
@@ -11943,6 +11992,9 @@
     "admin": {
       "subtitle": "Gestisci le impostazioni a livello di server e l'accesso a risorse come organizzazioni, utenti e licenze",
       "title": "Amministratore del server"
+    },
+    "agentic-testing": {
+      "title": ""
     },
     "alert-list-legacy": {
       "title": "Regole di avviso"
@@ -12540,6 +12592,9 @@
       "save-tooltip": ""
     }
   },
+  "page-loader": {
+    "default": ""
+  },
   "panel": {
     "dashlist": {
       "empty-state-message": "Nessun gruppo di dashboard configurato",
@@ -13126,8 +13181,9 @@
       "label-branch": "Ramo",
       "label-comment": "Commento",
       "label-filename": "Nome del file",
-      "label-folder": "Cartella",
       "label-path": "Percorso",
+      "label-repository-folder": "",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Seleziona o inserisci il percorso della cartella",
       "suffix-configured-branch": "Ramo sincronizzato",
@@ -13207,11 +13263,24 @@
     "code-block": {
       "aria-label-copy": "Copia codice negli appunti"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "Impostazioni del repository salvate",
       "alert-repository-settings-updated": "Impostazioni del repository aggiornate",
       "button-save": "Salva",
       "button-saving": "Salvataggio in corso...",
+      "description-commit-message-template": "",
       "description-connection": "Seleziona la connessione all'app GitHub da utilizzare",
       "description-enabled": "Una volta abilitato il pull automatico, la destinazione non può essere modificata.",
       "description-read-only": "Le risorse non possono essere modificate tramite Grafana.",
@@ -13222,6 +13291,7 @@
       "error-save-failed": "Impossibile salvare le impostazioni del repository",
       "error-save-repository": "Impossibile salvare le impostazioni del repository",
       "label-automatic-pulling": "Pull automatico",
+      "label-commit-message-template": "",
       "label-connection": "Connessione all'app GitHub",
       "label-enabled": "Abilitato",
       "label-interval-seconds": "Intervallo (secondi)",
@@ -13230,6 +13300,7 @@
       "label-title": "Titolo",
       "option-entire-instance": "Intera istanza",
       "option-managed-folder": "Cartella gestita",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "La mia configurazione"
     },
@@ -13439,7 +13510,7 @@
       "modal-title-set-up-public-access": "Configura l'accesso pubblico",
       "modal-title-set-up-required-features": "Configura le funzionalità necessarie",
       "step-description-copy-url": "Dall'output di ngrok, copia l'URL di inoltro https:// simile al seguente:",
-      "step-description-enable-feature-toggles": "Aggiungi l'attivazione/disattivazione della funzionalità di provisioning al file custom.ini. Nota: kubernetesDashboards è abilitato per impostazione predefinita, ma se lo hai esplicitamente disabilitato, dovrai abilitarlo nelle impostazioni di Grafana o rimuovere la sostituzione dalla configurazione.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Esegui questo comando per creare un tunnel sicuro per il tuo Grafana locale:",
       "step-description-update-grafana-config": "Aggiungi questo al tuo file custom.ini, sostituendo l'URL con il tuo URL ngrok effettivo:",
       "step-title-copy-url": "Copia il tuo URL pubblico",
@@ -13513,6 +13584,21 @@
       "authentication-failed": "",
       "request-failed": "",
       "resource-not-found": ""
+    },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
     },
     "instance-sync-deprecation": {
       "message": "La sincronizzazione delle istanze non è attualmente supportata completamente e interrompe i pannelli e gli avvisi della libreria. Per utilizzare i pannelli della libreria e gli avvisi, disconnetti il repository e riconnettitilo utilizzando la sincronizzazione delle cartelle.",
@@ -13800,7 +13886,8 @@
     "sync-job": {
       "error-no-job-id": "Impossibile avviare l'attività",
       "error-no-repository-name": "Nessun nome di repository fornito",
-      "error-starting-job": "Errore durante l'avvio dell'attività"
+      "error-starting-job": "Errore durante l'avvio dell'attività",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "Errore durante il pull delle risorse",
@@ -14122,6 +14209,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Aggiungi filtro",
+      "cancel-delete": "",
+      "confirm-delete": "",
+      "confirm-delete-confirm": "",
+      "delete-confirmation-group": "",
       "disable": "Disabilita {{type}}",
       "duplicate": "Duplica {{type}}",
       "enable": "Abilita {{type}}",
@@ -14163,10 +14254,7 @@
       "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
-      "body-query": "Vuoi davvero eliminare questa query?",
-      "body-transformation": "La rimozione di una trasformazione può interromperne altre.",
-      "confirm": "Elimina",
-      "title": "Eliminare {{name}}?"
+      "body-transformation": "La rimozione di una trasformazione può interromperne altre."
     },
     "details-sidebar": {
       "cache-timeout": "Timeout cache",
@@ -14630,7 +14718,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Esporta come immagine",
-      "export-json-title": "Esporta in formato JSON",
       "share-externally-title": "Condividi esternamente",
       "share-internally-title": "Condividi internamente",
       "share-snapshot-title": "Condividi istantanea"
@@ -14831,9 +14918,6 @@
       "home-dashboard-placeholder": "Dashboard predefinito",
       "language-preference-label": "Lingua",
       "language-preference-placeholder": "Scegli lingua",
-      "locale-preference-description": "Scegli la tua regione per visualizzare la data, l'ora e il formato numerico corrispondenti",
-      "locale-preference-label": "Formato regione",
-      "locale-preference-placeholder": "Scegli regione",
       "theme-description": "Ti piacciono i temi sperimentali? Dicci cosa ti piacerebbe vedere <2>qui.</2>",
       "theme-label": "Tema dell'interfaccia",
       "week-start-label": "Inizio settimana"
@@ -15133,6 +15217,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Creato il",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Scarica",
       "expires": "Scade ",
       "requested-by": "Richiesto da",
@@ -15447,7 +15533,6 @@
       "forwards-time-aria-label": "Usa un intervallo di tempo successivo",
       "to": "a",
       "zoom-out-button": "Riduci l'intervallo di tempo",
-      "zoom-out-tooltip": "Riduci l'intervallo di tempo <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Riduci l'intervallo di tempo <br/> t -"
     },
     "time-range": {
@@ -15534,8 +15619,8 @@
     },
     "legend": {
       "category": "Legenda",
-      "description-faceted-filter": "Mostra il filtro di visibilità della serie in base alle etichette",
-      "name-faceted-filter": "Filtro a faccette"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
@@ -16025,7 +16110,9 @@
       "description": {
         "group-by-field-value": "Raggruppa i dati in base a un valore di campo e crea tabelle nidificate con i dati raggruppati."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Se abilitato, le tabelle nidificate mostreranno i nomi dei campi come intestazione della tabella",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Mostra i nomi dei campi nelle tabelle nidificate",
       "name": {
         "group-to-nested-tables": "Raggruppa in tabelle nidificate"
@@ -16521,7 +16608,7 @@
       "message": "Nessun utente trovato"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Il token della sessione è stato revocato automaticamente perché hai raggiunto <2>il numero massimo di {{numSessions}} sessioni simultanee</2> per il tuo account.",
+      "auto-revoked": "",
       "resume-message": "<strong>Per riprendere la sessione, effettua nuovamente l'accesso.</strong>Se vieni disconnesso automaticamente più volte, contatta il tuo amministratore o visita la pagina delle licenze per verificare la tua quota.",
       "sign-in": "Accedi",
       "title-you-have-been-automatically-signed-out": "Sei stato disconnesso automaticamente"

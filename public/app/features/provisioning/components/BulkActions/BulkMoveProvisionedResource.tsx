@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -18,7 +18,7 @@ import {
   getDefaultWorkflow,
 } from 'app/features/provisioning/components/defaults';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
+import { isRootFolderUID } from 'app/features/search/constants';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { type StepStatusInfo } from '../../Wizard/types';
@@ -30,7 +30,12 @@ import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 
 import { type MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
-import { type BulkActionFormData, type BulkActionProvisionResourceProps, getTargetFolderPathInRepo } from './utils';
+import {
+  type BulkActionFormData,
+  type BulkActionProvisionResourceProps,
+  getTargetFolderPathInRepo,
+  isSameFolderPath,
+} from './utils';
 
 interface FormProps extends BulkActionProvisionResourceProps {
   initialValues: BulkActionFormData;
@@ -39,7 +44,14 @@ interface FormProps extends BulkActionProvisionResourceProps {
   folderPath?: string;
 }
 
-function FormContent({ initialValues, selectedItems, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
+function FormContent({
+  initialValues,
+  selectedItems,
+  repository,
+  canPushToConfiguredBranch,
+  folderPath,
+  onDismiss,
+}: FormProps) {
   // States
   const [job, setJob] = useState<Job>();
   const [jobError, setJobError] = useState<string | StatusInfo>();
@@ -88,6 +100,18 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
       return;
     }
 
+    if (isSameFolderPath(folderPath, targetFolderPathInRepo)) {
+      setError('targetFolderUID', {
+        type: 'manual',
+        message: t(
+          'browse-dashboards.bulk-move-resources-form.error-already-in-target-folder',
+          'Selected resources are already in the target folder.'
+        ),
+      });
+      setHasSubmitted(false);
+      return;
+    }
+
     reportInteraction('grafana_provisioning_bulk_move_submitted', {
       workflow: data.workflow,
       repositoryName: repository.name ?? 'unknown',
@@ -95,7 +119,11 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
       resourceCount: resources.length,
     });
 
-    // Create the move job spec
+    // Create the move job spec.
+    // TODO(grafana/git-ui-sync-project#1162): MoveJobOptions has no `message`
+    // field on the backend yet — once it gains one, pass
+    // `withSavedByTrailer(<default or data.comment>)` so the
+    // Grafana-saved-by trailer rides through to the resulting git commit.
     const jobSpec: MoveJobSpec = {
       action: 'move',
       move: {
@@ -159,7 +187,9 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
                     clearErrors('targetFolderUID');
                   }}
                   repositoryName={repository.name}
-                  excludeUIDs={[...Object.keys(selectedItems?.folder).map((uid) => uid)]}
+                  // selectedItems.folder contains false entries from deselect ancestor propagation
+                  // in setItemSelectionState reducer - filter to only truly-selected UIDs
+                  excludeUIDs={Object.keys(selectedItems?.folder ?? {}).filter((uid) => selectedItems.folder[uid])}
                 />
               </Field>
               <ResourceEditFormSharedFields
@@ -193,10 +223,17 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
 
 export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismiss }: BulkActionProvisionResourceProps) {
   // Check if we're on the root browser dashboards page
-  const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
+  const isRootPage = isRootFolderUID(folderUid);
   const { selectedItemsRepoUID } = useSelectionRepoValidation(selectedItems);
+
+  // Capture the repo UID so it survives selection state changes during/after job execution
+  const resolvedRepoUID = useRef(selectedItemsRepoUID);
+  if (selectedItemsRepoUID) {
+    resolvedRepoUID.current = selectedItemsRepoUID;
+  }
+
   const { repository, folder, isReadOnlyRepo } = useGetResourceRepositoryView({
-    folderName: isRootPage ? selectedItemsRepoUID : folderUid,
+    folderName: isRootPage ? resolvedRepoUID.current : folderUid,
   });
 
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);

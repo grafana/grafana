@@ -11,7 +11,7 @@ import (
 // BatchEmbedder turns a slice of extractor Items into a slice of
 // vector.Vector rows ready for the pgvector backend. It bundles the call
 // to the embedding provider with the Item-to-Vector mapping so callers
-// (the orchestrator) hand it Items + namespace/resource/RV and get back
+// (the resource embedder) hand it Items + namespace/resource/RV and get back
 // fully-populated Vectors.
 //
 // Provider-side chunking is internal to the underlying TextEmbedder, so
@@ -85,4 +85,8 @@ func (b *BatchEmbedder) Embed(
 		}
 	}
 	return vectors, nil
+}
+
+func (b *BatchEmbedder) Model() string {
+	return b.embedder.Model
 }

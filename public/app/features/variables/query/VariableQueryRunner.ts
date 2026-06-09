@@ -1,6 +1,5 @@
 import { merge, type Observable, of, Subject, throwError, type Unsubscribable } from 'rxjs';
 import { catchError, filter, finalize, mergeMap, take, takeUntil } from 'rxjs/operators';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   CoreApp,
@@ -11,6 +10,7 @@ import {
   type PanelData,
   type QueryVariableModel,
   type ScopedVars,
+  generateUUID,
 } from '@grafana/data';
 import { type StoreState, type ThunkDispatch } from 'app/types/store';
 
@@ -185,7 +185,7 @@ export class VariableQueryRunner {
 
     const request: DataQueryRequest = {
       app: CoreApp.Dashboard,
-      requestId: uuidv4(),
+      requestId: generateUUID(),
       timezone: '',
       range,
       interval: '',

@@ -233,6 +233,18 @@ export enum MatcherOperator {
   notRegex = '!~',
 }
 
+/**
+ * Rule metadata on Grafana silence GET responses when `ruleMetadata=true`.
+ * The whole object is omitted when the silence has no `__alert_rule_uid__` matcher.
+ * When present, `rule_uid` is always set from that matcher; `rule_title` and `folder_uid`
+ * are only set when the rule exists and the caller can read its folder.
+ */
+export interface SilenceRuleMetadata {
+  rule_uid?: string;
+  rule_title?: string;
+  folder_uid?: string;
+}
+
 export interface Silence extends WithAccessControlMetadata {
   id: string;
   matchers?: Matcher[];
@@ -244,11 +256,7 @@ export interface Silence extends WithAccessControlMetadata {
   status: {
     state: SilenceState;
   };
-  metadata?: {
-    rule_uid?: string;
-    rule_title?: string;
-    folder_uid?: string;
-  };
+  metadata?: SilenceRuleMetadata;
 }
 
 export type SilenceCreatePayload = {
@@ -349,7 +357,12 @@ export enum AlertmanagerChoice {
 
 export interface GrafanaAlertingConfiguration {
   alertmanagersChoice: AlertmanagerChoice;
+  // Snake_case mirrors the wire format from /api/v1/ngalert/admin_config.
+  external_alertmanager_uid?: string;
 }
+
+// POST /api/v1/ngalert/admin_config accepts partial updates.
+export type PostableGrafanaAlertingConfiguration = Partial<GrafanaAlertingConfiguration>;
 
 export enum AlertManagerImplementation {
   cortex = 'cortex',

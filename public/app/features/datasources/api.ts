@@ -1,3 +1,4 @@
+import { isString } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
 import { type DataSourceSettings, type DataSourceJsonData } from '@grafana/data';
@@ -5,6 +6,8 @@ import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
+
+import { DeprecatedInternalId } from '../apiserver/types';
 
 export const getDataSources = async (): Promise<DataSourceSettings[]> => {
   return await getBackendSrv().get('/api/datasources');
@@ -14,11 +17,12 @@ export const getDataSources = async (): Promise<DataSourceSettings[]> => {
 const LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX = 'lds-sv-';
 
 export interface K8sMetadata {
-  name: string;
   namespace: string;
-  uid?: string;
+  name: string; // Equivalent to legacy UID
+  generateName?: string; // only valid for create
+  uid?: string; // do not confuse this with legacy UID
   resourceVersion: string;
-  generation?: number;
+  generation?: number; // increments when the spec changes
   creationTimestamp?: string;
   labels: { [key: string]: string };
   annotations: { [key: string]: string };
@@ -46,7 +50,7 @@ export interface DatasourceAccessK8s {
 export interface DataSourceSettingsK8s {
   kind: string;
   apiVersion: string;
-  metadata: K8sMetadata;
+  metadata: Partial<K8sMetadata>;
   spec: DatasourceInstanceK8sSpec;
   secure?: Record<string, Record<string, string>>;
 }
@@ -133,10 +137,10 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
 ): DataSourceSettings => {
   // TODO: remove this once we figure out what code is using the deprecated
   // id field.
-  let id = parseInt(dsK8sSettings.metadata.labels['grafana.app/deprecatedInternalID'] || '', 10);
+  let id = parseInt(dsK8sSettings.metadata.labels?.[DeprecatedInternalId] || '', 10);
   let dsSettings: DataSourceSettings = {
     id: id,
-    uid: dsK8sSettings.metadata.name,
+    uid: dsK8sSettings.metadata.name!,
     orgId: 1,
     name: dsK8sSettings.spec.title,
     typeLogoUrl: '',
@@ -241,16 +245,15 @@ export const createDataSourceWithK8sAPI = async (dataSource: Partial<DataSourceS
   if (dataSource.secureJsonData) {
     dsK8sSettings.secure = {};
     for (let [k, v] of Object.entries(dataSource.secureJsonData)) {
-      if (v !== '') {
-        let value = {
-          create: v,
-          name: k,
-        };
-        if (isRecordOfString(value)) {
-          dsK8sSettings.secure[k] = value;
-        }
+      if (v !== '' && isString(v)) {
+        dsK8sSettings.secure[k] = { create: v };
       }
     }
+  }
+
+  // K8s apis require an explicit name, or request to generate the name for POST
+  if (!(dsK8sSettings.metadata?.name || dsK8sSettings.metadata?.generateName)) {
+    dsK8sSettings.metadata = { ...dsK8sSettings.metadata, generateName: 'g' }; // prefix for server generated unique name
   }
   return getBackendSrv().post(
     `/apis/${dsK8sSettings.apiVersion}/namespaces/${config.namespace}/datasources`,
@@ -298,23 +301,28 @@ export const updateDataSource = async (dataSource: DataSourceSettings) => {
         }
       }
     }
-    return getBackendSrv().put(
-      `/apis/${dsK8sSettings.apiVersion}/namespaces/${config.namespace}/datasources/${dsK8sSettings.metadata.name}`,
-      dsK8sSettings,
-      {
-        showErrorAlert: false,
-        showSuccessAlert: false,
-        validatePath: true,
-      }
+    return convertK8sDatasourceSettingsToLegacyDatasourceSettings(
+      await getBackendSrv().put<DataSourceSettingsK8s>(
+        `/apis/${dsK8sSettings.apiVersion}/namespaces/${config.namespace}/datasources/${dsK8sSettings.metadata.name}`,
+        dsK8sSettings,
+        {
+          showErrorAlert: false,
+          showSuccessAlert: false,
+          validatePath: true,
+        }
+      )
     );
   }
+
   // we're setting showErrorAlert and showSuccessAlert to false to suppress the popover notifications. Request result will now be
   // handled by the data source config page
-  return getBackendSrv().put(`/api/datasources/uid/${dataSource.uid}`, dataSource, {
-    showErrorAlert: false,
-    showSuccessAlert: false,
-    validatePath: true,
-  });
+  return getBackendSrv()
+    .put<{ datasource: DataSourceSettings }>(`/api/datasources/uid/${dataSource.uid}`, dataSource, {
+      showErrorAlert: false,
+      showSuccessAlert: false,
+      validatePath: true,
+    })
+    .then((response) => response.datasource);
 };
 
 export const deleteDataSource = (uid: string) => {

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -22,8 +23,15 @@ import (
 type dashboardStorageWrapper struct {
 	grafanarest.Storage
 
+	// Support home dashboards
+	homeDashboard home.HomeDashboardGetter
+	apiVersion    string
+
+	// Clear the dashboard cache on Delete
 	dashboardPermissionsSvc accesscontrol.DashboardPermissionsService
-	live                    live.DashboardActivityChannel
+
+	// Broadcast events
+	live live.DashboardActivityChannel
 }
 
 func (d dashboardStorageWrapper) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -62,4 +70,12 @@ func (d dashboardStorageWrapper) Delete(ctx context.Context, name string, delete
 		return obj, async, accessErr
 	}
 	return obj, async, nil
+}
+
+func (d dashboardStorageWrapper) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	if name == home.DASHBOARD_NAME && d.homeDashboard != nil {
+		return d.homeDashboard.Get(d.apiVersion)
+	}
+
+	return d.Storage.Get(ctx, name, options)
 }

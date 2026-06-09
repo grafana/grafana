@@ -283,5 +283,3 @@ const Filter = (
     </Stack>
   );
 };
-
-export default Filter;

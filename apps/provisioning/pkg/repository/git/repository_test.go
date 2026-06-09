@@ -1,13 +1,16 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -4986,4 +4989,76 @@ func TestGitRepository_GetCurrentBranch(t *testing.T) {
 			require.Equal(t, tt.expectedBranch, branch)
 		})
 	}
+}
+
+func TestWithGitContext_AuditFields(t *testing.T) {
+	var buf bytes.Buffer
+	handler := slog.NewJSONHandler(&buf, nil)
+	logger := logging.NewSLogLogger(handler)
+
+	ctx := logging.Context(context.Background(), logger)
+
+	gitRepo := &gitRepository{
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-repo",
+				Namespace: "test-ns",
+			},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType,
+			},
+		},
+		gitConfig: RepositoryConfig{
+			URL:    "https://git.example.com/owner/repo.git",
+			Branch: "main",
+		},
+	}
+
+	_, enrichedLogger := gitRepo.withGitContext(ctx, "main")
+	enrichedLogger.Info("test log")
+
+	output := buf.String()
+	require.Contains(t, output, `"namespace":"test-ns"`)
+	require.Contains(t, output, `"repository_name":"test-repo"`)
+	require.Contains(t, output, `"url":"https://git.example.com/owner/repo.git"`)
+	require.Contains(t, output, `"ref":"main"`)
+}
+
+func TestGitRepository_AuditLog(t *testing.T) {
+	var buf bytes.Buffer
+	handler := slog.NewJSONHandler(&buf, nil)
+	logger := logging.NewSLogLogger(handler)
+
+	ctx := logging.Context(context.Background(), logger)
+
+	mockClient := &mocks.FakeClient{}
+	mockClient.ListRefsReturns([]nanogit.Ref{
+		{Name: "refs/heads/main", Hash: hash.Hash{}},
+	}, nil)
+
+	gitRepo := &gitRepository{
+		client: mockClient,
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-repo",
+				Namespace: "my-ns",
+			},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType,
+			},
+		},
+		gitConfig: RepositoryConfig{
+			URL:    "https://git.example.com/owner/repo.git",
+			Branch: "main",
+		},
+	}
+
+	_, err := gitRepo.ListRefs(ctx)
+	require.NoError(t, err)
+
+	output := buf.String()
+	require.Contains(t, output, `"msg":"list refs"`)
+	require.Contains(t, output, `"namespace":"my-ns"`)
+	require.Contains(t, output, `"repository_name":"my-repo"`)
+	require.Contains(t, output, `"url":"https://git.example.com/owner/repo.git"`)
 }

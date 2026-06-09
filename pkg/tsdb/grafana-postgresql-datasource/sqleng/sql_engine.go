@@ -359,7 +359,7 @@ func (e *DataSourceHandler) processFrame(frame *data.Frame, qm *dataQueryModel, 
 				}
 			}
 		}
-		if qm.FillMissing != nil {
+		if qm.FillMissing != nil && qm.Interval > 0 {
 			frame = e.applyFill(frame, qm)
 		}
 	}

@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 func TestProvisioningServiceImpl(t *testing.T) {
@@ -159,7 +158,7 @@ func setup(t *testing.T) *serviceTestStruct {
 	}
 
 	service, err := newProvisioningServiceImpl(
-		func(context.Context, string, dashboardstore.DashboardProvisioningService, *setting.Cfg, org.Service, utils.DashboardStore, folder.Service, dualwrite.Service, *serverlock.ServerLockService) (dashboards.DashboardProvisioner, error) {
+		func(context.Context, string, dashboardstore.DashboardProvisioningService, *setting.Cfg, org.Service, utils.DashboardStore, folder.Service, *serverlock.ServerLockService) (dashboards.DashboardProvisioner, error) {
 			serviceTest.dashboardProvisionerInstantiations++
 			return serviceTest.mock, nil
 		},

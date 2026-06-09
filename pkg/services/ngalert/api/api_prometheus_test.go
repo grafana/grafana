@@ -549,7 +549,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				name:    "PolicyRouting",
 				inputNS: ngmodels.NotificationSettingsFromPolicy("test-policy"),
 				expectedNS: apimodels.AlertRuleNotificationSettings{
-					Policy: util.Pointer("test-policy"),
+					Policy: new("test-policy"),
 				},
 			},
 		} {
@@ -1908,7 +1908,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 
 		t.Run("then with all rules filtered out, no groups returned", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?health=unknown", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?state=recovering", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -2065,7 +2065,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.ElementsMatch(t, healths, []string{"ok", "error"})
 		})
 
-		t.Run("then with all rules filtered out, no groups returned", func(t *testing.T) {
+		t.Run("unknown health returns 400 Bad Request", func(t *testing.T) {
 			r, err := http.NewRequest("GET", "/api/v1/rules?health=unknown", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
@@ -2076,11 +2076,10 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
-			require.Equal(t, http.StatusOK, resp.Status())
+			require.Equal(t, http.StatusBadRequest, resp.Status())
 			var res apimodels.RuleResponse
 			require.NoError(t, json.Unmarshal(resp.Body(), &res))
-
-			require.Len(t, res.Data.RuleGroups, 0)
+			require.Contains(t, res.Error, "unknown health")
 		})
 	})
 

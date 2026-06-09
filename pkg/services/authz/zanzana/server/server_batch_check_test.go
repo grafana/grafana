@@ -214,6 +214,42 @@ func TestIntegrationServerBatchCheck(t *testing.T) {
 		assert.True(t, res.GetResults()["check2"].GetAllowed())
 	})
 
+	t.Run("user should batch check dashboard access through teams from request", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("allowed", utils.VerbGet, dashboardGroup, dashboardResource, "", "", "ctx-batch-dashboard"),
+			newItem("denied", utils.VerbGet, dashboardGroup, dashboardResource, "", "", "ctx-check-dashboard"),
+		}
+
+		req := newBatchReq("user:contextual", items)
+		req.Teams = []string{"ctx-batch"}
+		res, err := server.BatchCheck(newContextWithNamespace(), req)
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 2)
+		assert.True(t, res.GetResults()["allowed"].GetAllowed())
+		assert.False(t, res.GetResults()["denied"].GetAllowed())
+	})
+
+	t.Run("user should batch check dashboard access with one thousand request teams", func(t *testing.T) {
+		groups := make([]string, 1000)
+		for i := range groups {
+			groups[i] = fmt.Sprintf("irrelevant-%04d", i)
+		}
+		groups[999] = "ctx-1000"
+
+		items := []*authzv1.BatchCheckItem{
+			newItem("allowed", utils.VerbGet, dashboardGroup, dashboardResource, "", "", "ctx-1000-dashboard"),
+			newItem("denied", utils.VerbGet, dashboardGroup, dashboardResource, "", "", "ctx-check-dashboard"),
+		}
+
+		req := newBatchReq("user:contextual-1000", items)
+		req.Teams = groups
+		res, err := server.BatchCheck(newContextWithNamespace(), req)
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 2)
+		assert.True(t, res.GetResults()["allowed"].GetAllowed())
+		assert.False(t, res.GetResults()["denied"].GetAllowed())
+	})
+
 	t.Run("different verbs in same batch", func(t *testing.T) {
 		items := []*authzv1.BatchCheckItem{
 			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"),

@@ -122,7 +122,7 @@ export interface HealthCheckResult {
  *
  * @internal
  */
-export interface DatasourcesV0HealthCheckResult {
+interface DatasourcesV0HealthCheckResult {
   kind?: string;
   apiVersion?: string;
   status: string;

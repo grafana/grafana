@@ -1,7 +1,6 @@
 package navtreeimpl
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -12,8 +11,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/star"
-	"github.com/grafana/grafana/pkg/services/star/startest"
+	starapi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -29,13 +27,11 @@ func TestBuildStarredItemsNavLinks(t *testing.T) {
 	}
 
 	t.Run("Should return empty list when there are no starred dashboards", func(t *testing.T) {
-		starService := startest.NewStarServiceFake()
-		starService.ExpectedUserStars = &star.GetUserStarsResult{
-			UserStars: map[string]bool{},
-		}
+		starClient := starapi.NewMockK8sClients(t)
+		starClient.On("GetStars", reqCtx).Return([]string{}, nil)
 
 		service := ServiceImpl{
-			starService: starService,
+			starClient: starClient,
 		}
 
 		navLinks, err := service.buildStarredItemsNavLinks(reqCtx)
@@ -44,16 +40,11 @@ func TestBuildStarredItemsNavLinks(t *testing.T) {
 	})
 
 	t.Run("Should return nav links for starred dashboards", func(t *testing.T) {
-		starService := startest.NewStarServiceFake()
-		starService.ExpectedUserStars = &star.GetUserStarsResult{
-			UserStars: map[string]bool{
-				"dashboard1": true,
-				"dashboard2": true,
-			},
-		}
+		starClient := starapi.NewMockK8sClients(t)
+		starClient.On("GetStars", reqCtx).Return([]string{"dashboard1", "dashboard2"}, nil)
 
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardService.On("SearchDashboards", context.Background(), mock.Anything).Return(model.HitList{
+		dashboardService.On("SearchDashboards", mock.Anything, mock.Anything).Return(model.HitList{
 			{
 				UID:   "dashboard1",
 				Title: "Dashboard 1",
@@ -67,7 +58,7 @@ func TestBuildStarredItemsNavLinks(t *testing.T) {
 		}, nil)
 
 		service := ServiceImpl{
-			starService:      starService,
+			starClient:       starClient,
 			dashboardService: dashboardService,
 		}
 
@@ -84,17 +75,10 @@ func TestBuildStarredItemsNavLinks(t *testing.T) {
 	})
 
 	t.Run("Should limit to 50 starred dashboards", func(t *testing.T) {
-		starService := startest.NewStarServiceFake()
-		userStars := make(map[string]bool)
-		for i := 0; i < 60; i++ {
-			userStars[fmt.Sprintf("dashboard%d", i)] = true
-		}
-		starService.ExpectedUserStars = &star.GetUserStarsResult{
-			UserStars: userStars,
-		}
-
+		uids := make([]string, 60)
 		dashboardList := make(model.HitList, 60)
 		for i := 0; i < 60; i++ {
+			uids[i] = fmt.Sprintf("dashboard%d", i)
 			dashboardList[i] = &model.Hit{
 				UID:   fmt.Sprintf("dashboard%d", i),
 				Title: fmt.Sprintf("Dashboard %d", i),
@@ -102,11 +86,14 @@ func TestBuildStarredItemsNavLinks(t *testing.T) {
 			}
 		}
 
+		starClient := starapi.NewMockK8sClients(t)
+		starClient.On("GetStars", reqCtx).Return(uids, nil)
+
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardService.On("SearchDashboards", context.Background(), mock.Anything).Return(dashboardList, nil)
+		dashboardService.On("SearchDashboards", mock.Anything, mock.Anything).Return(dashboardList, nil)
 
 		service := ServiceImpl{
-			starService:      starService,
+			starClient:       starClient,
 			dashboardService: dashboardService,
 		}
 
@@ -116,17 +103,11 @@ func TestBuildStarredItemsNavLinks(t *testing.T) {
 	})
 
 	t.Run("Should sort dashboards by title", func(t *testing.T) {
-		starService := startest.NewStarServiceFake()
-		starService.ExpectedUserStars = &star.GetUserStarsResult{
-			UserStars: map[string]bool{
-				"dashboard1": true,
-				"dashboard2": true,
-				"dashboard3": true,
-			},
-		}
+		starClient := starapi.NewMockK8sClients(t)
+		starClient.On("GetStars", reqCtx).Return([]string{"dashboard1", "dashboard2", "dashboard3"}, nil)
 
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardService.On("SearchDashboards", context.Background(), mock.Anything).Return(model.HitList{
+		dashboardService.On("SearchDashboards", mock.Anything, mock.Anything).Return(model.HitList{
 			{
 				UID:   "dashboard1",
 				Title: "C Dashboard",
@@ -145,7 +126,7 @@ func TestBuildStarredItemsNavLinks(t *testing.T) {
 		}, nil)
 
 		service := ServiceImpl{
-			starService:      starService,
+			starClient:       starClient,
 			dashboardService: dashboardService,
 		}
 

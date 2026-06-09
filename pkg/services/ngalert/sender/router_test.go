@@ -32,8 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func ptrTo[T any](v T) *T { return &v }
-
 func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -67,7 +65,7 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 		&fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), false, metrics.NewSenderMetrics(prometheus.NewPedanticRegistry()))
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey.OrgID, SendAlertsTo: ptrTo(models.AllAlertmanagers)},
+		{OrgID: ruleKey.OrgID, SendAlertsTo: new(models.AllAlertmanagers)},
 	}, nil)
 	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
 	// when the first alert triggers.
@@ -137,7 +135,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 		fakeDs, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), false, metrics.NewSenderMetrics(prometheus.NewPedanticRegistry()))
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey1.OrgID, SendAlertsTo: ptrTo(models.AllAlertmanagers)},
+		{OrgID: ruleKey1.OrgID, SendAlertsTo: new(models.AllAlertmanagers)},
 	}, nil)
 
 	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
@@ -162,7 +160,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 	fakeDs.DataSources = append(fakeDs.DataSources, &ds2)
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey1.OrgID, SendAlertsTo: ptrTo(models.AllAlertmanagers)},
+		{OrgID: ruleKey1.OrgID, SendAlertsTo: new(models.AllAlertmanagers)},
 		{OrgID: ruleKey2.OrgID},
 	}, nil)
 
@@ -208,7 +206,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 	fakeDs.DataSources = append(fakeDs.DataSources, &ds3)
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey1.OrgID, SendAlertsTo: ptrTo(models.AllAlertmanagers)},
+		{OrgID: ruleKey1.OrgID, SendAlertsTo: new(models.AllAlertmanagers)},
 		{OrgID: ruleKey2.OrgID},
 	}, nil)
 
@@ -228,7 +226,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 	// 3. Now, let's provide a configuration that fails for OrgID = 1.
 	fakeDs.DataSources[0].URL = "123://invalid.org"
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey1.OrgID, SendAlertsTo: ptrTo(models.AllAlertmanagers)},
+		{OrgID: ruleKey1.OrgID, SendAlertsTo: new(models.AllAlertmanagers)},
 		{OrgID: ruleKey2.OrgID},
 	}, nil)
 
@@ -245,7 +243,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 	// If we fix it - it should be applied.
 	fakeDs.DataSources[0].URL = "notarealalertmanager:3030"
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey1.OrgID, SendAlertsTo: ptrTo(models.AllAlertmanagers)},
+		{OrgID: ruleKey1.OrgID, SendAlertsTo: new(models.AllAlertmanagers)},
 		{OrgID: ruleKey2.OrgID},
 	}, nil)
 
@@ -296,7 +294,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 		10*time.Minute, &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds}}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), false, metrics.NewSenderMetrics(prometheus.NewPedanticRegistry()))
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey.OrgID, SendAlertsTo: ptrTo(models.AllAlertmanagers)},
+		{OrgID: ruleKey.OrgID, SendAlertsTo: new(models.AllAlertmanagers)},
 	}, nil)
 	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
 	// when the first alert triggers.
@@ -322,7 +320,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 
 	// Now, let's change the Alertmanagers choice to send only to the external Alertmanager.
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey.OrgID, SendAlertsTo: ptrTo(models.ExternalAlertmanagers)},
+		{OrgID: ruleKey.OrgID, SendAlertsTo: new(models.ExternalAlertmanagers)},
 	}, nil)
 	// Again, make sure we sync and verify the externalAlertmanagers.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase(context.Background()))
@@ -334,7 +332,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 
 	// Finally, let's change the Alertmanagers choice to send only to the internal Alertmanager.
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey.OrgID, SendAlertsTo: ptrTo(models.InternalAlertmanager)},
+		{OrgID: ruleKey.OrgID, SendAlertsTo: new(models.InternalAlertmanager)},
 	}, nil)
 
 	// Again, make sure we sync and verify the externalAlertmanagers.
@@ -400,7 +398,7 @@ func TestAlertmanagersChoiceWithDisableExternalFeatureToggle(t *testing.T) {
 	// Test that we only send to the internal Alertmanager even though the configuration specifies AllAlertmanagers.
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey.OrgID, SendAlertsTo: ptrTo(models.AllAlertmanagers)},
+		{OrgID: ruleKey.OrgID, SendAlertsTo: new(models.AllAlertmanagers)},
 	}, nil)
 
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase(context.Background()))
@@ -419,7 +417,7 @@ func TestAlertmanagersChoiceWithDisableExternalFeatureToggle(t *testing.T) {
 	// Test that we still only send to the internal alertmanager even though the configuration specifies ExternalAlertmanagers.
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey.OrgID, SendAlertsTo: ptrTo(models.ExternalAlertmanagers)},
+		{OrgID: ruleKey.OrgID, SendAlertsTo: new(models.ExternalAlertmanagers)},
 	}, nil)
 
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase(context.Background()))

@@ -1,5 +1,4 @@
 import { LegacyGraphHoverClearEvent } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { behaviors, sceneGraph, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
@@ -172,7 +171,6 @@ describe('setupKeyboardShortcuts', () => {
 
   describe('other keyboard shortcuts', () => {
     beforeEach(() => {
-      config.featureToggles.newTimeRangeZoomShortcuts = false;
       setupKeyboardShortcuts(mockScene);
     });
 
@@ -184,11 +182,6 @@ describe('setupKeyboardShortcuts', () => {
     it('should setup refresh shortcut (d r)', () => {
       const drBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'd r');
       expect(drBinding).toBeDefined();
-    });
-
-    it('should setup zoom out shortcut (t z)', () => {
-      const tzBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 't z');
-      expect(tzBinding).toBeDefined();
     });
 
     it('should setup zoom out shortcut (ctrl+z)', () => {
@@ -265,10 +258,9 @@ describe('setupKeyboardShortcuts', () => {
     });
   });
 
-  describe('time range zoom shortcuts with feature toggle', () => {
-    describe('when newTimeRangeZoomShortcuts is enabled', () => {
+  describe('time range zoom shortcuts', () => {
+    describe('zoom key bindings', () => {
       beforeEach(() => {
-        config.featureToggles.newTimeRangeZoomShortcuts = true;
         jest.clearAllMocks();
       });
 
@@ -294,37 +286,11 @@ describe('setupKeyboardShortcuts', () => {
         expect(tMinusBinding![0].type).toBe('keypress');
       });
 
-      it('should not setup t z shortcut when feature toggle is on', () => {
+      it('should not setup t z shortcut', () => {
         setupKeyboardShortcuts(mockScene);
 
         const tzBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 't z');
         expect(tzBinding).toBeUndefined();
-      });
-    });
-
-    describe('when newTimeRangeZoomShortcuts is disabled', () => {
-      beforeEach(() => {
-        config.featureToggles.newTimeRangeZoomShortcuts = false;
-        jest.clearAllMocks();
-      });
-
-      it('should setup legacy t z shortcut', () => {
-        setupKeyboardShortcuts(mockScene);
-
-        const tzBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 't z');
-        expect(tzBinding).toBeDefined();
-      });
-
-      it('should not setup new zoom shortcuts when feature toggle is off', () => {
-        setupKeyboardShortcuts(mockScene);
-
-        const tPlusBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 't +');
-        const tEqualsBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 't =');
-        const tMinusBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 't -');
-
-        expect(tPlusBinding).toBeUndefined();
-        expect(tEqualsBinding).toBeUndefined();
-        expect(tMinusBinding).toBeUndefined();
       });
     });
 
@@ -354,7 +320,6 @@ describe('setupKeyboardShortcuts', () => {
       }
 
       beforeEach(() => {
-        config.featureToggles.newTimeRangeZoomShortcuts = true;
         mockTimeRange = createMockTimeRange();
 
         (sceneGraph.getTimeRange as jest.Mock).mockReturnValue(mockTimeRange);

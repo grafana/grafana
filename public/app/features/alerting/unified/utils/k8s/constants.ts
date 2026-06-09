@@ -31,3 +31,6 @@ export enum K8sAnnotations {
  * Special name that the K8S API expects to see/user for the root route in notification policies
  */
 export const ROOT_ROUTE_NAME = 'user-defined';
+
+/** Resource type identifier for notification policy routes, used with the permissions API */
+export const ROUTES_RESOURCE_TYPE = 'routingtrees';

@@ -77,13 +77,27 @@ export const RestoreModal = ({
       body={
         <>
           <Text element="p">
-            <Trans i18nKey="recently-deleted.restore-modal.text" count={numberOfDashboards}>
+            <Trans
+              i18nKey="recently-deleted.restore-modal.text"
+              count={numberOfDashboards}
+              tOptions={{
+                defaultValue_one: 'This action will restore {{numberOfDashboards}} dashboards.',
+                defaultValue_other: 'This action will restore {{numberOfDashboards}} dashboards.',
+              }}
+            >
               This action will restore {{ numberOfDashboards }} dashboards.
             </Trans>
           </Text>
           <Space v={3} />
           <Text element="p">
-            <Trans i18nKey="recently-deleted.restore-modal.folder-picker-text" count={numberOfDashboards}>
+            <Trans
+              i18nKey="recently-deleted.restore-modal.folder-picker-text"
+              count={numberOfDashboards}
+              tOptions={{
+                defaultValue_one: 'Please choose a folder where your dashboards will be restored.',
+                defaultValue_other: 'Please choose a folder where your dashboards will be restored.',
+              }}
+            >
               Please choose a folder where your dashboards will be restored.
             </Trans>
           </Text>
@@ -99,7 +113,7 @@ export const RestoreModal = ({
           ? t('recently-deleted.restore-modal.restore-loading', 'Restoring...')
           : t('recently-deleted.restore-modal.restore-button', 'Restore')
       }
-      confirmButtonVariant="primary"
+      confirmVariant="primary"
       isOpen
       onDismiss={onDismiss}
       onConfirm={onRestore}

@@ -355,7 +355,7 @@ func TestIdentityQueries(t *testing.T) {
 							Limit:    1,
 							Continue: 2,
 						},
-						External: boolPtr(true),
+						External: new(true),
 					}),
 				},
 				{
@@ -869,8 +869,4 @@ func TestIdentityQueries(t *testing.T) {
 			},
 		},
 	})
-}
-
-func boolPtr(b bool) *bool {
-	return &b
 }

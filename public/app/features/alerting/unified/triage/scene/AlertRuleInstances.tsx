@@ -11,6 +11,7 @@ import { useWorkbenchContext } from '../WorkbenchContext';
 import { GenericRow } from '../rows/GenericRow';
 import { InstanceRow } from '../rows/InstanceRow';
 
+import { alertStateFrameOrder } from './dataFrameUtils';
 import { alertRuleInstancesQuery } from './queries';
 import { useQueryFilter } from './utils';
 
@@ -36,7 +37,10 @@ export function extractInstancesFromData(series: DataFrame[] | undefined) {
     groups.get(key)!.series.push(series);
   });
 
-  return Array.from(groups.values());
+  return Array.from(groups.values()).map((instance) => ({
+    ...instance,
+    series: instance.series.slice().sort(alertStateFrameOrder),
+  }));
 }
 
 type AlertRuleInstancesProps = {

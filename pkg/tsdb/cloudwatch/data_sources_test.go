@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 func TestDataSourcesRoute(t *testing.T) {
@@ -57,7 +56,7 @@ func TestDataSourcesRoute(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		mockDataSourcesService.AssertCalled(t, "GetDataSources", resources.DataSourcesRequest{
-			Pattern: utils.Pointer("amazon"),
+			Pattern: testPointer("amazon"),
 		})
 	})
 
