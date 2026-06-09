@@ -638,16 +638,16 @@ function replaceVariableDatasources(
         return variable;
       }
 
-      // remove export labels
-      if (variable.labels) {
-        delete variable.labels[ExportLabel];
-        delete variable.labels[ExportDatasourceName];
-      }
+      // Drop export-only labels.
+      const { labels, ...variableWithoutLabels } = variable;
+      const remainingLabels = { ...labels };
+      delete remainingLabels[ExportLabel];
+      delete remainingLabels[ExportDatasourceName];
 
       return {
-        ...variable,
+        ...variableWithoutLabels,
         datasource: { name: ds.uid },
-        ...(Object.keys(variable.labels ?? {}).length > 0 && { labels: variable.labels }),
+        ...(Object.keys(remainingLabels).length > 0 && { labels: remainingLabels }),
       };
     }
 

@@ -168,6 +168,7 @@ export const ImportDashboardFormV2 = ({
                     {...field}
                     inputId={dataSourceOption}
                     noDefault={true}
+                    placeholder={input.info}
                     pluginId={input.pluginId}
                     current={selectedDataSources[dataSourceOption]}
                     onChange={(ds) => {

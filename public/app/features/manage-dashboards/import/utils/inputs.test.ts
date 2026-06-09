@@ -349,7 +349,7 @@ describe('extractV2Inputs', () => {
     expect(result).toEqual(emptyInputs);
   });
 
-  it('should surface the original datasource name on the input label and description', async () => {
+  it('surfaces the original datasource name on the input label', async () => {
     const dashboard = {
       elements: {},
       variables: [
@@ -1655,8 +1655,27 @@ describe('replaceDatasourcesInDashboard', () => {
       const updated = getAdhocVariable(result);
 
       expect(updated?.datasource?.name).toBe('new-loki-uid');
-      expect(updated?.labels?.[ExportLabel]).toBeUndefined();
-      expect(updated?.labels?.[ExportDatasourceName]).toBeUndefined();
+      // labels held only export-only keys, so the object is omitted entirely
+      expect(updated?.labels).toBeUndefined();
+    });
+
+    it('keeps non-export labels while stripping export-only ones', () => {
+      const variable = createAdhocVariable('loki', 'old-loki-uid');
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [
+          {
+            ...variable,
+            labels: { [ExportLabel]: 'loki', [ExportDatasourceName]: 'Original Loki', team: 'observability' },
+          },
+        ],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, mappings);
+      const updated = getAdhocVariable(result);
+
+      expect(updated?.labels).toEqual({ team: 'observability' });
     });
   });
 
@@ -1707,8 +1726,8 @@ describe('replaceDatasourcesInDashboard', () => {
       const updated = getGroupByVariable(result);
 
       expect(updated?.datasource?.name).toBe('new-prom-uid');
-      expect(updated?.labels?.[ExportLabel]).toBeUndefined();
-      expect(updated?.labels?.[ExportDatasourceName]).toBeUndefined();
+      // labels held only export-only keys, so the object is omitted entirely
+      expect(updated?.labels).toBeUndefined();
     });
   });
 
