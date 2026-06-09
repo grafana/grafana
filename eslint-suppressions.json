@@ -1093,11 +1093,6 @@
       "count": 5
     }
   },
-  "public/app/features/alerting/routes.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/state/ThresholdMapper.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
