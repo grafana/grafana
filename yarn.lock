@@ -2868,6 +2868,57 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/prometheus@patch:@grafana/prometheus@npm%3A13.1.2#./.yarn/patches/@grafana-prometheus-npm-13.1.2-ee1c5a3113.patch::locator=grafana%40workspace%3A.":
+  version: 13.1.2
+  resolution: "@grafana/prometheus@patch:@grafana/prometheus@npm%3A13.1.2#./.yarn/patches/@grafana-prometheus-npm-13.1.2-ee1c5a3113.patch::version=13.1.2&hash=adcdc4&locator=grafana%40workspace%3A."
+  dependencies:
+    "@emotion/css": "npm:11.13.5"
+    "@floating-ui/react": "npm:0.27.19"
+    "@grafana/plugin-ui": "npm:^0.13.1"
+    "@hello-pangea/dnd": "npm:18.0.1"
+    "@leeoniya/ufuzzy": "npm:1.0.19"
+    "@lezer/common": "npm:1.5.2"
+    "@lezer/highlight": "npm:1.2.3"
+    "@lezer/lr": "npm:1.4.8"
+    "@prometheus-io/lezer-promql": "npm:0.307.3"
+    "@types/debounce-promise": "npm:3.1.9"
+    "@types/lodash": "npm:4.17.20"
+    "@types/react": "npm:18.3.18"
+    "@types/react-dom": "npm:18.3.5"
+    "@types/react-highlight-words": "npm:0.20.0"
+    "@types/semver": "npm:7.7.1"
+    "@types/uuid": "npm:10.0.0"
+    debounce-promise: "npm:3.1.2"
+    lodash: "npm:^4.17.23"
+    moment: "npm:2.30.1"
+    moment-timezone: "npm:0.5.47"
+    monaco-editor: "npm:0.34.1"
+    monaco-promql: "npm:1.8.0"
+    pluralize: "npm:8.0.0"
+    prismjs: "npm:1.30.0"
+    react-highlight-words: "npm:0.21.0"
+    react-use: "npm:17.6.0"
+    react-window: "npm:1.8.11"
+    rxjs: "npm:7.8.2"
+    semver: "npm:7.7.3"
+    uuid: "npm:11.1.0"
+  peerDependencies:
+    "@grafana/assistant": ">=0.1.0"
+    "@grafana/data": ">=11.5.0"
+    "@grafana/e2e-selectors": ">=11.5.0"
+    "@grafana/i18n": ">=12.3.0"
+    "@grafana/runtime": ">=11.5.0"
+    "@grafana/schema": ">=11.5.0"
+    "@grafana/ui": ">=11.5.0"
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  peerDependenciesMeta:
+    "@grafana/assistant":
+      optional: true
+  checksum: 10/709b1430f142e487dcdf807b3e6bb20586b86ff6f8597a68aeaf8525e7d2aa2afcadff6bb0848d8d58f4d12a3090b568896dff1ae25d96dce4d48833ff34d981
+  languageName: node
+  linkType: hard
+
 "@grafana/react-data-grid@npm:7.0.0-beta.57":
   version: 7.0.0-beta.57
   resolution: "@grafana/react-data-grid@npm:7.0.0-beta.57"
@@ -18582,7 +18633,7 @@ __metadata:
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:3.7.1-canary.2604.25387292549.0"
     "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/prometheus": "npm:13.1.2"
+    "@grafana/prometheus": "patch:@grafana/prometheus@npm%3A13.1.2#./.yarn/patches/@grafana-prometheus-npm-13.1.2-ee1c5a3113.patch"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:^8.2.6"
     "@grafana/scenes-react": "npm:^8.2.6"
