@@ -110,8 +110,10 @@ describe('Card', () => {
         </Card>
       );
 
-      expect(screen.getByRole('radio')).toBeInTheDocument();
-      expect(screen.getByRole('radio')).toBeChecked();
+      // The selection state must be exposed to assistive tech, named after the card heading so
+      // multiple selectable cards are distinguishable (not a generic, repeated "option").
+      expect(screen.getByRole('radio', { name: 'My Option' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'My Option' })).toBeChecked();
 
       rerender(
         <Card noMargin isSelected={false}>
@@ -119,8 +121,8 @@ describe('Card', () => {
         </Card>
       );
 
-      expect(screen.getByRole('radio')).toBeInTheDocument();
-      expect(screen.getByRole('radio')).not.toBeChecked();
+      expect(screen.getByRole('radio', { name: 'My Option' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'My Option' })).not.toBeChecked();
 
       rerender(
         <Card noMargin>
