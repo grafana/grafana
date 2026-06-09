@@ -2,6 +2,22 @@
 
 THROWAWAY. Delete once the design decision is folded into the real components.
 
+## Resume / re-open
+
+- Branch: `proto/tier2-timeline-ui` (off `feat/1029-pruned-spans-model-layer`).
+- Worktree: `.claude/worktrees/prototype_traceview-ui-timeline`.
+- Re-open in a browser (from the worktree root):
+
+  ```bash
+  open public/app/features/explore/TraceView/components/TraceTimelineViewer/__prototype__/tier2-timeline.prototype.html
+  ```
+
+  Or via a local server: `python3 -m http.server 8000` then
+  http://localhost:8000/public/app/features/explore/TraceView/components/TraceTimelineViewer/__prototype__/tier2-timeline.prototype.html
+
+- Next step when a verdict exists: fill in the Verdict section below, then fold the
+  keepers into `SpanBar.tsx` / `SpanBarRow.tsx` / `SpanDetail` and delete this dir.
+
 ## Question
 
 Tier 2 of span-pruning Trace View work (grafana/grafana-adaptivetraces-app#1018):
