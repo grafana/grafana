@@ -296,7 +296,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-01-14,alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false
 2026-05-22,queryWithAssistant,experimental,@grafana/data-sources-plugins,false,false,true
 2026-05-22,queryEditorNext,privatePreview,@grafana/datapro,false,false,true
-2026-05-22,queryEditorNextMultiSelect,experimental,@grafana/datapro,false,false,true
 2026-05-22,kubernetesTeamsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesTeamsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesUsersApi,experimental,@grafana/identity-access-team,false,false,false

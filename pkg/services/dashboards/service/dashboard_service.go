@@ -1269,6 +1269,12 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *
 		resource = "folder"
 	}
 
+	// With the flag on, dashboard default permissions are set via the App Platform path, so skip the
+	// legacy SQL path here. Folders keep their own handling.
+	if !dash.IsFolder && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+		return
+	}
+
 	if !dr.cfg.RBAC.PermissionsOnCreation(resource) {
 		return
 	}
@@ -1834,6 +1840,18 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 		return nil, err
 	}
 	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
+
+	// Request default permissions for new root dashboards via the App Platform path; the dashboard
+	// API server's permission setter acts on this annotation. Root-only (nested inherit from the
+	// parent), dashboards only (folders have their own setter), and ignored on update, so it's safe
+	// before the create-or-update below.
+	if !cmd.IsFolder && cmd.FolderUID == "" && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return nil, err
+		}
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
+	}
 
 	out, err := dr.k8sclient.Update(ctx, obj, orgID, v1.UpdateOptions{
 		FieldValidation: v1.FieldValidationIgnore,

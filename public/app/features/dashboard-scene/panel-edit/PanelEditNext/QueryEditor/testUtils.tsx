@@ -297,8 +297,8 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   const defaultUiState: QueryEditorUIState = {
     selectedQuery,
     selectedTransformation,
-    selectedQueryRefIds: selectedQuery ? [selectedQuery.refId] : [],
-    selectedTransformationIds: selectedTransformation ? [selectedTransformation.transformId] : [],
+    selectedQueryRefIds: [],
+    selectedTransformationIds: [],
     multiSelectMode: false,
     setSelectedQuery: jest.fn(),
     setSelectedTransformation: jest.fn(),

@@ -551,6 +551,11 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		}
 	}
 
+	// Access to search is required when checking quotas.
+	if opts.OverridesService != nil && s.search == nil && opts.SearchClient == nil {
+		return nil, fmt.Errorf("overrides service requires search for quota checking")
+	}
+
 	return s, nil
 }
 
@@ -1949,15 +1954,21 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 		return nil, err
 	}
 
-	if s.search == nil {
-		// If the backend implements "GetStats", we can use it
-		srv, ok := s.backend.(StatsGetter)
-		if ok {
-			return srv.GetStats(ctx, req)
-		}
-		return nil, fmt.Errorf("search index not configured")
+	if s.search != nil {
+		return s.search.GetStats(ctx, req)
 	}
-	return s.search.GetStats(ctx, req)
+
+	if s.searchClient != nil {
+		return s.searchClient.GetStats(ctx, req)
+	}
+
+	// TODO: remove this fallback once the SQL backend is phased out; it's not implemented
+	// in the KV backend.
+	if srv, ok := s.backend.(StatsGetter); ok {
+		return srv.GetStats(ctx, req)
+	}
+
+	return nil, fmt.Errorf("search index not configured")
 }
 
 // requireUserNamespace is a cross-tenant safety net for delegated-only
@@ -2089,21 +2100,24 @@ func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRe
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 	}
-	usage, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	statsRsp, err := s.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		Namespace: nsr.Namespace,
+		Kinds:     []string{nsr.GroupResource()},
+	})
 	if err != nil {
 		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
+	}
+	if statsRsp.Error != nil {
+		return &resourcepb.QuotaUsageResponse{Error: statsRsp.Error}, nil
 	}
 	limit, err := s.overridesService.GetQuota(ctx, nsr)
 	if err != nil {
 		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
 	}
 
-	// handle case where no resources exist yet - very unlikely but possible
 	rsp := &resourcepb.QuotaUsageResponse{Limit: int64(limit.Limit)}
-	if len(usage) <= 0 {
-		rsp.Usage = 0
-	} else {
-		rsp.Usage = usage[0].Count
+	if len(statsRsp.Stats) > 0 {
+		rsp.Usage = statsRsp.Stats[0].Count
 	}
 
 	return rsp, nil
@@ -2263,11 +2277,19 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 		return nil
 	}
 
-	stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	statsRsp, err := s.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		Namespace: nsr.Namespace,
+		Kinds:     []string{nsr.GroupResource()},
+	})
 	if err != nil {
 		s.log.FromContext(ctx).Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
 		return nil
 	}
+	if statsRsp.Error != nil {
+		s.log.FromContext(ctx).Error("call to GetStats returned error", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", statsRsp.Error.Message)
+		return nil
+	}
+	stats := statsRsp.Stats
 	if len(stats) > 0 {
 		s.log.FromContext(ctx).Debug("stats found", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "count", stats[0].Count)
 	} else {
