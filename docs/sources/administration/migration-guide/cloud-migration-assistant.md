@@ -175,7 +175,7 @@ When you create a snapshot, the migration assistant makes a copy of all the reso
 
 Resources saved in the snapshot are strictly limited to the resources stored within an organization. This is important to note if there are multiple organizations used in your Grafana instance. If you want to migrate multiple organizations, refer to [Migrate multiple organizations](#migrate-multiple-organizations) for more information and guidance.
 
-Upload time depends primarily on the volume of data you're migrating. The process is optimized for speed and typically takes seconds to minutes rather than hours. In production migrations, the tool has demonstrated 100% success rates with data sets as large as 4,000 objects.
+Upload time depends primarily on the volume of data you're migrating. The process is optimized for speed and typically takes seconds to minutes rather than hours. In production migrations, the tool has demonstrated 100% success rates with datasets as large as 4,000 objects.
 
 Most migration operations run asynchronously, so you aren't blocked while a migration is pending and you can perform other tasks on your self-managed instance.
 
