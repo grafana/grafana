@@ -132,7 +132,7 @@ jobs:
       - name: Checkout Grafana target branch #checkout the target branch to base the release branch on
         uses: actions/checkout@v5
         with:
-          token: ${{ steps.get-writer-app-token.outputs.token }} # used only for fetching; commits go via planetscale API
+          token: ${{ steps.get-writer-app-token.outputs.token }} # used only for fetching; commits go via kminehart API
           ref: ${{ env.RELEASE_BRANCH }}
           fetch-tags: true
           fetch-depth: 0
@@ -156,7 +156,7 @@ jobs:
           go-version-file: .grafana-main/go.mod
           cache: false
 
-      # planetscale/ghcommit-action commits to an existing remote branch; it doesn't
+      # kminehart/ghcommit-action commits to an existing remote branch; it doesn't
       # create the branch itself. Pre-create the ref at the release branch's HEAD via
       # the Git Data API so subsequent commits have a target.
       - name: Pre-create branch on remote
@@ -213,7 +213,7 @@ jobs:
       - name: "Prettify CHANGELOG.md"
         if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
         run: npx prettier --write CHANGELOG.md
-      # All commits go through planetscale/ghcommit-action, which uses the Git Data API.
+      # All commits go through kminehart/ghcommit-action, which uses the Git Data API.
       # Two reasons we have to do this rather than a normal git push:
       #   1. Commits made via the Git Data API with a GitHub App installation token are
       #      automatically signed by GitHub under the App's identity (grafana-writer[bot]),
@@ -224,7 +224,7 @@ jobs:
       #      scan; the API path piggybacks on the same authorization.
       - name: Commit CHANGELOG.md
         if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
-        uses: planetscale/ghcommit-action@57a6c787385af407a557374c794a09273aaebfd7
+        uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
         with:
           commit_message: "Update changelog"
           repo: ${{ github.repository }}
@@ -247,7 +247,7 @@ jobs:
           yarn prettier:write
       - name: Commit version bumps
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
-        uses: planetscale/ghcommit-action@57a6c787385af407a557374c794a09273aaebfd7
+        uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
         with:
           commit_message: "Update version to ${{ env.VERSION }}"
           repo: ${{ github.repository }}
@@ -263,7 +263,7 @@ jobs:
         run: yarn install
       - name: Commit yarn.lock
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
-        uses: planetscale/ghcommit-action@57a6c787385af407a557374c794a09273aaebfd7
+        uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
         with:
           commit_message: "Update yarn.lock for ${{ env.VERSION }}"
           repo: ${{ github.repository }}
@@ -278,7 +278,7 @@ jobs:
         run: make gen-cue
       - name: Commit gen-cue changes
         if: ${{ !contains(inputs.version, '+security') }}
-        uses: planetscale/ghcommit-action@57a6c787385af407a557374c794a09273aaebfd7
+        uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
         with:
           commit_message: "Regenerate CUE schemas for ${{ env.VERSION }}"
           repo: ${{ github.repository }}
