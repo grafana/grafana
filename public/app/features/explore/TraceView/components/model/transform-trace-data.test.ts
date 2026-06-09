@@ -283,9 +283,7 @@ describe('transformTraceData() pruned span detection', () => {
     const first = transformTraceData(structuredClone(summaryDefaultsOnly))!;
     const second = transformTraceData(structuredClone(summaryDefaultsOnly))!;
 
-    expect(spanById(second, 'summ00000000a101').aggregation).toEqual(
-      spanById(first, 'summ00000000a101').aggregation
-    );
+    expect(spanById(second, 'summ00000000a101').aggregation).toEqual(spanById(first, 'summ00000000a101').aggregation);
     expect(JSON.stringify(summaryDefaultsOnly)).toBe(before);
   });
 });
