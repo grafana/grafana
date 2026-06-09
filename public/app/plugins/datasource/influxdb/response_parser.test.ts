@@ -224,6 +224,41 @@ describe('influxdb response parser', () => {
         expect(size(result)).toBe(1);
         expect(result[0].text).toBe('time');
       });
+
+      it('should include the field type in the value property', () => {
+        expect(result[0].value).toBe('float');
+      });
+    });
+
+    describe('response from 1.0 with multiple fields', () => {
+      const response = {
+        results: [
+          {
+            series: [
+              {
+                name: 'cpu',
+                columns: ['fieldKey', 'fieldType'],
+                values: [
+                  ['fieldstring', 'string'],
+                  ['fieldint', 'integer'],
+                  ['fieldfloat', 'float'],
+                  ['fieldbool', 'boolean'],
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      const result = parser.parse(query, response);
+
+      it('should return all fields with their types', () => {
+        expect(size(result)).toBe(4);
+        expect(result[0]).toEqual({ text: 'fieldstring', value: 'string' });
+        expect(result[1]).toEqual({ text: 'fieldint', value: 'integer' });
+        expect(result[2]).toEqual({ text: 'fieldfloat', value: 'float' });
+        expect(result[3]).toEqual({ text: 'fieldbool', value: 'boolean' });
+      });
     });
   });
 

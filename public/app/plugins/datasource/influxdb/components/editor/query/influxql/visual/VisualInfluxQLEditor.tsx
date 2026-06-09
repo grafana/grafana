@@ -9,6 +9,7 @@ import {
   getAllMeasurements,
   getAllPolicies,
   getFieldKeys,
+  getFieldKeysWithTypes,
   getTagKeys,
   getTagValues,
 } from '../../../../../influxql_metadata_query';
@@ -59,6 +60,23 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
 
     return new Set([...tagKeys, ...fieldKeys]);
   }, [measurement, policy, datasource]);
+
+  // Build a map from "fieldName::field" to its InfluxDB data type (string, integer, float, boolean).
+  const fieldTypeMap = useMemo(async () => {
+    const fieldKeysWithTypes = await getFieldKeysWithTypes(datasource, measurement || '', policy);
+    return new Map(fieldKeysWithTypes.map(({ name, type }) => [`${name}::field`, type]));
+  }, [measurement, policy, datasource]);
+
+  // Returns the InfluxDB data type for a ::field key, or undefined for ::tag keys.
+  const getTagKeyDataType = useMemo(
+    () => async (key: string): Promise<string | undefined> => {
+      if (!key.endsWith('::field')) {
+        return undefined;
+      }
+      return (await fieldTypeMap).get(key);
+    },
+    [fieldTypeMap]
+  );
 
   const selectLists = useMemo(() => {
     const dynamicSelectPartOptions = new Map([
@@ -132,6 +150,7 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
           tags={query.tags ?? []}
           onChange={handleTagsSectionChange}
           getTagKeyOptions={getMemoizedTagKeys}
+          getTagKeyDataType={getTagKeyDataType}
           getTagValueOptions={(key) =>
             withTemplateVariableOptions(
               allTagKeys.then((keys) => getTagValues(datasource, filterTags(query.tags ?? [], keys), key, measurement)),

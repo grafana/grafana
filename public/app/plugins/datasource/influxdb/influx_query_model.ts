@@ -142,7 +142,7 @@ export default class InfluxQueryModel {
     this.updatePersistedParts();
   }
 
-  private isOperatorTypeHandler(operator: string, value: string, fieldName: string) {
+  private isOperatorTypeHandler(operator: string, value: string, fieldName: string, dataType?: string) {
     let textValue;
     if (operator === 'Is Not') {
       operator = '!=';
@@ -153,6 +153,22 @@ export default class InfluxQueryModel {
     // Tags should always quote
     if (fieldName.endsWith('::tag')) {
       textValue = "'" + removeRegexWrapper(value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'")) + "'";
+      return {
+        operator: operator,
+        value: textValue,
+      };
+    }
+
+    // If the field type is known, use it to decide quoting.
+    if (dataType !== undefined) {
+      if (dataType === 'string') {
+        textValue = "'" + removeRegexWrapper(value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'")) + "'";
+      } else if (dataType === 'boolean') {
+        textValue = value.toLowerCase();
+      } else {
+        // integer or float: no quoting
+        textValue = value;
+      }
       return {
         operator: operator,
         value: textValue,
@@ -202,11 +218,19 @@ export default class InfluxQueryModel {
       }
       value = removeRegexWrapper(value);
       if (operator.startsWith('Is')) {
-        let r = this.isOperatorTypeHandler(operator, value, tag.key);
+        let r = this.isOperatorTypeHandler(operator, value, tag.key, tag.dataType);
         operator = r.operator;
         value = r.value;
       } else if ((!operator.startsWith('>') && !operator.startsWith('<')) || operator === '<>') {
-        value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
+        // For ::field keys with a known non-string dataType, skip quoting.
+        if (tag.key.endsWith('::field') && tag.dataType && tag.dataType !== 'string') {
+          if (tag.dataType === 'boolean') {
+            value = value.toLowerCase();
+          }
+          // integer / float: leave value as-is (unquoted)
+        } else {
+          value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
+        }
       }
     } else if (interpolate) {
       value = this.templateSrv.replace(value, this.scopedVars, 'regex');

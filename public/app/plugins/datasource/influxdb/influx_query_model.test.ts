@@ -395,6 +395,110 @@ describe('InfluxQuery', () => {
     });
   });
 
+  describe('field type-aware WHERE clause quoting', () => {
+    it('should quote value for string ::field with = operator', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'myfield::field', operator: '=', value: '10', dataType: 'string' }],
+        },
+        templateSrv,
+        {}
+      );
+      expect(query.render()).toBe(
+        "SELECT mean(\"value\") FROM \"autogen\".\"cpu\" WHERE (\"myfield\"::field = '10') AND $timeFilter"
+      );
+    });
+
+    it('should not quote value for integer ::field with = operator', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'myfield::field', operator: '=', value: '10', dataType: 'integer' }],
+        },
+        templateSrv,
+        {}
+      );
+      expect(query.render()).toBe(
+        'SELECT mean("value") FROM "autogen"."cpu" WHERE ("myfield"::field = 10) AND $timeFilter'
+      );
+    });
+
+    it('should not quote value for float ::field with != operator', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'myfield::field', operator: '!=', value: '3.14', dataType: 'float' }],
+        },
+        templateSrv,
+        {}
+      );
+      expect(query.render()).toBe(
+        'SELECT mean("value") FROM "autogen"."cpu" WHERE ("myfield"::field != 3.14) AND $timeFilter'
+      );
+    });
+
+    it('should lowercase and not quote value for boolean ::field with = operator', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'myfield::field', operator: '=', value: 'True', dataType: 'boolean' }],
+        },
+        templateSrv,
+        {}
+      );
+      expect(query.render()).toBe(
+        'SELECT mean("value") FROM "autogen"."cpu" WHERE ("myfield"::field = true) AND $timeFilter'
+      );
+    });
+
+    it('should quote string ::field value with Is operator even when value looks numeric', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'myfield::field', operator: 'Is', value: '10', dataType: 'string' }],
+        },
+        templateSrv,
+        {}
+      );
+      expect(query.render()).toBe(
+        "SELECT mean(\"value\") FROM \"autogen\".\"cpu\" WHERE (\"myfield\"::field = '10') AND $timeFilter"
+      );
+    });
+
+    it('should not quote integer ::field value with Is Not operator', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'myfield::field', operator: 'Is Not', value: '10', dataType: 'integer' }],
+        },
+        templateSrv,
+        {}
+      );
+      expect(query.render()).toBe(
+        'SELECT mean("value") FROM "autogen"."cpu" WHERE ("myfield"::field != 10) AND $timeFilter'
+      );
+    });
+  });
+
   describe('series with groupByTag', () => {
     it('should generate correct query', () => {
       const query = new InfluxQueryModel(
