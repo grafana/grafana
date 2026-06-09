@@ -1,0 +1,514 @@
+<!doctype html>
+<!--
+  THROWAWAY PROTOTYPE - Tier 2 (timeline semantics) for span-pruning summary spans.
+  See ./NOTES.md for the question this answers and how to run it.
+  Not production code: no build step, React via CDN, data hardcoded from the
+  feat/1029 fixtures (public/.../model/pruned-spans.fixture.ts). Delete when the
+  design decision is folded into SpanBar.tsx / SpanBarRow.tsx / SpanDetail.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TraceView Tier 2 prototype - summary span timeline</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+    <style>
+      :root {
+        /* Approximation of Grafana dark theme tokens (not exact). */
+        --bg: #111217;
+        --bg2: #181b1f;
+        --bg3: #22252b;
+        --border: #2c3235;
+        --text: #ccccdc;
+        --text-weak: #8e8e8e;
+        --text-faint: #6e6e6e;
+        --blue: #3d71d9;
+        --green: #6ccf8e;
+        --orange: #ff9830;
+        --red: #f2495c;
+        --purple: #b877d9;
+        --summary: #ffb357; /* summary spans read as "amber / aggregate" */
+        --outlier: #f2495c;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        font-size: 13px;
+      }
+      .app { max-width: 1180px; margin: 0 auto; padding: 16px 20px 120px; }
+      h1 { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
+      .sub { color: var(--text-weak); margin: 0 0 16px; font-size: 12px; }
+
+      /* ---- controls bar ---- */
+      .controls {
+        display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+        background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+        padding: 10px 12px; margin-bottom: 14px;
+      }
+      .controls .group { display: flex; gap: 6px; align-items: center; }
+      .controls label { color: var(--text-weak); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+      select, button {
+        background: var(--bg3); color: var(--text); border: 1px solid var(--border);
+        border-radius: 4px; padding: 5px 9px; font-size: 12px; cursor: pointer;
+      }
+      button:hover, select:hover { border-color: #555; }
+      .toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+      .toggle button { border: none; border-radius: 0; background: var(--bg3); }
+      .toggle button.on { background: var(--blue); color: #fff; }
+      .spacer { flex: 1; }
+      .legend { display: flex; gap: 14px; font-size: 11px; color: var(--text-weak); align-items: center; }
+      .legend .sw { display: inline-block; width: 22px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+
+      /* ---- timeline ---- */
+      .viewer { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+      .colhead { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); font-size: 11px; color: var(--text-weak); }
+      .colhead .name-col { padding: 6px 10px; }
+      .colhead .view-col { position: relative; padding: 6px 10px; }
+      .name-col { width: 38%; flex: 0 0 38%; border-right: 1px solid var(--border); }
+      .view-col { width: 62%; flex: 0 0 62%; position: relative; }
+
+      .row { display: flex; border-bottom: 1px solid rgba(255,255,255,0.04); height: 34px; }
+      .row:hover { background: rgba(255,255,255,0.03); }
+      .row.selected { background: rgba(61,113,217,0.14); }
+      .row.linked { background: rgba(242,73,92,0.10); box-shadow: inset 3px 0 0 var(--outlier); }
+      .row.summary-row.selected { background: rgba(255,179,87,0.12); box-shadow: inset 3px 0 0 var(--summary); }
+
+      .name-cell {
+        display: flex; align-items: center; gap: 4px; padding: 0 8px; width: 38%; flex: 0 0 38%;
+        white-space: nowrap; overflow: hidden; cursor: pointer; border-right: 1px solid var(--border);
+      }
+      .indent { display: inline-block; }
+      .twisty { color: var(--text-faint); width: 12px; text-align: center; }
+      .svc { font-weight: 600; margin-right: 4px; }
+      .op { color: var(--text-weak); }
+      .dur-label { color: var(--text-faint); margin-left: 6px; font-variant-numeric: tabular-nums; }
+      .name-badges { margin-left: auto; display: flex; gap: 4px; padding-left: 8px; }
+      .zoom-btn { opacity: 0; border: none; background: transparent; color: var(--text-weak); padding: 2px 4px; }
+      .row:hover .zoom-btn { opacity: 1; }
+      .zoom-btn:hover { color: #fff; }
+
+      .badge { font-size: 10px; padding: 1px 6px; border-radius: 9px; font-weight: 600; line-height: 1.5; }
+      .badge.count { background: var(--summary); color: #2b1a00; }
+      .badge.outlier { background: rgba(242,73,92,0.18); color: var(--outlier); border: 1px solid var(--outlier); }
+      .badge.summary { background: rgba(255,179,87,0.18); color: var(--summary); border: 1px solid var(--summary); }
+
+      /* view cell + bars */
+      .view-cell { width: 62%; flex: 0 0 62%; position: relative; cursor: pointer; }
+      .ticks { position: absolute; inset: 0; pointer-events: none; }
+      .tick { position: absolute; top: 0; bottom: 0; border-left: 1px dashed rgba(255,255,255,0.05); }
+      .bar { position: absolute; top: 30%; height: 40%; border-radius: 3px; min-width: 2px; }
+      .bar-label { position: absolute; font-size: 11px; color: var(--text-weak); white-space: nowrap; line-height: 1; top: 50%; transform: translateY(-50%); padding: 0 6px; }
+
+      /* summary span: window container + nested min/median/max range bands */
+      .summary-window {
+        position: absolute; top: 22%; height: 56%; border-radius: 3px;
+        border: 1px dashed var(--summary);
+        background: repeating-linear-gradient(45deg, rgba(255,179,87,0.06), rgba(255,179,87,0.06) 4px, transparent 4px, transparent 8px);
+      }
+      .band { position: absolute; top: 0; bottom: 0; border-radius: 3px 0 0 3px; }
+      .band.max { background: rgba(255,179,87,0.22); }
+      .band.median { background: rgba(255,179,87,0.45); }
+      .band.min { background: rgba(255,179,87,0.85); }
+      .band-tick { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--summary); }
+      .count-chip {
+        position: absolute; top: 50%; transform: translate(-50%,-50%); z-index: 3;
+        background: var(--summary); color: #2b1a00; font-weight: 700; font-size: 10px;
+        border-radius: 9px; padding: 1px 6px; box-shadow: 0 0 0 2px var(--bg);
+      }
+      .outlier-bar { position: absolute; top: 30%; height: 40%; border-radius: 3px; border: 1.5px solid var(--outlier); background: rgba(242,73,92,0.25); }
+
+      /* tooltip */
+      .tip {
+        position: fixed; z-index: 50; background: #000; color: var(--text); border: 1px solid var(--border);
+        border-radius: 6px; padding: 10px 12px; max-width: 320px; font-size: 12px; pointer-events: none;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      }
+      .tip h4 { margin: 0 0 6px; font-size: 12px; color: var(--summary); }
+      .tip table { border-collapse: collapse; width: 100%; }
+      .tip td { padding: 1px 0; }
+      .tip td:last-child { text-align: right; font-variant-numeric: tabular-nums; padding-left: 14px; }
+      .tip .note { margin-top: 7px; color: var(--text-weak); font-size: 11px; line-height: 1.4; border-top: 1px solid var(--border); padding-top: 6px; }
+
+      /* detail panel */
+      .detail { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 12px 16px; }
+      .detail h3 { margin: 0 0 8px; font-size: 13px; }
+      .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 12px; }
+      .stat { background: var(--bg3); border: 1px solid var(--border); border-radius: 5px; padding: 8px; }
+      .stat .k { color: var(--text-weak); font-size: 10px; text-transform: uppercase; letter-spacing: .04em; }
+      .stat .v { font-size: 16px; font-weight: 600; margin-top: 3px; font-variant-numeric: tabular-nums; }
+      .detail .winrow { color: var(--text-weak); font-size: 12px; margin-bottom: 10px; }
+      .detail .winrow b { color: var(--summary); }
+      .outlier-list { list-style: none; padding: 0; margin: 0; }
+      .outlier-list li { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid var(--border); }
+      .link { color: var(--blue); cursor: pointer; text-decoration: underline; }
+      .raw-toggle { color: var(--text-weak); cursor: pointer; font-size: 11px; text-decoration: underline; margin-top: 8px; display: inline-block; }
+      .raw { font-family: monospace; font-size: 11px; color: var(--text-weak); margin-top: 6px; white-space: pre-wrap; }
+      .callout { background: rgba(61,113,217,0.10); border: 1px solid var(--blue); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--text); margin-bottom: 12px; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel" data-presets="react">
+      const { useState, useRef } = React;
+
+      // units: span start/duration in MICROSECONDS; aggregation.*_ns in NANOSECONDS
+      const msFromUs = (us) => us / 1000;
+      const msFromNs = (ns) => ns / 1e6;
+      const fmtMs = (ms) => (ms >= 1000 ? (ms / 1000).toFixed(2) + 's' : ms.toFixed(ms < 10 ? 1 : 0) + 'ms');
+      const fmtMsFromUs = (us) => fmtMs(msFromUs(us));
+      const fmtMsFromNs = (ns) => fmtMs(msFromNs(ns));
+
+      // Transformed-shape data lifted from pruned-spans.fixture.ts (feat/1029).
+      // Each span: {id, parentId, svc, op, kind, startUs, durUs, agg?}
+      // agg mirrors the SpanAggregation type extracted by transformTraceData().
+      const TRACES = {
+        mixed: {
+          label: 'Mixed trace (normal + summary + outlier)',
+          rootDurUs: 120_000, // tightened from fixture's 1.65s so the demo is legible
+          spans: [
+            { id: 'root', parentId: null, svc: 'loki-query-engine', op: 'HTTP GET /query_range', kind: 'server', startUs: 0, durUs: 120_000 },
+            { id: 'auth', parentId: 'root', svc: 'loki-query-engine', op: 'auth.check', kind: 'client', startUs: 2_000, durUs: 3_000 },
+            { id: 'cache', parentId: 'root', svc: 'loki-query-engine', op: 'cache.get', kind: 'client', startUs: 6_000, durUs: 1_500 },
+            { id: 'summ', parentId: 'root', svc: 'loki-query-engine', op: 'SELECT', kind: 'client', startUs: 10_000, durUs: 80_000,
+              agg: { isSummary: true, spanCount: 5, durationMinNs: 5_000_000, durationMaxNs: 60_000_000, durationAvgNs: 22_000_000, durationMedianNs: 18_000_000,
+                     preservedOutlierIds: ['outl'], diverse: null } },
+            { id: 'outl', parentId: 'root', svc: 'loki-query-engine', op: 'SELECT', kind: 'client', startUs: 15_000, durUs: 60_000,
+              agg: { isPreservedOutlier: true, summarySpanId: 'summ' } },
+          ],
+        },
+        preserved: {
+          label: 'Summary with 2 preserved outliers',
+          rootDurUs: 120_000,
+          spans: [
+            { id: 'root', parentId: null, svc: 'loki-query-engine', op: 'HTTP GET /query_range', kind: 'server', startUs: 0, durUs: 120_000 },
+            { id: 'summ', parentId: 'root', svc: 'loki-query-engine', op: 'SELECT', kind: 'client', startUs: 10_000, durUs: 80_000,
+              agg: { isSummary: true, spanCount: 8, durationMinNs: 4_000_000, durationMaxNs: 75_000_000, durationAvgNs: 21_000_000, durationMedianNs: 12_000_000,
+                     preservedOutlierIds: ['outl1', 'outl2'], diverse: null } },
+            { id: 'outl1', parentId: 'root', svc: 'loki-query-engine', op: 'SELECT', kind: 'client', startUs: 12_000, durUs: 60_000,
+              agg: { isPreservedOutlier: true, summarySpanId: 'summ' } },
+            { id: 'outl2', parentId: 'root', svc: 'loki-query-engine', op: 'SELECT', kind: 'client', startUs: 20_000, durUs: 75_000,
+              agg: { isPreservedOutlier: true, summarySpanId: 'summ' } },
+          ],
+        },
+        ops: {
+          label: 'Real ops capture (Kafka publish, count 5)',
+          rootDurUs: 1_000_000,
+          spans: [
+            { id: 'root', parentId: null, svc: 'sampler-gateway', op: 'HTTP POST - collect', kind: 'server', startUs: 0, durUs: 1_000_000 },
+            { id: 'summ', parentId: 'root', svc: 'sampler-gateway', op: 'sampler-ingest publish', kind: 'producer', startUs: 590_830, durUs: 215_629,
+              agg: { isSummary: true, spanCount: 5, durationMinNs: 164_304_113, durationMaxNs: 215_615_080, durationAvgNs: 195_028_772, durationMedianNs: 215_118_016,
+                     preservedOutlierIds: [], diverse: 'messaging.kafka.destination.partition(4)' } },
+          ],
+        },
+      };
+
+      const SVC_COLOR = '#5794f2';
+
+      function ViewerHeader({ numTicks, traceDurUs }) {
+        const ticks = [];
+        for (let i = 0; i <= numTicks; i++) {
+          const pct = (i / numTicks) * 100;
+          ticks.push(
+            <span key={i} style={{ position: 'absolute', left: pct + '%', transform: i === numTicks ? 'translateX(-100%)' : 'none' }}>
+              {fmtMsFromUs((traceDurUs * i) / numTicks)}
+            </span>
+          );
+        }
+        return (
+          <div className="colhead">
+            <div className="name-col">Service &amp; Operation</div>
+            <div className="view-col" style={{ height: 26 }}>{ticks}</div>
+          </div>
+        );
+      }
+
+      function Ticks({ numTicks }) {
+        const t = [];
+        for (let i = 1; i < numTicks; i++) t.push(<div key={i} className="tick" style={{ left: (i / numTicks) * 100 + '%' }} />);
+        return <div className="ticks">{t}</div>;
+      }
+
+      // Tier 2 summary bar: dashed window container + left-anchored nested min/median/max
+      // range bands (scaled to the same timeline), so the user sees N ops of these
+      // magnitudes packed into a wall-clock window longer than any single op.
+      function SummaryBar({ span, view, pruningAware, onTip, offTip }) {
+        const startPct = view.toPct(span.startUs);
+        const endPct = view.toPct(span.startUs + span.durUs);
+        const widthPct = endPct - startPct;
+
+        if (!pruningAware) {
+          // Status quo: one solid bar labelled with the full window duration. Misleading.
+          return (
+            <React.Fragment>
+              <div className="bar" style={{ left: startPct + '%', width: widthPct + '%', background: SVC_COLOR }} />
+              <div className="bar-label" style={{ left: endPct + '%' }}>{fmtMsFromUs(span.durUs)}</div>
+            </React.Fragment>
+          );
+        }
+
+        const a = span.agg;
+        // band widths: duration magnitudes scaled to the timeline (ns -> us -> pct of window)
+        const maxPct = view.spanPct(msFromNs(a.durationMaxNs) * 1000);
+        const medPct = view.spanPct(msFromNs(a.durationMedianNs) * 1000);
+        const minPct = view.spanPct(msFromNs(a.durationMinNs) * 1000);
+
+        const tip = (
+          <div>
+            <h4>Summary of {a.spanCount} spans</h4>
+            <table>
+              <tbody>
+                <tr><td>Spans collapsed</td><td>{a.spanCount}</td></tr>
+                <tr><td>min</td><td>{fmtMsFromNs(a.durationMinNs)}</td></tr>
+                <tr><td>median</td><td>{fmtMsFromNs(a.durationMedianNs)}</td></tr>
+                <tr><td>avg</td><td>{fmtMsFromNs(a.durationAvgNs)}</td></tr>
+                <tr><td>max</td><td>{fmtMsFromNs(a.durationMaxNs)}</td></tr>
+                <tr><td>window (wall-clock)</td><td>{fmtMsFromUs(span.durUs)}</td></tr>
+              </tbody>
+            </table>
+            <div className="note">
+              The bar is a <b>time window</b> ({fmtMsFromUs(span.durUs)}), not one operation.
+              {' '}{a.spanCount} similar spans ran inside it; each lasted between {fmtMsFromNs(a.durationMinNs)} and {fmtMsFromNs(a.durationMaxNs)}.
+            </div>
+          </div>
+        );
+
+        return (
+          <div onMouseMove={(e) => onTip(e, tip)} onMouseLeave={offTip} style={{ position: 'absolute', inset: 0 }}>
+            <div className="summary-window" style={{ left: startPct + '%', width: widthPct + '%' }}>
+              <div className="band max" style={{ width: (maxPct / widthPct) * 100 + '%' }} />
+              <div className="band median" style={{ width: (medPct / widthPct) * 100 + '%' }} />
+              <div className="band min" style={{ width: (minPct / widthPct) * 100 + '%' }} />
+              <div className="band-tick" style={{ left: (medPct / widthPct) * 100 + '%' }} title="median" />
+            </div>
+            <div className="count-chip" style={{ left: startPct + '%' }}>x{a.spanCount}</div>
+            <div className="bar-label" style={{ left: endPct + '%' }}>
+              {fmtMsFromNs(a.durationMinNs)} | {fmtMsFromNs(a.durationMedianNs)} | {fmtMsFromNs(a.durationMaxNs)}
+            </div>
+          </div>
+        );
+      }
+
+      function SpanRow({ span, view, depth, state, dispatch, pruningAware, onTip, offTip }) {
+        const isSummary = span.agg?.isSummary;
+        const isOutlier = span.agg?.isPreservedOutlier;
+        const selected = state.selectedId === span.id;
+        const sel = state.selectedSpan;
+        const linked =
+          sel &&
+          ((sel.agg?.isSummary && sel.agg.preservedOutlierIds?.includes(span.id)) ||
+            (sel.agg?.isPreservedOutlier && sel.agg.summarySpanId === span.id));
+
+        const startPct = view.toPct(span.startUs);
+        const widthPct = view.toPct(span.startUs + span.durUs) - startPct;
+
+        const rowClass = ['row', selected && 'selected', linked && !selected && 'linked', isSummary && 'summary-row']
+          .filter(Boolean)
+          .join(' ');
+
+        return (
+          <div className={rowClass}>
+            <div className="name-cell" style={{ paddingLeft: 8 + depth * 16 }} onClick={() => dispatch({ type: 'select', id: span.id })}>
+              <span className="twisty">{span.id === 'root' ? '▾' : ''}</span>
+              <span className="svc" style={{ color: SVC_COLOR }}>{span.svc}</span>
+              <span className="op">{span.op}</span>
+              <span className="dur-label">{fmtMsFromUs(span.durUs)}</span>
+              <span className="name-badges">
+                {pruningAware && isSummary && <span className="badge count">{span.agg.spanCount} spans</span>}
+                {pruningAware && isOutlier && <span className="badge outlier">outlier</span>}
+                <button className="zoom-btn" title="Zoom timeline to this span" onClick={(e) => { e.stopPropagation(); dispatch({ type: 'zoom', span }); }}>{'⌖'}</button>
+              </span>
+            </div>
+            <div className="view-cell" onClick={() => dispatch({ type: 'select', id: span.id })}>
+              <Ticks numTicks={5} />
+              {isSummary ? (
+                <SummaryBar span={span} view={view} pruningAware={pruningAware} onTip={onTip} offTip={offTip} />
+              ) : isOutlier && pruningAware ? (
+                <React.Fragment>
+                  <div className="outlier-bar" style={{ left: startPct + '%', width: widthPct + '%' }} />
+                  <div className="bar-label" style={{ left: startPct + widthPct + '%' }}>{fmtMsFromUs(span.durUs)} . preserved outlier</div>
+                </React.Fragment>
+              ) : (
+                <React.Fragment>
+                  <div className="bar" style={{ left: startPct + '%', width: widthPct + '%', background: SVC_COLOR }} />
+                  <div className="bar-label" style={{ left: startPct + widthPct + '%' }}>{fmtMsFromUs(span.durUs)}</div>
+                </React.Fragment>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      function DetailPanel({ span, allSpans, dispatch, pruningAware }) {
+        const [showRaw, setShowRaw] = useState(false);
+        const a = span.agg;
+        if (!a?.isSummary || !pruningAware) {
+          return (
+            <div className="detail">
+              <h3>{span.svc} :: {span.op}</h3>
+              <div className="winrow">Duration {fmtMsFromUs(span.durUs)}{a?.isPreservedOutlier ? ' . preserved outlier (a real span kept out of its summary)' : ''}</div>
+              {a?.isPreservedOutlier && (
+                <div className="callout">
+                  This span was preserved as an outlier from summary{' '}
+                  <span className="link" onClick={() => dispatch({ type: 'select', id: a.summarySpanId })}>{a.summarySpanId}</span>. Select it to see the group.
+                </div>
+              )}
+            </div>
+          );
+        }
+        const stats = [
+          ['count', String(a.spanCount)],
+          ['min', fmtMsFromNs(a.durationMinNs)],
+          ['median', fmtMsFromNs(a.durationMedianNs)],
+          ['avg', fmtMsFromNs(a.durationAvgNs)],
+          ['max', fmtMsFromNs(a.durationMaxNs)],
+        ];
+        const outliers = (a.preservedOutlierIds || []).map((id) => allSpans.find((s) => s.id === id)).filter(Boolean);
+        return (
+          <div className="detail">
+            <h3>{span.svc} :: {span.op} <span className="badge count" style={{ marginLeft: 6 }}>{a.spanCount} spans</span></h3>
+            <div className="callout">
+              Pruned summary: {a.spanCount} similar spans were collapsed into one. The waterfall bar spans{' '}
+              <b>{fmtMsFromUs(span.durUs)}</b> of wall-clock, but no single operation took that long
+              {' '}(longest was {fmtMsFromNs(a.durationMaxNs)}).
+            </div>
+            <div className="stat-grid">
+              {stats.map(([k, v]) => (
+                <div className="stat" key={k}><div className="k">{k}</div><div className="v">{v}</div></div>
+              ))}
+            </div>
+            {a.diverse && <div className="winrow">Diverse attributes: <b>{a.diverse}</b></div>}
+            {outliers.length > 0 && (
+              <div>
+                <div className="winrow">Preserved outliers ({outliers.length}) - real spans kept out of the summary:</div>
+                <ul className="outlier-list">
+                  {outliers.map((o) => (
+                    <li key={o.id}>
+                      <span className="badge outlier">outlier</span>
+                      <span>{o.svc} :: {o.op}</span>
+                      <span className="dur-label">{fmtMsFromUs(o.durUs)}</span>
+                      <span className="link" onClick={() => dispatch({ type: 'select', id: o.id })}>view span</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <span className="raw-toggle" onClick={() => setShowRaw((v) => !v)}>{showRaw ? 'Hide' : 'Show'} raw aggregation.* tags (status quo)</span>
+            {showRaw && (
+              <div className="raw">{[
+                'aggregation.is_summary = true',
+                'aggregation.span_count = ' + a.spanCount,
+                'aggregation.duration_min_ns = ' + a.durationMinNs,
+                'aggregation.duration_median_ns = ' + a.durationMedianNs,
+                'aggregation.duration_avg_ns = ' + a.durationAvgNs,
+                'aggregation.duration_max_ns = ' + a.durationMaxNs,
+              ].join('\n')}</div>
+            )}
+          </div>
+        );
+      }
+
+      function App() {
+        const [traceKey, setTraceKey] = useState('mixed');
+        const [pruningAware, setPruningAware] = useState(true);
+        const [selectedId, setSelectedId] = useState(null);
+        const [zoom, setZoom] = useState(null); // {startUs, durUs} or null = full trace
+        const [tip, setTipState] = useState(null);
+        const tipRef = useRef(null);
+
+        const trace = TRACES[traceKey];
+        const spans = trace.spans;
+        const selectedSpan = spans.find((s) => s.id === selectedId) || null;
+
+        const winStart = zoom ? zoom.startUs : 0;
+        const winDur = zoom ? zoom.durUs : trace.rootDurUs;
+        const view = {
+          toPct: (us) => ((us - winStart) / winDur) * 100,
+          spanPct: (us) => (us / winDur) * 100, // a duration magnitude as % of window
+        };
+
+        const dispatch = (action) => {
+          switch (action.type) {
+            case 'select': setSelectedId((cur) => (cur === action.id ? null : action.id)); break;
+            case 'zoom': setZoom({ startUs: action.span.startUs, durUs: action.span.durUs }); break;
+            default: break;
+          }
+        };
+
+        const onTip = (e, content) => setTipState({ x: e.clientX, y: e.clientY, content });
+        const offTip = () => setTipState(null);
+
+        const summaryCount = spans.filter((s) => s.agg?.isSummary).length;
+
+        return (
+          <div className="app">
+            <h1>TraceView - Tier 2 summary span timeline</h1>
+            <p className="sub">Throwaway prototype. One design variant; the focus is interaction. Data from the feat/1029 fixtures.</p>
+
+            <div className="controls">
+              <div className="group">
+                <label>Trace</label>
+                <select value={traceKey} onChange={(e) => { setTraceKey(e.target.value); setSelectedId(null); setZoom(null); }}>
+                  {Object.entries(TRACES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                </select>
+              </div>
+              <div className="group">
+                <label>Rendering</label>
+                <div className="toggle">
+                  <button className={!pruningAware ? 'on' : ''} onClick={() => setPruningAware(false)}>Status quo</button>
+                  <button className={pruningAware ? 'on' : ''} onClick={() => setPruningAware(true)}>Pruning-aware (Tier 2)</button>
+                </div>
+              </div>
+              {zoom && <button onClick={() => setZoom(null)}>Reset zoom</button>}
+              <div className="spacer" />
+              <div className="legend">
+                <span><span className="sw" style={{ background: SVC_COLOR }} />normal</span>
+                <span><span className="sw" style={{ background: 'rgba(255,179,87,0.6)', border: '1px dashed var(--summary)' }} />summary window</span>
+                <span><span className="sw" style={{ background: 'rgba(242,73,92,0.25)', border: '1.5px solid var(--outlier)' }} />outlier</span>
+              </div>
+            </div>
+
+            {!pruningAware && summaryCount > 0 && (
+              <div className="callout" style={{ marginBottom: 12 }}>
+                Status quo: the summary {summaryCount === 1 ? 'span renders as a normal solid bar' : 'spans render as normal solid bars'} labelled with the
+                full window duration; it looks like one long operation. Flip to <b>Pruning-aware</b> to see the Tier 2 treatment.
+              </div>
+            )}
+
+            <div className="viewer">
+              <ViewerHeader numTicks={5} traceDurUs={winDur} />
+              {spans.map((span) => {
+                const depth = span.parentId == null ? 0 : 1;
+                const rows = [
+                  <SpanRow key={span.id} span={span} view={view} depth={depth} state={{ selectedId, selectedSpan }}
+                           dispatch={dispatch} pruningAware={pruningAware} onTip={onTip} offTip={offTip} />,
+                ];
+                if (selectedId === span.id) {
+                  rows.push(<DetailPanel key={span.id + '-d'} span={span} allSpans={spans} dispatch={dispatch} pruningAware={pruningAware} />);
+                }
+                return rows;
+              })}
+            </div>
+
+            <p className="sub" style={{ marginTop: 14 }}>
+              Try: hover a summary bar, click a row to expand, click the crosshair on the summary to zoom the timeline to its window,
+              select a summary to highlight its preserved-outlier siblings (red), then select an outlier to jump back.
+            </p>
+
+            {tip && (
+              <div ref={tipRef} className="tip" style={{ left: Math.min(tip.x + 14, window.innerWidth - 340), top: tip.y + 14 }}>
+                {tip.content}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+  </body>
+</html>
