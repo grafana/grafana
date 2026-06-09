@@ -120,6 +120,7 @@ describe('RulesTable RBAC', () => {
       await user.click(await ui.actionButtons.more.find());
 
       expect(ui.moreActionItems.delete.query()).not.toBeInTheDocument();
+      await user.keyboard('{Escape}');
     });
 
     it('Should render Edit button for users with the update permission', async () => {
@@ -152,7 +153,7 @@ describe('RulesTable RBAC', () => {
       render(<RulesTable rules={[grafanaRule]} />);
 
       await user.click(await ui.actionButtons.more.find());
-      expect(ui.moreActionItems.delete.get()).toBeInTheDocument();
+      expect(await ui.moreActionItems.delete.find()).toBeInTheDocument();
     });
 
     describe('rules in creating/deleting states', () => {
@@ -247,6 +248,7 @@ describe('RulesTable RBAC', () => {
 
       await user.click(await ui.actionButtons.more.find());
       expect(ui.moreActionItems.delete.query()).not.toBeInTheDocument();
+      await user.keyboard('{Escape}');
     });
 
     it('Should render Edit button for users with the update permission', async () => {
