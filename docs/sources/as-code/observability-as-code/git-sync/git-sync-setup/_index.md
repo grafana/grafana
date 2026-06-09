@@ -213,15 +213,29 @@ Click **Choose additional settings** for the final configuration steps.
 
 ## Choose additional settings
 
-In this last step, you can configure the **Sync interval (seconds)** to indicate how often you want your Grafana instance to pull updates from GitHub. The default value is 300 seconds in Grafana Cloud, and 60 seconds in Grafana OSS/Enterprise.
+In this last step, you can configure additional options for Git Sync. When you're done, click **Finish** to complete the setup.
+
+### Sync interval
+
+Use the **Sync interval (seconds)** setting to indicate how often you want your Grafana instance to automatically pull updates from the folder managed with Git Sync. The default value is 300 seconds in Grafana Cloud, and 60 seconds in Grafana OSS/Enterprise.
+
+### Other optional settings
 
 You can also select these optional settings:
 
 - Check **Read only** to ensure resources can't be modified in Grafana.
 - Check **Enable pull request option when saving** to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.
 - Check **Enable push to configured branch** to allow direct commits to the configured branch.
+- Check **Generate dashboards previews** to create preview links for pull requests. This option requires using image rendering and activating public access.
+- Enter a **Webhook URL** to override the auto-detected URL to register webhooks.
 
-Select **Finish** to complete the setup.
+### Advanced branch options
+
+TBC
+
+### Advanced commit options
+
+Use this option to enforce verified commits to use Git Sync. GPG, SSH, and S/MIME keys are supported.
 
 ## Verify your dashboards in Grafana
 
