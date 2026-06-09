@@ -1332,25 +1332,6 @@
         },
         "description": "GoneError is returned when the requested endpoint was removed."
       },
-      "helpFlagResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "helpFlags1": {
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "importDashboardResponse": {
         "content": {
           "application/json": {
@@ -23833,58 +23814,6 @@
         },
         "summary": "Update user email.",
         "tags": ["user"]
-      }
-    },
-    "/user/helpflags/clear": {
-      "get": {
-        "operationId": "clearHelpFlags",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/helpFlagResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Clear user help flag.",
-        "tags": ["signed_in_user"]
-      }
-    },
-    "/user/helpflags/{flag_id}": {
-      "put": {
-        "operationId": "setHelpFlag",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "flag_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/helpFlagResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Set user help flag.",
-        "tags": ["signed_in_user"]
       }
     },
     "/user/orgs": {

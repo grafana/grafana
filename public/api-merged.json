@@ -10115,60 +10115,6 @@
         }
       }
     },
-    "/user/helpflags/clear": {
-      "get": {
-        "tags": [
-          "signed_in_user"
-        ],
-        "summary": "Clear user help flag.",
-        "operationId": "clearHelpFlags",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/helpFlagResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/user/helpflags/{flag_id}": {
-      "put": {
-        "tags": [
-          "signed_in_user"
-        ],
-        "summary": "Set user help flag.",
-        "operationId": "setHelpFlag",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "flag_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/helpFlagResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/user/orgs": {
       "get": {
         "security": [
@@ -24981,21 +24927,6 @@
       "description": "GoneError is returned when the requested endpoint was removed.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
-      }
-    },
-    "helpFlagResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "object",
-        "properties": {
-          "helpFlags1": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
       }
     },
     "importDashboardResponse": {
