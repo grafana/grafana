@@ -269,6 +269,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		watchBufferSize:         opts.WatchBufferSize,
 		storageMetrics:          opts.storageMetrics,
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
+		analyzeBulkRowThreshold: analyzeResourceHistoryRowThreshold,
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 		migrationParquetBuffer:  opts.MigrationParquetBuffer,
 		tmpDir:                  opts.TmpDir,
@@ -308,6 +309,10 @@ type backend struct {
 	db         db.DB
 	dialect    sqltemplate.Dialect
 	bulkLock   *bulkLock
+
+	// analyzeBulkRowThreshold is the number of rows bulk-loaded into resource_history
+	// above which ANALYZE runs before the backfill. Overridable in tests.
+	analyzeBulkRowThreshold int
 
 	// -- Storage Services
 
