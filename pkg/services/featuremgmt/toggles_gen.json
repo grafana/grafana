@@ -4180,7 +4180,8 @@
       "metadata": {
         "name": "queryEditorNextMultiSelect",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-09T16:30:59Z"
       },
       "spec": {
         "description": "Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor",
