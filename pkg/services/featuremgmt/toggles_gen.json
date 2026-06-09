@@ -1295,7 +1295,8 @@
       "metadata": {
         "name": "colorblindThemes",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-08T15:15:15Z"
       },
       "spec": {
         "description": "Enables the new colorblind-friendly themes",
@@ -4065,6 +4066,20 @@
     },
     {
       "metadata": {
+        "name": "provisioning.gitConventions",
+        "resourceVersion": "1780985056992",
+        "creationTimestamp": "2026-06-09T06:04:16Z"
+      },
+      "spec": {
+        "description": "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "provisioning.readmes",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -4103,6 +4118,21 @@
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "provisioningGitConventions",
+        "resourceVersion": "1780931162256",
+        "creationTimestamp": "2026-06-08T15:06:02Z",
+        "deletionTimestamp": "2026-06-09T06:04:16Z"
+      },
+      "spec": {
+        "description": "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
       }
     },
     {

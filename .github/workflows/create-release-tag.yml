@@ -28,14 +28,17 @@ jobs:
       group: create-release-tag-${{ inputs.tag }}
       cancel-in-progress: false
     steps:
-      # The default GITHUB_TOKEN can't create tag refs that would trigger other
-      # workflows (e.g. publish-technical-documentation-release.yml on push:tags),
-      # so use an app token that isn't subject to that restriction.
+      # grafana/grafana is large enough that GitHub's pre-receive workflow-file scan
+      # exceeds its server-side timeout on any ref creation here. The push/API call is
+      # then rejected with "workflows scope may be required" regardless of whether
+      # workflow files were actually touched. workflows:write tells GitHub to skip the
+      # scan. grafana-writer is the only app installed with that scope on grafana/grafana;
+      # no bot lacking it can create refs (branches or tags) in this repo.
       - name: Get GitHub App token
         id: get-github-app-token
         uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          github_app: grafana-pr-automation
+          github_app: grafana-writer
       - name: Create annotated tag
         env:
           TAG: ${{ inputs.tag }}

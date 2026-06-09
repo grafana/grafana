@@ -318,19 +318,15 @@ func TestKVRemoteIndexStore_ListIndexKeys_SkipsNonULID(t *testing.T) {
 	assert.Equal(t, []ulid.ULID{indexKey}, keys)
 }
 
-// TestKVRemoteIndexStore_ListingSemantics pins down the divergent semantics
-// of the two listing paths:
+// TestKVRemoteIndexStore_ListingSemantics pins down the semantics of the
+// listing paths against a namespace that holds both a complete snapshot
+// and a separate incomplete upload, plus a second namespace whose only
+// snapshot is incomplete.
 //
-//   - ListIndexKeys reads the manifest section and returns ONLY complete
-//     snapshots (deliberate divergence from the bucket store's "may include
-//     incomplete" contract).
-//   - ListNamespaces / ListNamespaceResources read the data section and
-//     return ALL namespaces / resources that have any snapshot data
-//     (complete or incomplete), so the cleanup pass can still reach
-//     namespaces whose only snapshots are partial uploads.
-//
-// Two scenarios cover the cases that matter: a namespace with both kinds
-// of snapshots, and a namespace with only incomplete uploads.
+// ListIndexKeysIncludingIncomplete, ListNamespaces, and ListNamespaceResources
+// all need to surface incomplete uploads — they're the only way the
+// cleanup pass can reach orphaned data after a crashed upload.
+// ListIndexKeys itself stays on the cheap manifest-only path.
 func TestKVRemoteIndexStore_ListingSemantics(t *testing.T) {
 	store := newTestKVRemoteIndexStore(t)
 	ctx := t.Context()
@@ -339,14 +335,16 @@ func TestKVRemoteIndexStore_ListingSemantics(t *testing.T) {
 	completeKey, err := UploadIndexSnapshot(ctx, store, nsMixed, createTestBleveIndex(t),
 		IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 1}, testLogger)
 	require.NoError(t, err)
-	seedIncompleteSnapshot(t, store, nsMixed, ulid.Make())
+	incompleteMixedKey := ulid.Make()
+	seedIncompleteSnapshot(t, store, nsMixed, incompleteMixedKey)
 
 	nsOrphansOnly := resource.NamespacedResource{
 		Namespace: "orphans-only",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
-	seedIncompleteSnapshot(t, store, nsOrphansOnly, ulid.Make())
+	incompleteOrphanKey := ulid.Make()
+	seedIncompleteSnapshot(t, store, nsOrphansOnly, incompleteOrphanKey)
 
 	t.Run("ListIndexKeys returns only complete snapshots", func(t *testing.T) {
 		keys, err := store.ListIndexKeys(ctx, nsMixed)
@@ -355,7 +353,17 @@ func TestKVRemoteIndexStore_ListingSemantics(t *testing.T) {
 
 		keys, err = store.ListIndexKeys(ctx, nsOrphansOnly)
 		require.NoError(t, err)
-		assert.Empty(t, keys, "a namespace with only incomplete uploads must not surface any ULIDs")
+		assert.Empty(t, keys)
+	})
+
+	t.Run("ListIndexKeysIncludingIncomplete returns both complete and incomplete snapshots", func(t *testing.T) {
+		keys, err := store.ListIndexKeysIncludingIncomplete(ctx, nsMixed)
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []ulid.ULID{completeKey, incompleteMixedKey}, keys)
+
+		keys, err = store.ListIndexKeysIncludingIncomplete(ctx, nsOrphansOnly)
+		require.NoError(t, err)
+		assert.Equal(t, []ulid.ULID{incompleteOrphanKey}, keys)
 	})
 
 	t.Run("ListNamespaces returns namespaces with complete or incomplete snapshots", func(t *testing.T) {
@@ -376,25 +384,68 @@ func TestKVRemoteIndexStore_ListingSemantics(t *testing.T) {
 	})
 }
 
-// TestKVRemoteIndexStore_CleanupIncompleteIndexSnapshots_KnownBroken
-// documents a known limitation of the KV backend:
-// CleanupIncompleteIndexSnapshots cannot detect incomplete uploads because
-// ListIndexKeys only lists the manifest section. Once incomplete-upload
-// detection moves into the backend, this test should be replaced with a
-// real cleanup test.
-func TestKVRemoteIndexStore_CleanupIncompleteIndexSnapshots_KnownBroken(t *testing.T) {
+// TestKVRemoteIndexStore_CleanupIncompleteIndexSnapshots covers the end-to-end
+// path that was previously broken: an interrupted upload (data files
+// without a manifest) is detected by the cleanup helper and its data is
+// removed.
+func TestKVRemoteIndexStore_CleanupIncompleteIndexSnapshots(t *testing.T) {
 	store := newTestKVRemoteIndexStore(t)
 	ns := newTestNsResource()
+	ctx := t.Context()
 
 	incompleteKey := ulid.Make()
-	planted := seedIncompleteSnapshot(t, store, ns, incompleteKey)
+	seedIncompleteSnapshot(t, store, ns, incompleteKey)
 
-	cleaned, err := CleanupIncompleteIndexSnapshots(t.Context(), store, ns, time.Now(), testLogger)
+	cleaned, err := CleanupIncompleteIndexSnapshots(ctx, store, ns, time.Now(), testLogger)
 	require.NoError(t, err)
-	assert.Equal(t, 0, cleaned, "incomplete uploads are not currently detected on the KV backend")
+	assert.Equal(t, 1, cleaned)
+	assertNoDataKeys(t, store, ns, incompleteKey)
 
-	leftover := collectDataKeys(t, store, ns, incompleteKey)
-	assert.Len(t, leftover, len(planted), "orphaned data files remain on the KV backend; cleanup of incomplete uploads is not yet implemented here")
+	keys, err := store.ListIndexKeys(ctx, ns)
+	require.NoError(t, err)
+	assert.Empty(t, keys)
+}
+
+// TestKVRemoteIndexStore_CleanupIncompleteIndexSnapshots_SpareUploadedSnapshots
+// makes sure the helper does not touch complete snapshots while sweeping
+// incomplete ones under the same resource.
+func TestKVRemoteIndexStore_CleanupIncompleteIndexSnapshots_SpareUploadedSnapshots(t *testing.T) {
+	store := newTestKVRemoteIndexStore(t)
+	ns := newTestNsResource()
+	ctx := t.Context()
+
+	completeKey, err := UploadIndexSnapshot(ctx, store, ns, createTestBleveIndex(t),
+		IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 1}, testLogger)
+	require.NoError(t, err)
+	incompleteKey := ulid.Make()
+	seedIncompleteSnapshot(t, store, ns, incompleteKey)
+
+	cleaned, err := CleanupIncompleteIndexSnapshots(ctx, store, ns, time.Now(), testLogger)
+	require.NoError(t, err)
+	assert.Equal(t, 1, cleaned)
+	assertNoDataKeys(t, store, ns, incompleteKey)
+
+	keys, err := store.ListIndexKeys(ctx, ns)
+	require.NoError(t, err)
+	assert.Equal(t, []ulid.ULID{completeKey}, keys)
+}
+
+// TestKVRemoteIndexStore_CleanupIncompleteIndexSnapshots_SkipsRecent verifies
+// that an incomplete upload younger than the olderThan cutoff is left alone,
+// so live uploads aren't killed mid-flight.
+func TestKVRemoteIndexStore_CleanupIncompleteIndexSnapshots_SkipsRecent(t *testing.T) {
+	store := newTestKVRemoteIndexStore(t)
+	ns := newTestNsResource()
+	ctx := t.Context()
+
+	recentKey := ulid.Make()
+	seedIncompleteSnapshot(t, store, ns, recentKey)
+
+	// Cutoff in the past — the recent ULID is after it and should be skipped.
+	cleaned, err := CleanupIncompleteIndexSnapshots(ctx, store, ns, time.Now().Add(-time.Hour), testLogger)
+	require.NoError(t, err)
+	assert.Equal(t, 0, cleaned)
+	assert.NotEmpty(t, collectDataKeys(t, store, ns, recentKey))
 }
 
 // --- Locking ---
