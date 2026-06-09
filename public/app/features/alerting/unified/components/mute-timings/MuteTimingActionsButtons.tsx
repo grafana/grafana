@@ -4,7 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Badge, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
 import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
 
-import { isAvailable, isGranted } from '../../hooks/abilities/abilityUtils';
+import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
 import { useTimeIntervalAbility } from '../../hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { TimeIntervalAction } from '../../hooks/abilities/types';
 import { isLoading } from '../../hooks/useAsync';
@@ -58,9 +58,9 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
         {!isGrafanaDataSource && isDisabled(muteTiming) && (
           <Badge text={t('alerting.mute-timing-actions-buttons.text-disabled', 'Disabled')} color="orange" />
         )}
-        {isAvailable(updateAbility) && viewOrEditButton}
+        {isSupported(updateAbility) && viewOrEditButton}
 
-        {isAvailable(exportAbility) && (
+        {isSupported(exportAbility) && (
           <LinkButton
             icon="download-alt"
             variant="secondary"

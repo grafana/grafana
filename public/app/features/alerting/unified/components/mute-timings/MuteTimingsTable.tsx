@@ -10,7 +10,7 @@ import {
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
-import { isAvailable, isGranted } from '../../hooks/abilities/abilityUtils';
+import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
 import { useTimeIntervalAbility } from '../../hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { TimeIntervalAction } from '../../hooks/abilities/types';
 import { makeAMLink } from '../../utils/misc';
@@ -86,7 +86,7 @@ export const TimeIntervalsTable = () => {
             <Trans i18nKey="alerting.time-interval.add-time-interval">New time interval</Trans>
           </LinkButton>
         )}
-        {isAvailable(exportAbility) && (
+        {isSupported(exportAbility) && (
           <>
             <Button
               icon="download-alt"
