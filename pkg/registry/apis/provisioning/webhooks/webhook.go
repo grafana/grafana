@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"golang.org/x/time/rate"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -51,6 +52,8 @@ type webhookConnector struct {
 	// replayCache is the process-wide webhook replay cache, shared across every
 	// provider repository the connector dispatches for.
 	replayCache *replayCache
+	timeout     time.Duration
+	rateLimiter *ipRateLimiter
 }
 
 func NewWebhookConnector(
@@ -58,8 +61,20 @@ func NewWebhookConnector(
 	core webhookCore,
 	renderer pullrequest.ScreenshotRenderer,
 	registry prometheus.Registerer,
+	trustedProxyDepth int,
+	rateLimitRPS int,
 ) *webhookConnector {
 	metrics := registerWebhookMetrics(registry)
+
+	// A non-positive rps disables rate limiting: the limiter is left nil and
+	// Connect skips wrapping. This is the default so an upgrade never starts
+	// throttling traffic until a deployment explicitly configures a rate (and,
+	// where it sits behind a proxy, the trusted-proxy depth to key on).
+	var rateLimiter *ipRateLimiter
+	if rateLimitRPS > 0 {
+		rateLimiter = newIPRateLimiter(rate.Limit(rateLimitRPS), rateLimitRPS*2, trustedProxyDepth)
+	}
+
 	return &webhookConnector{
 		webhooksEnabled: webhooksEnabled,
 		core:            core,
@@ -67,6 +82,7 @@ func NewWebhookConnector(
 		registry:        registry,
 		metrics:         metrics,
 		replayCache:     newReplayCache(defaultReplayCacheTTL),
+		rateLimiter:     rateLimiter,
 	}
 }
 
@@ -123,8 +139,8 @@ func (s *webhookConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 }
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, span := tracing.Start(ctx, "provisioning.webhook.handle")
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, span := tracing.Start(r.Context(), "provisioning.webhook.handle")
 		defer span.End()
 
 		namespace := request.NamespaceValue(ctx)
@@ -221,7 +237,14 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		}
 
 		responder.Object(rsp.Code, rsp)
-	}), nil
+	})
+
+	var h http.Handler = handler
+	if s.rateLimiter != nil {
+		h = s.rateLimiter.wrap(h)
+	}
+
+	return h, nil
 }
 
 type webhookResult struct {

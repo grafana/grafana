@@ -204,6 +204,8 @@ type Cfg struct {
 	ProvisioningHistoryExpiration             time.Duration // HistoricJob retention and historic-job informer resync; default 10m; <=0 = default
 	ProvisioningJobPollInterval               time.Duration // job driver poll interval (fallback to the live job-create notification); default 30s; <=0 = default
 	ProvisioningPublicRootURL                 string        // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
+	ProvisioningWebhookTrustedProxyDepth      int           // number of trusted reverse-proxy hops in front of the webhook endpoint; 0 ignores X-Forwarded-For and rate-limits on the real TCP peer
+	ProvisioningWebhookRateLimitRPS           int           // sustained requests per second allowed per client by the webhook rate limiter; <= 0 disables rate limiting
 	DataPath                                  string
 	LogsPath                                  string
 	EnterpriseLicensePath                     string
@@ -2584,6 +2586,8 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningHistoryExpiration = iniFile.Section("provisioning").Key("history_expiration").MustDuration(ProvisioningHistoryExpirationDefault)
 	cfg.ProvisioningJobPollInterval = iniFile.Section("provisioning").Key("job_poll_interval").MustDuration(ProvisioningJobPollIntervalDefault)
 	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
+	cfg.ProvisioningWebhookTrustedProxyDepth = iniFile.Section("provisioning").Key("webhook_trusted_proxy_depth").MustInt(0)
+	cfg.ProvisioningWebhookRateLimitRPS = iniFile.Section("provisioning").Key("webhook_rate_limit_rps").MustInt(0)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")
