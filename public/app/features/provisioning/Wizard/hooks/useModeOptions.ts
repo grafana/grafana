@@ -52,7 +52,7 @@ function resolveDisabledReason(option: ModeOption, context: DisableContext) {
     );
   }
 
-  if (['instance', 'folder', 'folderless].includes(option.target)) {
+  if (!['instance', 'folder', 'folderless'].includes(option.target)) {
     return t('provisioning.mode-options.disabled.not-supported', 'This option is not supported yet.');
   }
 

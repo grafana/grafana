@@ -376,7 +376,7 @@ describe('BootstrapStep', () => {
         enabledOptions: [
           {
             target: 'folderless',
-            label: 'Sync to top level (no folder)',
+            label: 'Sync external storage directly at root level without a containing folder',
             description: 'Resources are provisioned at the top level without a wrapper folder',
             subtitle: 'Use this option to sync external resources to the top level',
             disabled: false,
@@ -395,7 +395,9 @@ describe('BootstrapStep', () => {
         },
       });
 
-      expect(await screen.findByText('Sync to top level (no folder)')).toBeInTheDocument();
+      expect(
+        await screen.findByText('Sync external storage directly at root level without a containing folder')
+      ).toBeInTheDocument();
     });
   });
 
@@ -413,7 +415,7 @@ describe('BootstrapStep', () => {
         enabledOptions: [
           {
             target: 'folderless',
-            label: 'Sync to top level (no folder)',
+            label: 'Sync external storage directly at root level without a containing folder',
             description: 'Resources are provisioned at the top level without a wrapper folder',
             subtitle: 'Use this option to sync external resources to the top level',
             disabled: false,
@@ -432,7 +434,9 @@ describe('BootstrapStep', () => {
         },
       });
 
-      const folderlessOption = await screen.findByText('Sync to top level (no folder)');
+      const folderlessOption = await screen.findByText(
+        'Sync external storage directly at root level without a containing folder'
+      );
       await user.click(folderlessOption);
 
       expect(screen.queryByRole('textbox', { name: /display name/i })).not.toBeInTheDocument();
