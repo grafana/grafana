@@ -22,12 +22,12 @@ func (a *AppInstaller) startCleanup(parentCtx context.Context, lifecycleMgr Life
 		a.logger.Info("Starting annotation cleanup loop", "interval", cleanupInterval, "retention", retentionTTL)
 
 		// Run immediately on startup
-		a.runCleanup(ctx, lifecycleMgr)
+		a.runCleanup(ctx, lifecycleMgr, retentionTTL)
 
 		for {
 			select {
 			case <-ticker.C:
-				a.runCleanup(ctx, lifecycleMgr)
+				a.runCleanup(ctx, lifecycleMgr, retentionTTL)
 			case <-ctx.Done():
 				a.logger.Info("Stopping annotation cleanup loop")
 				return
@@ -37,7 +37,7 @@ func (a *AppInstaller) startCleanup(parentCtx context.Context, lifecycleMgr Life
 }
 
 // runCleanup executes the cleanup operation with a timeout
-func (a *AppInstaller) runCleanup(ctx context.Context, lifecycleMgr LifecycleManager) {
+func (a *AppInstaller) runCleanup(ctx context.Context, lifecycleMgr LifecycleManager, retentionTTL time.Duration) {
 	// Set a 5-minute timeout for the cleanup
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
@@ -45,8 +45,9 @@ func (a *AppInstaller) runCleanup(ctx context.Context, lifecycleMgr LifecycleMan
 	ctx, span := a.tracer.Start(ctx, "annotation.cleanup")
 	defer span.End()
 
+	before := time.Now().UTC().Add(-retentionTTL)
 	start := time.Now()
-	deleted, err := lifecycleMgr.Cleanup(ctx)
+	deleted, err := lifecycleMgr.Cleanup(ctx, before)
 	dur := time.Since(start)
 
 	if err != nil {

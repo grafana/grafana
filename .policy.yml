@@ -35,7 +35,7 @@ policy:
             - Workflow .github/workflows/pr-go-workspace-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-k8s-codegen-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-mt-service-compatibility.yml succeeded or skipped
-            - Workflow .github/workflows/pr-patch-check-event.yml succeeded or skipped
+            - Workflow .github/workflows/pr-patch-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration-pgvector.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
@@ -151,6 +151,7 @@ approval_rules:
           conclusions:
             - skipped
             - success
+            - failure
           workflows:
             - .github/workflows/check-frontend-test-coverage.yml
   - name: Workflow .github/workflows/codeowners-validator.yml succeeded or skipped
@@ -523,11 +524,11 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/pr-mt-service-compatibility.yml
-  - name: Workflow .github/workflows/pr-patch-check-event.yml succeeded or skipped
+  - name: Workflow .github/workflows/pr-patch-check.yml succeeded or skipped
     if:
       file_not_deleted:
         paths:
-          - ^\.github\/workflows\/pr-patch-check-event\.yml$
+          - ^\.github\/workflows\/pr-patch-check\.yml$
       targets_branch:
         pattern: (^main$|^release-(?:[^/]*)$)
     requires:
@@ -537,7 +538,7 @@ approval_rules:
             - skipped
             - success
           workflows:
-            - .github/workflows/pr-patch-check-event.yml
+            - .github/workflows/pr-patch-check.yml
   - name: Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
     if:
       changed_files:

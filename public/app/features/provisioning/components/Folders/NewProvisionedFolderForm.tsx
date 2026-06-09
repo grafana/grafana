@@ -17,6 +17,7 @@ import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFo
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -153,6 +154,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
         resourceKind: 'folder',
         resourceID: '',
         title,
+        ...getCurrentCommitUser(),
       }),
       body: folderModel,
     });

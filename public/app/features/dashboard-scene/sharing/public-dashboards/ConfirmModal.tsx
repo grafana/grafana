@@ -13,7 +13,6 @@ export class ConfirmModal extends SceneObjectBase<ConfirmModalState> implements 
       confirmVariant: 'destructive',
       dismissText: 'Cancel',
       dismissVariant: 'secondary',
-      confirmButtonVariant: 'destructive',
       ...state,
     });
   }

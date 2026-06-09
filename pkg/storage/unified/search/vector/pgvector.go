@@ -9,12 +9,17 @@ import (
 	"time"
 
 	pgvector "github.com/pgvector/pgvector-go"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/vector")
 
 var _ VectorBackend = (*pgvectorBackend)(nil)
 
@@ -86,10 +91,24 @@ func validateResource(resource string) error {
 	return nil
 }
 
-func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) error {
+func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) (retErr error) {
 	if len(vectors) == 0 {
 		return nil
 	}
+
+	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.Upsert")
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
+	}()
+	span.SetAttributes(
+		attribute.Int("vector_count", len(vectors)),
+		attribute.String("resource", vectors[0].Resource),
+		attribute.String("namespace", vectors[0].Namespace),
+	)
 
 	for i := range vectors {
 		if err := vectors[i].Validate(); err != nil {
@@ -102,10 +121,25 @@ func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) error {
 	})
 }
 
-func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, vectors []Vector) error {
+func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, vectors []Vector) (retErr error) {
 	if len(vectors) == 0 {
 		return nil
 	}
+
+	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.UpsertReplaceSubresources")
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
+	}()
+	span.SetAttributes(
+		attribute.Int("vector_count", len(vectors)),
+		attribute.String("resource", vectors[0].Resource),
+		attribute.String("namespace", vectors[0].Namespace),
+	)
+
 	for i := range vectors {
 		if err := vectors[i].Validate(); err != nil {
 			return fmt.Errorf("vector[%d]: %w", i, err)
@@ -288,7 +322,23 @@ func (b *pgvectorBackend) Exists(ctx context.Context, namespace, model, resource
 }
 
 func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource string,
-	embedding []float32, limit int, filters ...SearchFilter) ([]VectorSearchResult, error) {
+	embedding []float32, limit int, filters ...SearchFilter) (results []VectorSearchResult, retErr error) {
+	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.Search")
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
+	}()
+	span.SetAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("model", model),
+		attribute.String("resource", resource),
+		attribute.Int("limit", limit),
+		attribute.Int("filter_count", len(filters)),
+	)
+
 	if err := validateResource(resource); err != nil {
 		return nil, err
 	}
@@ -326,7 +376,7 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 		return nil, err
 	}
 
-	results := make([]VectorSearchResult, len(rows))
+	results = make([]VectorSearchResult, len(rows))
 	for i, row := range rows {
 		results[i] = VectorSearchResult{
 			UID:         row.UID,

@@ -68,7 +68,7 @@ const Body = memo<DatePickerProps>(({ value, minDate, maxDate, onChange }) => {
 
 Body.displayName = 'Body';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     modal: css({
       zIndex: theme.zIndex.modal,

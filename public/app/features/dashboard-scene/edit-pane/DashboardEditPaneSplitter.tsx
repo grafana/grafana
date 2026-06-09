@@ -144,7 +144,8 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     hasOpenPane: Boolean(openPane),
     contentMargin: 1,
     position: 'right',
-    persistanceKey: isEditing ? 'dashboard' : 'dashboard-view',
+    persistenceKey: isEditing ? 'dashboard' : 'dashboard-view',
+    hiddenPersistenceKey: 'dashboard',
     defaultToDocked: isEditing ? true : false,
     onClosePane: () => editPane.closePane(),
     onGoBack: () => editPane.goBackToPrevious(),
@@ -197,7 +198,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
         {...sidebarContext.outerWrapperProps}
       >
         <div
-          className={styles.scrollContainer}
+          className={cx(styles.scrollContainer, sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar)}
           ref={onBodyRef}
           onPointerDown={onClearSelection}
           data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}

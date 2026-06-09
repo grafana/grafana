@@ -4,8 +4,14 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"time"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -13,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill")
 
 const backfillPageSize = 100
 
@@ -33,6 +41,9 @@ type Options struct {
 	Builders      []embed.Builder
 	// DashboardStats is optional; nil disables the views filter.
 	DashboardStats builders.DashboardStats
+	// Metrics is optional; when nil the backfiller runs without
+	// observability instrumentation (handy for unit tests).
+	Metrics *resource.VectorMetrics
 }
 
 type VectorBackfiller struct {
@@ -46,6 +57,7 @@ type VectorBackfiller struct {
 	sortedBuilders []embed.Builder
 	dashboardStats builders.DashboardStats
 	log            log.Logger
+	metrics        *resource.VectorMetrics
 }
 
 func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
@@ -88,6 +100,7 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 		sortedBuilders: sorted,
 		dashboardStats: opts.DashboardStats,
 		log:            log.New("backfill"),
+		metrics:        opts.Metrics,
 	}, nil
 }
 
@@ -265,31 +278,61 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 
 // processBackfillItem runs the per-resource pipeline: skip if RV>stopping_rv
 // or already embedded, else extract → embed → upsert.
-func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.BackfillJob, builder embed.Builder, iter resource.ListIterator) error {
-	rv := iter.ResourceVersion()
-	if rv > job.StoppingRV {
-		return nil
-	}
+func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.BackfillJob, builder embed.Builder, iter resource.ListIterator) (retErr error) {
+	ctx, span := tracer.Start(ctx, "unified.backfill.processBackfillItem")
+	defer span.End()
 
 	namespace := iter.Namespace()
 	name := iter.Name()
+	group := builder.Group()
+	res := builder.Resource()
+	span.SetAttributes(
+		attribute.String("group", group),
+		attribute.String("resource", res),
+		attribute.String("namespace", namespace),
+		attribute.String("uid", name),
+	)
+
+	start := time.Now()
+	statusLabel := "embedded"
+	defer func() {
+		if retErr != nil {
+			statusLabel = "error"
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		if b.metrics != nil {
+			metricutil.ObserveWithExemplar(ctx,
+				b.metrics.BackfillItemDuration.WithLabelValues(group, res, statusLabel),
+				time.Since(start).Seconds(),
+			)
+		}
+	}()
+
+	rv := iter.ResourceVersion()
+	if rv > job.StoppingRV {
+		statusLabel = "skipped_rv_past_stopping"
+		return nil
+	}
 
 	// if the embedding exists, then we don't need to backfill it
-	exists, err := b.vectorBackend.Exists(ctx, namespace, job.Model, builder.Resource(), name)
+	exists, err := b.vectorBackend.Exists(ctx, namespace, job.Model, res, name)
 	if err != nil {
 		return fmt.Errorf("exists check: %w", err)
 	}
 	if exists {
+		statusLabel = "skipped_already_embedded"
 		return nil
 	}
 
 	if b.shouldSkipForZeroViews(ctx, builder, namespace, name) {
+		statusLabel = "skipped_zero_views"
 		return nil
 	}
 
 	key := &resourcepb.ResourceKey{
-		Group:     builder.Group(),
-		Resource:  builder.Resource(),
+		Group:     group,
+		Resource:  res,
 		Namespace: namespace,
 		Name:      name,
 	}
@@ -302,10 +345,11 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		items = items[:resCap]
 	}
 	if len(items) == 0 {
+		statusLabel = "skipped_empty_extract"
 		return nil
 	}
 
-	vectors, err := b.batchEmbedder.Embed(ctx, namespace, builder.Resource(), rv, items)
+	vectors, err := b.batchEmbedder.Embed(ctx, namespace, res, rv, items)
 	if err != nil {
 		return fmt.Errorf("embed %s/%s: %w", namespace, name, err)
 	}

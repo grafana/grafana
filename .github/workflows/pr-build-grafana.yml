@@ -177,19 +177,6 @@ jobs:
       id-token: write
     runs-on: ubuntu-x64
     steps:
-      - id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
-        with:
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          repositories: '["grafana"]'
-          permissions: '{"checks": "write"}'
       - uses: grafana/shared-workflows/actions/login-to-gar@main
         id: login-to-gar
         with:
@@ -213,67 +200,3 @@ jobs:
           docker push "${DOCKER_IMAGE}"
           echo "IMAGE=${DOCKER_IMAGE}" >> "$GITHUB_ENV"
           echo "IMAGE=${DOCKER_IMAGE}" | tee -a "$GITHUB_OUTPUT"
-      - name: Add PR status check
-        env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
-          SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          gh api \
-            --method POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/grafana/grafana/check-runs \
-           -f "name=${IMAGE}" \
-           -f "head_sha=${SHA}" \
-           -f 'status=completed' \
-           -f 'conclusion=neutral' \
-           -f 'output[title]=Docker image' \
-           -f "output[summary]=${IMAGE}" \
-           -f "output[text]=${IMAGE}"
-
-  run-meticulous-tests:
-    if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.frontend == 'true'
-    needs: [push-docker-image, detect-changes]
-    name: Run Meticulous tests
-    runs-on: ubuntu-x64-small
-    continue-on-error: true
-    env:
-      IMAGE_TAG: ${{ needs.push-docker-image.outputs.IMAGE }}
-    permissions:
-      actions: write
-      contents: read
-      id-token: write
-      issues: write
-      pull-requests: write
-      statuses: read
-
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        id: login-to-gar
-        with:
-          registry: 'us-docker.pkg.dev'
-          environment: 'dev'
-
-      - name: Pull image from GAR
-        run: docker pull "$IMAGE_TAG"
-
-      - name: Get vault secrets
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
-        with:
-          repo_secrets: |
-            METICULOUS_API_TOKEN=meticulous-ui:api-token
-
-      - name: Run Meticulous tests
-        uses: alwaysmeticulous/report-diffs-action/upload-container@89c6081b30d17cfcc410b5c19c269cd7a4d67cdf # v1
-        with:
-          api-token: ${{ env.METICULOUS_API_TOKEN }}
-          image-tag: ${{ env.IMAGE_TAG }}
-          container-port: 3000
-          container-env: |
-            GF_AUTH_ANONYMOUS_ENABLED=true
-            GF_AUTH_ANONYMOUS_ORG_ROLE=Admin

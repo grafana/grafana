@@ -308,7 +308,7 @@ func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext
 
 	connections := make([]model.LibraryElementConnectionDTO, 0)
 	for _, dashboard := range dashboards {
-		if !c.HasRole(org.RoleAdmin) && dashboard.FolderUID != "" && dashboard.FolderUID != "general" {
+		if !c.HasRole(org.RoleAdmin) && !foldermodel.IsRootFolderUID(dashboard.FolderUID) {
 			if err := l.requireViewPermissionsOnFolderUID(c.Req.Context(), c.SignedInUser, dashboard.FolderUID); err != nil {
 				continue
 			}

@@ -20,3 +20,8 @@ export const DEFAULT_PER_PAGE_PAGINATION = 40;
 
 export const LS_VISUALIZATION_SELECT_TAB_KEY = 'VisualizationSelectPane.ListMode';
 export const MEGA_MENU_TOGGLE_ID = 'mega-menu-toggle';
+
+/**
+ * grafana-setupguide-app plugin ID, used in extension points to provide Cloud-only UI functionality.
+ */
+export const SETUPGUIDE_PLUGIN_ID = 'grafana-setupguide-app';

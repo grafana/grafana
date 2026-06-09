@@ -535,15 +535,22 @@ func (s *Service) validateBuiltinRole(ctx context.Context, builtinRole string) e
 	return nil
 }
 
-func (s *Service) declareFixedRoles() error {
-	scopeAll := s.options.GetScope("*")
+// FixedRoleRegistrations returns the templated reader/writer fixed-role
+// registrations derived from the given Options (fixed:{resource}.permissions:reader
+// and :writer). It is the single source of truth for how per-resource permission
+// management roles are generated, shared by the live service ([Service.declareFixedRoles])
+// and the GlobalRole seeder aggregation so the two cannot drift. Only the
+// role-identity fields of Options are read (Resource, APIGroup, K8sActionFormat,
+// ReaderRoleName, WriterRoleName, RoleGroup); the runtime closures are ignored.
+func FixedRoleRegistrations(o Options) []accesscontrol.RoleRegistration {
+	scopeAll := o.GetScope("*")
 	readerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        s.options.GetRoleName("reader"),
-			DisplayName: s.options.ReaderRoleName,
-			Group:       s.options.RoleGroup,
+			Name:        o.GetRoleName("reader"),
+			DisplayName: o.ReaderRoleName,
+			Group:       o.RoleGroup,
 			Permissions: []accesscontrol.Permission{
-				{Action: s.options.GetAction("read"), Scope: scopeAll},
+				{Action: o.GetAction("read"), Scope: scopeAll},
 			},
 		},
 		Grants: []string{string(org.RoleAdmin)},
@@ -551,17 +558,21 @@ func (s *Service) declareFixedRoles() error {
 
 	writerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        s.options.GetRoleName("writer"),
-			DisplayName: s.options.WriterRoleName,
-			Group:       s.options.RoleGroup,
+			Name:        o.GetRoleName("writer"),
+			DisplayName: o.WriterRoleName,
+			Group:       o.RoleGroup,
 			Permissions: accesscontrol.ConcatPermissions(readerRole.Role.Permissions, []accesscontrol.Permission{
-				{Action: s.options.GetAction("write"), Scope: scopeAll},
+				{Action: o.GetAction("write"), Scope: scopeAll},
 			}),
 		},
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	return s.service.DeclareFixedRoles(readerRole, writerRole)
+	return []accesscontrol.RoleRegistration{readerRole, writerRole}
+}
+
+func (s *Service) declareFixedRoles() error {
+	return s.service.DeclareFixedRoles(FixedRoleRegistrations(s.options)...)
 }
 
 type ActionSetService interface {
