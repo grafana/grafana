@@ -10,6 +10,7 @@ import {
 import type { RichHistoryQuery } from 'app/types/explore';
 
 import RichHistoryIndexedDBStorage from './RichHistoryIndexedDBStorage';
+import { RichHistoryServiceError } from './RichHistoryStorage';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -19,18 +20,6 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('./indexedDBMigration', () => ({
   migrateToIndexedDB: jest.fn().mockResolvedValue(undefined),
 }));
-
-// crypto.randomUUID may not be available in jsdom
-let uuidCounter = 0;
-if (typeof globalThis.crypto === 'undefined' || !globalThis.crypto.randomUUID) {
-  Object.defineProperty(globalThis, 'crypto', {
-    value: {
-      randomUUID: () => `uuid-${++uuidCounter}`,
-    },
-    writable: true,
-    configurable: true,
-  });
-}
 
 interface MockQuery extends DataQuery {
   query: string;
@@ -74,7 +63,6 @@ describe('RichHistoryIndexedDBStorage', () => {
   beforeEach(async () => {
     nowMs = new Date('2025-01-15T12:00:00Z').getTime();
     oldMs = new Date('2024-12-01T12:00:00Z').getTime();
-    uuidCounter = 0;
 
     dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(nowMs);
     (reportInteraction as jest.Mock).mockReset();
@@ -108,6 +96,19 @@ describe('RichHistoryIndexedDBStorage', () => {
       });
     });
 
+    it('generates an id without crypto.randomUUID (non-secure context)', async () => {
+      const original = globalThis.crypto.randomUUID;
+      // Simulate a non-secure context where randomUUID is unavailable.
+      // @ts-expect-error - intentionally removing for the test
+      globalThis.crypto.randomUUID = undefined;
+      try {
+        const { richHistoryQuery } = await storage.addToRichHistory(mockItem);
+        expect(richHistoryQuery.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+      } finally {
+        globalThis.crypto.randomUUID = original;
+      }
+    });
+
     it('should not save duplicated query', async () => {
       await storage.addToRichHistory(mockItem);
       dateNowSpy.mockReturnValue(nowMs + 1);
@@ -117,6 +118,18 @@ describe('RichHistoryIndexedDBStorage', () => {
 
       const { richHistory } = await storage.getRichHistory(filtersWithTimeRange());
       expect(richHistory).toHaveLength(2);
+    });
+
+    it('rejects a duplicate without changing the stored count', async () => {
+      await storage.addToRichHistory(mockItem);
+      const before = (await storage.getRichHistory(filtersWithTimeRange())).total;
+
+      await expect(storage.addToRichHistory(mockItem)).rejects.toMatchObject({
+        name: RichHistoryServiceError.DuplicatedEntry,
+      });
+
+      const after = (await storage.getRichHistory(filtersWithTimeRange())).total;
+      expect(after).toBe(before);
     });
 
     it('should detect duplicate when queries differ only by key/refId', async () => {
@@ -384,15 +397,22 @@ describe('RichHistoryIndexedDBStorage', () => {
       });
 
       // Insert recent entry
-      await storage.addToRichHistory({ ...mockItem, comment: 'recent' });
+      const { richHistoryQuery: recent } = await storage.addToRichHistory({ ...mockItem, comment: 'recent' });
 
-      // getRichHistory triggers retention cleanup
-      const { richHistory } = await storage.getRichHistory(filtersWithTimeRange({ from: 0, to: nowMs + 86_400_000 }));
+      // getRichHistory triggers retention cleanup as fire-and-forget, so we must
+      // await the captured cleanup promise before asserting DB state.
+      const cleanupSpy = jest.spyOn(
+        storage as unknown as { maybeRunRetentionCleanup: () => Promise<void> },
+        'maybeRunRetentionCleanup'
+      );
+      await storage.getRichHistory(filtersWithTimeRange({ from: 0, to: nowMs + 86_400_000 }));
+      await cleanupSpy.mock.results[0].value;
+      cleanupSpy.mockRestore();
 
-      const comments = richHistory.map((q) => q.comment);
-      expect(comments).toContain('recent');
-      expect(comments).toContain('old starred');
-      expect(comments).not.toContain('old not starred');
+      // Expired non-starred entry removed; starred and recent entries preserved.
+      expect(await db.get('queries', 'old-not-starred')).toBeUndefined();
+      expect(await db.get('queries', 'old-starred')).toBeDefined();
+      expect(await db.get('queries', recent.id)).toBeDefined();
     });
 
     it('should use configured retention period', async () => {
@@ -430,11 +450,16 @@ describe('RichHistoryIndexedDBStorage', () => {
         queries: [],
       });
 
-      const { richHistory } = await storage.getRichHistory(filtersWithTimeRange({ from: 0, to: nowMs + 86_400_000 }));
+      const cleanupSpy = jest.spyOn(
+        storage as unknown as { maybeRunRetentionCleanup: () => Promise<void> },
+        'maybeRunRetentionCleanup'
+      );
+      await storage.getRichHistory(filtersWithTimeRange({ from: 0, to: nowMs + 86_400_000 }));
+      await cleanupSpy.mock.results[0].value;
+      cleanupSpy.mockRestore();
 
-      const comments = richHistory.map((q) => q.comment);
-      expect(comments).toContain('one day old');
-      expect(comments).not.toContain('three days old');
+      expect(await db.get('queries', 'one-day-old')).toBeDefined();
+      expect(await db.get('queries', 'three-days-old')).toBeUndefined();
     });
   });
 
@@ -442,7 +467,7 @@ describe('RichHistoryIndexedDBStorage', () => {
     it('should return default settings when none are saved', async () => {
       const settings = await storage.getSettings();
       expect(settings).toEqual({
-        retentionPeriod: 7,
+        retentionPeriod: 14,
         starredTabAsFirstTab: false,
         activeDatasourcesOnly: false,
         lastUsedDatasourceFilters: [],

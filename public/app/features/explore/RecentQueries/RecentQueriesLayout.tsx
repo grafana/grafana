@@ -21,8 +21,7 @@ type Props = {
 
 export function RecentQueriesLayout({ onSelectQuery, onClose, onSaveToLibrary, onAnalyticsEvent }: Props) {
   const styles = useStyles2(getStyles);
-  const { queries, totalQueries, isLoading, isInitialLoad, error, filters, setFilters, loadMore, starQuery } =
-    useRecentQueriesData();
+  const { queries, isLoading, isInitialLoad, error, filters, setFilters, starQuery } = useRecentQueriesData();
 
   const availableDatasources = useMemo(() => createDatasourcesList().map((ds) => ds.name), []);
 
@@ -36,9 +35,10 @@ export function RecentQueriesLayout({ onSelectQuery, onClose, onSaveToLibrary, o
 
   const handleStarQuery = useCallback(
     (id: string, starred: boolean) => {
+      onAnalyticsEvent?.('queryStarred', { starred });
       starQuery(id, starred);
     },
-    [starQuery]
+    [starQuery, onAnalyticsEvent]
   );
 
   const handleSaveQuery = useMemo(
@@ -85,12 +85,10 @@ export function RecentQueriesLayout({ onSelectQuery, onClose, onSaveToLibrary, o
       <Divider direction="vertical" spacing={0} />
       <RecentQueriesList
         queries={queries}
-        totalQueries={totalQueries}
         isLoading={isLoading}
         sortOrder={filters.sortingOption.value ?? SortOrder.Descending}
         onSelectQuery={handleSelectQuery}
         onStarQuery={handleStarQuery}
-        onLoadMore={loadMore}
         onSaveQuery={handleSaveQuery}
       />
     </div>

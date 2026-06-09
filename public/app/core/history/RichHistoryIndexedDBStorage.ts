@@ -1,7 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import { isEqual, omit } from 'lodash';
 
-import { type DataQuery } from '@grafana/data';
+import { type DataQuery, generateUUID } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
   type RichHistorySearchBackendFilters,
@@ -28,7 +28,7 @@ const DEFAULT_ITEM_COUNT_WARNING_THRESHOLD = 50_000;
 const MS_PER_DAY = 86_400_000;
 
 const DEFAULT_SETTINGS: RichHistorySettings = {
-  retentionPeriod: 7,
+  retentionPeriod: 14,
   starredTabAsFirstTab: false,
   activeDatasourcesOnly: false,
   lastUsedDatasourceFilters: [],
@@ -53,10 +53,7 @@ interface QueryHistoryDBSchema extends DBSchema {
     value: StoredQuery;
     indexes: {
       'by-createdAt': number;
-      'by-datasourceUid': string;
       'by-starred': number;
-      'by-starred-createdAt': [number, number];
-      'by-datasourceUid-createdAt': [string, number];
     };
   };
   [SETTINGS_STORE]: {
@@ -148,10 +145,7 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
         // Queries store
         const queryStore = db.createObjectStore(QUERIES_STORE, { keyPath: 'id' });
         queryStore.createIndex('by-createdAt', 'createdAt');
-        queryStore.createIndex('by-datasourceUid', 'datasourceUid');
         queryStore.createIndex('by-starred', 'starred');
-        queryStore.createIndex('by-starred-createdAt', ['starred', 'createdAt']);
-        queryStore.createIndex('by-datasourceUid-createdAt', ['datasourceUid', 'createdAt']);
 
         // Settings store
         db.createObjectStore(SETTINGS_STORE);
@@ -162,18 +156,15 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
     });
   }
 
-  /** Expose db for migration use */
   getDB(): Promise<IDBPDatabase<QueryHistoryDBSchema>> {
     return this.dbPromise;
   }
 
-  /** Read from metadata store */
   async getMetadata(key: string): Promise<unknown> {
     const db = await this.dbPromise;
     return db.get(METADATA_STORE, key);
   }
 
-  /** Write to metadata store */
   async setMetadata(key: string, value: unknown): Promise<void> {
     const db = await this.dbPromise;
     await db.put(METADATA_STORE, value, key);
@@ -200,7 +191,12 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
       const lastQueriesToCompare = lastEntry.queries.map((q) => omit(q, ['key', 'refId']));
 
       if (isEqual(newQueriesToCompare, lastQueriesToCompare)) {
-        // Don't await tx.done — transaction auto-aborts when we throw
+        // Abort explicitly: throwing does not abort the transaction — any prior
+        // writes would still commit when it goes inactive — so abort to guarantee
+        // nothing is written even if a future change adds a write before this
+        // dedup check.
+        tx.abort();
+        await tx.done.catch(() => {}); // tx.done rejects with AbortError; swallow it
         const error = new Error('Entry already exists');
         error.name = RichHistoryServiceError.DuplicatedEntry;
         throw error;
@@ -209,7 +205,7 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
 
     const now = Date.now();
     const richHistoryQuery: RichHistoryQuery = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       createdAt: now,
       ...newRichHistoryQuery,
     };
@@ -230,7 +226,13 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
     await this.ensureMigrated();
     const db = await this.dbPromise;
 
-    await this.maybeRunRetentionCleanup(db);
+    // Fire-and-forget: retention cleanup is background GC, so don't block the
+    // read on it. A read racing the cleanup may briefly surface expired entries
+    // (the no-time-range branch, or a time range wider than the retention
+    // window); this self-heals once the next cleanup commits. Acceptable for GC.
+    void this.maybeRunRetentionCleanup(db).catch((error) => {
+      console.error('Query history retention cleanup failed:', error);
+    });
 
     // 1. Index-based retrieval — narrow at the DB level
     let storedResults: StoredQuery[];

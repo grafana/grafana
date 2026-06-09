@@ -40,18 +40,6 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-// crypto.randomUUID may not be available in jsdom
-let uuidCounter = 0;
-if (typeof globalThis.crypto === 'undefined' || !globalThis.crypto.randomUUID) {
-  Object.defineProperty(globalThis, 'crypto', {
-    value: {
-      randomUUID: () => `uuid-${++uuidCounter}`,
-    },
-    writable: true,
-    configurable: true,
-  });
-}
-
 // Use recent timestamps so retention cleanup does not remove them
 const NOW = new Date('2025-01-15T12:00:00Z').getTime();
 const ONE_HOUR = 3_600_000;
@@ -98,7 +86,6 @@ describe('migrateToIndexedDB', () => {
     (reportInteraction as jest.Mock).mockReset();
     mockFetch.mockReset();
     mockConfig.queryHistoryEnabled = false;
-    uuidCounter = 0;
   });
 
   afterEach(() => {
@@ -669,25 +656,37 @@ describe('migrateToIndexedDB', () => {
     expect(settings.lastUsedDatasourceFilters).toEqual(['Prometheus']);
   });
 
-  it('should abandon migration after max attempts and mark complete', async () => {
-    store.setObject(RICH_HISTORY_KEY, [validEntry1]);
+  it('should abandon migration after max attempts: warn, do not mark complete, do not over-increment', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      store.setObject(RICH_HISTORY_KEY, [validEntry1]);
 
-    // Set attempts to 3 (max) so the next call (attempt 4) should abandon
-    await indexedDBStorage.setMetadata('migrationAttempts', 3);
+      // Set attempts to the cap so the next call abandons.
+      await indexedDBStorage.setMetadata('migrationAttempts', 3);
 
-    await migrateToIndexedDB(indexedDBStorage);
+      await migrateToIndexedDB(indexedDBStorage);
 
-    // Should have fired abandoned telemetry
-    expect(reportInteraction).toHaveBeenCalledWith('grafana_query_history_migration_abandoned', {
-      attempts: 3,
-    });
+      // Should have fired abandoned telemetry with the capped attempt count.
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_query_history_migration_abandoned', {
+        attempts: 3,
+      });
 
-    // Should be marked complete to stop retrying
-    const complete = await indexedDBStorage.getMetadata('migrationComplete');
-    expect(complete).toBe(true);
+      // Should warn (not a UI notification).
+      expect(warnSpy).toHaveBeenCalled();
 
-    // Data should NOT have been migrated
-    const result = await indexedDBStorage.getRichHistory(queryFilters());
-    expect(result.total).toBe(0);
+      // Should NOT be marked complete — leaves recovery open for a future fixed build / support reset.
+      const complete = await indexedDBStorage.getMetadata('migrationComplete');
+      expect(complete).toBeUndefined();
+
+      // Counter must not grow past the cap.
+      const attempts = await indexedDBStorage.getMetadata('migrationAttempts');
+      expect(attempts).toBe(3);
+
+      // Data should NOT have been migrated.
+      const result = await indexedDBStorage.getRichHistory(queryFilters());
+      expect(result.total).toBe(0);
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });

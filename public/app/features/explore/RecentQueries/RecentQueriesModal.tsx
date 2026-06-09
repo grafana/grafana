@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Badge, Divider, Modal, Tab, TabsBar, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { type RichHistoryQuery } from 'app/types/explore';
@@ -18,11 +19,22 @@ type Props = {
 export function RecentQueriesModal({ isOpen, onClose, onSelectQuery }: Props) {
   const styles = useStyles2(getStyles);
 
+  const reportAnalytics = useCallback((event: string, properties?: Record<string, string | boolean | undefined>) => {
+    reportInteraction('grafana_explore_query_history_recent_queries', { event, ...properties });
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      reportAnalytics('opened');
+    }
+  }, [isOpen, reportAnalytics]);
+
   const handleSelectQuery = useCallback(
     (query: RichHistoryQuery) => {
+      reportAnalytics('querySelected', { datasourceName: query.datasourceName });
       onSelectQuery(query.queries[0], query.datasourceName);
     },
-    [onSelectQuery]
+    [onSelectQuery, reportAnalytics]
   );
 
   const modalTitle = (
@@ -54,10 +66,7 @@ export function RecentQueriesModal({ isOpen, onClose, onSelectQuery }: Props) {
         </TabsBar>
       </div>
       <Text color="secondary">
-        {t(
-          'recent-queries.description',
-          "Recent queries are queries that you've ran within Explore, within the past two weeks"
-        )}
+        {t('recent-queries.description', "Recent queries are queries that you've run in Explore")}
       </Text>
       <Divider spacing={0} />
     </div>
@@ -72,7 +81,7 @@ export function RecentQueriesModal({ isOpen, onClose, onSelectQuery }: Props) {
       className={styles.modal}
       contentClassName={styles.content}
     >
-      <RecentQueriesLayout onSelectQuery={handleSelectQuery} onClose={onClose} />
+      <RecentQueriesLayout onSelectQuery={handleSelectQuery} onClose={onClose} onAnalyticsEvent={reportAnalytics} />
     </Modal>
   );
 }

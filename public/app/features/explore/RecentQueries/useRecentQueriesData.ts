@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useAsync } from 'react-use';
+import { useAsync, useDebounce } from 'react-use';
 
 import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -19,14 +19,12 @@ export type RecentQueriesFilterState = {
 
 export type UseRecentQueriesDataReturn = {
   queries: RichHistoryQuery[];
-  totalQueries: number;
   isLoading: boolean;
   isInitialLoad: boolean;
   error: unknown;
   settings: RichHistorySettings | undefined;
   filters: RecentQueriesFilterState;
   setFilters: (update: Partial<RecentQueriesFilterState>) => void;
-  loadMore: () => void;
   starQuery: (id: string, starred: boolean) => Promise<void>;
 };
 
@@ -54,18 +52,11 @@ export function useRecentQueriesData(activeDatasources: string[] = []): UseRecen
     return base;
   });
 
-  const [page, setPage] = useState(1);
-  const [accumulatedQueries, setAccumulatedQueries] = useState<RichHistoryQuery[]>([]);
-  const [totalQueries, setTotalQueries] = useState(0);
+  const [displayedQueries, setDisplayedQueries] = useState<RichHistoryQuery[]>([]);
   const hasCompletedInitialFetch = useRef(false);
 
   const setFilters = useCallback((update: Partial<RecentQueriesFilterState>) => {
     setFiltersState((prev) => ({ ...prev, ...update }));
-    setPage(1);
-  }, []);
-
-  const loadMore = useCallback(() => {
-    setPage((prev) => prev + 1);
   }, []);
 
   const { value: settings } = useAsync(() => getRichHistorySettings(), []);
@@ -97,12 +88,11 @@ export function useRecentQueriesData(activeDatasources: string[] = []): UseRecen
   );
 
   const retentionPeriod = settings?.retentionPeriod;
-  const search = filters.searchQuery;
+  const [debouncedSearch, setDebouncedSearch] = useState(filters.searchQuery);
+  useDebounce(() => setDebouncedSearch(filters.searchQuery), 300, [filters.searchQuery]);
   const sortOrder = filters.sortingOption.value ?? SortOrder.Descending;
   const showStarredOnly = filters.showStarredOnly;
   const { datasourceFilters } = filters;
-
-  const fetchPageRef = useRef(page);
 
   const {
     value: fetchResult,
@@ -112,37 +102,29 @@ export function useRecentQueriesData(activeDatasources: string[] = []): UseRecen
     if (retentionPeriod === undefined) {
       return undefined;
     }
-    fetchPageRef.current = page;
     return getRichHistory({
-      search,
+      search: debouncedSearch,
       sortOrder,
       datasourceFilters,
       starred: showStarredOnly,
       from: 0,
       to: retentionPeriod,
-      page,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- datasourceFiltersKey is a stable string derived from datasourceFilters
-  }, [search, sortOrder, datasourceFiltersKey, showStarredOnly, retentionPeriod, page]);
+  }, [debouncedSearch, sortOrder, datasourceFiltersKey, showStarredOnly, retentionPeriod]);
 
   useEffect(() => {
     if (!fetchResult) {
       return;
     }
     hasCompletedInitialFetch.current = true;
-    const fetchedPage = fetchPageRef.current;
-    if (fetchedPage === 1) {
-      setAccumulatedQueries(fetchResult.richHistory);
-    } else {
-      setAccumulatedQueries((prev) => [...prev, ...fetchResult.richHistory]);
-    }
-    setTotalQueries(fetchResult.total ?? 0);
+    setDisplayedQueries(fetchResult.richHistory);
   }, [fetchResult]);
 
   const starQuery = useCallback(async (id: string, starred: boolean) => {
     const result = await updateStarredInRichHistory(id, starred);
     if (result !== undefined) {
-      setAccumulatedQueries((prev) => prev.map((q) => (q.id === id ? { ...q, starred } : q)));
+      setDisplayedQueries((prev) => prev.map((q) => (q.id === id ? { ...q, starred } : q)));
     }
   }, []);
 
@@ -150,15 +132,13 @@ export function useRecentQueriesData(activeDatasources: string[] = []): UseRecen
   const isInitialLoad = !hasCompletedInitialFetch.current && isLoading;
 
   return {
-    queries: accumulatedQueries,
-    totalQueries,
+    queries: displayedQueries,
     isLoading,
     isInitialLoad,
     error,
     settings,
     filters,
     setFilters,
-    loadMore,
     starQuery,
   };
 }

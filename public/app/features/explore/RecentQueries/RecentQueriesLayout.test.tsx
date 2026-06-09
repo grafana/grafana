@@ -40,12 +40,10 @@ const defaultFilters: RecentQueriesFilterState = {
 };
 
 const mockSetFilters = jest.fn();
-const mockLoadMore = jest.fn();
 const mockStarQuery = jest.fn();
 
 let mockDataHook = {
   queries: [mockRichHistoryQuery],
-  totalQueries: 1,
   isLoading: false,
   isInitialLoad: false,
   error: undefined as unknown,
@@ -57,7 +55,6 @@ let mockDataHook = {
   },
   filters: defaultFilters,
   setFilters: mockSetFilters,
-  loadMore: mockLoadMore,
   starQuery: mockStarQuery,
 };
 
@@ -82,7 +79,6 @@ describe('RecentQueriesLayout', () => {
     jest.clearAllMocks();
     mockDataHook = {
       queries: [mockRichHistoryQuery],
-      totalQueries: 1,
       isLoading: false,
       isInitialLoad: false,
       error: undefined,
@@ -94,7 +90,6 @@ describe('RecentQueriesLayout', () => {
       },
       filters: defaultFilters,
       setFilters: mockSetFilters,
-      loadMore: mockLoadMore,
       starQuery: mockStarQuery,
     };
   });
@@ -140,6 +135,7 @@ describe('RecentQueriesLayout', () => {
     onStarQuery('rh-1', true);
 
     expect(mockStarQuery).toHaveBeenCalledWith('rh-1', true);
+    expect(mockOnAnalyticsEvent).toHaveBeenCalledWith('queryStarred', { starred: true });
   });
 
   it('handles save query by calling onSaveToLibrary prop', () => {

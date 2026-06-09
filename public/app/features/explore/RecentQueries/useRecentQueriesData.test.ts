@@ -6,11 +6,13 @@ import { type RichHistoryQuery } from 'app/types/explore';
 import { getStoredFilterDefaults, storeFilterDefaults } from './filterDefaults';
 import { useRecentQueriesData } from './useRecentQueriesData';
 
-const { getRichHistory, getRichHistorySettings } = jest.requireMock('app/core/utils/richHistory');
+const { getRichHistory, getRichHistorySettings, updateStarredInRichHistory } =
+  jest.requireMock('app/core/utils/richHistory');
 
 jest.mock('app/core/utils/richHistory', () => ({
   getRichHistory: jest.fn(),
   getRichHistorySettings: jest.fn(),
+  updateStarredInRichHistory: jest.fn(),
 }));
 
 jest.mock('./filterDefaults', () => ({
@@ -84,7 +86,6 @@ describe('useRecentQueriesData', () => {
           starred: false,
           from: 0,
           to: 14,
-          page: 1,
         })
       );
     });
@@ -96,7 +97,7 @@ describe('useRecentQueriesData', () => {
     expect(getRichHistory).not.toHaveBeenCalled();
   });
 
-  it('returns queries and totalQueries from the fetch result', async () => {
+  it('returns queries from the fetch result', async () => {
     (getRichHistory as jest.Mock).mockResolvedValue({
       richHistory: [makeQuery(), makeQuery({ id: '2' })],
       total: 5,
@@ -104,8 +105,23 @@ describe('useRecentQueriesData', () => {
     const { result } = await renderAndSettle();
     await waitFor(() => {
       expect(result.current.queries).toHaveLength(2);
-      expect(result.current.totalQueries).toBe(5);
     });
+  });
+
+  it('updates a query optimistically when starred without refetching', async () => {
+    (getRichHistory as jest.Mock).mockResolvedValue({
+      richHistory: [makeQuery({ id: '1', starred: false })],
+      total: 1,
+    });
+    (updateStarredInRichHistory as jest.Mock).mockResolvedValue([]);
+    const { result } = await renderAndSettle();
+    await waitFor(() => expect(result.current.queries).toHaveLength(1));
+
+    (getRichHistory as jest.Mock).mockClear();
+    await act(async () => result.current.starQuery('1', true));
+
+    expect(result.current.queries[0].starred).toBe(true);
+    expect(getRichHistory).not.toHaveBeenCalled();
   });
 
   it('returns error when getRichHistory rejects', async () => {
@@ -123,46 +139,24 @@ describe('useRecentQueriesData', () => {
     expect(result.current.filters.searchQuery).toBe('hello');
   });
 
-  it('filter change resets page and replaces results', async () => {
-    const page1Queries = [makeQuery({ id: '1' })];
-    const page2Queries = [makeQuery({ id: '2' })];
-    const afterFilterQueries = [makeQuery({ id: '3' })];
+  it('replaces results with the latest fetch on filter change', async () => {
+    const initialQueries = [makeQuery({ id: '1' })];
+    const afterFilterQueries = [makeQuery({ id: '2' }), makeQuery({ id: '3' })];
 
     (getRichHistory as jest.Mock)
-      .mockResolvedValueOnce({ richHistory: page1Queries, total: 3 })
-      .mockResolvedValueOnce({ richHistory: page2Queries, total: 3 })
-      .mockResolvedValueOnce({ richHistory: afterFilterQueries, total: 1 });
+      .mockResolvedValueOnce({ richHistory: initialQueries, total: 1 })
+      .mockResolvedValueOnce({ richHistory: afterFilterQueries, total: 2 });
 
     const { result } = await renderAndSettle();
-    await waitFor(() => expect(result.current.queries).toHaveLength(1));
-
-    await act(async () => result.current.loadMore());
-    await waitFor(() => expect(result.current.queries).toHaveLength(2));
+    await waitFor(() => {
+      expect(result.current.queries).toHaveLength(1);
+      expect(result.current.queries[0].id).toBe('1');
+    });
 
     await act(async () => result.current.setFilters({ searchQuery: 'new search' }));
     await waitFor(() => {
-      expect(result.current.queries).toHaveLength(1);
-      expect(result.current.queries[0].id).toBe('3');
-    });
-  });
-
-  it('loadMore increments page and appends results', async () => {
-    const page1Queries = [makeQuery({ id: '1' })];
-    const page2Queries = [makeQuery({ id: '2' })];
-
-    (getRichHistory as jest.Mock)
-      .mockResolvedValueOnce({ richHistory: page1Queries, total: 2 })
-      .mockResolvedValueOnce({ richHistory: page2Queries, total: 2 });
-
-    const { result } = await renderAndSettle();
-    await waitFor(() => expect(result.current.queries).toHaveLength(1));
-
-    await act(async () => result.current.loadMore());
-
-    await waitFor(() => {
       expect(result.current.queries).toHaveLength(2);
-      expect(result.current.queries[0].id).toBe('1');
-      expect(result.current.queries[1].id).toBe('2');
+      expect(result.current.queries.map((q) => q.id)).toEqual(['2', '3']);
     });
   });
 
@@ -208,5 +202,34 @@ describe('useRecentQueriesData', () => {
   it('uses activeDatasources parameter as initial datasourceFilters', async () => {
     const { result } = await renderAndSettle(['loki']);
     expect(result.current.filters.datasourceFilters).toEqual(['loki']);
+  });
+
+  it('debounces search before fetching', async () => {
+    jest.useFakeTimers();
+    try {
+      const getRichHistoryMock = getRichHistory as jest.Mock;
+
+      const { result } = renderHook(() => useRecentQueriesData());
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+      getRichHistoryMock.mockClear();
+
+      act(() => result.current.setFilters({ searchQuery: 'a' }));
+      act(() => result.current.setFilters({ searchQuery: 'ab' }));
+      act(() => result.current.setFilters({ searchQuery: 'abc' }));
+
+      expect(result.current.filters.searchQuery).toBe('abc');
+      expect(getRichHistoryMock).not.toHaveBeenCalled();
+
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+
+      expect(getRichHistoryMock).toHaveBeenCalledTimes(1);
+      expect(getRichHistoryMock).toHaveBeenCalledWith(expect.objectContaining({ search: 'abc' }));
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

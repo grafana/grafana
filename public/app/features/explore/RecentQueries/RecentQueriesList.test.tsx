@@ -6,7 +6,7 @@ import { type RichHistoryQuery } from 'app/types/explore';
 
 import { RecentQueriesList } from './RecentQueriesList';
 
-// Mock RecentQueryRow so list tests focus on list-level behavior (grouping, loading, empty, load more).
+// Mock RecentQueryRow so list tests focus on list-level behavior (grouping, loading, empty).
 jest.mock('./RecentQueryRow', () => ({
   RecentQueryRow: jest.fn(
     ({
@@ -99,12 +99,10 @@ const allQueries = [...queriesJan3, ...queriesJan2];
 describe('RecentQueriesList', () => {
   const defaultProps = {
     queries: [] as RichHistoryQuery[],
-    totalQueries: 0,
     isLoading: false,
     sortOrder: SortOrder.Descending,
     onSelectQuery: jest.fn(),
     onStarQuery: jest.fn(),
-    onLoadMore: jest.fn(),
   };
 
   beforeEach(() => {
@@ -129,7 +127,7 @@ describe('RecentQueriesList', () => {
     });
 
     it('does not show query rows when loading', async () => {
-      render(<RecentQueriesList {...defaultProps} isLoading={true} queries={allQueries} totalQueries={3} />);
+      render(<RecentQueriesList {...defaultProps} isLoading={true} queries={allQueries} />);
       expect(screen.queryByTestId('recent-query-row')).not.toBeInTheDocument();
       // Let useAsync settle
       await waitFor(() => expect(mockGet).toHaveBeenCalled());
@@ -138,14 +136,14 @@ describe('RecentQueriesList', () => {
 
   describe('empty state', () => {
     it('shows empty state when no queries and not loading', async () => {
-      render(<RecentQueriesList {...defaultProps} queries={[]} totalQueries={0} />);
+      render(<RecentQueriesList {...defaultProps} queries={[]} />);
       expect(screen.getByText(/no recent queries found/i)).toBeInTheDocument();
       // Let useAsync settle (empty queries = no DS calls)
       await waitFor(() => expect(mockGet).not.toHaveBeenCalled());
     });
 
     it('does not show empty state when loading', async () => {
-      render(<RecentQueriesList {...defaultProps} queries={[]} totalQueries={0} isLoading={true} />);
+      render(<RecentQueriesList {...defaultProps} queries={[]} isLoading={true} />);
       expect(screen.queryByText(/no recent queries found/i)).not.toBeInTheDocument();
       await waitFor(() => expect(mockGet).not.toHaveBeenCalled());
     });
@@ -153,19 +151,19 @@ describe('RecentQueriesList', () => {
 
   describe('date-grouped rows', () => {
     it('renders date headings from mapQueriesToHeadings', async () => {
-      render(<RecentQueriesList {...defaultProps} queries={allQueries} totalQueries={3} />);
+      render(<RecentQueriesList {...defaultProps} queries={allQueries} />);
       expect(await screen.findByText('January 3, 2025')).toBeInTheDocument();
       expect(screen.getByText('January 2, 2025')).toBeInTheDocument();
     });
 
     it('renders a row for each query', async () => {
-      render(<RecentQueriesList {...defaultProps} queries={allQueries} totalQueries={3} />);
+      render(<RecentQueriesList {...defaultProps} queries={allQueries} />);
       const rows = await screen.findAllByTestId('recent-query-row');
       expect(rows).toHaveLength(3);
     });
 
     it('passes resolved datasource logo to each row', async () => {
-      render(<RecentQueriesList {...defaultProps} queries={allQueries} totalQueries={3} />);
+      render(<RecentQueriesList {...defaultProps} queries={allQueries} />);
       // Wait for DS resolution to complete and logos to appear
       await waitFor(() => {
         const rows = screen.getAllByTestId('recent-query-row');
@@ -177,7 +175,7 @@ describe('RecentQueriesList', () => {
     });
 
     it('passes resolved query display text to each row', async () => {
-      render(<RecentQueriesList {...defaultProps} queries={allQueries} totalQueries={3} />);
+      render(<RecentQueriesList {...defaultProps} queries={allQueries} />);
       await waitFor(() => {
         const rows = screen.getAllByTestId('recent-query-row');
         expect(rows[0]).toHaveAttribute('data-display-text', 'up{job="Prometheus"}');
@@ -191,7 +189,7 @@ describe('RecentQueriesList', () => {
     it('renders rows with fallback when datasource resolution fails', async () => {
       mockGet.mockRejectedValue(new Error('not found'));
       const queries = [makeQuery('q1', 'ds-missing', 'Missing DS', jan3)];
-      render(<RecentQueriesList {...defaultProps} queries={queries} totalQueries={1} />);
+      render(<RecentQueriesList {...defaultProps} queries={queries} />);
       // Wait for DS resolution attempt to complete
       await waitFor(() => {
         const rows = screen.getAllByTestId('recent-query-row');
@@ -205,45 +203,10 @@ describe('RecentQueriesList', () => {
     });
   });
 
-  describe('load more button', () => {
-    it('shows Load more when queries.length < totalQueries', async () => {
-      render(<RecentQueriesList {...defaultProps} queries={queriesJan3} totalQueries={10} />);
-      expect(await screen.findByRole('button', { name: /load more/i })).toBeInTheDocument();
-    });
-
-    it('does not show Load more when all queries are displayed', async () => {
-      render(<RecentQueriesList {...defaultProps} queries={allQueries} totalQueries={3} />);
-      await screen.findAllByTestId('recent-query-row');
-      expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument();
-    });
-
-    it('does not show Load more when queries is empty', async () => {
-      render(<RecentQueriesList {...defaultProps} queries={[]} totalQueries={10} />);
-      // Empty state renders, no load more
-      expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument();
-      await waitFor(() => expect(mockGet).not.toHaveBeenCalled());
-    });
-
-    it('calls onLoadMore when clicking Load more', async () => {
-      const onLoadMore = jest.fn();
-      render(<RecentQueriesList {...defaultProps} queries={queriesJan3} totalQueries={10} onLoadMore={onLoadMore} />);
-      const button = await screen.findByRole('button', { name: /load more/i });
-      button.click();
-      expect(onLoadMore).toHaveBeenCalledTimes(1);
-    });
-  });
-
   describe('callbacks', () => {
     it('passes onSelectQuery to rows', async () => {
       const onSelectQuery = jest.fn();
-      render(
-        <RecentQueriesList
-          {...defaultProps}
-          queries={[queriesJan3[0]]}
-          totalQueries={1}
-          onSelectQuery={onSelectQuery}
-        />
-      );
+      render(<RecentQueriesList {...defaultProps} queries={[queriesJan3[0]]} onSelectQuery={onSelectQuery} />);
       const row = await screen.findByTestId('recent-query-row');
       row.querySelector('button')!.click();
       expect(onSelectQuery).toHaveBeenCalledWith(queriesJan3[0]);
@@ -251,9 +214,7 @@ describe('RecentQueriesList', () => {
 
     it('passes onStarQuery to rows', async () => {
       const onStarQuery = jest.fn();
-      render(
-        <RecentQueriesList {...defaultProps} queries={[queriesJan3[0]]} totalQueries={1} onStarQuery={onStarQuery} />
-      );
+      render(<RecentQueriesList {...defaultProps} queries={[queriesJan3[0]]} onStarQuery={onStarQuery} />);
       const buttons = (await screen.findByTestId('recent-query-row')).querySelectorAll('button');
       buttons[1].click();
       expect(onStarQuery).toHaveBeenCalledWith('q1', true);
@@ -261,15 +222,13 @@ describe('RecentQueriesList', () => {
 
     it('forwards onSaveQuery to rows when provided', async () => {
       const onSaveQuery = jest.fn();
-      render(
-        <RecentQueriesList {...defaultProps} queries={[queriesJan3[0]]} totalQueries={1} onSaveQuery={onSaveQuery} />
-      );
+      render(<RecentQueriesList {...defaultProps} queries={[queriesJan3[0]]} onSaveQuery={onSaveQuery} />);
       const row = await screen.findByTestId('recent-query-row');
       expect(row).toHaveAttribute('data-has-save', 'true');
     });
 
     it('does not forward onSaveQuery when not provided', async () => {
-      render(<RecentQueriesList {...defaultProps} queries={[queriesJan3[0]]} totalQueries={1} />);
+      render(<RecentQueriesList {...defaultProps} queries={[queriesJan3[0]]} />);
       const row = await screen.findByTestId('recent-query-row');
       expect(row).toHaveAttribute('data-has-save', 'false');
     });

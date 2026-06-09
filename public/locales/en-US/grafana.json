@@ -14442,7 +14442,7 @@
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
   "recent-queries": {
-    "description": "Recent queries are queries that you've ran within Explore, within the past two weeks",
+    "description": "Recent queries are queries that you've run in Explore",
     "error-state": {
       "title": "Something went wrong!"
     },
@@ -14464,7 +14464,6 @@
     },
     "list": {
       "empty": "No recent queries found",
-      "load-more": "Load more",
       "loading": "Loading..."
     },
     "modal": {

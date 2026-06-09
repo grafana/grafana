@@ -1,8 +1,14 @@
 import { render, screen } from '@testing-library/react';
 
+import { reportInteraction } from '@grafana/runtime';
 import { type RichHistoryQuery } from 'app/types/explore';
 
 import { RecentQueriesModal } from './RecentQueriesModal';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 jest.mock('./RecentQueriesLayout', () => ({
   RecentQueriesLayout: jest.fn(
@@ -77,5 +83,27 @@ describe('RecentQueriesModal', () => {
     render(<RecentQueriesModal {...defaultProps} />);
     screen.getByText('close').click();
     expect(defaultProps.onClose).toHaveBeenCalled();
+  });
+
+  it('reports an opened event when the modal opens', () => {
+    render(<RecentQueriesModal {...defaultProps} />);
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_query_history_recent_queries', { event: 'opened' });
+  });
+
+  it('does not report an opened event when the modal is closed', () => {
+    render(<RecentQueriesModal {...defaultProps} isOpen={false} />);
+    expect(reportInteraction).not.toHaveBeenCalledWith(
+      'grafana_explore_query_history_recent_queries',
+      expect.objectContaining({ event: 'opened' })
+    );
+  });
+
+  it('reports a querySelected event when a query is chosen', () => {
+    render(<RecentQueriesModal {...defaultProps} />);
+    screen.getByText('select').click();
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_explore_query_history_recent_queries',
+      expect.objectContaining({ event: 'querySelected', datasourceName: 'Prometheus' })
+    );
   });
 });

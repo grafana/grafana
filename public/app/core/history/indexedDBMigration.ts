@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { type DataQuery, store } from '@grafana/data';
+import { type DataQuery, generateUUID, store } from '@grafana/data';
 import { config, getBackendSrv, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 
 import type { IndexedDBMigrationAccess } from './RichHistoryIndexedDBStorage';
@@ -84,17 +84,24 @@ export async function migrateToIndexedDB(indexedDBStorage: IndexedDBMigrationAcc
     return;
   }
 
-  // 2. Increment migration attempts counter and check max
+  // 2. Stop automatic retries once the cap is reached. Do NOT mark migration
+  // complete: leaving it incomplete lets a future fixed build (or the support
+  // reset key) recover the data. Don't grow the counter past the cap.
   const rawAttempts = await indexedDBStorage.getMetadata(METADATA_MIGRATION_ATTEMPTS);
   const currentAttempts = typeof rawAttempts === 'number' ? rawAttempts : 0;
-  const attemptNumber = currentAttempts + 1;
-  await indexedDBStorage.setMetadata(METADATA_MIGRATION_ATTEMPTS, attemptNumber);
 
-  if (attemptNumber > MAX_MIGRATION_ATTEMPTS) {
+  if (currentAttempts >= MAX_MIGRATION_ATTEMPTS) {
     reportInteraction('grafana_query_history_migration_abandoned', { attempts: currentAttempts });
-    await indexedDBStorage.setMetadata(METADATA_MIGRATION_COMPLETE, true);
+    console.warn(
+      `Query history migration to IndexedDB did not succeed after ${MAX_MIGRATION_ATTEMPTS} attempts. ` +
+        `Existing query history remains in localStorage and/or the remote API. ` +
+        `Set localStorage key '${RESET_MIGRATION_KEY}' to true and reload to retry the migration.`
+    );
     return;
   }
+
+  const attemptNumber = currentAttempts + 1;
+  await indexedDBStorage.setMetadata(METADATA_MIGRATION_ATTEMPTS, attemptNumber);
 
   // 3. Read localStorage data
   const rawData: unknown[] = store.getObject(RICH_HISTORY_KEY, []);
@@ -169,7 +176,7 @@ async function migrateFromLocalStorage(
       const datasource = getDataSourceSrv().getInstanceSettings(entry.datasourceName);
       const datasourceUid = datasource?.uid || '';
 
-      const id = crypto.randomUUID();
+      const id = generateUUID();
 
       await tx.store.put({
         id,
@@ -276,7 +283,7 @@ async function migrateFromRemoteStorage(
       const datasourceName = dsSettings?.name || '';
 
       await tx.store.put({
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         createdAt: createdAtMs,
         datasourceUid: dto.datasourceUid,
         datasourceName,

@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 import { type DataSourceApi, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Button, EmptyState, ScrollContainer, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { EmptyState, ScrollContainer, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { createQueryText, mapQueriesToHeadings } from 'app/core/utils/richHistory';
 import { type SortOrder } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';
@@ -14,25 +14,14 @@ import { RecentQueryRow } from './RecentQueryRow';
 
 type Props = {
   queries: RichHistoryQuery[];
-  totalQueries: number;
   isLoading: boolean;
   sortOrder: SortOrder;
   onSelectQuery: (query: RichHistoryQuery) => void;
   onStarQuery: (id: string, starred: boolean) => void;
-  onLoadMore: () => void;
   onSaveQuery?: (query: RichHistoryQuery) => void;
 };
 
-export function RecentQueriesList({
-  queries,
-  totalQueries,
-  isLoading,
-  sortOrder,
-  onSelectQuery,
-  onStarQuery,
-  onLoadMore,
-  onSaveQuery,
-}: Props) {
+export function RecentQueriesList({ queries, isLoading, sortOrder, onSelectQuery, onStarQuery, onSaveQuery }: Props) {
   const styles = useStyles2(getStyles);
 
   // Collect unique datasource UIDs so we resolve each once (not per-row).
@@ -79,7 +68,6 @@ export function RecentQueriesList({
   }
 
   const mappedQueriesToHeadings = mapQueriesToHeadings(queries, sortOrder);
-  const hasMore = queries.length > 0 && queries.length < totalQueries;
 
   return (
     <ScrollContainer>
@@ -108,13 +96,6 @@ export function RecentQueriesList({
             </div>
           </div>
         ))}
-        {hasMore && (
-          <div className={styles.loadMore}>
-            <Button variant="secondary" onClick={onLoadMore}>
-              {t('recent-queries.list.load-more', 'Load more')}
-            </Button>
-          </div>
-        )}
       </div>
     </ScrollContainer>
   );
@@ -148,10 +129,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
-  }),
-  loadMore: css({
-    display: 'flex',
-    justifyContent: 'center',
-    padding: theme.spacing(2, 0),
   }),
 });
