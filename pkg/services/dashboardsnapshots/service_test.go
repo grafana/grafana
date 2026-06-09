@@ -476,6 +476,52 @@ func TestCreateDashboardSnapshot(t *testing.T) {
 		assert.Equal(t, "Failed to create snapshot", response["message"])
 		assert.NotContains(t, response["message"], "connection refused")
 	})
+
+	t.Run("should generate a key when none is supplied and return 200", func(t *testing.T) {
+		mockService := NewMockService(t)
+		cfg := snapshot.SnapshotSharingOptions{
+			SnapshotsEnabled: true,
+		}
+		testUser := createTestUser()
+		dashboard := createTestDashboard(t)
+
+		// No Key / DeleteKey supplied — the handler must generate them.
+		cmd := CreateDashboardSnapshotCommand{
+			DashboardCreateCommand: snapshot.DashboardCreateCommand{
+				Dashboard: dashboard,
+				Name:      "Test Local Snapshot",
+			},
+		}
+
+		mockService.On("ValidateDashboardExists", mock.Anything, int64(1), "test-dashboard-uid").
+			Return(nil)
+
+		// Capture the command the handler passes to the store so we can prove the keys
+		// were generated server-side before the insert.
+		var capturedCmd *CreateDashboardSnapshotCommand
+		mockService.On("CreateDashboardSnapshot", mock.Anything, mock.Anything).
+			Run(func(args mock.Arguments) {
+				capturedCmd = args.Get(1).(*CreateDashboardSnapshotCommand)
+			}).
+			Return(&DashboardSnapshot{
+				Key:       "server-generated-key",
+				DeleteKey: "server-generated-delete-key",
+			}, nil)
+
+		req, _ := http.NewRequest("POST", "/api/snapshots", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		ctx, recorder := createReqContext(t, req, testUser)
+
+		CreateDashboardSnapshot(ctx, cfg, cmd, mockService)
+
+		mockService.AssertExpectations(t)
+		assert.Equal(t, http.StatusOK, recorder.Code)
+
+		// The request supplied no keys, so the server must have generated them.
+		require.NotNil(t, capturedCmd)
+		assert.NotEmpty(t, capturedCmd.Key)
+		assert.NotEmpty(t, capturedCmd.DeleteKey)
+	})
 }
 
 // TestCreateDashboardSnapshotPublic tests snapshot creation in public mode.
