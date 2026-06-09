@@ -228,7 +228,7 @@ If your dashboards use data sources on a private network that aren't accessible 
 
 The migration assistant supports any plugins found in the plugins catalog. As long as the plugin is signed or is a core plugin built into Grafana, you can migrate it. Due to security reasons, Grafana Cloud doesn't support unsigned plugins. If you're using any unsigned private plugins, seek an alternative plugin from the catalog or work on a strategy to deprecate certain functionality from your self-managed instance.
 
-Only plugins available in the [Grafana plugins catalog](https://grafana.com/grafana/plugins/) can be installed on Grafana Cloud. The migration assistant doesn't support private, custom-built, or third-party plugins that require manual uploading or modifications to Grafana backend files.
+You can only install plugins available in the [Grafana plugins catalog](https://grafana.com/grafana/plugins/) on Grafana Cloud. The migration assistant doesn't support private, custom-built, or third-party plugins that require manual uploading or modifications to Grafana backend files.
 
 If a plugin doesn't appear in the resource list on the **Migrate to Grafana Cloud** page, it isn't supported by the migration assistant and you must install it manually on your Grafana Cloud instance.
 
