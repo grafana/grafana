@@ -30,9 +30,8 @@ import (
 var annotationGR = annotationV0.AnnotationKind().GroupVersionResource().GroupResource()
 
 // maxSafeJSInt is 2^52 - 1. IDs are masked to this range so they remain
-// lossless when serialised to JSON and consumed by JavaScript (which uses
-// IEEE-754 doubles, safe up to 2^53-1). We use 52 bits — not 53 — to match
-// the convention in pkg/storage/unified/apistore/prepare.go.
+// lossless when serialised to JSON and consumed by JavaScript.
+// This follows the convention in pkg/storage/unified/apistore/prepare.go.
 const maxSafeJSInt = (1 << 52) - 1
 
 // toAPIError maps store-layer sentinels to the right k8s apierror so HTTP
