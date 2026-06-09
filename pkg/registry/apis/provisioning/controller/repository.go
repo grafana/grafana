@@ -644,6 +644,9 @@ func (rc *RepositoryController) process(key string) error {
 		shouldGenerateToken = rc.shouldGenerateTokenFromConnection(obj)
 	}
 
+	shouldDeriveAuthor := obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" &&
+		obj.Spec.GitHub != nil && obj.Status.AuthorName == ""
+
 	shouldRotateWebhookSecret := rc.shouldRotateWebhookSecret(obj)
 
 	// Determine the main triggering condition
@@ -663,6 +666,8 @@ func (rc *RepositoryController) process(key string) error {
 		logger.Info("repository was blocked but now within quota, processing to unblock")
 	case shouldGenerateToken:
 		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
+	case shouldDeriveAuthor:
+		logger.Info("repository commit author needs to be derived", "connection", obj.Spec.Connection.Name)
 	case hasQuotaChanged:
 		logger.Info("quota changed", "quota", newQuota)
 	case len(obj.Spec.Workflows) > 0 && (obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0):
@@ -713,6 +718,15 @@ func (rc *RepositoryController) process(key string) error {
 		}
 
 		obj.Secure.Token.Create = token
+	}
+
+	if shouldDeriveAuthor {
+		authorOps, err := rc.deriveAuthor(ctx, obj)
+		if err != nil {
+			logger.Error("deriving commit author", "error", err)
+		} else {
+			patchOperations = append(patchOperations, authorOps...)
+		}
 	}
 
 	repo, err := rc.repoFactory.Build(ctx, obj)
@@ -979,4 +993,35 @@ func (rc *RepositoryController) generateRepositoryToken(
 	}
 
 	return token.Token, patchOperations, nil
+}
+
+// deriveAuthor resolves the git author from the repository's connection and stores
+// it on the status so the commit signature can use it without resolving the connection.
+func (rc *RepositoryController) deriveAuthor(ctx context.Context, obj *provisioning.Repository) ([]map[string]any, error) {
+	c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("retrieving connection: %w", err)
+	}
+
+	conn, err := rc.connectionFactory.Build(ctx, c)
+	if err != nil {
+		return nil, fmt.Errorf("building connection: %w", err)
+	}
+
+	authorConn, ok := conn.(connection.AuthorConnection)
+	if !ok {
+		return nil, nil
+	}
+
+	name, email, err := authorConn.GetAuthor(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	obj.Status.AuthorName = name
+	obj.Status.AuthorEmail = email
+	return []map[string]any{
+		{"op": "add", "path": "/status/authorName", "value": name},
+		{"op": "add", "path": "/status/authorEmail", "value": email},
+	}, nil
 }

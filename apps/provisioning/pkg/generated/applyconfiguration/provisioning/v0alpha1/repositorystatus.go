@@ -36,6 +36,12 @@ type RepositoryStatusApplyConfiguration struct {
 	DeleteError *string `json:"deleteError,omitempty"`
 	// Quota contains the configured quota limits for this repository
 	Quota *QuotaStatusApplyConfiguration `json:"quota,omitempty"`
+	// AuthorName is the git author name used when writing commits. Defaults to
+	// "Grafana", replaced by the bot identity when a GitHub App connection is used.
+	AuthorName *string `json:"authorName,omitempty"`
+	// AuthorEmail is the git author email used when writing commits. Defaults to
+	// "noreply@grafana.com", replaced by the bot identity when a GitHub App connection is used.
+	AuthorEmail *string `json:"authorEmail,omitempty"`
 }
 
 // RepositoryStatusApplyConfiguration constructs a declarative configuration of the RepositoryStatus type for use with
@@ -136,5 +142,21 @@ func (b *RepositoryStatusApplyConfiguration) WithDeleteError(value string) *Repo
 // If called multiple times, the Quota field is set to the value of the last call.
 func (b *RepositoryStatusApplyConfiguration) WithQuota(value *QuotaStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
 	b.Quota = value
+	return b
+}
+
+// WithAuthorName sets the AuthorName field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the AuthorName field is set to the value of the last call.
+func (b *RepositoryStatusApplyConfiguration) WithAuthorName(value string) *RepositoryStatusApplyConfiguration {
+	b.AuthorName = &value
+	return b
+}
+
+// WithAuthorEmail sets the AuthorEmail field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the AuthorEmail field is set to the value of the last call.
+func (b *RepositoryStatusApplyConfiguration) WithAuthorEmail(value string) *RepositoryStatusApplyConfiguration {
+	b.AuthorEmail = &value
 	return b
 }

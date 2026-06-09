@@ -953,14 +953,20 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 }
 
 // createSignature creates author and committer signatures using the context signature if available,
-// falling back to default Grafana signature. The committer is overridden by
-// spec.commit.signerName/Email when set; that identity must match the signing
-// key for providers to mark commits as Verified.
+// falling back to the connection's derived identity (e.g. a GitHub App bot) from
+// the repository status, then the default Grafana signature. The committer is
+// overridden by spec.commit.signerName/Email when set; that identity must match
+// the signing key for providers to mark commits as Verified.
 func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, nanogit.Committer) {
 	author := nanogit.Author{
 		Name:  "Grafana",
 		Email: "noreply@grafana.com",
 		Time:  time.Now(),
+	}
+
+	if r.config.Status.AuthorName != "" && r.config.Status.AuthorEmail != "" {
+		author.Name = r.config.Status.AuthorName
+		author.Email = r.config.Status.AuthorEmail
 	}
 
 	// Use signature from context if available

@@ -36,6 +36,13 @@ type Connection interface {
 	Test(ctx context.Context) (*provisioning.TestResults, error)
 }
 
+// AuthorConnection is an optional interface for connections that can derive
+// the git author used to write commits (e.g. a GitHub App bot identity).
+type AuthorConnection interface {
+	// GetAuthor derives the git author name and email for commits written through this connection.
+	GetAuthor(ctx context.Context) (name, email string, err error)
+}
+
 // TokenConnection is an optional interface that connections can implement if they need
 // to handle tokens in their secrets.
 //
