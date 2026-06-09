@@ -40,4 +40,20 @@ export class Panel extends PageObject {
         .click({ position: { x: 0, y: 0 } });
     });
   }
+
+  async clickMenuItem(panelTitle: string, menuPath: string[]) {
+    await test.step(`Click menu item "${menuPath.join(' > ')}" on panel "${panelTitle}"`, async () => {
+      await this.dashboardPage
+        .getByGrafanaSelector(this.selectors.components.Panels.Panel.menu(panelTitle))
+        .click({ force: true });
+
+      for (const item of menuPath.slice(0, -1)) {
+        await this.dashboardPage.getByGrafanaSelector(this.selectors.components.Panels.Panel.menuItems(item)).hover();
+      }
+
+      await this.dashboardPage
+        .getByGrafanaSelector(this.selectors.components.Panels.Panel.menuItems(menuPath.at(-1)!))
+        .click();
+    });
+  }
 }
