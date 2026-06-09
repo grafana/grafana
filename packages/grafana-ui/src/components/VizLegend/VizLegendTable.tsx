@@ -110,13 +110,14 @@ export const VizLegendTable = <T extends unknown>({
         <thead className={styles.header}>
           <tr>
             <th></th>
-            {Object.keys(header).map((columnTitle) => (
+            {Object.keys(header).map((columnTitle, i) => (
               <th
                 title={header[columnTitle]}
                 key={columnTitle}
                 className={cx({
                   [styles.headerSortable]: Boolean(onToggleSort),
                   [styles.nameHeader]: isSortable,
+                  [styles.calcHeader]: i > 0,
                   [styles.withIcon]: sortKey === columnTitle,
                   'sr-only': !isSortable,
                 })}
@@ -161,6 +162,9 @@ const getStyles = (theme: GrafanaTheme2, placement: LegendPlacement = 'bottom') 
   }),
   nameHeader: css({
     textAlign: 'left',
+  }),
+  calcHeader: css({
+    textAlign: 'right',
   }),
   withIcon: css({
     paddingRight: '4px',
