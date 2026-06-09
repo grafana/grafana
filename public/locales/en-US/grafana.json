@@ -14373,6 +14373,8 @@
       "card-click": "Select card {{id}}",
       "card-multi-select": "Include card {{id}} in bulk selection",
       "data": "Data",
+      "enter-stacked-view": "Enter stacked view",
+      "exit-stacked-view": "Exit stacked view",
       "footer-items_one": "{{count}} items",
       "footer-items_other": "{{count}} items",
       "footer-items-alert_one": "{{count}} alerts",
@@ -14384,6 +14386,15 @@
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
       "view-toggle": "View"
+    },
+    "stacked": {
+      "exit": "Exit stacked view",
+      "exit-aria-label": "Exit stacked view",
+      "hidden-aria-label": "Hidden",
+      "scroll-area-aria-label": "Stacked editor items",
+      "showing-items_one": "Showing {{count}} items",
+      "showing-items_other": "Showing {{count}} items",
+      "transformation": "Transformation"
     },
     "transformation-debug": {
       "input-data": "Input data",

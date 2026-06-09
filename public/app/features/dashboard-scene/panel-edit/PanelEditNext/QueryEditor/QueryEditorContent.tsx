@@ -10,15 +10,18 @@ import { QueryEditorFooter } from './Footer/QueryEditorFooter';
 import { ContentHeaderSceneWrapper } from './Header/ContentHeader';
 import { DatasourceHelpPanel } from './Header/DatasourceHelpPanel';
 import { useAlertingContext, useQueryEditorUIContext } from './QueryEditorContext';
+import { StackedEditorRenderer } from './StackedEditor/StackedEditorRenderer';
 
 export function QueryEditorContent() {
   const styles = useStyles2(getStyles);
 
-  const { cardType, showingDatasourceHelp, pendingExpression, pendingTransformation } = useQueryEditorUIContext();
+  const { cardType, showingDatasourceHelp, pendingExpression, pendingTransformation, stackedMode } =
+    useQueryEditorUIContext();
   const { alertRules } = useAlertingContext();
   const hasPendingPicker = !!pendingExpression || !!pendingTransformation;
   const isAlertView = cardType === QueryEditorType.Alert;
   const isAlertEmptyState = isAlertView && alertRules.length === 0;
+  const shouldShowStackedEditor = stackedMode.enabled && !hasPendingPicker && !isAlertView;
 
   const shouldShowHeader = !isAlertEmptyState;
   const shouldShowFooter = !hasPendingPicker && !isAlertView;
@@ -26,10 +29,16 @@ export function QueryEditorContent() {
 
   return (
     <div className={styles.container}>
-      {shouldShowHeader && <ContentHeaderSceneWrapper />}
-      {shouldShowDatasourceHelp && <DatasourceHelpPanel />}
-      <QueryEditorBody />
-      {shouldShowFooter && <QueryEditorFooter />}
+      {shouldShowStackedEditor ? (
+        <StackedEditorRenderer />
+      ) : (
+        <>
+          {shouldShowHeader && <ContentHeaderSceneWrapper />}
+          {shouldShowDatasourceHelp && <DatasourceHelpPanel />}
+          <QueryEditorBody />
+          {shouldShowFooter && <QueryEditorFooter />}
+        </>
+      )}
     </div>
   );
 }

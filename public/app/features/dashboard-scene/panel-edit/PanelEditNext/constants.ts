@@ -108,6 +108,8 @@ export const SIDEBAR_CARD_SPACING = 1;
 export const SIDEBAR_CARD_INDENT = 2;
 export const FOOTER_HEIGHT = 32;
 
+export const SIDEBAR_CARD_DATA_ATTR = 'data-query-sidebar-card';
+
 export const CONTENT_SIDE_BAR = {
   fieldLabelWidth: 130,
   labelWidth: 80,
