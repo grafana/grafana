@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -132,7 +131,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 	}
 
 	hc := pluginproxy.HTTPContext{
-		Req:  c.Req.WithContext(identity.WithRequester(c.Req.Context(), c.SignedInUser)),
+		Req:  c.Req,
 		Resp: c.Resp,
 
 		UserToken: c.UserToken,
