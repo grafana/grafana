@@ -2486,7 +2486,7 @@ func TestEnsureFolderPathExist_WriteFolderMetadata(t *testing.T) {
 		rw.On("Create", mock.Anything, "new-folder/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "").
 			Return(nil)
 
-		folderID := ParseFolder("new-folder/", config.Name).ID
+		hashID := ParseFolder("new-folder/", config.Name).ID
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
 				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
@@ -2501,7 +2501,8 @@ func TestEnsureFolderPathExist_WriteFolderMetadata(t *testing.T) {
 
 		require.NoError(t, err)
 		rw.AssertCalled(t, "Create", mock.Anything, "new-folder/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "")
-		require.Equal(t, []string{folderID}, client.createCalls, "folder should be created in cluster")
+		require.Len(t, client.createCalls, 1, "folder should be created in cluster")
+		require.NotEqual(t, hashID, client.createCalls[0], "UID should be a stable UID, not hash-derived")
 	})
 
 	t.Run("does not write _folder.json when option is not set", func(t *testing.T) {
