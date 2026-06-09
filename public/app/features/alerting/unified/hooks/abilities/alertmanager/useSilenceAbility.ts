@@ -45,10 +45,8 @@ export function useSilenceAbility(payload: SilenceAbilityParam): AsyncAbility {
     switch (payload.action) {
       case SilenceAction.View:
       case SilenceAction.Preview:
-        return makeAbility(true, permissions[payload.action]);
-
       case SilenceAction.Create:
-        return makeAbility(true, permissions[SilenceAction.Create]);
+        return makeAbility(true, permissions[payload.action]);
 
       case SilenceAction.Update:
         if (payload.context?.accessControl?.write === false) {

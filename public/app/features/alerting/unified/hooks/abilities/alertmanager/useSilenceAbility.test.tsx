@@ -108,6 +108,17 @@ describe('useSilenceAbility', () => {
 
       expect(result.current.granted).toBe(true);
     });
+
+    it('should grant Create when only AlertingSilenceCreate is held', () => {
+      const amSource = setupGrafanaAlertmanager();
+      grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingSilenceCreate]);
+
+      const { result } = renderHook(() => useSilenceAbility({ action: SilenceAction.Create }), {
+        wrapper: createAlertmanagerWrapper(amSource),
+      });
+
+      expect(result.current.granted).toBe(true);
+    });
   });
 
   describe('external (Mimir) alertmanager', () => {
@@ -185,6 +196,28 @@ describe('useSilenceAbility', () => {
       });
 
       expect(result.current.granted).toBe(false);
+    });
+
+    it('should deny Update when accessControl.write is false on the silence entity', () => {
+      setupMimirAlertmanager(MIMIR_DATASOURCE_UID);
+      grantUserPermissions([EXTERNAL_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingInstancesExternalWrite]);
+
+      const { result } = renderHook(
+        () => ({
+          updateDenied: useSilenceAbility({
+            action: SilenceAction.Update,
+            context: { accessControl: { write: false } } as never,
+          }),
+          updateAllowed: useSilenceAbility({
+            action: SilenceAction.Update,
+            context: { accessControl: { write: true } } as never,
+          }),
+        }),
+        { wrapper: createAlertmanagerWrapper(MIMIR_DATASOURCE_UID) }
+      );
+
+      expect(result.current.updateDenied.granted).toBe(false);
+      expect(result.current.updateAllowed.granted).toBe(true);
     });
   });
 
