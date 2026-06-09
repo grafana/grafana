@@ -457,7 +457,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
   });
 }
 
-export function getVariantStyles(variant: ThemeTypographyVariant) {
+function getVariantStyles(variant: ThemeTypographyVariant) {
   return {
     margin: 0,
     fontSize: variant.fontSize,

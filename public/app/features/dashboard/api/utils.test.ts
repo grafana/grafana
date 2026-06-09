@@ -1,4 +1,4 @@
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, type Status } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type Resource } from 'app/features/apiserver/types';
@@ -137,39 +137,16 @@ describe('conversion status helpers', () => {
 
 describe('getDashboardsApiVersion', () => {
   beforeEach(() => {
-    locationService.push('/test');
+    config.featureToggles = {};
   });
 
   it.each([
-    [{ kubernetesDashboards: true }, undefined, 'unified'],
-    [{ kubernetesDashboards: false }, undefined, 'legacy'],
-    [{ kubernetesDashboards: true }, 'v1', 'v1'],
-    [{ kubernetesDashboards: true, dashboardNewLayouts: true }, undefined, 'v2'],
+    [{}, undefined, 'unified'],
+    [{}, 'v1', 'v1'],
+    [{}, 'v2', 'v2'],
+    [{ dashboardNewLayouts: true }, undefined, 'v2'],
   ])('with toggles %j and responseFormat %s returns %s', (toggles, responseFormat, expected) => {
     config.featureToggles = toggles;
     expect(getDashboardsApiVersion(responseFormat as 'v1' | 'v2' | undefined)).toBe(expected);
-  });
-
-  it('throws when requesting v2 without kubernetes dashboards', () => {
-    config.featureToggles = { kubernetesDashboards: false };
-    expect(() => getDashboardsApiVersion('v2')).toThrow('v2 is not supported');
-  });
-
-  it('throws when requesting v2 with legacy architecture', () => {
-    locationService.push('/test?scenes=false');
-    config.featureToggles = { kubernetesDashboards: true };
-    expect(() => getDashboardsApiVersion('v2')).toThrow('v2 is not supported for legacy');
-  });
-
-  describe('URL override scenes=false', () => {
-    beforeEach(() => locationService.push('/test?scenes=false'));
-
-    it.each([
-      [{ kubernetesDashboards: false }, 'legacy'],
-      [{ kubernetesDashboards: true }, 'v1'],
-    ])('with toggles %j returns %s', (toggles, expected) => {
-      config.featureToggles = toggles;
-      expect(getDashboardsApiVersion()).toBe(expected);
-    });
   });
 });

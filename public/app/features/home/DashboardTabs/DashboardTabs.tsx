@@ -2,25 +2,50 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
-import { type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { usePluginComponents } from '@grafana/runtime';
-import { Box, ScrollContainer, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { RecentDashboardsTab } from './RecentDashboardsTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
-import { type HomepageTab } from './types';
+import { type HomepageTabExtensionProps, type HomepageTab, validateHomepageTab } from './types';
 
 const RECENT_TAB_ID = 'recent';
 const STARRED_TAB_ID = 'starred';
 const MAX_RECENT = 20;
 const MAX_STARRED = 30;
 
-interface HomepageTabExtensionProps {
-  registerTab: (tab: HomepageTab) => void;
+function DashboardExtensionTab({
+  Component,
+  registerTab,
+  activeTab,
+}: {
+  Component: ComponentTypeWithExtensionMeta<HomepageTabExtensionProps>;
+  registerTab: (tab: HomepageTab) => () => void;
+  activeTab: string;
+}) {
+  const [id, setId] = useState<string | null>(null);
+  const register = useCallback(
+    (tab: unknown) => {
+      validateHomepageTab(tab);
+
+      setId(tab.id);
+      const unregister = registerTab(tab);
+
+      return () => {
+        setId(null);
+        unregister();
+      };
+    },
+    [registerTab]
+  );
+
+  return <Component register={register} active={activeTab === id} />;
 }
 
 export function DashboardTabs() {
@@ -54,12 +79,8 @@ export function DashboardTabs() {
   });
 
   const registerTab = useCallback((tab: HomepageTab) => {
-    setExtensionTabs((prev) => {
-      if (prev.some((t) => t.id === tab.id)) {
-        return prev;
-      }
-      return [...prev, tab];
-    });
+    setExtensionTabs((prev) => [...prev, tab]);
+    return () => setExtensionTabs((prev) => prev.filter((t) => t !== tab));
   }, []);
 
   // Auto-switch to the non-empty tab when initial data finishes loading
@@ -68,17 +89,31 @@ export function DashboardTabs() {
     if (didAutoSwitch.current || recentLoading || starredLoading) {
       return;
     }
-    didAutoSwitch.current = true;
 
     const recentEmpty = !recentDashboards?.length;
     const starredEmpty = !starredDashboards?.length;
 
     if (activeTab === RECENT_TAB_ID && recentEmpty && !starredEmpty) {
       setActiveTab(STARRED_TAB_ID);
-    } else if (activeTab === STARRED_TAB_ID && starredEmpty && !recentEmpty) {
-      setActiveTab(RECENT_TAB_ID);
+      didAutoSwitch.current = true;
+      return;
     }
-  }, [recentLoading, starredLoading, recentDashboards, starredDashboards, activeTab]);
+
+    if (activeTab === STARRED_TAB_ID && starredEmpty && !recentEmpty) {
+      setActiveTab(RECENT_TAB_ID);
+      didAutoSwitch.current = true;
+      return;
+    }
+
+    if ((activeTab === RECENT_TAB_ID || activeTab === STARRED_TAB_ID) && recentEmpty && starredEmpty) {
+      const extensionTab = extensionTabs.find((tab) => !tab.href);
+      if (extensionTab) {
+        setActiveTab(extensionTab.id);
+        didAutoSwitch.current = true;
+        return;
+      }
+    }
+  }, [recentLoading, starredLoading, recentDashboards, starredDashboards, extensionTabs, activeTab]);
 
   const builtInTabs: HomepageTab[] = [
     {
@@ -95,11 +130,11 @@ export function DashboardTabs() {
     },
   ];
 
-  const contentTabs = [...builtInTabs, ...extensionTabs.filter((tab) => tab.content)];
+  const contentTabs = [...builtInTabs, ...extensionTabs.filter((tab) => !tab.href)];
   const linkTabs = extensionTabs.filter((tab) => tab.href);
 
   return (
-    <Box backgroundColor="primary" borderRadius="default" padding={3} direction="column" display="flex" gap={2}>
+    <Stack direction="column" gap={2}>
       <TabsBar>
         {contentTabs.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -118,45 +153,47 @@ export function DashboardTabs() {
           <Tab key={tab.id} label={tab.label} icon={tab.icon} href={tab.href!} />
         ))}
       </TabsBar>
-      <TabContent className={styles.tabContent}>
-        <ScrollContainer showScrollIndicators maxHeight="256px" minHeight="256px">
-          {activeTab === RECENT_TAB_ID && (
-            <RecentDashboardsTab
-              dashboards={recentDashboards ?? []}
-              loading={recentLoading}
-              error={recentError}
-              retry={recentRetry}
-              foldersByUid={foldersByUid}
-            />
-          )}
-          {activeTab === STARRED_TAB_ID && (
-            <StarredDashboardsTab
-              dashboards={starredDashboards ?? []}
-              loading={starredLoading}
-              error={starredError}
-              retry={starredRetry}
-              foldersByUid={foldersByUid}
-            />
-          )}
-          {extensionTabs
-            .filter((tab) => tab.content && activeTab === tab.id)
-            .map((tab) => (
-              <div key={tab.id}>{tab.content}</div>
-            ))}
-        </ScrollContainer>
-      </TabContent>
 
-      {/* Render extension components (they return null, just register tabs) */}
-      {extensionComponents.map((Component, i) => (
-        <Component key={i} registerTab={registerTab} />
-      ))}
-    </Box>
+      {(activeTab === RECENT_TAB_ID || activeTab === STARRED_TAB_ID) && (
+        <TabContent className={styles.tabContent}>
+          <ScrollContainer showScrollIndicators maxHeight="256px" minHeight="256px">
+            {activeTab === RECENT_TAB_ID && (
+              <RecentDashboardsTab
+                dashboards={recentDashboards ?? []}
+                loading={recentLoading}
+                error={recentError}
+                retry={recentRetry}
+                foldersByUid={foldersByUid}
+                onStarChange={starredRetry}
+              />
+            )}
+            {activeTab === STARRED_TAB_ID && (
+              <StarredDashboardsTab
+                dashboards={starredDashboards ?? []}
+                loading={starredLoading}
+                error={starredError}
+                retry={starredRetry}
+                foldersByUid={foldersByUid}
+              />
+            )}
+          </ScrollContainer>
+        </TabContent>
+      )}
+
+      {/* Render extension component tabs without background + scroller */}
+      {extensionComponents
+        .filter((Component) => Component.meta.pluginId === SETUPGUIDE_PLUGIN_ID)
+        .map((Component, i) => (
+          <DashboardExtensionTab key={i} Component={Component} registerTab={registerTab} activeTab={activeTab} />
+        ))}
+    </Stack>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   tabContent: css({
     padding: 0,
+    borderRadius: theme.shape.radius.default,
   }),
   linkTabsSpacer: css({
     flex: 1,

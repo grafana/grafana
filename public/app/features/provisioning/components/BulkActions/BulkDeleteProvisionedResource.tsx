@@ -10,7 +10,7 @@ import { DescendantCount } from 'app/features/browse-dashboards/components/Brows
 import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
+import { isRootFolderUID } from 'app/features/search/constants';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { type StepStatusInfo } from '../../Wizard/types';
@@ -57,7 +57,11 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
       dashboardCount,
     });
 
-    // Create the delete job spec
+    // Create the delete job spec.
+    // TODO(grafana/git-ui-sync-project#1162): DeleteJobOptions has no
+    // `message` field on the backend yet — once it gains one, pass
+    // `withSavedByTrailer(<default or data.comment>)` so the
+    // Grafana-saved-by trailer rides through to the resulting git commit.
     const jobSpec: DeleteJobSpec = {
       action: 'delete',
       delete: {
@@ -140,7 +144,7 @@ export function BulkDeleteProvisionedResource({
   onDismiss,
 }: BulkActionProvisionResourceProps) {
   // Check if we're on the root browser dashboards page
-  const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
+  const isRootPage = isRootFolderUID(folderUid);
   const { selectedItemsRepoUID } = useSelectionRepoValidation(selectedItems);
 
   // Capture the repo UID so it survives selection state changes during/after job execution

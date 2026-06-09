@@ -35,13 +35,15 @@ on:
         description: 'The repository to create the security branch in (e.g., grafana/grafana-security-mirror)'
         required: true
 
-permissions:
-  contents: write
-  id-token: write
+permissions: {}
 
 jobs:
   main:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
+    permissions:
+      # Pushes use the app token via actions/checkout; GITHUB_TOKEN needs only OIDC for Vault.
+      contents: read
+      id-token: write
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
     steps:
@@ -49,7 +51,8 @@ jobs:
         id: get-github-app-token
         uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          github_app: grafana-delivery-bot
+          github_app: ${{ inputs.repository == 'grafana/grafana-security-mirror' && 'grafana-security-mirror-writer' || 'grafana-pr-automation' }}
+          permission_set: ${{ startsWith(github.ref_name, 'release-') && 'writer-release' || 'writer-main' }}
 
       - name: Checkout repository
         uses: actions/checkout@v5

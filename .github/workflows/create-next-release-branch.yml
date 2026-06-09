@@ -23,21 +23,47 @@ on:
         type: string
         required: true
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
   main:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+      id-token: write
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
     steps:
+      # Creating a ref in grafana/grafana requires workflows:write (the repo is too large
+      # for GitHub's pre-receive workflow-file scan to finish within its timeout, so any
+      # ref creation is rejected otherwise). grafana-writer is the only app installed with
+      # that scope, but it's only installed on grafana itself -- for grafana-enterprise we
+      # fall back to grafana-pr-automation.
+      - name: Compute app and permission_set
+        id: app-config
+        env:
+          OWNER_REPO: ${{ inputs.ownerRepo }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [[ "$OWNER_REPO" == "grafana/grafana" ]]; then
+            echo "github_app=grafana-writer" | tee -a "$GITHUB_OUTPUT"
+            scope_prefix="grafana-"
+          else
+            echo "github_app=grafana-pr-automation" | tee -a "$GITHUB_OUTPUT"
+            scope_prefix=""
+          fi
+          if [[ "$REF_NAME" == release-* ]]; then
+            tier="release"
+          else
+            tier="main"
+          fi
+          echo "permission_set=writer-${scope_prefix}${tier}" | tee -a "$GITHUB_OUTPUT"
       - name: Get GitHub App token
         id: get-github-app-token
         uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          github_app: grafana-delivery-bot
+          github_app: ${{ steps.app-config.outputs.github_app }}
+          permission_set: ${{ steps.app-config.outputs.permission_set }}
       - name: Create release branch
         id: branch
         uses: grafana/grafana-github-actions-go/bump-release@main # zizmor: ignore[unpinned-uses]

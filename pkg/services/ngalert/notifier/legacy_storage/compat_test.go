@@ -1,7 +1,6 @@
 package legacy_storage
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -10,111 +9,15 @@ import (
 	"github.com/grafana/alerting/definition"
 	"github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/notifytest"
-	emailV0 "github.com/grafana/alerting/receivers/email/v0mimir1"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/grafana/alerting/receivers/teams"
-	webhookV0 "github.com/grafana/alerting/receivers/webhook/v0mimir1"
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
-
-func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
-	t.Run("returns original pointer when receiver has only Grafana integrations", func(t *testing.T) {
-		receiver := &v1.PostableApiReceiver{
-			Receiver: definitions.Receiver{Name: "test"},
-			PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-					{UID: "grafana-uid", Name: "test", Type: "email"},
-				},
-			},
-		}
-		result, err := PostableMimirReceiverToPostableGrafanaReceiver(receiver)
-		require.NoError(t, err)
-		assert.Same(t, receiver, result)
-	})
-
-	t.Run("converts Mimir integrations to Grafana integrations", func(t *testing.T) {
-		wh := webhookV0.GetFullValidConfig()
-		receiver := &v1.PostableApiReceiver{
-			Receiver: definitions.Receiver{
-				Name:           "test-receiver",
-				WebhookConfigs: []*webhookV0.Config{&wh},
-			},
-		}
-
-		mimirConfigs, err := notify.ConfigReceiverToMimirIntegrations(receiver.Receiver)
-		require.NoError(t, err)
-		require.Len(t, mimirConfigs, 1)
-		expectedJSON, err := mimirConfigs[0].ConfigJSON()
-		require.NoError(t, err)
-
-		result, err := PostableMimirReceiverToPostableGrafanaReceiver(receiver)
-		require.NoError(t, err)
-		require.NotNil(t, result)
-		assert.NotSame(t, receiver, result)
-		require.Len(t, result.GrafanaManagedReceivers, 1)
-
-		converted := result.GrafanaManagedReceivers[0]
-		assert.Equal(t, "test-receiver", result.Name)
-		assert.Equal(t, "test-receiver", converted.Name)
-		assert.Equal(t, mimirIntegrationUID("test-receiver", "webhook", 0), converted.UID)
-		assert.JSONEq(t, string(expectedJSON), string(converted.Settings))
-		assert.False(t, converted.DisableResolveMessage)
-		assert.Nil(t, converted.SecureSettings)
-		assert.False(t, result.HasMimirIntegrations())
-	})
-
-	t.Run("existing Grafana integrations appear before converted Mimir ones", func(t *testing.T) {
-		wh := webhookV0.GetFullValidConfig()
-		grafanaRecv := &v1.PostableGrafanaReceiver{
-			UID:  "existing-uid",
-			Name: "existing",
-			Type: "email",
-		}
-		receiver := &v1.PostableApiReceiver{
-			Receiver: definitions.Receiver{
-				Name:           "mixed-receiver",
-				WebhookConfigs: []*webhookV0.Config{&wh},
-			},
-			PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{grafanaRecv},
-			},
-		}
-
-		result, err := PostableMimirReceiverToPostableGrafanaReceiver(receiver)
-		require.NoError(t, err)
-		require.Len(t, result.GrafanaManagedReceivers, 2)
-		assert.Same(t, grafanaRecv, result.GrafanaManagedReceivers[0])
-		assert.Equal(t, "webhook", result.GrafanaManagedReceivers[1].Type)
-	})
-
-	t.Run("assigns per-type UIDs to converted Mimir integrations", func(t *testing.T) {
-		// UIDs are indexed per integration type, so each type starts at 0.
-		em := emailV0.GetFullValidConfig()
-		wh := webhookV0.GetFullValidConfig()
-		receiver := &v1.PostableApiReceiver{
-			Receiver: definitions.Receiver{
-				Name:           "multi-receiver",
-				EmailConfigs:   []*emailV0.Config{&em},
-				WebhookConfigs: []*webhookV0.Config{&wh},
-			},
-		}
-
-		result, err := PostableMimirReceiverToPostableGrafanaReceiver(receiver)
-		require.NoError(t, err)
-		require.Len(t, result.GrafanaManagedReceivers, 2)
-
-		assert.Equal(t, mimirIntegrationUID("multi-receiver", "email", 0), result.GrafanaManagedReceivers[0].UID)
-		assert.Equal(t, mimirIntegrationUID("multi-receiver", "webhook", 0), result.GrafanaManagedReceivers[1].UID)
-	})
-}
 
 func TestPostableMimirReceiverToIntegrations(t *testing.T) {
 	t.Run("can convert all known types", func(t *testing.T) {
@@ -185,94 +88,4 @@ func TestManagedRouteToRoute(t *testing.T) {
 	assert.Equal(t, &ri, route.RepeatInterval)
 	assert.Len(t, route.Routes, 1)
 	assert.EqualValues(t, v1.Provenance("test"), route.Provenance)
-}
-
-func Test_InhibitRuleToInhibitionRule(t *testing.T) {
-	testRule := config.InhibitRule{
-		SourceMatchers: config.Matchers{
-			{
-				Type:  labels.MatchEqual,
-				Name:  "instance",
-				Value: "alertmanager-1",
-			},
-		},
-		TargetMatchers: config.Matchers{
-			{
-				Type:  labels.MatchEqual,
-				Name:  "instance",
-				Value: "alertmanager-2",
-			},
-		},
-		Equal: []string{
-			"service",
-		},
-	}
-
-	tt := []struct {
-		name        string
-		ruleName    string
-		provenance  v1.Provenance
-		inhibitRule config.InhibitRule
-		origin      models.ResourceOrigin
-		exp         *v1.InhibitionRule
-		expErr      error
-	}{
-		{
-			name:     "fails when name is empty",
-			ruleName: "  ",
-			expErr:   errors.New("inhibition rule name must not be empty"),
-		},
-		{
-			name:     "fails when name contains ':'",
-			ruleName: "a:b",
-			expErr:   errors.New("inhibition rule name cannot contain invalid character ':'"),
-		},
-		{
-			name:     "fails when name is not a valid dns 1123 subdomain",
-			ruleName: "_some_name",
-			expErr:   errors.New("inhibition rule name must be a valid DNS subdomain: a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')"),
-		},
-		{
-			name:     "fails when length of non-imported rule name is over UIDMaxLength limit",
-			ruleName: "some-really-long-inhibition-rule-name-001",
-			origin:   models.ResourceOriginGrafana,
-			expErr:   errors.New("inhibition rule name is too long (exceeds 40 characters)"),
-		},
-		{
-			name:        "allows length of imported rule name to be over UIDMaxLength limit",
-			ruleName:    "some-really-long-inhibition-rule-name-001",
-			provenance:  v1.Provenance(models.ProvenanceConvertedPrometheus),
-			origin:      models.ResourceOriginImported,
-			inhibitRule: testRule,
-			exp: &v1.InhibitionRule{
-				Name:        "some-really-long-inhibition-rule-name-001",
-				InhibitRule: testRule,
-				Provenance:  v1.Provenance(models.ProvenanceConvertedPrometheus),
-			},
-		},
-		{
-			name:        "converts model correctly when all validations passes",
-			ruleName:    "inhibition-rule-1",
-			origin:      models.ResourceOriginGrafana,
-			provenance:  v1.Provenance(models.ProvenanceNone),
-			inhibitRule: testRule,
-			exp: &v1.InhibitionRule{
-				Name:        "inhibition-rule-1",
-				InhibitRule: testRule,
-				Provenance:  v1.Provenance(models.ProvenanceNone),
-			},
-		},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			got, gotErr := InhibitRuleToInhibitionRule(tc.ruleName, tc.inhibitRule, tc.provenance)
-			if tc.expErr != nil {
-				require.EqualError(t, gotErr, tc.expErr.Error())
-			} else {
-				require.Nil(t, gotErr)
-			}
-			require.Equal(t, tc.exp, got)
-		})
-	}
 }

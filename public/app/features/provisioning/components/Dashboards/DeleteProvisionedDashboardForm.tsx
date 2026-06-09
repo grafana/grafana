@@ -19,6 +19,7 @@ import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestH
 import { type StatusInfo } from '../../types';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
@@ -104,6 +105,7 @@ export function DeleteProvisionedDashboardForm({
         resourceKind: 'dashboard',
         resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
         title: dashboard.state.title ?? '',
+        ...getCurrentCommitUser(),
       });
 
       try {

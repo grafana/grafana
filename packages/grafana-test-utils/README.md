@@ -22,3 +22,24 @@ Tests that an Observable emits the expected values in the correct order. This ma
 ### `toEmitValuesWith`
 
 Tests that an Observable emits values that satisfy custom expectations. This matcher collects all emitted values and passes them to a callback function where you can perform custom assertions.
+
+## Canvas snapshot tests & uPlot
+
+uPlot axis layout uses `measureText` from `@grafana/ui`. In JSDOM, `jest-canvas-mock` reports `TextMetrics.width === text.length`, which breaks axis sizing compared to the browser. Use `@grafana/test-utils/canvas` in `*.canvas.test.ts(x)` files:
+
+```ts
+import { measureText as uPlotAxisMeasureText } from '@grafana/ui';
+import { applyDefaultUPlotAxisMeasureTextMock } from '@grafana/test-utils/canvas';
+
+jest.mock('@grafana/ui/src/utils/measureText', () =>
+  require('@grafana/test-utils/canvas').createGrafanaUiMeasureTextJestMock()
+);
+
+beforeEach(() => {
+  applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
+});
+```
+
+Override widths in a single test with `uPlotAxisMeasureText.mockImplementationOnce(...)`; the default is restored in `beforeEach`.
+
+Inside `packages/grafana-ui`, mock the same relative path the component uses (e.g. `'../../../../utils/measureText'`) and pass it to `createGrafanaUiMeasureTextJestMock`.

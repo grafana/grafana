@@ -190,7 +190,10 @@ jobs:
             exit 1
         fi
   lint-frontend-openapi:
-    # Run this workflow for OSS only
+    needs: detect-changes
+    # Run this workflow for OSS only, and only when frontend code or this workflow
+    # file has changed (skips unrelated .github/** changes).
+    if: needs.detect-changes.outputs.changed == 'true'
     permissions:
       contents: read
       id-token: write
@@ -352,6 +355,36 @@ jobs:
           diff -u /tmp/main-circular-clean.txt /tmp/pr-circular-clean.txt || true
           exit 1
         fi
+  lint-knip:
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+      id-token: write
+    needs:
+      - detect-changes
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Get GitHub App token
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      with:
+        github_app: grafana-ci-bot
+    - name: Setup Enterprise
+      uses: ./.github/actions/setup-enterprise
+      with:
+        token: ${{ steps.get-github-app-token.outputs.token }}
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
+    - name: Run knip
+      # TODO reduce this to just `yarn run knip`
+      run: |
+        yarn run knip --workspace '@grafana/*'
+        yarn run knip --workspace '@test-plugins/*'
+        yarn run knip --workspace '@grafana-plugins/*'
 
   yarn-install-validation:
     needs:
@@ -373,3 +406,12 @@ jobs:
       run: yarn install --immutable --check-cache
       env:
         YARN_ENABLE_HARDENED_MODE: 1
+
+    - name: Check yarn.lock is deduplicated
+      id: yarn-dedupe
+      run: yarn dedupe --check
+    - name: Report yarn dedupe failure
+      if: failure() && steps.yarn-dedupe.outcome == 'failure'
+      run: |
+        echo "::error::yarn.lock contains duplicate dependencies. Run 'yarn dedupe' locally, commit the updated yarn.lock, and push again."
+        exit 1
