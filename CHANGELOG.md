@@ -1,3 +1,22 @@
+<!-- 11.6.15 START -->
+
+# 11.6.15 (2026-06-09)
+
+### Features and enhancements
+
+- **Docker:** Bump Alpine-based images to 3.23.4 [#123032](https://github.com/grafana/grafana/pull/123032), [@Proximyst](https://github.com/Proximyst)
+- **Go:** Update version to 1.26.3 [#124459](https://github.com/grafana/grafana/pull/124459), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **DashboardDS:** Fix Mixed panels not updating on time-range change with stale upstreams [#124890](https://github.com/grafana/grafana/pull/124890), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Security**: CVE-2026-33382
+- **Security**: CVE-2026-42127
+- **Security**: CVE-2026-42129
+- **Security**: CVE-2026-10601
+- **Security**: CVE-2026-8609
+
+<!-- 11.6.15 END -->
 <!-- 11.6.14+security-01 START -->
 
 # 11.6.14+security-01 (2026-03-25)
