@@ -974,7 +974,13 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		return models.AlertRule{}, err
 	}
 	if storedManager.Kind != manager.Kind && storedManager.Kind != utils.ManagerKindUnknown {
-		return models.AlertRule{}, fmt.Errorf("cannot change manager from '%s' to '%s'", storedManager.Kind, manager.Kind)
+		return models.AlertRule{}, errProvenanceMismatch.Build(errutil.TemplateData{
+			Public: map[string]any{
+				"ProvidedProvenance": models.ManagerPropertiesToProvenance(manager),
+				"StoredProvenance":   models.ManagerPropertiesToProvenance(storedManager),
+				"Operation":          "update",
+			},
+		})
 	}
 	if rule.NotificationSettings != nil {
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
