@@ -222,7 +222,7 @@ Your data sources, including credentials, are migrated securely and seamlessly t
 
 Resolve any data source configuration errors on your self-managed instance before you migrate. This helps ensure that error-free data sources appear in Grafana Cloud.
 
-If your dashboards use data sources on a private network that aren't accessible over the public internet, configure [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) after migration. PDC lets Grafana Cloud query data sources in your private network without opening inbound access. Confirm that your data source type supports PDC, and configure each applicable data source to connect through PDC after the migration completes.
+If your dashboards use data sources on a private network that aren't accessible over the public internet, configure [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) after migration. PDC lets Grafana Cloud query data sources in your private network without opening inbound access. Confirm that your data source type supports PDC, and configure each applicable data source to connect through PDC after completing the migration.
 
 ### Plugins
 
