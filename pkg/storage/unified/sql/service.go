@@ -211,7 +211,7 @@ func newService(
 	embedder *embedder.Embedder,
 	searchClient resourcepb.ResourceIndexClient,
 ) *service {
-	authn := grpcutils.NewAuthenticator(ReadGrpcServerConfig(cfg), tracer)
+	authn := newGrpcAuthenticator(cfg, tracer)
 
 	return &service{
 		backend:            backend,
@@ -374,7 +374,15 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 		return err
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex)
+	var snapshotStore search.RemoteIndexStore
+	if s.cfg.IndexSnapshotEnabled && s.cfg.IndexSnapshotStorageKV {
+		snapshotStore, err = buildKVSnapshotStore(s.cfg, s.backend, s.log)
+		if err != nil {
+			return err
+		}
+	}
+
+	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex, snapshotStore)
 	if err != nil {
 		return err
 	}
@@ -461,6 +469,14 @@ func ReadGrpcServerConfig(cfg *setting.Cfg) *grpcutils.AuthenticatorConfig {
 		AllowedAudiences: section.Key("allowed_audiences").Strings(","),
 		AllowInsecure:    cfg.Env == setting.Dev,
 	}
+}
+
+func newGrpcAuthenticator(cfg *setting.Cfg, tracer trace.Tracer) interceptors.AuthenticatorFunc {
+	unsafe := cfg.SectionWithEnvOverrides("grpc_server_authentication").Key("unsafe").MustBool(false)
+	if unsafe && cfg.Env == setting.Dev {
+		return grpcutils.NewUnsafeAuthenticator(tracer)
+	}
+	return grpcutils.NewAuthenticator(ReadGrpcServerConfig(cfg), tracer)
 }
 
 func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecyclerConfig, error) {
@@ -566,4 +582,41 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	resourcepb.RegisterResourceIndexServer(srv, handler)
 	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
+}
+
+// buildKVSnapshotStore wires a KVRemoteIndexStore that shares the KV
+// store and lease manager with the storage backend. The caller is
+// responsible for ensuring cfg.IndexSnapshotStorageKV is true. This
+// function validates the remaining preconditions and fails loudly so
+// misconfiguration is caught at process start rather than at the first
+// snapshot operation.
+func buildKVSnapshotStore(cfg *setting.Cfg, backend resource.StorageBackend, logger log.Logger) (search.RemoteIndexStore, error) {
+	if cfg.IndexSnapshotBucketURL != "" {
+		return nil, fmt.Errorf("index_snapshot_storage_kv and index_snapshot_bucket_url are mutually exclusive")
+	}
+	if !cfg.EnableKVLeases {
+		return nil, fmt.Errorf("index_snapshot_storage_kv requires enable_kv_leases")
+	}
+
+	kvBackend, ok := backend.(resource.KVBackend)
+	if !ok {
+		return nil, fmt.Errorf("index_snapshot_storage_kv requires a KV-backed storage backend (got %T)", backend)
+	}
+
+	leaseMgr := kvBackend.LeaseManager()
+	if leaseMgr == nil {
+		// Defensive: enable_kv_leases above should already have triggered
+		// lease manager creation in the backend.
+		return nil, fmt.Errorf("storage backend has no lease manager; cannot use index_snapshot_storage_kv")
+	}
+
+	store, err := search.NewKVRemoteIndexStore(search.KVRemoteIndexStoreConfig{
+		KV:           kvBackend.KV(),
+		LeaseManager: leaseMgr,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("building KV remote index store: %w", err)
+	}
+	logger.Info("using KV-backed snapshot store for search indexes")
+	return store, nil
 }
