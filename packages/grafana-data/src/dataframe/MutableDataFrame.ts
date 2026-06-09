@@ -5,7 +5,8 @@ import { type Field, type DataFrame, type DataFrameDTO, type FieldDTO, FieldType
 import { makeFieldParser } from '../utils/fieldParser';
 import { FunctionalVector } from '../vector/FunctionalVector';
 
-import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
+import { guessFieldTypeFromValue, guessFieldTypeForField } from './guessFieldType';
+import { toDataFrameDTO } from './processDataFrame';
 
 /** @deprecated */
 export type MutableField<T = any> = Field<T>;

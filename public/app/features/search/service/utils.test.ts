@@ -222,7 +222,6 @@ describe('filterSearchResults deletedby sort', () => {
       resource: 'dashboards',
       name: title.toLowerCase(),
       title,
-      location: 'general',
       folder: 'general',
       tags: [],
       field,

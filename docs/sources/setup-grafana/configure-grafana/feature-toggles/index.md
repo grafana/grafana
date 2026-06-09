@@ -32,14 +32,17 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `awsDatasourcesTempCredentials`              | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                             | Yes                |
 | `provisioning`                               | Enables Git Sync and as-code provisioning for Grafana resources                                                                                               | Yes                |
 | `provisioningFolderMetadata`                 | Allow setting folder metadata for provisioned folders                                                                                                         | Yes                |
-| `awsAsyncQueryCaching`                       | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled                            | Yes                |
+| `awsAsyncQueryCaching`                       | Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled                           | Yes                |
 | `dashgpt`                                    | Enable AI powered features in dashboards                                                                                                                      | Yes                |
+| `kubernetesShortURLs`                        | Enables k8s short URL API and uses it under the hood when handling legacy /api                                                                                | Yes                |
+| `useKubernetesShortURLsAPI`                  | Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs                                                     | Yes                |
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
+| `annotationsClustering`                      | Enables annotation clustering and switches to refactored annotation code                                                                                      | Yes                |
 | `dashboardNewLayouts`                        | Enables new dashboard layouts                                                                                                                                 | Yes                |
 | `dashboardDefaultLayoutSelector`             | Enables default layout selector in dashboard settings                                                                                                         | Yes                |
-| `sceneCsvExport`                             | Enables CSV export using scenes dashboard architecture                                                                                                        | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
+| `sqlExpressions`                             | Enables SQL Expressions, which can execute SQL queries against data source results.                                                                           | Yes                |
 | `cloudWatchNewLabelParsing`                  | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
 | `playlistsRBAC`                              | Enables RBAC for playlists                                                                                                                                    |                    |
 | `newUnconfiguredPanel`                       | Enables the new unconfigured panel experience                                                                                                                 | Yes                |
@@ -52,8 +55,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `improvedExternalSessionHandling`            | Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.                            | Yes                |
 | `useSessionStorageForRedirection`            | Use session storage for handling the redirection after login                                                                                                  | Yes                |
 | `pluginsSriChecks`                           | Enables SRI checks for plugin assets                                                                                                                          |                    |
-| `timeRangePan`                               | Enables time range panning functionality                                                                                                                      | Yes                |
-| `newTimeRangeZoomShortcuts`                  | Enables new keyboard shortcuts for time range zoom operations                                                                                                 | Yes                |
 | `azureMonitorDisableLogLimit`                | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                                              |                    |
 | `enableSCIM`                                 | Enables SCIM support for user and group management                                                                                                            | Yes                |
 | `alertingUIOptimizeReducer`                  | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                                                      | Yes                |
@@ -68,13 +69,15 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingImportYAMLUI`                       | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                             | Enables unified navbars                                                                                                                                       |                    |
 | `grafanaAssistantInProfilesDrilldown`        | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
-| `restoreDashboards`                          | Enables restore deleted dashboards feature                                                                                                                    | Yes                |
 | `sharingDashboardImage`                      | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
+| `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                                          | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
-| `newVizSuggestions`                          | Enable new visualization suggestions                                                                                                                          | Yes                |
-| `externalVizSuggestions`                     | Enable all plugins to supply visualization suggestions (including 3rd party plugins)                                                                          | Yes                |
+| `panelStyleActions`                          | Enable style actions (copy/paste) in the panel editor                                                                                                         | Yes                |
+| `vizPresets`                                 | Enable visualization presets                                                                                                                                  | Yes                |
+| `vizLegendFacetedFilter`                     | Enable faceted labels filter for series visibility in the legend                                                                                              | Yes                |
 | `opentsdbBackendMigration`                   | Run queries through the data source backend                                                                                                                   |                    |
 | `multiPropsVariables`                        | Enables support for variables whose values can have multiple properties                                                                                       | Yes                |
+| `dashboardSectionVariables`                  | Enables support for section level variables (rows and tabs)                                                                                                   | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                                            |                    |
 
 ## Public preview feature toggles
@@ -87,7 +90,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `refactorVariablesTimeRange`      | Refactor time range variables flow to reduce number of API calls made when query variables are chained |
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
-| `annotationsClustering`           | Enables annotation clustering and switches to refactored annotation code                               |
 | `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                            |
 | `feedbackButton`                  | Enables the feedback button in the dashboard edit sidebar                                              |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |
@@ -95,23 +97,24 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `timeComparison`                  | Enables time comparison option in supported panels                                                     |
 | `secretsManagementAppPlatformUI`  | Enable the secrets management app platform UI                                                          |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |
-| `sqlExpressions`                  | Enables SQL Expressions, which can execute SQL queries against data source results.                    |
 | `queryLibrary`                    | Enables Saved queries (query library) feature                                                          |
 | `savedQueriesRBAC`                | Enables Saved queries (query library) RBAC permissions                                                 |
 | `newSavedQueriesExperience`       | Enables the new Saved queries (query library) modal experience                                         |
 | `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                                     |
+| `groupToNestedTableV2`            | Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation         |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
 | `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                                       |
 | `teamFolders`                     | Enables team folders functionality                                                                     |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
-| `vizPresets`                      | Enable visualization presets                                                                           |
 | `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)                       |
+| `heatmapRowsAxisOptions`          | Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)                 |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
-| `newPanelPadding`                 | Increases panel padding globally                                                                       |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                               |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
 | `profilesExemplars`               | Enables profiles exemplars support in profiles drilldown                                               |
+| `pyroscopeUTF8LabelNames`         | Enables support for UTF-8 label names in Pyroscope label selectors                                     |
+| `flameGraphWithCallTree`          | Enables the new Flame Graph UI containing the Call Tree view                                           |
 | `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session                  |
 
 ## Development feature toggles

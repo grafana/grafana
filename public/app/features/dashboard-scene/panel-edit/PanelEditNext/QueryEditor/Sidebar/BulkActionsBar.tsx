@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { type ReactNode, useState } from 'react';
 import { useMeasure } from 'react-use';
 
@@ -59,7 +59,7 @@ interface BulkQueryActionsProps {
 }
 
 function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
-  const { selectedQueryRefIds, clearSelection } = useQueryEditorUIContext();
+  const { selectedQueryRefIds, setMultiSelectMode } = useQueryEditorUIContext();
   const { bulkDeleteQueries, bulkToggleQueriesHide, bulkChangeDataSource } = useActionsContext();
   const { queries } = useQueryRunnerContext();
 
@@ -75,13 +75,14 @@ function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
   const handleConfirmedDelete = () => {
     bulkDeleteQueries(selectedQueryRefIds);
     setShowDeleteConfirm(false);
-    clearSelection();
+    setMultiSelectMode(false);
   };
 
+  // In-place modifications (data source change, hide/show) keep the selection and toolbar so the
+  // user can keep operating on the same set. Only destructive Delete exits multi-select mode.
   const handleDatasourceChange = async (settings: DataSourceInstanceSettings) => {
     await bulkChangeDataSource(selectedQueryRefIds, settings);
     setShowDsModal(false);
-    clearSelection();
   };
 
   return (
@@ -127,8 +128,10 @@ function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
 
       <ConfirmModal
         isOpen={showDeleteConfirm}
-        title={t('query-editor-next.bulk-actions.delete-confirm-title', 'Delete {{count}} items?', {
+        title={t('query-editor-next.bulk-actions.delete-confirm-title', '', {
           count: selectedQueryRefIds.length,
+          defaultValue_one: 'Delete {{count}} item?',
+          defaultValue_other: 'Delete {{count}} items?',
         })}
         body={undefined}
         description={t('query-editor-next.bulk-actions.delete-confirm-body', 'This action cannot be undone.')}
@@ -145,7 +148,7 @@ interface BulkTransformationActionsProps {
 }
 
 function BulkTransformationActions({ barWidth }: BulkTransformationActionsProps) {
-  const { selectedTransformationIds, clearSelection } = useQueryEditorUIContext();
+  const { selectedTransformationIds, setMultiSelectMode } = useQueryEditorUIContext();
   const { bulkDeleteTransformations, bulkToggleTransformationsDisabled } = useActionsContext();
   const { transformations } = usePanelContext();
 
@@ -161,7 +164,7 @@ function BulkTransformationActions({ barWidth }: BulkTransformationActionsProps)
   const handleConfirmedDelete = () => {
     bulkDeleteTransformations(selectedTransformationIds);
     setShowDeleteConfirm(false);
-    clearSelection();
+    setMultiSelectMode(false);
   };
 
   return (
@@ -185,11 +188,11 @@ function BulkTransformationActions({ barWidth }: BulkTransformationActionsProps)
 
       <ConfirmModal
         isOpen={showDeleteConfirm}
-        title={t(
-          'query-editor-next.bulk-actions.delete-transformations-confirm-title',
-          'Delete {{count}} transformations?',
-          { count: selectedTransformationIds.length }
-        )}
+        title={t('query-editor-next.bulk-actions.delete-transformations-confirm-title', '', {
+          count: selectedTransformationIds.length,
+          defaultValue_one: 'Delete {{count}} transformation?',
+          defaultValue_other: 'Delete {{count}} transformations?',
+        })}
         body={undefined}
         description={t('query-editor-next.bulk-actions.delete-confirm-body', 'This action cannot be undone.')}
         confirmText={t('query-editor-next.bulk-actions.delete', 'Delete')}
@@ -200,51 +203,117 @@ function BulkTransformationActions({ barWidth }: BulkTransformationActionsProps)
   );
 }
 
-export function BulkActionsBar() {
+interface BulkActionsBarProps {
+  /** Optional class for layout/animation overrides applied by the consumer. */
+  className?: string;
+}
+
+interface BulkActionsVisibilityOptions {
+  selectedQueryCount: number;
+  selectedTransformationCount: number;
+  multiSelectMode: boolean;
+}
+
+interface BulkActionsVisibility {
+  hasQueryActions: boolean;
+  hasTransformationActions: boolean;
+  shouldRender: boolean;
+}
+
+// Bulk actions are only available in explicit multi-select mode. Exported so the parent
+// (SidebarFooter) can ternary-render the bar vs. counts off the same rule.
+export function getBulkActionsVisibility({
+  selectedQueryCount,
+  selectedTransformationCount,
+  multiSelectMode,
+}: BulkActionsVisibilityOptions): BulkActionsVisibility {
+  const hasQueryActions = multiSelectMode && selectedQueryCount > 0;
+  const hasTransformationActions = multiSelectMode && selectedTransformationCount > 0;
+
+  return {
+    hasQueryActions,
+    hasTransformationActions,
+    shouldRender: hasQueryActions || hasTransformationActions,
+  };
+}
+
+export function BulkActionsBar({ className }: BulkActionsBarProps = {}) {
   const styles = useStyles2(getStyles);
   const [barRef, { width: barWidth }] = useMeasure<HTMLDivElement>();
-  const { selectedQueryRefIds, selectedTransformationIds, clearSelection } = useQueryEditorUIContext();
+  const { selectedQueryRefIds, selectedTransformationIds, setMultiSelectMode, multiSelectMode } =
+    useQueryEditorUIContext();
 
-  const hasMultipleQueriesSelected = selectedQueryRefIds.length >= 2;
-  const hasMultipleTransformationsSelected = selectedTransformationIds.length >= 2;
+  const { hasQueryActions, hasTransformationActions, shouldRender } = getBulkActionsVisibility({
+    selectedQueryCount: selectedQueryRefIds.length,
+    selectedTransformationCount: selectedTransformationIds.length,
+    multiSelectMode,
+  });
 
-  if (!hasMultipleQueriesSelected && !hasMultipleTransformationsSelected) {
+  if (!shouldRender) {
     return null;
   }
+
+  const handleClear = () => {
+    setMultiSelectMode(false);
+  };
 
   return (
     <div
       ref={barRef}
-      className={styles.bar}
+      className={cx(styles.bar, className)}
       role="toolbar"
       aria-label={t('query-editor-next.bulk-actions.toolbar-label', 'Bulk actions')}
     >
-      {hasMultipleQueriesSelected && <BulkQueryActions barWidth={barWidth} />}
-      {hasMultipleTransformationsSelected && <BulkTransformationActions barWidth={barWidth} />}
-      <Button
-        size="sm"
-        variant="secondary"
-        fill="text"
-        icon="times"
-        onClick={clearSelection}
-        tooltip={t('query-editor-next.bulk-actions.clear-selection', 'Clear selection')}
-        aria-label={t('query-editor-next.bulk-actions.clear-selection', 'Clear selection')}
-        className={styles.clearButton}
-      />
+      <div className={styles.actionsScroll}>
+        {hasQueryActions && <BulkQueryActions barWidth={barWidth} />}
+        {hasTransformationActions && <BulkTransformationActions barWidth={barWidth} />}
+      </div>
+      <div className={styles.clearButtonWrapper}>
+        <Button
+          size="sm"
+          variant="secondary"
+          fill="text"
+          icon="times"
+          onClick={handleClear}
+          tooltip={t('query-editor-next.bulk-actions.clear-selection', 'Clear selection')}
+          aria-label={t('query-editor-next.bulk-actions.clear-selection', 'Clear selection')}
+        />
+      </div>
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   bar: css({
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  actionsScroll: css({
+    flex: 1,
+    minWidth: 0,
+    position: 'relative',
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(0.5),
-    padding: theme.spacing(0.75, 1.5),
-    background: theme.colors.background.canvas,
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      bottom: 0,
+      width: theme.spacing(4),
+      background: `linear-gradient(to right, transparent, ${theme.colors.background.primary})`,
+      pointerEvents: 'none',
+    },
   }),
-  clearButton: css({
-    marginLeft: 'auto',
+  clearButtonWrapper: css({
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
   }),
 });

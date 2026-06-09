@@ -31,9 +31,55 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
 
       // Clicking a panel should scroll that panel in view
-      await expect(page.getByText('Dashboard panel 48')).toBeHidden();
+      await expect(page.getByText('Dashboard panel 48')).not.toBeInViewport();
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Panel #48')).click();
-      await expect(page.getByText('Dashboard panel 48')).toBeVisible();
+      await expect(page.getByText('Dashboard panel 48')).toBeInViewport();
+    });
+
+    test('outline expanded state persists after closing and reopening the pane', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+    }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
+
+      const outlineTree = page.getByRole('tree');
+      const emptyIndicator = outlineTree.getByText('(empty)').first();
+
+      await expect(emptyIndicator).not.toBeVisible();
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.node('Variables')).click();
+      await expect(emptyIndicator).toBeVisible();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
+      await expect(outlineTree).not.toBeVisible();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
+      await expect(emptyIndicator).toBeVisible();
+    });
+
+    test('outline expanded state persists after discarding edit mode changes', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+    }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
+
+      const outlineTree = page.getByRole('tree');
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.node('Variables')).click();
+      await expect(outlineTree.getByText('(empty)').first()).toBeVisible();
+
+      // Exit edit mode
+      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+
+      // Re-enter edit mode
+      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
+      await expect(outlineTree.getByText('(empty)').first()).toBeVisible();
     });
   }
 );

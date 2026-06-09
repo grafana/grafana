@@ -7,7 +7,17 @@ package embedder
 
 import (
 	"context"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder")
 
 // VectorType is dense or sparse. We only do dense in this package.
 type VectorType string
@@ -17,7 +27,7 @@ const (
 )
 
 // DistanceMetric is how the vector store compares embeddings. Recorded on
-// the Embedder so the orchestrator and search side stay in sync.
+// the Embedder so the resource embedder and search side stay in sync.
 type DistanceMetric string
 
 const (
@@ -95,6 +105,52 @@ type Embedder struct {
 // provider doesn't already.
 func (e Embedder) ShouldNormalize() bool {
 	return e.VectorType == VectorTypeDense && e.Metric == CosineDistance && !e.Normalized
+}
+
+// Instrument wraps a TextEmbedder so each EmbedText call emits an OTel
+// span and (optionally) a latency histogram observation. The provider
+// call is the dominant latency source on every path that touches an
+// embedder (VectorSearch query embed, reconciler + backfiller document
+// batches), so wrapping here gives a single diagnostic anchor.
+//
+// The wrapped embedder is returned as a plain TextEmbedder so the caller
+// can assign it directly to Embedder.TextEmbedder — no special integration
+// with the Embedder struct required. duration may be nil; the span is
+// still emitted in that case.
+func Instrument(inner TextEmbedder, model string, duration *prometheus.HistogramVec) TextEmbedder {
+	return &instrumentedTextEmbedder{inner: inner, model: model, duration: duration}
+}
+
+type instrumentedTextEmbedder struct {
+	inner    TextEmbedder
+	model    string
+	duration *prometheus.HistogramVec
+}
+
+func (i *instrumentedTextEmbedder) EmbedText(ctx context.Context, input EmbedTextInput) (EmbedTextOutput, error) {
+	ctx, span := tracer.Start(ctx, "unified.embedder.EmbedText")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("model", i.model),
+		attribute.String("task", string(input.Task)),
+		attribute.Int("input_count", len(input.Texts)),
+	)
+
+	start := time.Now()
+	out, err := i.inner.EmbedText(ctx, input)
+	status := "success"
+	if err != nil {
+		status = "error"
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+	if i.duration != nil {
+		metricutil.ObserveWithExemplar(ctx,
+			i.duration.WithLabelValues(i.model, string(input.Task), status),
+			time.Since(start).Seconds(),
+		)
+	}
+	return out, err
 }
 
 // Registry is a name → Embedder lookup, populated at wiring time. Multiple

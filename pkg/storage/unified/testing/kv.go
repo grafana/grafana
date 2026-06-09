@@ -491,6 +491,19 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 		assert.Equal(t, namespacedKeys(nsPrefix, []string{"a2", "a1"}), keys)
 	})
 
+	t.Run("keys descending with range keeps end key exclusive", func(t *testing.T) {
+		var keys []string //nolint:prealloc
+		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
+			StartKey: namespacedKey(nsPrefix, "a2"),
+			EndKey:   namespacedKey(nsPrefix, "b2"),
+			Sort:     resource.SortOrderDesc,
+		}) {
+			require.NoError(t, err)
+			keys = append(keys, k)
+		}
+		assert.Equal(t, namespacedKeys(nsPrefix, []string{"b1", "a2"}), keys)
+	})
+
 	t.Run("keys descending with limit", func(t *testing.T) {
 		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
@@ -1063,6 +1076,25 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		value, err := io.ReadAll(reader)
 		require.NoError(t, err)
 		assert.Equal(t, "updated-value", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("batch update succeeds for existing key with same value", func(t *testing.T) {
+		saveKVHelper(t, kv, ctx, section, nk("update-same-value-key"), strings.NewReader("same-value"))
+
+		ops := []resource.BatchOp{
+			{Mode: kvpkg.BatchOpUpdate, Key: nk("update-same-value-key"), Value: []byte("same-value")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.NoError(t, err)
+
+		reader, err := kv.Get(ctx, section, nk("update-same-value-key"))
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "same-value", string(value))
 		err = reader.Close()
 		require.NoError(t, err)
 	})

@@ -16,12 +16,15 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
+
+func testPointer[T any](value T) *T {
+	return &value
+}
 
 func TestQuery_handleGetLogEvents_passes_nil_start_and_end_times_to_GetLogEvents(t *testing.T) {
 	origNewCWLogsClient := NewCWLogsClient
@@ -118,8 +121,8 @@ func TestQuery_GetLogEvents_returns_response_from_GetLogEvents_to_data_frame_fie
 	cli = &mocks.MockLogEvents{}
 	cli.On("GetLogEvents", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.GetLogEventsOutput{
 		Events: []cloudwatchlogstypes.OutputLogEvent{{
-			Message:   utils.Pointer("some message"),
-			Timestamp: utils.Pointer(int64(15)),
+			Message:   new("some message"),
+			Timestamp: new(int64(15)),
 		}}}, nil)
 
 	resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
@@ -148,7 +151,7 @@ func TestQuery_GetLogEvents_returns_response_from_GetLogEvents_to_data_frame_fie
 	assert.True(t, ok)
 
 	expectedTsField := data.NewField("ts", nil, []time.Time{time.UnixMilli(15).UTC()})
-	expectedMessageField := data.NewField("line", nil, []*string{utils.Pointer("some message")})
+	expectedMessageField := data.NewField("line", nil, []*string{new("some message")})
 	expectedTsField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
 	assert.Equal(t, []*data.Field{expectedTsField, expectedMessageField}, respA.Frames[0].Fields)
 }
@@ -1437,7 +1440,7 @@ func TestBuildSourceClause(t *testing.T) {
 		"namePrefix with single prefix": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
-					LogsQueryScope:   utils.Pointer(dataquery.LogsQueryScopeNamePrefix),
+					LogsQueryScope:   new(dataquery.LogsQueryScopeNamePrefix),
 					LogGroupPrefixes: []string{"/aws/lambda"},
 				},
 			},
@@ -1449,7 +1452,7 @@ func TestBuildSourceClause(t *testing.T) {
 		"namePrefix with multiple prefixes": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
-					LogsQueryScope:   utils.Pointer(dataquery.LogsQueryScopeNamePrefix),
+					LogsQueryScope:   new(dataquery.LogsQueryScopeNamePrefix),
 					LogGroupPrefixes: []string{"/aws/lambda", "/aws/apigateway"},
 				},
 			},
@@ -1461,7 +1464,7 @@ func TestBuildSourceClause(t *testing.T) {
 		"allLogGroups ignores leftover prefixes": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
-					LogsQueryScope:   utils.Pointer(dataquery.LogsQueryScopeAllLogGroups),
+					LogsQueryScope:   new(dataquery.LogsQueryScopeAllLogGroups),
 					LogGroupPrefixes: []string{"/aws/lambda"},
 				},
 			},
@@ -1473,8 +1476,8 @@ func TestBuildSourceClause(t *testing.T) {
 		"allLogGroups with INFREQUENT_ACCESS class": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
-					LogsQueryScope: utils.Pointer(dataquery.LogsQueryScopeAllLogGroups),
-					LogGroupClass:  utils.Pointer(dataquery.LogGroupClassINFREQUENTACCESS),
+					LogsQueryScope: testPointer(dataquery.LogsQueryScopeAllLogGroups),
+					LogGroupClass:  testPointer(dataquery.LogGroupClassINFREQUENTACCESS),
 				},
 			},
 			includeAccounts:       false,
@@ -1485,8 +1488,8 @@ func TestBuildSourceClause(t *testing.T) {
 		"allLogGroups with STANDARD class (should be omitted)": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
-					LogsQueryScope: utils.Pointer(dataquery.LogsQueryScopeAllLogGroups),
-					LogGroupClass:  utils.Pointer(dataquery.LogGroupClassSTANDARD),
+					LogsQueryScope: testPointer(dataquery.LogsQueryScopeAllLogGroups),
+					LogGroupClass:  testPointer(dataquery.LogGroupClassSTANDARD),
 				},
 			},
 			includeAccounts:       false,
@@ -1497,7 +1500,7 @@ func TestBuildSourceClause(t *testing.T) {
 		"allLogGroups with account identifiers when includeAccounts is true": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
-					LogsQueryScope:     utils.Pointer(dataquery.LogsQueryScopeAllLogGroups),
+					LogsQueryScope:     testPointer(dataquery.LogsQueryScopeAllLogGroups),
 					SelectedAccountIds: []string{"123456789012", "987654321098"},
 				},
 			},
@@ -1509,7 +1512,7 @@ func TestBuildSourceClause(t *testing.T) {
 		"allLogGroups with account identifiers when includeAccounts is false (non-monitoring account)": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
-					LogsQueryScope:     utils.Pointer(dataquery.LogsQueryScopeAllLogGroups),
+					LogsQueryScope:     testPointer(dataquery.LogsQueryScopeAllLogGroups),
 					SelectedAccountIds: []string{"123456789012", "987654321098"},
 				},
 			},
@@ -1521,9 +1524,9 @@ func TestBuildSourceClause(t *testing.T) {
 		"with all options and includeAccounts true": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
-					LogsQueryScope:     utils.Pointer(dataquery.LogsQueryScopeNamePrefix),
+					LogsQueryScope:     new(dataquery.LogsQueryScopeNamePrefix),
 					LogGroupPrefixes:   []string{"/aws/lambda"},
-					LogGroupClass:      utils.Pointer(dataquery.LogGroupClassINFREQUENTACCESS),
+					LogGroupClass:      new(dataquery.LogGroupClassINFREQUENTACCESS),
 					SelectedAccountIds: []string{"123456789012"},
 				},
 			},
@@ -1535,9 +1538,9 @@ func TestBuildSourceClause(t *testing.T) {
 		"with all options but includeAccounts false": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
-					LogsQueryScope:     utils.Pointer(dataquery.LogsQueryScopeNamePrefix),
+					LogsQueryScope:     new(dataquery.LogsQueryScopeNamePrefix),
 					LogGroupPrefixes:   []string{"/aws/lambda"},
-					LogGroupClass:      utils.Pointer(dataquery.LogGroupClassINFREQUENTACCESS),
+					LogGroupClass:      new(dataquery.LogGroupClassINFREQUENTACCESS),
 					SelectedAccountIds: []string{"123456789012"},
 				},
 			},

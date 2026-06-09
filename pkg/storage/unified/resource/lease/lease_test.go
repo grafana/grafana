@@ -9,16 +9,86 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	test "github.com/grafana/grafana/pkg/storage/unified/testing"
 )
 
 func TestLease(t *testing.T) {
-	t.Skip("not implemented yet")
 	test.RunLeaseTest(t, func(ctx context.Context) kv.KV {
 		return newMapKV()
 	})
+}
+
+func TestAcquireNameValidation(t *testing.T) {
+	m := lease.NewManager(newMapKV(), "holder-validation", nil, lease.WithGarbageCollectionDisabled)
+
+	t.Run("invalid keys are rejected", func(t *testing.T) {
+		for _, name := range []string{"", "invalid key", "invalid\nkey"} {
+			l, err := m.Acquire(t.Context(), name)
+			require.Error(t, err)
+			require.ErrorContains(t, err, "invalid lease name")
+			require.Nil(t, l)
+		}
+	})
+
+	t.Run("tilde is rejected", func(t *testing.T) {
+		l, err := m.Acquire(t.Context(), "validation/with~tilde")
+		require.Error(t, err)
+		require.ErrorContains(t, err, "not allowed")
+		require.Nil(t, l)
+	})
+
+	t.Run("using a name in the internal prefix", func(t *testing.T) {
+		l, err := m.Acquire(t.Context(), "lease-internal/test")
+		require.ErrorContains(t, err, "cannot use reserved lease name")
+		require.Error(t, err)
+		require.Nil(t, l)
+	})
+
+	t.Run("valid slash-separated name is accepted", func(t *testing.T) {
+		l, err := m.Acquire(t.Context(), "validation/slash-separated")
+		require.NoError(t, err)
+		require.NotNil(t, l)
+		require.NoError(t, m.Release(t.Context(), l))
+	})
+}
+
+func TestAcquireTTLValidation(t *testing.T) {
+	const minTTL = 100 * time.Millisecond
+	m := lease.NewManager(newMapKV(), "holder-validation", nil, lease.WithInternalMinTTL(minTTL), lease.WithGarbageCollectionDisabled)
+
+	testCases := []struct {
+		d       time.Duration
+		isValid bool
+	}{
+		{d: 0, isValid: false},
+		{d: -10, isValid: false},
+		{d: time.Millisecond, isValid: false},
+		{d: 100 * time.Millisecond, isValid: true},
+		{d: time.Minute, isValid: true},
+		{d: 10 * time.Minute, isValid: true},
+		{d: 11 * time.Minute, isValid: false}, // too long
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.d.String(), func(t *testing.T) {
+			l, err := m.Acquire(t.Context(), "ttl-validation", lease.WithTTL(tc.d))
+
+			if tc.isValid {
+				require.NoError(t, err)
+				require.NoError(t, m.Release(t.Context(), l))
+			} else {
+				require.Error(t, err)
+				require.ErrorContains(t, err, "invalid TTL")
+				require.Nil(t, l)
+			}
+		})
+	}
 }
 
 // mapKV is a thread-safe, in-memory kv.KV implementation scoped to a single
@@ -125,8 +195,17 @@ func (m *mapKV) Batch(ctx context.Context, sec string, ops []kv.BatchOp) error {
 			copy(v, op.Value)
 			m.data[op.Key] = v
 
+		case kv.BatchOpUpdate:
+			if _, exists := m.data[op.Key]; !exists {
+				m.data = snapshot
+				return &kv.BatchError{Err: kv.ErrNotFound, Index: i, Op: op}
+			}
+			v := make([]byte, len(op.Value))
+			copy(v, op.Value)
+			m.data[op.Key] = v
+
 		default:
-			panic(fmt.Sprintf("mapKV: Batch mode %d not implemented (only BatchOpCreate is supported)", op.Mode))
+			panic(fmt.Sprintf("mapKV: Batch mode %d not implemented", op.Mode))
 		}
 	}
 	return nil
@@ -168,15 +247,61 @@ func (w *mapKVWriter) Close() error {
 }
 
 func (m *mapKV) Delete(ctx context.Context, section, key string) error {
-	panic("mapKV: Delete not implemented")
+	m.checkSection(section)
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.data, key)
+	return nil
 }
 
 func (m *mapKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
-	panic("mapKV: BatchGet not implemented")
+	m.checkSection(section)
+
+	type item struct {
+		key   string
+		value []byte
+	}
+
+	m.mu.Lock()
+	items := make([]item, 0, len(keys))
+	for _, key := range keys {
+		v, ok := m.data[key]
+		if !ok {
+			continue
+		}
+		copied := make([]byte, len(v))
+		copy(copied, v)
+		items = append(items, item{key: key, value: copied})
+	}
+	m.mu.Unlock()
+
+	return func(yield func(kv.KeyValue, error) bool) {
+		for _, item := range items {
+			if err := ctx.Err(); err != nil {
+				yield(kv.KeyValue{}, err)
+				return
+			}
+			if !yield(kv.KeyValue{Key: item.key, Value: io.NopCloser(bytes.NewReader(item.value))}, nil) {
+				return
+			}
+		}
+	}
 }
 
 func (m *mapKV) BatchDelete(ctx context.Context, section string, keys []string) error {
-	panic("mapKV: BatchDelete not implemented")
+	m.checkSection(section)
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, key := range keys {
+		delete(m.data, key)
+	}
+	return nil
 }
 
 func (m *mapKV) UnixTimestamp(ctx context.Context) (int64, error) {

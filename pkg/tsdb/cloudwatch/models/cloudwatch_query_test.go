@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -122,7 +121,7 @@ func TestCloudWatchQuery(t *testing.T) {
 				Period:     300,
 				Id:         "id1",
 				MatchExact: true,
-				AccountId:  utils.Pointer("123456789"),
+				AccountId:  new("123456789"),
 				Label:      "${PROP('Namespace')}",
 				Dimensions: map[string][]string{
 					"InstanceId": {"i-12345678"},
@@ -144,7 +143,7 @@ func TestCloudWatchQuery(t *testing.T) {
 				Region:           "us-east-1",
 				Statistic:        "Average",
 				Expression:       "SEARCH(someexpression)",
-				AccountId:        utils.Pointer("123456789"),
+				AccountId:        new("123456789"),
 				Period:           300,
 				Id:               "id1",
 				MatchExact:       true,
@@ -960,13 +959,13 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 				CloudWatchMetricsQuery: dataquery.CloudWatchMetricsQuery{
 					Region:     "us-east-1",
 					Namespace:  "ec2",
-					MetricName: utils.Pointer("CPUUtilization"),
-					Alias:      utils.Pointer(tc.inputAlias),
+					MetricName: new("CPUUtilization"),
+					Alias:      new(tc.inputAlias),
 					Dimensions: &dataquery.Dimensions{
 						"InstanceId": dataquery.StringOrArrayOfString{ArrayOfString: []string{"test"}},
 					},
 					Statistic: &average,
-					Period:    utils.Pointer("600"),
+					Period:    new("600"),
 					Hide:      aws.Bool(false),
 				},
 			}

@@ -109,6 +109,18 @@
         ],
         "description": "Query any datasources (with expressions)",
         "operationId": "queryDatasources",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -132,35 +144,16 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.QueryDataResponse"
                 }
               }
             }
           }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "query.grafana.app",
-          "version": "v0alpha1",
-          "kind": "QueryDataResponse"
         }
-      },
-      "parameters": [
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
+      }
     },
     "/apis/query.grafana.app/v0alpha1/namespaces/{namespace}/query/sqlschemas": {
       "post": {
@@ -249,11 +242,6 @@
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana-plugin-sdk-go.backend.DataResponse": {
-        "description": "todo... improve schema",
-        "type": "object",
-        "additionalProperties": true
-      },
       "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.QueryDataResponse": {
         "description": "Wraps backend.QueryDataResponse, however it includes TypeMeta and implements runtime.Object",
         "type": "object",
@@ -273,22 +261,10 @@
             "description": "Responses is a map of RefIDs (Unique Query ID) to *DataResponse.",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.backend.DataResponse"
-                }
-              ]
+              "default": {}
             }
           }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "query.grafana.app",
-            "kind": "QueryDataResponse",
-            "version": "v0alpha1"
-          }
-        ]
+        }
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",

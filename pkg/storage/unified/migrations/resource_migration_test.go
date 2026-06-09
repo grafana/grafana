@@ -668,7 +668,7 @@ func newRetryTestResourceServerWithSearch(t *testing.T, backend resource.Storage
 		},
 	}
 
-	searchOpts, err := search.NewSearchOptions(featuremgmt.WithFeatures(), cfg, docBuilders, nil, nil)
+	searchOpts, err := search.NewSearchOptions(featuremgmt.WithFeatures(), cfg, docBuilders, nil, nil, nil)
 	require.NoError(t, err)
 
 	return resource.NewResourceServer(resource.ResourceServerOptions{

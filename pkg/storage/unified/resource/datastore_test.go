@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/bwmarrin/snowflake"
 	badger "github.com/dgraph-io/badger/v4"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -3186,7 +3188,7 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 
 	t.Run("batch get with some non-existent keys", func(t *testing.T) {
 		// Create 3 existing keys
-		existingKeys := make([]DataKey, 3)
+		existingKeys := make([]DataKey, 3) //nolint:prealloc
 		for i := 0; i < 3; i++ {
 			rv := node.Generate().Int64()
 			existingKeys[i] = DataKey{
@@ -3391,4 +3393,56 @@ func testDataStoreGetLatestAndPredecessor(t *testing.T, ctx context.Context, ds 
 		require.Error(t, err)
 		require.Equal(t, ErrNotFound, err)
 	})
+}
+
+func TestIsSnowflake(t *testing.T) {
+	created2017 := time.Date(2017, 3, 26, 17, 3, 40, 0, time.UTC)
+	micro2017 := created2017.UnixMicro()
+	snowflake2017 := rvmanager.SnowflakeFromRV(micro2017)
+
+	require.Less(t, snowflake2017, int64(1e18),
+		"sanity: a pre-2018 snowflake must fall below the old 1e18 threshold")
+	require.Equal(t, micro2017, rvmanager.RVFromSnowflake(snowflake2017),
+		"sanity: the micro-RV and key_path snowflake must round-trip")
+
+	tests := []struct {
+		name string
+		rv   int64
+		want bool
+	}{
+		{"zero", 0, false},
+		{"legacy micro-RV from 2017", micro2017, false},
+		{"recent legacy micro-RV", time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro(), false},
+		{"far-future legacy micro-RV (year 2200)", time.Date(2200, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro(), false},
+		// Regression: a snowflake from a pre-2018 timestamp is < 1e18 and was
+		// previously misclassified as a legacy micro-RV.
+		{"snowflake from 2017 timestamp", snowflake2017, true},
+		{"snowflake from 2013 timestamp", rvmanager.SnowflakeFromRV(time.Date(2013, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro()), true},
+		{"modern snowflake from 2025 timestamp", rvmanager.SnowflakeFromRV(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro()), true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, IsSnowflake(tt.rv))
+		})
+	}
+}
+
+// TestToSnowflakeRVIdempotent verifies that a value that is already a snowflake
+// must pass through toSnowflakeRV unchanged, including when it derives from an
+// old (pre-2018) timestamp and is therefore numerically below 1e18.
+func TestToSnowflakeRVIdempotent(t *testing.T) {
+	cases := []struct {
+		name      string
+		snowflake int64
+	}{
+		{"snowflake from 2017 timestamp", rvmanager.SnowflakeFromRV(time.Date(2017, 3, 26, 17, 3, 40, 0, time.UTC).UnixMicro())},
+		{"snowflake from 2014 timestamp", rvmanager.SnowflakeFromRV(time.Date(2014, 6, 1, 0, 0, 0, 0, time.UTC).UnixMicro())},
+		{"snowflake from 2025 timestamp", rvmanager.SnowflakeFromRV(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro())},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.snowflake, ToSnowflakeRV(tt.snowflake),
+				"toSnowflakeRV must not re-encode a value that is already a snowflake")
+		})
+	}
 }

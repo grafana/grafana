@@ -8,6 +8,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/authlib/authn"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -190,7 +191,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 				},
 				expect: expect{
 					decision: authorizer.DecisionDeny,
-					reason:   "you are not a member of the referenced team",
+					reason:   "no edit permissions for the team",
 				},
 			}},
 		}, {
@@ -298,7 +299,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 				},
 				expect: expect{
 					decision: authorizer.DecisionDeny,
-					reason:   "you are not a member of the referenced team",
+					reason:   "no edit permissions for the team",
 				},
 			}},
 		},
@@ -307,7 +308,8 @@ func TestAuthorizer_Authorize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			authz := &AuthorizeFromName{
-				Resource: tt.resource,
+				Resource:     tt.resource,
+				AccessClient: authlib.FixedAccessClient(false),
 			}
 			for _, check := range tt.check {
 				t.Run(check.name, func(t *testing.T) {
@@ -333,4 +335,55 @@ func TestAuthorizer_Authorize(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAuthorizer_TeamAccessClient(t *testing.T) {
+	resource := map[string][]ResourceOwner{
+		"preferences": {TeamResourceOwner},
+	}
+	adminNotInTeam := &identity.StaticRequester{
+		UserUID: "admin-not-in-team",
+		Groups:  []string{}, // not a member of any team
+		OrgRole: identity.RoleAdmin,
+		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{
+				DelegatedPermissions: []string{"group/preferences:*"},
+			},
+		},
+	}
+
+	t.Run("admin without group membership can get via IAM", func(t *testing.T) {
+		authz := &AuthorizeFromName{
+			AccessClient: authlib.FixedAccessClient(true),
+			Resource:     resource,
+		}
+		ctx := identity.WithRequester(context.Background(), adminNotInTeam)
+		d, _, err := authz.Authorize(ctx, authorizer.AttributesRecord{
+			Verb:            "get",
+			APIGroup:        "group",
+			Resource:        "preferences",
+			Name:            "team-XYZ",
+			ResourceRequest: true,
+		})
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionAllow, d)
+	})
+
+	t.Run("admin without group membership and without IAM permission is denied", func(t *testing.T) {
+		authz := &AuthorizeFromName{
+			AccessClient: authlib.FixedAccessClient(false),
+			Resource:     resource,
+		}
+		ctx := identity.WithRequester(context.Background(), adminNotInTeam)
+		d, reason, err := authz.Authorize(ctx, authorizer.AttributesRecord{
+			Verb:            "get",
+			APIGroup:        "group",
+			Resource:        "preferences",
+			Name:            "team-XYZ",
+			ResourceRequest: true,
+		})
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, d)
+		require.NotEmpty(t, reason)
+	})
 }
