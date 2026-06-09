@@ -46,7 +46,7 @@
     "@grafana/data": "13.1.0-pre",
     "@grafana/e2e-selectors": "13.1.0-pre",
     "@grafana/i18n": "13.1.0-pre",
-    "@grafana/plugin-ui": "0.13.1",
+    "@grafana/plugin-ui": "patch:@grafana/plugin-ui@npm%3A0.13.1#~/.yarn/patches/@grafana-plugin-ui-npm-0.13.1-5ecb6359c4.patch",
     "@grafana/ui": "13.1.0-pre",
     "@react-awesome-query-builder/ui": "6.6.15",
     "lodash": "4.18.1",

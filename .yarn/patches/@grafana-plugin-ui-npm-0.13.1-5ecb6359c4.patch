@@ -1,0 +1,13 @@
+diff --git a/dist/esm/components/VisualQueryBuilder/components/OperationParamEditor.js b/dist/esm/components/VisualQueryBuilder/components/OperationParamEditor.js
+index 007f995a2c395726ea12cb389912bf5d15d031b7..b2434ef0276b7e9111383c591e9eaa2739ce344f 100644
+--- a/dist/esm/components/VisualQueryBuilder/components/OperationParamEditor.js
++++ b/dist/esm/components/VisualQueryBuilder/components/OperationParamEditor.js
+@@ -100,7 +100,7 @@ function SelectInputParamEditor({
+   return /* @__PURE__ */ React.createElement(EditorStack, { gap: 0.5, direction: "row", alignItems: "center" }, /* @__PURE__ */ React.createElement(
+     Select,
+     {
+-      id: getOperationParamId(operationId, index),
++      inputId: getOperationParamId(operationId, index),
+       value: valueOption,
+       options: selectOptions,
+       placeholder: paramDef.placeholder,

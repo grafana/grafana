@@ -289,7 +289,7 @@
     "@grafana/llm": "1.0.8",
     "@grafana/monaco-logql": "^0.0.8",
     "@grafana/o11y-ds-frontend": "workspace:*",
-    "@grafana/plugin-ui": "^0.13.1",
+    "@grafana/plugin-ui": "patch:@grafana/plugin-ui@npm%3A0.13.1#~/.yarn/patches/@grafana-plugin-ui-npm-0.13.1-5ecb6359c4.patch",
     "@grafana/prometheus": "13.1.2",
     "@grafana/runtime": "workspace:*",
     "@grafana/scenes": "^8.2.6",
@@ -468,7 +468,9 @@
     "@types/slate/immutable": "^4.0.0",
     "@types/slate-react/immutable": "^4.0.0",
     "ws": "^8.20.1",
-    "js-cookie": "^3.0.7"
+    "js-cookie": "^3.0.7",
+    "@grafana/plugin-ui@npm:^0.13.0": "patch:@grafana/plugin-ui@npm%3A0.13.1#~/.yarn/patches/@grafana-plugin-ui-npm-0.13.1-5ecb6359c4.patch",
+    "@grafana/plugin-ui@npm:^0.13.1": "patch:@grafana/plugin-ui@npm%3A0.13.1#~/.yarn/patches/@grafana-plugin-ui-npm-0.13.1-5ecb6359c4.patch"
   },
   "workspaces": {
     "packages": [

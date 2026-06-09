@@ -10,7 +10,7 @@
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/lezer-traceql": "0.0.25",
     "@grafana/o11y-ds-frontend": "workspace:*",
-    "@grafana/plugin-ui": "^0.13.1",
+    "@grafana/plugin-ui": "patch:@grafana/plugin-ui@npm%3A0.13.1#~/.yarn/patches/@grafana-plugin-ui-npm-0.13.1-5ecb6359c4.patch",
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
