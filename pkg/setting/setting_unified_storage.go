@@ -261,6 +261,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Index snapshot settings
 	cfg.IndexSnapshotEnabled = section.Key("index_snapshot_enabled").MustBool(false)
 	cfg.IndexSnapshotBucketURL = section.Key("index_snapshot_bucket_url").String()
+	cfg.IndexSnapshotStorageKV = section.Key("index_snapshot_storage_kv").MustBool(false)
 	cfg.IndexSnapshotThreshold = section.Key("index_snapshot_threshold").MustInt(5000)
 	if cfg.IndexSnapshotThreshold < cfg.IndexFileThreshold {
 		cfg.Logger.Warn("index_snapshot_threshold is smaller than index_file_threshold, overriding", "configured", cfg.IndexSnapshotThreshold, "index_file_threshold", cfg.IndexFileThreshold)

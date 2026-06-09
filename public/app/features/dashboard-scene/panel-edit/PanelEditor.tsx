@@ -27,6 +27,7 @@ import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePick
 
 import { DashboardEditActionEvent, EDIT_PANE_COLLAPSED_KEY } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
+import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
@@ -337,6 +338,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     // Remember that we have done changes
     this._changesHaveBeenMade = true;
+  }
+
+  public getLibraryPanelBehavior(): LibraryPanelBehavior | undefined {
+    return getLibraryPanelBehavior(this.getPanel());
   }
 
   public onSaveLibraryPanel = () => {

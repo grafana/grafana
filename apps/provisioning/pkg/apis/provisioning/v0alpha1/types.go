@@ -454,8 +454,9 @@ const (
 	// top-level folders. Ownership is tracked per-resource via manager
 	// annotations rather than by folder containment.
 	//
-	// NOTE: This target is not supported yet. The value is reserved in the API,
-	// but repositories that use it are currently rejected during validation.
+	// NOTE: The folderless target is not fully implemented yet. It is gated by
+	// the provisioning `allowed_targets` setting (which defaults to `folder`),
+	// so it must be explicitly enabled, and its behavior may still change.
 	SyncTargetTypeFolderless SyncTargetType = "folderless"
 )
 
