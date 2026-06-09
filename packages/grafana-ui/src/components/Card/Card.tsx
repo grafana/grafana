@@ -130,8 +130,6 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
     isSelected: undefined,
   };
   const optionLabel = t('grafana-ui.card.option', 'option');
-  // Name the selection radio after the heading content so assistive tech announces which card is
-  // selected, rather than a generic "option" repeated for every selectable card in a list.
   const headingId = useId();
 
   return (
