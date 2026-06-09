@@ -637,12 +637,11 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		// hijacks the "name" query param to only search for shared dashboard UIDs
 		names = append(names, dashboardUIDs...)
 	} else if folder != "" {
-		// root folder is empty in the search index; collapse the canonical
-		// "general" sentinel to "" before querying.
-		folder = foldermodel.ToLegacyFolderUID(folder)
+		// A root folder UID ("general" or the legacy "") is expanded to match
+		// both root sentinels by the search backend, so pass it through unchanged.
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      "folder",
-			Operator: "=",
+			Operator: string(selection.Equals),
 			Values:   []string{folder},
 		})
 	}
@@ -744,11 +743,13 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
-	// populate list of unique folder UIDs in the list of dashboards user has read permissions
+	// populate list of unique folder UIDs in the list of dashboards user has read permissions.
+	// Root-parented dashboards have no parent folder to check, and the apistore may report root
+	// as either the legacy "" or the canonical "general" sentinel, so skip both.
 	allFolders := make([]string, 0)
 	for _, dash := range dashboardResult.Results.Rows {
 		folderUid := string(dash.Cells[folderUidIdx])
-		if folderUid != "" && !slices.Contains(allFolders, folderUid) {
+		if !foldermodel.IsRootFolderUID(folderUid) && !slices.Contains(allFolders, folderUid) {
 			allFolders = append(allFolders, folderUid)
 		}
 	}
@@ -777,11 +778,12 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		foldersWithAccess = append(foldersWithAccess, fold.Key.Name)
 	}
 
-	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder
+	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder.
+	// Root-parented dashboards (reported as "" or "general") have no parent folder, so skip both sentinels.
 	for _, dash := range dashboardResult.Results.Rows {
 		dashboardUid := dash.Key.Name
 		folderUid := string(dash.Cells[folderUidIdx])
-		if folderUid != "" && !slices.Contains(foldersWithAccess, folderUid) {
+		if !foldermodel.IsRootFolderUID(folderUid) && !slices.Contains(foldersWithAccess, folderUid) {
 			sharedDashboards = append(sharedDashboards, dashboardUid)
 		}
 	}
