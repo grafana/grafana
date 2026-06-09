@@ -131,6 +131,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
   };
   const optionLabel = t('grafana-ui.card.option', 'option');
   const headingId = useId();
+  const hasHeadingContent = React.Children.count(children) > 0;
 
   return (
     <div data-testid={selectors.components.Card.heading} className={cx(styles.heading, className)}>
@@ -147,7 +148,12 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
       )}
       {/* Input must be readonly because we are providing a value for the checked prop with no onChange handler */}
       {isSelected !== undefined && (
-        <input aria-labelledby={headingId} aria-label={optionLabel} type="radio" checked={isSelected} readOnly />
+        <input
+          {...(hasHeadingContent ? { 'aria-labelledby': headingId } : { 'aria-label': optionLabel })}
+          type="radio"
+          checked={isSelected}
+          readOnly
+        />
       )}
     </div>
   );

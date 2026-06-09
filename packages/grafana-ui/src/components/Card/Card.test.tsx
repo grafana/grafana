@@ -130,5 +130,11 @@ describe('Card', () => {
 
       expect(screen.queryByRole('radio')).not.toBeInTheDocument();
     });
+
+    it('Should fall back to a generic name for selectable cards without heading content', () => {
+      render(<Card noMargin isSelected={false} />);
+
+      expect(screen.getByRole('radio', { name: 'option' })).toBeInTheDocument();
+    });
   });
 });
