@@ -181,7 +181,7 @@ func TestGetAPIGroup(t *testing.T) {
 			service: &Service{
 				options: Options{
 					Resource: "dashboards",
-					APIGroup: "",
+					APIGroup: "dashboard.grafana.app",
 				},
 			},
 		}
@@ -195,7 +195,7 @@ func TestGetAPIGroup(t *testing.T) {
 			service: &Service{
 				options: Options{
 					Resource: "folders",
-					APIGroup: "",
+					APIGroup: "", // This should be invalid
 				},
 			},
 		}
