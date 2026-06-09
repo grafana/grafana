@@ -86,6 +86,58 @@ func TestIntegrationProvisioning_ExportPlaylist(t *testing.T) {
 	require.Equal(t, wantTitles, gotTitles, "exported titles should match the created playlists")
 }
 
+// TestIntegrationProvisioning_ExportPlaylistSelective verifies a selective export (Push with
+// an explicit Resources list) writes only the named playlists and leaves the rest out. This
+// exercises the generalized selective-export controller (#125993) for a non-dashboard kind.
+func TestIntegrationProvisioning_ExportPlaylistSelective(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	playlists := playlistClient(t, helper)
+
+	const count = 3
+	for i := 0; i < count; i++ {
+		name, title := playlistName(i)
+		_, err := playlists.Resource.Create(ctx, common.NewPlaylist(name, title), metav1.CreateOptions{})
+		require.NoError(t, err, "should create playlist %s", name)
+		t.Cleanup(func() { _ = playlists.Resource.Delete(ctx, name, metav1.DeleteOptions{}) })
+	}
+
+	const repo = "playlist-selective-export-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:                   repo,
+		SyncTarget:             "instance",
+		Workflows:              []string{"write"},
+		SkipResourceAssertions: true,
+	})
+
+	// Export only playlist-0 and playlist-2; playlist-1 must be left out.
+	name0, title0 := playlistName(0)
+	name2, title2 := playlistName(2)
+	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
+		Push: &provisioning.ExportJobOptions{
+			Resources: []provisioning.ResourceRef{
+				{Name: name0, Kind: "Playlist", Group: common.PlaylistGVR.Group},
+				{Name: name2, Kind: "Playlist", Group: common.PlaylistGVR.Group},
+			},
+		},
+	})
+	common.PrintFileTree(t, helper.ProvisioningPath)
+
+	files := helper.ExportedResourceFiles(t, playlistGroupPrefix)
+	require.Len(t, files, 2, "only the two requested playlists should be exported")
+	gotTitles := map[string]bool{}
+	for _, f := range files {
+		obj := helper.LoadYAMLOrJSONFile(f)
+		title, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
+		gotTitles[title] = true
+	}
+	require.Equal(t, map[string]bool{title0: true, title2: true}, gotTitles)
+	_, title1 := playlistName(1)
+	require.NotContains(t, gotTitles, title1, "the unselected playlist must not be exported")
+}
+
 // TestIntegrationProvisioning_SyncPlaylist verifies the import (pull) direction for a batch
 // of playlists: every file in the repository is provisioned into Grafana on sync, the
 // provisioned objects carry the manager annotations but no folder annotation (playlists are
