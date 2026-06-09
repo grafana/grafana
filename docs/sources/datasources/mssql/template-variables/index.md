@@ -130,15 +130,15 @@ Don't manually wrap variables in quotes (for example, `'${var}'`). Since Grafana
 
 When a variable allows multiple selections, Grafana provides several formatting options:
 
-| Format | Syntax | Output for selections `a`, `b` | Use case |
-| --- | --- | --- | --- |
-| Default (auto-quoted) | `$var` or `${var}` | `'a','b'` | `IN` clauses (recommended) |
-| `sqlstring` | `${var:sqlstring}` | `'a'` (single value only) | Equality comparisons |
-| `csv` | `${var:csv}` | `a,b` | Unquoted lists |
-| `singlequote` | `${var:singlequote}` | `'a','b'` | Explicit single-quote wrapping |
-| `doublequote` | `${var:doublequote}` | `"a","b"` | MSSQL identifier quoting |
-| `pipe` | `${var:pipe}` | `a\|b` | Regex patterns |
-| `raw` | `${var:raw}` | `a,b` | No escaping (use with caution) |
+| Format                | Syntax               | Output for selections `a`, `b` | Use case                       |
+| --------------------- | -------------------- | ------------------------------ | ------------------------------ |
+| Default (auto-quoted) | `$var` or `${var}`   | `'a','b'`                      | `IN` clauses (recommended)     |
+| `sqlstring`           | `${var:sqlstring}`   | `'a'` (single value only)      | Equality comparisons           |
+| `csv`                 | `${var:csv}`         | `a,b`                          | Unquoted lists                 |
+| `singlequote`         | `${var:singlequote}` | `'a','b'`                      | Explicit single-quote wrapping |
+| `doublequote`         | `${var:doublequote}` | `"a","b"`                      | MSSQL identifier quoting       |
+| `pipe`                | `${var:pipe}`        | `a\|b`                         | Regex patterns                 |
+| `raw`                 | `${var:raw}`         | `a,b`                          | No escaping (use with caution) |
 
 For multi-value variables in SQL `WHERE` clauses, the default formatting with `IN` is typically correct:
 
