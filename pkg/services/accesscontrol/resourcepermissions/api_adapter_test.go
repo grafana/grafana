@@ -127,7 +127,7 @@ func TestBuildResourcePermissionName(t *testing.T) {
 			apiGroup:     "",
 			resource:     "folders",
 			resourceID:   "folder-uid-456",
-			expectedName: "folders.grafana.app-folders-folder-uid-456",
+			expectedName: "folder.grafana.app-folders-folder-uid-456",
 		},
 		{
 			name:         "resourceUID from request overrides numeric resourceID",
