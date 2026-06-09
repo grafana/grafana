@@ -22,10 +22,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testPointer[T any](value T) *T {
-	return &value
-}
-
 func TestQuery_handleGetLogEvents_passes_nil_start_and_end_times_to_GetLogEvents(t *testing.T) {
 	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
@@ -1476,8 +1472,8 @@ func TestBuildSourceClause(t *testing.T) {
 		"allLogGroups with INFREQUENT_ACCESS class": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
-					LogsQueryScope: testPointer(dataquery.LogsQueryScopeAllLogGroups),
-					LogGroupClass:  testPointer(dataquery.LogGroupClassINFREQUENTACCESS),
+					LogsQueryScope: new(dataquery.LogsQueryScopeAllLogGroups),
+					LogGroupClass:  new(dataquery.LogGroupClassINFREQUENTACCESS),
 				},
 			},
 			includeAccounts:       false,
@@ -1488,8 +1484,8 @@ func TestBuildSourceClause(t *testing.T) {
 		"allLogGroups with STANDARD class (should be omitted)": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
-					LogsQueryScope: testPointer(dataquery.LogsQueryScopeAllLogGroups),
-					LogGroupClass:  testPointer(dataquery.LogGroupClassSTANDARD),
+					LogsQueryScope: new(dataquery.LogsQueryScopeAllLogGroups),
+					LogGroupClass:  new(dataquery.LogGroupClassSTANDARD),
 				},
 			},
 			includeAccounts:       false,
@@ -1500,7 +1496,7 @@ func TestBuildSourceClause(t *testing.T) {
 		"allLogGroups with account identifiers when includeAccounts is true": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
-					LogsQueryScope:     testPointer(dataquery.LogsQueryScopeAllLogGroups),
+					LogsQueryScope:     new(dataquery.LogsQueryScopeAllLogGroups),
 					SelectedAccountIds: []string{"123456789012", "987654321098"},
 				},
 			},
@@ -1512,7 +1508,7 @@ func TestBuildSourceClause(t *testing.T) {
 		"allLogGroups with account identifiers when includeAccounts is false (non-monitoring account)": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
-					LogsQueryScope:     testPointer(dataquery.LogsQueryScopeAllLogGroups),
+					LogsQueryScope:     new(dataquery.LogsQueryScopeAllLogGroups),
 					SelectedAccountIds: []string{"123456789012", "987654321098"},
 				},
 			},
