@@ -26,6 +26,7 @@ import (
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -280,6 +281,31 @@ var defaultPermissions = []map[string]any{
 	},
 }
 
+// buildDefaultFolderPermissions returns the default folder permissions with the creator granted
+// admin (in addition to the default basic-role permissions). Non-user/service-account identities
+// (anonymous, render service, etc.) get only the default permission set.
+func buildDefaultFolderPermissions(id authlib.AuthInfo) []map[string]any {
+	var creatorKind string
+	switch id.GetIdentityType() {
+	case authlib.TypeUser:
+		creatorKind = string(iamv0alpha1.ResourcePermissionSpecPermissionKindUser)
+	case authlib.TypeServiceAccount:
+		creatorKind = string(iamv0alpha1.ResourcePermissionSpecPermissionKindServiceAccount)
+	}
+
+	if creatorKind == "" {
+		return defaultPermissions
+	}
+
+	permissions := make([]map[string]any, 0, len(defaultPermissions)+1)
+	permissions = append(permissions, map[string]any{
+		"kind": creatorKind,
+		"name": id.GetIdentifier(),
+		"verb": "admin",
+	})
+	return append(permissions, defaultPermissions...)
+}
+
 // resourcePermissionsClient returns the ResourcePermission dynamic client, building it lazily from
 // restConfigProvider in embedded mode. Returns nil when no client is configured (e.g. flag off).
 func (b *FolderAPIBuilder) resourcePermissionsClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
@@ -327,6 +353,20 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 	log := logging.FromContext(ctx)
 	log.Debug("setting default folder permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
 
+	// Setting the default permissions is a system operation triggered by the creation of the
+	// folder, not an action the requester performs directly. The creator does not yet have
+	// permission to manage permissions on the brand-new folder, so we use a service identity to
+	// write them through the ResourcePermission API.
+	nsInfo, err := authlib.ParseNamespace(obj.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("parse namespace: %w", err)
+	}
+	ctx = identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
+
+	// The creator gets admin on their folder, in addition to the default basic-role permissions.
+	// Anonymous and other non-user identities don't get an explicit grant.
+	permissions := buildDefaultFolderPermissions(id)
+
 	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
 	name := fmt.Sprintf("%s-%s-%s", foldersv1.FolderResourceInfo.GroupVersionResource().Group, foldersv1.FolderResourceInfo.GroupVersionResource().Resource, obj.GetName())
 
@@ -344,7 +384,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 						"resource": foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
 						"name":     obj.GetName(),
 					},
-					"permissions": defaultPermissions,
+					"permissions": permissions,
 				},
 			},
 		}, metav1.UpdateOptions{})
@@ -368,7 +408,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 					"resource": foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
 					"name":     obj.GetName(),
 				},
-				"permissions": defaultPermissions,
+				"permissions": permissions,
 			},
 		},
 	}, metav1.CreateOptions{})
