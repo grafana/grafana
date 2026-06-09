@@ -107,8 +107,8 @@ func encryptReceiverConfigs(c []*v1.PostableApiReceiver, encrypt definitions.Enc
 				settingsChanged := false
 				secureSettingsChanged := false
 				for _, secretPath := range secretPaths {
-					secretKey := secretPath.String()
-					settingsValue, ok := settings[secretKey]
+					schemaKey := secretPath.String()
+					secretKey, settingsValue, ok := models.MapGetCaseInsensitive(settings, schemaKey)
 					if !ok {
 						continue
 					}

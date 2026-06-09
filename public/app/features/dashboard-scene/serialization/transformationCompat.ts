@@ -25,11 +25,12 @@ export function normalizeTransformation(t: WireTransformation): TransformationKi
   }
 
   // v2beta1: kind holds the transformation ID, spec.id is a duplicate
-  const { id: _id, ...spec } = t.spec;
+  const { id: specId, ...spec } = t.spec;
+  const group = t.kind === 'Transformation' && specId ? specId : t.kind;
 
   return {
     kind: 'Transformation',
-    group: t.kind,
+    group,
     spec,
   };
 }

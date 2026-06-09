@@ -162,9 +162,10 @@ export function useResourceStats(
 
   // Calculate requiresMigration based on sync target and user selection
   // For instance sync: migrate if there are resources (checkbox is disabled and always true)
-  // For folder sync: only migrate if user explicitly opts in via checkbox
+  // For folder and folderless sync: only migrate if user explicitly opts in via checkbox
   const requiresMigration = syncTarget === 'instance' ? resourceCount > 0 : (migrateResources ?? false);
-  const shouldSkipSync = (resourceCount === 0 || syncTarget === 'folder') && fileCount === 0;
+  const shouldSkipSync =
+    (resourceCount === 0 || syncTarget === 'folder' || syncTarget === 'folderless') && fileCount === 0;
 
   // Format display strings
   const resourceCountDisplay =

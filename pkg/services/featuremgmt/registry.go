@@ -287,6 +287,15 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:            "provisioning.gitConventions",
+			Description:     "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+			Generate:        Generate{Go: true, React: true},
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
@@ -2528,14 +2537,6 @@ var (
 			Description: "Enables next generation query editor experience",
 			Stage:       FeatureStagePrivatePreview,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Owner:       grafanaDataProSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "queryEditorNextMultiSelect",
-			Description: "Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 		},
