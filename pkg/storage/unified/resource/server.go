@@ -2102,7 +2102,7 @@ func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRe
 	}
 	statsRsp, err := s.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 		Namespace: nsr.Namespace,
-		Kinds:     []string{nsr.Kind()},
+		Kinds:     []string{nsr.GroupResource()},
 	})
 	if err != nil {
 		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
@@ -2279,7 +2279,7 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 
 	statsRsp, err := s.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 		Namespace: nsr.Namespace,
-		Kinds:     []string{nsr.Kind()},
+		Kinds:     []string{nsr.GroupResource()},
 	})
 	if err != nil {
 		s.log.FromContext(ctx).Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)

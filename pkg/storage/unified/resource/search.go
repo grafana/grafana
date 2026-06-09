@@ -67,10 +67,10 @@ func (s *NamespacedResource) Valid() bool {
 }
 
 func (s *NamespacedResource) String() string {
-	return fmt.Sprintf("%s/%s", s.Namespace, s.Kind())
+	return fmt.Sprintf("%s/%s", s.Namespace, s.GroupResource())
 }
 
-func (s *NamespacedResource) Kind() string {
+func (s *NamespacedResource) GroupResource() string {
 	return fmt.Sprintf("%s/%s", s.Group, s.Resource)
 }
 
