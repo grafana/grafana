@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 
 import { config, useAppPluginEnabled } from '@grafana/runtime';
 import { contextSrv as ctx } from 'app/core/services/context_srv';
-import { PERMISSIONS_CONTACT_POINTS_READ } from 'app/features/alerting/unified/components/contact-points/permissions';
 import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
@@ -559,7 +558,7 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     [AlertmanagerAction.ViewContactPoint]: toAbility(
       AlwaysSupported,
       notificationsPermissions.read,
-      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_CONTACT_POINTS_READ : [])
+      ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingReceiversRead] : [])
     ),
     [AlertmanagerAction.UpdateContactPoint]: toAbility(
       hasConfigurationAPI,

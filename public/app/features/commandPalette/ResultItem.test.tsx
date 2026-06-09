@@ -32,45 +32,45 @@ describe('ResultItem', () => {
     expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
   });
 
-  it('renders provisioned badge when managedBy is Repo and provisioning toggle is on', () => {
+  it('renders the managed badge when managedBy is Repo and provisioning toggle is on', () => {
     config.featureToggles.provisioning = true;
     const action = createActionImpl({ managedBy: ManagerKind.Repo });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    expect(screen.getByLabelText('Provisioned')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
   });
 
-  it('does not render provisioned badge when managedBy is undefined', () => {
+  it('does not render the managed badge when managedBy is undefined', () => {
     config.featureToggles.provisioning = true;
     const action = createActionImpl();
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    expect(screen.queryByLabelText('Provisioned')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 
-  it('renders provisioned badge when managedBy is a non-Repo kind', () => {
+  it('renders the managed badge when managedBy is a non-Repo kind', () => {
     config.featureToggles.provisioning = true;
     const action = createActionImpl({ managedBy: ManagerKind.Terraform });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    expect(screen.getByLabelText('Provisioned')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
   });
 
-  it('renders provisioned badge for plugin-managed resources', () => {
+  it('renders the managed badge for plugin-managed resources', () => {
     config.featureToggles.provisioning = true;
     const action = createActionImpl({ managedBy: ManagerKind.Plugin });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    expect(screen.getByLabelText('Provisioned')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
   });
 
-  it('does not render provisioned badge when provisioning toggle is off', () => {
+  it('does not render the managed badge when provisioning toggle is off', () => {
     config.featureToggles.provisioning = false;
     const action = createActionImpl({ managedBy: ManagerKind.Repo });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    expect(screen.queryByLabelText('Provisioned')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 
-  it('does not render provisioned badge when provisioning toggle is undefined', () => {
+  it('does not render the managed badge when provisioning toggle is undefined', () => {
     config.featureToggles.provisioning = undefined;
     const action = createActionImpl({ managedBy: ManagerKind.Repo });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    expect(screen.queryByLabelText('Provisioned')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 });

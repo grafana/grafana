@@ -49,7 +49,7 @@ export const FlagKeys = {
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables org-defined dashboard templates for enterprise */
   GrafanaOrgDashboardTemplates: "grafana.orgDashboardTemplates",
-  /** Replaces the Intercom survey for PanelEditNext feedback with an event that triggers an in-house survey */
+  /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
@@ -300,7 +300,7 @@ export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluatio
 };
 
 /**
- * Replaces the Intercom survey for PanelEditNext feedback with an event that triggers an in-house survey
+ * Enables firing an event for PanelEditNext feedback that triggers an in-house survey
  *
  * **Details:**
  * - flag key: `grafana.panelEditNextFeedbackEvent`

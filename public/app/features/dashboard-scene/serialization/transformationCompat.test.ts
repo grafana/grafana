@@ -35,6 +35,18 @@ describe('normalizeTransformation', () => {
       spec: { options: {} },
     });
   });
+
+  it('falls back to spec.id when kind is "Transformation" but group is missing (GH#125023)', () => {
+    const malformed = {
+      kind: 'Transformation',
+      spec: { id: 'merge', options: {} },
+    } as unknown as V2Beta1TransformationKind;
+    expect(normalizeTransformation(malformed)).toEqual({
+      kind: 'Transformation',
+      group: 'merge',
+      spec: { options: {} },
+    });
+  });
 });
 
 describe('toWireTransformation', () => {

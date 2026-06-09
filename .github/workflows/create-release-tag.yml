@@ -22,18 +22,27 @@ jobs:
   create-tag:
     runs-on: ubuntu-arm64-small
     permissions:
-      contents: write
+      id-token: write
+      contents: read
     concurrency:
       group: create-release-tag-${{ inputs.tag }}
       cancel-in-progress: false
     steps:
+      # The default GITHUB_TOKEN can't create tag refs that would trigger other
+      # workflows (e.g. publish-technical-documentation-release.yml on push:tags),
+      # so use an app token that isn't subject to that restriction.
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-pr-automation
       - name: Create annotated tag
         env:
           TAG: ${{ inputs.tag }}
           TAG_MESSAGE: ${{ inputs.message }}
           COMMIT_SHA: ${{ inputs.commit }}
           REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
         run: |
           tag_sha=$(gh api "repos/${REPO}/git/tags" \
             --method POST \

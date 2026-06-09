@@ -3,10 +3,10 @@ import { type ActionId, type ActionImpl } from 'kbar';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Badge, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { type ManagerKind } from 'app/features/apiserver/types';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 
 export const ResultItem = React.forwardRef(
   (
@@ -72,14 +72,7 @@ export const ResultItem = React.forwardRef(
             <span>{name}</span>
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
-          {showProvisionedBadge && (
-            <Badge
-              color="purple"
-              icon="exchange-alt"
-              aria-label={t('command-palette.badge.provisioned', 'Provisioned')}
-              tooltip={t('command-palette.badge.provisioned', 'Provisioned')}
-            />
-          )}
+          {showProvisionedBadge && <ManagedBadge managerKind={managedBy} />}
         </div>
       </div>
     );
