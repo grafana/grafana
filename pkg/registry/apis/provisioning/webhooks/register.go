@@ -146,7 +146,14 @@ func ProvideWebhooksWithImages(
 
 			screenshotRenderer := pullrequest.NewScreenshotRenderer(renderer, blobstore)
 			render := NewRenderConnector(blobstore, b)
-			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer, registry)
+			webhook := NewWebhookConnector(
+				isPublic,
+				b,
+				screenshotRenderer,
+				registry,
+				cfg.ProvisioningWebhookTrustedProxyDepth,
+				cfg.ProvisioningWebhookRateLimitRPS,
+			)
 
 			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urls, registry)
 			commenter := pullrequest.NewCommenter(cfg.ProvisioningAllowImageRendering)
@@ -162,7 +169,7 @@ func ProvideWebhooksWithImages(
 	}
 }
 
-func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer) *WebhookExtraBuilder {
+func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer, trustedProxyDepth int, rateLimitRPS int) *WebhookExtraBuilder {
 	urlProvider := func(_ context.Context, _ string) string {
 		return provisioningURL
 	}
@@ -174,7 +181,7 @@ func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer) *We
 		urlProvider: urlProvider,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
 			screenshotRenderer := pullrequest.NewNoOpRenderer()
-			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer, registry)
+			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer, registry, trustedProxyDepth, rateLimitRPS)
 
 			return NewWebhookExtra(webhook)
 		},
