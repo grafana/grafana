@@ -452,12 +452,10 @@ func (w *sqlWriteCloser) Close() error {
 
 	keyPath := getKeyPath(w.section, w.key)
 
-	// Do regular kv save: simple key_path + value insert with conflict check.
-	// Used for sections that map to dedicated key-value tables (resource_events,
-	// pending_tenant_deletions, kv_leases, search_snapshot_manifest,
-	// search_snapshot_data). DataSection still goes through the
-	// resource_history-specific path below until the legacy columns are dropped.
-	if w.section == EventsSection || w.section == PendingDeleteSection || w.section == LeasesSection || w.section == SearchSnapshotManifestSection || w.section == SearchSnapshotDataSection {
+	// Do regular kv save for sections that map to dedicated key-value tables.
+	// DataSection still goes through the resource_history-specific path below
+	// until the legacy columns are dropped.
+	if w.section != DataSection {
 		query, args := qb.buildUpsertQuery(keyPath, value)
 		_, err := w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 		if err != nil {
