@@ -6,6 +6,7 @@
 package apistore
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -640,10 +641,11 @@ func (s *Storage) GuaranteedUpdate(
 	ctx, span := tracer.Start(ctx, "apistore.Storage.GuaranteedUpdate")
 	defer span.End()
 	var (
-		res         storage.ResponseMeta
-		updatedObj  runtime.Object
-		existingObj runtime.Object
-		err         error
+		res           storage.ResponseMeta
+		updatedObj    runtime.Object
+		existingObj   runtime.Object
+		existingBytes []byte
+		err           error
 	)
 	req := &resourcepb.UpdateRequest{}
 	req.Key, err = s.getKey(key)
@@ -702,6 +704,7 @@ func (s *Storage) GuaranteedUpdate(
 			return s.Create(ctx, key, updatedObj, destination, 0)
 		}
 
+		existingBytes = readResponse.Value
 		existingObj, err = s.convertToObject(ctx, readResponse.Value, s.newFunc())
 		if err != nil {
 			return err
@@ -734,29 +737,34 @@ func (s *Storage) GuaranteedUpdate(
 			return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
 		}
 
+		// Only update (for real) if the bytes have changed
+		var rv uint64
 		req.Value = v.raw.Bytes()
-		req.ResourceVersion = readResponse.ResourceVersion
-		updateResponse, err := s.store.Update(ctx, req) // Also does RBAC check
-		if err != nil {
-			err = resource.GetError(resource.AsErrorResult(err))
-		} else if updateResponse.Error != nil {
-			if attempt < MaxUpdateAttempts && updateResponse.Error.Code == http.StatusConflict {
-				continue // try the read again
+		if !bytes.Equal(req.Value, existingBytes) {
+			req.ResourceVersion = readResponse.ResourceVersion
+			updateResponse, err := s.store.Update(ctx, req)
+			if err != nil {
+				err = resource.GetError(resource.AsErrorResult(err))
+			} else if updateResponse.Error != nil {
+				if attempt < MaxUpdateAttempts && updateResponse.Error.Code == http.StatusConflict {
+					continue // try the read again
+				}
+				err = resource.GetError(updateResponse.Error)
 			}
-			err = resource.GetError(updateResponse.Error)
-		}
 
-		// Cleanup secure values
-		if err = v.finish(ctx, err, s.opts.SecureValues); err != nil {
-			return err
+			// Cleanup secure values
+			if err = v.finish(ctx, err, s.opts.SecureValues); err != nil {
+				return err
+			}
+
+			rv = uint64(updateResponse.ResourceVersion)
 		}
 
 		if _, err := s.convertToObject(ctx, req.Value, destination); err != nil {
 			return err
 		}
 
-		if updateResponse.ResourceVersion > 0 {
-			rv := uint64(updateResponse.ResourceVersion)
+		if rv > 0 {
 			if err := s.versioner.UpdateObject(destination, rv); err != nil {
 				return err
 			}
