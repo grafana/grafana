@@ -256,7 +256,10 @@ jobs:
           GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
       - name: Create PR
         env:
-          GH_TOKEN: ${{ github.token }}
+          # grafana-pr-automation token (reader permission-set, now with pull_requests:write)
+          # is used here instead of the default GITHUB_TOKEN so the PR is created under the
+          # grafana-pr-automation[bot] identity.
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           LATEST_FLAG=()
@@ -266,7 +269,6 @@ jobs:
           gh pr create \
             "${LATEST_FLAG[@]}" \
             -l "no-changelog" \
-            --draft \
             --dry-run="$DRY_RUN" \
             -B "${RELEASE_BRANCH}" \
             -H "${WORK_BRANCH}" \
