@@ -32,12 +32,11 @@ func newConfigValidator(cfg *Config) *simple.Validator {
 				return fmt.Errorf("Config is a singleton; the only valid name is %q", v0alpha1.ConfigSingletonName)
 			}
 
-			// externalAlertmanagerSync.datasourceUid:
-			// only validate when actually changing — empty/unset is always
-			// allowed (clears the per-org config); only validate when the
-			// admin is setting a non-empty UID AND it differs from the
-			// current persisted value, so unrelated edits don't fail when
-			// the previously-stored UID is no longer valid.
+			// externalAlertmanagerSync.datasourceUid: validate only on a change to
+			// a non-empty UID. Clearing is always allowed (also while the ini
+			// override is set, so a dormant value can be removed); a no-op replay
+			// (e.g. a GitOps reconcile) is allowed too, since it can't introduce a
+			// new dormant value.
 			if newUID, changed := externalSyncUIDChange(obj, req.OldObject); changed && newUID != "" {
 				if err := cfg.ValidateExternalSyncDatasource(ctx, newUID); err != nil {
 					return fmt.Errorf("externalAlertmanagerSync.datasourceUid: %w", err)
