@@ -1,3 +1,16 @@
+<!-- 12.3.7 START -->
+
+# 12.3.7 (2026-06-09)
+
+### Features and enhancements
+
+- **Dashboards:** Get annotations and dashboard endpoint performance improvements [#121558](https://github.com/grafana/grafana/pull/121558), [@filewalkwithme](https://github.com/filewalkwithme)
+- **Docker:** Bump Alpine-based images to 3.23.4 [#123028](https://github.com/grafana/grafana/pull/123028), [@Proximyst](https://github.com/Proximyst)
+- **Go:** Update to 1.25.9 [#122096](https://github.com/grafana/grafana/pull/122096), [@macabu](https://github.com/macabu)
+- **Go:** Update version to 1.26.3 [#124457](https://github.com/grafana/grafana/pull/124457), [@macabu](https://github.com/macabu)
+- **LibraryPanels:** Return 403 instead of 500 for insufficient permissions [#123471](https://github.com/grafana/grafana/pull/123471), [@MissingRoberto](https://github.com/MissingRoberto)
+
+<!-- 12.3.7 END -->
 <!-- 12.4.4 START -->
 
 # 12.4.4 (2026-06-09)
