@@ -396,7 +396,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	docBuilders, err := InitializeDocumentBuilders(cfg)
 	require.NoError(t, err)
 	require.NoError(t, err)
-	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
+	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil, nil)
 	require.NoError(t, err)
 	cfg.DisablePruner = dbType == "sqlite3"
 	eDB, err := sql.ProvideResourceDB(cfg, nil)

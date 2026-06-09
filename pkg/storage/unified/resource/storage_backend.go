@@ -145,6 +145,16 @@ type KVBackend interface {
 	StorageBackend
 	resourcepb.DiagnosticsServer //nolint:staticcheck
 	ResourceServerStopper
+
+	// KV returns the underlying KV store. Exposed so other subsystems
+	// (e.g. search snapshot storage) can share the same store rather than
+	// opening a second connection.
+	KV() KV
+
+	// LeaseManager returns the lease manager used by this backend, or nil
+	// if leases are disabled. Exposed so other subsystems can share the
+	// same manager and avoid running a second heartbeat loop.
+	LeaseManager() *lease.Manager
 }
 
 type KVBackendOptions struct {
@@ -468,6 +478,17 @@ func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 	k.historyPruner = pruner
 	k.historyPruner.Start(ctx)
 	return nil
+}
+
+// KV returns the KV store backing this storage backend. See KVBackend.KV.
+func (b *kvStorageBackend) KV() KV {
+	return b.kv
+}
+
+// LeaseManager returns the lease manager owned by this backend, or nil
+// if leases are disabled. See KVBackend.LeaseManager.
+func (b *kvStorageBackend) LeaseManager() *lease.Manager {
+	return b.leaseManager
 }
 
 func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
