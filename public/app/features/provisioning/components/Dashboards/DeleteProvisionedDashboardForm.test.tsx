@@ -114,7 +114,7 @@ describe('DeleteProvisionedDashboardForm', () => {
 
       expect(capturedRequest!.url.pathname).toContain('/repositories/test-repo/files/dashboards/test.json');
       expect(capturedRequest!.url.searchParams.get('ref')).toBe('main');
-      expect(capturedRequest!.url.searchParams.get('message')).toBe('Delete dashboard: Test Dashboard');
+      expect(capturedRequest!.url.searchParams.get('message')).toBe('Delete resource: Test Dashboard');
     });
 
     it('renders the message from the repo commit template when comment is empty', async () => {
@@ -201,7 +201,7 @@ describe('DeleteProvisionedDashboardForm', () => {
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toHaveTextContent(
-          'You have selected a branch that does not contain this dashboard'
+          'You have selected a branch that does not contain this resource'
         );
       });
     });

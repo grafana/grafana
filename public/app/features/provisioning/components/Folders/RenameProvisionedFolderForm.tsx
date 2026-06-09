@@ -47,7 +47,6 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     setError(
       getProvisionedRequestError(
         error,
-        'folder',
         t('browse-dashboards.rename-provisioned-folder-form.error-saving', 'Failed to rename folder')
       )
     );

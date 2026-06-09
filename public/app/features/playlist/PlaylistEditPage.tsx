@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { type NavModelItem } from '@grafana/data';
@@ -13,12 +14,14 @@ import {
   getManagerKind,
   getSourcePath,
   isManaged,
+  isManagedByRepository,
   isManagedResourceReadOnly,
 } from 'app/features/provisioning/utils/managedResource';
 
 import { type Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
 
 import { PlaylistForm } from './PlaylistForm';
+import { SaveProvisionedPlaylistDrawer } from './SaveProvisionedPlaylistDrawer';
 
 export interface RouteParams {
   uid: string;
@@ -28,8 +31,17 @@ export const PlaylistEditPage = () => {
   const { uid = '' } = useParams();
   const { data, isLoading, isError, error } = useGetPlaylistQuery({ name: uid });
   const [replacePlaylist] = useReplacePlaylistMutation();
+  // Holds the edited playlist while the provisioning save drawer is open.
+  const [provisionedPlaylist, setProvisionedPlaylist] = useState<Playlist | undefined>();
 
   const onSubmit = async (playlist: Playlist) => {
+    // Repository-managed playlists are committed to git via the save drawer instead of
+    // being written directly through the playlist API.
+    if (isManagedByRepository(playlist)) {
+      setProvisionedPlaylist(playlist);
+      return;
+    }
+
     replacePlaylist({
       name: playlist.metadata?.name ?? '',
       playlist,
@@ -63,6 +75,12 @@ export const PlaylistEditPage = () => {
         )}
         {data && <PlaylistForm onSubmit={onSubmit} playlist={data} />}
       </Page.Contents>
+      {provisionedPlaylist && (
+        <SaveProvisionedPlaylistDrawer
+          playlist={provisionedPlaylist}
+          onDismiss={() => setProvisionedPlaylist(undefined)}
+        />
+      )}
     </Page>
   );
 };

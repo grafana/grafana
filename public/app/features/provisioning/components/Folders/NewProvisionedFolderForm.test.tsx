@@ -322,7 +322,7 @@ describe('NewProvisionedFolderForm', () => {
     expect(request.url.pathname).toContain('/repositories/test-repo/files/');
     expect(request.url.pathname).toContain('Branch%20Folder');
     expect(request.url.searchParams.get('ref')).toBe('feature/new-folder');
-    expect(request.url.searchParams.get('message')).toBe('Create folder: Branch Folder');
+    expect(request.url.searchParams.get('message')).toBe('Create resource: Branch Folder');
     expect(request.body).toEqual({ title: 'Branch Folder', type: 'folder' });
   });
 
@@ -388,7 +388,7 @@ describe('NewProvisionedFolderForm', () => {
     const request = requireCapturedRequest(capturedRequest);
     expect(request.url.pathname).toContain('/repositories/test-repo/files/');
     expect(request.url.pathname).toContain('Error%20Folder');
-    expect(request.url.searchParams.get('message')).toBe('Create folder: Error Folder');
+    expect(request.url.searchParams.get('message')).toBe('Create resource: Error Folder');
     expect(request.body).toEqual({ title: 'Error Folder', type: 'folder' });
   });
 

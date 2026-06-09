@@ -1,8 +1,10 @@
 import { t } from '@grafana/i18n';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
+import { type ProvisionedResourceType } from '../types/resource';
+
 export type CommitAction = 'create' | 'update' | 'delete' | 'move' | 'rename';
-export type CommitResourceKind = 'dashboard' | 'folder';
+export type CommitResourceKind = ProvisionedResourceType;
 export type CommitResourceID = string;
 
 export interface CommitTemplateVars {
@@ -48,32 +50,20 @@ function sanitizeLine(value: string | undefined): string {
   return (value ?? '').replace(/[\r\n]+/g, ' ').trim();
 }
 
-function defaultMessage({ action, resourceKind, title }: CommitTemplateVars): string {
-  // Full Record forces every (resourceKind, action) pair to be mapped, so any
-  // future widening of either union is caught at compile time. The three pairs
-  // that aren't reachable today (dashboard:rename, folder:update, folder:move)
-  // get sensible defaults rather than a runtime fallback.
-  const defaults: Record<`${CommitResourceKind}:${CommitAction}`, string> = {
-    'dashboard:create': t('provisioning.commit-message.dashboard-create-default', 'New dashboard: {{title}}', {
-      title,
-    }),
-    'dashboard:update': t('provisioning.commit-message.dashboard-update-default', 'Save dashboard: {{title}}', {
-      title,
-    }),
-    'dashboard:delete': t('provisioning.commit-message.dashboard-delete-default', 'Delete dashboard: {{title}}', {
-      title,
-    }),
-    'dashboard:move': t('provisioning.commit-message.dashboard-move-default', 'Move dashboard: {{title}}', { title }),
-    'dashboard:rename': t('provisioning.commit-message.dashboard-rename-default', 'Rename dashboard: {{title}}', {
-      title,
-    }),
-    'folder:create': t('provisioning.commit-message.folder-create-default', 'Create folder: {{title}}', { title }),
-    'folder:update': t('provisioning.commit-message.folder-update-default', 'Save folder: {{title}}', { title }),
-    'folder:delete': t('provisioning.commit-message.folder-delete-default', 'Delete folder: {{title}}', { title }),
-    'folder:rename': t('provisioning.commit-message.folder-rename-default', 'Rename folder: {{title}}', { title }),
-    'folder:move': t('provisioning.commit-message.folder-move-default', 'Move folder: {{title}}', { title }),
+function defaultMessage({ action, title }: Pick<CommitTemplateVars, 'action' | 'title'>): string {
+  // Resource-agnostic by design: the verb and the noun ("resource") are part of each translatable
+  // string rather than interpolated, so the messages localise cleanly (no fixed word order, no raw
+  // English nouns) and every resource type — dashboards, folders, playlists and any new type —
+  // shares the same copy. A repo can override this via singleResourceMessageTemplate (which can
+  // reference {{resourceKind}}) when resource-specific phrasing is wanted.
+  const defaults: Record<CommitAction, string> = {
+    create: t('provisioning.commit-message.create-default', 'Create resource: {{title}}', { title }),
+    update: t('provisioning.commit-message.update-default', 'Save resource: {{title}}', { title }),
+    delete: t('provisioning.commit-message.delete-default', 'Delete resource: {{title}}', { title }),
+    move: t('provisioning.commit-message.move-default', 'Move resource: {{title}}', { title }),
+    rename: t('provisioning.commit-message.rename-default', 'Rename resource: {{title}}', { title }),
   };
-  return defaults[`${resourceKind}:${action}`];
+  return defaults[action];
 }
 
 export function renderCommitMessage(template: string | undefined | null, vars: CommitTemplateVars): string {

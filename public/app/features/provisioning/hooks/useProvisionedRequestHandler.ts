@@ -17,12 +17,14 @@ import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { useDispatch } from 'app/types/store';
 
 import { ensureFolderPathTrailingSlash } from '../components/utils/path';
+import { type ProvisionedResourceType } from '../types/resource';
 import { getRepoFileUrl } from '../utils/git';
 
 import { PushSuccessMessage } from './PushSuccessMessage';
 import { useLastBranch } from './useLastBranch';
 
-type ResourceType = 'dashboard' | 'folder'; // Add more as needed, e.g., 'alert', etc.
+// Add new resource types in ../types/resource — this alias keeps existing imports working.
+type ResourceType = ProvisionedResourceType;
 
 // Information object that gets passed to all handlers
 interface ProvisionedOperationInfo {

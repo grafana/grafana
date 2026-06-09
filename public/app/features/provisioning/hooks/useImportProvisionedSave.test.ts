@@ -159,7 +159,7 @@ describe('useImportProvisionedSave', () => {
     });
 
     const req = requireCapturedRequest();
-    expect(req.url.searchParams.get('message')).toBe('New dashboard: My Dash');
+    expect(req.url.searchParams.get('message')).toBe('Create resource: My Dash');
   });
 
   it('trims whitespace-only comment and falls back to default', async () => {
@@ -179,7 +179,7 @@ describe('useImportProvisionedSave', () => {
     });
 
     const req = requireCapturedRequest();
-    expect(req.url.searchParams.get('message')).toBe('New dashboard: My Dash');
+    expect(req.url.searchParams.get('message')).toBe('Create resource: My Dash');
   });
 
   it('honors repository commit template when comment is empty', async () => {

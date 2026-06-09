@@ -18,12 +18,13 @@ import { useGetRepositoryFolders } from '../../hooks/useGetRepositoryFolders';
 import { useLastBranch } from '../../hooks/useLastBranch';
 import { usePRBranch } from '../../hooks/usePRBranch';
 import { type BaseProvisionedFormData } from '../../types/form';
+import { type ProvisionedResourceType } from '../../types/resource';
 import { joinPath, splitPath } from '../utils/path';
 
 type SharedFieldName = 'path' | 'comment';
 
 interface DashboardEditFormSharedFieldsProps {
-  resourceType: 'dashboard' | 'folder';
+  resourceType: ProvisionedResourceType;
   canPushToConfiguredBranch: boolean;
   isNew?: boolean;
   readOnly?: boolean;
@@ -99,14 +100,14 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     });
 
     const pathText =
-      resourceType === 'dashboard'
+      resourceType === 'folder'
         ? t(
-            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-file-path',
-            'File path inside the repository (.json or .yaml)'
-          )
-        : t(
             'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder-path',
             'Folder path inside the repository'
+          )
+        : t(
+            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-file-path',
+            'File path inside the repository (.json or .yaml)'
           );
 
     return (
