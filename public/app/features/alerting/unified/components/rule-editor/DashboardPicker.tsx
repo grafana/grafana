@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { noop } from 'lodash';
 import { type CSSProperties, useCallback, useMemo, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
-import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -257,7 +257,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
 
           {!isDashSearchFetching && (
             <AutoSizer>
-              {({ height, width }: Size) => (
+              {({ height, width }) => (
                 <FixedSizeList
                   ref={scrollToItem}
                   itemSize={50}
@@ -291,7 +291,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
 
           {selectedDashboardUid && !isDashboardFetching && (
             <AutoSizer>
-              {({ width, height }: Size) => (
+              {({ width, height }) => (
                 <FixedSizeList itemSize={32} height={height} width={width} itemCount={filteredPanels.length}>
                   {PanelRow}
                 </FixedSizeList>

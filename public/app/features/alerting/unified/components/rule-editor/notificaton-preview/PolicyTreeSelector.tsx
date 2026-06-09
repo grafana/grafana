@@ -50,24 +50,14 @@ export function PolicyTreeSelector() {
 
   const { currentData: policies, isLoading, error } = useListNotificationPolicyRoutes();
 
-  // A rule routed via notification_settings.policy carries a selectedPolicy value but no legacy label.
-  // They must keep editing through the policy field even when the toggle is OFF, so the two routing mechanisms never coexist.
-  const [isPolicyFieldRule] = useState(
-    () =>
-      usePolicyRoutingSettings ||
-      (Boolean(selectedPolicyField.value) && !labels.some((label) => label.key === NAMED_ROOT_LABEL_NAME))
-  );
-
-  // Resolve the current value from the routing mechanism this rule actually uses. Policy-field rules
-  // must read selectedPolicy only: the legacy label can linger in form state (it is stripped at DTO
-  // time, not on edit), so falling back to it would mask a reset-to-default with the stale value.
+  // Get current value: from selectedPolicy field (new) or from labels (old)
   const currentPolicyValue = useMemo(() => {
-    if (isPolicyFieldRule) {
-      return selectedPolicyField.value || '';
+    if (usePolicyRoutingSettings) {
+      return selectedPolicyField.value ?? '';
     }
-    const legacyLabelValue = labels.find((label) => label.key === NAMED_ROOT_LABEL_NAME)?.value;
-    return legacyLabelValue || '';
-  }, [isPolicyFieldRule, selectedPolicyField.value, labels]);
+    const existingLabel = labels.find((label) => label.key === NAMED_ROOT_LABEL_NAME);
+    return existingLabel?.value ?? '';
+  }, [usePolicyRoutingSettings, selectedPolicyField.value, labels]);
 
   const isUsingDefaultPolicy = currentPolicyValue === '';
 
@@ -120,7 +110,7 @@ export function PolicyTreeSelector() {
 
   // Validate that existing label value is still valid when policies load (legacy label path only)
   useEffect(() => {
-    if (isPolicyFieldRule) {
+    if (usePolicyRoutingSettings) {
       return;
     }
     if (isLoading || !policies || policies.length === 0) {
@@ -146,14 +136,12 @@ export function PolicyTreeSelector() {
       const newLabels = labels.filter((label) => label.key !== NAMED_ROOT_LABEL_NAME);
       setValue('labels', newLabels);
     }
-  }, [isPolicyFieldRule, isLoading, policies, labels, setValue]);
+  }, [usePolicyRoutingSettings, isLoading, policies, labels, setValue]);
 
   const updatePolicyValue = useCallback(
     (newValue: string) => {
-      if (isPolicyFieldRule) {
-        // Pass '' (not undefined) on reset: react-hook-form's controller onChange ignores undefined,
-        // leaving the previous policy in place. '' is the field's default and reads as the default policy.
-        selectedPolicyField.onChange(newValue);
+      if (usePolicyRoutingSettings) {
+        selectedPolicyField.onChange(newValue || undefined);
         return;
       }
 
@@ -178,7 +166,7 @@ export function PolicyTreeSelector() {
 
       setValue('labels', newLabels);
     },
-    [isPolicyFieldRule, selectedPolicyField, getValues, setValue]
+    [usePolicyRoutingSettings, selectedPolicyField, getValues, setValue]
   );
 
   const handlePolicyChange = (option: SelectableValue<string>) => {

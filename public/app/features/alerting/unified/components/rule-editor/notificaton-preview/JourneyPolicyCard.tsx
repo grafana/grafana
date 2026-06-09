@@ -9,22 +9,18 @@ import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 import { labelMatcherToObjectMatcher } from '../../../utils/routeAdapter';
 import { Matchers } from '../../notification-policies/Matchers';
 import { DefaultPolicyIndicator } from '../../notification-policies/Policy';
-import { isNamedRootMatcher } from '../../notification-policies/useNotificationPolicyRoute';
 
 interface JourneyPolicyCardProps {
   route: RouteWithID;
   isRoot?: boolean;
   isFinalRoute?: boolean;
-  policyName?: string;
 }
 
-export function JourneyPolicyCard({ route, isRoot = false, isFinalRoute = false, policyName }: JourneyPolicyCardProps) {
+export function JourneyPolicyCard({ route, isRoot = false, isFinalRoute = false }: JourneyPolicyCardProps) {
   const styles = useStyles2(getStyles);
 
-  // Convert route matchers to ObjectMatcher format, hiding the internal routing label from the root route (__grafana_managed_route__).
-  const matchers: ObjectMatcher[] = (route.matchers?.map(labelMatcherToObjectMatcher) ?? []).filter(
-    (m) => !isRoot || !isNamedRootMatcher(m)
-  );
+  // Convert route matchers to ObjectMatcher format
+  const matchers: ObjectMatcher[] = route.matchers?.map(labelMatcherToObjectMatcher) ?? [];
 
   const hasMatchers = matchers.length > 0;
   const continueMatching = route.continue ?? false;
@@ -33,16 +29,8 @@ export function JourneyPolicyCard({ route, isRoot = false, isFinalRoute = false,
     <article className={styles.policyWrapper(isFinalRoute)} aria-current={isFinalRoute ? 'true' : 'false'}>
       {continueMatching && <ContinueMatchingIndicator />}
       <Stack direction="column" gap={0.5}>
-        {/* root route indicator — render the tree name for named policy trees, fall back to
-            DefaultPolicyIndicator when policyName is undefined (the default tree). */}
-        {isRoot &&
-          (policyName ? (
-            <Text element="h2" variant="body" weight="medium">
-              {policyName}
-            </Text>
-          ) : (
-            <DefaultPolicyIndicator />
-          ))}
+        {/* root route indicator */}
+        {isRoot && <DefaultPolicyIndicator />}
 
         {/* Matchers */}
         {hasMatchers ? (

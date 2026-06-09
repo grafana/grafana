@@ -76,6 +76,7 @@ function NotificationPreviewGrafanaManaged({
                 <InstanceMatch
                   key={matchDetails.labels.join(',')}
                   matchedInstance={matchDetails}
+                  policyTreeSpec={routeTree.expandedSpec}
                   policyTreeMetadata={routeTree.metadata}
                 />
               ))}
