@@ -5,8 +5,12 @@
 ### Features and enhancements
 
 - **Docker:** Bump Alpine-based images to 3.23.4 [#123031](https://github.com/grafana/grafana/pull/123031), [@Proximyst](https://github.com/Proximyst)
-- **Go:** Update to 1.25.9 [#122097](https://github.com/grafana/grafana/pull/122097), [@macabu](https://github.com/macabu)
 - **Go:** Update version to 1.26.3 [#124458](https://github.com/grafana/grafana/pull/124458), [@macabu](https://github.com/macabu)
+- **Security**: CVE-2026-33382
+- **Security**: CVE-2026-42127
+- **Security**: CVE-2026-42129
+- **Security**: CVE-2026-10601
+- **Security**: CVE-2026-8609
 
 <!-- 12.2.9 END -->
 <!-- 12.2.8+security-01 START -->
