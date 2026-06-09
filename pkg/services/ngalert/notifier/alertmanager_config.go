@@ -89,11 +89,11 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 		if err := moa.Crypto.DecryptExtraConfigs(ctx, prepared); err != nil {
 			return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
 		}
-		mergeResult, err := merge.MergeExtraConfig(ctx, prepared, models.ProvenanceConvertedPrometheus)
+		mergedConfig, _, err := merge.MergeExtraConfig(ctx, prepared, models.ProvenanceConvertedPrometheus)
 		if err != nil {
 			return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to merge external configuration: %w", err)
 		}
-		prepared = &mergeResult.Config
+		prepared = &mergedConfig
 	}
 
 	config := prepared.AlertmanagerConfig
@@ -379,7 +379,7 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		}
 	}
 
-	mergeResult, err := merge.MergeExtraConfig(ctx, cfg, models.ProvenanceConvertedPrometheus)
+	_, mergeResult, err := merge.MergeExtraConfig(ctx, cfg, models.ProvenanceConvertedPrometheus)
 	if err != nil {
 		return merge.RenameResources{}, fmt.Errorf("cannot merge imported configuration into Grafana: %w", err)
 	}
@@ -451,7 +451,7 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 		return []v1.ExtraConfiguration{extraConfig}, nil
 	}
 
-	renamed, err := moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc, dryRun)
+	result, err := moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc, dryRun)
 	if err != nil {
 		return merge.RenameResources{}, err
 	}
@@ -461,7 +461,7 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 	} else {
 		moa.logger.Info("Applied alertmanager configuration with extra config", "org", org, "identifier", extraConfig.Identifier)
 	}
-	return renamed, nil
+	return result, nil
 }
 
 // DeleteExtraConfiguration deletes an ExtraConfiguration by its identifier while preserving the main AlertmanagerConfig.
