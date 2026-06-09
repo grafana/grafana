@@ -274,6 +274,20 @@ describe('transformTraceData() pruned span detection', () => {
     });
   });
 
+  // Contract lock for the strict-boolean detection decision: is_summary is matched on the real
+  // boolean `true` (PutBool from the processor), never the string 'true'. Detection gates the
+  // entire feature, so if a data source ever surfaces the flag as a string this MUST fail loudly
+  // here rather than silently no-op. See transform-trace-data.tsx extractSpanAggregation.
+  it('does not detect a summary span when is_summary is the string "true" (strict boolean match)', () => {
+    const fixture = structuredClone(summaryDefaultsOnly);
+    const summarySpan = fixture.spans.find((s) => s.spanID === 'summ00000000a101')!;
+    const flag = summarySpan.tags.find((t) => t.key === 'aggregation.is_summary')!;
+    flag.value = 'true';
+
+    const trace = transformTraceData(fixture)!;
+    expect(spanById(trace, 'summ00000000a101').aggregation).toBeUndefined();
+  });
+
   // Regression lock for the shared-fixture contract: transformTraceData mutates its input,
   // so callers must clone. This proves repeated transforms are stable AND the singleton is
   // never touched - if a future edit drops a structuredClone, the snapshot assertion fails.
