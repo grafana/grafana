@@ -10,15 +10,17 @@ import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/const
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { UnlinkModal } from '../scene/UnlinkModal';
-import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
+import { getDashboardSceneFor } from '../utils/utils';
 
+import { LibraryPanelEditModals } from './LibraryPanelEditModals';
 import { PanelEditPanelWrapper } from './PanelEditPanelWrapper';
 import { type PanelEditor } from './PanelEditor';
-import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 import { scrollReflowMediaCondition, useScrollReflowLimit } from './useScrollReflowLimit';
 
+// v1 panel editor. PanelEditNext/PanelEditorRendererNext.tsx is the v2 version and renders the same
+// PanelEditor scene, so anything the user can see here (modals, panes, toolbar actions) needs to
+// exist there too until we drop v1.
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
   const { optionsPane } = model.useState();
@@ -82,9 +84,8 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 
 function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
-  const { dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal, tableView } = model.useState();
+  const { dataPane, tableView } = model.useState();
   const panel = model.getPanel();
-  const libraryPanel = getLibraryPanelBehavior(panel);
   const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
@@ -118,21 +119,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
         <div {...primaryProps}>
           <PanelEditPanelWrapper panel={panel} tableView={tableView} dashboard={dashboard} />
         </div>
-        {showLibraryPanelSaveModal && libraryPanel && (
-          <SaveLibraryVizPanelModal
-            libraryPanel={libraryPanel}
-            onDismiss={model.onDismissLibraryPanelSaveModal}
-            onConfirm={model.onConfirmSaveLibraryPanel}
-            onDiscard={model.onDiscard}
-          ></SaveLibraryVizPanelModal>
-        )}
-        {showLibraryPanelUnlinkModal && libraryPanel && (
-          <UnlinkModal
-            onDismiss={model.onDismissUnlinkLibraryPanelModal}
-            onConfirm={model.onConfirmUnlinkLibraryPanel}
-            isOpen
-          />
-        )}
+        <LibraryPanelEditModals model={model} />
         {dataPane && (
           <>
             <div {...splitterProps} />
