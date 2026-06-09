@@ -3,8 +3,20 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
 import { textUtil, type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { Box, Card, type CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import {
+  Box,
+  Card,
+  type CellProps,
+  Grid,
+  Icon,
+  type IconName,
+  InteractiveTable,
+  LinkButton,
+  Stack,
+  Text,
+  useStyles2,
+} from '@grafana/ui';
 import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
@@ -12,6 +24,7 @@ import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
 import { hasMissingFolderMetadata } from '../utils/folderMetadata';
 import { isQuotaReachedOrExceeded } from '../utils/quota';
+import { getResourceIcon, getResourceLabel, getResourceListUrl } from '../utils/resourceKinds';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
@@ -42,7 +55,12 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         id: 'Resource',
         header: 'Resource Type',
         cell: ({ row: { original } }: StatCell<'resource'>) => {
-          return <span>{original.resource}</span>;
+          return (
+            <Stack direction="row" gap={1} alignItems="center">
+              <Icon name={getResourceIcon(original.group, original.resource)} />
+              <span>{getResourceLabel(original.group, original.resource)}</span>
+            </Stack>
+          );
         },
         size: 'auto',
       },
@@ -57,6 +75,47 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
     ],
     []
   );
+
+  // Derive the "view" actions from the repository's stats, routing and labelling
+  // each kind through its descriptor. Kinds that resolve to the same destination
+  // (e.g. dashboards + folders under a folder-synced repo) collapse into one
+  // button, and unknown kinds fall back gracefully.
+  const viewLinks = useMemo(() => {
+    const ctx = { repoName, syncTarget: repo.spec?.sync.target };
+    const folderUrl = `/dashboards/f/${repoName}`;
+    const links = new Map<string, { href: string; icon: IconName; label: string }>();
+
+    for (const stat of status?.stats ?? []) {
+      const href = getResourceListUrl(stat.group, stat.resource, ctx);
+      if (links.has(href)) {
+        continue;
+      }
+      // When the destination is the repository's own folder, keep the familiar
+      // folder framing rather than a per-kind label.
+      const isRepoFolder = repo.spec?.sync.target === 'folder' && href === folderUrl;
+      links.set(href, {
+        href,
+        icon: isRepoFolder ? 'folder-open' : getResourceIcon(stat.group, stat.resource),
+        label: isRepoFolder
+          ? t('provisioning.repository-overview.view-folder', 'View Folder')
+          : getResourceLabel(stat.group, stat.resource),
+      });
+    }
+
+    // Always offer at least the folder/dashboards view, preserving prior behavior
+    // when a repository reports no stats yet.
+    if (links.size === 0) {
+      const href = getResourceListUrl(undefined, undefined, ctx);
+      links.set(href, {
+        href,
+        icon: 'folder-open',
+        label: t('provisioning.repository-overview.view-folder', 'View Folder'),
+      });
+    }
+
+    return [...links.values()];
+  }, [repoName, repo.spec?.sync.target, status?.stats]);
+
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
@@ -84,9 +143,11 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                 )}
               </Card.Description>
               <Card.Actions className={styles.actions}>
-                <LinkButton size="md" href={getFolderURL(repo)} icon="folder-open" variant="secondary">
-                  <Trans i18nKey="provisioning.repository-overview.view-folder">View Folder</Trans>
-                </LinkButton>
+                {viewLinks.map((link) => (
+                  <LinkButton key={link.href} size="md" href={link.href} icon={link.icon} variant="secondary">
+                    {link.label}
+                  </LinkButton>
+                ))}
               </Card.Actions>
             </Card>
           </div>
@@ -160,13 +221,6 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
       </Stack>
     </Box>
   );
-}
-
-function getFolderURL(repo: Repository) {
-  if (repo.spec?.sync.target === 'folder') {
-    return `/dashboards/f/${repo.metadata?.name}`;
-  }
-  return '/dashboards';
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
