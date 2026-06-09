@@ -2494,7 +2494,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	}
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
-		cfg.ProvisioningAllowedTargets = []string{"folder"}
+		cfg.ProvisioningAllowedTargets = []string{"folder", "folderless"}
 	}
 	cfg.ProvisioningResources = iniFile.Section("provisioning").Key("resources").Strings(",")
 	if len(cfg.ProvisioningResources) == 0 {
