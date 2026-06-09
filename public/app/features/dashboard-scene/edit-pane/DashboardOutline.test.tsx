@@ -100,6 +100,97 @@ describe('DashboardOutline', () => {
     jest.clearAllMocks();
   });
 
+  describe('collapsed state persistence', () => {
+    it('should retain expanded/collapsed state when the pane is closed and reopened', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+      const outlinePane = editPane.state.outlinePane!;
+
+      scene.onEnterEditMode();
+      editPane.enableSelection();
+      editPane.openPane(outlinePane);
+
+      const { unmount } = render(
+        <ElementSelectionContext.Provider value={editPane.state.selectionContext}>
+          <WrapSidebar>
+            <outlinePane.Component model={outlinePane} />
+          </WrapSidebar>
+        </ElementSelectionContext.Provider>
+      );
+
+      await user.click(screen.getByTestId(selectors.components.PanelEditor.Outline.node('Row level 1')));
+      expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 2'))).toBeInTheDocument();
+
+      unmount();
+
+      render(
+        <ElementSelectionContext.Provider value={editPane.state.selectionContext}>
+          <WrapSidebar>
+            <outlinePane.Component model={outlinePane} />
+          </WrapSidebar>
+        </ElementSelectionContext.Provider>
+      );
+
+      expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 2'))).toBeInTheDocument();
+    });
+
+    it('should share collapsed state across clones', () => {
+      const outline = new DashboardOutline();
+
+      outline.setNodeCollapsed('node-1', false);
+      outline.setNodeCollapsed('node-2', true);
+
+      const cloned = outline.clone();
+
+      expect(cloned.isNodeCollapsed('node-1', true)).toBe(false);
+      expect(cloned.isNodeCollapsed('node-2', false)).toBe(true);
+
+      cloned.setNodeCollapsed('node-3', false);
+      expect(outline.isNodeCollapsed('node-3', true)).toBe(false);
+    });
+
+    it('should preserve collapsed state after entering and exiting edit mode', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+      const outlinePane = editPane.state.outlinePane!;
+
+      editPane.enableSelection();
+      editPane.openPane(outlinePane);
+
+      const { unmount } = render(
+        <ElementSelectionContext.Provider value={editPane.state.selectionContext}>
+          <WrapSidebar>
+            <outlinePane.Component model={outlinePane} />
+          </WrapSidebar>
+        </ElementSelectionContext.Provider>
+      );
+
+      await user.click(screen.getByTestId(selectors.components.PanelEditor.Outline.node('Row level 1')));
+      expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 2'))).toBeInTheDocument();
+
+      unmount();
+
+      scene.onEnterEditMode();
+      scene.exitEditMode({ skipConfirm: true });
+
+      const newOutlinePane = scene.state.editPane.state.outlinePane!;
+      scene.state.editPane.enableSelection();
+      scene.state.editPane.openPane(newOutlinePane);
+
+      render(
+        <ElementSelectionContext.Provider value={scene.state.editPane.state.selectionContext}>
+          <WrapSidebar>
+            <newOutlinePane.Component model={newOutlinePane} />
+          </WrapSidebar>
+        </ElementSelectionContext.Provider>
+      );
+
+      expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 2'))).toBeInTheDocument();
+    });
+  });
+
   describe('outline item interactions tracking', () => {
     it('should call DashboardInteractions.outlineItemClicked with correct parameters when clicking on items', async () => {
       const user = userEvent.setup();

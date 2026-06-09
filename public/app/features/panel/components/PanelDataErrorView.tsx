@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { type PanelDataErrorViewProps, locationService, config } from '@grafana/runtime';
+import { type PanelDataErrorViewProps, locationService } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Icon, usePanelContext, useStyles2 } from '@grafana/ui';
 import { CardButton } from 'app/core/components/CardButton';
@@ -100,9 +100,7 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
 
   const noData = !hasData(props.data);
   const noQueryConfigured = hasNoQueryConfigured(props.data);
-  const showEmptyState = Boolean(
-    config.featureToggles.newVizSuggestions && context.app === CoreApp.PanelEditor && noQueryConfigured && noData
-  );
+  const showEmptyState = Boolean(context.app === CoreApp.PanelEditor && noQueryConfigured && noData);
   const message = getMessageFor(props, dataSummary, showEmptyState);
 
   return (

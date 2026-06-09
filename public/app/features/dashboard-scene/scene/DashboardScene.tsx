@@ -48,6 +48,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
+import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { VariablesChanged } from 'app/features/variables/types';
 import { type DashboardDTO, type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
@@ -82,6 +83,7 @@ import { buildGridItemForPanel, transformSaveModelToScene } from '../serializati
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
+import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { type DashboardEditView } from '../settings/utils';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
@@ -547,6 +549,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
+    if (this.state.meta.isDashboardTemplate) {
+      return getDashboardTemplateExtension().restore(this, version);
+    }
+
     const api = await getDashboardAPI();
     // the id here is the resource version in k8s, use this instead to get the specific version
     const versionRsp = await api.restoreDashboardVersion(version.uid, version.id);
@@ -581,7 +587,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return true;
   };
 
-  public openSaveDrawer({ saveAsCopy, onSaveSuccess }: { saveAsCopy?: boolean; onSaveSuccess?: () => void }) {
+  public openSaveDrawer({
+    saveAsCopy,
+    saveDashboardTemplate,
+    saveAsDashboardTemplate,
+    onSaveSuccess,
+  }: {
+    saveAsCopy?: boolean;
+    saveDashboardTemplate?: boolean;
+    saveAsDashboardTemplate?: boolean;
+    onSaveSuccess?: () => void;
+  }) {
     if (!this.state.isEditing) {
       return;
     }
@@ -590,6 +606,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       overlay: new SaveDashboardDrawer({
         dashboardRef: this.getRef(),
         saveAsCopy,
+        saveAsDashboardTemplate,
+        saveDashboardTemplate,
         onSaveSuccess,
         showVariablesWarning: this.hasVariableErrors(),
       }),
@@ -599,17 +617,29 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public getPageNav(location: H.Location, navIndex: NavIndex) {
     const { meta, viewPanel, editPanel, title, uid } = this.state;
     const isNew = !Boolean(uid);
+    // Trailing slash enforces a path-segment match so unrelated prefixes (e.g. `/dashboard/provisioning-foo/...`) don't match.
+    const isProvisioningPreview = location.pathname.startsWith(PROVISIONING_PREVIEW_URL + '/');
+    const clearPanelView = {
+      viewPanel: null,
+      inspect: null,
+      editview: null,
+      editPanel: null,
+      tab: null,
+      shareView: null,
+    };
 
     let pageNav: NavModelItem = {
       text: title,
-      url: getDashboardUrl({
-        uid,
-        slug: meta.slug,
-        currentQueryParams: location.search,
-        updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null, shareView: null },
-        isHomeDashboard: !meta.url && !meta.slug && !isNew && !meta.isSnapshot,
-        isSnapshot: meta.isSnapshot,
-      }),
+      url: isProvisioningPreview
+        ? locationUtil.getUrlForPartial(location, clearPanelView)
+        : getDashboardUrl({
+            uid,
+            slug: meta.slug,
+            currentQueryParams: location.search,
+            updateQuery: clearPanelView,
+            isHomeDashboard: !meta.url && !meta.slug && !isNew && !meta.isSnapshot,
+            isSnapshot: meta.isSnapshot,
+          }),
     };
 
     const { folderUid } = meta;

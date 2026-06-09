@@ -32,9 +32,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -48,7 +48,6 @@ var (
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
-	namespacer           request.NamespaceMapper
 	storage              grafanarest.Storage
 	permissionStore      PermissionStore
 	accessClient         authlib.AccessClient
@@ -75,7 +74,6 @@ func RegisterAPIService(cfg *setting.Cfg,
 	zanzanaClient zanzana.Client,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
-		namespacer:           request.GetNamespaceMapper(cfg),
 		folderPermissionsSvc: folderPermissionsSvc,
 		accessClient:         accessClient,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
@@ -208,8 +206,8 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 	// Adds a path to return children of a given folder
 	storage[folders.StoragePath("children")] = &subChildrenREST{
-		getter: b.storage,
-		lister: b.storage,
+		getter:   b.storage,
+		searcher: b.searcher,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[folders.GroupVersion().Version] = storage
@@ -220,10 +218,11 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	opts.StorageOptsRegister(foldersv1.FolderResourceInfo.GroupResource(), apistore.StorageOptions{
 		// Preserve apiVersion/kind from the client on write. Without Scheme, apistore.encode
 		// uses the global LegacyCodec and converts to a single preferred external version.
-		Scheme:                      opts.Scheme,
-		EnableFolderSupport:         true,
-		RequireDeprecatedInternalID: true,
-		Permissions:                 b.setDefaultFolderPermissions,
+		Scheme:               opts.Scheme,
+		Index:                b.searcher,
+		EnableFolderSupport:  true,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
+		Permissions:          b.setDefaultFolderPermissions,
 	})
 
 	// v1
@@ -268,7 +267,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 	}
 
 	// only set default permissions for root folders
-	if obj.GetFolder() != "" {
+	if !folder.IsRootFolderUID(obj.GetFolder()) {
 		return nil
 	}
 
@@ -400,7 +399,8 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		}
 		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth)
 	case admission.Delete:
-		return validateOnDelete(ctx, f, b.searcher)
+		deleteOptions, _ := a.GetOperationOptions().(*metav1.DeleteOptions)
+		return validateOnDelete(ctx, f, b.searcher, deleteOptions, kubernetesFolderCascadeDeleteEnabled(ctx))
 	case admission.Update:
 		old, ok := a.GetOldObject().(*foldersv1.Folder)
 		if !ok {
@@ -409,7 +409,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		if err := validateOwnerReferencesOnManagedFolder(f, old); err != nil {
 			return err
 		}
-		return validateOnUpdate(ctx, f, old, b.storage, b.parents, b.searcher, b.maxNestedFolderDepth)
+		return validateOnUpdate(ctx, f, old, b.storage, b.parents, b.searcher, b.accessClient, b.maxNestedFolderDepth)
 	default:
 		return nil
 	}

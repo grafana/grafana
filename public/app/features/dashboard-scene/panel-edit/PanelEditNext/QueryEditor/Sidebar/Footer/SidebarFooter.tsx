@@ -32,8 +32,16 @@ export function SidebarFooter() {
   const visible = total - hidden;
 
   const suffixText = isAlertView
-    ? t('query-editor-next.sidebar.footer-items-alert', '{{count}} alerts', { count: total })
-    : t('query-editor-next.sidebar.footer-items', '{{count}} items', { count: total });
+    ? t('query-editor-next.sidebar.footer-items-alert', '', {
+        count: total,
+        defaultValue_one: '{{count}} alerts',
+        defaultValue_other: '{{count}} alerts',
+      })
+    : t('query-editor-next.sidebar.footer-items', '', {
+        count: total,
+        defaultValue_one: '{{count}} items',
+        defaultValue_other: '{{count}} items',
+      });
 
   // Render the bar OR the counts — never both. Keeping both in the DOM at
   // once would leave the obscured count Stack (incl. the Select… button) in

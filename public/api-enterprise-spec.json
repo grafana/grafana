@@ -6461,6 +6461,10 @@
           "description": "UID for the home dashboard",
           "type": "string"
         },
+        "homeURL": {
+          "description": "Explicit home URL (NOTE: this can only be modified in the system settings)",
+          "type": "string"
+        },
         "language": {
           "description": "Selected language",
           "type": "string"
@@ -10045,21 +10049,6 @@
       "description": "GoneError is returned when the requested endpoint was removed.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
-      }
-    },
-    "helpFlagResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "properties": {
-          "helpFlags1": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
       }
     },
     "importDashboardResponse": {

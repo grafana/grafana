@@ -91,7 +91,7 @@ export const inputSizes = () => {
   };
 };
 
-export const inputSizesPixels = (size: string) => {
+const inputSizesPixels = (size: string) => {
   switch (size) {
     case 'sm':
       return '200px';

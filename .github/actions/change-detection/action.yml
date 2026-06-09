@@ -54,7 +54,7 @@ runs:
     - name: Detect changes
       id: changed-files
       if: github.event_name == 'pull_request'
-      uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46
+      uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
       with:
         files_yaml: |
           self:
@@ -125,6 +125,7 @@ runs:
           frontend_dependencies:
             - 'yarn.lock'
             - 'package.json'
+            - '**/package.json'
           frontend_packages:
             - '.github/actions/checkout/**'
             - '.github/actions/change-detection/**'

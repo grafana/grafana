@@ -15,7 +15,6 @@ import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
-export const DEFAULT_TOOLTIP_WIDTH = undefined;
 export const TOOLTIP_OFFSET = 10;
 
 // todo: barchart? histogram?

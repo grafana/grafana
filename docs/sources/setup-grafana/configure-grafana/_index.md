@@ -686,6 +686,16 @@ Optionally, use this option to override the default endpoint address for Applica
 
 Optionally, use this to configure `enableAutoRouteTracking` in Azure Application Insights. Defaults to `true`. For more details, refer to the [Azure documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/app/application-insights-faq#is-there-a-way-to-see-fewer-events-per-transaction-when-i-use-the-application-insights-javascript-sdk)
 
+#### `posthog_token`
+
+If you want to track Grafana usage via PostHog, specify _your_ PostHog project API key here.
+By default this feature is disabled.
+
+#### `posthog_host`
+
+Optional PostHog instance host URL. Defaults to `https://us.i.posthog.com` (PostHog US Cloud).
+Set this if you use PostHog EU Cloud (`https://eu.i.posthog.com`) or a self-hosted instance.
+
 #### `feedback_links_enabled`
 
 Set to `false` to remove all feedback links from the UI. Default is `true`.
@@ -2823,6 +2833,10 @@ Comma-separated list of targets that a repository can control. `folder` by defau
 
 Whether image rendering is allowed for dashboard previews. Requires the image rendering service to be configured. Default is `true`.
 
+#### `allow_insecure`
+
+Whether to allow `http://` repository URLs together with a configured token. Because this sends the token in cleartext on every Git operation, it's rejected by default. Intended for local and development use only. It's also implicitly allowed when `app_mode = development`. Default is `false`.
+
 #### `min_sync_interval`
 
 The minimum sync interval that you can set for a repository. Indicates how often the controller will check for changes in the repository that were not propagated by a webhook. The minimum value is `10s`. Default is `10s`.
@@ -3108,7 +3122,7 @@ For example, to set cartoDB light as the default base layer:
 default_baselayer_config = `{
   "type": "xyz",
   "config": {
-    "attribution": "Open street map",
+    "attribution": "OpenStreetMap",
     "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
   }
 }`

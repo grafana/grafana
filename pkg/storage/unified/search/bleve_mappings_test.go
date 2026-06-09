@@ -56,7 +56,7 @@ func TestDocumentMapping(t *testing.T) {
 
 	fmt.Printf("DOC: fields %d\n", len(doc.Fields))
 	fmt.Printf("DOC: size %d\n", doc.Size())
-	require.Equal(t, 21, len(doc.Fields))
+	require.Equal(t, 19, len(doc.Fields))
 	require.False(t, doc.HasComposite(), "_all composite field should be disabled")
 }
 
@@ -101,11 +101,11 @@ func TestTermVectorsAndFreqNorm(t *testing.T) {
 
 	// Text fields that use MatchQuery with BM25 scoring must NOT skip freq/norm.
 	mustNotSkipFreqNorm := map[string]bool{
+		resource.SEARCH_FIELD_TITLE:       true,
 		resource.SEARCH_FIELD_TITLE_NGRAM: true,
 	}
 
 	// Fields excluded from SkipFreqNorm check:
-	// - "title" has mixed mappings (text for scoring + keyword for exact match)
 	// - "labels.*" uses dynamic mapping (separate issue)
 
 	for _, f := range doc.Fields {

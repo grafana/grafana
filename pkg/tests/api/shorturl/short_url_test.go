@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -33,8 +34,9 @@ func TestMain(m *testing.M) {
 
 func TestShortURL(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		AppModeProduction: true,
-		DisableAnonymous:  true,
+		AppModeProduction:     true,
+		DisableAnonymous:      true,
+		DisableFeatureToggles: []string{featuremgmt.FlagKubernetesShortURLs},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)

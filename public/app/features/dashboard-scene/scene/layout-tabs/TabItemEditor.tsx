@@ -59,7 +59,12 @@ export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPan
 
   const layoutCategory = useLayoutCategory(layout);
 
-  const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
+  // OpenFeature is not initialized for anonymous users, so fall back to
+  // the static feature toggle to ensure section variables work without auth.
+  const sectionVariablesEnabled = useBooleanFlagValue(
+    'dashboardSectionVariables',
+    Boolean(config.featureToggles.dashboardSectionVariables)
+  );
   const sectionVariablesCategory = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.tabs-layout.tab-options.section-variables.title', 'Variables'),
@@ -87,9 +92,7 @@ export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPan
       title: t('dashboard.tabs-layout.tab-options.section-filters.title', 'Filters'),
       id: 'tab-section-filters',
       isOpenDefault: true,
-      renderTitle: (isExpanded: boolean) => (
-        <SectionFiltersCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
-      ),
+      renderTitle: () => <SectionFiltersCategoryTitle />,
     });
 
     category.addItem(

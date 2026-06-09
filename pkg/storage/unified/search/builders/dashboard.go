@@ -232,6 +232,7 @@ type DashboardDocumentBuilder struct {
 
 type DashboardStats interface {
 	GetStats(ctx context.Context, namespace string) (map[string]map[string]int64, error)
+	GetDashboardStats(ctx context.Context, namespace, dashboardUid string) (map[string]int64, error)
 }
 
 type DashboardStatsLookup = func(ctx context.Context, uid string) map[string]int64

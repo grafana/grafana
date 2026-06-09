@@ -178,6 +178,11 @@
         window.__grafanaAssetSriChecksEnabled = true;
       [[end]]
 
+      [[if .ReduceBootdataAPI]]
+        // TODO add comment
+        window.__grafanaReduceBootdataAPI = true;
+      [[end]]
+
       window.__grafanaPublicDashboardAccessToken = [[.PublicDashboardAccessToken]];
       // global config
       window.grafanaBootData = {

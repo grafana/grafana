@@ -254,7 +254,14 @@ export function Workbench({
                     style={{ position: 'absolute', right: `calc(100% - ${leftColumnWidth}px)`, textAlign: 'right' }}
                   >
                     <Text variant="bodySmall" color="secondary">
-                      <Trans i18nKey="alerting.triage.showing-groups-count" values={{ count: data.length }}>
+                      <Trans
+                        i18nKey="alerting.triage.showing-groups-count"
+                        values={{ count: data.length }}
+                        tOptions={{
+                          defaultValue_one: 'Showing {{count}} groups',
+                          defaultValue_other: 'Showing {{count}} groups',
+                        }}
+                      >
                         {'Showing {{count}} groups'}
                       </Trans>
                     </Text>

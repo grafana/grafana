@@ -24,21 +24,21 @@ var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Title", Type: "string", Format: "string", Description: "The dashboard name"},
+			{Name: "Title", Type: "string", Description: "The dashboard name"},
+			{Name: "Tags", Type: "array", Format: "string", Description: "Dashboard tags"},
 			{Name: "Created At", Type: "date"},
 		},
-		Reader: func(obj any) ([]interface{}, error) {
+		Reader: func(obj any) ([]any, error) {
 			dash, ok := obj.(*Dashboard)
-			if ok {
-				if dash != nil {
-					return []interface{}{
-						dash.Name,
-						dash.Spec.Title,
-						dash.CreationTimestamp.UTC().Format(time.RFC3339),
-					}, nil
-				}
+			if !ok || dash == nil {
+				return nil, fmt.Errorf("expected dashboard")
 			}
-			return nil, fmt.Errorf("expected dashboard")
+			return []any{
+				dash.Name,
+				dash.Spec.Title,
+				dash.Spec.Tags,
+				dash.CreationTimestamp.UTC().Format(time.RFC3339),
+			}, nil
 		},
 	},
 )

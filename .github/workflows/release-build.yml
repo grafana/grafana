@@ -59,6 +59,7 @@ jobs:
         run: |
           echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
           echo "grafana_commit=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
+
   # Triggers the same workflow in `grafana-enterprise` on the same ref
   downstream:
     runs-on: ubuntu-x64-small
@@ -68,19 +69,12 @@ jobs:
       id-token: write
     name: Dispatch grafana-enterprise build
     steps:
-      - id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          repositories: '["grafana-enterprise"]'
-          permissions: '{"actions": "write"}'
+          github_app: grafana-releases-oss
+          permission_set: ${{ github.ref_name == 'main' && 'dispatch-downstream-main' || 'dispatch-downstream-release' }} # different branches require different permission sets
       - uses: actions/github-script@v8
         env:
           REF: ${{ github.ref_name }}
@@ -91,7 +85,7 @@ jobs:
           SOURCE_EVENT: ${{ inputs.source-event || github.event_name }}
           REPO: ${{ github.repository }}
         with:
-          github-token: ${{ steps.generate_token.outputs.token }}
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT, REPO} = process.env;
             let workflow = 'release-build-enterprise.yml';
@@ -838,145 +832,6 @@ jobs:
       environment: prod
       runs-on: ubuntu-x64-small
 
-  publish-dockerhub:
-    if: github.repository == 'grafana/grafana' && github.ref_name == 'main'
-    permissions:
-      contents: read
-      id-token: write
-    runs-on: ubuntu-x64-small
-    needs:
-      - setup
-      - verify-targz
-      - build-docker-linux-amd64
-      - build-docker-linux-arm64
-      - build-docker-linux-armv7
-      - verify-packages
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - variant: alpine
-            full-artifact: artifacts-docker
-            slim-artifact: artifacts-docker-alpine-slim
-            full-tag-suffix: ""
-            slim-tag-suffix: "-slim"
-          - variant: ubuntu
-            full-artifact: artifacts-docker-ubuntu
-            slim-artifact: artifacts-docker-ubuntu-slim
-            full-tag-suffix: "-ubuntu"
-            slim-tag-suffix: "-ubuntu-slim"
-          - variant: distroless
-            full-artifact: artifacts-docker-distroless
-            slim-artifact: artifacts-docker-distroless-slim
-            full-tag-suffix: "-distroless"
-            slim-tag-suffix: "-distroless-slim"
-    steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: ${{ matrix.full-artifact }}-linux-amd64
-          path: dist
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: ${{ matrix.full-artifact }}-linux-arm64
-          path: dist
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: ${{ matrix.full-artifact }}-linux-armv7
-          path: dist
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: ${{ matrix.slim-artifact }}-linux-amd64
-          path: dist
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: ${{ matrix.slim-artifact }}-linux-arm64
-          path: dist
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: ${{ matrix.slim-artifact }}-linux-armv7
-          path: dist
-      - name: Push ${{ matrix.variant }} + ${{ matrix.variant }}-slim to Docker Hub
-        env:
-          VERSION: ${{ needs.setup.outputs.version }}
-          FULL_TAG_SUFFIX: ${{ matrix.full-tag-suffix }}
-          SLIM_TAG_SUFFIX: ${{ matrix.slim-tag-suffix }}
-        run: |
-          set -euo pipefail
-          TAG_VERSION="${VERSION//+/-}"
-          for f in dist/*.docker.tar.gz; do docker load -i "$f"; done \
-            | grep "Loaded image:" | sed 's/Loaded image: //' | sort -u | tee docker_images
-          while read -r line; do docker push "$line"; done < docker_images
-          docker manifest create "grafana/grafana:main${FULL_TAG_SUFFIX}" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-amd64" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-arm64" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-armv7"
-          docker manifest create "grafana/grafana:main${SLIM_TAG_SUFFIX}" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-amd64" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-arm64" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-armv7"
-          docker manifest create "grafana/grafana-dev:${TAG_VERSION}${FULL_TAG_SUFFIX}" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-amd64" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-arm64" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-armv7"
-          docker manifest create "grafana/grafana-dev:${TAG_VERSION}${SLIM_TAG_SUFFIX}" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-amd64" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-arm64" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-armv7"
-          docker manifest push "grafana/grafana:main${FULL_TAG_SUFFIX}"
-          docker manifest push "grafana/grafana:main${SLIM_TAG_SUFFIX}"
-          docker manifest push "grafana/grafana-dev:${TAG_VERSION}${FULL_TAG_SUFFIX}"
-          docker manifest push "grafana/grafana-dev:${TAG_VERSION}${SLIM_TAG_SUFFIX}"
-
-  run-meticulous-tests:
-    if: github.repository == 'grafana/grafana'
-    needs:
-      - setup
-      - publish-dockerhub
-    name: Run Meticulous tests
-    runs-on: ubuntu-x64-small
-    continue-on-error: true
-    permissions:
-      actions: write
-      contents: read
-      id-token: write
-      issues: write
-      pull-requests: write
-      statuses: read
-
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
-      - name: Compute image tag
-        id: tag
-        env:
-          VERSION: ${{ needs.setup.outputs.version }}
-        run: echo "value=grafana/grafana-dev:${VERSION//+/-}" >> "$GITHUB_OUTPUT"
-
-      - name: Pull image from Dockerhub
-        env:
-          IMAGE_TAG: ${{ steps.tag.outputs.value }}
-        run: docker pull "$IMAGE_TAG"
-
-      - name: Get vault secrets
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
-        with:
-          repo_secrets: |
-            METICULOUS_API_TOKEN=meticulous-ui:api-token
-
-      - name: Run Meticulous tests
-        uses: alwaysmeticulous/report-diffs-action/upload-container@89c6081b30d17cfcc410b5c19c269cd7a4d67cdf # v1
-        with:
-          api-token: ${{ env.METICULOUS_API_TOKEN }}
-          image-tag: ${{ steps.tag.outputs.value }}
-          container-port: 3000
-          container-env: |
-            GF_AUTH_ANONYMOUS_ENABLED=true
-            GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-
   dispatch-npm-canaries:
     if: github.repository == 'grafana/grafana' && github.ref_name == 'main'
     name: Dispatch publish NPM canaries
@@ -1010,24 +865,17 @@ jobs:
     needs:
       - setup
     steps:
-      - id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          repositories: '["grafana"]'
-          permissions: '{"issues": "write", "pull_requests": "write", "contents": "read"}'
+          github_app: grafana-releases-oss
+          permission_set: notify-pr
       - name: Find PR
         continue-on-error: true
         id: find-pr
         env:
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
           GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
           REPO: ${{ github.repository }}
         run: |
@@ -1041,14 +889,14 @@ jobs:
         continue-on-error: true
         with:
           issue-number: ${{ env.ISSUE_NUMBER }}
-          comment-author: 'grafana-delivery-bot[bot]'
+          comment-author: 'grafana-releases-oss[bot]'
           body-includes: GitHub Actions Build
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ steps.get-github-app-token.outputs.token }}
       - name: Create or update comment # zizmor: ignore[superfluous-actions]
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v4
         if: ${{ steps.find-pr.outcome == 'success' }}
         with:
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ steps.get-github-app-token.outputs.token }}
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ env.ISSUE_NUMBER }}
           body: |

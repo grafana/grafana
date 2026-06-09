@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
 func TestSizeLimitedReaderWriter_Read(t *testing.T) {
@@ -72,4 +74,80 @@ func TestSizeLimitedReaderWriter_PreservesVersioned(t *testing.T) {
 
 	_, isCombined := rw.(versionedReaderWriter)
 	assert.True(t, isCombined, "wrapped repository must still satisfy ReaderWriter+Versioned")
+}
+
+// mockReadWriterWithURLs implements ReaderWriter and RepositoryWithURLs.
+// It is created manually here to avoid the ambiguous implementation of the
+// ReaderWriter and RepositoryWithURLs mocks, as they both implement Config and Test.
+type mockReadWriterWithURLs struct {
+	ReaderWriter
+	RepositoryWithURLs
+}
+
+func (m mockReadWriterWithURLs) Config() *provisioning.Repository {
+	return m.ReaderWriter.Config()
+}
+
+func (m mockReadWriterWithURLs) Test(ctx context.Context) (*provisioning.TestResults, error) {
+	return m.ReaderWriter.Test(ctx)
+}
+
+func TestSizeLimitedReaderWriter_PreservesRepositoryWithURLs(t *testing.T) {
+	inner := mockReadWriterWithURLs{
+		ReaderWriter:       NewMockReaderWriter(t),
+		RepositoryWithURLs: NewMockRepositoryWithURLs(t),
+	}
+
+	rw := NewSizeLimitedReaderWriter(inner, 1024)
+
+	_, hasURLs := rw.(RepositoryWithURLs)
+	assert.True(t, hasURLs, "wrapped repository must still satisfy RepositoryWithURLs")
+
+	_, isVersioned := rw.(Versioned)
+	assert.False(t, isVersioned, "should not satisfy Versioned when inner does not")
+}
+
+// mockReadWriterWithURLs implements ReaderWriter, Versioned and RepositoryWithURLs.
+// It is created manually here to avoid the ambiguous implementation of the
+// ReaderWriter and RepositoryWithURLs mocks, as they both implement Config and Test.
+type mockReadWriterVersionedWithURLs struct {
+	Versioned
+	ReaderWriter
+	RepositoryWithURLs
+}
+
+func (m mockReadWriterVersionedWithURLs) Config() *provisioning.Repository {
+	return m.ReaderWriter.Config()
+}
+
+func (m mockReadWriterVersionedWithURLs) Test(ctx context.Context) (*provisioning.TestResults, error) {
+	return m.ReaderWriter.Test(ctx)
+}
+
+func TestSizeLimitedReaderWriter_PreservesAllInterfaces(t *testing.T) {
+	inner := mockReadWriterVersionedWithURLs{
+		Versioned:          NewMockVersioned(t),
+		ReaderWriter:       NewMockReaderWriter(t),
+		RepositoryWithURLs: NewMockRepositoryWithURLs(t),
+	}
+
+	rw := NewSizeLimitedReaderWriter(inner, 1024)
+
+	_, isVersioned := rw.(Versioned)
+	assert.True(t, isVersioned, "wrapped repository must still satisfy Versioned")
+
+	_, hasURLs := rw.(RepositoryWithURLs)
+	assert.True(t, hasURLs, "wrapped repository must still satisfy RepositoryWithURLs")
+}
+
+func TestSizeLimitedReaderWriter_NoOptionalInterfaces(t *testing.T) {
+	inner := NewMockReaderWriter(t)
+
+	rw := NewSizeLimitedReaderWriter(inner, 1024)
+
+	_, isVersioned := rw.(Versioned)
+	assert.False(t, isVersioned, "should not satisfy Versioned when inner does not")
+
+	_, hasURLs := rw.(RepositoryWithURLs)
+	assert.False(t, hasURLs, "should not satisfy RepositoryWithURLs when inner does not")
 }

@@ -348,7 +348,14 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
           style={{ top: panelId ? '0px' : '40px' }} // panelId is undefined in Explore
           aria-label={t('nodeGraph.node-graph.aria-label-nodes-hidden-warning', 'Nodes hidden warning')}
         >
-          <Trans i18nKey="nodeGraph.node-graph.hidden-nodes" count={hiddenNodesCount}>
+          <Trans
+            i18nKey="nodeGraph.node-graph.hidden-nodes"
+            count={hiddenNodesCount}
+            tOptions={{
+              defaultValue_one: '<0></0> {{count}} nodes are hidden for performance reasons.',
+              defaultValue_other: '<0></0> {{count}} nodes are hidden for performance reasons.',
+            }}
+          >
             <Icon size="sm" name={'info-circle'} /> {'{{count}}'} nodes are hidden for performance reasons.
           </Trans>
         </div>
@@ -363,7 +370,14 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
             'Layered layout performance warning'
           )}
         >
-          <Trans i18nKey="nodeGraph.node-graph.processed-nodes" count={processed.nodes.length}>
+          <Trans
+            i18nKey="nodeGraph.node-graph.processed-nodes"
+            count={processed.nodes.length}
+            tOptions={{
+              defaultValue_one: '<0></0> Layered layout may be slow with {{count}} nodes.',
+              defaultValue_other: '<0></0> Layered layout may be slow with {{count}} nodes.',
+            }}
+          >
             <Icon size="sm" name={'exclamation-triangle'} /> Layered layout may be slow with {'{{count}}'} nodes.
           </Trans>
         </div>
