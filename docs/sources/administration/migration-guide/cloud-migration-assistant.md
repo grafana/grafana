@@ -365,7 +365,7 @@ If specific dashboards fail to migrate:
 If you operate separate self-managed instances for development, staging, and production, plan your Grafana Cloud stack layout before you migrate.
 
 - **Production**: We recommend a single Grafana Cloud stack for production. For guidance on structuring users and data, refer to [Structuring users and data in Grafana Cloud](https://grafana.com/docs/grafana-cloud/account-management/organize-your-stack/).
-- **Development and staging**: Separate Grafana Cloud stacks for development and staging environments are acceptable. Consider whether you need dedicated dev and staging stacks before you create them.
+- **Development and staging**: Separate Grafana Cloud stacks for development and staging environments are acceptable. Consider whether you need dedicated development and staging stacks before you create them.
 
 To migrate each environment:
 
