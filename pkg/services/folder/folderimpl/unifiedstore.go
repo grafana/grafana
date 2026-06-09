@@ -231,6 +231,8 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		q.Page = 1
 	}
 
+	// A root folder UID ("" or "general") is expanded to match both root
+	// sentinels by the search backend, so pass q.UID through unchanged.
 	fields := []*resourcepb.Requirement{{
 		Key:      resource.SEARCH_FIELD_FOLDER,
 		Operator: string(selection.In),
@@ -279,10 +281,12 @@ func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64,
 	hits := make([]*folder.FolderReference, 0, len(res.Hits))
 	for _, item := range res.Hits {
 		hits = append(hits, &folder.FolderReference{
-			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
-			UID:       item.Name,
-			Title:     item.Title,
-			ParentUID: item.Folder,
+			ID:    item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
+			UID:   item.Name,
+			Title: item.Title,
+			// Legacy responses convey root with an empty ParentUID; the apistore
+			// now stores it as "general", so convert back here.
+			ParentUID: folder.ToLegacyFolderUID(item.Folder),
 			ManagedBy: item.ManagedBy.Kind,
 		})
 	}

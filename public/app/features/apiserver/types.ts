@@ -50,6 +50,8 @@ export enum ManagerKind {
   Terraform = 'terraform',
   Kubectl = 'kubectl',
   Plugin = 'plugin',
+  /** @deprecated shim/migration path for legacy file provisioning */
+  ClassicFP = 'classic-file-provisioning',
 }
 
 export const AnnoKeyManagerKind = 'grafana.app/managedBy';

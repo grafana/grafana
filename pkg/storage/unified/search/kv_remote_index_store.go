@@ -26,11 +26,11 @@ const (
 	// KVRemoteIndexStore stores snapshot manifests. Separate from the
 	// data section so listing complete snapshots only requires scanning
 	// manifest keys (one per snapshot) rather than every data file key.
-	IndexSnapshotManifestSection = "index-snapshot-manifest"
+	IndexSnapshotManifestSection = kv.SearchSnapshotManifestSection
 
 	// IndexSnapshotDataSection is the KV section under which
 	// KVRemoteIndexStore stores per-file snapshot data.
-	IndexSnapshotDataSection = "index-snapshot-data"
+	IndexSnapshotDataSection = kv.SearchSnapshotDataSection
 
 	// defaultKVLockTTL matches BucketRemoteIndexStore's default lock TTL.
 	defaultKVLockTTL = 3 * time.Minute
@@ -43,6 +43,25 @@ const (
 	// atomic on most backends, but we still chunk to keep individual calls
 	// small.
 	kvDeleteBatchSize = kv.MaxBatchOps
+
+	// defaultKVChunkSize bounds the size of a single value written to the
+	// underlying KV. 10 MiB sits well under the per-value limit on every
+	// supported KV backend.
+	defaultKVChunkSize int64 = 10 * 1024 * 1024
+
+	// minKVChunkSize / maxKVChunkSize bound user-supplied ChunkSize
+	// values. The bounds are sanity guards: anything in this range works
+	// correctly, but values far from typical (a few MiB) are unlikely to
+	// be intentional. The upper bound stays under every backend's
+	// per-value cap with margin.
+	minKVChunkSize int64 = 1024 * 1024
+	maxKVChunkSize int64 = 1024 * 1024 * 1024
+
+	// kvChunkSuffixFormat zero-pads the chunk index so listing returns
+	// chunks in numeric order. Six digits supports up to a million chunks
+	// per file, which is comfortable headroom even at the minimum chunk
+	// size.
+	kvChunkSuffixFormat = "%06d"
 )
 
 // KVRemoteIndexStoreConfig configures NewKVRemoteIndexStore.
@@ -59,29 +78,32 @@ type KVRemoteIndexStoreConfig struct {
 	// build and cleanup locks. Zero values fall back to defaults.
 	BuildLock   LockOptions
 	CleanupLock LockOptions
+
+	// ChunkSize bounds the size (in bytes) of a single KV value used to
+	// store snapshot file data. Files larger than ChunkSize are split into
+	// numbered chunks; readers recover the chunk size from chunk 0's actual
+	// length, so writers can change ChunkSize between deployments without
+	// breaking existing snapshots. Zero falls back to defaultKVChunkSize.
+	ChunkSize int64
 }
 
 // KVRemoteIndexStore implements RemoteIndexStore on top of a kv.KV.
 //
 // Data and manifests live in separate KV sections
-// (IndexSnapshotManifestSection and IndexSnapshotDataSection) so that
-// per-resource listing of complete snapshots (ListIndexKeys) can scan one
-// key per snapshot rather than every data-file key. Discovery of
-// namespaces and resources (ListNamespaces, ListNamespaceResources)
-// still scans the data section so namespaces or resources whose only
-// snapshots are incomplete uploads remain visible to the cleanup pass.
+// (IndexSnapshotManifestSection and IndexSnapshotDataSection). The
+// manifest section holds one value per complete snapshot; its presence is
+// the completion signal. The data section holds one value per chunk of
+// each snapshot file.
 //
 // Layout:
 //
 //	IndexSnapshotManifestSection
 //	    <namespace>/<resource>/<group>/<index-key>
-//	    One value per snapshot; written last. Its presence is the
-//	    snapshot completion signal, matching BucketRemoteIndexStore's
-//	    contract.
+//	    One value per snapshot; written last.
 //
 //	IndexSnapshotDataSection
-//	    <namespace>/<resource>/<group>/<index-key>/<relPath>
-//	    One value per data file.
+//	    <namespace>/<resource>/<group>/<index-key>/<relPath>/<NNNNN>
+//	    One value per chunk; NNNNN is the zero-padded chunk index.
 //
 // '/' is the only character that's always reserved by the apimachinery
 // validators, so it's the natural separator between every field. Namespaces,
@@ -91,19 +113,25 @@ type KVRemoteIndexStoreConfig struct {
 // Locks live in kv.LeasesSection (managed by lease.Manager), so snapshot
 // keys and lease keys never overlap.
 //
-// Each data file is stored as a single KV value. Transparent chunking for
-// files larger than the backend's per-value limit is not yet implemented.
+// Each snapshot file is split into one or more fixed-size chunks. Even
+// small files get one chunk at index 000000, so read and write paths
+// don't need a separate non-chunked code path. ChunkSize is recoverable
+// at read time from the observed size of chunk 0, so the writer's choice
+// of ChunkSize is not part of the persistent format and can change
+// between deployments.
 //
-// Known limitation: because ListIndexKeys lists only the manifest section,
-// CleanupIncompleteIndexSnapshots cannot detect incomplete uploads (data
-// files written without a manifest) on this backend. Detection of incomplete
-// uploads will eventually move into the backend so the helper can work
-// correctly here too.
+// ListNamespaces and ListNamespaceResources scan the data section so
+// namespaces and resources whose only on-disk state is an incomplete
+// upload (data written without a manifest) remain visible to the cleanup
+// pass. ListIndexKeys stays on the cheap manifest-only scan and so does
+// not surface incomplete uploads; the cleanup pass uses
+// ListIndexKeysIncludingIncomplete to get that wider view.
 type KVRemoteIndexStore struct {
 	store           kv.KV
 	leaseMgr        *lease.Manager
 	buildLockOpts   LockOptions
 	cleanupLockOpts LockOptions
+	chunkSize       int64
 	log             log.Logger
 }
 
@@ -116,11 +144,16 @@ func NewKVRemoteIndexStore(cfg KVRemoteIndexStoreConfig) (*KVRemoteIndexStore, e
 	if cfg.LeaseManager == nil {
 		return nil, fmt.Errorf("lease manager is required")
 	}
+	chunkSize := cmp.Or(cfg.ChunkSize, defaultKVChunkSize)
+	if chunkSize < minKVChunkSize || chunkSize > maxKVChunkSize {
+		return nil, fmt.Errorf("chunk size %d out of range [%d, %d]", chunkSize, minKVChunkSize, maxKVChunkSize)
+	}
 	return &KVRemoteIndexStore{
 		store:           cfg.KV,
 		leaseMgr:        cfg.LeaseManager,
 		buildLockOpts:   cfg.BuildLock,
 		cleanupLockOpts: cfg.CleanupLock,
+		chunkSize:       chunkSize,
 		log:             log.New("kv-remote-index-store"),
 	}, nil
 }
@@ -153,8 +186,16 @@ func kvNamespacePrefix(namespace string) string {
 	return namespace + "/"
 }
 
-func (s *KVRemoteIndexStore) dataKey(ns resource.NamespacedResource, indexKey ulid.ULID, relPath string) string {
-	return kvDataPrefix(ns, indexKey) + relPath
+// dataKeyPrefix returns the per-file prefix under which all chunks of a
+// single snapshot file live. The trailing slash makes prefix-based listing
+// return only this file's chunks.
+func (s *KVRemoteIndexStore) dataKeyPrefix(ns resource.NamespacedResource, indexKey ulid.ULID, relPath string) string {
+	return kvDataPrefix(ns, indexKey) + relPath + "/"
+}
+
+// dataChunkKey returns the KV key for one chunk of a snapshot file.
+func (s *KVRemoteIndexStore) dataChunkKey(ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, chunkIdx int64) string {
+	return s.dataKeyPrefix(ns, indexKey, relPath) + fmt.Sprintf(kvChunkSuffixFormat, chunkIdx)
 }
 
 // manifestKey returns the key for a snapshot's manifest in the manifest
@@ -199,53 +240,132 @@ func validateNsResource(ns resource.NamespacedResource) error {
 	return nil
 }
 
-// WriteSnapshotFile streams src into a single KV value at the per-file key
-// in the data section. Chunking for large files is not yet implemented.
+// WriteSnapshotFile splits src into chunks of at most chunkSize bytes and
+// writes each chunk to a separate KV value under the per-file prefix. Empty
+// files are not supported because all KV backends reject zero-byte values,
+// but snapshot files produced by Bleve are always non-empty in practice.
 func (s *KVRemoteIndexStore) WriteSnapshotFile(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, relPath string, src *os.File) error {
 	if err := validateNsResource(nsResource); err != nil {
 		return err
 	}
-	w, err := s.store.Save(ctx, IndexSnapshotDataSection, s.dataKey(nsResource, indexKey, relPath))
+	stat, err := src.Stat()
 	if err != nil {
-		return fmt.Errorf("opening kv writer for %s: %w", relPath, err)
+		return fmt.Errorf("stat snapshot file %s: %w", relPath, err)
 	}
-	if _, err := io.Copy(w, src); err != nil {
-		_ = w.Close()
-		return fmt.Errorf("writing snapshot file %s: %w", relPath, err)
+	size := stat.Size()
+	if size == 0 {
+		return fmt.Errorf("snapshot file %s is empty", relPath)
 	}
-	if err := w.Close(); err != nil {
-		return fmt.Errorf("closing kv writer for %s: %w", relPath, err)
+	numChunks := (size + s.chunkSize - 1) / s.chunkSize
+
+	for chunkIdx := range numChunks {
+		offset := chunkIdx * s.chunkSize
+		length := s.chunkSize
+		if remaining := size - offset; remaining < length {
+			length = remaining
+		}
+		section := io.NewSectionReader(src, offset, length)
+		if err := s.writeChunk(ctx, nsResource, indexKey, relPath, chunkIdx, section); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-// ReadSnapshotFile streams the KV value at the per-file key in the data
-// section into dst, capping the transfer at expectedSize+1 bytes so a
-// misadvertised size cannot transfer unbounded data. Returns
-// ErrSnapshotNotFound if the key is absent.
+// writeChunk uploads a single chunk to its KV key. The reader is fully
+// drained or an error is returned.
+func (s *KVRemoteIndexStore) writeChunk(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, chunkIdx int64, src io.Reader) error {
+	key := s.dataChunkKey(ns, indexKey, relPath, chunkIdx)
+	w, err := s.store.Save(ctx, IndexSnapshotDataSection, key)
+	if err != nil {
+		return fmt.Errorf("opening kv writer for %s chunk %d: %w", relPath, chunkIdx, err)
+	}
+	if _, err := io.Copy(w, src); err != nil {
+		_ = w.Close()
+		return fmt.Errorf("writing %s chunk %d: %w", relPath, chunkIdx, err)
+	}
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("closing kv writer for %s chunk %d: %w", relPath, chunkIdx, err)
+	}
+	return nil
+}
+
+// ReadSnapshotFile reassembles a snapshot file by reading chunks 0..N-1 in
+// order, where N is recovered from chunk 0's actual size and the advertised
+// expectedSize. Returns ErrSnapshotNotFound if chunk 0 is missing, and
+// wraps resource.ErrWriteLimitExceeded if the assembled file would exceed
+// expectedSize.
 func (s *KVRemoteIndexStore) ReadSnapshotFile(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
 	if err := validateNsResource(nsResource); err != nil {
 		return err
 	}
-	rc, err := s.store.Get(ctx, IndexSnapshotDataSection, s.dataKey(nsResource, indexKey, relPath))
+
+	// Chunk 0's cap is expectedSize+1: either the whole file fits in one
+	// chunk, or we'll observe the writer's chunk size as len(chunk0) and
+	// fetch the remaining chunks from there.
+	n0, err := s.readChunk(ctx, nsResource, indexKey, relPath, 0, dst, expectedSize+1)
 	if err != nil {
 		if errors.Is(err, kv.ErrNotFound) {
 			return ErrSnapshotNotFound
 		}
-		return fmt.Errorf("reading snapshot file %s: %w", relPath, err)
+		return err
 	}
-	defer func() { _ = rc.Close() }()
-
-	// Read one extra byte so we can detect oversized objects without a
-	// second round trip.
-	n, err := io.Copy(dst, io.LimitReader(rc, expectedSize+1))
-	if err != nil {
-		return fmt.Errorf("copying snapshot file %s: %w", relPath, err)
-	}
-	if n > expectedSize {
+	switch {
+	case n0 > expectedSize:
 		return fmt.Errorf("remote object %s exceeds expected size %d: %w", relPath, expectedSize, resource.ErrWriteLimitExceeded)
+	case n0 == expectedSize:
+		// Single-chunk file fully covered by chunk 0.
+		return nil
+	case n0 == 0:
+		// Multi-chunk file with an empty chunk 0 would never make
+		// progress and we have no chunk size to derive. Treat it as
+		// corruption.
+		return fmt.Errorf("chunk 0 of %s is empty but expected size %d", relPath, expectedSize)
+	}
+
+	// Chunk 0 covered some but not all of the file, so its size IS the
+	// writer's chunk size; fetch the rest accordingly.
+	chunkSize := n0
+	written := n0
+	for chunkIdx := int64(1); written < expectedSize; chunkIdx++ {
+		// Cap each subsequent chunk at chunkSize+1 to detect over-read
+		// without buffering the whole chunk first.
+		n, err := s.readChunk(ctx, nsResource, indexKey, relPath, chunkIdx, dst, chunkSize+1)
+		if err != nil {
+			if errors.Is(err, kv.ErrNotFound) {
+				return fmt.Errorf("chunk %d of %s missing: %w", chunkIdx, relPath, err)
+			}
+			return err
+		}
+		if n == 0 {
+			return fmt.Errorf("chunk %d of %s is empty", chunkIdx, relPath)
+		}
+		written += n
+		if written > expectedSize {
+			return fmt.Errorf("remote object %s exceeds expected size %d: %w", relPath, expectedSize, resource.ErrWriteLimitExceeded)
+		}
 	}
 	return nil
+}
+
+// readChunk fetches one chunk into dst, capped at maxBytes to detect
+// over-sized values. Returns the number of bytes written. Propagates
+// kv.ErrNotFound unwrapped so callers can distinguish a missing chunk.
+func (s *KVRemoteIndexStore) readChunk(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, chunkIdx int64, dst io.Writer, maxBytes int64) (int64, error) {
+	key := s.dataChunkKey(ns, indexKey, relPath, chunkIdx)
+	rc, err := s.store.Get(ctx, IndexSnapshotDataSection, key)
+	if err != nil {
+		if errors.Is(err, kv.ErrNotFound) {
+			return 0, err
+		}
+		return 0, fmt.Errorf("reading %s chunk %d: %w", relPath, chunkIdx, err)
+	}
+	defer func() { _ = rc.Close() }()
+	n, err := io.Copy(dst, io.LimitReader(rc, maxBytes))
+	if err != nil {
+		return n, fmt.Errorf("copying %s chunk %d: %w", relPath, chunkIdx, err)
+	}
+	return n, nil
 }
 
 // WriteSnapshotManifest stores the manifest as a single KV value in the
@@ -299,8 +419,9 @@ func (s *KVRemoteIndexStore) ReadSnapshotManifest(ctx context.Context, nsResourc
 // data, complete or incomplete. Scans the data section so the cleanup
 // pass can reach a namespace whose only snapshots are partial uploads.
 func (s *KVRemoteIndexStore) ListNamespaces(ctx context.Context) ([]string, error) {
-	return listDistinctSegments(ctx, s.store, IndexSnapshotDataSection, "", func(seg string) (string, bool) {
-		return seg, seg != ""
+	return listDistinctValues(ctx, s.store, IndexSnapshotDataSection, "", func(rest string) (string, bool) {
+		ns, _, _ := strings.Cut(rest, "/")
+		return ns, ns != ""
 	})
 }
 
@@ -312,98 +433,105 @@ func (s *KVRemoteIndexStore) ListNamespaceResources(ctx context.Context, namespa
 	if err := validateNamespace(namespace); err != nil {
 		return nil, err
 	}
-	prefix := kvNamespacePrefix(namespace)
-	end := kv.PrefixRangeEnd(prefix)
-
-	seen := make(map[resource.NamespacedResource]struct{})
-	var result []resource.NamespacedResource
-	for key, err := range s.store.Keys(ctx, IndexSnapshotDataSection, kv.ListOptions{StartKey: prefix, EndKey: end}) {
-		if err != nil {
-			return nil, err
-		}
-		// Layout under prefix: "<resource>/<group>/<ULID>/<relPath>".
-		rest := strings.TrimPrefix(key, prefix)
+	return listDistinctValues(ctx, s.store, IndexSnapshotDataSection, kvNamespacePrefix(namespace), func(rest string) (resource.NamespacedResource, bool) {
+		// Layout under prefix: "<resource>/<group>/<ULID>/<relPath>/<NNNNN>".
 		res, after, ok := strings.Cut(rest, "/")
 		if !ok || res == "" {
-			continue
+			return resource.NamespacedResource{}, false
 		}
 		group, _, ok := strings.Cut(after, "/")
 		if !ok || group == "" {
-			continue
+			return resource.NamespacedResource{}, false
 		}
-		nr := resource.NamespacedResource{Namespace: namespace, Resource: res, Group: group}
-		if _, dup := seen[nr]; dup {
-			continue
-		}
-		seen[nr] = struct{}{}
-		result = append(result, nr)
-	}
-	return result, nil
+		return resource.NamespacedResource{Namespace: namespace, Resource: res, Group: group}, true
+	})
 }
 
-// ListIndexKeys returns the ULID keys of all complete snapshots under
-// nsResource. Scans the manifest section directly, so incomplete uploads
-// (data files written without a manifest) are not surfaced.
-//
-// Note: this is a deliberate divergence from the contract documented on
-// RemoteIndexStore.ListIndexKeys ("may include incomplete uploads"). As a
-// consequence, CleanupIncompleteIndexSnapshots cannot detect incomplete
-// uploads on this backend until incomplete-upload detection is moved into
-// the backend itself.
+// ListIndexKeys returns the ULID keys of complete snapshots under
+// nsResource. The manifest section is scanned via a cheap one-key-per-
+// snapshot listing; incomplete uploads (data files written without a
+// manifest) are not surfaced. Callers that need to see incomplete
+// uploads — notably CleanupIncompleteIndexSnapshots — use
+// ListIndexKeysIncludingIncomplete instead. Order is unspecified.
 func (s *KVRemoteIndexStore) ListIndexKeys(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error) {
 	if err := validateNsResource(nsResource); err != nil {
 		return nil, err
 	}
-	prefix := kvResourcePrefix(nsResource)
-	end := kv.PrefixRangeEnd(prefix)
-
-	var result []ulid.ULID
-	for key, err := range s.store.Keys(ctx, IndexSnapshotManifestSection, kv.ListOptions{StartKey: prefix, EndKey: end}) {
-		if err != nil {
-			return nil, err
-		}
-		// Manifest keys are flat: `<resourceSubPath>/<ULID>`, no trailing path.
-		ulidStr := strings.TrimPrefix(key, prefix)
-		u, err := ulid.Parse(ulidStr)
-		if err != nil {
-			// Shouldn't occur in practice; log so it doesn't disappear silently.
-			s.log.Warn("skipping non-ULID key in manifest section", "key", key, "err", err)
-			continue
-		}
-		result = append(result, u)
-	}
-	return result, nil
+	return listDistinctValues(ctx, s.store, IndexSnapshotManifestSection, kvResourcePrefix(nsResource), parseULIDFromSegment(s.log))
 }
 
-// listDistinctSegments scans the given KV section for keys with the given
-// prefix and returns the distinct first path segment after prefix,
-// transformed via parse. Entries for which parse returns ok=false are
-// dropped.
-func listDistinctSegments[T any](ctx context.Context, store kv.KV, section, prefix string, parse func(seg string) (T, bool)) ([]T, error) {
+// ListIndexKeysIncludingIncomplete returns the ULID keys of all
+// snapshots under nsResource, including incomplete uploads (data
+// written without a manifest). The data-section scan walks every chunk
+// key, so this is O(snapshots × files × chunks) and noticeably more
+// expensive than ListIndexKeys; only the cleanup pass needs the wider
+// view. Results are deduplicated on ULID; order is unspecified.
+func (s *KVRemoteIndexStore) ListIndexKeysIncludingIncomplete(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error) {
+	if err := validateNsResource(nsResource); err != nil {
+		return nil, err
+	}
+	prefix := kvResourcePrefix(nsResource)
+	parseULID := parseULIDFromSegment(s.log)
+
+	// Manifest section: one key per complete snapshot.
+	manifests, err := listDistinctValues(ctx, s.store, IndexSnapshotManifestSection, prefix, parseULID)
+	if err != nil {
+		return nil, err
+	}
+	// Data section: many keys per snapshot. Surfaces incomplete uploads
+	// (data written without a manifest).
+	datas, err := listDistinctValues(ctx, s.store, IndexSnapshotDataSection, prefix, parseULID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Sort+Compact removes ULIDs that appeared in both sections.
+	all := slices.Concat(manifests, datas)
+	slices.SortFunc(all, ulid.ULID.Compare)
+	return slices.Compact(all), nil
+}
+
+// parseULIDFromSegment returns a parse function for listDistinctValues
+// that extracts a ULID from the first '/'-separated segment of the path
+// remainder. Both the manifest layout (`<ULID>`) and the data layout
+// (`<ULID>/<relPath>/<NNNNN>`) yield the ULID. Non-ULID segments are
+// logged at warn level and skipped.
+func parseULIDFromSegment(logger log.Logger) func(rest string) (ulid.ULID, bool) {
+	return func(rest string) (ulid.ULID, bool) {
+		seg, _, _ := strings.Cut(rest, "/")
+		u, err := ulid.Parse(seg)
+		if err != nil {
+			logger.Warn("skipping non-ULID key segment", "seg", seg, "err", err)
+			return ulid.ULID{}, false
+		}
+		return u, true
+	}
+}
+
+// listDistinctValues scans keys in section under prefix and returns the
+// distinct values produced by parse from the path remainder after prefix.
+// Entries for which parse returns ok=false are dropped. Order is the order
+// the values first appear in the scan.
+func listDistinctValues[T comparable](ctx context.Context, store kv.KV, section, prefix string, parse func(rest string) (T, bool)) ([]T, error) {
 	opts := kv.ListOptions{StartKey: prefix}
 	if prefix != "" {
 		opts.EndKey = kv.PrefixRangeEnd(prefix)
 	}
 
-	seen := make(map[string]struct{})
+	seen := make(map[T]struct{})
 	var result []T
 	for key, err := range store.Keys(ctx, section, opts) {
 		if err != nil {
 			return nil, err
 		}
-		rest := strings.TrimPrefix(key, prefix)
-		seg, _, _ := strings.Cut(rest, "/")
-		if seg == "" {
-			continue
-		}
-		if _, ok := seen[seg]; ok {
-			continue
-		}
-		seen[seg] = struct{}{}
-		v, ok := parse(seg)
+		v, ok := parse(strings.TrimPrefix(key, prefix))
 		if !ok {
 			continue
 		}
+		if _, dup := seen[v]; dup {
+			continue
+		}
+		seen[v] = struct{}{}
 		result = append(result, v)
 	}
 	return result, nil
