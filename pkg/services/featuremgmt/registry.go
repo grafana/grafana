@@ -293,7 +293,7 @@ var (
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, React: true},
+			Generate:        Generate{Go: true, React: true},
 		},
 		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
