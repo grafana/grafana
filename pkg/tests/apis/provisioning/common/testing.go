@@ -1661,6 +1661,24 @@ func (h *ProvisioningTestHelper) PostFilesRequest(t *testing.T, repo string, opt
 	return resp
 }
 
+// ListRepositoryFiles returns the file listing from the repository's files endpoint
+// (GET .../files/). It is a directory listing only — it does not parse resources or run
+// a dry-run, so it is safe to call regardless of whether the files are already
+// provisioned in Grafana.
+func (h *ProvisioningTestHelper) ListRepositoryFiles(t *testing.T, ctx context.Context, repo string) []provisioning.FileItem {
+	t.Helper()
+	rsp := h.AdminREST.Get().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		Suffix("files/").
+		Do(ctx)
+	require.NoError(t, rsp.Error(), "listing repository files should succeed")
+	list := &provisioning.FileList{}
+	require.NoError(t, rsp.Into(list))
+	return list.Items
+}
+
 // FilesClient provides convenience methods for interacting with the provisioning
 // files subresource (/repositories/{repo}/files/{path}) via direct HTTP.
 // It avoids the Kubernetes REST client limitation with '/' in subresource names.

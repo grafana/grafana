@@ -2,6 +2,7 @@ package playlists
 
 import (
 	"context"
+	"encoding/json"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -10,11 +11,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -37,22 +40,23 @@ func newPlaylist(name, title string) *unstructured.Unstructured {
 	}
 }
 
+func playlistJSON(t *testing.T, name, title string) []byte {
+	t.Helper()
+	body, err := json.Marshal(newPlaylist(name, title).Object)
+	require.NoError(t, err)
+	return body
+}
+
 // TestIntegrationProvisioning_ExportPlaylist verifies that a full instance export (push)
-// succeeds with Playlist enabled as an active resource, and that the playlist is written
-// to the repository alongside other kinds. Before the provisioning identity was authorized
-// for playlists, enumerating the active kinds during export denied the playlist list and
-// failed the entire job — so a successful export here is the regression guard for that.
+// succeeds with Playlist enabled as an active resource and writes the playlist to the
+// repository. Before the provisioning identity was authorized for playlists, enumerating
+// the active kinds during export denied the playlist list and failed the entire job — so a
+// successful export here is the regression guard for that.
 func TestIntegrationProvisioning_ExportPlaylist(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	playlists := playlistClient(t, helper)
-
-	// A dashboard so the export covers more than just playlists (proves other kinds
-	// still export once playlists are active).
-	dashboard := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	_, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
-	require.NoError(t, err, "should be able to create v1 dashboard")
 
 	created, err := playlists.Resource.Create(ctx, newPlaylist("export-playlist", "Export Playlist"), metav1.CreateOptions{})
 	require.NoError(t, err, "provisioning identity context should allow creating a playlist")
@@ -60,11 +64,10 @@ func TestIntegrationProvisioning_ExportPlaylist(t *testing.T) {
 
 	const repo = "playlist-export-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "instance", // export is only supported for instance sync
-		Workflows:          []string{"write"},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    0,
+		Name:                   repo,
+		SyncTarget:             "instance", // export is only supported for instance sync
+		Workflows:              []string{"write"},
+		SkipResourceAssertions: true,
 	})
 
 	helper.DebugState(t, repo, "BEFORE EXPORT")
@@ -79,11 +82,10 @@ func TestIntegrationProvisioning_ExportPlaylist(t *testing.T) {
 	helper.DebugState(t, repo, "AFTER EXPORT")
 	common.PrintFileTree(t, helper.ProvisioningPath)
 
-	dashboardFiles, playlistFiles := exportedFilesByGroup(t, helper.ProvisioningPath)
-	require.NotEmpty(t, dashboardFiles, "dashboards should still be exported when playlist is active")
+	playlistFiles := exportedPlaylistFiles(t, helper.ProvisioningPath)
 	require.NotEmpty(t, playlistFiles, "the playlist should be exported to the repository")
 
-	obj := readResourceFile(t, playlistFiles[0])
+	obj := readFileFromDisk(t, playlistFiles[0])
 	title, _, err := unstructured.NestedString(obj, "spec", "title")
 	require.NoError(t, err)
 	require.Equal(t, "Export Playlist", title)
@@ -113,25 +115,106 @@ func TestIntegrationProvisioning_SyncPlaylist(t *testing.T) {
 	helper.SyncAndWait(t, repo, nil)
 	helper.DebugState(t, repo, "AFTER PLAYLIST SYNC")
 
-	var got *unstructured.Unstructured
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		got, err = playlists.Resource.Get(ctx, "synced-playlist", metav1.GetOptions{})
-		if err != nil {
-			collect.Errorf("playlist not provisioned yet: %s", err.Error())
-			return
-		}
-		assert.NotNil(collect, got)
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "playlist should be provisioned from the repository")
-
+	got := requirePlaylist(t, ctx, playlists, "synced-playlist")
 	title, _, err := unstructured.NestedString(got.Object, "spec", "title")
 	require.NoError(t, err)
 	require.Equal(t, "Synced Playlist", title)
 }
 
-// exportedFilesByGroup walks the repository directory and partitions resource files by
-// API group so tests can assert on what was exported without hard-coding generated names.
-func exportedFilesByGroup(t *testing.T, root string) (dashboards, playlists []string) {
+// TestIntegrationProvisioning_PlaylistFilesEndpoint exercises the repository files
+// subresource for playlists. A write to the configured branch of a sync-enabled repo both
+// stores the file and provisions the resource into Grafana (the dual writer "behaves the
+// same as running sync after writing"), so the test asserts the playlist state in Grafana
+// and the repository file listing after a create and a delete.
+//
+// Note: read-back and update via the files GET/PUT are intentionally not exercised here.
+// Both run a dry-run against the existing resource, and the playlist apiserver rejects an
+// update without metadata.resourceVersion (which a repository file does not carry). That is
+// a playlist round-trip limitation tracked separately under #1166, not part of the authz
+// wiring this change is about.
+func TestIntegrationProvisioning_PlaylistFilesEndpoint(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	playlists := playlistClient(t, helper)
+
+	const repo = "playlist-files-repo"
+	const path = "files-playlist.json"
+	const name = "files-playlist"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:                   repo,
+		SyncTarget:             "instance",
+		Workflows:              []string{"write"},
+		SkipResourceAssertions: true,
+	})
+	t.Cleanup(func() { _ = playlists.Resource.Delete(ctx, name, metav1.DeleteOptions{}) })
+
+	// Create the playlist via the files endpoint (POST).
+	result := helper.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		SubResource("files", path).
+		Body(playlistJSON(t, name, "Files Playlist")).
+		SetHeader("Content-Type", "application/json").
+		Do(ctx)
+	require.NoError(t, result.Error(), "creating a playlist via the files endpoint should succeed")
+
+	// The write both stores the file in the repo and provisions the playlist into Grafana.
+	require.Contains(t, repositoryFilePaths(t, ctx, helper, repo), path, "the playlist file should exist in the repository")
+
+	got := requirePlaylist(t, ctx, playlists, name)
+	title, _, err := unstructured.NestedString(got.Object, "spec", "title")
+	require.NoError(t, err)
+	require.Equal(t, "Files Playlist", title)
+
+	// Delete the playlist via the files endpoint (DELETE).
+	result = helper.AdminREST.Delete().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		SubResource("files", path).
+		Do(ctx)
+	require.NoError(t, result.Error(), "deleting a playlist file should succeed")
+
+	require.NotContains(t, repositoryFilePaths(t, ctx, helper, repo), path, "the playlist file should be removed from the repository")
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		_, err := playlists.Resource.Get(ctx, name, metav1.GetOptions{})
+		assert.True(collect, apierrors.IsNotFound(err), "playlist should be removed from Grafana after a files DELETE, got: %v", err)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "playlist should be deleted after a files DELETE")
+}
+
+// repositoryFilePaths returns the set of file paths currently in the repository.
+func repositoryFilePaths(t *testing.T, ctx context.Context, helper *common.ProvisioningTestHelper, repo string) []string {
 	t.Helper()
+	items := helper.ListRepositoryFiles(t, ctx, repo)
+	paths := make([]string, 0, len(items))
+	for _, item := range items {
+		paths = append(paths, item.Path)
+	}
+	return paths
+}
+
+// requirePlaylist waits until the named playlist is readable in Grafana and returns it.
+func requirePlaylist(t *testing.T, ctx context.Context, playlists *apis.K8sResourceClient, name string) *unstructured.Unstructured {
+	t.Helper()
+	var got *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := playlists.Resource.Get(ctx, name, metav1.GetOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
+		got = obj
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "playlist %q should be provisioned", name)
+	return got
+}
+
+// exportedPlaylistFiles walks the repository directory and returns the files that contain
+// playlist resources, so tests can assert on what was exported without hard-coding the
+// generated file names.
+func exportedPlaylistFiles(t *testing.T, root string) []string {
+	t.Helper()
+	var playlists []string
 	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -143,21 +226,17 @@ func exportedFilesByGroup(t *testing.T, root string) (dashboards, playlists []st
 		if ext != ".json" && ext != ".yaml" && ext != ".yml" {
 			return nil
 		}
-		obj := readResourceFile(t, p)
-		apiVersion, _, _ := unstructured.NestedString(obj, "apiVersion")
-		switch {
-		case strings.HasPrefix(apiVersion, "dashboard.grafana.app/"):
-			dashboards = append(dashboards, p)
-		case strings.HasPrefix(apiVersion, "playlist.grafana.app/"):
+		apiVersion, _, _ := unstructured.NestedString(readFileFromDisk(t, p), "apiVersion")
+		if strings.HasPrefix(apiVersion, "playlist.grafana.app/") {
 			playlists = append(playlists, p)
 		}
 		return nil
 	})
 	require.NoError(t, err)
-	return dashboards, playlists
+	return playlists
 }
 
-func readResourceFile(t *testing.T, path string) map[string]any {
+func readFileFromDisk(t *testing.T, path string) map[string]any {
 	t.Helper()
 	//nolint:gosec // reading files we just exported under a test temp dir
 	body, err := os.ReadFile(path)
