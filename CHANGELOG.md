@@ -1,3 +1,32 @@
+<!-- 13.0.2 START -->
+
+# 13.0.2 (2026-06-09)
+
+### Features and enhancements
+
+- **Dashboards:** Show k8s format in provisioned save [#123045](https://github.com/grafana/grafana/pull/123045), [@stephaniehingtgen](https://github.com/stephaniehingtgen)
+- **Docker:** Bump Alpine-based images to 3.23.4 [#122938](https://github.com/grafana/grafana/pull/122938), [@Proximyst](https://github.com/Proximyst)
+- **Go:** Update version to 1.26.3 [#124454](https://github.com/grafana/grafana/pull/124454), [@macabu](https://github.com/macabu)
+- **Homepage:** Support v2 dashboards if defined by a file [#123029](https://github.com/grafana/grafana/pull/123029), [@stephaniehingtgen](https://github.com/stephaniehingtgen)
+- **LibraryPanels:** Return 403 instead of 500 for insufficient permissions [#123467](https://github.com/grafana/grafana/pull/123467), [@MissingRoberto](https://github.com/MissingRoberto)
+- **Provisioning:** Don't mark folders pending due to \_folder.json metadata [#124139](https://github.com/grafana/grafana/pull/124139), [@MissingRoberto](https://github.com/MissingRoberto)
+- **Provisioning:** Honor ruleset bypass for write workflow validation [#124128](https://github.com/grafana/grafana/pull/124128), [@MissingRoberto](https://github.com/MissingRoberto)
+- **Provisioning:** Negotiate receive-pack capabilities for git pushes [#124130](https://github.com/grafana/grafana/pull/124130), [@MissingRoberto](https://github.com/MissingRoberto)
+- **Provisioning:** Per-verb fallback for the files subresource [#123900](https://github.com/grafana/grafana/pull/123900), [@MissingRoberto](https://github.com/MissingRoberto)
+- **Provisioning:** Scope repository uniqueness by (URL, branch, path) [#124121](https://github.com/grafana/grafana/pull/124121), [@ferruvich](https://github.com/ferruvich)
+- **Provisioning:** Surface folder uid-too-long and other validation 4xx as sync warnings [#123888](https://github.com/grafana/grafana/pull/123888), [@MissingRoberto](https://github.com/MissingRoberto)
+- **Provisioning:** add public_root_url instance setting for external URLs [#124258](https://github.com/grafana/grafana/pull/124258), [@MissingRoberto](https://github.com/MissingRoberto)
+
+### Bug fixes
+
+- **DashboardDS:** Fix Mixed panels not updating on time-range change with stale upstreams [#124894](https://github.com/grafana/grafana/pull/124894), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Jaeger:** Fix log event timestamp unit conversion in trace view [#123707](https://github.com/grafana/grafana/pull/123707), [@ktw4071](https://github.com/ktw4071)
+- **K8s Dashboards:** Fix folder permission check to use dashboards:create [#124942](https://github.com/grafana/grafana/pull/124942), [@mihai-turdean](https://github.com/mihai-turdean)
+- **PostgreSQL:** Allow sql_engine to return results for EXPLAIN queries [#123246](https://github.com/grafana/grafana/pull/123246), [@sdague](https://github.com/sdague)
+- **Provisioning:** Bump nanogit to v0.17.0 to fix pushes with repositories using git modules [#124140](https://github.com/grafana/grafana/pull/124140), [@MissingRoberto](https://github.com/MissingRoberto)
+- **RBAC:** Quick fix for global datasource permissions (Enterprise)
+
+<!-- 13.0.2 END -->
 <!-- 12.3.6+security-04 START -->
 
 # 12.3.6+security-04 (2026-05-12)
