@@ -1,4 +1,4 @@
-import { type Page } from '@playwright/test';
+import { test, type Page } from '@playwright/test';
 
 import { type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
@@ -43,5 +43,11 @@ class PanelOptions extends PageObject {
     return this.dashboardPage
       .getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description'))
       .locator('textarea');
+  }
+
+  async toggleTransparentBackground() {
+    await test.step('Toggle transparent background', async () => {
+      await this.page.getByRole('switch', { name: 'Transparent background' }).click({ force: true });
+    });
   }
 }
