@@ -114,7 +114,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                               |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
-| `profilesExemplars`               | Enables profiles exemplars support in profiles drilldown                                               |
 | `pyroscopeUTF8LabelNames`         | Enables support for UTF-8 label names in Pyroscope label selectors                                     |
 | `flameGraphWithCallTree`          | Enables the new Flame Graph UI containing the Call Tree view                                           |
 | `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session                  |

@@ -4005,14 +4005,17 @@
     {
       "metadata": {
         "name": "profilesExemplars",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-01-07T12:25:42Z"
+        "resourceVersion": "1780997707204",
+        "creationTimestamp": "2026-01-07T12:25:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-09 09:35:07.204275 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables profiles exemplars support in profiles drilldown",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/observability-traces-and-profiling",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
