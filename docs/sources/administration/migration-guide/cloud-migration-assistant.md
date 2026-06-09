@@ -40,12 +40,6 @@ The following resources are supported by the migration assistant:
 - Library Panels
 - Grafana Alerting resources
 
-Support for these resources has expanded over recent Grafana releases:
-
-- **Grafana 11.2**: Dashboards, folders, and data sources.
-- **Grafana 11.5**: All plugins (data sources, app plugins, and panel plugins), library panels, and Grafana Alerting resources.
-- **Grafana 12**: The migration assistant is generally available.
-
 ## Before you begin
 
 To use the Grafana migration assistant, you need:
