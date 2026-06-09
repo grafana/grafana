@@ -2,6 +2,7 @@ import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
 import { getDataSourceSrv, type FetchResponse, type CorrelationData, type CorrelationsData } from '@grafana/runtime';
+import { getLogger } from '@grafana/runtime/unstable';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import {
@@ -14,7 +15,6 @@ import {
   type UpdateCorrelationParams,
   type UpdateCorrelationResponse,
 } from './types';
-import { correlationsLogger } from './utils';
 
 export interface CorrelationsResponse {
   correlations: Correlation[];
@@ -32,7 +32,7 @@ export const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correla
   // This logging is to check if there are any customers who did not migrate existing correlations.
   // See Deprecation Notice in https://github.com/grafana/grafana/pull/72258 for more details
   if (correlation?.orgId === undefined || correlation?.orgId === null || correlation?.orgId === 0) {
-    correlationsLogger.logWarning('Invalid correlation config: Missing org id.');
+    getLogger('features.correlations').logWarning('Invalid correlation config: Missing org id.');
   }
 
   if (
@@ -60,7 +60,7 @@ export const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correla
     };
   }
 
-  correlationsLogger.logWarning(`Invalid correlation config: Missing source or target.`, {
+  getLogger('features.correlations').logWarning(`Invalid correlation config: Missing source or target.`, {
     source: JSON.stringify(sourceDatasource),
     target: JSON.stringify(targetDatasource),
   });

@@ -62,7 +62,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -247,7 +246,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 			defer func() {
 				cfg.UnifiedAlerting = alertingCfg
 			}()
-			cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{Enabled: util.Pointer(false)}
+			cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{Enabled: new(false)}
 
 			cfgProvider, err := configprovider.ProvideService(cfg)
 			require.NoError(t, err)
@@ -495,10 +494,12 @@ func getQuotaBySrvTargetScope(t *testing.T, quotaService quota.Service, srv quot
 }
 
 func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaService quota.Service) {
-	tracer := tracing.InitializeTracerForTest()
-	_, err := apikeyimpl.ProvideService(sqlStore, cfg, quotaService)
+	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
-	_, err = authimpl.ProvideUserAuthTokenService(sqlStore, nil, quotaService, fakes.NewFakeSecretsService(), cfg, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures())
+	tracer := tracing.InitializeTracerForTest()
+	_, err = apikeyimpl.ProvideService(sqlStore, cfg, quotaService)
+	require.NoError(t, err)
+	_, err = authimpl.ProvideUserAuthTokenService(t.Context(), sqlStore, nil, quotaService, fakes.NewFakeSecretsService(), cfgProvider, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	emptySearchResponse := &resourcepb.ResourceSearchResponse{TotalHits: 0}
@@ -559,6 +560,7 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 		cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, ngalertfakes.NewFakeKVStore(t), nil, nil, quotaService,
 		secretsService, nil, m, &foldertest.FakeService{}, &acmock.Mock{}, &dashboards.FakeDashboardService{}, nil, b, &acmock.Mock{},
 		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
+		nil,
 	)
 	require.NoError(t, err)
 }

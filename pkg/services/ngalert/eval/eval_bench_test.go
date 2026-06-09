@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func BenchmarkEvaluate(b *testing.B) {
@@ -45,12 +44,12 @@ func seedDataResponse(r *backend.QueryDataResponse, n int) {
 		a.Frames = append(a.Frames, &data.Frame{
 			Fields: data.Fields{
 				data.NewField("Time", labels, []time.Time{time.Now()}),
-				data.NewField("Value", labels, []*float64{util.Pointer(1.0)}),
+				data.NewField("Value", labels, []*float64{new(1.0)}),
 			},
 		})
 		b.Frames = append(b.Frames, &data.Frame{
 			Fields: data.Fields{
-				data.NewField("Value", labels, []*float64{util.Pointer(1.0)}),
+				data.NewField("Value", labels, []*float64{new(1.0)}),
 			},
 		})
 		resps["A"], resps["B"] = a, b

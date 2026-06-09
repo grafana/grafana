@@ -588,7 +588,13 @@ Limits the number of rows that Grafana processes from SQL data sources. Default 
 
 #### `user_agent`
 
-Sets a custom value for the `User-Agent` header for outgoing data proxy requests. If empty, the default value is `Grafana/<BuildVersion>` (for example `Grafana/9.0.0`).
+Sets a custom value for the `User-Agent` header for outgoing data proxy requests. If empty, the default value is `Grafana/<BuildVersion>` (for example `Grafana/13.0.0`).
+
+#### `forward_user_agent`
+
+If enabled, the data proxy preserves the client's original `User-Agent` header by appending it to the proxy's `User-Agent`. Useful for tracking the originating client (browser, CLI, AI agent, etc.) at upstream data sources. Default is `false`.
+
+For example, with this enabled, a request from a client carrying `User-Agent: my-client/1.4` is forwarded with `User-Agent: Grafana/13.0.0 my-client/1.4`.
 
 <hr />
 
@@ -2319,6 +2325,13 @@ The `[grafana_net]` configuration is still accepted and parsed as `[grafana_com]
 Default is https://grafana.com.
 The default authentication identity provider for Grafana Cloud.
 
+#### `proxy_token`
+
+Default is empty.
+A dedicated API token for plugin catalog browsing and plugin installs via `grafana-cli`. Requires the `dedicatedGrafanaComProxyAPIToken` [feature toggle]({{< relref "#feature_toggles" >}}) to be enabled.
+
+Set via environment variable: `GF_GRAFANA_COM_PROXY_TOKEN`.
+
 <hr>
 
 ### `[tracing.jaeger]`
@@ -2520,6 +2533,18 @@ Access key requires permissions to the S3 bucket for the 's3:PutObject' and 's3:
 #### `secret_key`
 
 Secret key, for example, AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
+
+#### `enable_presigned_urls`
+
+Generate presigned URLs for uploaded images instead of requiring publicly readable objects. When enabled, objects are uploaded without an ACL header, making this compatible with S3 buckets that have `ObjectOwnership` set to `BucketOwnerEnforced` (ACLs disabled). Default is `false`.
+
+#### `presigned_url_expiration`
+
+Duration for which presigned URLs remain valid. Uses Go duration format (e.g., `168h` for 7 days, `6h` for 6 hours). Default is `168h` (7 days).
+
+{{< admonition type="note" >}}
+The maximum expiration depends on your AWS credential type: IAM user credentials support up to 7 days, IAM role or STS credentials are limited to the session duration (typically 1–12 hours), and instance profile credentials are limited to 6 hours.
+{{< /admonition >}}
 
 <hr>
 
@@ -2798,6 +2823,10 @@ Comma-separated list of targets that a repository can control. `folder` by defau
 
 Whether image rendering is allowed for dashboard previews. Requires the image rendering service to be configured. Default is `true`.
 
+#### `allow_insecure`
+
+Whether to allow `http://` repository URLs together with a configured token. Because this sends the token in cleartext on every Git operation, it's rejected by default. Intended for local and development use only. It's also implicitly allowed when `app_mode = development`. Default is `false`.
+
 #### `min_sync_interval`
 
 The minimum sync interval that you can set for a repository. Indicates how often the controller will check for changes in the repository that were not propagated by a webhook. The minimum value is `10s`. Default is `10s`.
@@ -2815,6 +2844,17 @@ Maximum number of repositories allowed. Default is `10`. Set to `0` for unlimite
 #### `max_resources_per_repository`
 
 Maximum number of resources (dashboards, folders, etc.) allowed per repository. Default is `0`, which means unlimited.
+
+#### `public_root_url`
+
+Public-facing root URL of this Grafana instance, used by provisioning to construct URLs that must be reachable from external systems. When empty, falls back to `[server] root_url`.
+
+Two consumers honor this setting:
+
+- Webhook callbacks registered with the Git provider (for example, GitHub). The per-repository `spec.webhook.baseUrl`, when set, still wins.
+- Screenshot images embedded in pull-request comments. These are fetched by the Git provider's servers, so the URL must be reachable from the public internet.
+
+Set this when `[server] root_url` points at a cluster-internal address (for example, when Grafana runs behind a private ingress) but provisioning needs an externally-reachable host. This is analogous to `[rendering] callback_url`, which serves the same purpose for the image renderer plugin.
 
 <hr>
 
@@ -3072,7 +3112,7 @@ For example, to set cartoDB light as the default base layer:
 default_baselayer_config = `{
   "type": "xyz",
   "config": {
-    "attribution": "Open street map",
+    "attribution": "OpenStreetMap",
     "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
   }
 }`

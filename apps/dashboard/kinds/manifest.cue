@@ -103,6 +103,7 @@ manifest: {
 						status: DashboardStatus
 					}
 				},
+				globalVariableV2beta1,
 			]
 		}
 		"v2": {

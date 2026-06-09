@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,11 +17,14 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -27,12 +32,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 var (
@@ -40,11 +44,12 @@ var (
 )
 
 type DataSourceAPIBuilderConfig struct {
-	LoadQueryTypes         bool
-	LoadOpenAPISpec        bool
-	UseDualWriter          bool
-	EnableResourceEndpoint bool
-	EnableHealthEndpoint   bool
+	LoadQueryTypes              bool
+	LoadOpenAPISpec             bool
+	UseDualWriter               bool
+	EnableResourceEndpoint      bool
+	EnableHealthEndpoint        bool
+	EnableChunkedQueryStreaming bool
 }
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
@@ -54,11 +59,20 @@ type DataSourceAPIBuilder struct {
 	client                 PluginClient // will only ever be called with the same plugin id!
 	datasources            PluginDatasourceProvider
 	contextProvider        PluginContextWrapper
-	accessControl          accesscontrol.AccessControl
+	decrypter              decrypt.DecryptService // when not reading legacy
+	accessClient           authlib.AccessClient   // MT+ST
 	schemas                map[string]*pluginschema.PluginSchema
 	queryTypes             *datasourceV0.QueryTypeDefinitionList
 	cfg                    DataSourceAPIBuilderConfig
+	proxyDeps              *ProxyDependencies
 	dataSourceCRUDMetric   *prometheus.HistogramVec
+
+	// dataSourceRequestValidator gates outbound datasource requests (proxy and
+	// health), matching the legacy HTTP API behavior.
+	dataSourceRequestValidator validations.DataSourceRequestValidator
+
+	// Legacy or Unified -- depending on config
+	store grafanarest.Storage
 }
 
 func RegisterAPIService(
@@ -67,9 +81,12 @@ func RegisterAPIService(
 	pluginClient plugins.Client, // access to everything
 	datasources ScopedPluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
-	accessControl accesscontrol.AccessControl,
+	decrypter decrypt.DecryptService, // when not reading legacy
+	accessClient authlib.AccessClient,
 	reg prometheus.Registerer,
 	pluginSources sources.Registry,
+	dataSourceRequestValidator validations.DataSourceRequestValidator,
+	proxyDeps *ProxyDependencies,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
@@ -78,11 +95,12 @@ func RegisterAPIService(
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	flags := DataSourceAPIBuilderConfig{
-		LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes),
-		LoadOpenAPISpec:        features.IsEnabledGlobally(featuremgmt.FlagDatasourcesLoadOpenAPI),
-		UseDualWriter:          features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs),
-		EnableResourceEndpoint: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
-		EnableHealthEndpoint:   features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
+		LoadQueryTypes:              features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes),
+		LoadOpenAPISpec:             features.IsEnabledGlobally(featuremgmt.FlagDatasourcesLoadOpenAPI),
+		UseDualWriter:               features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs),
+		EnableResourceEndpoint:      features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
+		EnableHealthEndpoint:        features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
+		EnableChunkedQueryStreaming: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesChunkedQueryStreaming),
 	}
 
 	var err error
@@ -120,8 +138,11 @@ func RegisterAPIService(
 			client,
 			datasources.GetDatasourceProvider(plugin.JSONData),
 			contextProvider,
-			accessControl,
+			accessClient,
+			decrypter,
 			flags,
+			dataSourceRequestValidator,
+			proxyDeps,
 		)
 		if err != nil {
 			return nil, err
@@ -133,6 +154,7 @@ func RegisterAPIService(
 		if plugin.Schemas != nil {
 			builder.schemas = plugin.Schemas
 		}
+		builder.accessClient = accessClient // Only registered in ST for now
 
 		apiRegistrar.RegisterAPI(builder)
 	}
@@ -155,21 +177,37 @@ func NewDataSourceAPIBuilder(
 	client PluginClient,
 	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
-	accessControl accesscontrol.AccessControl,
+	accessClient authlib.AccessClient,
+	decrypter decrypt.DecryptService, // when not reading legacy
 	cfg DataSourceAPIBuilderConfig,
+	dataSourceRequestValidator validations.DataSourceRequestValidator,
+	proxyDeps *ProxyDependencies,
 ) (*DataSourceAPIBuilder, error) {
 	registerSubresourceMetrics(prometheus.DefaultRegisterer)
 
 	builder := &DataSourceAPIBuilder{
-		datasourceResourceInfo: datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(groupName, plugin.ID),
-		pluginJSON:             plugin,
-		client:                 client,
-		datasources:            datasources,
-		contextProvider:        contextProvider,
-		accessControl:          accessControl,
-		cfg:                    cfg,
+		datasourceResourceInfo:     datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(groupName, plugin.ID),
+		pluginJSON:                 plugin,
+		client:                     client,
+		datasources:                datasources,
+		contextProvider:            contextProvider,
+		accessClient:               accessClient,
+		decrypter:                  decrypter,
+		cfg:                        cfg,
+		dataSourceRequestValidator: dataSourceRequestValidator,
+		proxyDeps:                  proxyDeps,
 	}
 	return builder, nil
+}
+
+// validateDataSourceRequest runs the configured request validator against the
+// datasource URL and jsonData. It is used by the proxy and health subresources
+// to mirror the legacy HTTP API, which rejects requests the validator denies.
+func (b *DataSourceAPIBuilder) validateDataSourceRequest(dsURL string, jsonData map[string]any, req *http.Request) error {
+	if b.dataSourceRequestValidator == nil {
+		return nil
+	}
+	return b.dataSourceRequestValidator.Validate(dsURL, jsonData, req)
 }
 
 func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -224,7 +262,10 @@ func (b *DataSourceAPIBuilder) AllowedV0Alpha1Resources() []string {
 func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	if opts.StorageOptsRegister != nil {
 		opts.StorageOptsRegister(b.datasourceResourceInfo.GroupResource(), apistore.StorageOptions{
-			EnableFolderSupport: false,
+			Index: nil, // TODO, required to check that they are unique
+
+			// Keep them for now, but we should get rid of them when possible
+			DeprecatedInternalID: apistore.DeprecatedID_Required,
 
 			// Setting the schema explicitly will force the apistore to explicitly marshal with a matching Group+version
 			// This is required because we map the same go type (DataSourceConfig) across multiple api groups
@@ -255,22 +296,21 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			resourceInfo:                    &ds,
 			dsConfigHandlerRequestsDuration: b.dataSourceCRUDMetric,
 		}
+		// NOTE! there is currently NO PATH that is using unified storage to read!
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
 		if err != nil {
 			return err
 		}
-		dualStore, err := opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
+		b.store, err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
 		if err != nil {
 			return err
 		}
-		// generatedNameStorage assigns a server-generated name when the client
-		// sends none, which is the normal datasource create flow.
-		storage[ds.StoragePath()] = &generatedNameStorage{Storage: dualStore}
+		storage[ds.StoragePath()] = b.store
 		storage[ds.StoragePath("access")] = &subAccessREST{
 			builder: b,
-			getter:  legacyStore,
 		}
 	} else {
+		// Read only datasources
 		storage[ds.StoragePath()] = &connectionAccess{
 			datasources:    b.datasources,
 			resourceInfo:   ds,
@@ -280,7 +320,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// Frontend proxy
 	if len(b.pluginJSON.Routes) > 0 {
-		storage[ds.StoragePath("proxy")] = &subProxyREST{pluginJSON: b.pluginJSON}
+		storage[ds.StoragePath("proxy")] = &subProxyREST{builder: b}
 	}
 
 	// Register query types (convert to real k8s type first)
@@ -347,7 +387,15 @@ func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string)
 	defer span.End()
 
 	getInstanceCtx, getInstanceSpan := tracing.Start(ctx, "datasource.getPluginContext.getInstanceSettings")
-	instance, err := b.datasources.GetInstanceSettings(getInstanceCtx, uid)
+	var err error
+	var instance *backend.DataSourceInstanceSettings
+	if b.store != nil && b.decrypter != nil {
+		// Load from storage + decrypter (respecting dual write settings)
+		instance, err = b.getInstanceSettings(getInstanceCtx, uid)
+	} else {
+		// This is backed by the datasources abstraction, NOT storage
+		instance, err = b.datasources.GetInstanceSettings(getInstanceCtx, uid)
+	}
 	getInstanceSpan.End()
 	if err != nil {
 		err = tracing.Error(span, err)

@@ -95,7 +95,7 @@ const createEmptyDataFrame = (): DataFrame =>
     })
   );
 
-const createNestedDataFrame = (): DataFrame => {
+const createNestedDataFrame = (meta?: DataFrame['meta']): DataFrame => {
   const processedNestedFrame = withFieldOverrides(
     toDataFrame({
       name: 'NestedData',
@@ -116,6 +116,7 @@ const createNestedDataFrame = (): DataFrame => {
     toDataFrame({
       name: 'TestData',
       length: 2,
+      meta,
       fields: [
         { name: 'Column A', type: FieldType.string, values: ['A1', 'A2'], config: { custom: {} } },
         { name: 'Column B', type: FieldType.number, values: [1, 2], config: { custom: {} } },
@@ -125,6 +126,48 @@ const createNestedDataFrame = (): DataFrame => {
           name: '__nestedFrames',
           type: FieldType.nestedFrames,
           values: [[processedNestedFrame], [processedNestedFrame]],
+          config: { custom: {} },
+        },
+      ],
+    })
+  );
+};
+
+/**
+ * Outer table has NO footer reducers; nested frame fields DO have footer reducers.
+ * Used to verify that the nested table shows its own footer independent of the outer table.
+ */
+const createNestedDataFrameWithFooter = (): DataFrame => {
+  const processedNestedFrame = withFieldOverrides(
+    toDataFrame({
+      name: 'NestedWithFooter',
+      fields: [
+        {
+          name: 'Nested A',
+          type: FieldType.string,
+          values: ['N1', 'N2'],
+          config: { custom: { footer: { reducers: ['count'] } } },
+        },
+        {
+          name: 'Nested B',
+          type: FieldType.number,
+          values: [10, 20],
+          config: { custom: { footer: { reducers: ['sum'] } } },
+        },
+      ],
+    })
+  );
+
+  return withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 1,
+      fields: [
+        { name: 'Column A', type: FieldType.string, values: ['A1'], config: { custom: {} } },
+        {
+          name: '__nestedFrames',
+          type: FieldType.nestedFrames,
+          values: [[processedNestedFrame]],
           config: { custom: {} },
         },
       ],
@@ -487,6 +530,220 @@ describe('TableNG', () => {
         const expandedRow = container.querySelector('[aria-expanded="true"]');
         expect(expandedRow).toBeInTheDocument();
       }
+    });
+
+    it('auto-expands all rows when expandAllRows is set in frame meta', () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createNestedDataFrame({ custom: { expandAllRows: true } })}
+          width={800}
+          height={600}
+        />
+      );
+
+      const expandedRows = container.querySelectorAll('[aria-expanded="true"]');
+      expect(expandedRows.length).toBeGreaterThan(0);
+
+      ['N1', 'N2'].forEach((text) => {
+        expect(screen.getAllByText(text)).toHaveLength(2);
+      });
+    });
+  });
+
+  describe('Nested table footer', () => {
+    it('shows the nested footer when nested fields have footer reducers, even when the top-level table has no footer', async () => {
+      // The outer table has no footer reducers. The nested frame fields do.
+      // Before the fix, bottomSummaryRows was driven by the top-level hasFooter, so the nested
+      // footer never rendered. After the fix, each table controls its own footer independently.
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createNestedDataFrameWithFooter()} width={800} height={600} />
+      );
+
+      // Before expansion: no footer row should be visible at all
+      expect(container.querySelector('.rdg-summary-row')).not.toBeInTheDocument();
+
+      const expandButton = container.querySelector('[aria-label="Expand row"]');
+      expect(expandButton).toBeInTheDocument();
+      await user.click(expandButton!);
+
+      // After expansion: the nested DataGrid should show its own footer row
+      const footerRow = container.querySelector('.rdg-summary-row');
+      expect(footerRow).toBeInTheDocument();
+    });
+
+    it('nested footer displays values computed from the nested fields (sum of Nested B = 30)', async () => {
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createNestedDataFrameWithFooter()} width={800} height={600} />
+      );
+
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      // The nested Nested B column has values [10, 20]; sum = 30
+      expect(screen.getByText('30')).toBeInTheDocument();
+    });
+
+    it('does not show a footer row in the nested table when nested fields have no footer reducers', async () => {
+      // Uses the plain nested frame (no footer reducers on nested fields)
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createNestedDataFrame()} width={800} height={600} />
+      );
+
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      // No summary row should appear — nested fields have no footer reducers
+      expect(container.querySelector('.rdg-summary-row')).not.toBeInTheDocument();
+    });
+
+    it('shows independent footer rows for both top-level and nested tables when both have footer reducers', async () => {
+      // Add footer reducers to the top-level fields as well
+      const baseFrame = createNestedDataFrameWithFooter();
+      const frameWithTopLevelFooter = {
+        ...baseFrame,
+        fields: baseFrame.fields.map((field) => ({
+          ...field,
+          config: {
+            ...field.config,
+            custom: { ...field.config.custom, footer: { reducers: ['count'] } },
+          },
+        })),
+      };
+
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={frameWithTopLevelFooter} width={800} height={600} />
+      );
+
+      // Top-level footer is visible before expansion
+      expect(container.querySelector('.rdg-summary-row')).toBeInTheDocument();
+
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      // Both the top-level and nested summary rows should be present
+      const footerRows = container.querySelectorAll('.rdg-summary-row');
+      expect(footerRows.length).toBeGreaterThanOrEqual(2);
+
+      // The nested footer value (sum of Nested B = 30) must be visible
+      expect(screen.getByText('30')).toBeInTheDocument();
+    });
+
+    it('preserves expanded state by stable key when row order changes on re-render', async () => {
+      window.HTMLElement.prototype.scrollIntoView = jest.fn();
+
+      const makeStableFrame = (order: Array<'key-A' | 'key-B'>): DataFrame => {
+        const nestedA = {
+          meta: { custom: { stableRowKey: 'key-A', noHeader: true } },
+          length: 1,
+          fields: [{ name: 'Info', type: FieldType.string, values: ['nested-A'], config: {} }],
+        };
+        const nestedB = {
+          meta: { custom: { stableRowKey: 'key-B', noHeader: true } },
+          length: 1,
+          fields: [{ name: 'Info', type: FieldType.string, values: ['nested-B'], config: {} }],
+        };
+        const nested = { 'key-A': nestedA, 'key-B': nestedB };
+        const labels = { 'key-A': 'Row A', 'key-B': 'Row B' };
+
+        return withFieldOverrides(
+          toDataFrame({
+            name: 'StableTest',
+            length: 2,
+            fields: [
+              {
+                name: 'Label',
+                type: FieldType.string,
+                values: order.map((k) => labels[k]),
+                config: {},
+              },
+              {
+                name: '__nestedFrames',
+                type: FieldType.nestedFrames,
+                values: order.map((k) => [nested[k]]),
+                config: {},
+              },
+            ],
+          })
+        );
+      };
+
+      const { rerender, container } = render(
+        <TableNG enableVirtualization={false} data={makeStableFrame(['key-A', 'key-B'])} width={800} height={600} />
+      );
+
+      // Expand the first row (key-A is at index 0)
+      const expandButton = container.querySelector('[aria-label="Expand row"]');
+      expect(expandButton).toBeInTheDocument();
+      await user.click(expandButton!);
+      expect(screen.getByText('nested-A')).toBeInTheDocument();
+      expect(screen.queryByText('nested-B')).not.toBeInTheDocument();
+
+      // Re-render with reversed row order: key-B is now at index 0, key-A at index 1
+      rerender(
+        <TableNG enableVirtualization={false} data={makeStableFrame(['key-B', 'key-A'])} width={800} height={600} />
+      );
+
+      // key-A is now at index 1 but should still be expanded via its stable key
+      expect(screen.getByText('nested-A')).toBeInTheDocument();
+      // key-B moved to index 0 but was never expanded, so its content should not appear
+      expect(screen.queryByText('nested-B')).not.toBeInTheDocument();
+    });
+
+    it('falls back to row index for expansion state when stableRowKey is unset', async () => {
+      // Nested subframes carry no meta.custom.stableRowKey, so getStableRowKey returns String(rowIdx).
+      // Expansion is therefore keyed by position: when rows are reordered, the expanded slot
+      // stays at the same index and ends up showing whichever row data now sits there.
+      const makeIndexedFrame = (order: Array<'A' | 'B'>): DataFrame => {
+        const nestedA = {
+          meta: { custom: { noHeader: true } },
+          length: 1,
+          fields: [{ name: 'Info', type: FieldType.string, values: ['nested-A'], config: {} }],
+        };
+        const nestedB = {
+          meta: { custom: { noHeader: true } },
+          length: 1,
+          fields: [{ name: 'Info', type: FieldType.string, values: ['nested-B'], config: {} }],
+        };
+        const nested = { A: nestedA, B: nestedB };
+        const labels = { A: 'Row A', B: 'Row B' };
+
+        return withFieldOverrides(
+          toDataFrame({
+            name: 'IndexedTest',
+            length: 2,
+            fields: [
+              {
+                name: 'Label',
+                type: FieldType.string,
+                values: order.map((k) => labels[k]),
+                config: {},
+              },
+              {
+                name: '__nestedFrames',
+                type: FieldType.nestedFrames,
+                values: order.map((k) => [nested[k]]),
+                config: {},
+              },
+            ],
+          })
+        );
+      };
+
+      const { rerender, container } = render(
+        <TableNG enableVirtualization={false} data={makeIndexedFrame(['A', 'B'])} width={800} height={600} />
+      );
+
+      // Expand the row at index 0 (A's subframe).
+      const expandButton = container.querySelector('[aria-label="Expand row"]');
+      expect(expandButton).toBeInTheDocument();
+      await user.click(expandButton!);
+      expect(screen.getByText('nested-A')).toBeInTheDocument();
+      expect(screen.queryByText('nested-B')).not.toBeInTheDocument();
+
+      // Reverse the row order. Without a stable key, expansion sticks to index 0,
+      // which now holds B's subframe.
+      rerender(<TableNG enableVirtualization={false} data={makeIndexedFrame(['B', 'A'])} width={800} height={600} />);
+
+      expect(screen.getByText('nested-B')).toBeInTheDocument();
+      expect(screen.queryByText('nested-A')).not.toBeInTheDocument();
     });
   });
 

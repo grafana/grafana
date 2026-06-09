@@ -129,12 +129,16 @@ type sqlStatsRequest struct {
 	Namespace string
 	Group     string
 	Resource  string
-	Folder    string
-	MinCount  int
+	// Folders, when non-empty, restricts the count to rows whose folder is in
+	// this set. A single UID counts that exact folder (no recursion); callers
+	// that need recursive descendant counts pre-expand the subtree and pass
+	// every UID here.
+	Folders  []string
+	MinCount int
 }
 
 func (r sqlStatsRequest) Validate() error {
-	if r.Folder != "" && r.Namespace == "" {
+	if len(r.Folders) > 0 && r.Namespace == "" {
 		return fmt.Errorf("folder constraint requires a namespace")
 	}
 	return nil
@@ -464,9 +468,6 @@ type sqlResourceListModifiedSinceRequest struct {
 }
 
 func (r sqlResourceListModifiedSinceRequest) Validate() error {
-	if r.Namespace == "" {
-		return fmt.Errorf("missing namespace")
-	}
 	if r.Group == "" {
 		return fmt.Errorf("missing group")
 	}

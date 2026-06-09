@@ -31,6 +31,16 @@ func TestReadBody(t *testing.T) {
 			body:    "1234567890",
 			maxSize: 10,
 		},
+		{
+			name:    "zero maxSize disables the cap",
+			body:    "anything goes when the cap is unlimited",
+			maxSize: 0,
+		},
+		{
+			name:    "negative maxSize disables the cap",
+			body:    "anything goes when the cap is unlimited",
+			maxSize: -1,
+		},
 	}
 
 	for _, tt := range tests {

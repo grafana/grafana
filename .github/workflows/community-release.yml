@@ -23,13 +23,14 @@ on:
         default: false
         description: When enabled, this workflow will print a preview instead of creating an actual post.
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
   main:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: "Get vault secrets"
         id: vault-secrets

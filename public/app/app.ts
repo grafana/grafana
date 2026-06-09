@@ -40,12 +40,15 @@ import {
   setHelpNavItemHook,
   setFolderPicker,
   setCorrelationsService,
+  setPanelScreenshotService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
 } from '@grafana/runtime';
 import {
   getPanelPluginMetas,
+  initDataSourceInstanceSettings,
   initOpenFeature,
+  setDataSourcePluginImporter,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
   setPanelDataErrorView,
@@ -90,9 +93,11 @@ import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
+import { instanceSettings as expressionInstanceSettings } from './features/expressions/ExpressionDatasource';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
+import { PanelScreenshotServiceImpl } from './features/panel-screenshot/PanelScreenshotServiceImpl';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import {
   getObservablePluginComponents,
@@ -105,6 +110,7 @@ import { usePluginFunctions } from './features/plugins/extensions/usePluginFunct
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
+import { pluginImporter } from './features/plugins/importer/pluginImporter';
 import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
@@ -154,18 +160,11 @@ export class GrafanaApp {
         }
       }
 
-      const regionalFormat = config.featureToggles.localeFormatPreference
-        ? config.regionalFormat
-        : contextSrv.user.language;
-
-      const initI18nPromise = initializeI18n(
-        {
-          language: contextSrv.user.language,
-          ns: NAMESPACES,
-          module: loadTranslations,
-        },
-        regionalFormat
-      );
+      const initI18nPromise = initializeI18n({
+        language: contextSrv.user.language,
+        ns: NAMESPACES,
+        module: loadTranslations,
+      });
 
       // This is a placeholder so we can put a 'comment' in the message json files.
       // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
@@ -182,7 +181,7 @@ export class GrafanaApp {
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
-      setLocale(config.regionalFormat);
+      setLocale(contextSrv.user.language);
       setWeekStart(contextSrv.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
@@ -190,6 +189,7 @@ export class GrafanaApp {
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
+      setPanelScreenshotService(new PanelScreenshotServiceImpl());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => contextSrv.user.timezone);
       initGrafanaLive();
@@ -259,7 +259,16 @@ export class GrafanaApp {
         locationService.setOrgIdGetter(() => contextSrv.user.orgId);
       }
 
-      // Init DataSourceSrv
+      // Init async data source services (populates cache from boot data so
+      // new `getInstanceSettings` / `getInstanceSettingsList` callers don't
+      // need to wait on a network round trip).
+      initDataSourceInstanceSettings(
+        { ...config.datasources, [expressionInstanceSettings.name]: expressionInstanceSettings },
+        config.defaultDatasource
+      );
+      setDataSourcePluginImporter(pluginImporter.importDataSource.bind(pluginImporter));
+
+      // Init DataSourceSrv (legacy sync API; retained for backwards compatibility)
       const dataSourceSrv = new DatasourceSrv();
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
@@ -267,9 +276,9 @@ export class GrafanaApp {
 
       if (contextSrv.user.orgRole !== '') {
         preloadPlugins(await getAppPluginsToPreload());
+        getPluginExtensionRegistries();
       }
 
-      getPluginExtensionRegistries();
       await getPanelPluginMetas();
 
       setHelpNavItemHook(useHelpNode);

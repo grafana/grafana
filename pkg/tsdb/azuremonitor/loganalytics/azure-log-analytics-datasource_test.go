@@ -27,10 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
-func makeQueryPointer(q AzureLogAnalyticsQuery) *AzureLogAnalyticsQuery {
-	return &q
-}
-
 func TestBuildLogAnalyticsQuery(t *testing.T) {
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 	timeRange := backend.TimeRange{From: fromStart, To: fromStart.Add(34 * time.Minute)}
@@ -119,7 +115,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
@@ -156,7 +152,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				RefID:     "A",
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/workspaces/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/query",
@@ -191,7 +187,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				RefID:     "A",
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
@@ -227,7 +223,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				RefID:     "A",
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
@@ -265,7 +261,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
@@ -305,7 +301,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
@@ -349,7 +345,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/TestDataWorkspace/search",
@@ -485,7 +481,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/apps/AppInsightsTestDataWorkspace/query",
@@ -524,7 +520,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/apps/AppInsightsTestDataWorkspace/query",

@@ -3,7 +3,7 @@ import { merge } from 'webpack-merge';
 import config, { type Env } from '@grafana/plugin-configs/webpack.config.ts';
 
 const configWithFallback = async (env: Env) => {
-  const response = await config(env);
+  const response = await config(env, import.meta.dirname);
   if (response !== undefined && response.resolve !== undefined) {
     response.resolve.fallback = {
       ...response.resolve.fallback,

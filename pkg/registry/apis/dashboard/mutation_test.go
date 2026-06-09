@@ -8,7 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/admission"
-	"k8s.io/utils/ptr"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -20,7 +19,6 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // nolint:gocyclo
@@ -216,7 +214,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			inputObj: &dashv2alpha1.Dashboard{
 				Spec: dashv2alpha1.DashboardSpec{
 					Title:       "\ufeffDashboard Title",
-					Description: ptr.To("Description\ufeffwith BOM"),
+					Description: new("Description\ufeffwith BOM"),
 				},
 			},
 			operation:           admission.Create,
@@ -229,7 +227,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			inputObj: &dashv2beta1.Dashboard{
 				Spec: dashv2beta1.DashboardSpec{
 					Title:       "\ufeffDashboard Title",
-					Description: ptr.To("Description\ufeffwith BOM"),
+					Description: new("Description\ufeffwith BOM"),
 				},
 			},
 			operation:           admission.Create,
@@ -257,7 +255,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			inputObj: &dashv2alpha1.Dashboard{
 				Spec: dashv2alpha1.DashboardSpec{
 					Title:       "\ufeffDashboard with nested BOMs",
-					Description: ptr.To("Description\ufeffwith BOM"),
+					Description: new("Description\ufeffwith BOM"),
 					Tags:        []string{"\ufeffTag1", "Tag2\ufeff", "Tag3"},
 					Links: []dashv2alpha1.DashboardDashboardLink{
 						{
@@ -277,7 +275,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			inputObj: &dashv2beta1.Dashboard{
 				Spec: dashv2beta1.DashboardSpec{
 					Title:       "\ufeffDashboard with nested BOMs v2beta1",
-					Description: ptr.To("Description\ufeffwith BOM"),
+					Description: new("Description\ufeffwith BOM"),
 					Tags:        []string{"\ufeffTag1", "Tag2\ufeff", "Tag3"},
 					Links: []dashv2beta1.DashboardDashboardLink{
 						{
@@ -297,7 +295,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			inputObj: &dashv2.Dashboard{
 				Spec: dashv2.DashboardSpec{
 					Title:       "\ufeffDashboard with nested BOMs v2",
-					Description: ptr.To("Description\ufeffwith BOM"),
+					Description: new("Description\ufeffwith BOM"),
 					Tags:        []string{"\ufeffTag1", "Tag2\ufeff", "Tag3"},
 					Links: []dashv2.DashboardDashboardLink{
 						{
@@ -316,9 +314,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := &DashboardsAPIBuilder{
-				features: featuremgmt.WithFeatures(),
-			}
+			b := &DashboardsAPIBuilder{}
 			var operationOptions runtime.Object
 			switch tt.operation {
 			case admission.Create:

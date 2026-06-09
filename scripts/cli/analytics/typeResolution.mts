@@ -51,6 +51,13 @@ export function resolveType(type: Type): string {
     return `"${type.getLiteralValue()}"`;
   }
 
+  // Without this, mapped types like Exact<P, A> make properties look like A["key"]
+  // in the report instead of their actual type. Getting the constraint resolves that.
+  const constraint = type.getConstraint();
+  if (constraint) {
+    return resolveType(constraint);
+  }
+
   return type.getText(); // Default to the type's text representation
 }
 

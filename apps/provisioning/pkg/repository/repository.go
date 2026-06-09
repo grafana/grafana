@@ -76,6 +76,11 @@ var ErrTooManyItems error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Message: "maximum number of items exceeded",
 }}
 
+var ErrRepositoryMismatch = apierrors.NewBadRequest("repository mismatch")
+
+// ErrInvalidRef indicates that a provided git ref (branch or commit SHA) failed validation.
+var ErrInvalidRef = apierrors.NewBadRequest("invalid ref")
+
 type FileInfo struct {
 	// Path to the file on disk.
 	// No leading or trailing slashes will be contained within.

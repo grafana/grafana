@@ -67,7 +67,7 @@ func TestMLNodeExecute(t *testing.T) {
 
 	cmdResponse := data.NewFrame("test",
 		data.NewField("Time", nil, []time.Time{time.Unix(1, 0)}),
-		data.NewField("Value", nil, []*float64{fp(1)}),
+		data.NewField("Value", nil, []*float64{new(1.0)}),
 	)
 
 	cmd := &ml.FakeCommand{

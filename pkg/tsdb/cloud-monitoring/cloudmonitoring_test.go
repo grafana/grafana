@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"strings"
@@ -45,6 +47,21 @@ func TestNewInstanceSettings(t *testing.T) {
 		assert.Equal(t, "test", dsInfoCasted.defaultProject)
 		assert.Equal(t, "test", dsInfoCasted.clientEmail)
 		assert.Equal(t, "test", dsInfoCasted.tokenUri)
+	})
+
+	t.Run("should parse forwardOAuthIdentity authentication", func(t *testing.T) {
+		cli := httpclient.NewProvider()
+		f := newInstanceSettings(*cli)
+		dsInfo, err := f(context.Background(), backend.DataSourceInstanceSettings{
+			JSONData: json.RawMessage(`{"authenticationType": "forwardOAuthIdentity", "oauthPassThru": true, "defaultProject": "p1"}`),
+		})
+		require.NoError(t, err)
+		dsInfoCasted := dsInfo.(*datasourceInfo)
+		assert.Equal(t, forwardOAuthIdentityAuthentication, dsInfoCasted.authenticationType)
+		assert.True(t, dsInfoCasted.oauthPassThru)
+		assert.Equal(t, "p1", dsInfoCasted.defaultProject)
+		assert.NotNil(t, dsInfoCasted.services[cloudMonitor].client)
+		assert.NotNil(t, dsInfoCasted.services[resourceManager].client)
 	})
 }
 
@@ -1165,5 +1182,164 @@ func TestCheckHealth(t *testing.T) {
 			Status:  backend.HealthStatusError,
 			Message: "not found!",
 		}, res)
+	})
+
+	t.Run("forwardOAuthIdentity without a default project returns an error", func(t *testing.T) {
+		im := datasource.NewInstanceManager(func(_ context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return &datasourceInfo{
+				authenticationType: forwardOAuthIdentityAuthentication,
+				oauthPassThru:      true,
+				defaultProject:     "",
+			}, nil
+		})
+		service := &Service{im: im}
+		res, err := service.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+		})
+		assert.Nil(t, err)
+		assert.Equal(t, backend.HealthStatusError, res.Status)
+		assert.Contains(t, res.Message, "Default project is required")
+	})
+
+	t.Run("forwardOAuthIdentity surfaces friendlier message on 401 Unauthorized", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusUnauthorized)
+		}))
+		t.Cleanup(ts.Close)
+
+		im := datasource.NewInstanceManager(func(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return &datasourceInfo{
+				authenticationType: forwardOAuthIdentityAuthentication,
+				oauthPassThru:      true,
+				defaultProject:     "p1",
+				services: map[string]datasourceService{
+					cloudMonitor: {url: ts.URL, client: http.DefaultClient},
+				},
+			}, nil
+		})
+		service := &Service{im: im}
+		res, err := service.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, backend.HealthStatusError, res.Status)
+		assert.Contains(t, res.Message, "authenticated via Google OAuth")
+	})
+
+	t.Run("forwardOAuthIdentity surfaces friendlier message on 403 Forbidden", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusForbidden)
+		}))
+		t.Cleanup(ts.Close)
+
+		im := datasource.NewInstanceManager(func(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return &datasourceInfo{
+				authenticationType: forwardOAuthIdentityAuthentication,
+				oauthPassThru:      true,
+				defaultProject:     "p1",
+				services: map[string]datasourceService{
+					cloudMonitor: {url: ts.URL, client: http.DefaultClient},
+				},
+			}, nil
+		})
+		service := &Service{im: im}
+		res, err := service.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, backend.HealthStatusError, res.Status)
+		assert.Contains(t, res.Message, "Monitoring Viewer role")
+	})
+
+	t.Run("non-forwardOAuthIdentity preserves the original response status on errors", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusForbidden)
+		}))
+		t.Cleanup(ts.Close)
+
+		im := datasource.NewInstanceManager(func(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return &datasourceInfo{
+				authenticationType: jwtAuthentication,
+				defaultProject:     "p1",
+				services: map[string]datasourceService{
+					cloudMonitor: {url: ts.URL, client: http.DefaultClient},
+				},
+			}, nil
+		})
+		service := &Service{im: im}
+		res, err := service.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, backend.HealthStatusError, res.Status)
+		assert.NotContains(t, res.Message, "Monitoring Viewer role")
+	})
+}
+
+func TestQueryData_forwardOAuthIdentity(t *testing.T) {
+	t.Run("rejects alerting queries when oauthPassThru is set", func(t *testing.T) {
+		im := datasource.NewInstanceManager(func(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return &datasourceInfo{
+				authenticationType: forwardOAuthIdentityAuthentication,
+				oauthPassThru:      true,
+				defaultProject:     "p1",
+			}, nil
+		})
+		service := &Service{im: im, logger: backend.NewLoggerWith("logger", "test")}
+
+		_, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Headers: map[string]string{"FromAlert": "true"},
+			Queries: []backend.DataQuery{
+				{RefID: "A", QueryType: string(dataquery.QueryTypeTIMESERIESLIST), JSON: json.RawMessage(`{}`)},
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "alerting queries")
+		// The error must be flagged as a downstream/client error so error sources are
+		// attributed correctly in Grafana's plugin metrics.
+		assert.True(t, backend.IsDownstreamError(err))
+	})
+
+	t.Run("does not reject alerting queries when oauthPassThru is unset", func(t *testing.T) {
+		// JWT auth should pass straight through the alerting guard. The request will
+		// still fail later (no services configured), but the error must NOT mention
+		// alerting — that would indicate the guard misfired.
+		im := datasource.NewInstanceManager(func(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return &datasourceInfo{
+				authenticationType: jwtAuthentication,
+				oauthPassThru:      false,
+				defaultProject:     "p1",
+			}, nil
+		})
+		service := &Service{im: im, logger: backend.NewLoggerWith("logger", "test")}
+
+		defer func() {
+			// The query pipeline will panic on the nil http.Client; recover and assert
+			// that the panic happens AFTER the guard (i.e. the guard didn't fire).
+			_ = recover()
+		}()
+		_, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Headers: map[string]string{"FromAlert": "true"},
+			Queries: []backend.DataQuery{
+				{RefID: "A", QueryType: string(dataquery.QueryTypeTIMESERIESLIST), JSON: json.RawMessage(`{}`)},
+			},
+		})
+		if err != nil {
+			assert.NotContains(t, err.Error(), "alerting queries")
+		}
 	})
 }

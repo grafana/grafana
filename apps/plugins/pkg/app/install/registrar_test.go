@@ -659,7 +659,7 @@ func TestInstallRegistrar_Register_ErrorCases(t *testing.T) {
 			install: &PluginInstall{
 				ID:      "plugin-1",
 				Version: "1.0.0",
-				Source:  SourceChildPluginReconciler,
+				Source:  SourcePluginStore,
 			},
 			setupClient: func(fc *fakePluginInstallClient) {
 				fc.getFunc = func(context.Context, resource.Identifier) (*pluginsv0alpha1.Plugin, error) {

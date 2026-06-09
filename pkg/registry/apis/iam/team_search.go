@@ -14,8 +14,8 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
-	"k8s.io/apimachinery/pkg/fields"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
@@ -61,12 +61,12 @@ var teamAccessControlChecks = []teamAccessControlCheck{
 }
 
 type TeamSearchHandler struct {
-	log              log.Logger
-	client           resourcepb.ResourceIndexClient
-	tracer           trace.Tracer
-	features         featuremgmt.FeatureToggles
-	accessClient     authlib.AccessClient
-	teamBindingStore k8srest.Lister
+	log          log.Logger
+	client       resourcepb.ResourceIndexClient
+	tracer       trace.Tracer
+	features     featuremgmt.FeatureToggles
+	accessClient authlib.AccessClient
+	teamGetter   k8srest.Getter
 }
 
 func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTeamSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles, accessClient authlib.AccessClient) *TeamSearchHandler {
@@ -406,7 +406,7 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if queryParams.Get("membercount") == "true" && s.teamBindingStore != nil {
+	if queryParams.Get("membercount") == "true" && s.teamGetter != nil {
 		if err := s.enrichWithMemberCounts(ctx, requester.GetNamespace(), searchResults.Hits); err != nil {
 			errhttp.Write(ctx, err, w)
 			return
@@ -469,7 +469,8 @@ func (s *TeamSearchHandler) stampAccessControl(ctx context.Context, requester id
 	return nil
 }
 
-// enrichWithMemberCounts fetches member counts for each team hit concurrently.
+// enrichWithMemberCounts fetches each team concurrently and sets MemberCount
+// from len(team.Spec.Members) — the team is the source of truth for membership.
 // errgroup is used as a bounded concurrency pool (SetLimit); the first error
 // from any goroutine is propagated to the caller.
 func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespace string, hits []iamv0alpha1.GetSearchTeamsTeamHit) error {
@@ -483,17 +484,18 @@ func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespac
 	for i := range hits {
 		g.Go(func() error {
 			outgoingCtx := request.WithNamespace(ctx, namespace)
-			obj, err := s.teamBindingStore.List(outgoingCtx, &internalversion.ListOptions{
-				FieldSelector: fields.OneTermEqualSelector("spec.teamRef.name", hits[i].Name),
-			})
+			obj, err := s.teamGetter.Get(outgoingCtx, hits[i].Name, &metav1.GetOptions{})
 			if err != nil {
-				return fmt.Errorf("failed to list team bindings for team %s: %w", hits[i].Name, err)
+				if apierrors.IsNotFound(err) {
+					return nil
+				}
+				return fmt.Errorf("failed to get team %s: %w", hits[i].Name, err)
 			}
-			list, ok := obj.(*iamv0alpha1.TeamBindingList)
+			team, ok := obj.(*iamv0alpha1.Team)
 			if !ok {
-				return fmt.Errorf("unexpected type from team binding list for team %s: %T", hits[i].Name, obj)
+				return fmt.Errorf("unexpected type from team get for team %s: %T", hits[i].Name, obj)
 			}
-			count := int64(len(list.Items))
+			count := int64(len(team.Spec.Members))
 			hits[i].MemberCount = &count
 			return nil
 		})

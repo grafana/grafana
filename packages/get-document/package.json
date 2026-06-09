@@ -1,0 +1,12 @@
+{
+  "name": "get-document",
+  "version": "1.0.0-grafana.0",
+  "description": "Vendored fork of get-document — see VENDORED.md",
+  "license": "MIT",
+  "private": true,
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/webmodules/get-document.git"
+  }
+}

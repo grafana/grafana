@@ -46,6 +46,7 @@ export interface CascaderProps {
   id?: string;
   /** Whether you can clear the selected value or not */
   isClearable?: boolean;
+  'data-testid'?: string;
 }
 
 export interface CascaderOption {
@@ -121,6 +122,7 @@ export const Cascader = memo(
     disabled,
     id,
     isClearable,
+    'data-testid': dataTestId,
   }: CascaderProps) => {
     const searchableOptions = useMemo(() => flattenOptions(options, [], separator), [options, separator]);
     const getInitialValue = useCallback(
@@ -238,7 +240,7 @@ export const Cascader = memo(
     };
 
     return (
-      <div>
+      <div data-testid={dataTestId}>
         {isSearching ? (
           <Select
             allowCustomValue={allowCustomValue}

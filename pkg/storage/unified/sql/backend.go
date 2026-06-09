@@ -9,14 +9,16 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
-	"github.com/dgraph-io/badger/v4"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/go-sql-driver/mysql"
+	"github.com/google/uuid"
 	"github.com/grafana/dskit/services"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
@@ -24,13 +26,11 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/atomic"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/gcom"
@@ -103,24 +103,20 @@ func tmpDir(dataPath string) string {
 // For all other storage types a SQL backend will be created.
 func NewStorageBackend(
 	cfg *setting.Cfg,
-	db infraDB.DB,
+	eDB db.DBProvider,
 	reg prometheus.Registerer,
 	storageMetrics *resource.StorageMetrics,
 	disableStorageServices bool,
+	kvStore kv.KV,
 ) (resource.StorageBackend, error) {
 	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
 		MustString(string(options.StorageTypeUnified)))
 	switch storageType {
 	case options.StorageTypeFile:
-		return NewFileBackend(cfg)
+		return NewFileBackend(cfg, kvStore)
 	case options.StorageTypeUnifiedGrpc:
 		return nil, nil
 	default: // fall back to SQL backend
-	}
-	// create default unified backend
-	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
-	if err != nil {
-		return nil, err
 	}
 
 	isHA := isHighAvailabilityEnabled(cfg.SectionWithEnvOverrides("database"),
@@ -151,6 +147,10 @@ func NewStorageBackend(
 		})
 	}
 
+	if kvStore == nil {
+		return nil, fmt.Errorf("storage_type=%s: kv store missing", storageType)
+	}
+
 	ctx := context.Background()
 	dbConn, err := eDB.Init(ctx)
 	if err != nil {
@@ -161,11 +161,6 @@ func NewStorageBackend(
 		return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
 	}
 
-	sqlkv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
-	if err != nil {
-		return nil, fmt.Errorf("error creating sqlkv: %s", err)
-	}
-
 	tenantDeleterCfg := resource.NewTenantDeleterConfig(cfg)
 	if tenantDeleterCfg != nil {
 		if gcomClient := newTenantDeleterGcomClient(cfg); gcomClient != nil {
@@ -174,7 +169,7 @@ func NewStorageBackend(
 	}
 
 	kvBackendOpts := resource.KVBackendOptions{
-		KvStore:              sqlkv,
+		KvStore:              kvStore,
 		Reg:                  reg,
 		UseChannelNotifier:   !isHA,
 		Log:                  log.New("storage-backend"),
@@ -211,25 +206,37 @@ func NewStorageBackend(
 		kvBackendOpts.RvManager = rvManager
 	}
 
+	if cfg.EnableKVLeases {
+		kvBackendOpts.EnableKVLeases = true
+		kvBackendOpts.Holder = resolveLeaseHolder(cfg)
+	}
+
 	return resource.NewKVStorageBackend(kvBackendOpts)
 }
 
-func NewFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
-	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
-	dataPath := apiserverCfg.Key("storage_path").
-		MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
-	db, err := badger.Open(badger.DefaultOptions(filepath.Join(dataPath, "badger")).
-		WithLogger(nil))
-	if err != nil {
-		return nil, err
+func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, error) {
+	if kvStore == nil {
+		return nil, fmt.Errorf("file backend: kv store missing (ProvideKV returned nil)")
 	}
-
-	kvStore := resource.NewBadgerKV(db)
 	return resource.NewKVStorageBackend(resource.KVBackendOptions{
 		KvStore:                 kvStore,
 		Log:                     log.New("storage-backend"),
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 	})
+}
+
+func resolveLeaseHolder(cfg *setting.Cfg) string {
+	id := "unknown"
+	if cfg.InstanceID != "" {
+		id = cfg.InstanceID
+	}
+
+	hostname, err := os.Hostname()
+	if err == nil {
+		id = hostname
+	}
+
+	return fmt.Sprintf("%s-%s", id, uuid.NewString())
 }
 
 type BackendOptions struct {
@@ -365,7 +372,7 @@ type backend struct {
 
 	// Fields to control the cleanup of "lastImportTime" rows (used to find indexes to rebuild)
 	lastImportTimeMaxAge       time.Duration
-	lastImportTimeDeletionTime atomic.Time
+	lastImportTimeDeletionTime atomic.Pointer[time.Time]
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -953,30 +960,38 @@ func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest)
 
 	// TODO: validate key ?
 
-	if req.ResourceVersion > 0 {
-		return b.readHistory(ctx, req.Key, req.ResourceVersion)
-	}
-
-	readReq := &sqlResourceReadRequest{
-		SQLTemplate: sqltemplate.New(b.dialect),
-		Request:     req,
-		Response:    NewReadResponse(),
-	}
 	var res *resource.BackendReadResponse
-	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-		var err error
-		res, err = dbutil.QueryRow(ctx, tx, sqlResourceRead, readReq)
-		return err
-	})
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return &resource.BackendReadResponse{
-			Error: resource.NewNotFoundError(req.Key),
+	if req.ResourceVersion > 0 {
+		res = b.readHistory(ctx, req.Key, req.ResourceVersion)
+	} else {
+		readReq := &sqlResourceReadRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Request:     req,
+			Response:    NewReadResponse(),
 		}
-	} else if err != nil {
-		return &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
+		err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+			var err error
+			res, err = dbutil.QueryRow(ctx, tx, sqlResourceRead, readReq)
+			return err
+		})
+
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			res = &resource.BackendReadResponse{Error: resource.NewNotFoundError(req.Key)}
+		case err != nil:
+			res = &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
+		}
 	}
 
+	if resource.IsResourceNameMixedCase(req, res) {
+		b.log.Warn("resource name case mismatch in ReadResource",
+			"namespace", req.Key.Namespace,
+			"group", req.Key.Group,
+			"resource", req.Key.Resource,
+			"requested_name", req.Key.Name,
+			"stored_name", res.Key.Name,
+		)
+	}
 	return res
 }
 
@@ -1061,6 +1076,13 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	sinceRv = toMicrosecondRV(sinceRv)
 
+	// Validate key before doing latest RV check
+	if key.Group == "" || key.Resource == "" {
+		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+			yield(nil, fmt.Errorf("group and resource are required"))
+		}
+	}
+
 	// We don't use an explicit transaction for fetching LatestRV and subsequent fetching of resources.
 	// To guarantee that we don't include events with RV > LatestRV, we include the check in SQL query.
 
@@ -1110,12 +1132,15 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 				continue
 			}
 
-			// Deduplicate by name (namespace, group, and resource are always the same in the result set)
-			if _, ok := seen[mr.Key.Name]; ok {
+			// Deduplicate by (namespace, name). The query may run
+			// cross-namespace (empty Namespace argument) for the
+			// write-path scanner, so two resources with the same name
+			// in different namespaces must each yield once.
+			dedupKey := mr.Key.Namespace + "/" + mr.Key.Name
+			if _, ok := seen[dedupKey]; ok {
 				continue
 			}
-
-			seen[mr.Key.Name] = struct{}{}
+			seen[dedupKey] = struct{}{}
 			if !yield(mr, nil) {
 				return
 			}
@@ -1405,7 +1430,8 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 	queryDB := b.lastImportTimeDB(ctx)
 
 	// Delete old entries, if configured, and if enough time has passed since last deletion.
-	if b.lastImportTimeMaxAge > 0 && time.Since(b.lastImportTimeDeletionTime.Load()) > limitLastImportTimesDeletion {
+	last := b.lastImportTimeDeletionTime.Load()
+	if b.lastImportTimeMaxAge > 0 && (last == nil || time.Since(*last) > limitLastImportTimesDeletion) {
 		now := time.Now()
 
 		res, err := dbutil.Exec(ctx, queryDB, sqlResourceLastImportTimeDelete, &sqlResourceLastImportTimeDeleteRequest{
@@ -1424,7 +1450,7 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 			b.log.Info("Deleted old last import times", "rows", aff)
 		}
 
-		b.lastImportTimeDeletionTime.Store(now)
+		b.lastImportTimeDeletionTime.Store(&now)
 	}
 
 	rows, err := dbutil.QueryRows(ctx, queryDB, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{

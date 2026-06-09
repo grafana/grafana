@@ -19,7 +19,6 @@ import (
 
 	pluginsappapis "github.com/grafana/grafana/apps/plugins/pkg/apis"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
-	"github.com/grafana/grafana/apps/plugins/pkg/app/install"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 )
 
@@ -36,13 +35,6 @@ func New(cfg app.Config) (app.App, error) {
 		Kind: pluginsv0alpha1.PluginKind(),
 	}
 	logger := logging.DefaultLogger.With("app", "plugins.app")
-
-	if specificConfig.EnableChildReconciler {
-		reconcilerLogger := logger.With("component", "reconciler.children")
-		clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig())
-		registrar := install.NewInstallRegistrar(reconcilerLogger, clientGenerator)
-		pluginKind.Reconciler = install.NewChildPluginReconciler(reconcilerLogger, specificConfig.MetaProviderManager, registrar)
-	}
 
 	simpleConfig := simple.AppConfig{
 		Name:       "plugins",
@@ -74,19 +66,16 @@ func New(cfg app.Config) (app.App, error) {
 }
 
 type PluginAppConfig struct {
-	MetaProviderManager   *meta.ProviderManager
-	EnableChildReconciler bool
+	MetaProviderManager *meta.ProviderManager
 }
 
 func NewPluginsAppInstaller(
 	logger logging.Logger,
 	authorizer authorizer.Authorizer,
 	metaProviderManager *meta.ProviderManager,
-	enableChildReconciler bool,
 ) (*PluginAppInstaller, error) {
 	specificConfig := &PluginAppConfig{
-		MetaProviderManager:   metaProviderManager,
-		EnableChildReconciler: enableChildReconciler,
+		MetaProviderManager: metaProviderManager,
 	}
 	provider := simple.NewAppProvider(pluginsappapis.LocalManifest(), specificConfig, New)
 	appConfig := app.Config{

@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/fullstorydev/grpchan"
 	"github.com/gorilla/mux"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
@@ -31,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -51,6 +53,7 @@ type service struct {
 	// -- Shared Components
 	backend       resource.StorageBackend
 	vectorBackend vector.VectorBackend
+	embedder      *embedder.Embedder
 	serverStopper resource.ResourceServerStopper
 	cfg           *setting.Cfg
 	features      featuremgmt.FeatureToggles
@@ -61,6 +64,7 @@ type service struct {
 	// -- Storage Services
 	queue          QOSEnqueueDequeuer
 	storageMetrics *resource.StorageMetrics
+	vectorMetrics  *resource.VectorMetrics
 	scheduler      *scheduler.Scheduler
 	searchClient   resourcepb.ResourceIndexClient
 
@@ -95,15 +99,17 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	reg prometheus.Registerer,
 	docBuilders resource.DocumentBuilderSupplier,
 	indexMetrics *resource.BleveIndexMetrics,
+	vectorMetrics *resource.VectorMetrics,
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
 	vectorBackend vector.VectorBackend,
+	embedderInstance *embedder.Embedder,
 	provider grpcserver.Provider,
 	opts ...ServiceOption,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, vectorBackend, nil)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, vectorMetrics, searchRing, backend, vectorBackend, embedderInstance, nil)
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -134,16 +140,18 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	docBuilders resource.DocumentBuilderSupplier,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
+	vectorMetrics *resource.VectorMetrics,
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
 	vectorBackend vector.VectorBackend,
+	embedderInstance *embedder.Embedder,
 	searchClient resourcepb.ResourceIndexClient,
 	provider grpcserver.Provider,
 	opts ...ServiceOption,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, vectorBackend, searchClient)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, vectorMetrics, searchRing, backend, vectorBackend, embedderInstance, searchClient)
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -175,8 +183,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 		s.subservices = append(s.subservices, s.queue, s.scheduler)
 	}
 
-	err := s.initializeSubservicesManager()
-	if err != nil {
+	if err := s.initializeSubservicesManager(); err != nil {
 		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 	}
 
@@ -197,16 +204,19 @@ func newService(
 	docBuilders resource.DocumentBuilderSupplier,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
+	vectorMetrics *resource.VectorMetrics,
 	searchRing *ring.Ring,
 	backend resource.StorageBackend,
 	vectorBackend vector.VectorBackend,
+	embedder *embedder.Embedder,
 	searchClient resourcepb.ResourceIndexClient,
 ) *service {
-	authn := grpcutils.NewAuthenticator(ReadGrpcServerConfig(cfg), tracer)
+	authn := newGrpcAuthenticator(cfg, tracer)
 
 	return &service{
 		backend:            backend,
 		vectorBackend:      vectorBackend,
+		embedder:           embedder,
 		cfg:                cfg,
 		features:           features,
 		authenticator:      authn,
@@ -215,6 +225,7 @@ func newService(
 		reg:                reg,
 		docBuilders:        docBuilders,
 		storageMetrics:     storageMetrics,
+		vectorMetrics:      vectorMetrics,
 		indexMetrics:       indexMetrics,
 		searchRing:         searchRing,
 		searchClient:       searchClient,
@@ -370,6 +381,8 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 
 	serverOptions := ServerOptions{
 		Backend:        s.backend,
+		VectorBackend:  s.vectorBackend,
+		Embedder:       s.embedder,
 		Cfg:            s.cfg,
 		Tracer:         s.tracing,
 		Reg:            s.reg,
@@ -378,6 +391,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 		SearchClient:   s.searchClient,
 		StorageMetrics: s.storageMetrics,
 		IndexMetrics:   s.indexMetrics,
+		VectorMetrics:  s.vectorMetrics,
 		Features:       s.features,
 		QOSQueue:       s.queue,
 		OwnsIndexFn:    s.OwnsIndex,
@@ -447,6 +461,14 @@ func ReadGrpcServerConfig(cfg *setting.Cfg) *grpcutils.AuthenticatorConfig {
 		AllowedAudiences: section.Key("allowed_audiences").Strings(","),
 		AllowInsecure:    cfg.Env == setting.Dev,
 	}
+}
+
+func newGrpcAuthenticator(cfg *setting.Cfg, tracer trace.Tracer) interceptors.AuthenticatorFunc {
+	unsafe := cfg.SectionWithEnvOverrides("grpc_server_authentication").Key("unsafe").MustBool(false)
+	if unsafe && cfg.Env == setting.Dev {
+		return grpcutils.NewUnsafeAuthenticator(tracer)
+	}
+	return grpcutils.NewAuthenticator(ReadGrpcServerConfig(cfg), tracer)
 }
 
 func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecyclerConfig, error) {
@@ -539,14 +561,16 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	if sa := interceptors.NewServiceAuth(s.authenticator); sa != nil {
 		handler = &resourceServerWithAuth{ResourceServer: server, ServiceWithAuth: sa}
 	}
-	// Register storage services
 	srv := provider.GetServer()
-	resourcepb.RegisterResourceStoreServer(srv, handler)
+	// Storage services. ResourceStore is wrapped with the request-duration interceptor
+	// so we get group/resource-labeled metrics for Read/Create/Update/Delete/List.
+	metricsInt := resource.UnaryRequestDurationInterceptor(s.storageMetrics)
+	srv.RegisterService(grpchan.InterceptServer(&resourcepb.ResourceStore_ServiceDesc, metricsInt, nil), handler)
 	resourcepb.RegisterBulkStoreServer(srv, handler)
 	resourcepb.RegisterBlobStoreServer(srv, handler)
 	resourcepb.RegisterDiagnosticsServer(srv, handler)
 	resourcepb.RegisterQuotasServer(srv, handler)
-	// Register search services
+	// Search services
 	resourcepb.RegisterResourceIndexServer(srv, handler)
 	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
