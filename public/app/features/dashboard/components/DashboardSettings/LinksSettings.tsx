@@ -9,7 +9,7 @@ import { LinkSettingsList } from '../LinksSettings/LinkSettingsList';
 
 import { type SettingsPageProps } from './types';
 
-export type LinkSettingsMode = 'list' | 'new' | 'edit';
+type LinkSettingsMode = 'list' | 'new' | 'edit';
 
 export function LinksSettings({ dashboard, sectionNav, editIndex }: SettingsPageProps) {
   const [isNew, setIsNew] = useState<boolean>(false);

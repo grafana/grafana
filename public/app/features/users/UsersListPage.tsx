@@ -45,7 +45,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export type Props = ConnectedProps<typeof connector>;
 
-export interface State {
+interface State {
   showInvites: boolean;
 }
 

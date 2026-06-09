@@ -5,15 +5,15 @@ import { type ButtonVariant } from '@grafana/ui';
  * Event Payloads
  */
 
-export interface ShowDashSearchPayload {
+interface ShowDashSearchPayload {
   query?: string;
 }
 
-export interface LocationChangePayload {
+interface LocationChangePayload {
   href: string;
 }
 
-export interface ShowModalPayload {
+interface ShowModalPayload {
   model?: any;
   modalClass?: string;
   src?: string;
@@ -55,17 +55,17 @@ export interface ShowConfirmModalPayload {
   onAltAction?: () => void;
 }
 
-export interface ToggleKioskModePayload {
+interface ToggleKioskModePayload {
   exit?: boolean;
 }
 
-export interface DashScrollPayload {
+interface DashScrollPayload {
   restore?: boolean;
   animate?: boolean;
   pos?: number;
 }
 
-export interface PanelChangeViewPayload {}
+interface PanelChangeViewPayload {}
 
 /**
  * Events

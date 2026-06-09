@@ -23,7 +23,7 @@ export interface OrgUser extends WithAccessControlMetadata {
   isProvisioned?: boolean;
 }
 
-export interface User {
+interface User {
   id: number;
   label: string;
   avatarUrl: string;

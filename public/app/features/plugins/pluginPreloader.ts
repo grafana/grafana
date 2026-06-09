@@ -9,7 +9,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { pluginImporter } from './importer/pluginImporter';
 
-export type PluginPreloadResult = {
+type PluginPreloadResult = {
   pluginId: string;
   error?: unknown;
   exposedComponentConfigs: PluginExtensionExposedComponentConfig[];

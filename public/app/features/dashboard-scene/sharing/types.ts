@@ -8,7 +8,7 @@ export interface SceneShareTabState extends SceneObjectState, Partial<ModalScene
   modalRef?: SceneObjectRef<ModalSceneObjectLike>;
 }
 
-export interface SceneShareTab<T extends SceneShareTabState = SceneShareTabState> extends SceneObject<T> {
+interface SceneShareTab<T extends SceneShareTabState = SceneShareTabState> extends SceneObject<T> {
   getTabLabel(): string;
   tabId: string;
 }

@@ -6,7 +6,7 @@ import { type CorrelationExternal, type CorrelationQuery } from '@grafana/runtim
 
 import { type OmitUnion } from '../types';
 
-export interface FormExternalDTO {
+interface FormExternalDTO {
   sourceUID: string;
   label: string;
   description?: string;
@@ -33,7 +33,7 @@ export function assertIsQueryTypeError(
 
 export type EditFormDTO = OmitUnion<FormDTO, 'targetUID' | 'sourceUID'>;
 
-export type TransformationDTO = {
+type TransformationDTO = {
   type: SupportedTransformationType;
   expression?: string;
   mapValue?: string;

@@ -37,7 +37,7 @@ export type PreviewResponse = Array<
   Pick<AlertmanagerAlert, 'annotations' | 'endsAt' | 'startsAt' | 'generatorURL' | 'labels'>
 >;
 
-export interface Datasource {
+interface Datasource {
   type: string;
   uid: string;
 }
@@ -59,7 +59,7 @@ export enum PrometheusAPIFilters {
   ExcludeAlerts = 'exclude_alerts',
 }
 
-export interface Data {
+interface Data {
   refId: string;
   relativeTimeRange: RelativeTimeRange;
   queryType: string;
@@ -67,14 +67,14 @@ export interface Data {
   model: AlertQuery;
 }
 
-export interface GrafanaAlert {
+interface GrafanaAlert {
   data?: Data;
   condition: string;
   no_data_state: GrafanaAlertStateDecision;
   title: string;
 }
 
-export interface Rule {
+interface Rule {
   grafana_alert: GrafanaAlert;
   for: string;
   labels: Labels;

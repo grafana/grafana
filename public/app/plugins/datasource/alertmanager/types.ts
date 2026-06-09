@@ -4,7 +4,7 @@ import { type DataSourceJsonData, type WithAccessControlMetadata } from '@grafan
 
 export const ROUTES_META_SYMBOL = Symbol('routes_metadata');
 
-export interface ExtraConfiguration {
+interface ExtraConfiguration {
   identifier: string;
   source?: string;
   createdAt?: string;
@@ -20,7 +20,7 @@ export type AlertManagerCortexConfig = {
   extra_config?: ExtraConfiguration[];
 };
 
-export type TLSConfig = {
+type TLSConfig = {
   ca_file?: string;
   cert_file?: string;
   key_file?: string;
@@ -28,26 +28,26 @@ export type TLSConfig = {
   insecure_skip_verify?: boolean;
 };
 
-export type HTTPConfigCommon = {
+type HTTPConfigCommon = {
   proxy_url?: string | null;
   tls_config?: TLSConfig;
 };
 
-export type HTTPConfigBasicAuth = {
+type HTTPConfigBasicAuth = {
   basic_auth?: {
     username: string;
   } & ({ password?: string } | { password_file?: string });
 };
 
-export type HTTPConfigBearerToken = {
+type HTTPConfigBearerToken = {
   bearer_token?: string;
 };
 
-export type HTTPConfigBearerTokenFile = {
+type HTTPConfigBearerTokenFile = {
   bearer_token_file?: string;
 };
 
-export type HTTPConfig = HTTPConfigCommon & (HTTPConfigBasicAuth | HTTPConfigBearerToken | HTTPConfigBearerTokenFile);
+type HTTPConfig = HTTPConfigCommon & (HTTPConfigBasicAuth | HTTPConfigBearerToken | HTTPConfigBearerTokenFile);
 
 export type EmailConfig = {
   to: string;
@@ -67,7 +67,7 @@ export type EmailConfig = {
   headers?: Record<string, string>;
 };
 
-export type WebhookConfig = {
+type WebhookConfig = {
   url: string;
 
   send_resolved?: boolean;
@@ -166,7 +166,7 @@ export interface RouteWithID extends Route {
   routes?: RouteWithID[];
 }
 
-export type InhibitRule = {
+type InhibitRule = {
   target_match?: Record<string, string>;
   target_match_re?: Record<string, string>;
   source_match?: Record<string, string>;
@@ -239,7 +239,7 @@ export enum MatcherOperator {
  * When present, `rule_uid` is always set from that matcher; `rule_title` and `folder_uid`
  * are only set when the rule exists and the caller can read its folder.
  */
-export interface SilenceRuleMetadata {
+interface SilenceRuleMetadata {
   rule_uid?: string;
   rule_title?: string;
   folder_uid?: string;
@@ -307,7 +307,7 @@ export interface AlertmanagerStatus {
   };
 }
 
-export type TestReceiversAlert = Pick<AlertmanagerAlert, 'annotations' | 'labels'>;
+type TestReceiversAlert = Pick<AlertmanagerAlert, 'annotations' | 'labels'>;
 export type TestTemplateAlert = Pick<
   AlertmanagerAlert,
   'annotations' | 'labels' | 'startsAt' | 'endsAt' | 'generatorURL' | 'fingerprint'
@@ -315,7 +315,7 @@ export type TestTemplateAlert = Pick<
   status: 'firing' | 'resolved';
 };
 
-export interface TestReceiversPayload {
+interface TestReceiversPayload {
   receivers?: Receiver[];
   alert?: TestReceiversAlert;
 }
@@ -331,7 +331,7 @@ interface TestReceiversResultReceiver {
   name: string;
   grafana_managed_receiver_configs: TestReceiversResultGrafanaReceiverConfig[];
 }
-export interface TestReceiversResult {
+interface TestReceiversResult {
   notified_at: string;
   receivers: TestReceiversResultReceiver[];
 }
@@ -341,7 +341,7 @@ export interface ExternalAlertmanagersConnectionStatus {
   droppedAlertManagers: AlertmanagerUrl[];
 }
 
-export interface AlertmanagerUrl {
+interface AlertmanagerUrl {
   url: string;
 }
 

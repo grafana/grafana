@@ -13,7 +13,7 @@ export interface ApiKey extends WithAccessControlMetadata {
   lastUsedAt?: string;
 }
 
-export interface ApikeyMigrationResult {
+interface ApikeyMigrationResult {
   total: number;
   migrated: number;
   failed: number;
@@ -21,7 +21,7 @@ export interface ApikeyMigrationResult {
   failedDetails: string[];
 }
 
-export interface ApiKeysState {
+interface ApiKeysState {
   includeExpired: boolean;
   keys: ApiKey[];
   keysIncludingExpired: ApiKey[];

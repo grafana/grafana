@@ -11,7 +11,7 @@ import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/Dash
 
 import { applyJsonToDashboard, getDashboardJsonText } from './codePaneUtils';
 
-export interface DashboardCodePaneProps {
+interface DashboardCodePaneProps {
   initialValue: string;
   onApply: (jsonText: string) => { success: boolean; error?: string };
 }

@@ -80,7 +80,7 @@ export interface DashboardMeta {
   };
 }
 
-export interface AnnotationActions {
+interface AnnotationActions {
   canAdd: boolean;
   canEdit: boolean;
   canDelete: boolean;
@@ -90,7 +90,7 @@ export interface AnnotationsPermissions {
   dashboard: AnnotationActions;
 }
 
-export interface SnapshotSpec {
+interface SnapshotSpec {
   dashboard: DashboardDataDTO;
 }
 
@@ -131,7 +131,7 @@ export enum KioskMode {
   Full = 'full',
 }
 
-export type GetMutableDashboardModelFn = () => DashboardModel | null;
+type GetMutableDashboardModelFn = () => DashboardModel | null;
 
 export interface DashboardState {
   getModel: GetMutableDashboardModelFn;

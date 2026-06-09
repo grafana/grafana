@@ -80,7 +80,7 @@ export function LogViewFilters({ provider, filteredProvider, filter, onChange }:
   );
 }
 
-export type FilterConfig = {
+type FilterConfig = {
   fieldName: string;
   config: MatcherConfig;
 };

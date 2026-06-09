@@ -11,7 +11,7 @@
 import { type Observable } from 'rxjs';
 
 /** The object type and version */
-export interface TypeMeta<K = string> {
+interface TypeMeta<K = string> {
   apiVersion: string;
   kind: K;
 }
@@ -280,8 +280,8 @@ export interface K8sAPIGroupList {
 /**
  * Generic types to match the generated k8s API types in the RTK query clients
  */
-export interface GeneratedObjectMeta extends Partial<ObjectMeta> {}
-export interface GeneratedResource<T = object, S = object, K = string> extends Partial<TypeMeta<K>> {
+interface GeneratedObjectMeta extends Partial<ObjectMeta> {}
+interface GeneratedResource<T = object, S = object, K = string> extends Partial<TypeMeta<K>> {
   metadata?: GeneratedObjectMeta;
   spec?: T;
   status?: S;

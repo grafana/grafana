@@ -36,7 +36,7 @@ export interface FolderDTO extends WithAccessControlMetadata {
 /** Minimal data required to create a new folder */
 export type NewFolder = Pick<FolderDTO, 'title' | 'parentUid'>;
 
-export interface FolderState {
+interface FolderState {
   id: number;
   uid: string;
   title: string;
@@ -68,7 +68,7 @@ type DescendantResource = 'folders' | 'dashboards' | 'library_elements' | 'alert
 /** Summary of descendant counts by resource type, with keys matching the App Platform API response */
 export interface DescendantCount extends Record<DescendantResource, number> {}
 
-export interface FolderInfo {
+interface FolderInfo {
   /**
    * @deprecated use uid instead.
    */

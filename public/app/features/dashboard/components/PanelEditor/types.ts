@@ -23,7 +23,7 @@ export enum DisplayMode {
   Exact = 2,
 }
 
-export enum PanelEditTableToggle {
+enum PanelEditTableToggle {
   Off = 0,
   Table = 1,
 }
@@ -43,7 +43,7 @@ export const panelEditTableModes = [
 ];
 
 /** @internal */
-export interface Props {
+interface Props {
   plugin: PanelPlugin;
   config: FieldConfigSource;
   onChange: (config: FieldConfigSource) => void;

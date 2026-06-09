@@ -125,7 +125,7 @@ export interface NotifierDTO<T = NotifierType> {
   deprecated?: boolean;
 }
 
-export interface NotificationChannelType {
+interface NotificationChannelType {
   value: string;
   label: string;
   description: string;
@@ -135,7 +135,7 @@ export interface NotificationChannelType {
   info?: string;
 }
 
-export interface NotificationChannelDTO {
+interface NotificationChannelDTO {
   [key: string]: string | boolean | number | SelectableValue<string>;
   id: number;
   name: string;
@@ -149,10 +149,10 @@ export interface NotificationChannelDTO {
   isDefault: boolean;
 }
 
-export type NotificationChannelSecureSettings = Record<string, string | number>;
+type NotificationChannelSecureSettings = Record<string, string | number>;
 export type NotificationChannelSecureFields = Record<string, boolean | ''>;
 
-export interface ChannelTypeSettings {
+interface ChannelTypeSettings {
   [key: string]: any;
   autoResolve: true;
   httpMethod: string;
@@ -243,14 +243,14 @@ export interface AlertRulesState {
   isLoading: boolean;
 }
 
-export interface AlertNotification {
+interface AlertNotification {
   isDefault: boolean;
   name: string;
   id: number;
   type: string;
 }
 
-export interface AnnotationItemDTO {
+interface AnnotationItemDTO {
   id: number;
   alertId: number;
   alertName: string;

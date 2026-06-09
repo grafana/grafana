@@ -5,17 +5,17 @@ import { type PermissionLevel } from 'app/types/acl';
 
 import { type ManagerKind } from '../../apiserver/types';
 
-export interface SortOption {
+interface SortOption {
   description: string;
   displayName: string;
   meta: string;
   name: string;
 }
-export interface SortOptions {
+interface SortOptions {
   sortOptions: SortOption[];
 }
 
-export interface FacetField {
+interface FacetField {
   field: string;
   count?: number;
 }

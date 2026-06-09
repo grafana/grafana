@@ -58,7 +58,7 @@ export interface CloneOptions {
   message?: string;
 }
 
-export type DashboardLinkType = 'link' | 'dashboards';
+type DashboardLinkType = 'link' | 'dashboards';
 
 /** @experimental */
 export interface ScopeMeta {

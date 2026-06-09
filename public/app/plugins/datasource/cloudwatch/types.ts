@@ -18,7 +18,7 @@ export interface MultiFilters {
   [key: string]: string[];
 }
 
-export type Direction = 'ASC' | 'DESC';
+type Direction = 'ASC' | 'DESC';
 
 export type LogAction = 'GetQueryResults' | 'GetLogEvents' | 'StartQuery' | 'StopQuery';
 
@@ -87,12 +87,12 @@ export interface GetLogEventsRequest extends DataQuery {
   region: string;
 }
 
-export interface TSDBResponse<T = any> {
+interface TSDBResponse<T = any> {
   results: Record<string, TSDBQueryResult<T>>;
   message?: string;
 }
 
-export interface TSDBQueryResult<T = any> {
+interface TSDBQueryResult<T = any> {
   refId: string;
   series: TSDBTimeSeries[];
   tables: Array<TSDBTable<T>>;
@@ -102,12 +102,12 @@ export interface TSDBQueryResult<T = any> {
   meta?: any;
 }
 
-export interface TSDBTable<T = any> {
+interface TSDBTable<T = any> {
   columns: Array<{ text: string }>;
   rows: T[];
 }
 
-export interface DataQueryError<CloudWatchMetricsQuery> {
+interface DataQueryError<CloudWatchMetricsQuery> {
   data?: {
     message?: string;
     error?: string;
@@ -116,12 +116,12 @@ export interface DataQueryError<CloudWatchMetricsQuery> {
   message?: string;
 }
 
-export interface TSDBTimeSeries {
+interface TSDBTimeSeries {
   name: string;
   points: TSDBTimePoint[];
   tags?: Record<string, string>;
 }
-export type TSDBTimePoint = [number, number];
+type TSDBTimePoint = [number, number];
 
 export interface LogGroupField {
   /**
@@ -191,7 +191,7 @@ export interface MetricRequest {
   debug?: boolean;
 }
 
-export interface MetricQuery {
+interface MetricQuery {
   [key: string]: any;
   datasource?: DataSourceRef;
   refId?: string;

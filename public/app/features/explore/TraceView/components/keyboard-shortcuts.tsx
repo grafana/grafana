@@ -17,7 +17,7 @@ import type * as React from 'react';
 
 import keyboardMappings from './keyboard-mappings';
 
-export type CombokeysHandler =
+type CombokeysHandler =
   | (() => void)
   | ((event: React.KeyboardEvent) => void)
   | ((event: React.KeyboardEvent, s: string) => void);

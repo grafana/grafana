@@ -173,13 +173,13 @@ export interface ChangeVariableTypeActionHelperProps {
   source: SceneVariableSet;
 }
 
-export interface ChangeTitleActionHelperProps {
+interface ChangeTitleActionHelperProps {
   oldTitle: string;
   newTitle: string;
   source: DashboardScene;
 }
 
-export interface ChangeDescriptionActionHelperProps {
+interface ChangeDescriptionActionHelperProps {
   oldDescription: string;
   newDescription: string;
   source: DashboardScene;

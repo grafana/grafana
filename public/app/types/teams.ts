@@ -33,7 +33,7 @@ export interface TeamMember {
   permission: number;
 }
 
-export interface TeamGroup {
+interface TeamGroup {
   groupId: string;
   teamId: number;
 }

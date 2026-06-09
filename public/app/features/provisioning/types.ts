@@ -13,7 +13,7 @@ import {
 export type JobType = 'sync' | 'delete' | 'move' | 'fix' | 'releaseResources' | 'deleteResources';
 
 // Repository type definition - extracted from API client
-export type RepositoryType = RepositorySpec['type'];
+type RepositoryType = RepositorySpec['type'];
 export type RepoWorkflows = RepositorySpec['workflows'];
 
 export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySpec['type']> &
@@ -31,10 +31,10 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySp
     connectionName?: string;
   };
 
-export type RepositorySettingsField = Path<RepositoryFormData>;
+type RepositorySettingsField = Path<RepositoryFormData>;
 
 // Connection type definition - extracted from API client
-export type ConnectionType = ConnectionSpec['type'];
+type ConnectionType = ConnectionSpec['type'];
 
 export type ConnectionFormData = {
   type: ConnectionType;
@@ -54,14 +54,14 @@ export interface ProvisioningPreview {
 
 export type WorkflowOption = RepositorySpec['workflows'][number];
 
-export type HistoryItem = {
+type HistoryItem = {
   ref: string;
   message: string;
   createdAt?: number;
   authors: AuthorInfo[];
 };
 
-export type AuthorInfo = {
+type AuthorInfo = {
   name: string;
   username: string;
   avatarURL?: string;

@@ -74,7 +74,7 @@ function PendingPickerHeader({
  * Props for the standalone ContentHeader component.
  * This interface defines everything needed to render the header without Scene coupling.
  */
-export interface ContentHeaderProps {
+interface ContentHeaderProps {
   selectedAlert: AlertRule | null;
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;

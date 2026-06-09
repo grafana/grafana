@@ -3,7 +3,7 @@ import { type OrgRole, type WithAccessControlMetadata } from '@grafana/data';
 import { type Role } from './accessControl';
 import { type ApiKey } from './apiKeys';
 
-export interface OrgServiceAccount extends WithAccessControlMetadata {
+interface OrgServiceAccount extends WithAccessControlMetadata {
   serviceAccountId: number;
   avatarUrl: string;
   email: string;
@@ -15,7 +15,7 @@ export interface OrgServiceAccount extends WithAccessControlMetadata {
   tokens: number[];
 }
 
-export interface ServiceAccount {
+interface ServiceAccount {
   id: number;
   label: string;
   avatarUrl: string;
@@ -83,6 +83,6 @@ export interface ServiceAccountsState {
   serviceAccountStateFilter: ServiceAccountStateFilter;
 }
 
-export interface ServiceAccountsUpgradeStatus {
+interface ServiceAccountsUpgradeStatus {
   upgraded: boolean;
 }

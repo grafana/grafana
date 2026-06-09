@@ -19,7 +19,7 @@ import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../.
 import { type RowItem } from './RowItem';
 import { type RowsLayoutManager } from './RowsLayoutManager';
 
-export interface Props {
+interface Props {
   row: RowItem;
   manager: RowsLayoutManager;
   variable: MultiValueVariable;

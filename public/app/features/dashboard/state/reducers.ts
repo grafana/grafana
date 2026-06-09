@@ -56,12 +56,12 @@ const dashboardSlice = createSlice({
   },
 });
 
-export interface PanelModelAndPluginReadyPayload {
+interface PanelModelAndPluginReadyPayload {
   panelId: number;
   plugin: PanelPlugin;
 }
 
-export interface SetPanelInstanceStatePayload {
+interface SetPanelInstanceStatePayload {
   panelId: number;
   value: unknown;
 }

@@ -41,7 +41,7 @@ export interface DatasourceInstanceK8sSpec {
   readOnly?: boolean;
 }
 
-export interface DatasourceAccessK8s {
+interface DatasourceAccessK8s {
   kind: string;
   apiVersion: string;
   Permissions: Record<string, boolean>;

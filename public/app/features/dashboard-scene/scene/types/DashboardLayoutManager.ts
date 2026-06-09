@@ -97,7 +97,7 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   getAllGridTypes(): string[];
 }
 
-export interface LayoutManagerSerializer {
+interface LayoutManagerSerializer {
   serialize(layout: DashboardLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'];
   deserialize(
     layout: DashboardV2Spec['layout'],

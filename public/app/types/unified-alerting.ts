@@ -84,7 +84,7 @@ export interface GrafanaRecordingRule extends RecordingRule {
 
 export type GrafanaRule = GrafanaAlertingRule | GrafanaRecordingRule;
 
-export type BaseRuleGroup = { name: string };
+type BaseRuleGroup = { name: string };
 
 type TotalsWithoutAlerting = Exclude<AlertInstanceTotalState, AlertInstanceTotalState.Alerting>;
 enum FiringTotal {
@@ -98,13 +98,13 @@ export interface RuleGroup {
   totals?: Partial<Record<TotalsWithoutAlerting | FiringTotal, number>>;
 }
 
-export interface DataSourceRuleGroup {
+interface DataSourceRuleGroup {
   id: DataSourceRuleGroupIdentifier;
   interval: number;
   rules: Rule[];
 }
 
-export interface DataSourceRuleNamespace {
+interface DataSourceRuleNamespace {
   rulesSource: DataSourceRulesSourceIdentifier;
   id: DataSourceNamespaceIdentifier;
   groups: DataSourceRuleGroup[];
@@ -116,7 +116,7 @@ export interface RuleNamespace {
   groups: RuleGroup[];
 }
 
-export interface RulesSourceResult {
+interface RulesSourceResult {
   dataSourceName: string;
   error?: unknown;
   namespaces?: RuleNamespace[];
@@ -318,7 +318,7 @@ export interface RulerDataSourceConfig {
   apiVersion: 'legacy' | 'config';
 }
 
-export interface PromBasedDataSource {
+interface PromBasedDataSource {
   name: string;
   id: string | number;
   rulerConfig?: RulerDataSourceConfig;

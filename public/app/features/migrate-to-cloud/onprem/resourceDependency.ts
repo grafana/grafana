@@ -5,7 +5,7 @@ import { type ResourceTableItem } from './types';
 
 export type ResourceTypeId = ResourceTableItem['type'];
 
-export interface ResourceType {
+interface ResourceType {
   id: ResourceTypeId;
   name: string;
   icon: IconName;

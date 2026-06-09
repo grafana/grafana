@@ -12,7 +12,7 @@ import { type IconName } from '@grafana/ui';
 import { type PluginsState } from 'app/types/plugins';
 import { type StoreState } from 'app/types/store';
 
-export type PluginTypeCode = 'app' | 'panel' | 'datasource';
+type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
 export enum PluginAdminRoutes {
   Home = 'plugins-home',
@@ -105,7 +105,7 @@ export const SCORE_LEVELS = {
   CRITICAL: 'Critical',
 } as const;
 
-export type ScoreLevel = (typeof SCORE_LEVELS)[keyof typeof SCORE_LEVELS];
+type ScoreLevel = (typeof SCORE_LEVELS)[keyof typeof SCORE_LEVELS];
 
 export const INSIGHT_CATEGORIES = {
   SECURITY: 'security',
@@ -121,7 +121,7 @@ export const INSIGHT_LEVELS = {
   INFO: 'info',
 } as const;
 
-export interface InsightItem {
+interface InsightItem {
   id: string;
   name: string;
   description?: string;
@@ -129,7 +129,7 @@ export interface InsightItem {
   link?: string;
 }
 
-export interface InsightCategory {
+interface InsightCategory {
   name: string;
   items: InsightItem[];
   scoreValue: number;
@@ -143,7 +143,7 @@ export interface CatalogPluginInsights {
   insights: InsightCategory[];
 }
 
-export interface CatalogPluginInfo {
+interface CatalogPluginInfo {
   logos: { large: string; small: string };
   keywords: string[];
 }
@@ -261,7 +261,7 @@ interface Rel {
   url: string;
 }
 
-export interface Build {
+interface Build {
   time?: number;
   repo?: string;
   branch?: string;
@@ -278,13 +278,13 @@ export interface Version {
   status?: string; // Status of the version: 'active', 'deprecated'
 }
 
-export interface PluginDetails {
+interface PluginDetails {
   remote?: RemotePlugin;
   remoteVersions?: Version[];
   local?: LocalPlugin;
 }
 
-export interface Org {
+interface Org {
   slug: string;
   name: string;
   url: string;
@@ -294,7 +294,7 @@ export interface Org {
   avatarUrl: string;
 }
 
-export type CatalogPluginsState = { loading: boolean; error?: Error; plugins: CatalogPlugin[] };
+type CatalogPluginsState = { loading: boolean; error?: Error; plugins: CatalogPlugin[] };
 
 export enum PluginStatus {
   INSTALL = 'INSTALL',
@@ -335,9 +335,9 @@ export enum RequestStatus {
   Fulfilled = 'Fulfilled',
   Rejected = 'Rejected',
 }
-export type RemotePluginResponse = { plugins: RemotePlugin[]; error?: Error };
+type RemotePluginResponse = { plugins: RemotePlugin[]; error?: Error };
 
-export type RequestInfo = {
+type RequestInfo = {
   status: RequestStatus;
   // The whole error object
   error?: any;
@@ -345,7 +345,7 @@ export type RequestInfo = {
   errorMessage?: string;
 };
 
-export type PluginDetailsTab = {
+type PluginDetailsTab = {
   label: PluginTabLabels | string;
   icon?: IconName;
   id: PluginTabIds | string;

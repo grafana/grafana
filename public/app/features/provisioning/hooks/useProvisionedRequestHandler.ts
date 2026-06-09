@@ -183,4 +183,4 @@ export function useProvisionedRequestHandler<T>({
   ]);
 }
 
-export type { ResourceType, ProvisionedOperationInfo, RequestHandlers, ResourceConfig };
+export type { ProvisionedOperationInfo, RequestHandlers };

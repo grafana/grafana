@@ -21,7 +21,7 @@ import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../.
 import { type TabItem } from './TabItem';
 import { type TabsLayoutManager } from './TabsLayoutManager';
 
-export interface Props {
+interface Props {
   tab: TabItem;
   manager: TabsLayoutManager;
   variable: MultiValueVariable;

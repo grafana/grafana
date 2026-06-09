@@ -15,11 +15,11 @@ interface BaseRuleExtensionContext {
   labels: Record<string, string>;
 }
 
-export interface AlertingRuleExtensionContext extends BaseRuleExtensionContext {
+interface AlertingRuleExtensionContext extends BaseRuleExtensionContext {
   annotations: Record<string, string>;
 }
 
-export interface RecordingRuleExtensionContext extends BaseRuleExtensionContext {}
+interface RecordingRuleExtensionContext extends BaseRuleExtensionContext {}
 
 export function useRulePluginLinkExtension(rule: Rule | undefined, groupIdentifier: RuleGroupIdentifierV2) {
   // This ref provides a stable reference to an empty array, which is used to avoid re-renders when the rule is undefined.
@@ -43,7 +43,7 @@ export function useRulePluginLinkExtension(rule: Rule | undefined, groupIdentifi
   return links.filter((link) => link.pluginId === pluginId);
 }
 
-export interface PluginRuleExtensionParam {
+interface PluginRuleExtensionParam {
   pluginId: string;
   rule: CombinedRule;
 }

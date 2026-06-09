@@ -52,7 +52,7 @@ export enum ConnectionPath {
   Straight = 'straight',
 }
 
-export enum ConnectionDirection {
+enum ConnectionDirection {
   Forward = 'forward',
   Reverse = 'reverse',
   Both = 'both',

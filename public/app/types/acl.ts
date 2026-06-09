@@ -5,7 +5,7 @@ export enum TeamPermissionLevel {
 
 export type PermissionLevel = 'view' | 'edit' | 'admin';
 
-export enum SearchQueryType {
+enum SearchQueryType {
   Folder = 'dash-folder',
   Dashboard = 'dash-db',
 }

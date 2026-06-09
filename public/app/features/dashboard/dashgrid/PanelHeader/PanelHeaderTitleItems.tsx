@@ -14,7 +14,7 @@ import { PanelLinks } from '../PanelLinks';
 
 import { PanelHeaderNotices } from './PanelHeaderNotices';
 
-export interface AngularNotice {
+interface AngularNotice {
   show: boolean;
   isAngularPanel: boolean;
   isAngularDatasource: boolean;

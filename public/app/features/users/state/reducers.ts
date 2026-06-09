@@ -19,7 +19,7 @@ export interface UsersFetchResult {
   totalCount: number;
 }
 
-export interface UsersRolesFetchResult {
+interface UsersRolesFetchResult {
   orgUsers: OrgUser[];
   perPage: number;
   page: number;
