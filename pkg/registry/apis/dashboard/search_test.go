@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
@@ -52,19 +53,19 @@ func TestVectorSearch(t *testing.T) {
 			log:      log.New("test", "test"),
 			client:   client,
 			tracer:   tracing.NewNoopTracerService(),
-			features: featuremgmt.WithFeatures(),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch),
 		}
 	}
 
 	doRequest := func(handler SearchHandler, rawQuery string) *httptest.ResponseRecorder {
 		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search?"+rawQuery, nil)
+		req := httptest.NewRequest("GET", "/search/vector?"+rawQuery, nil)
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-		handler.DoSearch(rr, req)
+		handler.DoVectorSearch(rr, req)
 		return rr
 	}
 
-	t.Run("semantic=true calls VectorSearch and maps results to hits", func(t *testing.T) {
+	t.Run("calls VectorSearch and maps results to hits", func(t *testing.T) {
 		mockClient := &MockClient{
 			VectorSearchResponse: &resourcepb.VectorSearchResponse{
 				Results: []*resourcepb.VectorSearchResult{
@@ -75,7 +76,7 @@ func TestVectorSearch(t *testing.T) {
 		}
 		handler := newHandler(mockClient)
 
-		rr := doRequest(handler, "query=cpu&semantic=true&folder=f1&limit=10")
+		rr := doRequest(handler, "query=cpu&folder=f1&limit=10")
 
 		require.NotNil(t, mockClient.LastVectorSearchRequest)
 		assert.Equal(t, 1, mockClient.VectorSearchCallCount)
@@ -99,41 +100,32 @@ func TestVectorSearch(t *testing.T) {
 		assert.Equal(t, 0.12, p.MaxScore)
 	})
 
-	t.Run("falls back to lexical search when vector search is unimplemented", func(t *testing.T) {
+	t.Run("returns 501 and does not fall back when vector search is unimplemented", func(t *testing.T) {
 		mockClient := &MockClient{
 			VectorSearchErr: status.Error(codes.Unimplemented, "vector search not configured"),
-			MockResponses: []*resourcepb.ResourceSearchResponse{{
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: resource.SEARCH_FIELD_TITLE}},
-					Rows:    []*resourcepb.ResourceTableRow{},
-				},
-			}},
 		}
 		handler := newHandler(mockClient)
 
-		rr := doRequest(handler, "query=cpu&semantic=true")
+		rr := doRequest(handler, "query=cpu")
 
 		assert.Equal(t, 1, mockClient.VectorSearchCallCount)
-		require.NotNil(t, mockClient.LastSearchRequest, "expected fallback to lexical Search")
-		assert.Equal(t, "cpu", mockClient.LastSearchRequest.Query)
-		assert.Equal(t, 200, rr.Result().StatusCode)
+		assert.Equal(t, 0, mockClient.CallCount, "must not fall back to lexical search")
+		assert.Equal(t, http.StatusNotImplemented, rr.Result().StatusCode)
 	})
 
-	t.Run("without the flag, only lexical search is called", func(t *testing.T) {
-		mockClient := &MockClient{
-			MockResponses: []*resourcepb.ResourceSearchResponse{{
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: resource.SEARCH_FIELD_TITLE}},
-					Rows:    []*resourcepb.ResourceTableRow{},
-				},
-			}},
+	t.Run("route is registered only when the feature toggle is enabled", func(t *testing.T) {
+		hasVectorRoute := func(features featuremgmt.FeatureToggles) bool {
+			h := SearchHandler{features: features}
+			for _, route := range h.GetAPIRoutes(nil).Namespace {
+				if route.Path == "search/vector" {
+					return true
+				}
+			}
+			return false
 		}
-		handler := newHandler(mockClient)
 
-		doRequest(handler, "query=cpu")
-
-		assert.Equal(t, 0, mockClient.VectorSearchCallCount)
-		require.NotNil(t, mockClient.LastSearchRequest)
+		assert.False(t, hasVectorRoute(featuremgmt.WithFeatures()), "route should be absent when toggle off")
+		assert.True(t, hasVectorRoute(featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch)), "route should be present when toggle on")
 	})
 }
 

@@ -25,6 +25,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -61,7 +62,7 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 	searchResults := defs[dashboardv0alpha1.SearchResults{}.OpenAPIModelName()].Schema
 	sortableFields := defs[dashboardv0alpha1.SortableFields{}.OpenAPIModelName()].Schema
 
-	return &builder.APIRoutes{
+	routes := &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
 				Path: "search",
@@ -89,15 +90,6 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Description: "user query string",
 										Required:    false,
 										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "semantic",
-										In:          "query",
-										Description: "run a semantic (vector) search ranked by meaning rather than keyword match. Falls back to lexical search when vector search is not configured.",
-										Required:    false,
-										Schema:      spec.BooleanProperty(),
 									},
 								},
 								{
@@ -340,6 +332,83 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 			},
 		},
 	}
+
+	// Semantic (vector) search is still experimental, so it's only registered —
+	// and therefore only present in the OpenAPI spec — when the feature toggle
+	// is enabled.
+	if s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagDashboardVectorSearch) { // nolint:staticcheck
+		routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
+			Path: "search/vector",
+			Spec: &spec3.PathProps{
+				Get: &spec3.Operation{
+					OperationProps: spec3.OperationProps{
+						Tags:        []string{"Search"},
+						OperationId: "vectorSearchDashboards",
+						Description: "Semantic (vector) search for dashboards, ranked by meaning rather than keyword match",
+						Parameters: []*spec3.Parameter{
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "namespace",
+									In:          "path",
+									Required:    true,
+									Example:     "default",
+									Description: "workspace",
+									Schema:      spec.StringProperty(),
+								},
+							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "query",
+									In:          "query",
+									Description: "natural language query string",
+									Required:    true,
+									Schema:      spec.StringProperty(),
+								},
+							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "folder",
+									In:          "query",
+									Description: "restrict results to a folder (not recursive)",
+									Required:    false,
+									Schema:      spec.StringProperty(),
+								},
+							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "limit",
+									In:          "query",
+									Description: "maximum number of results to return (default 50, max 200)",
+									Required:    false,
+									Schema:      spec.Int64Property(),
+								},
+							},
+						},
+						Responses: &spec3.Responses{
+							ResponsesProps: spec3.ResponsesProps{
+								StatusCodeResponses: map[int]*spec3.Response{
+									200: {
+										ResponseProps: spec3.ResponseProps{
+											Content: map[string]*spec3.MediaType{
+												"application/json": {
+													MediaTypeProps: spec3.MediaTypeProps{
+														Schema: &searchResults,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Handler: s.DoVectorSearch,
+		})
+	}
+
+	return routes
 }
 
 func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
@@ -357,6 +426,11 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 }
 
 var errEmptyResults = fmt.Errorf("empty results")
+
+// errVectorSearchNotConfigured is returned (HTTP 501) when the vector search
+// endpoint is enabled by feature toggle but the unified storage backend has no
+// embedder/vector store configured.
+var errVectorSearchNotConfigured = errutil.NotImplemented("dashboard.vectorSearchNotConfigured")
 
 func permissionToActions(p dashboardaccess.PermissionType) (dashboardAction string, folderAction string) {
 	switch p {
@@ -400,15 +474,6 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Semantic (vector) search is opt-in via ?semantic=true. When the vector
-	// backend isn't configured the call returns Unimplemented and we fall
-	// through to lexical search so the caller always gets results.
-	if queryParams.Get("semantic") == "true" {
-		if s.doVectorSearch(ctx, w, user, queryParams) {
-			return
-		}
-	}
-
 	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, user, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
 		return s.getDashboardsUIDsSharedWithUser(ctx, user, requestedPermission)
 	})
@@ -450,15 +515,30 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	s.write(w, parsedResults)
 }
 
-// doVectorSearch runs a semantic search against unified storage. It returns true
-// when it has produced a response (results or a hard error already written to w),
-// and false when vector search is not configured (gRPC Unimplemented) so the caller
-// can fall back to lexical search.
-func (s *SearchHandler) doVectorSearch(ctx context.Context, w http.ResponseWriter, user identity.Requester, queryParams url.Values) bool {
+// DoVectorSearch serves the semantic (vector) search endpoint. It is registered
+// only when the dashboardVectorSearch feature toggle is enabled. Unlike lexical
+// search it does not fall back: if the vector backend isn't configured the
+// underlying call returns Unimplemented, which we surface as 501.
+func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
+	ctx, span := s.tracer.Start(r.Context(), "dashboard.vectorSearch")
+	defer span.End()
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	queryParams, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
 	key, err := asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
-		return true
+		return
 	}
 
 	limit := 50
@@ -486,19 +566,18 @@ func (s *SearchHandler) doVectorSearch(ctx context.Context, w http.ResponseWrite
 	result, err := s.client.VectorSearch(ctx, req)
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
-			s.log.Debug("vector search not configured, falling back to lexical search")
-			return false
+			errhttp.Write(ctx, errVectorSearchNotConfigured.Errorf("vector search is not configured on this instance"), w)
+			return
 		}
 		errhttp.Write(ctx, err, w)
-		return true
+		return
 	}
 	if result.GetError() != nil {
 		errhttp.Write(ctx, resource.GetError(result.GetError()), w)
-		return true
+		return
 	}
 
 	s.write(w, vectorSearchResultsToSearchResults(result))
-	return true
 }
 
 // vectorSearchResultsToSearchResults maps a VectorSearchResponse onto the DTO the
