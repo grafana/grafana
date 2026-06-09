@@ -1265,6 +1265,14 @@
             }
           },
           {
+            "name": "semantic",
+            "in": "query",
+            "description": "run a semantic (vector) search ranked by meaning rather than keyword match. Falls back to lexical search when vector search is not configured.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "type",
             "in": "query",
             "description": "search dashboards or folders.  When empty, this will search both",
