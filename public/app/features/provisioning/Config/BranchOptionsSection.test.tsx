@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useForm } from 'react-hook-form';
@@ -5,6 +6,10 @@ import { useForm } from 'react-hook-form';
 import { type RepositoryFormData } from '../types';
 
 import { BranchOptionsSection } from './BranchOptionsSection';
+
+jest.mock('@openfeature/react-sdk', () => ({
+  useBooleanFlagValue: jest.fn(),
+}));
 
 function Wrapper() {
   const { register } = useForm<RepositoryFormData>();
@@ -18,6 +23,18 @@ function Wrapper() {
 }
 
 describe('BranchOptionsSection', () => {
+  beforeEach(() => {
+    // Default to the gitConventions flag being enabled; specific tests override.
+    jest.mocked(useBooleanFlagValue).mockReturnValue(true);
+  });
+
+  it('renders nothing when the gitConventions flag is off', () => {
+    jest.mocked(useBooleanFlagValue).mockReturnValue(false);
+    const { container } = render(<Wrapper />);
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it('renders collapsed by default, hiding the inner fields', () => {
     render(<Wrapper />);
 

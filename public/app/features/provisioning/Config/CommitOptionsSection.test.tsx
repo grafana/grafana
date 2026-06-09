@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useForm } from 'react-hook-form';
@@ -5,6 +6,10 @@ import { useForm } from 'react-hook-form';
 import { type RepositoryFormData } from '../types';
 
 import { CommitOptionsSection } from './CommitOptionsSection';
+
+jest.mock('@openfeature/react-sdk', () => ({
+  useBooleanFlagValue: jest.fn(),
+}));
 
 function Wrapper() {
   const { register } = useForm<RepositoryFormData>();
@@ -18,6 +23,10 @@ function Wrapper() {
 }
 
 describe('CommitOptionsSection', () => {
+  beforeEach(() => {
+    // Default to the gitConventions flag being enabled; specific tests override.
+    jest.mocked(useBooleanFlagValue).mockReturnValue(true);
+  });
   it('renders collapsed by default, hiding the inner fields', () => {
     render(<Wrapper />);
 
@@ -66,5 +75,17 @@ describe('CommitOptionsSection', () => {
 
     expect(screen.getByRole('textbox')).toHaveAttribute('name', 'commit.singleResourceMessageTemplate');
     expect(screen.getByRole('checkbox')).toHaveAttribute('name', 'commit.enforceTemplate');
+  });
+
+  it('hides the enforce option when the gitConventions flag is off but keeps the message template', async () => {
+    jest.mocked(useBooleanFlagValue).mockReturnValue(false);
+    const user = userEvent.setup();
+    render(<Wrapper />);
+
+    await user.click(screen.getByText('Commit options (advanced)'));
+
+    expect(screen.getByText('Commit message template')).toBeInTheDocument();
+    expect(screen.queryByText('Enforce commit message template')).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 });

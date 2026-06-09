@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { type FieldValues, type Path, type UseFormRegister } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
@@ -12,13 +13,16 @@ interface Props<T extends FieldValues> {
 /**
  * Advanced commit options (RepositorySpec.commit / CommitOptions). Collapsed by
  * default since the built-in defaults are sensible and most users won't change
- * them.
+ * them. The enforce-template option is gated behind the provisioning.gitConventions
+ * flag; the message template itself is always available.
  */
 export function CommitOptionsSection<T extends FieldValues>({
   register,
   messageTemplateName,
   enforceTemplateName,
 }: Props<T>) {
+  const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
+
   return (
     <ControlledCollapse
       label={t('provisioning.commit-options.label-commit-options', 'Commit options (advanced)')}
@@ -53,16 +57,18 @@ export function CommitOptionsSection<T extends FieldValues>({
           />
         </Field>
 
-        <Field noMargin>
-          <Checkbox
-            {...register(enforceTemplateName)}
-            label={t('provisioning.commit-options.label-enforce-template', 'Enforce commit message template')}
-            description={t(
-              'provisioning.commit-options.description-enforce-template',
-              'Pre-fill the commit message in save dialogs from the template above and make it read-only. The "Grafana-saved-by" trailer is always appended.'
-            )}
-          />
-        </Field>
+        {gitConventionsEnabled && (
+          <Field noMargin>
+            <Checkbox
+              {...register(enforceTemplateName)}
+              label={t('provisioning.commit-options.label-enforce-template', 'Enforce commit message template')}
+              description={t(
+                'provisioning.commit-options.description-enforce-template',
+                'Pre-fill the commit message in save dialogs from the template above and make it read-only. The "Grafana-saved-by" trailer is always appended.'
+              )}
+            />
+          </Field>
+        )}
       </Stack>
     </ControlledCollapse>
   );

@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { type FieldValues, type Path, type UseFormRegister } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
@@ -12,13 +13,20 @@ interface Props<T extends FieldValues> {
 /**
  * Branch naming options (RepositorySpec.branch / BranchOptions). These only
  * take effect for the branch (pull request) workflow on git-based repositories,
- * so the caller is responsible for only rendering it for those.
+ * so the caller is responsible for only rendering it for those. The whole
+ * section is gated behind the provisioning.gitConventions flag.
  */
 export function BranchOptionsSection<T extends FieldValues>({
   register,
   nameTemplateName,
   enforceTemplateName,
 }: Props<T>) {
+  const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
+
+  if (!gitConventionsEnabled) {
+    return null;
+  }
+
   return (
     <ControlledCollapse
       label={t('provisioning.branch-options.label-branch-options', 'Branch options (advanced)')}
