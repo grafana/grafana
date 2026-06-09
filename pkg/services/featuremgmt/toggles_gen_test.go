@@ -174,12 +174,51 @@ func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 	return all
 }
 
+// dottedNamingGrandfathered lists flags that ship to a new client (React/Go) but
+// predate the dotted `component.flagName` convention. Their keys are already part
+// of users' configuration and frontend code, so renaming them would be a breaking
+// change. They are exempt from the dotted-name requirement for backwards
+// compatibility only.
+//
+// DO NOT add entries here. New flags that generate React or Go clients must use
+// the dotted `component.flagName` format.
+var dottedNamingGrandfathered = map[string]bool{
+	"lokiShardSplitting":                               true,
+	"faroSessionReplay":                                true,
+	"provisioningFolderMetadata":                       true,
+	"sqlExpressionsCodeMirror":                         true,
+	"newSavedQueriesExperience":                        true,
+	"dashboardTemplatesAssistantButton":                true,
+	"suggestedDashboardsAssistantButton":               true,
+	"newLogsPanel":                                     true,
+	"recentlyViewedDashboards":                         true,
+	"experimentRecentlyViewedDashboards":               true,
+	"createdByMeSearchFilter":                          true,
+	"otelLogsFormatting":                               true,
+	"newLogContext":                                    true,
+	"dashboardSectionVariables":                        true,
+	"globalDashboardVariables":                         true,
+	"queryEditorNext":                                  true,
+	"queryEditorNextMultiSelect":                       true,
+	"managedPluginsV2":                                 true,
+	"analyticsFramework":                               true,
+	"datasourcesApiServerEnableHealthEndpointFrontend": true,
+	"flameGraphWithCallTree":                           true,
+	"inlineLogDetailsNoScrolls":                        true,
+	"splashScreen":                                     true,
+}
+
 func verifyFlagName(flag FeatureFlag) error {
 	name := flag.Name
 
-	// Flags should be in the format `component.flagName`, except legacy feature toggles
-	isLegacy := flag.Generate.LegacyFrontend || flag.Generate.LegacyGo
-	if !isLegacy && !strings.Contains(name, ".") {
+	// The dotted `component.flagName` convention is enforced for any flag that
+	// generates a new client (React via OpenFeature, or Go). A legacy generation
+	// target does NOT exempt such a flag — otherwise a new flag could slip through
+	// with a camelCase key simply by also setting LegacyGo/LegacyFrontend. Purely
+	// legacy flags (no React/Go target) keep the camelCase keys baked into existing
+	// config and are exempt.
+	generatesNewClient := flag.Generate.React || flag.Generate.Go
+	if generatesNewClient && !dottedNamingGrandfathered[name] && !strings.Contains(name, ".") {
 		return fmt.Errorf("flag name %q must be in the format of component.flagName", name)
 	}
 
@@ -190,6 +229,60 @@ func verifyFlagName(flag FeatureFlag) error {
 		}
 	}
 	return nil
+}
+
+func TestVerifyFlagName(t *testing.T) {
+	tests := []struct {
+		name    string
+		flag    FeatureFlag
+		wantErr bool
+	}{
+		{
+			name:    "purely legacy flag may use camelCase",
+			flag:    FeatureFlag{Name: "myLegacyFlag", Generate: Generate{LegacyGo: true, LegacyFrontend: true}},
+			wantErr: false,
+		},
+		{
+			name:    "new React flag must be dotted",
+			flag:    FeatureFlag{Name: "provisioningGitConventions", Generate: Generate{React: true}},
+			wantErr: true,
+		},
+		{
+			name:    "new React flag with a legacy target must still be dotted",
+			flag:    FeatureFlag{Name: "provisioningGitConventions", Generate: Generate{LegacyGo: true, React: true}},
+			wantErr: true,
+		},
+		{
+			name:    "new Go flag with a legacy target must still be dotted",
+			flag:    FeatureFlag{Name: "provisioningGitConventions", Generate: Generate{LegacyFrontend: true, Go: true}},
+			wantErr: true,
+		},
+		{
+			name:    "dotted new client flag is valid",
+			flag:    FeatureFlag{Name: "provisioning.gitConventions", Generate: Generate{LegacyGo: true, React: true}},
+			wantErr: false,
+		},
+		{
+			name:    "grandfathered camelCase React flag is exempt",
+			flag:    FeatureFlag{Name: "provisioningFolderMetadata", Generate: Generate{LegacyGo: true, React: true}},
+			wantErr: false,
+		},
+		{
+			name:    "segments must be lowerCamelCase",
+			flag:    FeatureFlag{Name: "provisioning.GitConventions", Generate: Generate{React: true}},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := verifyFlagName(tt.flag)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
 }
 
 // Check if all flags are configured properly
