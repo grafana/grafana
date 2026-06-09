@@ -1,8 +1,8 @@
 import { forwardRef } from 'react';
 
-import { Icon } from '../Icon/Icon';
+import { Icon, type IconProps } from '../Icon/Icon';
 
-interface Props {
+interface Props extends IconProps {
   isLoading: boolean;
   isOpen: boolean;
 }
@@ -15,7 +15,7 @@ export const SuffixIcon = forwardRef<SVGElement, Props>(({ isLoading, isOpen, ..
       ? 'search'
       : 'angle-down';
 
-  return <Icon name={suffixIcon} {...rest} ref={ref} />;
+  return <Icon {...rest} name={suffixIcon} ref={ref} />;
 });
 
 SuffixIcon.displayName = 'SuffixIcon';
