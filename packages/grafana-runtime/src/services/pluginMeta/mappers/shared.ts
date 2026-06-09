@@ -39,7 +39,7 @@ function toCDNUrl(spec: v0alpha1Spec, path: string): string {
   }
 }
 
-export function screenshotsMapper(spec: v0alpha1Spec): PluginMetaInfo['screenshots'] {
+function screenshotsMapper(spec: v0alpha1Spec): PluginMetaInfo['screenshots'] {
   if (!spec.pluginJson.info.screenshots) {
     return [];
   }
@@ -51,7 +51,7 @@ export function screenshotsMapper(spec: v0alpha1Spec): PluginMetaInfo['screensho
   }));
 }
 
-export function logosMapper(spec: v0alpha1Spec): PluginMetaInfo['logos'] {
+function logosMapper(spec: v0alpha1Spec): PluginMetaInfo['logos'] {
   return {
     ...spec.pluginJson.info.logos,
     large: toCDNUrl(spec, spec.pluginJson.info.logos.large),
@@ -219,7 +219,7 @@ export function isDecoupledCorePlugin(spec: v0alpha1Spec): boolean {
   return isCorePlugin(spec) && !spec.module?.path?.startsWith('core:');
 }
 
-export function normalizeEnd(url: string): string {
+function normalizeEnd(url: string): string {
   if (url.endsWith('/')) {
     return url;
   }
@@ -227,7 +227,7 @@ export function normalizeEnd(url: string): string {
   return `${url}/`;
 }
 
-export function combinePathAndUrl(url: string, path: string): string {
+function combinePathAndUrl(url: string, path: string): string {
   const normalized = normalizeEnd(url);
   try {
     const returnUrl = new URL(path, normalized);

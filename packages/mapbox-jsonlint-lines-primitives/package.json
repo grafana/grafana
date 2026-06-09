@@ -1,0 +1,12 @@
+{
+  "name": "@mapbox/jsonlint-lines-primitives",
+  "version": "2.0.2-grafana.0",
+  "description": "Vendored fork of @mapbox/jsonlint-lines-primitives — see VENDORED.md",
+  "license": "MIT",
+  "private": true,
+  "main": "lib/jsonlint.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mapbox/jsonlint.git"
+  }
+}

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"net"
-	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -237,7 +236,17 @@ func parseAcceptList(s string) ([]*net.IPNet, error) {
 func coerceProxyAddress(proxyAddr string) (*net.IPNet, error) {
 	proxyAddr = strings.TrimSpace(proxyAddr)
 	if !strings.Contains(proxyAddr, "/") {
-		proxyAddr = path.Join(proxyAddr, "32")
+		ip := net.ParseIP(proxyAddr)
+		if ip == nil {
+			return nil, fmt.Errorf("could not parse the network: invalid IP address")
+		}
+
+		mask := 32
+		if ip.To4() == nil {
+			mask = 128
+		}
+
+		proxyAddr = fmt.Sprintf("%s/%d", proxyAddr, mask)
 	}
 
 	_, network, err := net.ParseCIDR(proxyAddr)

@@ -12,7 +12,7 @@ import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { type ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { type SqlExpressionQuery } from '../../types';
-import { ALLOWED_FUNCTIONS, fetchSQLFields } from '../../utils/metaSqlExpr';
+import { ALLOWED_FUNCTIONS, fetchSQLFields, type FetchSQLFieldsOptions } from '../../utils/metaSqlExpr';
 import { QueryToolbox } from '../QueryToolbox';
 
 import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
@@ -38,6 +38,10 @@ export interface SqlExprProps {
 
 export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, metadata, onRunQuery }: SqlExprProps) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
+  const interpolationScopedVars = metadata?.data?.request?.scopedVars;
+  const interpolationFilters = metadata?.data?.request?.filters;
+  const interpolationRange = metadata?.range;
+
   const completionProvider = useMemo<SqlCompletionProvider>(
     () => ({
       tables: () =>
@@ -53,7 +57,11 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
         }
 
         try {
-          return await fetchFields(table, queries || []);
+          return await fetchFields(table, queries || [], {
+            range: interpolationRange,
+            scopedVars: interpolationScopedVars,
+            filters: interpolationFilters,
+          });
         } catch {
           return [];
         }
@@ -65,7 +73,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
           kind: 'function',
         })),
     }),
-    [queries, refIds]
+    [interpolationFilters, interpolationRange, interpolationScopedVars, queries, refIds]
   );
 
   const initialQuery = `SELECT
@@ -89,7 +97,9 @@ LIMIT
   } = useSQLSchemas({
     queries,
     enabled: true,
-    timeRange: metadata?.range,
+    timeRange: interpolationRange,
+    scopedVars: interpolationScopedVars,
+    filters: interpolationFilters,
   });
 
   const queryContext = useMemo(
@@ -288,7 +298,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-async function fetchFields(table: string | undefined, queries: DataQuery[]) {
-  const fields = await fetchSQLFields({ table }, queries);
+async function fetchFields(table: string | undefined, queries: DataQuery[], options: FetchSQLFieldsOptions = {}) {
+  const fields = await fetchSQLFields({ table }, queries, options);
   return fields.map((field) => ({ label: field.name, insertText: field.value, kind: 'column' as const, boost: 50 }));
 }

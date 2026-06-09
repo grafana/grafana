@@ -26,10 +26,7 @@ func TestK8sRESTAdapter_Create(t *testing.T) {
 	})
 
 	store := NewMemoryStore()
-	adapter := &k8sRESTAdapter{
-		store:        store,
-		accessClient: authtypes.FixedAccessClient(true),
-	}
+	adapter := newTestAdapter(store, authtypes.FixedAccessClient(true))
 
 	expectedCreatedBy := authtypes.NewTypeID(authtypes.TypeUser, userUID)
 
@@ -142,10 +139,7 @@ func TestK8sRESTAdapter_Create(t *testing.T) {
 
 func TestK8sRESTAdapter_TenantIsolation(t *testing.T) {
 	store := NewMemoryStore()
-	adapter := &k8sRESTAdapter{
-		store:        store,
-		accessClient: authtypes.FixedAccessClient(true),
-	}
+	adapter := newTestAdapter(store, authtypes.FixedAccessClient(true))
 
 	// Create annotations in different namespaces (tenants)
 	namespace1 := "org-1"
@@ -295,10 +289,7 @@ func TestK8sRESTAdapter_TenantIsolation(t *testing.T) {
 
 func TestK8sRESTAdapter_UIDIsSet(t *testing.T) {
 	store := NewMemoryStore()
-	adapter := &k8sRESTAdapter{
-		store:        store,
-		accessClient: authtypes.FixedAccessClient(true),
-	}
+	adapter := newTestAdapter(store, authtypes.FixedAccessClient(true))
 
 	ctx := k8srequest.WithNamespace(identity.WithRequester(t.Context(), &identity.StaticRequester{
 		Type:    authtypes.TypeUser,
@@ -340,10 +331,7 @@ func TestK8sRESTAdapter_UIDIsSet(t *testing.T) {
 
 func TestK8sRESTAdapter_NotFound(t *testing.T) {
 	store := NewMemoryStore()
-	adapter := &k8sRESTAdapter{
-		store:        store,
-		accessClient: authtypes.FixedAccessClient(true),
-	}
+	adapter := newTestAdapter(store, authtypes.FixedAccessClient(true))
 
 	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), "default")
 

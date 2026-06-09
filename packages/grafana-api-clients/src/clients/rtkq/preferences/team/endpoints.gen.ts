@@ -35,13 +35,12 @@ export type PreferencesQueryHistoryPreference = {
 export type PreferencesSpec = {
   /** UID for the home dashboard */
   homeDashboardUID?: string;
+  /** Explicit home URL (NOTE: this can only be modified in the system settings) */
+  homeURL?: string;
   /** Selected language */
   language?: string;
   navbar?: PreferencesNavbarPreference;
   queryHistory?: PreferencesQueryHistoryPreference;
-  /** Selected locale (beta)
-    TODO: Will be removed */
-  regionalFormat?: string;
   /** user interface theme */
   theme?: string;
   /** The timezone selection */
@@ -75,7 +74,6 @@ export type UpdatePrefsCmd = {
   language?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
-  regionalFormat?: string;
   theme?: 'light' | 'dark' | 'system';
   /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
   timezone?: string;

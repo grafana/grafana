@@ -367,7 +367,7 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 
 	isEnd := func(item *badger.Item) bool {
 		if opt.Sort == SortOrderDesc {
-			return string(item.Key()) <= end
+			return string(item.Key()) < end
 		}
 		return string(item.Key()) >= end
 	}
@@ -398,6 +398,9 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 				return
 			}
 			item := iter.Item()
+			if opt.Sort == SortOrderDesc && string(item.Key()) >= start {
+				continue
+			}
 			if opt.Limit > 0 && count >= opt.Limit {
 				break
 			}

@@ -55,7 +55,16 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
         {connected > 0 ? (
           <>
             <p>
-              <Trans i18nKey="library-panels.modal.body" count={connected}>
+              <Trans
+                i18nKey="library-panels.modal.body"
+                count={connected}
+                tOptions={{
+                  defaultValue_one:
+                    'This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:',
+                  defaultValue_other:
+                    'This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:',
+                }}
+              >
                 This panel is being used in {{ count: connected }} dashboard. Please choose which dashboard to view the
                 panel in:
               </Trans>

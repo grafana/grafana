@@ -80,10 +80,12 @@ export function useConnectionOptions(enabled: boolean) {
         const remaining = repos.length - maxToShow;
         const repoText =
           remaining > 0
-            ? t('provisioning.connection-options.repos-truncated', '{{shown}} +{{count}} more', {
+            ? t('provisioning.connection-options.repos-truncated', '', {
                 shown,
                 count: remaining,
                 interpolation: { escapeValue: false },
+                defaultValue_one: '{{shown}} +{{count}} more',
+                defaultValue_other: '{{shown}} +{{count}} more',
               })
             : shown;
         descriptionParts.push(repoText);

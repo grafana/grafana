@@ -23,11 +23,6 @@
       "dataset-selector": {
         "aria-label-dataset-selector": "Adatkészlet-választó"
       },
-      "error-boundary": {
-        "fall-back": {
-          "error": "Hiba"
-        }
-      },
       "get-custom-operators": {
         "custom-operators": {
           "label": {

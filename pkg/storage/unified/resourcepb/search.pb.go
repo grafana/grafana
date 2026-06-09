@@ -90,8 +90,12 @@ type ResourceStatsRequest struct {
 	// when empty, we assume searching across everything
 	// NOTE, this query may need to federate across a few storage instances
 	Kinds []string `protobuf:"bytes,2,rep,name=kinds,proto3" json:"kinds,omitempty"`
-	// Limit the stats within a folder (not recursive!)
-	Folder        string `protobuf:"bytes,3,opt,name=folder,proto3" json:"folder,omitempty"`
+	// Limit the stats to documents whose direct folder is in this set.
+	// A single UID counts that exact folder (no recursion). Callers that
+	// need recursive descendant counts (e.g. Move/Delete confirmation in
+	// the folders apiserver) pre-expand the folder subtree and pass every
+	// UID here.
+	Folder        []string `protobuf:"bytes,3,rep,name=folder,proto3" json:"folder,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -140,11 +144,11 @@ func (x *ResourceStatsRequest) GetKinds() []string {
 	return nil
 }
 
-func (x *ResourceStatsRequest) GetFolder() string {
+func (x *ResourceStatsRequest) GetFolder() []string {
 	if x != nil {
 		return x.Folder
 	}
-	return ""
+	return nil
 }
 
 type ResourceStatsResponse struct {
@@ -633,7 +637,7 @@ type VectorSearchRequest struct {
 	// Maximum results to return. Defaults to 50 when zero, capped at 200.
 	Limit int64 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 	// Optional filters applied as exact-match constraints on top of vector
-	// ranking. Reserved keys: "uid" matches resource UIDs, "folder" matches
+	// ranking. Reserved keys: "uid" matches resource UIDs (name field), "folder" matches
 	// folder UIDs. All other keys are matched as JSONB metadata containment.
 	Filters       []*Requirement `protobuf:"bytes,4,rep,name=filters,proto3" json:"filters,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1280,7 +1284,7 @@ var file_search_proto_rawDesc = string([]byte{
 	0x01, 0x28, 0x09, 0x52, 0x09, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x12, 0x14,
 	0x0a, 0x05, 0x6b, 0x69, 0x6e, 0x64, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x05, 0x6b,
 	0x69, 0x6e, 0x64, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x18, 0x03,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x22, 0xd2, 0x01, 0x0a,
+	0x20, 0x03, 0x28, 0x09, 0x52, 0x06, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x22, 0xd2, 0x01, 0x0a,
 	0x15, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x73, 0x52, 0x65,
 	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2b, 0x0a, 0x05, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x18,
 	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,

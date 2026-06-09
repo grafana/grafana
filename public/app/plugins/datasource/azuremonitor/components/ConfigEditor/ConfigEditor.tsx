@@ -125,5 +125,3 @@ export const ConfigEditor = memo(function ConfigEditor(props: Props) {
     </>
   );
 });
-
-export default ConfigEditor;

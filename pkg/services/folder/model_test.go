@@ -6,6 +6,40 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestIsRootFolderUID(t *testing.T) {
+	cases := []struct {
+		uid      string
+		expected bool
+	}{
+		{"", true},
+		{GeneralFolderUID, true},
+		{SharedWithMeFolderUID, false},
+		{"some-folder-uid", false},
+	}
+	for _, c := range cases {
+		t.Run(c.uid, func(t *testing.T) {
+			require.Equal(t, c.expected, IsRootFolderUID(c.uid))
+		})
+	}
+}
+
+func TestToLegacyFolderUID(t *testing.T) {
+	cases := []struct {
+		in       string
+		expected string
+	}{
+		{"", ""},
+		{GeneralFolderUID, ""},
+		{SharedWithMeFolderUID, SharedWithMeFolderUID},
+		{"some-folder-uid", "some-folder-uid"},
+	}
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			require.Equal(t, c.expected, ToLegacyFolderUID(c.in))
+		})
+	}
+}
+
 func TestFoldersSortByPostorder(t *testing.T) {
 	t.Run("empty list returns empty list", func(t *testing.T) {
 		var folders []*Folder

@@ -2,20 +2,18 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
-import { type GrafanaTheme2, store } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, CollapsableSection, Grid, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
-import { contextSrv } from 'app/core/services/context_srv';
+import impressionSrv from 'app/core/services/impression_srv';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 
 import { getRecentlyViewedDashboards } from '../api/recentlyViewed';
 
 const MAX_RECENT = 5;
-
-const recentDashboardsKey = `dashboard_impressions-${contextSrv.user.orgId}`;
 
 export function RecentlyViewedDashboards() {
   const styles = useStyles2(getStyles);
@@ -34,7 +32,7 @@ export function RecentlyViewedDashboards() {
 
   const handleClearHistory = () => {
     reportInteraction('grafana_recently_viewed_dashboards_clear_history');
-    store.set(recentDashboardsKey, JSON.stringify([]));
+    impressionSrv.clearImpressions();
     retry();
   };
 

@@ -136,6 +136,10 @@ function FixFolderMetadataForm({
   const handleSubmitForm = async ({ ref }: BaseProvisionedFormData) => {
     onSubmitError(undefined);
     try {
+      // TODO(grafana/git-ui-sync-project#1162): FixFolderMetadataJobOptions
+      // has no `message` field on the backend yet — once it gains one, pass
+      // `withSavedByTrailer('Fix folder metadata')` so the Grafana-saved-by
+      // trailer rides through to the resulting git commit.
       const result = await createJob({
         name: repositoryName,
         jobSpec: {
