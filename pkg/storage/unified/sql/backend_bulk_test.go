@@ -7,7 +7,44 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+func TestAnalyzeResourceHistoryForBackfill(t *testing.T) {
+	t.Run("postgres above threshold issues ANALYZE", func(t *testing.T) {
+		b, ctx := setupBackendTest(t)
+		b.dialect = sqltemplate.PostgreSQL
+		b.SQLMock.ExpectExec(`ANALYZE`).WillReturnResult(sqlmock.NewResult(0, 0))
+
+		require.NoError(t, b.analyzeResourceHistoryForBackfill(ctx, b.db, analyzeResourceHistoryRowThreshold))
+		require.NoError(t, b.SQLMock.ExpectationsWereMet())
+	})
+
+	t.Run("failed ANALYZE returns the error", func(t *testing.T) {
+		b, ctx := setupBackendTest(t)
+		b.dialect = sqltemplate.PostgreSQL
+		b.SQLMock.ExpectExec(`ANALYZE`).WillReturnError(errTest)
+
+		require.ErrorIs(t, b.analyzeResourceHistoryForBackfill(ctx, b.db, analyzeResourceHistoryRowThreshold), errTest)
+		require.NoError(t, b.SQLMock.ExpectationsWereMet())
+	})
+
+	t.Run("postgres below threshold skips ANALYZE", func(t *testing.T) {
+		b, ctx := setupBackendTest(t)
+		b.dialect = sqltemplate.PostgreSQL
+
+		require.NoError(t, b.analyzeResourceHistoryForBackfill(ctx, b.db, analyzeResourceHistoryRowThreshold-1))
+		require.NoError(t, b.SQLMock.ExpectationsWereMet())
+	})
+
+	t.Run("non-postgres skips ANALYZE", func(t *testing.T) {
+		b, ctx := setupBackendTest(t)
+		b.dialect = sqltemplate.SQLite
+
+		require.NoError(t, b.analyzeResourceHistoryForBackfill(ctx, b.db, analyzeResourceHistoryRowThreshold*10))
+		require.NoError(t, b.SQLMock.ExpectationsWereMet())
+	})
+}
 
 func TestBackendInsertHistoryBatch(t *testing.T) {
 	b, ctx := setupBackendTest(t)
