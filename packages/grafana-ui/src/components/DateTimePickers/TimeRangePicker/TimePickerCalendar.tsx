@@ -15,7 +15,7 @@ import { Body } from './CalendarBody';
 import { Footer } from './CalendarFooter';
 import { Header } from './CalendarHeader';
 
-export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
+const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
   return {
     container: css({
       top: 0,

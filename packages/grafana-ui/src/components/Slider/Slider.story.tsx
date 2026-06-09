@@ -3,11 +3,15 @@ import { type StoryFn, type Meta } from '@storybook/react-webpack5';
 import { Field } from '../Forms/Field';
 
 import { Slider } from './Slider';
+import mdx from './Slider.mdx';
 
 const meta: Meta<typeof Slider> = {
   title: 'Inputs/Slider',
   component: Slider,
   parameters: {
+    docs: {
+      page: mdx,
+    },
     controls: {
       exclude: ['formatTooltipResult', 'onChange', 'onAfterChange', 'value', 'tooltipAlwaysVisible'],
     },

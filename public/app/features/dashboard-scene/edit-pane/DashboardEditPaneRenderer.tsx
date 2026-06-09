@@ -34,7 +34,7 @@ export interface Props {
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
 export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
-  const { openPane, selectionContext } = useSceneObjectState(editPane, {
+  const { openPane, selectionContext, outlinePane } = useSceneObjectState(editPane, {
     shouldActivateOrKeepAlive: true,
   });
   const { isEditing, meta, uid, viewPanel } = dashboard.useState();
@@ -45,10 +45,11 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const sidebarContext = useSidebarContext();
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
-      sidebarContext?.onToggleIsHidden();
+      editPane.closePane();
+      sidebarContext?.setIsHidden(true);
       e.currentTarget.blur();
     },
-    [sidebarContext]
+    [editPane, sidebarContext]
   );
 
   /**
@@ -130,7 +131,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             icon="list-ui-alt"
             onClick={() => {
               DashboardInteractions.dashboardOutlineClicked();
-              editPane.openPane(new DashboardOutline({}));
+              editPane.openPane(outlinePane!);
             }}
             title={t('dashboard.sidebar.outline.title', 'Outline')}
             tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
@@ -162,17 +163,13 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               onClick={() => onOpenSnapshotOriginalDashboard(dashboard.getSnapshotUrl())}
             />
           )}
-          {!isEditing && (
-            <>
-              <Sidebar.Divider />
-              <Sidebar.Button
-                icon={'arrow-to-right'}
-                onClick={onClickHideSidebar}
-                title={t('grafana-ui.sidebar.hide', 'Hide')}
-                data-testid={selectors.components.Sidebar.showHideToggle}
-              />
-            </>
-          )}
+          <Sidebar.Divider />
+          <Sidebar.Button
+            icon={'arrow-to-right'}
+            onClick={onClickHideSidebar}
+            title={t('grafana-ui.sidebar.hide', 'Hide')}
+            data-testid={selectors.components.Sidebar.showHideToggle}
+          />
         </div>
       </Sidebar.Toolbar>
     </>

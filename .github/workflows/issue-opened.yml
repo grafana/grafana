@@ -14,7 +14,7 @@ permissions: {}
 
 jobs:
   main:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     if: github.repository == 'grafana/grafana'
     permissions:
       contents: read
@@ -55,7 +55,7 @@ jobs:
       contents: read
       id-token: write
     if: github.repository == 'grafana/grafana'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     steps:
 
       - name: "Get vault secrets"
@@ -121,7 +121,7 @@ jobs:
   auto-label-internal-issues:
     needs: [main]
     if: github.repository == 'grafana/grafana'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       issues: write
       id-token: write

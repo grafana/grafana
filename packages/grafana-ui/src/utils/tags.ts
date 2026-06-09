@@ -87,7 +87,3 @@ function djb2(str: string) {
   }
   return hash;
 }
-
-export default {
-  getTagColorsFromName,
-};

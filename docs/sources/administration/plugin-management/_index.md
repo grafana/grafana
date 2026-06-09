@@ -88,6 +88,16 @@ To update a plugin:
 
 When the update is complete, a confirmation message will indicate the installation was successful.
 
+#### Update plugins managed by Grafana
+
+{{< admonition type="note" >}}
+Available in [Grafana Cloud](https/docs/grafana-cloud).
+{{< /admonition >}}
+
+If you're a Grafana Cloud user, Grafana Labs automatically keeps plugins up to date. When a new version is available, it's updated on your behalf, and you don't need to take any action.
+
+For third-party plugins not managed by Grafana Labs, automatic updates only apply within the same major version. If a plugin releases a new major version, you need to update it manually through the plugin catalog.
+
 ### Uninstall a plugin
 
 To uninstall a plugin:

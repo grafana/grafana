@@ -282,6 +282,62 @@ func TestIntegrationCreateUser(t *testing.T) {
 		cfg:     cfg,
 	}
 
+	t.Run("SkipOrgSetup=true: InsertOrgUser is not called, DefaultOrgRole is ignored", func(t *testing.T) {
+		var inserted *org.OrgUser
+		userService := LegacyService{
+			store: userStore,
+			orgService: &orgtest.FakeOrgService{
+				InsertOrgUserFn: func(_ context.Context, orgUser *org.OrgUser) (int64, error) {
+					inserted = orgUser
+					return 1, nil
+				},
+			},
+			cacheService: localcache.ProvideService(),
+			teamService:  &teamtest.FakeService{},
+			tracer:       tracing.InitializeTracerForTest(),
+			cfg:          setting.NewCfg(),
+			db:           ss,
+		}
+		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
+			Email:          "skip@example.com",
+			Login:          "skipuser",
+			Name:           "skipuser",
+			DefaultOrgRole: "Editor",
+			SkipOrgSetup:   true,
+		})
+		require.NoError(t, err)
+		require.Nil(t, inserted, "InsertOrgUser must not be called when SkipOrgSetup=true")
+	})
+
+	t.Run("SkipOrgSetup=false, empty DefaultOrgRole: org_user inserted with AutoAssignOrgRole", func(t *testing.T) {
+		var inserted *org.OrgUser
+		cfg := setting.NewCfg()
+		cfg.AutoAssignOrg = true
+		cfg.AutoAssignOrgRole = string(org.RoleViewer)
+		userService := LegacyService{
+			store: userStore,
+			orgService: &orgtest.FakeOrgService{
+				InsertOrgUserFn: func(_ context.Context, orgUser *org.OrgUser) (int64, error) {
+					inserted = orgUser
+					return 1, nil
+				},
+			},
+			cacheService: localcache.ProvideService(),
+			teamService:  &teamtest.FakeService{},
+			tracer:       tracing.InitializeTracerForTest(),
+			cfg:          cfg,
+			db:           ss,
+		}
+		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
+			Email: "fallback@example.com",
+			Login: "fallbackuser",
+			Name:  "fallbackuser",
+		})
+		require.NoError(t, err)
+		require.NotNil(t, inserted, "InsertOrgUser must be called when SkipOrgSetup=false")
+		assert.Equal(t, org.RoleViewer, inserted.Role, "Role must come from cfg.AutoAssignOrgRole when DefaultOrgRole is empty")
+	})
+
 	t.Run("create user should roll back created user if OrgUser cannot be created", func(t *testing.T) {
 		userService := LegacyService{
 			store: userStore,

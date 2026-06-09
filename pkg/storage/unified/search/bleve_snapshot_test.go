@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/blevesearch/bleve/v2"
 	"github.com/oklog/ulid/v2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -904,6 +904,42 @@ func TestShouldUpload(t *testing.T) {
 		be.setUploadTracking(key, time.Now().Add(-2*time.Minute))
 
 		should, err := be.shouldUpload(key, idx, time.Now())
+		require.NoError(t, err)
+		assert.False(t, should)
+	})
+
+	t.Run("skips when mutation count is below threshold and snapshot is still fresh", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, MaxIndexAge: 8 * time.Hour, UploadInterval: time.Minute, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		now := time.Now()
+		be.setUploadTracking(key, now.Add(-2*time.Hour))
+
+		should, err := be.shouldUpload(key, idx, now)
+		require.NoError(t, err)
+		assert.False(t, should)
+	})
+
+	t.Run("uploads when mutation count is below threshold but snapshot is stale", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, MaxIndexAge: 8 * time.Hour, UploadInterval: time.Minute, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		now := time.Now()
+		be.setUploadTracking(key, now.Add(-5*time.Hour))
+
+		should, err := be.shouldUpload(key, idx, now)
+		require.NoError(t, err)
+		assert.True(t, should)
+	})
+
+	t.Run("skips stale snapshot when upload interval has not elapsed", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, MaxIndexAge: 2 * time.Hour, UploadInterval: 4 * time.Hour, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		now := time.Now()
+		be.setUploadTracking(key, now.Add(-2*time.Hour))
+
+		should, err := be.shouldUpload(key, idx, now)
 		require.NoError(t, err)
 		assert.False(t, should)
 	})

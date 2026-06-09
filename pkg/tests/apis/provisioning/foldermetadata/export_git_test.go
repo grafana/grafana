@@ -23,7 +23,7 @@ func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataEnabled(t *test
 		folderUID   = "git-meta-uid"
 		folderTitle = "git-meta-folder"
 	)
-	helper.CreateExportGitRepo(t, repoName)
+	helper.CreateExportGitRepo(t, repoName, nil)
 
 	createUnmanagedFolder(t, helper.ProvisioningTestHelper, folderUID, folderTitle)
 

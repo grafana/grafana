@@ -89,6 +89,7 @@ const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
     justifyItems: state.justifyItems || 'unset',
     alignItems: state.alignItems || 'unset',
     justifyContent: state.justifyContent || 'unset',
+    height: '100%',
     [theme.breakpoints.down('md')]: state.md
       ? {
           gridTemplateRows: state.md.templateRows,

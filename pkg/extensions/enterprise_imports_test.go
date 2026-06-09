@@ -22,6 +22,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	_ "github.com/grafana/grafana/pkg/services/anonymous/anontest"
 	_ "github.com/grafana/grafana/pkg/services/authn/authntest"
+	_ "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	_ "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 	_ "github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	_ "github.com/grafana/grafana/pkg/services/datasources/fakes"

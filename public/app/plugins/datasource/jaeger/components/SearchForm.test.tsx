@@ -16,7 +16,7 @@ import { createFetchResponse } from '../helpers/createFetchResponse';
 import { testResponse } from '../testResponse';
 import { type JaegerQuery } from '../types';
 
-import SearchForm from './SearchForm';
+import { SearchForm } from './SearchForm';
 
 export const backendSrv = { fetch: jest.fn() } as unknown as BackendSrv;
 

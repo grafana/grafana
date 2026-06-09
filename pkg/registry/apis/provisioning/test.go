@@ -134,6 +134,12 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					old, _ := s.repoGetter.GetRepository(ctx, name)
 					if old != nil {
 						oldCfg := old.Config()
+						if repository.RequiresNewTokenForURLChange(&cfg, oldCfg) {
+							responder.Error(k8serrors.NewBadRequest(
+								"a new token is required when changing the repository URL",
+							))
+							return
+						}
 						repository.CopySecureValues(&cfg, oldCfg)
 
 						// Copying previous finalizers
