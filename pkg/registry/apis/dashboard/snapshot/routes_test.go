@@ -211,7 +211,6 @@ func TestCreateSnapshotDuplicateKeyReturns409(t *testing.T) {
 	err = json.Unmarshal(recorder.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	assert.Equal(t, "dashboardsnapshots.keyAlreadyExists", resp["messageId"])
-
 }
 
 func TestCreateSnapshotPublicMode(t *testing.T) {
