@@ -291,6 +291,9 @@ func buildDefaultFolderPermissions(id authlib.AuthInfo) []map[string]any {
 		creatorKind = string(iamv0alpha1.ResourcePermissionSpecPermissionKindUser)
 	case authlib.TypeServiceAccount:
 		creatorKind = string(iamv0alpha1.ResourcePermissionSpecPermissionKindServiceAccount)
+	default:
+		// Non-user/service-account identities (anonymous, render service, etc.) get only the
+		// default permission set; no creator admin grant.
 	}
 
 	if creatorKind == "" {
