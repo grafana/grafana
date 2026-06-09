@@ -56,7 +56,7 @@ func TestDataSourcesRoute(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		mockDataSourcesService.AssertCalled(t, "GetDataSources", resources.DataSourcesRequest{
-			Pattern: testPointer("amazon"),
+			Pattern: new("amazon"),
 		})
 	})
 
