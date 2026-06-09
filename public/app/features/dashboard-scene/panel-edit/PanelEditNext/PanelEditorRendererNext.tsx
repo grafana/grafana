@@ -6,16 +6,15 @@ import { t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { NavToolbarActions } from '../../scene/NavToolbarActions';
+import { LibraryPanelEditModals } from '../LibraryPanelEditModals';
 import { type PanelEditor } from '../PanelEditor';
 import { scrollReflowMediaCondition } from '../useScrollReflowLimit';
 
 import { VizAndDataPaneNext } from './VizAndDataPaneNext';
-import { SidebarSize } from './constants';
 import { usePanelEditorShell } from './hooks';
 
 export function PanelEditorRendererNext({ model }: SceneComponentProps<PanelEditor>) {
-  const { dashboard, optionsPane, splitter, controls } = usePanelEditorShell(model);
+  const { optionsPane, splitter, controls } = usePanelEditorShell(model);
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } = splitter;
 
   const styles = useStyles2(getWrapperStyles);
@@ -27,6 +26,7 @@ export function PanelEditorRendererNext({ model }: SceneComponentProps<PanelEdit
           <controls.Component model={controls} />
         </div>
       )}
+      <LibraryPanelEditModals model={model} />
       <div
         {...containerProps}
         className={cx(containerProps.className, styles.content)}

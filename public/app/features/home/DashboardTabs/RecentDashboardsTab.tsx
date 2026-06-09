@@ -16,9 +16,10 @@ interface Props {
   error: Error | undefined;
   retry: () => void;
   foldersByUid: Record<string, LocationInfo>;
+  onStarChange?: () => void;
 }
 
-export function RecentDashboardsTab({ dashboards, loading, error, retry, foldersByUid }: Props) {
+export function RecentDashboardsTab({ dashboards, loading, error, retry, foldersByUid, onStarChange }: Props) {
   const styles = useStyles2(getStyles);
 
   if (loading) {
@@ -91,6 +92,7 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
               locationInfo={foldersByUid[dash.location]}
               layoutMode="list"
               source="homepage_recentTab"
+              onStarChange={onStarChange}
             />
           </li>
         ))}

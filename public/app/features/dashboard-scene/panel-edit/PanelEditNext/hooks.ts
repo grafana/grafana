@@ -186,7 +186,6 @@ export function useVizAndDataPaneLayout(
 ) {
   const dashboard = getDashboardSceneFor(model);
   const { dataPane, tableView } = model.useState();
-  const panel = model.getPanel();
   const { controls } = dashboard.useState();
   const [sidebarSize = SidebarSize.Mini, setSidebarSize] = useLocalStorage<SidebarSize>(
     QUERY_EDITOR_SIDEBAR_SIZE_KEY,
@@ -194,10 +193,6 @@ export function useVizAndDataPaneLayout(
   );
 
   const isScrollingLayout = useScrollReflowLimit();
-
-  console.log('useVizAndDataPaneLayout', sidebarSize, isScrollingLayout);
-
-  const panelToShow = tableView ?? panel;
 
   const sidebarResize = useRatioResize({
     direction: 'horizontal',
@@ -232,8 +227,10 @@ export function useVizAndDataPaneLayout(
   return {
     scene: {
       dataPane,
-      panelToShow,
+      panel: model.getPanel(),
+      tableView,
       controls,
+      dashboard,
     },
     layout: {
       sidebarSize,
