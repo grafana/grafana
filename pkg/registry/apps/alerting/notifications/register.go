@@ -60,16 +60,13 @@ type AppInstaller struct {
 	ng  *ngalert.AlertNG
 }
 
-// newExternalSyncDatasourceValidator builds the admission check for the
-// Config kind's spec.externalAlertmanagerSync.datasourceUid. Mirrors the
-// legacy admin_config HTTP API (pkg/services/ngalert/api/api_configuration.go:138)
-// so both surfaces accept the same inputs during the transition window.
-//
-// Check ordering is broad → narrow: feature flag (the global enabler) is
-// checked before the ini-precedence rejection so when both apply, the user
-// learns that sync isn't active at all before being told about the operator
-// override. The ini check still rejects silent-accept once the flag is on,
-// closing the snap-back risk if the operator later clears the override.
+// newExternalSyncDatasourceValidator builds the admission check for the Config
+// kind's spec.externalAlertmanagerSync.datasourceUid: requires the sync feature
+// flag (checked first — with it off the syncer is fully disabled), rejects writes
+// while the operator ini override is set, and verifies the datasource is a
+// syncable Alertmanager. A UID stored before the override was set stays dormant
+// and reactivates if the override is cleared; clearing the spec value is allowed
+// even while the override is set.
 func newExternalSyncDatasourceValidator(cfg *setting.Cfg, ds datasources.DataSourceService) func(ctx context.Context, uid string) error {
 	return func(ctx context.Context, uid string) error {
 		ofClient := openfeature.NewDefaultClient()
@@ -77,7 +74,10 @@ func newExternalSyncDatasourceValidator(cfg *setting.Cfg, ds datasources.DataSou
 			return fmt.Errorf("external alertmanager UID sync is disabled on this instance")
 		}
 
-		if cfg != nil && cfg.UnifiedAlerting.ExternalAlertmanagerUID != "" {
+		if cfg == nil {
+			return fmt.Errorf("server configuration unavailable; cannot verify operator override")
+		}
+		if cfg.UnifiedAlerting.ExternalAlertmanagerUID != "" {
 			return fmt.Errorf("external alertmanager UID is managed by the operator (unified_alerting.external_alertmanager_uid); cannot be changed via API")
 		}
 

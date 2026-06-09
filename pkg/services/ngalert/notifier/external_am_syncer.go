@@ -64,7 +64,7 @@ const conditionReasonSyncSucceeded = "SyncSucceeded"
 // imported as a managed route: sync stops and the admin owns it from here.
 const conditionReasonMergeCommitted = "MergeCommitted"
 
-const mergeCommittedMessage = "External Alertmanager configuration imported; it is now managed in Grafana and no longer synced from the datasource."
+const mergeCommittedMessage = "The external Alertmanager configuration has already been merged into Grafana; automatic sync from the datasource has stopped."
 
 // SyncReason categorises a sync failure. snake_case constant → Prometheus
 // `reason` label (ExternalAMConfigSyncFailures); PascalCase via
