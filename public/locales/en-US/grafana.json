@@ -1180,12 +1180,6 @@
       "label-metric": "Metric",
       "label-pending-period": "Pending period"
     },
-    "evaluation-group": {
-      "label-delete": "Delete",
-      "label-export": "Export",
-      "label-reorder-rules": "Re-order rules",
-      "text-provisioned": "Provisioned"
-    },
     "evaluation-group-creation-modal": {
       "description-group-name": "A group evaluates all its rules over the same evaluation interval.",
       "description-often-rules-group-evaluated": "How often all rules in the group are evaluated.",
@@ -2535,22 +2529,9 @@
         "aria-label": "add policy",
         "text": "New notification policy"
       },
-      "delete-reasons": {
-        "no-permissions": "You do not have the required permission to delete this notification policy",
-        "provisioned": "Notification policy is provisioned and cannot be deleted via the UI"
-      },
-      "delete-text": "Notification policy cannot be deleted for the following reasons:",
-      "empty-state": {
-        "message": "No policies found"
-      },
       "fetch": {
         "error": "Failed to fetch policies"
       },
-      "reset-reasons": {
-        "no-permissions": "You do not have the required permission to reset this notification policy",
-        "provisioned": "Notification policy is provisioned and cannot be reset via the UI"
-      },
-      "reset-text": "Notification policy cannot be reset for the following reasons:",
       "text-loading": "Loading...."
     },
     "policies-tree-wrapper": {
@@ -2759,16 +2740,6 @@
       "label-override-grouping": "Override grouping",
       "label-override-timings": "Override timings",
       "repeat-interval": "Repeat interval: <strong>{{repeatIntervalValue}}</strong>"
-    },
-    "routing-tree-filter": {
-      "aria-label-clear": "clear",
-      "aria-label-search-routing-trees": "search routing trees",
-      "clear": "Clear",
-      "label-search-by-name-or-receiver": "Search by policy name or contact point",
-      "placeholder-search": "Search"
-    },
-    "routing-tree-header": {
-      "reset": "Reset"
     },
     "rule-actions-buttons": {
       "title-edit": "Edit",

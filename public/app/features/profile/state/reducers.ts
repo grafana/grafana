@@ -131,7 +131,7 @@ export const updateWeekStartForSession = (weekStart?: WeekStart): ThunkResult<vo
   };
 };
 
-export const {
+const {
   setUpdating,
   initLoadOrgs,
   orgsLoaded,
@@ -143,7 +143,22 @@ export const {
   sessionsLoaded,
   updateTimeZone,
   updateWeekStart,
+  updateFiscalYearStartMonth,
 } = slice.actions;
+
+export {
+  setUpdating,
+  initLoadOrgs,
+  orgsLoaded,
+  initLoadTeams,
+  teamsLoaded,
+  userLoaded,
+  userSessionRevoked,
+  initLoadSessions,
+  sessionsLoaded,
+  updateTimeZone,
+  updateWeekStart,
+};
 
 export const userReducer = slice.reducer;
 export default { user: slice.reducer };
