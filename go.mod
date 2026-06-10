@@ -184,7 +184,7 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // @grafana/grafana-operator-experience-squad
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/grafana-backend-group
 	go.etcd.io/bbolt v1.4.3 // @grafana/grafana-search-and-storage
-	go.opentelemetry.io/collector/pdata v1.57.0 // @grafana/grafana-backend-group
+	go.opentelemetry.io/collector/pdata v1.59.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.68.0 // @grafana/grafana-catalog
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.68.0 // @grafana/grafana-operator-experience-squad
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.68.0 // @grafana/sharing-squad
@@ -212,7 +212,7 @@ require (
 	google.golang.org/api v0.278.0 // @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20260414002931-afd174a4e478 // @grafana/identity-access-team
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260427160629-7cedc36a6bc4 // @grafana/identity-access-team
-	google.golang.org/grpc v1.81.0 // @grafana/grafana-catalog
+	google.golang.org/grpc v1.81.1 // @grafana/grafana-catalog
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // @grafana/grafana-catalog
 	gopkg.in/ini.v1 v1.67.2 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
@@ -668,7 +668,7 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.6.9 // indirect
 	go.etcd.io/etcd/client/v3 v3.6.9 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/collector/featuregate v1.57.0 // indirect
+	go.opentelemetry.io/collector/featuregate v1.59.0 // indirect
 	go.opentelemetry.io/contrib/bridges/prometheus v0.68.0 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.42.0 // indirect
 	go.opentelemetry.io/contrib/exporters/autoexport v0.68.0 // indirect
