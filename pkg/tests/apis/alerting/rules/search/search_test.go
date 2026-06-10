@@ -58,6 +58,7 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 	createAlertRule(t, ctx, alertClient, "memory usage high", true, map[string]string{"team": "b"}, "ds-loki")
 	createAlertRule(t, ctx, alertClient, "disk low", false, map[string]string{"team": "a"}, "ds-prom")
 	createRecordingRule(t, ctx, recClient, "cpu recording", "ds-prom")
+	createRecordingRule(t, ctx, recClient, "disk recording", "ds-prom")
 
 	rc := helper.Org1.Admin.RESTClient(t, &v0alpha1.GroupVersion)
 	getRaw := func(t *testing.T, path string, params url.Values) []byte {
@@ -136,17 +137,27 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 
 	t.Run("recording rules: returns all recording rules", func(t *testing.T) {
-		resp := searchRecording(t, nil)
-		require.Len(t, resp.Items, 1)
-		require.Equal(t, "cpu recording", resp.Items[0].Title)
+		require.ElementsMatch(t, []string{"cpu recording", "disk recording"}, recordingTitles(searchRecording(t, nil)))
 	})
 
 	t.Run("cross-kind: returns both kinds", func(t *testing.T) {
-		require.Len(t, searchCrossKind(t, nil).Items, 4)
+		require.Len(t, searchCrossKind(t, nil).Items, 5)
 	})
 
 	t.Run("cross-kind: type narrowing", func(t *testing.T) {
-		require.Equal(t, []string{"cpu recording"}, crossKindTitles(searchCrossKind(t, url.Values{"type": {"recordingrule"}})))
+		require.ElementsMatch(t, []string{"cpu recording", "disk recording"}, crossKindTitles(searchCrossKind(t, url.Values{"type": {"recordingrule"}})))
+	})
+
+	t.Run("cross-kind: interleaved by title", func(t *testing.T) {
+		// Sorting the union by title mixes the two kinds rather than grouping
+		// them: the recordings land between alert rules.
+		asc := searchCrossKind(t, url.Values{"sort": {"title"}})
+		require.Equal(t, []string{"cpu recording", "cpu usage high", "disk low", "disk recording", "memory usage high"}, crossKindTitles(asc))
+		require.Equal(t, []string{"recordingrule", "alertrule", "alertrule", "recordingrule", "alertrule"}, crossKindKinds(asc))
+
+		desc := searchCrossKind(t, url.Values{"sort": {"-title"}})
+		require.Equal(t, []string{"memory usage high", "disk recording", "disk low", "cpu usage high", "cpu recording"}, crossKindTitles(desc))
+		require.Equal(t, []string{"alertrule", "recordingrule", "alertrule", "alertrule", "recordingrule"}, crossKindKinds(desc))
 	})
 
 	t.Run("consistency: search matches list", func(t *testing.T) {
@@ -164,6 +175,14 @@ func alertTitles(resp v0alpha1.GetSearchAlertRulesResponse) []string {
 	return out
 }
 
+func recordingTitles(resp v0alpha1.GetSearchRecordingRulesResponse) []string {
+	out := make([]string, 0, len(resp.Items))
+	for _, h := range resp.Items {
+		out = append(out, h.Title)
+	}
+	return out
+}
+
 // crossKindTitles reads the title from whichever variant of the union hit is set.
 func crossKindTitles(resp v0alpha1.GetSearchRulesResponse) []string {
 	out := make([]string, 0, len(resp.Items))
@@ -173,6 +192,21 @@ func crossKindTitles(resp v0alpha1.GetSearchRulesResponse) []string {
 			out = append(out, h.AlertRuleHit.Title)
 		case h.RecordingRuleHit != nil:
 			out = append(out, h.RecordingRuleHit.Title)
+		}
+	}
+	return out
+}
+
+// crossKindKinds reports the kind of each union hit, in order, so a test can
+// assert the two kinds are interleaved rather than grouped.
+func crossKindKinds(resp v0alpha1.GetSearchRulesResponse) []string {
+	out := make([]string, 0, len(resp.Items))
+	for _, h := range resp.Items {
+		switch {
+		case h.AlertRuleHit != nil:
+			out = append(out, "alertrule")
+		case h.RecordingRuleHit != nil:
+			out = append(out, "recordingrule")
 		}
 	}
 	return out
