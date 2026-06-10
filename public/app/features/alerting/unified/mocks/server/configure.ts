@@ -373,9 +373,7 @@ export const getErrorResponse = (message: string, status = 500) => HttpResponse.
 
 const defaultError = getErrorResponse('Unknown error');
 /** Make alertmanager config update fail */
-export const makeAlertmanagerConfigUpdateFail = (
-  responseOverride: ReturnType<typeof getErrorResponse> = defaultError
-) => {
+const makeAlertmanagerConfigUpdateFail = (responseOverride: ReturnType<typeof getErrorResponse> = defaultError) => {
   server.use(updateAlertmanagerConfigHandler(responseOverride));
 };
 

@@ -32,7 +32,7 @@ const getInvalidMatcher = (matchers: string[]) => {
   });
 };
 
-export const alertmanagerAlertsListHandler = () =>
+const alertmanagerAlertsListHandler = () =>
   http.get<{ datasourceUid: string }>('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ params, request }) => {
     const matchers = new URL(request.url).searchParams.getAll('filter');
 

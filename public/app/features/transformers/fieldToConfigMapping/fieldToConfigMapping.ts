@@ -251,7 +251,7 @@ function combineValueMappings(context: FieldToConfigContext): ValueMapping[] {
 
 let configMapHandlersIndex: Record<string, FieldToConfigMapHandler> | null = null;
 
-export function getConfigMapHandlersIndex() {
+function getConfigMapHandlersIndex() {
   if (configMapHandlersIndex === null) {
     configMapHandlersIndex = {};
     for (const def of configMapHandlers) {
@@ -270,16 +270,6 @@ function toNumericOrUndefined(value: unknown) {
   }
 
   return numeric;
-}
-
-export function getConfigHandlerKeyForField(fieldName: string, mappings: FieldToConfigMapping[]) {
-  for (const map of mappings) {
-    if (fieldName === map.fieldName) {
-      return map.handlerKey;
-    }
-  }
-
-  return fieldName.toLowerCase();
 }
 
 export function lookUpConfigHandler(key: string | null): FieldToConfigMapHandler | null {

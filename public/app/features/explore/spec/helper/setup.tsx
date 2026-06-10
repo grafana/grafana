@@ -52,15 +52,11 @@ import { QueriesDrawerContextProvider } from '../../QueriesDrawer/QueriesDrawerC
 
 import { mockData } from './mocks';
 
-export const setBooleanFlags = (flags: Record<string, boolean>) => {
-  setTestFlags(flags);
-};
-
-export const QueryLibraryMocks = {
+const QueryLibraryMocks = {
   data: mockData.all,
 };
 
-export const IdentityServiceMocks = {
+const IdentityServiceMocks = {
   data: mockData.identityDisplay,
 };
 

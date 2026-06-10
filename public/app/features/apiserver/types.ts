@@ -58,8 +58,8 @@ export const AnnoKeyManagerKind = 'grafana.app/managedBy';
 export const AnnoKeyManagerIdentity = 'grafana.app/managerId';
 export const AnnoKeyManagerAllowsEdits = 'grafana.app/managerAllowsEdits';
 export const AnnoKeySourcePath = 'grafana.app/sourcePath';
-export const AnnoKeySourceChecksum = 'grafana.app/sourceChecksum';
-export const AnnoKeySourceTimestamp = 'grafana.app/sourceTimestamp';
+const AnnoKeySourceChecksum = 'grafana.app/sourceChecksum';
+const AnnoKeySourceTimestamp = 'grafana.app/sourceTimestamp';
 
 // for auditing... when saving from the UI, mark which version saved it from where
 export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';

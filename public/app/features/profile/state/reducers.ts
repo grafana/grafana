@@ -39,7 +39,7 @@ export const initialUserState: UserState = {
   user: null,
 };
 
-export const slice = createSlice({
+const slice = createSlice({
   name: 'user/profile',
   initialState: initialUserState,
   reducers: {

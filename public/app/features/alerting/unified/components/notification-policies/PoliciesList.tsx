@@ -38,7 +38,7 @@ import {
 
 const DEFAULT_PAGE_SIZE = 10;
 
-export const PoliciesList = () => {
+const PoliciesList = () => {
   const [queryParams] = useURLSearchParams();
   const { currentData: allPolicies, isLoading, error: fetchPoliciesError } = useListNotificationPolicyRoutes();
 
@@ -141,7 +141,7 @@ interface RoutingTreeProps {
   receivers?: Receiver[];
 }
 
-export const RoutingTree = ({ route, receivers }: RoutingTreeProps) => {
+const RoutingTree = ({ route, receivers }: RoutingTreeProps) => {
   const styles = useStyles2(getStyles);
   const { selectedAlertmanager } = useAlertmanager();
 
@@ -192,7 +192,7 @@ interface RoutingTreeHeaderProps {
   route: Route;
 }
 
-export const RoutingTreeHeader = ({ route }: RoutingTreeHeaderProps) => {
+const RoutingTreeHeader = ({ route }: RoutingTreeHeaderProps) => {
   const provisioned = isRouteProvisioned(route);
   const styles = useStyles2(getStyles);
 

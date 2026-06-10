@@ -20,7 +20,7 @@ export class DashboardCodePane extends SceneObjectBase {
   }
 }
 
-export function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodePane>) {
+function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodePane>) {
   const styles = useStyles2(getStyles);
   const dashboard = getDashboardSceneFor(model);
 

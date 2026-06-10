@@ -4,7 +4,7 @@ import { type Invitee } from 'app/types/user';
 
 import { selectors } from './reducers';
 
-export const { selectAll, selectById, selectTotal } = selectors;
+export const { selectAll } = selectors;
 
 const selectQuery = (_state: EntityState<Invitee, string>, query: string) => query;
 export const selectInvitesMatchingQuery = createSelector([selectAll, selectQuery], (invites, searchQuery) => {

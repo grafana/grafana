@@ -65,7 +65,6 @@ export const getNotFoundForFilterClear = () => screen.getByTestId(selectors.dash
 export const getTreeSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search);
 export const getTreeHeadline = () => screen.getByTestId(selectors.tree.headline);
 
-export const getResultApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications'));
 export const findResultApplicationsExpand = async () =>
   await screen.findByTestId(selectors.tree.expand('applications'));
 
@@ -104,7 +103,5 @@ export const getResultEnvironmentsDevSelect = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.radio('environments-dev'));
 export const getResultEnvironmentsProdSelect = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.radio('environments-prod'));
-export const queryResultEnvironmentsDevSelect = () => screen.queryByTestId(selectors.tree.radio('environments-dev'));
-export const queryResultEnvironmentsProdSelect = () => screen.queryByTestId(selectors.tree.radio('environments-prod'));
 
 export const getListOfScopes = (service: ScopesService) => service.state.value;

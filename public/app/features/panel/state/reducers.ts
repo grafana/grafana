@@ -9,7 +9,7 @@ interface PanelState {
   instanceState?: unknown | null;
 }
 
-export const initialState: RootPanelsState = {};
+const initialState: RootPanelsState = {};
 
 const panelsSlice = createSlice({
   name: 'panels',
@@ -49,7 +49,7 @@ interface SetPanelInstanceStatePayload {
 export const { panelModelAndPluginReady, setPanelInstanceState, changePanelKey, removePanel, removeAllPanels } =
   panelsSlice.actions;
 
-export const panelsReducer = panelsSlice.reducer;
+const panelsReducer = panelsSlice.reducer;
 
 export default {
   panels: panelsReducer,

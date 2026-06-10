@@ -309,7 +309,7 @@ export function useDeleteRoutingTree() {
   });
 }
 
-export function useCreateRoutingTree() {
+function useCreateRoutingTree() {
   const [createRoutingTree] = useCreateRoutingTreeMutation();
 
   return useAsync(async (partialFormRoute: Partial<FormAmRoute>) => {

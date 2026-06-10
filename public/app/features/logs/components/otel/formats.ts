@@ -81,7 +81,7 @@ export function getSuggestedFieldsForLogs(logs: LogListModel[] | LogRowModel[]):
   );
 }
 
-export function getSuggestedFieldsForAnyLogs() {
+function getSuggestedFieldsForAnyLogs() {
   return ['app', 'service_name', 'message', 'msg', 'traceID', 'trace_id', 'environment', 'error'];
 }
 

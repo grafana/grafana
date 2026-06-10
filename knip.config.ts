@@ -34,6 +34,10 @@ const config: KnipConfig = {
     // we don't often use enums, but when we do we usually include members we'll utilise in the future
     'enumMembers',
   ],
+  rules: {
+    // there are cases where duplicates are necessary e.g. React.lazy expects a default import
+    duplicates: 'off',
+  },
   ignore: ['**/*.gen.ts*', '**/*_gen.ts*'],
   ignoreBinaries: ['jq', 'make', 'shellcheck'],
   tags: ['-lintignore'],

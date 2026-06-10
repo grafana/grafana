@@ -36,7 +36,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  *
  * This function extracts `template_files` and re-serializes the remaining config as JSON.
  */
-export function parseAlertmanagerYaml(yamlContent: string): ParsedAlertmanagerYaml {
+function parseAlertmanagerYaml(yamlContent: string): ParsedAlertmanagerYaml {
   let parsed: unknown;
   try {
     parsed = load(yamlContent);

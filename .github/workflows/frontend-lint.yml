@@ -380,11 +380,7 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - name: Run knip
-      # TODO reduce this to just `yarn run knip`
-      run: |
-        yarn run knip --workspace '@grafana/*'
-        yarn run knip --workspace '@test-plugins/*'
-        yarn run knip --workspace '@grafana-plugins/*'
+      run: yarn run knip
 
   yarn-install-validation:
     needs:

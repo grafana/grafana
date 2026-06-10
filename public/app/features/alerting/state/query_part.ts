@@ -82,7 +82,7 @@ export class QueryPart {
   }
 }
 
-export function functionRenderer(part: any, innerExpr: string) {
+function functionRenderer(part: any, innerExpr: string) {
   const str = part.def.type + '(';
   const parameters = map(part.params, (value, index) => {
     const paramType = part.def.params[index];
@@ -104,16 +104,4 @@ export function functionRenderer(part: any, innerExpr: string) {
     parameters.unshift(innerExpr);
   }
   return str + parameters.join(', ') + ')';
-}
-
-export function suffixRenderer(part: QueryPart, innerExpr: string) {
-  return innerExpr + ' ' + part.params[0];
-}
-
-export function identityRenderer(part: QueryPart, innerExpr: string) {
-  return part.params[0];
-}
-
-export function quotedIdentityRenderer(part: QueryPart, innerExpr: string) {
-  return '"' + part.params[0] + '"';
 }
