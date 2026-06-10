@@ -12,7 +12,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 
-import { DeepSearchResults } from './DeepSearchResults';
+import { type DeepSearchNavHandle, DeepSearchResults } from './DeepSearchResults';
 import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
@@ -71,6 +71,25 @@ function CommandPaletteContents() {
   });
   const showDeepSearch = deepSearchEnabled && !currentRootActionId && searchQuery.length > 0;
 
+  const deepSearchNavRef = useRef<DeepSearchNavHandle>(null);
+  const onSearchKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>) => {
+      // Right arrow with the caret at the end of the input moves keyboard
+      // focus into the deep search column ("navigation mode")
+      const input = event.currentTarget;
+      if (
+        event.key === 'ArrowRight' &&
+        deepSearchResults.length > 0 &&
+        input.selectionStart === input.value.length &&
+        input.selectionStart === input.selectionEnd
+      ) {
+        event.preventDefault();
+        deepSearchNavRef.current?.focusFirst();
+      }
+    },
+    [deepSearchResults]
+  );
+
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
     { isOpen: true, onClose: () => query.setVisualState(VisualState.animatingOut) },
@@ -95,6 +114,7 @@ function CommandPaletteContents() {
               <KBarSearch
                 defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                 className={styles.search}
+                onKeyDown={onSearchKeyDown}
               />
               <div className={styles.loadingBarContainer}>
                 {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
@@ -109,6 +129,7 @@ function CommandPaletteContents() {
               isFetchingDeepSearchResults={isFetchingDeepSearchResults}
               showDeepSearch={showDeepSearch}
               onNavigate={queryToggle}
+              deepSearchNavRef={deepSearchNavRef}
             />
           </div>
         </FocusScope>
@@ -156,6 +177,7 @@ interface RenderResultsProps {
   isFetchingDeepSearchResults: boolean;
   showDeepSearch: boolean;
   onNavigate: () => void;
+  deepSearchNavRef: React.Ref<DeepSearchNavHandle>;
 }
 
 const RenderResults = ({
@@ -166,6 +188,7 @@ const RenderResults = ({
   isFetchingDeepSearchResults,
   showDeepSearch,
   onNavigate,
+  deepSearchNavRef,
 }: RenderResultsProps) => {
   const { results: kbarResults, rootActionId } = useMatches();
   const { query } = useKBar();
@@ -204,6 +227,17 @@ const RenderResults = ({
     }
     return results;
   }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
+
+  const returnToInput = useCallback(
+    (resetSelection: boolean) => {
+      query.getInput().focus();
+      if (resetSelection) {
+        // Highlight the first item again, as if the palette was just opened
+        query.setActiveIndex(typeof items[0] === 'string' ? 1 : 0);
+      }
+    },
+    [query, items]
+  );
 
   const hasKeywordResults = items.length > 0;
   const hasDeepSearchResults = deepSearchResults.length > 0;
@@ -260,7 +294,13 @@ const RenderResults = ({
       )}
       {showDeepSearch && (
         <div className={cx(styles.deepSearchColumn, !hasKeywordResults && styles.deepSearchColumnFull)}>
-          <DeepSearchResults results={deepSearchResults} isFetching={isFetchingDeepSearchResults} onNavigate={onNavigate} />
+          <DeepSearchResults
+            results={deepSearchResults}
+            isFetching={isFetchingDeepSearchResults}
+            onNavigate={onNavigate}
+            onReturnToInput={returnToInput}
+            navRef={deepSearchNavRef}
+          />
         </div>
       )}
     </div>

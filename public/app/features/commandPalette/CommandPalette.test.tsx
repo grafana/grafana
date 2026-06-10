@@ -124,6 +124,59 @@ describe('CommandPalette', () => {
       expect(screen.queryByText('No results found')).not.toBeInTheDocument();
     });
 
+    it('supports keyboard navigation into and out of the deep search column', async () => {
+      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
+      server.use(
+        getDashboardMemorySearchHandler([
+          { dashboardUid: 'dash-1', dashboardTitle: 'API latency', content: 'p99 latency', score: 0.1 },
+          { dashboardUid: 'dash-2', dashboardTitle: 'Checkout', content: 'checkout errors', score: 0.2 },
+        ])
+      );
+
+      setup();
+      const user = userEvent.setup();
+      const input = screen.getByPlaceholderText('Search or jump to...');
+      await user.type(input, 'latency');
+      await screen.findByText('API latency', {}, { timeout: 3000 });
+
+      // Right arrow at the end of the input enters navigation mode on the first card
+      await user.keyboard('{ArrowRight}');
+      expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
+
+      // Down/Up move between cards
+      await user.keyboard('{ArrowDown}');
+      expect(screen.getByRole('link', { name: /Checkout/ })).toHaveFocus();
+      await user.keyboard('{ArrowUp}');
+      expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
+
+      // Up on the first card returns focus to the input
+      await user.keyboard('{ArrowUp}');
+      expect(input).toHaveFocus();
+    });
+
+    it('escape in navigation mode returns focus to the input without closing the palette', async () => {
+      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
+      server.use(
+        getDashboardMemorySearchHandler([
+          { dashboardUid: 'dash-1', dashboardTitle: 'API latency', content: 'p99 latency', score: 0.1 },
+        ])
+      );
+
+      setup();
+      const user = userEvent.setup();
+      const input = screen.getByPlaceholderText('Search or jump to...');
+      await user.type(input, 'latency');
+      await screen.findByText('API latency', {}, { timeout: 3000 });
+
+      await user.keyboard('{ArrowRight}');
+      expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
+
+      await user.keyboard('{Escape}');
+      expect(input).toHaveFocus();
+      // The palette is still open
+      expect(screen.getByPlaceholderText('Search or jump to...')).toBeInTheDocument();
+    });
+
     it('does not render the deep search column when the assistant is unavailable', async () => {
       (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: false });
       let deepSearchCalled = false;
