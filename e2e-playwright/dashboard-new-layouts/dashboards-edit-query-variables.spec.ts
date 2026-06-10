@@ -36,9 +36,7 @@ test.describe(
         label: 'VariableUnderTest', // constant doesn't really need a label
       };
 
-      // common steps to add a new variable
-      await flows.newEditPaneVariableClick(dashboardPage, selectors);
-      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
 
       // open the modal query variable editor
       await dashboardPage

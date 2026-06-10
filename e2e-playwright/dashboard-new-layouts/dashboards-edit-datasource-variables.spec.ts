@@ -31,9 +31,7 @@ test.describe(
         value: `gdev-${dsType}`,
       };
 
-      // Common steps to add a new variable
-      await flows.newEditPaneVariableClick(dashboardPage, selectors);
-      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
 
       await dashboardPage
         .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect)

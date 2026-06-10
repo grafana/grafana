@@ -5,6 +5,8 @@ import { type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plu
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
+import { Controls, Panel, Sidebar } from './page-objects';
+
 export const flows = {
   async newEditPaneVariableClick(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
@@ -15,11 +17,20 @@ export const flows = {
       .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton)
       .click();
   },
-  async newEditPanelCommonVariableInputs(
+  async addNewGenericVariable(
+    page: Page,
     dashboardPage: DashboardPage,
     selectors: E2ESelectorGroups,
     variable: Variable
   ) {
+    const controls = new Controls(page, dashboardPage, selectors);
+    const sidebar = new Sidebar(page, dashboardPage, selectors);
+
+    await controls.enterEditMode();
+
+    await sidebar.toolbar.clickButton('Add');
+    await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.addNewVariableButton).click();
+
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableType(variable.type))
       .click();
@@ -44,8 +55,7 @@ export const flows = {
     }
   },
   async addNewTextBoxVariable(dashboardPage: DashboardPage, variable: Variable) {
-    await flows.newEditPaneVariableClick(dashboardPage, selectors);
-    await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+    await flows.addNewGenericVariable(dashboardPage.ctx.page, dashboardPage, selectors, variable);
     // set the textbox variable value
     const type = 'variable-type Value';
     const fieldLabel = dashboardPage.getByGrafanaSelector(
