@@ -74,7 +74,7 @@ require (
 	github.com/go-ldap/ldap/v3 v3.4.4 // @grafana/identity-access-team
 	github.com/go-logfmt/logfmt v0.6.1 // @grafana/data-sources-plugins
 	github.com/go-openapi/loads v0.23.3 // @grafana/alerting-backend
-	github.com/go-openapi/runtime v0.29.5 // @grafana/alerting-backend
+	github.com/go-openapi/runtime v0.32.1 // @grafana/alerting-backend
 	github.com/go-openapi/strfmt v0.26.2 // @grafana/alerting-backend
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // @grafana/grafana-backend-group
 	github.com/go-sql-driver/mysql v1.10.0 // @grafana/grafana-search-and-storage
@@ -447,7 +447,7 @@ require (
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-openapi/analysis v0.25.0 // indirect
 	github.com/go-openapi/errors v0.22.7 // indirect
-	github.com/go-openapi/jsonpointer v0.22.5 // indirect
+	github.com/go-openapi/jsonpointer v0.23.1 // indirect
 	github.com/go-openapi/jsonreference v0.21.5 // indirect
 	github.com/go-openapi/spec v0.22.4 // indirect
 	github.com/go-openapi/swag v0.26.0 // indirect
@@ -722,7 +722,10 @@ require (
 
 require github.com/redis/go-redis/extra/redisotel/v9 v9.19.0 // @grafana/grafana-operator-experience-squad
 
-require github.com/redis/go-redis/extra/rediscmd/v9 v9.19.0 // indirect
+require (
+	github.com/go-openapi/runtime/server-middleware v0.30.0 // indirect
+	github.com/redis/go-redis/extra/rediscmd/v9 v9.19.0 // indirect
+)
 
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
