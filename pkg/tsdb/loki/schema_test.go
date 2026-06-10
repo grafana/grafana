@@ -129,6 +129,74 @@ func TestSchemaProvider_Columns(t *testing.T) {
 	require.Equal(t, []string{"level", "pod"}, names)
 }
 
+func TestSchemaProvider_Columns_withParserProbe(t *testing.T) {
+	var queryRangeCalled atomic.Bool
+	p := newTestSchemaProvider(t, func(req *http.Request) (int, string, []byte) {
+		switch {
+		case strings.HasSuffix(req.URL.Path, "/loki/api/v1/labels") && req.URL.Query().Get("query") == "":
+			return 200, "", []byte(`{"status":"success","data":["service_name"]}`)
+		case strings.HasSuffix(req.URL.Path, "/loki/api/v1/labels") && strings.Contains(req.URL.Query().Get("query"), `service_name="carts"`):
+			return 200, "", []byte(`{"status":"success","data":["env","service_name"]}`)
+		case strings.Contains(req.URL.Path, "/loki/api/v1/query_range"):
+			queryRangeCalled.Store(true)
+			require.Contains(t, req.URL.Query().Get("query"), "| json")
+			return 200, "", []byte(`{"status":"success","data":{"resultType":"streams","result":[{"stream":{"env":"prod","level":"error","service_name":"carts"},"values":[["1700000000000000000","{}"]]}]}}`)
+		default:
+			t.Fatalf("unexpected request: %s", req.URL.String())
+		}
+		return 0, "", nil
+	})
+
+	cr, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
+		Tables:          []string{"carts"},
+		TableParameters: map[string]string{"PARSER": "json"},
+	})
+	require.NoError(t, err)
+	require.True(t, queryRangeCalled.Load())
+
+	names := columnNames(cr.Columns["carts"])
+	require.Contains(t, names, "level")
+	require.Contains(t, names, "env")
+}
+
+func TestSchemaProvider_Columns_withParserSchemaContext(t *testing.T) {
+	var queryRangeCalled atomic.Bool
+	p := newTestSchemaProvider(t, func(req *http.Request) (int, string, []byte) {
+		switch {
+		case strings.HasSuffix(req.URL.Path, "/loki/api/v1/labels") && req.URL.Query().Get("query") == "":
+			return 200, "", []byte(`{"status":"success","data":["service_name"]}`)
+		case strings.HasSuffix(req.URL.Path, "/loki/api/v1/labels") && strings.Contains(req.URL.Query().Get("query"), `service_name="carts"`):
+			return 200, "", []byte(`{"status":"success","data":["env","service_name"]}`)
+		case strings.Contains(req.URL.Path, "/loki/api/v1/query_range"):
+			queryRangeCalled.Store(true)
+			require.Contains(t, req.URL.Query().Get("query"), "| logfmt")
+			return 200, "", []byte(`{"status":"success","data":{"resultType":"streams","result":[{"stream":{"level":"info","msg":"hello","service_name":"carts"},"values":[["1700000000000000000","{}"]]}]}}`)
+		default:
+			t.Fatalf("unexpected request: %s", req.URL.String())
+		}
+		return 0, "", nil
+	})
+
+	cr, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
+		Tables:        []string{"carts"},
+		SchemaContext: map[string]string{"PARSER": "logfmt"},
+	})
+	require.NoError(t, err)
+	require.True(t, queryRangeCalled.Load())
+
+	names := columnNames(cr.Columns["carts"])
+	require.Contains(t, names, "level")
+	require.Contains(t, names, "msg")
+}
+
+func columnNames(cols []schemas.Column) []string {
+	names := make([]string, 0, len(cols))
+	for _, c := range cols {
+		names = append(names, c.Name)
+	}
+	return names
+}
+
 func TestSchemaProvider_Columns_PerTableErrorFallback(t *testing.T) {
 	p := newTestSchemaProvider(t, func(req *http.Request) (int, string, []byte) {
 		if strings.HasSuffix(req.URL.Path, "/loki/api/v1/labels") && req.URL.Query().Get("query") == "" {
@@ -172,6 +240,12 @@ func TestSchemaProvider_ColumnValues_SkipsTimestampLineAndValue(t *testing.T) {
 	require.Equal(t, []string{"info", "error"}, resp.ColumnValues["level"])
 	_, hasTs := resp.ColumnValues["timestamp"]
 	require.False(t, hasTs)
+}
+
+func TestSchemaCacheKeys_doNotCollide(t *testing.T) {
+	parsedKey := schemaParsedLabelsCacheKey("service_name", "carts", "json")
+	require.Equal(t, "service_name\x00carts\x00json", parsedKey)
+	require.NotEqual(t, schemaCacheKeyTableLabel, parsedKey)
 }
 
 func TestSchemaProvider_TableLabelCache_Expires(t *testing.T) {
@@ -225,6 +299,7 @@ func TestSchemaProvider_Schema(t *testing.T) {
 	require.Equal(t, "a", sr.FullSchema.Tables[0].Name)
 	require.Equal(t, schemaBaseColumns, sr.FullSchema.Tables[0].Columns)
 	require.Equal(t, lokiTableHints, sr.FullSchema.Tables[0].TableHints)
+	require.True(t, sr.FullSchema.Tables[0].TableHints[4].AffectsSchema)
 	require.Equal(t, lokiDatasourceCapabilities, sr.FullSchema.Capabilities)
 }
 
