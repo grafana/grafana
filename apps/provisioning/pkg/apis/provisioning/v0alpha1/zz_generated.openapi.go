@@ -924,6 +924,13 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubConnectionConfig(ref common.Ref
 							Format:      "",
 						},
 					},
+					"pollingOnly": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PollingOnly tells Grafana to sync this connection by polling rather than relying on GitHub webhook events. When set, the GitHub App does not require webhooks:write permission. Use this when Grafana runs on a private network and cannot receive callbacks from GitHub.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"appID", "installationID"},
 			},

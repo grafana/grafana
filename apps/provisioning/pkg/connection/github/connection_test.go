@@ -747,6 +747,93 @@ func TestConnection_Test(t *testing.T) {
 			},
 		},
 		{
+			// PollingOnly skips the webhooks check at both the app and installation level,
+			// so a GitHub App without webhooks:write can still connect successfully.
+			name: "success - polling only, no webhooks permission on app or installation",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+						PollingOnly:    true,
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
+					ID:   123,
+					Slug: "test-app",
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionNone,
+					},
+				}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
+					ID:      456,
+					Enabled: true,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionNone,
+					},
+				}, nil)
+			},
+			expectedCode:  http.StatusOK,
+			expectSuccess: true,
+		},
+		{
+			// PollingOnly only skips the webhooks check; other required permissions still apply.
+			name: "failure - polling only does not exempt missing contents permission",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+						PollingOnly:    true,
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
+					ID:   123,
+					Slug: "test-app",
+					Permissions: github.Permissions{
+						Contents:     github.PermissionNone,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionNone,
+					},
+				}, nil)
+			},
+			expectedCode:  http.StatusForbidden,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:     metav1.CauseTypeForbidden,
+					Field:    "spec.github.appID",
+					Detail:   "GitHub App lacks required 'contents' permission: requires 'write', has ''",
+					BadValue: appID,
+				},
+			},
+		},
+		{
 			name: "failure - multiple missing permissions",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
