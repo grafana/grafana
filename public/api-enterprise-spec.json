@@ -8889,6 +8889,9 @@
         "name": {
           "type": "string"
         },
+        "role": {
+          "type": "string"
+        },
         "uid": {
           "type": "string"
         }
