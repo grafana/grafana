@@ -228,10 +228,10 @@ github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+
 github.com/googleapis/gax-go/v2 v2.0.5/go.mod h1:DWXyrwAJ9X0FpwwEdw+IPEYBICEFu5mhpdKc/us6bOk=
 github.com/grafana/alerting v0.0.0-20260601143310-62c199acc7fc h1:MzBWvBFYFp3IgqmflrYvaBxaw/9DBPyhyo8pb5q9Q8E=
 github.com/grafana/alerting v0.0.0-20260601143310-62c199acc7fc/go.mod h1:soZ8LBBzR3OnWD1vWaCx5PqKJEYavieLEnQFOl1tLIo=
-github.com/grafana/authlib v0.0.0-20260511070317-cdec9a89f585 h1:Y0LfJ8e4x1y4jhXj2BpY97DebOPZCmiejFYp5ga1x1A=
-github.com/grafana/authlib v0.0.0-20260511070317-cdec9a89f585/go.mod h1:AWryAuOp+dICuspMD555qPikxDraraypjMU8/C+yHx0=
-github.com/grafana/authlib/types v0.0.0-20260511070317-cdec9a89f585 h1:Z/4Gy4iAo1RFjwOhS+j6CaGp0Ak6KlHtVC2KjVfqcPM=
-github.com/grafana/authlib/types v0.0.0-20260511070317-cdec9a89f585/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
+github.com/grafana/authlib v0.0.0-20260603144019-18cfcbc9496a h1:Yz6AtFowxBvJxqbj+/IWM1DOwVnmvm5LLT0irGWMDNU=
+github.com/grafana/authlib v0.0.0-20260603144019-18cfcbc9496a/go.mod h1:AWryAuOp+dICuspMD555qPikxDraraypjMU8/C+yHx0=
+github.com/grafana/authlib/types v0.0.0-20260603144019-18cfcbc9496a h1:eCs+dKdWRZOLkMTP1ahQ1F58m4KojlBhj1saPZKw6bU=
+github.com/grafana/authlib/types v0.0.0-20260603144019-18cfcbc9496a/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
 github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 h1:/m/qmt7Ay+HK+GVbIvXrJIRHC07xFM6nWFMmyePmAUs=
 github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3/go.mod h1:6zFIzal2FCd0JC1pE0ZTb2ftC0Jr/zsQR4zRNRdDfZA=
 github.com/grafana/grafana-app-sdk v0.56.0 h1:2fgZ37xKywSR2FvXCZ/AMNOraU0AJXkKtJMvIQIV6iA=
@@ -277,8 +277,8 @@ github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7V
 github.com/julienschmidt/httprouter v1.3.0/go.mod h1:JR6WtHb+2LUe8TCKY3cZOxFyyO8IZAc4RVcycCCAKdM=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
-github.com/klauspost/compress v1.18.5 h1:/h1gH5Ce+VWNLSWqPzOVn6XBO+vJbCNGvjoaGBFW2IE=
-github.com/klauspost/compress v1.18.5/go.mod h1:cwPg85FWrGar70rWktvGQj8/hthj3wpl0PGDogxkrSQ=
+github.com/klauspost/compress v1.18.6 h1:2jupLlAwFm95+YDR+NwD2MEfFO9d4z4Prjl1XXDjuao=
+github.com/klauspost/compress v1.18.6/go.mod h1:cwPg85FWrGar70rWktvGQj8/hthj3wpl0PGDogxkrSQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.3/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/kr/logfmt v0.0.0-20140226030751-b84e30acd515/go.mod h1:+0opPa2QZZtGFBFZlji/RkVcI2GknAs/DXo4wKdlNEc=
