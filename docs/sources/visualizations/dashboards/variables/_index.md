@@ -46,21 +46,50 @@ You can use variables in:
 - Descriptions
 - [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/)
 
-To see variable settings, navigate to **Dashboard Settings > Variables**.
-Click a variable in the list to see its settings.
+To work with variables, you typically do the following:
+
+1. Choose the type of variable that matches the value you want viewers to control.
+1. Add the variable to the dashboard.
+1. Use the variable in queries, titles, links, or other dashboard fields.
+1. Manage the variable order, dependencies, and URL behavior as the dashboard grows.
+
+To see variable settings, click **Edit** in the top-right corner of the dashboard, click the **Dashboard options** icon, click **Settings**, and then click **Variables**.
 
 {{< docs/play title="Templating - Interactive dashboard" url="https://play.grafana.org/goto/B9Xog68Hg?orgId=1" >}}
+
+## Variables you create and global variables
+
+Grafana supports two broad kinds of variables:
+
+- **Variables you create**: Dashboard-specific variables that you define and configure. Use these variables when viewers need to choose values such as a server, data source, region, environment, or interval. For configuration steps, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
+- **Global variables**: Built-in variables that Grafana provides automatically, such as the current time range, dashboard name, organization, or signed-in user. For the full reference, refer to [Global variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/global-variables/).
+
+## Choose a variable type
+
+Choose a variable type based on how you want Grafana to get the value and how users interact with it.
+
+| Variable type | Use when                                                                                                              |
+| ------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Query         | The list of values comes from a data source query, such as server names, metric names, label values, or data centers. |
+| Custom        | You want to define a fixed list of values manually.                                                                   |
+| Text box      | Viewers need to enter a free-form value.                                                                              |
+| Constant      | A dashboard needs a reusable value that viewers don't change.                                                         |
+| Data source   | Viewers need to switch a dashboard or query between data source instances.                                            |
+| Interval      | Viewers need to change the time grouping or aggregation interval in queries.                                          |
+| Filters       | Viewers need dashboard-wide key/value filters for supported data sources.                                             |
+| Switch        | Viewers need to toggle between two configured values.                                                                 |
+
+For the complete list of variable settings and type-specific steps, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
 
 ## Template variables {#templates}
 
 A _template_ is any query that contains a variable.
 Queries with text that starts with `$` are templates.
+For example, if you administer a dashboard that monitors several servers, it can have panels that use a template query like this one:
 
 {{< admonition type="note">}}
-In our documentation and in the application, we typically simply refer to a _template query_ as a _query_, but we often use the terms _variable_ and _template variable_ interchangeably.
+Grafana documentation and the application typically refer to a _template query_ as a _query_, but the terms _variable_ and _template variable_ are often used interchangeably.
 {{< /admonition >}}
-
-For example, if you were administering a dashboard to monitor several servers, it could have panels that use template queries like this one:
 
 ```text
 groupByNode(movingAverage(apps.$app.$server.counters.requests.count, 10), 2, 'sum')
@@ -72,7 +101,7 @@ The following image shows a panel in edit mode using the query:
 
 ### Variables in URLs
 
-By default, variable values are synced to the URL using [query parameter syntax](https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#query-parameters), `var-<varname>=value`.
+By default, variable values are synced to the URL using [query parameter syntax](hhttps://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/variable-syntax/#query-parameters), `var-<varname>=value`.
 For example:
 
 ```text
@@ -89,6 +118,8 @@ This is useful when you want to keep URLs clean, prevent users from overriding a
 Constant variables have `skipUrlSync` set to `true` by default, since their value is fixed and not intended to be changed through the URL.
 {{< /admonition >}}
 
+For more information about URL variables, shared links, time ranges, and filters, refer to [Create dashboard URL variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/).
+
 ## Additional examples
 
 The following dashboards in Grafana Play provide examples of template variables:
@@ -99,6 +130,14 @@ The following dashboards in Grafana Play provide examples of template variables:
 
 ## Next steps
 
-The following topics describe how to add and manage variables in your dashboards:
+Use the following topics based on what you want to do next:
+
+- To create dashboard-specific variables, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
+- To use built-in variables for time ranges, users, organizations, or query intervals, refer to [Global variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/global-variables/).
+- To configure chained variables, multi-property variables, or regular expression filtering, refer to [Advanced variable usage](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/advanced-variables/).
+- To control how Grafana interpolates variable values, refer to [Variable syntax](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/variable-syntax/).
+- To reorder, clone, delete, or inspect variable dependencies, refer to [Manage and inspect variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/inspect-variable/).
+
+The following pages contain the full variables documentation:
 
 {{< section >}}
