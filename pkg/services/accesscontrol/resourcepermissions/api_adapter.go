@@ -24,6 +24,7 @@ import (
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -73,7 +74,7 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 			return nil, fmt.Errorf("failed to convert to typed resource permission: %w", err)
 		}
 
-		directDTO, err := a.convertK8sResourcePermissionToDTO(&resourcePerm, namespace, false)
+		directDTO, err := a.convertK8sResourcePermissionToDTO(ctx, &resourcePerm, namespace, false)
 		if err != nil {
 			return nil, err
 		}
@@ -114,12 +115,17 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 	return dto, nil
 }
 
-func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePermission, namespace string, isInherited bool) (getResourcePermissionsResponse, error) {
+func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePerm *iamv0.ResourcePermission, namespace string, isInherited bool) (getResourcePermissionsResponse, error) {
 	namespaceInfo, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse namespace %q: %w", namespace, err)
 	}
 	orgID := namespaceInfo.OrgID
+
+	// Resolve subject names with a service identity: the caller is already authorized
+	// to read this resource's permissions but may lack users:read (e.g. an editor),
+	// which would otherwise leave the subject unnamed. Mirrors the legacy SQL join.
+	lookupCtx, _ := identity.WithServiceIdentity(ctx, orgID)
 
 	permissions := resourcePerm.Spec.Permissions
 	dto := make(getResourcePermissionsResponse, 0, len(permissions))
@@ -154,7 +160,7 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePerm
 
 		switch kind {
 		case iamv0.ResourcePermissionSpecPermissionKindUser, iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
-			userDetails, err := a.service.userService.GetByUID(context.Background(), &user.GetUserByUIDQuery{UID: name})
+			userDetails, err := a.service.userService.GetByUID(lookupCtx, &user.GetUserByUIDQuery{UID: name})
 			if err == nil {
 				permDTO.UserID = userDetails.ID
 				permDTO.UserUID = userDetails.UID
@@ -165,7 +171,7 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePerm
 				permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, orgID)
 			}
 		case iamv0.ResourcePermissionSpecPermissionKindTeam:
-			teamDetails, err := a.service.teamService.GetTeamByID(context.Background(), &team.GetTeamByIDQuery{
+			teamDetails, err := a.service.teamService.GetTeamByID(lookupCtx, &team.GetTeamByIDQuery{
 				UID:   name,
 				OrgID: orgID,
 			})
@@ -297,7 +303,7 @@ func (a *api) getFolderHierarchyPermissions(ctx context.Context, namespace strin
 			continue
 		}
 
-		inheritedDTO, err := a.convertK8sResourcePermissionToDTO(&parentResourcePerm, namespace, true)
+		inheritedDTO, err := a.convertK8sResourcePermissionToDTO(ctx, &parentResourcePerm, namespace, true)
 		if err != nil {
 			a.logger.Warn("Failed to convert parent folder permissions to DTO", "error", err, "parentFolder", parentFolder.Name)
 			continue
