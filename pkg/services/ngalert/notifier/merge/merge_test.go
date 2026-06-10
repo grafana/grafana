@@ -4,8 +4,6 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
-	"maps"
-	"slices"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -402,7 +400,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		}
 	}
 
-	buildExpectedManaged := func(t *testing.T, mimirYAML string, renames RenameResources) (v1.ManagedRoutes, v1.ManagedInhibitionRules) {
+	buildExpectedManaged := func(t *testing.T, mimirYAML string, renames RenameResources) (v1.ManagedRoutes, map[v1.ResourceUID]v1.InhibitionRule) {
 		t.Helper()
 		extra := v1.ExtraConfiguration{Identifier: identifier, AlertmanagerConfig: mimirYAML}
 		mcfg, err := extra.GetAlertmanagerConfig()
@@ -448,9 +446,9 @@ func TestMergeExtraConfig(t *testing.T) {
 
 		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirConfig, RenameResources{})
 		assertConfig(t, v1.AMConfigV1{
-			AlertmanagerConfig:     *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) { p.Global = nil }),
-			ManagedRoutes:          expectedRoutes,
-			ManagedInhibitionRules: expectedInhibitRules,
+			AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) { p.Global = nil }),
+			ManagedRoutes:      expectedRoutes,
+			InhibitionRules:    expectedInhibitRules,
 		}, config)
 	})
 
@@ -461,9 +459,9 @@ func TestMergeExtraConfig(t *testing.T) {
 
 		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirNoIntervals, RenameResources{})
 		assertConfig(t, v1.AMConfigV1{
-			AlertmanagerConfig:     *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) { p.Global = nil }),
-			ManagedRoutes:          expectedRoutes,
-			ManagedInhibitionRules: expectedInhibitRules,
+			AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) { p.Global = nil }),
+			ManagedRoutes:      expectedRoutes,
+			InhibitionRules:    expectedInhibitRules,
 		}, config)
 	})
 
@@ -481,8 +479,8 @@ func TestMergeExtraConfig(t *testing.T) {
 					Receiver: definition.Receiver{Name: "grafana-default-email" + identifier},
 				})
 			}),
-			ManagedRoutes:          expectedRoutes,
-			ManagedInhibitionRules: expectedInhibitRules,
+			ManagedRoutes:   expectedRoutes,
+			InhibitionRules: expectedInhibitRules,
 		}, config)
 	})
 
@@ -506,8 +504,8 @@ func TestMergeExtraConfig(t *testing.T) {
 					&v1.PostableApiReceiver{Receiver: definition.Receiver{Name: "grafana-default-email" + identifier + "_01"}},
 				)
 			}),
-			ManagedRoutes:          expectedRoutes,
-			ManagedInhibitionRules: expectedInhibitRules,
+			ManagedRoutes:   expectedRoutes,
+			InhibitionRules: expectedInhibitRules,
 		}, config)
 	})
 
@@ -533,8 +531,8 @@ func TestMergeExtraConfig(t *testing.T) {
 					{Name: "mti-1" + identifier},
 				}
 			}),
-			ManagedRoutes:          expectedRoutes,
-			ManagedInhibitionRules: expectedInhibitRules,
+			ManagedRoutes:   expectedRoutes,
+			InhibitionRules: expectedInhibitRules,
 		}, config)
 	})
 
@@ -578,14 +576,14 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should populate stats with added resource names", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		config, result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		_, result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.NoError(t, err)
 
 		assert.Equal(t, identifier, result.AddedRoute)
 		assert.ElementsMatch(t, []string{"recv", "recv2"}, result.AddedReceivers)
 		assert.ElementsMatch(t, []string{"mti-2", "ti-2"}, result.AddedTimeIntervals)
 		assert.Empty(t, result.AddedTemplates)
-		assert.ElementsMatch(t, slices.Collect(maps.Keys(config.ManagedInhibitionRules)), result.AddedInhibitionRules)
+		assert.ElementsMatch(t, []string{"mimir-12345-imported-inhibition-rule-0000"}, result.AddedInhibitionRules)
 	})
 
 	t.Run("should report renamed receiver in stats", func(t *testing.T) {
@@ -639,11 +637,11 @@ func TestMergeExtraConfig(t *testing.T) {
 		config, _, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.NoError(t, err)
 
-		require.Len(t, config.ManagedInhibitionRules, 1)
-		for _, rule := range config.ManagedInhibitionRules {
+		require.Len(t, config.InhibitionRules, 1)
+		for _, rule := range config.InhibitionRules {
 			hasSourceScope := false
 			for _, m := range rule.SourceMatchers {
-				if m.Name == models.NamedRouteLabel && m.Value == identifier {
+				if m.Label == models.NamedRouteLabel && m.Value == identifier {
 					hasSourceScope = true
 					break
 				}
@@ -652,7 +650,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 			hasTargetScope := false
 			for _, m := range rule.TargetMatchers {
-				if m.Name == models.NamedRouteLabel && m.Value == identifier {
+				if m.Label == models.NamedRouteLabel && m.Value == identifier {
 					hasTargetScope = true
 					break
 				}
