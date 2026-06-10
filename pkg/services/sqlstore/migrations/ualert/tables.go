@@ -30,6 +30,14 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add column external_alertmanager_uid in ngalert_configuration", migrator.NewAddColumnMigration(migrator.Table{Name: "ngalert_configuration"}, &migrator.Column{
 		Name: "external_alertmanager_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: true,
 	}))
+
+	// Fix alert_rule_state.id column type on PostgreSQL. The migrator maps DB_BigInt with
+	// IsAutoIncrement to SERIAL (integer, max 2^31-1) instead of BIGSERIAL (bigint). The
+	// periodic full-sync (DELETE + re-INSERT) burns through sequence values rapidly, causing
+	// the sequence to overflow on busy installations.
+	mg.AddMigration("alter alert_rule_state id column and sequence to bigint for postgres", migrator.NewRawSQLMigration("").
+		Postgres("ALTER TABLE alert_rule_state ALTER COLUMN id TYPE BIGINT; ALTER SEQUENCE alert_rule_state_id_seq AS BIGINT;"))
+
 	// End of migration log, add new migrations above this line.
 }
 
