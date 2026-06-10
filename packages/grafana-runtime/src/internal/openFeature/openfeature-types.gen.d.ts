@@ -34,7 +34,6 @@ declare module "@openfeature/core" {
     | "dashboardSectionVariables"
     | "globalDashboardVariables"
     | "queryEditorNext"
-    | "queryEditorNextMultiSelect"
     | "managedPluginsV2"
     | "analyticsFramework"
     | "grafana.scenesFlickeringFix"

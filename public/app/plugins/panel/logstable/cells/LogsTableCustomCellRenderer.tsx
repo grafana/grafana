@@ -42,7 +42,7 @@ export function LogsTableCustomCellRenderer(props: {
   );
 }
 
-export interface AutoCellProps {
+interface AutoCellProps {
   field: Field;
   value: string;
   rowIdx: number;

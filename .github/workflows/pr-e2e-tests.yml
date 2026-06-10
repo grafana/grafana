@@ -421,7 +421,7 @@ jobs:
       - name: Extract and publish metrics
         run: ./scripts/ci-frontend-metrics.sh | node --experimental-strip-types .github/workflows/scripts/publish-frontend-metrics.mts
         env:
-          GRAFANA_MISC_STATS_API_KEY: ${{ env.GRAFANA_MISC_STATS_API_KEY}}
+          GRAFANA_MISC_STATS_API_KEY: ${{ fromJSON(steps.vault-secrets.outputs.secrets).GRAFANA_MISC_STATS_API_KEY }}
 
   # 'All E2E tests complete' is still a required check. To help with this transition, we keep
   # a placeholder job to avoid needing to remove the required check from github yet.

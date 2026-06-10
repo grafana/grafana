@@ -55,6 +55,30 @@ describe('useGlobalTimeIntervalAbility', () => {
 
     expect(result.current.granted).toBe(true);
   });
+
+  it('grants Update when write permission is held', () => {
+    grantUserPermissions([AccessControlAction.AlertingTimeIntervalsWrite]);
+
+    const { result } = renderHook(() => useGlobalTimeIntervalAbility(TimeIntervalAction.Update));
+
+    expect(result.current.granted).toBe(true);
+  });
+
+  it('grants Delete when delete permission is held', () => {
+    grantUserPermissions([AccessControlAction.AlertingTimeIntervalsDelete]);
+
+    const { result } = renderHook(() => useGlobalTimeIntervalAbility(TimeIntervalAction.Delete));
+
+    expect(result.current.granted).toBe(true);
+  });
+
+  it('does not grant Delete when only write permission is held', () => {
+    grantUserPermissions([AccessControlAction.AlertingTimeIntervalsWrite]);
+
+    const { result } = renderHook(() => useGlobalTimeIntervalAbility(TimeIntervalAction.Delete));
+
+    expect(result.current.granted).toBe(false);
+  });
 });
 
 describe('useTimeIntervalAbility', () => {
@@ -123,6 +147,30 @@ describe('useTimeIntervalAbility', () => {
 
       const { result } = renderHook(
         () => useTimeIntervalAbility({ action: TimeIntervalAction.Delete, context: notProvisioned as never }),
+        { wrapper: createAlertmanagerWrapper(amSource) }
+      );
+
+      expect(result.current.granted).toBe(false);
+    });
+
+    it('should grant Delete when only delete permission is held', () => {
+      const amSource = setupGrafanaAlertmanager();
+      grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingTimeIntervalsDelete]);
+
+      const { result } = renderHook(
+        () => useTimeIntervalAbility({ action: TimeIntervalAction.Delete, context: notProvisioned as never }),
+        { wrapper: createAlertmanagerWrapper(amSource) }
+      );
+
+      expect(result.current.granted).toBe(true);
+    });
+
+    it('should NOT grant Update when only delete permission is held', () => {
+      const amSource = setupGrafanaAlertmanager();
+      grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingTimeIntervalsDelete]);
+
+      const { result } = renderHook(
+        () => useTimeIntervalAbility({ action: TimeIntervalAction.Update, context: notProvisioned as never }),
         { wrapper: createAlertmanagerWrapper(amSource) }
       );
 
