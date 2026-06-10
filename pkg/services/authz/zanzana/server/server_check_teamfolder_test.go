@@ -13,13 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// TestIntegrationServerCheck_TeamFolderEditGrantsDashboardCreate isolates the question that
-// the live multi-instance env could not answer cleanly (reconciler pruning, two stores,
-// per-instance caches): does a folder-level "edit" grant to a team, plus the team supplied
-// as a per-request contextual membership, allow creating a dashboard in that folder?
-//
-// The seeded tuple is EXACTLY what a resourcepermission "Editor" grant to a team on a folder
-// produces today: a single folder#edit tuple for team#member, with no dashboard subresource tuple.
+// TestIntegrationServerCheck_TeamFolderEditGrantsDashboardCreate verifies that a folder-level
+// "edit" grant to a team, plus the team supplied as a per-request contextual membership, allows
+// creating a dashboard in that folder. The seeded tuple is what a resourcepermission "Editor"
+// grant to a team on a folder produces: a single folder#edit tuple for team#member.
 func TestIntegrationServerCheck_TeamFolderEditGrantsDashboardCreate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
