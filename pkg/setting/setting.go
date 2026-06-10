@@ -1122,6 +1122,12 @@ type AnnotationAppPlatformSettings struct {
 	StoreBackend string        // "legacy-sql" (default), "grpc", or "postgres"
 	RetentionTTL time.Duration // Retention TTL for annotations
 
+	// APIMigrationPhase controls how the legacy API proxies to the new app platform API.
+	// "off" (default) = legacy behavior, "proxy-writes" = proxy writes only, "proxy-all" = proxy all requests.
+	APIMigrationPhase string
+	// AppPlatformURL is the base URL of the new app platform annotations API.
+	AppPlatformURL string
+
 	GRPCAddress       string // gRPC server address (e.g., "localhost:9090")
 	GRPCUseTLS        bool   // Enable TLS for gRPC connection (default: false)
 	GRPCTLSCAFile     string // Path to CA certificate file (optional)
@@ -1143,10 +1149,12 @@ type AnnotationAppPlatformSettings struct {
 func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
 	appPlatformSection := cfg.Section("annotations.app_platform")
 	return AnnotationAppPlatformSettings{
-		Enabled:        appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend:   appPlatformSection.Key("store_backend").MustString("legacy-sql"),
-		RetentionTTL:   appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
-		EnableLegacyID: appPlatformSection.Key("enable_legacy_id").MustBool(false),
+		Enabled:           appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend:      appPlatformSection.Key("store_backend").MustString("legacy-sql"),
+		RetentionTTL:      appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
+		APIMigrationPhase: appPlatformSection.Key("api_migration_phase").MustString("off"),
+		AppPlatformURL:    appPlatformSection.Key("app_platform_url").MustString(""),
+		EnableLegacyID:    appPlatformSection.Key("enable_legacy_id").MustBool(false),
 
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
 		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),

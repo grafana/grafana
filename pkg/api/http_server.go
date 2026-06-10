@@ -51,6 +51,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	annotationsproxy "github.com/grafana/grafana/pkg/services/annotations/proxy"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
@@ -210,6 +211,7 @@ type HTTPServer struct {
 	TeamService                     team.Service
 	accesscontrolService            accesscontrol.Service
 	annotationsRepo                 annotations.Repository
+	annotationsProxyClient          *annotationsproxy.Client
 	tagService                      tag.Service
 	oauthTokenService               oauthtoken.OAuthTokenService
 	statsService                    stats.Service
@@ -400,6 +402,17 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 			Help:      "Total number of datasource endpoint redirects by route (local/remote) and plugin type",
 		}, []string{"route", "plugin_type", "target"}),
 		dsConnectionClient: datasource.NewLegacyConnectionClient(dataSourcesService),
+	}
+
+	if phase := cfg.AnnotationAppPlatform.APIMigrationPhase; phase != "" && phase != "off" {
+		if cfg.AnnotationAppPlatform.AppPlatformURL != "" {
+			hs.annotationsProxyClient = annotationsproxy.NewClient(
+				cfg.AnnotationAppPlatform.AppPlatformURL,
+				&http.Client{}, // TODO: should probably be configurable for TLS, timeouts, etc.
+			)
+		} else {
+			hs.log.Warn("annotations api_migration_phase is set but app_platform_url is empty, proxying disabled")
+		}
 	}
 
 	promRegister.MustRegister(hs.htmlHandlerRequestsDuration)

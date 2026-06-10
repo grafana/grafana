@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	annotationsproxy "github.com/grafana/grafana/pkg/services/annotations/proxy"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -21,6 +22,25 @@ import (
 )
 
 const defaultAnnotationsLimit = 100
+
+func (hs *HTTPServer) shouldProxyAnnotationWrites() bool {
+	if hs.annotationsProxyClient == nil {
+		return false
+	}
+	phase := hs.Cfg.AnnotationAppPlatform.APIMigrationPhase
+	return phase == "proxy-writes" || phase == "proxy-all"
+}
+
+func (hs *HTTPServer) shouldProxyAnnotationReads() bool {
+	if hs.annotationsProxyClient == nil {
+		return false
+	}
+	return hs.Cfg.AnnotationAppPlatform.APIMigrationPhase == "proxy-all"
+}
+
+func (hs *HTTPServer) annotationNamespace(orgID int64) string {
+	return hs.namespacer(orgID)
+}
 
 // swagger:route GET /annotations annotations getAnnotations
 //
@@ -33,6 +53,11 @@ const defaultAnnotationsLimit = 100
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Response {
+	if hs.shouldProxyAnnotationReads() {
+		hs.log.Debug("Proxying annotation read to app platform API", "handler", "GetAnnotations")
+		return hs.proxyGetAnnotations(c)
+	}
+
 	query := &annotations.ItemQuery{
 		From:         c.QueryInt64("from"),
 		To:           c.QueryInt64("to"),
@@ -75,6 +100,74 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 	}
 
 	return response.JSON(http.StatusOK, items)
+}
+
+func (hs *HTTPServer) proxyGetAnnotations(c *contextmodel.ReqContext) response.Response {
+	dashboardUID := c.Query("dashboardUID")
+
+	// Resolve dashboard ID to UID if needed
+	if dashboardUID == "" {
+		if dashboardID := c.QueryInt64("dashboardId"); dashboardID != 0 {
+			dq := dashboards.GetDashboardQuery{ID: dashboardID, OrgID: c.GetOrgID()} // nolint:staticcheck
+			dqResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
+			if err != nil {
+				return response.Error(http.StatusBadRequest, "Invalid dashboard ID in annotation request", err)
+			}
+			dashboardUID = dqResult.UID
+		}
+	}
+
+	limit := c.QueryInt64("limit")
+	if limit == 0 {
+		limit = defaultAnnotationsLimit
+	}
+
+	result, err := hs.annotationsProxyClient.Search(c.Req.Context(), annotationsproxy.SearchRequest{
+		Namespace:    hs.annotationNamespace(c.GetOrgID()),
+		DashboardUID: dashboardUID,
+		PanelID:      c.QueryInt64("panelId"),
+		From:         c.QueryInt64("from"),
+		To:           c.QueryInt64("to"),
+		Limit:        limit,
+		Tags:         c.QueryStrings("tags"),
+		MatchAny:     c.QueryBool("matchAny"),
+	})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get annotations via app platform API", err)
+	}
+
+	items := make([]*annotations.ItemDTO, 0, len(result.Items))
+	for _, anno := range result.Items {
+		items = append(items, annotationToItemDTO(anno))
+	}
+
+	return response.JSON(http.StatusOK, items)
+}
+
+// annotationToItemDTO converts a proxy Annotation to the legacy ItemDTO format.
+func annotationToItemDTO(anno annotationsproxy.Annotation) *annotations.ItemDTO {
+	item := &annotations.ItemDTO{
+		ID:   anno.LegacyID(),
+		Text: anno.Spec.Text,
+		Time: anno.Spec.Time,
+		Tags: anno.Spec.Tags,
+	}
+	if anno.Spec.TimeEnd != nil {
+		item.TimeEnd = *anno.Spec.TimeEnd
+	}
+	if anno.Spec.DashboardUID != nil {
+		item.DashboardUID = anno.Spec.DashboardUID
+	}
+	if anno.Spec.PanelID != nil {
+		item.PanelID = *anno.Spec.PanelID
+	}
+	// Map k8s metadata annotations to legacy fields
+	if anno.Metadata.Annotations != nil {
+		if createdBy, ok := anno.Metadata.Annotations["grafana.com/createdBy"]; ok {
+			item.Login = createdBy
+		}
+	}
+	return item
 }
 
 type AnnotationError struct {
@@ -137,6 +230,11 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "Failed to save annotation", err)
 	}
 
+	if hs.shouldProxyAnnotationWrites() {
+		hs.log.Debug("Proxying annotation write to app platform API", "handler", "PostAnnotation")
+		return hs.proxyCreateAnnotation(c, cmd)
+	}
+
 	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
 		OrgID:        c.GetOrgID(),
@@ -163,6 +261,26 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Annotation added",
 		"id":      startID,
+	})
+}
+
+func (hs *HTTPServer) proxyCreateAnnotation(c *contextmodel.ReqContext, cmd dtos.PostAnnotationsCmd) response.Response {
+	result, err := hs.annotationsProxyClient.Create(c.Req.Context(), annotationsproxy.CreateRequest{
+		Namespace:    hs.annotationNamespace(c.GetOrgID()),
+		Text:         cmd.Text,
+		Time:         cmd.Time,
+		TimeEnd:      cmd.TimeEnd,
+		DashboardUID: cmd.DashboardUID,
+		PanelID:      cmd.PanelId,
+		Tags:         cmd.Tags,
+	})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to save annotation via app platform API", err)
+	}
+
+	return response.JSON(http.StatusOK, util.DynMap{
+		"message": "Annotation added",
+		"id":      result.LegacyID(),
 	})
 }
 
@@ -221,6 +339,23 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) respons
 		return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
 	}
 
+	if hs.shouldProxyAnnotationWrites() {
+		hs.log.Debug("Proxying annotation write to app platform API", "handler", "PostGraphiteAnnotation")
+		result, err := hs.annotationsProxyClient.Create(c.Req.Context(), annotationsproxy.CreateRequest{
+			Namespace: hs.annotationNamespace(c.GetOrgID()),
+			Text:      text,
+			Time:      cmd.When * 1000,
+			Tags:      tagsArray,
+		})
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to save Graphite annotation via app platform API", err)
+		}
+		return response.JSON(http.StatusOK, util.DynMap{
+			"message": "Graphite annotation added",
+			"id":      result.LegacyID(),
+		})
+	}
+
 	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
 		OrgID:  c.GetOrgID(),
@@ -263,6 +398,11 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
+	if hs.shouldProxyAnnotationWrites() {
+		hs.log.Debug("Proxying annotation write to app platform API", "handler", "UpdateAnnotation")
+		return hs.proxyUpdateAnnotation(c, annotationID, cmd)
+	}
+
 	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
 	if resp != nil {
 		return resp
@@ -291,6 +431,34 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 	return response.Success("Annotation updated")
 }
 
+func (hs *HTTPServer) proxyUpdateAnnotation(c *contextmodel.ReqContext, annotationID int64, cmd dtos.UpdateAnnotationsCmd) response.Response {
+	ns := hs.annotationNamespace(c.GetOrgID())
+
+	// Look up the annotation by legacy ID to get its k8s name and resourceVersion
+	existing, err := hs.annotationsProxyClient.GetByLegacyID(c.Req.Context(), ns, annotationID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to find annotation via app platform API", err)
+	}
+	if existing == nil {
+		return response.Error(http.StatusNotFound, "Annotation not found", nil)
+	}
+
+	_, err = hs.annotationsProxyClient.Update(c.Req.Context(), annotationsproxy.UpdateRequest{
+		Namespace:       ns,
+		Name:            existing.Metadata.Name,
+		ResourceVersion: existing.Metadata.ResourceVersion,
+		Text:            cmd.Text,
+		Time:            cmd.Time,
+		TimeEnd:         cmd.TimeEnd,
+		Tags:            cmd.Tags,
+	})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update annotation via app platform API", err)
+	}
+
+	return response.Success("Annotation updated")
+}
+
 // swagger:route PATCH /annotations/{annotation_id} annotations patchAnnotation
 //
 // Patch Annotation.
@@ -313,6 +481,11 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
+	}
+
+	if hs.shouldProxyAnnotationWrites() {
+		hs.log.Debug("Proxying annotation write to app platform API", "handler", "PatchAnnotation")
+		return hs.proxyPatchAnnotation(c, annotationID, cmd)
 	}
 
 	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
@@ -359,6 +532,51 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 	return response.Success("Annotation patched")
 }
 
+func (hs *HTTPServer) proxyPatchAnnotation(c *contextmodel.ReqContext, annotationID int64, cmd dtos.PatchAnnotationsCmd) response.Response {
+	ns := hs.annotationNamespace(c.GetOrgID())
+
+	existing, err := hs.annotationsProxyClient.GetByLegacyID(c.Req.Context(), ns, annotationID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to find annotation via app platform API", err)
+	}
+	if existing == nil {
+		return response.Error(http.StatusNotFound, "Annotation not found", nil)
+	}
+
+	// Apply patch: merge provided fields onto the existing annotation
+	updateReq := annotationsproxy.UpdateRequest{
+		Namespace:       ns,
+		Name:            existing.Metadata.Name,
+		ResourceVersion: existing.Metadata.ResourceVersion,
+		Text:            existing.Spec.Text,
+		Time:            existing.Spec.Time,
+		Tags:            existing.Spec.Tags,
+	}
+	if existing.Spec.TimeEnd != nil {
+		updateReq.TimeEnd = *existing.Spec.TimeEnd
+	}
+
+	if cmd.Text != "" {
+		updateReq.Text = cmd.Text
+	}
+	if cmd.Time > 0 {
+		updateReq.Time = cmd.Time
+	}
+	if cmd.TimeEnd > 0 {
+		updateReq.TimeEnd = cmd.TimeEnd
+	}
+	if cmd.Tags != nil {
+		updateReq.Tags = cmd.Tags
+	}
+
+	_, err = hs.annotationsProxyClient.Update(c.Req.Context(), updateReq)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to patch annotation via app platform API", err)
+	}
+
+	return response.Success("Annotation patched")
+}
+
 // swagger:route POST /annotations/mass-delete annotations massDeleteAnnotations
 //
 // Delete multiple annotations.
@@ -368,6 +586,13 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) MassDeleteAnnotations(c *contextmodel.ReqContext) response.Response {
+	if hs.shouldProxyAnnotationWrites() {
+		hs.log.Debug("Proxying annotation write to app platform API", "handler", "MassDeleteAnnotations")
+		// TODO: implement mass delete proxy. The new API only supports single-resource
+		// deletes, so this would need to search for matching annotations and delete them
+		// individually. For now, fall through to legacy behavior.
+	}
+
 	cmd := dtos.MassDeleteAnnotationsCmd{}
 	err := web.Bind(c.Req, &cmd)
 	if err != nil {
@@ -454,6 +679,19 @@ func (hs *HTTPServer) GetAnnotationByID(c *contextmodel.ReqContext) response.Res
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
+	if hs.shouldProxyAnnotationReads() {
+		hs.log.Debug("Proxying annotation read to app platform API", "handler", "GetAnnotationByID")
+		ns := hs.annotationNamespace(c.GetOrgID())
+		anno, err := hs.annotationsProxyClient.GetByLegacyID(c.Req.Context(), ns, annotationID)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to get annotation via app platform API", err)
+		}
+		if anno == nil {
+			return response.Error(http.StatusNotFound, "Annotation not found", nil)
+		}
+		return response.JSON(http.StatusOK, annotationToItemDTO(*anno))
+	}
+
 	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
 	if resp != nil {
 		return resp
@@ -481,6 +719,24 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.
 	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
+	}
+
+	if hs.shouldProxyAnnotationWrites() {
+		hs.log.Debug("Proxying annotation write to app platform API", "handler", "DeleteAnnotationByID")
+		ns := hs.annotationNamespace(c.GetOrgID())
+
+		existing, err := hs.annotationsProxyClient.GetByLegacyID(c.Req.Context(), ns, annotationID)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to find annotation via app platform API", err)
+		}
+		if existing == nil {
+			return response.Error(http.StatusNotFound, "Annotation not found", nil)
+		}
+
+		if err := hs.annotationsProxyClient.Delete(c.Req.Context(), ns, existing.Metadata.Name); err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to delete annotation via app platform API", err)
+		}
+		return response.Success("Annotation deleted")
 	}
 
 	err = hs.annotationsRepo.Delete(c.Req.Context(), &annotations.DeleteParams{
@@ -524,6 +780,31 @@ func findAnnotationByID(ctx context.Context, repo annotations.Repository, annota
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetAnnotationTags(c *contextmodel.ReqContext) response.Response {
+	if hs.shouldProxyAnnotationReads() {
+		hs.log.Debug("Proxying annotation read to app platform API", "handler", "GetAnnotationTags")
+
+		result, err := hs.annotationsProxyClient.Tags(c.Req.Context(), annotationsproxy.TagsRequest{
+			Namespace: hs.annotationNamespace(c.GetOrgID()),
+			Prefix:    c.Query("tag"),
+			Limit:     c.QueryInt64("limit"),
+		})
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to find annotation tags via app platform API", err)
+		}
+
+		// Convert to legacy response format
+		tags := make([]*annotations.TagsDTO, 0, len(result.Tags))
+		for _, t := range result.Tags {
+			tags = append(tags, &annotations.TagsDTO{
+				Tag:   t.Tag,
+				Count: t.Count,
+			})
+		}
+		return response.JSON(http.StatusOK, annotations.GetAnnotationTagsResponse{
+			Result: annotations.FindTagsResult{Tags: tags},
+		})
+	}
+
 	query := &annotations.TagsQuery{
 		OrgID: c.GetOrgID(),
 		Tag:   c.Query("tag"),
