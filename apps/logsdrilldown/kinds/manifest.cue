@@ -36,13 +36,15 @@ manifest: {
 // v1alpha1 is the v1alpha1 version of the app's API.
 // It includes kinds which the v1alpha1 API serves, and (future) custom routes served globally from the v1alpha1 version.
 v1alpha1: {
+	// Explicitly set to false to keep the app disabled by default for testing.
+	served: false
 	// kinds is the list of kinds served by this version
 	kinds: [logsdrilldownv1alpha1, logsdrilldownDefaultsv1alpha1]
 	// [OPTIONAL]
 	// served indicates whether this particular version is served by the API server.
 	// served should be set to false before a version is removed from the manifest entirely.
 	// served defaults to true if not present.
-	served: true
+	// served: true
 	// [OPTIONAL]
 	// Codegen is a trait that tells the grafana-app-sdk, or other code generation tooling, how to process this kind.
 	// If not present, default values within the codegen trait are used.
@@ -69,13 +71,15 @@ v1alpha1: {
 }
 
 v1beta1: {
+	// Explicitly set to false to keep the app disabled by default for testing.
+	served: false
 	// kinds is the list of kinds served by this version
 	kinds: [logsdrilldownDefaultColumnsv1beta1, logsdrilldownDefaultLabelsv1beta1]
 	// [OPTIONAL]
 	// served indicates whether this particular version is served by the API server.
 	// served should be set to false before a version is removed from the manifest entirely.
 	// served defaults to true if not present.
-	served: true
+	// served: true
 	// [OPTIONAL]
 	// Codegen is a trait that tells the grafana-app-sdk, or other code generation tooling, how to process this kind.
 	// If not present, default values within the codegen trait are used.
