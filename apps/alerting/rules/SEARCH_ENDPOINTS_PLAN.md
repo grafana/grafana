@@ -47,8 +47,9 @@ the legacy one. Two deliberate choices keep the backends consistent:
   too. (`title`/`folder` use the standard indexed fields.)
 
 **Validation:** unit tests cover the encoding and the legacy table round-trip; the e2e suite runs
-under dual-writer modes 0 and 2. Running it under mode 3+ (unified read, with search enabled)
-validates the indexed path end to end — the agreed way to verify the unified backend.
+the full search matrix (filters, label/datasource matching, sorting, pagination, cross-kind) under
+dual-writer modes 0, 2 and **3** — so both the legacy backend and the unified indexed backend
+(reading from unified storage) are verified end to end.
 
 **Note on rules as source of truth:** the ngalert SQL store is what the alerting engine evaluates
 from. The unified path is for serving the k8s read/search surface as rules migrate to unified
