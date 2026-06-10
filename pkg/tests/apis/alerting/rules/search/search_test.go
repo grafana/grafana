@@ -34,7 +34,7 @@ func TestIntegrationRuleSearch(t *testing.T) {
 	// Search reads through the provisioning service (the ngalert SQL store), so
 	// results must be correct whichever dual-writer mode the rule resources run
 	// in. Legacy is written (and authoritative) in modes 0-3.
-	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode2} {
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3} {
 		t.Run(fmt.Sprintf("dualWriterMode=%d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -177,6 +177,7 @@ func createAlertRule(t *testing.T, ctx context.Context, client *apis.TypedClient
 
 	rule := &v0alpha1.AlertRule{
 		ObjectMeta: v1.ObjectMeta{
+			Name:        base.UID,
 			Namespace:   "default",
 			Annotations: map[string]string{v0alpha1.FolderAnnotationKey: searchFolder},
 		},
@@ -205,6 +206,7 @@ func createRecordingRule(t *testing.T, ctx context.Context, client *apis.TypedCl
 
 	rule := &v0alpha1.RecordingRule{
 		ObjectMeta: v1.ObjectMeta{
+			Name:        base.UID,
 			Namespace:   "default",
 			Annotations: map[string]string{v0alpha1.FolderAnnotationKey: searchFolder},
 		},
