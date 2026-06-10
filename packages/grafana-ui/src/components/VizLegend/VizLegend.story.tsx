@@ -49,28 +49,10 @@ const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, n
     setItems(generateLegendItems(seriesCount, theme, stats));
   }, [seriesCount, theme, stats]);
 
-  const onLabelClick = (clickItem: VizLegendItem) => {
-    setItems(
-      items.map((item) => {
-        if (item !== clickItem) {
-          return {
-            ...item,
-            disabled: true,
-          };
-        } else {
-          return {
-            ...item,
-            disabled: false,
-          };
-        }
-      })
-    );
-  };
-
   return (
     <p style={{ marginBottom: '32px' }}>
       <h3 style={{ marginBottom: '32px' }}>{name}</h3>
-      <VizLegend displayMode={displayMode} items={items} placement={placement} onLabelClick={onLabelClick} />
+      <VizLegend displayMode={displayMode} items={items} placement={placement} />
     </p>
   );
 };

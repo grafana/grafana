@@ -1,4 +1,5 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
+import clsx from 'clsx';
 import { useMemo, type JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -98,22 +99,21 @@ export const VizLegendTable = <T extends unknown>({
   }
 
   return (
-    <table className={cx(styles.table, className)}>
+    <table className={clsx(styles.table, className)}>
       <thead>
         <tr>
           {Object.keys(header).map((columnTitle) => (
             <th
               title={header[columnTitle]}
               key={columnTitle}
-              className={cx(styles.header, {
-                [styles.headerSortable]: Boolean(onToggleSort),
-                [styles.nameHeader]: isSortable,
-                [styles.withIcon]: sortKey === columnTitle,
-                'sr-only': !isSortable,
-              })}
+              className={clsx(
+                styles.header,
+                isSortable ? styles.headerSortable : 'sr-only',
+                sortKey === columnTitle ? styles.withIcon : null
+              )}
               onClick={() => {
-                if (onToggleSort && isSortable) {
-                  onToggleSort(columnTitle);
+                if (isSortable) {
+                  onToggleSort?.(columnTitle);
                 }
               }}
             >
@@ -166,15 +166,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     textAlign: 'right',
     whiteSpace: 'nowrap',
   }),
-  nameHeader: css({
-    textAlign: 'left',
-    paddingLeft: '30px',
-  }),
   withIcon: css({
     paddingRight: '4px',
   }),
   headerSortable: css({
     cursor: 'pointer',
+    textAlign: 'left',
+    paddingLeft: '30px',
   }),
   filterAction: css({
     marginLeft: theme.spacing(0.5),
