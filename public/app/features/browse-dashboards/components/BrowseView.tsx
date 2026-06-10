@@ -152,10 +152,11 @@ export function BrowseView({
   );
 
   const provisioningReadmesEnabled = useBooleanFlagValue('provisioning.readmes', false);
+  const showReadme = provisioningReadmesEnabled && isProvisionedFolder && !!folderUID;
   const styles = useStyles2(getStyles);
 
   const flatTreeWithReadme = useMemo(() => {
-    if (!provisioningReadmesEnabled || !isProvisionedFolder || !folderUID || flatTree.length === 0) {
+    if (!showReadme || flatTree.length === 0) {
       return flatTree;
     }
 
@@ -167,7 +168,7 @@ export function BrowseView({
         isOpen: false,
       },
     ];
-  }, [flatTree, isProvisionedFolder, folderUID, provisioningReadmesEnabled]);
+  }, [flatTree, showReadme, folderUID]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
@@ -223,7 +224,7 @@ export function BrowseView({
             }
           />
         )}
-        {provisioningReadmesEnabled && isProvisionedFolder && folderUID && <FolderReadmePanel folderUID={folderUID} />}
+        {showReadme && folderUID && <FolderReadmePanel folderUID={folderUID} />}
       </div>
     );
   }
