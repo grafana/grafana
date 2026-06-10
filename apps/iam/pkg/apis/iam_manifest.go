@@ -1229,9 +1229,26 @@ var appManifestData = app.ManifestData{
 										},
 									},
 								},
+								"created": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "Creation timestamp, in epoch milliseconds.",
+									},
+								},
+								"disabled": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
 								"email": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
+									},
+								},
+								"internalId": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "Deprecated internal (legacy SQL) id of the user.",
 									},
 								},
 								"lastSeenAt": {
@@ -1284,6 +1301,9 @@ var appManifestData = app.ManifestData{
 								"lastSeenAt",
 								"lastSeenAtAge",
 								"provisioned",
+								"disabled",
+								"internalId",
+								"created",
 								"score",
 							},
 						},

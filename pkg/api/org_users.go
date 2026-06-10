@@ -7,10 +7,13 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
@@ -121,7 +124,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) respo
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
 		User:  c.SignedInUser,
-	})
+	}, false)
 
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
@@ -151,7 +154,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext)
 		Limit:                    c.QueryInt("limit"),
 		User:                     c.SignedInUser,
 		DontEnforceAccessControl: !hs.License.FeatureEnabled("accesscontrol.enforcement"),
-	})
+	}, false)
 
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
@@ -197,7 +200,7 @@ func (hs *HTTPServer) GetOrgUsers(c *contextmodel.ReqContext) response.Response 
 		Query: "",
 		Limit: 0,
 		User:  c.SignedInUser,
-	})
+	}, false)
 
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get users for organization", err)
@@ -249,7 +252,7 @@ func (hs *HTTPServer) SearchOrgUsers(c *contextmodel.ReqContext) response.Respon
 		Limit:    perPage,
 		User:     c.SignedInUser,
 		SortOpts: sortOpts,
-	})
+	}, false)
 
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get users for organization", err)
@@ -285,7 +288,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) respo
 		SortOpts: sortOpts,
 	}
 
-	result, err := hs.searchOrgUsersHelper(c, query)
+	result, err := hs.searchOrgUsersHelper(c, query, true)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
 	}
@@ -293,9 +296,19 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) respo
 	return response.JSON(http.StatusOK, result)
 }
 
-func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery, useK8s bool) (*org.SearchOrgUsersQueryResult, error) {
 	query.ExcludeHiddenUsers = true
-	result, err := hs.orgService.SearchOrgUsers(c.Req.Context(), query)
+
+	ctx := c.Req.Context()
+	kubernetesUsersRedirect := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx))
+
+	var result *org.SearchOrgUsersQueryResult
+	var err error
+	if useK8s && kubernetesUsersRedirect {
+		result, err = hs.searchOrgUsersUsingK8s(c, query)
+	} else {
+		result, err = hs.orgService.SearchOrgUsers(ctx, query)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -346,6 +359,53 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	result.Page = query.Page
 	result.PerPage = query.Limit
 	return result, nil
+}
+
+func (hs *HTTPServer) searchOrgUsersUsingK8s(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	searchResult, err := hs.userService.Search(c.Req.Context(), &user.SearchUsersQuery{
+		SignedInUser: query.User,
+		OrgID:        query.OrgID,
+		Query:        query.Query,
+		Page:         query.Page,
+		Limit:        query.Limit,
+		SortOpts:     query.SortOpts,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	orgUsers := make([]*org.OrgUserDTO, 0, len(searchResult.Users))
+	for _, u := range searchResult.Users {
+		if query.UserID != 0 && u.ID != query.UserID {
+			continue
+		}
+		orgUsers = append(orgUsers, &org.OrgUserDTO{
+			OrgID:         query.OrgID,
+			UserID:        u.ID,
+			UID:           u.UID,
+			Email:         u.Email,
+			Name:          u.Name,
+			Login:         u.Login,
+			Role:          u.Role,
+			LastSeenAt:    u.LastSeenAt,
+			LastSeenAtAge: u.LastSeenAtAge,
+			Created:       u.Created,
+			IsDisabled:    u.IsDisabled,
+			IsProvisioned: u.IsProvisioned,
+		})
+	}
+
+	totalCount := searchResult.TotalCount
+	if query.UserID != 0 {
+		totalCount = int64(len(orgUsers))
+	}
+
+	return &org.SearchOrgUsersQueryResult{
+		TotalCount: totalCount,
+		OrgUsers:   orgUsers,
+		Page:       searchResult.Page,
+		PerPage:    searchResult.PerPage,
+	}, nil
 }
 
 // swagger:route PATCH /org/users/{user_id} org updateOrgUserForCurrentOrg
