@@ -1195,9 +1195,6 @@
       "placeholder-enter-a-name": "Enter a name",
       "title-new-evaluation-group": "New evaluation group"
     },
-    "evaluation-group-loader": {
-      "title-something-wrong-trying-fetch-group-details": "Something went wrong when trying to fetch group details"
-    },
     "existing-rule-editor": {
       "sorry-permission": "Sorry! You do not have permission to edit this rule.",
       "sorry-this-rule-does-not-exist": "Sorry! This rule does not exist.",
@@ -1967,9 +1964,7 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "This data source has no rules configured",
         "new-alert-rule": "New alert rule",
-        "new-ds-managed-alerting-rule": "New data source-managed alerting rule",
         "new-ds-managed-recording-rule": "New data source-managed recording rule",
         "new-grafana-alerting-rule": "New alert rule",
         "new-grafana-recording-rule": "New recording rule",
@@ -2980,7 +2975,6 @@
       "return-button": {
         "title": "Alert rules"
       },
-      "rulerrule-loading-error": "Failed to load the rule",
       "toggle": {
         "use-new-experience": "Use new experience",
         "view-previous-experience": "Revert to previous experience"
@@ -3577,9 +3571,6 @@
       "collapse": "Collapse",
       "collapse-all": "Collapse all",
       "collapse-sidebar": "Collapse sidebar",
-      "compact-firing": "firing",
-      "compact-pending": "pending",
-      "compact-rules": "rules",
       "error-loading-rule": "Error loading rule",
       "expand": "Expand",
       "expand-all": "Expand all",
@@ -5672,8 +5663,7 @@
           "apply": "Apply",
           "change-value": "Change variable value",
           "discard": "Discard",
-          "modal-title": "Custom options",
-          "values": "Values separated by comma"
+          "modal-title": "Custom options"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -5898,7 +5888,6 @@
     },
     "inspect": {
       "data-tab": "Data",
-      "error-tab": "Error",
       "json-tab": "JSON",
       "meta-tab": "Meta data",
       "query-tab": "Query",
@@ -6013,13 +6002,6 @@
       "new-row": {
         "title": {
           "row-title": "Row title"
-        }
-      }
-    },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "Widget title"
         }
       }
     },
@@ -8782,19 +8764,6 @@
     "span-bar-row": {
       "tooltip-adaptive-traces-restored": "Recovered by Adaptive Traces."
     },
-    "span-bar-section": {
-      "description-link": "Add additional info next to the service and operation on a span bar row in the trace view.",
-      "title-span-bar": "Span bar"
-    },
-    "span-bar-settings": {
-      "aria-label-selectlabelname": "Select label name",
-      "label-label": "Label",
-      "label-tag-key": "Tag key",
-      "placeholder-duration": "Duration",
-      "placeholder-enter-tag-key": "Enter tag key",
-      "tooltip-default-duration": "Default: duration",
-      "tooltip-tag-key": "Tag key which will be used to get the tag value. A span's attributes and resources will be searched for the tag key"
-    },
     "span-detail": {
       "label": {
         "kind": "Kind:",
@@ -9034,13 +9003,6 @@
       "folder-deleted-success": "Folder deleted",
       "folder-move-error-provisioned": "Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.",
       "folder-moved-success": "Folder moved"
-    },
-    "get-loading-nav": {
-      "main": {
-        "title": {
-          "loading": "Loading"
-        }
-      }
     }
   },
   "forgot-password": {
@@ -11619,11 +11581,6 @@
     "noOptionsMessage-no-options-found": "No options found"
   },
   "migrate-to-cloud": {
-    "build-snapshot": {
-      "description": "This tool can migrate some resources from this installation to your cloud stack. To get started, you'll need to create a snapshot of this installation. Creating a snapshot typically takes less than two minutes. The snapshot is stored alongside this Grafana installation.",
-      "title": "No snapshot exists",
-      "when-complete": "Once the snapshot is complete, you will be able to upload it to your cloud stack."
-    },
     "building-snapshot": {
       "description": "We're gathering your resources for migration to Grafana Cloud. This should only take a moment.",
       "description-eta": "Creating a snapshot typically takes less than two minutes.",
@@ -12480,13 +12437,6 @@
       "recently-viewed-dashboards": "Recently viewed dashboards",
       "search": "Search",
       "starred-dashboards": "Starred dashboards"
-    },
-    "get-calculation-value-data-links-variable-suggestions": {
-      "value-calc-var": {
-        "label": {
-          "calculation-name": "Calculation name"
-        }
-      }
     },
     "get-data-links-variable-suggestions": {
       "value-time-var": {
