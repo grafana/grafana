@@ -73,8 +73,7 @@ func PostableAPIConfigToNotificationsConfiguration(
 		return alertingNotify.NotificationsConfiguration{}, err
 	}
 	return alertingNotify.NotificationsConfiguration{
-		RoutingTree: RouteToAPI(cfg.AlertmanagerConfig.Route),
-		// Unclear if we need to include inhibition rules from AlertmanagerConfig as historically they shouldn't have been supported, but for now we do to keep behaviour unchanged.
+		RoutingTree:   RouteToAPI(cfg.AlertmanagerConfig.Route),
 		InhibitRules:  append(inhibitionRules, cfg.AlertmanagerConfig.InhibitRules...),
 		TimeIntervals: ModelToTimeIntervals(cfg.AlertmanagerConfig.TimeIntervals, cfg.AlertmanagerConfig.MuteTimeIntervals),
 		Templates:     ModelToTemplateDefinitions(cfg.SortedTemplates(false)), // templates are already merged.

@@ -177,7 +177,10 @@ func InhibitionRuleToModel(in definitions.InhibitionRule) InhibitionRule {
 func MatchersToModel(in config.Matchers) []Matcher {
 	out := make([]Matcher, 0, len(in))
 	for _, m := range in {
-		out = append(out, Matcher{Type: MatcherType(m.Type.String()), Label: m.Name, Value: m.Value}) // TODO: Stricter Type conversion?
+		if m == nil {
+			continue
+		}
+		out = append(out, Matcher{Type: MatcherType(m.Type.String()), Label: m.Name, Value: m.Value})
 	}
 	return out
 }
