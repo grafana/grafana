@@ -58,7 +58,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 
 	t.Run("dashboard creation in new folder writes _folder.json", func(t *testing.T) {
 		body := common.DashboardJSON("implicit-dash-001", "Implicit Dashboard", 1)
-		resp := files.Put(t, "implicit-folder/dashboard.json", body)
+		resp := files.PostWithBody(t, "implicit-folder/dashboard.json", body)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating dashboard in new folder should succeed")
 
 		uid, title := files.RequireValidFolderMetadata(t, ctx, "implicit-folder/_folder.json")
@@ -70,7 +70,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 
 	t.Run("explicit folder creation after dashboard reuses existing _folder.json UID", func(t *testing.T) {
 		body := common.DashboardJSON("reuse-dash-001", "Reuse Dashboard", 1)
-		resp := files.Put(t, "reuse-folder/dashboard.json", body)
+		resp := files.PostWithBody(t, "reuse-folder/dashboard.json", body)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating dashboard should succeed")
 
 		uid := files.ReadFolderUID(t, ctx, "reuse-folder/_folder.json")
@@ -85,8 +85,8 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 
 	t.Run("nested dashboard creation writes _folder.json for all ancestor folders", func(t *testing.T) {
 		body := common.DashboardJSON("nested-dash-001", "Nested Dashboard", 1)
-		resp := files.Put(t, "ancestor-a/ancestor-b/dashboard.json", body)
-		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested dashboard should succeed")
+		resp := files.PostWithBody(t, "ancestor-a/ancestor-b/dashboard.json", body)
+		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested dashboard should succeed: %s", string(resp.Body))
 
 		parentUID, _ := files.RequireValidFolderMetadata(t, ctx, "ancestor-a/_folder.json")
 		childUID, _ := files.RequireValidFolderMetadata(t, ctx, "ancestor-a/ancestor-b/_folder.json")

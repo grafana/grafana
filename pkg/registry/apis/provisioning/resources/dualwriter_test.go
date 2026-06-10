@@ -1412,3 +1412,67 @@ func TestUpdateFolderMetadata(t *testing.T) {
 		})
 	}
 }
+
+func TestEnsureAncestorFolderMetadata(t *testing.T) {
+	t.Run("writes _folder.json for new folder", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "new-folder/_folder.json", "test-ref").
+			Return(nil, repository.ErrFileNotFound)
+		rw.On("Create", mock.Anything, "new-folder/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg").
+			Return(nil)
+
+		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
+		dw := &DualReadWriter{repo: rw, folders: fm, folderMetadataEnabled: true}
+		err := dw.ensureAncestorFolderMetadata(context.Background(), "new-folder/dashboard.json", "test-ref", "msg")
+
+		require.NoError(t, err)
+		rw.AssertCalled(t, "Create", mock.Anything, "new-folder/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg")
+	})
+
+	t.Run("does not overwrite existing _folder.json", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+
+		existingManifest := NewFolderManifest("existing-uid", "existing-folder", FolderKind)
+		existingData, _ := json.Marshal(existingManifest)
+		rw.On("Read", mock.Anything, "existing-folder/_folder.json", "test-ref").
+			Return(&repository.FileInfo{Data: existingData, Hash: "abc"}, nil)
+
+		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
+		dw := &DualReadWriter{repo: rw, folders: fm, folderMetadataEnabled: true}
+		err := dw.ensureAncestorFolderMetadata(context.Background(), "existing-folder/dashboard.json", "test-ref", "msg")
+
+		require.NoError(t, err)
+		rw.AssertNotCalled(t, "Create", mock.Anything, "existing-folder/_folder.json", mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("writes _folder.json for each ancestor in nested path", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "a/_folder.json", "test-ref").
+			Return(nil, repository.ErrFileNotFound)
+		rw.On("Read", mock.Anything, "a/b/_folder.json", "test-ref").
+			Return(nil, repository.ErrFileNotFound)
+		rw.On("Create", mock.Anything, "a/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg").
+			Return(nil)
+		rw.On("Create", mock.Anything, "a/b/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg").
+			Return(nil)
+
+		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
+		dw := &DualReadWriter{repo: rw, folders: fm, folderMetadataEnabled: true}
+		err := dw.ensureAncestorFolderMetadata(context.Background(), "a/b/dashboard.json", "test-ref", "msg")
+
+		require.NoError(t, err)
+		rw.AssertCalled(t, "Create", mock.Anything, "a/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg")
+		rw.AssertCalled(t, "Create", mock.Anything, "a/b/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg")
+	})
+
+	t.Run("no-op for root-level file", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+
+		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
+		dw := &DualReadWriter{repo: rw, folders: fm, folderMetadataEnabled: true}
+		err := dw.ensureAncestorFolderMetadata(context.Background(), "dashboard.json", "test-ref", "msg")
+
+		require.NoError(t, err)
+		rw.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+}

@@ -349,6 +349,12 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 		return nil, fmt.Errorf("authorize write to ref: %w", err)
 	}
 
+	if create && r.folderMetadataEnabled && !safepath.IsDir(opts.Path) {
+		if err := r.ensureAncestorFolderMetadata(ctx, opts.Path, opts.Ref, opts.Message); err != nil {
+			return nil, err
+		}
+	}
+
 	info := &repository.FileInfo{
 		Data: opts.Data,
 		Path: opts.Path,
@@ -420,11 +426,7 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 			})
 		}
 
-		var ensureOpts []EnsurePathOption
-		if r.folderMetadataEnabled {
-			ensureOpts = append(ensureOpts, WithWriteFolderMetadata())
-		}
-		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref, ensureOpts...); err != nil {
+		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref); err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
 
@@ -432,6 +434,39 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 	}
 
 	return parsed, err
+}
+
+// ensureAncestorFolderMetadata walks ancestor directories of filePath and writes
+// _folder.json for any that don't have one yet, using the same pattern as
+// CreateFolder (stable UID via util.GenerateShortUID).
+func (r *DualReadWriter) ensureAncestorFolderMetadata(ctx context.Context, filePath, ref, message string) error {
+	dir := safepath.Dir(filePath)
+	if dir == "" {
+		return nil
+	}
+	return safepath.Walk(ctx, dir, func(ctx context.Context, segPath string) error {
+		// Folder still exists in tree, no need to write metadata
+		if _, ok := r.folders.Tree().GetByPath(segPath); ok {
+			return nil
+		}
+
+		_, _, readErr := ReadFolderMetadata(ctx, r.repo, segPath, ref)
+		if errors.Is(readErr, repository.ErrRefNotFound) {
+			_, _, readErr = ReadFolderMetadata(ctx, r.repo, segPath, "")
+		}
+		if readErr == nil {
+			return nil
+		}
+		if !errors.Is(readErr, repository.ErrFileNotFound) {
+			return fmt.Errorf("read folder metadata for %q: %w", segPath, readErr)
+		}
+		uid := util.GenerateShortUID()
+		manifest := NewFolderManifest(uid, safepath.Base(segPath), r.folders.FolderGVK())
+		if _, err := WriteFolderMetadata(ctx, r.repo, segPath, manifest, ref, message); err != nil {
+			return fmt.Errorf("write folder metadata for %q: %w", segPath, err)
+		}
+		return nil
+	})
 }
 
 // MoveResource moves a resource from one path to another in the repository

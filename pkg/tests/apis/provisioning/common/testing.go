@@ -1725,6 +1725,12 @@ func (c *FilesClient) Post(t *testing.T, filePath string) *FilesResponse {
 	return c.Do(t, http.MethodPost, filePath, nil)
 }
 
+// PostPostWithBody sends a POST request to the given path with body.
+func (c *FilesClient) PostWithBody(t *testing.T, filePath string, body []byte) *FilesResponse {
+	t.Helper()
+	return c.Do(t, http.MethodPost, filePath, body)
+}
+
 // Put sends a PUT request to the given path with a JSON body.
 func (c *FilesClient) Put(t *testing.T, filePath string, body []byte) *FilesResponse {
 	t.Helper()

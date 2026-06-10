@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const MaxNumberOfFolders = 10000
@@ -25,9 +24,8 @@ const MaxNumberOfFolders = 10000
 type EnsurePathOption func(*ensurePathConfig)
 
 type ensurePathConfig struct {
-	relocatingUIDs      map[string]struct{}
-	forceWalk           bool
-	writeFolderMetadata bool
+	relocatingUIDs map[string]struct{}
+	forceWalk      bool
 }
 
 func newEnsurePathConfig(opts []EnsurePathOption) ensurePathConfig {
@@ -60,14 +58,6 @@ func WithRelocatingUIDs(uids ...string) EnsurePathOption {
 func WithForceWalk() EnsurePathOption {
 	return func(cfg *ensurePathConfig) {
 		cfg.forceWalk = true
-	}
-}
-
-// WithWriteFolderMetadata causes EnsureFolderPathExist to write a _folder.json
-// file for each newly created folder when folder metadata is enabled.
-func WithWriteFolderMetadata() EnsurePathOption {
-	return func(cfg *ensurePathConfig) {
-		cfg.writeFolderMetadata = true
 	}
 }
 
@@ -160,7 +150,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 		return parent, nil
 	}
 
-	f, err := fm.resolveFolderForPath(ctx, dir, ref, false)
+	f, err := fm.resolveFolderForPath(ctx, dir, ref)
 	if err != nil {
 		return "", err
 	}
@@ -186,7 +176,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
-		f, err := fm.resolveFolderForPath(ctx, traverse, ref, epCfg.writeFolderMetadata)
+		f, err := fm.resolveFolderForPath(ctx, traverse, ref)
 		if err != nil {
 			return err
 		}
@@ -227,22 +217,9 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 // resolveFolderForPath parses folder metadata when possible. If metadata is
 // invalid, it falls back to the current folder already known at that path. When
 // no folder exists yet, it falls back to the hash/path-derived folder identity.
-// When writeFolderMetadata is true, a missing _folder.json is created for folders
-// not yet in the tree, generating a stable UID before the folder is created in
-// the store.
-func (fm *FolderManager) resolveFolderForPath(ctx context.Context, path, ref string, writeFolderMetadata bool) (Folder, error) {
+func (fm *FolderManager) resolveFolderForPath(ctx context.Context, path, ref string) (Folder, error) {
 	f, err := ParseFolderWithMetadata(ctx, fm.repo, path, ref, fm.folderMetadataEnabled)
 	if err == nil {
-		if f.MetadataHash == "" && writeFolderMetadata && fm.folderMetadataEnabled {
-			if _, ok := fm.tree.GetByPath(path); !ok {
-				stableUID := util.GenerateShortUID()
-				manifest := NewFolderManifest(stableUID, f.Title, fm.folderGVK)
-				if _, err := WriteFolderMetadata(ctx, fm.repo, path, manifest, ref, ""); err != nil {
-					return Folder{}, fmt.Errorf("write folder metadata for %q: %w", path, err)
-				}
-				f.ID = stableUID
-			}
-		}
 		return f, nil
 	}
 
