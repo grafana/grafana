@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/rulesequence"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	reqns "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert"
@@ -64,6 +65,8 @@ func RegisterAppInstaller(
 
 	membershipIndex := rulesequence_app.NewMembershipIndex()
 
+	searchHandler := search.NewHandler(*ng.Api.AlertRules, reqns.GetNamespaceMapper(cfg))
+
 	appSpecificConfig := rulesAppConfig.RuntimeConfig{
 		FolderValidator:               newFolderValidator(ng),
 		BaseEvaluationInterval:        ng.Cfg.UnifiedAlerting.BaseInterval,
@@ -72,6 +75,9 @@ func RegisterAppInstaller(
 		MembershipResolver:            membershipIndex,
 		NotificationSettingsValidator: newNotificationSettingsValidator(ng),
 		WatchNamespace:                watchNamespace(cfg),
+		SearchRulesHandler:            searchHandler.SearchRules,
+		SearchAlertRulesHandler:       searchHandler.SearchAlertRules,
+		SearchRecordingRulesHandler:   searchHandler.SearchRecordingRules,
 	}
 
 	provider := simple.NewAppProvider(rulesManifest.LocalManifest(), appSpecificConfig, rulesApp.New)
