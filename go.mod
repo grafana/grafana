@@ -748,3 +748,5 @@ replace (
 // This was retracted, but seems to be known by the Go module proxy, and is
 // otherwise pulled in as a transitive dependency.
 exclude k8s.io/client-go v12.0.0+incompatible
+
+replace github.com/grafana/schemads => /Users/isabellasiu/code/schemads

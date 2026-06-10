@@ -8,9 +8,11 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
+	gocache "github.com/patrickmn/go-cache"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	apidata "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
@@ -39,6 +41,22 @@ const defaultSchemaTableLabel = "service_name"
 // schemaTableLabelCacheTTL is how long we reuse the label picked by discoverTableLabel before
 // re-querying Loki's /labels API.
 const schemaTableLabelCacheTTL = 5 * time.Minute
+
+// schemaCacheKeyTableLabel is the go-cache key for the resolved table label. It uses ASCII unit
+// separator (0x1f), which cannot appear in Loki label names, so it cannot collide with parsed-label keys.
+const schemaCacheKeyTableLabel = "\x1fgrafana/loki/schema/table-label"
+
+const (
+	schemaProbeLimit   = 100
+	schemaProbeWindow  = 15 * time.Minute
+	grafanaSQLHintParser = "PARSER"
+)
+
+var reservedParsedLabels = map[string]struct{}{
+	"__error__":          {},
+	"__error_details__":  {},
+	"__stream_shard__":   {},
+}
 
 var schemaBaseColumns = []schemas.Column{
 	{
@@ -72,6 +90,12 @@ var lokiTableHints = []schemas.TableHint{
 	{Name: "direction", Description: "Log direction: direction('forward') or direction('backward').", HasValue: true},
 	{Name: "rate", Description: "Wrap the stream selector with rate() or bytes_rate() over this window, e.g. rate('5m'). Combines with aggregation when set.", HasValue: true},
 	{Name: "instant", Description: "Use Loki instant query API for metric expressions (requires aggregation or rate hint).", HasValue: false},
+	{
+		Name:          "parser",
+		Description:   "Log line parser: parser('json') or parser('logfmt').",
+		HasValue:      true,
+		AffectsSchema: true,
+	},
 }
 
 // lokiDatasourceCapabilities declares what the SQL engine may push to Loki.
@@ -100,12 +124,11 @@ type SchemaProvider struct {
 	logger     log.Logger
 	tracer     trace.Tracer
 
-	tableLabelMu       sync.Mutex
-	cachedTableLabel   string
-	tableLabelCachedAt time.Time
-
 	// cacheTTL overrides schemaTableLabelCacheTTL when non-zero (tests).
 	cacheTTL time.Duration
+
+	cacheOnce   sync.Once
+	schemaCache *gocache.Cache
 }
 
 func NewSchemaProvider(httpClient *http.Client, url string, logger log.Logger, tracer trace.Tracer) *SchemaProvider {
@@ -128,6 +151,18 @@ func (p *SchemaProvider) cacheTTLOrDefault() time.Duration {
 		return p.cacheTTL
 	}
 	return schemaTableLabelCacheTTL
+}
+
+func (p *SchemaProvider) schemaCacheOrInit() *gocache.Cache {
+	p.cacheOnce.Do(func() {
+		ttl := p.cacheTTLOrDefault()
+		p.schemaCache = gocache.New(ttl, 2*ttl)
+	})
+	return p.schemaCache
+}
+
+func schemaParsedLabelsCacheKey(tableLabel, table, parser string) string {
+	return tableLabel + "\x00" + table + "\x00" + parser
 }
 
 // Schema implements schemas.SchemaHandler.
@@ -158,15 +193,27 @@ func (p *SchemaProvider) Tables(ctx context.Context, _ *schemas.TablesRequest) (
 	if err != nil {
 		return nil, err
 	}
+	tableHints := make(map[string][]schemas.TableHint, len(names))
+	for _, name := range names {
+		tableHints[name] = lokiTableHints
+	}
 	return &schemas.TablesResponse{
 		Tables:       names,
+		TableHints:   tableHints,
 		Capabilities: lokiDatasourceCapabilities,
 	}, nil
+}
+
+// LabelNamesForTable returns stream label names for a table value (Grafana SQL table name).
+func (p *SchemaProvider) LabelNamesForTable(ctx context.Context, table string) ([]string, error) {
+	tblLabel := p.resolvedTableLabel(ctx)
+	return p.fetchLabelNamesForTable(ctx, tblLabel, table)
 }
 
 // Columns implements schemas.ColumnsHandler.
 func (p *SchemaProvider) Columns(ctx context.Context, req *schemas.ColumnsRequest) (*schemas.ColumnsResponse, error) {
 	tblLabel := p.resolvedTableLabel(ctx)
+	parser := parserFromColumnsRequest(req.SchemaContext, req.TableParameters)
 	out := make(map[string][]schemas.Column, len(req.Tables))
 	for _, table := range req.Tables {
 		labels, err := p.fetchLabelNamesForTable(ctx, tblLabel, table)
@@ -175,7 +222,16 @@ func (p *SchemaProvider) Columns(ctx context.Context, req *schemas.ColumnsReques
 			out[table] = schemaBaseColumns
 			continue
 		}
-		out[table] = buildColumnsFromLabels(labels, tblLabel)
+		cols := buildColumnsFromLabels(labels, tblLabel)
+		if parser != "" {
+			parsed, err := p.fetchParsedLabelNames(ctx, tblLabel, table, parser, labels)
+			if err != nil {
+				p.logger.Warn("failed to probe parsed columns for table", "table", table, "parser", parser, "error", err)
+			} else {
+				cols = appendParsedColumns(cols, parsed)
+			}
+		}
+		out[table] = cols
 	}
 	return &schemas.ColumnsResponse{Columns: out}, nil
 }
@@ -183,6 +239,21 @@ func (p *SchemaProvider) Columns(ctx context.Context, req *schemas.ColumnsReques
 // ColumnValues implements schemas.ColumnValuesHandler.
 func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnValuesRequest) (*schemas.ColumnValuesResponse, error) {
 	tblLabel := p.resolvedTableLabel(ctx)
+	parser := parserFromColumnsRequest(req.SchemaContext, req.TableParameters)
+
+	var streamSet map[string]struct{}
+	if parser != "" {
+		streamLabels, err := p.fetchLabelNamesForTable(ctx, tblLabel, req.Table)
+		if err != nil {
+			p.logger.Warn("failed to fetch stream labels for column values", "table", req.Table, "error", err)
+		} else {
+			streamSet = make(map[string]struct{}, len(streamLabels))
+			for _, l := range streamLabels {
+				streamSet[l] = struct{}{}
+			}
+		}
+	}
+
 	resp := &schemas.ColumnValuesResponse{
 		ColumnValues: make(map[string][]string),
 		Errors:       make(map[string]string),
@@ -190,6 +261,17 @@ func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnVa
 	for _, col := range req.Columns {
 		if col == "timestamp" || col == "line" || col == "value" {
 			continue
+		}
+		if parser != "" && streamSet != nil {
+			if _, isStream := streamSet[col]; !isStream {
+				vals, err := p.fetchParsedColumnValues(ctx, tblLabel, req.Table, parser, col, req.TimeRange)
+				if err != nil {
+					resp.Errors[col] = err.Error()
+					continue
+				}
+				resp.ColumnValues[col] = vals
+				continue
+			}
 		}
 		vals, err := p.fetchLabelValues(ctx, tblLabel, req.Table, col, req.TimeRange)
 		if err != nil {
@@ -242,16 +324,13 @@ func (p *SchemaProvider) fetchLokiStringList(ctx context.Context, path, desc str
 }
 
 func (p *SchemaProvider) resolvedTableLabel(ctx context.Context) string {
-	p.tableLabelMu.Lock()
-	defer p.tableLabelMu.Unlock()
-	now := time.Now()
-	ttl := p.cacheTTLOrDefault()
-	if !p.tableLabelCachedAt.IsZero() && now.Sub(p.tableLabelCachedAt) < ttl {
-		return p.cachedTableLabel
+	c := p.schemaCacheOrInit()
+	if v, ok := c.Get(schemaCacheKeyTableLabel); ok {
+		return v.(string)
 	}
-	p.cachedTableLabel = p.discoverTableLabel(ctx)
-	p.tableLabelCachedAt = time.Now()
-	return p.cachedTableLabel
+	label := p.discoverTableLabel(ctx)
+	c.Set(schemaCacheKeyTableLabel, label, p.cacheTTLOrDefault())
+	return label
 }
 
 func (p *SchemaProvider) discoverTableLabel(ctx context.Context) string {
@@ -274,6 +353,207 @@ func (p *SchemaProvider) discoverTableLabel(ctx context.Context) string {
 
 func (p *SchemaProvider) fetchAllLabelNames(ctx context.Context) ([]string, error) {
 	return p.fetchLokiStringList(ctx, "/loki/api/v1/labels", "list labels")
+}
+
+func parserFromColumnsRequest(schemaContext, params map[string]string) string {
+	if p := tableParamGet(schemaContext, grafanaSQLHintParser); p != "" {
+		return strings.ToLower(strings.TrimSpace(p))
+	}
+	raw := tableParamGet(params, grafanaSQLHintParser)
+	return strings.ToLower(strings.TrimSpace(raw))
+}
+
+func tableParamGet(params map[string]string, upperKey string) string {
+	if params == nil {
+		return ""
+	}
+	if v, ok := params[upperKey]; ok {
+		return strings.TrimSpace(v)
+	}
+	for k, v := range params {
+		if strings.EqualFold(k, upperKey) {
+			return strings.TrimSpace(v)
+		}
+	}
+	return ""
+}
+
+func validateLogQLParser(parser string) (string, error) {
+	switch strings.ToLower(strings.TrimSpace(parser)) {
+	case "json":
+		return "json", nil
+	case "logfmt":
+		return "logfmt", nil
+	default:
+		return "", fmt.Errorf("unsupported parser %q; use json or logfmt", parser)
+	}
+}
+
+func (p *SchemaProvider) fetchParsedLabelNames(ctx context.Context, tableLabel, table, parser string, streamLabels []string) ([]string, error) {
+	stage, err := validateLogQLParser(parser)
+	if err != nil {
+		return nil, err
+	}
+
+	cacheKey := schemaParsedLabelsCacheKey(tableLabel, table, stage)
+	c := p.schemaCacheOrInit()
+	if v, ok := c.Get(cacheKey); ok {
+		return append([]string(nil), v.([]string)...), nil
+	}
+
+	streamSet := make(map[string]struct{}, len(streamLabels))
+	for _, l := range streamLabels {
+		streamSet[l] = struct{}{}
+	}
+
+	keys, err := p.probeParsedLabelKeys(ctx, tableLabel, table, stage)
+	if err != nil {
+		return nil, err
+	}
+
+	filtered := make([]string, 0, len(keys))
+	for _, k := range keys {
+		if k == tableLabel {
+			continue
+		}
+		if _, reserved := reservedParsedLabels[k]; reserved {
+			continue
+		}
+		if _, isStream := streamSet[k]; isStream {
+			continue
+		}
+		filtered = append(filtered, k)
+	}
+	sort.Strings(filtered)
+
+	c.Set(cacheKey, filtered, p.cacheTTLOrDefault())
+
+	return filtered, nil
+}
+
+type lokiStreamsQueryResponse struct {
+	Status string `json:"status"`
+	Data   struct {
+		Result []struct {
+			Stream map[string]string `json:"stream"`
+		} `json:"result"`
+	} `json:"data"`
+}
+
+func (p *SchemaProvider) probeParsedLabelKeys(ctx context.Context, tableLabel, table, parserStage string) ([]string, error) {
+	query := logQLSelector(tableLabel, table) + " | " + parserStage
+	params := url.Values{}
+	params.Set("query", query)
+	params.Set("limit", strconv.Itoa(schemaProbeLimit))
+	end := time.Now().UTC()
+	start := end.Add(-schemaProbeWindow)
+	params.Set("start", strconv.FormatInt(start.UnixNano(), 10))
+	params.Set("end", strconv.FormatInt(end.UnixNano(), 10))
+
+	api := newLokiAPI(p.httpClient, p.url, p.logger, p.tracer)
+	raw, err := api.RawQuery(ctx, "/loki/api/v1/query_range?"+params.Encode())
+	if err != nil {
+		return nil, fmt.Errorf("probe parsed labels: %w", err)
+	}
+	if raw.Status/100 != 2 {
+		return nil, fmt.Errorf("probe parsed labels: unexpected status %d", raw.Status)
+	}
+
+	var parsed lokiStreamsQueryResponse
+	if err := json.Unmarshal(raw.Body, &parsed); err != nil {
+		return nil, fmt.Errorf("probe parsed labels: decode: %w", err)
+	}
+	if parsed.Status != "success" {
+		return nil, fmt.Errorf("probe parsed labels: loki status %q", parsed.Status)
+	}
+
+	keysSet := make(map[string]struct{})
+	for _, r := range parsed.Data.Result {
+		for k := range r.Stream {
+			keysSet[k] = struct{}{}
+		}
+	}
+	keys := make([]string, 0, len(keysSet))
+	for k := range keysSet {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys, nil
+}
+
+func (p *SchemaProvider) fetchParsedColumnValues(ctx context.Context, tableLabel, table, parserStage, column string, tr apidata.TimeRange) ([]string, error) {
+	keys, err := p.probeParsedLabelKeys(ctx, tableLabel, table, parserStage)
+	if err != nil {
+		return nil, err
+	}
+	keySet := make(map[string]struct{}, len(keys))
+	for _, k := range keys {
+		keySet[k] = struct{}{}
+	}
+	if _, ok := keySet[column]; !ok {
+		return nil, nil
+	}
+
+	query := logQLSelector(tableLabel, table) + " | " + parserStage
+	params := url.Values{}
+	params.Set("query", query)
+	params.Set("limit", strconv.Itoa(schemaProbeLimit))
+	appendTimeRangeParams(params, tr)
+	if params.Get("start") == "" && params.Get("end") == "" {
+		end := time.Now().UTC()
+		start := end.Add(-schemaProbeWindow)
+		params.Set("start", strconv.FormatInt(start.UnixNano(), 10))
+		params.Set("end", strconv.FormatInt(end.UnixNano(), 10))
+	}
+
+	api := newLokiAPI(p.httpClient, p.url, p.logger, p.tracer)
+	raw, err := api.RawQuery(ctx, "/loki/api/v1/query_range?"+params.Encode())
+	if err != nil {
+		return nil, fmt.Errorf("probe parsed column values: %w", err)
+	}
+	if raw.Status/100 != 2 {
+		return nil, fmt.Errorf("probe parsed column values: unexpected status %d", raw.Status)
+	}
+
+	var parsed lokiStreamsQueryResponse
+	if err := json.Unmarshal(raw.Body, &parsed); err != nil {
+		return nil, fmt.Errorf("probe parsed column values: decode: %w", err)
+	}
+	if parsed.Status != "success" {
+		return nil, fmt.Errorf("probe parsed column values: loki status %q", parsed.Status)
+	}
+
+	valuesSet := make(map[string]struct{})
+	for _, r := range parsed.Data.Result {
+		if v, ok := r.Stream[column]; ok && v != "" {
+			valuesSet[v] = struct{}{}
+		}
+	}
+	values := make([]string, 0, len(valuesSet))
+	for v := range valuesSet {
+		values = append(values, v)
+	}
+	sort.Strings(values)
+	return values, nil
+}
+
+func appendParsedColumns(cols []schemas.Column, parsed []string) []schemas.Column {
+	existing := make(map[string]struct{}, len(cols))
+	for _, c := range cols {
+		existing[c.Name] = struct{}{}
+	}
+	for _, name := range parsed {
+		if _, ok := existing[name]; ok {
+			continue
+		}
+		cols = append(cols, schemas.Column{
+			Name:        name,
+			Type:        schemas.ColumnTypeString,
+			Operators:   labelColumnOperators,
+			Description: "Extracted log field (parser hint).",
+		})
+	}
+	return cols
 }
 
 func buildColumnsFromLabels(labels []string, tableLabel string) []schemas.Column {

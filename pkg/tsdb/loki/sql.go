@@ -88,6 +88,7 @@ func dsAbstractionEnabled(req *backend.QueryDataRequest) bool {
 //	STEP, RATE — Grafana duration strings; invalid values fail the rewrite.
 //	DIRECTION — forward/backward; applied on log queries only (QueryJSONModel.Direction).
 //	INSTANT — key presence selects instant API for metric queries only.
+//	PARSER — json or logfmt; appends a LogQL parser stage and routes non-stream filters to pipeline label filters.
 //
 // Positive schemas.Query.limit is mapped to Loki MaxLines on log queries only (buildLogPlan).
 //
@@ -135,7 +136,7 @@ func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataReque
 			}
 		}
 
-		rewritten, kind, err := rewriteSQLQuery(q, sq, tableLabel)
+		rewritten, kind, err := rewriteSQLQuery(ctx, q, sq, tableLabel, dsInfo)
 		if err != nil {
 			sqlErrors[q.RefID] = err
 			continue
@@ -157,6 +158,7 @@ type sqlHints struct {
 	rateDur   time.Duration // parsed RATE duration, 0 if absent
 	direction string        // lowercased DIRECTION hint, "" if absent
 	instant   bool          // INSTANT hint key presence
+	parser    string        // lowercased PARSER hint (json, logfmt), "" if absent
 }
 
 // parseSQLHints validates and extracts the TableHintValues supported by Loki Grafana SQL. Errors
@@ -172,6 +174,13 @@ func parseSQLHints(hints map[string]string) (sqlHints, error) {
 	}
 	h.direction = strings.ToLower(hintGet(hints, grafanaSQLHintDirection))
 	h.instant = instantHintEnabled(hints)
+	if rawParser := hintGet(hints, grafanaSQLHintParser); rawParser != "" {
+		stage, err := validateLogQLParser(rawParser)
+		if err != nil {
+			return h, fmt.Errorf("loki grafana sql: %w", err)
+		}
+		h.parser = stage
+	}
 	return h, nil
 }
 
@@ -252,15 +261,15 @@ func buildMetricPlan(selector string, sq grafanaSQLQuery, hints sqlHints, queryD
 // sq.GrafanaSql == true and sq.Table != "". Returns sqlKindLog or sqlKindMetric so callers can
 // dispatch response-frame flattening. Returned errors are prefixed with "loki grafana sql:" and
 // intended to be surfaced to the user as-is.
-func rewriteSQLQuery(q backend.DataQuery, sq grafanaSQLQuery, tableLabel string) (backend.DataQuery, sqlKind, error) {
-	selector, err := buildLogQLExpr(tableLabel, sq.Table, sq.Filters)
-	if err != nil {
-		return q, "", fmt.Errorf("loki grafana sql: failed to build LogQL: %w", err)
-	}
-
+func rewriteSQLQuery(ctx context.Context, q backend.DataQuery, sq grafanaSQLQuery, tableLabel string, dsInfo *datasourceInfo) (backend.DataQuery, sqlKind, error) {
 	hints, err := parseSQLHints(sq.TableHintValues)
 	if err != nil {
 		return q, "", err
+	}
+
+	expr, err := buildLogQLPipeline(ctx, tableLabel, sq.Table, sq.Filters, hints, dsInfo)
+	if err != nil {
+		return q, "", fmt.Errorf("loki grafana sql: failed to build LogQL: %w", err)
 	}
 
 	isMetric := sq.Aggregation != nil || hints.rateStr != ""
@@ -268,14 +277,20 @@ func rewriteSQLQuery(q backend.DataQuery, sq grafanaSQLQuery, tableLabel string)
 		return q, "", fmt.Errorf("loki grafana sql: %s hint requires a metric query (aggregation or %s)", grafanaSQLHintInstant, grafanaSQLHintRate)
 	}
 
+	if isMetric && hints.parser != "" && sq.Aggregation != nil {
+		if err := rejectParsedMetricAggregation(ctx, sq.Table, sq.Aggregation, hints, dsInfo); err != nil {
+			return q, "", err
+		}
+	}
+
 	var plan queryPlan
 	if isMetric {
-		plan, err = buildMetricPlan(selector, sq, hints, q.TimeRange.Duration())
+		plan, err = buildMetricPlan(expr, sq, hints, q.TimeRange.Duration())
 		if err != nil {
 			return q, "", err
 		}
 	} else {
-		plan = buildLogPlan(selector, sq, hints)
+		plan = buildLogPlan(expr, sq, hints)
 	}
 
 	if plan.intervalStep > 0 {
@@ -423,14 +438,22 @@ func buildGrafanaSQLMetricExpr(selector string, agg *aggregationHint, window tim
 	}
 }
 
-func wrapLogQLRate(selector string, column string, d time.Duration) string {
-	w := gtime.FormatInterval(d)
-	bracket := "[" + w + "]"
+func wrapLogQLRate(logQuery string, column string, d time.Duration) string {
+	bracket := logQLRangeBracket(logQuery, d)
 	col := strings.ToLower(strings.TrimSpace(column))
 	if col == metricColumnBytes {
-		return fmt.Sprintf("bytes_rate(%s%s)", selector, bracket)
+		return fmt.Sprintf("bytes_rate(%s)", bracket)
 	}
-	return fmt.Sprintf("rate(%s%s)", selector, bracket)
+	return fmt.Sprintf("rate(%s)", bracket)
+}
+
+func logQLRangeBracket(logQuery string, d time.Duration) string {
+	w := gtime.FormatInterval(d)
+	bracket := "[" + w + "]"
+	if strings.Contains(logQuery, " | ") {
+		return logQuery + " " + bracket
+	}
+	return logQuery + bracket
 }
 
 func aggregationGroupLabels(agg *aggregationHint) []string {
@@ -452,21 +475,20 @@ func aggregationGroupLabels(agg *aggregationHint) []string {
 	return grouping
 }
 
-func innerMetricRangeVector(selector string, sqlFunc string, column string, window time.Duration) (string, error) {
-	w := gtime.FormatInterval(window)
-	bracket := "[" + w + "]"
+func innerMetricRangeVector(logQuery string, sqlFunc string, column string, window time.Duration) (string, error) {
+	bracket := logQLRangeBracket(logQuery, window)
 
 	switch strings.ToUpper(strings.TrimSpace(sqlFunc)) {
 	case "COUNT":
-		return fmt.Sprintf("count_over_time(%s%s)", selector, bracket), nil
+		return fmt.Sprintf("count_over_time(%s)", bracket), nil
 	}
 
 	col := strings.ToLower(strings.TrimSpace(column))
 	switch col {
 	case "", "*", "line", "value", "count":
-		return fmt.Sprintf("count_over_time(%s%s)", selector, bracket), nil
+		return fmt.Sprintf("count_over_time(%s)", bracket), nil
 	case metricColumnBytes:
-		return fmt.Sprintf("bytes_over_time(%s%s)", selector, bracket), nil
+		return fmt.Sprintf("bytes_over_time(%s)", bracket), nil
 	default:
 		return "", fmt.Errorf("unsupported aggregation column %q for loki metric pushdown", column)
 	}
@@ -492,6 +514,113 @@ func hintGet(hints map[string]string, upperKey string) string {
 		}
 	}
 	return ""
+}
+
+func buildLogQLPipeline(ctx context.Context, tableLabel, tableValue string, filters []schemas.ColumnFilter, hints sqlHints, dsInfo *datasourceInfo) (string, error) {
+	streamLabelSet, err := streamLabelSetForTable(ctx, dsInfo, tableValue)
+	if err != nil {
+		return "", err
+	}
+
+	var streamFilters, pipelineFilters []schemas.ColumnFilter
+	for _, f := range filters {
+		if shouldSkipFilterColumn(f.Name) || f.Name == tableLabel {
+			continue
+		}
+		if hints.parser != "" {
+			if streamLabelSet[f.Name] {
+				streamFilters = append(streamFilters, f)
+			} else {
+				pipelineFilters = append(pipelineFilters, f)
+			}
+			continue
+		}
+		if len(streamLabelSet) > 0 && !streamLabelSet[f.Name] {
+			for _, cond := range f.Conditions {
+				if _, err := filterConditionToLogQL(f.Name, cond); err != nil {
+					return "", err
+				}
+			}
+			return "", fmt.Errorf("column %q requires parser('json') or parser('logfmt') hint", f.Name)
+		}
+		streamFilters = append(streamFilters, f)
+	}
+
+	selector, err := buildLogQLExpr(tableLabel, tableValue, streamFilters)
+	if err != nil {
+		return "", err
+	}
+	if hints.parser == "" {
+		return selector, nil
+	}
+
+	expr := selector + " | " + hints.parser
+	for _, f := range pipelineFilters {
+		for _, cond := range f.Conditions {
+			frag, err := pipelineFilterToLogQL(f.Name, cond)
+			if err != nil {
+				return "", err
+			}
+			expr += " | " + frag
+		}
+	}
+	return expr, nil
+}
+
+func streamLabelSetForTable(ctx context.Context, dsInfo *datasourceInfo, table string) (map[string]bool, error) {
+	if dsInfo == nil || dsInfo.schemaProvider == nil {
+		return nil, nil
+	}
+	labels, err := dsInfo.schemaProvider.LabelNamesForTable(ctx, table)
+	if err != nil {
+		return nil, err
+	}
+	set := make(map[string]bool, len(labels))
+	for _, l := range labels {
+		set[l] = true
+	}
+	return set, nil
+}
+
+func rejectParsedMetricAggregation(ctx context.Context, table string, agg *aggregationHint, hints sqlHints, dsInfo *datasourceInfo) error {
+	if agg == nil || hints.parser == "" {
+		return nil
+	}
+	col := strings.ToLower(strings.TrimSpace(agg.Column))
+	if col == "" || col == "*" || col == "line" || col == "value" || col == "count" || col == metricColumnBytes {
+		return nil
+	}
+	streamLabelSet, err := streamLabelSetForTable(ctx, dsInfo, table)
+	if err != nil {
+		return err
+	}
+	if streamLabelSet[col] || streamLabelSet[agg.Column] {
+		return nil
+	}
+	return fmt.Errorf("aggregation on parsed field %q requires unwrap (not yet supported)", agg.Column)
+}
+
+func pipelineFilterToLogQL(name string, cond schemas.FilterCondition) (string, error) {
+	switch cond.Operator {
+	case schemas.OperatorEquals:
+		return fmt.Sprintf("%s = %s", name, strconv.Quote(fmt.Sprintf("%v", cond.Value))), nil
+	case schemas.OperatorNotEquals:
+		return fmt.Sprintf("%s != %s", name, strconv.Quote(fmt.Sprintf("%v", cond.Value))), nil
+	case schemas.OperatorLike:
+		pat := fmt.Sprintf("%v", cond.Value)
+		return fmt.Sprintf("%s =~ %s", name, strconv.Quote(pat)), nil
+	case schemas.OperatorIn:
+		if len(cond.Values) == 0 {
+			return "", fmt.Errorf("empty IN list for column %q", name)
+		}
+		re, err := inValuesToRegex(cond.Values)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("%s =~ %s", name, strconv.Quote(re)), nil
+	default:
+		return "", fmt.Errorf("unsupported filter operator %q for column %q", cond.Operator, name)
+	}
 }
 
 // buildLogQLExpr builds a LogQL stream selector for the table row plus label filters.
