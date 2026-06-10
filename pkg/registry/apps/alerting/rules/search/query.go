@@ -1,93 +1,89 @@
 package search
 
 import (
-	"net/url"
 	"sort"
 	"strconv"
 	"strings"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"k8s.io/apimachinery/pkg/selection"
+
 	"github.com/grafana/grafana/pkg/expr"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// parseParams decodes the request query string into the generated (superset)
-// request params type, so the handler input matches the documented API.
-func parseParams(v url.Values) model.GetSearchRulesRequestParams {
-	p := model.GetSearchRulesRequestParams{
-		Q:                   strPtr(v, "q"),
-		Folders:             v["folders"],
-		Groups:              v["groups"],
-		DatasourceUIDs:      v["datasourceUIDs"],
-		Labels:              v["labels"],
-		ContinueToken:       strPtr(v, "continueToken"),
-		Type:                strPtr(v, "type"),
-		DashboardUID:        strPtr(v, "dashboardUID"),
-		Receiver:            strPtr(v, "receiver"),
-		NotificationType:    strPtr(v, "notificationType"),
-		RoutingTree:         strPtr(v, "routingTree"),
-		Metric:              strPtr(v, "metric"),
-		TargetDatasourceUID: strPtr(v, "targetDatasourceUID"),
-	}
-	if s := v.Get("paused"); s != "" {
-		if b, err := strconv.ParseBool(s); err == nil {
-			p.Paused = &b
-		}
-	}
-	if s := v.Get("limit"); s != "" {
-		if n, err := strconv.ParseInt(s, 10, 64); err == nil && n >= 0 {
-			p.Limit = &n
-		}
-	}
-	if s := v.Get("panelID"); s != "" {
-		if n, err := strconv.ParseInt(s, 10, 64); err == nil {
-			p.PanelID = &n
-		}
-	}
-	if s := v.Get("sort"); s != "" {
-		f := model.GetSearchRulesRequestRuleSearchSortField(s)
-		p.Sort = &f
-	}
-	return p
+// filters is the backend-neutral view of a ResourceSearchRequest used by the
+// legacy backend. The handler encodes these into the request; the legacy and
+// unified backends each decode the request in their own way.
+type filters struct {
+	text                string
+	folders             []string
+	groups              []string
+	datasourceUIDs      []string
+	labels              []labelMatcher
+	paused              *bool
+	dashboardUID        string
+	panelID             string
+	receiver            string
+	notificationType    string
+	routingTree         string
+	metric              string
+	targetDatasourceUID string
+	sortField           string
+	sortDesc            bool
 }
 
-func strPtr(v url.Values, key string) *string {
-	if s := v.Get(key); s != "" {
-		return &s
+func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
+	f := filters{text: req.Query}
+	opts := req.Options
+	if opts != nil {
+		for _, r := range opts.Fields {
+			switch r.Key {
+			case fieldFolder:
+				f.folders = r.Values
+			case fieldGroup:
+				f.groups = r.Values
+			case fieldDatasourceUIDs:
+				f.datasourceUIDs = r.Values
+			case fieldPaused:
+				if len(r.Values) == 1 {
+					if b, err := strconv.ParseBool(r.Values[0]); err == nil {
+						f.paused = &b
+					}
+				}
+			case fieldDashboardUID:
+				f.dashboardUID = firstValue(r.Values)
+			case fieldPanelID:
+				f.panelID = firstValue(r.Values)
+			case fieldReceiver:
+				f.receiver = firstValue(r.Values)
+			case fieldNotificationType:
+				f.notificationType = firstValue(r.Values)
+			case fieldRoutingTree:
+				f.routingTree = firstValue(r.Values)
+			case fieldMetric:
+				f.metric = firstValue(r.Values)
+			case fieldTargetDatasourceUID:
+				f.targetDatasourceUID = firstValue(r.Values)
+			}
+		}
+		for _, r := range opts.Labels {
+			f.labels = append(f.labels, requirementToMatcher(r))
+		}
 	}
-	return nil
+	if len(req.SortBy) > 0 {
+		f.sortField = req.SortBy[0].Field
+		f.sortDesc = req.SortBy[0].Desc
+	}
+	return f
 }
 
-func strVal(p *string) string {
-	if p == nil {
+func firstValue(values []string) string {
+	if len(values) == 0 {
 		return ""
 	}
-	return *p
-}
-
-func limit(p model.GetSearchRulesRequestParams) int64 {
-	if p.Limit == nil {
-		return 0
-	}
-	return *p.Limit
-}
-
-func panelID(p model.GetSearchRulesRequestParams) string {
-	if p.PanelID == nil {
-		return ""
-	}
-	return strconv.FormatInt(*p.PanelID, 10)
-}
-
-// sortSpec splits a sort field value into the field name and descending flag
-// ("-title" -> "title", desc).
-func sortSpec(field *model.GetSearchRulesRequestRuleSearchSortField) (string, bool) {
-	if field == nil {
-		return "", false
-	}
-	s := string(*field)
-	return strings.TrimPrefix(s, "-"), strings.HasPrefix(s, "-")
+	return values[0]
 }
 
 type labelMatcher struct {
@@ -105,17 +101,8 @@ const (
 	matchNotExists
 )
 
-func parseLabelMatchers(raw []string) []labelMatcher {
-	matchers := make([]labelMatcher, 0, len(raw))
-	for _, s := range raw {
-		if s == "" {
-			continue
-		}
-		matchers = append(matchers, parseLabelMatcher(s))
-	}
-	return matchers
-}
-
+// parseLabelMatcher parses a "labels" query value: key=value, key!=value, key
+// (exists) or !key (not exists).
 func parseLabelMatcher(s string) labelMatcher {
 	if rest, ok := strings.CutPrefix(s, "!"); ok {
 		return labelMatcher{key: rest, op: matchNotExists}
@@ -127,6 +114,40 @@ func parseLabelMatcher(s string) labelMatcher {
 		return labelMatcher{key: k, value: v, op: matchEquals}
 	}
 	return labelMatcher{key: s, op: matchExists}
+}
+
+// requirementToMatcher / matcherToRequirement translate a label matcher to and
+// from a ResourceSearchRequest label requirement so it survives the request.
+func requirementToMatcher(r *resourcepb.Requirement) labelMatcher {
+	m := labelMatcher{key: r.Key, value: firstValue(r.Values)}
+	switch selection.Operator(r.Operator) {
+	case selection.NotEquals:
+		m.op = matchNotEquals
+	case selection.Exists:
+		m.op = matchExists
+	case selection.DoesNotExist:
+		m.op = matchNotExists
+	default:
+		m.op = matchEquals
+	}
+	return m
+}
+
+func matcherToRequirement(m labelMatcher) *resourcepb.Requirement {
+	r := &resourcepb.Requirement{Key: m.key}
+	switch m.op {
+	case matchNotEquals:
+		r.Operator = string(selection.NotEquals)
+		r.Values = []string{m.value}
+	case matchExists:
+		r.Operator = string(selection.Exists)
+	case matchNotExists:
+		r.Operator = string(selection.DoesNotExist)
+	default:
+		r.Operator = string(selection.Equals)
+		r.Values = []string{m.value}
+	}
+	return r
 }
 
 func matchText(r *ngmodels.AlertRule, text string) bool {
@@ -194,7 +215,7 @@ func matchDatasources(r *ngmodels.AlertRule, uids []string) bool {
 func sortRules(rules []*ngmodels.AlertRule, field string, desc bool) {
 	var less func(a, b *ngmodels.AlertRule) bool
 	switch field {
-	case "group":
+	case fieldGroup:
 		// Compound key keeps each group together and in evaluation order.
 		less = func(a, b *ngmodels.AlertRule) bool {
 			if a.NamespaceUID != b.NamespaceUID {
@@ -222,26 +243,6 @@ func sortRules(rules []*ngmodels.AlertRule, field string, desc bool) {
 		}
 		return less(rules[i], rules[j])
 	})
-}
-
-// paginate slices the (already filtered and sorted) rules using an offset
-// encoded in the continue token. It returns the page and the token for the
-// next page, which is empty when the last page is reached.
-func paginate(rules []*ngmodels.AlertRule, continueToken string, limit int64) ([]*ngmodels.AlertRule, string) {
-	offset := 0
-	if continueToken != "" {
-		if n, err := strconv.Atoi(continueToken); err == nil && n > 0 {
-			offset = n
-		}
-	}
-	if offset > len(rules) {
-		offset = len(rules)
-	}
-	rules = rules[offset:]
-	if limit <= 0 || int64(len(rules)) <= limit {
-		return rules, ""
-	}
-	return rules[:limit], strconv.Itoa(offset + int(limit))
 }
 
 func includeFilter(values []string) provisioning.ListRuleStringFilter {
