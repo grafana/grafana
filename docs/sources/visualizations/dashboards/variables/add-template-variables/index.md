@@ -663,14 +663,13 @@ If the currently selected time zone is _Browser Time_, Grafana tries to determin
 ## Chained variables
 
 _Chained variables_, also called _linked variables_ or _nested variables_, are query variables with one or more other variables in their variable query.
+This section explains how chained variables work and provides links to example dashboards that use chained variables.
 
-Chained variables create dependent relationships where the options available in one variable depend on the selections made in another.
-This pattern enables cascading filters that help users drill down through hierarchical data structures.
+Chained variable queries are different for every data source, but the premise is the same for all.
+You can use chained variable queries in any data source that allows them.
 
-Cascading filter patterns are common in multi-tier filtering scenarios such as region > cluster > namespace > pod.
-Each level narrows the available options based on the previous selection, creating an intuitive navigation experience through your infrastructure or data hierarchy.
-
-Technically, there is no limit to how many many variables you can chain together, but the more links you have, the greater the query load.
+Extremely complex linked templated dashboards are possible, 5 or 10 levels deep.
+Technically, there is no limit to how deep or complex you can go, but the more links you have, the greater the query load.
 
 ### Grafana Play dashboard examples
 
