@@ -870,7 +870,7 @@ jobs:
             echo "Unable to load Docker image from $PACKAGE_PATH"
             exit 1
           fi
-          echo "IMAGE_UNDER_TEST=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "IMAGE_UNDER_TEST=$IMAGE" | tee -a "$GITHUB_OUTPUT"
 
       - name: Get vault secrets
         id: vault-secrets
