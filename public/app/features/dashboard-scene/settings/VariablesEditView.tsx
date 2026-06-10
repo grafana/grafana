@@ -247,6 +247,8 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const usagesNetwork = useMemo(() => model.getUsagesNetwork(), [model]);
   const usages = useMemo(() => model.getUsages(), [model]);
   const saveModel = model.getSaveModel();
+
+  const isDynamicDashboardsEnabled = useFlagGrafanaDashboardsNewLayouts();
   const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
 
   const goToSidebar = () => {
@@ -262,7 +264,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
     DashboardInteractions.takeMeToSidebarClicked({ item: 'variables' });
   };
 
-  if (isSettingsPageRedesignEnabled) {
+  if (isDynamicDashboardsEnabled && isSettingsPageRedesignEnabled) {
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
         <NavToolbarActions dashboard={dashboard} />

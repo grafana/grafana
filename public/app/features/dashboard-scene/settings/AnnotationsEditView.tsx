@@ -153,6 +153,7 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
 
   const annotations: AnnotationQuery[] = dataLayersToAnnotations(annotationLayers);
 
+  const isDynamicDashboardsEnabled = useFlagGrafanaDashboardsNewLayouts();
   const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
 
   const goToSidebar = () => {
@@ -187,7 +188,7 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
-      {isSettingsPageRedesignEnabled ? (
+      {isDynamicDashboardsEnabled && isSettingsPageRedesignEnabled ? (
         <Alert
           severity="info"
           title={t('dashboard-scene.dashboard-settings.annotations.title-moved', 'Looking for annotations?')}
