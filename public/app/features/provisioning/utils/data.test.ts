@@ -321,6 +321,62 @@ describe('provisioning data mapping', () => {
     });
   });
 
+  describe('pull request options', () => {
+    it('writes titleTemplate to spec when provided', () => {
+      const formData = makeFormData('github');
+      formData.pullRequest = { titleTemplate: '{{action}}: {{title}}' };
+      const spec = dataToSpec(formData);
+      expect(spec.pullRequest?.titleTemplate).toBe('{{action}}: {{title}}');
+    });
+
+    it('trims surrounding whitespace before writing to spec', () => {
+      const formData = makeFormData('github');
+      formData.pullRequest = { titleTemplate: '  {{title}}  ' };
+      const spec = dataToSpec(formData);
+      expect(spec.pullRequest?.titleTemplate).toBe('{{title}}');
+    });
+
+    it('writes enforceTemplate to spec without a title template', () => {
+      const formData = makeFormData('github');
+      formData.pullRequest = { enforceTemplate: true };
+      const spec = dataToSpec(formData);
+      expect(spec.pullRequest).toEqual({ enforceTemplate: true });
+    });
+
+    it('writes both title template and enforceTemplate to spec', () => {
+      const formData = makeFormData('github');
+      formData.pullRequest = { titleTemplate: '{{title}}', enforceTemplate: true };
+      const spec = dataToSpec(formData);
+      expect(spec.pullRequest).toEqual({ titleTemplate: '{{title}}', enforceTemplate: true });
+    });
+
+    it('omits pull request options when title template is whitespace-only and enforce is false', () => {
+      const formData = makeFormData('github');
+      formData.pullRequest = { titleTemplate: '   ', enforceTemplate: false };
+      const spec = dataToSpec(formData);
+      expect(spec.pullRequest).toBeUndefined();
+    });
+
+    it('omits pull request options from spec when not set', () => {
+      const spec = dataToSpec(makeFormData('github'));
+      expect(spec.pullRequest).toBeUndefined();
+    });
+
+    it('reads pull request options from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        pullRequest: { titleTemplate: '{{title}}', enforceTemplate: true },
+      };
+      const data = specToData(spec);
+      expect(data.pullRequest?.titleTemplate).toBe('{{title}}');
+      expect(data.pullRequest?.enforceTemplate).toBe(true);
+    });
+  });
+
   describe('empty branch sends empty string for backend auto-detection', () => {
     it.each(['github', 'gitlab', 'bitbucket', 'git'] as const)(
       'sends empty branch for %s when branch is not set',

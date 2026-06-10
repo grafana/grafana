@@ -1,4 +1,9 @@
-import { type BranchOptions, type CommitOptions, type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  type BranchOptions,
+  type CommitOptions,
+  type PullRequestOptions,
+  type RepositorySpec,
+} from 'app/api/clients/provisioning/v0alpha1';
 
 import { type RepositoryFormData } from '../types';
 
@@ -42,6 +47,26 @@ const buildBranchOptions = (data: RepositoryFormData): BranchOptions | undefined
   return branch;
 };
 
+// Build the spec-level pull request options from the form, omitting empty
+// values. Returns undefined when nothing is configured.
+const buildPullRequestOptions = (data: RepositoryFormData): PullRequestOptions | undefined => {
+  const titleTemplate = data.pullRequest?.titleTemplate?.trim();
+  const enforceTemplate = data.pullRequest?.enforceTemplate;
+
+  if (!titleTemplate && !enforceTemplate) {
+    return undefined;
+  }
+
+  const pullRequest: PullRequestOptions = {};
+  if (titleTemplate) {
+    pullRequest.titleTemplate = titleTemplate;
+  }
+  if (enforceTemplate) {
+    pullRequest.enforceTemplate = enforceTemplate;
+  }
+  return pullRequest;
+};
+
 export const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflows'] => {
   if (data.readOnly) {
     return [];
@@ -71,6 +96,11 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
   const branch = buildBranchOptions(data);
   if (branch) {
     spec.branch = branch;
+  }
+
+  const pullRequest = buildPullRequestOptions(data);
+  if (pullRequest) {
+    spec.pullRequest = pullRequest;
   }
 
   if (data.webhook?.baseUrl) {

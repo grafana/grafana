@@ -13744,6 +13744,14 @@
         }
       }
     },
+    "pull-request-options": {
+      "description-enforce-template": "Pre-fill the pull request title in save dialogs from the template above and make it read-only.",
+      "description-title-template": "Template for the pull request title opened by the branch workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Leave empty to use the first line of the commit message.",
+      "label-enforce-template": "Enforce pull request title template",
+      "label-pull-request-options": "Pull request options (advanced)",
+      "label-title-template": "Pull request title template",
+      "placeholder-title-template": "{{actionVar}}: {{titleVar}}"
+    },
     "quota-limit": {
       "message-both-repositories_one": "Your account is limited to {{count}} connected repositories",
       "message-both-repositories_other": "Your account is limited to {{count}} connected repositories",

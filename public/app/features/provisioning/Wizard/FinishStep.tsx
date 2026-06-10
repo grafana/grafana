@@ -8,6 +8,7 @@ import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alph
 import { BranchOptionsSection } from '../Config/BranchOptionsSection';
 import { CommitOptionsSection } from '../Config/CommitOptionsSection';
 import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfiguredBranchOption';
+import { PullRequestOptionsSection } from '../Config/PullRequestOptionsSection';
 import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
 import { isGitProvider } from '../utils/repositoryTypes';
 
@@ -128,6 +129,14 @@ export const FinishStep = memo(function FinishStep() {
             messageTemplateName="repository.commit.singleResourceMessageTemplate"
             enforceTemplateName="repository.commit.enforceTemplate"
           />
+          {/* Pull requests are not supported by the pure git type. */}
+          {type !== 'git' && (
+            <PullRequestOptionsSection<WizardFormData>
+              register={register}
+              titleTemplateName="repository.pullRequest.titleTemplate"
+              enforceTemplateName="repository.pullRequest.enforceTemplate"
+            />
+          )}
         </>
       )}
 

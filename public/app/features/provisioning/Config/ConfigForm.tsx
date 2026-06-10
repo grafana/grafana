@@ -42,6 +42,7 @@ import { BranchOptionsSection } from './BranchOptionsSection';
 import { CommitOptionsSection } from './CommitOptionsSection';
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
+import { PullRequestOptionsSection } from './PullRequestOptionsSection';
 import { getDefaultValues } from './defaults';
 
 // This needs to be a function for translations to work
@@ -391,6 +392,14 @@ export function ConfigForm({ data }: ConfigFormProps) {
               messageTemplateName="commit.singleResourceMessageTemplate"
               enforceTemplateName="commit.enforceTemplate"
             />
+            {/* Pull requests are not supported by the pure git type. */}
+            {type !== 'git' && (
+              <PullRequestOptionsSection<RepositoryFormData>
+                register={register}
+                titleTemplateName="pullRequest.titleTemplate"
+                enforceTemplateName="pullRequest.enforceTemplate"
+              />
+            )}
           </>
         )}
         {type === 'github' && <ConfigFormGithubCollapse register={register} />}
