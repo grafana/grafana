@@ -1,4 +1,4 @@
-import { clone, each, map } from 'lodash';
+import { clone, each } from 'lodash';
 
 export class QueryPartDef {
   type: string;
@@ -80,28 +80,4 @@ export class QueryPart {
     text += ')';
     this.text = text;
   }
-}
-
-function functionRenderer(part: any, innerExpr: string) {
-  const str = part.def.type + '(';
-  const parameters = map(part.params, (value, index) => {
-    const paramType = part.def.params[index];
-    if (paramType.type === 'time') {
-      if (value === 'auto') {
-        value = '$__interval';
-      }
-    }
-    if (paramType.quote === 'single') {
-      return "'" + value + "'";
-    } else if (paramType.quote === 'double') {
-      return '"' + value + '"';
-    }
-
-    return value;
-  });
-
-  if (innerExpr) {
-    parameters.unshift(innerExpr);
-  }
-  return str + parameters.join(', ') + ')';
 }

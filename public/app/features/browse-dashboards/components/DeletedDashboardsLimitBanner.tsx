@@ -7,7 +7,7 @@ import { Alert } from '@grafana/ui';
 
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 
-const DELETED_DASHBOARDS_LIMIT = 1000;
+export const DELETED_DASHBOARDS_LIMIT = 1000;
 export const DISMISS_STORAGE_KEY = 'grafana.recently-deleted-limit-banner.dismissed';
 
 interface Props {

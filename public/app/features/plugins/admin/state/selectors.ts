@@ -13,7 +13,9 @@ const selectRoot = (state: PluginCatalogStoreState) => state.plugins;
 
 const selectItems = createSelector(selectRoot, ({ items }) => items);
 
-export const { selectAll } = pluginsAdapter.getSelectors(selectItems);
+const { selectAll, selectById } = pluginsAdapter.getSelectors(selectItems);
+
+export { selectById };
 
 const debouncedTrackSearch = debounce((count) => {
   reportInteraction('plugins_search', {
