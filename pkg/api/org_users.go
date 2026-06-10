@@ -7,13 +7,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/open-feature/go-sdk/openfeature"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
@@ -148,36 +145,6 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) respo
 // 500: internalServerError
 
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext) response.Response {
-	ctx := c.Req.Context()
-	// When users are served from unified storage (kubernetesUsersRedirect), search there:
-	// it is org-namespaced and includes identities that have no legacy org_user row.
-	if ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
-		searchResult, err := hs.userService.Search(ctx, &user.SearchUsersQuery{
-			OrgID:        c.GetOrgID(),
-			Query:        c.Query("query"),
-			Limit:        c.QueryInt("limit"),
-			SignedInUser: c.SignedInUser,
-		})
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
-		}
-
-		result := make([]*dtos.UserLookupDTO, 0, len(searchResult.Users))
-		for _, u := range searchResult.Users {
-			avatarURL := u.AvatarURL
-			if avatarURL == "" {
-				avatarURL = dtos.GetGravatarUrl(hs.Cfg, u.Email)
-			}
-			result = append(result, &dtos.UserLookupDTO{
-				UID:       u.UID,
-				UserID:    u.ID,
-				Login:     u.Login,
-				AvatarURL: avatarURL,
-			})
-		}
-		return response.JSON(http.StatusOK, result)
-	}
-
 	orgUsersResult, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
 		OrgID:                    c.GetOrgID(),
 		Query:                    c.Query("query"),
