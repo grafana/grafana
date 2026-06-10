@@ -113,6 +113,7 @@ export const useUpdateNavStarredItems = () => {
   };
 };
 
+// Matches the backend cap on starred nav children in bootData (buildStarredItemsNavLinks)
 const STARRED_NAV_CAP = 50;
 
 /**
