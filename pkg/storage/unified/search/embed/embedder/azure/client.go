@@ -46,7 +46,7 @@ func NewClient(endpoint, deployment, apiVersion, apiKey string) (Client, error) 
 
 func (c *restClient) EmbedTexts(ctx context.Context, texts []string, dimensions int) (EmbedResult, error) {
 	params := openai.EmbeddingNewParams{
-		Model:          openai.EmbeddingModel(c.deployment), // for Azure this is the deployment name
+		Model:          c.deployment, // for Azure this is the deployment name
 		Input:          openai.EmbeddingNewParamsInputUnion{OfArrayOfStrings: texts},
 		EncodingFormat: openai.EmbeddingNewParamsEncodingFormatFloat,
 	}
