@@ -5,7 +5,7 @@ import { useIntersection } from 'react-use';
 
 import { type GrafanaTheme2, renderMarkdown, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, LinkButton, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
@@ -25,8 +25,8 @@ interface Props {
  * Header shows the file name + an Edit pencil that opens the host editor;
  * the body either renders the markdown or shows an "Add README" empty state.
  *
- * Returns null and triggers no data fetching when the `provisioning.readmes`
- * OpenFeature toggle is off or when the folder isn't provisioned.
+ * Returns null when the `provisioning.readmes` toggle is off or a loaded folder
+ * isn't provisioned; shows a spinner while loading.
  */
 export function FolderReadmePanel({ folderUID }: Props) {
   const provisioningReadmesEnabled = useBooleanFlagValue('provisioning.readmes', false);
@@ -38,7 +38,7 @@ export function FolderReadmePanel({ folderUID }: Props) {
 
 function FolderReadmePanelContent({ folderUID }: Props) {
   const styles = useStyles2(getStyles);
-  const { repository, folder, readmePath, status, markdownContent, refetch } = useFolderReadme(folderUID);
+  const { repository, folder, readmePath, status, isLoading, markdownContent, refetch } = useFolderReadme(folderUID);
 
   const sectionRef = useRef<HTMLElement>(null);
   const intersection = useIntersection(sectionRef, { threshold: 0.5 });
@@ -58,27 +58,31 @@ function FolderReadmePanelContent({ folderUID }: Props) {
     FolderReadmeEvents.panelViewed({ repositoryType: repository.type, status });
   }, [intersection, repository, status]);
 
-  if (!repository || status === 'loading') {
+  if (!isLoading && !repository) {
     return null;
   }
 
-  const editUrl = getRepoEditFileUrl({
-    repoType: repository.type,
-    url: repository.url,
-    branch: repository.branch,
-    filePath: readmePath,
-    pathPrefix: repository.path,
-  });
+  const editUrl = repository
+    ? getRepoEditFileUrl({
+        repoType: repository.type,
+        url: repository.url,
+        branch: repository.branch,
+        filePath: readmePath,
+        pathPrefix: repository.path,
+      })
+    : undefined;
 
   const folderTitle = folder?.spec?.title ?? '';
-  const newFileUrl = getRepoNewFileUrl({
-    repoType: repository.type,
-    url: repository.url,
-    branch: repository.branch,
-    filePath: readmePath,
-    pathPrefix: repository.path,
-    template: buildReadmeTemplate(folderTitle),
-  });
+  const newFileUrl = repository
+    ? getRepoNewFileUrl({
+        repoType: repository.type,
+        url: repository.url,
+        branch: repository.branch,
+        filePath: readmePath,
+        pathPrefix: repository.path,
+        template: buildReadmeTemplate(folderTitle),
+      })
+    : undefined;
 
   return (
     <section
@@ -109,7 +113,7 @@ function FolderReadmePanelContent({ folderUID }: Props) {
             tooltip={t('browse-dashboards.readme.edit-tooltip', 'Edit README')}
             aria-label={t('browse-dashboards.readme.edit-tooltip', 'Edit README')}
             onClick={() => {
-              FolderReadmeEvents.editClicked({ repositoryType: repository.type });
+              repository && FolderReadmeEvents.editClicked({ repositoryType: repository.type });
             }}
           />
         )}
@@ -129,15 +133,22 @@ function FolderReadmePanelContent({ folderUID }: Props) {
 }
 
 interface ReadmeBodyProps {
-  status: Exclude<FolderReadmeStatus, 'loading'>;
+  status: FolderReadmeStatus;
   markdownContent: string | undefined;
-  repository: RepositoryView;
+  repository: RepositoryView | undefined;
   readmePath: string;
   newFileUrl: string | undefined;
   refetch: () => void;
 }
 
 function ReadmeBody({ status, markdownContent, repository, readmePath, newFileUrl, refetch }: ReadmeBodyProps) {
+  if (status === 'loading' || !repository) {
+    return (
+      <Stack justifyContent="center">
+        <Spinner size="lg" />
+      </Stack>
+    );
+  }
   switch (status) {
     case 'ok':
       return markdownContent !== undefined ? (

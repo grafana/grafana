@@ -21,7 +21,6 @@ import mimirRulerHandlers from 'app/features/alerting/unified/mocks/server/handl
 import pluginsHandlers from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import allPluginHandlers from 'app/features/alerting/unified/mocks/server/handlers/plugins/all-plugin-handlers';
 import provisioningHandlers from 'app/features/alerting/unified/mocks/server/handlers/provisioning';
-import searchHandlers from 'app/features/alerting/unified/mocks/server/handlers/search';
 import silenceHandlers from 'app/features/alerting/unified/mocks/server/handlers/silences';
 import userStorageHandlers from 'app/features/alerting/unified/mocks/server/handlers/userStorage';
 
@@ -57,7 +56,6 @@ export const alertingHandlers = [
 const allHandlers = [
   ...alertingHandlers,
   ...folderHandlers,
-  ...searchHandlers,
 
   ...accessControlHandlers,
   ...allPluginHandlers,
