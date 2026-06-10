@@ -122,7 +122,7 @@ func TestCellsParseRoundTrip(t *testing.T) {
 			Rows:    []*resourcepb.ResourceTableRow{{Key: ruleKey("default", rule), Cells: ruleCells(rule)}},
 		},
 	}
-	hits := parseResults(resp)
+	hits := parseAlertRuleHits(resp)
 	require.Len(t, hits, 1)
 	h := hits[0]
 	assert.Equal(t, "uid1", h.Name)
