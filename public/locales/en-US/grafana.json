@@ -1103,9 +1103,6 @@
       },
       "unknown": "Unknown"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "You do not appear to have any compatible datasources."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluations to start alerting",
       "pending-period": "Pending period",
@@ -5939,9 +5936,6 @@
       "select-source": "Select source",
       "unknown": "Unknown Object: {{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "No Metadata Inspector"
-    },
     "inspect-stats": {
       "data-title": "Data source stats",
       "data-traceids": "Trace IDs",
@@ -6421,7 +6415,6 @@
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
-      "read-only": "Read only",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
       "save-as-template": {
@@ -6558,28 +6551,6 @@
     },
     "view-panel": {
       "not-found": "Panel not found"
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Change visualization",
-      "aria-label-close": "Close options pane",
-      "aria-label-show": "Show options pane",
-      "tooltip-click-to-change-visualization": "Click to change visualization",
-      "tooltip-close": "Close options pane",
-      "tooltip-show": "Show options pane"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Search for...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Reusable panels you can share between multiple dashboards."
-        },
-        "label": {
-          "library-panels": "Library panels",
-          "suggestions": "Suggestions",
-          "visualizations": "Visualizations"
-        }
-      },
-      "title-close": "Close"
     },
     "viz-panel": {
       "delete-panel-text": "Deleting this panel will also remove all queries. Are you sure you want to continue?",
@@ -9052,9 +9023,6 @@
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
-  "folder-repo": {
-    "read-only-badge": "Read only"
-  },
   "folders": {
     "api": {
       "anonymous-user": "Anonymous",
@@ -11054,10 +11022,6 @@
     "add-library-panel-modal": {
       "title-create-library-panel": "Create library panel"
     },
-    "change-library-panel-modal": {
-      "confirmText-change": "Change",
-      "confirmText-replace": "Replace"
-    },
     "confirm": {
       "delete-panel": "Do you want to delete this panel?"
     },
@@ -11097,9 +11061,6 @@
       "select-no-options-message": "No dashboards found",
       "select-placeholder": "Start typing to search for dashboard",
       "title": "View panel in dashboard"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "Create new library panel"
     },
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
@@ -13645,6 +13606,9 @@
       "update-configuration-link": "update your Grafana configuration",
       "upgrade-link": "upgrade your account"
     },
+    "read-only-badge": {
+      "text": "Read only"
+    },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "recent-jobs": {
@@ -13665,7 +13629,6 @@
     },
     "repository-card": {
       "last-sync": "Last sync: {{date}}",
-      "read-only-badge": "Read only",
       "settings": "Settings",
       "view": "View"
     },
@@ -16638,9 +16601,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "No renamed or missing variables found."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "Couldn't load variable"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "When to update the values of this variable",

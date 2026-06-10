@@ -57,7 +57,7 @@ export const publicServiceRegistry = new Registry<PublicServiceItem>(() => [
   },
 ]);
 
-export interface ESRIXYZConfig extends XYZConfig {
+interface ESRIXYZConfig extends XYZConfig {
   server: string;
 }
 

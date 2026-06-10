@@ -113,7 +113,7 @@ interface InitializeExplorePayload {
 
 const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExploreAction');
 
-export interface SetUrlReplacedPayload {
+interface SetUrlReplacedPayload {
   exploreId: string;
 }
 

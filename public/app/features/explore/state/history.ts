@@ -30,7 +30,7 @@ import {
 // Actions and Payloads
 //
 
-export interface HistoryUpdatedPayload {
+interface HistoryUpdatedPayload {
   history: HistoryItem[];
 }
 export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore/historyUpdated');

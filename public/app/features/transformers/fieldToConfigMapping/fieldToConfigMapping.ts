@@ -15,7 +15,7 @@ import {
   FieldType,
 } from '@grafana/data';
 
-export interface ThresholdArguments {
+interface ThresholdArguments {
   color: string;
 }
 
@@ -290,7 +290,7 @@ export function lookUpConfigHandler(key: string | null): FieldToConfigMapHandler
   return getConfigMapHandlersIndex()[key];
 }
 
-export interface EvaluatedMapping {
+interface EvaluatedMapping {
   automatic: boolean;
   handler: FieldToConfigMapHandler | null;
   handlerArguments: HandlerArguments;
