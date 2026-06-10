@@ -133,6 +133,20 @@ func (r *stagedGitRepository) Create(ctx context.Context, path, ref string, data
 	return r.handleCommitAndPush(ctx, message)
 }
 
+func (r *stagedGitRepository) CreateBatch(ctx context.Context, ref string, pathsAndData map[string][]byte, message string) error {
+	if !r.isRefSupported(ref) {
+		return errors.New("ref is not supported for staged repository")
+	}
+
+	for path, data := range pathsAndData {
+		if err := r.create(ctx, path, data, r.writer); err != nil {
+			return err
+		}
+	}
+
+	return r.handleCommitAndPush(ctx, message)
+}
+
 func (r *stagedGitRepository) blobExists(ctx context.Context, path string) (bool, error) {
 	if r.gitConfig.Path != "" {
 		path = safepath.Join(r.gitConfig.Path, path)

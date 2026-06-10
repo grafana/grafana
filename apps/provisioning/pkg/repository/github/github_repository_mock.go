@@ -228,6 +228,55 @@ func (_c *MockGithubRepository_Create_Call) RunAndReturn(run func(context.Contex
 	return _c
 }
 
+// CreateBatch provides a mock function with given fields: ctx, ref, pathsAndData, message
+func (_m *MockGithubRepository) CreateBatch(ctx context.Context, ref string, pathsAndData map[string][]byte, message string) error {
+	ret := _m.Called(ctx, ref, pathsAndData, message)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateBatch")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, map[string][]byte, string) error); ok {
+		r0 = rf(ctx, ref, pathsAndData, message)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockGithubRepository_CreateBatch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateBatch'
+type MockGithubRepository_CreateBatch_Call struct {
+	*mock.Call
+}
+
+// CreateBatch is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ref string
+//   - pathsAndData map[string][]byte
+//   - message string
+func (_e *MockGithubRepository_Expecter) CreateBatch(ctx interface{}, ref interface{}, pathsAndData interface{}, message interface{}) *MockGithubRepository_CreateBatch_Call {
+	return &MockGithubRepository_CreateBatch_Call{Call: _e.mock.On("CreateBatch", ctx, ref, pathsAndData, message)}
+}
+
+func (_c *MockGithubRepository_CreateBatch_Call) Run(run func(ctx context.Context, ref string, pathsAndData map[string][]byte, message string)) *MockGithubRepository_CreateBatch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(map[string][]byte), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *MockGithubRepository_CreateBatch_Call) Return(_a0 error) *MockGithubRepository_CreateBatch_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockGithubRepository_CreateBatch_Call) RunAndReturn(run func(context.Context, string, map[string][]byte, string) error) *MockGithubRepository_CreateBatch_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Delete provides a mock function with given fields: ctx, path, ref, message
 func (_m *MockGithubRepository) Delete(ctx context.Context, path string, ref string, message string) error {
 	ret := _m.Called(ctx, path, ref, message)

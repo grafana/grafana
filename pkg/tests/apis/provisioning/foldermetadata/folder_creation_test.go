@@ -21,7 +21,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 	files := helper.NewFilesClient(repo)
 
 	t.Run("simple folder creation writes _folder.json with stable UID", func(t *testing.T) {
-		resp := files.Post(t, "meta-test-folder/")
+		resp := files.Post(t, "meta-test-folder/", nil)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating folder should succeed")
 
 		uid, title := files.RequireValidFolderMetadata(t, ctx, "meta-test-folder/_folder.json")
@@ -35,7 +35,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 	})
 
 	t.Run("nested creation writes _folder.json for every folder in the path", func(t *testing.T) {
-		resp := files.Post(t, "parent-folder/child-folder/")
+		resp := files.Post(t, "parent-folder/child-folder/", nil)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested folder should succeed")
 
 		parentUID, _ := files.RequireValidFolderMetadata(t, ctx, "parent-folder/_folder.json")
@@ -49,16 +49,16 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 	})
 
 	t.Run("duplicate folder creation returns 409 Conflict", func(t *testing.T) {
-		resp := files.Post(t, "duplicate-folder/")
+		resp := files.Post(t, "duplicate-folder/", nil)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "first creation should succeed")
 
-		resp2 := files.Post(t, "duplicate-folder/")
+		resp2 := files.Post(t, "duplicate-folder/", nil)
 		require.Equal(t, http.StatusConflict, resp2.StatusCode, "second creation should return 409 Conflict")
 	})
 
 	t.Run("dashboard creation in new folder writes _folder.json", func(t *testing.T) {
 		body := common.DashboardJSON("implicit-dash-001", "Implicit Dashboard", 1)
-		resp := files.PostWithBody(t, "implicit-folder/dashboard.json", body)
+		resp := files.Post(t, "implicit-folder/dashboard.json", body)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating dashboard in new folder should succeed")
 
 		uid, title := files.RequireValidFolderMetadata(t, ctx, "implicit-folder/_folder.json")
@@ -70,13 +70,13 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 
 	t.Run("explicit folder creation after dashboard reuses existing _folder.json UID", func(t *testing.T) {
 		body := common.DashboardJSON("reuse-dash-001", "Reuse Dashboard", 1)
-		resp := files.PostWithBody(t, "reuse-folder/dashboard.json", body)
+		resp := files.Post(t, "reuse-folder/dashboard.json", body)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating dashboard should succeed")
 
 		uid := files.ReadFolderUID(t, ctx, "reuse-folder/_folder.json")
 		require.NotEmpty(t, uid, "implicit _folder.json should have a UID")
 
-		resp2 := files.Post(t, "reuse-folder/")
+		resp2 := files.Post(t, "reuse-folder/", nil)
 		require.Equal(t, http.StatusConflict, resp2.StatusCode, "explicit folder creation should return 409 because folder already exists")
 
 		uid2 := files.ReadFolderUID(t, ctx, "reuse-folder/_folder.json")
@@ -85,7 +85,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 
 	t.Run("nested dashboard creation writes _folder.json for all ancestor folders", func(t *testing.T) {
 		body := common.DashboardJSON("nested-dash-001", "Nested Dashboard", 1)
-		resp := files.PostWithBody(t, "ancestor-a/ancestor-b/dashboard.json", body)
+		resp := files.Post(t, "ancestor-a/ancestor-b/dashboard.json", body)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested dashboard should succeed: %s", string(resp.Body))
 
 		parentUID, _ := files.RequireValidFolderMetadata(t, ctx, "ancestor-a/_folder.json")
@@ -100,13 +100,13 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 	})
 
 	t.Run("child created inside existing managed folder gets its own _folder.json", func(t *testing.T) {
-		resp := files.Post(t, "managed-parent/")
+		resp := files.Post(t, "managed-parent/", nil)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating parent folder should succeed")
 
 		parentUID := files.ReadFolderUID(t, ctx, "managed-parent/_folder.json")
 		require.NotEmpty(t, parentUID, "parent should have a non-empty stable UID")
 
-		resp2 := files.Post(t, "managed-parent/child-folder/")
+		resp2 := files.Post(t, "managed-parent/child-folder/", nil)
 		require.Equal(t, http.StatusOK, resp2.StatusCode, "creating child folder should succeed")
 
 		childUID := files.ReadFolderUID(t, ctx, "managed-parent/child-folder/_folder.json")

@@ -349,12 +349,6 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 		return nil, fmt.Errorf("authorize write to ref: %w", err)
 	}
 
-	if create && r.folderMetadataEnabled && !safepath.IsDir(opts.Path) {
-		if err := r.ensureAncestorFolderMetadata(ctx, opts.Path, opts.Ref, opts.Message); err != nil {
-			return nil, err
-		}
-	}
-
 	info := &repository.FileInfo{
 		Data: opts.Data,
 		Path: opts.Path,
@@ -403,7 +397,20 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 
 	// Create or update
 	if create {
-		err = r.repo.Create(ctx, opts.Path, opts.Ref, data, opts.Message)
+		creations := make(map[string][]byte)
+		if r.folderMetadataEnabled && !safepath.IsDir(opts.Path) {
+			var metaErr error
+			creations, metaErr = r.folderMetadataCreations(ctx, opts.Path, opts.Ref, opts.Message)
+			if metaErr != nil {
+				return nil, fmt.Errorf("checking for folder metadata creations: %w", metaErr)
+			}
+		}
+		if len(creations) > 0 {
+			creations[opts.Path] = data
+			err = r.repo.CreateBatch(ctx, opts.Ref, creations, opts.Message)
+		} else {
+			err = r.repo.Create(ctx, opts.Path, opts.Ref, data, opts.Message)
+		}
 	} else {
 		err = r.repo.Update(ctx, opts.Path, opts.Ref, data, opts.Message)
 	}
@@ -426,25 +433,33 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 			})
 		}
 
-		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref); err != nil {
+		parent, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref)
+		if err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
 
-		err = parsed.Run(ctx)
+		// In case the parent folder has a different ID than the one from the initially parsed resource,
+		// e.g. when the folder metadata has been generated as part of the create operation, we need to update it.
+		if parsed.Meta.GetFolder() != parent {
+			parsed.Meta.SetFolder(parent)
+		}
+
+		if err := parsed.Run(ctx); err != nil {
+			return nil, fmt.Errorf("run resource: %w", err)
+		}
 	}
 
-	return parsed, err
+	return parsed, nil
 }
 
-// ensureAncestorFolderMetadata walks ancestor directories of filePath and writes
-// _folder.json for any that don't have one yet, using the same pattern as
-// CreateFolder (stable UID via util.GenerateShortUID).
-func (r *DualReadWriter) ensureAncestorFolderMetadata(ctx context.Context, filePath, ref, message string) error {
+func (r *DualReadWriter) folderMetadataCreations(ctx context.Context, filePath, ref, message string) (map[string][]byte, error) {
 	dir := safepath.Dir(filePath)
 	if dir == "" {
-		return nil
+		return nil, nil
 	}
-	return safepath.Walk(ctx, dir, func(ctx context.Context, segPath string) error {
+
+	creations := make(map[string][]byte)
+	err := safepath.Walk(ctx, dir, func(ctx context.Context, segPath string) error {
 		// Folder still exists in tree, no need to write metadata
 		if _, ok := r.folders.Tree().GetByPath(segPath); ok {
 			return nil
@@ -461,12 +476,19 @@ func (r *DualReadWriter) ensureAncestorFolderMetadata(ctx context.Context, fileP
 			return fmt.Errorf("read folder metadata for %q: %w", segPath, readErr)
 		}
 		uid := util.GenerateShortUID()
-		manifest := NewFolderManifest(uid, safepath.Base(segPath), r.folders.FolderGVK())
-		if _, err := WriteFolderMetadata(ctx, r.repo, segPath, manifest, ref, message); err != nil {
-			return fmt.Errorf("write folder metadata for %q: %w", segPath, err)
+		manifestBlob, err := marshalFolderManifest(NewFolderManifest(uid, safepath.Base(segPath), r.folders.FolderGVK()))
+		if err != nil {
+			return fmt.Errorf("marshal folder manifest for %q: %w", segPath, err)
 		}
+
+		creations[safepath.Join(segPath, folderMetadataFileName)] = manifestBlob
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return creations, nil
 }
 
 // MoveResource moves a resource from one path to another in the repository

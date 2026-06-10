@@ -132,8 +132,12 @@ type Writer interface {
 	Repository
 
 	// Write a file to the repository.
-	// The data has already been validated and is ready for save
+	// The data has already been validated and is ready for save.
 	Create(ctx context.Context, path, ref string, data []byte, message string) error
+
+	// Create a batch of files in the repository.
+	// The data has already been validated and is ready for save.
+	CreateBatch(ctx context.Context, ref string, pathsAndData map[string][]byte, message string) error
 
 	// Update a file in the remote repository
 	// The data has already been validated and is ready for save

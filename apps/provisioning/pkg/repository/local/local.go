@@ -290,6 +290,20 @@ func (r *localRepository) Create(ctx context.Context, filepath string, ref strin
 	return os.WriteFile(fpath, data, 0600)
 }
 
+func (r *localRepository) CreateBatch(ctx context.Context, ref string, pathsAndData map[string][]byte, comment string) error {
+	if err := r.validateRequest(ref); err != nil {
+		return err
+	}
+
+	for path, data := range pathsAndData {
+		if err := r.Create(ctx, path, ref, data, comment); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (r *localRepository) Update(ctx context.Context, path string, ref string, data []byte, comment string) error {
 	if err := r.validateRequest(ref); err != nil {
 		return err
