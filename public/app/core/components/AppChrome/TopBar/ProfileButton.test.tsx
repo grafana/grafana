@@ -27,13 +27,11 @@ describe('ProfileButton', () => {
   };
   const originalNewsFeedEnabled = config.newsFeedEnabled;
   const originalDisableSignoutMenu = config.auth.disableSignoutMenu;
-  const originalGrafanaconThemes = config.featureToggles.grafanaconThemes;
 
   beforeEach(() => {
     user = userEvent.setup();
     config.newsFeedEnabled = true;
     config.auth.disableSignoutMenu = false;
-    config.featureToggles.grafanaconThemes = false;
 
     // Drawer portals into .main-view
     mainView = document.createElement('div');
@@ -44,7 +42,6 @@ describe('ProfileButton', () => {
   afterEach(() => {
     config.newsFeedEnabled = originalNewsFeedEnabled;
     config.auth.disableSignoutMenu = originalDisableSignoutMenu;
-    config.featureToggles.grafanaconThemes = originalGrafanaconThemes;
     document.body.removeChild(mainView);
   });
 
@@ -57,7 +54,8 @@ describe('ProfileButton', () => {
 
     const menu = await screen.findByRole('menu');
     expect(screen.queryByRole('menuitem', { name: /sign out/i })).not.toBeInTheDocument();
-    expect(Array.from(menu.children)).toHaveLength(3);
+    expect(screen.getAllByRole('menuitem')).toHaveLength(3);
+    expect(Array.from(menu.children)).toHaveLength(4);
   });
 
   it('should return focus to the profile button when the news feed drawer is closed', async () => {
