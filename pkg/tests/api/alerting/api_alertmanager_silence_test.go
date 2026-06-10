@@ -31,7 +31,14 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 
 	testinfra.SQLiteIntegrationTest(t)
 
-	grafanaListedAddr, env := getStandardSharedEnv(t)
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	adminApiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
@@ -41,13 +48,11 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 		Title: "Folder 1",
 	}
 	adminApiClient.CreateFolder(t, f1.UID, f1.Title)
-	t.Cleanup(func() { deleteFolder(t, grafanaListedAddr, f1.UID) })
 	f2 := folder.Folder{
 		UID:   util.GenerateShortUID(),
 		Title: "Folder 2",
 	}
 	adminApiClient.CreateFolder(t, f2.UID, f2.Title)
-	t.Cleanup(func() { deleteFolder(t, grafanaListedAddr, f2.UID) })
 
 	group1 := generateAlertRuleGroup(1, alertRuleGen())
 	group2 := generateAlertRuleGroup(1, alertRuleGen())
