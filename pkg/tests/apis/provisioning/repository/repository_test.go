@@ -358,6 +358,60 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			expectedErr: "cannot have both remove and release orphan resources finalizers",
 		},
 		{
+			name: "should error if branch options are set on a local repository",
+			repo: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Repository",
+				"metadata": map[string]any{
+					"name":      "local-repo-with-branch-options",
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"title": "Local Repo With Branch Options",
+					"type":  string(provisioning.LocalRepositoryType),
+					"sync": map[string]any{
+						"enabled": false,
+						"target":  "folder",
+					},
+					"local": map[string]any{
+						"path": helper.ProvisioningPath,
+					},
+					"branch": map[string]any{
+						"nameTemplate": "{{title}}",
+					},
+					"workflows": []string{},
+				},
+			}},
+			expectedErr: "branch options are not supported on local repositories",
+		},
+		{
+			name: "should error if commit options are set on a local repository",
+			repo: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Repository",
+				"metadata": map[string]any{
+					"name":      "local-repo-with-commit-options",
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"title": "Local Repo With Commit Options",
+					"type":  string(provisioning.LocalRepositoryType),
+					"sync": map[string]any{
+						"enabled": false,
+						"target":  "folder",
+					},
+					"local": map[string]any{
+						"path": helper.ProvisioningPath,
+					},
+					"commit": map[string]any{
+						"singleResourceMessageTemplate": "{{title}}",
+					},
+					"workflows": []string{},
+				},
+			}},
+			expectedErr: "commit options are not supported on local repositories",
+		},
+		{
 			name: "should error if unknown finalizer is set",
 			repo: func() *unstructured.Unstructured {
 				localTmp := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
