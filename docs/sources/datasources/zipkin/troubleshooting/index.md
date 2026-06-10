@@ -149,14 +149,13 @@ These errors occur when importing a JSON trace file.
 
 **Possible causes and solutions:**
 
-| Cause                   | Solution                                                                                                                                                      |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Invalid JSON syntax     | Validate the file with a JSON linter. Common issues include trailing commas, missing quotes, or unclosed brackets.                                            |
-| Wrong JSON structure    | The file must be a JSON array of span objects (`[{...}, {...}]`), not a single object. Refer to the [Zipkin v2 span format](https://zipkin.io/zipkin-api/#/). |
-| Missing required fields | Each span must include `traceId`, `id`, `name`, `timestamp`, and `duration`.                                                                                  |
-| Wrong file type         | Ensure you're uploading a `.json` file, not a different format.                                                                                               |
+| Cause                | Solution                                                                                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Invalid JSON syntax  | Validate the file with a JSON linter. Common issues include trailing commas, missing quotes, or unclosed brackets.                                            |
+| Wrong JSON structure | The file must be a JSON array of span objects (`[{...}, {...}]`), not a single object. Refer to the [Zipkin v2 span format](https://zipkin.io/zipkin-api/#/). |
+| Wrong file type      | Ensure you're uploading a `.json` file, not a different format.                                                                                               |
 
-### "unsupported query type upload"
+### `unsupported query type upload. only available in frontend mode`
 
 **Symptoms:**
 
