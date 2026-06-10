@@ -15,34 +15,40 @@ Tracking issue: [alerting-squad#1756](https://github.com/grafana/alerting-squad/
 - Unit tests for the filter/sort/paginate logic and an e2e test (runnable under multiple
   dual-writer modes).
 
-**Next — mode-routed legacy/unified search (the agreed target architecture).** The search must be
-part of the k8s-client path and alternate between the legacy and unified backends by the resource's
-dual-writer mode, using the built-in router rather than a bespoke switch. Concrete plan with
-references:
+**Mode-routed legacy/unified search — landed (committed).** Search is on the k8s-client path and
+alternates backends by the resource's dual-writer mode via the built-in router:
 
-1. **Wrap legacy as a `resourcepb.ResourceIndexClient`.** Mirror
-   [pkg/registry/apis/iam/team/legacy_search.go](../../../pkg/registry/apis/iam/team/legacy_search.go)
-   (`LegacyTeamSearchClient`): embed `resourcepb.ResourceIndexClient`, implement only `Search` by
-   reading filters/sort/limit/page out of the `ResourceSearchRequest` (reusing the existing
-   `query.go` logic) and emitting a `ResourceTable` (columns + rows keyed by rule UID).
-2. **Route by mode with the built-in wrapper.**
-   `resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), gr, unifiedClient, legacyClient)`
-   ([pkg/storage/unified/resource/search_client.go](../../../pkg/storage/unified/resource/search_client.go)).
-   It dispatches per-request via `dual.ReadFromUnified(ctx, gr)` (modes 0–2 → legacy, 3+ → unified),
-   with shadow-traffic/metrics built in.
-3. **Index rules for the unified path.** Add AlertRule/RecordingRule document builders under
-   [pkg/storage/unified/search/builders/](../../../pkg/storage/unified/search/builders/) (mirror
-   `dashboard.go`) declaring the searchable columns (title, folder, group, paused, source DS,
-   labels) and register them in `builders.All`.
-4. **Wire dependencies.** Add `resource.ResourceClient` and `dualwrite.Service` to
-   `RegisterAppInstaller` (both are existing DI providers); regenerate wire.
-5. **Reshape the handler + response.** The router returns `ResourceSearchResponse` (a `ResourceTable`
-   of indexed columns), so hits become **indexed-column summaries** (like `DashboardHit`), not full
-   `metadata + spec`. Update the CUE response/hit types accordingly and mirror
-   [pkg/services/dashboards/service/search/search.go](../../../pkg/services/dashboards/service/search/search.go)
-   `ParseResults` to turn rows into hits.
-6. **Verify both modes** (e2e under legacy and unified dual-writer modes; the unified path needs a
-   running storage+search backend to validate).
+1. **Legacy as a `resourcepb.ResourceIndexClient`** — `search.legacyClient` (mirrors
+   [pkg/registry/apis/iam/team/legacy_search.go](../../../pkg/registry/apis/iam/team/legacy_search.go)):
+   implements `Search` by reading filters/sort/limit/offset out of the `ResourceSearchRequest`
+   (reusing `query.go`) and emitting a `ResourceTable` keyed by rule UID.
+2. **Router** — `resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), gr, unifiedClient,
+legacyClient)`, one per kind (mode is per resource); modes 0–2 → legacy, 3+ → unified.
+3. **Wiring** — `resource.ResourceClient` + `dualwrite.Service` injected into `RegisterAppInstaller`
+   (wire regenerated).
+4. **Handler + response** — the handler translates the HTTP query into a `ResourceSearchRequest` and
+   massages the columnar `ResourceSearchResponse` into typed hits: per-kind hits for
+   `/search/alertrules` and `/search/recordingrules`, and a discriminated union for cross-kind
+   `/search`.
+5. **Tested** — unit tests pass; e2e runs under dual-writer modes 0 and 2 (the modes alert rules
+   support today).
+
+**Unified read path (modes 3+) — indexed (committed).** AlertRule/RecordingRule document builders
+([pkg/storage/unified/search/builders/alertingrules.go](../../../pkg/storage/unified/search/builders/alertingrules.go),
+registered in `builders.All`) expose the rule search columns (`type`, `paused`, `datasourceUIDs`,
+per-kind dashboard/panel and metric/target fields) so the unified backend returns the same hits as
+the legacy one. Two deliberate choices keep the backends consistent:
+
+- **`group`** is a controlled metadata label, so it is matched via `IndexableDocument.Labels`
+  (`grafana.com/group`) rather than a custom field; the request carries it as a label selector.
+- **Rule labels** (`label:team=a`, plugin-origin) are indexed as a dedicated filterable `labels`
+  field of flattened `key`/`key=value` terms (built from `spec.labels`), and the request carries
+  matchers as `in`/`notin` terms on that field — so rule-label matching works on the unified path
+  too. (`title`/`folder` use the standard indexed fields.)
+
+**Validation:** unit tests cover the encoding and the legacy table round-trip; the e2e suite runs
+under dual-writer modes 0 and 2. Running it under mode 3+ (unified read, with search enabled)
+validates the indexed path end to end — the agreed way to verify the unified backend.
 
 **Note on rules as source of truth:** the ngalert SQL store is what the alerting engine evaluates
 from. The unified path is for serving the k8s read/search surface as rules migrate to unified
