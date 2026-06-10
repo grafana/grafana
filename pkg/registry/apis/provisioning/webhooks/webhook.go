@@ -127,11 +127,12 @@ func (s *webhookConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 }
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	namespace := request.NamespaceValue(ctx)
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, span := tracing.Start(r.Context(), "provisioning.webhook.handle")
 		defer span.End()
 
-		namespace := request.NamespaceValue(ctx)
 		span.SetAttributes(
 			attribute.String("repository", name),
 			attribute.String("namespace", namespace),
@@ -227,7 +228,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 
 	var h http.Handler = handler
 	if s.rateLimiter != nil {
-		h = s.rateLimiter.wrap(h)
+		h = s.rateLimiter.wrap(namespace, h)
 	}
 
 	return h, nil

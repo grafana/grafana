@@ -132,7 +132,7 @@ func TestIPRateLimiterWrap(t *testing.T) {
 	t.Run("passes allowed requests to the next handler", func(t *testing.T) {
 		l := newIPRateLimiter(10, 20, 0)
 		var called bool
-		h := l.wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := l.wrap("ns1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			called = true
 			w.WriteHeader(http.StatusOK)
 		}))
@@ -149,7 +149,7 @@ func TestIPRateLimiterWrap(t *testing.T) {
 	t.Run("returns 429 once the limit is exceeded", func(t *testing.T) {
 		l := newIPRateLimiter(1, 1, 0)
 		var calls int
-		h := l.wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := l.wrap("ns1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			calls++
 		}))
 
@@ -172,7 +172,7 @@ func TestIPRateLimiterWrap(t *testing.T) {
 	t.Run("forged X-Forwarded-For cannot evade the limit by default", func(t *testing.T) {
 		l := newIPRateLimiter(1, 1, 0)
 		var calls int
-		h := l.wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := l.wrap("ns1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			calls++
 		}))
 
@@ -273,9 +273,23 @@ func TestClientKey(t *testing.T) {
 			if tt.xRealIP != "" {
 				req.Header.Set("X-Real-Ip", tt.xRealIP)
 			}
-			assert.Equal(t, tt.want, l.clientKey(req))
+			assert.Equal(t, tt.want, l.clientIP(req))
 		})
 	}
+}
+
+func TestClientKeyTenantScoping(t *testing.T) {
+	l := newIPRateLimiter(1, 1, 0)
+	newReq := func() *http.Request {
+		req := httptest.NewRequest(http.MethodPost, "/webhook", nil)
+		req.RemoteAddr = "1.2.3.4:5678"
+		return req
+	}
+
+	// Same client IP, different tenants must produce different keys so one
+	// tenant's traffic cannot consume another's bucket.
+	assert.NotEqual(t, l.clientKey("ns1", newReq()), l.clientKey("ns2", newReq()))
+	assert.Equal(t, "ns1|1.2.3.4", l.clientKey("ns1", newReq()))
 }
 
 // Guards the documented invariant that burst must be >= rps, otherwise a single
