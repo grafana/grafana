@@ -1,9 +1,15 @@
+import debounce from 'debounce-promise';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
 import { type DashboardMemorySearchResult, searchDashboardMemory } from '../api/deepSearch';
 
 // Results are panel-level, so fetch well past the per-dashboard display count
 // to give grouping enough hits to rank dashboards by match count
 export const DEEP_SEARCH_FETCH_LIMIT = 50;
 export const MAX_SNIPPETS_PER_DASHBOARD = 3;
+// Vector search is slower than the keyword search (200ms debounce), so wait
+// longer before firing — the deep column loads independently anyway
+const DEEP_SEARCH_DEBOUNCE_MS = 500;
 
 /** One dashboard in the deep search column, aggregated from its panel-level matches. */
 export interface DeepSearchDashboardResult {
@@ -66,4 +72,68 @@ export async function getDeepSearchResults(query: string): Promise<DeepSearchDas
 
   const results = await searchDashboardMemory(query, { limit: DEEP_SEARCH_FETCH_LIMIT });
   return groupDashboardMemoryResults(results);
+}
+
+interface UseDeepSearchResultsOptions {
+  searchQuery: string;
+  /** False while the palette shows a sub-category — deep results only apply at the root. */
+  show: boolean;
+  /** Gate on assistant availability; when false no requests fire and results stay empty. */
+  enabled: boolean;
+}
+
+/**
+ * Semantic dashboard search for the deep search palette column. Mirrors
+ * useSearchResults but debounces longer and reports its own fetching flag so
+ * the deep column loads independently of the fast keyword results.
+ */
+export function useDeepSearchResults({ searchQuery, show, enabled }: UseDeepSearchResultsOptions) {
+  const [deepSearchResults, setDeepSearchResults] = useState<DeepSearchDashboardResult[]>([]);
+  const [isFetchingDeepSearchResults, setIsFetchingDeepSearchResults] = useState(false);
+  const lastSearchTimestamp = useRef<number>(0);
+
+  const debouncedDeepSearch = useMemo(() => debounce(getDeepSearchResults, DEEP_SEARCH_DEBOUNCE_MS), []);
+
+  useEffect(() => {
+    const timestamp = Date.now();
+
+    if (!enabled || !show || searchQuery.length === 0) {
+      setDeepSearchResults([]);
+      setIsFetchingDeepSearchResults(false);
+      lastSearchTimestamp.current = timestamp;
+      return;
+    }
+
+    let cancelled = false;
+
+    const search = async () => {
+      setIsFetchingDeepSearchResults(true);
+
+      let results: DeepSearchDashboardResult[] = [];
+      try {
+        results = await debouncedDeepSearch(searchQuery);
+      } catch (error) {
+        // The endpoint lives in the assistant plugin — callers are expected to
+        // gate on its availability via the enabled flag, so degrade to an
+        // empty column but log for anyone calling this without the gate
+        console.error('Deep search failed. It needs assistant app plugin to be installed.', error);
+      }
+
+      // Skip state updates when the effect has been cleaned up, and only keep
+      // results issued after the most recently resolved search, so a slow
+      // early response can't overwrite a newer one
+      if (!cancelled && timestamp > lastSearchTimestamp.current) {
+        setDeepSearchResults(results);
+        setIsFetchingDeepSearchResults(false);
+        lastSearchTimestamp.current = timestamp;
+      }
+    };
+    search();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, show, searchQuery, debouncedDeepSearch]);
+
+  return { deepSearchResults, isFetchingDeepSearchResults };
 }

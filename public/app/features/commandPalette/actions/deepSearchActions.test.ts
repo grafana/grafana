@@ -1,11 +1,14 @@
+import { renderHook, waitFor } from '@testing-library/react';
+import { HttpResponse, http } from 'msw';
+
 import { setBackendSrv } from '@grafana/runtime';
 import { getDashboardMemorySearchHandler } from '@grafana/test-utils/handlers';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { type DashboardMemorySearchResult } from '../api/deepSearch';
+import { DASHBOARD_MEMORY_SEARCH_URL, type DashboardMemorySearchResult } from '../api/deepSearch';
 
-import { getDeepSearchResults, groupDashboardMemoryResults } from './deepSearchActions';
+import { getDeepSearchResults, groupDashboardMemoryResults, useDeepSearchResults } from './deepSearchActions';
 
 setBackendSrv(backendSrv);
 const server = setupMockServer();
@@ -102,5 +105,80 @@ describe('getDeepSearchResults', () => {
 
     expect(await getDeepSearchResults('   ')).toEqual([]);
     expect(called).toBe(false);
+  });
+});
+
+describe('useDeepSearchResults', () => {
+  afterEach(() => {
+    server.events.removeAllListeners();
+  });
+
+  it('returns empty results when the search query is empty', () => {
+    const { result } = renderHook(() => useDeepSearchResults({ searchQuery: '', show: true, enabled: true }));
+
+    expect(result.current.deepSearchResults).toEqual([]);
+    expect(result.current.isFetchingDeepSearchResults).toBe(false);
+  });
+
+  it('returns empty results when show is false', () => {
+    const { result } = renderHook(() => useDeepSearchResults({ searchQuery: 'latency', show: false, enabled: true }));
+
+    expect(result.current.deepSearchResults).toEqual([]);
+    expect(result.current.isFetchingDeepSearchResults).toBe(false);
+  });
+
+  it('does not call the API when disabled', async () => {
+    let called = false;
+    server.events.on('request:start', () => {
+      called = true;
+    });
+
+    const { result } = renderHook(() => useDeepSearchResults({ searchQuery: 'latency', show: true, enabled: false }));
+
+    expect(result.current.deepSearchResults).toEqual([]);
+    expect(result.current.isFetchingDeepSearchResults).toBe(false);
+    // Debounce means a request would only fire after a delay; give it time to prove it doesn't
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    expect(called).toBe(false);
+  });
+
+  it('fetches and returns grouped results', async () => {
+    server.use(
+      getDashboardMemorySearchHandler([
+        panelHit({ dashboardUid: 'dash-1', score: 0.1 }),
+        panelHit({ dashboardUid: 'dash-1', content: 'p50 latency', score: 0.3 }),
+      ])
+    );
+
+    const { result } = renderHook(() => useDeepSearchResults({ searchQuery: 'latency', show: true, enabled: true }));
+
+    expect(result.current.isFetchingDeepSearchResults).toBe(true);
+    await waitFor(
+      () => {
+        expect(result.current.deepSearchResults).toEqual([
+          expect.objectContaining({ dashboardUid: 'dash-1', matchedPanelCount: 2 }),
+        ]);
+      },
+      { timeout: 3000 }
+    );
+    expect(result.current.isFetchingDeepSearchResults).toBe(false);
+  });
+
+  it('degrades to empty results and logs when the endpoint fails', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    server.use(http.get(DASHBOARD_MEMORY_SEARCH_URL, () => HttpResponse.json({}, { status: 500 })));
+
+    const { result } = renderHook(() => useDeepSearchResults({ searchQuery: 'latency', show: true, enabled: true }));
+
+    expect(result.current.isFetchingDeepSearchResults).toBe(true);
+    await waitFor(
+      () => {
+        expect(result.current.isFetchingDeepSearchResults).toBe(false);
+      },
+      { timeout: 3000 }
+    );
+    expect(result.current.deepSearchResults).toEqual([]);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Deep search failed'), expect.anything());
+    consoleErrorSpy.mockRestore();
   });
 });
