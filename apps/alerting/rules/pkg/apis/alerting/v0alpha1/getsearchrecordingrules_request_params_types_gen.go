@@ -19,6 +19,7 @@ func (GetSearchRecordingRulesRequestRuleSearchSortField) OpenAPIModelName() stri
 type GetSearchRecordingRulesRequestParams struct {
 	Metric              *string                                            `json:"metric,omitempty"`
 	Q                   *string                                            `json:"q,omitempty"`
+	Names               []string                                           `json:"names,omitempty"`
 	Folders             []string                                           `json:"folders,omitempty"`
 	Groups              []string                                           `json:"groups,omitempty"`
 	Paused              *bool                                              `json:"paused,omitempty"`

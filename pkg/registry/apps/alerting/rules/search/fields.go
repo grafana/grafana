@@ -6,6 +6,7 @@ import "github.com/grafana/grafana/pkg/storage/unified/resource"
 // and unified backends (and the unified document builder). Title and folder
 // reuse the standard search fields; the rest are rule-specific.
 const (
+	fieldName           = resource.SEARCH_FIELD_NAME
 	fieldTitle          = resource.SEARCH_FIELD_TITLE
 	fieldFolder         = resource.SEARCH_FIELD_FOLDER
 	fieldGroup          = "group"

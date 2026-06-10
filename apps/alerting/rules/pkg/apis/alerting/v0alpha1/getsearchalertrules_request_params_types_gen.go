@@ -22,6 +22,7 @@ type GetSearchAlertRulesRequestParams struct {
 	Receiver         *string                                        `json:"receiver,omitempty"`
 	NotificationType *string                                        `json:"notificationType,omitempty"`
 	Q                *string                                        `json:"q,omitempty"`
+	Names            []string                                       `json:"names,omitempty"`
 	Folders          []string                                       `json:"folders,omitempty"`
 	Groups           []string                                       `json:"groups,omitempty"`
 	Paused           *bool                                          `json:"paused,omitempty"`

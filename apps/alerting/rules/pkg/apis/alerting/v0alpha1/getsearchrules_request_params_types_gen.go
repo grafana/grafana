@@ -25,6 +25,7 @@ type GetSearchRulesRequestParams struct {
 	Q                   *string                                   `json:"q,omitempty"`
 	Limit               *int64                                    `json:"limit,omitempty"`
 	Metric              *string                                   `json:"metric,omitempty"`
+	Names               []string                                  `json:"names,omitempty"`
 	Folders             []string                                  `json:"folders,omitempty"`
 	Groups              []string                                  `json:"groups,omitempty"`
 	Paused              *bool                                     `json:"paused,omitempty"`

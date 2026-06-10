@@ -13,6 +13,7 @@ import (
 #commonSearchQuery: {
 	#paginationQuery
 	q?: string
+	names?: [...string]
 	folders?: [...string]
 	groups?: [...string]
 	paused?: bool

@@ -76,6 +76,9 @@ func RegisterAppInstaller(
 	searchHandler := search.NewHandler(
 		unifiedresource.NewSearchClient(searchAdapter, alertrule.ResourceInfo.GroupResource(), unifiedClient, legacySearch),
 		unifiedresource.NewSearchClient(searchAdapter, recordingrule.ResourceInfo.GroupResource(), unifiedClient, legacySearch),
+		// TODO: inject a ruler-backed search.RuleStatusReader here to enable
+		// state/health filtering and hydration (the cross-source join).
+		nil,
 	)
 
 	appSpecificConfig := rulesAppConfig.RuntimeConfig{

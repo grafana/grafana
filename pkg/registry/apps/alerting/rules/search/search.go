@@ -29,11 +29,19 @@ const defaultLimit = 100
 type Handler struct {
 	alertRules     resourcepb.ResourceIndexClient
 	recordingRules resourcepb.ResourceIndexClient
-	logger         log.Logger
+	// statusReader sources runtime state/health from the ruler for the
+	// state/health join. May be nil until that support lands.
+	statusReader RuleStatusReader
+	logger       log.Logger
 }
 
-func NewHandler(alertRules, recordingRules resourcepb.ResourceIndexClient) *Handler {
-	return &Handler{alertRules: alertRules, recordingRules: recordingRules, logger: log.New("alerting.rules.search")}
+func NewHandler(alertRules, recordingRules resourcepb.ResourceIndexClient, statusReader RuleStatusReader) *Handler {
+	return &Handler{
+		alertRules:     alertRules,
+		recordingRules: recordingRules,
+		statusReader:   statusReader,
+		logger:         log.New("alerting.rules.search"),
+	}
 }
 
 // clientFor selects the router for the primary resource being searched.
@@ -93,6 +101,11 @@ func (h *Handler) SearchRules(ctx context.Context, w app.CustomRouteResponseWrit
 
 // run builds the search request, dispatches to the mode-routed client for the
 // primary kind, and computes the next page token.
+//
+// TODO: state/health support hooks in here. When h.statusReader is set and the
+// query filters on state/health, the config search must run unpaginated and be
+// joined with statuses before sorting/paginating; when state/health is only
+// displayed, the returned page's UIDs are hydrated via h.statusReader.
 func (h *Handler) run(ctx context.Context, req *app.CustomRouteRequest, primary schema.GroupResource, federated []schema.GroupResource) (*resourcepb.ResourceSearchResponse, string, error) {
 	searchReq, offset, err := buildSearchRequest(req.URL.Query(), req.ResourceIdentifier.Namespace, primary, federated)
 	if err != nil {
@@ -155,6 +168,7 @@ func buildSearchRequest(q url.Values, namespace string, primary schema.GroupReso
 			req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{Key: field, Operator: "in", Values: vals})
 		}
 	}
+	add(fieldName, q["names"]...)
 	add(fieldFolder, q["folders"]...)
 	add(fieldDatasourceUIDs, q["datasourceUIDs"]...)
 	add(fieldDashboardUID, q.Get("dashboardUID"))

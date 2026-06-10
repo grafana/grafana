@@ -256,6 +256,24 @@ var appManifestData = app.ManifestData{
 
 									{
 										ParameterProps: spec3.ParameterProps{
+											Name: "names",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
 											Name: "notificationType",
 											In:   "query",
 											Schema: &spec.Schema{
@@ -566,6 +584,24 @@ var appManifestData = app.ManifestData{
 
 									{
 										ParameterProps: spec3.ParameterProps{
+											Name: "names",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
 											Name: "notificationType",
 											In:   "query",
 											Schema: &spec.Schema{
@@ -845,6 +881,24 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "names",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
 												},
 											},
 										},

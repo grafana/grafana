@@ -106,6 +106,18 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 		}
 	})
 
+	t.Run("alert rules: filter by name (uid)", func(t *testing.T) {
+		all := searchAlert(t, nil).Items
+		require.GreaterOrEqual(t, len(all), 2)
+		want := []string{all[0].Name, all[1].Name}
+		got := searchAlert(t, url.Values{"names": want})
+		gotNames := make([]string, 0, len(got.Items))
+		for _, h := range got.Items {
+			gotNames = append(gotNames, h.Name)
+		}
+		require.ElementsMatch(t, want, gotNames)
+	})
+
 	t.Run("alert rules: free-text title filter", func(t *testing.T) {
 		require.ElementsMatch(t, []string{"cpu usage high", "memory usage high"}, alertTitles(searchAlert(t, url.Values{"q": {"usage"}})))
 	})

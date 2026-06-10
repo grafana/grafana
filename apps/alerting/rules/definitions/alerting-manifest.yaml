@@ -566,6 +566,12 @@ spec:
               schema:
                 type: string
             - in: query
+              name: names
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
               name: notificationType
               schema:
                 type: string
@@ -684,6 +690,12 @@ spec:
               schema:
                 type: integer
             - in: query
+              name: names
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
               name: notificationType
               schema:
                 type: string
@@ -793,6 +805,12 @@ spec:
               name: metric
               schema:
                 type: string
+            - in: query
+              name: names
+              schema:
+                items:
+                  type: string
+                type: array
             - in: query
               name: paused
               schema:
