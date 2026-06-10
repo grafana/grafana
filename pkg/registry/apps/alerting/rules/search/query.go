@@ -5,8 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/selection"
-
+	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -42,8 +41,8 @@ func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
 			switch r.Key {
 			case fieldFolder:
 				f.folders = r.Values
-			case fieldGroup:
-				f.groups = r.Values
+			case fieldLabels:
+				f.labels = append(f.labels, requirementToLabelMatchers(r)...)
 			case fieldDatasourceUIDs:
 				f.datasourceUIDs = r.Values
 			case fieldPaused:
@@ -68,8 +67,11 @@ func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
 				f.targetDatasourceUID = firstValue(r.Values)
 			}
 		}
+		// Group is carried as a controlled metadata label.
 		for _, r := range opts.Labels {
-			f.labels = append(f.labels, requirementToMatcher(r))
+			if r.Key == model.GroupLabelKey {
+				f.groups = r.Values
+			}
 		}
 	}
 	if len(req.SortBy) > 0 {
@@ -116,38 +118,46 @@ func parseLabelMatcher(s string) labelMatcher {
 	return labelMatcher{key: s, op: matchExists}
 }
 
-// requirementToMatcher / matcherToRequirement translate a label matcher to and
-// from a ResourceSearchRequest label requirement so it survives the request.
-func requirementToMatcher(r *resourcepb.Requirement) labelMatcher {
-	m := labelMatcher{key: r.Key, value: firstValue(r.Values)}
-	switch selection.Operator(r.Operator) {
-	case selection.NotEquals:
-		m.op = matchNotEquals
-	case selection.Exists:
-		m.op = matchExists
-	case selection.DoesNotExist:
-		m.op = matchNotExists
-	default:
-		m.op = matchEquals
-	}
-	return m
-}
-
-func matcherToRequirement(m labelMatcher) *resourcepb.Requirement {
-	r := &resourcepb.Requirement{Key: m.key}
+// labelMatcherRequirement / requirementToLabelMatchers translate label matchers
+// to and from a requirement on the indexed "labels" field, using flattened
+// "key"/"key=value" terms and in/notin operators so a matcher survives the
+// request and resolves the same way on both backends.
+func labelMatcherRequirement(m labelMatcher) *resourcepb.Requirement {
+	r := &resourcepb.Requirement{Key: fieldLabels, Operator: "in"}
 	switch m.op {
+	case matchEquals:
+		r.Values = []string{m.key + "=" + m.value}
 	case matchNotEquals:
-		r.Operator = string(selection.NotEquals)
-		r.Values = []string{m.value}
+		r.Operator = "notin"
+		r.Values = []string{m.key + "=" + m.value}
 	case matchExists:
-		r.Operator = string(selection.Exists)
+		r.Values = []string{m.key}
 	case matchNotExists:
-		r.Operator = string(selection.DoesNotExist)
-	default:
-		r.Operator = string(selection.Equals)
-		r.Values = []string{m.value}
+		r.Operator = "notin"
+		r.Values = []string{m.key}
 	}
 	return r
+}
+
+func requirementToLabelMatchers(r *resourcepb.Requirement) []labelMatcher {
+	negated := r.Operator == "notin" || r.Operator == "!="
+	out := make([]labelMatcher, 0, len(r.Values))
+	for _, term := range r.Values {
+		if k, v, ok := strings.Cut(term, "="); ok {
+			op := matchEquals
+			if negated {
+				op = matchNotEquals
+			}
+			out = append(out, labelMatcher{key: k, value: v, op: op})
+			continue
+		}
+		op := matchExists
+		if negated {
+			op = matchNotExists
+		}
+		out = append(out, labelMatcher{key: term, op: op})
+	}
+	return out
 }
 
 func matchText(r *ngmodels.AlertRule, text string) bool {
