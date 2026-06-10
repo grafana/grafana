@@ -53,7 +53,7 @@ export const evenPaneResizeAction = createAction('explore/evenPaneResizeAction')
  */
 export const splitClose = createAction<string>('explore/splitClose');
 
-export interface SetPaneStateActionPayload {
+interface SetPaneStateActionPayload {
   [itemId: string]: Partial<ExploreItemState>;
 }
 export const setPaneState = createAction<SetPaneStateActionPayload>('explore/setPaneState');

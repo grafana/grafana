@@ -127,13 +127,16 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 		if key.Namespace != "" && c.Key.Namespace != key.Namespace {
 			continue
 		}
+		// latestRv mirrors the real backend's behavior: it's the
+		// absolute latest event RV for this resource, independent
+		// of the sinceRv cutoff applied to the iterator.
+		if c.ResourceVersion > latestRv {
+			latestRv = c.ResourceVersion
+		}
 		if c.ResourceVersion <= sinceRv {
 			continue
 		}
 		matches = append(matches, c)
-		if c.ResourceVersion > latestRv {
-			latestRv = c.ResourceVersion
-		}
 	}
 	itemErr := f.itemErr
 	itemErrI := f.itemErrI
@@ -172,6 +175,18 @@ type fakeVector struct {
 	setLatestRVCalls int
 	setLatestRVErr   error
 	getLatestRVErr   error
+
+	ensuredPartitions  []string
+	ensurePartitionErr error
+
+	backfillJobs      []backfillJobCall
+	createBackfillErr error
+}
+
+type backfillJobCall struct {
+	Model      string
+	Resource   string
+	StoppingRV int64
 }
 
 type deleteCall struct{ Namespace, Model, Resource, UID string }
@@ -307,6 +322,24 @@ func (f *fakeVector) SetLatestRV(_ context.Context, rv int64) error {
 func (f *fakeVector) ListIncompleteBackfillJobs(context.Context, string) ([]vector.BackfillJob, error) {
 	return nil, nil
 }
+func (f *fakeVector) EnsureResourcePartition(_ context.Context, res string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.ensurePartitionErr != nil {
+		return f.ensurePartitionErr
+	}
+	f.ensuredPartitions = append(f.ensuredPartitions, res)
+	return nil
+}
+func (f *fakeVector) CreateBackfillJob(_ context.Context, model, res string, stoppingRV int64) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.createBackfillErr != nil {
+		return f.createBackfillErr
+	}
+	f.backfillJobs = append(f.backfillJobs, backfillJobCall{Model: model, Resource: res, StoppingRV: stoppingRV})
+	return nil
+}
 func (f *fakeVector) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {
 	return nil
 }
@@ -327,6 +360,32 @@ func (f *fakeVector) TryAcquireReconcilerLock(context.Context) (func(), bool, er
 		defer f.mu.Unlock()
 		f.lockReleases++
 	}, true, nil
+}
+
+// fakeBackfiller records that Run was invoked and blocks until ctx is
+// cancelled, mirroring the real backfiller's lifetime semantics.
+type fakeBackfiller struct {
+	mu      sync.Mutex
+	runs    int
+	blocked bool
+}
+
+func (f *fakeBackfiller) Run(ctx context.Context) error {
+	f.mu.Lock()
+	f.runs++
+	block := f.blocked
+	f.mu.Unlock()
+	if block {
+		<-ctx.Done()
+		return ctx.Err()
+	}
+	return nil
+}
+
+func (f *fakeBackfiller) runCount() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.runs
 }
 
 // fakeText is a deterministic embedder used by the reconciler. It

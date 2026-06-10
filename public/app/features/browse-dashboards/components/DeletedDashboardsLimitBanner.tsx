@@ -21,14 +21,14 @@ interface Props {
 }
 
 export function DeletedDashboardsLimitBanner({ resultToken }: Props) {
-  const { value: data } = useAsync(() => deletedDashboardsCache.getAsResourceList(), [resultToken]);
+  const { value: data } = useAsync(() => deletedDashboardsCache.getAsTable(), [resultToken]);
   const [dismissed, setDismissed] = useState<boolean>(() => store.getObject(DISMISS_STORAGE_KEY) === true);
 
   if (!data || dismissed) {
     return null;
   }
 
-  const count = data.items.length;
+  const count = data.rows.length;
   const lowerBoundOfMissing = data.metadata.remainingItemCount ?? (data.metadata.continue ? 1 : 0);
   const atLimit = count + lowerBoundOfMissing >= DELETED_DASHBOARDS_LIMIT;
 

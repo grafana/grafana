@@ -36,7 +36,7 @@ import { getAnnotations, isPausedRule, isUngroupedRuleGroup, prometheusRuleType,
 
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
-export interface CacheValue {
+interface CacheValue {
   promRules?: RuleNamespace[];
   rulerRules?: RulerRulesConfigDTO | null;
   result: CombinedRuleNamespace[];
