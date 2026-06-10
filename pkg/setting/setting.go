@@ -1135,18 +1135,18 @@ type AnnotationAppPlatformSettings struct {
 	PostgresTagCacheTTL      time.Duration // TTL for tag query cache
 	PostgresTagCacheSize     int           // Size of the tag query cache
 
-	// EnableDeprecatedInternalID controls whether a grafana.app/deprecatedInternalID
-	// label is generated for new annotations.
-	EnableDeprecatedInternalID bool
+	// EnableLegacyID controls whether a grafana.app/legacyID label is generated
+	// for new annotations.
+	EnableLegacyID bool
 }
 
 func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
 	appPlatformSection := cfg.Section("annotations.app_platform")
 	return AnnotationAppPlatformSettings{
-		Enabled:                    appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend:               appPlatformSection.Key("store_backend").MustString("legacy-sql"),
-		RetentionTTL:               appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
-		EnableDeprecatedInternalID: appPlatformSection.Key("enable_deprecated_internal_id").MustBool(false),
+		Enabled:        appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend:   appPlatformSection.Key("store_backend").MustString("legacy-sql"),
+		RetentionTTL:   appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
+		EnableLegacyID: appPlatformSection.Key("enable_legacy_id").MustBool(false),
 
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
 		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),

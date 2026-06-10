@@ -110,7 +110,7 @@ func NewAppInstaller(
 	}
 
 	var sfNode *snowflake.Node
-	if cfg.EnableDeprecatedInternalID {
+	if cfg.EnableLegacyID {
 		node, err := snowflake.NewNode(rand.Int64N(1024))
 		if err != nil {
 			return nil, fmt.Errorf("failed to create snowflake node: %w", err)

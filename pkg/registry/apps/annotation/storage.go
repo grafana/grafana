@@ -40,8 +40,8 @@ type ListOptions struct {
 	Scopes         []string
 	ScopesMatchAny bool
 
-	// DeprecatedInternalID filters by the legacy numeric ID
-	DeprecatedInternalID int64
+	// LegacyID filters by the legacy numeric ID
+	LegacyID int64
 }
 
 type AnnotationList struct {

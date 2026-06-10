@@ -233,13 +233,9 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	annotation.SetCreatedBy(user.GetUID())
 
 	if s.snowflakeNode != nil {
-		meta, err := utils.MetaAccessor(annotation)
-		if err != nil {
-			return nil, apierrors.NewInternalError(err)
-		}
-		if meta.GetDeprecatedInternalID() == 0 { // nolint:staticcheck
+		if getLegacyID(annotation) == 0 {
 			id := s.snowflakeNode.Generate().Int64() & maxSafeJSInt
-			meta.SetDeprecatedInternalID(id) // nolint:staticcheck
+			setLegacyID(annotation, id)
 		}
 	}
 
@@ -381,12 +377,12 @@ func parseFieldSelector(fs fields.Selector, opts *ListOptions) error {
 				return fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
 			}
 			opts.To = v
-		case "metadata.deprecatedInternalID":
+		case "metadata.legacyID":
 			v, err := strconv.ParseInt(r.Value, 10, 64)
 			if err != nil {
-				return fmt.Errorf("invalid deprecatedInternalID value %q: %w", r.Value, err)
+				return fmt.Errorf("invalid legacyID value %q: %w", r.Value, err)
 			}
-			opts.DeprecatedInternalID = v
+			opts.LegacyID = v
 		default:
 			return fmt.Errorf("unsupported field selector: %s", r.Field)
 		}

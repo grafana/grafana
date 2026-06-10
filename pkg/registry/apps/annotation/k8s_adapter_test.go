@@ -20,7 +20,6 @@ import (
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // errStore returns a configurable error from every method. Used to verify the
@@ -53,7 +52,7 @@ func (u *updatedObjectInfo) UpdatedObject(_ context.Context, _ runtime.Object) (
 	return u.obj, nil
 }
 
-func newTestAdapterWithDeprecatedID(store Store, ac authtypes.AccessClient) *k8sRESTAdapter {
+func newTestAdapterWithLegacyID(store Store, ac authtypes.AccessClient) *k8sRESTAdapter {
 	adapter := newTestAdapter(store, ac)
 	node, err := snowflake.NewNode(0)
 	if err != nil {
@@ -63,13 +62,10 @@ func newTestAdapterWithDeprecatedID(store Store, ac authtypes.AccessClient) *k8s
 	return adapter
 }
 
-// testGetDeprecatedID is a test helper that extracts the deprecated internal ID
-// from an annotation via MetaAccessor.
-func testGetDeprecatedID(t *testing.T, anno *annotationV0.Annotation) int64 {
+// testGetLegacyID is a test helper that extracts the legacy ID from an annotation.
+func testGetLegacyID(t *testing.T, anno *annotationV0.Annotation) int64 {
 	t.Helper()
-	meta, err := utils.MetaAccessor(anno)
-	require.NoError(t, err)
-	return meta.GetDeprecatedInternalID() // nolint:staticcheck
+	return getLegacyID(anno)
 }
 
 // TestToAPIError covers the helper in isolation: each sentinel maps to the
@@ -176,8 +172,8 @@ func TestK8sAdapter_Create(t *testing.T) {
 		assert.True(t, apierrors.IsAlreadyExists(err), "expected 409 AlreadyExists, got %v", err)
 	})
 
-	t.Run("generates deprecated ID when enabled", func(t *testing.T) {
-		adapter := newTestAdapterWithDeprecatedID(NewMemoryStore(), allowAll)
+	t.Run("generates legacy ID when enabled", func(t *testing.T) {
+		adapter := newTestAdapterWithLegacyID(NewMemoryStore(), allowAll)
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 		obj := &annotationV0.Annotation{
@@ -187,30 +183,30 @@ func TestK8sAdapter_Create(t *testing.T) {
 		result, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		id := testGetDeprecatedID(t, result.(*annotationV0.Annotation))
+		id := testGetLegacyID(t, result.(*annotationV0.Annotation))
 		assert.Greater(t, id, int64(0))
 		assert.LessOrEqual(t, id, int64(maxSafeJSInt))
 	})
 
-	t.Run("preserves caller-supplied deprecated ID", func(t *testing.T) {
-		adapter := newTestAdapterWithDeprecatedID(NewMemoryStore(), allowAll)
+	t.Run("preserves caller-supplied legacy ID", func(t *testing.T) {
+		adapter := newTestAdapterWithLegacyID(NewMemoryStore(), allowAll)
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 		obj := &annotationV0.Annotation{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "backfilled",
 				Namespace: ns,
-				Labels:    map[string]string{utils.LabelKeyDeprecatedInternalID: "12345"},
+				Labels:    map[string]string{LabelKeyLegacyID: "12345"},
 			},
 			Spec: annotationV0.AnnotationSpec{Text: "backfilled", Time: 1000},
 		}
 		result, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		assert.Equal(t, int64(12345), testGetDeprecatedID(t, result.(*annotationV0.Annotation)))
+		assert.Equal(t, int64(12345), testGetLegacyID(t, result.(*annotationV0.Annotation)))
 	})
 
-	t.Run("no deprecated ID when disabled", func(t *testing.T) {
+	t.Run("no legacy ID when disabled", func(t *testing.T) {
 		adapter := newTestAdapter(NewMemoryStore(), allowAll)
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
@@ -221,11 +217,11 @@ func TestK8sAdapter_Create(t *testing.T) {
 		result, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		assert.Equal(t, int64(0), testGetDeprecatedID(t, result.(*annotationV0.Annotation)))
+		assert.Equal(t, int64(0), testGetLegacyID(t, result.(*annotationV0.Annotation)))
 	})
 
 	t.Run("generates unique IDs", func(t *testing.T) {
-		adapter := newTestAdapterWithDeprecatedID(NewMemoryStore(), allowAll)
+		adapter := newTestAdapterWithLegacyID(NewMemoryStore(), allowAll)
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 		seen := make(map[int64]struct{}, 50)
@@ -237,7 +233,7 @@ func TestK8sAdapter_Create(t *testing.T) {
 			result, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 			require.NoError(t, err)
 
-			id := testGetDeprecatedID(t, result.(*annotationV0.Annotation))
+			id := testGetLegacyID(t, result.(*annotationV0.Annotation))
 			_, dup := seen[id]
 			assert.False(t, dup, "duplicate ID: %d", id)
 			seen[id] = struct{}{}
@@ -266,7 +262,7 @@ func TestK8sAdapter_List(t *testing.T) {
 
 	setup := func(t *testing.T) (*k8sRESTAdapter, context.Context) {
 		t.Helper()
-		adapter := newTestAdapterWithDeprecatedID(NewMemoryStore(), allowAll)
+		adapter := newTestAdapterWithLegacyID(NewMemoryStore(), allowAll)
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 		for _, tc := range []struct {
@@ -280,7 +276,7 @@ func TestK8sAdapter_List(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      tc.name,
 					Namespace: ns,
-					Labels:    map[string]string{utils.LabelKeyDeprecatedInternalID: tc.id},
+					Labels:    map[string]string{LabelKeyLegacyID: tc.id},
 				},
 				Spec: annotationV0.AnnotationSpec{Text: tc.name, Time: 1000},
 			}
@@ -290,10 +286,10 @@ func TestK8sAdapter_List(t *testing.T) {
 		return adapter, ctx
 	}
 
-	t.Run("field selector filters by deprecated ID", func(t *testing.T) {
+	t.Run("field selector filters by legacy ID", func(t *testing.T) {
 		adapter, ctx := setup(t)
 		result, err := adapter.List(ctx, &internalversion.ListOptions{
-			FieldSelector: fields.ParseSelectorOrDie("metadata.deprecatedInternalID=100"),
+			FieldSelector: fields.ParseSelectorOrDie("metadata.legacyID=100"),
 		})
 		require.NoError(t, err)
 		list := result.(*annotationV0.AnnotationList)
@@ -301,10 +297,10 @@ func TestK8sAdapter_List(t *testing.T) {
 		assert.Equal(t, "anno-a", list.Items[0].Name)
 	})
 
-	t.Run("non-matching deprecated ID returns empty", func(t *testing.T) {
+	t.Run("non-matching legacy ID returns empty", func(t *testing.T) {
 		adapter, ctx := setup(t)
 		result, err := adapter.List(ctx, &internalversion.ListOptions{
-			FieldSelector: fields.ParseSelectorOrDie("metadata.deprecatedInternalID=999"),
+			FieldSelector: fields.ParseSelectorOrDie("metadata.legacyID=999"),
 		})
 		require.NoError(t, err)
 		list := result.(*annotationV0.AnnotationList)

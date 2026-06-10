@@ -8,7 +8,6 @@ import (
 	"time"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -128,7 +127,7 @@ func (s *PostgreSQLStore) Close() error {
 func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error) {
 	query := `
 		SELECT namespace, name, time, time_end, dashboard_uid, panel_id,
-		       text, tags, scopes, created_by, created_at, deprecated_internal_id
+		       text, tags, scopes, created_by, created_at, legacy_id
 		FROM annotations
 		WHERE namespace = $1 AND name = $2
 		LIMIT 1
@@ -137,18 +136,18 @@ func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*ann
 	row := s.pool.QueryRow(ctx, query, namespace, name)
 
 	var (
-		ns, n, text          string
-		timeMs, createdAt    int64
-		timeEnd              *int64
-		dashboardUID         *string
-		panelID              *int64
-		tags, scopes         []string
-		createdBy            *string
-		deprecatedInternalID *int64
+		ns, n, text       string
+		timeMs, createdAt int64
+		timeEnd           *int64
+		dashboardUID      *string
+		panelID           *int64
+		tags, scopes      []string
+		createdBy         *string
+		legacyID          *int64
 	)
 
 	err := row.Scan(&ns, &n, &timeMs, &timeEnd, &dashboardUID, &panelID,
-		&text, &tags, &scopes, &createdBy, &createdAt, &deprecatedInternalID)
+		&text, &tags, &scopes, &createdBy, &createdAt, &legacyID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
@@ -156,7 +155,7 @@ func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*ann
 		return nil, fmt.Errorf("failed to scan annotation: %w", err)
 	}
 
-	return rowToAnnotation(ns, n, timeMs, timeEnd, dashboardUID, panelID, text, tags, scopes, createdBy, createdAt, deprecatedInternalID), nil
+	return rowToAnnotation(ns, n, timeMs, timeEnd, dashboardUID, panelID, text, tags, scopes, createdBy, createdAt, legacyID), nil
 }
 
 // Create creates a new annotation
@@ -182,22 +181,20 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 	createdBy := anno.GetCreatedBy()
 	createdAt := time.Now().UTC().UnixMilli()
 
-	var deprecatedInternalID *int64
-	if meta, err := utils.MetaAccessor(anno); err == nil {
-		if id := meta.GetDeprecatedInternalID(); id > 0 { // nolint:staticcheck
-			deprecatedInternalID = &id
-		}
+	var legacyID *int64
+	if id := getLegacyID(anno); id > 0 {
+		legacyID = &id
 	}
 
 	query := `
 		INSERT INTO annotations
-		(namespace, name, time, time_end, dashboard_uid, panel_id, text, tags, scopes, created_by, created_at, deprecated_internal_id)
+		(namespace, name, time, time_end, dashboard_uid, panel_id, text, tags, scopes, created_by, created_at, legacy_id)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
 
 	_, err := s.pool.Exec(ctx, query,
 		namespace, name, timeMs, timeEnd, dashboardUID, panelID,
-		text, pq.Array(tags), pq.Array(scopes), createdBy, createdAt, deprecatedInternalID,
+		text, pq.Array(tags), pq.Array(scopes), createdBy, createdAt, legacyID,
 	)
 	if err != nil {
 		// Check for unique constraint violation
@@ -285,23 +282,23 @@ func (s *PostgreSQLStore) List(ctx context.Context, namespace string, opts ListO
 	var results []annotationV0.Annotation
 	for rows.Next() {
 		var (
-			ns, n, text          string
-			timeMs, createdAt    int64
-			timeEnd              *int64
-			dashboardUID         *string
-			panelID              *int64
-			tags, scopes         []string
-			createdBy            *string
-			deprecatedInternalID *int64
+			ns, n, text       string
+			timeMs, createdAt int64
+			timeEnd           *int64
+			dashboardUID      *string
+			panelID           *int64
+			tags, scopes      []string
+			createdBy         *string
+			legacyID          *int64
 		)
 
 		err := rows.Scan(&ns, &n, &timeMs, &timeEnd, &dashboardUID, &panelID,
-			&text, &tags, &scopes, &createdBy, &createdAt, &deprecatedInternalID)
+			&text, &tags, &scopes, &createdBy, &createdAt, &legacyID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan annotation row: %w", err)
 		}
 
-		results = append(results, *rowToAnnotation(ns, n, timeMs, timeEnd, dashboardUID, panelID, text, tags, scopes, createdBy, createdAt, deprecatedInternalID))
+		results = append(results, *rowToAnnotation(ns, n, timeMs, timeEnd, dashboardUID, panelID, text, tags, scopes, createdBy, createdAt, legacyID))
 	}
 
 	if err := rows.Err(); err != nil {
@@ -393,16 +390,16 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 	}
 
 	// Deprecated internal ID filter
-	if opts.DeprecatedInternalID > 0 {
-		conditions = append(conditions, fmt.Sprintf("deprecated_internal_id = $%d", argNum))
-		args = append(args, opts.DeprecatedInternalID)
+	if opts.LegacyID > 0 {
+		conditions = append(conditions, fmt.Sprintf("legacy_id = $%d", argNum))
+		args = append(args, opts.LegacyID)
 		argNum++
 	}
 
 	// Construct query
 	query := `
 		SELECT namespace, name, time, time_end, dashboard_uid, panel_id,
-		       text, tags, scopes, created_by, created_at, deprecated_internal_id
+		       text, tags, scopes, created_by, created_at, legacy_id
 		FROM annotations
 		WHERE ` + strings.Join(conditions, " AND ") + `
 		ORDER BY time DESC, name
@@ -418,7 +415,7 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 // rowToAnnotation converts database row values to an Annotation object
 func rowToAnnotation(namespace, name string, timeMs int64, timeEnd *int64,
 	dashboardUID *string, panelID *int64, text string, tags, scopes []string,
-	createdBy *string, createdAt int64, deprecatedInternalID *int64) *annotationV0.Annotation {
+	createdBy *string, createdAt int64, legacyID *int64) *annotationV0.Annotation {
 	anno := &annotationV0.Annotation{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -444,11 +441,9 @@ func rowToAnnotation(namespace, name string, timeMs int64, timeEnd *int64,
 	// Set creation timestamp
 	anno.CreationTimestamp = metav1.NewTime(time.UnixMilli(createdAt))
 
-	// Populate the deprecated internal ID label if the column has a value
-	if deprecatedInternalID != nil && *deprecatedInternalID != 0 {
-		if meta, err := utils.MetaAccessor(anno); err == nil {
-			meta.SetDeprecatedInternalID(*deprecatedInternalID) // nolint:staticcheck
-		}
+	// Populate the legacy ID label if the column has a value
+	if legacyID != nil && *legacyID != 0 {
+		setLegacyID(anno, *legacyID)
 	}
 
 	return anno
