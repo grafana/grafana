@@ -173,6 +173,8 @@ func validateWorkflowOptions(cfg *provisioning.Repository) field.ErrorList {
 			list = append(list, field.Invalid(field.NewPath("spec", "pullRequest"),
 				cfg.Spec.PullRequest, "pull request options are not supported on git repositories"))
 		}
+	default:
+		// Hosting providers (github, githubEnterprise, bitbucket, gitlab) support all options.
 	}
 
 	return list
