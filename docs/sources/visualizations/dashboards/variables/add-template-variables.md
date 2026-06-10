@@ -44,7 +44,8 @@ weight: 100
 
 # Add variables
 
-The following table lists the types of variables shipped with Grafana.
+In addition to the built-in global variables that come with Grafana, you can create your own variables.
+The following table lists the types of variables you can create:
 
 <!-- prettier-ignore-start -->
 
@@ -497,10 +498,6 @@ If you do not want Grafana to do this automatic regular expression escaping and 
 - Turn off the **Multi-value** or **Include All option** options.
 - Use the [raw variable format](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/variable-syntax/#raw).
 
-### Include All option
-
-Grafana adds an `All` option to the variable drop-down list. If a user selects this option, then all variable options are selected.
-
 ### Custom all value
 
 This option is only visible if the **Include All option** is selected.
@@ -510,3 +507,7 @@ Enter regular expressions, globs, or Lucene syntax in the **Custom all value** f
 By default the `All` value includes all options in combined expression. This can become very long and can have performance problems. Sometimes it can be better to specify a custom all value, like a wildcard regular expression.
 
 In order to have custom regular expression, globs, or Lucene syntax in the **Custom all value** option, it's never escaped so you have to think about what's a valid value for your data source.
+
+### Include All option
+
+Grafana adds an `All` option to the variable drop-down list. If a user selects this option, then all variable options are selected.
