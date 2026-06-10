@@ -448,9 +448,13 @@ func relatedOps(e *operationEntry, s *apiDocsState) []*operationEntry {
 	var related []*operationEntry
 	seen := map[string]bool{e.OperationID: true}
 
+	// add records a related operation, skipping duplicates (including e
+	// itself, which is pre-seeded in seen). It returns false only once the
+	// cap is reached, signalling callers to stop scanning. Skipped duplicates
+	// return true so scanning continues.
 	add := func(other *operationEntry) bool {
 		if seen[other.OperationID] {
-			return false
+			return true
 		}
 		seen[other.OperationID] = true
 		related = append(related, other)
