@@ -473,15 +473,17 @@
     {
       "metadata": {
         "name": "alertingMultiplePolicies",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1781102456776",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-10 14:40:56.776063699 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables the ability to create multiple alerting policies",
-        "stage": "experimental",
+        "description": "Enables the ability to create multiple notification policies in alerting",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

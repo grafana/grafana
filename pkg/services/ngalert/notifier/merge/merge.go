@@ -144,14 +144,16 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1, provenance models.P
 	}
 
 	var addedInhibitionRules []string
-	managedInhibitionRules := make(v1.ManagedInhibitionRules, len(mcfg.InhibitRules)+len(cfg.ManagedInhibitionRules))
+	managedInhibitionRules := make(map[v1.ResourceUID]v1.InhibitionRule, len(mcfg.InhibitRules)+len(cfg.InhibitionRules))
 	{
-		maps.Copy(managedInhibitionRules, cfg.ManagedInhibitionRules)
-		importedRules, err := BuildManagedInhibitionRules(mimirCfg.Identifier, mcfg.InhibitRules, v1.Provenance(provenance))
+		maps.Copy(managedInhibitionRules, cfg.InhibitionRules)
+		importedRules, err := BuildManagedInhibitionRules(mimirCfg.Identifier, mcfg.InhibitRules, provenance)
 		if err != nil {
 			return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("failed to build managed inhibition rules for imported configuration: %w", err)
 		}
-		addedInhibitionRules = slices.Collect(maps.Keys(importedRules))
+		for uid := range importedRules {
+			addedInhibitionRules = append(addedInhibitionRules, string(uid))
+		}
 		maps.Copy(managedInhibitionRules, importedRules)
 	}
 
@@ -182,8 +184,8 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1, provenance models.P
 				},
 				Receivers: mergedReceivers,
 			},
-			ManagedRoutes:          managedRoutes,
-			ManagedInhibitionRules: managedInhibitionRules,
+			ManagedRoutes:   managedRoutes,
+			InhibitionRules: managedInhibitionRules,
 		}, MergeResult{
 			RenameResources:      RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals},
 			AddedRoute:           mimirCfg.Identifier,
@@ -334,10 +336,10 @@ func createIndexReceivers(existing, incoming []*v1.PostableApiReceiver) map[stri
 	return usedNames
 }
 
-func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule, provenance v1.Provenance) (v1.ManagedInhibitionRules, error) {
+func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule, provenance models.Provenance) (map[v1.ResourceUID]v1.InhibitionRule, error) {
 	scopedRules := applyManagedRouteMatcher(identifier, rules)
 
-	res := make(v1.ManagedInhibitionRules, len(scopedRules))
+	res := make(map[v1.ResourceUID]v1.InhibitionRule, len(scopedRules))
 	for i, rule := range scopedRules {
 		namePrefix := fmt.Sprintf("%s-imported-inhibition-rule-", identifier)
 
@@ -347,11 +349,12 @@ func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule, 
 		}
 		name := fmt.Sprintf(namePrefix+intFmt, i)
 
-		ir, err := v1.InhibitRuleToInhibitionRule(name, rule, provenance)
-		if err != nil {
+		ir := v1.NewInhibitionRule(name, v1.MatchersToModel(rule.SourceMatchers), v1.MatchersToModel(rule.TargetMatchers), rule.Equal, provenance)
+		if err := ir.Validate(); err != nil {
 			return nil, err
 		}
-		res[name] = ir
+
+		res[ir.UID] = ir
 	}
 
 	return res, nil
