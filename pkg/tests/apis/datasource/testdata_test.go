@@ -336,6 +336,51 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		})
 	})
 
+	t.Run("resources", func(t *testing.T) {
+		const base = "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/resources/"
+
+		// The testdata plugin's /test/json route echoes the request back, so we
+		// can confirm the method, path and body are forwarded to the plugin.
+		t.Run("echo endpoint reflects the forwarded request", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   base + "test/json",
+				Body:   []byte(`{"hello":"world"}`),
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusOK, raw.Response.StatusCode, "body: %s", raw.Body)
+
+			body := string(raw.Body)
+			require.Contains(t, body, `"method":"POST"`, "echoed method")
+			require.Contains(t, body, "test/json", "echoed forwarded path")
+			require.Contains(t, body, `"hello":"world"`, "echoed request body")
+		})
+
+		// A forwarded sub path that itself contains "/resources" must be passed
+		// through intact (it falls through to the catch-all handler).
+		t.Run("forwards a sub path containing /resources", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodGet,
+				Path:   base + "nested/resources/path",
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusOK, raw.Response.StatusCode, "body: %s", raw.Body)
+			require.Contains(t, string(raw.Body), "Hello world from test datasource!")
+		})
+
+		t.Run("returns 404 for an unknown datasource", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodGet,
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/does-not-exist/resources/test/json",
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusNotFound, raw.Response.StatusCode)
+		})
+	})
+
 	t.Run("delete", func(t *testing.T) {
 		err := client.Delete(ctx, "test", metav1.DeleteOptions{})
 		require.NoError(t, err)

@@ -1714,6 +1714,12 @@ func toBulkIterator(items []*resourcepb.BulkRequest) *sliceBulkRequestIterator {
 	return &sliceBulkRequestIterator{ix: -1, items: items}
 }
 
+// ToBulkIterator returns a BulkRequestIterator over the given requests, for use by
+// bulk-processing tests in other packages.
+func ToBulkIterator(items []*resourcepb.BulkRequest) resource.BulkRequestIterator {
+	return toBulkIterator(items)
+}
+
 func (s *sliceBulkRequestIterator) Next() bool {
 	s.ix++
 	return s.ix < len(s.items)
