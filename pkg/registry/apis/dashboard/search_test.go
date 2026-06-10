@@ -936,12 +936,12 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
-		"root folder is passed through for the search backend to expand": {
+		"canonical root folder is collapsed to the legacy empty sentinel": {
 			queryString: "folder=general",
 			expected: &resourcepb.ResourceSearchRequest{
 				Options: &resourcepb.ListOptions{
 					Key:    dashboardKey,
-					Fields: []*resourcepb.Requirement{{Key: "folder", Operator: "=", Values: []string{"general"}}},
+					Fields: []*resourcepb.Requirement{{Key: "folder", Operator: "=", Values: []string{""}}},
 				},
 				Query:     "",
 				Limit:     50,
