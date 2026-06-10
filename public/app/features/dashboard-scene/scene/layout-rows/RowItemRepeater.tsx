@@ -19,20 +19,13 @@ import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../.
 import { type RowItem } from './RowItem';
 import { type RowsLayoutManager } from './RowsLayoutManager';
 
-export interface Props {
+interface Props {
   row: RowItem;
   manager: RowsLayoutManager;
   variable: MultiValueVariable;
 }
 
-export function RowItemRepeater({
-  row,
-  variable,
-}: {
-  row: RowItem;
-  manager: RowsLayoutManager;
-  variable: MultiValueVariable;
-}) {
+export function RowItemRepeater({ row, variable }: Props) {
   const { repeatedRows } = row.useState();
 
   // Subscribe to variable state changes and perform repeats when the variable changes

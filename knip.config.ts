@@ -77,6 +77,7 @@ const config: KnipConfig = {
         'public/app/app.ts',
         'public/app/index.ts',
         'public/app/api/clients/**/index.ts',
+        'public/app/extensions/index.ts',
         'public/app/extensions/api/clients/**/index.ts',
         'public/app/plugins/**/module.{ts,tsx,js}',
         'scripts/**/*.{t,j}s*',

@@ -39,7 +39,7 @@ import {
 import { styleUsesText } from '../style/utils';
 import { type LayerContentInfo } from '../utils/getFeatures';
 
-export interface StyleEditorOptions {
+interface StyleEditorOptions {
   layerInfo?: Observable<LayerContentInfo>;
   simpleFixedValues?: boolean;
   displayRotation?: boolean;

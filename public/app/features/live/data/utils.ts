@@ -11,7 +11,7 @@ export enum StreamingResponseDataType {
 /**
  * @alpha -- experimental
  */
-export type StreamingResponseDataTypeToData = {
+type StreamingResponseDataTypeToData = {
   [StreamingResponseDataType.NewValuesSameSchema]: {
     values: unknown[][];
   };

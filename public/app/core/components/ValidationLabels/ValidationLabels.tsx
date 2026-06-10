@@ -16,7 +16,7 @@ export interface ValidationLabelsProps {
   pristine: boolean;
 }
 
-export interface ValidationLabelProps {
+interface ValidationLabelProps {
   strongPasswordValidation: StrongPasswordValidation;
   password: string;
   pristine: boolean;
