@@ -5,6 +5,8 @@ manifest: {
 	groupOverride: "live.grafana.app"
 	versions: {
 		"v1alpha1": {
+     	// Explicitly set to false to keep the app disabled by default for testing.
+     	served: false
 			codegen: {
 				ts: {enabled: false}
 				go: {enabled: true}
