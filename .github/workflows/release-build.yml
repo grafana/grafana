@@ -831,6 +831,40 @@ jobs:
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
       runs-on: ubuntu-x64-small
+  run-meticulous-tests:
+    if: github.repository == 'grafana/grafana'
+    name: Run Meticulous tests
+    runs-on: ubuntu-x64-small
+    continue-on-error: true
+    permissions:
+      actions: write
+      contents: read
+      id-token: write
+      issues: write
+      pull-requests: write
+      statuses: read
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Get vault secrets
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            METICULOUS_API_TOKEN=meticulous-ui:api-token
+
+      - name: Run Meticulous tests
+        uses: alwaysmeticulous/report-diffs-action/upload-container@89c6081b30d17cfcc410b5c19c269cd7a4d67cdf # v1
+        with:
+          api-token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).METICULOUS_API_TOKEN }}
+          image-tag: grafana/grafana:nightly-distroless-slim
+          container-port: 3000
+          container-env: |
+            GF_AUTH_ANONYMOUS_ENABLED=true
+            GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
 
   dispatch-npm-canaries:
     if: github.repository == 'grafana/grafana' && github.ref_name == 'main'
