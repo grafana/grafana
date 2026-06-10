@@ -193,7 +193,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-01-29,fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 2025-12-18,fetchRulesInCompactMode,experimental,@grafana/alerting-squad,false,false,false
 2025-02-04,newLogsPanel,GA,@grafana/observability-logs,false,false,true
-2025-02-06,grafanaconThemes,GA,@grafana/grafana-frontend-platform,false,true,false
 2025-02-14,alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
 2025-08-29,alertingUseNewSimplifiedRoutingHashAlgorithm,preview,@grafana/alerting-squad,false,true,false
 2025-03-31,useScopesNavigationEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
@@ -296,7 +295,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-01-14,alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false
 2026-05-22,queryWithAssistant,experimental,@grafana/data-sources-plugins,false,false,true
 2026-05-22,queryEditorNext,privatePreview,@grafana/datapro,false,false,true
-2026-05-22,queryEditorNextMultiSelect,experimental,@grafana/datapro,false,false,true
 2026-05-22,kubernetesTeamsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesTeamsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesUsersApi,experimental,@grafana/identity-access-team,false,false,false
@@ -346,7 +344,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,querycaching.redirectToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-22,querycaching.enableConnectionsClient,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-22,querycaching.useInQueryService,experimental,@grafana/grafana-operator-experience-squad,false,false,false
-2026-05-22,compiledBootScript,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,influxDBConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-05-22,clickHouseConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-05-22,grafana.newPreferencesPage,experimental,@grafana/grafana-frontend-platform,false,false,true

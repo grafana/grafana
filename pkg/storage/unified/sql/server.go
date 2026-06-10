@@ -230,8 +230,7 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 	batchEmbedder := embedder.NewBatchEmbedder(*opts.Embedder)
 	builders := []embed.Builder{dashboard.New()}
 
-	var err error
-	resourceOpts.VectorBackfiller, err = backfill.NewVectorBackfiller(backfill.Options{
+	backfiller, err := backfill.NewVectorBackfiller(backfill.Options{
 		Storage:        opts.Backend,
 		VectorBackend:  opts.VectorBackend,
 		BatchEmbedder:  batchEmbedder,
@@ -248,6 +247,7 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 		VectorBackend: opts.VectorBackend,
 		BatchEmbedder: batchEmbedder,
 		Builders:      builders,
+		Backfiller:    backfiller,
 		Interval:      opts.Cfg.VectorReconcilerInterval,
 		Metrics:       resourceOpts.VectorMetrics,
 	})

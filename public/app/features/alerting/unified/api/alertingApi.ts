@@ -8,7 +8,7 @@ import { appEvents } from 'app/core/app_events';
 
 import { logMeasurement } from '../Analytics';
 
-export type ExtendedBackendSrvRequest = BackendSrvRequest & {
+type ExtendedBackendSrvRequest = BackendSrvRequest & {
   /**
    * Data to send with a request. Maps to the `data` property on a `BackendSrvRequest`
    *
@@ -18,7 +18,7 @@ export type ExtendedBackendSrvRequest = BackendSrvRequest & {
   body?: BackendSrvRequest['data'];
 };
 
-export type NotificationOptions = {
+type NotificationOptions = {
   /**
    * Custom success message to show after completion of the request.
    *

@@ -11,7 +11,7 @@ export type GitHubAuthType = 'pat' | 'github-app';
 
 export type GitHubAppMode = 'existing' | 'new';
 
-export interface MigrateFormData {
+interface MigrateFormData {
   history: boolean;
   identifier: boolean;
   migrateResources?: boolean;

@@ -1311,7 +1311,8 @@
       "metadata": {
         "name": "compiledBootScript",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-08T09:00:55Z"
       },
       "spec": {
         "description": "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
@@ -2532,7 +2533,8 @@
       "metadata": {
         "name": "grafanaconThemes",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-02-06T11:08:04Z"
+        "creationTimestamp": "2025-02-06T11:08:04Z",
+        "deletionTimestamp": "2026-06-08T15:48:46Z"
       },
       "spec": {
         "description": "Enables the temporary themes for GrafanaCon",
@@ -4180,7 +4182,8 @@
       "metadata": {
         "name": "queryEditorNextMultiSelect",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-09T16:30:59Z"
       },
       "spec": {
         "description": "Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor",
