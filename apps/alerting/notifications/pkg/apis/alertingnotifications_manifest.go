@@ -61,7 +61,7 @@ var appManifestData = app.ManifestData{
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v0alpha1",
-			Served: true,
+			Served: false,
 			Kinds: []app.ManifestVersionKind{
 				{
 					Kind:       "InhibitionRule",
@@ -559,7 +559,7 @@ var appManifestData = app.ManifestData{
 
 		{
 			Name:   "v1beta1",
-			Served: true,
+			Served: false,
 			Kinds: []app.ManifestVersionKind{
 				{
 					Kind:       "InhibitionRule",
