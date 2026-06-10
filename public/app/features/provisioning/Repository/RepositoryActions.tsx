@@ -30,7 +30,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
 
   return (
     <Stack wrap="wrap">
-      {isReadOnlyRepo && <ReadOnlyBadge isLocal={repoType === 'local'} />}
+      {isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
       <StatusBadge repo={repository} displayOnly />
       {repoHref && (
         <Button variant="secondary" icon={providerIcon} onClick={() => window.open(repoHref, '_blank')}>

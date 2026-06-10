@@ -130,7 +130,7 @@ export function ToolbarActions({ dashboard }: Props) {
       group: 'icon-actions',
       condition: true,
       render: () => {
-        return <ReadOnlyBadge isLocal={repoType === 'local'} />;
+        return <ReadOnlyBadge repoType={repoType} />;
       },
     });
   }

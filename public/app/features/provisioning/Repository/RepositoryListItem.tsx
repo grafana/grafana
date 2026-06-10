@@ -68,7 +68,7 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={2} direction="row" alignItems="center" wrap>
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
-          {isReadOnlyRepo && <ReadOnlyBadge isLocal={spec?.type === 'local'} />}
+          {isReadOnlyRepo && <ReadOnlyBadge repoType={spec?.type} />}
         </Stack>
       </Card.Heading>
 
