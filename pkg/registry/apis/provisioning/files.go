@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -83,12 +82,10 @@ func (c *filesConnector) getRepo(ctx context.Context, method, name string) (repo
 
 // TODO: document the synchronous write and delete on the API Spec
 func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
-	ctx = logging.Context(ctx, logger)
-
-	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c.handleRequest(ctx, name, r, responder, logger)
-	}), 30*time.Second), nil
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
+		c.handleRequest(logging.Context(ctx, logger), name, r, responder, logger)
+	}), nil
 }
 
 // handleRequest processes the HTTP request for files operations.
@@ -123,7 +120,7 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 	}
 
 	logger = logger.With("url", r.URL.Path, "ref", opts.Ref, "message", opts.Message)
-	ctx = logging.Context(r.Context(), logger)
+	ctx = logging.Context(ctx, logger)
 
 	// Handle directory listing separately
 	isDir := safepath.IsDir(opts.Path)
