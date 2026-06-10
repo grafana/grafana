@@ -26,7 +26,7 @@ var appManifestData = app.ManifestData{
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v1alpha1",
-			Served: true,
+			Served: false,
 			Kinds:  []app.ManifestVersionKind{},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
