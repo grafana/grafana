@@ -8,7 +8,7 @@ import { type MapLayerRegistryItem, type MapLayerOptions, type GrafanaTheme2, ty
 const LAYER_TYPE_BACKGROUND = 'background';
 const PAINT_BACKGROUND_OPACITY = 'background-opacity';
 
-export interface MaplibreConfig {
+interface MaplibreConfig {
   url: string;
   accessToken?: string;
 }

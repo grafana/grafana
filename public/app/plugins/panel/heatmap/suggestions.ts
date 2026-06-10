@@ -53,7 +53,8 @@ export const heatmapSuggestionsSupplier: VisualizationSuggestionsSupplier<Option
     !dataSummary.rawFrames ||
     !dataSummary.hasData ||
     !dataSummary.hasFieldType(FieldType.time) ||
-    !dataSummary.hasFieldType(FieldType.number)
+    !dataSummary.hasFieldType(FieldType.number) ||
+    dataSummary.hasFieldType(FieldType.string)
   ) {
     return;
   }

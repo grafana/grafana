@@ -1584,14 +1584,6 @@ const injectedRtkApi = api
         query: () => ({ url: `/user/email/update` }),
         providesTags: ['user'],
       }),
-      clearHelpFlags: build.query<ClearHelpFlagsApiResponse, ClearHelpFlagsApiArg>({
-        query: () => ({ url: `/user/helpflags/clear` }),
-        providesTags: ['signed_in_user'],
-      }),
-      setHelpFlag: build.mutation<SetHelpFlagApiResponse, SetHelpFlagApiArg>({
-        query: (queryArg) => ({ url: `/user/helpflags/${queryArg.flagId}`, method: 'PUT' }),
-        invalidatesTags: ['signed_in_user'],
-      }),
       getSignedInUserOrgList: build.query<GetSignedInUserOrgListApiResponse, GetSignedInUserOrgListApiArg>({
         query: () => ({ url: `/user/orgs` }),
         providesTags: ['signed_in_user'],
@@ -3049,18 +3041,6 @@ export type GetUserAuthTokensApiResponse = /** status 200 (empty) */ UserToken[]
 export type GetUserAuthTokensApiArg = void;
 export type UpdateUserEmailApiResponse = unknown;
 export type UpdateUserEmailApiArg = void;
-export type ClearHelpFlagsApiResponse = /** status 200 (empty) */ {
-  helpFlags1?: number;
-  message?: string;
-};
-export type ClearHelpFlagsApiArg = void;
-export type SetHelpFlagApiResponse = /** status 200 (empty) */ {
-  helpFlags1?: number;
-  message?: string;
-};
-export type SetHelpFlagApiArg = {
-  flagId: string;
-};
 export type GetSignedInUserOrgListApiResponse = /** status 200 (empty) */ UserOrgDto[];
 export type GetSignedInUserOrgListApiArg = void;
 export type ChangeUserPasswordApiResponse =
@@ -4508,6 +4488,8 @@ export type PreferencesQueryHistoryPreference = {
 export type PreferencesSpec = {
   /** UID for the home dashboard */
   homeDashboardUID?: string;
+  /** Explicit home URL (NOTE: this can only be modified in the system settings) */
+  homeURL?: string;
   /** Selected language */
   language?: string;
   navbar?: PreferencesNavbarPreference;
@@ -5819,9 +5801,6 @@ export const {
   useLazyGetUserAuthTokensQuery,
   useUpdateUserEmailQuery,
   useLazyUpdateUserEmailQuery,
-  useClearHelpFlagsQuery,
-  useLazyClearHelpFlagsQuery,
-  useSetHelpFlagMutation,
   useGetSignedInUserOrgListQuery,
   useLazyGetSignedInUserOrgListQuery,
   useChangeUserPasswordMutation,

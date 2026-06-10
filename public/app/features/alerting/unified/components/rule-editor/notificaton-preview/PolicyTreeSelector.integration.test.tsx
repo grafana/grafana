@@ -25,7 +25,7 @@ import {
 import { setAlertmanagerChoices, setFolderResponse } from 'app/features/alerting/unified/mocks/server/configure';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { captureRequests, serializeRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/search';
+import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { MANUAL_ROUTING_KEY } from 'app/features/alerting/unified/utils/rule-form';
@@ -530,6 +530,77 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
       expect(policyTreeUi.policySelector.query()).not.toBeInTheDocument();
     });
   });
+
+  // Regression: a rule routed via notification_settings.policy (the canonical, backend-honored
+  // storage) was shown as "Default policy" and silently dropped on save when only
+  // alertingMultiplePolicies was enabled (alertingPolicyRoutingSettings OFF), because the
+  // selector/save paths only looked at the legacy __grafana_managed_route__ label.
+  describe('edit existing rule with notification_settings.policy (alertingPolicyRoutingSettings OFF)', () => {
+    const CUSTOM_POLICY_NAME = 'Managed Policy - Empty Provisioned';
+
+    beforeEach(() => {
+      setFolderResponse(
+        mockFolder({
+          uid: grafanaRulerNamespace.uid,
+          title: grafanaRulerNamespace.name,
+          accessControl: {
+            [AccessControlAction.AlertingRuleUpdate]: true,
+          },
+        })
+      );
+
+      const ruleWithPolicy: RulerGrafanaRuleDTO = {
+        ...grafanaRulerRule,
+        labels: {},
+        grafana_alert: {
+          ...grafanaRulerRule.grafana_alert,
+          notification_settings: { policy: CUSTOM_POLICY_NAME },
+        },
+      };
+      const group: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
+        ...grafanaRulerGroup,
+        rules: [ruleWithPolicy],
+      };
+      server.use(
+        http.get(`/api/ruler/grafana/api/v1/rules/${grafanaRulerNamespace.uid}/${grafanaRulerGroup.name}`, () =>
+          HttpResponse.json(group)
+        )
+      );
+    });
+
+    it('shows the policy from notification_settings.policy pre-selected, not "Default policy"', async () => {
+      renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeEnabled();
+      });
+
+      expect(screen.getByText(CUSTOM_POLICY_NAME)).toBeInTheDocument();
+      expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
+      expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
+      expect(policyTreeUi.defaultBadge.query()).not.toBeInTheDocument();
+    });
+
+    it('round-trips notification_settings.policy on save (does not drop it or add a legacy label)', async () => {
+      const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+
+      const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeEnabled();
+      });
+
+      await user.click(ui.buttons.save.get());
+      const requests = await capture;
+      const bodies = await Promise.all(
+        requests.map((r) => r.json() as Promise<RulerRuleGroupDTO<RulerGrafanaRuleDTO>>)
+      );
+      const savedRule = bodies[0].rules.find((r) => r.grafana_alert.title === grafanaRulerRule.grafana_alert.title);
+
+      expect(savedRule?.grafana_alert.notification_settings?.policy).toBe(CUSTOM_POLICY_NAME);
+      expect(savedRule?.labels?.[NAMED_ROOT_LABEL_NAME]).toBeUndefined();
+    });
+  });
 });
 
 describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
@@ -712,6 +783,30 @@ describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
       expect(screen.getByText(CUSTOM_POLICY_NAME)).toBeInTheDocument();
       expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
       expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
+    });
+
+    it('clears the policy on reset (re-opening the selector shows default, not the stale label)', async () => {
+      const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+
+      // Loads expanded with the migrated policy selected.
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeEnabled();
+      });
+      expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
+
+      // Reset to default, then re-open the selector.
+      await user.click(policyTreeUi.resetButton.get());
+      await waitFor(() => {
+        expect(policyTreeUi.changeButton.get()).toBeInTheDocument();
+      });
+      await user.click(policyTreeUi.changeButton.get());
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeInTheDocument();
+      });
+
+      // The selector must reflect the default policy, not the stale legacy label.
+      expect(policyTreeUi.resetButton.query()).not.toBeInTheDocument();
+      expect(within(policyTreeUi.policySelector.get()).queryByText(CUSTOM_POLICY_NAME)).not.toBeInTheDocument();
     });
   });
 });

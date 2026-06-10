@@ -1,4 +1,3 @@
-import { type DataQuery } from '@grafana/data';
 import { type Dashboard, type DataSourceRef } from '@grafana/schema';
 import { type ObjectMeta } from 'app/features/apiserver/types';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -11,23 +10,6 @@ export interface HomeDashboardRedirectDTO {
 export interface DashboardDTO {
   dashboard: DashboardDataDTO;
   meta: DashboardMeta;
-}
-
-export interface ImportDashboardResponseDTO {
-  uid: string;
-  pluginId: string;
-  title: string;
-  imported: boolean;
-  importedRevision?: number;
-  importedUri: string;
-  importedUrl: string;
-  slug: string;
-  dashboardId: number;
-  folderId: number;
-  folderUid: string;
-  description: string;
-  path: string;
-  removed: boolean;
 }
 
 export interface SaveDashboardResponseDTO {
@@ -73,6 +55,11 @@ export interface DashboardMeta {
   isNew?: boolean;
   version?: number;
 
+  // Dashboard template edit flow. Set when a dashboard scene was hydrated from an DashboardTemplate
+  // via DashboardRoutes.Template with editTemplate=true.
+  isDashboardTemplate?: boolean;
+  dashboardTemplateUid?: string;
+
   // When loaded from kubernetes, we stick the raw metadata here
   // yes weird, but this means all the editor structures can exist unchanged
   // until we use the resource as the main container
@@ -85,9 +72,6 @@ export interface DashboardMeta {
   // This property is not persisted in the DB but its existence is controlled by the API
   reloadOnParamsChange?: boolean;
 
-  /** True when no custom home dashboard is configured (the platform default should be used). */
-  isDefaultHome?: boolean;
-
   // Conversion status from the API response, indicating if the dashboard was converted from another version
   conversionStatus?: {
     storedVersion?: string;
@@ -96,7 +80,7 @@ export interface DashboardMeta {
   };
 }
 
-export interface AnnotationActions {
+interface AnnotationActions {
   canAdd: boolean;
   canEdit: boolean;
   canDelete: boolean;
@@ -104,10 +88,6 @@ export interface AnnotationActions {
 
 export interface AnnotationsPermissions {
   dashboard: AnnotationActions;
-}
-
-export interface SnapshotSpec {
-  dashboard: DashboardDataDTO;
 }
 
 // FIXME: This should not override Dashboard types
@@ -147,12 +127,7 @@ export enum KioskMode {
   Full = 'full',
 }
 
-export type GetMutableDashboardModelFn = () => DashboardModel | null;
-
-export interface QueriesToUpdateOnDashboardLoad {
-  panelId: number;
-  queries: DataQuery[];
-}
+type GetMutableDashboardModelFn = () => DashboardModel | null;
 
 export interface DashboardState {
   getModel: GetMutableDashboardModelFn;

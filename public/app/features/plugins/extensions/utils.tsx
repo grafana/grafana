@@ -17,10 +17,10 @@ import {
 } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
 import { getAppPluginMetas } from '@grafana/runtime/internal';
+import { getPluginSettings } from '@grafana/runtime/unstable';
 import { Modal } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { isRecord } from 'app/core/utils/isRecord';
-import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import {
   CloseExtensionSidebarEvent,
   OpenExtensionSidebarEvent,
@@ -88,11 +88,7 @@ export const wrapWithPluginContext = <T,>({
   log: ExtensionsLog;
 }) => {
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
-    const {
-      error,
-      loading,
-      value: pluginMeta,
-    } = useAsync(() => getPluginSettings(pluginId, { showErrorAlert: false }));
+    const { error, loading, value: pluginMeta } = useAsync(() => getPluginSettings(pluginId, false));
 
     if (loading) {
       return null;

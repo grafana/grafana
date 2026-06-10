@@ -4,6 +4,7 @@ import { t } from '@grafana/i18n';
 import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
+import { withSavedByTrailer } from '../../utils/currentUser';
 import { type StepStatusInfo } from '../types';
 
 export interface UseCreateSyncJobParams {
@@ -36,10 +37,17 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
         const jobSpec = requiresMigration
           ? {
               action: 'migrate' as const,
-              migrate: {},
+              migrate: {
+                message: withSavedByTrailer(
+                  t('provisioning.sync-job.migrate-default-message', 'Migrate Grafana resources into repository')
+                ),
+              },
             }
           : {
               action: 'pull' as const,
+              // TODO(grafana/git-ui-sync-project#1162): SyncJobOptions has no
+              // `message` field on the backend yet — when it gains one, append
+              // the Grafana-saved-by trailer here too.
               pull: {
                 incremental: false,
               },

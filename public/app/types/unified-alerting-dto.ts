@@ -153,7 +153,7 @@ export interface PromAlertingRuleDTO extends PromRuleDTOBase {
   notificationSettings?: GrafanaNotificationSettings;
 }
 
-export interface PromRecordingRuleDTO extends PromRuleDTOBase {
+interface PromRecordingRuleDTO extends PromRuleDTOBase {
   health: string;
   name: string;
   query: string; // expr
@@ -186,7 +186,7 @@ export interface GrafanaPromRuleGroupDTO extends PromRuleGroupDTO<GrafanaPromRul
   folderUid: string;
 }
 
-export interface PromResponse<T> {
+interface PromResponse<T> {
   status: 'success' | 'error' | ''; // mocks return empty string
   data: T;
   errorType?: string;
@@ -259,7 +259,7 @@ export type GrafanaNotificationSettings = MergeExclusive<
   GrafanaNotificationSettingsBase & { policy: string }
 >;
 
-export interface GrafanaEditorSettings {
+interface GrafanaEditorSettings {
   simplified_query_and_expressions_section: boolean;
   simplified_notifications_section: boolean;
 }
@@ -268,7 +268,7 @@ export interface UpdatedBy {
   uid: string;
   name: string;
 }
-export interface PostableGrafanaRuleDefinition {
+interface PostableGrafanaRuleDefinition {
   uid?: string;
   title: string;
   condition: string;

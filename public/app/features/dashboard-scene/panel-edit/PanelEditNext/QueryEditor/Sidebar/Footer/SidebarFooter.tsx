@@ -1,5 +1,4 @@
-import { css, cx } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { css, cx, keyframes } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -13,9 +12,8 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from '../../QueryEditorContext';
-import { coverFromRight, uncoverToRight } from '../../animations';
 import { useDelayedUnmount } from '../../hooks/useDelayedUnmount';
-import { BulkActionsBar, hasActionableSelection } from '../BulkActionsBar';
+import { BulkActionsBar, getBulkActionsVisibility } from '../BulkActionsBar';
 
 export function SidebarFooter() {
   const { queries } = useQueryRunnerContext();
@@ -23,7 +21,6 @@ export function SidebarFooter() {
   const { alertRules } = useAlertingContext();
   const { cardType, setMultiSelectMode, selectedQueryRefIds, selectedTransformationIds, multiSelectMode } =
     useQueryEditorUIContext();
-  const isMultiSelectEnabled = useBooleanFlagValue('queryEditorNextMultiSelect', false);
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
@@ -35,13 +32,26 @@ export function SidebarFooter() {
   const visible = total - hidden;
 
   const suffixText = isAlertView
-    ? t('query-editor-next.sidebar.footer-items-alert', '{{count}} alerts', { count: total })
-    : t('query-editor-next.sidebar.footer-items', '{{count}} items', { count: total });
+    ? t('query-editor-next.sidebar.footer-items-alert', '', {
+        count: total,
+        defaultValue_one: '{{count}} alerts',
+        defaultValue_other: '{{count}} alerts',
+      })
+    : t('query-editor-next.sidebar.footer-items', '', {
+        count: total,
+        defaultValue_one: '{{count}} items',
+        defaultValue_other: '{{count}} items',
+      });
 
-  const hasBulkActions =
-    !isAlertView &&
-    (hasActionableSelection(selectedQueryRefIds.length, multiSelectMode) ||
-      hasActionableSelection(selectedTransformationIds.length, multiSelectMode));
+  // Render the bar OR the counts — never both. Keeping both in the DOM at
+  // once would leave the obscured count Stack (incl. the Select… button) in
+  // tab order and screen-reader output, even though the overlay covers it.
+  const { shouldRender } = getBulkActionsVisibility({
+    selectedQueryCount: selectedQueryRefIds.length,
+    selectedTransformationCount: selectedTransformationIds.length,
+    multiSelectMode,
+  });
+  const hasBulkActions = !isAlertView && shouldRender;
 
   // Layered swap: counts is the steady "background" view; the bar slides in
   // over it from the right and slides out the same way. The counts itself
@@ -79,7 +89,7 @@ export function SidebarFooter() {
             <Text weight="medium" variant="bodySmall">
               {suffixText}
             </Text>
-            {!isAlertView && isMultiSelectEnabled && (
+            {!isAlertView && (
               <Button
                 fill="text"
                 size="sm"
@@ -157,14 +167,16 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.primary,
       zIndex: 1,
     }),
+    // Pure-translate cover/reveal of the counts by the bar. No opacity, so the
+    // covered content never bleeds through.
     barEnter: css({
       [theme.transitions.handleMotion('no-preference')]: {
-        animation: `${coverFromRight} ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeOut} both`,
+        animation: `${keyframes({ from: { transform: 'translateX(120%)' }, to: { transform: 'translateX(0)' } })} ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeOut} both`,
       },
     }),
     barExit: css({
       [theme.transitions.handleMotion('no-preference')]: {
-        animation: `${uncoverToRight} ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeIn} both`,
+        animation: `${keyframes({ from: { transform: 'translateX(0)' }, to: { transform: 'translateX(120%)' } })} ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeIn} both`,
       },
     }),
   };

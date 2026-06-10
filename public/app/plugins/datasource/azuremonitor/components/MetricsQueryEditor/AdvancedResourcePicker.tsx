@@ -9,7 +9,7 @@ import { Input, Label, InlineField, Button, useStyles2 } from '@grafana/ui';
 import { type AzureMonitorResource } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
 
-export interface ResourcePickerProps<T> {
+interface ResourcePickerProps<T> {
   resources: T[];
   onChange: (resources: T[]) => void;
 }

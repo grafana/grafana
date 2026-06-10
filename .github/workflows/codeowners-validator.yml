@@ -8,7 +8,7 @@ permissions: {}
 
 jobs:
   codeowners-validator:
-    runs-on: github-hosted-ubuntu-x64-small
+    runs-on: ubuntu-x64-small
     permissions:
       contents: read
     steps:
