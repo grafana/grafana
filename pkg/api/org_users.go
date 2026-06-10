@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -146,10 +148,11 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) respo
 // 500: internalServerError
 
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext) response.Response {
+	ctx := c.Req.Context()
 	// Single-org with users in unified storage: the legacy org_user/user join is
 	// empty, so read the shared users via the k8s-redirected user search instead.
-	if hs.Cfg.RBAC.SingleOrganization && hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesUsersApi) {
-		searchResult, err := hs.userService.Search(c.Req.Context(), &user.SearchUsersQuery{
+	if hs.Cfg.RBAC.SingleOrganization && ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		searchResult, err := hs.userService.Search(ctx, &user.SearchUsersQuery{
 			SignedInUser: c.SignedInUser,
 			OrgID:        c.GetOrgID(),
 			Query:        c.Query("query"),
@@ -161,11 +164,15 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext)
 
 		result := make([]*dtos.UserLookupDTO, 0, len(searchResult.Users))
 		for _, u := range searchResult.Users {
+			avatarURL := u.AvatarURL
+			if avatarURL == "" {
+				avatarURL = dtos.GetGravatarUrl(hs.Cfg, u.Email)
+			}
 			result = append(result, &dtos.UserLookupDTO{
 				UID:       u.UID,
 				UserID:    u.ID,
 				Login:     u.Login,
-				AvatarURL: u.AvatarURL,
+				AvatarURL: avatarURL,
 			})
 		}
 		return response.JSON(http.StatusOK, result)
