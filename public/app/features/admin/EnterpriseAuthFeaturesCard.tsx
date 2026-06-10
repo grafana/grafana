@@ -1,14 +1,13 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { useUserStorage } from '@grafana/runtime/internal';
 import { Text, Stack, useStyles2, Button, LinkButton } from '@grafana/ui';
 import { CloudEnterpriseBadge } from 'app/core/components/Branding/CloudEnterpriseBadge';
-import { backendSrv } from 'app/core/services/backend_srv';
-import { contextSrv } from 'app/core/services/context_srv';
 
 export interface Props {
   page?: 'teams' | 'users';
@@ -16,17 +15,18 @@ export interface Props {
 
 export function EnterpriseAuthFeaturesCard({ page }: Props) {
   const styles = useStyles2(getStyles);
-  const helpFlags = contextSrv.user.helpFlags1;
-  const HELP_FLAG_ENTERPRISE_AUTH = 0x0004;
-  const [isDismissed, setDismissed] = useState<boolean>(Boolean(helpFlags & HELP_FLAG_ENTERPRISE_AUTH));
+  const storage = useUserStorage('grafana-help-flags');
+  const [isDismissed, setDismissed] = useState<boolean>(true);
 
-  const onDismiss = () => {
-    backendSrv
-      .put(`/api/user/helpflags/${HELP_FLAG_ENTERPRISE_AUTH}`, undefined, { showSuccessAlert: false })
-      .then((res) => {
-        contextSrv.user.helpFlags1 = res.helpFlags1;
-        setDismissed(true);
-      });
+  useEffect(() => {
+    storage.getItem('enterpriseAuthCardDismissed').then((value: string | null) => {
+      setDismissed(value === 'true');
+    });
+  }, [storage]);
+
+  const onDismiss = async () => {
+    await storage.setItem('enterpriseAuthCardDismissed', 'true');
+    setDismissed(true);
   };
 
   // This card is only visible in oss

@@ -857,11 +857,6 @@
     "clone-rule-button": {
       "title-copy": "Copy"
     },
-    "clone-rule-editor": {
-      "text-loading-the-rule": "Loading the rule...",
-      "title-cannot-exist": "Cannot copy the rule. The rule does not exist",
-      "title-error": "Error"
-    },
     "cloud-alert-preview": {
       "alerts-preview": "Alerts preview",
       "info": "Info",
@@ -1206,10 +1201,6 @@
     "evaluation-group-loader": {
       "title-something-wrong-trying-fetch-group-details": "Something went wrong when trying to fetch group details"
     },
-    "evaluation-interval-limit-exceeded": {
-      "body-minimum-interval": "A minimum evaluation interval of <strong>{{minInterval}}</strong> has been configured in Grafana.<br/>Please contact the administrator to configure a lower interval.",
-      "title-global-evaluation-interval-limit-exceeded": "Global evaluation interval limit exceeded"
-    },
     "existing-rule-editor": {
       "sorry-permission": "Sorry! You do not have permission to edit this rule.",
       "sorry-this-rule-does-not-exist": "Sorry! This rule does not exist.",
@@ -1479,9 +1470,6 @@
     "grafana-folder-and-labels-step": {
       "title-add-folder-and-labels": "Add folder and labels"
     },
-    "grafana-managed-rule-type": {
-      "description": "Supports multiple data sources of any kind.<br/>Transform data with expressions."
-    },
     "grafana-modify-export": {
       "body-invalid-rule-id": "The rule UID in the page URL is invalid. Please check the URL and try again.",
       "title-invalid-rule-id": "Invalid rule ID"
@@ -1601,9 +1589,6 @@
     "group-loader": {
       "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}",
       "no-rules": "No rules found in this group"
-    },
-    "group-status": {
-      "content-the-group-is-being-deleted": "The group is being deleted"
     },
     "group-wrapper": {
       "toggle": "Toggle group"
@@ -2035,14 +2020,6 @@
         "recovering": "Recovering"
       }
     },
-    "loki-apidatasource": {
-      "message": {
-        "data-source-is-working": "Data source is working"
-      },
-      "title": {
-        "success": "Success"
-      }
-    },
     "loki-state-history": {
       "clear-filters": "Clear filters",
       "common-labels": "Common labels",
@@ -2111,9 +2088,6 @@
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "new"
-    },
-    "mimir-flavored-type": {
-      "description": "Use a Mimir, Loki or Cortex datasource.<br/>Expressions are not supported."
     },
     "min-interval-option": {
       "label-interval": "Interval",
@@ -2258,7 +2232,6 @@
       "common-annotations": "Annotations",
       "common-labels": "Labels",
       "current": "Current",
-      "debug-details-heading": "Debug details",
       "error-title": "Error loading notification",
       "error-title-banner": "Delivery error",
       "error-unknown": "Unknown error",
@@ -2266,7 +2239,6 @@
       "field-integration-index": "Integration index",
       "field-pipeline-time": "Pipeline time",
       "field-retry": "Retry",
-      "field-timestamp": "Timestamp",
       "field-uuid": "UUID",
       "info-group-labels": "Group labels",
       "loading": "Loading notification...",
@@ -2323,9 +2295,6 @@
     },
     "notification-policy-drawer": {
       "view-notification-policy-tree": "View notification policy tree"
-    },
-    "notification-policy-matchers": {
-      "no-matchers": "No matchers"
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
@@ -2731,20 +2700,11 @@
         }
       }
     },
-    "receivers-section": {
-      "button-more": "More",
-      "new-menu": {
-        "label-export-all": "Export all"
-      }
-    },
     "recording-rule": {
       "term": "Recording rule"
     },
     "recording-rule-editor": {
       "error-no-query-editor": "Could not load query editor due to: {{errorMessage}}"
-    },
-    "recording-rule-type": {
-      "description": "Precompute expressions.<br/>Should be combined with an alert rule."
     },
     "recording-rules": {
       "description-target-data-source": "The Prometheus data source to store recording rules in",
@@ -2846,9 +2806,6 @@
     },
     "rule-details-expression": {
       "label-expression": "Expression"
-    },
-    "rule-details-federated-sources": {
-      "label-tenant-sources": "Tenant sources"
     },
     "rule-details-matching-instances": {
       "button-show-all": "Show all",
@@ -3085,9 +3042,6 @@
     "rule-time-range-label": {
       "relative": "<0>{{from}}</0> to now",
       "relative-with-to": "<0>{{from}}</0> to <2>{{to}}</2>"
-    },
-    "rule-type-picker": {
-      "grafana-managed": "Select “Grafana managed” unless you have a Mimir, Loki or Cortex data source with the Ruler API enabled."
     },
     "rule-view": {
       "query": {
@@ -5164,10 +5118,6 @@
       "item-3": "Share Grafana access more freely, knowing that users will not unwittingly see sensitive data",
       "title": "Secure access to data with data source permissions in Grafana Cloud"
     },
-    "search": {
-      "aria-label-search-all": "Search all",
-      "placeholder": "Search all"
-    },
     "use-data-source-settings-nav": {
       "node": {
         "subTitle": {
@@ -5851,11 +5801,6 @@
         "annotations": "Annotations"
       }
     },
-    "get-errors": {
-      "message": {
-        "error-loading-data": "Error loading data"
-      }
-    },
     "get-field-override-categories": {
       "label-add-field-override": "Add field override",
       "label-add-override-property": "Add override property",
@@ -5960,9 +5905,7 @@
       "json-tab": "JSON",
       "meta-tab": "Meta data",
       "query-tab": "Query",
-      "stats-tab": "Stats",
-      "subtitle": "{{queryCount}} queries with total query time of {{formatted}}",
-      "title": "Inspect: {{panelTitle}}"
+      "stats-tab": "Stats"
     },
     "inspect-data": {
       "data-options": "Data options",
@@ -6145,21 +6088,6 @@
     },
     "panel-editor-table-view": {
       "title-raw-data": "Raw data"
-    },
-    "panel-editor-unconnected": {
-      "editor-actions": {
-        "apply": "Apply",
-        "discard": "Discard",
-        "save": "Save",
-        "save-library-panel": "Save library panel",
-        "title-apply-changes-and-save-dashboard": "Apply changes and save dashboard",
-        "title-apply-changes-and-save-library-panel": "Apply changes and save library panel",
-        "title-apply-changes-dashboard": "Apply changes and go back to dashboard",
-        "title-undo-all-changes": "Undo all changes"
-      },
-      "table-view-label-table-view": "Table view",
-      "title-unlink": "Disconnects this panel from the library panel so that you can edit it regularly.",
-      "unlink": "Unlink"
     },
     "panel-links": {
       "aria-label-panel-links": "Panel links"
@@ -6365,9 +6293,6 @@
       "title": "Source ({{provider}})",
       "tooltip": "View source file in repository"
     },
-    "sub-menu-un-connected": {
-      "aria-label-template-variables": "Template variables"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Dashboard JSON used to help troubleshoot visualization issues"
@@ -6455,15 +6380,9 @@
       "more-save-options": "More save options",
       "new": {
         "back-to-dashboard": "Back to dashboard",
-        "dashboard-settings": {
-          "tooltip": "Dashboard settings"
-        },
         "discard-library-panel-changes": "Discard library panel changes",
         "discard-panel": "Discard panel changes",
         "discard-panel-new": "Discard panel",
-        "edit-dashboard-v2-schema": {
-          "tooltip": "Edit dashboard v2 schema"
-        },
         "enter-edit-mode": {
           "label": "Make editable",
           "tooltip": "This dashboard was marked as read only"
@@ -6549,14 +6468,6 @@
         "title-show-transform-help": "Show transform help"
       },
       "title-delete": "Delete {{name}}?"
-    },
-    "transformation-picker": {
-      "info": "Transformations allow you to join, calculate, re-order, hide, and rename your query results before they are visualized.",
-      "info-graph-not-suitable": "Many transforms are not suitable if you're using the Graph visualization, as it currently only supports time series data.",
-      "info-switch-to-table": "It can help to switch to the Table visualization to understand what a transformation is doing. ",
-      "placeholder-search-for-transformation": "Search for transformation",
-      "read-more": "Read more",
-      "title-transformations": "Transformations"
     },
     "transformation-picker-ng": {
       "clear-search": "Clear search",
@@ -8555,15 +8466,6 @@
       "error-with-stack": "Failed to get panel plugin",
       "title-find-plugin": "Failed to find plugin"
     },
-    "draggable-manager-demo": {
-      "click-and-drag-gray-divider": "Click and drag the gray divider in the colored area, below.",
-      "click-horizontally-somewhere-colored-below": "Click and drag horizontally somewhere in the colored area, below.",
-      "drag-value": "Value: {{dragValue}}",
-      "draggable-manager-demo": "DraggableManager demo",
-      "dragging-a-divider": "Dragging a divider",
-      "dragging-a-sub-region": "Dragging a sub-region",
-      "value": "Value: {{ dividerPos }}"
-    },
     "drop-down-menu": {
       "aria-label-links": "Links",
       "links": "Links"
@@ -8666,9 +8568,6 @@
       "no-logs-found": "No logs found.",
       "scan-for-older-logs": "Scan for older logs",
       "stop-scan": "Stop scan"
-    },
-    "logs-column-search": {
-      "placeholder-search-fields-by-name": "Search fields by name"
     },
     "logs-container": {
       "label-logs": "Logs"
@@ -11553,6 +11452,9 @@
         "oldest-first": "Oldest logs first",
         "show-search": "Search logs"
       },
+      "level": {
+        "unspecified": "Unspecified"
+      },
       "line-wrapping": {
         "enable": "Enable line wrapping",
         "enable-prettify": "Enable line wrapping and prettify JSON",
@@ -11812,14 +11714,6 @@
       "error-title": "Error deleting token",
       "title": "Delete migration token"
     },
-    "disconnect-modal": {
-      "body": "This will remove the migration token from this installation. If you wish to upload more resources in the future, you will need to enter a new migration token.",
-      "cancel": "Cancel",
-      "disconnect": "Disconnect",
-      "disconnecting": "Disconnecting...",
-      "error": "There was an error disconnecting",
-      "title": "Disconnect from cloud stack"
-    },
     "folder-info": {
       "folder": "Folder {{folderUid}}",
       "unable-to-load-folder": "Unable to load folder"
@@ -11848,11 +11742,6 @@
     },
     "migration-token": {
       "delete-button": "Delete token",
-      "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
-      "delete-modal-cancel": "Cancel",
-      "delete-modal-confirm": "Delete",
-      "delete-modal-deleting": "Deleting...",
-      "delete-modal-title": "Delete migration token",
       "error-body": "Unable to generate a migration token. Please try again later.",
       "error-title": "Something went wrong",
       "generate-button": "Generate a migration token",
@@ -13097,9 +12986,6 @@
     "plugin-list-item": {
       "label-author": "By {{author}}",
       "title-icon-plugin-type": "{{pluginType}} plugin"
-    },
-    "plugin-signature-details-badge": {
-      "signed-by": "Signed by: {{signatureOrg}}"
     },
     "plugin-update-available-badge": {
       "update-available": "Update available!"
@@ -14377,6 +14263,7 @@
       "alerts_other": "Alerts ({{count}})",
       "alerts-loading": "Alerts",
       "card-click": "Select card {{id}}",
+      "card-multi-select": "Include card {{id}} in bulk selection",
       "data": "Data",
       "enter-stacked-view": "Enter stacked view",
       "exit-stacked-view": "Exit stacked view",
@@ -14696,15 +14583,6 @@
     },
     "get-role-cell": {
       "aria-label-role": "Role"
-    },
-    "service-account-list-item": {
-      "add-token": "Add token",
-      "aria-label-role": "Role",
-      "disable": "Disable",
-      "enable": "Enable",
-      "title-tokens": "Tokens",
-      "tooltip-delete-button": "Delete service account {{serviceAccountName}}",
-      "tooltip-managed-service-account-cannot-modified": "This is a managed service account and cannot be modified"
     },
     "service-account-page-unconnected": {
       "add-service-account-token": "Add service account token",
