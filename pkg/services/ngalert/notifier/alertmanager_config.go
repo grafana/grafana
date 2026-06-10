@@ -96,23 +96,19 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 		prepared = &mergedConfig
 	}
 
-	config := prepared.AlertmanagerConfig
-	templates := prepared.SortedTemplates(false) // templates are already merged
-
 	// Add managed routes and extra route as managed route to the configuration.
 	// Also add extra inhibition rules to the configuration if extra route exists and doesn't conflict with existing
 	// route
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
-		config.Route = legacy_storage.WithManagedRoutes(config.Route, prepared.ManagedRoutes)
-		config.InhibitRules = legacy_storage.WithManagedInhibitionRules(config.InhibitRules, prepared.ManagedInhibitionRules)
+		prepared.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(prepared.AlertmanagerConfig.Route, prepared.ManagedRoutes)
 	}
 
-	if err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, &config, onInvalid, moa.featureManager); err != nil {
+	if err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, &prepared.AlertmanagerConfig, onInvalid, moa.featureManager); err != nil {
 		return alertingNotify.NotificationsConfiguration{}, err
 	}
 
-	return PostableAPIConfigToNotificationsConfiguration(config, templates, moa.limits)
+	return PostableAPIConfigToNotificationsConfiguration(*prepared, moa.limits)
 }
 
 func (moa *MultiOrgAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context, orgId int64) error {
