@@ -408,6 +408,12 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 					Type:     "page",
 					AddToNav: true,
 				},
+				{
+					Name:     "Operations",
+					Path:     "/a/grafana-asserts-app/operations",
+					Type:     "page",
+					AddToNav: true,
+				},
 			},
 		},
 	}
@@ -489,6 +495,7 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 
 		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
 		require.NotNil(t, monitoringNode)
+		// Operations is nested under Applications, so it is not a flat sibling.
 		require.Len(t, monitoringNode.Children, 4)
 
 		// Asserts "Entity graph" stays hoisted to the top, then Frontend, then the
@@ -498,6 +505,37 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 		require.Equal(t, "Applications", monitoringNode.Children[2].Text)
 		require.Equal(t, "standalone-plugin-page-applications", monitoringNode.Children[2].Id)
 		require.Equal(t, "Application", monitoringNode.Children[3].Text)
+	})
+
+	t.Run("asserts Operations page is nested as a child of the Applications page", func(t *testing.T) {
+		service.navigationAppConfig = map[string]NavigationAppConfig{
+			"grafana-asserts-app":           {SectionID: navtree.NavIDObservability, SortWeight: 2, Icon: "asserts"},
+			"grafana-kowalski-app":          {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Frontend"},
+			"grafana-app-observability-app": {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Application"},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		treeRoot.Sort()
+
+		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
+		require.NotNil(t, monitoringNode)
+
+		var applicationsNode *navtree.NavLink
+		for _, child := range monitoringNode.Children {
+			if child.Text == "Applications" {
+				applicationsNode = child
+			}
+			// Operations must not appear as a flat sibling in the Observability section.
+			require.NotEqual(t, "Operations", child.Text)
+		}
+
+		require.NotNil(t, applicationsNode)
+		require.Len(t, applicationsNode.Children, 1)
+		require.Equal(t, "Operations", applicationsNode.Children[0].Text)
+		require.Equal(t, "standalone-plugin-page-operations", applicationsNode.Children[0].Id)
+		require.Equal(t, "/a/grafana-asserts-app/operations", applicationsNode.Children[0].Url)
 	})
 }
 

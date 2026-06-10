@@ -286,10 +286,26 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 	sectionChildren := []*navtree.NavLink{appLink}
 	// asserts pages expand to root Observability section instead of it's own node
 	if plugin.ID == "grafana-asserts-app" {
-		sectionChildren = appLink.Children
-
 		applicationsURL := s.cfg.AppSubURL + "/a/grafana-asserts-app/applications"
-		for _, child := range sectionChildren {
+		operationsURL := s.cfg.AppSubURL + "/a/grafana-asserts-app/operations"
+
+		// The Operations page is nested under the Applications page instead of being
+		// hoisted as a flat sibling like the other asserts pages.
+		var applicationsNode, operationsNode *navtree.NavLink
+		for _, child := range appLink.Children {
+			switch child.Url {
+			case applicationsURL:
+				applicationsNode = child
+			case operationsURL:
+				operationsNode = child
+			}
+		}
+
+		sectionChildren = make([]*navtree.NavLink, 0, len(appLink.Children))
+		for _, child := range appLink.Children {
+			if child == operationsNode {
+				continue
+			}
 			if child.Url == applicationsURL {
 				// Place the asserts Applications page between Frontend (3) and Application (5)
 				child.SortWeight = 4
@@ -298,6 +314,12 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				child.SortWeight = -100 + child.SortWeight
 			}
 			child.Id = "standalone-plugin-page-" + strings.ReplaceAll(strings.ToLower(child.Text), " ", "-")
+			sectionChildren = append(sectionChildren, child)
+		}
+
+		if applicationsNode != nil && operationsNode != nil {
+			operationsNode.Id = "standalone-plugin-page-" + strings.ReplaceAll(strings.ToLower(operationsNode.Text), " ", "-")
+			applicationsNode.Children = append(applicationsNode.Children, operationsNode)
 		}
 	}
 
