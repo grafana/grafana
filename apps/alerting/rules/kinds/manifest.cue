@@ -1,6 +1,8 @@
 package kinds
 
 manifest: {
+	// Explicitly set to false to keep the app disabled by default for testing.
+	served: false
 	appName:       "alerting"
 	groupOverride: "rules.alerting.grafana.app"
 	versions: {
