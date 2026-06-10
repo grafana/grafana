@@ -46,6 +46,7 @@ const FILTER_LEVELS: LogLevel[] = [
   LogLevel.error,
   LogLevel.critical,
   LogLevel.unknown,
+  LogLevel.unspecified,
 ];
 
 export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisationType = 'logs' }: Props) => {
@@ -228,9 +229,9 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
         />
         {logLevels.map((level) => (
           <Menu.Item
-            key={level}
+            key={level ?? 'Unspecified'}
             className={filterLevels.includes(level) ? styles.menuItemActive : undefined}
-            label={capitalize(level)}
+            label={level ? capitalize(level) : t('logs.logs-controls.level.unspecified', 'Unspecified')}
             onClick={() => onFilterLevelClick(level)}
           />
         ))}

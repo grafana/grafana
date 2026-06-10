@@ -5,7 +5,7 @@ import { type Invitee } from 'app/types/user';
 
 import InviteeRow from './InviteeRow';
 
-export interface Props {
+interface Props {
   invitees: Invitee[];
 }
 

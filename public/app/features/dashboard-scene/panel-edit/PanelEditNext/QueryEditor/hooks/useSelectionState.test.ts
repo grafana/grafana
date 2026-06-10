@@ -43,11 +43,11 @@ describe('useSelectionState', () => {
       expect(result.current.selectedQueryRefIds).toEqual(['C']);
     });
 
-    it('calls onClearSideEffects', () => {
+    it('does NOT call onClearSideEffects (only active changes do)', () => {
       const onClearSideEffects = jest.fn();
       const { result } = setup({ ...defaultProps, onClearSideEffects });
       act(() => result.current.toggleQuerySelection({ refId: 'A' }));
-      expect(onClearSideEffects).toHaveBeenCalledTimes(1);
+      expect(onClearSideEffects).not.toHaveBeenCalled();
     });
 
     it('clears transformation selection (cross-type exclusivity)', () => {
@@ -76,10 +76,10 @@ describe('useSelectionState', () => {
     });
 
     it('keeps the last selection when Cmd+clicking the only selected query', () => {
-      // Mount-time default already selects queries[0] = 'A'. Cmd+clicking it
-      // should be a no-op so we never reach a "selection mode but nothing
-      // selected" state — same invariant clearSelection enforces.
+      // Once a single item is in the bulk set, Cmd+clicking it should keep it so we never
+      // reach a "selection mode but nothing selected" state.
       const { result } = setup();
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }, { multi: true }));
       expect(result.current.selectedQueryRefIds).toEqual(['A']);
 
       act(() => result.current.toggleQuerySelection({ refId: 'A' }, { multi: true }));
@@ -121,7 +121,7 @@ describe('useSelectionState', () => {
 
     it('anchors to the first query on initial load', () => {
       const { result } = setup();
-      // First query is selected by default, so Shift+Click C range-selects A-C
+      // First query is the active default, so Shift+Click C range-selects A-C.
       act(() => result.current.toggleQuerySelection({ refId: 'C' }, { range: true }));
       expect(result.current.selectedQueryRefIds).toEqual(['A', 'B', 'C']);
     });
@@ -134,11 +134,12 @@ describe('useSelectionState', () => {
       expect(result.current.selectedTransformationIds).toEqual([]);
     });
 
-    it('uses queries[0] as implicit anchor after clearSelection', () => {
+    it('uses the active query as implicit anchor after clearSelection', () => {
       const { result } = setup();
       act(() => result.current.clearSelection());
-      // clearSelection mirrors the mount-time initializer and falls back to the first query.
-      expect(result.current.selectedQueryRefIds).toEqual(['A']);
+      // clearSelection clears bulk and resets active to the first query.
+      expect(result.current.selectedQueryRefIds).toEqual([]);
+      expect(result.current.activeQueryRefId).toBe('A');
 
       act(() => result.current.toggleQuerySelection({ refId: 'C' }, { range: true }));
       expect(result.current.selectedQueryRefIds).toEqual(['A', 'B', 'C']);
@@ -157,14 +158,48 @@ describe('useSelectionState', () => {
       expect(result.current.selectedQueryRefIds).toEqual(['A', 'B', 'C']);
     });
 
-    it('does not range-select when shift-clicking a query after selecting a transformation', () => {
+    it('does not range-select when shift-clicking a query while a transformation is active', () => {
       const { result } = setup();
-      // Select a transformation (this clears query selection)
-      act(() => result.current.toggleTransformationSelection(mockTransformations[0]));
-      expect(result.current.selectedQueryRefIds).toEqual([]);
-      // Shift+Click a query — should NOT range-select from first query, just plain select
+      // Activate a transformation so it becomes the active card.
+      act(() => result.current.activateTransformation(mockTransformations[0]));
+      expect(result.current.activeTransformationId).toBe('tx-0');
+      expect(result.current.activeQueryRefId).toBeNull();
+      // Shift+Click a query — should NOT range-select across card types, just plain-select.
       act(() => result.current.toggleQuerySelection({ refId: 'C' }, { range: true }));
       expect(result.current.selectedQueryRefIds).toEqual(['C']);
+    });
+
+    it('keeps the anchor pinned so a later Shift+Click shrinks the range (A, Shift+C, Shift+B → A,B)', () => {
+      const { result } = setup();
+      // Anchor on A, expand to C, then shrink back to B. The anchor must stay on A rather
+      // than drifting to the last-clicked id, otherwise B-C would linger.
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }));
+      act(() => result.current.toggleQuerySelection({ refId: 'C' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'B', 'C']);
+
+      act(() => result.current.toggleQuerySelection({ refId: 'B' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
+    });
+
+    it('re-derives the range from the pinned anchor when crossing sides', () => {
+      const { result } = setup();
+      act(() => result.current.toggleQuerySelection({ refId: 'C' }));
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'B', 'C']);
+
+      // Shift+Click past the anchor on the other side — range is still measured from C.
+      act(() => result.current.toggleQuerySelection({ refId: 'D' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['C', 'D']);
+    });
+
+    it('preserves Ctrl-added selections outside the Shift range', () => {
+      const { result } = setup();
+      // Independently pick A, then Ctrl+pick C (anchor moves to C). Shift+Click D extends from
+      // the new anchor C while the independent A survives.
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }));
+      act(() => result.current.toggleQuerySelection({ refId: 'C' }, { multi: true }));
+      act(() => result.current.toggleQuerySelection({ refId: 'D' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'C', 'D']);
     });
   });
 
@@ -182,11 +217,11 @@ describe('useSelectionState', () => {
       expect(result.current.selectedTransformationIds).toEqual(['tx-2']);
     });
 
-    it('calls onClearSideEffects', () => {
+    it('does NOT call onClearSideEffects (only active changes do)', () => {
       const onClearSideEffects = jest.fn();
       const { result } = setup({ ...defaultProps, onClearSideEffects });
       act(() => result.current.toggleTransformationSelection(mockTransformations[0]));
-      expect(onClearSideEffects).toHaveBeenCalledTimes(1);
+      expect(onClearSideEffects).not.toHaveBeenCalled();
     });
 
     it('clears query selection (cross-type exclusivity)', () => {
@@ -239,17 +274,28 @@ describe('useSelectionState', () => {
       act(() => result.current.toggleTransformationSelection(mockTransformations[1], { range: true }));
       expect(result.current.selectedTransformationIds).toEqual(['tx-1']);
     });
+
+    it('keeps the anchor pinned so a later Shift+Click shrinks the range', () => {
+      const { result } = setup();
+      act(() => result.current.toggleTransformationSelection(mockTransformations[0]));
+      act(() => result.current.toggleTransformationSelection(mockTransformations[2], { range: true }));
+      expect(result.current.selectedTransformationIds).toEqual(['tx-0', 'tx-1', 'tx-2']);
+
+      act(() => result.current.toggleTransformationSelection(mockTransformations[1], { range: true }));
+      expect(result.current.selectedTransformationIds).toEqual(['tx-0', 'tx-1']);
+    });
   });
 
   describe('clearSelection', () => {
-    it('restores the default selection (first query) and clears transformations', () => {
+    it('clears bulk arrays and resets active to the first query', () => {
       const { result } = setup();
       act(() => result.current.toggleQuerySelection({ refId: 'A' }));
       act(() => result.current.toggleQuerySelection({ refId: 'B' }, { multi: true }));
       act(() => result.current.clearSelection());
-      // Mirrors the mount-time initializer: first query is the implicit default.
-      expect(result.current.selectedQueryRefIds).toEqual(['A']);
+      expect(result.current.selectedQueryRefIds).toEqual([]);
       expect(result.current.selectedTransformationIds).toEqual([]);
+      expect(result.current.activeQueryRefId).toBe('A');
+      expect(result.current.activeTransformationId).toBeNull();
     });
 
     it('clears to empty when there are no queries to default to', () => {
@@ -257,6 +303,8 @@ describe('useSelectionState', () => {
       act(() => result.current.clearSelection());
       expect(result.current.selectedQueryRefIds).toEqual([]);
       expect(result.current.selectedTransformationIds).toEqual([]);
+      expect(result.current.activeQueryRefId).toBeNull();
+      expect(result.current.activeTransformationId).toBeNull();
     });
 
     it('calls onClearSideEffects', () => {
@@ -268,28 +316,90 @@ describe('useSelectionState', () => {
   });
 
   describe('onCardSelectionChange', () => {
-    it('sets query selection and clears transformations', () => {
+    it('sets active query and clears bulk arrays', () => {
       const { result } = setup();
-      act(() => result.current.toggleTransformationSelection(mockTransformations[0]));
+      act(() => result.current.toggleQuerySelection({ refId: 'B' }, { multi: true }));
+      act(() => result.current.toggleTransformationSelection(mockTransformations[0], { multi: true }));
       act(() => result.current.onCardSelectionChange('A', null));
-      expect(result.current.selectedQueryRefIds).toEqual(['A']);
+      expect(result.current.activeQueryRefId).toBe('A');
+      expect(result.current.activeTransformationId).toBeNull();
+      expect(result.current.selectedQueryRefIds).toEqual([]);
       expect(result.current.selectedTransformationIds).toEqual([]);
     });
 
-    it('sets transformation selection and clears queries', () => {
+    it('sets active transformation and clears bulk arrays', () => {
       const { result } = setup();
-      act(() => result.current.toggleQuerySelection({ refId: 'A' }));
+      act(() => result.current.toggleQuerySelection({ refId: 'B' }, { multi: true }));
       act(() => result.current.onCardSelectionChange(null, 'tx-0'));
+      expect(result.current.activeQueryRefId).toBeNull();
+      expect(result.current.activeTransformationId).toBe('tx-0');
       expect(result.current.selectedQueryRefIds).toEqual([]);
+      expect(result.current.selectedTransformationIds).toEqual([]);
+    });
+
+    it('clears active and bulk arrays when both args are null', () => {
+      const { result } = setup();
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }, { multi: true }));
+      act(() => result.current.onCardSelectionChange(null, null));
+      expect(result.current.activeQueryRefId).toBeNull();
+      expect(result.current.activeTransformationId).toBeNull();
+      expect(result.current.selectedQueryRefIds).toEqual([]);
+      expect(result.current.selectedTransformationIds).toEqual([]);
+    });
+  });
+
+  describe('activateQuery / activateTransformation', () => {
+    it('activateQuery sets the active query without touching bulk arrays', () => {
+      const { result } = setup();
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }, { multi: true }));
+      act(() => result.current.toggleQuerySelection({ refId: 'B' }, { multi: true }));
+      act(() => result.current.activateQuery({ refId: 'C' }));
+      expect(result.current.activeQueryRefId).toBe('C');
+      expect(result.current.activeTransformationId).toBeNull();
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
+    });
+
+    it('activateTransformation sets the active transformation without touching bulk arrays', () => {
+      const { result } = setup();
+      act(() => result.current.toggleTransformationSelection(mockTransformations[0], { multi: true }));
+      act(() => result.current.activateTransformation(mockTransformations[2]));
+      expect(result.current.activeTransformationId).toBe('tx-2');
+      expect(result.current.activeQueryRefId).toBeNull();
       expect(result.current.selectedTransformationIds).toEqual(['tx-0']);
     });
 
-    it('clears both when both args are null', () => {
+    it('activateQuery calls onClearSideEffects', () => {
+      const onClearSideEffects = jest.fn();
+      const { result } = setup({ ...defaultProps, onClearSideEffects });
+      onClearSideEffects.mockClear();
+      act(() => result.current.activateQuery({ refId: 'B' }));
+      expect(onClearSideEffects).toHaveBeenCalledTimes(1);
+    });
+
+    it('activateTransformation calls onClearSideEffects', () => {
+      const onClearSideEffects = jest.fn();
+      const { result } = setup({ ...defaultProps, onClearSideEffects });
+      onClearSideEffects.mockClear();
+      act(() => result.current.activateTransformation(mockTransformations[0]));
+      expect(onClearSideEffects).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('selectActiveInMultiSelection', () => {
+    it('checks the active query', () => {
       const { result } = setup();
-      act(() => result.current.toggleQuerySelection({ refId: 'A' }));
-      act(() => result.current.onCardSelectionChange(null, null));
-      expect(result.current.selectedQueryRefIds).toEqual([]);
+      act(() => result.current.activateQuery({ refId: 'B' }));
+      act(() => result.current.selectActiveInMultiSelection());
+      expect(result.current.selectedQueryRefIds).toEqual(['B']);
       expect(result.current.selectedTransformationIds).toEqual([]);
+    });
+
+    it('checks the active transformation and clears query bulk selection', () => {
+      const { result } = setup();
+      act(() => result.current.activateTransformation(mockTransformations[1]));
+      act(() => result.current.selectActiveInMultiSelection());
+      expect(result.current.selectedQueryRefIds).toEqual([]);
+      expect(result.current.selectedTransformationIds).toEqual(['tx-1']);
     });
   });
 
@@ -307,6 +417,123 @@ describe('useSelectionState', () => {
       act(() => result.current.toggleQuerySelection({ refId: 'B' }, { multi: true }));
       act(() => result.current.trackQueryRename('A', 'A_renamed'));
       expect(result.current.selectedQueryRefIds).toEqual(['A_renamed', 'B']);
+    });
+  });
+
+  describe('onCardSelectionChange — seedBulk', () => {
+    it('seeds the bulk selection with the activated query', () => {
+      const { result } = setup();
+      act(() => result.current.onCardSelectionChange('B', null, { seedBulk: true }));
+      expect(result.current.activeQueryRefId).toBe('B');
+      expect(result.current.selectedQueryRefIds).toEqual(['B']);
+      expect(result.current.selectedTransformationIds).toEqual([]);
+    });
+
+    it('seeds the bulk selection with the activated transformation', () => {
+      const { result } = setup();
+      act(() => result.current.onCardSelectionChange(null, 'tx-1', { seedBulk: true }));
+      expect(result.current.activeTransformationId).toBe('tx-1');
+      expect(result.current.selectedTransformationIds).toEqual(['tx-1']);
+      expect(result.current.selectedQueryRefIds).toEqual([]);
+    });
+
+    it('seeds the query anchor so a follow-up Shift+Click ranges from it', () => {
+      const { result } = setup();
+      act(() => result.current.onCardSelectionChange('B', null, { seedBulk: true }));
+      act(() => result.current.toggleQuerySelection({ refId: 'D' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['B', 'C', 'D']);
+    });
+
+    it('seeds nothing when activating with null ids', () => {
+      const { result } = setup();
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }));
+      act(() => result.current.onCardSelectionChange(null, null, { seedBulk: true }));
+      expect(result.current.selectedQueryRefIds).toEqual([]);
+      expect(result.current.selectedTransformationIds).toEqual([]);
+    });
+  });
+
+  describe('removeQueryFromSelection', () => {
+    it('removes the query from the bulk selection', () => {
+      const { result } = setup();
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }));
+      act(() => result.current.toggleQuerySelection({ refId: 'C' }, { multi: true }));
+      act(() => result.current.removeQueryFromSelection('A'));
+      expect(result.current.selectedQueryRefIds).toEqual(['C']);
+    });
+
+    it('falls the active query back to the first query when the active one is removed', () => {
+      const { result } = setup();
+      act(() => result.current.activateQuery(mockQueries[2]));
+      expect(result.current.activeQueryRefId).toBe('C');
+      act(() => result.current.removeQueryFromSelection('C'));
+      expect(result.current.activeQueryRefId).toBe('A');
+    });
+
+    it('leaves the active query untouched when a different query is removed', () => {
+      const { result } = setup();
+      act(() => result.current.activateQuery(mockQueries[2]));
+      act(() => result.current.removeQueryFromSelection('A'));
+      expect(result.current.activeQueryRefId).toBe('C');
+    });
+
+    it('clears the anchor so a later Shift+Click no longer ranges from the removed query', () => {
+      const { result } = setup();
+      // Anchor on B via plain click, then remove B.
+      act(() => result.current.toggleQuerySelection({ refId: 'B' }));
+      act(() => result.current.removeQueryFromSelection('B'));
+      // With the anchor cleared, a Shift+Click on D ranges from the active query (A), not B.
+      act(() => result.current.toggleQuerySelection({ refId: 'D' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'B', 'C', 'D']);
+    });
+  });
+
+  describe('removeTransformationFromSelection', () => {
+    it('removes the transformation from the bulk selection', () => {
+      const { result } = setup();
+      act(() => result.current.toggleTransformationSelection(mockTransformations[0]));
+      act(() => result.current.toggleTransformationSelection(mockTransformations[2], { multi: true }));
+      act(() => result.current.removeTransformationFromSelection('tx-0'));
+      expect(result.current.selectedTransformationIds).toEqual(['tx-2']);
+    });
+
+    it('clears the active transformation when the active one is removed', () => {
+      const { result } = setup();
+      act(() => result.current.activateTransformation(mockTransformations[1]));
+      expect(result.current.activeTransformationId).toBe('tx-1');
+      act(() => result.current.removeTransformationFromSelection('tx-1'));
+      expect(result.current.activeTransformationId).toBeNull();
+    });
+
+    it('clears the anchor so a later Shift+Click no longer ranges from the removed transformation', () => {
+      const { result } = setup();
+      act(() => result.current.toggleTransformationSelection(mockTransformations[0]));
+      act(() => result.current.removeTransformationFromSelection('tx-0'));
+      act(() => result.current.toggleTransformationSelection(mockTransformations[2], { range: true }));
+      // Anchor cleared → plain selection of the clicked transformation only.
+      expect(result.current.selectedTransformationIds).toEqual(['tx-2']);
+    });
+  });
+
+  describe('reconciling the active transformation with the list', () => {
+    it('clears the active transformation when it is removed from the transformations list', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: defaultProps,
+      });
+      act(() => result.current.activateTransformation(mockTransformations[1]));
+      expect(result.current.activeTransformationId).toBe('tx-1');
+      rerender({ ...defaultProps, transformations: mockTransformations.filter((t) => t.transformId !== 'tx-1') });
+      expect(result.current.activeTransformationId).toBeNull();
+    });
+  });
+
+  describe('range selection with an unknown card', () => {
+    it('falls back to a plain selection when the Shift+Clicked query is not in the list', () => {
+      const { result } = setup();
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }));
+      // 'Z' is not part of the queries, so the contiguous range cannot be computed.
+      act(() => result.current.toggleQuerySelection({ refId: 'Z' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['Z']);
     });
   });
 });
