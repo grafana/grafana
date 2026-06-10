@@ -60,7 +60,7 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 	createRecordingRule(t, ctx, recClient, "cpu recording", "ds-prom")
 
 	rc := helper.Org1.Admin.RESTClient(t, &v0alpha1.GroupVersion)
-	do := func(t *testing.T, path string, params url.Values) searchResponse {
+	getRaw := func(t *testing.T, path string, params url.Values) []byte {
 		t.Helper()
 		segments := []string{"apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", "search"}
 		if path != "" {
@@ -74,95 +74,97 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 		}
 		raw, err := req.DoRaw(ctx)
 		require.NoError(t, err)
-		var resp searchResponse
-		require.NoError(t, json.Unmarshal(raw, &resp))
+		return raw
+	}
+	searchAlert := func(t *testing.T, params url.Values) v0alpha1.GetSearchAlertRulesResponse {
+		var resp v0alpha1.GetSearchAlertRulesResponse
+		require.NoError(t, json.Unmarshal(getRaw(t, "alertrules", params), &resp))
 		return resp
 	}
-	search := func(t *testing.T, path string, params url.Values) []searchHit {
-		return do(t, path, params).Items
+	searchRecording := func(t *testing.T, params url.Values) v0alpha1.GetSearchRecordingRulesResponse {
+		var resp v0alpha1.GetSearchRecordingRulesResponse
+		require.NoError(t, json.Unmarshal(getRaw(t, "recordingrules", params), &resp))
+		return resp
+	}
+	searchCrossKind := func(t *testing.T, params url.Values) v0alpha1.GetSearchRulesResponse {
+		var resp v0alpha1.GetSearchRulesResponse
+		require.NoError(t, json.Unmarshal(getRaw(t, "", params), &resp))
+		return resp
 	}
 
 	t.Run("alert rules: returns all alert rules", func(t *testing.T) {
-		hits := search(t, "alertrules", nil)
-		require.Len(t, hits, 3)
+		require.Len(t, searchAlert(t, nil).Items, 3)
 	})
 
 	t.Run("alert rules: free-text title filter", func(t *testing.T) {
-		hits := search(t, "alertrules", url.Values{"q": {"usage"}})
-		require.ElementsMatch(t, []string{"cpu usage high", "memory usage high"}, titles(hits))
+		require.ElementsMatch(t, []string{"cpu usage high", "memory usage high"}, alertTitles(searchAlert(t, url.Values{"q": {"usage"}})))
 	})
 
 	t.Run("alert rules: label matcher", func(t *testing.T) {
-		hits := search(t, "alertrules", url.Values{"labels": {"team=a"}})
-		require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, titles(hits))
+		require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, alertTitles(searchAlert(t, url.Values{"labels": {"team=a"}})))
 	})
 
 	t.Run("alert rules: source datasource filter", func(t *testing.T) {
-		hits := search(t, "alertrules", url.Values{"datasourceUIDs": {"ds-loki"}})
-		require.Equal(t, []string{"memory usage high"}, titles(hits))
+		require.Equal(t, []string{"memory usage high"}, alertTitles(searchAlert(t, url.Values{"datasourceUIDs": {"ds-loki"}})))
 	})
 
 	t.Run("alert rules: paused filter", func(t *testing.T) {
-		hits := search(t, "alertrules", url.Values{"paused": {"true"}})
-		require.Equal(t, []string{"memory usage high"}, titles(hits))
+		require.Equal(t, []string{"memory usage high"}, alertTitles(searchAlert(t, url.Values{"paused": {"true"}})))
 	})
 
 	t.Run("alert rules: sort by title descending", func(t *testing.T) {
-		hits := search(t, "alertrules", url.Values{"sort": {"-title"}})
-		require.Equal(t, []string{"memory usage high", "disk low", "cpu usage high"}, titles(hits))
+		require.Equal(t, []string{"memory usage high", "disk low", "cpu usage high"}, alertTitles(searchAlert(t, url.Values{"sort": {"-title"}})))
 	})
 
 	t.Run("alert rules: pagination", func(t *testing.T) {
-		first := do(t, "alertrules", url.Values{"sort": {"title"}, "limit": {"2"}})
-		require.Len(t, first.Items, 2)
-		require.Equal(t, []string{"cpu usage high", "disk low"}, titles(first.Items))
-		require.NotEmpty(t, first.Metadata.Continue)
+		first := searchAlert(t, url.Values{"sort": {"title"}, "limit": {"2"}})
+		require.Equal(t, []string{"cpu usage high", "disk low"}, alertTitles(first))
+		require.NotEmpty(t, first.Continue)
 
-		second := do(t, "alertrules", url.Values{"sort": {"title"}, "limit": {"2"}, "continueToken": {first.Metadata.Continue}})
-		require.Equal(t, []string{"memory usage high"}, titles(second.Items))
-		require.Empty(t, second.Metadata.Continue)
+		second := searchAlert(t, url.Values{"sort": {"title"}, "limit": {"2"}, "continueToken": {first.Continue}})
+		require.Equal(t, []string{"memory usage high"}, alertTitles(second))
+		require.Empty(t, second.Continue)
 	})
 
 	t.Run("recording rules: returns all recording rules", func(t *testing.T) {
-		hits := search(t, "recordingrules", nil)
-		require.Equal(t, []string{"cpu recording"}, titles(hits))
+		resp := searchRecording(t, nil)
+		require.Len(t, resp.Items, 1)
+		require.Equal(t, "cpu recording", resp.Items[0].Title)
 	})
 
 	t.Run("cross-kind: returns both kinds", func(t *testing.T) {
-		hits := search(t, "", nil)
-		require.Len(t, hits, 4)
+		require.Len(t, searchCrossKind(t, nil).Items, 4)
 	})
 
 	t.Run("cross-kind: type narrowing", func(t *testing.T) {
-		hits := search(t, "", url.Values{"type": {"recordingrule"}})
-		require.Equal(t, []string{"cpu recording"}, titles(hits))
+		require.Equal(t, []string{"cpu recording"}, crossKindTitles(searchCrossKind(t, url.Values{"type": {"recordingrule"}})))
 	})
 
 	t.Run("consistency: search matches list", func(t *testing.T) {
 		list, err := alertClient.List(ctx, v1.ListOptions{})
 		require.NoError(t, err)
-		hits := search(t, "alertrules", nil)
-		require.Len(t, hits, len(list.Items))
+		require.Len(t, searchAlert(t, nil).Items, len(list.Items))
 	})
 }
 
-// searchHit / searchResponse decode the summary rule hit returned by search.
-type searchHit struct {
-	Type   string `json:"type"`
-	Name   string `json:"name"`
-	Title  string `json:"title"`
-	Folder string `json:"folder"`
-}
-
-type searchResponse struct {
-	Metadata v1.ListMeta `json:"metadata"`
-	Items    []searchHit `json:"items"`
-}
-
-func titles(hits []searchHit) []string {
-	out := make([]string, 0, len(hits))
-	for _, h := range hits {
+func alertTitles(resp v0alpha1.GetSearchAlertRulesResponse) []string {
+	out := make([]string, 0, len(resp.Items))
+	for _, h := range resp.Items {
 		out = append(out, h.Title)
+	}
+	return out
+}
+
+// crossKindTitles reads the title from whichever variant of the union hit is set.
+func crossKindTitles(resp v0alpha1.GetSearchRulesResponse) []string {
+	out := make([]string, 0, len(resp.Items))
+	for _, h := range resp.Items {
+		switch {
+		case h.AlertRuleHit != nil:
+			out = append(out, h.AlertRuleHit.Title)
+		case h.RecordingRuleHit != nil:
+			out = append(out, h.RecordingRuleHit.Title)
+		}
 	}
 	return out
 }
