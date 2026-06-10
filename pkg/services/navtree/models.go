@@ -56,6 +56,7 @@ const (
 	NavIDCfgPlugins           = "cfg/plugins"
 	NavIDCfgAccess            = "cfg/access"
 	NavIDBookmarks            = "bookmarks"
+	NavIDPulse                = "pulse"
 )
 
 type NavLink struct {

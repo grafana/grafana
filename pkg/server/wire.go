@@ -389,6 +389,10 @@ var wireBasicSet = wire.NewSet(
 	publicdashboards.ProvideStore,
 	publicdashboards.ProvideMetricsService,
 	publicdashboards.ProvideApi,
+	// Pulse is wired only for OSS builds (see wireexts_oss.go). Enterprise
+	// builds carry a pre-generated enterprise_wire_gen.go in the grafana-
+	// enterprise repo, so any addition to the shared wireBasicSet would
+	// force a companion PR every time we touch Pulse wiring.
 	starApi.ProvideApi,
 	prefapi.ProvideK8sHandler,
 	starApi.ProvideK8sClients,

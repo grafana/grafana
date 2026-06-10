@@ -1,0 +1,14 @@
+{{HiddenSubject .Subject "New reply in {{.ThreadTitle}}"}}
+
+Hi {{.RecipientName}},
+
+{{.AuthorName}} replied in "{{.ThreadTitle}}", a Pulse thread you are subscribed to.
+
+{{if .BodyPreview}}> {{.BodyPreview}}
+
+{{end}}Open the thread:
+{{.ThreadURL}}
+
+You are receiving this email because you are subscribed to this Pulse thread. Open the thread to unsubscribe.
+
+Sent by Grafana v{{.BuildVersion}} (c) {{now | date "2006"}} Grafana Labs

@@ -109,6 +109,7 @@ import { createMutationClient } from './DashboardMutationClientSetter';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { PulseDrawer } from './PulseDrawer';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
@@ -1015,6 +1016,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<VizPanel>) {
     this.setState({
       overlay: new AddLibraryPanelDrawer({ panelToReplaceRef }),
+    });
+  }
+
+  public onShowPulseDrawer(panelId?: number) {
+    // The drawer's panel scoping is now expressed as a *filter* (the
+    // user can clear it from inside the drawer) rather than a baked-in
+    // scope. Pre-applying the panel filter here preserves the original
+    // call-site contract — opening the drawer "for panel N" still
+    // lands the user on a panel-narrowed list.
+    this.setState({
+      overlay: new PulseDrawer({ panelFilter: panelId }),
     });
   }
 

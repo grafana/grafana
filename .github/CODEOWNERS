@@ -185,6 +185,7 @@
 /pkg/services/org/ @grafana/grafana-backend-group
 /pkg/services/preference/ @grafana/grafana-backend-group
 /pkg/services/provisioning/ @grafana/grafana-search-and-storage
+/pkg/services/pulse/ @grafana/dashboards-squad
 /pkg/services/provisioning/alerting/ @grafana/alerting-backend
 /pkg/services/query/ @grafana/grafana-datasources-core-services
 /pkg/services/queryhistory/ @grafana/datapro
@@ -994,6 +995,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/panel-screenshot/ @grafana/dashboards-squad
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/grafana-frontend-platform
+/public/app/features/pulse/ @grafana/dashboards-squad
 /public/app/features/plugins/admin/ @grafana/grafana-catalog
 /public/app/features/plugins/datasource_srv* @grafana/grafana-catalog
 /public/app/features/profile/ @grafana/grafana-frontend-platform

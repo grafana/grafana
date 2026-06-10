@@ -12,6 +12,7 @@ export const FOLDER_ID = 'manage-folder';
 export const getDashboardsTabID = (folderUID: string) => `folder-dashboards-${folderUID}`;
 export const getLibraryPanelsTabID = (folderUID: string) => `folder-library-panels-${folderUID}`;
 export const getAlertingTabID = (folderUID: string) => `folder-alerting-${folderUID}`;
+export const getPulseTabID = (folderUID: string) => `folder-pulse-${folderUID}`;
 export const getPermissionsTabID = (folderUID: string) => `folder-permissions-${folderUID}`;
 export const getSettingsTabID = (folderUID: string) => `folder-settings-${folderUID}`;
 
@@ -63,6 +64,22 @@ export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: Fol
       id: getAlertingTabID(folder.uid),
       text: t('browse-dashboards.manage-folder-nav.alert-rules', 'Alert rules'),
       url: `${folder.url}/alerting`,
+    });
+  }
+
+  // Pulse is gated on the same feature toggle the dashboard-side drawer
+  // uses, so toggling Pulse off hides both surfaces in lockstep. The
+  // folder Pulse tab is a read-only roll-up of threads attached to
+  // dashboards in this folder hierarchy — it doesn't write anything
+  // to the folder itself, so it stays available on provisioned
+  // folders alongside the rest of the read-only tabs.
+  if (config.featureToggles?.dashboardPulse) {
+    model.children!.push({
+      active: false,
+      icon: 'comment-alt-message',
+      id: getPulseTabID(folder.uid),
+      text: t('browse-dashboards.manage-folder-nav.pulse', 'Pulse'),
+      url: `${folder.url}/pulse`,
     });
   }
 

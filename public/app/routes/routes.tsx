@@ -511,6 +511,20 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboards/f/:uid/:slug/pulse',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "FolderPulse"*/ 'app/features/browse-dashboards/BrowseFolderPulsePage')
+      ),
+    },
+    {
+      // Slug-less form so deep-links from the global Pulse overview (which
+      // doesn't always carry a slug) land on the same page.
+      path: '/dashboards/f/:uid/pulse',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "FolderPulse"*/ 'app/features/browse-dashboards/BrowseFolderPulsePage')
+      ),
+    },
+    {
       path: '/library-panels',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
@@ -547,6 +561,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
       ),
+    },
+    config.featureToggles.dashboardPulse && {
+      path: '/pulse',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "PulsePage" */ 'app/features/pulse/PulsePage')),
     },
     {
       // Redirect the /femt dev page to the root

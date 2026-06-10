@@ -339,6 +339,16 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Enables Pulse, threaded conversations attached to dashboards and panels (Slack-style threads with @user and #panel mentions, subscriptions, and notifications)
+  * @default false
+  */
+  dashboardPulse?: boolean;
+  /**
+  * Lets users tag the Grafana Assistant in a Pulse thread (@assistant). When tagged, the assistant posts a reply back into the thread. Requires dashboardPulse to be enabled.
+  * @default false
+  */
+  dashboardPulseAssistant?: boolean;
+  /**
   * Enables default layout selector in dashboard settings
   * @default true
   */

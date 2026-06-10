@@ -1464,6 +1464,45 @@
     },
     {
       "metadata": {
+        "name": "dashboardPulse",
+        "resourceVersion": "1779806858857",
+        "creationTimestamp": "2026-05-26T14:47:38Z"
+      },
+      "spec": {
+        "description": "Enables Pulse, threaded conversations attached to dashboards and panels (Slack-style threads with @user and #panel mentions, subscriptions, and notifications)",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardPulseAssistant",
+        "resourceVersion": "1780488488319",
+        "creationTimestamp": "2026-06-03T12:08:08Z"
+      },
+      "spec": {
+        "description": "Lets users tag the Grafana Assistant in a Pulse thread (@assistant). When tagged, the assistant posts a reply back into the thread. Requires dashboardPulse to be enabled.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardPulseEmail",
+        "resourceVersion": "1779806858857",
+        "creationTimestamp": "2026-05-26T14:47:38Z"
+      },
+      "spec": {
+        "description": "Sends email notifications to Pulse mention and subscription recipients. Requires dashboardPulse to be enabled and SMTP to be configured.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardSectionVariables",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

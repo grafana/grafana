@@ -4296,6 +4296,9 @@
       "title-folder-not-found": "Folder not found",
       "title-ruler-namespace-error": "Cannot load rules"
     },
+    "browse-folder-pulse-page": {
+      "title-folder-not-found": "Folder not found"
+    },
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
@@ -4415,10 +4418,45 @@
       "team-folders-error-title": "Error loading team folders",
       "unknown-error": "Unknown error"
     },
+    "folder-pulse": {
+      "author-unknown": "Unknown",
+      "closed": "Closed",
+      "column": {
+        "author": "Author",
+        "folder": "Folder",
+        "last-activity": "Last activity",
+        "replies": "Replies",
+        "resource": "Resource",
+        "thread": "Thread",
+        "type": "Type"
+      },
+      "empty": {
+        "all": "No Pulse threads on dashboards in this folder yet",
+        "all-hint": "This view rolls up Pulse threads attached to dashboards in this folder and its subfolders. Open any dashboard to start a thread there.",
+        "error": "Couldn't load Pulse threads",
+        "error-hint": "Something went wrong while fetching threads. Please refresh and try again.",
+        "filtered": "No matching threads",
+        "filtered-hint": "Try clearing the search, status, or scope filters."
+      },
+      "loading": "Loading threads…",
+      "refreshing": "Updating…",
+      "scope": {
+        "all": "All threads",
+        "mine": "My threads"
+      },
+      "search-placeholder": "Search by thread content or dashboard title",
+      "status": {
+        "all": "All",
+        "closed": "Closed",
+        "open": "Open"
+      },
+      "untitled": "Untitled thread"
+    },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
-      "panels": "Panels"
+      "panels": "Panels",
+      "pulse": "Pulse"
     },
     "my-team-folders": "My team folders",
     "name-cell": {
@@ -6277,6 +6315,10 @@
         "title": "Outline",
         "tooltip": "Content outline"
       },
+      "pulse": {
+        "title": "Pulse",
+        "tooltip": "Open Pulse"
+      },
       "redo": "Redo",
       "snapshot": {
         "tooltip": "Open original dashboard"
@@ -6391,6 +6433,10 @@
         "playlist-previous": "Go to previous dashboard",
         "playlist-stop": "Stop playlist",
         "public-dashboard": "Public",
+        "pulse": {
+          "label": "Pulse",
+          "tooltip": "Open Pulse — start or join the conversation about this dashboard"
+        },
         "save-dashboard": {
           "label": "Save",
           "tooltip": "Save changes"
@@ -7313,6 +7359,11 @@
     },
     "panel-non-applicable-drilldowns-sub-header": {
       "default-reason": "Filter is not applicable"
+    },
+    "panel-pulse-mentions": {
+      "tooltip-many_one": "{{count}} threads mention this panel",
+      "tooltip-many_other": "{{count}} threads mention this panel",
+      "tooltip-one": "1 thread mentions this panel"
     },
     "panel-styles": {
       "threshold-badge-tooltip": "This preset will modify thresholds",
@@ -12529,6 +12580,7 @@
       "more": "More...",
       "new-alert-rule": "New alert rule",
       "paste-styles": "Paste styles",
+      "pulse": "Pulse on this panel",
       "query": "Query",
       "remove": "Remove",
       "replace-library-panel": "Replace library panel",
@@ -14049,6 +14101,140 @@
       "last-active-label": "Last active",
       "origin-label": "Origin",
       "role-label": "Role"
+    }
+  },
+  "pulse": {
+    "assistant": {
+      "context-dashboard": "This question is from a Grafana Pulse conversation on the dashboard \"{{dashboardTitle}}\". Open it here and use your dashboard tools to inspect it: {{link}}",
+      "context-panel": "This question is from a Grafana Pulse conversation about the panel \"{{panelTitle}}\" (panel id {{panelId}}) on the dashboard \"{{dashboardTitle}}\". Open it here and use your dashboard tools to inspect it: {{link}}",
+      "empty-prompt": "Please help with this dashboard conversation.",
+      "system-prompt": "You are the Grafana Assistant replying inside a dashboard conversation thread. Answer concisely and helpfully in Markdown.",
+      "unavailable": "I'm the Grafana Assistant, but I'm not available in this Grafana instance right now, so I can't answer here."
+    },
+    "composer": {
+      "assistant-display-name": "Grafana Assistant",
+      "assistant-suggestion-label": "Grafana Assistant",
+      "assistant-suggestion-sublabel": "Tag the assistant to reply in this thread",
+      "cancel": "Cancel",
+      "hint-markdown": "Cmd/Ctrl+Enter to send · @user · #panel · **markdown**",
+      "hint-markdown-dashboard": "Cmd/Ctrl+Enter to send · @user · #dashboard · **markdown**",
+      "hint-markdown-multi": "Cmd/Ctrl+Enter to send · @user · #resource · **markdown**",
+      "input-aria": "Pulse message",
+      "placeholder": "Pulse on this dashboard… (@ for users, # for panels, **markdown** supported)",
+      "preview-empty": "Nothing to preview yet.",
+      "send": "Submit",
+      "submit-error": "Could not submit thread. Please check Pulse API and try again.",
+      "tab-preview": "Preview",
+      "tab-write": "Write",
+      "time-suggestion-label": "Insert dashboard time range",
+      "title-aria": "Thread title",
+      "title-placeholder": "Title — a short summary of this thread",
+      "user-lookup-empty": "No matching users.",
+      "user-lookup-error": "Could not load user suggestions.",
+      "user-lookup-forbidden": "You do not have permission to look up users for mentions (requires pulse:read).",
+      "user-lookup-loading": "Searching users…"
+    },
+    "drawer": {
+      "back": "Back to threads",
+      "closed-tag": "Closed",
+      "empty-body": "Use Pulse to leave context-aware comments on this dashboard. Your team will be notified.",
+      "empty-cta": "Start the first thread",
+      "empty-filtered-body": "Try a different panel or user, or clear the filters to see every thread on this dashboard.",
+      "empty-filtered-cta": "Clear filters",
+      "empty-filtered-title": "No threads match the current filters",
+      "empty-title": "Nothing to discuss yet",
+      "filter-clear": "Clear filters",
+      "filter-panel-all": "All panels",
+      "filter-panel-aria": "Filter threads by panel",
+      "filter-panel-fallback": "Panel #{{id}}",
+      "filter-panel-label": "Panel",
+      "filter-search-aria": "Filter threads by text",
+      "filter-search-label": "Search threads",
+      "filter-search-placeholder": "Search title or body — matches replies too",
+      "filter-user-all": "All users",
+      "filter-user-aria": "Filter threads by user",
+      "filter-user-fallback": "User #{{id}}",
+      "filter-user-label": "User",
+      "last-activity": "Last activity: {{when}}",
+      "loading": "Loading threads…",
+      "loading-thread": "Loading thread…",
+      "new-thread": "Start a thread",
+      "start-on-dashboard": "Start a thread on this dashboard",
+      "thread-author-avatar-alt": "Avatar for {{name}}",
+      "thread-author-unknown": "User",
+      "thread-fallback": "Conversation",
+      "thread-meta_one": "{{count}} replies",
+      "thread-meta_other": "{{count}} replies",
+      "thread-missing": "Thread not found.",
+      "thread-title-placeholder": "Title — short summary of this thread (required)",
+      "threads-on-dashboard": "Threads on this dashboard",
+      "title": "Pulse"
+    },
+    "overview": {
+      "author-unknown": "Unknown",
+      "closed": "Closed",
+      "column": {
+        "author": "Author",
+        "last-activity": "Last activity",
+        "replies": "Replies",
+        "resource": "Resource",
+        "thread": "Thread",
+        "type": "Type"
+      },
+      "empty": {
+        "all": "No threads yet",
+        "all-hint": "Start a thread on any dashboard panel and it will appear here.",
+        "filtered": "No matching threads",
+        "filtered-hint": "Try clearing the search or switching back to all threads."
+      },
+      "error": {
+        "message": "Something went wrong while fetching threads. Please refresh and try again.",
+        "title": "Failed to load Pulse threads"
+      },
+      "loading": "Loading threads…",
+      "refreshing": "Updating…",
+      "scope": {
+        "all": "All threads",
+        "mine": "My threads"
+      },
+      "search-placeholder": "Search by thread content or dashboard title",
+      "status": {
+        "all": "All",
+        "closed": "Closed",
+        "open": "Open"
+      },
+      "subtitle": "Browse every Pulse thread across your dashboards. Open a thread to jump straight into the conversation.",
+      "untitled": "Untitled thread"
+    },
+    "thread": {
+      "author-bot": "Automation #{{id}}",
+      "author-bot-named": "{{name}} (automation)",
+      "author-user": "User #{{id}}",
+      "back": "Back to threads",
+      "close-thread": "Close thread",
+      "close-thread-confirm": "Close thread",
+      "close-thread-text": "Closing this thread keeps the history visible but prevents new replies. Admins can reopen it later.",
+      "close-thread-title": "Close thread",
+      "closed-badge": "Closed",
+      "closed-notice": "This thread is closed. Ask an admin to reopen it if more discussion is needed.",
+      "delete": "Delete pulse",
+      "delete-confirm": "Delete",
+      "delete-text": "Are you sure you want to delete this pulse?",
+      "delete-thread": "Delete thread",
+      "delete-thread-confirm": "Delete thread",
+      "delete-thread-text": "This permanently deletes the conversation and all its replies. This cannot be undone.",
+      "delete-thread-title": "Delete thread",
+      "delete-title": "Delete pulse",
+      "edit": "Edit pulse",
+      "edited": "(edited)",
+      "empty": "No pulses yet.",
+      "loading": "Loading…",
+      "reopen-thread": "Reopen thread",
+      "reply-placeholder": "Reply… (@ for users, # for panels)",
+      "reply-placeholder-dashboard": "Reply… (@ for users, # for dashboards)",
+      "reply-placeholder-multi": "Reply… (@ for users, # for resources)",
+      "tombstone": "This pulse was deleted.",
+      "untitled": "Conversation"
     }
   },
   "query": {

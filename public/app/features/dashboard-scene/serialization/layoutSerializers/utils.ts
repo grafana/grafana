@@ -34,6 +34,7 @@ import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
+import { PanelPulseMentions } from '../../scene/PanelPulseMentions';
 import { VizPanelHeaderActions } from '../../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../../scene/VizPanelSubHeader';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -59,6 +60,13 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   );
 
   titleItems.push(new PanelNotices());
+
+  // V2 dashboard layouts (auto-grid, rows, tabs, responsive grid) build
+  // panels through this helper instead of transformSaveModelToScene, so
+  // the Pulse mention indicator must be wired here too — without this,
+  // the icon never mounts on dashboards using any V2 layout, even
+  // though the backend rollup is correct.
+  titleItems.push(new PanelPulseMentions({ panelId: id ?? panel.spec.id }));
 
   const queryOptions = panel.spec.data.spec.queryOptions;
   const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;
@@ -135,6 +143,12 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
   );
 
   titleItems.push(new PanelNotices());
+
+  // Mirror buildVizPanel above — V2 layouts construct library panels
+  // through this helper, and the Pulse indicator should appear on
+  // them too. The dashboard panel id is what the indicator keys off
+  // (matches the backend rollup), not the library asset uid.
+  titleItems.push(new PanelPulseMentions({ panelId: id ?? panel.spec.id }));
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
