@@ -46,22 +46,14 @@ spec:
           properties:
             datasourceUID:
               $ref: '#/components/schemas/DatasourceUID'
-              description: The UID of the datasource to run this expression against.
-                If omitted, the expression will be run against the `__expr__` datasource
             model:
               additionalProperties: {}
               type: object
             queryType:
-              description: The type of query if this is a query expression
               type: string
             relativeTimeRange:
               $ref: '#/components/schemas/RelativeTimeRange'
             source:
-              description: |-
-                Used to mark the expression to be used as the final source for the rule evaluation
-                Only one expression in a rule can be marked as the source
-                For AlertRules, this is the expression that will be evaluated against the alerting condition
-                For RecordingRules, this is the expression that will be recorded
               type: boolean
           required:
           - model
@@ -69,9 +61,6 @@ spec:
         ExpressionMap:
           additionalProperties:
             $ref: '#/components/schemas/Expression'
-          description: |-
-            TODO: validate that only one can specify source=true
-            & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
           type: object
         IntervalTrigger:
           additionalProperties: false
@@ -100,8 +89,6 @@ spec:
           - KeepLast
           type: string
         NotificationSettings:
-          description: 'TODO(@moustafab): this should be imported from the notifications
-            package'
           oneOf:
           - $ref: '#/components/schemas/SimplifiedRouting'
           - $ref: '#/components/schemas/NamedRoutingTree'
@@ -203,7 +190,6 @@ spec:
         TemplateString:
           type: string
         TimeIntervalRef:
-          description: 'TODO(@moustafab): validate regex for time interval ref'
           type: string
         spec:
           additionalProperties: false
@@ -295,22 +281,14 @@ spec:
           properties:
             datasourceUID:
               $ref: '#/components/schemas/DatasourceUID'
-              description: The UID of the datasource to run this expression against.
-                If omitted, the expression will be run against the `__expr__` datasource
             model:
               additionalProperties: {}
               type: object
             queryType:
-              description: The type of query if this is a query expression
               type: string
             relativeTimeRange:
               $ref: '#/components/schemas/RelativeTimeRange'
             source:
-              description: |-
-                Used to mark the expression to be used as the final source for the rule evaluation
-                Only one expression in a rule can be marked as the source
-                For AlertRules, this is the expression that will be evaluated against the alerting condition
-                For RecordingRules, this is the expression that will be recorded
               type: boolean
           required:
           - model
@@ -318,9 +296,6 @@ spec:
         ExpressionMap:
           additionalProperties:
             $ref: '#/components/schemas/Expression'
-          description: |-
-            TODO: validate that only one can specify source=true
-            & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
           type: object
         IntervalTrigger:
           additionalProperties: false
@@ -331,7 +306,6 @@ spec:
           - interval
           type: object
         MetricName:
-          description: 'TODO(@moustafab): validate the metric name regex'
           pattern: ^[a-zA-Z_:][a-zA-Z0-9_:]*$
           type: string
         OperatorState:
@@ -496,8 +470,6 @@ spec:
           properties:
             name:
               $ref: '#/components/schemas/RuleUID'
-              description: name is the metadata.name of an AlertRule or RecordingRule
-                resource.
           required:
           - name
           type: object
@@ -547,4 +519,838 @@ spec:
       scope: Namespaced
       userReadable: false
     name: v0alpha1
+    routes:
+      namespaced:
+        /search:
+          get:
+            operationId: getSearchRules
+            parameters:
+            - in: query
+              name: continueToken
+              schema:
+                type: string
+            - in: query
+              name: dashboardUID
+              schema:
+                type: string
+            - in: query
+              name: datasourceUIDs
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: folders
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: groups
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: labels
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: limit
+              schema:
+                type: integer
+            - in: query
+              name: metric
+              schema:
+                type: string
+            - in: query
+              name: notificationType
+              schema:
+                type: string
+            - in: query
+              name: panelID
+              schema:
+                type: integer
+            - in: query
+              name: paused
+              schema:
+                type: boolean
+            - in: query
+              name: q
+              schema:
+                type: string
+            - in: query
+              name: receiver
+              schema:
+                type: string
+            - in: query
+              name: routingTree
+              schema:
+                type: string
+            - in: query
+              name: sort
+              schema:
+                $ref: '#/components/schemas/RuleSearchSortField'
+            - in: query
+              name: targetDatasourceUID
+              schema:
+                type: string
+            - in: query
+              name: type
+              schema:
+                type: string
+            responses:
+              default:
+                content:
+                  application/json:
+                    schema:
+                      additionalProperties: false
+                      properties:
+                        apiVersion:
+                          description: 'APIVersion defines the versioned schema of
+                            this representation of an object. Servers should convert
+                            recognized schemas to the latest internal value, and may
+                            reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                          type: string
+                        items:
+                          items:
+                            $ref: '#/components/schemas/getSearchRulesRuleHit'
+                          type: array
+                        kind:
+                          description: 'Kind is a string value representing the REST
+                            resource this object represents. Servers may infer this
+                            from the endpoint the client submits requests to. Cannot
+                            be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                          type: string
+                        metadata:
+                          properties:
+                            continue:
+                              type: string
+                            remainingItemCount:
+                              type: integer
+                            resourceVersion:
+                              type: string
+                            selfLink:
+                              type: string
+                          type: object
+                          x-grafana-app-uses-kubernetes-list-metadata: true
+                      required:
+                      - items
+                      - apiVersion
+                      - kind
+                      - metadata
+                      type: object
+                description: Default OK response
+        /search/alertrules:
+          get:
+            operationId: getSearchAlertRules
+            parameters:
+            - in: query
+              name: continueToken
+              schema:
+                type: string
+            - in: query
+              name: dashboardUID
+              schema:
+                type: string
+            - in: query
+              name: datasourceUIDs
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: folders
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: groups
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: labels
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: limit
+              schema:
+                type: integer
+            - in: query
+              name: notificationType
+              schema:
+                type: string
+            - in: query
+              name: panelID
+              schema:
+                type: integer
+            - in: query
+              name: paused
+              schema:
+                type: boolean
+            - in: query
+              name: q
+              schema:
+                type: string
+            - in: query
+              name: receiver
+              schema:
+                type: string
+            - in: query
+              name: routingTree
+              schema:
+                type: string
+            - in: query
+              name: sort
+              schema:
+                $ref: '#/components/schemas/RuleSearchSortField'
+            responses:
+              default:
+                content:
+                  application/json:
+                    schema:
+                      additionalProperties: false
+                      properties:
+                        apiVersion:
+                          description: 'APIVersion defines the versioned schema of
+                            this representation of an object. Servers should convert
+                            recognized schemas to the latest internal value, and may
+                            reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                          type: string
+                        items:
+                          items:
+                            $ref: '#/components/schemas/getSearchAlertRulesAlertRuleHit'
+                          type: array
+                        kind:
+                          description: 'Kind is a string value representing the REST
+                            resource this object represents. Servers may infer this
+                            from the endpoint the client submits requests to. Cannot
+                            be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                          type: string
+                        metadata:
+                          properties:
+                            continue:
+                              type: string
+                            remainingItemCount:
+                              type: integer
+                            resourceVersion:
+                              type: string
+                            selfLink:
+                              type: string
+                          type: object
+                          x-grafana-app-uses-kubernetes-list-metadata: true
+                      required:
+                      - items
+                      - apiVersion
+                      - kind
+                      - metadata
+                      type: object
+                description: Default OK response
+        /search/recordingrules:
+          get:
+            operationId: getSearchRecordingRules
+            parameters:
+            - in: query
+              name: continueToken
+              schema:
+                type: string
+            - in: query
+              name: datasourceUIDs
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: folders
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: groups
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: labels
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: limit
+              schema:
+                type: integer
+            - in: query
+              name: metric
+              schema:
+                type: string
+            - in: query
+              name: paused
+              schema:
+                type: boolean
+            - in: query
+              name: q
+              schema:
+                type: string
+            - in: query
+              name: sort
+              schema:
+                $ref: '#/components/schemas/RuleSearchSortField'
+            - in: query
+              name: targetDatasourceUID
+              schema:
+                type: string
+            responses:
+              default:
+                content:
+                  application/json:
+                    schema:
+                      additionalProperties: false
+                      properties:
+                        apiVersion:
+                          description: 'APIVersion defines the versioned schema of
+                            this representation of an object. Servers should convert
+                            recognized schemas to the latest internal value, and may
+                            reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                          type: string
+                        items:
+                          items:
+                            $ref: '#/components/schemas/getSearchRecordingRulesRecordingRuleHit'
+                          type: array
+                        kind:
+                          description: 'Kind is a string value representing the REST
+                            resource this object represents. Servers may infer this
+                            from the endpoint the client submits requests to. Cannot
+                            be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                          type: string
+                        metadata:
+                          properties:
+                            continue:
+                              type: string
+                            remainingItemCount:
+                              type: integer
+                            resourceVersion:
+                              type: string
+                            selfLink:
+                              type: string
+                          type: object
+                          x-grafana-app-uses-kubernetes-list-metadata: true
+                      required:
+                      - items
+                      - apiVersion
+                      - kind
+                      - metadata
+                      type: object
+                description: Default OK response
+      schemas:
+        getSearchAlertRulesAlertRuleHit:
+          additionalProperties: false
+          properties:
+            metadata:
+              additionalProperties: {}
+              type: object
+            spec:
+              $ref: '#/components/schemas/getSearchAlertRulesAlertRuleSpec'
+          required:
+          - metadata
+          - spec
+          type: object
+        getSearchAlertRulesAlertRuleSpec:
+          additionalProperties: false
+          properties:
+            annotations:
+              additionalProperties:
+                $ref: '#/components/schemas/getSearchAlertRulesTemplateString'
+              type: object
+            execErrState:
+              $ref: '#/components/schemas/getSearchAlertRulesExecErrState'
+              default: Error
+            expressions:
+              $ref: '#/components/schemas/getSearchAlertRulesExpressionMap'
+            for:
+              type: string
+            keepFiringFor:
+              type: string
+            labels:
+              additionalProperties:
+                $ref: '#/components/schemas/getSearchAlertRulesTemplateString'
+              type: object
+            missingSeriesEvalsToResolve:
+              minimum: 0
+              type: integer
+            noDataState:
+              $ref: '#/components/schemas/getSearchAlertRulesNoDataState'
+              default: NoData
+            notificationSettings:
+              $ref: '#/components/schemas/getSearchAlertRulesNotificationSettings'
+            panelRef:
+              $ref: '#/components/schemas/getSearchAlertRulesPanelRef'
+            paused:
+              type: boolean
+            title:
+              type: string
+            trigger:
+              $ref: '#/components/schemas/getSearchAlertRulesIntervalTrigger'
+          required:
+          - title
+          - trigger
+          - noDataState
+          - execErrState
+          - expressions
+          type: object
+        getSearchAlertRulesDatasourceUID:
+          pattern: ^[a-zA-Z0-9_-]+$
+          type: string
+        getSearchAlertRulesExecErrState:
+          enum:
+          - Error
+          - Ok
+          - Alerting
+          - KeepLast
+          type: string
+        getSearchAlertRulesExpression:
+          additionalProperties: false
+          properties:
+            datasourceUID:
+              $ref: '#/components/schemas/getSearchAlertRulesDatasourceUID'
+            model:
+              additionalProperties: {}
+              type: object
+            queryType:
+              type: string
+            relativeTimeRange:
+              $ref: '#/components/schemas/getSearchAlertRulesRelativeTimeRange'
+            source:
+              type: boolean
+          required:
+          - model
+          type: object
+        getSearchAlertRulesExpressionMap:
+          additionalProperties:
+            $ref: '#/components/schemas/getSearchAlertRulesExpression'
+          type: object
+        getSearchAlertRulesIntervalTrigger:
+          additionalProperties: false
+          properties:
+            interval:
+              $ref: '#/components/schemas/getSearchAlertRulesPromDuration'
+          required:
+          - interval
+          type: object
+        getSearchAlertRulesNamedRoutingTree:
+          additionalProperties: false
+          properties:
+            routingTree:
+              type: string
+            type:
+              $ref: '#/components/schemas/getSearchAlertRulesNotificationSettingsType'
+          required:
+          - type
+          - routingTree
+          type: object
+        getSearchAlertRulesNoDataState:
+          enum:
+          - NoData
+          - Ok
+          - Alerting
+          - KeepLast
+          type: string
+        getSearchAlertRulesNotificationSettings:
+          oneOf:
+          - $ref: '#/components/schemas/SimplifiedRouting'
+          - $ref: '#/components/schemas/NamedRoutingTree'
+        getSearchAlertRulesNotificationSettingsType:
+          enum:
+          - SimplifiedRouting
+          - NamedRoutingTree
+          type: string
+        getSearchAlertRulesPanelRef:
+          additionalProperties: false
+          properties:
+            dashboardUID:
+              minLength: 1
+              pattern: ^[a-zA-Z0-9_-]+$
+              type: string
+            panelID:
+              exclusiveMinimum: true
+              minimum: 0
+              type: integer
+          required:
+          - dashboardUID
+          - panelID
+          type: object
+        getSearchAlertRulesPromDuration:
+          not:
+            pattern: hmuµn
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
+          type: string
+        getSearchAlertRulesPromDurationWMillis:
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$
+          type: string
+        getSearchAlertRulesRelativeTimeRange:
+          additionalProperties: false
+          properties:
+            from:
+              $ref: '#/components/schemas/getSearchAlertRulesPromDurationWMillis'
+            to:
+              $ref: '#/components/schemas/getSearchAlertRulesPromDurationWMillis'
+          required:
+          - from
+          - to
+          type: object
+        getSearchAlertRulesSimplifiedRouting:
+          additionalProperties: false
+          properties:
+            activeTimeIntervals:
+              items:
+                $ref: '#/components/schemas/getSearchAlertRulesTimeIntervalRef'
+              type: array
+            groupBy:
+              items:
+                type: string
+              type: array
+            groupInterval:
+              $ref: '#/components/schemas/getSearchAlertRulesPromDuration'
+            groupWait:
+              $ref: '#/components/schemas/getSearchAlertRulesPromDuration'
+            muteTimeIntervals:
+              items:
+                $ref: '#/components/schemas/getSearchAlertRulesTimeIntervalRef'
+              type: array
+            receiver:
+              type: string
+            repeatInterval:
+              $ref: '#/components/schemas/getSearchAlertRulesPromDuration'
+            type:
+              $ref: '#/components/schemas/getSearchAlertRulesNotificationSettingsType'
+          required:
+          - type
+          - receiver
+          type: object
+        getSearchAlertRulesTemplateString:
+          type: string
+        getSearchAlertRulesTimeIntervalRef:
+          type: string
+        getSearchRecordingRulesDatasourceUID:
+          pattern: ^[a-zA-Z0-9_-]+$
+          type: string
+        getSearchRecordingRulesExpression:
+          additionalProperties: false
+          properties:
+            datasourceUID:
+              $ref: '#/components/schemas/getSearchRecordingRulesDatasourceUID'
+            model:
+              additionalProperties: {}
+              type: object
+            queryType:
+              type: string
+            relativeTimeRange:
+              $ref: '#/components/schemas/getSearchRecordingRulesRelativeTimeRange'
+            source:
+              type: boolean
+          required:
+          - model
+          type: object
+        getSearchRecordingRulesExpressionMap:
+          additionalProperties:
+            $ref: '#/components/schemas/getSearchRecordingRulesExpression'
+          type: object
+        getSearchRecordingRulesIntervalTrigger:
+          additionalProperties: false
+          properties:
+            interval:
+              $ref: '#/components/schemas/getSearchRecordingRulesPromDuration'
+          required:
+          - interval
+          type: object
+        getSearchRecordingRulesMetricName:
+          pattern: ^[a-zA-Z_:][a-zA-Z0-9_:]*$
+          type: string
+        getSearchRecordingRulesPromDuration:
+          not:
+            pattern: hmuµn
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
+          type: string
+        getSearchRecordingRulesPromDurationWMillis:
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$
+          type: string
+        getSearchRecordingRulesRecordingRuleHit:
+          additionalProperties: false
+          properties:
+            metadata:
+              additionalProperties: {}
+              type: object
+            spec:
+              $ref: '#/components/schemas/getSearchRecordingRulesRecordingRuleSpec'
+          required:
+          - metadata
+          - spec
+          type: object
+        getSearchRecordingRulesRecordingRuleSpec:
+          additionalProperties: false
+          properties:
+            expressions:
+              $ref: '#/components/schemas/getSearchRecordingRulesExpressionMap'
+            labels:
+              additionalProperties:
+                $ref: '#/components/schemas/getSearchRecordingRulesTemplateString'
+              type: object
+            metric:
+              $ref: '#/components/schemas/getSearchRecordingRulesMetricName'
+            paused:
+              type: boolean
+            targetDatasourceUID:
+              $ref: '#/components/schemas/getSearchRecordingRulesDatasourceUID'
+            title:
+              type: string
+            trigger:
+              $ref: '#/components/schemas/getSearchRecordingRulesIntervalTrigger'
+          required:
+          - title
+          - trigger
+          - metric
+          - expressions
+          - targetDatasourceUID
+          type: object
+        getSearchRecordingRulesRelativeTimeRange:
+          additionalProperties: false
+          properties:
+            from:
+              $ref: '#/components/schemas/getSearchRecordingRulesPromDurationWMillis'
+            to:
+              $ref: '#/components/schemas/getSearchRecordingRulesPromDurationWMillis'
+          required:
+          - from
+          - to
+          type: object
+        getSearchRecordingRulesTemplateString:
+          type: string
+        getSearchRulesAlertRuleSpec:
+          additionalProperties: false
+          properties:
+            annotations:
+              additionalProperties:
+                $ref: '#/components/schemas/getSearchRulesTemplateString'
+              type: object
+            execErrState:
+              $ref: '#/components/schemas/getSearchRulesExecErrState'
+              default: Error
+            expressions:
+              $ref: '#/components/schemas/getSearchRulesExpressionMap'
+            for:
+              type: string
+            keepFiringFor:
+              type: string
+            labels:
+              additionalProperties:
+                $ref: '#/components/schemas/getSearchRulesTemplateString'
+              type: object
+            missingSeriesEvalsToResolve:
+              minimum: 0
+              type: integer
+            noDataState:
+              $ref: '#/components/schemas/getSearchRulesNoDataState'
+              default: NoData
+            notificationSettings:
+              $ref: '#/components/schemas/getSearchRulesNotificationSettings'
+            panelRef:
+              $ref: '#/components/schemas/getSearchRulesPanelRef'
+            paused:
+              type: boolean
+            title:
+              type: string
+            trigger:
+              $ref: '#/components/schemas/getSearchRulesIntervalTrigger'
+          required:
+          - title
+          - trigger
+          - noDataState
+          - execErrState
+          - expressions
+          type: object
+        getSearchRulesDatasourceUID:
+          pattern: ^[a-zA-Z0-9_-]+$
+          type: string
+        getSearchRulesExecErrState:
+          enum:
+          - Error
+          - Ok
+          - Alerting
+          - KeepLast
+          type: string
+        getSearchRulesExpression:
+          additionalProperties: false
+          properties:
+            datasourceUID:
+              $ref: '#/components/schemas/getSearchRulesDatasourceUID'
+            model:
+              additionalProperties: {}
+              type: object
+            queryType:
+              type: string
+            relativeTimeRange:
+              $ref: '#/components/schemas/getSearchRulesRelativeTimeRange'
+            source:
+              type: boolean
+          required:
+          - model
+          type: object
+        getSearchRulesExpressionMap:
+          additionalProperties:
+            $ref: '#/components/schemas/getSearchRulesExpression'
+          type: object
+        getSearchRulesIntervalTrigger:
+          additionalProperties: false
+          properties:
+            interval:
+              $ref: '#/components/schemas/getSearchRulesPromDuration'
+          required:
+          - interval
+          type: object
+        getSearchRulesMetricName:
+          pattern: ^[a-zA-Z_:][a-zA-Z0-9_:]*$
+          type: string
+        getSearchRulesNamedRoutingTree:
+          additionalProperties: false
+          properties:
+            routingTree:
+              type: string
+            type:
+              $ref: '#/components/schemas/getSearchRulesNotificationSettingsType'
+          required:
+          - type
+          - routingTree
+          type: object
+        getSearchRulesNoDataState:
+          enum:
+          - NoData
+          - Ok
+          - Alerting
+          - KeepLast
+          type: string
+        getSearchRulesNotificationSettings:
+          oneOf:
+          - $ref: '#/components/schemas/SimplifiedRouting'
+          - $ref: '#/components/schemas/NamedRoutingTree'
+        getSearchRulesNotificationSettingsType:
+          enum:
+          - SimplifiedRouting
+          - NamedRoutingTree
+          type: string
+        getSearchRulesPanelRef:
+          additionalProperties: false
+          properties:
+            dashboardUID:
+              minLength: 1
+              pattern: ^[a-zA-Z0-9_-]+$
+              type: string
+            panelID:
+              exclusiveMinimum: true
+              minimum: 0
+              type: integer
+          required:
+          - dashboardUID
+          - panelID
+          type: object
+        getSearchRulesPromDuration:
+          not:
+            pattern: hmuµn
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
+          type: string
+        getSearchRulesPromDurationWMillis:
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$
+          type: string
+        getSearchRulesRecordingRuleSpec:
+          additionalProperties: false
+          properties:
+            expressions:
+              $ref: '#/components/schemas/getSearchRulesExpressionMap'
+            labels:
+              additionalProperties:
+                $ref: '#/components/schemas/getSearchRulesTemplateString'
+              type: object
+            metric:
+              $ref: '#/components/schemas/getSearchRulesMetricName'
+            paused:
+              type: boolean
+            targetDatasourceUID:
+              $ref: '#/components/schemas/getSearchRulesDatasourceUID'
+            title:
+              type: string
+            trigger:
+              $ref: '#/components/schemas/getSearchRulesIntervalTrigger'
+          required:
+          - title
+          - trigger
+          - metric
+          - expressions
+          - targetDatasourceUID
+          type: object
+        getSearchRulesRelativeTimeRange:
+          additionalProperties: false
+          properties:
+            from:
+              $ref: '#/components/schemas/getSearchRulesPromDurationWMillis'
+            to:
+              $ref: '#/components/schemas/getSearchRulesPromDurationWMillis'
+          required:
+          - from
+          - to
+          type: object
+        getSearchRulesRuleHit:
+          additionalProperties: false
+          properties:
+            metadata:
+              additionalProperties: {}
+              type: object
+            spec:
+              oneOf:
+              - $ref: '#/components/schemas/AlertRuleSpec'
+              - $ref: '#/components/schemas/RecordingRuleSpec'
+          required:
+          - metadata
+          - spec
+          type: object
+        getSearchRulesSimplifiedRouting:
+          additionalProperties: false
+          properties:
+            activeTimeIntervals:
+              items:
+                $ref: '#/components/schemas/getSearchRulesTimeIntervalRef'
+              type: array
+            groupBy:
+              items:
+                type: string
+              type: array
+            groupInterval:
+              $ref: '#/components/schemas/getSearchRulesPromDuration'
+            groupWait:
+              $ref: '#/components/schemas/getSearchRulesPromDuration'
+            muteTimeIntervals:
+              items:
+                $ref: '#/components/schemas/getSearchRulesTimeIntervalRef'
+              type: array
+            receiver:
+              type: string
+            repeatInterval:
+              $ref: '#/components/schemas/getSearchRulesPromDuration'
+            type:
+              $ref: '#/components/schemas/getSearchRulesNotificationSettingsType'
+          required:
+          - type
+          - receiver
+          type: object
+        getSearchRulesTemplateString:
+          type: string
+        getSearchRulesTimeIntervalRef:
+          type: string
     served: true

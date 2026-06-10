@@ -1,6 +1,6 @@
 package v0alpha1
 
-RecordingRuleSpec: #RuleSpec & {
+#RecordingRuleSpec: #RuleSpec & {
 	metric:              #MetricName
 	targetDatasourceUID: #DatasourceUID
 }
