@@ -1351,11 +1351,6 @@ export interface FeatureToggles {
   */
   lokiQueryLimitsContext?: boolean;
   /**
-  * Enables the new version of rudderstack
-  * @default false
-  */
-  rudderstackUpgrade?: boolean;
-  /**
   * Adds support for Kubernetes alerting historian APIs
   * @default false
   */

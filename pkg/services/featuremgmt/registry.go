@@ -2427,16 +2427,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "rudderstackUpgrade",
-			Description:     "Enables the new version of rudderstack",
-			Generate:        Generate{LegacyFrontend: true},
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaFrontendPlatformSquad,
-			Expression:      "false",
-			RequiresRestart: false,
-			HideFromDocs:    false,
-		},
-		{
 			Name:            "kubernetesAlertingHistorian",
 			Description:     "Adds support for Kubernetes alerting historian APIs",
 			Stage:           FeatureStageExperimental,
