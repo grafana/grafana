@@ -439,6 +439,35 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			expectedErr: "pull request options are not supported on local repositories",
 		},
 		{
+			name: "should error if pull request options are set on a git repository",
+			repo: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Repository",
+				"metadata": map[string]any{
+					"name":      "git-repo-with-pull-request-options",
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"title": "Git Repo With Pull Request Options",
+					"type":  string(provisioning.GitRepositoryType),
+					"sync": map[string]any{
+						"enabled": false,
+						"target":  "folder",
+					},
+					"git": map[string]any{
+						"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
+						"branch": "main",
+					},
+					"pullRequest": map[string]any{
+						"titleTemplate": "{{title}}",
+					},
+					// Empty workflows to avoid the token/connection requirement
+					"workflows": []string{},
+				},
+			}},
+			expectedErr: "pull request options are not supported on git repositories",
+		},
+		{
 			name: "should error if unknown finalizer is set",
 			repo: func() *unstructured.Unstructured {
 				localTmp := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{

@@ -318,7 +318,7 @@ func TestValidator_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "branch, commit and pull request options allowed for git repository",
+			name: "branch, commit and pull request options allowed for github repository",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -330,6 +330,43 @@ func TestValidator_Validate(t *testing.T) {
 						Branch:      &provisioning.BranchOptions{NameTemplate: "{{title}}"},
 						Commit:      &provisioning.CommitOptions{SingleResourceMessageTemplate: "{{title}}"},
 						PullRequest: &provisioning.PullRequestOptions{TitleTemplate: "{{title}}"},
+					},
+				}
+			}(),
+			expectedErrs: 0,
+		},
+		{
+			name: "pull request options for git repository",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:       "Test Repo",
+						Type:        provisioning.GitRepositoryType,
+						PullRequest: &provisioning.PullRequestOptions{TitleTemplate: "{{title}}"},
+					},
+				}
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Equal(t, "spec.pullRequest", errors[0].Field)
+				require.Contains(t, errors.ToAggregate().Error(), "pull request options are not supported on git repositories")
+			},
+		},
+		{
+			name: "branch and commit options allowed for git repository",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:  "Test Repo",
+						Type:   provisioning.GitRepositoryType,
+						Branch: &provisioning.BranchOptions{NameTemplate: "{{title}}"},
+						Commit: &provisioning.CommitOptions{SingleResourceMessageTemplate: "{{title}}"},
 					},
 				}
 			}(),

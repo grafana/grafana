@@ -104,6 +104,13 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 		}
 	}
 
+	// Pull requests are a hosting-provider feature. Plain git repositories support the
+	// branch workflow but cannot open pull requests, so reject pull request options.
+	if cfg.Spec.Type == provisioning.GitRepositoryType && cfg.Spec.PullRequest != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", "pullRequest"),
+			cfg.Spec.PullRequest, "pull request options are not supported on git repositories"))
+	}
+
 	for _, w := range cfg.Spec.Workflows {
 		switch w {
 		case provisioning.WriteWorkflow: // valid; no fall thru
