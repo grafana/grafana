@@ -66,11 +66,14 @@ func TestVectorSearch(t *testing.T) {
 	}
 
 	t.Run("calls VectorSearch and maps results to hits", func(t *testing.T) {
+		// The backend returns results ordered by score (ascending cosine distance,
+		// closest first); the mock mirrors that contract.
 		mockClient := &MockClient{
 			VectorSearchResponse: &resourcepb.VectorSearchResponse{
 				Results: []*resourcepb.VectorSearchResult{
 					{Name: "d1", Title: "CPU usage", Folder: "f1", Score: 0.12},
 					{Name: "d2", Title: "Memory usage", Folder: "f2", Score: 0.34},
+					{Name: "d3", Title: "Disk I/O", Folder: "f1", Score: 0.51},
 				},
 			},
 		}
@@ -91,13 +94,17 @@ func TestVectorSearch(t *testing.T) {
 		defer func() { require.NoError(t, resp.Body.Close()) }()
 		p := &v0alpha1.SearchResults{}
 		require.NoError(t, json.NewDecoder(resp.Body).Decode(p))
-		require.Len(t, p.Hits, 2)
-		assert.Equal(t, int64(2), p.TotalHits)
+		require.Len(t, p.Hits, 3)
+		assert.Equal(t, int64(3), p.TotalHits)
+
+		// Hits preserve the backend's score order (closest first).
+		assert.Equal(t, []string{"d1", "d2", "d3"}, []string{p.Hits[0].Name, p.Hits[1].Name, p.Hits[2].Name})
+		assert.Equal(t, []float64{0.12, 0.34, 0.51}, []float64{p.Hits[0].Score, p.Hits[1].Score, p.Hits[2].Score})
+		assert.Equal(t, 0.12, p.MaxScore)
+
 		assert.Equal(t, "CPU usage", p.Hits[0].Title)
-		assert.Equal(t, "d1", p.Hits[0].Name)
 		assert.Equal(t, "f1", p.Hits[0].Folder)
 		assert.Equal(t, "dashboards", p.Hits[0].Resource)
-		assert.Equal(t, 0.12, p.MaxScore)
 	})
 
 	t.Run("returns 501 and does not fall back when vector search is unimplemented", func(t *testing.T) {

@@ -3189,12 +3189,12 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
-			Name:        "dashboardVectorSearch",
+			Name:        "dashboard.vectorSearch",
 			Description: "Exposes the semantic (vector) search endpoint for dashboards under the dashboard API",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
-			Generate:    Generate{LegacyGo: true},
+			Generate:    Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

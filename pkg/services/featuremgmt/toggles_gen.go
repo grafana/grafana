@@ -980,5 +980,5 @@ const (
 
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
-	FlagDashboardVectorSearch = "dashboardVectorSearch"
+	FlagDashboardVectorSearch = "dashboard.vectorSearch"
 )
