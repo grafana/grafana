@@ -18,7 +18,7 @@ labels:
     - oss
 title: Variable syntax
 description: Learn about different types of variable syntax
-weight: 300
+weight: 400
 ---
 
 # Variable syntax

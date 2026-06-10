@@ -24,7 +24,7 @@ refs:
       destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
     - pattern: /docs/grafana-cloud/
       destination: https://grafana.com/docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/
-weight: 200
+weight: 500
 ---
 
 # Manage and inspect variables
