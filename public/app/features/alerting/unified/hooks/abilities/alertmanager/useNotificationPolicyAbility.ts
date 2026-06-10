@@ -17,7 +17,7 @@ import {
 } from '../types';
 
 /** Minimal shape needed to check provenance on a notification policy/route. */
-export type NotificationPolicyContext = { provenance?: string };
+type NotificationPolicyContext = { provenance?: string };
 
 export type NotificationPolicyAbilityParam =
   | { action: NotificationPolicyAction.ViewTree }

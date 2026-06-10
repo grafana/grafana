@@ -5,7 +5,7 @@ import { contextSrv as ctx } from 'app/core/services/context_srv';
 import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
-} from 'app/features/alerting/unified/components/mute-timings/permissions';
+} from 'app/features/alerting/unified/hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';

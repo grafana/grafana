@@ -535,10 +535,6 @@ const (
 	// Add compact=true when fetching rules
 	FlagFetchRulesInCompactMode = "fetchRulesInCompactMode"
 
-	// FlagGrafanaconThemes
-	// Enables the temporary themes for GrafanaCon
-	FlagGrafanaconThemes = "grafanaconThemes"
-
 	// FlagAlertingUseNewSimplifiedRoutingHashAlgorithm
 	FlagAlertingUseNewSimplifiedRoutingHashAlgorithm = "alertingUseNewSimplifiedRoutingHashAlgorithm"
 
@@ -917,10 +913,6 @@ const (
 	// FlagQuerycachingUseInQueryService
 	// Enables the query service to do query caching
 	FlagQuerycachingUseInQueryService = "querycaching.useInQueryService"
-
-	// FlagCompiledBootScript
-	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script
-	FlagCompiledBootScript = "compiledBootScript"
 
 	// FlagInfluxDBConfigValidation
 	// Enables validation on the InfluxDB data source configuration page

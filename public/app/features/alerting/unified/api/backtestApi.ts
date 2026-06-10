@@ -6,7 +6,7 @@ import { alertingApi } from './alertingApi';
 /**
  * Request body for the backtest API matching the BacktestConfig struct in the backend
  */
-export interface BacktestRequest {
+interface BacktestRequest {
   // Required time range fields
   from: string; // ISO 8601 timestamp
   to: string; // ISO 8601 timestamp
