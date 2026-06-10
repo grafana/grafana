@@ -31,7 +31,8 @@ interface HeaderActionsProps {
  * own visibility by reading from QueryEditorUIContext.
  */
 export function HeaderActions({ containerRef }: HeaderActionsProps) {
-  const { selectedQuery, selectedTransformation, cardType } = useQueryEditorUIContext();
+  const { selectedQuery, selectedTransformation, cardType, multiSelectMode, setMultiSelectMode } =
+    useQueryEditorUIContext();
   const { toggleQueryHide, toggleTransformationDisabled, deleteQuery, deleteTransformation } = useActionsContext();
 
   const onToggleHide = useCallback(() => {
@@ -48,7 +49,10 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
     } else if (selectedTransformation) {
       deleteTransformation(selectedTransformation.transformId);
     }
-  }, [selectedQuery, selectedTransformation, deleteQuery, deleteTransformation]);
+    if (multiSelectMode) {
+      setMultiSelectMode(false);
+    }
+  }, [selectedQuery, selectedTransformation, deleteQuery, deleteTransformation, multiSelectMode, setMultiSelectMode]);
 
   if (cardType === QueryEditorType.Alert) {
     return null;

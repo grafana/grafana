@@ -133,6 +133,38 @@ describe('HeaderActions', () => {
     expect(deleteTransformation).toHaveBeenCalledWith('transform-42');
   });
 
+  it('exits multi-select mode when the header delete is clicked', async () => {
+    const deleteQuery = jest.fn();
+    const setMultiSelectMode = jest.fn();
+
+    const { user } = renderWithQueryEditorProvider(<HeaderActions />, {
+      selectedQuery: { refId: 'A', hide: false },
+      uiStateOverrides: { cardType: QueryEditorType.Query, multiSelectMode: true, setMultiSelectMode },
+      actionsOverrides: { deleteQuery },
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Delete action' }));
+
+    expect(deleteQuery).toHaveBeenCalledWith('A');
+    expect(setMultiSelectMode).toHaveBeenCalledWith(false);
+  });
+
+  it('does not toggle multi-select mode on header delete when not in multi-select mode', async () => {
+    const deleteQuery = jest.fn();
+    const setMultiSelectMode = jest.fn();
+
+    const { user } = renderWithQueryEditorProvider(<HeaderActions />, {
+      selectedQuery: { refId: 'A', hide: false },
+      uiStateOverrides: { cardType: QueryEditorType.Query, multiSelectMode: false, setMultiSelectMode },
+      actionsOverrides: { deleteQuery },
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Delete action' }));
+
+    expect(deleteQuery).toHaveBeenCalledWith('A');
+    expect(setMultiSelectMode).not.toHaveBeenCalled();
+  });
+
   it('passes the selected transformation id to Actions', () => {
     const selectedTransformation = makeTransformation({
       transformId: 'reduce-0',

@@ -35,10 +35,7 @@ export interface UseSelectionStateResult {
   removeTransformationFromSelection: (transformId: string) => void;
 }
 
-/**
- * Returns the contiguous ids between `anchorId` and `clickedId` (inclusive), in list order.
- * Returns null when either id is not present in `orderedIds`.
- */
+/** Ids between anchor and clicked (inclusive, list order), or null if either id is missing. */
 function getContiguousRange(orderedIds: string[], anchorId: string, clickedId: string): string[] | null {
   const anchorIdx = orderedIds.indexOf(anchorId);
   const clickedIdx = orderedIds.indexOf(clickedId);
@@ -52,33 +49,41 @@ function getContiguousRange(orderedIds: string[], anchorId: string, clickedId: s
   return orderedIds.slice(start, end + 1);
 }
 
-/**
- * Merges the stable "range base" (selections made before the current Shift sequence, e.g. via
- * Ctrl+Click) with the freshly computed contiguous range, preserving order and de-duplicating.
- */
+/** Merges the "range base" (selections predating the current Shift sequence) with the new range. */
 function mergeRangeWithBase(base: string[], range: string[]): string[] {
   const baseSet = new Set(base);
   return [...base, ...range.filter((id) => !baseSet.has(id))];
 }
 
 /**
- * Manages active (editor/highlight) and multi-select (bulk actions) state separately.
- *
- * - `activeQueryRefId` / `activeTransformationId`: active card for the editor pane.
- * - `selectedQueryRefIds` / `selectedTransformationIds`: bulk selection set (checkbox / modifiers).
- *
- * Query and transformation active selections are mutually exclusive, as are query vs
- * transformation multi-select sets.
+ * Manages the active card and the multi-select (bulk) sets; queries and transformations are
+ * mutually exclusive in both. The exposed active ids are resolved against the live lists each
+ * render (stale transformation → null, stale/unset query → queries[0]), so every consumer
+ * agrees on which card is active.
  */
 export function useSelectionState({
   queries,
   transformations,
   onClearSideEffects,
 }: UseSelectionStateOptions): UseSelectionStateResult {
-  const [activeQueryRefId, setActiveQueryRefId] = useState<string | null>(() => queries[0]?.refId ?? null);
-  const [activeTransformationId, setActiveTransformationId] = useState<string | null>(null);
+  // Last explicit activation. Can go stale while Scene mutations propagate, so never
+  // exposed — consumers read the resolved ids derived below.
+  const [rawActiveQueryRefId, setRawActiveQueryRefId] = useState<string | null>(null);
+  const [rawActiveTransformationId, setRawActiveTransformationId] = useState<string | null>(null);
   const [selectedQueryRefIds, setSelectedQueryRefIds] = useState<string[]>([]);
   const [selectedTransformationIds, setSelectedTransformationIds] = useState<string[]>([]);
+
+  // Resolved active ids — valid by construction: stale transformation → null, stale/unset
+  // query → queries[0].
+  const activeTransformationId =
+    rawActiveTransformationId !== null &&
+    transformations.some(({ transformId }) => transformId === rawActiveTransformationId)
+      ? rawActiveTransformationId
+      : null;
+
+  const rawQueryExists = rawActiveQueryRefId !== null && queries.some(({ refId }) => refId === rawActiveQueryRefId);
+  const activeQueryRefId =
+    activeTransformationId !== null ? null : rawQueryExists ? rawActiveQueryRefId : (queries[0]?.refId ?? null);
 
   const onClearSideEffectsRef = useRef(onClearSideEffects);
   onClearSideEffectsRef.current = onClearSideEffects;
@@ -101,11 +106,8 @@ export function useSelectionState({
   const selectedTransformationIdsRef = useRef(selectedTransformationIds);
   selectedTransformationIdsRef.current = selectedTransformationIds;
 
-  // Range-select anchors. The anchor is pinned by the last non-range action (plain or
-  // Ctrl/Cmd toggle) and stays fixed across consecutive Shift+Clicks, so each Shift+Click
-  // re-derives the range from the same origin (e.g. anchor 1: Shift+3 → 1-3, Shift+2 → 1-2).
-  // The matching "range base" holds the selections that existed when the anchor was set so
-  // independent Ctrl picks survive a later Shift-range.
+  // Shift-range anchors: pinned by the last non-range action, fixed across consecutive
+  // Shift+Clicks. The "range base" keeps prior Ctrl picks alive outside a later range.
   const queryAnchorRef = useRef<string | null>(null);
   const queryRangeBaseRef = useRef<string[]>([]);
   const transformationAnchorRef = useRef<string | null>(null);
@@ -118,26 +120,27 @@ export function useSelectionState({
     transformationRangeBaseRef.current = [];
   }, []);
 
-  // Reconcile active ids when the underlying lists change (e.g. after a delete propagates
-  // from the Scene). Without this, activeQueryRefId / activeTransformationId can reference
-  // items that no longer exist, causing downstream consumers like selectActiveInMultiSelection
-  // to seed stale ids into the bulk set.
+  // GC stale raw ids after deletes. Resolution already covers display; this only stops a
+  // recycled id (deleting "A" frees "A" for the next added query) from re-attaching.
   useEffect(() => {
-    if (activeQueryRefId !== null && !queries.some((q) => q.refId === activeQueryRefId)) {
-      setActiveQueryRefId(queries[0]?.refId ?? null);
+    if (rawActiveQueryRefId !== null && !queries.some(({ refId }) => refId === rawActiveQueryRefId)) {
+      setRawActiveQueryRefId(null);
     }
-  }, [queries, activeQueryRefId]);
+  }, [queries, rawActiveQueryRefId]);
 
   useEffect(() => {
-    if (activeTransformationId !== null && !transformations.some((t) => t.transformId === activeTransformationId)) {
-      setActiveTransformationId(null);
+    if (
+      rawActiveTransformationId !== null &&
+      !transformations.some(({ transformId }) => transformId === rawActiveTransformationId)
+    ) {
+      setRawActiveTransformationId(null);
     }
-  }, [transformations, activeTransformationId]);
+  }, [transformations, rawActiveTransformationId]);
 
   const onCardSelectionChange = useCallback(
     (queryRefId: string | null, transformationId: string | null, options?: { seedBulk?: boolean }) => {
-      setActiveQueryRefId(queryRefId);
-      setActiveTransformationId(transformationId);
+      setRawActiveQueryRefId(queryRefId);
+      setRawActiveTransformationId(transformationId);
       resetSelectionAnchors();
       if (options?.seedBulk) {
         setSelectedQueryRefIds(queryRefId ? [queryRefId] : []);
@@ -153,7 +156,7 @@ export function useSelectionState({
   );
 
   const trackQueryRename = useCallback((originalRefId: string, updatedRefId: string) => {
-    setActiveQueryRefId((current) => (current === originalRefId ? updatedRefId : current));
+    setRawActiveQueryRefId((current) => (current === originalRefId ? updatedRefId : current));
     setSelectedQueryRefIds((current) => current.map((id) => (id === originalRefId ? updatedRefId : id)));
     if (queryAnchorRef.current === originalRefId) {
       queryAnchorRef.current = updatedRefId;
@@ -162,14 +165,14 @@ export function useSelectionState({
   }, []);
 
   const activateQuery = useCallback((query: DataQuery | ExpressionQuery) => {
-    setActiveQueryRefId(query.refId);
-    setActiveTransformationId(null);
+    setRawActiveQueryRefId(query.refId);
+    setRawActiveTransformationId(null);
     onClearSideEffectsRef.current?.();
   }, []);
 
   const activateTransformation = useCallback((transformation: Transformation) => {
-    setActiveQueryRefId(null);
-    setActiveTransformationId(transformation.transformId);
+    setRawActiveQueryRefId(null);
+    setRawActiveTransformationId(transformation.transformId);
     onClearSideEffectsRef.current?.();
   }, []);
 
@@ -182,19 +185,13 @@ export function useSelectionState({
     const currentSelection = selectedQueryRefIdsRef.current;
 
     if (modifiers?.range) {
-      // When a transformation is active and there's no pinned query anchor, fall through to
-      // plain-click instead of range-selecting from queries[0] — avoids surprising ranges
-      // that cross card types.
-      const hasActiveTransformation = activeTransformationIdRef.current !== null;
-      const anchorRefId =
-        queryAnchorRef.current ??
-        activeQueryRefIdRef.current ??
-        (hasActiveTransformation ? null : (orderedIds[0] ?? null));
+      // Pinned anchor wins, else the resolved active query — null while a transformation is
+      // active, so Shift+Click plain-selects instead of ranging across card types.
+      const anchorRefId = queryAnchorRef.current ?? activeQueryRefIdRef.current;
 
       if (anchorRefId !== null) {
         const range = getContiguousRange(orderedIds, anchorRefId, query.refId);
         if (range) {
-          // Anchor and base stay fixed so consecutive Shift+Clicks grow/shrink from the origin.
           setSelectedQueryRefIds(mergeRangeWithBase(queryRangeBaseRef.current, range));
           return;
         }
@@ -209,7 +206,7 @@ export function useSelectionState({
           : currentSelection.filter((id) => id !== query.refId)
         : [...currentSelection, query.refId];
       setSelectedQueryRefIds(next);
-      // Pin the anchor to the toggled card; everything else becomes the base a later Shift extends.
+      // The toggled card becomes the anchor; the rest becomes the Shift-range base.
       queryAnchorRef.current = query.refId;
       queryRangeBaseRef.current = next.filter((id) => id !== query.refId);
       return;
@@ -269,8 +266,10 @@ export function useSelectionState({
   const selectActiveInMultiSelection = useCallback(() => {
     resetSelectionAnchors();
 
+    // Seed from the resolved ids so the selection matches the card the editor is showing —
+    // multi-select can never open with checkboxes visible but nothing checked.
     const transformationId = activeTransformationIdRef.current;
-    if (transformationId) {
+    if (transformationId !== null) {
       setSelectedQueryRefIds([]);
       setSelectedTransformationIds([transformationId]);
       transformationAnchorRef.current = transformationId;
@@ -278,7 +277,7 @@ export function useSelectionState({
     }
 
     const queryRefId = activeQueryRefIdRef.current;
-    if (queryRefId) {
+    if (queryRefId !== null) {
       setSelectedTransformationIds([]);
       setSelectedQueryRefIds([queryRefId]);
       queryAnchorRef.current = queryRefId;
@@ -286,21 +285,18 @@ export function useSelectionState({
   }, [resetSelectionAnchors]);
 
   const clearSelection = useCallback(() => {
-    const firstQueryRefId = queriesRef.current[0]?.refId ?? null;
-    setActiveQueryRefId(firstQueryRefId);
-    setActiveTransformationId(null);
+    // Null raw ids resolve to queries[0].
+    setRawActiveQueryRefId(null);
+    setRawActiveTransformationId(null);
     clearMultiSelection();
     onClearSideEffectsRef.current?.();
   }, [clearMultiSelection]);
 
   const removeQueryFromSelection = useCallback((refId: string) => {
     setSelectedQueryRefIds((current) => current.filter((id) => id !== refId));
-    setActiveQueryRefId((current) => {
-      if (current !== refId) {
-        return current;
-      }
-      return queriesRef.current[0]?.refId ?? null;
-    });
+    // Null the raw id rather than pick a successor — `queries` may still contain the
+    // deleted item this render, so any successor chosen here could be stale.
+    setRawActiveQueryRefId((current) => (current === refId ? null : current));
     if (queryAnchorRef.current === refId) {
       queryAnchorRef.current = null;
     }
@@ -309,7 +305,7 @@ export function useSelectionState({
 
   const removeTransformationFromSelection = useCallback((transformId: string) => {
     setSelectedTransformationIds((current) => current.filter((id) => id !== transformId));
-    setActiveTransformationId((current) => (current === transformId ? null : current));
+    setRawActiveTransformationId((current) => (current === transformId ? null : current));
     if (transformationAnchorRef.current === transformId) {
       transformationAnchorRef.current = null;
     }

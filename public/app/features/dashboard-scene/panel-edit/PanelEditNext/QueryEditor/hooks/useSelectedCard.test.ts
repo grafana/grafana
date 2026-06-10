@@ -34,12 +34,12 @@ describe('useSelectedCard', () => {
   ];
 
   describe('query selection', () => {
-    it('should select first query by default when nothing is active', () => {
+    it('should select nothing when no id is provided (useSelectionState supplies the queries[0] fallback upstream)', () => {
       const { result } = renderHook(() =>
         useSelectedCard(null, null, null, mockQueries, mockTransformations, mockAlerts)
       );
 
-      expect(result.current.selectedQuery).toEqual(mockQueries[0]);
+      expect(result.current.selectedQuery).toBeNull();
       expect(result.current.selectedTransformation).toBeNull();
       expect(result.current.selectedAlert).toBeNull();
     });
@@ -94,13 +94,14 @@ describe('useSelectedCard', () => {
       expect(result.current.selectedQuery).toBeNull();
     });
 
-    it('should fall back to first query when the active refId does not exist', () => {
+    it('should return null when the active refId does not exist', () => {
       const { result } = renderHook(() =>
         useSelectedCard('INVALID', null, null, mockQueries, mockTransformations, mockAlerts)
       );
 
-      // Active refId not found and no other type is active — defaults to first query.
-      expect(result.current.selectedQuery).toEqual(mockQueries[0]);
+      // Ids arrive already resolved from useSelectionState, so an unknown id maps to nothing
+      // rather than silently showing a different query.
+      expect(result.current.selectedQuery).toBeNull();
       expect(result.current.selectedTransformation).toBeNull();
       expect(result.current.selectedAlert).toBeNull();
     });
@@ -214,8 +215,8 @@ describe('useSelectedCard', () => {
     });
 
     it('should resolve both when activeQueryRefId and activeTransformationId are simultaneously set', () => {
-      // The wrapper enforces mutual exclusivity for the active ids, but useSelectedCard itself
-      // does not — when both are provided, both resolve.
+      // useSelectionState enforces mutual exclusivity for the active ids, but useSelectedCard
+      // itself does not — when both are provided, both resolve.
       const { result } = renderHook(() =>
         useSelectedCard('B', 'transform-1', null, mockQueries, mockTransformations, mockAlerts)
       );
@@ -292,7 +293,7 @@ describe('useSelectedCard', () => {
       expect(result.current.selectedAlert).toEqual(newAlerts[0]);
     });
 
-    it('should handle the active query being removed from the array by falling back to the first query', () => {
+    it('should return null when the active query is removed from the array (useSelectionState re-resolves upstream)', () => {
       const { result, rerender } = renderHook(
         ({ queries }) => useSelectedCard('B', null, null, queries, mockTransformations, mockAlerts),
         {
@@ -309,7 +310,7 @@ describe('useSelectedCard', () => {
 
       rerender({ queries: newQueries });
 
-      expect(result.current.selectedQuery).toEqual(newQueries[0]);
+      expect(result.current.selectedQuery).toBeNull();
     });
   });
 });

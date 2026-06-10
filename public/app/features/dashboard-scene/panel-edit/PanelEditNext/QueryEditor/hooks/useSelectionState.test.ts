@@ -337,11 +337,13 @@ describe('useSelectionState', () => {
       expect(result.current.selectedTransformationIds).toEqual([]);
     });
 
-    it('clears active and bulk arrays when both args are null', () => {
+    it('resets the active card to the default (queries[0]) when both args are null', () => {
       const { result } = setup();
       act(() => result.current.toggleQuerySelection({ refId: 'A' }, { multi: true }));
       act(() => result.current.onCardSelectionChange(null, null));
-      expect(result.current.activeQueryRefId).toBeNull();
+      // With no explicit activation, the resolved active query falls back to queries[0] —
+      // matching the card the editor pane shows.
+      expect(result.current.activeQueryRefId).toBe('A');
       expect(result.current.activeTransformationId).toBeNull();
       expect(result.current.selectedQueryRefIds).toEqual([]);
       expect(result.current.selectedTransformationIds).toEqual([]);
@@ -400,6 +402,39 @@ describe('useSelectionState', () => {
       act(() => result.current.selectActiveInMultiSelection());
       expect(result.current.selectedQueryRefIds).toEqual([]);
       expect(result.current.selectedTransformationIds).toEqual(['tx-1']);
+    });
+
+    it('falls back to queries[0] when no card is explicitly active', () => {
+      const { result } = setup();
+      // No activate* call: the resolved active query falls back to queries[0], so entering
+      // multi-select seeds the card the editor pane is showing.
+      act(() => result.current.selectActiveInMultiSelection());
+      expect(result.current.selectedQueryRefIds).toEqual(['A']);
+      expect(result.current.selectedTransformationIds).toEqual([]);
+    });
+
+    it('falls back to queries[0] after the active transformation is deleted from the list', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: defaultProps,
+      });
+      act(() => result.current.activateTransformation(mockTransformations[1]));
+      expect(result.current.activeTransformationId).toBe('tx-1');
+
+      // Deleting the active transformation resolves its active id to null, so the active
+      // card falls back to queries[0] — the seed must follow that fallback.
+      rerender({ ...defaultProps, transformations: mockTransformations.filter((t) => t.transformId !== 'tx-1') });
+      expect(result.current.activeTransformationId).toBeNull();
+
+      act(() => result.current.selectActiveInMultiSelection());
+      expect(result.current.selectedQueryRefIds).toEqual(['A']);
+      expect(result.current.selectedTransformationIds).toEqual([]);
+    });
+
+    it('seeds nothing when there are no cards at all', () => {
+      const { result } = setup({ ...defaultProps, queries: [], transformations: [] });
+      act(() => result.current.selectActiveInMultiSelection());
+      expect(result.current.selectedQueryRefIds).toEqual([]);
+      expect(result.current.selectedTransformationIds).toEqual([]);
     });
   });
 

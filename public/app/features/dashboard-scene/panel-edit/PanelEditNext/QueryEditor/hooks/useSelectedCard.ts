@@ -5,15 +5,13 @@ import { type DataQuery } from '@grafana/schema';
 import { type AlertRule, EMPTY_ALERT, type Transformation } from '../types';
 
 /**
- * Resolves `selectedQuery`, `selectedTransformation`, and `selectedAlert` from active
- * selection ids and the live Scene query/transformation lists.
+ * Maps the resolved active ids from useSelectionState to the corresponding query /
+ * transformation / alert objects. The ids arrive already resolved against the live lists
+ * (useSelectionState falls back to queries[0] when nothing is explicitly active), so this
+ * hook only applies cross-type precedence on top.
  *
- * Query selection has an auto-select fallback: when no active query is set and no other
- * type or picker is active, it defaults to queries[0] so the editor pane is never empty.
- * If the active query is deleted, its refId is no longer found and the fallback kicks in.
- *
- * @param hasPendingPicker - Suppresses the query auto-select fallback while an expression or
- *   transformation type picker is active, so the content area shows the picker instead.
+ * @param hasPendingPicker - Suppresses the query card while an expression or transformation
+ *   type picker is active, so the content area shows the picker instead.
  */
 export function useSelectedCard(
   activeQueryRefId: string | null,
@@ -25,23 +23,12 @@ export function useSelectedCard(
   hasPendingPicker = false
 ) {
   const selectedQuery = useMemo(() => {
-    if (selectedAlertId || hasPendingPicker) {
+    if (selectedAlertId || hasPendingPicker || !activeQueryRefId) {
       return null;
     }
 
-    if (activeQueryRefId) {
-      const query = queries.find(({ refId }) => refId === activeQueryRefId);
-      if (query) {
-        return query;
-      }
-    }
-
-    if (activeTransformationId) {
-      return null;
-    }
-
-    return queries.length > 0 ? queries[0] : null;
-  }, [queries, activeQueryRefId, activeTransformationId, selectedAlertId, hasPendingPicker]);
+    return queries.find(({ refId }) => refId === activeQueryRefId) ?? null;
+  }, [queries, activeQueryRefId, selectedAlertId, hasPendingPicker]);
 
   const selectedTransformation = useMemo(() => {
     if (activeTransformationId) {
