@@ -21,7 +21,7 @@ import { Toggletip } from '../Toggletip/Toggletip';
 import { VizLayout, type VizLayoutLegendProps } from '../VizLayout/VizLayout';
 import { FacetedLabelsFilter } from '../VizLegend/FacetedLabelsFilter';
 import { VizLegend } from '../VizLegend/VizLegend';
-import { type VizLegendItem } from '../VizLegend/types';
+import { VizLegendNameOverflow, type VizLegendItem } from '../VizLegend/types';
 
 import { type UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { getDisplayValuesForCalcs } from './utils';
@@ -204,6 +204,7 @@ export const PlotLegend = memo(function PlotLegend({
       isSortable={true}
       limit={limit}
       filterAction={!facetedFilterPinned ? filterToggle : undefined}
+      nameOverflow={typeof vizLayoutLegendProps.width === 'string' ? VizLegendNameOverflow.Wrap : undefined}
     />
   );
 

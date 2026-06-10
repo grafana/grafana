@@ -266,7 +266,7 @@ VizLegendOptions: {
 	isVisible?: bool
 	sortBy?:    string
 	sortDesc?:  bool
-	width?:     number
+	width?:     number | string
 	limit?:     number
 	calcs: [...string]
 } @cuetsy(kind="interface")

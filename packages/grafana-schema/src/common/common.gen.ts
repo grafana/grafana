@@ -683,7 +683,7 @@ export interface VizLegendOptions {
   showLegend: boolean;
   sortBy?: string;
   sortDesc?: boolean;
-  width?: number;
+  width?: (number | string);
 }
 
 export const defaultVizLegendOptions: Partial<VizLegendOptions> = {

@@ -32,6 +32,7 @@ export const VizLegendTable = <T extends unknown>({
   isSortable,
   limit = 0,
   filterAction,
+  nameOverflow,
 }: VizLegendTableProps<T>): JSX.Element => {
   const styles = useStyles2(getStyles);
   const header: Record<string, string> = {
@@ -93,6 +94,7 @@ export const VizLegendTable = <T extends unknown>({
         onLabelMouseOut={onLabelMouseOut}
         readonly={readonly}
         hasMixedAxes={hasMixedAxes}
+        nameOverflow={nameOverflow}
       />
     );
   }

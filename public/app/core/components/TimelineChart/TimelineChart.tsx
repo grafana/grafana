@@ -7,7 +7,7 @@ import {
   type VisibilityMode,
   type VizTooltipOptions,
 } from '@grafana/schema';
-import { type UPlotConfigBuilder, VizLayout, VizLegend, type VizLegendItem } from '@grafana/ui';
+import { type UPlotConfigBuilder, VizLayout, VizLegend, type VizLegendItem, VizLegendNameOverflow } from '@grafana/ui';
 
 import { GraphNG, type GraphNGProps } from '../GraphNG/GraphNG';
 import { getXAxisConfig } from '../TimeSeries/utils';
@@ -87,7 +87,13 @@ export const TimelineChart = (props: TimelineProps) => {
 
       return (
         <VizLayout.Legend placement={legend.placement}>
-          <VizLegend placement={legend.placement} items={legendItems} displayMode={legend.displayMode} readonly />
+          <VizLegend
+            placement={legend.placement}
+            items={legendItems}
+            displayMode={legend.displayMode}
+            nameOverflow={typeof legend.width === 'string' ? VizLegendNameOverflow.Wrap : undefined}
+            readonly
+          />
         </VizLayout.Legend>
       );
     },

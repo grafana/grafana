@@ -10014,6 +10014,7 @@
         "name-values": "Values",
         "name-visibility": "Visibility",
         "name-width": "Width",
+        "placeholder-width": "Auto, px, or % (e.g. 220 or 35%)",
         "placement-options": {
           "label-bottom": "Bottom",
           "label-right": "Right"

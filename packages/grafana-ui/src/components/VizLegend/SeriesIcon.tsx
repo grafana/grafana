@@ -70,7 +70,7 @@ export const SeriesIcon = React.memo(
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     display: 'inline-block',
-    width: '14px',
+    minWidth: '14px',
     height: '4px',
   }),
   forcedColors: css({

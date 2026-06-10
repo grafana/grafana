@@ -17,6 +17,7 @@ import {
   type VizLayoutLegendProps,
   VizLegend,
   type VizLegendItem,
+  VizLegendNameOverflow,
   useTheme2,
 } from '@grafana/ui';
 import { getDisplayValuesForCalcs } from '@grafana/ui/internal';
@@ -135,6 +136,7 @@ export const BarChartLegend = memo(
           sortBy={vizLayoutLegendProps.sortBy}
           sortDesc={vizLayoutLegendProps.sortDesc}
           isSortable={true}
+          nameOverflow={typeof vizLayoutLegendProps.width === 'string' ? VizLegendNameOverflow.Wrap : undefined}
         />
       </VizLayout.Legend>
     );
