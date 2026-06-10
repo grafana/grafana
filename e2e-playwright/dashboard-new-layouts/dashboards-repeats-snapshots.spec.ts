@@ -25,6 +25,19 @@ async function expectRepeatPanelsRendered(
   await expect(repeatedPanels.first()).toBeVisible();
 }
 
+async function expectRepeatPanelTitlesInterpolated(
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  expectedTitles: string[]
+) {
+  for (const title of expectedTitles) {
+    const panel = dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
+      .filter({ hasText: new RegExp(`^${title}$`) });
+    await expect(panel).toBeVisible();
+  }
+}
+
 async function publishDashboardSnapshot(
   page: Page,
   dashboardPage: DashboardPage,
@@ -71,6 +84,9 @@ test.describe(
       // Sanity check: repeats exist before snapshot.
       await expectRepeatPanelsRendered(dashboardPage, selectors, repeatOptions.length);
 
+      const expectedTitlesBefore = repeatOptions.map((opt) => `${repeatTitleBase}${opt}`);
+      await expectRepeatPanelTitlesInterpolated(dashboardPage, selectors, expectedTitlesBefore);
+
       // Open share drawer -> Share snapshot.
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.arrowMenu).click();
       await dashboardPage
@@ -83,6 +99,9 @@ test.describe(
 
       // Regression: snapshot must include repeat clones; otherwise panels are missing / fail to render.
       await expectRepeatPanelsRendered(dashboardPage, selectors, repeatOptions.length);
+
+      const expectedTitlesInSnapshot = repeatOptions.map((opt) => `${repeatTitleBase}${opt}`);
+      await expectRepeatPanelTitlesInterpolated(dashboardPage, selectors, expectedTitlesInSnapshot);
     });
 
     test('dashboard snapshot renders repeated panels (auto grid)', async ({ dashboardPage, selectors, page }) => {
@@ -102,6 +121,9 @@ test.describe(
 
       await expectRepeatPanelsRendered(dashboardPage, selectors, repeatOptions.length);
 
+      const expectedTitlesBefore = repeatOptions.map((opt) => `${repeatTitleBase}${opt}`);
+      await expectRepeatPanelTitlesInterpolated(dashboardPage, selectors, expectedTitlesBefore);
+
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.arrowMenu).click();
       await dashboardPage
         .getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.menu.shareSnapshot)
@@ -112,6 +134,9 @@ test.describe(
       await expect(dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Controls)).toBeVisible();
 
       await expectRepeatPanelsRendered(dashboardPage, selectors, repeatOptions.length);
+
+      const expectedTitlesInSnapshot = repeatOptions.map((opt) => `${repeatTitleBase}${opt}`);
+      await expectRepeatPanelTitlesInterpolated(dashboardPage, selectors, expectedTitlesInSnapshot);
     });
   }
 );

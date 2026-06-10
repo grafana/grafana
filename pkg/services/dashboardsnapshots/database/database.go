@@ -52,6 +52,11 @@ func (d *DashboardSnapshotStore) CreateDashboardSnapshot(ctx context.Context, cm
 			expires = time.Now().Add(time.Second * time.Duration(cmd.Expires))
 		}
 
+		dashboardJSON := simplejson.New()
+		if cmd.Dashboard != nil && cmd.Dashboard.Object != nil {
+			dashboardJSON = simplejson.NewFromAny(cmd.Dashboard.Object)
+		}
+
 		snapshot := &dashboardsnapshots.DashboardSnapshot{
 			Name:               cmd.Name,
 			Key:                cmd.Key,
@@ -61,7 +66,7 @@ func (d *DashboardSnapshotStore) CreateDashboardSnapshot(ctx context.Context, cm
 			External:           cmd.External,
 			ExternalURL:        cmd.ExternalURL,
 			ExternalDeleteURL:  cmd.ExternalDeleteURL,
-			Dashboard:          simplejson.New(),
+			Dashboard:          dashboardJSON,
 			DashboardEncrypted: cmd.DashboardEncrypted,
 			Expires:            expires,
 			Created:            time.Now(),
