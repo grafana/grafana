@@ -124,6 +124,12 @@ func ProvideRegistration(
 	authnSvc.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService, tracer, features).SyncOauthTokenHook, 60)
 	authnSvc.RegisterPostAuthHook(userSync.FetchSyncedUserHook, 100)
 
+	// When id_use_external_groups_for_groups_claim is set, surface external groups as the
+	// identity's groups so the forward authz Check (which reads GetGroups()) builds the same
+	// contextual team-membership tuples the ID token and the Zanzana merge resolver use.
+	// Must run after FetchSyncedUserHook (100) so it overrides the stored team memberships.
+	authnSvc.RegisterPostAuthHook(sync.ProvideGroupsClaimSync(cfg).SyncGroupsClaimHook, 115)
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagEnableSCIM) {
 		authnSvc.RegisterPostAuthHook(userSync.ValidateUserProvisioningHook, 30)
