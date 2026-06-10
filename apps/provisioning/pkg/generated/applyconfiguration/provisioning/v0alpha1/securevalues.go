@@ -16,7 +16,7 @@ type SecureValuesApplyConfiguration struct {
 	// Some webhooks (including github) require a secret key value
 	WebhookSecret *commonv0alpha1.InlineSecureValue `json:"webhookSecret,omitempty"`
 	// Private key used to sign commits the repository writes back. The format
-	// is selected by spec.commit.signingFormat. When unset, commits are
+	// is selected by spec.commit.signingMethod. When unset, commits are
 	// unsigned.
 	CommitSigningKey *commonv0alpha1.InlineSecureValue `json:"commitSigningKey,omitempty"`
 }

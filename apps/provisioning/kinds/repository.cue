@@ -125,10 +125,10 @@ repository: {
 					// public key is registered. When empty, defaults to
 					// "noreply@grafana.com".
 					signerEmail?: string
-					// Format of the key in secure.commitSigningKey. When unset, commits are not signed.
-					signingFormat?: "gpg" | "ssh" | "smime"
+					// Method used to sign commits with the key in secure.commitSigningKey. When unset, commits are not signed.
+					signingMethod?: "gpg" | "ssh" | "smime"
 					// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
-					// signingFormat is "smime". This is public, not a secret.
+					// signingMethod is "smime". This is public, not a secret.
 					smimeCertificate?: string
 				}
 				#HealthStatus: {

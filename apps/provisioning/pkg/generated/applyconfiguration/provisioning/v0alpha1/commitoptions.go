@@ -30,11 +30,11 @@ type CommitOptionsApplyConfiguration struct {
 	// and a verified email on the account where the matching public key is
 	// registered. When empty, defaults to "noreply@grafana.com".
 	SignerEmail *string `json:"signerEmail,omitempty"`
-	// Format of the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
+	// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
 	// When empty, commits are not signed.
-	SigningFormat *provisioningv0alpha1.SigningFormat `json:"signingFormat,omitempty"`
+	SigningMethod *provisioningv0alpha1.SigningMethod `json:"signingMethod,omitempty"`
 	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
-	// signingFormat is "smime". This is public (not a secret) and is embedded
+	// signingMethod is "smime". This is public (not a secret) and is embedded
 	// in the commit signature. Unused for the gpg and ssh formats.
 	SMIMECertificate *string `json:"smimeCertificate,omitempty"`
 }
@@ -77,11 +77,11 @@ func (b *CommitOptionsApplyConfiguration) WithSignerEmail(value string) *CommitO
 	return b
 }
 
-// WithSigningFormat sets the SigningFormat field in the declarative configuration to the given value
+// WithSigningMethod sets the SigningMethod field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the SigningFormat field is set to the value of the last call.
-func (b *CommitOptionsApplyConfiguration) WithSigningFormat(value provisioningv0alpha1.SigningFormat) *CommitOptionsApplyConfiguration {
-	b.SigningFormat = &value
+// If called multiple times, the SigningMethod field is set to the value of the last call.
+func (b *CommitOptionsApplyConfiguration) WithSigningMethod(value provisioningv0alpha1.SigningMethod) *CommitOptionsApplyConfiguration {
+	b.SigningMethod = &value
 	return b
 }
 

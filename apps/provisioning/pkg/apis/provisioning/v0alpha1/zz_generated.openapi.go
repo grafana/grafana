@@ -245,9 +245,9 @@ func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCal
 							Format:      "",
 						},
 					},
-					"signingFormat": {
+					"signingMethod": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Format of the key in secure.commitSigningKey. One of \"gpg\", \"ssh\", or \"smime\". When empty, commits are not signed.\n\nPossible enum values:\n - `\"gpg\"`\n - `\"smime\"`\n - `\"ssh\"`",
+							Description: "Method used to sign commits with the key in secure.commitSigningKey. One of \"gpg\", \"ssh\", or \"smime\". When empty, commits are not signed.\n\nPossible enum values:\n - `\"gpg\"`\n - `\"smime\"`\n - `\"ssh\"`",
 							Type:        []string{"string"},
 							Format:      "",
 							Enum:        []interface{}{"gpg", "smime", "ssh"},
@@ -255,7 +255,7 @@ func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCal
 					},
 					"smimeCertificate": {
 						SchemaProps: spec.SchemaProps{
-							Description: "PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingFormat is \"smime\". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats.",
+							Description: "PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingMethod is \"smime\". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -3308,7 +3308,7 @@ func schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref common.ReferenceCall
 					},
 					"commitSigningKey": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingFormat. When unset, commits are unsigned.",
+							Description: "Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingMethod. When unset, commits are unsigned.",
 							Default:     map[string]interface{}{},
 							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
 						},

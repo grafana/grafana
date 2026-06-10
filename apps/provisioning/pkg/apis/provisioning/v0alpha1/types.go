@@ -36,7 +36,7 @@ type SecureValues struct {
 	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
 
 	// Private key used to sign commits the repository writes back. The format
-	// is selected by spec.commit.signingFormat. When unset, commits are
+	// is selected by spec.commit.signingMethod. When unset, commits are
 	// unsigned.
 	CommitSigningKey common.InlineSecureValue `json:"commitSigningKey,omitzero,omitempty"`
 }
@@ -339,24 +339,24 @@ type CommitOptions struct {
 	// registered. When empty, defaults to "noreply@grafana.com".
 	SignerEmail string `json:"signerEmail,omitempty"`
 
-	// Format of the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
+	// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
 	// When empty, commits are not signed.
-	SigningFormat SigningFormat `json:"signingFormat,omitempty"`
+	SigningMethod SigningMethod `json:"signingMethod,omitempty"`
 
 	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
-	// signingFormat is "smime". This is public (not a secret) and is embedded
+	// signingMethod is "smime". This is public (not a secret) and is embedded
 	// in the commit signature. Unused for the gpg and ssh formats.
 	SMIMECertificate string `json:"smimeCertificate,omitempty"`
 }
 
-// SigningFormat selects the key format used to sign commits.
+// SigningMethod selects how commits are signed.
 // +enum
-type SigningFormat string
+type SigningMethod string
 
 const (
-	GPGSigningFormat   SigningFormat = "gpg"
-	SSHSigningFormat   SigningFormat = "ssh"
-	SMIMESigningFormat SigningFormat = "smime"
+	GPGSigningMethod   SigningMethod = "gpg"
+	SSHSigningMethod   SigningMethod = "ssh"
+	SMIMESigningMethod SigningMethod = "smime"
 )
 
 func (CommitOptions) OpenAPIModelName() string {

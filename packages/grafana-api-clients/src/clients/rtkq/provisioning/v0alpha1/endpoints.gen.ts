@@ -1791,7 +1791,7 @@ export type JobList = {
   metadata?: ListMeta;
 };
 export type SecureValues = {
-  /** Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingFormat. When unset, commits are unsigned. */
+  /** Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingMethod. When unset, commits are unsigned. */
   commitSigningKey?: InlineSecureValue;
   /** Token used to connect the configured repository */
   token?: InlineSecureValue;
@@ -1823,16 +1823,16 @@ export type CommitOptions = {
   signerEmail?: string;
   /** Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to "Grafana". */
   signerName?: string;
-  /** Format of the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime". When empty, commits are not signed.
+  /** Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime". When empty, commits are not signed.
     
     Possible enum values:
      - `"gpg"`
      - `"smime"`
      - `"ssh"` */
-  signingFormat?: 'gpg' | 'smime' | 'ssh';
+  signingMethod?: 'gpg' | 'smime' | 'ssh';
   /** Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}, {{userName}}, {{userLogin}}, {{userEmail}}. When empty, a built-in default is used (e.g. "Save dashboard: <title>"). */
   singleResourceMessageTemplate?: string;
-  /** PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingFormat is "smime". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats. */
+  /** PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingMethod is "smime". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats. */
   smimeCertificate?: string;
 };
 export type ConnectionInfo = {
