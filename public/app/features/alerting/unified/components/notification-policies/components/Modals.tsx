@@ -21,7 +21,7 @@ import {
   trackNotificationPolicyResetError,
 } from '../notificationPolicyAnalytics';
 
-export interface DeleteModalProps {
+interface DeleteModalProps {
   isOpen: boolean;
   onConfirm: () => Promise<unknown>;
   onDismiss: () => void;

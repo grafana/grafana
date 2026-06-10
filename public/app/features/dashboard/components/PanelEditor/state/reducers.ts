@@ -14,7 +14,7 @@ const DEFAULT_PANEL_EDITOR_UI_STATE: PanelEditorUIState = {
   mode: DisplayMode.Fill,
 };
 
-export interface PanelEditorUIState {
+interface PanelEditorUIState {
   /* Visualization options pane visibility */
   isPanelOptionsVisible: boolean;
   /* Pixels or percentage */

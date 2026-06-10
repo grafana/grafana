@@ -169,7 +169,7 @@ export interface ResourceList<T, S = object, K = string> extends TypeMeta {
 }
 
 /** Kubernetes Table column definition (meta.k8s.io/v1) */
-export interface TableColumnDefinition {
+interface TableColumnDefinition {
   name: string;
   type: string;
   format?: string;
@@ -178,7 +178,7 @@ export interface TableColumnDefinition {
 }
 
 /** Minimal metadata returned in Table row objects */
-export interface PartialObjectMetadata {
+interface PartialObjectMetadata {
   metadata: ObjectMeta;
 }
 

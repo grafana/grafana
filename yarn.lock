@@ -18576,7 +18576,6 @@ __metadata:
     logfmt: "npm:^1.3.2"
     lossless-json: "npm:^4.1.1"
     lru-cache: "npm:11.2.2"
-    lru-memoize: "npm:^1.1.0"
     madge: "npm:^8.0.0"
     mailparser: "npm:3.9.8"
     marked: "npm:16.3.0"
@@ -22687,13 +22686,6 @@ __metadata:
   dependencies:
     yallist: "npm:^4.0.0"
   checksum: 10/fc1fe2ee205f7c8855fa0f34c1ab0bcf14b6229e35579ec1fd1079f31d6fc8ef8eb6fd17f2f4d99788d7e339f50e047555551ebd5e434dda503696e7c6591825
-  languageName: node
-  linkType: hard
-
-"lru-memoize@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "lru-memoize@npm:1.1.0"
-  checksum: 10/566f2760348281e080d74e25e64ba9ae8d3c6496b7f2bf15444a6186852272c02c19125aa2821db87d87a8902ee9d98872e87eec1a8b395117b1c3e1e34345aa
   languageName: node
   linkType: hard
 
