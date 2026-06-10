@@ -243,8 +243,6 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 		Group:     group,
 		Verb:      verb,
 		Resource:  resource,
-		// Teams become contextual team-membership tuples server-side (team:<name>#member),
-		// so team-based grants surface in the merged permissions.
 		Teams: teams,
 	}
 
