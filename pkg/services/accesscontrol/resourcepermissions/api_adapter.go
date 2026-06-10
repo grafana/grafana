@@ -73,7 +73,7 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 			return nil, fmt.Errorf("failed to convert to typed resource permission: %w", err)
 		}
 
-		directDTO, err := a.convertK8sResourcePermissionToDTO(&resourcePerm, namespace, false)
+		directDTO, err := a.convertK8sResourcePermissionToDTO(ctx, &resourcePerm, namespace, false)
 		if err != nil {
 			return nil, err
 		}
@@ -114,7 +114,7 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 	return dto, nil
 }
 
-func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePermission, namespace string, isInherited bool) (getResourcePermissionsResponse, error) {
+func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePerm *iamv0.ResourcePermission, namespace string, isInherited bool) (getResourcePermissionsResponse, error) {
 	namespaceInfo, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse namespace %q: %w", namespace, err)
@@ -154,7 +154,7 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePerm
 
 		switch kind {
 		case iamv0.ResourcePermissionSpecPermissionKindUser, iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
-			userDetails, err := a.service.userService.GetByUID(context.Background(), &user.GetUserByUIDQuery{UID: name})
+			userDetails, err := a.service.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: name})
 			if err == nil {
 				permDTO.UserID = userDetails.ID
 				permDTO.UserUID = userDetails.UID
@@ -165,7 +165,7 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePerm
 				permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, orgID)
 			}
 		case iamv0.ResourcePermissionSpecPermissionKindTeam:
-			teamDetails, err := a.service.teamService.GetTeamByID(context.Background(), &team.GetTeamByIDQuery{
+			teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
 				UID:   name,
 				OrgID: orgID,
 			})
@@ -297,7 +297,7 @@ func (a *api) getFolderHierarchyPermissions(ctx context.Context, namespace strin
 			continue
 		}
 
-		inheritedDTO, err := a.convertK8sResourcePermissionToDTO(&parentResourcePerm, namespace, true)
+		inheritedDTO, err := a.convertK8sResourcePermissionToDTO(ctx, &parentResourcePerm, namespace, true)
 		if err != nil {
 			a.logger.Warn("Failed to convert parent folder permissions to DTO", "error", err, "parentFolder", parentFolder.Name)
 			continue

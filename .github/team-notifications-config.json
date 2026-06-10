@@ -60,6 +60,21 @@
         "fr_notify": true,
         "fr_weekly": true
       }
+    },
+    {
+      "name": "datapro",
+      "kickoff_date": "2026-06-08",
+      "adoption_date": "2025-06-08",
+      "codeowners_teams": [
+        "@grafana/datapro"
+      ],
+      "area_labels": ["area/explore", "area/transformations", "area/correlations", "area/expressions"],
+      "enabled": {
+        "pr_notify": true,
+        "pr_weekly": true,
+        "fr_notify": true,
+        "fr_weekly": true
+      }
     }
   ]
 }
