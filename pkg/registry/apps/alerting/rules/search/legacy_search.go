@@ -90,6 +90,19 @@ func ruleKey(namespace string, r *ngmodels.AlertRule) *resourcepb.ResourceKey {
 func ruleCells(r *ngmodels.AlertRule) [][]byte {
 	labels, _ := json.Marshal(r.Labels)
 	datasources, _ := json.Marshal(sourceDatasourceUIDs(r))
+
+	var dashboardUID, panelID, metric, targetDatasourceUID string
+	if r.DashboardUID != nil {
+		dashboardUID = *r.DashboardUID
+	}
+	if r.PanelID != nil {
+		panelID = strconv.FormatInt(*r.PanelID, 10)
+	}
+	if r.Record != nil {
+		metric = r.Record.Metric
+		targetDatasourceUID = r.Record.TargetDatasourceUID
+	}
+
 	return [][]byte{
 		[]byte(ruleType(r)),
 		[]byte(r.Title),
@@ -98,6 +111,10 @@ func ruleCells(r *ngmodels.AlertRule) [][]byte {
 		[]byte(strconv.FormatBool(r.IsPaused)),
 		labels,
 		datasources,
+		[]byte(dashboardUID),
+		[]byte(panelID),
+		[]byte(metric),
+		[]byte(targetDatasourceUID),
 	}
 }
 
