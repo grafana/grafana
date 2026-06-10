@@ -9,7 +9,7 @@ require (
 	github.com/go-json-experiment/json v0.0.0-20260214004413-d219187c3433
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.7.0
-	github.com/grafana/authlib/types v0.0.0-20260511070317-cdec9a89f585
+	github.com/grafana/authlib/types v0.0.0-20260603144019-18cfcbc9496a
 	github.com/grafana/grafana-plugin-sdk-go v0.292.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260424202308-770920975880
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20260424202308-770920975880
@@ -70,7 +70,7 @@ require (
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20260511070317-cdec9a89f585 // indirect
+	github.com/grafana/authlib v0.0.0-20260603144019-18cfcbc9496a // indirect
 	github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect

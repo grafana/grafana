@@ -8,7 +8,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/go-github/v82 v82.0.0
 	github.com/google/uuid v1.6.0
-	github.com/grafana/authlib/types v0.0.0-20260511070317-cdec9a89f585
+	github.com/grafana/authlib/types v0.0.0-20260603144019-18cfcbc9496a
 	github.com/grafana/grafana-app-sdk v0.56.0
 	github.com/grafana/grafana-app-sdk/logging v0.55.0
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20260424050122-76eba5631b44
@@ -61,7 +61,7 @@ require (
 	github.com/google/go-github/v73 v73.0.0 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/authlib v0.0.0-20260511070317-cdec9a89f585 // indirect
+	github.com/grafana/authlib v0.0.0-20260603144019-18cfcbc9496a // indirect
 	github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
