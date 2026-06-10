@@ -6,13 +6,17 @@ import (
 	"errors"
 	"net/http"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type subHealthREST struct {
@@ -48,10 +52,19 @@ func (r *subHealthREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	namespace := request.NamespaceValue(ctx)
+	ctx, connectSpan := tracing.Start(ctx, "datasource.health.connect",
+		attribute.String("namespace", namespace),
+		attribute.String("plugin_id", r.builder.pluginJSON.ID),
+		attribute.String("datasource_uid", name),
+	)
+	defer connectSpan.End()
+
 	m := newConnectMetric("health", r.builder.pluginJSON.ID)
 
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
+		err = tracing.Error(connectSpan, err)
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			m.SetNotFound()
 			m.Record()
@@ -61,20 +74,48 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 		m.Record()
 		return nil, err
 	}
-	ctx = config.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
-	ctx = contextualMiddlewares(ctx)
-
-	healthResponse, err := r.builder.client.CheckHealth(ctx, &backend.CheckHealthRequest{
-		PluginContext: pluginCtx,
-	})
-	if err != nil {
-		m.SetError()
-		m.Record()
-		return nil, err
-	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
+
+		_, reqSpan := tracing.Start(req.Context(), "datasource.health.request",
+			attribute.String("namespace", namespace),
+			attribute.String("plugin_id", r.builder.pluginJSON.ID),
+			attribute.String("datasource_uid", name),
+		)
+		defer reqSpan.End()
+
+		// Validate the request the same way the legacy /health endpoint does,
+		// before reaching out to the datasource.
+		var dsURL string
+		var jsonData map[string]any
+		if settings := pluginCtx.DataSourceInstanceSettings; settings != nil {
+			dsURL = settings.URL
+			if len(settings.JSONData) > 0 {
+				_ = json.Unmarshal(settings.JSONData, &jsonData)
+			}
+		}
+		if err := r.builder.validateDataSourceRequest(dsURL, jsonData, req); err != nil {
+			_ = tracing.Error(reqSpan, err)
+			m.SetError()
+			responder.Error(apierrors.NewForbidden(r.builder.datasourceResourceInfo.GroupResource(), name, err))
+			return
+		}
+
+		healthCtx := config.WithGrafanaConfig(req.Context(), pluginCtx.GrafanaConfig)
+		healthCtx = contextualMiddlewares(healthCtx)
+
+		checkHealthCtx, checkHealthSpan := tracing.Start(healthCtx, "datasource.health.pluginClient.CheckHealth")
+		healthResponse, err := r.builder.client.CheckHealth(checkHealthCtx, &backend.CheckHealthRequest{
+			PluginContext: pluginCtx,
+		})
+		checkHealthSpan.End()
+		if err != nil {
+			_ = tracing.Error(reqSpan, err)
+			m.SetError()
+			responder.Error(err)
+			return
+		}
 
 		rsp := &datasource.HealthCheckResult{}
 		rsp.Code = int(healthResponse.Status)
@@ -82,8 +123,9 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 		rsp.Message = healthResponse.Message
 
 		if len(healthResponse.JSONDetails) > 0 {
-			err = json.Unmarshal(healthResponse.JSONDetails, &rsp.Details)
+			err := json.Unmarshal(healthResponse.JSONDetails, &rsp.Details)
 			if err != nil {
+				_ = tracing.Error(reqSpan, err)
 				m.SetError()
 				responder.Error(err)
 				return

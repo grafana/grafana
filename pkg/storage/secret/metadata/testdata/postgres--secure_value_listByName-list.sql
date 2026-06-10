@@ -7,5 +7,4 @@ WHERE
   "namespace" = 'ns' AND
   "name" IN ('a', 'b') AND
   "active" = true
-FOR UPDATE
 ;

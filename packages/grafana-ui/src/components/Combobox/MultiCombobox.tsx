@@ -71,17 +71,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   const invalid = invalidProp ?? fieldContext.invalid;
   const ariaDescribedBy = fieldContext['aria-describedby'];
 
-  const allOptionItem = useMemo(() => {
-    return {
-      label:
-        inputValue === ''
-          ? t('multicombobox.all.title', 'All')
-          : t('multicombobox.all.title-filtered', 'All (filtered)'),
-      // Type casting needed to make this work when T is a number
-      value: ALL_OPTION_VALUE,
-    } as ComboboxOption<T>;
-  }, [inputValue]);
-
   // Handle async options and the 'All' option
   const {
     options: baseOptions,
@@ -89,11 +78,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     asyncLoading,
     asyncError,
   } = useOptions(optionsProp, createCustomValue, customValueDescription);
-  const options = useMemo(() => {
-    // Only add the 'All' option if there's more than 1 option
-    const addAllOption = enableAllOption && baseOptions.length > 1;
-    return addAllOption ? [allOptionItem, ...baseOptions] : baseOptions;
-  }, [baseOptions, enableAllOption, allOptionItem]);
   const loading = loadingProp || fieldContext.loading || asyncLoading;
 
   const selectedItems = useMemo(() => {
@@ -103,6 +87,33 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
     return getSelectedItemsFromValue<T>(value, typeof optionsProp !== 'function' ? optionsProp : baseOptions);
   }, [value, optionsProp, baseOptions]);
+
+  const allOptionItem = useMemo(() => {
+    const isFiltered = inputValue !== '';
+    const realBaseOptions = baseOptions.filter((opt) => !opt.infoOption);
+
+    let label: string;
+    if (isFiltered) {
+      const anyFilteredSelected = realBaseOptions.some((opt) => selectedItems.some((s) => s.value === opt.value));
+      label = anyFilteredSelected
+        ? t('multicombobox.all.title-deselect-filtered', 'Deselect all (filtered)')
+        : t('multicombobox.all.title-select-filtered', 'Select all (filtered)');
+    } else {
+      label =
+        selectedItems.length > 0
+          ? t('multicombobox.all.title-deselect', 'Deselect all')
+          : t('multicombobox.all.title-select', 'Select all');
+    }
+
+    // Type casting needed to make this work when T is a number
+    return { label, value: ALL_OPTION_VALUE } as ComboboxOption<T>;
+  }, [inputValue, selectedItems, baseOptions]);
+
+  const options = useMemo(() => {
+    // Only add the 'All' option if there's more than 1 option
+    const addAllOption = enableAllOption && baseOptions.length > 1;
+    return addAllOption ? [allOptionItem, ...baseOptions] : baseOptions;
+  }, [baseOptions, enableAllOption, allOptionItem]);
 
   const { measureRef, counterMeasureRef, suffixMeasureRef, shownItems } = useMeasureMulti(
     selectedItems,
@@ -114,6 +125,12 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     (item: ComboboxOption<T>) => selectedItems.some((opt) => opt.value === item.value),
     [selectedItems]
   );
+
+  const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    // Synchronously update inputValue so it is batched with downshift's dispatch
+    // in a single React render. See onStateChange InputChange case for details.
+    setInputValue(event.target.value);
+  }, []);
 
   const { getSelectedItemProps, getDropdownProps, setSelectedItems, addSelectedItem, removeSelectedItem, reset } =
     useMultipleSelection({
@@ -161,7 +178,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       },
     });
 
-  const { isOpen, highlightedIndex, getMenuProps, getInputProps, getItemProps } = useCombobox({
+  const { isOpen, highlightedIndex, getMenuProps, getInputProps, getItemProps, getToggleButtonProps } = useCombobox({
     items: options,
     itemToString,
     inputId: id,
@@ -215,25 +232,20 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
           // Handle All functionality
           if (newSelectedItem?.value === ALL_OPTION_VALUE) {
-            // TODO: fix bug where if the search filtered items list is the
-            // same length, but different, than the selected items (ask tobias)
-            const isAllFilteredSelected = selectedItems.length === options.length - 1;
-
-            // if every option is already selected, clear the selection.
-            // otherwise, select all the options (excluding the first ALL_OPTION and info options)
+            const isFiltered = inputValue !== '';
             const realOptions = options.slice(1).filter((option) => !option.infoOption);
-            let newSelectedItems = isAllFilteredSelected && inputValue === '' ? [] : realOptions;
 
-            if (!isAllFilteredSelected && inputValue !== '') {
-              newSelectedItems = [...new Set([...selectedItems, ...realOptions])];
-            }
-
-            if (isAllFilteredSelected && inputValue !== '') {
-              // Deselect all currently filtered items
+            if (isFiltered) {
               const filteredSet = new Set(realOptions.map((item) => item.value));
-              newSelectedItems = selectedItems.filter((item) => !filteredSet.has(item.value));
+              const anyFilteredSelected = selectedItems.some((item) => filteredSet.has(item.value));
+              if (anyFilteredSelected) {
+                setSelectedItems(selectedItems.filter((item) => !filteredSet.has(item.value)));
+              } else {
+                setSelectedItems([...new Set([...selectedItems, ...realOptions])]);
+              }
+            } else {
+              setSelectedItems(selectedItems.length > 0 ? [] : realOptions);
             }
-            setSelectedItems(newSelectedItems);
           } else if (newSelectedItem && isOptionSelected(newSelectedItem)) {
             // Find the actual selected item object that matches the clicked item by value
             // This is necessary because the clicked item (from async options) may be a different
@@ -247,9 +259,10 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           }
           break;
         case useCombobox.stateChangeTypes.InputChange:
-          setInputValue(newInputValue ?? '');
+          // setInputValue is intentionally NOT called here. It is called synchronously in the
+          // input's onChange handler instead, so that it is batched with downshift's dispatch
+          // in a single React render.
           updateOptions(newInputValue ?? '');
-
           break;
         default:
           break;
@@ -326,6 +339,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               'aria-describedby': ariaDescribedBy, // Description should be handled with the Field component
               'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
               'data-testid': dataTestId,
+              onChange: handleInputChange,
               onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
                 // Stop Escape from propagating to parent overlays (e.g. Modals, Drawers)
                 // so that only the dropdown menu closes, not the parent.
@@ -355,7 +369,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 }}
               />
             )}
-            <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
+            <SuffixIcon
+              isLoading={loading || false}
+              isOpen={isOpen}
+              {...getToggleButtonProps({ disabled, role: 'button' })}
+            />
           </div>
         </span>
       </div>

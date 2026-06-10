@@ -61,10 +61,6 @@ func (n *NoopREST) Delete(ctx context.Context, name string, deleteValidation res
 	return nil, false, errNoopStorage
 }
 
-func (n *NoopREST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, errNoopStorage
-}
-
 func (n *NoopREST) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
 	return nil, errNoopStorage
 }

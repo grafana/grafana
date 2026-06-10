@@ -1,8 +1,8 @@
 import { Trans } from '@grafana/i18n';
 import { TextLink } from '@grafana/ui';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import { CONFIGURE_GRAFANA_DOCS_URL, UPGRADE_URL } from '../constants';
-import { isOnPrem } from '../utils/isOnPrem';
 
 interface QuotaLimitMessageProps {
   maxRepositories?: number;
@@ -73,19 +73,47 @@ function LimitText({
     case 'both':
       return onPrem ? (
         <>
-          <Trans i18nKey="provisioning.quota-limit.message-both-repositories-onprem" count={maxRepositories}>
+          <Trans
+            i18nKey="provisioning.quota-limit.message-both-repositories-onprem"
+            count={maxRepositories}
+            tOptions={{
+              defaultValue_one: 'Your instance is limited to {{count}} connected repositories',
+              defaultValue_other: 'Your instance is limited to {{count}} connected repositories',
+            }}
+          >
             Your instance is limited to {{ count: maxRepositories }} connected repositories
           </Trans>{' '}
-          <Trans i18nKey="provisioning.quota-limit.message-both-resources-onprem" count={maxResourcesPerRepository}>
+          <Trans
+            i18nKey="provisioning.quota-limit.message-both-resources-onprem"
+            count={maxResourcesPerRepository}
+            tOptions={{
+              defaultValue_one: 'and {{count}} synced resources per repository.',
+              defaultValue_other: 'and {{count}} synced resources per repository.',
+            }}
+          >
             and {{ count: maxResourcesPerRepository }} synced resources per repository.
           </Trans>
         </>
       ) : (
         <>
-          <Trans i18nKey="provisioning.quota-limit.message-both-repositories" count={maxRepositories}>
+          <Trans
+            i18nKey="provisioning.quota-limit.message-both-repositories"
+            count={maxRepositories}
+            tOptions={{
+              defaultValue_one: 'Your account is limited to {{count}} connected repositories',
+              defaultValue_other: 'Your account is limited to {{count}} connected repositories',
+            }}
+          >
             Your account is limited to {{ count: maxRepositories }} connected repositories
           </Trans>{' '}
-          <Trans i18nKey="provisioning.quota-limit.message-both-resources" count={maxResourcesPerRepository}>
+          <Trans
+            i18nKey="provisioning.quota-limit.message-both-resources"
+            count={maxResourcesPerRepository}
+            tOptions={{
+              defaultValue_one: 'and {{count}} synced resources per repository.',
+              defaultValue_other: 'and {{count}} synced resources per repository.',
+            }}
+          >
             and {{ count: maxResourcesPerRepository }} synced resources per repository.
           </Trans>
         </>
@@ -93,22 +121,50 @@ function LimitText({
 
     case 'resource':
       return onPrem ? (
-        <Trans i18nKey="provisioning.quota-limit.message-resource-onprem" count={maxResourcesPerRepository}>
+        <Trans
+          i18nKey="provisioning.quota-limit.message-resource-onprem"
+          count={maxResourcesPerRepository}
+          tOptions={{
+            defaultValue_one: 'Your instance is limited to {{count}} synced resources per repository.',
+            defaultValue_other: 'Your instance is limited to {{count}} synced resources per repository.',
+          }}
+        >
           Your instance is limited to {{ count: maxResourcesPerRepository }} synced resources per repository.
         </Trans>
       ) : (
-        <Trans i18nKey="provisioning.quota-limit.message-resource" count={maxResourcesPerRepository}>
+        <Trans
+          i18nKey="provisioning.quota-limit.message-resource"
+          count={maxResourcesPerRepository}
+          tOptions={{
+            defaultValue_one: 'Your account is limited to {{count}} synced resources per repository.',
+            defaultValue_other: 'Your account is limited to {{count}} synced resources per repository.',
+          }}
+        >
           Your account is limited to {{ count: maxResourcesPerRepository }} synced resources per repository.
         </Trans>
       );
 
     case 'repository':
       return onPrem ? (
-        <Trans i18nKey="provisioning.quota-limit.message-repository-onprem" count={maxRepositories}>
+        <Trans
+          i18nKey="provisioning.quota-limit.message-repository-onprem"
+          count={maxRepositories}
+          tOptions={{
+            defaultValue_one: 'Your instance is limited to {{count}} connected repositories.',
+            defaultValue_other: 'Your instance is limited to {{count}} connected repositories.',
+          }}
+        >
           Your instance is limited to {{ count: maxRepositories }} connected repositories.
         </Trans>
       ) : (
-        <Trans i18nKey="provisioning.quota-limit.message-repository" count={maxRepositories}>
+        <Trans
+          i18nKey="provisioning.quota-limit.message-repository"
+          count={maxRepositories}
+          tOptions={{
+            defaultValue_one: 'Your account is limited to {{count}} connected repositories.',
+            defaultValue_other: 'Your account is limited to {{count}} connected repositories.',
+          }}
+        >
           Your account is limited to {{ count: maxRepositories }} connected repositories.
         </Trans>
       );

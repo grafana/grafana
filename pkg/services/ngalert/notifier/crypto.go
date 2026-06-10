@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
@@ -30,10 +31,10 @@ const (
 type Crypto interface {
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
 	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
-	EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
-	DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
+	EncryptExtraConfigs(ctx context.Context, config *v1.AMConfigV1) error
+	DecryptExtraConfigs(ctx context.Context, config *v1.AMConfigV1) error
 
-	getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error)
+	getDecryptedSecret(r *v1.PostableGrafanaReceiver, key string) (string, error)
 }
 
 // alertmanagerCrypto implements decryption of Alertmanager configuration and encryption of arbitrary payloads based on Grafana's encryptions.
@@ -43,7 +44,11 @@ type alertmanagerCrypto struct {
 	log     log.Logger
 }
 
-func NewCrypto(secrets secrets.Service, configs configurationStore, log log.Logger) Crypto {
+func NewCrypto(
+	secrets secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	configs configurationStore,
+	log log.Logger,
+) Crypto {
 	return &alertmanagerCrypto{
 		ExtraConfigsCrypto: NewExtraConfigsCrypto(secrets),
 		configs:            configs,
@@ -52,17 +57,17 @@ func NewCrypto(secrets secrets.Service, configs configurationStore, log log.Logg
 }
 
 // EncryptReceiverConfigs encrypts all SecureSettings in the given receivers.
-func EncryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt definitions.EncryptFn) error {
+func EncryptReceiverConfigs(c []*v1.PostableApiReceiver, encrypt definitions.EncryptFn) error {
 	return encryptReceiverConfigs(c, encrypt, true)
 }
 
-func EncryptReceiverConfigSettings(c []*definitions.PostableApiReceiver, encrypt definitions.EncryptFn) error {
+func EncryptReceiverConfigSettings(c []*v1.PostableApiReceiver, encrypt definitions.EncryptFn) error {
 	return encryptReceiverConfigs(c, encrypt, false)
 }
 
 // encryptReceiverConfigs encrypts all SecureSettings in the given receivers.
 // encryptExisting determines whether to encrypt existing secure settings.
-func encryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt definitions.EncryptFn, encryptExisting bool) error {
+func encryptReceiverConfigs(c []*v1.PostableApiReceiver, encrypt definitions.EncryptFn, encryptExisting bool) error {
 	// encrypt secure settings for storing them in DB
 	for _, r := range c {
 		for _, gr := range r.GrafanaManagedReceivers {
@@ -85,7 +90,11 @@ func encryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt defini
 					return fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", gr.Type, gr.Name, err)
 				}
 
-				typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(schema.IntegrationType(gr.Type), schema.V1)
+				v := schema.V1
+				if gr.Version != "" {
+					v = schema.Version(gr.Version)
+				}
+				typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(schema.IntegrationType(gr.Type), v)
 				if !ok {
 					return fmt.Errorf("failed to get secret keys for contact point type %s", gr.Type)
 				}
@@ -98,8 +107,8 @@ func encryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt defini
 				settingsChanged := false
 				secureSettingsChanged := false
 				for _, secretPath := range secretPaths {
-					secretKey := secretPath.String()
-					settingsValue, ok := settings[secretKey]
+					schemaKey := secretPath.String()
+					secretKey, settingsValue, ok := models.MapGetCaseInsensitive(settings, schemaKey)
 					if !ok {
 						continue
 					}
@@ -142,7 +151,7 @@ func encryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt defini
 	return nil
 }
 
-func (c *alertmanagerCrypto) getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error) {
+func (c *alertmanagerCrypto) getDecryptedSecret(r *v1.PostableGrafanaReceiver, key string) (string, error) {
 	storedValue, ok := r.SecureSettings[key]
 	if !ok {
 		return "", nil
@@ -180,7 +189,7 @@ func NewExtraConfigsCrypto(secrets secretService) *ExtraConfigsCrypto {
 	}
 }
 
-func (c *ExtraConfigsCrypto) EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
+func (c *ExtraConfigsCrypto) EncryptExtraConfigs(ctx context.Context, config *v1.AMConfigV1) error {
 	for i := range config.ExtraConfigs {
 		// If it has prefix, consider it encrypted already
 		if strings.HasPrefix(config.ExtraConfigs[i].AlertmanagerConfig, cryptoPrefix) {
@@ -198,7 +207,7 @@ func (c *ExtraConfigsCrypto) EncryptExtraConfigs(ctx context.Context, config *de
 	return nil
 }
 
-func (c *ExtraConfigsCrypto) DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
+func (c *ExtraConfigsCrypto) DecryptExtraConfigs(ctx context.Context, config *v1.AMConfigV1) error {
 	for i := range config.ExtraConfigs {
 		// If it does not have prefix, consider it decrypted already
 		if !strings.HasPrefix(config.ExtraConfigs[i].AlertmanagerConfig, cryptoPrefix) {

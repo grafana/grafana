@@ -128,7 +128,7 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 		// Add necessary query params
 		queryParams.Add("select", "categories,solutions,tables,workspaces")
 		req.URL.RawQuery = queryParams.Encode()
-		resp, err := cli.Do(req)
+		resp, err := cli.Do(req) // #nosec G704 -- datasource client targets operator-configured URL
 		if err != nil {
 			statusCode := http.StatusInternalServerError
 			if resp != nil {
@@ -853,10 +853,6 @@ func (ar *AzureLogAnalyticsResponse) GetPrimaryResultTable() (*types.AzureRespon
 }
 
 func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (AzureLogAnalyticsResponse, error) {
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return AzureLogAnalyticsResponse{}, err
-	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			e.Logger.Warn("Failed to close response body", "err", err)
@@ -864,14 +860,20 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	}()
 
 	if res.StatusCode/100 != 2 {
+		body, readErr := io.ReadAll(res.Body)
+		if readErr != nil {
+			return AzureLogAnalyticsResponse{}, fmt.Errorf("non-2xx response %s and failed to read body: %w", res.Status, readErr)
+		}
 		return AzureLogAnalyticsResponse{}, utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
 	}
 
 	var data AzureLogAnalyticsResponse
-	d := json.NewDecoder(bytes.NewReader(body))
+	// UseNumber preserves int64 precision; downstream converters in
+	// azure-response-table-frame.go type-assert cells to json.Number and
+	// fail on any other numeric type, so this must stay.
+	d := json.NewDecoder(res.Body)
 	d.UseNumber()
-	err = d.Decode(&data)
-	if err != nil {
+	if err := d.Decode(&data); err != nil {
 		return AzureLogAnalyticsResponse{}, err
 	}
 

@@ -53,8 +53,8 @@ func webhookCreationMocks(hookID int64) []ghmock.MockBackendOption {
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(&github.Hook{
-					ID:     github.Ptr(hookID),
-					URL:    github.Ptr("https://grafana.example.com/hook"),
+					ID:     new(hookID),
+					URL:    new("https://grafana.example.com/hook"),
 					Events: []string{"pull_request", "push"},
 				})
 			}),
@@ -196,8 +196,8 @@ func TestIntegrationProvisioning_WebhookSecretRotatedWhenExpired(t *testing.T) {
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(&github.Hook{
-					ID:     github.Ptr(int64(200)),
-					URL:    github.Ptr("https://grafana.example.com/hook"),
+					ID:     new(int64(200)),
+					URL:    new("https://grafana.example.com/hook"),
 					Events: []string{"pull_request", "push"},
 				})
 			}),
@@ -207,8 +207,8 @@ func TestIntegrationProvisioning_WebhookSecretRotatedWhenExpired(t *testing.T) {
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(&github.Hook{
-					ID:     github.Ptr(int64(200)),
-					URL:    github.Ptr("https://grafana.example.com/hook"),
+					ID:     new(int64(200)),
+					URL:    new("https://grafana.example.com/hook"),
 					Events: []string{"pull_request", "push"},
 				})
 			}),

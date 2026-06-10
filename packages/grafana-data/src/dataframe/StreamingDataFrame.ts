@@ -7,7 +7,8 @@ import { parseLabels } from '../utils/labels';
 import { renderLegendFormat } from '../utils/legend';
 
 import { type DataFrameJSON, decodeFieldValueEntities, type FieldSchema } from './DataFrameJSON';
-import { guessFieldTypeFromValue, toFilteredDataFrameDTO } from './processDataFrame';
+import { guessFieldTypeFromValue } from './guessFieldType';
+import { toFilteredDataFrameDTO } from './processDataFrame';
 
 /**
  * Indicate if the frame is appened or replace
@@ -483,7 +484,7 @@ export function getStreamingFrameOptions(opts?: Partial<StreamingFrameOptions>):
 
 // converts vertical insertion records with table keys in [0] and column values in [1...N]
 // to join()-able tables with column arrays
-export function transpose(vrecs: unknown[][]) {
+function transpose(vrecs: unknown[][]) {
   let tableKeys = new Set(vrecs[0]);
   let tables = new Map();
 
@@ -529,7 +530,7 @@ export function closestIdx(num: number, arr: number[], lo?: number, hi?: number)
   return hi;
 }
 
-export function parseLabelsFromField(str: string): Labels {
+function parseLabelsFromField(str: string): Labels {
   if (!str.length) {
     return {};
   }
@@ -542,17 +543,6 @@ export function parseLabelsFromField(str: string): Labels {
     parsedLabels[key] = val;
   });
   return parsedLabels;
-}
-
-/**
- * @internal // not exported in yet
- */
-export function getLastStreamingDataFramePacket(frame: DataFrame) {
-  if (frame instanceof StreamingDataFrame) {
-    const pi = frame.packetInfo;
-    return pi.action;
-  }
-  return undefined;
 }
 
 // mutable circular push

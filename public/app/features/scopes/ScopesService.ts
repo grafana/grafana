@@ -181,7 +181,7 @@ export class ScopesService implements ScopesContextValue {
           this.locationService.partial(
             {
               scopes: newScopeNames,
-              scope_node: newScopeNodeId || null,
+              scope_node: newScopeNodeId ?? null,
               scope_parent: null,
             },
             true
@@ -248,6 +248,15 @@ export class ScopesService implements ScopesContextValue {
       this.updateState({ enabled });
       if (enabled) {
         const { appliedScopes, scopes } = this.selectorService.state;
+        // Defer the URL write when scope metadata has not loaded yet.
+        // setEnabled is called from `@grafana/scenes` during dashboard mount,
+        // which can race with `applyScopes` and re-write a stale `scope_node`
+        // that the subscription has already settled (or is about to settle).
+        // The URL-sync subscription will fire once metadata arrives.
+        const firstScope = appliedScopes[0];
+        if (firstScope && !scopes[firstScope.scopeId]) {
+          return;
+        }
         const scopeNodeId = this.getScopeNodeIdForUrl(appliedScopes, scopes);
         this.locationService.partial(
           {

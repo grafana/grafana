@@ -132,7 +132,6 @@ beforeEach(() => {
     subscribeToState: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
   });
 
-  config.featureToggles.newVizSuggestions = false;
   config.featureToggles.newUnconfiguredPanel = true;
   contextSrv.isSignedIn = true;
 });
@@ -140,7 +139,6 @@ beforeEach(() => {
 afterEach(() => {
   deactivateScene?.();
   deactivateScene = undefined;
-  config.featureToggles.newVizSuggestions = false;
   config.featureToggles.newUnconfiguredPanel = false;
   contextSrv.isSignedIn = false;
 });
@@ -148,9 +146,8 @@ afterEach(() => {
 // ─── tests ────────────────────────────────────────────────────────────────────
 
 describe('UnconfiguredPanelComp', () => {
-  describe('empty state path (newVizSuggestions + PanelEditor)', () => {
-    it('renders the query-prompt message when the feature toggle is on and app is PanelEditor', () => {
-      config.featureToggles.newVizSuggestions = true;
+  describe('empty state path (PanelEditor)', () => {
+    it('renders the query-prompt message when app is PanelEditor', () => {
       mockUsePanelContext.mockReturnValue({ app: CoreApp.PanelEditor });
 
       renderPanel();
@@ -158,9 +155,8 @@ describe('UnconfiguredPanelComp', () => {
       expect(screen.getByText(/run a query to visualize it here/i)).toBeInTheDocument();
     });
 
-    it('does not show the empty state message when the feature toggle is off', () => {
-      config.featureToggles.newVizSuggestions = false;
-      mockUsePanelContext.mockReturnValue({ app: CoreApp.PanelEditor });
+    it('does not show the empty state message when app is not PanelEditor', () => {
+      mockUsePanelContext.mockReturnValue({ app: CoreApp.Dashboard });
       buildDashboard({ isEditing: false });
 
       renderPanel();
@@ -314,18 +310,7 @@ describe('UnconfiguredPanelComp', () => {
 
     describe('queryLibraryEnabled = true', () => {
       beforeEach(() => {
-        config.featureToggles.newVizSuggestions = true;
         mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: true });
-      });
-
-      it('does not render the "Use saved query" button when newVizSuggestions is off', async () => {
-        config.featureToggles.newVizSuggestions = false;
-        buildDashboard({ isEditing: true });
-        const { user, root } = renderPanel();
-
-        await user.hover(root);
-
-        expect(screen.queryByRole('button', { name: /use saved query/i })).not.toBeInTheDocument();
       });
 
       it('renders the "Use saved query" button', async () => {
@@ -452,7 +437,6 @@ describe('UnconfiguredPanelComp', () => {
     describe('savedQueriesRBAC = true', () => {
       beforeEach(() => {
         mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: true });
-        config.featureToggles.newVizSuggestions = true;
         config.featureToggles.savedQueriesRBAC = true;
         buildDashboard({ isEditing: true });
       });
@@ -489,7 +473,6 @@ describe('UnconfiguredPanelComp', () => {
 
       it('shows all buttons as icon-only with tooltips', async () => {
         mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: true });
-        config.featureToggles.newVizSuggestions = true;
         buildDashboard({ isEditing: true });
         const { user, root } = renderPanel();
 

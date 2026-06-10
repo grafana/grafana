@@ -552,6 +552,90 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, len(mockResponse3.Results.Rows), len(p.Hits))
 	})
+
+	t.Run("should treat the canonical 'general' folder as root", func(t *testing.T) {
+		// dashboardSearchRequest: one dashboard parented to root via the canonical
+		// "general" sentinel, and one parented to a private folder.
+		mockResponse1 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key:   &resourcepb.ResourceKey{Name: "dashboardinroot", Resource: "dashboard"},
+						Cells: [][]byte{[]byte(folder.GeneralFolderUID)}, // root reported as "general"
+					},
+					{
+						Key:   &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
+						Cells: [][]byte{[]byte("privatefolder")},
+					},
+				},
+			},
+		}
+
+		// folderSearchRequest: user has access to no parent folders.
+		mockResponse2 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows:    []*resourcepb.ResourceTableRow{},
+			},
+		}
+
+		// final dashboardSearchRequest: only the dashboard whose parent folder the
+		// user cannot access is shared; the root dashboard is excluded.
+		mockResponse3 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key:   &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
+						Cells: [][]byte{[]byte("privatefolder")},
+					},
+				},
+			},
+		}
+
+		mockClient := &MockClient{
+			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse1, mockResponse2, mockResponse3},
+		}
+
+		features := featuremgmt.WithFeatures()
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search?folder=sharedwithme", nil)
+		req.Header.Add("content-type", "application/json")
+		allPermissions := make(map[int64]map[string][]string)
+		permissions := make(map[string][]string)
+		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinroot", "dashboards:uid:dashboardinprivatefolder"}
+		allPermissions[1] = permissions
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
+
+		searchHandler.DoSearch(rr, req)
+
+		assert.Equal(t, 3, mockClient.CallCount)
+		// the root ("general") dashboard contributes no parent folder to look up
+		secondCall := mockClient.MockCalls[1]
+		assert.Equal(t, []string{"privatefolder"}, secondCall.Options.Fields[0].Values)
+		// and the root dashboard is not treated as shared
+		thirdCall := mockClient.MockCalls[2]
+		assert.Equal(t, []string{"dashboardinprivatefolder"}, thirdCall.Options.Fields[1].Values)
+
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		p := &v0alpha1.SearchResults{}
+		err := json.NewDecoder(resp.Body).Decode(p)
+		require.NoError(t, err)
+		assert.Equal(t, len(mockResponse3.Results.Rows), len(p.Hits))
+	})
 }
 
 func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
@@ -571,7 +655,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		Resource:  "folders",
 		Namespace: "test-namespace",
 	}
-	defaultFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", resource.SEARCH_FIELD_OWNER_REFERENCES}
+	defaultFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", resource.SEARCH_FIELD_OWNER_REFERENCES} //nolint:prealloc
 
 	tests := map[string]struct {
 		queryString           string
@@ -852,7 +936,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
-		"root folder should be converted to empty string": {
+		"canonical root folder is collapsed to the legacy empty sentinel": {
 			queryString: "folder=general",
 			expected: &resourcepb.ResourceSearchRequest{
 				Options: &resourcepb.ListOptions{

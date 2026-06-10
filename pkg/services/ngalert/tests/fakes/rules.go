@@ -326,24 +326,37 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 	return f.listAlertRules(q)
 }
 
+//nolint:gocyclo // this function is intentionally not split to keep the logic in one place, making it easier to maintain the filtering logic in tests
 func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesGroup, error) {
-	hasDashboard := func(r *models.AlertRule, dashboardUID string, panelID int64) bool {
-		if dashboardUID != "" {
-			if r.DashboardUID == nil || *r.DashboardUID != dashboardUID {
-				return false
-			}
-			if panelID > 0 {
-				if r.PanelID == nil || *r.PanelID != panelID {
-					return false
-				}
-			}
-		}
-		return true
-	}
-
 	ruleList := models.RulesGroup{}
 	for _, r := range f.Rules[q.OrgID] {
-		if !hasDashboard(r, q.DashboardUID, q.PanelID) {
+		ruleDashUID := ""
+		if r.DashboardUID != nil {
+			ruleDashUID = *r.DashboardUID
+		}
+		if q.DashboardUID != "" && ruleDashUID != q.DashboardUID {
+			continue
+		}
+		if q.ExcludeDashboardUID != "" && ruleDashUID == q.ExcludeDashboardUID {
+			continue
+		}
+		var rulePanelID int64
+		if r.PanelID != nil {
+			rulePanelID = *r.PanelID
+		}
+		if q.PanelID != 0 && rulePanelID != q.PanelID {
+			continue
+		}
+		if q.ExcludePanelID != 0 && rulePanelID == q.ExcludePanelID {
+			continue
+		}
+		if q.IsPaused != nil && r.IsPaused != *q.IsPaused {
+			continue
+		}
+		if q.TitleExact != "" && r.Title != q.TitleExact {
+			continue
+		}
+		if q.ExcludeTitle != "" && r.Title == q.ExcludeTitle {
 			continue
 		}
 		if len(q.NamespaceUIDs) > 0 && !slices.Contains(q.NamespaceUIDs, r.NamespaceUID) {
@@ -361,7 +374,57 @@ func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesG
 			}
 		}
 
-		if cpr := r.ContactPointRouting(); q.ReceiverName != "" && (cpr == nil || cpr.Receiver != q.ReceiverName) {
+		ruleReceiver := ""
+		if cpr := r.ContactPointRouting(); cpr != nil {
+			ruleReceiver = cpr.Receiver
+		}
+		if q.ReceiverName != "" && ruleReceiver != q.ReceiverName {
+			continue
+		}
+		if q.ExcludeReceiverName != "" && ruleReceiver == q.ExcludeReceiverName {
+			continue
+		}
+
+		var ruleNotifType models.NotificationSettingsType
+		switch {
+		case r.ContactPointRouting() != nil:
+			ruleNotifType = models.NotificationSettingsTypeSimplifiedRouting
+		case r.PolicyRouting() != nil:
+			ruleNotifType = models.NotificationSettingsTypeNamedRoutingTree
+		}
+		if q.NotificationSettingsType != "" && ruleNotifType != q.NotificationSettingsType {
+			continue
+		}
+		if q.ExcludeNotificationSettingsType != "" && ruleNotifType == q.ExcludeNotificationSettingsType {
+			continue
+		}
+
+		rulePolicy := ""
+		if pr := r.PolicyRouting(); pr != nil {
+			rulePolicy = pr.Policy
+		}
+		if q.RoutingPolicyExact != "" && rulePolicy != q.RoutingPolicyExact {
+			continue
+		}
+		if q.ExcludeRoutingPolicy != "" && rulePolicy == q.ExcludeRoutingPolicy {
+			continue
+		}
+
+		ruleMetric, ruleTargetUID := "", ""
+		if r.Record != nil {
+			ruleMetric = r.Record.Metric
+			ruleTargetUID = r.Record.TargetDatasourceUID
+		}
+		if q.RecordMetricExact != "" && ruleMetric != q.RecordMetricExact {
+			continue
+		}
+		if q.ExcludeRecordMetric != "" && ruleMetric == q.ExcludeRecordMetric {
+			continue
+		}
+		if q.RecordTargetDatasourceUIDExact != "" && ruleTargetUID != q.RecordTargetDatasourceUIDExact {
+			continue
+		}
+		if q.ExcludeRecordTargetDatasourceUID != "" && ruleTargetUID == q.ExcludeRecordTargetDatasourceUID {
 			continue
 		}
 

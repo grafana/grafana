@@ -37,7 +37,8 @@ type IndexViewData struct {
 	RenderBindingSupported bool              `json:"-"`
 	// AutoLoginRedirectURL is the URL the frontend should redirect to for auto-login.
 	// Empty means no auto-login redirect should occur.
-	AutoLoginRedirectURL string `json:"autoLoginRedirectURL,omitempty"`
+	AutoLoginRedirectURL  string `json:"autoLoginRedirectURL,omitempty"`
+	AssetSriChecksEnabled bool   `json:"-"`
 }
 
 type EntryPointAssets struct {

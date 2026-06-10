@@ -128,7 +128,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     const formValuesMatchContentSent =
       formValues.title.trim() === contentSent.title && formValues.folder.uid === contentSent.folderUid;
     if (isNameExistsError(error) && formValuesMatchContentSent) {
-      return <NameAlreadyExistsError cancelButton={cancelButton} saveButton={saveButton} />;
+      return <NameAlreadyExistsError />;
     }
     return (
       <>
@@ -217,7 +217,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   );
 }
 
-export interface TitleLabelProps {
+interface TitleLabelProps {
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 
@@ -237,7 +237,7 @@ export function TitleFieldLabel(props: TitleLabelProps) {
   );
 }
 
-export interface DescriptionLabelProps {
+interface DescriptionLabelProps {
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 

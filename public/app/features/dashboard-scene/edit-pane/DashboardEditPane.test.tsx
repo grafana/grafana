@@ -144,6 +144,18 @@ describe('DashboardEditPane', () => {
       expect(editPane.getSelectedObject()).toBe(tab1);
     });
 
+    it('Removing a panel that is not selected', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+
+      const panel1 = scene.onCreateNewPanel();
+      const panel2 = scene.onCreateNewPanel();
+
+      scene.removePanel(panel1);
+
+      expect(editPane.getSelectedObject()).toBe(panel2);
+    });
+
     it('Force selecting tab should always select it', () => {
       const { editPane, tab1 } = setupWithTwoTabs();
 
@@ -202,6 +214,24 @@ describe('DashboardEditPane', () => {
 
     expect(cloned.state.redoStack).toHaveLength(0);
     expect(cloned.state.undoStack).toHaveLength(0);
+  });
+
+  it('clone should preserve the outline collapsed state', () => {
+    const scene = buildTestScene();
+    const editPane = scene.state.editPane;
+    const outlinePane = editPane.state.outlinePane!;
+
+    outlinePane.setNodeCollapsed('some-key', false);
+    outlinePane.setNodeCollapsed('another-key', true);
+
+    const cloned = editPane.clone({});
+    const clonedOutline = cloned.state.outlinePane!;
+
+    expect(clonedOutline.isNodeCollapsed('some-key', true)).toBe(false);
+    expect(clonedOutline.isNodeCollapsed('another-key', false)).toBe(true);
+
+    clonedOutline.setNodeCollapsed('new-key', false);
+    expect(outlinePane.isNodeCollapsed('new-key', true)).toBe(false);
   });
 
   it('keeps the variable selected when undoing and redoing variable type changes', () => {

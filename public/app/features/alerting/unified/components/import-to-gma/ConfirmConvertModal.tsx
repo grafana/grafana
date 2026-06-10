@@ -228,7 +228,7 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
       isOpen={isOpen}
       title={title}
       confirmText={confirmText}
-      confirmButtonVariant="primary"
+      confirmVariant="primary"
       modalClass={styles.modal}
       body={
         <Stack direction="column" gap={2}>

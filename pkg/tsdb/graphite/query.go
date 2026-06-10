@@ -71,7 +71,6 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 
 	for refId, graphiteReq := range graphiteQueries {
 		_, span := tracing.DefaultTracer().Start(ctx, "graphite query")
-		defer span.End()
 		targetStr := strings.Join(graphiteReq.formData["target"], ",")
 		span.SetAttributes(
 			attribute.String("refId", refId),
@@ -88,6 +87,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
+			span.End()
 			result.Responses[refId] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(err))
 			return result, nil
 		}
@@ -103,11 +103,13 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
+			span.End()
 			result.Responses[refId] = backend.ErrorResponseWithErrorSource(err)
 			return result, nil
 		}
 
 		frames = append(frames, queryFrames...)
+		span.End()
 	}
 
 	for _, f := range frames {

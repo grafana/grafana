@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, type MouseEvent, useRef, type ChangeEvent } from 'react';
+import { useCallback, useMemo, useRef, type ChangeEvent, type MouseEvent } from 'react';
 
 import { colorManipulator, type GrafanaTheme2, type LogRowModel, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { IconButton, Input, useStyles2 } from '@grafana/ui';
+import { Dropdown, IconButton, Input, Menu, useStyles2 } from '@grafana/ui';
 
 import { copyText, handleOpenLogsContextClick } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
@@ -12,6 +12,7 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 import { useLogDetailsContext } from './LogDetailsContext';
 import { type LogLineDetailsMode } from './LogLineDetails';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
+import { getLogAsJSON } from './export';
 import { type LogListModel } from './processing';
 
 interface Props {
@@ -79,6 +80,11 @@ export const LogLineDetailsHeader = ({
     copyText(log.entry, containerRef);
     reportInteractionWrapper('logs_log_line_details_header_copy_clicked');
   }, [log.entry, reportInteractionWrapper]);
+
+  const copyLogLineAsJson = useCallback(async () => {
+    copyText(await getLogAsJSON(log), containerRef);
+    reportInteractionWrapper('logs_log_line_details_header_copy_json_clicked');
+  }, [log, reportInteractionWrapper]);
 
   const copyLinkToLogLine = useCallback(() => {
     onPermalinkClick?.(log);
@@ -178,6 +184,19 @@ export const LogLineDetailsHeader = ({
     toggleDetails(log);
   }, [log, toggleDetails]);
 
+  const copyMenu = useMemo(
+    () => (
+      <Menu>
+        <Menu.Item label={t('logs.log-line-details.copy-log-line', 'Copy log line message')} onClick={copyLogLine} />
+        <Menu.Item
+          label={t('logs.log-line-details.copy-log-line-json', 'Copy log contents as JSON')}
+          onClick={copyLogLineAsJson}
+        />
+      </Menu>
+    ),
+    [copyLogLine, copyLogLineAsJson]
+  );
+
   return (
     <div className={styles.header} ref={containerRef}>
       <Input
@@ -222,14 +241,15 @@ export const LogLineDetailsHeader = ({
             variant={logLineDisplayed ? 'primary' : undefined}
           />
         )}
-        <IconButton
-          tooltip={t('logs.log-line-details.copy-to-clipboard', 'Copy to clipboard')}
-          tooltipPlacement="top"
-          size="md"
-          name="copy"
-          onClick={copyLogLine}
-          tabIndex={0}
-        />
+        <Dropdown overlay={copyMenu} placement="auto-end">
+          <IconButton
+            tooltip={t('logs.log-line-details.copy-to-clipboard', 'Copy to clipboard')}
+            tooltipPlacement="top"
+            size="md"
+            name="copy"
+            tabIndex={0}
+          />
+        </Dropdown>
         {onPermalinkClick && log.rowId !== undefined && log.uid && (
           <IconButton
             tooltip={t('logs.log-line-details.copy-shortlink', 'Copy shortlink')}

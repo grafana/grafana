@@ -130,7 +130,7 @@ func (s CorrelationsService) handleDatasourceDeletion(ctx context.Context, event
 }
 
 func (s *CorrelationsService) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
-	return s.CountCorrelations(ctx)
+	return s.CountCorrelations(ctx, nil)
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {

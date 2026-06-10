@@ -6,11 +6,11 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { CONFIGURE_GRAFANA_DOCS_URL, UPGRADE_URL } from '../constants';
-import { isOnPrem } from '../utils/isOnPrem';
 
 import { BootstrapStepCardIcons } from './BootstrapStepCardIcons';
 import { BootstrapStepResourceCounting } from './BootstrapStepResourceCounting';

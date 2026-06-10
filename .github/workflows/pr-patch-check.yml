@@ -1,29 +1,20 @@
 name: Dispatch check for patch conflicts
 on:
-  workflow_call:
-    inputs:
-      head_ref:
-        type: string
-        required: true
-      base_ref:
-        type: string
-        required: true
-      repo:
-        type: string
-        required: true
-      sender_login:
-        type: string
-        required: true
-      sha:
-        type: string
-        required: true
-      pr_commit_sha:
-        type: string
-        required: true
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - "main"
+      - "release-*"
 
-permissions:
-  id-token: write
-  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # If a new commit is applied, just give up.
+  cancel-in-progress: true
+
+permissions: {}
 
 # Since this is run on a pull request, we want to apply the patches intended for the
 # target branch onto the source branch, to verify compatibility before merging.
@@ -34,34 +25,27 @@ jobs:
     # it as a success
     if: ${{ ! github.event.pull_request.head.repo.fork }}
     env:
-      HEAD_REF: ${{ inputs.head_ref }}
+      HEAD_REF: ${{ github.head_ref }}
       BASE_REF: ${{ github.base_ref }}
-      REPO: ${{ inputs.repo }}
-      SENDER: ${{ inputs.sender_login }}
-      SHA: ${{ inputs.sha }}
-      PR_COMMIT_SHA: ${{ inputs.pr_commit_sha }}
-    runs-on: ubuntu-latest
+      REPO: ${{ github.repository }}
+      SENDER: ${{ github.event.sender.login }}
+      SHA: ${{ github.sha }}
+      PR_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+    runs-on: ubuntu-arm64-small
+    permissions:
+      id-token: write
+      contents: read
+      statuses: write
     steps:
-      - name: "Get vault secrets"
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: "Generate token"
-        id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        with:
-          # App needs Actions: Read/Write for the grafana/security-patch-actions repo
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          permissions: "{\"actions\": \"write\", \"workflows\": \"write\"}"
-          repositories: "[\"security-patch-actions\"]"
+          github_app: grafana-releases-oss
       - name: "Dispatch job"
         uses: actions/github-script@v8
         with:
-          github-token: ${{ steps.generate_token.outputs.token }}
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             const {HEAD_REF, BASE_REF, REPO, SENDER, SHA, PR_COMMIT_SHA} = process.env;
 
@@ -85,7 +69,7 @@ jobs:
         # since the security-patch-actions workflow output must not be exposed.
         uses: actions/github-script@v8
         with:
-          github-token: ${{ steps.generate_token.outputs.token }}
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             const {HEAD_REF, REPO} = process.env;
 
@@ -149,7 +133,7 @@ jobs:
     if: ${{ github.event.pull_request.head.repo.fork }}
     permissions:
       statuses: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     steps:
       - name: All good
         run: |

@@ -30,6 +30,18 @@ import (
 const folderSearchLimit = 100000
 const folderListLimit = 100000
 
+// descendantsBatchSize bounds how many parent UIDs are sent in a single
+// multi-value `In` Search when walking a subtree in GetDescendants. K=100
+// keeps per-call latency on the same order as a single-parent Search while
+// reducing the call count for non-trivial subtrees by ~100x.
+const descendantsBatchSize = 100
+
+// searchPageSize bounds the per-page hit count when searchChildren paginates
+// internally. At ~100 bytes per hit this keeps each response well under the
+// default 4 MiB gRPC max receive size, so a high-fanout search is split into
+// multiple round-trips instead of failing with ResourceExhausted.
+const searchPageSize = 10000
+
 func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.GetFolders")
 	defer span.End()
@@ -219,7 +231,7 @@ func (s *Service) SearchFolders(ctx context.Context, query folder.SearchFoldersQ
 			URI:         "db/" + slug,
 			URL:         dashboards.GetFolderURL(item.Name, slug),
 			Type:        model.DashHitFolder,
-			FolderUID:   item.Folder,
+			FolderUID:   folder.ToLegacyFolderUID(item.Folder),
 			Description: item.Description,
 		}
 	}
@@ -335,7 +347,8 @@ func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title strin
 	}
 
 	// If we're searching for top-level folders (parentUID == nil), and the first result is not in the root folder, remove it from the results.
-	for parentUID == nil && len(hits.Hits) > 0 && hits.Hits[0].Folder != "" {
+	// The apistore now writes "general" (canonical) for root parents while older entries still carry the legacy empty string; both denote the root.
+	for parentUID == nil && len(hits.Hits) > 0 && !folder.IsRootFolderUID(hits.Hits[0].Folder) {
 		hits.Hits = hits.Hits[1:]
 	}
 
@@ -507,14 +520,6 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	}
 	if cmd.OrgID < 1 {
 		return folder.ErrBadRequest.Errorf("invalid orgID")
-	}
-
-	evaluator := accesscontrol.EvalPermission(folder.ActionFoldersDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID))
-	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil || !hasAccess {
-		if err != nil {
-			return toFolderError(err)
-		}
-		return folder.ErrAccessDenied
 	}
 
 	descFolders, err := s.unifiedStore.GetDescendants(ctx, cmd.OrgID, cmd.UID)

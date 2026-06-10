@@ -46,7 +46,7 @@ func (session *Session) FindAndCount(rowsSlicePtr any, condiBean ...any) (int64,
 	}
 
 	sliceElementType := sliceValue.Type().Elem()
-	if sliceElementType.Kind() == reflect.Ptr {
+	if sliceElementType.Kind() == reflect.Pointer {
 		sliceElementType = sliceElementType.Elem()
 	}
 	session.autoResetStatement = true
@@ -77,7 +77,7 @@ func (session *Session) find(rowsSlicePtr any, condiBean ...any) error {
 
 	var tp = tpStruct
 	if session.statement.RefTable == nil {
-		if sliceElementType.Kind() == reflect.Ptr {
+		if sliceElementType.Kind() == reflect.Pointer {
 			if sliceElementType.Elem().Kind() == reflect.Struct {
 				pv := reflect.New(sliceElementType.Elem())
 				if err := session.statement.setRefValue(pv); err != nil {
@@ -198,11 +198,11 @@ func (session *Session) noCacheFind(table *core.Table, containerValue reflect.Va
 	var newElemFunc func(fields []string) reflect.Value
 	elemType := containerValue.Type().Elem()
 	var isPointer bool
-	if elemType.Kind() == reflect.Ptr {
+	if elemType.Kind() == reflect.Pointer {
 		isPointer = true
 		elemType = elemType.Elem()
 	}
-	if elemType.Kind() == reflect.Ptr {
+	if elemType.Kind() == reflect.Pointer {
 		return errors.New("pointer to pointer is not supported")
 	}
 

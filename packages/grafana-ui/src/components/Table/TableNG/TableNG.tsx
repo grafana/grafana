@@ -1,4 +1,4 @@
-import 'react-data-grid/lib/styles.css';
+import '@grafana/react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
@@ -15,18 +15,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import {
-  Cell,
-  type CellRendererProps,
-  DataGrid,
-  type DataGridHandle,
-  type DataGridProps,
-  type RenderCellProps,
-  type Renderers,
-  type RenderRowProps,
-  Row,
-  type SortColumn,
-} from 'react-data-grid';
 
 import {
   type DataFrame,
@@ -38,6 +26,18 @@ import {
   getDisplayProcessor,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import {
+  Cell,
+  type CellRendererProps,
+  DataGrid,
+  type DataGridHandle,
+  type DataGridProps,
+  type RenderCellProps,
+  type Renderers,
+  type RenderRowProps,
+  Row,
+  type SortColumn,
+} from '@grafana/react-data-grid';
 import { FieldColorModeId, TableCellTooltipPlacement, type TableFooterOptions } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
@@ -64,6 +64,7 @@ import {
   useFilteredRows,
   useHeaderHeight,
   useManagedSort,
+  useNestedColWidths,
   useNestedRows,
   usePaginatedRows,
   useRowHeight,
@@ -105,6 +106,7 @@ import {
   getDisplayName,
   getIsNestedTable,
   getJustifyContent,
+  getStableRowKey,
   getSummaryCellTextAlign,
   getVisibleFields,
   IS_SAFARI_26,
@@ -174,6 +176,7 @@ export function TableNG(props: TableNGProps) {
   );
 
   const resizeHandler = useColumnResize(onColumnResize);
+  const nestedResizeHandler = useColumnResize(onColumnResize, 'nested');
 
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
   const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);
@@ -200,12 +203,28 @@ export function TableNG(props: TableNGProps) {
         : undefined,
     [data, nestedFramesFieldName, hasNestedFrames]
   );
+
+  // Returns a stable string key for a row based on the groupBy field values stored in the nested
+  // subframe's meta. Falls back to the string index when no stable key is available (non-grouped data).
+  const getStableRowKeyForRowIdx = useCallback(
+    (rowIdx: number): string => getStableRowKey(rowIdx, nestedData?.[rowIdx]),
+    [nestedData]
+  );
+
   const firstRowNestedData = useMemo(
     () => (hasNestedFrames && nestedData ? nestedData[0] : undefined),
     [nestedData, hasNestedFrames]
   );
   const nestedFields = useMemo(() => firstRowNestedData?.fields ?? [], [firstRowNestedData]);
   const nestedVisibleFields = useMemo(() => getVisibleFields(nestedFields), [nestedFields]);
+  const nestedHasFooter = useMemo(
+    () => nestedVisibleFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
+    [nestedVisibleFields]
+  );
+  const nestedFooterHeight = useMemo(
+    () => (nestedHasFooter ? calculateFooterHeight(nestedVisibleFields) : 0),
+    [nestedHasFooter, nestedVisibleFields]
+  );
 
   const { rows: filteredRows, filter, setFilter, filterResult } = useFilteredRows(rows, data.fields, hasNestedFrames);
 
@@ -252,7 +271,13 @@ export function TableNG(props: TableNGProps) {
     },
     [getCellActions]
   );
-  const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(() => {
+    if (data.meta?.custom?.expandAllRows) {
+      const nestedField = data.fields.find((f) => f.type === FieldType.nestedFrames);
+      return new Set(Array.from({ length: data.length }, (_, i) => getStableRowKey(i, nestedField?.values[i]?.[0])));
+    }
+    return new Set();
+  });
   const [selectedRows, setSelectedRows] = useState((): ReadonlySet<string> => new Set());
 
   // vt scrollbar accounting for column auto-sizing
@@ -281,7 +306,22 @@ export function TableNG(props: TableNGProps) {
 
   // https://github.com/grafana/grafana/issues/118984: nested tables don't support frozen columns yet.
   const frozenColumns = useMemo(() => (hasNestedFrames ? 0 : _frozenColumns), [hasNestedFrames, _frozenColumns]);
-  const [widths, numFrozenColsFullyInView] = useColWidths(visibleFields, availableWidth, frozenColumns);
+  const configuredWidthCount = visibleFields.reduce(
+    (count, field) => count + (field.config.custom?.width != null ? 1 : 0),
+    0
+  );
+  const prevConfiguredWidthCount = useRef(configuredWidthCount);
+  const widthConfigResetKey = configuredWidthCount < prevConfiguredWidthCount.current ? Symbol() : undefined;
+  const resetColumnWidths = widthConfigResetKey != null ? new Map() : undefined;
+
+  prevConfiguredWidthCount.current = configuredWidthCount;
+
+  const [widths, numFrozenColsFullyInView] = useColWidths(
+    visibleFields,
+    availableWidth,
+    frozenColumns,
+    widthConfigResetKey
+  );
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
@@ -294,11 +334,15 @@ export function TableNG(props: TableNGProps) {
   // the minimum max row height we should honor is a single line of text.
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
   const visibleNestedRowCounts = useMemo(
-    () => nestedRows.map((row, idx) => (expandedRows.has(idx) ? row.final.length : null)),
-    [nestedRows, expandedRows]
+    () => nestedRows.map((row, idx) => (expandedRows.has(getStableRowKeyForRowIdx(idx)) ? row.final.length : null)),
+    [nestedRows, expandedRows, getStableRowKeyForRowIdx]
   );
 
-  const [nestedFieldWidths] = useColWidths(nestedVisibleFields, availableWidth);
+  const { nestedFieldWidths, nestedColWidths, handleNestedColumnWidthsChange } = useNestedColWidths({
+    nestedVisibleFields,
+    availableWidth,
+    structureRev,
+  });
 
   const hasNestedHeaders = useMemo(() => firstRowNestedData?.meta?.custom?.noHeader !== true, [firstRowNestedData]);
   const nestedHeaderHeight = useHeaderHeight({
@@ -331,6 +375,7 @@ export function TableNG(props: TableNGProps) {
     nestedColWidths: nestedFieldWidths,
     nestedFields: nestedVisibleFields,
     nestedRows,
+    nestedFooterHeight,
   });
 
   const {
@@ -367,37 +412,10 @@ export function TableNG(props: TableNGProps) {
     }
   }, [scrollToIndex, sortedRows]);
 
-  const [footers, isUniformFooter] = useMemo(() => {
-    const footers: Array<TableFooterOptions | undefined> = [];
-    let isUniformFooter = true;
-    let firstReducers: string[] | undefined;
-    for (const field of visibleFields) {
-      const footer = field.config?.custom?.footer;
-      footers.push(footer);
-
-      if (firstReducers === undefined && (footer?.reducers?.length ?? 0) > 0) {
-        firstReducers = footer?.reducers; // store the reducers for the first visible array with a footer.
-      } else if (firstReducers !== undefined) {
-        // once we have a list of reducers, compare each subsequent footer's reducers to the first.
-        const reducers: string[] | undefined = footer?.reducers;
-
-        // ignore fields with no footer reducers.
-        if (reducers?.length ?? 0 > 0) {
-          // isUniformFooter is false if there are different numbers of reducers or if the reducers are not identical.
-          if (reducers!.length !== firstReducers!.length || reducers!.some((r, idx) => firstReducers?.[idx] !== r)) {
-            isUniformFooter = false;
-            break;
-          }
-        }
-      }
-    }
-    return [footers, isUniformFooter];
-  }, [visibleFields]);
-
   // normalize the row height into a function which returns a number, so we avoid a bunch of conditionals during rendering.
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof defaultNestedRowHeight === 'string') {
-      return (row: TableRow) => (expandedRows.has(row.__index) ? TABLE.MAX_CELL_HEIGHT : 0);
+      return (row: TableRow) => (expandedRows.has(getStableRowKeyForRowIdx(row.__index)) ? TABLE.MAX_CELL_HEIGHT : 0);
     }
     if (typeof rowHeight === 'function') {
       // this is safe because we only return a (row: TableRow) => string function when defaultNestedRowHeight is a string.
@@ -408,11 +426,11 @@ export function TableNG(props: TableNGProps) {
       return () => TABLE.MAX_CELL_HEIGHT;
     }
     return () => rowHeight;
-  }, [rowHeight, defaultNestedRowHeight, expandedRows]);
+  }, [rowHeight, defaultNestedRowHeight, expandedRows, getStableRowKeyForRowIdx]);
 
   const renderRow = useMemo(
-    () => renderRowFactory(data.fields, panelContext, expandedRows, enableSharedCrosshair),
-    [data.fields, panelContext, expandedRows, enableSharedCrosshair]
+    () => renderRowFactory(data.fields, panelContext, expandedRows, enableSharedCrosshair, getStableRowKeyForRowIdx),
+    [data.fields, panelContext, expandedRows, enableSharedCrosshair, getStableRowKeyForRowIdx]
   );
 
   const commonDataGridProps = useMemo(
@@ -425,7 +443,6 @@ export function TableNG(props: TableNGProps) {
           sortable: true,
           // draggable: true,
         },
-        onColumnResize: resizeHandler,
         onSortColumnsChange: (newSortColumns: SortColumn[]) => {
           setSortColumns(newSortColumns);
           onSortByChange?.(
@@ -445,7 +462,6 @@ export function TableNG(props: TableNGProps) {
     [
       enableVirtualization,
       hasFooter,
-      resizeHandler,
       sortColumns,
       rowHeight,
       styles.headerRow,
@@ -462,6 +478,8 @@ export function TableNG(props: TableNGProps) {
       nestedColumnsMatrix: FromFieldsResult[],
       hasNestedHeaders: boolean,
       nestedHeaderHeightPx: number,
+      hasNestedFooter: boolean,
+      nestedFooterHeightPx: number,
       renderers: Renderers<TableRow, TableSummaryRow>
     ): TableColumn => ({
       key: EXPANDED_COLUMN_KEY,
@@ -488,17 +506,18 @@ export function TableNG(props: TableNGProps) {
 
         if (row.__depth === 0) {
           const rowIdx = row.__index;
+          const stableKey = getStableRowKeyForRowIdx(rowIdx);
 
           return (
             <RowExpander
               rowId={rowId}
-              isExpanded={expandedRows.has(row.__index)}
+              isExpanded={expandedRows.has(stableKey)}
               onCellExpand={() => {
                 setExpandedRows((er) => {
-                  if (er.has(rowIdx)) {
-                    er.delete(rowIdx);
+                  if (er.has(stableKey)) {
+                    er.delete(stableKey);
                   } else {
-                    er.add(rowIdx);
+                    er.add(stableKey);
                   }
                   return new Set(er);
                 });
@@ -525,10 +544,15 @@ export function TableNG(props: TableNGProps) {
               className={clsx(styles.grid, styles.gridNested)}
               headerRowClass={clsx(styles.headerRow, hasNestedHeaders ? '' : styles.displayNone)}
               headerRowHeight={hasNestedHeaders ? nestedHeaderHeightPx : 0}
+              bottomSummaryRows={hasNestedFooter ? [{}] : undefined}
+              summaryRowHeight={nestedFooterHeightPx}
+              onColumnResize={nestedResizeHandler}
               columns={nestedColumns}
               rows={expandedRecords}
               renderers={{ ...renderers, noRowsFallback: <EmptyTablePlaceholder noValue={noValue} /> }}
               onCellClick={onCellClick}
+              columnWidths={nestedColWidths}
+              onColumnWidthsChange={handleNestedColumnWidthsChange}
             />
           </div>
         );
@@ -549,10 +573,14 @@ export function TableNG(props: TableNGProps) {
       data.fields.length,
       commonDataGridProps,
       expandedRows,
+      getStableRowKeyForRowIdx,
       nestedRows,
       noValue,
       onCellClick,
       uniqueId,
+      nestedColWidths,
+      nestedResizeHandler,
+      handleNestedColumnWidthsChange,
     ]
   );
 
@@ -568,6 +596,38 @@ export function TableNG(props: TableNGProps) {
         columns: [],
         cellRootRenderers: {},
       };
+
+      // Derive footer config from the fields being processed so nested tables use
+      // their own footer configuration rather than the top-level table's.
+      const fieldFooters: Array<TableFooterOptions | undefined> = [];
+      let isFieldUniformFooter = true;
+      let firstFooterReducers: string[] | undefined;
+      for (const field of f) {
+        const footer = field.config?.custom?.footer;
+        const reducers: string[] | undefined = footer?.reducers;
+
+        fieldFooters.push(footer);
+
+        // if reducers are undefined or empty on the footer, don't retain them for comparison.
+        if (reducers === undefined || reducers.length === 0) {
+          continue;
+        }
+
+        // first time we encounter a viable footer config, store it and move on.
+        if (firstFooterReducers === undefined) {
+          firstFooterReducers = reducers;
+          continue;
+        }
+
+        // for all other viable footer configs, check to see if the reducers match the first one we encountered.
+        if (
+          reducers.length !== firstFooterReducers.length ||
+          reducers.some((r, idx) => firstFooterReducers?.[idx] !== r)
+        ) {
+          isFieldUniformFooter = false;
+          break;
+        }
+      }
 
       // Reuse pre-computed filter results — no re-scanning of rows needed.
       // Top-level tables use filterResult from useFilteredRows; nested tables use the
@@ -858,12 +918,12 @@ export function TableNG(props: TableNGProps) {
           renderSummaryCell: () => (
             <SummaryCell
               rows={visibleRows}
-              footers={footers}
+              footers={fieldFooters}
               field={field}
               colIdx={i}
               textAlign={getSummaryCellTextAlign(textAlign, cellType)}
-              rowLabel={isUniformFooter && i === 0}
-              hideLabel={isUniformFooter && i !== 0}
+              rowLabel={isFieldUniformFooter && i === 0}
+              hideLabel={isFieldUniformFooter && i !== 0}
             />
           ),
         });
@@ -877,12 +937,10 @@ export function TableNG(props: TableNGProps) {
       disableSanitizeHtml,
       filter,
       filterResult,
-      footers,
       frozenColumns,
       getCellActions,
       getCellColorInlineStyles,
       getTextColorForBackground,
-      isUniformFooter,
       maxRowHeight,
       nestedRows,
       numFrozenColsFullyInView,
@@ -927,18 +985,31 @@ export function TableNG(props: TableNGProps) {
     }
 
     // pre-calculate renderRow and expandedColumns based on the first nested frame's fields.
-    const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
+    const renderRow = renderRowFactory(
+      firstRowNestedData.fields,
+      panelContext,
+      expandedRows,
+      enableSharedCrosshair,
+      getStableRowKeyForRowIdx
+    );
 
     const expanderCellRenderer: CellRootRenderer = (key, props) => <Cell key={key} {...props} />;
     result.cellRootRenderers[EXPANDED_COLUMN_KEY] = expanderCellRenderer;
 
     // If we have nested frames, we need to add a column for the row expansion
     result.columns.unshift(
-      buildNestedTableExpanderColumn(nestedColumnsMatrix, hasNestedHeaders, nestedHeaderHeight, {
-        renderRow,
-        renderCell: (key, props) =>
-          nestedColumnsMatrix[props.row.__parentIndex!].cellRootRenderers[props.column.key](key, props),
-      })
+      buildNestedTableExpanderColumn(
+        nestedColumnsMatrix,
+        hasNestedHeaders,
+        nestedHeaderHeight,
+        nestedHasFooter,
+        nestedFooterHeight,
+        {
+          renderRow,
+          renderCell: (key, props) =>
+            nestedColumnsMatrix[props.row.__parentIndex!].cellRootRenderers[props.column.key](key, props),
+        }
+      )
     );
 
     return result;
@@ -949,8 +1020,11 @@ export function TableNG(props: TableNGProps) {
     expandedRows,
     firstRowNestedData,
     fromFields,
+    getStableRowKeyForRowIdx,
     hasNestedHeaders,
     nestedColumnsMatrix,
+    nestedFooterHeight,
+    nestedHasFooter,
     nestedHeaderHeight,
     panelContext,
     rows,
@@ -986,6 +1060,9 @@ export function TableNG(props: TableNGProps) {
         onSelectedRowsChange={setSelectedRows}
         headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
         headerRowHeight={headerHeight}
+        columnWidths={resetColumnWidths}
+        onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
+        onColumnResize={resizeHandler}
         onCellClick={onCellClick}
         onCellKeyDown={({ column, row }, event) => {
           // if top-left cell, use default browser tabbing
@@ -1070,12 +1147,18 @@ export function TableNG(props: TableNGProps) {
  * this is passed to the top-level `renderRow` prop on DataGrid. applies aria attributes and custom event handlers.
  */
 const renderRowFactory =
-  (fields: Field[], panelContext: PanelContext, expandedRows: Set<number>, enableSharedCrosshair: boolean) =>
+  (
+    fields: Field[],
+    panelContext: PanelContext,
+    expandedRows: Set<string>,
+    enableSharedCrosshair: boolean,
+    getStableKey: (rowIdx: number) => string
+  ) =>
   // eslint-disable-next-line react/display-name
   (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
     const { row } = props;
     const rowIdx = row.__index;
-    const isExpanded = expandedRows.has(rowIdx);
+    const isExpanded = expandedRows.has(getStableKey(rowIdx));
 
     // Don't render non expanded child rows
     if (row.__depth === 1) {

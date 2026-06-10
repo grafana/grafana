@@ -27,7 +27,7 @@ const getEc2InstanceAttribute = jest.fn().mockResolvedValue([{ label: 'g', value
 const getResourceARNs = jest.fn().mockResolvedValue([{ label: 'h', value: 'h' }]);
 const getLogGroups = jest
   .fn()
-  .mockResolvedValue([{ value: { arn: 'a', name: 'a' } }, { value: { arn: 'b', name: 'b' } }]);
+  .mockResolvedValue({ results: [{ value: { arn: 'a', name: 'a' } }, { value: { arn: 'b', name: 'b' } }] });
 
 const variables = new CloudWatchVariableSupport(mock.datasource.resources);
 

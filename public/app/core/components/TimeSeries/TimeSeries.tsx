@@ -14,10 +14,11 @@ const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'annotatio
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme' | 'legend'> & {
   legend: TimeSeriesLegendOptions;
+  onPinnedToSidebarChange?: (pinned: boolean) => void;
 };
 
 export function TimeSeries(props: TimeSeriesProps) {
-  const { timeZone, options, renderers, tweakAxis, tweakScale, legend, frames } = props;
+  const { timeZone, options, renderers, tweakAxis, tweakScale, legend, frames, onPinnedToSidebarChange } = props;
   const theme = useTheme2();
 
   const prepConfig = useCallback(
@@ -46,9 +47,19 @@ export function TimeSeries(props: TimeSeriesProps) {
       }
 
       const enableFacetedFilter = config.featureToggles.vizLegendFacetedFilter && legend?.enableFacetedFilter;
-      return <PlotLegend data={frames} config={uPlotConfig} {...legend} enableFacetedFilter={enableFacetedFilter} />;
+      const facetedFilterPinned = config.featureToggles.vizLegendFacetedFilter && legend?.facetedFilterPinned;
+      return (
+        <PlotLegend
+          data={frames}
+          config={uPlotConfig}
+          {...legend}
+          enableFacetedFilter={enableFacetedFilter}
+          facetedFilterPinned={facetedFilterPinned}
+          onPinnedToSidebarChange={onPinnedToSidebarChange}
+        />
+      );
     },
-    [legend, frames]
+    [legend, frames, onPinnedToSidebarChange]
   );
 
   return (

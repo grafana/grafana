@@ -318,6 +318,8 @@ type ConvertAlertmanagerResponse struct {
 	Error     string `json:"error"`
 	// RenameResources contains information about renamed resources during configuration merge
 	RenameResources *RenameResources `json:"rename_resources,omitempty"`
+	// Stats contains information about what was added during configuration merge
+	Stats *MergeStats `json:"stats,omitempty"`
 }
 
 // RenameResources describes which resources were renamed to avoid conflicts
@@ -328,18 +330,26 @@ type RenameResources struct {
 	TimeIntervals map[string]string `json:"time_intervals,omitempty"`
 }
 
+// MergeStats describes which resources were added during configuration merge.
+type MergeStats struct {
+	// AddedRoute is the identifier of the routing sub-tree added to the configuration
+	AddedRoute string `json:"added_route,omitempty"`
+	// AddedReceivers contains the names of receivers added (post-rename if renamed)
+	AddedReceivers []string `json:"added_receivers,omitempty"`
+	// AddedTimeIntervals contains the names of time intervals added (post-rename if renamed)
+	AddedTimeIntervals []string `json:"added_time_intervals,omitempty"`
+	// AddedTemplates contains the names of templates added
+	AddedTemplates []string `json:"added_templates,omitempty"`
+	// AddedInhibitionRules contains the names of inhibition rules added
+	AddedInhibitionRules []string `json:"added_inhibition_rules,omitempty"`
+}
+
 // swagger:parameters RouteConvertPrometheusPostAlertmanagerConfig
 type RouteConvertPrometheusPostAlertmanagerConfigParams struct {
 	// Unique identifier for this Alertmanager configuration.
 	// This identifier is used to distinguish between different imported configurations.
 	// in: header
 	Identifier string `json:"x-grafana-alerting-config-identifier"`
-	// Comma-separated list of label matchers in 'key=value' format.
-	// These matchers determine which alerts this configuration should handle.
-	// For example: 'environment=production,team=backend' will only apply this
-	// configuration to alerts matching both environment=production AND team=backend.
-	// in: header
-	MergeMatchers string `json:"x-grafana-alerting-merge-matchers"`
 	// If true, the configuration will replace an existing configuration regardless of its identifier
 	// in: header
 	Replace bool `json:"x-grafana-alerting-config-force-replace"`

@@ -12,7 +12,7 @@ export interface TraceIdTimeParamsOptions {
   enabled?: boolean;
 }
 
-export interface TraceIdTimeParamsData extends DataSourceJsonData {
+interface TraceIdTimeParamsData extends DataSourceJsonData {
   traceIdTimeParams?: TraceIdTimeParamsOptions;
 }
 
