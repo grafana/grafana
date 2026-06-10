@@ -13,12 +13,12 @@ import (
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/install"
@@ -42,11 +42,15 @@ type pluginStorage interface {
 	rest.GracefulDeleter
 }
 
+// PluginStorageHookProvider receives plugin storage lifecycle callbacks.
+// After* hooks run post-commit; mutations to the plugin they receive are not
+// persisted, so they can only return an error (which is logged, never
+// surfaced to the API caller).
 type PluginStorageHookProvider interface {
 	BeginCreate(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.CreateOptions) (genericregistry.FinishFunc, error)
-	AfterCreate(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.CreateOptions) (*pluginsv0alpha1.Plugin, error)
+	AfterCreate(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.CreateOptions) error
 	BeginUpdate(ctx context.Context, plugin, oldPlugin *pluginsv0alpha1.Plugin, options *metav1.UpdateOptions) (genericregistry.FinishFunc, error)
-	AfterUpdate(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.UpdateOptions) (*pluginsv0alpha1.Plugin, error)
+	AfterUpdate(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.UpdateOptions) error
 	AfterDelete(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.DeleteOptions) error
 }
 
@@ -67,7 +71,7 @@ func newPluginStorage(
 	if !ok {
 		return nil, fmt.Errorf("plugin storage must be *genericregistry.Store, got %T", wrapped)
 	}
-	var hookProvider PluginStorageHookProvider = NewDefaultPluginStorageHookProvider(store, logger, metaManager)
+	hookProvider := NewDefaultPluginStorageHookProvider(store, logger, metaManager)
 	if decorate != nil {
 		hookProvider = decorate(hookProvider)
 	}
@@ -99,6 +103,9 @@ func registerPluginStorageHooks(store *genericregistry.Store, logger logging.Log
 			var err error
 			hookFinish, err = hooks.BeginCreate(ctx, plugin, options)
 			if err != nil {
+				// The original begin already succeeded; per the FinishFunc
+				// contract its finish must still run with success=false.
+				finish(ctx, false)
 				return nil, err
 			}
 			if hookFinish == nil {
@@ -122,8 +129,7 @@ func registerPluginStorageHooks(store *genericregistry.Store, logger logging.Log
 			return
 		}
 		ctx, finish := newPluginStorageHookContext(plugin.Namespace, "pluginStorage.afterCreate", logger)
-		_, err := hooks.AfterCreate(ctx, plugin, options)
-		finish(err)
+		finish(hooks.AfterCreate(ctx, plugin, options))
 	}
 
 	beginUpdate := store.BeginUpdate
@@ -142,6 +148,9 @@ func registerPluginStorageHooks(store *genericregistry.Store, logger logging.Log
 			var err error
 			hookFinish, err = hooks.BeginUpdate(ctx, plugin, oldPlugin, options)
 			if err != nil {
+				// The original begin already succeeded; per the FinishFunc
+				// contract its finish must still run with success=false.
+				finish(ctx, false)
 				return nil, err
 			}
 			if hookFinish == nil {
@@ -165,8 +174,7 @@ func registerPluginStorageHooks(store *genericregistry.Store, logger logging.Log
 			return
 		}
 		ctx, finish := newPluginStorageHookContext(plugin.Namespace, "pluginStorage.afterUpdate", logger)
-		_, err := hooks.AfterUpdate(ctx, plugin, options)
-		finish(err)
+		finish(hooks.AfterUpdate(ctx, plugin, options))
 	}
 
 	afterDelete := store.AfterDelete
@@ -185,7 +193,7 @@ func registerPluginStorageHooks(store *genericregistry.Store, logger logging.Log
 }
 
 func (h *pluginStorageHookProvider) BeginCreate(ctx context.Context, plugin *pluginsv0alpha1.Plugin, _ *metav1.CreateOptions) (genericregistry.FinishFunc, error) {
-	if !isChildPlugin(plugin) {
+	if !IsChildPlugin(plugin) {
 		normalizePluginID(plugin)
 		h.stampDesiredChildren(ctx, plugin, nil)
 	}
@@ -193,19 +201,19 @@ func (h *pluginStorageHookProvider) BeginCreate(ctx context.Context, plugin *plu
 	return finishNoOp, nil
 }
 
-func (h *pluginStorageHookProvider) AfterCreate(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
+func (h *pluginStorageHookProvider) AfterCreate(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.CreateOptions) error {
 	if isCreateDryRun(options) {
-		return plugin, nil
+		return nil
 	}
-	if isChildPlugin(plugin) {
-		return plugin, nil
+	if IsChildPlugin(plugin) {
+		return nil
 	}
 	normalizePluginID(plugin)
-	return plugin, h.applyChildren(ctx, plugin)
+	return h.applyChildren(ctx, plugin)
 }
 
 func (h *pluginStorageHookProvider) BeginUpdate(ctx context.Context, plugin, oldPlugin *pluginsv0alpha1.Plugin, _ *metav1.UpdateOptions) (genericregistry.FinishFunc, error) {
-	if !isChildPlugin(plugin) {
+	if !IsChildPlugin(plugin) {
 		normalizePluginID(plugin)
 		h.stampDesiredChildren(ctx, plugin, oldPlugin)
 	}
@@ -213,22 +221,22 @@ func (h *pluginStorageHookProvider) BeginUpdate(ctx context.Context, plugin, old
 	return finishNoOp, nil
 }
 
-func (h *pluginStorageHookProvider) AfterUpdate(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
+func (h *pluginStorageHookProvider) AfterUpdate(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.UpdateOptions) error {
 	if isUpdateDryRun(options) {
-		return plugin, nil
+		return nil
 	}
-	if isChildPlugin(plugin) {
-		return plugin, nil
+	if IsChildPlugin(plugin) {
+		return nil
 	}
 	normalizePluginID(plugin)
-	return plugin, h.applyChildren(ctx, plugin)
+	return h.applyChildren(ctx, plugin)
 }
 
 func (h *pluginStorageHookProvider) AfterDelete(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.DeleteOptions) error {
 	if isDeleteDryRun(options) {
 		return nil
 	}
-	if isChildPlugin(plugin) {
+	if IsChildPlugin(plugin) {
 		return nil
 	}
 	return h.deleteChildren(ctx, plugin.Annotations)
@@ -237,15 +245,15 @@ func (h *pluginStorageHookProvider) AfterDelete(ctx context.Context, plugin *plu
 func finishNoOp(context.Context, bool) {}
 
 func isCreateDryRun(options *metav1.CreateOptions) bool {
-	return options != nil && len(options.DryRun) > 0
+	return options != nil && dryrun.IsDryRun(options.DryRun)
 }
 
 func isUpdateDryRun(options *metav1.UpdateOptions) bool {
-	return options != nil && len(options.DryRun) > 0
+	return options != nil && dryrun.IsDryRun(options.DryRun)
 }
 
 func isDeleteDryRun(options *metav1.DeleteOptions) bool {
-	return options != nil && len(options.DryRun) > 0
+	return options != nil && dryrun.IsDryRun(options.DryRun)
 }
 
 func (h *pluginStorageHookProvider) applyChildren(ctx context.Context, plugin *pluginsv0alpha1.Plugin) error {
@@ -266,31 +274,14 @@ func (h *pluginStorageHookProvider) deleteChildren(ctx context.Context, annotati
 	return nil
 }
 
+// pluginFromRuntimeObject returns the typed plugin behind a storage hook
+// object. The store decodes every request into the kind's typed zero value, so
+// hooks only ever see *pluginsv0alpha1.Plugin; anything else is skipped. Do
+// not add a conversion fallback here: Begin* hooks mutate the plugin in place,
+// and mutating a converted copy would silently be lost.
 func pluginFromRuntimeObject(obj runtime.Object) (*pluginsv0alpha1.Plugin, bool) {
-	switch plugin := obj.(type) {
-	case *pluginsv0alpha1.Plugin:
-		return plugin, true
-	case *unstructured.Unstructured:
-		out := &pluginsv0alpha1.Plugin{}
-		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(plugin.Object, out); err == nil {
-			return out, true
-		}
-
-		out.ObjectMeta = metav1.ObjectMeta{
-			Name:        plugin.GetName(),
-			Namespace:   plugin.GetNamespace(),
-			Annotations: plugin.GetAnnotations(),
-			Labels:      plugin.GetLabels(),
-		}
-		out.Spec.Id, _, _ = unstructured.NestedString(plugin.Object, "spec", "id")
-		out.Spec.Version, _, _ = unstructured.NestedString(plugin.Object, "spec", "version")
-		if parentID, ok, _ := unstructured.NestedString(plugin.Object, "spec", "parentId"); ok {
-			out.Spec.ParentId = &parentID
-		}
-		return out, true
-	default:
-		return nil, false
-	}
+	plugin, ok := obj.(*pluginsv0alpha1.Plugin)
+	return plugin, ok
 }
 
 // stampDesiredChildren writes the children the parent should currently own
@@ -425,10 +416,6 @@ func (h *pluginStorageHookProvider) upsertChildPlugin(ctx context.Context, paren
 		return err
 	}
 
-	if childPluginMatches(existing, expected) {
-		return nil
-	}
-
 	updated := existing.DeepCopy()
 	updated.Labels = mergeStringMap(existing.Labels, expected.Labels)
 	updated.Annotations = mergeStringMap(existing.Annotations, expected.Annotations)
@@ -453,21 +440,6 @@ func childPluginForParent(parent *pluginsv0alpha1.Plugin, namespace string, chil
 	return child
 }
 
-func childPluginMatches(existing, desired *pluginsv0alpha1.Plugin) bool {
-	if existing.Labels[parentIDLabel] != desired.Labels[parentIDLabel] {
-		return false
-	}
-	if desired.Spec.ParentId == nil {
-		return false
-	}
-	return !(&install.PluginInstall{
-		ID:       desired.Spec.Id,
-		Version:  desired.Spec.Version,
-		Source:   install.SourceChildPlugin,
-		ParentID: *desired.Spec.ParentId,
-	}).ShouldUpdate(existing)
-}
-
 func setAnnotation(plugin *pluginsv0alpha1.Plugin, key, value string) {
 	if plugin.Annotations == nil {
 		plugin.Annotations = map[string]string{}
@@ -490,7 +462,10 @@ func parseAppliedChildren(annotations map[string]string) []string {
 	return out
 }
 
-func isChildPlugin(plugin *pluginsv0alpha1.Plugin) bool {
+// IsChildPlugin reports whether the plugin is owned by a parent plugin.
+// Exported so decorating hook providers (e.g. enterprise) share one
+// definition of "child".
+func IsChildPlugin(plugin *pluginsv0alpha1.Plugin) bool {
 	return plugin.Spec.ParentId != nil && *plugin.Spec.ParentId != ""
 }
 
