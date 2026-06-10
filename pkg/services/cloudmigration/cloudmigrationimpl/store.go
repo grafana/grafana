@@ -14,6 +14,9 @@ type store interface {
 
 	CreateSnapshot(ctx context.Context, snapshot cloudmigration.CloudMigrationSnapshot) error
 	UpdateSnapshot(ctx context.Context, snapshot cloudmigration.UpdateSnapshotCmd) error
+	GetSnapshotStatus(ctx context.Context, sessionUID, snapshotUID string) (cloudmigration.SnapshotStatus, error)
+	TransitionSessionWorkflow(ctx context.Context, orgID int64, sessionUID string, expected, next cloudmigration.SessionWorkflow, activeSnapshotUID *string) error
+	ResetSessionWorkflow(ctx context.Context, orgID int64, sessionUID string) error
 	GetIndex(ctx context.Context, orgID int64, sessionUID string, snapshotUID string) (cloudmigration.CloudMigrationSnapshotIndex, error)
 	GetPartition(ctx context.Context, snapshotUID string, resourceType string, partitionNumber int) (cloudmigration.CloudMigrationSnapshotPartition, error)
 	StorePartition(ctx context.Context, snapshotUID string, resourceType string, partitionNumber int, data []byte) error

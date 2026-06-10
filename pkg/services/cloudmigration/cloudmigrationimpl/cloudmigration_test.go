@@ -1068,6 +1068,10 @@ func (m *gmsClientMock) CreatePresignedUploadUrl(ctx context.Context, session cl
 	return "http://localhost:3000", nil
 }
 
+func (m *gmsClientMock) CancelSnapshot(context.Context, cloudmigration.CloudMigrationSession, cloudmigration.CloudMigrationSnapshot) error {
+	return nil
+}
+
 func (m *gmsClientMock) ReportEvent(context.Context, cloudmigration.CloudMigrationSession, gmsclient.EventRequestDTO) {
 	m.reportEventCalled++
 }

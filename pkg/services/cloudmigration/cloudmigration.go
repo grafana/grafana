@@ -29,6 +29,6 @@ type Service interface {
 	CreateSnapshot(ctx context.Context, signedInUser *user.SignedInUser, cmd CreateSnapshotCommand) (*CloudMigrationSnapshot, error)
 	GetSnapshot(ctx context.Context, query GetSnapshotsQuery) (*CloudMigrationSnapshot, error)
 	GetSnapshotList(ctx context.Context, query ListSnapshotsQuery) ([]CloudMigrationSnapshot, error)
-	UploadSnapshot(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, sessionUid string, snapshotUid string) error
-	CancelSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error
+	UploadSnapshot(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, cmd UploadSnapshotCommand) error
+	CancelSnapshot(ctx context.Context, orgID int64, sessionUid string, snapshotUid string) error
 }

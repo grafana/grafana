@@ -227,10 +227,12 @@ func (cma *CloudMigrationAPI) GetSession(c *contextmodel.ReqContext) response.Re
 	}
 
 	return response.JSON(http.StatusOK, CloudMigrationSessionResponseDTO{
-		UID:     s.UID,
-		Slug:    s.Slug,
-		Created: s.Created,
-		Updated: s.Updated,
+		UID:               s.UID,
+		Slug:              s.Slug,
+		Workflow:          toSessionWorkflowDTO(s.Workflow),
+		ActiveSnapshotUID: s.ActiveSnapshotUID,
+		Created:           s.Created,
+		Updated:           s.Updated,
 	})
 }
 
@@ -266,12 +268,7 @@ func (cma *CloudMigrationAPI) CreateSession(c *contextmodel.ReqContext) response
 		return response.ErrOrFallback(http.StatusInternalServerError, "session creation error", err)
 	}
 
-	return response.JSON(http.StatusOK, CloudMigrationSessionResponseDTO{
-		UID:     s.UID,
-		Slug:    s.Slug,
-		Created: s.Created,
-		Updated: s.Updated,
-	})
+	return response.JSON(http.StatusOK, toCloudMigrationSessionResponseDTO(*s))
 }
 
 // swagger:route DELETE /cloudmigration/migration/{uid} migrations deleteSession
@@ -357,10 +354,15 @@ func (cma *CloudMigrationAPI) CreateSnapshot(c *contextmodel.ReqContext) respons
 	ss, err := cma.cloudMigrationService.CreateSnapshot(ctx, c.SignedInUser, cloudmigration.CreateSnapshotCommand{
 		SessionUID:    uid,
 		ResourceTypes: resourceTypes,
+		Force:         cmd.Force,
 	})
 	if err != nil {
 		span.SetStatus(codes.Error, "error creating snapshot")
 		span.RecordError(err)
+
+		if resp, ok := sessionConflictResponse(err); ok {
+			return resp
+		}
 
 		return response.ErrOrFallback(http.StatusInternalServerError, "error creating snapshot", err)
 	}
@@ -591,9 +593,25 @@ func (cma *CloudMigrationAPI) UploadSnapshot(c *contextmodel.ReqContext) respons
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid snapshot uid", err)
 	}
 
-	if err := cma.cloudMigrationService.UploadSnapshot(ctx, c.OrgID, c.SignedInUser, sessUid, snapshotUid); err != nil {
+	var cmd UploadSnapshotRequestDTO
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		span.SetStatus(codes.Error, "invalid request body")
+		span.RecordError(err)
+
+		return response.ErrOrFallback(http.StatusBadRequest, "invalid request body", err)
+	}
+
+	if err := cma.cloudMigrationService.UploadSnapshot(ctx, c.OrgID, c.SignedInUser, cloudmigration.UploadSnapshotCommand{
+		SessionUID:  sessUid,
+		SnapshotUID: snapshotUid,
+		Force:       cmd.Force,
+	}); err != nil {
 		span.SetStatus(codes.Error, "error uploading snapshot")
 		span.RecordError(err)
+
+		if resp, ok := sessionConflictResponse(err); ok {
+			return resp
+		}
 
 		return response.ErrOrFallback(http.StatusInternalServerError, "error uploading snapshot", err)
 	}
@@ -630,7 +648,7 @@ func (cma *CloudMigrationAPI) CancelSnapshot(c *contextmodel.ReqContext) respons
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid snapshot uid", err)
 	}
 
-	if err := cma.cloudMigrationService.CancelSnapshot(ctx, sessUid, snapshotUid); err != nil {
+	if err := cma.cloudMigrationService.CancelSnapshot(ctx, c.OrgID, sessUid, snapshotUid); err != nil {
 		span.SetStatus(codes.Error, "error canceling snapshot")
 		span.RecordError(err)
 

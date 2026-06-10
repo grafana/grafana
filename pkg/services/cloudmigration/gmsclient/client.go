@@ -11,6 +11,7 @@ type Client interface {
 	StartSnapshot(context.Context, cloudmigration.CloudMigrationSession, cloudmigration.EncryptionAlgo) (*cloudmigration.StartSnapshotResponse, error)
 	GetSnapshotStatus(context.Context, cloudmigration.CloudMigrationSession, cloudmigration.CloudMigrationSnapshot, int) (*cloudmigration.GetSnapshotStatusResponse, error)
 	CreatePresignedUploadUrl(context.Context, cloudmigration.CloudMigrationSession, cloudmigration.CloudMigrationSnapshot) (string, error)
+	CancelSnapshot(context.Context, cloudmigration.CloudMigrationSession, cloudmigration.CloudMigrationSnapshot) error
 	ReportEvent(context.Context, cloudmigration.CloudMigrationSession, EventRequestDTO)
 }
 
