@@ -146,11 +146,12 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 }
 
-// searchHit / searchResponse decode the relevant parts of the generated
-// response shape (metadata + spec) regardless of rule kind.
+// searchHit / searchResponse decode the summary rule hit returned by search.
 type searchHit struct {
-	Metadata v1.ObjectMeta  `json:"metadata"`
-	Spec     map[string]any `json:"spec"`
+	Type   string `json:"type"`
+	Name   string `json:"name"`
+	Title  string `json:"title"`
+	Folder string `json:"folder"`
 }
 
 type searchResponse struct {
@@ -161,9 +162,7 @@ type searchResponse struct {
 func titles(hits []searchHit) []string {
 	out := make([]string, 0, len(hits))
 	for _, h := range hits {
-		if title, ok := h.Spec["title"].(string); ok {
-			out = append(out, title)
-		}
+		out = append(out, h.Title)
 	}
 	return out
 }

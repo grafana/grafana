@@ -8,63 +8,42 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		AlertRule{}.OpenAPIModelName():                                              schema_pkg_apis_alerting_v0alpha1_AlertRule(ref),
-		AlertRuleExpression{}.OpenAPIModelName():                                    schema_pkg_apis_alerting_v0alpha1_AlertRuleExpression(ref),
-		AlertRuleIntervalTrigger{}.OpenAPIModelName():                               schema_pkg_apis_alerting_v0alpha1_AlertRuleIntervalTrigger(ref),
-		AlertRuleList{}.OpenAPIModelName():                                          schema_pkg_apis_alerting_v0alpha1_AlertRuleList(ref),
-		AlertRuleNamedRoutingTree{}.OpenAPIModelName():                              schema_pkg_apis_alerting_v0alpha1_AlertRuleNamedRoutingTree(ref),
-		AlertRulePanelRef{}.OpenAPIModelName():                                      schema_pkg_apis_alerting_v0alpha1_AlertRulePanelRef(ref),
-		AlertRuleRelativeTimeRange{}.OpenAPIModelName():                             schema_pkg_apis_alerting_v0alpha1_AlertRuleRelativeTimeRange(ref),
-		AlertRuleSimplifiedRouting{}.OpenAPIModelName():                             schema_pkg_apis_alerting_v0alpha1_AlertRuleSimplifiedRouting(ref),
-		AlertRuleSimplifiedRoutingOrNamedRoutingTree{}.OpenAPIModelName():           schema_pkg_apis_alerting_v0alpha1_AlertRuleSimplifiedRoutingOrNamedRoutingTree(ref),
-		AlertRuleSpec{}.OpenAPIModelName():                                          schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref),
-		AlertRuleStatus{}.OpenAPIModelName():                                        schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref),
-		AlertRulestatusOperatorState{}.OpenAPIModelName():                           schema_pkg_apis_alerting_v0alpha1_AlertRulestatusOperatorState(ref),
-		GetSearchAlertRulesAlertRuleHit{}.OpenAPIModelName():                        schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesAlertRuleHit(ref),
-		GetSearchAlertRulesAlertRuleSpec{}.OpenAPIModelName():                       schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesAlertRuleSpec(ref),
-		GetSearchAlertRulesBody{}.OpenAPIModelName():                                schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesBody(ref),
-		GetSearchAlertRulesExpression{}.OpenAPIModelName():                          schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesExpression(ref),
-		GetSearchAlertRulesIntervalTrigger{}.OpenAPIModelName():                     schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesIntervalTrigger(ref),
-		GetSearchAlertRulesNamedRoutingTree{}.OpenAPIModelName():                    schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesNamedRoutingTree(ref),
-		GetSearchAlertRulesPanelRef{}.OpenAPIModelName():                            schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesPanelRef(ref),
-		GetSearchAlertRulesRelativeTimeRange{}.OpenAPIModelName():                   schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesRelativeTimeRange(ref),
-		GetSearchAlertRulesResponse{}.OpenAPIModelName():                            schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesResponse(ref),
-		GetSearchAlertRulesSimplifiedRouting{}.OpenAPIModelName():                   schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesSimplifiedRouting(ref),
-		GetSearchAlertRulesSimplifiedRoutingOrNamedRoutingTree{}.OpenAPIModelName(): schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesSimplifiedRoutingOrNamedRoutingTree(ref),
-		GetSearchRecordingRulesBody{}.OpenAPIModelName():                            schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesBody(ref),
-		GetSearchRecordingRulesExpression{}.OpenAPIModelName():                      schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesExpression(ref),
-		GetSearchRecordingRulesIntervalTrigger{}.OpenAPIModelName():                 schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesIntervalTrigger(ref),
-		GetSearchRecordingRulesRecordingRuleHit{}.OpenAPIModelName():                schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesRecordingRuleHit(ref),
-		GetSearchRecordingRulesRecordingRuleSpec{}.OpenAPIModelName():               schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesRecordingRuleSpec(ref),
-		GetSearchRecordingRulesRelativeTimeRange{}.OpenAPIModelName():               schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesRelativeTimeRange(ref),
-		GetSearchRecordingRulesResponse{}.OpenAPIModelName():                        schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesResponse(ref),
-		GetSearchRulesAlertRuleSpec{}.OpenAPIModelName():                            schema_pkg_apis_alerting_v0alpha1_GetSearchRulesAlertRuleSpec(ref),
-		GetSearchRulesBody{}.OpenAPIModelName():                                     schema_pkg_apis_alerting_v0alpha1_GetSearchRulesBody(ref),
-		GetSearchRulesExpression{}.OpenAPIModelName():                               schema_pkg_apis_alerting_v0alpha1_GetSearchRulesExpression(ref),
-		GetSearchRulesIntervalTrigger{}.OpenAPIModelName():                          schema_pkg_apis_alerting_v0alpha1_GetSearchRulesIntervalTrigger(ref),
-		GetSearchRulesNamedRoutingTree{}.OpenAPIModelName():                         schema_pkg_apis_alerting_v0alpha1_GetSearchRulesNamedRoutingTree(ref),
-		GetSearchRulesPanelRef{}.OpenAPIModelName():                                 schema_pkg_apis_alerting_v0alpha1_GetSearchRulesPanelRef(ref),
-		GetSearchRulesRecordingRuleSpec{}.OpenAPIModelName():                        schema_pkg_apis_alerting_v0alpha1_GetSearchRulesRecordingRuleSpec(ref),
-		GetSearchRulesRelativeTimeRange{}.OpenAPIModelName():                        schema_pkg_apis_alerting_v0alpha1_GetSearchRulesRelativeTimeRange(ref),
-		GetSearchRulesResponse{}.OpenAPIModelName():                                 schema_pkg_apis_alerting_v0alpha1_GetSearchRulesResponse(ref),
-		GetSearchRulesRuleHit{}.OpenAPIModelName():                                  schema_pkg_apis_alerting_v0alpha1_GetSearchRulesRuleHit(ref),
-		GetSearchRulesSimplifiedRouting{}.OpenAPIModelName():                        schema_pkg_apis_alerting_v0alpha1_GetSearchRulesSimplifiedRouting(ref),
-		GetSearchRulesSimplifiedRoutingOrNamedRoutingTree{}.OpenAPIModelName():      schema_pkg_apis_alerting_v0alpha1_GetSearchRulesSimplifiedRoutingOrNamedRoutingTree(ref),
-		RecordingRule{}.OpenAPIModelName():                                          schema_pkg_apis_alerting_v0alpha1_RecordingRule(ref),
-		RecordingRuleExpression{}.OpenAPIModelName():                                schema_pkg_apis_alerting_v0alpha1_RecordingRuleExpression(ref),
-		RecordingRuleIntervalTrigger{}.OpenAPIModelName():                           schema_pkg_apis_alerting_v0alpha1_RecordingRuleIntervalTrigger(ref),
-		RecordingRuleList{}.OpenAPIModelName():                                      schema_pkg_apis_alerting_v0alpha1_RecordingRuleList(ref),
-		RecordingRuleRelativeTimeRange{}.OpenAPIModelName():                         schema_pkg_apis_alerting_v0alpha1_RecordingRuleRelativeTimeRange(ref),
-		RecordingRuleSpec{}.OpenAPIModelName():                                      schema_pkg_apis_alerting_v0alpha1_RecordingRuleSpec(ref),
-		RecordingRuleStatus{}.OpenAPIModelName():                                    schema_pkg_apis_alerting_v0alpha1_RecordingRuleStatus(ref),
-		RecordingRulestatusOperatorState{}.OpenAPIModelName():                       schema_pkg_apis_alerting_v0alpha1_RecordingRulestatusOperatorState(ref),
-		RuleSequence{}.OpenAPIModelName():                                           schema_pkg_apis_alerting_v0alpha1_RuleSequence(ref),
-		RuleSequenceIntervalTrigger{}.OpenAPIModelName():                            schema_pkg_apis_alerting_v0alpha1_RuleSequenceIntervalTrigger(ref),
-		RuleSequenceList{}.OpenAPIModelName():                                       schema_pkg_apis_alerting_v0alpha1_RuleSequenceList(ref),
-		RuleSequenceRuleRef{}.OpenAPIModelName():                                    schema_pkg_apis_alerting_v0alpha1_RuleSequenceRuleRef(ref),
-		RuleSequenceSpec{}.OpenAPIModelName():                                       schema_pkg_apis_alerting_v0alpha1_RuleSequenceSpec(ref),
-		RuleSequenceStatus{}.OpenAPIModelName():                                     schema_pkg_apis_alerting_v0alpha1_RuleSequenceStatus(ref),
-		RuleSequencestatusOperatorState{}.OpenAPIModelName():                        schema_pkg_apis_alerting_v0alpha1_RuleSequencestatusOperatorState(ref),
+		AlertRule{}.OpenAPIModelName():                                    schema_pkg_apis_alerting_v0alpha1_AlertRule(ref),
+		AlertRuleExpression{}.OpenAPIModelName():                          schema_pkg_apis_alerting_v0alpha1_AlertRuleExpression(ref),
+		AlertRuleIntervalTrigger{}.OpenAPIModelName():                     schema_pkg_apis_alerting_v0alpha1_AlertRuleIntervalTrigger(ref),
+		AlertRuleList{}.OpenAPIModelName():                                schema_pkg_apis_alerting_v0alpha1_AlertRuleList(ref),
+		AlertRuleNamedRoutingTree{}.OpenAPIModelName():                    schema_pkg_apis_alerting_v0alpha1_AlertRuleNamedRoutingTree(ref),
+		AlertRulePanelRef{}.OpenAPIModelName():                            schema_pkg_apis_alerting_v0alpha1_AlertRulePanelRef(ref),
+		AlertRuleRelativeTimeRange{}.OpenAPIModelName():                   schema_pkg_apis_alerting_v0alpha1_AlertRuleRelativeTimeRange(ref),
+		AlertRuleSimplifiedRouting{}.OpenAPIModelName():                   schema_pkg_apis_alerting_v0alpha1_AlertRuleSimplifiedRouting(ref),
+		AlertRuleSimplifiedRoutingOrNamedRoutingTree{}.OpenAPIModelName(): schema_pkg_apis_alerting_v0alpha1_AlertRuleSimplifiedRoutingOrNamedRoutingTree(ref),
+		AlertRuleSpec{}.OpenAPIModelName():                                schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref),
+		AlertRuleStatus{}.OpenAPIModelName():                              schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref),
+		AlertRulestatusOperatorState{}.OpenAPIModelName():                 schema_pkg_apis_alerting_v0alpha1_AlertRulestatusOperatorState(ref),
+		GetSearchAlertRulesBody{}.OpenAPIModelName():                      schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesBody(ref),
+		GetSearchAlertRulesResponse{}.OpenAPIModelName():                  schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesResponse(ref),
+		GetSearchAlertRulesRuleHit{}.OpenAPIModelName():                   schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesRuleHit(ref),
+		GetSearchRecordingRulesBody{}.OpenAPIModelName():                  schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesBody(ref),
+		GetSearchRecordingRulesResponse{}.OpenAPIModelName():              schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesResponse(ref),
+		GetSearchRecordingRulesRuleHit{}.OpenAPIModelName():               schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesRuleHit(ref),
+		GetSearchRulesBody{}.OpenAPIModelName():                           schema_pkg_apis_alerting_v0alpha1_GetSearchRulesBody(ref),
+		GetSearchRulesResponse{}.OpenAPIModelName():                       schema_pkg_apis_alerting_v0alpha1_GetSearchRulesResponse(ref),
+		GetSearchRulesRuleHit{}.OpenAPIModelName():                        schema_pkg_apis_alerting_v0alpha1_GetSearchRulesRuleHit(ref),
+		RecordingRule{}.OpenAPIModelName():                                schema_pkg_apis_alerting_v0alpha1_RecordingRule(ref),
+		RecordingRuleExpression{}.OpenAPIModelName():                      schema_pkg_apis_alerting_v0alpha1_RecordingRuleExpression(ref),
+		RecordingRuleIntervalTrigger{}.OpenAPIModelName():                 schema_pkg_apis_alerting_v0alpha1_RecordingRuleIntervalTrigger(ref),
+		RecordingRuleList{}.OpenAPIModelName():                            schema_pkg_apis_alerting_v0alpha1_RecordingRuleList(ref),
+		RecordingRuleRelativeTimeRange{}.OpenAPIModelName():               schema_pkg_apis_alerting_v0alpha1_RecordingRuleRelativeTimeRange(ref),
+		RecordingRuleSpec{}.OpenAPIModelName():                            schema_pkg_apis_alerting_v0alpha1_RecordingRuleSpec(ref),
+		RecordingRuleStatus{}.OpenAPIModelName():                          schema_pkg_apis_alerting_v0alpha1_RecordingRuleStatus(ref),
+		RecordingRulestatusOperatorState{}.OpenAPIModelName():             schema_pkg_apis_alerting_v0alpha1_RecordingRulestatusOperatorState(ref),
+		RuleSequence{}.OpenAPIModelName():                                 schema_pkg_apis_alerting_v0alpha1_RuleSequence(ref),
+		RuleSequenceIntervalTrigger{}.OpenAPIModelName():                  schema_pkg_apis_alerting_v0alpha1_RuleSequenceIntervalTrigger(ref),
+		RuleSequenceList{}.OpenAPIModelName():                             schema_pkg_apis_alerting_v0alpha1_RuleSequenceList(ref),
+		RuleSequenceRuleRef{}.OpenAPIModelName():                          schema_pkg_apis_alerting_v0alpha1_RuleSequenceRuleRef(ref),
+		RuleSequenceSpec{}.OpenAPIModelName():                             schema_pkg_apis_alerting_v0alpha1_RuleSequenceSpec(ref),
+		RuleSequenceStatus{}.OpenAPIModelName():                           schema_pkg_apis_alerting_v0alpha1_RuleSequenceStatus(ref),
+		RuleSequencestatusOperatorState{}.OpenAPIModelName():              schema_pkg_apis_alerting_v0alpha1_RuleSequencestatusOperatorState(ref),
 	}
 }
 
@@ -635,153 +614,6 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRulestatusOperatorState(ref common.R
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesAlertRuleHit(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"object"},
-							Format: "",
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(GetSearchAlertRulesAlertRuleSpec{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"metadata", "spec"},
-			},
-		},
-		Dependencies: []string{
-			GetSearchAlertRulesAlertRuleSpec{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesAlertRuleSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"title": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"paused": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-					"trigger": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(GetSearchAlertRulesIntervalTrigger{}.OpenAPIModelName()),
-						},
-					},
-					"labels": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"annotations": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"for": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"keepFiringFor": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"missingSeriesEvalsToResolve": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
-					"noDataState": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"execErrState": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"notificationSettings": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(GetSearchAlertRulesSimplifiedRoutingOrNamedRoutingTree{}.OpenAPIModelName()),
-						},
-					},
-					"expressions": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(GetSearchAlertRulesExpression{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-					"panelRef": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(GetSearchAlertRulesPanelRef{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"title", "trigger", "noDataState", "execErrState", "expressions"},
-			},
-		},
-		Dependencies: []string{
-			GetSearchAlertRulesExpression{}.OpenAPIModelName(), GetSearchAlertRulesIntervalTrigger{}.OpenAPIModelName(), GetSearchAlertRulesPanelRef{}.OpenAPIModelName(), GetSearchAlertRulesSimplifiedRoutingOrNamedRoutingTree{}.OpenAPIModelName()},
-	}
-}
-
 func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesBody(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -795,7 +627,7 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesBody(ref common.Refere
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(GetSearchAlertRulesAlertRuleHit{}.OpenAPIModelName()),
+										Ref:     ref(GetSearchAlertRulesRuleHit{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -806,152 +638,7 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesBody(ref common.Refere
 			},
 		},
 		Dependencies: []string{
-			GetSearchAlertRulesAlertRuleHit{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesExpression(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"queryType": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"relativeTimeRange": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(GetSearchAlertRulesRelativeTimeRange{}.OpenAPIModelName()),
-						},
-					},
-					"datasourceUID": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"model": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"object"},
-							Format: "",
-						},
-					},
-					"source": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-				},
-				Required: []string{"model"},
-			},
-		},
-		Dependencies: []string{
-			GetSearchAlertRulesRelativeTimeRange{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesIntervalTrigger(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"interval": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"interval"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesNamedRoutingTree(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"type": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"routingTree": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"type", "routingTree"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesPanelRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"dashboardUID": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"panelID": {
-						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
-						},
-					},
-				},
-				Required: []string{"dashboardUID", "panelID"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesRelativeTimeRange(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"from": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"to": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"from", "to"},
-			},
-		},
+			GetSearchAlertRulesRuleHit{}.OpenAPIModelName()},
 	}
 }
 
@@ -988,7 +675,7 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesResponse(ref common.Re
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(GetSearchAlertRulesAlertRuleHit{}.OpenAPIModelName()),
+										Ref:     ref(GetSearchAlertRulesRuleHit{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -999,11 +686,11 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesResponse(ref common.Re
 			},
 		},
 		Dependencies: []string{
-			GetSearchAlertRulesAlertRuleHit{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
+			GetSearchAlertRulesRuleHit{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesSimplifiedRouting(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesRuleHit(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1016,229 +703,13 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesSimplifiedRouting(ref 
 							Format:  "",
 						},
 					},
-					"receiver": {
+					"name": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
 						},
 					},
-					"groupBy": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"groupWait": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"groupInterval": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"repeatInterval": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"muteTimeIntervals": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"activeTimeIntervals": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"type", "receiver"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesSimplifiedRoutingOrNamedRoutingTree(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"SimplifiedRouting": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(GetSearchAlertRulesSimplifiedRouting{}.OpenAPIModelName()),
-						},
-					},
-					"NamedRoutingTree": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(GetSearchAlertRulesNamedRoutingTree{}.OpenAPIModelName()),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			GetSearchAlertRulesNamedRoutingTree{}.OpenAPIModelName(), GetSearchAlertRulesSimplifiedRouting{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesBody(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(GetSearchRecordingRulesRecordingRuleHit{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"items"},
-			},
-		},
-		Dependencies: []string{
-			GetSearchRecordingRulesRecordingRuleHit{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesExpression(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"queryType": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"relativeTimeRange": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(GetSearchRecordingRulesRelativeTimeRange{}.OpenAPIModelName()),
-						},
-					},
-					"datasourceUID": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"model": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"object"},
-							Format: "",
-						},
-					},
-					"source": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-				},
-				Required: []string{"model"},
-			},
-		},
-		Dependencies: []string{
-			GetSearchRecordingRulesRelativeTimeRange{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesIntervalTrigger(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"interval": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"interval"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesRecordingRuleHit(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"object"},
-							Format: "",
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(GetSearchRecordingRulesRecordingRuleSpec{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"metadata", "spec"},
-			},
-		},
-		Dependencies: []string{
-			GetSearchRecordingRulesRecordingRuleSpec{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesRecordingRuleSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
 					"title": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -1246,16 +717,23 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesRecordingRuleSpec(
 							Format:  "",
 						},
 					},
+					"folder": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"paused": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"boolean"},
 							Format: "",
-						},
-					},
-					"trigger": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(GetSearchRecordingRulesIntervalTrigger{}.OpenAPIModelName()),
 						},
 					},
 					"labels": {
@@ -1273,67 +751,52 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesRecordingRuleSpec(
 							},
 						},
 					},
-					"metric": {
+					"datasourceUIDs": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"expressions": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(GetSearchRecordingRulesExpression{}.OpenAPIModelName()),
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
 						},
 					},
-					"targetDatasourceUID": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
 				},
-				Required: []string{"title", "trigger", "metric", "expressions", "targetDatasourceUID"},
+				Required: []string{"type", "name", "title", "folder"},
 			},
 		},
-		Dependencies: []string{
-			GetSearchRecordingRulesExpression{}.OpenAPIModelName(), GetSearchRecordingRulesIntervalTrigger{}.OpenAPIModelName()},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesRelativeTimeRange(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesBody(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"from": {
+					"items": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"to": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(GetSearchRecordingRulesRuleHit{}.OpenAPIModelName()),
+									},
+								},
+							},
 						},
 					},
 				},
-				Required: []string{"from", "to"},
+				Required: []string{"items"},
 			},
 		},
+		Dependencies: []string{
+			GetSearchRecordingRulesRuleHit{}.OpenAPIModelName()},
 	}
 }
 
@@ -1370,7 +833,7 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesResponse(ref commo
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(GetSearchRecordingRulesRecordingRuleHit{}.OpenAPIModelName()),
+										Ref:     ref(GetSearchRecordingRulesRuleHit{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1381,16 +844,30 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesResponse(ref commo
 			},
 		},
 		Dependencies: []string{
-			GetSearchRecordingRulesRecordingRuleHit{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
+			GetSearchRecordingRulesRuleHit{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesAlertRuleSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesRuleHit(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"title": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -1398,16 +875,23 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesAlertRuleSpec(ref common.Re
 							Format:  "",
 						},
 					},
+					"folder": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"paused": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"boolean"},
 							Format: "",
-						},
-					},
-					"trigger": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(GetSearchRulesIntervalTrigger{}.OpenAPIModelName()),
 						},
 					},
 					"labels": {
@@ -1425,11 +909,10 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesAlertRuleSpec(ref common.Re
 							},
 						},
 					},
-					"annotations": {
+					"datasourceUIDs": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: "",
@@ -1440,68 +923,10 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesAlertRuleSpec(ref common.Re
 							},
 						},
 					},
-					"for": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"keepFiringFor": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"missingSeriesEvalsToResolve": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
-					"noDataState": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"execErrState": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"notificationSettings": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(GetSearchRulesSimplifiedRoutingOrNamedRoutingTree{}.OpenAPIModelName()),
-						},
-					},
-					"expressions": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(GetSearchRulesExpression{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-					"panelRef": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(GetSearchRulesPanelRef{}.OpenAPIModelName()),
-						},
-					},
 				},
-				Required: []string{"title", "trigger", "noDataState", "execErrState", "expressions"},
+				Required: []string{"type", "name", "title", "folder"},
 			},
 		},
-		Dependencies: []string{
-			GetSearchRulesExpression{}.OpenAPIModelName(), GetSearchRulesIntervalTrigger{}.OpenAPIModelName(), GetSearchRulesPanelRef{}.OpenAPIModelName(), GetSearchRulesSimplifiedRoutingOrNamedRoutingTree{}.OpenAPIModelName()},
 	}
 }
 
@@ -1530,228 +955,6 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesBody(ref common.ReferenceCa
 		},
 		Dependencies: []string{
 			GetSearchRulesRuleHit{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesExpression(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"queryType": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"relativeTimeRange": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(GetSearchRulesRelativeTimeRange{}.OpenAPIModelName()),
-						},
-					},
-					"datasourceUID": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"model": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"object"},
-							Format: "",
-						},
-					},
-					"source": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-				},
-				Required: []string{"model"},
-			},
-		},
-		Dependencies: []string{
-			GetSearchRulesRelativeTimeRange{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesIntervalTrigger(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"interval": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"interval"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesNamedRoutingTree(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"type": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"routingTree": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"type", "routingTree"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesPanelRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"dashboardUID": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"panelID": {
-						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
-						},
-					},
-				},
-				Required: []string{"dashboardUID", "panelID"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesRecordingRuleSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"title": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"paused": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-					"trigger": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(GetSearchRulesIntervalTrigger{}.OpenAPIModelName()),
-						},
-					},
-					"labels": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"metric": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"expressions": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(GetSearchRulesExpression{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-					"targetDatasourceUID": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"title", "trigger", "metric", "expressions", "targetDatasourceUID"},
-			},
-		},
-		Dependencies: []string{
-			GetSearchRulesExpression{}.OpenAPIModelName(), GetSearchRulesIntervalTrigger{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesRelativeTimeRange(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"from": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"to": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"from", "to"},
-			},
-		},
 	}
 }
 
@@ -1809,31 +1012,6 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesRuleHit(ref common.Referenc
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"object"},
-							Format: "",
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"object"},
-							Format: "",
-						},
-					},
-				},
-				Required: []string{"metadata", "spec"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesSimplifiedRouting(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -1841,17 +1019,44 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesSimplifiedRouting(ref commo
 							Format:  "",
 						},
 					},
-					"receiver": {
+					"name": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
 						},
 					},
-					"groupBy": {
+					"title": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"folder": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"paused": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: "",
@@ -1862,39 +1067,7 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesSimplifiedRouting(ref commo
 							},
 						},
 					},
-					"groupWait": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"groupInterval": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"repeatInterval": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"muteTimeIntervals": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"activeTimeIntervals": {
+					"datasourceUIDs": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -1909,33 +1082,9 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesSimplifiedRouting(ref commo
 						},
 					},
 				},
-				Required: []string{"type", "receiver"},
+				Required: []string{"type", "name", "title", "folder"},
 			},
 		},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesSimplifiedRoutingOrNamedRoutingTree(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"SimplifiedRouting": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(GetSearchRulesSimplifiedRouting{}.OpenAPIModelName()),
-						},
-					},
-					"NamedRoutingTree": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(GetSearchRulesNamedRoutingTree{}.OpenAPIModelName()),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			GetSearchRulesNamedRoutingTree{}.OpenAPIModelName(), GetSearchRulesSimplifiedRouting{}.OpenAPIModelName()},
 	}
 }
 

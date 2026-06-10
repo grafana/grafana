@@ -8,29 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
-
-func TestParseParams(t *testing.T) {
-	v, err := url.ParseQuery("q=cpu&folders=f1&folders=f2&groups=g1&paused=true&limit=10&sort=-group&type=alertrule&labels=team%3Da&labels=!__grafana_origin&datasourceUIDs=ds1&panelID=7")
-	require.NoError(t, err)
-
-	p := parseParams(v)
-
-	assert.Equal(t, "cpu", strVal(p.Q))
-	assert.Equal(t, []string{"f1", "f2"}, p.Folders)
-	assert.Equal(t, []string{"g1"}, p.Groups)
-	require.NotNil(t, p.Paused)
-	assert.True(t, *p.Paused)
-	assert.Equal(t, int64(10), limit(p))
-	assert.Equal(t, "alertrule", strVal(p.Type))
-	assert.Equal(t, []string{"ds1"}, p.DatasourceUIDs)
-	assert.Equal(t, "7", panelID(p))
-
-	field, desc := sortSpec(p.Sort)
-	assert.Equal(t, "group", field)
-	assert.True(t, desc)
-}
 
 func TestParseLabelMatcher(t *testing.T) {
 	tests := map[string]labelMatcher{
@@ -41,20 +22,21 @@ func TestParseLabelMatcher(t *testing.T) {
 	}
 	for in, want := range tests {
 		assert.Equal(t, want, parseLabelMatcher(in), in)
+		// matchers must survive the round trip through a request requirement.
+		assert.Equal(t, want, requirementToMatcher(matcherToRequirement(want)), in)
 	}
 }
 
 func TestMatchLabels(t *testing.T) {
 	rule := &ngmodels.AlertRule{Labels: map[string]string{"team": "a", "__grafana_origin": "plugin/x"}}
 
-	assert.True(t, matchLabels(rule, parseLabelMatchers([]string{"team=a"})))
-	assert.False(t, matchLabels(rule, parseLabelMatchers([]string{"team=b"})))
-	assert.True(t, matchLabels(rule, parseLabelMatchers([]string{"team!=b"})))
-	// plugin-owned via existence check
-	assert.True(t, matchLabels(rule, parseLabelMatchers([]string{"__grafana_origin"})))
-	assert.False(t, matchLabels(rule, parseLabelMatchers([]string{"!__grafana_origin"})))
+	assert.True(t, matchLabels(rule, []labelMatcher{parseLabelMatcher("team=a")}))
+	assert.False(t, matchLabels(rule, []labelMatcher{parseLabelMatcher("team=b")}))
+	assert.True(t, matchLabels(rule, []labelMatcher{parseLabelMatcher("team!=b")}))
+	assert.True(t, matchLabels(rule, []labelMatcher{parseLabelMatcher("__grafana_origin")}))
+	assert.False(t, matchLabels(rule, []labelMatcher{parseLabelMatcher("!__grafana_origin")}))
 	// all matchers must hold (AND)
-	assert.False(t, matchLabels(rule, parseLabelMatchers([]string{"team=a", "missing"})))
+	assert.False(t, matchLabels(rule, []labelMatcher{parseLabelMatcher("team=a"), parseLabelMatcher("missing")}))
 }
 
 func TestMatchDatasources(t *testing.T) {
@@ -67,7 +49,6 @@ func TestMatchDatasources(t *testing.T) {
 	assert.True(t, matchDatasources(rule, []string{"ds1"}))
 	assert.True(t, matchDatasources(rule, []string{"other", "ds1"}))
 	assert.False(t, matchDatasources(rule, []string{"other"}))
-	// the server-side expression datasource is never matchable
 	assert.False(t, matchDatasources(rule, []string{expr.DatasourceUID}))
 }
 
@@ -78,52 +59,88 @@ func TestSortRules(t *testing.T) {
 		{Title: "c", NamespaceUID: "f1", RuleGroup: "g0", RuleGroupIndex: 1},
 	}
 
-	sortRules(rules, "group", false)
-	// g0 sorts before g1; within g1 the group index is preserved.
+	sortRules(rules, fieldGroup, false)
 	assert.Equal(t, []string{"c", "a", "b"}, titles(rules))
 
-	sortRules(rules, "title", false)
+	sortRules(rules, fieldTitle, false)
 	assert.Equal(t, []string{"a", "b", "c"}, titles(rules))
 
-	sortRules(rules, "title", true)
+	sortRules(rules, fieldTitle, true)
 	assert.Equal(t, []string{"c", "b", "a"}, titles(rules))
 }
 
-func TestPaginate(t *testing.T) {
-	rules := make([]*ngmodels.AlertRule, 5)
-	for i := range rules {
-		rules[i] = &ngmodels.AlertRule{UID: string(rune('a' + i))}
+// TestBuildSearchRequestExtractRoundTrip verifies the handler-built request can
+// be decoded back into the same filters by the legacy backend.
+func TestBuildSearchRequestExtractRoundTrip(t *testing.T) {
+	q := url.Values{
+		"q":              {"cpu"},
+		"folders":        {"f1", "f2"},
+		"groups":         {"g1"},
+		"paused":         {"true"},
+		"datasourceUIDs": {"ds1", "ds2"},
+		"labels":         {"team=a", "!__grafana_origin"},
+		"sort":           {"-group"},
+		"receiver":       {"slack"},
+	}
+	req, offset, err := buildSearchRequest(q, "default", alertrule.ResourceInfo.GroupResource(), nil)
+	require.NoError(t, err)
+	assert.Zero(t, offset)
+
+	f := extractFilters(req)
+	assert.Equal(t, "cpu", f.text)
+	assert.Equal(t, []string{"f1", "f2"}, f.folders)
+	assert.Equal(t, []string{"g1"}, f.groups)
+	assert.Equal(t, []string{"ds1", "ds2"}, f.datasourceUIDs)
+	assert.Equal(t, "slack", f.receiver)
+	require.NotNil(t, f.paused)
+	assert.True(t, *f.paused)
+	assert.Equal(t, fieldGroup, f.sortField)
+	assert.True(t, f.sortDesc)
+	assert.ElementsMatch(t, []labelMatcher{
+		{key: "team", value: "a", op: matchEquals},
+		{key: "__grafana_origin", op: matchNotExists},
+	}, f.labels)
+}
+
+// TestCellsParseRoundTrip verifies a rule encoded into table cells decodes back
+// into the expected hit.
+func TestCellsParseRoundTrip(t *testing.T) {
+	rule := &ngmodels.AlertRule{
+		UID:          "uid1",
+		Title:        "cpu high",
+		NamespaceUID: "folder1",
+		RuleGroup:    "group1",
+		IsPaused:     true,
+		Labels:       map[string]string{"team": "a"},
+		Data:         []ngmodels.AlertQuery{{DatasourceUID: "ds1"}, {DatasourceUID: expr.DatasourceUID}},
 	}
 
-	page, token := paginate(rules, "", 2)
-	assert.Len(t, page, 2)
-	assert.Equal(t, "2", token)
-
-	page, token = paginate(rules, token, 2)
-	assert.Equal(t, []string{"c", "d"}, uids(page))
-	assert.Equal(t, "4", token)
-
-	page, token = paginate(rules, token, 2)
-	assert.Equal(t, []string{"e"}, uids(page))
-	assert.Empty(t, token, "last page has no continue token")
-
-	page, token = paginate(rules, "", 0)
-	assert.Len(t, page, 5, "limit 0 returns everything")
-	assert.Empty(t, token)
+	resp := &resourcepb.ResourceSearchResponse{
+		TotalHits: 1,
+		Results: &resourcepb.ResourceTable{
+			Columns: resultColumnDefinitions(),
+			Rows:    []*resourcepb.ResourceTableRow{{Key: ruleKey("default", rule), Cells: ruleCells(rule)}},
+		},
+	}
+	hits := parseResults(resp)
+	require.Len(t, hits, 1)
+	h := hits[0]
+	assert.Equal(t, "uid1", h.Name)
+	assert.EqualValues(t, "alertrule", h.Type)
+	assert.Equal(t, "cpu high", h.Title)
+	assert.Equal(t, "folder1", h.Folder)
+	require.NotNil(t, h.Group)
+	assert.Equal(t, "group1", *h.Group)
+	require.NotNil(t, h.Paused)
+	assert.True(t, *h.Paused)
+	assert.Equal(t, map[string]string{"team": "a"}, h.Labels)
+	assert.Equal(t, []string{"ds1"}, h.DatasourceUIDs)
 }
 
 func titles(rules []*ngmodels.AlertRule) []string {
 	out := make([]string, len(rules))
 	for i, r := range rules {
 		out[i] = r.Title
-	}
-	return out
-}
-
-func uids(rules []*ngmodels.AlertRule) []string {
-	out := make([]string, len(rules))
-	for i, r := range rules {
-		out[i] = r.UID
 	}
 	return out
 }

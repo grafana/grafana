@@ -32,7 +32,9 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	apistore "github.com/grafana/grafana/pkg/storage/unified/apistore"
+	unifiedresource "github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var (
@@ -51,6 +53,8 @@ type AppInstaller struct {
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
+	unifiedClient unifiedresource.ResourceClient,
+	dual dualwrite.Service,
 	_ resource.ClientGenerator, // retained for Wire compatibility; membership resolution now uses a watch-backed index
 ) (*AppInstaller, error) {
 	if ng.IsDisabled() {
@@ -65,7 +69,14 @@ func RegisterAppInstaller(
 
 	membershipIndex := rulesequence_app.NewMembershipIndex()
 
-	searchHandler := search.NewHandler(*ng.Api.AlertRules, reqns.GetNamespaceMapper(cfg))
+	// Search routes through a dual-writer-aware client per kind: the legacy
+	// backend (provisioning service) serves modes 0-2, the unified client 3+.
+	legacySearch := search.NewLegacyClient(*ng.Api.AlertRules)
+	searchAdapter := dualwrite.NewSearchAdapter(dual)
+	searchHandler := search.NewHandler(
+		unifiedresource.NewSearchClient(searchAdapter, alertrule.ResourceInfo.GroupResource(), unifiedClient, legacySearch),
+		unifiedresource.NewSearchClient(searchAdapter, recordingrule.ResourceInfo.GroupResource(), unifiedClient, legacySearch),
+	)
 
 	appSpecificConfig := rulesAppConfig.RuntimeConfig{
 		FolderValidator:               newFolderValidator(ng),

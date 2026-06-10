@@ -53,7 +53,7 @@ searchRoutes: {
 					query: #alertRuleSearchQuery
 				}
 				response: {
-					items: [...v0alpha1.#AlertRuleHit]
+					items: [...v0alpha1.#RuleHit]
 				}
 				responseMetadata: {
 					typeMeta: true
@@ -68,7 +68,7 @@ searchRoutes: {
 					query: #recordingRuleSearchQuery
 				}
 				response: {
-					items: [...v0alpha1.#RecordingRuleHit]
+					items: [...v0alpha1.#RuleHit]
 				}
 				responseMetadata: {
 					typeMeta: true

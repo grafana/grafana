@@ -675,7 +675,7 @@ var appManifestData = app.ManifestData{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
 
-																							Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesAlertRuleHit"),
+																							Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesRuleHit"),
 																						}},
 																				},
 																			},
@@ -925,7 +925,7 @@ var appManifestData = app.ManifestData{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
 
-																							Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesRecordingRuleHit"),
+																							Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesRuleHit"),
 																						}},
 																				},
 																			},
@@ -987,337 +987,11 @@ var appManifestData = app.ManifestData{
 				},
 				Cluster: map[string]spec3.PathProps{},
 				Schemas: map[string]spec.Schema{
-					"getSearchAlertRulesAlertRuleHit": {
+					"getSearchAlertRulesRuleHit": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
-								"metadata": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
-										AdditionalProperties: &spec.SchemaOrBool{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{},
-											},
-										},
-									},
-								},
-								"spec": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesAlertRuleSpec"),
-									},
-								},
-							},
-							Required: []string{
-								"metadata",
-								"spec",
-							},
-						},
-					},
-					"getSearchAlertRulesAlertRuleSpec": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"annotations": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
-										AdditionalProperties: &spec.SchemaOrBool{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-
-													Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesTemplateString"),
-												},
-											},
-										},
-									},
-								},
-								"execErrState": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesExecErrState"),
-									},
-								},
-								"expressions": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesExpressionMap"),
-									},
-								},
-								"for": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"keepFiringFor": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"labels": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
-										AdditionalProperties: &spec.SchemaOrBool{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-
-													Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesTemplateString"),
-												},
-											},
-										},
-									},
-								},
-								"missingSeriesEvalsToResolve": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"integer"},
-									},
-								},
-								"noDataState": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesNoDataState"),
-									},
-								},
-								"notificationSettings": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesNotificationSettings"),
-									},
-								},
-								"panelRef": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesPanelRef"),
-									},
-								},
-								"paused": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"boolean"},
-									},
-								},
-								"title": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"trigger": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesIntervalTrigger"),
-									},
-								},
-							},
-							Required: []string{
-								"title",
-								"trigger",
-								"noDataState",
-								"execErrState",
-								"expressions",
-							},
-						},
-					},
-					"getSearchAlertRulesDatasourceUID": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-						},
-					},
-					"getSearchAlertRulesExecErrState": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-							Enum: []interface{}{
-								"Error",
-								"Ok",
-								"Alerting",
-								"KeepLast",
-							},
-						},
-					},
-					"getSearchAlertRulesExpression": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"datasourceUID": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesDatasourceUID"),
-									},
-								},
-								"model": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
-										AdditionalProperties: &spec.SchemaOrBool{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{},
-											},
-										},
-									},
-								},
-								"queryType": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"relativeTimeRange": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesRelativeTimeRange"),
-									},
-								},
-								"source": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"boolean"},
-									},
-								},
-							},
-							Required: []string{
-								"model",
-							},
-						},
-					},
-					"getSearchAlertRulesExpressionMap": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesExpression"),
-									},
-								},
-							},
-						},
-					},
-					"getSearchAlertRulesIntervalTrigger": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"interval": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesPromDuration"),
-									},
-								},
-							},
-							Required: []string{
-								"interval",
-							},
-						},
-					},
-					"getSearchAlertRulesNamedRoutingTree": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"routingTree": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"type": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesNotificationSettingsType"),
-									},
-								},
-							},
-							Required: []string{
-								"type",
-								"routingTree",
-							},
-						},
-					},
-					"getSearchAlertRulesNoDataState": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-							Enum: []interface{}{
-								"NoData",
-								"Ok",
-								"Alerting",
-								"KeepLast",
-							},
-						},
-					},
-					"getSearchAlertRulesNotificationSettings": {
-						SchemaProps: spec.SchemaProps{},
-					},
-					"getSearchAlertRulesNotificationSettingsType": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-							Enum: []interface{}{
-								"SimplifiedRouting",
-								"NamedRoutingTree",
-							},
-						},
-					},
-					"getSearchAlertRulesPanelRef": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"dashboardUID": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"panelID": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"integer"},
-									},
-								},
-							},
-							Required: []string{
-								"dashboardUID",
-								"panelID",
-							},
-						},
-					},
-					"getSearchAlertRulesPromDuration": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-						},
-					},
-					"getSearchAlertRulesPromDurationWMillis": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-						},
-					},
-					"getSearchAlertRulesRelativeTimeRange": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"from": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesPromDurationWMillis"),
-									},
-								},
-								"to": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesPromDurationWMillis"),
-									},
-								},
-							},
-							Required: []string{
-								"from",
-								"to",
-							},
-						},
-					},
-					"getSearchAlertRulesSimplifiedRouting": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"activeTimeIntervals": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-
-													Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesTimeIntervalRef"),
-												}},
-										},
-									},
-								},
-								"groupBy": {
+								"datasourceUIDs": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"array"},
 										Items: &spec.SchemaOrArray{
@@ -1328,306 +1002,88 @@ var appManifestData = app.ManifestData{
 										},
 									},
 								},
-								"groupInterval": {
+								"folder": {
 									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesPromDuration"),
+										Type: []string{"string"},
 									},
 								},
-								"groupWait": {
+								"group": {
 									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesPromDuration"),
+										Type: []string{"string"},
 									},
 								},
-								"muteTimeIntervals": {
+								"labels": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"name": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"paused": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"title": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"type": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesRuleSearchType"),
+									},
+								},
+							},
+							Required: []string{
+								"type",
+								"name",
+								"title",
+								"folder",
+							},
+						},
+					},
+					"getSearchAlertRulesRuleSearchType": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"string"},
+							Enum: []interface{}{
+								"alertrule",
+								"recordingrule",
+							},
+						},
+					},
+					"getSearchRecordingRulesRuleHit": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"datasourceUIDs": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"array"},
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-
-													Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesTimeIntervalRef"),
+													Type: []string{"string"},
 												}},
 										},
 									},
 								},
-								"receiver": {
+								"folder": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
 									},
 								},
-								"repeatInterval": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesPromDuration"),
-									},
-								},
-								"type": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesNotificationSettingsType"),
-									},
-								},
-							},
-							Required: []string{
-								"type",
-								"receiver",
-							},
-						},
-					},
-					"getSearchAlertRulesTemplateString": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-						},
-					},
-					"getSearchAlertRulesTimeIntervalRef": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-						},
-					},
-					"getSearchRecordingRulesDatasourceUID": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-						},
-					},
-					"getSearchRecordingRulesExpression": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"datasourceUID": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesDatasourceUID"),
-									},
-								},
-								"model": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
-										AdditionalProperties: &spec.SchemaOrBool{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{},
-											},
-										},
-									},
-								},
-								"queryType": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"relativeTimeRange": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesRelativeTimeRange"),
-									},
-								},
-								"source": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"boolean"},
-									},
-								},
-							},
-							Required: []string{
-								"model",
-							},
-						},
-					},
-					"getSearchRecordingRulesExpressionMap": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesExpression"),
-									},
-								},
-							},
-						},
-					},
-					"getSearchRecordingRulesIntervalTrigger": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"interval": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesPromDuration"),
-									},
-								},
-							},
-							Required: []string{
-								"interval",
-							},
-						},
-					},
-					"getSearchRecordingRulesMetricName": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-						},
-					},
-					"getSearchRecordingRulesPromDuration": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-						},
-					},
-					"getSearchRecordingRulesPromDurationWMillis": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-						},
-					},
-					"getSearchRecordingRulesRecordingRuleHit": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"metadata": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
-										AdditionalProperties: &spec.SchemaOrBool{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{},
-											},
-										},
-									},
-								},
-								"spec": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesRecordingRuleSpec"),
-									},
-								},
-							},
-							Required: []string{
-								"metadata",
-								"spec",
-							},
-						},
-					},
-					"getSearchRecordingRulesRecordingRuleSpec": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"expressions": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesExpressionMap"),
-									},
-								},
-								"labels": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
-										AdditionalProperties: &spec.SchemaOrBool{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-
-													Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesTemplateString"),
-												},
-											},
-										},
-									},
-								},
-								"metric": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesMetricName"),
-									},
-								},
-								"paused": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"boolean"},
-									},
-								},
-								"targetDatasourceUID": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesDatasourceUID"),
-									},
-								},
-								"title": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"trigger": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesIntervalTrigger"),
-									},
-								},
-							},
-							Required: []string{
-								"title",
-								"trigger",
-								"metric",
-								"expressions",
-								"targetDatasourceUID",
-							},
-						},
-					},
-					"getSearchRecordingRulesRelativeTimeRange": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"from": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesPromDurationWMillis"),
-									},
-								},
-								"to": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesPromDurationWMillis"),
-									},
-								},
-							},
-							Required: []string{
-								"from",
-								"to",
-							},
-						},
-					},
-					"getSearchRecordingRulesTemplateString": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-						},
-					},
-					"getSearchRulesAlertRuleSpec": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"annotations": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
-										AdditionalProperties: &spec.SchemaOrBool{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-
-													Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesTemplateString"),
-												},
-											},
-										},
-									},
-								},
-								"execErrState": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesExecErrState"),
-									},
-								},
-								"expressions": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesExpressionMap"),
-									},
-								},
-								"for": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"keepFiringFor": {
+								"group": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
 									},
@@ -1638,34 +1094,15 @@ var appManifestData = app.ManifestData{
 										AdditionalProperties: &spec.SchemaOrBool{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-
-													Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesTemplateString"),
+													Type: []string{"string"},
 												},
 											},
 										},
 									},
 								},
-								"missingSeriesEvalsToResolve": {
+								"name": {
 									SchemaProps: spec.SchemaProps{
-										Type: []string{"integer"},
-									},
-								},
-								"noDataState": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesNoDataState"),
-									},
-								},
-								"notificationSettings": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesNotificationSettings"),
-									},
-								},
-								"panelRef": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesPanelRef"),
+										Type: []string{"string"},
 									},
 								},
 								"paused": {
@@ -1674,123 +1111,6 @@ var appManifestData = app.ManifestData{
 									},
 								},
 								"title": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"trigger": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesIntervalTrigger"),
-									},
-								},
-							},
-							Required: []string{
-								"title",
-								"trigger",
-								"noDataState",
-								"execErrState",
-								"expressions",
-							},
-						},
-					},
-					"getSearchRulesDatasourceUID": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-						},
-					},
-					"getSearchRulesExecErrState": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-							Enum: []interface{}{
-								"Error",
-								"Ok",
-								"Alerting",
-								"KeepLast",
-							},
-						},
-					},
-					"getSearchRulesExpression": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"datasourceUID": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesDatasourceUID"),
-									},
-								},
-								"model": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
-										AdditionalProperties: &spec.SchemaOrBool{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{},
-											},
-										},
-									},
-								},
-								"queryType": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"relativeTimeRange": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesRelativeTimeRange"),
-									},
-								},
-								"source": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"boolean"},
-									},
-								},
-							},
-							Required: []string{
-								"model",
-							},
-						},
-					},
-					"getSearchRulesExpressionMap": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesExpression"),
-									},
-								},
-							},
-						},
-					},
-					"getSearchRulesIntervalTrigger": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"interval": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesPromDuration"),
-									},
-								},
-							},
-							Required: []string{
-								"interval",
-							},
-						},
-					},
-					"getSearchRulesMetricName": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-						},
-					},
-					"getSearchRulesNamedRoutingTree": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"routingTree": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
 									},
@@ -1798,151 +1118,24 @@ var appManifestData = app.ManifestData{
 								"type": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesNotificationSettingsType"),
+										Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesRuleSearchType"),
 									},
 								},
 							},
 							Required: []string{
 								"type",
-								"routingTree",
-							},
-						},
-					},
-					"getSearchRulesNoDataState": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-							Enum: []interface{}{
-								"NoData",
-								"Ok",
-								"Alerting",
-								"KeepLast",
-							},
-						},
-					},
-					"getSearchRulesNotificationSettings": {
-						SchemaProps: spec.SchemaProps{},
-					},
-					"getSearchRulesNotificationSettingsType": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-							Enum: []interface{}{
-								"SimplifiedRouting",
-								"NamedRoutingTree",
-							},
-						},
-					},
-					"getSearchRulesPanelRef": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"dashboardUID": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"panelID": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"integer"},
-									},
-								},
-							},
-							Required: []string{
-								"dashboardUID",
-								"panelID",
-							},
-						},
-					},
-					"getSearchRulesPromDuration": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-						},
-					},
-					"getSearchRulesPromDurationWMillis": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
-						},
-					},
-					"getSearchRulesRecordingRuleSpec": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"expressions": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesExpressionMap"),
-									},
-								},
-								"labels": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
-										AdditionalProperties: &spec.SchemaOrBool{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-
-													Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesTemplateString"),
-												},
-											},
-										},
-									},
-								},
-								"metric": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesMetricName"),
-									},
-								},
-								"paused": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"boolean"},
-									},
-								},
-								"targetDatasourceUID": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesDatasourceUID"),
-									},
-								},
-								"title": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"trigger": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesIntervalTrigger"),
-									},
-								},
-							},
-							Required: []string{
+								"name",
 								"title",
-								"trigger",
-								"metric",
-								"expressions",
-								"targetDatasourceUID",
+								"folder",
 							},
 						},
 					},
-					"getSearchRulesRelativeTimeRange": {
+					"getSearchRecordingRulesRuleSearchType": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"from": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesPromDurationWMillis"),
-									},
-								},
-								"to": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesPromDurationWMillis"),
-									},
-								},
-							},
-							Required: []string{
-								"from",
-								"to",
+							Type: []string{"string"},
+							Enum: []interface{}{
+								"alertrule",
+								"recordingrule",
 							},
 						},
 					},
@@ -1950,43 +1143,7 @@ var appManifestData = app.ManifestData{
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
-								"metadata": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
-										AdditionalProperties: &spec.SchemaOrBool{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{},
-											},
-										},
-									},
-								},
-								"spec": {
-									SchemaProps: spec.SchemaProps{},
-								},
-							},
-							Required: []string{
-								"metadata",
-								"spec",
-							},
-						},
-					},
-					"getSearchRulesSimplifiedRouting": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"activeTimeIntervals": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-
-													Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesTimeIntervalRef"),
-												}},
-										},
-									},
-								},
-								"groupBy": {
+								"datasourceUIDs": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"array"},
 										Items: &spec.SchemaOrArray{
@@ -1997,62 +1154,65 @@ var appManifestData = app.ManifestData{
 										},
 									},
 								},
-								"groupInterval": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesPromDuration"),
-									},
-								},
-								"groupWait": {
-									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesPromDuration"),
-									},
-								},
-								"muteTimeIntervals": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-
-													Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesTimeIntervalRef"),
-												}},
-										},
-									},
-								},
-								"receiver": {
+								"folder": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
 									},
 								},
-								"repeatInterval": {
+								"group": {
 									SchemaProps: spec.SchemaProps{
-
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesPromDuration"),
+										Type: []string{"string"},
+									},
+								},
+								"labels": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"name": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"paused": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"title": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
 									},
 								},
 								"type": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesNotificationSettingsType"),
+										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesRuleSearchType"),
 									},
 								},
 							},
 							Required: []string{
 								"type",
-								"receiver",
+								"name",
+								"title",
+								"folder",
 							},
 						},
 					},
-					"getSearchRulesTemplateString": {
+					"getSearchRulesRuleSearchType": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"string"},
-						},
-					},
-					"getSearchRulesTimeIntervalRef": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"string"},
+							Enum: []interface{}{
+								"alertrule",
+								"recordingrule",
+							},
 						},
 					},
 				},
