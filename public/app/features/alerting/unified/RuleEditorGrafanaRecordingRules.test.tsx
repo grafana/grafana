@@ -15,7 +15,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { grantUserPermissions, mockDataSource } from './mocks';
 import { grafanaRulerGroup } from './mocks/grafanaRulerApi';
 import { captureRequests, serializeRequests } from './mocks/server/events';
-import { FOLDER_TITLE_HAPPY_PATH } from './mocks/server/handlers/search';
+import { FOLDER_TITLE_HAPPY_PATH } from './mocks/server/handlers/folders';
 import { setupDataSources } from './testSetup/datasources';
 import { setupPluginsExtensionsHook } from './testSetup/plugins';
 

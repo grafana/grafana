@@ -3,7 +3,7 @@ import { isEqual, uniqBy } from 'lodash';
 import { type DataFrameJSON } from '@grafana/data';
 import { type GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
-export interface Line {
+interface Line {
   previous: GrafanaAlertStateWithReason;
   current: GrafanaAlertStateWithReason;
   values?: Record<string, number>;
