@@ -363,7 +363,6 @@ func InhibitionRulesToDB(in map[ResourceUID]InhibitionRule) (definitions.Managed
 		m, err := InhibitionRuleToDB(ir)
 		if err != nil {
 			errs = append(errs, err)
-			continue
 		}
 		out[m.Name] = m
 	}
@@ -371,13 +370,15 @@ func InhibitionRulesToDB(in map[ResourceUID]InhibitionRule) (definitions.Managed
 }
 
 func InhibitionRuleToDB(in InhibitionRule) (*definitions.InhibitionRule, error) {
+	var errs []error
+
 	sourceMatchers, err := MatchersToDB(in.SourceMatchers)
 	if err != nil {
-		return nil, fmt.Errorf("invalid source matchers: %w", err)
+		errs = append(errs, fmt.Errorf("invalid source matchers: %w", err))
 	}
 	targetMatchers, err := MatchersToDB(in.TargetMatchers)
 	if err != nil {
-		return nil, fmt.Errorf("invalid target matchers: %w", err)
+		errs = append(errs, fmt.Errorf("invalid target matchers: %w", err))
 	}
 	return &definitions.InhibitionRule{
 		Name: string(in.UID),
@@ -387,7 +388,7 @@ func InhibitionRuleToDB(in InhibitionRule) (*definitions.InhibitionRule, error) 
 			Equal:          slices.Clone(in.Equal),
 		},
 		Provenance: definition.Provenance(in.Provenance),
-	}, nil
+	}, errors.Join(errs...)
 }
 
 func MatchersToDB(in []Matcher) (config.Matchers, error) {
@@ -395,19 +396,26 @@ func MatchersToDB(in []Matcher) (config.Matchers, error) {
 		return nil, nil
 	}
 
+	var errs []error
 	result := make(config.Matchers, 0, len(in))
 	for _, m := range in {
 		matchType, err := MatcherTypeToDB(m.Type)
 		if err != nil {
-			return nil, err
+			errs = append(errs, fmt.Errorf("invalid matcher (label=%s, type=%s, value=%s): %w", m.Label, m.Type, m.Value, err))
 		}
 		matcher, err := labels.NewMatcher(matchType, m.Label, m.Value)
 		if err != nil {
-			return nil, fmt.Errorf("invalid matcher (label=%s, type=%s, value=%s): %w", m.Label, m.Type, m.Value, err)
+			// Try to recover by using the default match type, could be useful in the future if we want to ignore certain compat errors without losing data.
+			matcher = &labels.Matcher{
+				Type:  matchType,
+				Name:  m.Label,
+				Value: m.Value,
+			}
+			errs = append(errs, fmt.Errorf("invalid matcher (label=%s, type=%s, value=%s): %w", m.Label, m.Type, m.Value, err))
 		}
 		result = append(result, matcher)
 	}
-	return result, nil
+	return result, errors.Join(errs...)
 }
 
 func MatcherTypeToDB(mType MatcherType) (labels.MatchType, error) {
