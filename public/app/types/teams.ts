@@ -32,8 +32,3 @@ export interface TeamMember {
   labels: string[];
   permission: number;
 }
-
-export interface TeamGroup {
-  groupId: string;
-  teamId: number;
-}

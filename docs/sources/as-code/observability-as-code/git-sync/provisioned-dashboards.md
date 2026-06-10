@@ -101,6 +101,14 @@ You can remove a provisioned dashboard by deleting the dashboard from the reposi
 
 To restore a deleted dashboard, raise a PR directly in your GitHub repository. Restoring resources from the UI isn't possible at the moment.
 
+## Document folders with a README
+
+Document the contents or any other relevant piece of information of your provisioned folder in a `README.md` file stored alongside its resources in the repository. Grafana renders the README inline on the folder page, below the list of dashboards, so your team can see what's in the folder, how it's organized, and where to find the right dashboard without leaving Grafana.
+
+- When the folder contains a `README.md` file, Grafana renders its Markdown content. Relative links and images in the README resolve against the host repository.
+- If the folder has no `README.md`, or if the folder is empty, you'll be prompted to action with a **Add README** button.
+- You can edit the README any time. Select the edit pencil in the README header to open the file in your Git provider's editor and commit changes through your usual workflow.
+
 ## Best practices
 
 Follow these recommendations when working with provisioned dashboards:
@@ -109,3 +117,4 @@ Follow these recommendations when working with provisioned dashboards:
 - **Provide clear commit messages**: Describe your changes to help with tracking and collaboration
 - **Regularly sync your repository**: Keep Grafana up to date with the latest changes
 - **Review the Events tab**: Monitor sync status to ensure changes are applied correctly
+- **Add a folder README**: Document each folder's contents with a `README.md` so teammates can find the right dashboard quickly

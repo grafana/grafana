@@ -5,8 +5,6 @@ import { useMemo, useRef, useState } from 'react';
 
 import { stringifyErrorLike } from '../utils/misc';
 
-export type AsyncStatus = 'loading' | 'success' | 'error' | 'not-executed';
-
 export type AsyncState<Result> =
   | AsyncStateUninitialized<Result>
   | AsyncStateFulfilled<Result>

@@ -416,6 +416,95 @@ func (b *pgvectorBackend) ListIncompleteBackfillJobs(ctx context.Context, model 
 	return out, nil
 }
 
+// EnsureResourcePartition creates the embeddings_<resource> partition leaf and
+// its metadata index. The per-resource advisory lock serializes the attach
+// (ACCESS EXCLUSIVE on the parent) so concurrent replicas don't race it.
+func (b *pgvectorBackend) EnsureResourcePartition(ctx context.Context, resource string) error {
+	// resource is interpolated unquoted into the DDL below; reject anything
+	// sanitizeIdentifier would alter to keep it injection-safe.
+	if resource == "" || sanitizeIdentifier(resource) != resource {
+		return fmt.Errorf("ensure partition: unsafe resource %q", resource)
+	}
+	leaf := subtreeName(resource) // embeddings_<resource>
+	idx := leaf + "_metadata_idx"
+
+	// Fast path: skip the lock + DDL only when BOTH leaf and index exist.
+	// Checking the index too lets a retry finish a prior attempt that created
+	// the leaf but failed before the index.
+	ready, err := b.resourcePartitionReady(ctx, leaf, idx)
+	if err != nil {
+		return fmt.Errorf("check partition %s: %w", leaf, err)
+	}
+	if ready {
+		return nil
+	}
+
+	conn, err := b.db.SqlDB().Conn(ctx)
+	if err != nil {
+		return fmt.Errorf("ensure partition conn: %w", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	lockName := "vectorpartition_" + resource
+	if _, err := conn.ExecContext(ctx,
+		"SELECT pg_advisory_lock(hashtext($1)::bigint)", lockName); err != nil {
+		return fmt.Errorf("ensure partition lock: %w", err)
+	}
+	defer func() {
+		_, _ = conn.ExecContext(context.Background(),
+			"SELECT pg_advisory_unlock(hashtext($1)::bigint)", lockName)
+	}()
+
+	if _, err := conn.ExecContext(ctx, fmt.Sprintf(
+		`CREATE TABLE IF NOT EXISTS %s PARTITION OF %s FOR VALUES IN ('%s')`,
+		leaf, unifiedParent, resource,
+	)); err != nil {
+		return fmt.Errorf("create partition %s: %w", leaf, err)
+	}
+	if _, err := conn.ExecContext(ctx, fmt.Sprintf(
+		`CREATE INDEX IF NOT EXISTS %s ON %s USING GIN (metadata)`,
+		idx, leaf,
+	)); err != nil {
+		return fmt.Errorf("create metadata index on %s: %w", leaf, err)
+	}
+	return nil
+}
+
+// resourcePartitionReady reports whether leaf is attached as a partition of
+// the parent (pg_inherits, not to_regclass, so a same-named unrelated table
+// can't match) AND its metadata index exists.
+func (b *pgvectorBackend) resourcePartitionReady(ctx context.Context, leaf, idx string) (bool, error) {
+	var ready bool
+	err := b.db.QueryRowContext(ctx, `
+		SELECT
+			EXISTS (
+				SELECT 1 FROM pg_inherits i
+				JOIN pg_class c ON c.oid = i.inhrelid
+				JOIN pg_class p ON p.oid = i.inhparent
+				WHERE p.relname = $1 AND c.relname = $2
+			)
+			AND EXISTS (
+				SELECT 1 FROM pg_class WHERE relname = $3 AND relkind = 'i'
+			)`, unifiedParent, leaf, idx).Scan(&ready)
+	if err != nil {
+		return false, err
+	}
+	return ready, nil
+}
+
+func (b *pgvectorBackend) CreateBackfillJob(ctx context.Context, model, resource string, stoppingRV int64) error {
+	req := &sqlVectorBackfillJobsCreateRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Model:       model,
+		Resource:    resource,
+		StoppingRV:  stoppingRV,
+	}
+	if _, err := dbutil.Exec(ctx, b.db, sqlVectorBackfillJobsCreate, req); err != nil {
+		return fmt.Errorf("create backfill job (%s,%s): %w", model, resource, err)
+	}
+	return nil
+}
+
 func (b *pgvectorBackend) UpdateBackfillJobCheckpoint(ctx context.Context, id int64, lastSeenKey string, lastErr string) error {
 	req := &sqlVectorBackfillJobsUpdateRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),

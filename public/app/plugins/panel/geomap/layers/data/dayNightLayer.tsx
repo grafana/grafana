@@ -17,7 +17,7 @@ import {
   type EventBus
 } from '@grafana/data';
 
-export enum ShowTime {
+enum ShowTime {
   From = 'from',
   To = 'to',
 }
