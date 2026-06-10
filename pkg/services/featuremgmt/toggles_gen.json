@@ -4083,15 +4083,18 @@
     {
       "metadata": {
         "name": "provisioning.readmes",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1781078230859",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-10 07:57:10.859008 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
