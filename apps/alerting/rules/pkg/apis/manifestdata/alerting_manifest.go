@@ -991,6 +991,18 @@ var appManifestData = app.ManifestData{
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
+								"annotations": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
 								"dashboardUID": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
@@ -1012,7 +1024,22 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
+								"for": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
 								"group": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"interval": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"keepFiringFor": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
 									},
@@ -1113,6 +1140,11 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
+								"interval": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
 								"labels": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"object"},
@@ -1178,6 +1210,18 @@ var appManifestData = app.ManifestData{
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
+								"annotations": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
 								"dashboardUID": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
@@ -1199,7 +1243,22 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
+								"for": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
 								"group": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"interval": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"keepFiringFor": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
 									},
@@ -1287,6 +1346,11 @@ var appManifestData = app.ManifestData{
 									},
 								},
 								"group": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"interval": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
 									},

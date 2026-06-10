@@ -18,6 +18,9 @@ func NewGetSearchRulesRuleHit() *GetSearchRulesRuleHit {
 // +k8s:openapi-gen=true
 type GetSearchRulesAlertRuleHit struct {
 	Type             GetSearchRulesRuleSearchType `json:"type"`
+	Annotations      map[string]string            `json:"annotations,omitempty"`
+	For              *string                      `json:"for,omitempty"`
+	KeepFiringFor    *string                      `json:"keepFiringFor,omitempty"`
 	DashboardUID     *string                      `json:"dashboardUID,omitempty"`
 	PanelID          *int64                       `json:"panelID,omitempty"`
 	Receiver         *string                      `json:"receiver,omitempty"`
@@ -26,6 +29,7 @@ type GetSearchRulesAlertRuleHit struct {
 	Title            string                       `json:"title"`
 	Folder           string                       `json:"folder"`
 	Group            *string                      `json:"group,omitempty"`
+	Interval         *string                      `json:"interval,omitempty"`
 	Paused           *bool                        `json:"paused,omitempty"`
 	Labels           map[string]string            `json:"labels,omitempty"`
 	RoutingTree      *string                      `json:"routingTree,omitempty"`
@@ -65,6 +69,7 @@ type GetSearchRulesRecordingRuleHit struct {
 	Title               string                       `json:"title"`
 	Folder              string                       `json:"folder"`
 	Group               *string                      `json:"group,omitempty"`
+	Interval            *string                      `json:"interval,omitempty"`
 	Paused              *bool                        `json:"paused,omitempty"`
 	Labels              map[string]string            `json:"labels,omitempty"`
 	TargetDatasourceUID *string                      `json:"targetDatasourceUID,omitempty"`

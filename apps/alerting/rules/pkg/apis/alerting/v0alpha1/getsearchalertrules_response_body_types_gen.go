@@ -5,6 +5,9 @@ package v0alpha1
 // +k8s:openapi-gen=true
 type GetSearchAlertRulesAlertRuleHit struct {
 	Type             GetSearchAlertRulesRuleSearchType `json:"type"`
+	Annotations      map[string]string                 `json:"annotations,omitempty"`
+	For              *string                           `json:"for,omitempty"`
+	KeepFiringFor    *string                           `json:"keepFiringFor,omitempty"`
 	DashboardUID     *string                           `json:"dashboardUID,omitempty"`
 	PanelID          *int64                            `json:"panelID,omitempty"`
 	Receiver         *string                           `json:"receiver,omitempty"`
@@ -13,6 +16,7 @@ type GetSearchAlertRulesAlertRuleHit struct {
 	Title            string                            `json:"title"`
 	Folder           string                            `json:"folder"`
 	Group            *string                           `json:"group,omitempty"`
+	Interval         *string                           `json:"interval,omitempty"`
 	Paused           *bool                             `json:"paused,omitempty"`
 	Labels           map[string]string                 `json:"labels,omitempty"`
 	RoutingTree      *string                           `json:"routingTree,omitempty"`

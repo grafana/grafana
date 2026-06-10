@@ -5,18 +5,22 @@ package v0alpha1
 #RuleSearchType: "alertrule" | "recordingrule" @cog(kind="enum",memberNames="AlertRule|RecordingRule")
 
 _ruleHitBase: {
-	name:    string
-	title:   string
-	folder:  string
-	group?:  string
-	paused?: bool
+	name:      string
+	title:     string
+	folder:    string
+	group?:    string
+	interval?: string
+	paused?:   bool
 	labels?: [string]: string
 	datasourceUIDs?: [...string]
 }
 
 #AlertRuleHit: {
 	_ruleHitBase
-	type:              #RuleSearchType & "alertrule"
+	type: #RuleSearchType & "alertrule"
+	annotations?: [string]: string
+	"for"?:            string
+	keepFiringFor?:    string
 	dashboardUID?:     string
 	panelID?:          int64
 	receiver?:         string

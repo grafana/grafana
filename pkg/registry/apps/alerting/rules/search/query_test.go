@@ -3,6 +3,7 @@ package search
 import (
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -107,13 +108,19 @@ func TestBuildSearchRequestExtractRoundTrip(t *testing.T) {
 // into the expected hit.
 func TestCellsParseRoundTrip(t *testing.T) {
 	rule := &ngmodels.AlertRule{
-		UID:          "uid1",
-		Title:        "cpu high",
-		NamespaceUID: "folder1",
-		RuleGroup:    "group1",
-		IsPaused:     true,
-		Labels:       map[string]string{"team": "a"},
-		Data:         []ngmodels.AlertQuery{{DatasourceUID: "ds1"}, {DatasourceUID: expr.DatasourceUID}},
+		UID:             "uid1",
+		Title:           "cpu high",
+		NamespaceUID:    "folder1",
+		RuleGroup:       "group1",
+		IntervalSeconds: 60,
+		For:             5 * time.Minute,
+		IsPaused:        true,
+		Labels:          map[string]string{"team": "a"},
+		Annotations:     map[string]string{"summary": "cpu is high"},
+		Data:            []ngmodels.AlertQuery{{DatasourceUID: "ds1"}, {DatasourceUID: expr.DatasourceUID}},
+		NotificationSettings: &ngmodels.NotificationSettings{
+			ContactPointRouting: &ngmodels.ContactPointRouting{Receiver: "slack"},
+		},
 	}
 
 	resp := &resourcepb.ResourceSearchResponse{
@@ -136,6 +143,15 @@ func TestCellsParseRoundTrip(t *testing.T) {
 	assert.True(t, *h.Paused)
 	assert.Equal(t, map[string]string{"team": "a"}, h.Labels)
 	assert.Equal(t, []string{"ds1"}, h.DatasourceUIDs)
+	require.NotNil(t, h.Interval)
+	assert.Equal(t, "1m", *h.Interval)
+	require.NotNil(t, h.For)
+	assert.Equal(t, "5m", *h.For)
+	assert.Equal(t, map[string]string{"summary": "cpu is high"}, h.Annotations)
+	require.NotNil(t, h.Receiver)
+	assert.Equal(t, "slack", *h.Receiver)
+	require.NotNil(t, h.NotificationType)
+	assert.Equal(t, "SimplifiedRouting", *h.NotificationType)
 }
 
 func titles(rules []*ngmodels.AlertRule) []string {

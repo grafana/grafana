@@ -855,6 +855,10 @@ spec:
         getSearchAlertRulesAlertRuleHit:
           additionalProperties: false
           properties:
+            annotations:
+              additionalProperties:
+                type: string
+              type: object
             dashboardUID:
               type: string
             datasourceUIDs:
@@ -863,7 +867,13 @@ spec:
               type: array
             folder:
               type: string
+            for:
+              type: string
             group:
+              type: string
+            interval:
+              type: string
+            keepFiringFor:
               type: string
             labels:
               additionalProperties:
@@ -907,6 +917,8 @@ spec:
               type: string
             group:
               type: string
+            interval:
+              type: string
             labels:
               additionalProperties:
                 type: string
@@ -937,6 +949,10 @@ spec:
         getSearchRulesAlertRuleHit:
           additionalProperties: false
           properties:
+            annotations:
+              additionalProperties:
+                type: string
+              type: object
             dashboardUID:
               type: string
             datasourceUIDs:
@@ -945,7 +961,13 @@ spec:
               type: array
             folder:
               type: string
+            for:
+              type: string
             group:
+              type: string
+            interval:
+              type: string
+            keepFiringFor:
               type: string
             labels:
               additionalProperties:
@@ -983,6 +1005,8 @@ spec:
             folder:
               type: string
             group:
+              type: string
+            interval:
               type: string
             labels:
               additionalProperties:

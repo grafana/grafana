@@ -629,6 +629,33 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesAlertRuleHit(ref commo
 							Format:  "",
 						},
 					},
+					"annotations": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"for": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"keepFiringFor": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"dashboardUID": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -675,6 +702,12 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesAlertRuleHit(ref commo
 						},
 					},
 					"group": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"interval": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -878,6 +911,12 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesRecordingRuleHit(r
 							Format: "",
 						},
 					},
+					"interval": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"paused": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"boolean"},
@@ -987,6 +1026,33 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesAlertRuleHit(ref common.Ref
 							Format:  "",
 						},
 					},
+					"annotations": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"for": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"keepFiringFor": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"dashboardUID": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -1033,6 +1099,12 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesAlertRuleHit(ref common.Ref
 						},
 					},
 					"group": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"interval": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -1178,6 +1250,12 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesRecordingRuleHit(ref common
 						},
 					},
 					"group": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"interval": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",

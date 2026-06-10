@@ -10,6 +10,7 @@ type GetSearchRecordingRulesRecordingRuleHit struct {
 	Title               string                                `json:"title"`
 	Folder              string                                `json:"folder"`
 	Group               *string                               `json:"group,omitempty"`
+	Interval            *string                               `json:"interval,omitempty"`
 	Paused              *bool                                 `json:"paused,omitempty"`
 	Labels              map[string]string                     `json:"labels,omitempty"`
 	TargetDatasourceUID *string                               `json:"targetDatasourceUID,omitempty"`

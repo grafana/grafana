@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"strconv"
+	"time"
 
+	prom_model "github.com/prometheus/common/model"
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -89,6 +91,7 @@ func ruleKey(namespace string, r *ngmodels.AlertRule) *resourcepb.ResourceKey {
 // ruleCells encodes the result columns for a rule, in resultColumns order.
 func ruleCells(r *ngmodels.AlertRule) [][]byte {
 	labels, _ := json.Marshal(r.Labels)
+	annotations, _ := json.Marshal(r.Annotations)
 	datasources, _ := json.Marshal(sourceDatasourceUIDs(r))
 
 	var dashboardUID, panelID, metric, targetDatasourceUID string
@@ -102,20 +105,54 @@ func ruleCells(r *ngmodels.AlertRule) [][]byte {
 		metric = r.Record.Metric
 		targetDatasourceUID = r.Record.TargetDatasourceUID
 	}
+	receiver, notificationType, routingTree := notificationFields(r.NotificationSettings)
 
 	return [][]byte{
 		[]byte(ruleType(r)),
 		[]byte(r.Title),
 		[]byte(r.NamespaceUID),
 		[]byte(r.RuleGroup),
+		[]byte(promDuration(time.Duration(r.IntervalSeconds) * time.Second)),
 		[]byte(strconv.FormatBool(r.IsPaused)),
 		labels,
 		datasources,
+		annotations,
+		[]byte(promDurationOrEmpty(r.For)),
+		[]byte(promDurationOrEmpty(r.KeepFiringFor)),
 		[]byte(dashboardUID),
 		[]byte(panelID),
+		[]byte(receiver),
+		[]byte(notificationType),
+		[]byte(routingTree),
 		[]byte(metric),
 		[]byte(targetDatasourceUID),
 	}
+}
+
+func promDuration(d time.Duration) string {
+	return prom_model.Duration(d).String()
+}
+
+func promDurationOrEmpty(d time.Duration) string {
+	if d <= 0 {
+		return ""
+	}
+	return promDuration(d)
+}
+
+// notificationFields maps the rule's notification settings to the receiver,
+// notification type, and routing tree displayed on a hit.
+func notificationFields(ns *ngmodels.NotificationSettings) (receiver, notificationType, routingTree string) {
+	if ns == nil {
+		return "", "", ""
+	}
+	if ns.ContactPointRouting != nil {
+		return ns.ContactPointRouting.Receiver, string(ngmodels.NotificationSettingsTypeSimplifiedRouting), ""
+	}
+	if ns.PolicyRouting != nil {
+		return "", string(ngmodels.NotificationSettingsTypeNamedRoutingTree), ns.PolicyRouting.Policy
+	}
+	return "", "", ""
 }
 
 func ruleType(r *ngmodels.AlertRule) string {
