@@ -281,10 +281,19 @@ var (
 		{
 			Name:        "provisioning.readmes",
 			Description: "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAppPlatformSquad,
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:            "provisioning.gitConventions",
+			Description:     "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+			Generate:        Generate{Go: true, React: true},
 		},
 		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
@@ -431,6 +440,7 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Expression:  "true",
 		},
+
 		{
 			Name:            "kubernetesCorrelations",
 			Description:     "Adds support for Kubernetes correlations",
@@ -1653,16 +1663,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:            "grafanaconThemes",
-			Description:     "Enables the temporary themes for GrafanaCon",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaFrontendPlatformSquad,
-			HideFromDocs:    true,
-			RequiresRestart: true,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "alertingJiraIntegration",
 			Description:  "Enables the new Jira integration for contact points in cloud alert managers.",
 			Stage:        FeatureStageExperimental,
@@ -2531,14 +2531,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "queryEditorNextMultiSelect",
-			Description: "Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true, React: true},
-			Owner:       grafanaDataProSquad,
-			Expression:  "false",
-		},
-		{
 			Name:         "kubernetesTeamsApi",
 			Description:  "Enables team APIs in the app platform",
 			Stage:        FeatureStageExperimental,
@@ -2830,16 +2822,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-		},
-		{
-			Name:            "colorblindThemes",
-			Description:     "Enables the new colorblind-friendly themes",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaFrontendPlatformSquad,
-			HideFromDocs:    true,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		}, {
 			Name:        "yAxisTickControl",
 			Description: "Enables fine-grained Y-axis tick options beyond the auto-ticks",
@@ -2973,15 +2955,6 @@ var (
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 			Generate:    Generate{Go: true},
-		},
-		{
-			Name:         "compiledBootScript",
-			Description:  "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "false",
-			HideFromDocs: true,
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "influxDBConfigValidation",
@@ -3181,7 +3154,7 @@ var (
 		},
 		{
 			Name:         "grafana.panelEditNextFeedbackEvent",
-			Description:  "Replaces the Intercom survey for PanelEditNext feedback with an event that triggers an in-house survey",
+			Description:  "Enables firing an event for PanelEditNext feedback that triggers an in-house survey",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDataProSquad,
 			HideFromDocs: true,

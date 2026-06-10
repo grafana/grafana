@@ -280,7 +280,7 @@ func TestConvertK8sResourcePermissionToDTO(t *testing.T) {
 		},
 	}
 
-	inheritedPerms, err := api.convertK8sResourcePermissionToDTO(folderPermission, "stack-123-org-1", true)
+	inheritedPerms, err := api.convertK8sResourcePermissionToDTO(context.Background(), folderPermission, "stack-123-org-1", true)
 
 	require.NoError(t, err)
 	require.Len(t, inheritedPerms, 2, "should have 2 inherited permissions (Editor and Viewer)")

@@ -7,11 +7,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 // S3Client wraps the S3 operations needed by the image uploader.
 type S3Client interface {
-	Upload(ctx context.Context, input *s3manager.UploadInput) (*s3manager.UploadOutput, error)
-	PresignGetObject(bucket, key string, expiration time.Duration) (string, error)
+	Upload(ctx context.Context, input *s3.PutObjectInput) (*manager.UploadOutput, error)
+	PresignGetObject(ctx context.Context, bucket, key string, expiration time.Duration) (string, error)
 }

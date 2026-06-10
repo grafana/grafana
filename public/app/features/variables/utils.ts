@@ -195,7 +195,7 @@ function getUrlValueForComparison(value: unknown) {
   return value;
 }
 
-export interface UrlQueryType {
+interface UrlQueryType {
   value: UrlQueryValue;
   removed?: boolean;
 }

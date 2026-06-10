@@ -182,7 +182,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({
                   </Trans>
                 </li>
               )}
-              {syncTarget === 'folder' && (
+              {(syncTarget === 'folder' || syncTarget === 'folderless') && (
                 <>
                   <li>
                     <Trans i18nKey="provisioning.wizard.alert-point-folder-structure">

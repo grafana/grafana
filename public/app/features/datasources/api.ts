@@ -41,7 +41,7 @@ export interface DatasourceInstanceK8sSpec {
   readOnly?: boolean;
 }
 
-export interface DatasourceAccessK8s {
+interface DatasourceAccessK8s {
   kind: string;
   apiVersion: string;
   Permissions: Record<string, boolean>;
@@ -301,23 +301,28 @@ export const updateDataSource = async (dataSource: DataSourceSettings) => {
         }
       }
     }
-    return getBackendSrv().put(
-      `/apis/${dsK8sSettings.apiVersion}/namespaces/${config.namespace}/datasources/${dsK8sSettings.metadata.name}`,
-      dsK8sSettings,
-      {
-        showErrorAlert: false,
-        showSuccessAlert: false,
-        validatePath: true,
-      }
+    return convertK8sDatasourceSettingsToLegacyDatasourceSettings(
+      await getBackendSrv().put<DataSourceSettingsK8s>(
+        `/apis/${dsK8sSettings.apiVersion}/namespaces/${config.namespace}/datasources/${dsK8sSettings.metadata.name}`,
+        dsK8sSettings,
+        {
+          showErrorAlert: false,
+          showSuccessAlert: false,
+          validatePath: true,
+        }
+      )
     );
   }
+
   // we're setting showErrorAlert and showSuccessAlert to false to suppress the popover notifications. Request result will now be
   // handled by the data source config page
-  return getBackendSrv().put(`/api/datasources/uid/${dataSource.uid}`, dataSource, {
-    showErrorAlert: false,
-    showSuccessAlert: false,
-    validatePath: true,
-  });
+  return getBackendSrv()
+    .put<{ datasource: DataSourceSettings }>(`/api/datasources/uid/${dataSource.uid}`, dataSource, {
+      showErrorAlert: false,
+      showSuccessAlert: false,
+      validatePath: true,
+    })
+    .then((response) => response.datasource);
 };
 
 export const deleteDataSource = (uid: string) => {

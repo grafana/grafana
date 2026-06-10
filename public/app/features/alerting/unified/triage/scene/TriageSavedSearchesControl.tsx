@@ -7,7 +7,7 @@ import {
   type SceneObjectState,
   sceneGraph,
 } from '@grafana/scenes';
-import { useTimeRange, useVariableValues } from '@grafana/scenes-react';
+import { useTimeRange } from '@grafana/scenes-react';
 
 import { SavedSearches } from '../../components/saved-searches/SavedSearches';
 import { type SavedSearch, validateSearchName } from '../../components/saved-searches/savedSearchesSchema';
@@ -70,21 +70,22 @@ function TriageSavedSearchesControlRenderer({ model }: SceneComponentProps<Triag
 
   // Use Scene-aware hooks to get current state (triggers re-render on state change)
   const [timeRange] = useTimeRange();
-  const [groupBy = []] = useVariableValues<string>(VARIABLES.groupBy);
 
-  // Get the AdHocFiltersVariable directly to access raw filter objects
-  // This is needed because useVariableValues returns the interpolated expression string,
-  // not the individual filter objects we need for serialization
+  // Get the AdHocFiltersVariable directly to access raw filter objects.
+  // The unified variable holds both regular filters and groupBy entries (operator: 'groupBy').
+  // This is needed because useVariableValue returns the interpolated expression string,
+  // not the individual filter objects we need for serialization.
   const filtersVar = sceneGraph.lookupVariable(VARIABLES.filters, model);
 
   // Use useState() for reactive access to filter state (triggers re-render on filter change)
   const filtersState = filtersVar instanceof AdHocFiltersVariable ? filtersVar.useState() : undefined;
   const filters = filtersState?.filters;
 
-  // Serialize Scene state to a query string (reactive to changes)
+  // Serialize Scene state to a query string (reactive to changes).
+  // filters contains both regular filters and groupBy entries — serializeTriageState handles both.
   const currentSearchQuery = useMemo(() => {
-    return serializeTriageState(filters ?? [], groupBy, timeRange.raw);
-  }, [timeRange, filters, groupBy]);
+    return serializeTriageState(filters ?? [], timeRange.raw);
+  }, [timeRange, filters]);
 
   /**
    * Apply a saved search by programmatically updating Scene variables.

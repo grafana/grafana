@@ -42,7 +42,8 @@ export async function initOpenFeature() {
 
   const ofProvider = new OFREPWebProvider({
     baseUrl: baseUrl,
-    pollInterval: -1, // disable polling
+    disableVisibilityRefresh: true, // Do not refresh
+    cacheMode: 'disabled', // Do not write to localStorage
     timeoutMs: 5_000,
   });
 
