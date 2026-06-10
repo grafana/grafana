@@ -11,6 +11,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { setBookmark } from 'app/core/reducers/navBarTree';
+import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
@@ -35,6 +36,7 @@ export const MegaMenu = memo(
     const state = chrome.useState();
     const [patchPreferences] = usePatchUserPreferencesMutation();
     const pinnedItems = usePinnedItems();
+    useSyncStarredItemsInNav();
 
     // Remove profile + help from tree
     const navItems = navTree

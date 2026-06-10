@@ -24,6 +24,14 @@ function translateNav(navTree: NavModelItem[]): NavModelItem[] {
 // this matches the prefix set in the backend navtree
 export const ID_PREFIX = 'starred/';
 
+export interface StarredNavItem {
+  id: string;
+  title: string;
+  url: string;
+}
+// Single shared collator avoids per-call Intl.Collator construction
+const collator = new Intl.Collator();
+
 const navTreeSlice = createSlice({
   name: 'navBarTree',
   initialState: () => translateNav(config.bootData?.navTree ?? []),
@@ -42,7 +50,7 @@ const navTreeSlice = createSlice({
             url,
           };
           starredItems.children.push(newStarredItem);
-          starredItems.children.sort((a, b) => a.text.localeCompare(b.text));
+          starredItems.children.sort((a, b) => collator.compare(a.text, b.text));
         } else {
           const index = starredItems.children?.findIndex((item) => item.id === ID_PREFIX + id) ?? -1;
           if (index > -1) {
@@ -80,7 +88,7 @@ const navTreeSlice = createSlice({
         if (navItem) {
           navItem.text = title;
           navItem.url = url;
-          starredItems.children?.sort((a, b) => a.text.localeCompare(b.text));
+          starredItems.children?.sort((a, b) => collator.compare(a.text, b.text));
         }
       }
     },
@@ -91,8 +99,33 @@ const navTreeSlice = createSlice({
         state.splice(pluginItemIndex, 1);
       }
     },
+    setStarredItems: (state, action: PayloadAction<{ uids: string[]; items: StarredNavItem[] }>) => {
+      const starred = state.find((n) => n.id === 'starred');
+      if (!starred) {
+        return;
+      }
+      const { uids, items } = action.payload;
+      const found = new Map(items.map((item) => [item.id, item]));
+      const existing = new Map((starred.children ?? []).map((child) => [child.id, child]));
+      const children: NavModelItem[] = [];
+      for (const uid of uids) {
+        const item = found.get(uid);
+        if (item) {
+          children.push({ id: ID_PREFIX + uid, text: item.title, url: item.url });
+        } else {
+          // The search index is eventually consistent, so a freshly starred dashboard may
+          // be missing from the response — keep the optimistic entry added by setStarred
+          const prev = existing.get(ID_PREFIX + uid);
+          if (prev) {
+            children.push(prev);
+          }
+        }
+      }
+      starred.children = children.sort((a, b) => collator.compare(a.text, b.text));
+    },
   },
 });
 
-export const { setStarred, removePluginFromNavTree, updateDashboardName, setBookmark } = navTreeSlice.actions;
+export const { setStarred, setStarredItems, removePluginFromNavTree, updateDashboardName, setBookmark } =
+  navTreeSlice.actions;
 export const navTreeReducer = navTreeSlice.reducer;
