@@ -12,11 +12,14 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 
+import { DeepSearchResults } from './DeepSearchResults';
 import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
+import { type DeepSearchDashboardResult, useDeepSearchResults } from './actions/deepSearchActions';
 import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
+import { isDeepSearchMockEnabled } from './api/deepSearchMock';
 import { useRegisterRecentScopesActions, useRegisterScopesActions } from './scopes/scopeActions';
 import { type CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
@@ -58,6 +61,16 @@ function CommandPaletteContents() {
   // time.
   const { searchResults, isFetchingSearchResults } = useSearchResults({ searchQuery, show: !currentRootActionId });
 
+  const { isAvailable: isAssistantAvailable } = useAssistant();
+  // TODO: dev-only mock override, remove before merging
+  const deepSearchEnabled = isAssistantAvailable || isDeepSearchMockEnabled();
+  const { deepSearchResults, isFetchingDeepSearchResults } = useDeepSearchResults({
+    searchQuery,
+    show: !currentRootActionId,
+    enabled: deepSearchEnabled,
+  });
+  const showDeepSearch = deepSearchEnabled && !currentRootActionId && searchQuery.length > 0;
+
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
     { isOpen: true, onClose: () => query.setVisualState(VisualState.animatingOut) },
@@ -88,13 +101,15 @@ function CommandPaletteContents() {
               </div>
             </div>
             {scopesRow ? <div className={styles.searchContainer}>{scopesRow}</div> : null}
-            <div className={styles.resultsContainer}>
-              <RenderResults
-                isFetchingSearchResults={isFetchingSearchResults}
-                searchResults={searchResults}
-                searchQuery={searchQuery}
-              />
-            </div>
+            <RenderResults
+              isFetchingSearchResults={isFetchingSearchResults}
+              searchResults={searchResults}
+              searchQuery={searchQuery}
+              deepSearchResults={deepSearchResults}
+              isFetchingDeepSearchResults={isFetchingDeepSearchResults}
+              showDeepSearch={showDeepSearch}
+              onNavigate={queryToggle}
+            />
           </div>
         </FocusScope>
       </KBarAnimator>
@@ -137,9 +152,21 @@ interface RenderResultsProps {
   isFetchingSearchResults: boolean;
   searchResults: CommandPaletteAction[];
   searchQuery: string;
+  deepSearchResults: DeepSearchDashboardResult[];
+  isFetchingDeepSearchResults: boolean;
+  showDeepSearch: boolean;
+  onNavigate: () => void;
 }
 
-const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: RenderResultsProps) => {
+const RenderResults = ({
+  isFetchingSearchResults,
+  searchResults,
+  searchQuery,
+  deepSearchResults,
+  isFetchingDeepSearchResults,
+  showDeepSearch,
+  onNavigate,
+}: RenderResultsProps) => {
   const { results: kbarResults, rootActionId } = useMatches();
   const { query } = useKBar();
   const { isAvailable: isAssistantAvailable } = useAssistant();
@@ -178,39 +205,65 @@ const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: 
     return results;
   }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
 
-  const showEmptyState = !isFetchingSearchResults && items.length === 0;
+  const hasKeywordResults = items.length > 0;
+  const hasDeepSearchResults = deepSearchResults.length > 0;
+  // The empty state shows only when neither the keyword list nor the deep
+  // search column has (or is still fetching) anything to show
+  const showEmptyState =
+    !isFetchingSearchResults && !isFetchingDeepSearchResults && !hasKeywordResults && !hasDeepSearchResults;
   useEffect(() => {
     showEmptyState && reportInteraction('grafana_empty_state_shown', { source: 'command_palette' });
   }, [showEmptyState]);
 
-  return showEmptyState ? (
-    <EmptyState variant="not-found" role="alert" message={t('command-palette.empty-state.message', 'No results found')}>
-      {isAssistantAvailable && (
-        <OpenAssistantButton
-          origin="grafana/command-palette-empty-state"
-          prompt={`Search for ${searchQuery}`}
-          title={t('command-palette.empty-state.button-title', 'Search with Grafana Assistant')}
-          onClick={query.toggle}
-        />
+  if (showEmptyState) {
+    return (
+      <div className={styles.resultsContainer}>
+        <EmptyState
+          variant="not-found"
+          role="alert"
+          message={t('command-palette.empty-state.message', 'No results found')}
+        >
+          {isAssistantAvailable && (
+            <OpenAssistantButton
+              origin="grafana/command-palette-empty-state"
+              prompt={`Search for ${searchQuery}`}
+              title={t('command-palette.empty-state.button-title', 'Search with Grafana Assistant')}
+              onClick={query.toggle}
+            />
+          )}
+        </EmptyState>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.columnsContainer}>
+      {hasKeywordResults && (
+        <div className={styles.resultsContainer}>
+          <KBarResults
+            items={items}
+            maxHeight={650}
+            onRender={({ item, active }) => {
+              const isFirst = items[0] === item;
+
+              const renderedItem =
+                typeof item === 'string' ? (
+                  <div className={cx(styles.sectionHeader, isFirst && styles.sectionHeaderFirst)}>{item}</div>
+                ) : (
+                  <ResultItem action={item} active={active} currentRootActionId={rootActionId!} />
+                );
+
+              return renderedItem;
+            }}
+          />
+        </div>
       )}
-    </EmptyState>
-  ) : (
-    <KBarResults
-      items={items}
-      maxHeight={650}
-      onRender={({ item, active }) => {
-        const isFirst = items[0] === item;
-
-        const renderedItem =
-          typeof item === 'string' ? (
-            <div className={cx(styles.sectionHeader, isFirst && styles.sectionHeaderFirst)}>{item}</div>
-          ) : (
-            <ResultItem action={item} active={active} currentRootActionId={rootActionId!} />
-          );
-
-        return renderedItem;
-      }}
-    />
+      {showDeepSearch && (
+        <div className={cx(styles.deepSearchColumn, !hasKeywordResults && styles.deepSearchColumnFull)}>
+          <DeepSearchResults results={deepSearchResults} isFetching={isFetchingDeepSearchResults} onNavigate={onNavigate} />
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -281,8 +334,37 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
     spinner: css({
       height: '22px',
     }),
+    columnsContainer: css({
+      display: 'flex',
+      alignItems: 'stretch',
+    }),
     resultsContainer: css({
       paddingBottom: theme.spacing(1),
+      flexGrow: 1,
+      minWidth: 0,
+    }),
+    deepSearchColumn: css({
+      flex: '0 0 40%',
+      minWidth: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      // Match the maxHeight of the keyword results list (KBarResults)
+      maxHeight: 650,
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
+      // The palette is capped at the md breakpoint width below lg — too narrow
+      // for a second column
+      [theme.breakpoints.down('lg')]: {
+        display: 'none',
+      },
+    }),
+    // When there are no keyword results the deep column is the only content,
+    // so it takes the full width and fits on narrow screens again
+    deepSearchColumnFull: css({
+      flex: '1 1 auto',
+      borderLeft: 'none',
+      [theme.breakpoints.down('lg')]: {
+        display: 'flex',
+      },
     }),
     sectionHeader: css({
       padding: theme.spacing(1.5, 2, 2, 2),

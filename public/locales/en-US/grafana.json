@@ -4947,6 +4947,11 @@
       "light-theme": "Light",
       "scopes": "Scopes"
     },
+    "deep-search": {
+      "match-count_one": "{{count}} match",
+      "match-count_other": "{{count}} matches",
+      "no-matches": "No matches"
+    },
     "empty-state": {
       "button-title": "Search with Grafana Assistant",
       "message": "No results found"
@@ -4961,6 +4966,7 @@
     "section": {
       "actions": "Actions",
       "dashboard-search-results": "Dashboards",
+      "deep-search": "Deep search",
       "folder-search-results": "Folders",
       "pages": "Pages",
       "preferences": "Preferences",
