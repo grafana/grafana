@@ -22,8 +22,9 @@ func TestParseLabelMatcher(t *testing.T) {
 	}
 	for in, want := range tests {
 		assert.Equal(t, want, parseLabelMatcher(in), in)
-		// matchers must survive the round trip through a request requirement.
-		assert.Equal(t, want, requirementToMatcher(matcherToRequirement(want)), in)
+		// matchers must survive the round trip through the labels-field requirement.
+		got := requirementToLabelMatchers(labelMatcherRequirement(want))
+		require.Equal(t, []labelMatcher{want}, got, in)
 	}
 }
 

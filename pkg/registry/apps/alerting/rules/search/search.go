@@ -156,7 +156,6 @@ func buildSearchRequest(q url.Values, namespace string, primary schema.GroupReso
 		}
 	}
 	add(fieldFolder, q["folders"]...)
-	add(fieldGroup, q["groups"]...)
 	add(fieldDatasourceUIDs, q["datasourceUIDs"]...)
 	add(fieldDashboardUID, q.Get("dashboardUID"))
 	add(fieldPanelID, q.Get("panelID"))
@@ -168,9 +167,15 @@ func buildSearchRequest(q url.Values, namespace string, primary schema.GroupReso
 	if v := q.Get("paused"); v != "" {
 		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{Key: fieldPaused, Operator: "=", Values: []string{v}})
 	}
+	// Group is a controlled metadata label, matched via the label selector.
+	if groups := nonEmpty(q["groups"]); len(groups) > 0 {
+		req.Options.Labels = append(req.Options.Labels, &resourcepb.Requirement{Key: model.GroupLabelKey, Operator: "in", Values: groups})
+	}
+	// Rule labels are matched against the indexed labels field as flattened
+	// "key"/"key=value" terms.
 	for _, l := range q["labels"] {
 		if l != "" {
-			req.Options.Labels = append(req.Options.Labels, matcherToRequirement(parseLabelMatcher(l)))
+			req.Options.Fields = append(req.Options.Fields, labelMatcherRequirement(parseLabelMatcher(l)))
 		}
 	}
 	if s := q.Get("sort"); s != "" {
