@@ -915,11 +915,6 @@ export interface FeatureToggles {
   */
   newLogsPanel?: boolean;
   /**
-  * Enables the temporary themes for GrafanaCon
-  * @default true
-  */
-  grafanaconThemes?: boolean;
-  /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   * @default false
   */

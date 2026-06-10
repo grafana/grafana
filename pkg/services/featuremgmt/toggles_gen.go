@@ -535,10 +535,6 @@ const (
 	// Add compact=true when fetching rules
 	FlagFetchRulesInCompactMode = "fetchRulesInCompactMode"
 
-	// FlagGrafanaconThemes
-	// Enables the temporary themes for GrafanaCon
-	FlagGrafanaconThemes = "grafanaconThemes"
-
 	// FlagAlertingUseNewSimplifiedRoutingHashAlgorithm
 	FlagAlertingUseNewSimplifiedRoutingHashAlgorithm = "alertingUseNewSimplifiedRoutingHashAlgorithm"
 

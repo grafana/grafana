@@ -2532,7 +2532,8 @@
       "metadata": {
         "name": "grafanaconThemes",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-02-06T11:08:04Z"
+        "creationTimestamp": "2025-02-06T11:08:04Z",
+        "deletionTimestamp": "2026-06-08T15:48:46Z"
       },
       "spec": {
         "description": "Enables the temporary themes for GrafanaCon",
