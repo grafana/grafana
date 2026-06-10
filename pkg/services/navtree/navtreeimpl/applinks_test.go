@@ -376,6 +376,131 @@ func TestAddAppLinks(t *testing.T) {
 	})
 }
 
+func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	permissions := []ac.Permission{
+		{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+	}
+
+	assertsApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "grafana-asserts-app",
+			Name: "Knowledge graph",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:       "Knowledge graph",
+					Path:       "/a/grafana-asserts-app/",
+					Type:       "page",
+					AddToNav:   true,
+					DefaultNav: true,
+				},
+				{
+					Name:     "Entity graph",
+					Path:     "/a/grafana-asserts-app/entities",
+					Type:     "page",
+					AddToNav: true,
+				},
+				{
+					Name:     "Applications",
+					Path:     "/a/grafana-asserts-app/applications",
+					Type:     "page",
+					AddToNav: true,
+				},
+			},
+		},
+	}
+
+	frontendApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "grafana-kowalski-app",
+			Name: "Frontend",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:       "Frontend",
+					Path:       "/a/grafana-kowalski-app/",
+					Type:       "page",
+					AddToNav:   true,
+					DefaultNav: true,
+				},
+				{
+					Name:     "Overview",
+					Path:     "/a/grafana-kowalski-app/overview",
+					Type:     "page",
+					AddToNav: true,
+				},
+			},
+		},
+	}
+
+	applicationApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "grafana-app-observability-app",
+			Name: "Application",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:       "Application",
+					Path:       "/a/grafana-app-observability-app/",
+					Type:       "page",
+					AddToNav:   true,
+					DefaultNav: true,
+				},
+				{
+					Name:     "Services",
+					Path:     "/a/grafana-app-observability-app/services",
+					Type:     "page",
+					AddToNav: true,
+				},
+			},
+		},
+	}
+
+	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+		assertsApp.ID:     {ID: 0, OrgID: 1, PluginID: assertsApp.ID, PluginVersion: "1.0.0", Enabled: true},
+		frontendApp.ID:    {ID: 0, OrgID: 1, PluginID: frontendApp.ID, PluginVersion: "1.0.0", Enabled: true},
+		applicationApp.ID: {ID: 0, OrgID: 1, PluginID: applicationApp.ID, PluginVersion: "1.0.0", Enabled: true},
+	}}
+
+	service := ServiceImpl{
+		log:            log.New("navtree"),
+		cfg:            setting.NewCfg(),
+		accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+		pluginSettings: &pluginSettings,
+		features:       featuremgmt.WithFeatures(),
+		pluginStore: &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{assertsApp, frontendApp, applicationApp},
+		},
+	}
+
+	t.Run("asserts Applications page sits between Frontend and Application, other asserts pages stay on top", func(t *testing.T) {
+		service.navigationAppConfig = map[string]NavigationAppConfig{
+			"grafana-asserts-app":           {SectionID: navtree.NavIDObservability, SortWeight: 2, Icon: "asserts"},
+			"grafana-kowalski-app":          {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Frontend"},
+			"grafana-app-observability-app": {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Application"},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		treeRoot.Sort()
+
+		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
+		require.NotNil(t, monitoringNode)
+		require.Len(t, monitoringNode.Children, 4)
+
+		// Asserts "Entity graph" stays hoisted to the top, then Frontend, then the
+		// asserts "Applications" page (weight 4), then the Application plugin (weight 5).
+		require.Equal(t, "Entity graph", monitoringNode.Children[0].Text)
+		require.Equal(t, "Frontend", monitoringNode.Children[1].Text)
+		require.Equal(t, "Applications", monitoringNode.Children[2].Text)
+		require.Equal(t, "standalone-plugin-page-applications", monitoringNode.Children[2].Id)
+		require.Equal(t, "Application", monitoringNode.Children[3].Text)
+	})
+}
+
 func TestBuildDataConnectionsNavLink(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}

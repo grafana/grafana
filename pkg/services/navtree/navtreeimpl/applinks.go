@@ -288,9 +288,15 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 	if plugin.ID == "grafana-asserts-app" {
 		sectionChildren = appLink.Children
 
-		// keep current sorting if the pages, but above all the other apps
+		applicationsURL := s.cfg.AppSubURL + "/a/grafana-asserts-app/applications"
 		for _, child := range sectionChildren {
-			child.SortWeight = -100 + child.SortWeight
+			if child.Url == applicationsURL {
+				// Place the asserts Applications page between Frontend (3) and Application (5)
+				child.SortWeight = 4
+			} else {
+				// keep current sorting of the pages, but above all the other apps
+				child.SortWeight = -100 + child.SortWeight
+			}
 			child.Id = "standalone-plugin-page-" + strings.ReplaceAll(strings.ToLower(child.Text), " ", "-")
 		}
 	}
@@ -399,10 +405,10 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-sigil-app":                {SectionID: navtree.NavIDObservability, SortWeight: 1, Text: "AI", IsNew: true},
 		"grafana-asserts-app":              {SectionID: navtree.NavIDObservability, SortWeight: 2, Icon: "asserts"},
 		"grafana-kowalski-app":             {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Frontend"},
-		"grafana-app-observability-app":    {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Application"},
-		"grafana-dbo11y-app":               {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Database", IsNew: true},
-		"grafana-k8s-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 6, Text: "Kubernetes"},
-		"grafana-csp-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 7, Icon: "cloud-provider"},
+		"grafana-app-observability-app":    {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Application"},
+		"grafana-dbo11y-app":               {SectionID: navtree.NavIDObservability, SortWeight: 6, Text: "Database", IsNew: true},
+		"grafana-k8s-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 7, Text: "Kubernetes"},
+		"grafana-csp-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 8, Icon: "cloud-provider"},
 		"grafana-metricsdrilldown-app":     {SectionID: navtree.NavIDDrilldown, SortWeight: 1, Text: "Metrics"},
 		"grafana-lokiexplore-app":          {SectionID: navtree.NavIDDrilldown, SortWeight: 2, Text: "Logs"},
 		"grafana-exploretraces-app":        {SectionID: navtree.NavIDDrilldown, SortWeight: 3, Text: "Traces"},
