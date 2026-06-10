@@ -5,3 +5,5 @@ import (
 )
 
 var ErrBaseNotFound = errutil.NotFound("dashboardsnapshots.not-found", errutil.WithPublicMessage("Snapshot not found"))
+
+var ErrDashboardSnapshotAlreadyExists = errutil.Conflict("dashboardsnapshots.keyAlreadyExists", errutil.WithPublicMessage("Snapshot key already exists"))
