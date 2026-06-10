@@ -638,6 +638,10 @@ const (
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
 
+	// FlagAlertingConvertPrometheusViaKubernetesAPI
+	// Use internal Kubernetes clients to create AlertRule, RecordingRule, and RuleSequence resources during Prometheus rule conversion instead of the legacy provisioning path
+	FlagAlertingConvertPrometheusViaKubernetesAPI = "alertingConvertPrometheusViaKubernetesAPI"
+
 	// FlagAlertingDisableDMAinUI
 	// Disables the DMA feature in the UI
 	FlagAlertingDisableDMAinUI = "alertingDisableDMAinUI"
