@@ -13156,7 +13156,7 @@
       "folder-update-default": "Save folder: {{title}}"
     },
     "commit-options": {
-      "description-enforce-template": "Pre-fill the commit message in save dialogs from the template above and make it read-only. The \"Grafana-saved-by\" trailer is always appended.",
+      "description-enforce-template": "Pre-fill the commit message in save dialogs from the template above and make it read-only.",
       "label-commit-options": "Commit options (advanced)",
       "label-enforce-template": "Enforce commit message template"
     },
@@ -13165,7 +13165,7 @@
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
-      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. A \"Grafana-saved-by: <name> (<login>)\" trailer is appended automatically. Leave empty to use the built-in defaults.",
+      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. Leave empty to use the built-in defaults.",
       "description-connection": "Select the GitHub App connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",

@@ -34,7 +34,7 @@ export function CommitOptionsSection<T extends FieldValues>({
           label={t('provisioning.config-form.label-commit-message-template', 'Commit message template')}
           description={t(
             'provisioning.config-form.description-commit-message-template',
-            'Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. A "Grafana-saved-by: <name> (<login>)" trailer is appended automatically. Leave empty to use the built-in defaults.',
+            'Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. Leave empty to use the built-in defaults.',
             {
               actionVar: '{{action}}',
               kindVar: '{{resourceKind}}',
@@ -64,7 +64,7 @@ export function CommitOptionsSection<T extends FieldValues>({
               label={t('provisioning.commit-options.label-enforce-template', 'Enforce commit message template')}
               description={t(
                 'provisioning.commit-options.description-enforce-template',
-                'Pre-fill the commit message in save dialogs from the template above and make it read-only. The "Grafana-saved-by" trailer is always appended.'
+                'Pre-fill the commit message in save dialogs from the template above and make it read-only.'
               )}
             />
           </Field>
