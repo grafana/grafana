@@ -667,6 +667,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "dashboardNotebookLayout",
+			Description: "Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboardDefaultLayoutSelector",
 			Description: "Enables default layout selector in dashboard settings",
 			Stage:       FeatureStageGeneralAvailability,
