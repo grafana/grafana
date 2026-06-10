@@ -162,20 +162,34 @@ function buildContextLine(body: PulseBody, ctx: AssistantReplyContext): string |
   }
 
   const link = dashboardLink(ctx.dashboardUID, panelId);
+  // Identify the dashboard by UID and tell the assistant to load it *through
+  // its own dashboard tools* (which query Grafana's API in-session). The
+  // link is only a human-facing reference — earlier wording ("open it here:
+  // <url>") made the model try to HTTP-fetch the URL, which fails because
+  // config.appUrl is unreachable from the assistant's runtime (e.g.
+  // localhost:3000 in dev).
+  //
   // escapeValue:false keeps the URL (and any "/" or "&" in titles) intact —
   // this string is an LLM prompt, not HTML, so i18next's default
-  // entity-escaping would corrupt the link it's meant to follow.
+  // entity-escaping would corrupt the values.
   if (panelId !== undefined) {
     return t(
       'pulse.assistant.context-panel',
-      'This question is from a Grafana Pulse conversation about the panel "{{panelTitle}}" (panel id {{panelId}}) on the dashboard "{{dashboardTitle}}". Open it here and use your dashboard tools to inspect it: {{link}}',
-      { panelTitle: panelTitle || `#${panelId}`, panelId, dashboardTitle, link, interpolation: { escapeValue: false } }
+      'This question is from a Grafana Pulse conversation about the panel "{{panelTitle}}" (panel id {{panelId}}) on the dashboard "{{dashboardTitle}}" (dashboard UID {{dashboardUID}}). Use your dashboard tools to look up this dashboard by its UID and inspect the panel — do not fetch any URL. Reference link for the user: {{link}}',
+      {
+        panelTitle: panelTitle || `#${panelId}`,
+        panelId,
+        dashboardTitle,
+        dashboardUID: ctx.dashboardUID,
+        link,
+        interpolation: { escapeValue: false },
+      }
     );
   }
   return t(
     'pulse.assistant.context-dashboard',
-    'This question is from a Grafana Pulse conversation on the dashboard "{{dashboardTitle}}". Open it here and use your dashboard tools to inspect it: {{link}}',
-    { dashboardTitle, link, interpolation: { escapeValue: false } }
+    'This question is from a Grafana Pulse conversation on the dashboard "{{dashboardTitle}}" (dashboard UID {{dashboardUID}}). Use your dashboard tools to look up this dashboard by its UID and inspect it — do not fetch any URL. Reference link for the user: {{link}}',
+    { dashboardTitle, dashboardUID: ctx.dashboardUID, link, interpolation: { escapeValue: false } }
   );
 }
 
