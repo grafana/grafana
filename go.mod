@@ -483,7 +483,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.15 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/grafana/jsonparser v0.0.0-20241004153430-023329977675 // indirect
-	github.com/grafana/nanogit v0.17.3 // indirect
+	github.com/grafana/nanogit v0.18.0 // indirect
 	github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 // indirect
 	github.com/grafana/sqlds/v5 v5.1.1 // indirect
 	github.com/hashicorp/consul/api v1.33.7 // indirect
@@ -725,6 +725,7 @@ require github.com/redis/go-redis/extra/redisotel/v9 v9.19.0 // @grafana/grafana
 require (
 	github.com/onsi/gomega v1.39.1 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.19.0 // indirect
+	github.com/smallstep/pkcs7 v0.2.1 // indirect
 )
 
 replace (
