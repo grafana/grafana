@@ -466,22 +466,23 @@ describe('QueryEditorContextWrapper - delete actions', () => {
     });
   });
 
-  it('deleteQuery removes the deleted refId from selectedQueryRefIds', () => {
+  it('exits multi-select mode and clears the bulk selection when a query is deleted from its header', () => {
     const dataPane = makeMockDataPane();
     const { result } = renderWithBothContexts(dataPane);
 
-    // Populate the bulk array via multi-select; the active path no longer mirrors bulk.
     act(() => result.current.ui.setMultiSelectMode(true));
     act(() => result.current.ui.toggleQuerySelection({ refId: 'A' } as DataQuery, { multi: true }));
     act(() => result.current.ui.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
+    expect(result.current.ui.multiSelectMode).toBe(true);
     expect(result.current.ui.selectedQueryRefIds).toEqual(['A', 'B']);
 
     act(() => result.current.actions.deleteQuery('A'));
 
-    expect(result.current.ui.selectedQueryRefIds).toEqual(['B']);
+    expect(result.current.ui.multiSelectMode).toBe(false);
+    expect(result.current.ui.selectedQueryRefIds).toEqual([]);
   });
 
-  it('deleteTransformation removes the deleted id from selectedTransformationIds', () => {
+  it('exits multi-select mode and clears the bulk selection when a transformation is deleted from its header', () => {
     const { useTransformations } = require('./hooks/useTransformations');
     const mockTransformation: Transformation = {
       registryItem: undefined,
@@ -501,11 +502,13 @@ describe('QueryEditorContextWrapper - delete actions', () => {
     act(() => result.current.ui.setMultiSelectMode(true));
     act(() => result.current.ui.toggleTransformationSelection(mockTransformation, { multi: true }));
     act(() => result.current.ui.toggleTransformationSelection(otherTransformation, { multi: true }));
+    expect(result.current.ui.multiSelectMode).toBe(true);
     expect(result.current.ui.selectedTransformationIds).toEqual(['reduce-0', 'organize-1']);
 
     act(() => result.current.actions.deleteTransformation('reduce-0'));
 
-    expect(result.current.ui.selectedTransformationIds).toEqual(['organize-1']);
+    expect(result.current.ui.multiSelectMode).toBe(false);
+    expect(result.current.ui.selectedTransformationIds).toEqual([]);
   });
 });
 

@@ -444,6 +444,9 @@ export function QueryEditorContextWrapper({
       deleteQuery: (refId: string) => {
         dataPane.deleteQuery(refId);
         removeQueryFromSelection(refId);
+        // Deleting a card from its header exits multi-select mode so the checkboxes and bulk-actions
+        // footer revert together instead of leaving a desynced multi-select state behind.
+        setMultiSelectModeState(false);
       },
       duplicateQuery: dataPane.duplicateQuery,
       toggleQueryHide: dataPane.toggleQueryHide,
@@ -459,6 +462,9 @@ export function QueryEditorContextWrapper({
           dataPane.deleteTransformation(index);
         }
         removeTransformationFromSelection(transformId);
+        // Deleting a card from its header exits multi-select mode so the checkboxes and bulk-actions
+        // footer revert together instead of leaving a desynced multi-select state behind.
+        setMultiSelectModeState(false);
       },
       toggleTransformationDisabled: (transformId: string) => {
         const index = findTransformationIndex(transformId);
@@ -489,6 +495,7 @@ export function QueryEditorContextWrapper({
       onSwitchToClassic,
       removeQueryFromSelection,
       removeTransformationFromSelection,
+      setMultiSelectModeState,
       trackQueryRename,
     ]
   );
