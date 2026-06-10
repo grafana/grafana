@@ -14,7 +14,7 @@ export function normalizeLogLevelFieldInPlace(field: Field): void {
   for (let i = 0; i < values.length; i++) {
     const v = values[i];
     if (v === null || v === undefined) {
-      values[i] = LogLevel.unknown;
+      values[i] = LogLevel.unspecified;
       continue;
     }
     values[i] = getLogLevelFromKey(typeof v === 'number' ? v : String(v));

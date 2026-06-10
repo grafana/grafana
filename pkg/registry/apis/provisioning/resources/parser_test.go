@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -26,6 +27,7 @@ func TestParser(t *testing.T) {
 		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
 	clients.On("ForKind", mock.Anything, dashboardV1.DashboardResourceInfo.GroupVersionKind()).
 		Return(nil, dashboardV1.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
+	clients.On("SupportedResources").Return(SupportedProvisioningResources).Maybe()
 
 	parser := &parser{
 		repo: provisioning.ResourceRepositoryInfo{
@@ -154,10 +156,81 @@ spec:
 	})
 }
 
+func TestParser_FolderAnnotationGuard(t *testing.T) {
+	// An org-scoped resource that is declared as supported but is NOT folder-scoped
+	// (no CapabilityFolder). It must never receive a folder annotation.
+	orgScopedGVK := schema.GroupVersionKind{Group: "playlist.grafana.app", Version: "v0alpha1", Kind: "Playlist"}
+	orgScopedGVR := schema.GroupVersionResource{Group: "playlist.grafana.app", Version: "v0alpha1", Resource: "playlists"}
+
+	supported := []SupportedResource{
+		{GroupKind: dashboardV0.DashboardResourceInfo.GroupVersionKind().GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+		{GroupKind: orgScopedGVK.GroupKind(), Capabilities: sets.New[string]()},
+	}
+
+	clients := NewMockResourceClients(t)
+	clients.On("ForKind", mock.Anything, dashboardV0.DashboardResourceInfo.GroupVersionKind()).
+		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
+	clients.On("ForKind", mock.Anything, orgScopedGVK).
+		Return(nil, orgScopedGVR, nil).Maybe()
+	clients.On("SupportedResources").Return(supported).Maybe()
+
+	parser := &parser{
+		repo: provisioning.ResourceRepositoryInfo{
+			Type:      provisioning.LocalRepositoryType,
+			Namespace: "xxx",
+			Name:      "repo",
+		},
+		clients: clients,
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.LocalRepositoryType,
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		},
+	}
+
+	t.Run("folder-scoped resource still gets a folder annotation", func(t *testing.T) {
+		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "team-a/test-dashboard.json",
+			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  name: test-dashboard
+spec:
+  title: Test dashboard
+`),
+		})
+		require.NoError(t, err)
+		require.Equal(t, ParseFolder("team-a/", "repo").ID, parsed.Meta.GetFolder(),
+			"dashboards must continue to get a folder annotation")
+		require.Equal(t, ParseFolder("team-a/", "repo").ID, parsed.Obj.GetAnnotations()[utils.AnnoKeyFolder])
+	})
+
+	t.Run("org-scoped resource gets no folder annotation", func(t *testing.T) {
+		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "team-a/my-playlist.json",
+			Data: []byte(`apiVersion: playlist.grafana.app/v0alpha1
+kind: Playlist
+metadata:
+  name: my-playlist
+spec:
+  title: My playlist
+`),
+		})
+		require.NoError(t, err)
+		require.Empty(t, parsed.Meta.GetFolder(),
+			"org-scoped resources must not have a folder annotation stamped on them")
+		_, hasFolder := parsed.Obj.GetAnnotations()[utils.AnnoKeyFolder]
+		require.False(t, hasFolder, "org-scoped resources must not carry the folder annotation")
+	})
+}
+
 func TestParser_FolderMetadataRefFallback(t *testing.T) {
 	clients := NewMockResourceClients(t)
 	clients.On("ForKind", mock.Anything, mock.Anything).
 		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
+	clients.On("SupportedResources").Return(SupportedProvisioningResources).Maybe()
 
 	folderMetadataJSON := `{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"Team A"}}`
 
@@ -501,6 +574,86 @@ func TestDryRunDeletePopulatesExisting(t *testing.T) {
 		require.NoError(t, parsed.DryRun(context.Background()))
 		require.Equal(t, "team-a", parsed.ExistingFolder())
 	})
+}
+
+func TestSkipsStrictValidation(t *testing.T) {
+	// Behaviour must be identical to the previous hardcoded dashboard check
+	// (f.GVR == DashboardResource): only the v1 dashboard GVR is exempt.
+	require.True(t, skipsStrictValidation(DashboardResource),
+		"v1 dashboard resource must be exempt from strict validation")
+	require.False(t, skipsStrictValidation(FolderResource),
+		"non-dashboard resources must use strict validation")
+	// The exemption is version-specific: v2 dashboards keep strict validation so
+	// their CUE schema is enforced by apiserver admission.
+	require.False(t, skipsStrictValidation(DashboardResourceV2),
+		"v2 dashboard resource must keep strict validation")
+	require.False(t, skipsStrictValidation(DashboardResourceV2alpha1),
+		"v2alpha1 dashboard resource must keep strict validation")
+	require.False(t, skipsStrictValidation(DashboardResourceV2beta1),
+		"v2beta1 dashboard resource must keep strict validation")
+}
+
+func TestParsedResource_DryRun_FieldValidation(t *testing.T) {
+	notFound := apierrors.NewNotFound(schema.GroupResource{Resource: "test"}, "my-resource")
+
+	tests := []struct {
+		name                string
+		gvr                 schema.GroupVersionResource
+		skipStrict          bool
+		wantFieldValidation string
+	}{
+		{
+			name:                "v1 dashboard resource is exempt and uses Ignore",
+			gvr:                 DashboardResource,
+			wantFieldValidation: "Ignore",
+		},
+		{
+			name:                "v2 dashboard resource is not exempt and uses Strict",
+			gvr:                 DashboardResourceV2,
+			wantFieldValidation: "Strict",
+		},
+		{
+			name:                "non-dashboard resource uses Strict",
+			gvr:                 FolderResource,
+			wantFieldValidation: "Strict",
+		},
+		{
+			name:                "SkipStrictValidation forces Ignore regardless of resource",
+			gvr:                 FolderResource,
+			skipStrict:          true,
+			wantFieldValidation: "Ignore",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &MockDynamicResourceInterface{}
+			// No existing resource, so DryRun takes the Create path.
+			mockClient.On("Get", mock.Anything, "my-resource", metav1.GetOptions{}, mock.Anything).
+				Return(nil, notFound)
+
+			obj := &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "my-resource", "namespace": "default"},
+			}}
+			mockClient.On("Create", mock.Anything, obj,
+				mock.MatchedBy(func(opts metav1.CreateOptions) bool {
+					return opts.FieldValidation == tt.wantFieldValidation
+				}), mock.Anything).
+				Return(obj, nil)
+
+			parsed := &ParsedResource{
+				Action:               provisioning.ResourceActionCreate,
+				Obj:                  obj,
+				GVR:                  tt.gvr,
+				SkipStrictValidation: tt.skipStrict,
+				Client:               mockClient,
+				Repo:                 testRepoInfo(),
+			}
+
+			require.NoError(t, parsed.DryRun(context.Background()))
+			mockClient.AssertExpectations(t)
+		})
+	}
 }
 
 func newParsedResource(client *MockDynamicResourceInterface, opts ...func(*ParsedResource)) *ParsedResource {
