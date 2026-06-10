@@ -21,7 +21,7 @@ export type RepoWorkflows = RepositorySpec['workflows'];
 // template / enforcement) collides with the git config `branch` (the branch
 // name string). The branch name keeps the flat `branch` field below; the
 // BranchOptions live under `branchOptions`.
-export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | 'branch'> &
+export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | 'branch' | RepositorySpec['type']> &
   BitbucketRepositoryConfig &
   GitRepositoryConfig &
   GitHubRepositoryConfig &

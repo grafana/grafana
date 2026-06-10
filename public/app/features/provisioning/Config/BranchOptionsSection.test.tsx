@@ -1,15 +1,11 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { useForm } from 'react-hook-form';
+import { act, render, screen } from 'test/test-utils';
+
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { type RepositoryFormData } from '../types';
 
 import { BranchOptionsSection } from './BranchOptionsSection';
-
-jest.mock('@openfeature/react-sdk', () => ({
-  useBooleanFlagValue: jest.fn(),
-}));
 
 function Wrapper() {
   const { register } = useForm<RepositoryFormData>();
@@ -25,11 +21,18 @@ function Wrapper() {
 describe('BranchOptionsSection', () => {
   beforeEach(() => {
     // Default to the gitConventions flag being enabled; specific tests override.
-    jest.mocked(useBooleanFlagValue).mockReturnValue(true);
+    setTestFlags({ 'provisioning.gitConventions': true });
+  });
+
+  afterEach(async () => {
+    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
   it('renders nothing when the gitConventions flag is off', () => {
-    jest.mocked(useBooleanFlagValue).mockReturnValue(false);
+    setTestFlags({ 'provisioning.gitConventions': false });
     const { container } = render(<Wrapper />);
 
     expect(container).toBeEmptyDOMElement();
@@ -44,8 +47,7 @@ describe('BranchOptionsSection', () => {
   });
 
   it('reveals the branch name template and enforcement fields when expanded', async () => {
-    const user = userEvent.setup();
-    render(<Wrapper />);
+    const { user } = render(<Wrapper />);
 
     await user.click(screen.getByText('Branch options (advanced)'));
 
@@ -54,8 +56,7 @@ describe('BranchOptionsSection', () => {
   });
 
   it('registers the inputs under the provided spec paths', async () => {
-    const user = userEvent.setup();
-    render(<Wrapper />);
+    const { user } = render(<Wrapper />);
 
     await user.click(screen.getByText('Branch options (advanced)'));
 
