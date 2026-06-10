@@ -339,6 +339,11 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels
+  * @default false
+  */
+  dashboardNotebookLayout?: boolean;
+  /**
   * Enables default layout selector in dashboard settings
   * @default true
   */
@@ -915,11 +920,6 @@ export interface FeatureToggles {
   */
   newLogsPanel?: boolean;
   /**
-  * Enables the temporary themes for GrafanaCon
-  * @default true
-  */
-  grafanaconThemes?: boolean;
-  /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   * @default false
   */
@@ -1406,11 +1406,6 @@ export interface FeatureToggles {
   */
   queryEditorNext?: boolean;
   /**
-  * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
-  * @default false
-  */
-  queryEditorNextMultiSelect?: boolean;
-  /**
   * Enables team APIs in the app platform
   * @default false
   */
@@ -1615,11 +1610,6 @@ export interface FeatureToggles {
   * @default false
   */
   cacheConfigUnifiedStorageMigration?: boolean;
-  /**
-  * Boots the frontend using the boot.js script built from TS instead of the embedded boot script
-  * @default false
-  */
-  compiledBootScript?: boolean;
   /**
   * Enables validation on the InfluxDB data source configuration page
   * @default false

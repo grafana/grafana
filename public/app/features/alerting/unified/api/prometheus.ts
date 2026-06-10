@@ -20,7 +20,7 @@ export interface FetchPromRulesFilter {
   panelId?: number;
 }
 
-export interface PrometheusDataSourceConfig {
+interface PrometheusDataSourceConfig {
   dataSourceName: string;
   limitAlerts?: number;
   identifier?: RuleIdentifier;

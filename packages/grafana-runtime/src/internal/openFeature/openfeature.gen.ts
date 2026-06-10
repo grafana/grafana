@@ -83,8 +83,6 @@ export const FlagKeys = {
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
   QueryEditorNext: "queryEditorNext",
-  /** Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor */
-  QueryEditorNextMultiSelect: "queryEditorNextMultiSelect",
   /** Store query history in browser IndexedDB instead of server-side */
   QueryHistoryLocalOnly: "queryHistory.localOnly",
   /** Replace the Query History drawer with a new Recent Queries modal UI */
@@ -460,10 +458,10 @@ export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationO
  *
  * **Details:**
  * - flag key: `provisioning.readmes`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.readmes", false, options).value;
+  return useFlag("provisioning.readmes", true, options).value;
 };
 
 /**
@@ -486,17 +484,6 @@ export const useFlagProvisioningFolderMetadata = (options?: ReactFlagEvaluationO
  */
 export const useFlagQueryEditorNext = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("queryEditorNext", false, options).value;
-};
-
-/**
- * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
- *
- * **Details:**
- * - flag key: `queryEditorNextMultiSelect`
- * - default value: `false`
- */
-export const useFlagQueryEditorNextMultiSelect = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("queryEditorNextMultiSelect", false, options).value;
 };
 
 /**
