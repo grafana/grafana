@@ -103,11 +103,11 @@ To restore a deleted dashboard, raise a PR directly in your GitHub repository. R
 
 ## Document folders with a README
 
-You can document the contents of a provisioned folder with a `README.md` file stored alongside its resources in the repository. Grafana renders the README inline on the folder page, below the list of dashboards, so your team can see what's in the folder, how it's organized, and where to find the right dashboard without leaving Grafana.
+Document the contents or any other relevant piece of information of your provisioned folder in a `README.md` file stored alongside its resources in the repository. Grafana renders the README inline on the folder page, below the list of dashboards, so your team can see what's in the folder, how it's organized, and where to find the right dashboard without leaving Grafana.
 
-- If the folder contains a `README.md`, Grafana renders its Markdown content. Relative links and images in the README resolve against the host repository.
-- If the folder has no `README.md`, Grafana shows an **Add README** call to action. This also appears in empty folders that don't yet contain any dashboards or subfolders.
-- Select the edit pencil in the README header to open the file in your Git provider's editor and commit changes through your usual workflow.
+- When the folder contains a `README.md` file, Grafana renders its Markdown content. Relative links and images in the README resolve against the host repository.
+- If the folder has no `README.md`, or if the folder is empty, you'll be prompted to action with a **Add README** button.
+- You can edit the README any time. Select the edit pencil in the README header to open the file in your Git provider's editor and commit changes through your usual workflow.
 
 ## Best practices
 
