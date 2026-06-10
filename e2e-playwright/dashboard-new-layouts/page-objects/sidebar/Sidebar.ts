@@ -1,4 +1,4 @@
-import { type Page } from '@playwright/test';
+import { test, type Page } from '@playwright/test';
 
 import { type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
@@ -36,5 +36,11 @@ export class Sidebar extends PageObject {
 
   getCloseButton() {
     return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.closePane);
+  }
+
+  async clickDeleteButton() {
+    await test.step('Click delete button in sidebar', async () => {
+      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.EditPaneHeader.deleteButton).click();
+    });
   }
 }
