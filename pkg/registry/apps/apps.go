@@ -62,6 +62,10 @@ func ProvideAppInstallers(
 	if alertingNotificationAppInstaller != nil {
 		installers = append(installers, alertingNotificationAppInstaller)
 	}
+
+	// app registration controlled by runtime_config
+	// `served: false` in the app manifest should mark apps as disabled.
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	// if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
 	installers = append(installers, shorturlAppInstaller)
@@ -77,7 +81,6 @@ func ProvideAppInstallers(
 	installers = append(installers, logsdrilldownAppInstaller)
 	// }
 
-	// app registration controlled by runtime_config
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	// if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
 	installers = append(installers, advisorAppInstaller)
@@ -106,9 +109,9 @@ func ProvideAppInstallers(
 	//
 	// Developers are encouraged to explore the built-in functionality of the App Platform
 	// to control the app registration (see `docs/apps/example/README.md`).
-	if cfg.AnnotationAppPlatform.Enabled {
-		installers = append(installers, annotationAppInstaller)
-	}
+	// if cfg.AnnotationAppPlatform.Enabled {
+	installers = append(installers, annotationAppInstaller)
+	// }
 	return installers
 }
 
