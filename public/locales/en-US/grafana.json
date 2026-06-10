@@ -9035,6 +9035,11 @@
     "sql-expr": {
       "button-run-query": "Run query"
     },
+    "sql-expression": {
+      "editor": {
+        "aria-label": "SQL expression editor"
+      }
+    },
     "sql-schema": {
       "error-title": "Error",
       "loading": "Loading schema information...",
