@@ -836,6 +836,8 @@ jobs:
     name: Run Meticulous tests
     runs-on: ubuntu-x64-small
     continue-on-error: true
+    needs:
+      - build-docker-linux-amd64
     permissions:
       actions: write
       contents: read
@@ -849,6 +851,27 @@ jobs:
         with:
           persist-credentials: false
 
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-docker-distroless-slim-linux-amd64
+          path: dist
+
+      - name: Load Docker image under test
+        id: load-image
+        run: |
+          PACKAGE_PATH="$(find dist -type f -name '*_linux_amd64.distroless-slim.docker.tar.gz' | sort | sed -n '1p')"
+          if [ -z "$PACKAGE_PATH" ]; then
+            echo "No distroless-slim docker package found in dist/"
+            ls -laR dist
+            exit 1
+          fi
+          IMAGE="$(docker load -i "$PACKAGE_PATH" | sed -n 's/^Loaded image: //p' | sed -n '1p')"
+          if [ -z "$IMAGE" ]; then
+            echo "Unable to load Docker image from $PACKAGE_PATH"
+            exit 1
+          fi
+          echo "IMAGE_UNDER_TEST=$IMAGE" | tee -a "$GITHUB_OUTPUT"
+
       - name: Get vault secrets
         id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
@@ -860,7 +883,7 @@ jobs:
         uses: alwaysmeticulous/report-diffs-action/upload-container@89c6081b30d17cfcc410b5c19c269cd7a4d67cdf # v1
         with:
           api-token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).METICULOUS_API_TOKEN }}
-          image-tag: grafana/grafana:nightly-distroless-slim
+          image-tag: ${{ steps.load-image.outputs.IMAGE_UNDER_TEST }}
           container-port: 3000
           container-env: |
             GF_AUTH_ANONYMOUS_ENABLED=true
