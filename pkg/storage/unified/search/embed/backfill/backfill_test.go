@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -92,9 +93,20 @@ func TestRun_LockUnavailable_SkipsAllWork(t *testing.T) {
 func TestRun_LockAcquired_ReleasedOnReturn(t *testing.T) {
 	vec := newFakeVector()
 	o := newBackfiller(t, newFakeStorage(), vec)
-	require.NoError(t, o.Run(context.Background()))
 
-	assert.Equal(t, 1, vec.lockAttempts)
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- o.Run(ctx) }()
+
+	// Run loops on a ticker; wait for the lock, then stop it.
+	require.Eventually(t, func() bool {
+		vec.mu.Lock()
+		defer vec.mu.Unlock()
+		return vec.lockAttempts == 1
+	}, time.Second, time.Millisecond)
+	cancel()
+	require.ErrorIs(t, <-done, context.Canceled)
+
 	assert.Equal(t, 1, vec.lockReleases, "lock must be released when Run returns")
 }
 
