@@ -20,7 +20,9 @@ export type RecordingSplitMode =
   | 'inline-divider'
   | 'mixed-badged'
   | 'folder-chip'
-  | 'tabbed';
+  | 'tabbed'
+  // POC: not a layout — switches the folder card to the single cross-kind `/search` endpoint.
+  | 'search';
 
 export const RECORDING_SPLIT_MODES: RecordingSplitMode[] = [
   'header-tabs',
@@ -29,6 +31,7 @@ export const RECORDING_SPLIT_MODES: RecordingSplitMode[] = [
   'mixed-badged',
   'folder-chip',
   'tabbed',
+  'search',
 ];
 
 export const DEFAULT_RECORDING_SPLIT_MODE: RecordingSplitMode = 'header-tabs';

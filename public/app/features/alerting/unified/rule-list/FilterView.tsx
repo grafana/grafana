@@ -155,6 +155,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
             case 'grafana':
               return (
                 <GrafanaRuleListItem
+                  key={key}
                   rule={rule}
                   groupIdentifier={groupIdentifier}
                   namespaceName={ruleWithOrigin.namespaceName}

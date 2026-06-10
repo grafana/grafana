@@ -14,6 +14,7 @@ const OPTIONS: Array<ComboboxOption<RecordingSplitMode>> = [
   { value: 'mixed-badged', label: 'Mixed list, recording dimmed' },
   { value: 'folder-chip', label: 'Chip at folder bottom' },
   { value: 'tabbed', label: 'Top-level tabs' },
+  { value: 'search', label: 'Single /search request' },
 ];
 
 /**

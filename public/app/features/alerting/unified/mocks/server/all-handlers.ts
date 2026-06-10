@@ -14,6 +14,7 @@ import inhibitionRulesK8sHandlers from 'app/features/alerting/unified/mocks/serv
 import integrationTypeSchemasK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/integrationTypeSchemas.k8s';
 import receiverK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/receivers.k8s';
 import routingTreeK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/routingtrees.k8s';
+import rulesSearchK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/rulesSearch.k8s';
 import templatesK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/templates.k8s';
 import timeIntervalK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import receiverTestK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8sReceiverTest';
@@ -45,6 +46,7 @@ export const alertingHandlers = [
   ...receiverTestK8sHandlers,
   ...templatesK8sHandlers,
   ...routingTreeK8sHandlers,
+  ...rulesSearchK8sHandlers,
 ];
 
 /**

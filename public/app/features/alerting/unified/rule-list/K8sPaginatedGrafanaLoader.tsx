@@ -16,6 +16,7 @@ import { LoadMoreButton } from './components/LoadMoreButton';
 import { NoRulesFound } from './components/NoRulesFound';
 import { K8sFolderCard } from './gma-design/K8sFolderCard';
 import { type RuleKind } from './gma-design/K8sRuleRow';
+import { K8sSearchFolderCard } from './gma-design/K8sSearchFolderCard';
 import { getRuleDesignStyles } from './gma-design/styles';
 import { useDataSourceLoadingReporter } from './hooks/useDataSourceLoadingReporter';
 import { type DataSourceLoadState } from './hooks/useDataSourceLoadingStates';
@@ -103,6 +104,17 @@ export function K8sPaginatedGrafanaLoader({
             const folderUid = folder.metadata.name;
             if (!folderUid) {
               return null;
+            }
+            if (recordingSplitMode === 'search') {
+              return (
+                <K8sSearchFolderCard
+                  key={`${folderUid}-search-${ruleFilter?.ruleType ?? ''}`}
+                  folderUid={folderUid}
+                  folderTitle={getFolderTitle(folder)}
+                  groupFilter={groupFilter}
+                  ruleFilter={ruleFilter}
+                />
+              );
             }
             return (
               <K8sFolderCard
