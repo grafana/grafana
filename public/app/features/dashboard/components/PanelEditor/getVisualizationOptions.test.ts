@@ -5,10 +5,12 @@ import {
   FieldType,
   getDefaultTimeRange,
   LoadingState,
+  PanelOptionsEditorBuilder,
   type PanelPlugin,
   Registry,
   toDataFrame,
 } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test';
 import { VizPanel } from '@grafana/scenes';
 
 import { getStandardEditorContext, getVisualizationOptions2 } from './getVisualizationOptions';
@@ -409,5 +411,62 @@ describe('getVisualizationOptions', () => {
       expect(showIfSpy.mock.calls[0][0].displayName).toBe('default');
       expect(showIfSpy.mock.calls[0][2][0].fields[0].config.displayName).toBe('annotation');
     });
+  });
+
+  it('should only return quick toggles if asked', () => {
+    const vizPanel = new VizPanel({
+      title: 'Panel A',
+      pluginId: 'timeseries',
+      key: 'panel-12',
+    });
+
+    const plugin = getPanelPlugin({ id: 'graph' });
+
+    plugin
+      .setPanelOptions((builder) => {
+        builder.addBooleanSwitch({
+          name: 'option A',
+          path: 'optionA',
+          defaultValue: true,
+        });
+        builder.addBooleanSwitch({
+          name: 'option B',
+          path: 'optionB',
+          defaultValue: true,
+        });
+      })
+      .useFieldConfig({
+        useCustomConfig: (builder) => {
+          builder.addBooleanSwitch({
+            name: 'field config A',
+            path: 'fieldConfigA',
+            defaultValue: false,
+          });
+          builder.addBooleanSwitch({
+            name: 'field config B',
+            path: 'fieldConfigB',
+            defaultValue: false,
+          });
+        },
+      })
+      .setViewPanelOptions({
+        quickToggles: {
+          optionProperties: ['optionB'],
+          fieldConfigProperties: ['custom.fieldConfigA'],
+        },
+      });
+
+    const vizOptions = getVisualizationOptions2({
+      panel: vizPanel,
+      eventBus: new EventBusSrv(),
+      plugin: plugin,
+      instanceState: {},
+      quickToggles: true,
+    });
+
+    expect(vizOptions.length).toEqual(1);
+    expect(vizOptions[0].props.id).toEqual('quick-toggles');
+    expect(vizOptions[0].items[0].props.id).toEqual('graph-optionB');
+    expect(vizOptions[0].items[1].props.id).toEqual('fieldConfigA');
   });
 });

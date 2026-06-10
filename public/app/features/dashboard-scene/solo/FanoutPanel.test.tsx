@@ -8,7 +8,7 @@ import {
 } from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
 
-import { groupDataFramesByLabel } from './ViewPanelWrapper';
+import { groupDataFramesByLabel } from './FanoutPanel';
 
 describe('SoloPanelWrapper', () => {});
 
