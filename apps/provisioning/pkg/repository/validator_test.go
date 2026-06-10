@@ -275,38 +275,61 @@ func TestValidator_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "branch and commit options for local repository",
+			name: "pull request options for local repository",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Finalizers: []string{CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
-						Title:  "Test Repo",
-						Type:   provisioning.LocalRepositoryType,
-						Branch: &provisioning.BranchOptions{NameTemplate: "{{title}}"},
-						Commit: &provisioning.CommitOptions{SingleResourceMessageTemplate: "{{title}}"},
+						Title:       "Test Repo",
+						Type:        provisioning.LocalRepositoryType,
+						PullRequest: &provisioning.PullRequestOptions{TitleTemplate: "{{title}}"},
 					},
 				}
 			}(),
-			expectedErrs: 2,
+			expectedErrs: 1,
 			validateError: func(t *testing.T, errors field.ErrorList) {
-				require.Contains(t, errors.ToAggregate().Error(), "branch options are not supported on local repositories")
-				require.Contains(t, errors.ToAggregate().Error(), "commit options are not supported on local repositories")
+				require.Equal(t, "spec.pullRequest", errors[0].Field)
+				require.Contains(t, errors.ToAggregate().Error(), "pull request options are not supported on local repositories")
 			},
 		},
 		{
-			name: "branch and commit options allowed for git repository",
+			name: "branch, commit and pull request options for local repository",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Finalizers: []string{CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
-						Title:  "Test Repo",
-						Type:   provisioning.GitHubRepositoryType,
-						Branch: &provisioning.BranchOptions{NameTemplate: "{{title}}"},
-						Commit: &provisioning.CommitOptions{SingleResourceMessageTemplate: "{{title}}"},
+						Title:       "Test Repo",
+						Type:        provisioning.LocalRepositoryType,
+						Branch:      &provisioning.BranchOptions{NameTemplate: "{{title}}"},
+						Commit:      &provisioning.CommitOptions{SingleResourceMessageTemplate: "{{title}}"},
+						PullRequest: &provisioning.PullRequestOptions{TitleTemplate: "{{title}}"},
+					},
+				}
+			}(),
+			expectedErrs: 3,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "branch options are not supported on local repositories")
+				require.Contains(t, errors.ToAggregate().Error(), "commit options are not supported on local repositories")
+				require.Contains(t, errors.ToAggregate().Error(), "pull request options are not supported on local repositories")
+			},
+		},
+		{
+			name: "branch, commit and pull request options allowed for git repository",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:       "Test Repo",
+						Type:        provisioning.GitHubRepositoryType,
+						Branch:      &provisioning.BranchOptions{NameTemplate: "{{title}}"},
+						Commit:      &provisioning.CommitOptions{SingleResourceMessageTemplate: "{{title}}"},
+						PullRequest: &provisioning.PullRequestOptions{TitleTemplate: "{{title}}"},
 					},
 				}
 			}(),

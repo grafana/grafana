@@ -86,9 +86,9 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 			cfg.Spec.Git, "Git config only valid when type is git"))
 	}
 
-	// Branch and commit options are only meaningful for the branch workflow, which
-	// is not supported on local repositories. Reject them to avoid silently storing
-	// configuration that can never take effect.
+	// Branch, commit and pull request options are only meaningful for the branch
+	// workflow, which is not supported on local repositories. Reject them to avoid
+	// silently storing configuration that can never take effect.
 	if cfg.Spec.Type == provisioning.LocalRepositoryType {
 		if cfg.Spec.Branch != nil {
 			list = append(list, field.Invalid(field.NewPath("spec", "branch"),
@@ -97,6 +97,10 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 		if cfg.Spec.Commit != nil {
 			list = append(list, field.Invalid(field.NewPath("spec", "commit"),
 				cfg.Spec.Commit, "commit options are not supported on local repositories"))
+		}
+		if cfg.Spec.PullRequest != nil {
+			list = append(list, field.Invalid(field.NewPath("spec", "pullRequest"),
+				cfg.Spec.PullRequest, "pull request options are not supported on local repositories"))
 		}
 	}
 
