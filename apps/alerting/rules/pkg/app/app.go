@@ -49,7 +49,8 @@ func New(cfg app.Config) (app.App, error) {
 				},
 			},
 		},
-		ManagedKinds: managedKinds,
+		ManagedKinds:          managedKinds,
+		VersionedCustomRoutes: buildSearchRoutes(runtimeCfg),
 	}
 
 	a, err := simple.NewApp(c)
@@ -63,6 +64,26 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	return a, nil
+}
+
+// buildSearchRoutes wires the rule search handlers (provided by the registry)
+// to their namespaced custom routes. Routes whose handler is unset are skipped
+// so manifest validation without a backing instance does not register nil
+// handlers.
+func buildSearchRoutes(cfg config.RuntimeConfig) map[string]simple.AppVersionRouteHandlers {
+	handlers := simple.AppVersionRouteHandlers{}
+	add := func(path string, handler simple.AppCustomRouteHandler) {
+		if handler != nil {
+			handlers[simple.AppVersionRoute{Namespaced: true, Path: path, Method: simple.AppCustomRouteMethodGet}] = handler
+		}
+	}
+	add("/search", cfg.SearchRulesHandler)
+	add("/search/alertrules", cfg.SearchAlertRulesHandler)
+	add("/search/recordingrules", cfg.SearchRecordingRulesHandler)
+	if len(handlers) == 0 {
+		return nil
+	}
+	return map[string]simple.AppVersionRouteHandlers{"v0alpha1": handlers}
 }
 
 func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig) *simple.Validator {

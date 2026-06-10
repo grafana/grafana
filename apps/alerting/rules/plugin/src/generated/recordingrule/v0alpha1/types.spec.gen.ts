@@ -16,28 +16,19 @@ export type TemplateString = string;
 
 export const defaultTemplateString = (): TemplateString => ("");
 
-// TODO(@moustafab): validate the metric name regex
 export type MetricName = string;
 
 export const defaultMetricName = (): MetricName => ("");
 
-// TODO: validate that only one can specify source=true
-// & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
 export type ExpressionMap = Record<string, Expression>;
 
 export const defaultExpressionMap = (): ExpressionMap => ({});
 
 export interface Expression {
-	// The type of query if this is a query expression
 	queryType?: string;
 	relativeTimeRange?: RelativeTimeRange;
-	// The UID of the datasource to run this expression against. If omitted, the expression will be run against the `__expr__` datasource
 	datasourceUID?: DatasourceUID;
 	model: any;
-	// Used to mark the expression to be used as the final source for the rule evaluation
-	// Only one expression in a rule can be marked as the source
-	// For AlertRules, this is the expression that will be evaluated against the alerting condition
-	// For RecordingRules, this is the expression that will be recorded
 	source?: boolean;
 }
 
