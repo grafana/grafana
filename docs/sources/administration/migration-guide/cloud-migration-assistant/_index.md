@@ -44,6 +44,7 @@ The following resources are supported by the migration assistant:
 
 To use the Grafana migration assistant, you need:
 
+- A self-managed Grafana instance.
 - A [Grafana Cloud Stack](https://grafana.com/docs/grafana-cloud/get-started/) you intend to migrate your resources to.
 - [`Admin`](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/) access to the Grafana Cloud Stack. To check your access level, go to `https://grafana.com/orgs/<YOUR-ORG-NAME>/members`.
 - [Grafana server administrator](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators) access to your existing self-managed Grafana instance. To check your access level, go to `https://<GRAFANA-ONPREM-URL>/admin/users`.
