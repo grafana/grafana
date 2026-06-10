@@ -86,30 +86,7 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 			cfg.Spec.Git, "Git config only valid when type is git"))
 	}
 
-	// Branch, commit and pull request options are only meaningful for the branch
-	// workflow, which is not supported on local repositories. Reject them to avoid
-	// silently storing configuration that can never take effect.
-	if cfg.Spec.Type == provisioning.LocalRepositoryType {
-		if cfg.Spec.Branch != nil {
-			list = append(list, field.Invalid(field.NewPath("spec", "branch"),
-				cfg.Spec.Branch, "branch options are not supported on local repositories"))
-		}
-		if cfg.Spec.Commit != nil {
-			list = append(list, field.Invalid(field.NewPath("spec", "commit"),
-				cfg.Spec.Commit, "commit options are not supported on local repositories"))
-		}
-		if cfg.Spec.PullRequest != nil {
-			list = append(list, field.Invalid(field.NewPath("spec", "pullRequest"),
-				cfg.Spec.PullRequest, "pull request options are not supported on local repositories"))
-		}
-	}
-
-	// Pull requests are a hosting-provider feature. Plain git repositories support the
-	// branch workflow but cannot open pull requests, so reject pull request options.
-	if cfg.Spec.Type == provisioning.GitRepositoryType && cfg.Spec.PullRequest != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", "pullRequest"),
-			cfg.Spec.PullRequest, "pull request options are not supported on git repositories"))
-	}
+	list = append(list, validateWorkflowOptions(cfg)...)
 
 	for _, w := range cfg.Spec.Workflows {
 		switch w {
@@ -163,6 +140,39 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 
 	if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.BaseURL != "" {
 		list = append(list, validateWebhookBaseURL(cfg.Spec.Webhook.BaseURL)...)
+	}
+
+	return list
+}
+
+// validateWorkflowOptions rejects branch, commit and pull request options on repository
+// types that cannot use them. These options are only meaningful for the branch workflow
+// (git-only), and pull requests additionally require a hosting provider. Rejecting them
+// avoids silently storing configuration that can never take effect.
+func validateWorkflowOptions(cfg *provisioning.Repository) field.ErrorList {
+	var list field.ErrorList
+
+	switch cfg.Spec.Type {
+	case provisioning.LocalRepositoryType:
+		// Local repositories support neither the branch workflow nor pull requests.
+		if cfg.Spec.Branch != nil {
+			list = append(list, field.Invalid(field.NewPath("spec", "branch"),
+				cfg.Spec.Branch, "branch options are not supported on local repositories"))
+		}
+		if cfg.Spec.Commit != nil {
+			list = append(list, field.Invalid(field.NewPath("spec", "commit"),
+				cfg.Spec.Commit, "commit options are not supported on local repositories"))
+		}
+		if cfg.Spec.PullRequest != nil {
+			list = append(list, field.Invalid(field.NewPath("spec", "pullRequest"),
+				cfg.Spec.PullRequest, "pull request options are not supported on local repositories"))
+		}
+	case provisioning.GitRepositoryType:
+		// Plain git supports the branch workflow but cannot open pull requests.
+		if cfg.Spec.PullRequest != nil {
+			list = append(list, field.Invalid(field.NewPath("spec", "pullRequest"),
+				cfg.Spec.PullRequest, "pull request options are not supported on git repositories"))
+		}
 	}
 
 	return list
