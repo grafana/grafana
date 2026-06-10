@@ -439,34 +439,9 @@ func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 		return iamv0.NewGetSearchUsersResponse(), nil
 	}
 
-	titleIDX := -1
-	emailIDX := -1
-	loginIDX := -1
-	lastSeenAtIDX := -1
-	roleIDX := -1
-	disabledIDX := -1
-	createdIDX := -1
-	internalIDIDX := -1
-
+	colIdx := make(map[string]int, len(result.Results.Columns))
 	for i, v := range result.Results.Columns {
-		switch v.Name {
-		case resource.SEARCH_FIELD_TITLE:
-			titleIDX = i
-		case builders.USER_EMAIL:
-			emailIDX = i
-		case builders.USER_LOGIN:
-			loginIDX = i
-		case builders.USER_LAST_SEEN_AT:
-			lastSeenAtIDX = i
-		case builders.USER_ROLE:
-			roleIDX = i
-		case builders.USER_IS_DISABLED:
-			disabledIDX = i
-		case resource.SEARCH_FIELD_CREATED:
-			createdIDX = i
-		case resource.SEARCH_FIELD_LEGACY_ID:
-			internalIDIDX = i
-		}
+		colIdx[v.Name] = i
 	}
 
 	sr := iamv0.NewGetSearchUsersResponse()
@@ -479,52 +454,45 @@ func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 		if len(row.Cells) != len(result.Results.Columns) {
 			return iamv0.NewGetSearchUsersResponse(), fmt.Errorf("error parsing user search response: mismatch number of columns and cells")
 		}
-
-		var login string
-		if loginIDX >= 0 && row.Cells[loginIDX] != nil {
-			login = string(row.Cells[loginIDX])
-		}
-
-		hit := iamv0.GetSearchUsersUserHit{
-			Name:  row.Key.Name,
-			Login: login,
-		}
-
-		if titleIDX >= 0 && row.Cells[titleIDX] != nil {
-			hit.Title = string(row.Cells[titleIDX])
-		}
-
-		if emailIDX >= 0 && row.Cells[emailIDX] != nil {
-			hit.Email = string(row.Cells[emailIDX])
-		}
-
-		if roleIDX >= 0 && row.Cells[roleIDX] != nil {
-			hit.Role = string(row.Cells[roleIDX])
-		}
-
-		if lastSeenAtIDX >= 0 && row.Cells[lastSeenAtIDX] != nil {
-			if len(row.Cells[lastSeenAtIDX]) == 8 {
-				hit.LastSeenAt = int64(binary.BigEndian.Uint64(row.Cells[lastSeenAtIDX]))
-				hit.LastSeenAtAge = util.GetAgeString(time.Unix(hit.LastSeenAt, 0))
-			}
-		}
-
-		if disabledIDX >= 0 && len(row.Cells[disabledIDX]) > 0 {
-			hit.Disabled = row.Cells[disabledIDX][0] == 1
-		}
-
-		if createdIDX >= 0 && len(row.Cells[createdIDX]) == 8 {
-			hit.Created = int64(binary.BigEndian.Uint64(row.Cells[createdIDX]))
-		}
-
-		if internalIDIDX >= 0 && len(row.Cells[internalIDIDX]) == 8 {
-			hit.InternalId = int64(binary.BigEndian.Uint64(row.Cells[internalIDIDX]))
-		}
-
-		sr.Hits = append(sr.Hits, hit)
+		sr.Hits = append(sr.Hits, parseUserHit(row, colIdx))
 	}
 
 	return sr, nil
+}
+
+func parseUserHit(row *resourcepb.ResourceTableRow, colIdx map[string]int) iamv0.GetSearchUsersUserHit {
+	cell := func(name string) []byte {
+		if i, ok := colIdx[name]; ok {
+			return row.Cells[i]
+		}
+		return nil
+	}
+	asInt64 := func(name string) int64 {
+		if b := cell(name); len(b) == 8 {
+			return int64(binary.BigEndian.Uint64(b))
+		}
+		return 0
+	}
+
+	hit := iamv0.GetSearchUsersUserHit{
+		Name:       row.Key.Name,
+		Title:      string(cell(resource.SEARCH_FIELD_TITLE)),
+		Email:      string(cell(builders.USER_EMAIL)),
+		Login:      string(cell(builders.USER_LOGIN)),
+		Role:       string(cell(builders.USER_ROLE)),
+		Created:    asInt64(resource.SEARCH_FIELD_CREATED),
+		InternalId: asInt64(resource.SEARCH_FIELD_LEGACY_ID),
+	}
+
+	if b := cell(builders.USER_IS_DISABLED); len(b) > 0 {
+		hit.Disabled = b[0] == 1
+	}
+	if b := cell(builders.USER_LAST_SEEN_AT); len(b) == 8 {
+		hit.LastSeenAt = int64(binary.BigEndian.Uint64(b))
+		hit.LastSeenAtAge = util.GetAgeString(time.Unix(hit.LastSeenAt, 0))
+	}
+
+	return hit
 }
 
 var bleveEscapeRegex = regexp.MustCompile(`([\\*?])`)
