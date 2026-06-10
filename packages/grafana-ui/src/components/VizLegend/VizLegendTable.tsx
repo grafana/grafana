@@ -109,7 +109,11 @@ export const VizLegendTable = <T extends unknown>({
       >
         <thead className={styles.header}>
           <tr>
-            <th></th>
+            <th>
+              <span className="sr-only">
+                <Trans i18nKey={'legend.container.series-color-and-icon'}>Series color</Trans>
+              </span>
+            </th>
             {Object.keys(header).map((columnTitle, i) => (
               <th
                 title={header[columnTitle]}
