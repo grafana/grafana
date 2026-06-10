@@ -10,6 +10,7 @@ import {
 } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
+import { cmd } from '../mutation-api/cmd';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
@@ -76,20 +77,12 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
   };
 
   public onDelete = (identifier: string) => {
-    // Find the index of the variable to be deleted
-    const variableIndex = this.getVariableIndex(identifier);
-    const { variables } = this.getVariableSet().state;
-    if (variableIndex === -1) {
-      // Handle the case where the variable is not found
+    const sceneVar = this.getVariables().find((v) => v.state.name === identifier);
+    if (!sceneVar) {
       console.error('Variable not found');
       return;
     }
-
-    // Create a new array excluding the variable to be deleted
-    const updatedVariables = [...variables.slice(0, variableIndex), ...variables.slice(variableIndex + 1)];
-
-    // Update the state or the variables array
-    this.getVariableSet().setState({ variables: updatedVariables });
+    this.getDashboard().mutationClient.execute(cmd.removeVariable(sceneVar));
     // Remove editIndex otherwise switches to next variable in list
     this.setState({ editIndex: undefined });
   };
@@ -159,10 +152,8 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
   public onAdd = () => {
     const variables = this.getVariables();
     const variableIndex = variables.length;
-    //add the new variable to the end of the array
     const defaultNewVariable = getVariableDefault(variables);
-
-    this.getVariableSet().setState({ variables: [...this.getVariables(), defaultNewVariable] });
+    this.getDashboard().mutationClient.execute(cmd.addVariable(defaultNewVariable));
     this.setState({ editIndex: variableIndex });
   };
 
@@ -184,6 +175,16 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
   };
 
   public onGoBack = () => {
+    const editIndex = this.state.editIndex;
+    if (editIndex !== undefined) {
+      // Register the edit pass through the Mutation API so it joins the
+      // undo/redo stack. New variables already registered via ADD_VARIABLE
+      // in onAdd, but their edited state lands here.
+      const variable = this.getVariables()[editIndex];
+      if (variable) {
+        this.getDashboard().mutationClient.execute(cmd.updateVariable(variable));
+      }
+    }
     this.setState({ editIndex: undefined });
   };
 

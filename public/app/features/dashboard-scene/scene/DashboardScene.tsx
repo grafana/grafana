@@ -63,6 +63,7 @@ import {
 } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
+import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -242,6 +243,37 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * Dashboard changes tracker
    */
   private _changeTracker: DashboardSceneChangeTracker;
+  private _mutationClient?: DashboardMutationClient;
+  private _writeLocks = new Set<string>();
+
+  /**
+   * Lazy-initialized Mutation API client. UI components can call
+   * `dashboard.mutationClient.execute(cmd.addVariable(...))` to route writes
+   * through the API the same way the Assistant does.
+   */
+  public get mutationClient(): DashboardMutationClient {
+    if (!this._mutationClient) {
+      this._mutationClient = new DashboardMutationClient(this);
+    }
+    return this._mutationClient;
+  }
+
+  /**
+   * Acquire a write lock for the given target identifier (e.g. 'variables').
+   * Subsequent mutations against the same target return locked:true until released.
+   * Reads via Scenes subscriptions are unaffected.
+   */
+  public acquireWriteLock(target: string): void {
+    this._writeLocks.add(target);
+  }
+
+  public releaseWriteLock(target: string): void {
+    this._writeLocks.delete(target);
+  }
+
+  public isWriteLocked(target: string): boolean {
+    return this._writeLocks.has(target);
+  }
 
   /**
    * Remember scroll position when going into panel edit
