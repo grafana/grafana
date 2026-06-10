@@ -10,6 +10,8 @@ manifest: {
 }
 
 v0alpha1: {
+	// Explicitly set to false to keep the app disabled by default for testing.
+	served: false
 	kinds: [annotationv0alpha1]
 	routes: {
 		namespaced: {
