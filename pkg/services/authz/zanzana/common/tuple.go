@@ -192,6 +192,10 @@ func IsGroupResourceRelation(relation string) bool {
 	return isValidRelation(relation, RelationsGroupResource)
 }
 
+func IsResourceRelation(relation string) bool {
+	return isValidRelation(relation, RelationsResource)
+}
+
 func IsSubresourceRelation(relation string) bool {
 	return isValidRelation(relation, RelationsSubresource)
 }
@@ -316,13 +320,19 @@ func translateK8sNativeToTuple(subject, action, kind, name string) (*openfgav1.T
 		return nil, false
 	}
 
-	_, verb, ok := strings.Cut(action, kind+":")
-	if !ok || !IsGroupResourceRelation(verb) {
+	before, verb, ok := strings.Cut(action, kind+":")
+	if !ok || before != "" || !IsGroupResourceRelation(verb) {
 		return nil, false
 	}
 
 	if name == "*" {
 		return NewGroupResourceTuple(subject, verb, group, resource, ""), true
+	}
+
+	// A named instance maps to the "resource" type, which has no "create" relation
+	// (you can't create an already-named instance). Drop verbs that aren't valid there.
+	if !IsResourceRelation(verb) {
+		return nil, false
 	}
 	return NewResourceTuple(subject, verb, group, resource, "", name), true
 }
