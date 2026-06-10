@@ -63,6 +63,23 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		}
 	}
 
+	// When the App Observability plugin is present it owns the "Application" entry in the
+	// Observability section, so hide the equivalent asserts "Applications" page. Operations
+	// is nested inside that node, so it is dropped along with it.
+	if enabledAccessibleAppPluginMap["grafana-app-observability-app"] != nil {
+		if obsSection := treeRoot.FindById(navtree.NavIDObservability); obsSection != nil {
+			assertsApplicationsURL := s.cfg.AppSubURL + "/a/grafana-asserts-app/applications"
+			children := make([]*navtree.NavLink, 0, len(obsSection.Children))
+			for _, child := range obsSection.Children {
+				if child.Url == assertsApplicationsURL {
+					continue
+				}
+				children = append(children, child)
+			}
+			obsSection.Children = children
+		}
+	}
+
 	if len(appLinks) > 0 {
 		sort.SliceStable(appLinks, func(i, j int) bool {
 			return appLinks[i].Text < appLinks[j].Text

@@ -464,29 +464,30 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 		},
 	}
 
-	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
-		assertsApp.ID:     {ID: 0, OrgID: 1, PluginID: assertsApp.ID, PluginVersion: "1.0.0", Enabled: true},
-		frontendApp.ID:    {ID: 0, OrgID: 1, PluginID: frontendApp.ID, PluginVersion: "1.0.0", Enabled: true},
-		applicationApp.ID: {ID: 0, OrgID: 1, PluginID: applicationApp.ID, PluginVersion: "1.0.0", Enabled: true},
-	}}
-
-	service := ServiceImpl{
-		log:            log.New("navtree"),
-		cfg:            setting.NewCfg(),
-		accessControl:  accesscontrolmock.New().WithPermissions(permissions),
-		pluginSettings: &pluginSettings,
-		features:       featuremgmt.WithFeatures(),
-		pluginStore: &pluginstore.FakePluginStore{
-			PluginList: []pluginstore.Plugin{assertsApp, frontendApp, applicationApp},
-		},
+	navigationAppConfig := map[string]NavigationAppConfig{
+		"grafana-asserts-app":           {SectionID: navtree.NavIDObservability, SortWeight: 2, Icon: "asserts"},
+		"grafana-kowalski-app":          {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Frontend"},
+		"grafana-app-observability-app": {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Application"},
 	}
 
-	t.Run("asserts Applications page sits between Frontend and Application, other asserts pages stay on top", func(t *testing.T) {
-		service.navigationAppConfig = map[string]NavigationAppConfig{
-			"grafana-asserts-app":           {SectionID: navtree.NavIDObservability, SortWeight: 2, Icon: "asserts"},
-			"grafana-kowalski-app":          {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Frontend"},
-			"grafana-app-observability-app": {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Application"},
+	newService := func(pluginList []pluginstore.Plugin) ServiceImpl {
+		settings := map[string]*pluginsettings.DTO{}
+		for _, p := range pluginList {
+			settings[p.ID] = &pluginsettings.DTO{ID: 0, OrgID: 1, PluginID: p.ID, PluginVersion: "1.0.0", Enabled: true}
 		}
+		return ServiceImpl{
+			log:                 log.New("navtree"),
+			cfg:                 setting.NewCfg(),
+			accessControl:       accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings:      &pluginsettings.FakePluginSettings{Plugins: settings},
+			features:            featuremgmt.WithFeatures(),
+			pluginStore:         &pluginstore.FakePluginStore{PluginList: pluginList},
+			navigationAppConfig: navigationAppConfig,
+		}
+	}
+
+	t.Run("without the App Observability plugin, the asserts Applications page sits between Frontend and Application with Operations nested", func(t *testing.T) {
+		service := newService([]pluginstore.Plugin{assertsApp, frontendApp})
 
 		treeRoot := navtree.NavTreeRoot{}
 		err := service.addAppLinks(&treeRoot, reqCtx)
@@ -496,23 +497,25 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
 		require.NotNil(t, monitoringNode)
 		// Operations is nested under Applications, so it is not a flat sibling.
-		require.Len(t, monitoringNode.Children, 4)
+		require.Len(t, monitoringNode.Children, 3)
 
 		// Asserts "Entity graph" stays hoisted to the top, then Frontend, then the
-		// asserts "Applications" page (weight 4), then the Application plugin (weight 5).
+		// asserts "Applications" page (weight 4).
 		require.Equal(t, "Entity graph", monitoringNode.Children[0].Text)
 		require.Equal(t, "Frontend", monitoringNode.Children[1].Text)
 		require.Equal(t, "Applications", monitoringNode.Children[2].Text)
 		require.Equal(t, "standalone-plugin-page-applications", monitoringNode.Children[2].Id)
-		require.Equal(t, "Application", monitoringNode.Children[3].Text)
+
+		// Operations is nested as a child of the Applications page, not a flat sibling.
+		applicationsNode := monitoringNode.Children[2]
+		require.Len(t, applicationsNode.Children, 1)
+		require.Equal(t, "Operations", applicationsNode.Children[0].Text)
+		require.Equal(t, "standalone-plugin-page-operations", applicationsNode.Children[0].Id)
+		require.Equal(t, "/a/grafana-asserts-app/operations", applicationsNode.Children[0].Url)
 	})
 
-	t.Run("asserts Operations page is nested as a child of the Applications page", func(t *testing.T) {
-		service.navigationAppConfig = map[string]NavigationAppConfig{
-			"grafana-asserts-app":           {SectionID: navtree.NavIDObservability, SortWeight: 2, Icon: "asserts"},
-			"grafana-kowalski-app":          {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Frontend"},
-			"grafana-app-observability-app": {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Application"},
-		}
+	t.Run("when the App Observability plugin is present, it replaces the asserts Applications page and Operations is hidden", func(t *testing.T) {
+		service := newService([]pluginstore.Plugin{assertsApp, frontendApp, applicationApp})
 
 		treeRoot := navtree.NavTreeRoot{}
 		err := service.addAppLinks(&treeRoot, reqCtx)
@@ -522,20 +525,22 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
 		require.NotNil(t, monitoringNode)
 
-		var applicationsNode *navtree.NavLink
+		var hasAppObservability bool
 		for _, child := range monitoringNode.Children {
-			if child.Text == "Applications" {
-				applicationsNode = child
+			// The appo11y "Application" page is shown instead of the asserts "Applications" page.
+			if child.Text == "Application" && child.Url == "/a/grafana-app-observability-app/" {
+				hasAppObservability = true
 			}
-			// Operations must not appear as a flat sibling in the Observability section.
+			// The asserts "Applications" page must not be shown when appo11y is present.
+			require.NotEqual(t, "/a/grafana-asserts-app/applications", child.Url)
+			// Operations was nested under the asserts Applications page, so it is gone too.
 			require.NotEqual(t, "Operations", child.Text)
+			for _, grandchild := range child.Children {
+				require.NotEqual(t, "Operations", grandchild.Text)
+			}
 		}
 
-		require.NotNil(t, applicationsNode)
-		require.Len(t, applicationsNode.Children, 1)
-		require.Equal(t, "Operations", applicationsNode.Children[0].Text)
-		require.Equal(t, "standalone-plugin-page-operations", applicationsNode.Children[0].Id)
-		require.Equal(t, "/a/grafana-asserts-app/operations", applicationsNode.Children[0].Url)
+		require.True(t, hasAppObservability, "expected the appo11y Application page to be present")
 	})
 }
 
