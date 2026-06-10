@@ -11032,6 +11032,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "Series color",
       "show-all-series": "...show all {{total}} items"
     }
   },
