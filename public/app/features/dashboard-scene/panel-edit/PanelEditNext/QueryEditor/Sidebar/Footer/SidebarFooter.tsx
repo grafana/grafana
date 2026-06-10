@@ -1,8 +1,8 @@
-import { css, cx, keyframes } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Icon, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { FOOTER_HEIGHT, QueryEditorType } from '../../../constants';
 import { trackSelectButtonClick } from '../../../tracking';
@@ -12,7 +12,6 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from '../../QueryEditorContext';
-import { useDelayedUnmount } from '../../hooks/useDelayedUnmount';
 import { BulkActionsBar, getBulkActionsVisibility } from '../BulkActionsBar';
 
 export function SidebarFooter() {
@@ -21,7 +20,6 @@ export function SidebarFooter() {
   const { alertRules } = useAlertingContext();
   const { cardType, setMultiSelectMode, selectedQueryRefIds, selectedTransformationIds, multiSelectMode } =
     useQueryEditorUIContext();
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
   const isAlertView = cardType === QueryEditorType.Alert;
@@ -43,9 +41,9 @@ export function SidebarFooter() {
         defaultValue_other: '{{count}} items',
       });
 
-  // Render the bar OR the counts — never both. Keeping both in the DOM at
-  // once would leave the obscured count Stack (incl. the Select… button) in
-  // tab order and screen-reader output, even though the overlay covers it.
+  // Both views are always rendered into the same grid cell; the bar slides over
+  // the steady counts and back. `inert` + `aria-hidden` keep the hidden view out
+  // of tab order and the accessibility tree (React 18 needs the object-spread).
   const { shouldRender } = getBulkActionsVisibility({
     selectedQueryCount: selectedQueryRefIds.length,
     selectedTransformationCount: selectedTransformationIds.length,
@@ -53,82 +51,59 @@ export function SidebarFooter() {
   });
   const hasBulkActions = !isAlertView && shouldRender;
 
-  // Layered swap: counts is the steady "background" view; the bar slides in
-  // over it from the right and slides out the same way. The counts itself
-  // never animates — it just sits there and gets covered or revealed.
-  //   * Open : counts stays mounted for `exitMs` (the bar's enter duration)
-  //            so it remains visible underneath while the bar slides in,
-  //            then unmounts once the bar has fully covered it.
-  //   * Close: counts mounts immediately and the bar plays its exit slide on
-  //            top of it; the bar then unmounts and the counts is revealed.
-  // The bar is z-indexed above the counts so the layering is independent of
-  // DOM order in this file.
-  const exitMs = theme.transitions.duration.short;
-  const shouldRenderBar = useDelayedUnmount(hasBulkActions, exitMs);
-  const shouldRenderCounts = useDelayedUnmount(!hasBulkActions, exitMs);
-
   const handleSelectClick = () => {
     setMultiSelectMode(true);
     trackSelectButtonClick();
   };
 
-  // `inert` blocks focus from the covered view's buttons during the 250ms
-  // transition (React 18 needs the object-spread workaround).
-  const barIsExiting = !hasBulkActions;
-  const countsIsCovered = hasBulkActions;
-
   return (
     <div className={styles.footer}>
-      {shouldRenderCounts && (
-        <div
-          className={cx(styles.viewSlot, styles.countsLayout)}
-          aria-hidden={countsIsCovered}
-          {...(countsIsCovered && { inert: '' })}
-        >
-          <Stack direction="row" alignItems="center" gap={0.5}>
-            <Text weight="medium" variant="bodySmall">
-              {suffixText}
-            </Text>
-            {!isAlertView && (
-              <Button
-                fill="text"
-                size="sm"
-                variant="secondary"
-                icon="checkbox-multiple"
-                onClick={handleSelectClick}
-                aria-label={t('query-editor-next.sidebar.footer-select-label', 'Select multiple items')}
-              >
-                {t('query-editor-next.sidebar.footer-select', 'Select...')}
-              </Button>
-            )}
-          </Stack>
+      <div
+        className={cx(styles.viewSlot, styles.countsLayout)}
+        aria-hidden={hasBulkActions}
+        {...(hasBulkActions && { inert: '' })}
+      >
+        <Stack direction="row" alignItems="center" gap={0.5}>
+          <Text weight="medium" variant="bodySmall">
+            {suffixText}
+          </Text>
           {!isAlertView && (
-            <Stack direction="row" alignItems="center" gap={1}>
-              <Stack direction="row" alignItems="center" gap={0.5}>
-                <Icon name="eye" size="sm" className={styles.icon} />
-                <Text weight="medium" variant="bodySmall">
-                  {visible}
-                </Text>
-              </Stack>
-              <Stack direction="row" alignItems="center" gap={0.5}>
-                <Icon name="eye-slash" size="sm" className={styles.icon} />
-                <Text weight="medium" variant="bodySmall">
-                  {hidden}
-                </Text>
-              </Stack>
-            </Stack>
+            <Button
+              fill="text"
+              size="sm"
+              variant="secondary"
+              icon="checkbox-multiple"
+              onClick={handleSelectClick}
+              aria-label={t('query-editor-next.sidebar.footer-select-label', 'Select multiple items')}
+            >
+              {t('query-editor-next.sidebar.footer-select', 'Select...')}
+            </Button>
           )}
-        </div>
-      )}
-      {shouldRenderBar && (
-        <div
-          className={cx(styles.viewSlot, styles.barOverlay, hasBulkActions ? styles.barEnter : styles.barExit)}
-          aria-hidden={barIsExiting}
-          {...(barIsExiting && { inert: '' })}
-        >
-          <BulkActionsBar />
-        </div>
-      )}
+        </Stack>
+        {!isAlertView && (
+          <Stack direction="row" alignItems="center" gap={1}>
+            <Stack direction="row" alignItems="center" gap={0.5}>
+              <Icon name="eye" size="sm" className={styles.icon} />
+              <Text weight="medium" variant="bodySmall">
+                {visible}
+              </Text>
+            </Stack>
+            <Stack direction="row" alignItems="center" gap={0.5}>
+              <Icon name="eye-slash" size="sm" className={styles.icon} />
+              <Text weight="medium" variant="bodySmall">
+                {hidden}
+              </Text>
+            </Stack>
+          </Stack>
+        )}
+      </div>
+      <div
+        className={cx(styles.viewSlot, styles.barOverlay, hasBulkActions && styles.barOpen)}
+        aria-hidden={!hasBulkActions}
+        {...(!hasBulkActions && { inert: '' })}
+      >
+        <BulkActionsBar />
+      </div>
     </div>
   );
 }
@@ -161,22 +136,29 @@ function getStyles(theme: GrafanaTheme2) {
     countsLayout: css({
       justifyContent: 'space-between',
     }),
-    // Opaque background + explicit stacking so the bar fully obscures the
-    // counts beneath it regardless of JSX order in this file.
+    // Opaque background + explicit stacking so the bar fully obscures the counts
+    // beneath it. Parked off-screen by default; `barOpen` slides it over. No
+    // opacity, so the covered content never bleeds through. Asymmetric easing is
+    // free: CSS uses the transition on the target state (easeIn back to closed,
+    // easeOut from `barOpen`).
     barOverlay: css({
       background: theme.colors.background.primary,
       zIndex: 1,
-    }),
-    // Pure-translate cover/reveal of the counts by the bar. No opacity, so the
-    // covered content never bleeds through.
-    barEnter: css({
+      transform: 'translateX(120%)',
       [theme.transitions.handleMotion('no-preference')]: {
-        animation: `${keyframes({ from: { transform: 'translateX(120%)' }, to: { transform: 'translateX(0)' } })} ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeOut} both`,
+        transition: theme.transitions.create('transform', {
+          duration: theme.transitions.duration.short,
+          easing: theme.transitions.easing.easeIn,
+        }),
       },
     }),
-    barExit: css({
+    barOpen: css({
+      transform: 'translateX(0)',
       [theme.transitions.handleMotion('no-preference')]: {
-        animation: `${keyframes({ from: { transform: 'translateX(0)' }, to: { transform: 'translateX(120%)' } })} ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeIn} both`,
+        transition: theme.transitions.create('transform', {
+          duration: theme.transitions.duration.short,
+          easing: theme.transitions.easing.easeOut,
+        }),
       },
     }),
   };
