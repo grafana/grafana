@@ -33,7 +33,7 @@ var appManifestData = app.ManifestData{
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v1beta1",
-			Served: true,
+			Served: false,
 			Kinds: []app.ManifestVersionKind{
 				{
 					Kind:       "ShortURL",
