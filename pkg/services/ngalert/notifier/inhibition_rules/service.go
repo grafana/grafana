@@ -72,13 +72,13 @@ func (svc *Service) GetInhibitionRules(ctx context.Context, orgID int64) ([]v1.I
 
 // GetInhibitionRule returns a single inhibition rule by UID.
 // Includes both Grafana-managed and imported rules.
-func (svc *Service) GetInhibitionRule(ctx context.Context, name string, orgID int64) (v1.InhibitionRule, error) {
+func (svc *Service) GetInhibitionRule(ctx context.Context, uid v1.ResourceUID, orgID int64) (v1.InhibitionRule, error) {
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return v1.InhibitionRule{}, err
 	}
 
-	result, found, err := svc.getInhibitionRuleByUID(ctx, revision, name)
+	result, found, err := svc.getInhibitionRuleByUID(ctx, revision, uid)
 	if err != nil {
 		return v1.InhibitionRule{}, err
 	} else if !found {
@@ -127,7 +127,7 @@ func (svc *Service) UpdateInhibitionRule(ctx context.Context, rule v1.Inhibition
 		return v1.InhibitionRule{}, err
 	}
 
-	existing, found, err := svc.getInhibitionRuleByUID(ctx, revision, string(rule.UID))
+	existing, found, err := svc.getInhibitionRuleByUID(ctx, revision, rule.UID)
 	if err != nil {
 		return v1.InhibitionRule{}, err
 	} else if !found {
@@ -159,7 +159,7 @@ func (svc *Service) UpdateInhibitionRule(ctx context.Context, rule v1.Inhibition
 }
 
 // DeleteInhibitionRule deletes an inhibition rule by UID
-func (svc *Service) DeleteInhibitionRule(ctx context.Context, uid string, orgID int64, provenance models.Provenance, version string) error {
+func (svc *Service) DeleteInhibitionRule(ctx context.Context, uid v1.ResourceUID, orgID int64, provenance models.Provenance, version string) error {
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -192,16 +192,16 @@ func (svc *Service) DeleteInhibitionRule(ctx context.Context, uid string, orgID 
 
 // Helper functions
 
-func (svc *Service) getInhibitionRuleByUID(ctx context.Context, rev *legacy_storage.ConfigRevision, uid string) (v1.InhibitionRule, bool, error) {
+func (svc *Service) getInhibitionRuleByUID(ctx context.Context, rev *legacy_storage.ConfigRevision, uid v1.ResourceUID) (v1.InhibitionRule, bool, error) {
 	// Check Grafana-managed rules first
 	managedInhibitionRules := rev.Config.InhibitionRules
-	if r, ok := managedInhibitionRules[v1.ResourceUID(uid)]; ok {
+	if r, ok := managedInhibitionRules[uid]; ok {
 		return r, true, nil
 	}
 
 	// Check imported rules
 	importedRules := svc.getImportedInhibitRules(rev)
-	if r, ok := importedRules[v1.ResourceUID(uid)]; ok {
+	if r, ok := importedRules[uid]; ok {
 		return r, true, nil
 	}
 

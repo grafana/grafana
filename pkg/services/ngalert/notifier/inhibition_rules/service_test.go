@@ -117,20 +117,20 @@ func TestService_GetInhibitionRule(t *testing.T) {
 		name          string
 		grafanaRules  []v1.InhibitionRule
 		importedRules []v1.InhibitionRule
-		ruleUID       string
+		ruleUID       v1.ResourceUID
 		expErr        error
 		expRule       v1.InhibitionRule
 	}{
 		{
 			name:         "can fetch grafana rule by UID",
 			grafanaRules: grafanaRules,
-			ruleUID:      string(testGrafanaRule.UID),
+			ruleUID:      testGrafanaRule.UID,
 			expRule:      testGrafanaRule,
 		},
 		{
 			name:          "can fetch imported rule by UID",
 			importedRules: importedRules,
-			ruleUID:       string(testImportedRule.UID),
+			ruleUID:       testImportedRule.UID,
 			expRule:       testImportedRule,
 		},
 		{
@@ -231,18 +231,18 @@ func TestService_DeleteInhibitionRule(t *testing.T) {
 		name          string
 		grafanaRules  []v1.InhibitionRule
 		importedRules []v1.InhibitionRule
-		ruleUID       string
+		ruleUID       v1.ResourceUID
 		expErr        error
 	}{
 		{
 			name:         "can delete grafana rule",
 			grafanaRules: grafanaRules,
-			ruleUID:      string(testGrafanaRule.UID),
+			ruleUID:      testGrafanaRule.UID,
 		},
 		{
 			name:          "can't delete imported rule",
 			importedRules: importedRules,
-			ruleUID:       string(testImportedRule.UID),
+			ruleUID:       testImportedRule.UID,
 			expErr:        models.MakeErrInhibitionRuleOrigin(string(testImportedRule.UID), "delete"),
 		},
 	}
