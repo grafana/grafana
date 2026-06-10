@@ -16,7 +16,7 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { type StepStatusInfo } from '../../Wizard/types';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 import { type StatusInfo } from '../../types';
-import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
+import { ProvisionedFormShell } from '../ProvisionedFormShell';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getCanPushToConfiguredBranch, getDefaultWorkflow } from '../defaults';
 import { generateTimestamp } from '../utils/timestamp';
@@ -154,7 +154,7 @@ export function BulkDeleteProvisionedResource({
   }
 
   // For root provisioned folders, the folder UID is the repository name
-  const { repository, isReadOnlyRepo } = useGetResourceRepositoryView({
+  const { repository, isReadOnlyRepo, isLoading } = useGetResourceRepositoryView({
     folderName: isRootPage ? resolvedRepoUID.current : folderUid,
   });
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
@@ -166,17 +166,19 @@ export function BulkDeleteProvisionedResource({
     workflow: getDefaultWorkflow(repository),
   };
 
-  if (!repository || isReadOnlyRepo) {
-    return <RepoInvalidStateBanner noRepository={!repository} isReadOnlyRepo={isReadOnlyRepo} />;
-  }
-
   return (
-    <FormContent
-      selectedItems={selectedItems}
-      onDismiss={onDismiss}
-      initialValues={initialValues}
-      repository={repository}
-      canPushToConfiguredBranch={canPushToConfiguredBranch}
-    />
+    <ProvisionedFormShell
+      isLoading={isLoading}
+      isMissingRepo={!isLoading && !isReadOnlyRepo && !repository}
+      isReadOnly={isReadOnlyRepo}
+    >
+      <FormContent
+        selectedItems={selectedItems}
+        onDismiss={onDismiss}
+        initialValues={initialValues}
+        repository={repository!}
+        canPushToConfiguredBranch={canPushToConfiguredBranch}
+      />
+    </ProvisionedFormShell>
   );
 }

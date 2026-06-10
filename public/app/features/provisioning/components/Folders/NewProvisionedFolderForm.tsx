@@ -19,7 +19,7 @@ import { type BaseProvisionedFormData } from '../../types/form';
 import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
-import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
+import { ProvisionedFormShell } from '../ProvisionedFormShell';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
 import { joinPath } from '../utils/path';
@@ -240,35 +240,31 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
 }
 
 export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
-  const { canPushToConfiguredBranch, repository, folder, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData(
-    {
+  const { canPushToConfiguredBranch, repository, folder, initialValues, isReadOnlyRepo, isLoading } =
+    useProvisionedFolderFormData({
       folderUid: parentFolder?.uid,
       title: '', // Empty title for new folders
-    }
-  );
-
-  if (isReadOnlyRepo || !initialValues) {
-    return (
-      <RepoInvalidStateBanner
-        noRepository={!initialValues}
-        isReadOnlyRepo={isReadOnlyRepo}
-        readOnlyMessage={t(
-          'browse-dashboards.new-folder.read-only-message',
-          'To create this folder, please add the resource in your repository directly.'
-        )}
-      />
-    );
-  }
+    });
 
   return (
-    <FormContent
-      parentFolder={parentFolder}
-      onDismiss={onDismiss}
-      initialValues={initialValues}
-      repository={repository}
-      canPushToConfiguredBranch={canPushToConfiguredBranch}
-      folder={folder}
-    />
+    <ProvisionedFormShell
+      isLoading={isLoading}
+      isMissingRepo={!isLoading && !isReadOnlyRepo && !initialValues}
+      isReadOnly={isReadOnlyRepo}
+      readOnlyMessage={t(
+        'browse-dashboards.new-folder.read-only-message',
+        'To create this folder, please add the resource in your repository directly.'
+      )}
+    >
+      <FormContent
+        parentFolder={parentFolder}
+        onDismiss={onDismiss}
+        initialValues={initialValues!}
+        repository={repository}
+        canPushToConfiguredBranch={canPushToConfiguredBranch}
+        folder={folder}
+      />
+    </ProvisionedFormShell>
   );
 }
 

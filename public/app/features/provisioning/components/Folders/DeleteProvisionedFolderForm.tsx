@@ -23,7 +23,7 @@ import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
-import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
+import { ProvisionedFormShell } from '../ProvisionedFormShell';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
 
@@ -221,31 +221,29 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
 }
 
 export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteProvisionedFolderFormProps) {
-  const { canPushToConfiguredBranch, repository, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData({
-    folderUid: parentFolder?.uid,
-    title: parentFolder?.title,
-  });
-
-  if (isReadOnlyRepo || !initialValues) {
-    return (
-      <RepoInvalidStateBanner
-        noRepository={!initialValues}
-        isReadOnlyRepo={isReadOnlyRepo}
-        readOnlyMessage={t(
-          'browse-dashboards.delete-folder.read-only-message',
-          'To delete this folder, please remove the folder from your repository.'
-        )}
-      />
-    );
-  }
+  const { canPushToConfiguredBranch, repository, initialValues, isReadOnlyRepo, isLoading } =
+    useProvisionedFolderFormData({
+      folderUid: parentFolder?.uid,
+      title: parentFolder?.title,
+    });
 
   return (
-    <FormContent
-      parentFolder={parentFolder}
-      onDismiss={onDismiss}
-      initialValues={initialValues}
-      repository={repository}
-      canPushToConfiguredBranch={canPushToConfiguredBranch}
-    />
+    <ProvisionedFormShell
+      isLoading={isLoading}
+      isMissingRepo={!isLoading && !isReadOnlyRepo && !initialValues}
+      isReadOnly={isReadOnlyRepo}
+      readOnlyMessage={t(
+        'browse-dashboards.delete-folder.read-only-message',
+        'To delete this folder, please remove the folder from your repository.'
+      )}
+    >
+      <FormContent
+        parentFolder={parentFolder}
+        onDismiss={onDismiss}
+        initialValues={initialValues!}
+        repository={repository}
+        canPushToConfiguredBranch={canPushToConfiguredBranch}
+      />
+    </ProvisionedFormShell>
   );
 }

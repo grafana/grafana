@@ -25,6 +25,7 @@ export interface ProvisionedFolderFormDataResult {
   canPushToConfiguredBranch: boolean;
   initialValues?: BaseProvisionedFormData;
   isReadOnlyRepo: boolean;
+  isLoading: boolean;
 }
 
 /**
@@ -60,5 +61,6 @@ export function useProvisionedFolderFormData({
     canPushToConfiguredBranch,
     initialValues,
     isReadOnlyRepo,
+    isLoading: Boolean(isLoading),
   };
 }

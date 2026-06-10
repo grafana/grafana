@@ -24,9 +24,9 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { type StepStatusInfo } from '../../Wizard/types';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 import { type StatusInfo } from '../../types';
+import { ProvisionedFormShell } from '../ProvisionedFormShell';
 import { MoveActionAvailableTargetWarning } from '../Shared/MoveActionAvailableTargetWarning';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
-import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 
 import { type MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
@@ -232,7 +232,7 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
     resolvedRepoUID.current = selectedItemsRepoUID;
   }
 
-  const { repository, folder, isReadOnlyRepo } = useGetResourceRepositoryView({
+  const { repository, folder, isReadOnlyRepo, isLoading } = useGetResourceRepositoryView({
     folderName: isRootPage ? resolvedRepoUID.current : folderUid,
   });
 
@@ -245,18 +245,20 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
     workflow: getDefaultWorkflow(repository),
   };
 
-  if (!repository || isReadOnlyRepo) {
-    return <RepoInvalidStateBanner noRepository={!repository} isReadOnlyRepo={isReadOnlyRepo} />;
-  }
-
   return (
-    <FormContent
-      selectedItems={selectedItems}
-      onDismiss={onDismiss}
-      initialValues={initialValues}
-      repository={repository}
-      canPushToConfiguredBranch={canPushToConfiguredBranch}
-      folderPath={isRootPage ? '/' : folderPath}
-    />
+    <ProvisionedFormShell
+      isLoading={isLoading}
+      isMissingRepo={!isLoading && !isReadOnlyRepo && !repository}
+      isReadOnly={isReadOnlyRepo}
+    >
+      <FormContent
+        selectedItems={selectedItems}
+        onDismiss={onDismiss}
+        initialValues={initialValues}
+        repository={repository!}
+        canPushToConfiguredBranch={canPushToConfiguredBranch}
+        folderPath={isRootPage ? '/' : folderPath}
+      />
+    </ProvisionedFormShell>
   );
 }

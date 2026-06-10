@@ -128,6 +128,7 @@ const mockHookData: ProvisionedFolderFormDataResult = {
     path: '/dashboards',
     workflow: 'write',
   },
+  isLoading: false,
 };
 
 function requireCapturedRequest(capturedRequest: { url: URL; body: unknown } | null): { url: URL; body: unknown } {

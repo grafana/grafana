@@ -98,6 +98,7 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
   initialValues: mockFormData,
   isReadOnlyRepo: false,
   canPushToConfiguredBranch: true,
+  isLoading: false,
 };
 
 function setup(props: Partial<Parameters<typeof RenameProvisionedFolderForm>[0]> = {}, hookData = defaultHookData) {

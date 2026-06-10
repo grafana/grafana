@@ -145,6 +145,7 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
   initialValues: mockFormData,
   isReadOnlyRepo: false,
   canPushToConfiguredBranch: true,
+  isLoading: false,
 };
 
 function setup(
