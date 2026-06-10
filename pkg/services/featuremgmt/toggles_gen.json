@@ -2169,20 +2169,6 @@
     },
     {
       "metadata": {
-        "name": "folderScopedAuthzForCRDs",
-        "resourceVersion": "1779887493191",
-        "creationTimestamp": "2026-05-27T13:11:33Z"
-      },
-      "spec": {
-        "description": "Enforce folder-scoped authorization for K8s-native CRD resources annotated with grafana.app/folder-scoped (RequireFolder writes, dual-check authz, allow-list removal).",
-        "stage": "experimental",
-        "codeowner": "@grafana/identity-access-team",
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "foldersAppPlatformAPI",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-07-03T14:15:23Z"

@@ -243,6 +243,37 @@ func newServiceAccountTranslation() translation {
 	return saTranslation
 }
 
+// newAlertingNotificationsTranslation maps the notifications.alerting.grafana.app
+// resources (receivers, routingtrees, templategroups, timeintervals,
+// inhibitionrules) to the coarse org-level alerting notification actions.
+func newAlertingNotificationsTranslation() translation {
+	return translation{
+		resource:  "alert.notifications",
+		attribute: "",
+		verbMapping: map[string]string{
+			utils.VerbGet:              "alert.notifications:read",
+			utils.VerbList:             "alert.notifications:read",
+			utils.VerbWatch:            "alert.notifications:read",
+			utils.VerbCreate:           "alert.notifications:write",
+			utils.VerbUpdate:           "alert.notifications:write",
+			utils.VerbPatch:            "alert.notifications:write",
+			utils.VerbDelete:           "alert.notifications:write",
+			utils.VerbDeleteCollection: "alert.notifications:write",
+		},
+		folderSupport: false,
+		skipScopeOnVerb: map[string]bool{
+			utils.VerbGet:              true,
+			utils.VerbList:             true,
+			utils.VerbWatch:            true,
+			utils.VerbCreate:           true,
+			utils.VerbUpdate:           true,
+			utils.VerbPatch:            true,
+			utils.VerbDelete:           true,
+			utils.VerbDeleteCollection: true,
+		},
+	}
+}
+
 func NewMapperRegistry() MapperRegistry {
 	skipScopeOnAllVerbs := map[string]bool{
 		utils.VerbCreate:           true,
@@ -258,6 +289,13 @@ func NewMapperRegistry() MapperRegistry {
 	}
 
 	mapper := mapper(map[string]map[string]translation{
+		"notifications.alerting.grafana.app": {
+			"receivers":       newAlertingNotificationsTranslation(),
+			"routingtrees":    newAlertingNotificationsTranslation(),
+			"templategroups":  newAlertingNotificationsTranslation(),
+			"timeintervals":   newAlertingNotificationsTranslation(),
+			"inhibitionrules": newAlertingNotificationsTranslation(),
+		},
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
 			"librarypanels": newResourceTranslation("library.panels", "uid", true, nil),

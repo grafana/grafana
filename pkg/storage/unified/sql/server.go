@@ -159,16 +159,8 @@ func withSecureValueService(opts *ServerOptions, resourceOpts *resource.Resource
 
 func withAccessClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	if opts.AccessClient != nil {
-		// When the folder-scoped authz toggle is on, drop the dashboards/folders
-		// allow list shortcut so that apiextensions managed CRDs (*.ext.grafana.app) hit
-		// the underlying authz client and the new dual-check path actually runs.
-		disableAllowList := opts.Features != nil &&
-			//nolint:staticcheck // not yet migrated to OpenFeature
-			opts.Features.IsEnabledGlobally(featuremgmt.FlagFolderScopedAuthzForCRDs)
-
 		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{
-			Registry:         opts.Reg,
-			DisableAllowList: disableAllowList,
+			Registry: opts.Reg,
 		})
 	}
 	return nil

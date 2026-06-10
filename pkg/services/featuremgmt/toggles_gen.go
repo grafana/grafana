@@ -375,10 +375,6 @@ const (
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
 
-	// FlagFolderScopedAuthzForCRDs
-	// Enforce folder-scoped authorization for K8s-native CRD resources annotated with grafana.app/folder-scoped (RequireFolder writes, dual-check authz, allow-list removal).
-	FlagFolderScopedAuthzForCRDs = "folderScopedAuthzForCRDs"
-
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"

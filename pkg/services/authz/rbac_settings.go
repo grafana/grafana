@@ -70,10 +70,9 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 }
 
 type RBACServerSettings struct {
-	Folder                   FolderAPISettings
-	CacheTTL                 time.Duration
-	LocalFolderCacheTTL      time.Duration
-	FolderScopedAuthzForCRDs bool
+	Folder              FolderAPISettings
+	CacheTTL            time.Duration
+	LocalFolderCacheTTL time.Duration
 }
 
 type FolderAPISettings struct {

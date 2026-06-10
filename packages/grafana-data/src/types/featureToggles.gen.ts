@@ -664,11 +664,6 @@ export interface FeatureToggles {
   */
   authZGRPCServer?: boolean;
   /**
-  * Enforce folder-scoped authorization for K8s-native CRD resources annotated with grafana.app/folder-scoped (RequireFolder writes, dual-check authz, allow-list removal).
-  * @default false
-  */
-  folderScopedAuthzForCRDs?: boolean;
-  /**
   * Use openFGA as authorization engine.
   * @default false
   */

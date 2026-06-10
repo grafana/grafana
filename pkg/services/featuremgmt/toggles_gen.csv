@@ -142,7 +142,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-06-05,pluginProxyPreserveTrailingSlash,GA,@grafana/grafana-catalog,false,false,false
 2024-06-06,azureMonitorPrometheusExemplars,GA,@grafana/data-sources-plugins,false,false,false
 2024-06-13,authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
-2026-05-27,folderScopedAuthzForCRDs,experimental,@grafana/identity-access-team,false,false,false
 2024-06-19,zanzana,experimental,@grafana/identity-access-team,false,false,false
 2025-10-21,zanzanaNoLegacyClient,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,zanzanaMergeUserPermissions,experimental,@grafana/identity-access-team,false,false,false

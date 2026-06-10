@@ -1228,15 +1228,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "folderScopedAuthzForCRDs",
-			Description:  "Enforce folder-scoped authorization for K8s-native CRD resources annotated with grafana.app/folder-scoped (RequireFolder writes, dual-check authz, allow-list removal).",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "zanzana",
 			Description:  "Use openFGA as authorization engine.",
 			Stage:        FeatureStageExperimental,

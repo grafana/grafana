@@ -1533,7 +1533,25 @@ func TestService_K8sNativeFallback(t *testing.T) {
 		assert.False(t, resp.Allowed)
 	})
 
-	t.Run("Check: unregistered group allowed with K8s-native action", func(t *testing.T) {
+	t.Run("Check: unregistered group allowed with stack-role grant and no folder (avoid breaking existing apps that are not in apiextensions service - *.ext.grafana.app)", func(t *testing.T) {
+		s := setup([]accesscontrol.Permission{
+			{Action: "unregistered.grafana.app/widgets:get", Scope: ""},
+		})
+		resp, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "unregistered.grafana.app",
+			Resource:  "widgets",
+			Verb:      "get",
+			Name:      "w1",
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed)
+	})
+
+	t.Run("Check: unregistered group denied with resource-scoped grant but no stack role", func(t *testing.T) {
+		// A scoped grant on the resource is no longer a stack role, so without
+		// an empty-scope grant the folder-authz path denies access.
 		s := setup([]accesscontrol.Permission{
 			{Action: "unregistered.grafana.app/widgets:get", Scope: "unregistered.grafana.app/widgets:uid:w1"},
 		})
@@ -1546,7 +1564,7 @@ func TestService_K8sNativeFallback(t *testing.T) {
 			Name:      "w1",
 		})
 		require.NoError(t, err)
-		assert.True(t, resp.Allowed)
+		assert.False(t, resp.Allowed)
 	})
 
 	t.Run("Check: unknown verb still errors", func(t *testing.T) {
@@ -1609,6 +1627,169 @@ func TestService_K8sNativeFallback(t *testing.T) {
 		require.NoError(t, err)
 		assert.ElementsMatch(t, []string{"dash1", "dash2"}, resp.Items)
 	})
+}
+
+func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
+	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+			Audience: []string{"authzservice"},
+		},
+		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+	})
+	ctx := types.WithAuthInfo(context.Background(), callingService)
+
+	const group = "widget.ext.grafana.app"
+
+	// stackRole returns an empty-scope grant for the given resource action,
+	// which the folder-authz path treats as the stack role.
+	stackRole := func(action string) accesscontrol.Permission {
+		return accesscontrol.Permission{Action: action, Scope: ""}
+	}
+	folderPerm := func(action, folderUID string) accesscontrol.Permission {
+		return accesscontrol.Permission{
+			Action:     action,
+			Scope:      "folders:uid:" + folderUID,
+			Kind:       "folders",
+			Attribute:  "uid",
+			Identifier: folderUID,
+		}
+	}
+
+	type testCase struct {
+		name        string
+		permissions []accesscontrol.Permission
+		folders     []store.Folder
+		req         *authzv1.CheckRequest
+		expected    bool
+	}
+
+	testCases := []testCase{
+		{
+			name: "resource with stack role and folder read permission",
+			permissions: []accesscontrol.Permission{
+				stackRole("widget.ext.grafana.app/widgets:get"),
+				folderPerm("folders:read", "f1"),
+			},
+			folders:  []store.Folder{{UID: "f1"}},
+			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet, Name: "w1", Folder: "f1"},
+			expected: true,
+		},
+		{
+			name: "subresource with stack role and folder read permission",
+			permissions: []accesscontrol.Permission{
+				stackRole("widget.ext.grafana.app/widgets/status:get"),
+				folderPerm("folders:read", "f1"),
+			},
+			folders:  []store.Folder{{UID: "f1"}},
+			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Subresource: "status", Verb: utils.VerbGet, Name: "w1", Folder: "f1"},
+			expected: true,
+		},
+		{
+			name:        "capabilities probe (no name) allowed with stack role",
+			permissions: []accesscontrol.Permission{stackRole("widget.ext.grafana.app/widgets:get")},
+			req:         &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet},
+			expected:    true,
+		},
+		{
+			name:        "capabilities probe (no name) denied without stack role",
+			permissions: []accesscontrol.Permission{},
+			req:         &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet},
+			expected:    false,
+		},
+		{
+			name:        "cluster-scoped (no folder) allowed with stack role",
+			permissions: []accesscontrol.Permission{stackRole("widget.ext.grafana.app/widgets:get")},
+			req:         &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet, Name: "w1"},
+			expected:    true,
+		},
+		{
+			name: "write verb allowed with stack role and folder write permission",
+			permissions: []accesscontrol.Permission{
+				stackRole("widget.ext.grafana.app/widgets:update"),
+				folderPerm("folders:write", "f1"),
+			},
+			folders:  []store.Folder{{UID: "f1"}},
+			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbUpdate, Name: "w1", Folder: "f1"},
+			expected: true,
+		},
+		{
+			name:        "stack role but no folder permission denied",
+			permissions: []accesscontrol.Permission{stackRole("widget.ext.grafana.app/widgets:get")},
+			folders:     []store.Folder{{UID: "f1"}},
+			req:         &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet, Name: "w1", Folder: "f1"},
+			expected:    false,
+		},
+		{
+			name: "folder inheritance: permission on ancestor allows child",
+			permissions: []accesscontrol.Permission{
+				stackRole("widget.ext.grafana.app/widgets:get"),
+				folderPerm("folders:read", "parent"),
+			},
+			folders:  []store.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}},
+			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet, Name: "w1", Folder: "child"},
+			expected: true,
+		},
+		{
+			name: "folder inheritance miss: permission on unrelated folder denied",
+			permissions: []accesscontrol.Permission{
+				stackRole("widget.ext.grafana.app/widgets:get"),
+				folderPerm("folders:read", "other"),
+			},
+			folders:  []store.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}, {UID: "other"}},
+			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet, Name: "w1", Folder: "child"},
+			expected: false,
+		},
+		{
+			name: "wildcard folder grant allows without walking the tree",
+			permissions: []accesscontrol.Permission{
+				stackRole("widget.ext.grafana.app/widgets:get"),
+				{Action: "folders:read", Scope: "*", Kind: "*"},
+			},
+			folders:  []store.Folder{{UID: "f1"}},
+			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet, Name: "w1", Folder: "f1"},
+			expected: true,
+		},
+		{
+			name: "permission verb allowed with folder admin",
+			permissions: []accesscontrol.Permission{
+				stackRole("widget.ext.grafana.app/widgets:get_permissions"),
+				folderPerm("folders.permissions:write", "f1"),
+			},
+			folders:  []store.Folder{{UID: "f1"}},
+			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGetPermissions, Name: "w1", Folder: "f1"},
+			expected: true,
+		},
+		{
+			name: "permission verb denied with only folder write",
+			permissions: []accesscontrol.Permission{
+				stackRole("widget.ext.grafana.app/widgets:set_permissions"),
+				folderPerm("folders:write", "f1"),
+			},
+			folders:  []store.Folder{{UID: "f1"}},
+			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbSetPermissions, Name: "w1", Folder: "f1"},
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := setupService()
+			userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+			fStore := &fakeStore{userID: userID, userPermissions: tc.permissions, folders: tc.folders}
+			s.store = fStore
+			s.permissionStore = fStore
+			s.folderStore = fStore
+			s.identityStore = &fakeIdentityStore{}
+
+			tc.req.Namespace = "org-12"
+			tc.req.Subject = "user:test-uid"
+
+			resp, err := s.Check(ctx, tc.req)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, resp.Allowed)
+		})
+	}
 }
 
 func TestService_CacheCheck(t *testing.T) {

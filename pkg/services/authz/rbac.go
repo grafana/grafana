@@ -87,8 +87,6 @@ func ProvideAuthZClient(
 		sql := legacysql.NewDatabaseProvider(db)
 		rbacSettings := rbac.Settings{
 			CacheTTL: authCfg.cacheTTL,
-			//nolint:staticcheck // not yet migrated to OpenFeature
-			FolderScopedAuthzForCRDs: features.IsEnabledGlobally(featuremgmt.FlagFolderScopedAuthzForCRDs),
 		}
 		if cfg != nil {
 			rbacSettings.AnonOrgRole = cfg.Anonymous.OrgRole
@@ -325,9 +323,8 @@ func RegisterRBACAuthZService(
 		reg,
 		cache,
 		rbac.Settings{
-			CacheTTL:                 cfg.CacheTTL,
-			LocalFolderCacheTTL:      cfg.LocalFolderCacheTTL,
-			FolderScopedAuthzForCRDs: cfg.FolderScopedAuthzForCRDs,
+			CacheTTL:            cfg.CacheTTL,
+			LocalFolderCacheTTL: cfg.LocalFolderCacheTTL,
 		}, // anonymous org role can only be set in-proc
 	)
 
