@@ -42,6 +42,7 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	f := extractFilters(req)
 	rules, _, _, err := c.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
 		RuleType:                  ruleTypeForRequest(req),
+		RuleUIDs:                  f.names,
 		GroupFilter:               includeFilter(f.groups),
 		FolderFilter:              includeFilter(f.folders),
 		PausedFilter:              provisioning.ListRuleBoolFilter{Value: f.paused},
@@ -107,6 +108,7 @@ func ruleCells(r *ngmodels.AlertRule) [][]byte {
 	}
 	receiver, notificationType, routingTree := notificationFields(r.NotificationSettings)
 
+	// TODO: see if there is a safer way to make sure the ordering of cells matches the resultColumns definition, without relying on manual maintenance of this function when columns are added/removed/reshuffled.
 	return [][]byte{
 		[]byte(ruleType(r)),
 		[]byte(r.Title),

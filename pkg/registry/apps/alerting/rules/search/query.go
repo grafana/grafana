@@ -17,6 +17,7 @@ import (
 // unified backends each decode the request in their own way.
 type filters struct {
 	text                string
+	names               []string
 	folders             []string
 	groups              []string
 	datasourceUIDs      []string
@@ -39,6 +40,8 @@ func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
 	if opts != nil {
 		for _, r := range opts.Fields {
 			switch r.Key {
+			case fieldName:
+				f.names = r.Values
 			case fieldFolder:
 				f.folders = r.Values
 			case fieldLabels:

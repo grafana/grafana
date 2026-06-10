@@ -155,6 +155,7 @@ func buildSearchRequest(q url.Values, namespace string, primary schema.GroupReso
 			req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{Key: field, Operator: "in", Values: vals})
 		}
 	}
+	add(fieldName, q["names"]...)
 	add(fieldFolder, q["folders"]...)
 	add(fieldDatasourceUIDs, q["datasourceUIDs"]...)
 	add(fieldDashboardUID, q.Get("dashboardUID"))
