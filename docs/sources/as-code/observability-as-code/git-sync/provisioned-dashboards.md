@@ -101,6 +101,20 @@ You can remove a provisioned dashboard by deleting the dashboard from the reposi
 
 To restore a deleted dashboard, raise a PR directly in your GitHub repository. Restoring resources from the UI isn't possible at the moment.
 
+## Document folders with a README
+
+{{< admonition type="note" >}}
+
+This feature is behind the `provisioningReadmes` feature toggle, which is off by default. For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
+
+{{< /admonition >}}
+
+You can document the contents of a provisioned folder with a `README.md` file stored alongside its resources in the repository. When the feature is enabled, Grafana renders the README inline on the folder page, below the list of dashboards, so your team can see what's in the folder, how it's organized, and where to find the right dashboard without leaving Grafana.
+
+- If the folder contains a `README.md`, Grafana renders its Markdown content. Relative links and images in the README resolve against the host repository.
+- If the folder has no `README.md`, Grafana shows an **Add README** call to action. This also appears in empty folders that don't yet contain any dashboards or subfolders.
+- Select the edit pencil in the README header to open the file in your Git provider's editor and commit changes through your usual workflow.
+
 ## Best practices
 
 Follow these recommendations when working with provisioned dashboards:
@@ -109,3 +123,4 @@ Follow these recommendations when working with provisioned dashboards:
 - **Provide clear commit messages**: Describe your changes to help with tracking and collaboration
 - **Regularly sync your repository**: Keep Grafana up to date with the latest changes
 - **Review the Events tab**: Monitor sync status to ensure changes are applied correctly
+- **Add a folder README**: Document each folder's contents with a `README.md` so teammates can find the right dashboard quickly
