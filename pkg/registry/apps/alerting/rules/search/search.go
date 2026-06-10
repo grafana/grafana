@@ -238,9 +238,9 @@ func (r rowReader) int64Ptr(name string) *int64 {
 	return nil
 }
 
-func (r rowReader) labels() map[string]string {
+func (r rowReader) jsonMap(name string) map[string]string {
 	var out map[string]string
-	if i, ok := r.idx[fieldLabels]; ok && i < len(r.row.Cells) && len(r.row.Cells[i]) > 0 {
+	if i, ok := r.idx[name]; ok && i < len(r.row.Cells) && len(r.row.Cells[i]) > 0 {
 		_ = json.Unmarshal(r.row.Cells[i], &out)
 	}
 	return out
@@ -264,9 +264,13 @@ func parseAlertRuleHits(resp *resourcepb.ResourceSearchResponse) []model.GetSear
 			Title:            r.str(fieldTitle),
 			Folder:           r.str(fieldFolder),
 			Group:            r.strPtr(fieldGroup),
+			Interval:         r.strPtr(fieldInterval),
 			Paused:           r.boolPtr(fieldPaused),
-			Labels:           r.labels(),
+			Labels:           r.jsonMap(fieldLabels),
 			DatasourceUIDs:   r.datasourceUIDs(),
+			Annotations:      r.jsonMap(fieldAnnotations),
+			For:              r.strPtr(fieldFor),
+			KeepFiringFor:    r.strPtr(fieldKeepFiringFor),
 			DashboardUID:     r.strPtr(fieldDashboardUID),
 			PanelID:          r.int64Ptr(fieldPanelID),
 			Receiver:         r.strPtr(fieldReceiver),
@@ -287,8 +291,9 @@ func parseRecordingRuleHits(resp *resourcepb.ResourceSearchResponse) []model.Get
 			Title:               r.str(fieldTitle),
 			Folder:              r.str(fieldFolder),
 			Group:               r.strPtr(fieldGroup),
+			Interval:            r.strPtr(fieldInterval),
 			Paused:              r.boolPtr(fieldPaused),
-			Labels:              r.labels(),
+			Labels:              r.jsonMap(fieldLabels),
 			DatasourceUIDs:      r.datasourceUIDs(),
 			Metric:              r.strPtr(fieldMetric),
 			TargetDatasourceUID: r.strPtr(fieldTargetDatasourceUID),
@@ -311,8 +316,9 @@ func parseRuleHits(resp *resourcepb.ResourceSearchResponse) []model.GetSearchRul
 				Title:               r.str(fieldTitle),
 				Folder:              r.str(fieldFolder),
 				Group:               r.strPtr(fieldGroup),
+				Interval:            r.strPtr(fieldInterval),
 				Paused:              r.boolPtr(fieldPaused),
-				Labels:              r.labels(),
+				Labels:              r.jsonMap(fieldLabels),
 				DatasourceUIDs:      r.datasourceUIDs(),
 				Metric:              r.strPtr(fieldMetric),
 				TargetDatasourceUID: r.strPtr(fieldTargetDatasourceUID),
@@ -324,9 +330,13 @@ func parseRuleHits(resp *resourcepb.ResourceSearchResponse) []model.GetSearchRul
 				Title:            r.str(fieldTitle),
 				Folder:           r.str(fieldFolder),
 				Group:            r.strPtr(fieldGroup),
+				Interval:         r.strPtr(fieldInterval),
 				Paused:           r.boolPtr(fieldPaused),
-				Labels:           r.labels(),
+				Labels:           r.jsonMap(fieldLabels),
 				DatasourceUIDs:   r.datasourceUIDs(),
+				Annotations:      r.jsonMap(fieldAnnotations),
+				For:              r.strPtr(fieldFor),
+				KeepFiringFor:    r.strPtr(fieldKeepFiringFor),
 				DashboardUID:     r.strPtr(fieldDashboardUID),
 				PanelID:          r.int64Ptr(fieldPanelID),
 				Receiver:         r.strPtr(fieldReceiver),

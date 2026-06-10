@@ -2,6 +2,7 @@ package builders
 
 import (
 	"context"
+	"encoding/json"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -17,28 +18,46 @@ import (
 // is a known label key matched via IndexableDocument.Labels.
 const (
 	ruleSearchType                = "type"
+	ruleSearchInterval            = "interval"
 	ruleSearchPaused              = "paused"
 	ruleSearchLabels              = "labels"
+	ruleSearchAnnotations         = "annotations"
+	ruleSearchFor                 = "for"
+	ruleSearchKeepFiringFor       = "keepFiringFor"
 	ruleSearchDatasourceUIDs      = "datasourceUIDs"
 	ruleSearchDashboardUID        = "dashboardUID"
 	ruleSearchPanelID             = "panelID"
+	ruleSearchReceiver            = "receiver"
+	ruleSearchNotificationType    = "notificationType"
+	ruleSearchRoutingTree         = "routingTree"
 	ruleSearchMetric              = "metric"
 	ruleSearchTargetDatasourceUID = "targetDatasourceUID"
 )
 
 func ruleSearchColumnDefinitions() []*resourcepb.ResourceTableColumnDefinition {
 	filterable := &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}
+	str := func(name string) *resourcepb.ResourceTableColumnDefinition {
+		return &resourcepb.ResourceTableColumnDefinition{Name: name, Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: filterable}
+	}
 	return []*resourcepb.ResourceTableColumnDefinition{
-		{Name: ruleSearchType, Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: filterable},
+		str(ruleSearchType),
+		str(ruleSearchInterval),
 		{Name: ruleSearchPaused, Type: resourcepb.ResourceTableColumnDefinition_BOOLEAN, Properties: filterable},
 		// The rule's own (spec) labels, indexed as "key" and "key=value" terms
 		// so label matchers (equals and existence) resolve against them.
 		{Name: ruleSearchLabels, Type: resourcepb.ResourceTableColumnDefinition_STRING, IsArray: true, Properties: filterable},
+		// annotations is display-only, carried as the JSON-encoded map.
+		str(ruleSearchAnnotations),
+		str(ruleSearchFor),
+		str(ruleSearchKeepFiringFor),
 		{Name: ruleSearchDatasourceUIDs, Type: resourcepb.ResourceTableColumnDefinition_STRING, IsArray: true, Properties: filterable},
-		{Name: ruleSearchDashboardUID, Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: filterable},
+		str(ruleSearchDashboardUID),
 		{Name: ruleSearchPanelID, Type: resourcepb.ResourceTableColumnDefinition_INT64, Properties: filterable},
-		{Name: ruleSearchMetric, Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: filterable},
-		{Name: ruleSearchTargetDatasourceUID, Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: filterable},
+		str(ruleSearchReceiver),
+		str(ruleSearchNotificationType),
+		str(ruleSearchRoutingTree),
+		str(ruleSearchMetric),
+		str(ruleSearchTargetDatasourceUID),
 	}
 }
 
@@ -82,6 +101,7 @@ func (alertRuleSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb
 		return nil, err
 	}
 	doc.Fields[ruleSearchType] = "alertrule"
+	doc.Fields[ruleSearchInterval] = string(rule.Spec.Trigger.Interval)
 	var uids []string
 	for _, e := range rule.Spec.Expressions {
 		if e.DatasourceUID != nil {
@@ -94,9 +114,28 @@ func (alertRuleSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb
 	if rule.Spec.Paused != nil {
 		doc.Fields[ruleSearchPaused] = *rule.Spec.Paused
 	}
+	if rule.Spec.For != nil {
+		doc.Fields[ruleSearchFor] = *rule.Spec.For
+	}
+	if rule.Spec.KeepFiringFor != nil {
+		doc.Fields[ruleSearchKeepFiringFor] = *rule.Spec.KeepFiringFor
+	}
+	if a := annotationsJSON(rule.Spec.Annotations); a != "" {
+		doc.Fields[ruleSearchAnnotations] = a
+	}
 	if rule.Spec.PanelRef != nil {
 		doc.Fields[ruleSearchDashboardUID] = rule.Spec.PanelRef.DashboardUID
 		doc.Fields[ruleSearchPanelID] = rule.Spec.PanelRef.PanelID
+	}
+	if ns := rule.Spec.NotificationSettings; ns != nil {
+		switch {
+		case ns.SimplifiedRouting != nil:
+			doc.Fields[ruleSearchReceiver] = ns.SimplifiedRouting.Receiver
+			doc.Fields[ruleSearchNotificationType] = string(rulesv0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting)
+		case ns.NamedRoutingTree != nil:
+			doc.Fields[ruleSearchRoutingTree] = ns.NamedRoutingTree.RoutingTree
+			doc.Fields[ruleSearchNotificationType] = string(rulesv0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree)
+		}
 	}
 	if terms := labelTerms(rule.Spec.Labels); len(terms) > 0 {
 		doc.Fields[ruleSearchLabels] = terms
@@ -113,6 +152,7 @@ func (recordingRuleSearchBuilder) BuildDocument(ctx context.Context, key *resour
 		return nil, err
 	}
 	doc.Fields[ruleSearchType] = "recordingrule"
+	doc.Fields[ruleSearchInterval] = string(rule.Spec.Trigger.Interval)
 	var uids []string
 	for _, e := range rule.Spec.Expressions {
 		if e.DatasourceUID != nil {
@@ -163,4 +203,21 @@ func labelTerms[T ~string](labels map[string]T) []string {
 		out = append(out, k, k+"="+string(v))
 	}
 	return out
+}
+
+// annotationsJSON encodes rule annotations as a JSON object string for display,
+// or "" when there are none.
+func annotationsJSON[T ~string](annotations map[string]T) string {
+	if len(annotations) == 0 {
+		return ""
+	}
+	m := make(map[string]string, len(annotations))
+	for k, v := range annotations {
+		m[k] = string(v)
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return ""
+	}
+	return string(b)
 }
