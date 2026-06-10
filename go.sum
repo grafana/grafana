@@ -1607,8 +1607,8 @@ github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 h1:/m/qmt7Ay+HK+GVbI
 github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3/go.mod h1:6zFIzal2FCd0JC1pE0ZTb2ftC0Jr/zsQR4zRNRdDfZA=
 github.com/grafana/e2e v0.1.2-0.20260309174126-b5393d4e610f h1:gxaqz5StufMU078tWFuf8CUi4PZtITBxjM2TZV7NOFw=
 github.com/grafana/e2e v0.1.2-0.20260309174126-b5393d4e610f/go.mod h1:KFvJP5m5GQ837CN7rUbWIiPdw1JZgeRJTEyp2O5U0is=
-github.com/grafana/go-mysql-server v0.20.2-grafana-2 h1:Odgye5nVNmxma8PUN6QrLz9ygdjJLrpSOE5vPpezJzI=
-github.com/grafana/go-mysql-server v0.20.2-grafana-2/go.mod h1:phaWF0mUq6w4kkHi+ahJ+nUwZ20gkf2vAm8pGMZOJRw=
+github.com/grafana/go-mysql-server v0.20.2-grafana-3 h1:d9t/ZbwjchVL/VLJ+W51h6z9JaSzQ84xG1hTZBU5oWY=
+github.com/grafana/go-mysql-server v0.20.2-grafana-3/go.mod h1:Oy0XD/nfIkwVBMud5aY8Rvqw8Rbi+2yCxW84a9391+A=
 github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f h1:5xkjl5Y/j2QefJKOtTfyD1wXlVsQ2yEXmd0u82h5obs=
 github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f/go.mod h1:+O5QxOwwgP10jedZHapzXY+IPKTnzHBtIs5UUb9G+kI=
 github.com/grafana/gomemcache v0.0.0-20251127154401-74f93547077b h1:5qp8/5YPt/Z2RW5QHsxvwE05+LWQYIXydP2MwOkMfb8=
@@ -1663,8 +1663,8 @@ github.com/grafana/sqlds/v5 v5.1.1 h1:QEZayyzZZZjDnfMX/f5k7oLehOBH7X1MMnpgn+yDkk
 github.com/grafana/sqlds/v5 v5.1.1/go.mod h1:fUt31TRrHrBZ6lyaHZyDqSfeouuSXV6PeBgrNFuZVmo=
 github.com/grafana/tempo v1.5.1-0.20260427112133-525d1bab07e0 h1:kE5kdMnyPJmlNUdWhahfzqPYB3vM8DtAxgWymbB8nOA=
 github.com/grafana/tempo v1.5.1-0.20260427112133-525d1bab07e0/go.mod h1:zsoFhLpNKV0zyDbgvTtmSnDIN+NBtFiqCj/Xa1w+Cg4=
-github.com/grafana/vitess v0.0.0-grafana-1 h1:Q/HDraFFj94iuyfWrfEZRvNn3c76JR4sZY2NsBgw6uM=
-github.com/grafana/vitess v0.0.0-grafana-1/go.mod h1:eLLslh1CSPMf89pPcaMG4yM72PQbTN9OUYJeAy0fAis=
+github.com/grafana/vitess v0.0.0-grafana-2 h1:acOPRrYMU8ZhDUC99WAxiB8fIZtgQ4/JjcaY6YIjQcE=
+github.com/grafana/vitess v0.0.0-grafana-2/go.mod h1:eLLslh1CSPMf89pPcaMG4yM72PQbTN9OUYJeAy0fAis=
 github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 h1:UH//fgunKIs4JdUbpDl1VZCDaL56wXCB/5+wF6uHfaI=
 github.com/grpc-ecosystem/go-grpc-middleware v1.4.0/go.mod h1:g5qyo/la0ALbONm6Vbp88Yd8NsDy6rZz+RcrMPxvld8=
 github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 h1:QGLs/O40yoNK9vmy4rhUGBVyMf1lISBGtXRpsu/Qu/o=
