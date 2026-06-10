@@ -183,7 +183,7 @@ For example, if you have server names or region names that never change, then yo
    | Option              | Description                                                                                                                                                                                                           |
    | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
    | CSV                 | Enter a flat list of values for the variable in a comma-separated list. You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.            |
-   | JSON                | Provide a JSON array of objects where each object can have any number of properties that can be referenced. For more information refer, to [Configure multi-property variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/advanced-variables/#configure-multi-property-variables). |
+   | JSON                | Provide a JSON array of objects where each object can have any number of properties that can be referenced. For more information refer, to [Configure multi-property variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/advanced-variables/#multi-property-variables). |
    | Multi-value         | Enables multiple values to be selected at the same time. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                   |
    | Allow custom values | Enables users to add custom values to the list. Only applies to CSV custom values. For more information, refer to [Selection Options](#configure-variable-selection-options).                                         |
    | Include All option  | Enables an option to include all variables. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                |
@@ -295,7 +295,7 @@ However, in the dashboard schema, it's still referred to as `"kind": "AdhocVaria
 
 To use this feature, enable the `dashboardUnifiedDrilldownControls` feature toggle in your Grafana configuration file.
 
-For more information on the **Filter and Group by** feature, refer to the [Dashboard controls documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#filter-and-group-by).
+For more information on the **Filter and Group by** feature, refer to the [Dashboard controls documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#filter-and-group-by).
 {{< /admonition >}}
 
 _Filters_ are one of the most complex and flexible variable options available.
@@ -328,7 +328,7 @@ To create a filter, follow these steps:
 1. Enter an optional description of your changes and click **Save**.
 1. Click **Back to dashboard** and then **Exit edit**.
 
-Now you can [filter data on the dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#filter-dashboard-data).
+Now you can [filter data on the dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/use-dashboards/#filter-dashboard-data).
 
 {{< admonition type="tip" >}}
 You can use data links to link back to the dashboard you are currently on. This enables "panel-to-panel filtering," where clicking a data point in one panel updates the dashboard variables and filters the rest of the dashboard.
@@ -344,7 +344,7 @@ Filters on the current dashboard are automatically preserved.
 Learn more in:
 
 - [Configure data links and actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-data-links/)
-- [Create dashboard URL variables – Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/#ad-hoc-filters)
+- [Create dashboard URL variables > Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/#filters)
   {{< /admonition >}}
 
 ### Filter any data using the Dashboard data source
@@ -402,7 +402,7 @@ If one of the panels in the dashboard using that data source doesn't include tha
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-no-data-v12.2.png" max-width="650px" alt="Table, filtered and bar chart returning no results" >}}
 
 In cases where the data source you're using doesn't support filtering, consider using the special Dashboard data source.
-For more information, refer to [Filter any data using the Dashboard data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#filter-any-data-using-the-dashboard-data-source).
+For more information, refer to [Filter any data using the Dashboard data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#filter-any-data-using-the-dashboard-data-source).
 
 ## Add a switch variable
 
