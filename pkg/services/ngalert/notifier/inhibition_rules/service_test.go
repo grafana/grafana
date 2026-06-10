@@ -268,7 +268,7 @@ func TestService_DeleteInhibitionRule(t *testing.T) {
 					listMap[r.UID] = r
 				}
 
-				require.NotContains(t, listMap, v1.ResourceUID(tc.ruleUID))
+				require.NotContains(t, listMap, tc.ruleUID)
 			}
 		})
 	}
