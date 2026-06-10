@@ -284,7 +284,7 @@ export function isPluginProvidedRule(rule?: Rule | PromRuleDTO | RulerRuleDTO): 
   return Boolean(getRulePluginOrigin(rule));
 }
 
-export type GroupReadOnlyReason = 'plugin' | 'provisioned' | 'federated';
+type GroupReadOnlyReason = 'plugin' | 'provisioned' | 'federated';
 
 export type GroupReadOnlyStatus = { readOnly: true; reason: GroupReadOnlyReason } | { readOnly: false };
 

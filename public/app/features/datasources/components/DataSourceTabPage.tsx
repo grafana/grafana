@@ -10,7 +10,7 @@ import { useDataSourceInfo } from '../components/useDataSourceInfo';
 import { useDataSource, useDataSourceRights } from '../state/hooks';
 import { setNameAndVersion } from '../state/reducers';
 
-export interface Props {
+interface Props {
   uid: string;
   pageId: string | null;
 }

@@ -23,6 +23,7 @@ import {
   mockQueryOptionsState,
   mockTransformToggles,
   mockTypeConfig,
+  mockUIStateBase,
   renderWithQueryEditorProvider,
 } from './testUtils';
 
@@ -174,6 +175,7 @@ describe('QueryEditorRenderer', () => {
             toggleQuerySelection: jest.fn(),
             toggleTransformationSelection: jest.fn(),
             clearSelection: jest.fn(),
+            stackedMode: mockUIStateBase.stackedMode,
             confirmingDeleteActionKey: null,
             setConfirmingDeleteActionKey: jest.fn(),
           }}
@@ -254,6 +256,7 @@ describe('QueryEditorRenderer', () => {
             toggleQuerySelection: jest.fn(),
             toggleTransformationSelection: jest.fn(),
             clearSelection: jest.fn(),
+            stackedMode: mockUIStateBase.stackedMode,
             confirmingDeleteActionKey: null,
             setConfirmingDeleteActionKey: jest.fn(),
           }}

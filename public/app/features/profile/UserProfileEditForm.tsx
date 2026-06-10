@@ -7,7 +7,7 @@ import { type UserDTO } from 'app/types/user';
 
 import { type ProfileUpdateFields } from './types';
 
-export interface Props {
+interface Props {
   user: UserDTO | null;
   isSavingUser: boolean;
   updateProfile: (payload: ProfileUpdateFields) => void;

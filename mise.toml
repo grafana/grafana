@@ -1,0 +1,6 @@
+[tools]
+go = '''{{ exec(command="awk '/^go [0-9]/{print $2}' go.mod") }}'''
+
+[settings]
+node.corepack = true
+idiomatic_version_file_enable_tools = ["node"]

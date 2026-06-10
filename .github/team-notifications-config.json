@@ -45,6 +45,36 @@
         "fr_notify": true,
         "fr_weekly": true
       }
+    },
+    {
+      "name": "frontend-navigation",
+      "kickoff_date": "2026-05-29",
+      "adoption_date": "2025-05-29",
+      "codeowners_teams": [
+        "@grafana/grafana-frontend-navigation"
+      ],
+      "area_labels": ["area/navigation", "area/search", "area/frontend/login", "area/panel/dashboard-list"],
+      "enabled": {
+        "pr_notify": true,
+        "pr_weekly": true,
+        "fr_notify": true,
+        "fr_weekly": true
+      }
+    },
+    {
+      "name": "datapro",
+      "kickoff_date": "2026-06-08",
+      "adoption_date": "2025-06-08",
+      "codeowners_teams": [
+        "@grafana/datapro"
+      ],
+      "area_labels": ["area/explore", "area/transformations", "area/correlations", "area/expressions"],
+      "enabled": {
+        "pr_notify": true,
+        "pr_weekly": true,
+        "fr_notify": true,
+        "fr_weekly": true
+      }
     }
   ]
 }
