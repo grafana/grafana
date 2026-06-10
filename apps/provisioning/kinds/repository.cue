@@ -116,6 +116,20 @@ repository: {
 					// Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}.
 					// When empty, a built-in default is used (e.g. "Save dashboard: <title>").
 					singleResourceMessageTemplate?: string
+					// Name used as the commit committer. Required for the signing key's
+					// identity to match the commit, which providers need to mark commits
+					// as Verified. When empty, defaults to "Grafana".
+					committerName?: string
+					// Email used as the commit committer. Must match the signing key's
+					// identity and a verified email on the account where the matching
+					// public key is registered. When empty, defaults to
+					// "noreply@grafana.com".
+					committerEmail?: string
+					// Format of the key in secure.signingKey. When unset, commits are not signed.
+					signingFormat?: "gpg" | "ssh" | "smime"
+					// PEM-encoded X.509 certificate paired with secure.signingKey when
+					// signingFormat is "smime". This is public, not a secret.
+					smimeCertificate?: string
 				}
 				#HealthStatus: {
 					// When not healthy, requests will not be executed

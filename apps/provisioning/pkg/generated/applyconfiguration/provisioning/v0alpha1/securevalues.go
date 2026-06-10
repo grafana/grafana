@@ -15,6 +15,10 @@ type SecureValuesApplyConfiguration struct {
 	Token *commonv0alpha1.InlineSecureValue `json:"token,omitempty"`
 	// Some webhooks (including github) require a secret key value
 	WebhookSecret *commonv0alpha1.InlineSecureValue `json:"webhookSecret,omitempty"`
+	// Private key used to sign commits the repository writes back. The format
+	// is selected by spec.commit.signingFormat. When unset, commits are
+	// unsigned.
+	SigningKey *commonv0alpha1.InlineSecureValue `json:"signingKey,omitempty"`
 }
 
 // SecureValuesApplyConfiguration constructs a declarative configuration of the SecureValues type for use with
@@ -36,5 +40,13 @@ func (b *SecureValuesApplyConfiguration) WithToken(value commonv0alpha1.InlineSe
 // If called multiple times, the WebhookSecret field is set to the value of the last call.
 func (b *SecureValuesApplyConfiguration) WithWebhookSecret(value commonv0alpha1.InlineSecureValue) *SecureValuesApplyConfiguration {
 	b.WebhookSecret = &value
+	return b
+}
+
+// WithSigningKey sets the SigningKey field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the SigningKey field is set to the value of the last call.
+func (b *SecureValuesApplyConfiguration) WithSigningKey(value commonv0alpha1.InlineSecureValue) *SecureValuesApplyConfiguration {
+	b.SigningKey = &value
 	return b
 }
