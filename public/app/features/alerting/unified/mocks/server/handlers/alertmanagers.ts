@@ -90,7 +90,7 @@ const getAlertmanagerStatusHandler = () =>
     return HttpResponse.json({ message: 'data source not found', traceID: '' }, { status: 404 });
   });
 
-export const ALERTMANAGER_UPDATE_ERROR_RESPONSE = HttpResponse.json({ message: 'bad request' }, { status: 400 });
+const ALERTMANAGER_UPDATE_ERROR_RESPONSE = HttpResponse.json({ message: 'bad request' }, { status: 400 });
 
 /** Perform some basic validation on the config that we expect the backend to also do */
 const validateGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) => {
@@ -118,7 +118,7 @@ const validateGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) => 
   return null;
 };
 
-export const updateAlertmanagerConfigHandler = (responseOverride?: typeof ALERTMANAGER_UPDATE_ERROR_RESPONSE) =>
+const updateAlertmanagerConfigHandler = (responseOverride?: typeof ALERTMANAGER_UPDATE_ERROR_RESPONSE) =>
   http.post<{ name: string }>('/api/alertmanager/:name/config/api/v1/alerts', async ({ request, params }) => {
     if (responseOverride) {
       return responseOverride;

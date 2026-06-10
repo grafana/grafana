@@ -1,5 +1,4 @@
-import uFuzzy from '@leeoniya/ufuzzy';
-import { pick, uniq } from 'lodash';
+import { pick } from 'lodash';
 import { useMemo, useState } from 'react';
 
 import { INHERITABLE_KEYS, type InheritableProperties } from '@grafana/alerting/internal';
@@ -372,35 +371,6 @@ export function useCreatePolicyAction(allPolicies: Route[] | undefined) {
     existingPolicyNames,
   };
 }
-
-const fuzzyFinder = new uFuzzy({
-  intraMode: 1,
-  intraIns: 1,
-  intraSub: 1,
-  intraDel: 1,
-  intraTrn: 1,
-});
-
-export const useRootRouteSearch = (policies: Route[], search?: string | null): Route[] => {
-  const nameHaystack = useMemo(() => {
-    return policies.map((policy) => policy.name ?? '');
-  }, [policies]);
-
-  const receiverHaystack = useMemo(() => {
-    return policies.map((policy) => policy.receiver ?? '');
-  }, [policies]);
-
-  if (!search) {
-    return policies;
-  }
-
-  const nameHits = fuzzyFinder.filter(nameHaystack, search) ?? [];
-  const typeHits = fuzzyFinder.filter(receiverHaystack, search) ?? [];
-
-  const hits = [...nameHits, ...typeHits];
-
-  return uniq(hits).map((id) => policies[id]) ?? [];
-};
 
 /**
  * Convert Route to K8s compatible format. Make sure we aren't sending any additional properties the API doesn't recognize

@@ -28,7 +28,7 @@ interface DeleteModalProps {
   routeName: string;
 }
 
-export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, routeName }: DeleteModalProps) => {
+const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, routeName }: DeleteModalProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<unknown | undefined>();
 

@@ -143,7 +143,6 @@ export const {
   sessionsLoaded,
   updateTimeZone,
   updateWeekStart,
-  updateFiscalYearStartMonth,
 } = slice.actions;
 
 export const userReducer = slice.reducer;

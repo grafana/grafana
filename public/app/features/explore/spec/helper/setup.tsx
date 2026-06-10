@@ -338,11 +338,6 @@ export const withinQueryHistory = () => {
   return within(container);
 };
 
-export const withinQueryLibrary = () => {
-  const container = screen.getByRole('dialog', { name: /Query library/ });
-  return within(container);
-};
-
 const exploreTestsHelper: { setupExplore: typeof setupExplore; tearDownExplore?: (options?: TearDownOptions) => void } =
   {
     setupExplore,

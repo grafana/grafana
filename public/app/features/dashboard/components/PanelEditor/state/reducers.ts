@@ -123,7 +123,6 @@ export const {
 
   setDiscardChanges,
   closeEditor,
-  setPanelEditorUIState,
   toggleVizPicker,
 } = pluginsSlice.actions;
 

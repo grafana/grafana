@@ -46,8 +46,7 @@ interface SetPanelInstanceStatePayload {
   value: unknown;
 }
 
-export const { panelModelAndPluginReady, setPanelInstanceState, changePanelKey, removePanel, removeAllPanels } =
-  panelsSlice.actions;
+export const { panelModelAndPluginReady, setPanelInstanceState, removePanel, removeAllPanels } = panelsSlice.actions;
 
 const panelsReducer = panelsSlice.reducer;
 

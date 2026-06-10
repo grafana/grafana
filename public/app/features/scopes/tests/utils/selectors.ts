@@ -49,7 +49,6 @@ export const queryRecentScopeSet = (scope: string) => screen.queryByRole('button
 export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards.expand);
 export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
 export const queryDashboardsContainer = () => screen.queryByTestId(selectors.dashboards.container);
-export const queryDashboardsSearch = () => screen.queryByTestId(selectors.dashboards.search);
 export const getDashboardsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.dashboards.search);
 export const queryDashboardFolderExpand = (uid: string) =>
   screen.queryByTestId(selectors.dashboards.dashboardExpand(uid));
@@ -74,16 +73,10 @@ export const getResultApplicationsGrafanaSelect = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana'));
 export const findResultApplicationsGrafanaSelect = () =>
   screen.findByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana'));
-export const queryPersistedApplicationsGrafanaSelect = () =>
-  screen.queryByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana'));
-export const getPersistedApplicationsGrafanaSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-grafana'));
 export const queryResultApplicationsMimirSelect = () =>
   screen.queryByTestId(selectors.tree.select('applications-mimir'));
 export const getResultApplicationsMimirSelect = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.select('applications-mimir'));
-export const queryPersistedApplicationsMimirSelect = () =>
-  screen.queryByTestId(selectors.tree.select('applications-mimir'));
 export const getPersistedApplicationsMimirSelect = () =>
   screen.getByTestId(selectors.tree.select('applications-mimir'));
 export const queryResultApplicationsCloudSelect = () =>

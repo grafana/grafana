@@ -38,7 +38,7 @@ const config: KnipConfig = {
     // there are cases where duplicates are necessary e.g. React.lazy expects a default import
     duplicates: 'off',
   },
-  ignore: ['**/*.gen.ts*', '**/*_gen.ts*'],
+  ignore: ['**/*.gen.ts*', '**/*_gen.ts*', 'public/app/features/alerting/unified/search/search.terms.js'],
   ignoreBinaries: ['jq', 'make', 'shellcheck'],
   tags: ['-lintignore'],
   workspaces: {
