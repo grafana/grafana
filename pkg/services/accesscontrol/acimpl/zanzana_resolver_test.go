@@ -699,3 +699,121 @@ func TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups(t *testing.
 		})
 	}
 }
+
+// permScopes returns the scopes the resolver produced for the given action.
+func permScopes(perms []ac.Permission, action string) []string {
+	var out []string
+	for _, p := range perms {
+		if p.Action == action {
+			out = append(out, p.Scope)
+		}
+	}
+	return out
+}
+
+// scopeKind returns the kind segment of a legacy RBAC scope, e.g. "folders" for
+// "folders:uid:abc" and "folders" for "folders:*". "*" has no kind.
+func scopeKind(scope string) string {
+	if scope == "*" {
+		return ""
+	}
+	return strings.SplitN(scope, ":", 2)[0]
+}
+
+// TestListPermissions_ScopeKindFollowsResource checks that, for every supported
+// action, objects are scoped by the resource they belong to (never by the action
+// prefix), so a sub-resource action like "folders.permissions:read" scopes on
+// "folders:uid:<uid>" rather than "folders.permissions:uid:<uid>".
+func TestListPermissions_ScopeKindFollowsResource(t *testing.T) {
+	const (
+		itemUID   = "obj-uid"
+		folderUID = "fold-uid"
+	)
+
+	actions := common.SupportedActions()
+	require.NotEmpty(t, actions)
+
+	for _, entry := range actions {
+		t.Run(entry.Action, func(t *testing.T) {
+			// Cover both code paths: a directly-assigned object and an enclosing folder.
+			resp := &authzv1.ListResponse{
+				Items:   []string{itemUID},
+				Folders: []string{folderUID},
+			}
+			perms, err := zanzanaResolve(resp, entry.Action, "")
+			require.NoError(t, err)
+			require.NotEmpty(t, perms, "action %q produced no permissions", entry.Action)
+
+			scopes := permScopes(perms, entry.Action)
+
+			require.Contains(t, scopes, ac.Scope(entry.Resource, "uid", itemUID),
+				"item must be scoped by the listed resource %q", entry.Resource)
+			require.Contains(t, scopes, ac.Scope("folders", "uid", folderUID),
+				"folder-list entries must be folder-scoped")
+
+			// Every scope kind must be a base resource, never a sub-resource like
+			// "folders.permissions" (which would never match a legacy folders:uid: query).
+			for _, s := range scopes {
+				k := scopeKind(s)
+				require.NotContains(t, k, ".", "scope %q has sub-resource kind %q", s, k)
+			}
+		})
+	}
+}
+
+// TestListPermissions_AllScopeKindFollowsResource asserts the same invariant for
+// org-wide (All=true) grants.
+func TestListPermissions_AllScopeKindFollowsResource(t *testing.T) {
+	for _, entry := range common.SupportedActions() {
+		t.Run(entry.Action, func(t *testing.T) {
+			perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, entry.Action, "")
+			require.NoError(t, err)
+			require.NotEmpty(t, perms, "action %q produced no permissions for All grant", entry.Action)
+
+			scopes := permScopes(perms, entry.Action)
+			require.Contains(t, scopes, ac.Scope(entry.Resource, "*"),
+				"All grant must produce the %q wildcard", entry.Resource)
+
+			for _, s := range scopes {
+				k := scopeKind(s)
+				require.NotContains(t, k, ".",
+					"All-grant scope %q has sub-resource kind %q", s, k)
+			}
+		})
+	}
+}
+
+// TestListPermissions_PermissionManagementActionsScoping pins how *.permissions:*
+// actions translate: scoped by their base resource, and for dashboards either
+// dashboard-scoped (direct grant) or folder-scoped (inherited from the folder).
+func TestListPermissions_PermissionManagementActionsScoping(t *testing.T) {
+	cases := []struct {
+		name       string
+		action     string
+		resp       *authzv1.ListResponse
+		wantScopes []string
+	}{
+		// Folder permission management is always folder-scoped.
+		{"folder perms on a folder", "folders.permissions:read",
+			&authzv1.ListResponse{Items: []string{"fold1"}}, []string{"folders:uid:fold1"}},
+		{"folder perms write on a folder", "folders.permissions:write",
+			&authzv1.ListResponse{Items: []string{"fold1"}}, []string{"folders:uid:fold1"}},
+
+		// Dashboard permission management: direct grant, folder-inherited, or both.
+		{"dashboard perms on a dashboard", "dashboards.permissions:read",
+			&authzv1.ListResponse{Items: []string{"dash1"}}, []string{"dashboards:uid:dash1"}},
+		{"dashboard perms via a folder", "dashboards.permissions:read",
+			&authzv1.ListResponse{Folders: []string{"fold1"}}, []string{"folders:uid:fold1"}},
+		{"dashboard perms on a dashboard and via a folder", "dashboards.permissions:write",
+			&authzv1.ListResponse{Items: []string{"dash1"}, Folders: []string{"fold1"}},
+			[]string{"dashboards:uid:dash1", "folders:uid:fold1"}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			perms, err := zanzanaResolve(tc.resp, tc.action, "")
+			require.NoError(t, err)
+			require.ElementsMatch(t, tc.wantScopes, permScopes(perms, tc.action))
+		})
+	}
+}

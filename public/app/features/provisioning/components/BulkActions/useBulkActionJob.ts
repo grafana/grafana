@@ -25,7 +25,7 @@ export interface MoveJobSpec {
   };
 }
 
-export type BulkJobSpec = DeleteJobSpec | MoveJobSpec;
+type BulkJobSpec = DeleteJobSpec | MoveJobSpec;
 
 interface UseBulkActionJobResult {
   createBulkJob: (

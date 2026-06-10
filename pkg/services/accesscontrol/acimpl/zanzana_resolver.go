@@ -208,20 +208,16 @@ func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedIn
 	return result, nil
 }
 
-func scopeFromAction(action, name string) string {
-	parts := strings.SplitN(action, ":", 2)
-	if parts[0] == "" {
-		return name
-	}
-	return ac.Scope(parts[0], "uid", name)
+// resourceScope scopes an object by the resource type Zanzana listed it under
+// (e.g. "folders:uid:abc"), not by the action prefix, so permission actions like
+// "folders.permissions:read" stay scoped on "folders:uid:<uid>".
+func resourceScope(resource, name string) string {
+	return ac.Scope(resource, "uid", name)
 }
 
-func allScopeFromAction(action string) string {
-	parts := strings.SplitN(action, ":", 2)
-	if parts[0] == "" {
-		return "*"
-	}
-	return ac.Scope(parts[0], "*")
+// resourceWildcardScope is the org-wide scope for the listed resource ("folders:*").
+func resourceWildcardScope(resource string) string {
+	return ac.Scope(resource, "*")
 }
 
 // folderScopeForLegacyRBAC returns a legacy RBAC scope for folder-scoped access (folders:uid:<uid>).
@@ -243,7 +239,7 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 		Group:     group,
 		Verb:      verb,
 		Resource:  resource,
-		Teams: teams,
+		Teams:     teams,
 	}
 
 	resp, err := r.client.List(ctx, req)
@@ -290,7 +286,7 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 			}
 			appendIfMatches(ac.Permission{
 				Action: action,
-				Scope:  allScopeFromAction(action),
+				Scope:  resourceWildcardScope(resource),
 			})
 			// Generic dashboard list grants org-wide dashboard access; legacy RBAC also records
 			// folder wildcard for the same action (see SearchUsersPermissions / Reduce).
@@ -301,16 +297,16 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 		} else {
 			appendIfMatches(ac.Permission{
 				Action: action,
-				Scope:  allScopeFromAction(action),
+				Scope:  resourceWildcardScope(resource),
 			})
 		}
 	}
 
-	// Convert Items to legacy scopes (e.g. dashboards:uid:<name>).
+	// Items are objects of the listed resource type, scoped by that resource.
 	for _, item := range resp.Items {
 		appendIfMatches(ac.Permission{
 			Action: action,
-			Scope:  scopeFromAction(action, item),
+			Scope:  resourceScope(resource, item),
 		})
 	}
 

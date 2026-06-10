@@ -86,7 +86,7 @@ export enum AlertmanagerAdminAction {
 }
 
 /** Union of all alertmanager entity action enums. */
-export type AlertmanagerAction =
+type AlertmanagerAction =
   | ContactPointAction
   | NotificationTemplateAction
   | NotificationPolicyAction
@@ -113,7 +113,7 @@ export enum EnrichmentAction {
   Write = 'write-enrichment',
 }
 
-export type Action =
+type Action =
   | AlertmanagerAction
   | ExternalAlertmanagerAction
   | RuleAction

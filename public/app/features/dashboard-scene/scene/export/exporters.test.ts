@@ -28,7 +28,13 @@ import { createConstantVariableAdapter } from '../../../variables/constant/adapt
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 
-import { makeExportableV1, makeExportableV2, type LibraryElementExport, ExportLabel } from './exporters';
+import {
+  makeExportableV1,
+  makeExportableV2,
+  type LibraryElementExport,
+  ExportLabel,
+  ExportDatasourceName,
+} from './exporters';
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -761,6 +767,35 @@ describe('dashboard exporter v2', () => {
     expect(annotationQuery.spec.query.labels?.[ExportLabel]).toBe('prometheus-4');
   });
 
+  it('should assign the original datasource name as an export label during export', async () => {
+    const { dashboard } = await setup();
+
+    const panel = dashboard.elements['panel-1'];
+    if (panel.kind !== 'Panel') {
+      throw new Error('Panel should be a Panel');
+    }
+    const panelQuery = panel.spec.data.spec.queries[0];
+    expect(panelQuery.spec.query.labels?.[ExportDatasourceName]).toBe('Production Prometheus');
+
+    const queryVariable = dashboard.variables.find(
+      (variable) => variable.kind === 'QueryVariable'
+    ) as QueryVariableKind;
+    expect(queryVariable.spec.query.labels?.[ExportDatasourceName]).toBe('Production Prometheus');
+
+    const groupByVariable = dashboard.variables.find(
+      (variable) => variable.kind === 'GroupByVariable'
+    ) as GroupByVariableKind;
+    expect(groupByVariable.labels?.[ExportDatasourceName]).toBe('Staging Prometheus');
+
+    const adhocVariable = dashboard.variables.find(
+      (variable) => variable.kind === 'AdhocVariable'
+    ) as AdhocVariableKind;
+    expect(adhocVariable.labels?.[ExportDatasourceName]).toBe('Dev Prometheus');
+
+    const annotationQuery = dashboard.annotations[0];
+    expect(annotationQuery.spec.query.labels?.[ExportDatasourceName]).toBe('Annotations Prometheus');
+  });
+
   it('should not remove datasource ref from panel that uses a datasource variable', async () => {
     const { dashboard } = await setup();
     const panel = dashboard.elements['panel-using-datasource-var'];
@@ -929,4 +964,26 @@ stubs['grafana'] = {
     name: 'grafana',
     builtIn: true,
   },
+} as DataSourceInstanceSettings;
+
+// Stubs used by v2 schema fixtures — each datasource UID maps to a distinct display name
+// so we can assert that the original name is preserved through export.
+stubs['datasource1'] = {
+  name: 'Production Prometheus',
+  meta: { id: 'prometheus', info: { version: '1.2.1' }, name: 'Prometheus' },
+} as DataSourceInstanceSettings;
+
+stubs['datasource2'] = {
+  name: 'Staging Prometheus',
+  meta: { id: 'prometheus', info: { version: '1.2.1' }, name: 'Prometheus' },
+} as DataSourceInstanceSettings;
+
+stubs['datasource3'] = {
+  name: 'Dev Prometheus',
+  meta: { id: 'prometheus', info: { version: '1.2.1' }, name: 'Prometheus' },
+} as DataSourceInstanceSettings;
+
+stubs['uid'] = {
+  name: 'Annotations Prometheus',
+  meta: { id: 'grafana-testdata-datasource', info: { version: '1.2.1' }, name: 'TestData' },
 } as DataSourceInstanceSettings;

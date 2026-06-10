@@ -8,6 +8,7 @@ import { buildNotificationButton } from 'app/core/components/AppNotifications/No
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isRootFolderUID } from 'app/features/search/constants';
 import { useDispatch } from 'app/types/store';
 
@@ -90,13 +91,16 @@ export function RecentlyDeletedActions() {
     setIsBulkRestoreLoading(true);
 
     const promises = selectedDashboards.map(async (uid) => {
-      const deletedDashboards = await deletedDashboardsCache.getAsResourceList();
-      const dashboard = deletedDashboards?.items.find((d) => d.metadata.name === uid);
-      if (!dashboard) {
+      const table = await deletedDashboardsCache.getAsTable();
+      const row = table.rows.find((r) => r.object.metadata.name === uid);
+      if (!row) {
         console.warn(`Dashboard ${uid} not found in deleted items`);
         return { uid, error: 'not_found' };
       }
-      // Clone the dashboard to be able to edit the immutable data from the store
+
+      const api = await getDashboardAPI();
+      const dashboard = await api.getDashboard(uid, { resourceVersion: row.object.metadata.resourceVersion });
+
       const copy = structuredClone(dashboard);
       copy.metadata = {
         ...copy.metadata,
@@ -144,7 +148,7 @@ export function RecentlyDeletedActions() {
     dispatch(clearFolders(Array.from(parentUIDs)));
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
 
-    deletedDashboardsCache.clear();
+    deletedDashboardsCache.removeItems(successful);
     await stateManager.doSearch();
 
     const notificationData = getRestoreNotificationData(successful, failed, restoreTarget);
