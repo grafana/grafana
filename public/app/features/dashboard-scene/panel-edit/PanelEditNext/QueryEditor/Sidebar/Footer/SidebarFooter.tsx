@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { FOOTER_HEIGHT, QueryEditorType } from '../../../constants';
-import { trackSelectButtonClick } from '../../../tracking';
+import { trackMultiSelectToggle } from '../../../tracking';
 import {
   useAlertingContext,
   usePanelContext,
@@ -53,7 +53,7 @@ export function SidebarFooter() {
 
   const handleSelectClick = () => {
     setMultiSelectMode(true);
-    trackSelectButtonClick();
+    trackMultiSelectToggle('enter');
   };
 
   return (
