@@ -11,8 +11,10 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
 
 // capturingZanzanaClient records every ListRequest it receives so tests can
@@ -65,7 +67,7 @@ func zanzanaResolve(resp *authzv1.ListResponse, action, scope string) ([]ac.Perm
 	}
 	fake := &fakeZanzanaClient{listResp: resp}
 	r := &ZanzanaPermissionResolver{client: fake}
-	return r.listPermissions(context.Background(), "org:1", "user:parity", group, resource, verb, action, scope)
+	return r.listPermissions(context.Background(), "org:1", "user:parity", nil, group, resource, verb, action, scope)
 }
 
 func TestSearchPermissionsForIdentity_NoActionOrPrefix_ListsAllSupportedActions(t *testing.T) {
@@ -138,6 +140,7 @@ func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
 		context.Background(),
 		"org:1",
 		"user:1",
+		nil,
 		group,
 		resource,
 		verb,
@@ -166,6 +169,7 @@ func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
 			context.Background(),
 			"org:1",
 			"user:1",
+			nil,
 			group,
 			resource,
 			verb,
@@ -192,6 +196,7 @@ func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
 			context.Background(),
 			"org:1",
 			"user:1",
+			nil,
 			group,
 			resource,
 			verb,
@@ -224,6 +229,7 @@ func TestListPermissions_ScopeFilter_WildcardScopeQuery(t *testing.T) {
 			context.Background(),
 			"org:1",
 			"user:1",
+			nil,
 			group,
 			resource,
 			verb,
@@ -244,6 +250,7 @@ func TestListPermissions_ScopeFilter_WildcardScopeQuery(t *testing.T) {
 			context.Background(),
 			"org:1",
 			"user:1",
+			nil,
 			group,
 			resource,
 			verb,
@@ -647,6 +654,48 @@ func TestLegacyZanzanaParity(t *testing.T) {
 			sortPermissions(legacy)
 			sortPermissions(zanzana)
 			require.Equal(t, legacy, zanzana)
+		})
+	}
+}
+
+// TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups verifies the merge
+// resolver sends the signed-in user's team memberships as List `Teams`, so team-based
+// grants (resolved via contextual team:<name>#member tuples) surface in the merged
+// permissions. It mirrors the id token groups claim: external (proxy/IdP) groups when
+// id_use_external_groups_for_groups_claim is set, otherwise stored team memberships.
+func TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups(t *testing.T) {
+	newReq := func(stored, external []string) identity.Requester {
+		return &identity.StaticRequester{
+			Type:           claims.TypeUser,
+			UserID:         1,
+			UserUID:        "u1",
+			OrgID:          1,
+			Groups:         stored,
+			ExternalGroups: external,
+		}
+	}
+
+	cases := []struct {
+		name              string
+		useExternalGroups bool
+		wantTeams         []string
+	}{
+		{"external groups when configured", true, []string{"team_a", "everyone"}},
+		{"stored team memberships otherwise", false, []string{"stored-team"}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cap := &capturingZanzanaClient{}
+			cap.listResp = &authzv1.ListResponse{}
+			r := NewZanzanaPermissionResolver(cap, &usertest.FakeUserService{}, tc.useExternalGroups)
+
+			_, err := r.ResolveCurrentUserPermissions(context.Background(), newReq([]string{"stored-team"}, []string{"team_a", "everyone"}))
+			require.NoError(t, err)
+			require.NotEmpty(t, cap.listCalls, "expected the resolver to issue List requests")
+			for _, c := range cap.listCalls {
+				require.Equal(t, tc.wantTeams, c.Teams, "every List request must carry the user's teams")
+			}
 		})
 	}
 }

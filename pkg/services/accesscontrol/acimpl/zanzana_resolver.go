@@ -25,20 +25,38 @@ var logger = log.New("accesscontrol.zanzana_resolver")
 type ZanzanaPermissionResolver struct {
 	client  zanzana.Client
 	userSvc user.Service
+	// useExternalGroups mirrors cfg.IDUseExternalGroupsForGroupsClaim: it selects which
+	// team memberships are sent as Zanzana contextual tuples for the current user, so the
+	// merged permissions match what the forward Check path (which uses the groups claim)
+	// enforces.
+	useExternalGroups bool
 }
 
-func NewZanzanaPermissionResolver(client zanzana.Client, userSvc user.Service) *ZanzanaPermissionResolver {
+func NewZanzanaPermissionResolver(client zanzana.Client, userSvc user.Service, useExternalGroups bool) *ZanzanaPermissionResolver {
 	return &ZanzanaPermissionResolver{
-		client:  client,
-		userSvc: userSvc,
+		client:            client,
+		userSvc:           userSvc,
+		useExternalGroups: useExternalGroups,
 	}
+}
+
+// teamsForCurrentUser returns the team memberships to send as Zanzana contextual tuples
+// for the signed-in user, mirroring the id token groups claim (resolveGroupsClaim):
+// proxy/IdP-supplied external groups when id_use_external_groups_for_groups_claim is set,
+// otherwise the user's stored team memberships. Without this, team-based grants are not
+// reflected in the merged legacy permissions.
+func (r *ZanzanaPermissionResolver) teamsForCurrentUser(usr identity.Requester) []string {
+	if r.useExternalGroups {
+		return usr.GetExternalGroups()
+	}
+	return usr.GetGroups()
 }
 
 // ResolveCurrentUserPermissions lists Zanzana-supported permissions for the signed-in identity.
 func (r *ZanzanaPermissionResolver) ResolveCurrentUserPermissions(ctx context.Context, usr identity.Requester) ([]ac.Permission, error) {
 	subject := usr.GetUID()
 	namespace := claims.OrgNamespaceFormatter(usr.GetOrgID())
-	return r.listAllWithPrefix(ctx, namespace, subject, "", "")
+	return r.listAllWithPrefix(ctx, namespace, subject, r.teamsForCurrentUser(usr), "", "")
 }
 
 // searchUsersPermissions searches for users' permissions using Zanzana
@@ -81,20 +99,22 @@ func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Con
 	if options.Action != "" {
 		group, resource, verb := common.TranslateActionToListParams(options.Action)
 		if group != "" && resource != "" {
-			perms, err := r.listPermissions(ctx, namespace, subject, group, resource, verb, options.Action, options.Scope)
+			// Per-user search resolves another identity's permissions; their request-time
+			// contextual team membership isn't available here, so no teams are passed.
+			perms, err := r.listPermissions(ctx, namespace, subject, nil, group, resource, verb, options.Action, options.Scope)
 			if err != nil {
 				return nil, err
 			}
 			permissions = append(permissions, perms...)
 		}
 	} else if options.ActionPrefix != "" {
-		permissions, err = r.listAllWithPrefix(ctx, namespace, subject, options.ActionPrefix, options.Scope)
+		permissions, err = r.listAllWithPrefix(ctx, namespace, subject, nil, options.ActionPrefix, options.Scope)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		// Neither action nor prefix specified (namespacedId-only query): list every supported action.
-		permissions, err = r.listAllWithPrefix(ctx, namespace, subject, "", options.Scope)
+		permissions, err = r.listAllWithPrefix(ctx, namespace, subject, nil, "", options.Scope)
 		if err != nil {
 			return nil, err
 		}
@@ -216,13 +236,16 @@ func isDashboardRBACAction(action string) bool {
 }
 
 // listPermissions lists permissions for a subject on a given group/resource
-func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject, group, resource, verb, action, scope string) ([]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject string, teams []string, group, resource, verb, action, scope string) ([]ac.Permission, error) {
 	req := &authzv1.ListRequest{
 		Namespace: namespace,
 		Subject:   subject,
 		Group:     group,
 		Verb:      verb,
 		Resource:  resource,
+		// Teams become contextual team-membership tuples server-side (team:<name>#member),
+		// so team-based grants surface in the merged permissions.
+		Teams: teams,
 	}
 
 	resp, err := r.client.List(ctx, req)
@@ -305,11 +328,11 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 	return permissions, nil
 }
 
-func (r *ZanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, namespace, subject, prefix, scope string) ([]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, namespace, subject string, teams []string, prefix, scope string) ([]ac.Permission, error) {
 	var permissions []ac.Permission
 	for _, entry := range common.SupportedActions() {
 		if strings.HasPrefix(entry.Action, prefix) {
-			perms, err := r.listPermissions(ctx, namespace, subject, entry.Group, entry.Resource, entry.Verb, entry.Action, scope)
+			perms, err := r.listPermissions(ctx, namespace, subject, teams, entry.Group, entry.Resource, entry.Verb, entry.Action, scope)
 			if err != nil {
 				return nil, err
 			}
