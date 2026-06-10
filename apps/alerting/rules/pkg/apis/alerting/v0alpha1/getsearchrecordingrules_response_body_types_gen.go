@@ -3,25 +3,29 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
-type GetSearchRecordingRulesRuleHit struct {
-	Type           GetSearchRecordingRulesRuleSearchType `json:"type"`
-	Name           string                                `json:"name"`
-	Title          string                                `json:"title"`
-	Folder         string                                `json:"folder"`
-	Group          *string                               `json:"group,omitempty"`
-	Paused         *bool                                 `json:"paused,omitempty"`
-	Labels         map[string]string                     `json:"labels,omitempty"`
-	DatasourceUIDs []string                              `json:"datasourceUIDs,omitempty"`
+type GetSearchRecordingRulesRecordingRuleHit struct {
+	Type                GetSearchRecordingRulesRuleSearchType `json:"type"`
+	Metric              *string                               `json:"metric,omitempty"`
+	Name                string                                `json:"name"`
+	Title               string                                `json:"title"`
+	Folder              string                                `json:"folder"`
+	Group               *string                               `json:"group,omitempty"`
+	Paused              *bool                                 `json:"paused,omitempty"`
+	Labels              map[string]string                     `json:"labels,omitempty"`
+	TargetDatasourceUID *string                               `json:"targetDatasourceUID,omitempty"`
+	DatasourceUIDs      []string                              `json:"datasourceUIDs,omitempty"`
 }
 
-// NewGetSearchRecordingRulesRuleHit creates a new GetSearchRecordingRulesRuleHit object.
-func NewGetSearchRecordingRulesRuleHit() *GetSearchRecordingRulesRuleHit {
-	return &GetSearchRecordingRulesRuleHit{}
+// NewGetSearchRecordingRulesRecordingRuleHit creates a new GetSearchRecordingRulesRecordingRuleHit object.
+func NewGetSearchRecordingRulesRecordingRuleHit() *GetSearchRecordingRulesRecordingRuleHit {
+	return &GetSearchRecordingRulesRecordingRuleHit{
+		Type: GetSearchRecordingRulesRuleSearchTypeRecordingRule,
+	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for GetSearchRecordingRulesRuleHit.
-func (GetSearchRecordingRulesRuleHit) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRecordingRulesRuleHit"
+// OpenAPIModelName returns the OpenAPI model name for GetSearchRecordingRulesRecordingRuleHit.
+func (GetSearchRecordingRulesRecordingRuleHit) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRecordingRulesRecordingRuleHit"
 }
 
 // +k8s:openapi-gen=true
@@ -39,13 +43,13 @@ func (GetSearchRecordingRulesRuleSearchType) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type GetSearchRecordingRulesBody struct {
-	Items []GetSearchRecordingRulesRuleHit `json:"items"`
+	Items []GetSearchRecordingRulesRecordingRuleHit `json:"items"`
 }
 
 // NewGetSearchRecordingRulesBody creates a new GetSearchRecordingRulesBody object.
 func NewGetSearchRecordingRulesBody() *GetSearchRecordingRulesBody {
 	return &GetSearchRecordingRulesBody{
-		Items: []GetSearchRecordingRulesRuleHit{},
+		Items: []GetSearchRecordingRulesRecordingRuleHit{},
 	}
 }
 

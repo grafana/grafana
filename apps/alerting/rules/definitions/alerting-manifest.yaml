@@ -726,7 +726,7 @@ spec:
                           type: string
                         items:
                           items:
-                            $ref: '#/components/schemas/getSearchAlertRulesRuleHit'
+                            $ref: '#/components/schemas/getSearchAlertRulesAlertRuleHit'
                           type: array
                         kind:
                           description: 'Kind is a string value representing the REST
@@ -824,7 +824,7 @@ spec:
                           type: string
                         items:
                           items:
-                            $ref: '#/components/schemas/getSearchRecordingRulesRuleHit'
+                            $ref: '#/components/schemas/getSearchRecordingRulesRecordingRuleHit'
                           type: array
                         kind:
                           description: 'Kind is a string value representing the REST
@@ -852,9 +852,11 @@ spec:
                       type: object
                 description: Default OK response
       schemas:
-        getSearchAlertRulesRuleHit:
+        getSearchAlertRulesAlertRuleHit:
           additionalProperties: false
           properties:
+            dashboardUID:
+              type: string
             datasourceUIDs:
               items:
                 type: string
@@ -869,8 +871,16 @@ spec:
               type: object
             name:
               type: string
+            notificationType:
+              type: string
+            panelID:
+              type: integer
             paused:
               type: boolean
+            receiver:
+              type: string
+            routingTree:
+              type: string
             title:
               type: string
             type:
@@ -886,7 +896,7 @@ spec:
           - alertrule
           - recordingrule
           type: string
-        getSearchRecordingRulesRuleHit:
+        getSearchRecordingRulesRecordingRuleHit:
           additionalProperties: false
           properties:
             datasourceUIDs:
@@ -901,10 +911,14 @@ spec:
               additionalProperties:
                 type: string
               type: object
+            metric:
+              type: string
             name:
               type: string
             paused:
               type: boolean
+            targetDatasourceUID:
+              type: string
             title:
               type: string
             type:
@@ -920,9 +934,11 @@ spec:
           - alertrule
           - recordingrule
           type: string
-        getSearchRulesRuleHit:
+        getSearchRulesAlertRuleHit:
           additionalProperties: false
           properties:
+            dashboardUID:
+              type: string
             datasourceUIDs:
               items:
                 type: string
@@ -937,8 +953,16 @@ spec:
               type: object
             name:
               type: string
+            notificationType:
+              type: string
+            panelID:
+              type: integer
             paused:
               type: boolean
+            receiver:
+              type: string
+            routingTree:
+              type: string
             title:
               type: string
             type:
@@ -949,6 +973,44 @@ spec:
           - title
           - folder
           type: object
+        getSearchRulesRecordingRuleHit:
+          additionalProperties: false
+          properties:
+            datasourceUIDs:
+              items:
+                type: string
+              type: array
+            folder:
+              type: string
+            group:
+              type: string
+            labels:
+              additionalProperties:
+                type: string
+              type: object
+            metric:
+              type: string
+            name:
+              type: string
+            paused:
+              type: boolean
+            targetDatasourceUID:
+              type: string
+            title:
+              type: string
+            type:
+              $ref: '#/components/schemas/getSearchRulesRuleSearchType'
+          required:
+          - type
+          - name
+          - title
+          - folder
+          type: object
+        getSearchRulesRuleHit:
+          description: RuleHit is the cross-kind union returned by /search.
+          oneOf:
+          - $ref: '#/components/schemas/AlertRuleHit'
+          - $ref: '#/components/schemas/RecordingRuleHit'
         getSearchRulesRuleSearchType:
           enum:
           - alertrule

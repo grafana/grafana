@@ -3,25 +3,32 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
-type GetSearchAlertRulesRuleHit struct {
-	Type           GetSearchAlertRulesRuleSearchType `json:"type"`
-	Name           string                            `json:"name"`
-	Title          string                            `json:"title"`
-	Folder         string                            `json:"folder"`
-	Group          *string                           `json:"group,omitempty"`
-	Paused         *bool                             `json:"paused,omitempty"`
-	Labels         map[string]string                 `json:"labels,omitempty"`
-	DatasourceUIDs []string                          `json:"datasourceUIDs,omitempty"`
+type GetSearchAlertRulesAlertRuleHit struct {
+	Type             GetSearchAlertRulesRuleSearchType `json:"type"`
+	DashboardUID     *string                           `json:"dashboardUID,omitempty"`
+	PanelID          *int64                            `json:"panelID,omitempty"`
+	Receiver         *string                           `json:"receiver,omitempty"`
+	NotificationType *string                           `json:"notificationType,omitempty"`
+	Name             string                            `json:"name"`
+	Title            string                            `json:"title"`
+	Folder           string                            `json:"folder"`
+	Group            *string                           `json:"group,omitempty"`
+	Paused           *bool                             `json:"paused,omitempty"`
+	Labels           map[string]string                 `json:"labels,omitempty"`
+	RoutingTree      *string                           `json:"routingTree,omitempty"`
+	DatasourceUIDs   []string                          `json:"datasourceUIDs,omitempty"`
 }
 
-// NewGetSearchAlertRulesRuleHit creates a new GetSearchAlertRulesRuleHit object.
-func NewGetSearchAlertRulesRuleHit() *GetSearchAlertRulesRuleHit {
-	return &GetSearchAlertRulesRuleHit{}
+// NewGetSearchAlertRulesAlertRuleHit creates a new GetSearchAlertRulesAlertRuleHit object.
+func NewGetSearchAlertRulesAlertRuleHit() *GetSearchAlertRulesAlertRuleHit {
+	return &GetSearchAlertRulesAlertRuleHit{
+		Type: GetSearchAlertRulesRuleSearchTypeAlertRule,
+	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for GetSearchAlertRulesRuleHit.
-func (GetSearchAlertRulesRuleHit) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchAlertRulesRuleHit"
+// OpenAPIModelName returns the OpenAPI model name for GetSearchAlertRulesAlertRuleHit.
+func (GetSearchAlertRulesAlertRuleHit) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchAlertRulesAlertRuleHit"
 }
 
 // +k8s:openapi-gen=true
@@ -39,13 +46,13 @@ func (GetSearchAlertRulesRuleSearchType) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type GetSearchAlertRulesBody struct {
-	Items []GetSearchAlertRulesRuleHit `json:"items"`
+	Items []GetSearchAlertRulesAlertRuleHit `json:"items"`
 }
 
 // NewGetSearchAlertRulesBody creates a new GetSearchAlertRulesBody object.
 func NewGetSearchAlertRulesBody() *GetSearchAlertRulesBody {
 	return &GetSearchAlertRulesBody{
-		Items: []GetSearchAlertRulesRuleHit{},
+		Items: []GetSearchAlertRulesAlertRuleHit{},
 	}
 }
 

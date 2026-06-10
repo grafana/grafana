@@ -4,8 +4,7 @@ package v0alpha1
 
 #RuleSearchType: "alertrule" | "recordingrule" @cog(kind="enum",memberNames="AlertRule|RecordingRule")
 
-#RuleHit: {
-	type:    #RuleSearchType
+_ruleHitBase: {
 	name:    string
 	title:   string
 	folder:  string
@@ -14,3 +13,23 @@ package v0alpha1
 	labels?: [string]: string
 	datasourceUIDs?: [...string]
 }
+
+#AlertRuleHit: {
+	_ruleHitBase
+	type:              #RuleSearchType & "alertrule"
+	dashboardUID?:     string
+	panelID?:          int64
+	receiver?:         string
+	notificationType?: string
+	routingTree?:      string
+}
+
+#RecordingRuleHit: {
+	_ruleHitBase
+	type:                 #RuleSearchType & "recordingrule"
+	metric?:              string
+	targetDatasourceUID?: string
+}
+
+// RuleHit is the cross-kind union returned by /search.
+#RuleHit: #AlertRuleHit | #RecordingRuleHit

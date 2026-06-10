@@ -2,26 +2,46 @@
 
 package v0alpha1
 
+import (
+	json "encoding/json"
+)
+
+// RuleHit is the cross-kind union returned by /search.
 // +k8s:openapi-gen=true
-type GetSearchRulesRuleHit struct {
-	Type           GetSearchRulesRuleSearchType `json:"type"`
-	Name           string                       `json:"name"`
-	Title          string                       `json:"title"`
-	Folder         string                       `json:"folder"`
-	Group          *string                      `json:"group,omitempty"`
-	Paused         *bool                        `json:"paused,omitempty"`
-	Labels         map[string]string            `json:"labels,omitempty"`
-	DatasourceUIDs []string                     `json:"datasourceUIDs,omitempty"`
-}
+type GetSearchRulesRuleHit = GetSearchRulesAlertRuleHitOrRecordingRuleHit
 
 // NewGetSearchRulesRuleHit creates a new GetSearchRulesRuleHit object.
 func NewGetSearchRulesRuleHit() *GetSearchRulesRuleHit {
-	return &GetSearchRulesRuleHit{}
+	return NewGetSearchRulesAlertRuleHitOrRecordingRuleHit()
 }
 
-// OpenAPIModelName returns the OpenAPI model name for GetSearchRulesRuleHit.
-func (GetSearchRulesRuleHit) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRulesRuleHit"
+// +k8s:openapi-gen=true
+type GetSearchRulesAlertRuleHit struct {
+	Type             GetSearchRulesRuleSearchType `json:"type"`
+	DashboardUID     *string                      `json:"dashboardUID,omitempty"`
+	PanelID          *int64                       `json:"panelID,omitempty"`
+	Receiver         *string                      `json:"receiver,omitempty"`
+	NotificationType *string                      `json:"notificationType,omitempty"`
+	Name             string                       `json:"name"`
+	Title            string                       `json:"title"`
+	Folder           string                       `json:"folder"`
+	Group            *string                      `json:"group,omitempty"`
+	Paused           *bool                        `json:"paused,omitempty"`
+	Labels           map[string]string            `json:"labels,omitempty"`
+	RoutingTree      *string                      `json:"routingTree,omitempty"`
+	DatasourceUIDs   []string                     `json:"datasourceUIDs,omitempty"`
+}
+
+// NewGetSearchRulesAlertRuleHit creates a new GetSearchRulesAlertRuleHit object.
+func NewGetSearchRulesAlertRuleHit() *GetSearchRulesAlertRuleHit {
+	return &GetSearchRulesAlertRuleHit{
+		Type: GetSearchRulesRuleSearchTypeAlertRule,
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for GetSearchRulesAlertRuleHit.
+func (GetSearchRulesAlertRuleHit) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRulesAlertRuleHit"
 }
 
 // +k8s:openapi-gen=true
@@ -35,6 +55,32 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for GetSearchRulesRuleSearchType.
 func (GetSearchRulesRuleSearchType) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRulesRuleSearchType"
+}
+
+// +k8s:openapi-gen=true
+type GetSearchRulesRecordingRuleHit struct {
+	Type                GetSearchRulesRuleSearchType `json:"type"`
+	Metric              *string                      `json:"metric,omitempty"`
+	Name                string                       `json:"name"`
+	Title               string                       `json:"title"`
+	Folder              string                       `json:"folder"`
+	Group               *string                      `json:"group,omitempty"`
+	Paused              *bool                        `json:"paused,omitempty"`
+	Labels              map[string]string            `json:"labels,omitempty"`
+	TargetDatasourceUID *string                      `json:"targetDatasourceUID,omitempty"`
+	DatasourceUIDs      []string                     `json:"datasourceUIDs,omitempty"`
+}
+
+// NewGetSearchRulesRecordingRuleHit creates a new GetSearchRulesRecordingRuleHit object.
+func NewGetSearchRulesRecordingRuleHit() *GetSearchRulesRecordingRuleHit {
+	return &GetSearchRulesRecordingRuleHit{
+		Type: GetSearchRulesRuleSearchTypeRecordingRule,
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for GetSearchRulesRecordingRuleHit.
+func (GetSearchRulesRecordingRuleHit) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRulesRecordingRuleHit"
 }
 
 // +k8s:openapi-gen=true
@@ -52,4 +98,71 @@ func NewGetSearchRulesBody() *GetSearchRulesBody {
 // OpenAPIModelName returns the OpenAPI model name for GetSearchRulesBody.
 func (GetSearchRulesBody) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRulesBody"
+}
+
+// +k8s:openapi-gen=true
+type GetSearchRulesAlertRuleHitOrRecordingRuleHit struct {
+	AlertRuleHit     *GetSearchRulesAlertRuleHit     `json:"AlertRuleHit,omitempty"`
+	RecordingRuleHit *GetSearchRulesRecordingRuleHit `json:"RecordingRuleHit,omitempty"`
+}
+
+// NewGetSearchRulesAlertRuleHitOrRecordingRuleHit creates a new GetSearchRulesAlertRuleHitOrRecordingRuleHit object.
+func NewGetSearchRulesAlertRuleHitOrRecordingRuleHit() *GetSearchRulesAlertRuleHitOrRecordingRuleHit {
+	return &GetSearchRulesAlertRuleHitOrRecordingRuleHit{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `GetSearchRulesAlertRuleHitOrRecordingRuleHit` as JSON.
+func (resource GetSearchRulesAlertRuleHitOrRecordingRuleHit) MarshalJSON() ([]byte, error) {
+	if resource.AlertRuleHit != nil {
+		return json.Marshal(resource.AlertRuleHit)
+	}
+	if resource.RecordingRuleHit != nil {
+		return json.Marshal(resource.RecordingRuleHit)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `GetSearchRulesAlertRuleHitOrRecordingRuleHit` from JSON.
+func (resource *GetSearchRulesAlertRuleHitOrRecordingRuleHit) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]interface{})
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["type"]
+	if !found {
+		return nil
+	}
+
+	switch discriminator {
+	case "alertrule":
+		var getSearchRulesAlertRuleHit GetSearchRulesAlertRuleHit
+		if err := json.Unmarshal(raw, &getSearchRulesAlertRuleHit); err != nil {
+			return err
+		}
+
+		resource.AlertRuleHit = &getSearchRulesAlertRuleHit
+		return nil
+	case "recordingrule":
+		var getSearchRulesRecordingRuleHit GetSearchRulesRecordingRuleHit
+		if err := json.Unmarshal(raw, &getSearchRulesRecordingRuleHit); err != nil {
+			return err
+		}
+
+		resource.RecordingRuleHit = &getSearchRulesRecordingRuleHit
+		return nil
+	}
+
+	return nil
+}
+
+// OpenAPIModelName returns the OpenAPI model name for GetSearchRulesAlertRuleHitOrRecordingRuleHit.
+func (GetSearchRulesAlertRuleHitOrRecordingRuleHit) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRulesAlertRuleHitOrRecordingRuleHit"
 }

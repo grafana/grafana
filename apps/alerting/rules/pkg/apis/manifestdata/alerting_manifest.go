@@ -675,7 +675,7 @@ var appManifestData = app.ManifestData{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
 
-																							Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesRuleHit"),
+																							Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesAlertRuleHit"),
 																						}},
 																				},
 																			},
@@ -925,7 +925,7 @@ var appManifestData = app.ManifestData{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
 
-																							Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesRuleHit"),
+																							Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesRecordingRuleHit"),
 																						}},
 																				},
 																			},
@@ -987,10 +987,15 @@ var appManifestData = app.ManifestData{
 				},
 				Cluster: map[string]spec3.PathProps{},
 				Schemas: map[string]spec.Schema{
-					"getSearchAlertRulesRuleHit": {
+					"getSearchAlertRulesAlertRuleHit": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
+								"dashboardUID": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
 								"datasourceUIDs": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"array"},
@@ -1029,9 +1034,29 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
+								"notificationType": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"panelID": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
 								"paused": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"boolean"},
+									},
+								},
+								"receiver": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"routingTree": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
 									},
 								},
 								"title": {
@@ -1063,7 +1088,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getSearchRecordingRulesRuleHit": {
+					"getSearchRecordingRulesRecordingRuleHit": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -1100,6 +1125,11 @@ var appManifestData = app.ManifestData{
 										},
 									},
 								},
+								"metric": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
 								"name": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
@@ -1108,6 +1138,11 @@ var appManifestData = app.ManifestData{
 								"paused": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"boolean"},
+									},
+								},
+								"targetDatasourceUID": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
 									},
 								},
 								"title": {
@@ -1139,10 +1174,15 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getSearchRulesRuleHit": {
+					"getSearchRulesAlertRuleHit": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
+								"dashboardUID": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
 								"datasourceUIDs": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"array"},
@@ -1181,9 +1221,29 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
+								"notificationType": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"panelID": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
 								"paused": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"boolean"},
+									},
+								},
+								"receiver": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"routingTree": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
 									},
 								},
 								"title": {
@@ -1204,6 +1264,89 @@ var appManifestData = app.ManifestData{
 								"title",
 								"folder",
 							},
+						},
+					},
+					"getSearchRulesRecordingRuleHit": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"datasourceUIDs": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+								"folder": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"group": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"labels": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"metric": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"name": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"paused": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"targetDatasourceUID": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"title": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"type": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesRuleSearchType"),
+									},
+								},
+							},
+							Required: []string{
+								"type",
+								"name",
+								"title",
+								"folder",
+							},
+						},
+					},
+					"getSearchRulesRuleHit": {
+						SchemaProps: spec.SchemaProps{
+
+							Description: "RuleHit is the cross-kind union returned by /search.",
 						},
 					},
 					"getSearchRulesRuleSearchType": {
