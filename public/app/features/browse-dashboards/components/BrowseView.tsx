@@ -152,7 +152,7 @@ export function BrowseView({
   );
 
   const provisioningReadmesEnabled = useBooleanFlagValue('provisioning.readmes', false);
-  const showReadme = provisioningReadmesEnabled && isProvisionedFolder && !!folderUID;
+  const showReadme = provisioningReadmesEnabled && isProvisionedFolder && folderUID;
   const styles = useStyles2(getStyles);
 
   const flatTreeWithReadme = useMemo(() => {
@@ -224,7 +224,7 @@ export function BrowseView({
             }
           />
         )}
-        {showReadme && folderUID && <FolderReadmePanel folderUID={folderUID} />}
+        {showReadme && <FolderReadmePanel folderUID={folderUID} />}
       </div>
     );
   }
