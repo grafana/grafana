@@ -187,6 +187,25 @@ describe('browse-dashboards BrowseView', () => {
       });
     }
 
+    function mockReadmeMissing() {
+      jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
+        repository: {
+          name: 'r',
+          target: 'folder',
+          title: 'r',
+          type: 'github',
+          url: 'https://github.com/o/r',
+          branch: 'main',
+          workflows: [],
+        } as never,
+        folder: undefined,
+        readmePath: 'README.md',
+        status: 'missing',
+        markdownContent: undefined,
+        refetch: jest.fn(),
+      });
+    }
+
     afterEach(() => {
       act(() => {
         setTestFlags({});
@@ -257,7 +276,7 @@ describe('browse-dashboards BrowseView', () => {
       expect(screen.queryByText('README.md')).not.toBeInTheDocument();
     });
 
-    it('does not append the README row for empty folders', async () => {
+    it('appends the README panel for empty provisioned folders', async () => {
       setTestFlags({ 'provisioning.readmes': true });
       mockReadme();
 
@@ -272,7 +291,25 @@ describe('browse-dashboards BrowseView', () => {
       );
 
       expect(await screen.findByText('Create dashboard')).toBeInTheDocument();
-      expect(screen.queryByText('README.md')).not.toBeInTheDocument();
+      expect(await screen.findByText('README.md')).toBeInTheDocument();
+    });
+
+    it('shows the Add README CTA for empty provisioned folders without a README', async () => {
+      setTestFlags({ 'provisioning.readmes': true });
+      mockReadmeMissing();
+
+      render(
+        <BrowseView
+          permissions={mockPermissions}
+          folderUID={folderB_empty.item.uid}
+          isProvisionedFolder
+          width={WIDTH}
+          height={HEIGHT}
+        />
+      );
+
+      expect(await screen.findByText('Create dashboard')).toBeInTheDocument();
+      expect(await screen.findByRole('link', { name: /Add README/i })).toBeInTheDocument();
     });
   });
 });
