@@ -55,9 +55,8 @@ func ProvideAuthZClient(
 	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
 ) (client authlib.AccessClient, err error) {
-	// Option 2 (authz-boundary): decorate the returned client so the forward Check
-	// derives contextual team membership from external groups under the flag. No-op
-	// when the flag is off. Wrapping here covers every return path below.
+	// Decorate so the forward Check sources team membership from external groups under
+	// id_use_external_groups_for_groups_claim. No-op when off; covers every return path.
 	defer func() {
 		if err == nil && client != nil {
 			client = newExternalGroupsAccessClient(cfg, client)

@@ -9,17 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// newExternalGroupsAccessClient decorates an AccessClient so that, when
-// id_use_external_groups_for_groups_claim is set, the contextual team-membership
-// tuples the forward authz path derives from AuthInfo.GetGroups() come from the
-// IdP/proxy-supplied external groups (external group names match team UIDs) instead
-// of Grafana-stored team memberships.
-//
-// This is the authz-boundary alternative to setting Identity.Groups during authn:
-// it confines the flag handling to the forward Check/Compile/BatchCheck path without
-// changing the identity seen by the rest of the system. When the flag is off it is a
-// no-op and returns the inner client unchanged (preserving any wider interface it
-// implements, e.g. zanzana.Client).
+// newExternalGroupsAccessClient decorates an AccessClient so that, under
+// id_use_external_groups_for_groups_claim, the forward authz path sources its contextual
+// team membership from the identity's external groups instead of stored team memberships.
+// No-op (returns inner unchanged) when the flag is off.
 func newExternalGroupsAccessClient(cfg *setting.Cfg, inner authlib.AccessClient) authlib.AccessClient {
 	if cfg == nil || !cfg.IDUseExternalGroupsForGroupsClaim {
 		return inner
@@ -31,8 +24,7 @@ type externalGroupsAccessClient struct {
 	inner authlib.AccessClient
 }
 
-// swap returns an AuthInfo whose GetGroups() yields the identity's external groups,
-// leaving every other AuthInfo method delegated to the original.
+// swap returns an AuthInfo whose GetGroups() yields the external groups.
 func (c *externalGroupsAccessClient) swap(info authlib.AuthInfo) authlib.AuthInfo {
 	r, ok := info.(identity.Requester)
 	if !ok {
@@ -57,8 +49,7 @@ func (c *externalGroupsAccessClient) BatchCheck(ctx context.Context, info authli
 	return c.inner.BatchCheck(ctx, c.swap(info), req)
 }
 
-// externalGroupsAuthInfo overrides GetGroups() to return external groups while
-// delegating all other AuthInfo methods to the embedded value.
+// externalGroupsAuthInfo overrides GetGroups() and delegates the rest.
 type externalGroupsAuthInfo struct {
 	authlib.AuthInfo
 	groups []string
