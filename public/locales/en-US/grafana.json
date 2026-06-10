@@ -12249,7 +12249,8 @@
     },
     "megamenu-item": {
       "collapse-aria-label": "Collapse section: {{sectionName}}",
-      "expand-aria-label": "Expand section: {{sectionName}}"
+      "expand-aria-label": "Expand section: {{sectionName}}",
+      "loading-aria-label": "Loading {{sectionName}}"
     },
     "org-switcher": {
       "aria-label": "Change organization"

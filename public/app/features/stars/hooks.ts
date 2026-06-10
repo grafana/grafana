@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   useGetStarsQuery as useLegacyGetStarsQuery,
@@ -121,6 +121,9 @@ const STARRED_NAV_CAP = 50;
  */
 export const useSyncStarredItemsInNav = () => {
   const { data: uids, isLoading } = useStarredItems('dashboard.grafana.app', 'Dashboard');
+  // Initialized from the stars query so a remount with a warm RTK cache doesn't
+  // flash a loading state — the nav tree is already correct from the prior sync
+  const [hasSynced, setHasSynced] = useState(!isLoading);
 
   // Stable identity so the effect doesn't re-fire when the array ref changes but content is identical
   const uidKey = useMemo(() => {
@@ -137,6 +140,7 @@ export const useSyncStarredItemsInNav = () => {
 
     if (uidKey === '') {
       dispatch(setStarredItems({ uids: [], items: [] }));
+      setHasSynced(true);
       return;
     }
 
@@ -155,13 +159,18 @@ export const useSyncStarredItemsInNav = () => {
           items.push({ id: row.uid, title: row.name, url: row.url });
         }
         dispatch(setStarredItems({ uids: names, items }));
+        setHasSynced(true);
       })
       .catch((err) => {
         console.error('Failed to sync starred items to nav', err);
+        // Fall back to the empty message rather than showing a loading state forever
+        setHasSynced(true);
       });
 
     return () => {
       cancelled = true;
     };
   }, [uidKey, isLoading]);
+
+  return { isLoading: isLoading || !hasSynced };
 };

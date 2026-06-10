@@ -22,18 +22,21 @@ setupMockServer();
 
 /** Renders the hook plus a read-only component that reflects Redux starred state */
 const TestHarness = () => {
-  useSyncStarredItemsInNav();
+  const { isLoading } = useSyncStarredItemsInNav();
   const navTree = useSelector((state) => state.navBarTree);
   const starred = navTree.find((item) => item.id === 'starred');
 
   return (
-    <ul data-testid="starred-list">
-      {starred?.children?.map((child) => (
-        <li key={child.id} data-testid={`synced-${child.id}`}>
-          {child.text}
-        </li>
-      ))}
-    </ul>
+    <>
+      <span data-testid="loading-state">{String(isLoading)}</span>
+      <ul data-testid="starred-list">
+        {starred?.children?.map((child) => (
+          <li key={child.id} data-testid={`synced-${child.id}`}>
+            {child.text}
+          </li>
+        ))}
+      </ul>
+    </>
   );
 };
 
@@ -88,6 +91,9 @@ describe('useSyncStarredItemsInNav', () => {
 
       render(<TestHarness />);
 
+      // Loading until the stars query and search round-trip complete
+      expect(screen.getByTestId('loading-state')).toHaveTextContent('true');
+
       await waitFor(() => {
         expect(mockSearcher.search).toHaveBeenCalledWith({
           name: starredDashboards.map((d) => d.uid).sort(),
@@ -101,6 +107,8 @@ describe('useSyncStarredItemsInNav', () => {
           expect(screen.getByTestId(`synced-starred/${dash.uid}`)).toBeInTheDocument();
         });
       }
+
+      expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
     });
 
     it('dispatches empty items when no stars exist', async () => {
@@ -130,6 +138,11 @@ describe('useSyncStarredItemsInNav', () => {
 
       // Search should NOT be called when there are no stars
       expect(mockSearcher.search).not.toHaveBeenCalled();
+
+      // Loading resolves even without a search round-trip
+      await waitFor(() => {
+        expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
+      });
     });
   });
 });
