@@ -16,7 +16,6 @@ import {
   type EventBus,
   type ExploreLogsPanelState,
   type ExplorePanelsState,
-  type FieldConfigSource,
   type GrafanaTheme2,
   LoadingState,
   type LogLevel,
@@ -56,7 +55,7 @@ import { LogLineContext } from 'app/features/logs/components/panel/LogLineContex
 import { LogList, type LogListOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
 import { dedupLogRows, LogLevelColor } from 'app/features/logs/logsModel';
-import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
+import { getLogLevelFromKey, getLogLevelInfo, isMissingTimeField } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
@@ -734,6 +733,61 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [logsVolumeData?.data, logsVolumeEnabled, sortOrderChanged]
   );
 
+  const onTableOptionsChange = useCallback(
+    (options: Options) => {
+      if (options.displayedFields && !shallowCompare(options.displayedFields, displayedFields)) {
+        setDisplayedFields(options.displayedFields);
+      }
+      if (options.sortOrder && options.sortOrder !== logsSortOrder) {
+        onChangeLogsSortOrder(options.sortOrder);
+      }
+      if (options.fieldSelectorWidth !== undefined && options.fieldSelectorWidth !== fieldSelectorWidth) {
+        store.set(LOGS_TABLE_SETTING_KEYS.fieldSelectorWidth, options.fieldSelectorWidth);
+        setFieldSelectorWidth(options.fieldSelectorWidth);
+      }
+      if (
+        options.sortBy &&
+        !compareArrayValues(
+          options?.sortBy ?? [],
+          tableSortBy ?? [],
+          (a, b) => a.displayName === b.displayName && a.desc === b.desc
+        )
+      ) {
+        handleSetTableSortBy(options.sortBy);
+      }
+
+      if (options.frameIndex !== tableFrameIndex) {
+        const refId = props?.logsFrames?.[options.frameIndex]?.refId;
+        if (refId) {
+          updatePanelState({ refId });
+        }
+      }
+    },
+    [
+      displayedFields,
+      fieldSelectorWidth,
+      handleSetTableSortBy,
+      logsSortOrder,
+      onChangeLogsSortOrder,
+      props?.logsFrames,
+      tableFrameIndex,
+      tableSortBy,
+      updatePanelState,
+    ]
+  );
+
+  const tableOptions = useMemo(
+    () => ({
+      sortOrder: logsSortOrder,
+      sortBy: tableSortBy,
+      displayedFields: displayedFields,
+      permalinkedLogId: props.panelState?.logs?.id,
+      frameIndex: tableFrameIndex,
+      fieldSelectorWidth: fieldSelectorWidth,
+    }),
+    [displayedFields, fieldSelectorWidth, logsSortOrder, props.panelState?.logs?.id, tableFrameIndex, tableSortBy]
+  );
+
   const onDisplayedSeriesChanged = useCallback((levels: string[]) => {
     if (visibilityChangedRef.current) {
       visibilityChangedRef.current = false;
@@ -859,52 +913,15 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             <ExploreLogsTable
               eventBus={eventBus}
               data={panelData}
+              isLabelFilterActive={props.isFilterLabelActive}
               timeZone={timeZone}
               buildLinkToLogLine={onTablePermalinkClick}
-              externalOptions={{
-                sortOrder: logsSortOrder,
-                sortBy: tableSortBy,
-                displayedFields: displayedFields,
-                permalinkedLogId: props.panelState?.logs?.id,
-                frameIndex: tableFrameIndex,
-                fieldSelectorWidth: fieldSelectorWidth,
-              }}
+              externalOptions={tableOptions}
               width={width}
               height={tableHeight}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
-              onOptionsChange={(options: Options) => {
-                if (options.displayedFields && !shallowCompare(options.displayedFields, displayedFields)) {
-                  setDisplayedFields(options.displayedFields);
-                }
-                if (options.sortOrder && options.sortOrder !== logsSortOrder) {
-                  onChangeLogsSortOrder(options.sortOrder);
-                }
-                if (options.fieldSelectorWidth !== undefined && options.fieldSelectorWidth !== fieldSelectorWidth) {
-                  store.set(LOGS_TABLE_SETTING_KEYS.fieldSelectorWidth, options.fieldSelectorWidth);
-                  setFieldSelectorWidth(options.fieldSelectorWidth);
-                }
-                if (
-                  options.sortBy &&
-                  !compareArrayValues(
-                    options?.sortBy ?? [],
-                    tableSortBy ?? [],
-                    (a, b) => a.displayName === b.displayName && a.desc === b.desc
-                  )
-                ) {
-                  handleSetTableSortBy(options.sortBy);
-                }
-
-                if (options.frameIndex !== tableFrameIndex) {
-                  const refId = props?.logsFrames?.[options.frameIndex]?.refId;
-                  if (refId) {
-                    updatePanelState({ refId });
-                  }
-                }
-              }}
-              onFieldConfigChange={function (config: FieldConfigSource): void {
-                // @todo save field overrides somewhere (e.g. column widths)
-              }}
+              onOptionsChange={onTableOptionsChange}
               onChangeTimeRange={onChangeTime}
             />
           )}
@@ -1016,10 +1033,18 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         {!loading && !hasData && !scanning && (
           <div className={styles.noDataWrapper}>
             <div className={styles.noData}>
-              <Trans i18nKey="explore.logs.no-logs-found">No logs found.</Trans>
-              <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickScan}>
-                <Trans i18nKey="explore.logs.scan-for-older-logs">Scan for older logs</Trans>
-              </Button>
+              {isMissingTimeField(props.logsFrames) ? (
+                <Trans i18nKey="explore.logs.missing-time-field-message">
+                  The Logs visualization requires a time field. Add a time-typed column to your query.
+                </Trans>
+              ) : (
+                <>
+                  <Trans i18nKey="explore.logs.no-logs-found">No logs found.</Trans>
+                  <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickScan}>
+                    <Trans i18nKey="explore.logs.scan-for-older-logs">Scan for older logs</Trans>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         )}

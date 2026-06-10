@@ -20,6 +20,7 @@ export type {
   PanelElementEntry,
   PanelElementsData,
   ListVariablesData,
+  ListAnnotationsData,
 } from './types';
 
 export { ALL_COMMANDS, MUTATION_TYPES, validatePayload } from './commands/registry';

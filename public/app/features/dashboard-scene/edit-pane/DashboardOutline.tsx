@@ -4,11 +4,13 @@ import React, { useMemo, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { type SceneObject } from '@grafana/scenes';
-import { Box, Icon, ScrollContainer, Sidebar, Text, useElementSelection, useStyles2 } from '@grafana/ui';
+import { type SceneComponentProps, SceneObjectBase, type SceneObject, type SceneObjectState } from '@grafana/scenes';
+import { Box, Icon, ScrollContainer, Sidebar, Text, Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardLinksSet } from '../settings/links/DashboardLinksSet';
 import { LinkEdit } from '../settings/links/LinkAddEditableElement';
+import { DashboardFiltersSet } from '../settings/variables/DashboardFiltersSet';
+import { SectionFiltersSet } from '../settings/variables/SectionFiltersSet';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -17,20 +19,60 @@ import { type DashboardEditPane } from './DashboardEditPane';
 import { getEditableElementFor } from './shared';
 import { useOutlineRename } from './useOutlineRename';
 
-export interface Props {
-  editPane: DashboardEditPane;
-  isEditing: boolean | undefined;
+interface DashboardOutlineState extends SceneObjectState {
+  collapsedState: Map<string, boolean>;
 }
 
-export function DashboardOutline({ editPane, isEditing }: Props) {
-  const dashboard = getDashboardSceneFor(editPane);
+export class DashboardOutline extends SceneObjectBase<DashboardOutlineState> {
+  public static Component = DashboardOutlineRenderer;
+
+  constructor(state?: Partial<DashboardOutlineState>) {
+    super({
+      ...state,
+      collapsedState: state?.collapsedState ?? new Map<string, boolean>(),
+    });
+  }
+
+  public getId() {
+    return 'outline' as const;
+  }
+
+  public isNodeCollapsed(key: string | undefined, defaultCollapsed: boolean): boolean {
+    if (key === undefined) {
+      return defaultCollapsed;
+    }
+    return this.state.collapsedState.get(key) ?? defaultCollapsed;
+  }
+
+  public setNodeCollapsed(key: string | undefined, collapsed: boolean): void {
+    if (key !== undefined) {
+      this.state.collapsedState.set(key, collapsed);
+    }
+  }
+
+  public clone(withState?: Partial<DashboardOutlineState>): this {
+    const cloned = super.clone({ ...withState, collapsedState: this.state.collapsedState });
+    return cloned;
+  }
+}
+
+export function DashboardOutlineRenderer({ model }: SceneComponentProps<DashboardOutline>) {
+  const dashboard = getDashboardSceneFor(model);
+  const { isEditing } = dashboard.useState();
 
   return (
     <Box display="flex" direction="column" flex={1} height="100%">
       <Sidebar.PaneHeader title={t('dashboard.outline.pane-header', 'Content outline')} />
       <ScrollContainer showScrollIndicators={true}>
         <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
-          <DashboardOutlineNode sceneObject={dashboard} isEditing={isEditing} editPane={editPane} depth={0} index={0} />
+          <DashboardOutlineNode
+            sceneObject={dashboard}
+            isEditing={isEditing}
+            editPane={dashboard.state.editPane}
+            outline={model}
+            depth={0}
+            index={0}
+          />
         </Box>
       </ScrollContainer>
     </Box>
@@ -40,15 +82,16 @@ export function DashboardOutline({ editPane, isEditing }: Props) {
 interface DashboardOutlineNodeProps {
   sceneObject: SceneObject;
   editPane: DashboardEditPane;
+  outline: DashboardOutline;
   isEditing: boolean | undefined;
   depth: number;
   index: number;
 }
 
-function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }: DashboardOutlineNodeProps) {
+function DashboardOutlineNode({ sceneObject, editPane, outline, isEditing, depth, index }: DashboardOutlineNodeProps) {
   const styles = useStyles2(getStyles);
   const key = sceneObject.state.key;
-  const [isCollapsed, setIsCollapsed] = useState(depth > 0);
+  const [isCollapsed, setIsCollapsed] = useState(() => outline.isNodeCollapsed(key, depth > 0));
   const { isSelected, onSelect } = useElementSelection(key);
   const isCloned = useMemo(() => isRepeatCloneOrChildOf(sceneObject), [sceneObject]);
   const editableElement = useMemo(() => getEditableElementFor(sceneObject)!, [sceneObject]);
@@ -68,8 +111,13 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
     e.stopPropagation();
 
     if (!isSelected) {
-      if (sceneObject instanceof LinkEdit || sceneObject instanceof DashboardLinksSet) {
-        // Select directly via editPane.selectObject because link objects are not
+      if (
+        sceneObject instanceof LinkEdit ||
+        sceneObject instanceof DashboardLinksSet ||
+        sceneObject instanceof DashboardFiltersSet ||
+        sceneObject instanceof SectionFiltersSet
+      ) {
+        // Select directly via editPane.selectObject because these objects are not
         // in the scene graph, so sceneGraph.findByKey (used by onSelect) can't find them.
         editPane.selectObject(sceneObject);
       } else {
@@ -83,7 +131,9 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
 
   const onToggleCollapse = (evt: React.MouseEvent) => {
     evt.stopPropagation();
-    setIsCollapsed(!isCollapsed);
+    const newCollapsed = !isCollapsed;
+    setIsCollapsed(newCollapsed);
+    outline.setNodeCollapsed(key, newCollapsed);
   };
 
   if (elementInfo.isHidden && !isEditing) {
@@ -135,7 +185,15 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
           ) : (
             <>
               <div className={styles.nodeName}>
-                <Text truncate>{instanceName}</Text>
+                {elementInfo.tooltip ? (
+                  <Tooltip content={elementInfo.tooltip} placement="auto">
+                    <span className={styles.nodeNameText}>
+                      <Text truncate>{instanceName}</Text>
+                    </span>
+                  </Tooltip>
+                ) : (
+                  <Text truncate>{instanceName}</Text>
+                )}
                 {elementInfo.isHidden && <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />}
               </div>
               {isCloned && (
@@ -156,6 +214,7 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
                 key={child.state.key}
                 sceneObject={child}
                 editPane={editPane}
+                outline={outline}
                 depth={depth + 1}
                 isEditing={isEditing}
                 index={i}
@@ -256,6 +315,12 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       alignItems: 'center',
       overflow: 'hidden',
+    }),
+    nodeNameText: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      overflow: 'hidden',
+      minWidth: 0,
     }),
     hiddenIcon: css({
       color: theme.colors.text.secondary,

@@ -64,7 +64,12 @@ import {
   isSupportedExternalRulesSourceType,
 } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
-import { isGrafanaAlertingRuleByType, isGrafanaRecordingRuleByType, rulerRuleType } from './rules';
+import {
+  isGrafanaAlertingRuleByType,
+  isGrafanaRecordingRuleByType,
+  isUngroupedRuleGroup,
+  rulerRuleType,
+} from './rules';
 import { parseInterval } from './time';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
@@ -115,7 +120,9 @@ export function getNotificationSettingsForDTO(
   contactPoints?: AlertManagerManualRouting,
   selectedPolicy?: string
 ): GrafanaNotificationSettings | undefined {
-  if (config.featureToggles.alertingPolicyRoutingSettings && selectedPolicy && !manualRouting) {
+  // selectedPolicy is only populated for rules routed via notification_settings.policy so emit it in both toggle states.
+  // Legacy label-routed rules leave selectedPolicy unset and keep routing through the label.
+  if (selectedPolicy && !manualRouting) {
     return { policy: selectedPolicy };
   }
   if (contactPoints?.grafana?.selectedContactPoint && manualRouting) {
@@ -177,9 +184,10 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
 
   const annotations = arrayToRecord(cleanAnnotations(values.annotations));
   const labels = arrayToRecord(cleanLabels(values.labels));
-  // When the new policy routing is active, the legacy label must not be sent so that both
-  // routing mechanisms never coexist in the same payload.
-  if (config.featureToggles.alertingPolicyRoutingSettings) {
+  // The legacy label must not be sent whenever the policy field is in use, so the two routing
+  // mechanisms never coexist in the same payload: either when the new policy routing is active
+  // (toggle on) or when we are writing a route to notification_settings.policy.
+  if (config.featureToggles.alertingPolicyRoutingSettings || notificationSettings?.policy) {
     delete labels[NAMED_ROOT_LABEL_NAME];
   }
 
@@ -354,6 +362,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         name: ga.title,
         type: RuleFormType.grafanaRecording,
         group: group.name,
+        isUngroupedRuleGroup: isUngroupedRuleGroup(group.name),
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
         queries: ga.data,
         condition: ga.condition,
@@ -379,6 +388,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           name: ga.title,
           type: RuleFormType.grafana,
           group: group.name,
+          isUngroupedRuleGroup: isUngroupedRuleGroup(group.name),
           evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
           evaluateFor: normalizedRule.for || '0',
           keepFiringFor: normalizedRule.keep_firing_for || '0',

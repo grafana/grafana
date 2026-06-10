@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 
 import { AlertLabels, StateText } from '@grafana/alerting/unstable';
 import { type Labels } from '@grafana/data';
@@ -47,6 +47,13 @@ interface InstanceDetailsDrawerTitleProps {
   commonLabels?: Labels;
   alertState?: GrafanaAlertState | null;
   rule?: GrafanaRuleDefinition;
+  onOpenSilence?: () => void;
+  titleText?: string;
+  /** Overrides the muted label above the title (defaults to Alert Instance). */
+  sectionLabel?: ReactNode;
+  hideActions?: boolean;
+  titleSection?: ReactNode;
+  showAlertState?: boolean;
 }
 
 export function InstanceDetailsDrawerTitle({
@@ -54,6 +61,12 @@ export function InstanceDetailsDrawerTitle({
   commonLabels,
   alertState,
   rule,
+  onOpenSilence,
+  titleText,
+  sectionLabel,
+  hideActions = false,
+  titleSection,
+  showAlertState = true,
 }: InstanceDetailsDrawerTitleProps) {
   const { folder } = useFolder(rule?.namespace_uid);
   const { pluginId, installed, settings } = useIrmPlugin(SupportedPlugin.Incident);
@@ -75,9 +88,11 @@ export function InstanceDetailsDrawerTitle({
     : false;
   const hasFolderSilencePermission = folder?.accessControl?.[AccessControlAction.AlertingSilenceCreate] ?? false;
   const canSilence = canCreateSilence || hasFolderSilencePermission;
+
   return (
     <Stack direction="column" gap={2}>
-      {folder && rule && (
+      {titleSection && <Stack direction="row">{titleSection}</Stack>}
+      {!titleSection && folder && rule && (
         <InstanceLocation
           folderTitle={stringifyFolder(folder)}
           groupName={rule.rule_group}
@@ -88,73 +103,87 @@ export function InstanceDetailsDrawerTitle({
       )}
       <Stack direction="column" gap={0.5}>
         <Text variant="bodySmall" color="secondary">
-          <Trans i18nKey="alerting.triage.instance-details-drawer.alert-instance-label">Alert Instance</Trans>
+          {sectionLabel ?? (
+            <Trans i18nKey="alerting.triage.instance-details-drawer.alert-instance-label">Alert Instance</Trans>
+          )}
         </Text>
         <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
           <Stack direction="row" alignItems="center" gap={1} minWidth={0}>
             <Text variant="h3" element="h3" truncate>
-              {rule?.title ?? (
+              {titleText ?? rule?.title ?? (
                 <Trans i18nKey="alerting.triage.instance-details-drawer.instance-details">Instance details</Trans>
               )}
             </Text>
-            {alertState && <StateText type="alerting" {...grafanaAlertStateToStateTextProps(alertState)} />}
+            {showAlertState && alertState && (
+              <StateText type="alerting" {...grafanaAlertStateToStateTextProps(alertState)} />
+            )}
           </Stack>
-          <Stack direction="row" gap={1} alignItems="center">
-            {silenceLink && (
-              <>
-                {canSilence ? (
-                  <LinkButton
-                    href={silenceLink}
-                    icon="bell-slash"
-                    variant="secondary"
-                    size="sm"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Trans i18nKey="alerting.triage.instance-details-drawer.silence-button">Silence</Trans>
-                  </LinkButton>
-                ) : (
-                  <Tooltip
-                    content={t(
-                      'alerting.triage.instance-details-drawer.silence-no-permission',
-                      'You do not have permission to create silences'
-                    )}
-                  >
-                    <Button icon="bell-slash" variant="secondary" size="sm" disabled>
+          {!hideActions && (
+            <Stack direction="row" gap={1} alignItems="center">
+              {silenceLink && (
+                <>
+                  {canSilence && onOpenSilence && (
+                    <Button icon="bell-slash" variant="secondary" size="sm" onClick={onOpenSilence}>
                       <Trans i18nKey="alerting.triage.instance-details-drawer.silence-button">Silence</Trans>
                     </Button>
-                  </Tooltip>
-                )}
-              </>
-            )}
-            {shouldShowDeclareIncident && (
-              <>
-                {canAccessIncident ? (
-                  <LinkButton
-                    href={incidentURL}
-                    icon="fire"
-                    variant="secondary"
-                    size="sm"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Trans i18nKey="alerting.triage.instance-details-drawer.declare-incident">Declare incident</Trans>
-                  </LinkButton>
-                ) : (
-                  <Tooltip
-                    content={t(
-                      'alerting.triage.instance-details-drawer.declare-incident-no-permission',
-                      'You do not have permission to access Incident'
-                    )}
-                  >
-                    <Button icon="fire" variant="secondary" size="sm" disabled>
+                  )}
+                  {canSilence && !onOpenSilence && (
+                    <LinkButton
+                      href={silenceLink}
+                      icon="bell-slash"
+                      variant="secondary"
+                      size="sm"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Trans i18nKey="alerting.triage.instance-details-drawer.silence-button">Silence</Trans>
+                    </LinkButton>
+                  )}
+                  {!canSilence && (
+                    <Tooltip
+                      content={t(
+                        'alerting.triage.instance-details-drawer.silence-no-permission',
+                        'You do not have permission to create silences'
+                      )}
+                    >
+                      <Button icon="bell-slash" variant="secondary" size="sm" disabled>
+                        <Trans i18nKey="alerting.triage.instance-details-drawer.silence-button">Silence</Trans>
+                      </Button>
+                    </Tooltip>
+                  )}
+                </>
+              )}
+              {shouldShowDeclareIncident && (
+                <>
+                  {canAccessIncident ? (
+                    <LinkButton
+                      href={incidentURL}
+                      icon="fire"
+                      variant="secondary"
+                      size="sm"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <Trans i18nKey="alerting.triage.instance-details-drawer.declare-incident">Declare incident</Trans>
-                    </Button>
-                  </Tooltip>
-                )}
-              </>
-            )}
-          </Stack>
+                    </LinkButton>
+                  ) : (
+                    <Tooltip
+                      content={t(
+                        'alerting.triage.instance-details-drawer.declare-incident-no-permission',
+                        'You do not have permission to access Incident'
+                      )}
+                    >
+                      <Button icon="fire" variant="secondary" size="sm" disabled>
+                        <Trans i18nKey="alerting.triage.instance-details-drawer.declare-incident">
+                          Declare incident
+                        </Trans>
+                      </Button>
+                    </Tooltip>
+                  )}
+                </>
+              )}
+            </Stack>
+          )}
         </Stack>
       </Stack>
       <Box>

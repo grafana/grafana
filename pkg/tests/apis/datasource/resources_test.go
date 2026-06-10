@@ -35,7 +35,7 @@ func setup(t *testing.T) *apis.K8sTestHelper {
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,       // Required to start the datasource api servers
-			featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
+			featuremgmt.FlagDatasourceUseNewCRUDAPIs,                   // enables CRUD endpoints
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
 		},
 	})

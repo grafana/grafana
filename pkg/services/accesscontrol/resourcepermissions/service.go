@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -21,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -227,13 +230,13 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 	}
 
 	var datasourceType string
-	if s.options.DatasourceTypeResolver != nil {
+	if s.options.DatasourceTypeResolver != nil && resourceID != "*" {
 		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
 			datasourceType = t
 		}
 	}
 
-	return s.store.SetUserResourcePermission(ctx, orgID, user, SetResourcePermissionCommand{
+	result, err := s.store.SetUserResourcePermission(ctx, orgID, user, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.scopeResource(),
@@ -241,6 +244,14 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		ResourceAttribute: s.options.ResourceAttribute,
 		DatasourceType:    datasourceType,
 	}, s.options.OnSetUser)
+
+	if err != nil {
+		return nil, err
+	}
+
+	s.clearUserPermissionCache(orgID, user.ID)
+
+	return result, nil
 }
 
 func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
@@ -261,7 +272,7 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 	}
 
 	var datasourceType string
-	if s.options.DatasourceTypeResolver != nil {
+	if s.options.DatasourceTypeResolver != nil && resourceID != "*" {
 		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
 			datasourceType = t
 		}
@@ -295,7 +306,7 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 	}
 
 	var datasourceType string
-	if s.options.DatasourceTypeResolver != nil {
+	if s.options.DatasourceTypeResolver != nil && resourceID != "*" {
 		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
 			datasourceType = t
 		}
@@ -323,7 +334,7 @@ func (s *Service) SetPermissions(
 	}
 
 	var datasourceType string
-	if s.options.DatasourceTypeResolver != nil {
+	if s.options.DatasourceTypeResolver != nil && resourceID != "*" {
 		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
 			datasourceType = t
 		}
@@ -365,11 +376,24 @@ func (s *Service) SetPermissions(
 		})
 	}
 
-	return s.store.SetResourcePermissions(ctx, orgID, dbCommands, ResourceHooks{
+	result, err := s.store.SetResourcePermissions(ctx, orgID, dbCommands, ResourceHooks{
 		User:        s.options.OnSetUser,
 		Team:        s.options.OnSetTeam,
 		BuiltInRole: s.options.OnSetBuiltInRole,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	clearedUsers := make(map[int64]bool)
+	for _, cmd := range commands {
+		if cmd.UserID != 0 && !clearedUsers[cmd.UserID] {
+			s.clearUserPermissionCache(orgID, cmd.UserID)
+			clearedUsers[cmd.UserID] = true
+		}
+	}
+
+	return result, nil
 }
 
 func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string {
@@ -386,6 +410,21 @@ func (s *Service) DeleteResourcePermissions(ctx context.Context, orgID int64, re
 		Resource:          s.scopeResource(),
 		ResourceAttribute: s.options.ResourceAttribute,
 		ResourceID:        resourceID,
+	})
+}
+
+// clearUserPermissionCache invalidates the RBAC permission cache for a user.
+// It clears both regular user and service account cache keys since we don't
+// know the identity type from just the user ID.
+func (s *Service) clearUserPermissionCache(orgID int64, userID int64) {
+	s.service.ClearUserPermissionCache(&user.SignedInUser{
+		OrgID:  orgID,
+		UserID: userID,
+	})
+	s.service.ClearUserPermissionCache(&user.SignedInUser{
+		OrgID:            orgID,
+		UserID:           userID,
+		IsServiceAccount: true,
 	})
 }
 
@@ -407,6 +446,17 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 		}
 	}
 
+	// Write action set token for service accounts. Granular actions are also written until
+	// FlagOnlyStoreServiceAccountActionSets is enabled (after the backfill migration has run).
+	if s.options.Resource == serviceaccounts.ScopeServiceAccountRoot {
+		actions = append(actions, s.options.GetActionSetName(permission))
+
+		onlyActionSets, _ := openfeature.NewDefaultClient().BooleanValue(context.Background(), featuremgmt.FlagOnlyStoreServiceAccountActionSets, false, openfeature.EvaluationContext{})
+		if onlyActionSets {
+			return actions, nil
+		}
+	}
+
 	// New resources with no legacy granular data go straight to action-set-only.
 	if s.options.Resource == accesscontrol.AlertingRoutesResource {
 		return []string{s.options.GetActionSetName(permission)}, nil
@@ -424,6 +474,10 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID string) error {
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.validateResource")
 	defer span.End()
+
+	if resourceID == "*" {
+		return ErrInvalidResourceID.Build(ErrInvalidResourceIDData(resourceID))
+	}
 
 	if s.options.ResourceValidator != nil {
 		return s.options.ResourceValidator(ctx, orgID, resourceID)
@@ -481,15 +535,22 @@ func (s *Service) validateBuiltinRole(ctx context.Context, builtinRole string) e
 	return nil
 }
 
-func (s *Service) declareFixedRoles() error {
-	scopeAll := s.options.GetScope("*")
+// FixedRoleRegistrations returns the templated reader/writer fixed-role
+// registrations derived from the given Options (fixed:{resource}.permissions:reader
+// and :writer). It is the single source of truth for how per-resource permission
+// management roles are generated, shared by the live service ([Service.declareFixedRoles])
+// and the GlobalRole seeder aggregation so the two cannot drift. Only the
+// role-identity fields of Options are read (Resource, APIGroup, K8sActionFormat,
+// ReaderRoleName, WriterRoleName, RoleGroup); the runtime closures are ignored.
+func FixedRoleRegistrations(o Options) []accesscontrol.RoleRegistration {
+	scopeAll := o.GetScope("*")
 	readerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        s.options.GetRoleName("reader"),
-			DisplayName: s.options.ReaderRoleName,
-			Group:       s.options.RoleGroup,
+			Name:        o.GetRoleName("reader"),
+			DisplayName: o.ReaderRoleName,
+			Group:       o.RoleGroup,
 			Permissions: []accesscontrol.Permission{
-				{Action: s.options.GetAction("read"), Scope: scopeAll},
+				{Action: o.GetAction("read"), Scope: scopeAll},
 			},
 		},
 		Grants: []string{string(org.RoleAdmin)},
@@ -497,17 +558,21 @@ func (s *Service) declareFixedRoles() error {
 
 	writerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        s.options.GetRoleName("writer"),
-			DisplayName: s.options.WriterRoleName,
-			Group:       s.options.RoleGroup,
+			Name:        o.GetRoleName("writer"),
+			DisplayName: o.WriterRoleName,
+			Group:       o.RoleGroup,
 			Permissions: accesscontrol.ConcatPermissions(readerRole.Role.Permissions, []accesscontrol.Permission{
-				{Action: s.options.GetAction("write"), Scope: scopeAll},
+				{Action: o.GetAction("write"), Scope: scopeAll},
 			}),
 		},
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	return s.service.DeclareFixedRoles(readerRole, writerRole)
+	return []accesscontrol.RoleRegistration{readerRole, writerRole}
+}
+
+func (s *Service) declareFixedRoles() error {
+	return s.service.DeclareFixedRoles(FixedRoleRegistrations(s.options)...)
 }
 
 type ActionSetService interface {
@@ -639,7 +704,8 @@ func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, 
 func isActionSetEnabledResource(action string) bool {
 	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) ||
 		strings.HasPrefix(action, folder.ScopeFoldersRoot) ||
-		strings.HasPrefix(action, accesscontrol.AlertingRoutesKind)
+		strings.HasPrefix(action, accesscontrol.AlertingRoutesKind) ||
+		strings.HasPrefix(action, serviceaccounts.ScopeServiceAccountRoot)
 }
 
 // scopeResource returns the resource prefix used for Resource fields in commands/queries.

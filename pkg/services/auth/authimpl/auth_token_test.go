@@ -15,6 +15,7 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -655,7 +656,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		var uat userAuthToken
 		err = uat.fromUserToken(&ut)
 		require.Nil(t, err)
-		uatBytes, err := json.Marshal(uat)
+		uatBytes, err := json.Marshal(uat) // #nosec G117 -- test fixture marshaling internal struct
 		require.Nil(t, err)
 		uatJSON, err := simplejson.NewJson(uatBytes)
 		require.Nil(t, err)
@@ -680,7 +681,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			UnhashedToken:     "e",
 			ExternalSessionId: 7,
 		}
-		uatBytes, err := json.Marshal(uat)
+		uatBytes, err := json.Marshal(uat) // #nosec G117 -- test fixture marshaling internal struct
 		require.Nil(t, err)
 		uatJSON, err := simplejson.NewJson(uatBytes)
 		require.Nil(t, err)
@@ -714,9 +715,12 @@ func createTestContext(t *testing.T) *testContext {
 
 	extSessionStore := provideExternalSessionStore(sqlstore, &fakes.FakeSecretsService{}, tracer)
 
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+
 	tokenService := &UserAuthTokenService{
 		sqlStore:             sqlstore,
-		cfg:                  cfg,
+		cfgProvider:          cfgProvider,
 		log:                  log.New("test-logger"),
 		singleflight:         new(singleflight.Group),
 		externalSessionStore: extSessionStore,
@@ -725,6 +729,7 @@ func createTestContext(t *testing.T) *testContext {
 
 	return &testContext{
 		sqlstore:        sqlstore,
+		cfg:             cfg,
 		tokenService:    tokenService,
 		extSessionStore: &extSessionStore,
 	}
@@ -732,6 +737,7 @@ func createTestContext(t *testing.T) *testContext {
 
 type testContext struct {
 	sqlstore        db.DB
+	cfg             *setting.Cfg
 	tokenService    *UserAuthTokenService
 	extSessionStore *auth.ExternalSessionStore
 }

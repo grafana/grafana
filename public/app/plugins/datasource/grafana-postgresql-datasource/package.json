@@ -12,8 +12,7 @@
     "@grafana/ui": "13.1.0-pre",
     "lodash": "^4.17.23",
     "react": "18.3.1",
-    "rxjs": "7.8.2",
-    "tslib": "2.8.1"
+    "rxjs": "7.8.2"
   },
   "devDependencies": {
     "@grafana/e2e-selectors": "13.1.0-pre",
@@ -26,8 +25,7 @@
     "@types/node": "24.10.1",
     "@types/react": "18.3.18",
     "jest": "29.7.0",
-    "ts-node": "10.9.2",
-    "typescript": "5.9.2",
+    "typescript": "6.0.2",
     "webpack": "^5.105.0"
   },
   "peerDependencies": {
@@ -40,5 +38,5 @@
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --maxWorkers 4"
   },
-  "packageManager": "yarn@4.11.0"
+  "packageManager": "yarn@4.15.0"
 }

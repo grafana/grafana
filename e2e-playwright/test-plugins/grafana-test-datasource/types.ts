@@ -10,7 +10,7 @@ export const DEFAULT_QUERY: Partial<MyQuery> = {
   constant: 6.5,
 };
 
-export interface DataPoint {
+interface DataPoint {
   Time: number;
   Value: number;
 }

@@ -1,21 +1,32 @@
 import { css } from '@emotion/css';
 import { upperFirst } from 'lodash';
-import { type RefObject, useRef } from 'react';
+import { type RefObject, useMemo, useRef } from 'react';
 
 import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
-import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Text, useStyles2, useTheme2 } from '@grafana/ui';
+import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { type ExpressionQuery } from 'app/features/expressions/types';
 
-import { getQueryEditorColors, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
-import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { getQueryEditorTypeConfig, type QueryEditorTypeConfig, QueryEditorType } from '../../constants';
+import {
+  useActionsContext,
+  useQueryEditorUIContext,
+  useQueryRunnerContext,
+  useQueryEditorTypeConfig,
+} from '../QueryEditorContext';
 import { type AlertRule, type Transformation } from '../types';
 import { getEditorBorderColor } from '../utils';
 
 import { EditableQueryName } from './EditableQueryName';
 import { HeaderActions } from './HeaderActions';
+
+interface DatasourceSectionProps {
+  selectedQuery: DataQuery;
+  onChange: (ds: DataSourceInstanceSettings) => void;
+}
 
 function DatasourceSection({ selectedQuery, onChange }: DatasourceSectionProps) {
   const styles = useStyles2(getDatasourceSectionStyles);
@@ -27,25 +38,27 @@ function DatasourceSection({ selectedQuery, onChange }: DatasourceSectionProps) 
   );
 }
 
-const Separator = () => (
-  <Text variant="h4" color="secondary">
-    /
-  </Text>
-);
-
 interface PendingPickerHeaderProps {
   editorType: QueryEditorType;
   label: NonNullable<React.ReactNode>;
   onCancel?: () => void;
   cancelLabel: React.ReactNode;
   styles: ReturnType<typeof getStyles>;
+  typeConfig: Record<QueryEditorType, QueryEditorTypeConfig>;
 }
 
-function PendingPickerHeader({ editorType, label, onCancel, cancelLabel, styles }: PendingPickerHeaderProps) {
+function PendingPickerHeader({
+  editorType,
+  label,
+  onCancel,
+  cancelLabel,
+  styles,
+  typeConfig,
+}: PendingPickerHeaderProps) {
   return (
     <div className={styles.container}>
       <div className={styles.leftSection}>
-        <Icon name={QUERY_EDITOR_TYPE_CONFIG[editorType].icon} size="sm" />
+        <Icon name={typeConfig[editorType].icon} size="sm" />
         <Text weight="light" variant="body" color="secondary">
           {label}
         </Text>
@@ -89,6 +102,11 @@ export interface ContentHeaderProps {
    * Used downstream for saved queries positioning.
    */
   containerRef?: RefObject<HTMLDivElement>;
+  /**
+   * Optional type config for query editor types (icons, colors, labels).
+   * If not provided, will be computed from the current theme.
+   */
+  typeConfig?: Record<QueryEditorType, QueryEditorTypeConfig>;
 }
 
 /**
@@ -115,10 +133,14 @@ export function ContentHeader({
   isMultiSelection,
   renderHeaderExtras,
   containerRef: externalContainerRef,
+  typeConfig: typeConfigProp,
 }: ContentHeaderProps) {
   // Fallback ref if none provided (for saved queries positioning)
   const internalContainerRef = useRef<HTMLDivElement>(null);
   const containerRef = externalContainerRef || internalContainerRef;
+  const theme = useTheme2();
+  // Use provided typeConfig or compute from theme (for standalone usage)
+  const typeConfig = useMemo(() => typeConfigProp ?? getQueryEditorTypeConfig(theme), [typeConfigProp, theme]);
 
   const styles = useStyles2(getStyles, { cardType, selectedAlert });
 
@@ -126,10 +148,11 @@ export function ContentHeader({
     return (
       <PendingPickerHeader
         editorType={QueryEditorType.Expression}
-        label={<Trans i18nKey="query-editor-next.header.pending-expression">Select an Expression</Trans>}
+        label={<Trans i18nKey="query-editor-next.header.pending-expression">Select an expression</Trans>}
         onCancel={onCancelPendingExpression}
         cancelLabel={<Trans i18nKey="query-editor-next.header.pending-expression-cancel">Cancel</Trans>}
         styles={styles}
+        typeConfig={typeConfig}
       />
     );
   }
@@ -138,10 +161,11 @@ export function ContentHeader({
     return (
       <PendingPickerHeader
         editorType={QueryEditorType.Transformation}
-        label={<Trans i18nKey="query-editor-next.header.pending-transformation">Select a Transformation</Trans>}
+        label={<Trans i18nKey="query-editor-next.header.pending-transformation">Select a transformation</Trans>}
         onCancel={onCancelPendingTransformation}
         cancelLabel={<Trans i18nKey="query-editor-next.header.pending-transformation-cancel">Cancel</Trans>}
         styles={styles}
+        typeConfig={typeConfig}
       />
     );
   }
@@ -153,14 +177,14 @@ export function ContentHeader({
   return (
     <div className={styles.container} ref={containerRef}>
       <div className={styles.leftSection}>
-        <Icon name={QUERY_EDITOR_TYPE_CONFIG[cardType].icon} size="sm" />
+        <Icon name={typeConfig[cardType].icon} size="sm" />
 
         {cardType === QueryEditorType.Alert && selectedAlert && (
           <>
             <Text weight="light" variant="body" color="primary">
               <Trans i18nKey="query-editor-next.header.alert">Alert</Trans>
             </Text>
-            <Separator />
+            <NavToolbarSeparator />
             <Text weight="light" variant="code" color="primary">
               {selectedAlert.rule.name}
             </Text>
@@ -173,7 +197,7 @@ export function ContentHeader({
               selectedQuery={selectedQuery}
               onChange={(ds) => onChangeDataSource(ds, selectedQuery.refId)}
             />
-            <Separator />
+            <NavToolbarSeparator />
           </>
         )}
 
@@ -182,7 +206,7 @@ export function ContentHeader({
             <Text weight="light" variant="body" color="primary">
               {upperFirst(selectedQuery.type)} <Trans i18nKey="query-editor-next.header.expression">Expression</Trans>
             </Text>
-            <Separator />
+            <NavToolbarSeparator />
           </>
         )}
 
@@ -191,7 +215,7 @@ export function ContentHeader({
             <Text weight="light" variant="body" color="primary">
               <Trans i18nKey="query-editor-next.header.transformation">Transformation</Trans>
             </Text>
-            <Separator />
+            <NavToolbarSeparator />
             <Text weight="light" variant="code" color="primary">
               {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
             </Text>
@@ -234,6 +258,8 @@ export function ContentHeaderSceneWrapper({
     selectedQuery,
     selectedTransformation,
     selectedQueryRefIds,
+    selectedTransformationIds,
+    multiSelectMode,
     cardType,
     pendingExpression,
     setPendingExpression,
@@ -242,6 +268,7 @@ export function ContentHeaderSceneWrapper({
   } = useQueryEditorUIContext();
   const { queries } = useQueryRunnerContext();
   const { changeDataSource, updateSelectedQuery } = useActionsContext();
+  const typeConfig = useQueryEditorTypeConfig();
 
   return (
     <ContentHeader
@@ -256,15 +283,11 @@ export function ContentHeaderSceneWrapper({
       onCancelPendingTransformation={() => setPendingTransformation(null)}
       onChangeDataSource={changeDataSource}
       onUpdateQuery={updateSelectedQuery}
-      isMultiSelection={selectedQueryRefIds.length > 1}
+      isMultiSelection={multiSelectMode && (selectedQueryRefIds.length > 0 || selectedTransformationIds.length > 0)}
       renderHeaderExtras={renderHeaderExtras}
+      typeConfig={typeConfig}
     />
   );
-}
-
-interface DatasourceSectionProps {
-  selectedQuery: DataQuery;
-  onChange: (ds: DataSourceInstanceSettings) => void;
 }
 
 const getStyles = (
@@ -272,12 +295,11 @@ const getStyles = (
   { cardType, selectedAlert }: { cardType: QueryEditorType; selectedAlert: AlertRule | null }
 ) => {
   const borderColor = getEditorBorderColor({ theme, editorType: cardType, alertState: selectedAlert?.state });
-  const themeColors = getQueryEditorColors(theme);
 
   return {
     container: css({
       position: 'relative',
-      backgroundColor: themeColors.contentHeaderBackground,
+      backgroundColor: theme.colors.background.secondary,
       padding: theme.spacing(0.5),
       paddingLeft: `calc(${theme.spacing(0.5)} + 4px)`,
       borderTopLeftRadius: theme.shape.radius.default,

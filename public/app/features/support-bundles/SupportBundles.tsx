@@ -3,7 +3,7 @@ import { connect, type ConnectedProps } from 'react-redux';
 
 import { dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { LinkButton, Spinner, IconButton } from '@grafana/ui';
+import { Alert, LinkButton, Spinner, IconButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -64,6 +64,15 @@ const SupportBundlesUnconnected = ({ supportBundles, isLoading, loadBundles, rem
   return (
     <Page navId="support-bundles" subTitle={subTitle} actions={actions}>
       <Page.Contents isLoading={isLoading}>
+        <Alert
+          title={t('support-bundles.support-bundles-unconnected.deprecation-warning-title', 'Deprecated feature')}
+          severity="warning"
+        >
+          <Trans i18nKey="support-bundles.support-bundles-unconnected.deprecation-warning-message">
+            Support bundles are deprecated and will be removed soon. For troubleshooting, collect the relevant server
+            logs, configuration, and diagnostic details manually, then attach them to your Grafana Support ticket.
+          </Trans>
+        </Alert>
         <table className="filter-table form-inline">
           <thead>
             <tr>

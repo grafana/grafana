@@ -23,4 +23,9 @@ func init() {
 		Description: "Watch provisioning jobs and manage job history cleanup",
 		RunFunc:     provisioning.RunJobController,
 	})
+	server.RegisterOperator(server.Operator{
+		Name:        "provisioning-jobqueue",
+		Description: "Pick and execute provisioning jobs using lease-based claiming",
+		RunFunc:     provisioning.RunJobQueueController,
+	})
 }

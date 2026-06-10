@@ -17,6 +17,7 @@ recordingRulev0alpha1: recordingRuleKind & {
 		operations: [
 			"CREATE",
 			"UPDATE",
+			"DELETE",
 		]
 	}
 	mutation: {
@@ -28,9 +29,8 @@ recordingRulev0alpha1: recordingRuleKind & {
 	selectableFields: [
 		"spec.title",
 		"spec.paused",
-		// FIXME(@moustafab): not sure why these fields are being considered structs... Bug in codegen
-		// "spec.metric",
-		// "spec.targetDatasourceUID",
+		"spec.metric",
+		"spec.targetDatasourceUID",
 		// TODO: add status fields for filtering
 	]
 }

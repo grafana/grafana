@@ -223,7 +223,7 @@ describe('filterByName transformer', () => {
         },
       };
 
-      const data = setupTransformationScene(seriesWithNamesToMatch, cfg, [
+      const data = await setupTransformationScene(seriesWithNamesToMatch, cfg, [
         new TestVariable({ name: 'var', value: 'B,D' }),
       ]);
       const filtered = data[0];
@@ -243,7 +243,7 @@ describe('filterByName transformer', () => {
         },
       };
 
-      const data = setupTransformationScene(seriesWithNamesToMatch, cfg, [
+      const data = await setupTransformationScene(seriesWithNamesToMatch, cfg, [
         new TestVariable({ name: 'var', value: 'B,D' }),
       ]);
 
@@ -263,7 +263,7 @@ describe('filterByName transformer', () => {
         },
       };
 
-      const data = setupTransformationScene(seriesWithNamesToMatch, cfg, [
+      const data = await setupTransformationScene(seriesWithNamesToMatch, cfg, [
         new TestVariable({ name: 'var', value: 'startsWith' }),
       ]);
 
@@ -301,11 +301,11 @@ function activateFullSceneTree(scene: SceneObject): SceneDeactivationHandler {
   };
 }
 
-export function setupTransformationScene(
+async function setupTransformationScene(
   inputData: DataFrame,
   cfg: DataTransformerConfig,
   variables: SceneVariable[]
-): DataFrame[] {
+): Promise<DataFrame[]> {
   class TestSceneObject extends SceneObjectBase<{}> {}
   const dataNode = new SceneDataNode({
     data: {
@@ -331,5 +331,11 @@ export function setupTransformationScene(
 
   activateFullSceneTree(scene);
 
-  return sceneGraph.getData(consumer).state.data?.series!;
+  return new Promise<DataFrame[]>((resolve) => {
+    const dataProvider = sceneGraph.getData(consumer);
+    const sub = dataProvider.subscribeToState((state) => {
+      sub.unsubscribe();
+      resolve(state.data?.series ?? []);
+    });
+  });
 }

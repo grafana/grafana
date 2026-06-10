@@ -1,7 +1,7 @@
 import { find, isEqual, omit } from 'lodash';
 
 import { type DataQuery, type SelectableValue, store } from '@grafana/data';
-import { createMonitoringLogger } from '@grafana/runtime';
+import { getLogger } from '@grafana/runtime/unstable';
 import { type RichHistorySearchFilters, type RichHistorySettings, SortOrder } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';
 
@@ -28,8 +28,6 @@ export type RichHistoryLocalStorageDTO = {
   comment: string;
   queries: DataQuery[];
 };
-
-const logger = createMonitoringLogger('features.query-history.local-storage');
 
 /**
  * Local storage implementation for Rich History. It keeps all entries in browser's local storage.
@@ -203,7 +201,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
       allQueriesCount: allQueriesCount?.toString(),
     };
 
-    logger.logWarning(message, {
+    getLogger('features.query-history.local-storage').logWarning(message, {
       ...localStats,
       ...additionalInfo,
     });

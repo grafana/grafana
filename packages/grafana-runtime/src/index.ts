@@ -7,7 +7,14 @@ export * from './services';
 export * from './config';
 export * from './analytics/types';
 export { loadPluginCss, type PluginCssOptions, setPluginImportUtils, getPluginImportUtils } from './utils/plugin';
-export { reportMetaAnalytics, reportInteraction, reportPageview, reportExperimentView } from './analytics/utils';
+export {
+  MAX_PAGE_URL_LENGTH,
+  TRUNCATION_MARKER,
+  reportMetaAnalytics,
+  reportInteraction,
+  reportPageview,
+  reportExperimentView,
+} from './analytics/utils';
 export { featureEnabled } from './utils/licensing';
 export {
   logInfo,
@@ -46,11 +53,7 @@ export {
 } from './services/QueryRunner';
 export { PluginPage } from './components/PluginPage';
 export type { PluginPageType, PluginPageProps, PluginPageBackground } from './components/PluginPage';
-export {
-  DataSourcePicker,
-  type DataSourcePickerProps,
-  type DataSourcePickerState,
-} from './components/DataSourcePicker';
+export { DataSourcePicker, type DataSourcePickerProps } from './components/DataSourcePicker';
 export {
   type PluginEventProperties,
   createPluginEventProperties,
@@ -77,6 +80,12 @@ export {
   getCorrelationsService,
   setCorrelationsService,
 } from './services/CorrelationsService';
+export {
+  type PanelScreenshotService,
+  type PanelScreenshotOptions,
+  getPanelScreenshotService,
+  setPanelScreenshotService,
+} from './services/PanelScreenshotService';
 export { getAppPluginVersion, isAppPluginInstalled } from './services/pluginMeta/apps';
 export {
   useAppPluginInstalled,
@@ -86,3 +95,5 @@ export {
   usePanelPluginVersion,
 } from './services/pluginMeta/hooks';
 export { getListedPanelPluginIds, getPanelPluginVersion, isPanelPluginInstalled } from './services/pluginMeta/panels';
+export { isAppPluginEnabled } from './services/pluginSettings/settings';
+export { useAppPluginEnabled } from './services/pluginSettings/hooks';

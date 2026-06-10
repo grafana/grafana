@@ -5,11 +5,11 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2, Stack, Text, Icon, Box } from '@grafana/ui';
 
-import { type RecentScope } from './types';
+import { type RecentScopeSet } from './types';
 
 interface RecentScopesProps {
-  recentScopes: RecentScope[][];
-  onSelect: (scopeIds: string[], parentNodeId?: string, scopeNodeId?: string) => void;
+  recentScopes: RecentScopeSet[];
+  onSelect: (scopeIds: string[], scopeNodeId?: string) => void;
 }
 
 export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
@@ -39,21 +39,15 @@ export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
             recentScopes.map((recentScopeSet) => (
               <button
                 className={styles.recentScopeButton}
-                key={
-                  recentScopeSet.map((s) => s.metadata.name).join(',') + recentScopeSet[0]?.parentNode?.metadata?.name
-                }
+                key={recentScopeSet.scopeIds.join(',')}
                 onClick={() => {
-                  onSelect(
-                    recentScopeSet.map((s) => s.metadata.name),
-                    recentScopeSet[0]?.parentNode?.metadata?.name,
-                    recentScopeSet[0]?.scopeNodeId
-                  );
+                  onSelect(recentScopeSet.scopeIds, recentScopeSet.scopeNodeId);
                 }}
               >
-                <Text truncate>{recentScopeSet.map((s) => s.spec.title).join(', ')}</Text>
-                {recentScopeSet[0]?.parentNode?.spec.title && (
+                <Text truncate>{recentScopeSet.scopes.map((s) => s.title).join(', ')}</Text>
+                {recentScopeSet.parentNodeTitle && (
                   <Text truncate variant="body" color="secondary">
-                    {recentScopeSet[0]?.parentNode?.spec.title}
+                    {recentScopeSet.parentNodeTitle}
                   </Text>
                 )}
               </button>

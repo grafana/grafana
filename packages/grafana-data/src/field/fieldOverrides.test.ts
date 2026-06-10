@@ -447,6 +447,35 @@ describe('applyFieldOverrides', () => {
     expect(config.decimals).toEqual(1);
   });
 
+  it('should skip overrides with unknown matcher ids', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+    const data = applyFieldOverrides({
+      data: [f0],
+      fieldConfig: {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byReg' as FieldMatcherID, options: '.*' },
+            properties: [{ id: 'decimals', value: 5 }],
+          },
+          {
+            matcher: { id: FieldMatcherID.numeric },
+            properties: [{ id: 'decimals', value: 1 }],
+          },
+        ],
+      },
+      replaceVariables: (value) => value,
+      theme: createTheme(),
+      fieldConfigRegistry: customFieldRegistry,
+    });
+
+    expect(data).toHaveLength(1);
+    expect(data[0].fields[1].config.decimals).toEqual(1);
+
+    warnSpy.mockRestore();
+  });
+
   it('displayName should be able to reference itself', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame

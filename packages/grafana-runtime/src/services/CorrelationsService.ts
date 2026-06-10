@@ -7,14 +7,14 @@ import {
   type CorrelationQueryTimeRange,
 } from '@grafana/data';
 
-export type CorrelationConfigQuery = {
+type CorrelationConfigQuery = {
   field: string;
   target: object; // for queries, this contains anything that would go in the query editor, so any extension off DataQuery a datasource would have, and needs to be generic.
   transformations?: DataLinkTransformationConfig[];
   timeRange?: CorrelationQueryTimeRange;
 };
 
-export type CorrelationConfigExternal = {
+type CorrelationConfigExternal = {
   field: string;
   target: {
     url: string; // For external, this simply contains a URL
@@ -68,6 +68,7 @@ export interface CorrelationsData {
   page: number;
   limit: number;
   totalCount: number;
+  doesContinue?: boolean;
 }
 
 /**

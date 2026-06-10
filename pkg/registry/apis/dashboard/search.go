@@ -15,14 +15,17 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	claims "github.com/grafana/authlib/types"
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -342,8 +345,6 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 	s.write(w, sortable)
 }
 
-const rootFolder = "general"
-
 var errEmptyResults = fmt.Errorf("empty results")
 
 func permissionToActions(p dashboardaccess.PermissionType) (dashboardAction string, folderAction string) {
@@ -580,23 +581,33 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		})
 	}
 
+	// K6 creates a technical folder for some rbac handling that should not be visible to normal user.
+	// The legacy search backend ignores NotIn on name, but we should be mostly in mode 4+ now.
+	if !user.IsIdentityType(claims.TypeServiceAccount) {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_NAME,
+			Operator: string(selection.NotIn),
+			Values:   []string{accesscontrol.K6FolderUID},
+		})
+	}
+
 	if searchRequest.Query == "*" {
 		searchRequest.Query = "" // will match everything
 	} else if searchRequest.Query != "" {
 		// Explicitly configure the query for dashboard+folder matching.
 		searchRequest.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
 			{
-				Name:  resource.SEARCH_FIELD_TITLE,
-				Type:  resourcepb.QueryFieldType_KEYWORD,
-				Boost: 10, // exact match -- includes ngrams! If they lived on their own field, we could score them differently
-			}, {
-				Name:  resource.SEARCH_FIELD_TITLE,
-				Type:  resourcepb.QueryFieldType_TEXT,
-				Boost: 2, // standard analyzer (with ngrams!)
-			}, {
 				Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
+				Type:  resourcepb.QueryFieldType_KEYWORD,
+				Boost: 10, // exact title match (case-insensitive via pre-lowered title_phrase)
+			}, {
+				Name:  resource.SEARCH_FIELD_TITLE,
 				Type:  resourcepb.QueryFieldType_TEXT,
-				Boost: 5, // standard analyzer
+				Boost: 2, // standard analyzer (word-level matching)
+			}, {
+				Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
+				Type:  resourcepb.QueryFieldType_TEXT,
+				Boost: 1, // ngram analyzer (partial/prefix matching)
 			},
 		}
 
@@ -626,12 +637,11 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		// hijacks the "name" query param to only search for shared dashboard UIDs
 		names = append(names, dashboardUIDs...)
 	} else if folder != "" {
-		if folder == rootFolder {
-			folder = "" // root folder is empty in the search index
-		}
+		// A root folder UID ("general" or the legacy "") is expanded to match
+		// both root sentinels by the search backend, so pass it through unchanged.
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      "folder",
-			Operator: "=",
+			Operator: string(selection.Equals),
 			Values:   []string{folder},
 		})
 	}
@@ -733,11 +743,13 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
-	// populate list of unique folder UIDs in the list of dashboards user has read permissions
+	// populate list of unique folder UIDs in the list of dashboards user has read permissions.
+	// Root-parented dashboards have no parent folder to check, and the apistore may report root
+	// as either the legacy "" or the canonical "general" sentinel, so skip both.
 	allFolders := make([]string, 0)
 	for _, dash := range dashboardResult.Results.Rows {
 		folderUid := string(dash.Cells[folderUidIdx])
-		if folderUid != "" && !slices.Contains(allFolders, folderUid) {
+		if !foldermodel.IsRootFolderUID(folderUid) && !slices.Contains(allFolders, folderUid) {
 			allFolders = append(allFolders, folderUid)
 		}
 	}
@@ -766,11 +778,12 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		foldersWithAccess = append(foldersWithAccess, fold.Key.Name)
 	}
 
-	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder
+	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder.
+	// Root-parented dashboards (reported as "" or "general") have no parent folder, so skip both sentinels.
 	for _, dash := range dashboardResult.Results.Rows {
 		dashboardUid := dash.Key.Name
 		folderUid := string(dash.Cells[folderUidIdx])
-		if folderUid != "" && !slices.Contains(foldersWithAccess, folderUid) {
+		if !foldermodel.IsRootFolderUID(folderUid) && !slices.Contains(foldersWithAccess, folderUid) {
 			sharedDashboards = append(sharedDashboards, dashboardUid)
 		}
 	}

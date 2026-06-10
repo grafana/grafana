@@ -4,6 +4,8 @@ import { CoreApp } from '@grafana/data';
 import { Stack } from '@grafana/ui';
 
 import { Actions } from '../../Actions';
+import { ConfirmationStyle } from '../../DeleteConfirm';
+import { queryToActionItem, transformationToActionItem } from '../../actionItem';
 import { QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
@@ -23,7 +25,7 @@ interface HeaderActionsProps {
  *
  * @remarks
  * Manages actions (hide, delete) for the currently selected query or transformation.
- * Delete confirmation behavior is configured per type in QUERY_EDITOR_TYPE_CONFIG and
+ * Delete confirmation behavior is configured per type in getQueryEditorTypeConfig and
  * handled by the Actions component.
  * Child components like WarningBadges, SaveButton, and ActionsMenu determine their
  * own visibility by reading from QueryEditorUIContext.
@@ -48,16 +50,17 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
     }
   }, [selectedQuery, selectedTransformation, deleteQuery, deleteTransformation]);
 
-  const itemName =
-    selectedQuery?.refId ?? selectedTransformation?.registryItem?.name ?? selectedTransformation?.transformId ?? '';
-
-  const item = {
-    name: itemName,
-    type: cardType,
-    isHidden: selectedQuery?.hide || selectedTransformation?.transformConfig?.disabled || false,
-  };
-
   if (cardType === QueryEditorType.Alert) {
+    return null;
+  }
+
+  const item = selectedQuery
+    ? queryToActionItem(selectedQuery, { type: cardType })
+    : selectedTransformation
+      ? transformationToActionItem(selectedTransformation)
+      : null;
+
+  if (!item) {
     return null;
   }
 
@@ -68,6 +71,7 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
       <PluginActions app={CoreApp.PanelEditor} />
       <Actions
         contentHeader={true}
+        confirmStyle={ConfirmationStyle.full}
         item={item}
         onDelete={onDelete}
         onToggleHide={onToggleHide}

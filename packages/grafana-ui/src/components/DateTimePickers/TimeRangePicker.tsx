@@ -8,19 +8,18 @@ import {
   rangeUtil,
   type GrafanaTheme2,
   dateTimeFormat,
-  timeZoneFormatUserFriendly,
   type TimeOption,
   type TimeRange,
-  type TimeZone,
   dateMath,
   getTimeZoneInfo,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
+import { type TimeZone } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { getFeatureToggle } from '../../utils/featureToggle';
 import { ButtonGroup } from '../Button/ButtonGroup';
+import { Stack } from '../Layout/Stack/Stack';
 import { getModalStyles } from '../Modal/getModalStyles';
 import { getPortalContainer } from '../Portal/Portal';
 import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
@@ -28,6 +27,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { TimeZoneDescription } from './TimeZonePicker/TimeZoneDescription';
+import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
 import { type WeekStart } from './WeekStartPicker';
 import { getQuickOptions } from './options';
 import { useTimeSync } from './utils/useTimeSync';
@@ -68,10 +68,6 @@ export interface TimeRangePickerProps {
   onToolbarTimePickerClick?: () => void;
   /** Which day of the week the calendar should start on. Possible values: "saturday", "sunday" or "monday" */
   weekStart?: WeekStart;
-}
-
-export interface State {
-  isOpen: boolean;
 }
 
 /**
@@ -248,19 +244,10 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 TimeRangePicker.displayName = 'TimeRangePicker';
 
 const ZoomOutTooltip = () => {
-  const newShortcuts = getFeatureToggle('newTimeRangeZoomShortcuts');
   return (
-    <>
-      {newShortcuts ? (
-        <Trans i18nKey="time-picker.range-picker.zoom-out-tooltip-new">
-          Time range zoom out <br /> t -
-        </Trans>
-      ) : (
-        <Trans i18nKey="time-picker.range-picker.zoom-out-tooltip">
-          Time range zoom out <br /> CTRL+Z
-        </Trans>
-      )}
-    </>
+    <Trans i18nKey="time-picker.range-picker.zoom-out-tooltip-new">
+      Time range zoom out <br /> t -
+    </Trans>
   );
 };
 
@@ -272,7 +259,7 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
   const timeZoneInfo = timeZone ? getTimeZoneInfo(timeZone, now) : undefined;
 
   return (
-    <>
+    <Stack alignItems="center" direction="column" gap={0}>
       <div className="text-center">
         {dateTimeFormat(timeRange.from, { timeZone })}
         <div className="text-center">
@@ -281,10 +268,10 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
         {dateTimeFormat(timeRange.to, { timeZone })}
       </div>
       <div className={styles.container}>
-        <span className={styles.utc}>{timeZoneFormatUserFriendly(timeZone)}</span>
+        <span className={styles.utc}>{timeZoneInfo ? getTimeZoneTitle(timeZoneInfo) : ''}</span>
         <TimeZoneDescription info={timeZoneInfo} />
       </div>
-    </>
+    </Stack>
   );
 };
 
@@ -349,16 +336,13 @@ const getLabelStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'baseline',
       whiteSpace: 'nowrap',
-      columnGap: theme.spacing(0.5),
+      columnGap: theme.spacing(0.75),
     }),
     utc: css({
-      color: theme.v1.palette.orange,
-      fontSize: theme.typography.size.sm,
-      paddingLeft: '6px',
-      lineHeight: '28px',
-      verticalAlign: 'bottom',
+      color: theme.colors.warning.text,
+      fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
     }),
   };

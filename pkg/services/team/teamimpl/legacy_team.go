@@ -93,7 +93,7 @@ func (s *LegacyService) GetTeamsByUser(ctx context.Context, query *team.GetTeams
 	return s.store.GetByUser(ctx, query)
 }
 
-func (s *LegacyService) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
+func (s *LegacyService) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, []string, error) {
 	ctx, span := s.tracer.Start(ctx, "team.GetTeamIDsByUser", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),
 		attribute.Int64("userID", query.UserID),

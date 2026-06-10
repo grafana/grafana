@@ -25,11 +25,5 @@ describe('getTimeZoneInfo', () => {
       const result = getTimeZoneInfo('Europe/Warsaw', Date.now());
       expect(result?.ianaName).toBe('Europe/Warsaw');
     });
-
-    it('should not think Singapore is in Antarctica', () => {
-      const result = getTimeZoneInfo('Asia/Singapore', Date.now());
-      expect(result).not.toBeUndefined();
-      expect(result!.countries).not.toContainEqual({ code: 'AQ', name: 'Antarctica' });
-    });
   });
 });

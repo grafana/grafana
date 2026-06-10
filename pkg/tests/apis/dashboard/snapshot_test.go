@@ -12,10 +12,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -82,15 +81,15 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 
 			t.Log("Testing:", tc.description)
 
-			t.Run("RBAC denies GET without snapshots:read", func(t *testing.T) {
-				// First create a snapshot as admin
+			t.Run("GET snapshot is always public", func(t *testing.T) {
+				// Create a snapshot as admin
 				createResp := createSnapshotViaSubresource(t, helper, ns)
 				require.NotEmpty(t, createResp.Key)
 
-				// Try to get the snapshot as a user with no permissions
-				_, err := noneClient.Resource.Get(context.Background(), createResp.Key, metav1.GetOptions{})
-				require.Error(t, err, "user without snapshots:read should be denied")
-				assert.Contains(t, err.Error(), "forbidden", "error should indicate forbidden access")
+				// A user with no permissions can still GET a snapshot (snapshots are shared via URL)
+				got, err := noneClient.Resource.Get(context.Background(), createResp.Key, metav1.GetOptions{})
+				require.NoError(t, err, "GET on snapshots should always be allowed")
+				assert.Equal(t, createResp.Key, got.GetName())
 			})
 
 			t.Run("RBAC denies LIST without snapshots:read", func(t *testing.T) {
@@ -222,8 +221,8 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 
 			t.Run("list snapshots", func(t *testing.T) {
 				// Create multiple snapshots
-				createdSnapshots := []string{}
-				for i := 0; i < 3; i++ {
+				createdSnapshots := make([]string, 0, 3)
+				for range 3 {
 					resp := createSnapshotViaSubresource(t, helper, ns)
 					require.NotEmpty(t, resp.Key)
 					createdSnapshots = append(createdSnapshots, resp.Key)

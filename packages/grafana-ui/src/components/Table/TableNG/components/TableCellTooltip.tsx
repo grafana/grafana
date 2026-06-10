@@ -8,11 +8,11 @@ import {
   memo,
   type RefObject,
 } from 'react';
-import { type DataGridHandle } from 'react-data-grid';
 
 import { type ActionModel, type DataFrame, type Field, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { type DataGridHandle } from '@grafana/react-data-grid';
 import { type TableCellTooltipPlacement } from '@grafana/schema';
 
 import { Popover } from '../../../Tooltip/Popover';

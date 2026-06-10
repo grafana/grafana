@@ -168,6 +168,8 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		Logger:                l,
 		Metrics:               alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer, l),
 		NotificationHistorian: notificationHistorian,
+
+		BuildWithManifestBuilder: true,
 	}
 
 	gam, err := alertingNotify.NewGrafanaAlertmanager(opts)

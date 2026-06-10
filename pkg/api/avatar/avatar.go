@@ -45,7 +45,7 @@ type AvatarCacheServer struct {
 }
 
 var (
-	looksLikeMD5 = regexp.MustCompile("^[a-fA-F0-9]{32}$")
+	looksLikeGravatarHash = regexp.MustCompile("^(?:[a-fA-F0-9]{32}|[a-fA-F0-9]{64})$")
 
 	// Parameters needed to fetch Gravatar with a retro fallback
 	gravatarFetchParams = url.Values{"d": {"retro"}, "size": {"200"}, "r": {"pg"}}.Encode()
@@ -57,7 +57,7 @@ var (
 func (a *AvatarCacheServer) Handler(ctx *contextmodel.ReqContext) {
 	hash := web.Params(ctx.Req)[":hash"]
 
-	if !looksLikeMD5.MatchString(hash) {
+	if !looksLikeGravatarHash.MatchString(hash) {
 		ctx.JsonApiErr(404, "Avatar not found", nil)
 		return
 	}

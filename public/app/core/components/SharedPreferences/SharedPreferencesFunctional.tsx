@@ -1,12 +1,12 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { memo, useMemo, useState, useEffect } from 'react';
+import { memo, useState, useEffect } from 'react';
 
-import { type PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
+  Alert,
   Box,
   Button,
   Combobox,
@@ -23,32 +23,27 @@ import {
   type WeekStart,
   WeekStartPicker,
 } from '@grafana/ui';
-import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
 
 import { DashboardPicker } from '../Select/DashboardPicker';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
-import { languageChanged, regionalFormatChanged, saveButtonClicked, themeChanged } from './analytics/main';
-import {
-  getLanguageOptions,
-  getRegionalFormatOptions,
-  getStyles,
-  getTranslatedThemeName,
-  type Props,
-  type State,
-} from './utils';
+import { languageChanged, saveButtonClicked, themeChanged } from './analytics/main';
+import { useSharedPreferences } from './useSharedPreferences';
+import { getLanguageOptions, getStyles, getTranslatedThemeName, type PrefsState, type Props } from './utils';
 
 export const SharedPreferencesFunctional = memo((props: Props) => {
+  const { resourceUri } = props;
+
+  const [updatePreferences, { preferences: prefs, isLoading, isError, isUpdating, isUpdateError }] =
+    useSharedPreferences(resourceUri);
+
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
-  const [state, setState] = useState<UserPreferencesDTO & State>({
-    isLoading: false,
-    isSubmitting: false,
-    theme: '',
+  const [state, setState] = useState<PrefsState>({
+    theme: undefined,
     timezone: '',
     weekStart: '',
     language: '',
-    regionalFormat: '',
     queryHistory: { homeTab: '' },
     navbar: { bookmarkUrls: [] },
     homeDashboardUID: '',
@@ -56,8 +51,6 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
   const themes = getSelectableThemes();
   const styles = useStyles2(getStyles);
-
-  const service = useMemo(() => new PreferencesService(props.resourceUri), [props.resourceUri]);
 
   // Options are translated, so must be called after init but call them
   // in constructor to avoid memo-break of array changing every render
@@ -67,40 +60,23 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     group: theme.isExtra ? t('shared-preferences.theme.experimental', 'Experimental') : undefined,
   }));
   const languageOptions: ComboboxOption[] = getLanguageOptions();
-  const regionalFormatOptions: ComboboxOption[] = getRegionalFormatOptions();
 
   // Add default option
   themeOptions.unshift({ value: '', label: t('shared-preferences.theme.default-label', 'Default') });
 
+  //TODO - stop copying API in a separate state, use react form hooks instead
   useEffect(() => {
-    const loadPreferences = async () => {
-      setState((prev) => ({ ...prev, isLoading: true }));
-      try {
-        const prefs = await service.load();
-        setState((prev) => ({
-          ...prev,
-          homeDashboardUID: prefs.homeDashboardUID ?? prev.homeDashboardUID,
-          theme: prefs.theme ?? prev.theme,
-          timezone: prefs.timezone ?? prev.timezone,
-          weekStart: prefs.weekStart ?? prev.weekStart,
-          language: prefs.language ?? prev.language,
-          regionalFormat: prefs.regionalFormat ?? prev.regionalFormat,
-          queryHistory: prefs.queryHistory ?? prev.queryHistory,
-          navbar: prefs.navbar ?? prev.navbar,
-        }));
-      } catch (err) {
-        console.error('Failed to load preferences', err);
-      } finally {
-        setState((prev) => ({ ...prev, isLoading: false }));
-      }
-    };
-
-    loadPreferences();
-  }, [service]);
+    if (prefs) {
+      setState(prefs);
+    }
+  }, [prefs]);
 
   const handleSubmitForm = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const confirmationResult = props.onConfirm ? await props.onConfirm() : true;
+    if (!confirmationResult) {
+      return;
+    }
     if (isAnalyticsFrameworkEnabled) {
       saveButtonClicked({
         preferenceType: props.preferenceType,
@@ -108,7 +84,6 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
         language: state.language,
       });
     } else {
-      // eslint-disable-next-line no-restricted-syntax
       reportInteraction('grafana_preferences_save_button_clicked', {
         preferenceType: props.preferenceType,
         theme: state.theme,
@@ -116,24 +91,15 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
       });
     }
 
-    if (!confirmationResult) {
+    const prefsData = state;
+    // prevent page reload on save failure so the error banner remains visible
+    try {
+      await updatePreferences(prefsData);
+    } catch {
+      // error is surfaced via isUpdateError — just prevent the reload below
       return;
     }
-    setState((prev) => ({ ...prev, isSubmitting: true }));
-    await service
-      .update({
-        homeDashboardUID: state.homeDashboardUID,
-        theme: state.theme,
-        timezone: state.timezone,
-        weekStart: state.weekStart,
-        language: state.language,
-        regionalFormat: state.regionalFormat,
-        queryHistory: state.queryHistory,
-        navbar: state.navbar,
-      })
-      .finally(() => {
-        setState((prev) => ({ ...prev, isSubmitting: false }));
-      });
+
     window.location.reload();
   };
 
@@ -180,25 +146,8 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
         preferenceType: props.preferenceType,
       });
     } else {
-      // eslint-disable-next-line no-restricted-syntax
       reportInteraction('grafana_preferences_language_changed', {
         toLanguage: language,
-        preferenceType: props.preferenceType,
-      });
-    }
-  };
-
-  const handleRegionalFormatChanged = (regionalFormat: string) => {
-    setState((prev) => ({ ...prev, regionalFormat }));
-    if (isAnalyticsFrameworkEnabled) {
-      regionalFormatChanged({
-        toRegionalFormat: regionalFormat,
-        preferenceType: props.preferenceType,
-      });
-    } else {
-      // eslint-disable-next-line no-restricted-syntax
-      reportInteraction('grafana_preferences_regional_format_changed', {
-        toRegionalFormat: regionalFormat,
         preferenceType: props.preferenceType,
       });
     }
@@ -208,12 +157,21 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
   return (
     <form onSubmit={handleSubmitForm} className={styles.form}>
+      {isError && (
+        <Alert severity="error" title={t('shared-preferences.error.get-preferences', 'Error loading preferences')} />
+      )}
+      {isUpdateError && (
+        <Alert
+          severity="error"
+          title={t('shared-preferences.error.update-preferences', 'Error updating preferences')}
+        />
+      )}
       <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={props.disabled}>
         <Stack direction="column" gap={2}>
           <Field
             noMargin
-            loading={state.isLoading}
-            disabled={state.isLoading}
+            loading={isLoading}
+            disabled={isLoading}
             label={t('shared-preferences.fields.theme-label', 'Interface theme')}
             description={
               config.featureToggles.grafanaconThemes && config.feedbackLinksEnabled ? (
@@ -240,8 +198,8 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
           <Field
             noMargin
-            loading={state.isLoading}
-            disabled={state.isLoading}
+            loading={isLoading}
+            disabled={isLoading}
             label={
               <Label htmlFor="home-dashboard-select">
                 <span className={styles.labelText}>
@@ -263,7 +221,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
           <Field
             noMargin
-            disabled={state.isLoading}
+            disabled={isLoading}
             label={t('shared-dashboard.fields.timezone-label', 'Timezone')}
             data-testid={selectors.components.TimeZonePicker.containerV2}
           >
@@ -277,8 +235,8 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
           <Field
             noMargin
-            loading={state.isLoading}
-            disabled={state.isLoading}
+            loading={isLoading}
+            disabled={isLoading}
             label={t('shared-preferences.fields.week-start-label', 'Week start')}
             data-testid={selectors.components.WeekStartPicker.containerV2}
           >
@@ -291,8 +249,8 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
           <Field
             noMargin
-            loading={state.isLoading}
-            disabled={state.isLoading}
+            loading={isLoading}
+            disabled={isLoading}
             label={
               <Label htmlFor="language-preference-select">
                 <span className={styles.labelText}>
@@ -311,39 +269,11 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
               id="language-preference-select"
             />
           </Field>
-          {config.featureToggles.localeFormatPreference && (
-            <Field
-              noMargin
-              loading={state.isLoading}
-              disabled={state.isLoading}
-              label={
-                <Label htmlFor="locale-preference">
-                  <span className={styles.labelText}>
-                    <Trans i18nKey="shared-preferences.fields.locale-preference-label">Region format</Trans>
-                  </span>
-                  <FeatureBadge featureState={FeatureState.preview} />
-                </Label>
-              }
-              description={t(
-                'shared-preferences.fields.locale-preference-description',
-                'Choose your region to see the corresponding date, time, and number format'
-              )}
-              data-testid="User preferences locale drop down"
-            >
-              <Combobox
-                value={regionalFormatOptions.find((loc) => loc.value === state.regionalFormat)?.value || ''}
-                onChange={(locale: ComboboxOption | null) => handleRegionalFormatChanged(locale?.value ?? '')}
-                options={regionalFormatOptions}
-                placeholder={t('shared-preferences.fields.locale-preference-placeholder', 'Choose region')}
-                id="locale-preference-select"
-              />
-            </Field>
-          )}
         </Stack>
       </FieldSet>
       <Box marginTop={6}>
         <Button
-          disabled={state.isSubmitting}
+          disabled={isUpdating}
           type="submit"
           variant="primary"
           data-testid={selectors.components.UserProfile.preferencesSaveButton}
