@@ -102,9 +102,9 @@ func (l *ipRateLimiter) evictOldest() {
 	delete(l.buckets, key)
 }
 
-func (l *ipRateLimiter) wrap(next http.Handler) http.Handler {
+func (l *ipRateLimiter) wrap(tenant string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !l.allow(l.clientKey(r), time.Now()) {
+		if !l.allow(l.clientKey(tenant, r), time.Now()) {
 			http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
 			return
 		}
@@ -112,11 +112,20 @@ func (l *ipRateLimiter) wrap(next http.Handler) http.Handler {
 	})
 }
 
-// clientKey derives the rate-limiting key for a request. Client-supplied
-// forwarding headers are trusted only when trustedProxyDepth > 0, i.e. the
-// endpoint is declared to sit behind that many trusted reverse proxies;
-// otherwise the real TCP peer (RemoteAddr) is used so a forged header cannot
-// evade the limit.
+// clientKey derives the rate-limiting key: the tenant (request namespace) joined
+// with the client IP. The endpoint is multi-tenant, so keying on the namespace
+// isolates tenants — a burst from one tenant cannot throttle another's
+// deliveries. The IP component keeps a direct attacker in a separate bucket from
+// GitHub's shared egress IPs within the same tenant, so throttling the attacker
+// does not 429 (and thereby drop) that tenant's legitimate webhook events.
+func (l *ipRateLimiter) clientKey(tenant string, r *http.Request) string {
+	return tenant + "|" + l.clientIP(r)
+}
+
+// clientIP resolves the client address. Client-supplied forwarding headers are
+// trusted only when trustedProxyDepth > 0, i.e. the endpoint is declared to sit
+// behind that many trusted reverse proxies; otherwise the real TCP peer
+// (RemoteAddr) is used so a forged header cannot evade the limit.
 //
 // When trusted, X-Real-Ip is preferred: infrastructure in front of Grafana
 // (such as the Grafana Cloud gateway) sets it to the resolved client IP and
@@ -124,7 +133,7 @@ func (l *ipRateLimiter) wrap(next http.Handler) http.Handler {
 // X-Forwarded-For is the fallback, where the rightmost trustedProxyDepth entries
 // are treated as inserted by our own infrastructure and the entry just before
 // them is the originating client.
-func (l *ipRateLimiter) clientKey(r *http.Request) string {
+func (l *ipRateLimiter) clientIP(r *http.Request) string {
 	peer := remoteHost(r.RemoteAddr)
 	if l.trustedProxyDepth <= 0 {
 		return peer
