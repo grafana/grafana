@@ -2,6 +2,52 @@
 
 Tracking issue: [alerting-squad#1756](https://github.com/grafana/alerting-squad/issues/1756) — _Align on filtering behavior and API support_.
 
+## Implementation status
+
+**Landed (committed):**
+
+- The three namespaced custom routes (`/search`, `/search/alertrules`, `/search/recordingrules`)
+  with generated request-params and response/hit types.
+- A **legacy** search backend: a handler backed by the provisioning `AlertRuleService`.
+  Selector-expressible filters are pushed to the service; free-text title, rule-label matchers
+  (plugin-origin via a label existence check), and source-datasource filters run in memory, with
+  title/group sorting and offset pagination.
+- Unit tests for the filter/sort/paginate logic and an e2e test (runnable under multiple
+  dual-writer modes).
+
+**Next — mode-routed legacy/unified search (the agreed target architecture).** The search must be
+part of the k8s-client path and alternate between the legacy and unified backends by the resource's
+dual-writer mode, using the built-in router rather than a bespoke switch. Concrete plan with
+references:
+
+1. **Wrap legacy as a `resourcepb.ResourceIndexClient`.** Mirror
+   [pkg/registry/apis/iam/team/legacy_search.go](../../../pkg/registry/apis/iam/team/legacy_search.go)
+   (`LegacyTeamSearchClient`): embed `resourcepb.ResourceIndexClient`, implement only `Search` by
+   reading filters/sort/limit/page out of the `ResourceSearchRequest` (reusing the existing
+   `query.go` logic) and emitting a `ResourceTable` (columns + rows keyed by rule UID).
+2. **Route by mode with the built-in wrapper.**
+   `resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), gr, unifiedClient, legacyClient)`
+   ([pkg/storage/unified/resource/search_client.go](../../../pkg/storage/unified/resource/search_client.go)).
+   It dispatches per-request via `dual.ReadFromUnified(ctx, gr)` (modes 0–2 → legacy, 3+ → unified),
+   with shadow-traffic/metrics built in.
+3. **Index rules for the unified path.** Add AlertRule/RecordingRule document builders under
+   [pkg/storage/unified/search/builders/](../../../pkg/storage/unified/search/builders/) (mirror
+   `dashboard.go`) declaring the searchable columns (title, folder, group, paused, source DS,
+   labels) and register them in `builders.All`.
+4. **Wire dependencies.** Add `resource.ResourceClient` and `dualwrite.Service` to
+   `RegisterAppInstaller` (both are existing DI providers); regenerate wire.
+5. **Reshape the handler + response.** The router returns `ResourceSearchResponse` (a `ResourceTable`
+   of indexed columns), so hits become **indexed-column summaries** (like `DashboardHit`), not full
+   `metadata + spec`. Update the CUE response/hit types accordingly and mirror
+   [pkg/services/dashboards/service/search/search.go](../../../pkg/services/dashboards/service/search/search.go)
+   `ParseResults` to turn rows into hits.
+6. **Verify both modes** (e2e under legacy and unified dual-writer modes; the unified path needs a
+   running storage+search backend to validate).
+
+**Note on rules as source of truth:** the ngalert SQL store is what the alerting engine evaluates
+from. The unified path is for serving the k8s read/search surface as rules migrate to unified
+storage; engine evaluation moving off the SQL store is a separate, larger migration.
+
 ## Goal
 
 The current rule list UI is powered by the old Prometheus endpoint

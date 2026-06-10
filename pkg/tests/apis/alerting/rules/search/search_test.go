@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"testing"
 	"time"
@@ -11,9 +12,12 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -27,8 +31,24 @@ const searchFolder = "search-folder"
 func TestIntegrationRuleSearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	// Search reads through the provisioning service (the ngalert SQL store), so
+	// results must be correct whichever dual-writer mode the rule resources run
+	// in. Legacy is written (and authoritative) in modes 0-3.
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode2} {
+		t.Run(fmt.Sprintf("dualWriterMode=%d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"alertrules.rules.alerting.grafana.app":     {DualWriterMode: mode},
+					"recordingrules.rules.alerting.grafana.app": {DualWriterMode: mode},
+				},
+			})
+			runRuleSearchTests(t, helper)
+		})
+	}
+}
+
+func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 	ctx := context.Background()
-	helper := common.GetTestHelper(t)
 	common.CreateTestFolder(t, helper, searchFolder)
 
 	alertClient := common.NewAlertRuleClient(t, helper.Org1.Admin)
