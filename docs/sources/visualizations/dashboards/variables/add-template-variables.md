@@ -10,7 +10,6 @@ aliases:
   - ../../../variables/add-template-variables/ # /docs/grafana/next/variables/add-template-variables/
   - ../../../variables/add-text-box-variable/ # /docs/grafana/next/variables/add-text-box-variable/
   - ../../../variables/formatting-multi-value-variables/ # /docs/grafana/next/variables/formatting-multi-value-variables/
-  - ../../../variables/global-variables/ # /docs/grafana/next/variables/global-variables/
   - ../../../variables/manage-variable/ # /docs/grafana/next/variables/manage-variable/
   - ../../../variables/variable-selection-options/ # /docs/grafana/next/variables/variable-selection-options/
   - ../../../variables/variable-types/ # /docs/grafana/next/variables/variable-types/
@@ -21,7 +20,6 @@ aliases:
   - ../../../variables/variable-types/add-interval-variable/ # /docs/grafana/next/variables/variable-types/add-interval-variable/
   - ../../../variables/variable-types/add-query-variable/ # /docs/grafana/next/variables/variable-types/add-query-variable/
   - ../../../variables/variable-types/add-text-box-variable/ # /docs/grafana/next/variables/variable-types/add-text-box-variable/
-  - ../../../variables/variable-types/global-variables/ # /docs/grafana/next/variables/variable-types/global-variables/
   - ../../../dashboards/variables/add-template-variables/ # /docs/grafana/next/dashboards/variables/add-template-variables/
 keywords:
   - grafana
