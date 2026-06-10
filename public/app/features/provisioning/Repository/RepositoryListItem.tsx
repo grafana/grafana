@@ -5,13 +5,14 @@ import { type GrafanaTheme2, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Badge, Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
+import { getResourceLabel, getResourceListUrl } from '../utils/resourceKinds';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -84,9 +85,12 @@ export function RepositoryListItem({ repository }: Props) {
                   fill="outline"
                   size="md"
                   variant="secondary"
-                  href={getListURL(repository, stat)}
+                  href={getResourceListUrl(stat.group, stat.resource, {
+                    repoName: name,
+                    syncTarget: spec?.sync.target,
+                  })}
                 >
-                  {stat.count} {stat.resource}
+                  {stat.count} {getResourceLabel(stat.group, stat.resource)}
                 </LinkButton>
               ))}
             </Stack>
@@ -120,17 +124,6 @@ export function RepositoryListItem({ repository }: Props) {
       </Card.Actions>
     </Card>
   );
-}
-
-// Helper function
-function getListURL(repo: Repository, stats: ResourceCount): string {
-  if (stats.resource === 'playlists') {
-    return '/playlists';
-  }
-  if (repo.spec?.sync.target === 'folder') {
-    return `/dashboards/f/${repo.metadata?.name}`;
-  }
-  return '/dashboards';
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
