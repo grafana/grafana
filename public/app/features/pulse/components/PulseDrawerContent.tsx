@@ -29,7 +29,7 @@ import {
   useListPanelMentionsQuery,
   useListThreadsQuery,
 } from '../api/pulseApi';
-import { useAssistantAutoReply } from '../hooks/useAssistantAutoReply';
+import { useAssistantAutoReply, type PanelSnapshot } from '../hooks/useAssistantAutoReply';
 import { useResourcePulseStream } from '../hooks/useResourcePulseStream';
 import { type PulseThread } from '../types';
 import { type PanelSuggestion } from '../utils/lookups';
@@ -45,6 +45,11 @@ interface Props {
   /** Free-form search needle. Empty / whitespace-only is no filter. */
   searchFilter?: string;
   panels?: PanelSuggestion[];
+  /** Resolves a panel's live configuration for the assistant auto-reply, so
+   *  an @assistant pulse gets the panel's queries/type/thresholds embedded
+   *  in its prompt. Supplied by the dashboard scene; omit on surfaces
+   *  without scene access (the prompt then names the panel only). */
+  getPanelSnapshot?: (panelId: number) => PanelSnapshot | undefined;
   /** Extra resource sources for the composer's `#` picker on this
    *  surface. The dashboard drawer passes sibling dashboards here so
    *  a thread can reference other dashboards in the same folder
@@ -108,6 +113,7 @@ export function PulseDrawerContent({
   authorFilter,
   searchFilter,
   panels,
+  getPanelSnapshot,
   resourceMentions,
   currentUserId,
   isAdmin = false,
@@ -349,6 +355,7 @@ export function PulseDrawerContent({
           thread={activeThread}
           panels={panels}
           panelTitlesById={panelTitlesById}
+          getPanelSnapshot={getPanelSnapshot}
           resourceMentions={resourceMentions}
           currentUserId={currentUserId}
           isAdmin={isAdmin}
@@ -417,6 +424,10 @@ export function PulseDrawerContent({
                 // which panel — even without an explicit #panel chip. This
                 // informs the prompt only; it does not anchor the thread.
                 fallbackPanelId: panelFilter,
+                // Lets the prompt embed the panel's live config (queries,
+                // type, thresholds) — the only way the tool-less inline
+                // assistant can know what the panel shows.
+                getPanelSnapshot,
               });
             }}
           />

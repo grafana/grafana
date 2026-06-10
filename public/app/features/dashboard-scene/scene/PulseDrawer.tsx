@@ -11,12 +11,16 @@ import {
   type SceneObjectUrlSyncHandler,
   SceneObjectUrlSyncConfig,
   sceneGraph,
+  SceneQueryRunner,
+  SceneDataTransformer,
   VizPanel,
 } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type CurrentTimeRange, type ResourceMentionSource } from 'app/features/pulse/components/PulseComposer';
 import { PulseDrawerContent } from 'app/features/pulse/components/PulseDrawerContent';
+import { type PanelSnapshot } from 'app/features/pulse/hooks/useAssistantAutoReply';
 import { useFolderDashboards } from 'app/features/pulse/hooks/useFolderDashboards';
 import { type PanelSuggestion } from 'app/features/pulse/utils/lookups';
 
@@ -220,6 +224,11 @@ function PulseDrawerRenderer({ model }: SceneComponentProps<PulseDrawer>) {
   const resourceUID = dashboard.state.uid ?? '';
   const panels = collectPanels(dashboard);
   const currentUserId = contextSrv.user.id;
+
+  // Resolver handed to the assistant auto-reply so it can embed a panel's
+  // real configuration in the prompt. Lazy on purpose — only invoked when a
+  // pulse actually tags @assistant, so we don't walk every panel per render.
+  const getPanelSnapshot = useCallback((panelId: number) => buildPanelSnapshot(dashboard, panelId), [dashboard]);
   // Reopen-thread is admin-only; close+delete-thread also surface for
   // org admins so a moderation flow exists even when the original
   // author has rotated out.
@@ -290,6 +299,7 @@ function PulseDrawerRenderer({ model }: SceneComponentProps<PulseDrawer>) {
         authorFilter={authorFilter}
         searchFilter={searchFilter}
         panels={panels}
+        getPanelSnapshot={getPanelSnapshot}
         resourceMentions={resourceMentions}
         currentUserId={currentUserId}
         isAdmin={isAdmin}
@@ -336,6 +346,89 @@ function collectPanels(dashboard: DashboardScene): PanelSuggestion[] {
     out.push({ id, title: obj.state.title || `Panel ${id}` });
   }
   return out;
+}
+
+/**
+ * buildPanelSnapshot distills a single panel's live configuration into the
+ * slice worth handing to the assistant: visualization type, datasource,
+ * query expressions, unit, and thresholds. The inline assistant can't open
+ * the dashboard, so this is the only knowledge it gets about the panel.
+ * Returns undefined when the panel is gone or yields nothing useful, so the
+ * prompt falls back to naming the panel rather than an empty block.
+ */
+function buildPanelSnapshot(dashboard: DashboardScene, panelId: number): PanelSnapshot | undefined {
+  if (!dashboard.state.body) {
+    return undefined;
+  }
+  const panel = sceneGraph
+    .findAllObjects(dashboard, (obj) => obj instanceof VizPanel)
+    .find((obj): obj is VizPanel => obj instanceof VizPanel && panelIdFromVizPanelKey(obj) === panelId);
+  if (!panel) {
+    return undefined;
+  }
+
+  const snapshot: PanelSnapshot = {};
+  if (panel.state.pluginId) {
+    snapshot.panelType = panel.state.pluginId;
+  }
+  const description = panel.state.description?.trim();
+  if (description) {
+    snapshot.description = description;
+  }
+
+  const runner = getQueryRunner(panel);
+  if (runner) {
+    const dsType = runner.state.datasource?.type;
+    if (dsType) {
+      snapshot.datasourceType = dsType;
+    }
+    const queries = runner.state.queries.map(queryExpression).filter((q): q is string => Boolean(q));
+    if (queries.length > 0) {
+      snapshot.queries = queries;
+    }
+  }
+
+  const defaults = panel.state.fieldConfig?.defaults;
+  if (defaults?.unit) {
+    snapshot.unit = defaults.unit;
+  }
+  const steps = defaults?.thresholds?.steps;
+  if (steps && steps.length > 0) {
+    // The base step carries -Infinity (sometimes null) as its bound; label
+    // it "base" rather than emitting a sentinel number into the prompt.
+    snapshot.thresholds = steps.map((s) => `${Number.isFinite(s.value) ? s.value : 'base'}:${s.color}`);
+  }
+
+  return Object.keys(snapshot).length > 0 ? snapshot : undefined;
+}
+
+/**
+ * getQueryRunner walks a panel's data provider to the underlying query
+ * runner, unwrapping a transformer when one sits in between. Inlined here
+ * (rather than importing `getQueryRunnerFor` from `../utils/utils.ts`) for
+ * the same circular-dependency reason documented at the top of this file.
+ */
+function getQueryRunner(panel: VizPanel): SceneQueryRunner | undefined {
+  let provider = panel.state.$data ?? panel.parent?.state.$data;
+  while (provider instanceof SceneDataTransformer) {
+    provider = provider.state.$data;
+  }
+  return provider instanceof SceneQueryRunner ? provider : undefined;
+}
+
+/** queryExpression best-effort extracts a human-readable expression from a
+ *  query, trying the common per-datasource fields, prefixed with the query's
+ *  refId so the model can refer to "query A". */
+function queryExpression(query: DataQuery): string | undefined {
+  // Expression lives in a datasource-specific field that isn't on the base
+  // DataQuery type; read it dynamically rather than asserting a shape.
+  for (const field of ['expr', 'rawSql', 'rawQuery', 'query', 'expression']) {
+    const value = Reflect.get(query, field);
+    if (typeof value === 'string' && value.trim()) {
+      return query.refId ? `${query.refId}: ${value.trim()}` : value.trim();
+    }
+  }
+  return undefined;
 }
 
 /** isPulseEnabled gates everything Pulse-related on the feature toggle. */

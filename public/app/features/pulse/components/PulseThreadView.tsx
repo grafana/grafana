@@ -17,7 +17,7 @@ import {
   useMarkReadMutation,
   useReopenThreadMutation,
 } from '../api/pulseApi';
-import { useAssistantAutoReply } from '../hooks/useAssistantAutoReply';
+import { useAssistantAutoReply, type PanelSnapshot } from '../hooks/useAssistantAutoReply';
 import { type Pulse, type PulseBody, type PulseMention, type PulseThread } from '../types';
 import { bodyToMarkdown } from '../utils/body';
 import { type PanelSuggestion } from '../utils/lookups';
@@ -34,6 +34,10 @@ interface Props {
    * back to their stored displayName.
    */
   panelTitlesById?: ReadonlyMap<number, string>;
+  /** Resolves the thread's panel configuration for the assistant auto-reply,
+   *  so a reply tagging @assistant embeds the panel's queries/type in its
+   *  prompt. Supplied by the dashboard scene; omit elsewhere. */
+  getPanelSnapshot?: (panelId: number) => PanelSnapshot | undefined;
   /** Source for the `#` picker in the reply / edit composer when the
    *  thread lives outside a dashboard (today: the folder Pulse tab).
    *  When provided, replies on this thread offer `#dashboard` (or
@@ -75,6 +79,7 @@ export function PulseThreadView({
   thread,
   panels,
   panelTitlesById,
+  getPanelSnapshot,
   resourceMention,
   resourceMentions,
   currentUserId,
@@ -133,6 +138,9 @@ export function PulseThreadView({
       // Fall back to the drawer's panel scope so a reply from "Pulse on this
       // panel" still tells the assistant which panel, chip or not.
       fallbackPanelId: panelFilter,
+      // Lets the prompt embed the panel's live config — the tool-less inline
+      // assistant can't otherwise know what the panel shows.
+      getPanelSnapshot,
     });
   }
 

@@ -41,6 +41,32 @@ export interface AssistantReplyContext {
    *  same rename-resilient map the renderer uses), rather than a stale chip
    *  label. */
   panelTitlesById?: ReadonlyMap<number, string>;
+  /** Resolver for a panel's current configuration, used to embed what the
+   *  panel actually shows into the prompt. The inline assistant is a plain
+   *  LLM call with no dashboard access — it can't open the dashboard or run
+   *  tools — so config we don't hand it, it can't see. Supplied by the scene
+   *  layer (which holds the live `VizPanel`); omitted on surfaces without
+   *  scene access, where the prompt degrades to naming the panel only. */
+  getPanelSnapshot?: (panelId: number) => PanelSnapshot | undefined;
+}
+
+/** PanelSnapshot is the slice of a panel's configuration worth handing to
+ *  the assistant so it can reason about what the panel shows. Every field
+ *  is optional — the formatter emits only what's present. */
+export interface PanelSnapshot {
+  /** Panel plugin id, e.g. "timeseries", "stat", "gauge". */
+  panelType?: string;
+  /** Author-written panel description, when set. */
+  description?: string;
+  /** Datasource type backing the queries, e.g. "prometheus", "loki". */
+  datasourceType?: string;
+  /** Human-readable query expressions (PromQL/LogQL/SQL/…), best-effort
+   *  pulled from each target's expression field, prefixed with its refId. */
+  queries?: string[];
+  /** Display unit, e.g. "bytes", "percent". */
+  unit?: string;
+  /** Threshold steps formatted as "value:color", ascending. */
+  thresholds?: string[];
 }
 
 /** bodyTagsAssistant reports whether a composed body contains an
@@ -162,25 +188,32 @@ function buildContextLine(body: PulseBody, ctx: AssistantReplyContext): string |
   }
 
   const link = dashboardLink(ctx.dashboardUID, panelId);
-  // Identify the dashboard by UID and tell the assistant to load it *through
-  // its own dashboard tools* (which query Grafana's API in-session). The
-  // link is only a human-facing reference — earlier wording ("open it here:
-  // <url>") made the model try to HTTP-fetch the URL, which fails because
-  // config.appUrl is unreachable from the assistant's runtime (e.g.
-  // localhost:3000 in dev).
+
+  // The inline assistant is a bare LLM call: no tools, no dashboard access,
+  // no ability to fetch a URL. Earlier prompts that told it to "open the
+  // link" or "use your dashboard tools" asked for things it can't do — it
+  // would try to HTTP-fetch an unreachable config.appUrl, or reply that it
+  // has no such tools. So instead we *hand it* the panel's configuration
+  // inline (the only knowledge it can have), and the link stays a plain
+  // human reference for whoever reads the thread.
   //
-  // escapeValue:false keeps the URL (and any "/" or "&" in titles) intact —
-  // this string is an LLM prompt, not HTML, so i18next's default
-  // entity-escaping would corrupt the values.
+  // escapeValue:false keeps the embedded config, URL, and any "/" or "&" in
+  // titles intact — this string is an LLM prompt, not HTML, so i18next's
+  // default entity-escaping would corrupt the values.
   if (panelId !== undefined) {
+    const snapshot = ctx.getPanelSnapshot?.(panelId);
+    const configText = snapshot ? formatPanelSnapshot(snapshot) : '';
+    const panelConfig = configText
+      ? `\n\nThe panel's current configuration:\n${configText}`
+      : '';
     return t(
       'pulse.assistant.context-panel',
-      'This question is from a Grafana Pulse conversation about the panel "{{panelTitle}}" (panel id {{panelId}}) on the dashboard "{{dashboardTitle}}" (dashboard UID {{dashboardUID}}). Use your dashboard tools to look up this dashboard by its UID and inspect the panel — do not fetch any URL. Reference link for the user: {{link}}',
+      'This question is from a Grafana Pulse conversation about the panel "{{panelTitle}}" (panel id {{panelId}}) on the dashboard "{{dashboardTitle}}".{{panelConfig}}\n\nYou are replying inside the conversation thread and cannot open the dashboard or run its queries yourself, so answer from the panel details above and the discussion. If you need data values or specifics you have not been given, ask the user. A reference link for the user: {{link}}',
       {
         panelTitle: panelTitle || `#${panelId}`,
         panelId,
         dashboardTitle,
-        dashboardUID: ctx.dashboardUID,
+        panelConfig,
         link,
         interpolation: { escapeValue: false },
       }
@@ -188,9 +221,38 @@ function buildContextLine(body: PulseBody, ctx: AssistantReplyContext): string |
   }
   return t(
     'pulse.assistant.context-dashboard',
-    'This question is from a Grafana Pulse conversation on the dashboard "{{dashboardTitle}}" (dashboard UID {{dashboardUID}}). Use your dashboard tools to look up this dashboard by its UID and inspect it — do not fetch any URL. Reference link for the user: {{link}}',
-    { dashboardTitle, dashboardUID: ctx.dashboardUID, link, interpolation: { escapeValue: false } }
+    'This question is from a Grafana Pulse conversation on the dashboard "{{dashboardTitle}}". You are replying inside the conversation thread and cannot open the dashboard yourself, so answer from the discussion. If you need specifics about the dashboard you have not been given, ask the user. A reference link for the user: {{link}}',
+    { dashboardTitle, link, interpolation: { escapeValue: false } }
   );
+}
+
+/** formatPanelSnapshot renders a PanelSnapshot as a compact, plain-text
+ *  block for the prompt. Plain English (not translated): it's structured
+ *  data fed to the model, which is itself prompted in English. */
+function formatPanelSnapshot(s: PanelSnapshot): string {
+  const lines: string[] = [];
+  if (s.panelType) {
+    lines.push(`- Visualization type: ${s.panelType}`);
+  }
+  if (s.description) {
+    lines.push(`- Description: ${s.description}`);
+  }
+  if (s.datasourceType) {
+    lines.push(`- Datasource type: ${s.datasourceType}`);
+  }
+  if (s.queries && s.queries.length > 0) {
+    lines.push('- Queries:');
+    for (const q of s.queries) {
+      lines.push(`    ${q}`);
+    }
+  }
+  if (s.unit) {
+    lines.push(`- Unit: ${s.unit}`);
+  }
+  if (s.thresholds && s.thresholds.length > 0) {
+    lines.push(`- Thresholds: ${s.thresholds.join(', ')}`);
+  }
+  return lines.join('\n');
 }
 
 /** dashboardLink builds an absolute dashboard URL (optionally focused on a

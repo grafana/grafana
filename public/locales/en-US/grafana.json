@@ -14209,8 +14209,8 @@
   },
   "pulse": {
     "assistant": {
-      "context-dashboard": "This question is from a Grafana Pulse conversation on the dashboard \"{{dashboardTitle}}\" (dashboard UID {{dashboardUID}}). Use your dashboard tools to look up this dashboard by its UID and inspect it — do not fetch any URL. Reference link for the user: {{link}}",
-      "context-panel": "This question is from a Grafana Pulse conversation about the panel \"{{panelTitle}}\" (panel id {{panelId}}) on the dashboard \"{{dashboardTitle}}\" (dashboard UID {{dashboardUID}}). Use your dashboard tools to look up this dashboard by its UID and inspect the panel — do not fetch any URL. Reference link for the user: {{link}}",
+      "context-dashboard": "This question is from a Grafana Pulse conversation on the dashboard \"{{dashboardTitle}}\". You are replying inside the conversation thread and cannot open the dashboard yourself, so answer from the discussion. If you need specifics about the dashboard you have not been given, ask the user. A reference link for the user: {{link}}",
+      "context-panel": "This question is from a Grafana Pulse conversation about the panel \"{{panelTitle}}\" (panel id {{panelId}}) on the dashboard \"{{dashboardTitle}}\".{{panelConfig}}\n\nYou are replying inside the conversation thread and cannot open the dashboard or run its queries yourself, so answer from the panel details above and the discussion. If you need data values or specifics you have not been given, ask the user. A reference link for the user: {{link}}",
       "empty-prompt": "Please help with this dashboard conversation.",
       "system-prompt": "You are the Grafana Assistant replying inside a dashboard conversation thread. Answer concisely and helpfully in Markdown.",
       "unavailable": "I'm the Grafana Assistant, but I'm not available in this Grafana instance right now, so I can't answer here."

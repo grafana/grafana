@@ -85,7 +85,7 @@ describe('useAssistantAutoReply', () => {
     });
   });
 
-  it('includes a dashboard/panel link in the prompt so the assistant can inspect it', async () => {
+  it('includes a dashboard/panel link in the prompt as a human reference', async () => {
     const { result } = renderHook(() => useAssistantAutoReply());
     await result.current(assistantBody, {
       threadUID: 't1',
@@ -101,6 +101,37 @@ describe('useAssistantAutoReply', () => {
     // The @assistant chip text is stripped from the question.
     expect(prompt).not.toContain('@Grafana Assistant');
     expect(prompt).toContain('explain');
+    // The inline assistant has no tools and can't fetch a URL, so the prompt
+    // must not instruct it to do either.
+    expect(prompt).not.toMatch(/use your dashboard tools/i);
+    expect(prompt).not.toMatch(/do not fetch/i);
+  });
+
+  it('embeds the panel configuration from getPanelSnapshot in the prompt', async () => {
+    const { result } = renderHook(() => useAssistantAutoReply());
+    await result.current(assistantBody, {
+      threadUID: 't1',
+      dashboardUID: 'dash-uid',
+      dashboardTitle: 'My dashboard',
+      panelId: 4,
+      panelTitle: 'Latency',
+      getPanelSnapshot: (id) => {
+        expect(id).toBe(4);
+        return {
+          panelType: 'timeseries',
+          datasourceType: 'prometheus',
+          queries: ['A: rate(http_requests_total[5m])'],
+          unit: 'reqps',
+          thresholds: ['base:green', '80:red'],
+        };
+      },
+    });
+    const prompt = lastGenerateOptions?.prompt ?? '';
+    expect(prompt).toContain('timeseries');
+    expect(prompt).toContain('prometheus');
+    expect(prompt).toContain('rate(http_requests_total[5m])');
+    expect(prompt).toContain('reqps');
+    expect(prompt).toContain('80:red');
   });
 
   it('uses the drawer panel scope (fallbackPanelId) when nothing more explicit is present', async () => {
