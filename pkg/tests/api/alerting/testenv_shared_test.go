@@ -78,4 +78,5 @@ func deleteFolder(t *testing.T, addr, folderUID string) {
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	_ = resp.Body.Close()
+	require.Equal(t, http.StatusOK, resp.StatusCode, "deleteFolder %s failed", folderUID)
 }
