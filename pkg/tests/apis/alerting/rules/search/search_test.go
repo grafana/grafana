@@ -96,6 +96,15 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Len(t, searchAlert(t, nil).Items, 3)
 	})
 
+	t.Run("alert rules: compact-view fields populated", func(t *testing.T) {
+		// interval is a config field common to both backends; assert it round
+		// trips consistently regardless of storage mode.
+		for _, h := range searchAlert(t, nil).Items {
+			require.NotNil(t, h.Interval, h.Title)
+			require.Equal(t, "10s", *h.Interval, h.Title)
+		}
+	})
+
 	t.Run("alert rules: free-text title filter", func(t *testing.T) {
 		require.ElementsMatch(t, []string{"cpu usage high", "memory usage high"}, alertTitles(searchAlert(t, url.Values{"q": {"usage"}})))
 	})
