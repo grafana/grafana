@@ -231,23 +231,23 @@ func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCal
 							Format:      "",
 						},
 					},
-					"committerName": {
+					"signerName": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Name used as the commit committer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to \"Grafana\".",
+							Description: "Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to \"Grafana\".",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"committerEmail": {
+					"signerEmail": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Email used as the commit committer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to \"noreply@grafana.com\".",
+							Description: "Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to \"noreply@grafana.com\".",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"signingFormat": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Format of the key in secure.signingKey. One of \"gpg\", \"ssh\", or \"smime\". When empty, commits are not signed.\n\nPossible enum values:\n - `\"gpg\"`\n - `\"smime\"`\n - `\"ssh\"`",
+							Description: "Format of the key in secure.commitSigningKey. One of \"gpg\", \"ssh\", or \"smime\". When empty, commits are not signed.\n\nPossible enum values:\n - `\"gpg\"`\n - `\"smime\"`\n - `\"ssh\"`",
 							Type:        []string{"string"},
 							Format:      "",
 							Enum:        []interface{}{"gpg", "smime", "ssh"},
@@ -255,7 +255,7 @@ func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCal
 					},
 					"smimeCertificate": {
 						SchemaProps: spec.SchemaProps{
-							Description: "PEM-encoded X.509 certificate paired with secure.signingKey when signingFormat is \"smime\". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats.",
+							Description: "PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingFormat is \"smime\". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -3306,7 +3306,7 @@ func schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref common.ReferenceCall
 							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
 						},
 					},
-					"signingKey": {
+					"commitSigningKey": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingFormat. When unset, commits are unsigned.",
 							Default:     map[string]interface{}{},

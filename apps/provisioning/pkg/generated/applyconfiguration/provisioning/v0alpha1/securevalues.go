@@ -18,7 +18,7 @@ type SecureValuesApplyConfiguration struct {
 	// Private key used to sign commits the repository writes back. The format
 	// is selected by spec.commit.signingFormat. When unset, commits are
 	// unsigned.
-	SigningKey *commonv0alpha1.InlineSecureValue `json:"signingKey,omitempty"`
+	CommitSigningKey *commonv0alpha1.InlineSecureValue `json:"commitSigningKey,omitempty"`
 }
 
 // SecureValuesApplyConfiguration constructs a declarative configuration of the SecureValues type for use with
@@ -43,10 +43,10 @@ func (b *SecureValuesApplyConfiguration) WithWebhookSecret(value commonv0alpha1.
 	return b
 }
 
-// WithSigningKey sets the SigningKey field in the declarative configuration to the given value
+// WithCommitSigningKey sets the CommitSigningKey field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the SigningKey field is set to the value of the last call.
-func (b *SecureValuesApplyConfiguration) WithSigningKey(value commonv0alpha1.InlineSecureValue) *SecureValuesApplyConfiguration {
-	b.SigningKey = &value
+// If called multiple times, the CommitSigningKey field is set to the value of the last call.
+func (b *SecureValuesApplyConfiguration) WithCommitSigningKey(value commonv0alpha1.InlineSecureValue) *SecureValuesApplyConfiguration {
+	b.CommitSigningKey = &value
 	return b
 }

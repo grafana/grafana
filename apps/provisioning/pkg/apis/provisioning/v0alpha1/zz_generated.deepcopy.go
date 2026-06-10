@@ -1513,7 +1513,7 @@ func (in *SecureValues) DeepCopyInto(out *SecureValues) {
 	*out = *in
 	in.Token.DeepCopyInto(&out.Token)
 	in.WebhookSecret.DeepCopyInto(&out.WebhookSecret)
-	in.SigningKey.DeepCopyInto(&out.SigningKey)
+	in.CommitSigningKey.DeepCopyInto(&out.CommitSigningKey)
 	return
 }
 

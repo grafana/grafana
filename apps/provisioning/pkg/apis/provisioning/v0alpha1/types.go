@@ -38,7 +38,7 @@ type SecureValues struct {
 	// Private key used to sign commits the repository writes back. The format
 	// is selected by spec.commit.signingFormat. When unset, commits are
 	// unsigned.
-	SigningKey common.InlineSecureValue `json:"signingKey,omitzero,omitempty"`
+	CommitSigningKey common.InlineSecureValue `json:"commitSigningKey,omitzero,omitempty"`
 }
 
 func (SecureValues) OpenAPIModelName() string {
@@ -46,7 +46,7 @@ func (SecureValues) OpenAPIModelName() string {
 }
 
 func (v SecureValues) IsZero() bool {
-	return v.Token.IsZero() && v.WebhookSecret.IsZero() && v.SigningKey.IsZero()
+	return v.Token.IsZero() && v.WebhookSecret.IsZero() && v.CommitSigningKey.IsZero()
 }
 
 type LocalRepositoryConfig struct {
@@ -329,21 +329,21 @@ type CommitOptions struct {
 	// SingleResourceMessageTemplate and rendered read-only. The
 	// Grafana-saved-by trailer is always appended regardless of this setting.
 	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
-	// Name used as the commit committer. Required for the signing key's identity
+	// Name used as the commit signer. Required for the signing key's identity
 	// to match the commit, which providers need to mark commits as Verified. When
 	// empty, defaults to "Grafana".
-	CommitterName string `json:"committerName,omitempty"`
+	SignerName string `json:"signerName,omitempty"`
 
-	// Email used as the commit committer. Must match the signing key's identity
+	// Email used as the commit signer. Must match the signing key's identity
 	// and a verified email on the account where the matching public key is
 	// registered. When empty, defaults to "noreply@grafana.com".
-	CommitterEmail string `json:"committerEmail,omitempty"`
+	SignerEmail string `json:"signerEmail,omitempty"`
 
-	// Format of the key in secure.signingKey. One of "gpg", "ssh", or "smime".
+	// Format of the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
 	// When empty, commits are not signed.
 	SigningFormat SigningFormat `json:"signingFormat,omitempty"`
 
-	// PEM-encoded X.509 certificate paired with secure.signingKey when
+	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
 	// signingFormat is "smime". This is public (not a secret) and is embedded
 	// in the commit signature. Unused for the gpg and ssh formats.
 	SMIMECertificate string `json:"smimeCertificate,omitempty"`

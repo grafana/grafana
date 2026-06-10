@@ -22,18 +22,18 @@ type CommitOptionsApplyConfiguration struct {
 	// SingleResourceMessageTemplate and rendered read-only. The
 	// Grafana-saved-by trailer is always appended regardless of this setting.
 	EnforceTemplate *bool `json:"enforceTemplate,omitempty"`
-	// Name used as the commit committer. Required for the signing key's identity
+	// Name used as the commit signer. Required for the signing key's identity
 	// to match the commit, which providers need to mark commits as Verified. When
 	// empty, defaults to "Grafana".
-	CommitterName *string `json:"committerName,omitempty"`
-	// Email used as the commit committer. Must match the signing key's identity
+	SignerName *string `json:"signerName,omitempty"`
+	// Email used as the commit signer. Must match the signing key's identity
 	// and a verified email on the account where the matching public key is
 	// registered. When empty, defaults to "noreply@grafana.com".
-	CommitterEmail *string `json:"committerEmail,omitempty"`
-	// Format of the key in secure.signingKey. One of "gpg", "ssh", or "smime".
+	SignerEmail *string `json:"signerEmail,omitempty"`
+	// Format of the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
 	// When empty, commits are not signed.
 	SigningFormat *provisioningv0alpha1.SigningFormat `json:"signingFormat,omitempty"`
-	// PEM-encoded X.509 certificate paired with secure.signingKey when
+	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
 	// signingFormat is "smime". This is public (not a secret) and is embedded
 	// in the commit signature. Unused for the gpg and ssh formats.
 	SMIMECertificate *string `json:"smimeCertificate,omitempty"`
@@ -61,19 +61,19 @@ func (b *CommitOptionsApplyConfiguration) WithEnforceTemplate(value bool) *Commi
 	return b
 }
 
-// WithCommitterName sets the CommitterName field in the declarative configuration to the given value
+// WithSignerName sets the SignerName field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the CommitterName field is set to the value of the last call.
-func (b *CommitOptionsApplyConfiguration) WithCommitterName(value string) *CommitOptionsApplyConfiguration {
-	b.CommitterName = &value
+// If called multiple times, the SignerName field is set to the value of the last call.
+func (b *CommitOptionsApplyConfiguration) WithSignerName(value string) *CommitOptionsApplyConfiguration {
+	b.SignerName = &value
 	return b
 }
 
-// WithCommitterEmail sets the CommitterEmail field in the declarative configuration to the given value
+// WithSignerEmail sets the SignerEmail field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the CommitterEmail field is set to the value of the last call.
-func (b *CommitOptionsApplyConfiguration) WithCommitterEmail(value string) *CommitOptionsApplyConfiguration {
-	b.CommitterEmail = &value
+// If called multiple times, the SignerEmail field is set to the value of the last call.
+func (b *CommitOptionsApplyConfiguration) WithSignerEmail(value string) *CommitOptionsApplyConfiguration {
+	b.SignerEmail = &value
 	return b
 }
 
