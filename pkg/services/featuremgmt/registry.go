@@ -201,6 +201,22 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "queryHistory.localOnly",
+			Description: "Store query history in browser IndexedDB instead of server-side",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "queryHistory.recentQueriesUI",
+			Description: "Replace the Query History drawer with a new Recent Queries modal UI",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageGeneralAvailability,
@@ -269,6 +285,15 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:            "provisioning.gitConventions",
+			Description:     "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+			Generate:        Generate{Go: true, React: true},
 		},
 		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
@@ -415,6 +440,7 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Expression:  "true",
 		},
+
 		{
 			Name:            "kubernetesCorrelations",
 			Description:     "Adds support for Kubernetes correlations",
@@ -1637,16 +1663,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:            "grafanaconThemes",
-			Description:     "Enables the temporary themes for GrafanaCon",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaFrontendPlatformSquad,
-			HideFromDocs:    true,
-			RequiresRestart: true,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "alertingJiraIntegration",
 			Description:  "Enables the new Jira integration for contact points in cloud alert managers.",
 			Stage:        FeatureStageExperimental,
@@ -2515,14 +2531,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "queryEditorNextMultiSelect",
-			Description: "Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true, React: true},
-			Owner:       grafanaDataProSquad,
-			Expression:  "false",
-		},
-		{
 			Name:         "kubernetesTeamsApi",
 			Description:  "Enables team APIs in the app platform",
 			Stage:        FeatureStageExperimental,
@@ -2814,16 +2822,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-		},
-		{
-			Name:            "colorblindThemes",
-			Description:     "Enables the new colorblind-friendly themes",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaFrontendPlatformSquad,
-			HideFromDocs:    true,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		}, {
 			Name:        "yAxisTickControl",
 			Description: "Enables fine-grained Y-axis tick options beyond the auto-ticks",
@@ -2957,15 +2955,6 @@ var (
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 			Generate:    Generate{Go: true},
-		},
-		{
-			Name:         "compiledBootScript",
-			Description:  "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "false",
-			HideFromDocs: true,
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "influxDBConfigValidation",
@@ -3147,6 +3136,14 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:        "plugins.initDataSourcesAsync",
+			Description: "Initializes data source instance settings asynchronously from the API instead of synchronously from boot data",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaCatalogSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "frontendService.reducedBootDataAPI",
 			Description:  "Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed",
 			Stage:        FeatureStageExperimental,
@@ -3154,6 +3151,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "grafana.panelEditNextFeedbackEvent",
+			Description:  "Enables firing an event for PanelEditNext feedback that triggers an in-house survey",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataProSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

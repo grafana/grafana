@@ -50,7 +50,7 @@ jobs:
           persist-credentials: false
 
       - name: Cache backend build
-        uses: actions/cache@v5
+        uses: actions/cache@v5  # zizmor: ignore[cache-poisoning] key derived only from hashFiles of tracked source
         id: cache
         with:
           key: "e2e-build-backend-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum', 'go.work', 'go.work.sum', 'pkg/**/*.go', 'apps/**/*.go', '!**_test.go', 'Makefile', 'embed.go') }}"
@@ -86,7 +86,7 @@ jobs:
           persist-credentials: false
 
       - name: Cache frontend build
-        uses: actions/cache@v5
+        uses: actions/cache@v5  # zizmor: ignore[cache-poisoning] key derived only from hashFiles of tracked source
         id: cache
         with:
           key: "e2e-build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'scripts/webpack/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc') }}"
@@ -421,7 +421,7 @@ jobs:
       - name: Extract and publish metrics
         run: ./scripts/ci-frontend-metrics.sh | node --experimental-strip-types .github/workflows/scripts/publish-frontend-metrics.mts
         env:
-          GRAFANA_MISC_STATS_API_KEY: ${{ env.GRAFANA_MISC_STATS_API_KEY}}
+          GRAFANA_MISC_STATS_API_KEY: ${{ fromJSON(steps.vault-secrets.outputs.secrets).GRAFANA_MISC_STATS_API_KEY }}
 
   # 'All E2E tests complete' is still a required check. To help with this transition, we keep
   # a placeholder job to avoid needing to remove the required check from github yet.

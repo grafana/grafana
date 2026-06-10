@@ -1295,7 +1295,8 @@
       "metadata": {
         "name": "colorblindThemes",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-08T15:15:15Z"
       },
       "spec": {
         "description": "Enables the new colorblind-friendly themes",
@@ -1310,7 +1311,8 @@
       "metadata": {
         "name": "compiledBootScript",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-08T09:00:55Z"
       },
       "spec": {
         "description": "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
@@ -2406,6 +2408,24 @@
     },
     {
       "metadata": {
+        "name": "grafana.panelEditNextFeedbackEvent",
+        "resourceVersion": "1780592255785",
+        "creationTimestamp": "2026-05-27T17:36:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-04 16:57:35.785848 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables firing an event for PanelEditNext feedback that triggers an in-house survey",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.scenesFlickeringFix",
         "resourceVersion": "1778737357419",
         "creationTimestamp": "2026-05-06T09:26:24Z",
@@ -2513,7 +2533,8 @@
       "metadata": {
         "name": "grafanaconThemes",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-02-06T11:08:04Z"
+        "creationTimestamp": "2025-02-06T11:08:04Z",
+        "deletionTimestamp": "2026-06-08T15:48:46Z"
       },
       "spec": {
         "description": "Enables the temporary themes for GrafanaCon",
@@ -3826,6 +3847,20 @@
     },
     {
       "metadata": {
+        "name": "plugins.initDataSourcesAsync",
+        "resourceVersion": "1779789947610",
+        "creationTimestamp": "2026-05-26T10:05:47Z"
+      },
+      "spec": {
+        "description": "Initializes data source instance settings asynchronously from the API instead of synchronously from boot data",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "plugins.marketplaceLicensing",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -4033,6 +4068,20 @@
     },
     {
       "metadata": {
+        "name": "provisioning.gitConventions",
+        "resourceVersion": "1780985056992",
+        "creationTimestamp": "2026-06-09T06:04:16Z"
+      },
+      "spec": {
+        "description": "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "provisioning.readmes",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -4071,6 +4120,21 @@
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "provisioningGitConventions",
+        "resourceVersion": "1780931162256",
+        "creationTimestamp": "2026-06-08T15:06:02Z",
+        "deletionTimestamp": "2026-06-09T06:04:16Z"
+      },
+      "spec": {
+        "description": "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
       }
     },
     {
@@ -4118,7 +4182,8 @@
       "metadata": {
         "name": "queryEditorNextMultiSelect",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-09T16:30:59Z"
       },
       "spec": {
         "description": "Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor",
@@ -4138,6 +4203,40 @@
         "description": "Enables the query service to fetch the configuration from the settings service",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryHistory.localOnly",
+        "resourceVersion": "1779463558878",
+        "creationTimestamp": "2026-05-21T19:21:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-22 15:25:58.878199 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Store query history in browser IndexedDB instead of server-side",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryHistory.recentQueriesUI",
+        "resourceVersion": "1779463558878",
+        "creationTimestamp": "2026-05-21T19:21:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-22 15:25:58.878199 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Replace the Query History drawer with a new Recent Queries modal UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
         "expression": "false"
       }
     },

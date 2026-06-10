@@ -32,9 +32,7 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
   const renderMenu = () => (
     <TopNavBarMenu node={profileNode}>
       <>
-        {config.featureToggles.grafanaconThemes && (
-          <MenuItem icon="palette" onClick={onToggleThemeDrawer} label={t('profile.change-theme', 'Change theme')} />
-        )}
+        <MenuItem icon="palette" onClick={onToggleThemeDrawer} label={t('profile.change-theme', 'Change theme')} />
         <Menu.Item
           icon="monitor"
           onClick={onToggleKioskMode}

@@ -15,11 +15,11 @@ import { isConstant } from '../../../variables/guard';
 import { type DashboardModel } from '../../state/DashboardModel';
 import { type GridPos } from '../../state/PanelModel';
 
-export interface InputUsage {
+interface InputUsage {
   libraryPanels?: LibraryPanel[];
 }
 
-export interface LibraryPanel {
+interface LibraryPanel {
   name: string;
   uid: string;
 }

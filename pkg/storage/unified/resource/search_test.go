@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/authlib/types"
@@ -143,12 +143,21 @@ type mockSearchBackend struct {
 	mu              sync.Mutex
 	buildIndexCalls []buildIndexCall
 	cache           map[NamespacedResource]ResourceIndex
+	stopCalls       atomic.Int32
 }
 
 type buildIndexCall struct {
 	key    NamespacedResource
 	size   int64
 	fields SearchableDocumentFields
+}
+
+func (m *mockSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
+	return nil, nil
+}
+
+func (m *mockSearchBackend) WriteOpenIndexStats(_ time.Time) error {
+	return nil
 }
 
 func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
@@ -191,6 +200,133 @@ func (m *mockSearchBackend) TotalDocs() int64 {
 
 func (m *mockSearchBackend) GetOpenIndexes() []NamespacedResource {
 	return m.openIndexes
+}
+
+func (m *mockSearchBackend) Stop() {
+	m.stopCalls.Add(1)
+}
+
+type manifestSearchBackend struct {
+	mockSearchBackend
+
+	stats    []ResourceStats
+	ok       bool
+	loadErr  error
+	loadCall atomic.Int32
+}
+
+func (m *manifestSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
+	m.loadCall.Add(1)
+	if !m.ok {
+		return nil, m.loadErr
+	}
+	return append([]ResourceStats(nil), m.stats...), m.loadErr
+}
+
+func TestBuildIndexesUsesOpenIndexStats(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{{NamespacedResource: NamespacedResource{Namespace: "fallback", Group: "group", Resource: "resource"}, Count: 50}},
+	}
+	search := &manifestSearchBackend{
+		stats: []ResourceStats{{NamespacedResource: key, Count: 5}},
+		ok:    true,
+	}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{"group": "resource"},
+	}
+
+	support, err := newSearchServer(SearchOptions{
+		Backend:      search,
+		Resources:    supplier,
+		InitMinCount: 10,
+	}, storage, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	built, err := support.buildIndexes(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, 1, built)
+	require.Equal(t, int32(1), search.loadCall.Load())
+	require.Zero(t, storage.statsCalls.Load())
+	require.Len(t, search.buildIndexCalls, 1)
+	require.Equal(t, key, search.buildIndexCalls[0].key)
+	require.Equal(t, int64(5), search.buildIndexCalls[0].size)
+}
+
+func TestBuildIndexesFallsBackToResourceStats(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{{NamespacedResource: key, Count: 50}},
+	}
+	search := &manifestSearchBackend{ok: false}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{"group": "resource"},
+	}
+
+	support, err := newSearchServer(SearchOptions{
+		Backend:      search,
+		Resources:    supplier,
+		InitMinCount: 10,
+	}, storage, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	built, err := support.buildIndexes(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, 1, built)
+	require.Equal(t, int32(1), search.loadCall.Load())
+	require.Equal(t, int32(1), storage.statsCalls.Load())
+	require.Len(t, search.buildIndexCalls, 1)
+	require.Equal(t, key, search.buildIndexCalls[0].key)
+	require.Equal(t, int64(50), search.buildIndexCalls[0].size)
+}
+
+func TestBuildIndexesAppliesOwnershipToOpenIndexStats(t *testing.T) {
+	owned := NamespacedResource{Namespace: "owned", Group: "group", Resource: "resource"}
+	unowned := NamespacedResource{Namespace: "unowned", Group: "group", Resource: "resource"}
+	storage := &mockStorageBackend{}
+	search := &manifestSearchBackend{
+		stats: []ResourceStats{
+			{NamespacedResource: owned, Count: 10},
+			{NamespacedResource: unowned, Count: 10},
+		},
+		ok: true,
+	}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{"group": "resource"},
+	}
+	ownsIndexFn := func(key NamespacedResource) (bool, error) {
+		return key != unowned, nil
+	}
+
+	support, err := newSearchServer(SearchOptions{
+		Backend:   search,
+		Resources: supplier,
+	}, storage, nil, nil, nil, nil, nil, nil, ownsIndexFn)
+	require.NoError(t, err)
+
+	built, err := support.buildIndexes(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, 1, built)
+	require.Zero(t, storage.statsCalls.Load())
+	require.Len(t, search.buildIndexCalls, 1)
+	require.Equal(t, owned, search.buildIndexCalls[0].key)
+}
+
+func TestSearchServerStopStopsBackend(t *testing.T) {
+	search := &mockSearchBackend{}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{"group": "resource"},
+	}
+
+	support, err := newSearchServer(SearchOptions{
+		Backend:   search,
+		Resources: supplier,
+	}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+	support.bgTaskCancel = func() {}
+
+	support.stop()
+	require.Equal(t, int32(1), search.stopCalls.Load())
 }
 
 func TestSearchGetOrCreateIndex(t *testing.T) {

@@ -18,7 +18,7 @@ export interface DatasourceMapping {
 /**
  * Request body for dashboard compatibility check API call
  */
-export interface CheckCompatibilityRequest {
+interface CheckCompatibilityRequest {
   /** Complete dashboard JSON object (supports both v1 and v2 schemas) */
   dashboardJson: DashboardJson;
   /** Array of datasource mappings to check compatibility against */
@@ -28,7 +28,7 @@ export interface CheckCompatibilityRequest {
 /**
  * Breakdown of compatibility metrics for a single query within a panel
  */
-export interface QueryBreakdown {
+interface QueryBreakdown {
   /** Title of the panel containing this query */
   panelTitle: string;
   /** Numeric ID of the panel */
@@ -50,7 +50,7 @@ export interface QueryBreakdown {
 /**
  * Compatibility check result for a single datasource
  */
-export interface DatasourceResult {
+interface DatasourceResult {
   /** Unique identifier of the datasource */
   uid: string;
   /** Type of datasource */

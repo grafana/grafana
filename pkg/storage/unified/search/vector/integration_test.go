@@ -89,6 +89,8 @@ func cleanIntegrationState(t *testing.T, engine *xorm.Engine) {
 		`DELETE FROM vector_promoted WHERE namespace LIKE 'integration-test%'`)
 	_, _ = engine.DB().ExecContext(ctx,
 		`UPDATE vector_latest_rv SET latest_rv = 0 WHERE id = 1`)
+	_, _ = engine.DB().ExecContext(ctx,
+		`DELETE FROM vector_backfill_jobs WHERE model = $1`, testModel)
 }
 
 func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
@@ -387,6 +389,21 @@ func TestIntegrationVectorGetLatestRV(t *testing.T) {
 	assert.Equal(t, int64(100), rv)
 }
 
+func TestIntegrationVectorCreateBackfillJob(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, testResource, 100))
+
+	// Second insert for the same (model, resource) is a no-op (ON CONFLICT
+	// DO NOTHING): the original row is preserved, not overwritten with 200.
+	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, testResource, 200))
+
+	jobs, err := backend.ListIncompleteBackfillJobs(ctx, testModel)
+	require.NoError(t, err)
+	require.Len(t, jobs, 1, "exactly one job exists after the conflicting insert")
+	assert.Equal(t, int64(100), jobs[0].StoppingRV, "original stopping_rv preserved")
+}
+
 func TestIntegrationVectorReconcilerLock(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 
@@ -480,4 +497,46 @@ func makeEmbedding(a, b float32) []float32 {
 	e[0] = a
 	e[1] = b
 	return e
+}
+
+func TestEnsureResourcePartition_RejectsUnsafeResource(t *testing.T) {
+	b := &pgvectorBackend{}
+	for _, res := range []string{"", "Dashboards", "dash-boards", "a.b", "drop;table", "with space"} {
+		require.Error(t, b.EnsureResourcePartition(context.Background(), res),
+			"resource %q must be rejected", res)
+	}
+}
+
+func TestIntegrationVectorEnsureResourcePartition(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+	pg := backend.(*pgvectorBackend)
+
+	const res = "testpartition"
+	leaf := subtreeName(res)
+	idx := leaf + "_metadata_idx"
+	drop := func() { _, _ = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP TABLE IF EXISTS %s`, leaf)) }
+	drop()
+	t.Cleanup(drop)
+
+	// Absent before creation.
+	ready, err := pg.resourcePartitionReady(ctx, leaf, idx)
+	require.NoError(t, err)
+	require.False(t, ready)
+
+	// Create it: partition + metadata index both present.
+	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
+	ready, err = pg.resourcePartitionReady(ctx, leaf, idx)
+	require.NoError(t, err)
+	assert.True(t, ready, "leaf attached as partition and metadata index present")
+
+	// Heals a missing index: drop it, retry must recreate it.
+	_, err = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP INDEX IF EXISTS %s`, idx))
+	require.NoError(t, err)
+	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
+	ready, err = pg.resourcePartitionReady(ctx, leaf, idx)
+	require.NoError(t, err)
+	assert.True(t, ready, "missing index recreated on retry")
+
+	// Idempotent: a second call (fast path) is a no-op, no error.
+	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
 }

@@ -261,6 +261,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Index snapshot settings
 	cfg.IndexSnapshotEnabled = section.Key("index_snapshot_enabled").MustBool(false)
 	cfg.IndexSnapshotBucketURL = section.Key("index_snapshot_bucket_url").String()
+	cfg.IndexSnapshotStorageKV = section.Key("index_snapshot_storage_kv").MustBool(false)
+	cfg.IndexSnapshotKVChunkConcurrency = section.Key("index_snapshot_kv_chunk_concurrency").MustInt(1)
 	cfg.IndexSnapshotThreshold = section.Key("index_snapshot_threshold").MustInt(5000)
 	if cfg.IndexSnapshotThreshold < cfg.IndexFileThreshold {
 		cfg.Logger.Warn("index_snapshot_threshold is smaller than index_file_threshold, overriding", "configured", cfg.IndexSnapshotThreshold, "index_file_threshold", cfg.IndexFileThreshold)
@@ -272,6 +274,16 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.IndexSnapshotMaxAge = cfg.MaxFileIndexAge
 	}
 	cfg.IndexSnapshotCleanupGracePeriod = section.Key("index_snapshot_cleanup_grace_period").MustDuration(30 * time.Minute)
+
+	// Periodic on-disk cleanup of leftover bleve index folders.
+	// disk_index_cleanup_interval = 0 disables the loop (default).
+	cfg.DiskIndexCleanupInterval = section.Key("disk_index_cleanup_interval").MustDuration(0)
+	cfg.DiskIndexCleanupGracePeriod = section.Key("disk_index_cleanup_grace_period").MustDuration(time.Hour)
+	// disk_index_cleanup_unopened_grace_period only applies to the newest on-disk
+	// index for a resource this pod owns but has not opened in this process.
+	// Keeping it longer lets a later BuildIndex for that resource reuse the
+	// existing index instead of rebuilding from scratch.
+	cfg.DiskIndexCleanupUnopenedGracePeriod = section.Key("disk_index_cleanup_unopened_grace_period").MustDuration(24 * time.Hour)
 
 	// Vector storage (separate pgvector database)
 	vectorSection := cfg.Raw.Section("database_vector")

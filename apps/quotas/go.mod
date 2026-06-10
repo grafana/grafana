@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/quotas
 
-go 1.26.3
+go 1.26.4
 
 // transitive dependencies that need replaced
 // TODO: stop depending on grafana core(
@@ -79,8 +79,7 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.55.0 // indirect
 	github.com/Machiel/slugify v1.0.1 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
-	github.com/Masterminds/semver v1.5.0 // indirect
-	github.com/Masterminds/semver/v3 v3.4.0 // indirect
+	github.com/Masterminds/semver/v3 v3.5.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
 	github.com/VividCortex/mysqlerr v1.0.0 // indirect
@@ -198,9 +197,9 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.15 // indirect
 	github.com/googleapis/gax-go/v2 v2.22.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20260512174254-5095d423178f // indirect
-	github.com/grafana/authlib v0.0.0-20260427145542-9c256e2dbcb2 // indirect
-	github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2 // indirect
+	github.com/grafana/alerting v0.0.0-20260601143310-62c199acc7fc // indirect
+	github.com/grafana/authlib v0.0.0-20260603144019-18cfcbc9496a // indirect
+	github.com/grafana/authlib/types v0.0.0-20260603144019-18cfcbc9496a // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 // indirect
 	github.com/grafana/grafana-aws-sdk v1.4.4 // indirect
@@ -324,7 +323,7 @@ require (
 	github.com/prometheus/alertmanager v0.31.1 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.67.5 // indirect
+	github.com/prometheus/common v0.68.0 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/exporter-toolkit v0.15.1 // indirect
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
