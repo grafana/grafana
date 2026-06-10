@@ -47,16 +47,16 @@ func (p *appTestPluginStorageHookProvider) BeginCreate(context.Context, *plugins
 	return nil, nil
 }
 
-func (p *appTestPluginStorageHookProvider) AfterCreate(_ context.Context, plugin *pluginsv0alpha1.Plugin, _ *metav1.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
-	return plugin, nil
+func (p *appTestPluginStorageHookProvider) AfterCreate(context.Context, *pluginsv0alpha1.Plugin, *metav1.CreateOptions) error {
+	return nil
 }
 
 func (p *appTestPluginStorageHookProvider) BeginUpdate(context.Context, *pluginsv0alpha1.Plugin, *pluginsv0alpha1.Plugin, *metav1.UpdateOptions) (genericregistry.FinishFunc, error) {
 	return nil, nil
 }
 
-func (p *appTestPluginStorageHookProvider) AfterUpdate(_ context.Context, plugin *pluginsv0alpha1.Plugin, _ *metav1.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
-	return plugin, nil
+func (p *appTestPluginStorageHookProvider) AfterUpdate(context.Context, *pluginsv0alpha1.Plugin, *metav1.UpdateOptions) error {
+	return nil
 }
 
 func (p *appTestPluginStorageHookProvider) AfterDelete(context.Context, *pluginsv0alpha1.Plugin, *metav1.DeleteOptions) error {

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/require"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -16,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
@@ -209,10 +207,10 @@ func TestPluginStorage_UpdateMetaUnavailable_PreservesAnnotation(t *testing.T) {
 		"child-b must survive a meta-failed Update")
 }
 
-func TestPluginStorage_UpdateIdempotent_NoStaleCleanup(t *testing.T) {
+func TestPluginStorage_UpdateSameVersion_UpsertsChildAndDoesNotDelete(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	parentStorage := newFakePluginRESTStorage()
-	parentStorage.set(childPluginFullyOwnedBy("default", "child-a", "1.0.0", parentPluginWithUID("parent")))
+	parentStorage.set(childPlugin("default", "child-a", "1.0.0", "parent"))
 	parentStorage.set(parentPluginWithApplied("default", "parent", "1.0.0", "child-a"))
 	storage := newTestPluginStorage(t, parentStorage, map[string][]string{
 		"parent:1.0.0": {"child-a"},
@@ -223,6 +221,8 @@ func TestPluginStorage_UpdateIdempotent_NoStaleCleanup(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Contains(t, parentStorage.items, storageKey("default", "child-a"))
+	require.Equal(t, 1, parentStorage.updateCalls[storageKey("default", "child-a")],
+		"existing desired children must still be updated so downstream hooks can reconcile")
 	require.Equal(t, "child-a", parentStorage.items[storageKey("default", "parent")].Annotations[appliedChildrenAnnotation])
 }
 
@@ -456,35 +456,6 @@ func parentPluginWithApplied(namespace, id, version string, applied ...string) *
 	return p
 }
 
-// parentPluginWithUID builds a parent plugin with a deterministic UID.
-func parentPluginWithUID(id string) *pluginsv0alpha1.Plugin {
-	p := plugin("default", id, "1.0.0", "")
-	p.UID = types.UID(id + "-uid")
-	return p
-}
-
-// childPluginFullyOwnedBy builds a child plugin that matches exactly what
-// childPluginForParent would produce so childPluginMatches recognises it as
-// already-applied.
-func childPluginFullyOwnedBy(namespace, id, version string, parent *pluginsv0alpha1.Plugin) *pluginsv0alpha1.Plugin {
-	parentID := parent.Spec.Id
-	return &pluginsv0alpha1.Plugin{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-			Name:      id,
-			Labels:    map[string]string{parentIDLabel: parentID},
-			Annotations: map[string]string{
-				install.PluginInstallSourceAnnotation: install.SourceChildPlugin,
-			},
-		},
-		Spec: pluginsv0alpha1.PluginSpec{
-			Id:       id,
-			Version:  version,
-			ParentId: &parentID,
-		},
-	}
-}
-
 type fakeMetaProvider struct {
 	children map[string][]string
 	err      error
@@ -519,7 +490,7 @@ func newHookTestStorage(storage *fakePluginRESTStorage, logger logging.Logger, m
 }
 
 func (s *hookTestStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	if plugin, ok := obj.(*pluginsv0alpha1.Plugin); ok && !isChildPlugin(plugin) {
+	if plugin, ok := obj.(*pluginsv0alpha1.Plugin); ok && !IsChildPlugin(plugin) {
 		normalizePluginID(plugin)
 		s.hooks.stampDesiredChildren(ctx, plugin, nil)
 	}
@@ -530,7 +501,7 @@ func (s *hookTestStorage) Create(ctx context.Context, obj runtime.Object, create
 	}
 
 	plugin, ok := created.(*pluginsv0alpha1.Plugin)
-	if !ok || isChildPlugin(plugin) {
+	if !ok || IsChildPlugin(plugin) {
 		return created, nil
 	}
 	normalizePluginID(plugin)
@@ -551,7 +522,7 @@ func (s *hookTestStorage) Update(
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
 	wrappedObjInfo := &testStampingObjInfo{inner: objInfo, transform: func(ctx context.Context, newObj, oldObj runtime.Object) (runtime.Object, error) {
-		if plugin, ok := newObj.(*pluginsv0alpha1.Plugin); ok && !isChildPlugin(plugin) {
+		if plugin, ok := newObj.(*pluginsv0alpha1.Plugin); ok && !IsChildPlugin(plugin) {
 			normalizePluginID(plugin)
 			oldPlugin, _ := oldObj.(*pluginsv0alpha1.Plugin)
 			s.hooks.stampDesiredChildren(ctx, plugin, oldPlugin)
@@ -565,7 +536,7 @@ func (s *hookTestStorage) Update(
 	}
 
 	plugin, ok := updated.(*pluginsv0alpha1.Plugin)
-	if !ok || isChildPlugin(plugin) {
+	if !ok || IsChildPlugin(plugin) {
 		return updated, created, nil
 	}
 	normalizePluginID(plugin)
@@ -583,7 +554,7 @@ func (s *hookTestStorage) Delete(ctx context.Context, name string, deleteValidat
 	}
 
 	var children []string
-	if plugin != nil && !isChildPlugin(plugin) {
+	if plugin != nil && !IsChildPlugin(plugin) {
 		children = parseAppliedChildren(plugin.Annotations)
 	}
 
@@ -619,11 +590,15 @@ func (t *testStampingObjInfo) UpdatedObject(ctx context.Context, oldObj runtime.
 }
 
 type fakePluginRESTStorage struct {
-	items map[string]*pluginsv0alpha1.Plugin
+	items       map[string]*pluginsv0alpha1.Plugin
+	updateCalls map[string]int
 }
 
 func newFakePluginRESTStorage() *fakePluginRESTStorage {
-	return &fakePluginRESTStorage{items: map[string]*pluginsv0alpha1.Plugin{}}
+	return &fakePluginRESTStorage{
+		items:       map[string]*pluginsv0alpha1.Plugin{},
+		updateCalls: map[string]int{},
+	}
 }
 
 func (s *fakePluginRESTStorage) New() runtime.Object {
@@ -726,6 +701,7 @@ func (s *fakePluginRESTStorage) Update(ctx context.Context, name string, objInfo
 	if plugin.Namespace == "" {
 		plugin.Namespace, _ = request.NamespaceFrom(ctx)
 	}
+	s.updateCalls[storageKey(plugin.Namespace, plugin.Name)]++
 	s.items[storageKey(plugin.Namespace, plugin.Name)] = plugin
 	return plugin.DeepCopy(), false, nil
 }
@@ -785,9 +761,9 @@ func (p *recordingPluginStorageHookProvider) BeginCreate(context.Context, *plugi
 	}, nil
 }
 
-func (p *recordingPluginStorageHookProvider) AfterCreate(_ context.Context, plugin *pluginsv0alpha1.Plugin, _ *metav1.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
+func (p *recordingPluginStorageHookProvider) AfterCreate(context.Context, *pluginsv0alpha1.Plugin, *metav1.CreateOptions) error {
 	p.calls = append(p.calls, "afterCreate")
-	return plugin, nil
+	return nil
 }
 
 func (p *recordingPluginStorageHookProvider) BeginUpdate(context.Context, *pluginsv0alpha1.Plugin, *pluginsv0alpha1.Plugin, *metav1.UpdateOptions) (genericregistry.FinishFunc, error) {
@@ -797,63 +773,13 @@ func (p *recordingPluginStorageHookProvider) BeginUpdate(context.Context, *plugi
 	}, nil
 }
 
-func (p *recordingPluginStorageHookProvider) AfterUpdate(_ context.Context, plugin *pluginsv0alpha1.Plugin, _ *metav1.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
+func (p *recordingPluginStorageHookProvider) AfterUpdate(context.Context, *pluginsv0alpha1.Plugin, *metav1.UpdateOptions) error {
 	p.calls = append(p.calls, "afterUpdate")
-	return plugin, nil
+	return nil
 }
 
 func (p *recordingPluginStorageHookProvider) AfterDelete(context.Context, *pluginsv0alpha1.Plugin, *metav1.DeleteOptions) error {
 	p.calls = append(p.calls, "afterDelete")
-	return nil
-}
-
-type fakePluginChildClient struct {
-	items map[string]*pluginsv0alpha1.Plugin
-}
-
-func newFakePluginChildClient() *fakePluginChildClient {
-	return &fakePluginChildClient{items: map[string]*pluginsv0alpha1.Plugin{}}
-}
-
-func (c *fakePluginChildClient) ListAll(_ context.Context, namespace string, _ resource.ListOptions) (*pluginsv0alpha1.PluginList, error) {
-	list := &pluginsv0alpha1.PluginList{}
-	for _, item := range c.items {
-		if item.Namespace != namespace {
-			continue
-		}
-		list.Items = append(list.Items, *item.DeepCopy())
-	}
-	return list, nil
-}
-
-func (c *fakePluginChildClient) Get(_ context.Context, identifier resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
-	item, ok := c.items[identifier.Namespace+"/"+identifier.Name]
-	if !ok {
-		return nil, notFound(identifier.Name)
-	}
-	return item.DeepCopy(), nil
-}
-
-func (c *fakePluginChildClient) Create(_ context.Context, obj *pluginsv0alpha1.Plugin, _ resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
-	key := obj.Namespace + "/" + obj.Name
-	if _, ok := c.items[key]; ok {
-		return nil, errorsK8s.NewAlreadyExists(schema.GroupResource{Group: pluginsv0alpha1.APIGroup, Resource: "plugins"}, obj.Name)
-	}
-	c.items[key] = obj.DeepCopy()
-	return obj.DeepCopy(), nil
-}
-
-func (c *fakePluginChildClient) Update(_ context.Context, obj *pluginsv0alpha1.Plugin, _ resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
-	c.items[obj.Namespace+"/"+obj.Name] = obj.DeepCopy()
-	return obj.DeepCopy(), nil
-}
-
-func (c *fakePluginChildClient) Delete(_ context.Context, identifier resource.Identifier, _ resource.DeleteOptions) error {
-	key := identifier.Namespace + "/" + identifier.Name
-	if _, ok := c.items[key]; !ok {
-		return notFound(identifier.Name)
-	}
-	delete(c.items, key)
 	return nil
 }
 
