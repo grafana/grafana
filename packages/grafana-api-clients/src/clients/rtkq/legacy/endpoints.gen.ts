@@ -5311,6 +5311,9 @@ export type ChangeUserPasswordCommand = {
   oldPassword?: Password;
 };
 export type UserSearchHitDto = {
+  accessControl?: {
+    [key: string]: boolean;
+  };
   authLabels?: string[];
   avatarUrl?: string;
   created?: string;
