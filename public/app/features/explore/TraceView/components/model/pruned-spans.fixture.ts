@@ -425,12 +425,3 @@ export const summaryAsObservedInOps: TraceResponse = {
     },
   ],
 };
-
-export const summarySpanFixtures = {
-  summaryDefaultsOnly,
-  summaryWithConditionalAttrs,
-  summaryNoOptionalAttrs,
-  summaryWithPreservedOutliers,
-  mixedTrace,
-  summaryAsObservedInOps,
-};
