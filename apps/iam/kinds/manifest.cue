@@ -68,6 +68,7 @@ v0alpha1: {
 							email:        string
 							provisioned:  bool
 							externalUID:  string
+							internalId?:  int64
 							memberCount?: int64
 							accessControl?: {[string]: bool}
 						}

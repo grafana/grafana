@@ -2,6 +2,7 @@ package search
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -22,6 +23,7 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 	emailIDX := -1
 	provisionedIDX := -1
 	externalUIDIDX := -1
+	legacyIDIDX := -1
 
 	for i, v := range result.Results.Columns {
 		if v == nil {
@@ -37,6 +39,8 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 			provisionedIDX = i
 		case builders.TEAM_SEARCH_EXTERNAL_UID:
 			externalUIDIDX = i
+		case resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID:
+			legacyIDIDX = i
 		}
 	}
 
@@ -75,6 +79,12 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 
 		if externalUIDIDX >= 0 && row.Cells[externalUIDIDX] != nil {
 			hit.ExternalUID = string(row.Cells[externalUIDIDX])
+		}
+
+		if legacyIDIDX >= 0 && row.Cells[legacyIDIDX] != nil {
+			if legacyID, err := strconv.ParseInt(string(row.Cells[legacyIDIDX]), 10, 64); err == nil {
+				hit.InternalId = &legacyID
+			}
 		}
 
 		sr.Hits[i] = *hit
