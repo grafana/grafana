@@ -1103,9 +1103,6 @@
       },
       "unknown": "Okänt"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "Du verkar inte ha några kompatibla datakällor."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Utvärderingar för att börja varna",
       "pending-period": "Väntande period",
@@ -5939,9 +5936,6 @@
       "select-source": "Välj källa",
       "unknown": "Okänt objekt: {{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "Ingen funktion för metadatainspektion"
-    },
     "inspect-stats": {
       "data-title": "Statistik för datakälla",
       "data-traceids": "Spårnings-ID",
@@ -6421,7 +6415,6 @@
       "playlist-next": "Gå till nästa instrumentpanel",
       "playlist-previous": "Gå till föregående instrumentpanel",
       "playlist-stop": "Stoppa spellista",
-      "read-only": "Skrivskyddad",
       "refresh": "Uppdatera instrumentpanel",
       "save": "Spara instrumentpanel",
       "save-as-template": {
@@ -6558,28 +6551,6 @@
     },
     "view-panel": {
       "not-found": ""
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Ändra visualisering",
-      "aria-label-close": "Stäng alternativrutan",
-      "aria-label-show": "Visa alternativfönster",
-      "tooltip-click-to-change-visualization": "Klicka för att ändra visualisering",
-      "tooltip-close": "Stäng alternativrutan",
-      "tooltip-show": "Visa alternativfönster"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Sök efter …",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Återanvändbara paneler som du kan dela mellan flera instrumentpaneler."
-        },
-        "label": {
-          "library-panels": "Bibliotekspaneler",
-          "suggestions": "Förslag",
-          "visualizations": "Visualiseringar"
-        }
-      },
-      "title-close": "Stäng"
     },
     "viz-panel": {
       "delete-panel-text": "Om du tar bort denna panel tas också alla frågor bort. Är du säker på att du vill fortsätta?",
@@ -9052,9 +9023,6 @@
     "select-aria-label": "Mappfilter",
     "select-placeholder": "Filtrera efter mapp"
   },
-  "folder-repo": {
-    "read-only-badge": "Skrivskyddad"
-  },
   "folders": {
     "api": {
       "anonymous-user": "",
@@ -11032,6 +11000,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "",
       "show-all-series": "… visa alla {{total}} objekt"
     }
   },
@@ -11053,10 +11022,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "Skapa bibliotekspanel"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "Ändra",
-      "confirmText-replace": "Byt ut"
     },
     "confirm": {
       "delete-panel": "Vill du radera denna panel?"
@@ -11097,9 +11062,6 @@
       "title": "Visa panel i instrumentpanelen",
       "body_one": "Denna panel används i {{count}} instrumentpanel. Välj vilken instrumentpanel du vill visa panelen i:",
       "body_other": "Denna panel används i {{count}} instrumentpanel. Välj vilken instrumentpanel du vill visa panelen i:"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "Skapa ny bibliotekspanel"
     },
     "save": {
       "error": "Ett fel uppstod när bibliotekspanelen skulle sparas: ”{{errorMsg}}”",
@@ -13645,6 +13607,9 @@
       "message-resource-onprem_one": "Instansen är begränsad till {{count}} synkroniserade resurser per lagringsplats.",
       "message-resource-onprem_other": "Instansen är begränsad till {{count}} synkroniserade resurser per lagringsplats."
     },
+    "read-only-badge": {
+      "text": ""
+    },
     "read-only-local-tooltip": "Den här resursen är skrivskyddad och tilldelas via filprovisionering. Om du behöver göra ändringar måste du uppdatera det anslutna arkivet. Ändra inställningarna genom att gå till Administration > Tilldelning > Lagringsplatser.",
     "read-only-remote-tooltip": "Den här resursen är skrivskyddad och tilldelas via Git. Om du behöver göra ändringar måste du uppdatera det anslutna arkivet. Ändra inställningarna genom att gå till Administration > Tilldelning > Lagringsplatser.",
     "recent-jobs": {
@@ -13665,7 +13630,6 @@
     },
     "repository-card": {
       "last-sync": "Senaste synkronisering: {{date}}",
-      "read-only-badge": "Skrivskyddad",
       "settings": "Inställningar",
       "view": "Visa"
     },
@@ -16638,9 +16602,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "Inga omdöpta eller saknade variabler hittades."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "Det gick inte att ladda variabeln"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "När ska värdena för denna variabel uppdateras",
