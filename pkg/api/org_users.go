@@ -7,10 +7,13 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
@@ -145,6 +148,36 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) respo
 // 500: internalServerError
 
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext) response.Response {
+	ctx := c.Req.Context()
+	// Single-org with users in unified storage: the legacy org_user/user join is
+	// empty, so read the shared users via the k8s-redirected user search instead.
+	if hs.Cfg.RBAC.SingleOrganization && ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		searchResult, err := hs.userService.Search(ctx, &user.SearchUsersQuery{
+			SignedInUser: c.SignedInUser,
+			OrgID:        c.GetOrgID(),
+			Query:        c.Query("query"),
+			Limit:        c.QueryInt("limit"),
+		})
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
+		}
+
+		result := make([]*dtos.UserLookupDTO, 0, len(searchResult.Users))
+		for _, u := range searchResult.Users {
+			avatarURL := u.AvatarURL
+			if avatarURL == "" {
+				avatarURL = dtos.GetGravatarUrl(hs.Cfg, u.Email)
+			}
+			result = append(result, &dtos.UserLookupDTO{
+				UID:       u.UID,
+				UserID:    u.ID,
+				Login:     u.Login,
+				AvatarURL: avatarURL,
+			})
+		}
+		return response.JSON(http.StatusOK, result)
+	}
+
 	orgUsersResult, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
 		OrgID:                    c.GetOrgID(),
 		Query:                    c.Query("query"),

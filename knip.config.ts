@@ -7,7 +7,24 @@ const packageIgnoreDeps = [
   'rollup-plugin-node-externals',
 ];
 
-const packageEntries = ['i18next.config.ts'];
+const defaultEntries = ['i18next.config.ts'];
+
+const externalisedDatasources = [
+  'azuremonitor',
+  'cloud-monitoring',
+  'grafana-postgresql-datasource',
+  'grafana-pyroscope-datasource',
+  'grafana-testdata-datasource',
+  'graphite',
+  'influxdb',
+  'jaeger',
+  'loki',
+  'mssql',
+  'mysql',
+  'opentsdb',
+  'parca',
+  'tempo',
+];
 
 const config: KnipConfig = {
   compilers: {
@@ -18,39 +35,114 @@ const config: KnipConfig = {
     'enumMembers',
   ],
   ignore: ['**/*.gen.ts*', '**/*_gen.ts*'],
-  ignoreBinaries: ['make'],
+  ignoreBinaries: ['jq', 'make', 'shellcheck'],
+  tags: ['-lintignore'],
   workspaces: {
     '.': {
-      // TODO figure out how to properly include webpack/jest configs
-      jest: false,
+      ignore: ['scripts/grafana-server/tmp/**', 'devenv/**'],
+      ignoreDependencies: [
+        // TODO remove these ignores when react 19 is released
+        'react-19',
+        'react-dom-19',
+
+        // used by yarn test:ci
+        'jest-junit',
+
+        // used by coverage script, see jest.config.codeowner.js
+        'jest-monocart-coverage',
+
+        // needed by github actions
+        '@grafana/levitate',
+        'wait-on',
+
+        // used via `yarn <bin>` in scripts/validate-npm-packages.sh — knip doesn't detect yarn-invoked binaries
+        '@arethetypeswrong/cli',
+        'publint',
+      ],
+      project: [
+        'public/app/**',
+        'scripts/**',
+        '.github/**',
+        'e2e-playwright/**',
+
+        // paths to ignore
+        '!devenv/**',
+        '!e2e-playwright/test-plugins/**',
+        '!packages/**',
+        '!pkg/**',
+        ...externalisedDatasources.map((ds) => `!public/app/plugins/datasource/${ds}/**`),
+      ],
+      entry: [
+        ...defaultEntries,
+        'public/app/app.ts',
+        'public/app/index.ts',
+        'public/app/api/clients/**/index.ts',
+        'public/app/extensions/index.ts',
+        'public/app/extensions/api/clients/**/index.ts',
+        'public/app/plugins/**/module.{ts,tsx,js}',
+        'scripts/**/*.{t,j}s*',
+        'scripts/**/*.m{t,j}s*',
+        'scripts/**/*.cjs',
+
+        // reporter for playwright
+        'e2e-playwright/utils/axe-a11y/reporter.ts',
+
+        // levitate
+        '.github/workflows/scripts/levitate/*.js',
+
+        // custom jest config for code coverage
+        'jest.config.codeowner.js',
+      ],
+      webpack: {
+        config: ['scripts/webpack/webpack.dev.ts', 'scripts/webpack/webpack.prod.ts'],
+      },
+      postcss: {
+        config: 'scripts/webpack/postcss.config.js',
+      },
+      playwright: {
+        config: [
+          'e2e-playwright/playwright.config.ts',
+          'e2e-playwright/extensions/enterprise/playwright-enterprise.config.ts',
+          'e2e-playwright/extensions/oem/playwright-enterprise-oem.config.ts',
+        ],
+      },
     },
-    'public/app/plugins/datasource/*': {
-      // TODO figure out how to properly include webpack/jest configs
-      webpack: false,
+    [`public/app/plugins/datasource/{${externalisedDatasources.join(',')}}`]: {
+      jest: true,
+      entry: [...defaultEntries, 'module.{ts,tsx,js}'],
+      // these are provided by grafana-plugin-configs
+      ignoreDependencies: ['@swc/jest'],
+      ignoreUnresolved: ['identity-obj-proxy'],
     },
     'e2e-playwright/test-plugins/*': {
-      // TODO figure out how to properly include webpack/jest configs
-      webpack: false,
+      entry: [...defaultEntries, 'module.{ts,tsx,js}', 'plugins/*/module.{ts,tsx,js}'],
     },
     'packages/**': {
-      entry: packageEntries,
+      entry: defaultEntries,
       ignoreDependencies: packageIgnoreDeps,
       jest: true,
     },
     // `grafana-alerting` has stories that are included in `grafana-ui`'s storybook
-    // this is a bad idea
-    // `grafana-alerting` should have its own storybook (like `grafana-flamegraph`), then we could remove this special block
+    // this means:
+    //   - we need to manually enable the storybook plugin since there's no storybook dep in package.json
+    //   - its stories/mdx docs reference dependencies that are managed by `grafana-ui`
+    // TODO `grafana-alerting` should probably have its own storybook (like `grafana-flamegraph`)
     'packages/grafana-alerting': {
-      entry: [...packageEntries, '**/*.story.tsx'],
-      ignoreDependencies: [...packageIgnoreDeps, '@storybook/react-webpack5', '@storybook/react'],
+      entry: defaultEntries,
+      ignoreDependencies: [
+        ...packageIgnoreDeps,
+        '@storybook/addon-docs',
+        '@storybook/react-webpack5',
+        '@storybook/react',
+      ],
+      storybook: true,
     },
     'packages/grafana-api-clients': {
-      entry: [...packageEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/plopfile.ts'],
+      entry: [...defaultEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/generate.ts'],
     },
     'packages/grafana-plugin-configs': {
-      // TODO figure out how to properly include webpack/jest configs
+      // this package contains shared code that isn't immediately used by the package
       webpack: false,
-      // this package contains shared dependencies that aren't immediately used by the package
       ignoreDependencies: ['.*'],
     },
   },

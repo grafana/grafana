@@ -473,15 +473,17 @@
     {
       "metadata": {
         "name": "alertingMultiplePolicies",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1781102456776",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-10 14:40:56.776063699 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables the ability to create multiple alerting policies",
-        "stage": "experimental",
+        "description": "Enables the ability to create multiple notification policies in alerting",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1295,7 +1297,8 @@
       "metadata": {
         "name": "colorblindThemes",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-08T15:15:15Z"
       },
       "spec": {
         "description": "Enables the new colorblind-friendly themes",
@@ -1310,7 +1313,8 @@
       "metadata": {
         "name": "compiledBootScript",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-08T09:00:55Z"
       },
       "spec": {
         "description": "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
@@ -1459,6 +1463,23 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardNotebookLayout",
+        "resourceVersion": "1781098889122",
+        "creationTimestamp": "2026-06-10T13:08:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-10 13:41:29.122290475 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -2406,6 +2427,24 @@
     },
     {
       "metadata": {
+        "name": "grafana.panelEditNextFeedbackEvent",
+        "resourceVersion": "1780592255785",
+        "creationTimestamp": "2026-05-27T17:36:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-04 16:57:35.785848 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables firing an event for PanelEditNext feedback that triggers an in-house survey",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.scenesFlickeringFix",
         "resourceVersion": "1778737357419",
         "creationTimestamp": "2026-05-06T09:26:24Z",
@@ -2513,7 +2552,8 @@
       "metadata": {
         "name": "grafanaconThemes",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-02-06T11:08:04Z"
+        "creationTimestamp": "2025-02-06T11:08:04Z",
+        "deletionTimestamp": "2026-06-08T15:48:46Z"
       },
       "spec": {
         "description": "Enables the temporary themes for GrafanaCon",
@@ -3965,14 +4005,17 @@
     {
       "metadata": {
         "name": "profilesExemplars",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-01-07T12:25:42Z"
+        "resourceVersion": "1780997707204",
+        "creationTimestamp": "2026-01-07T12:25:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-09 09:35:07.204275 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables profiles exemplars support in profiles drilldown",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/observability-traces-and-profiling",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4047,16 +4090,33 @@
     },
     {
       "metadata": {
+        "name": "provisioning.gitConventions",
+        "resourceVersion": "1780985056992",
+        "creationTimestamp": "2026-06-09T06:04:16Z"
+      },
+      "spec": {
+        "description": "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "provisioning.readmes",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1781078230859",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-10 07:57:10.859008 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4085,6 +4145,21 @@
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "provisioningGitConventions",
+        "resourceVersion": "1780931162256",
+        "creationTimestamp": "2026-06-08T15:06:02Z",
+        "deletionTimestamp": "2026-06-09T06:04:16Z"
+      },
+      "spec": {
+        "description": "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
       }
     },
     {
@@ -4132,7 +4207,8 @@
       "metadata": {
         "name": "queryEditorNextMultiSelect",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-09T16:30:59Z"
       },
       "spec": {
         "description": "Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor",
@@ -4152,6 +4228,40 @@
         "description": "Enables the query service to fetch the configuration from the settings service",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryHistory.localOnly",
+        "resourceVersion": "1779463558878",
+        "creationTimestamp": "2026-05-21T19:21:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-22 15:25:58.878199 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Store query history in browser IndexedDB instead of server-side",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryHistory.recentQueriesUI",
+        "resourceVersion": "1779463558878",
+        "creationTimestamp": "2026-05-21T19:21:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-22 15:25:58.878199 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Replace the Query History drawer with a new Recent Queries modal UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
         "expression": "false"
       }
     },

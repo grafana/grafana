@@ -1,4 +1,3 @@
-import { type DataQuery } from '@grafana/data';
 import { type Dashboard, type DataSourceRef } from '@grafana/schema';
 import { type ObjectMeta } from 'app/features/apiserver/types';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -81,7 +80,7 @@ export interface DashboardMeta {
   };
 }
 
-export interface AnnotationActions {
+interface AnnotationActions {
   canAdd: boolean;
   canEdit: boolean;
   canDelete: boolean;
@@ -89,10 +88,6 @@ export interface AnnotationActions {
 
 export interface AnnotationsPermissions {
   dashboard: AnnotationActions;
-}
-
-export interface SnapshotSpec {
-  dashboard: DashboardDataDTO;
 }
 
 // FIXME: This should not override Dashboard types
@@ -132,12 +127,7 @@ export enum KioskMode {
   Full = 'full',
 }
 
-export type GetMutableDashboardModelFn = () => DashboardModel | null;
-
-export interface QueriesToUpdateOnDashboardLoad {
-  panelId: number;
-  queries: DataQuery[];
-}
+type GetMutableDashboardModelFn = () => DashboardModel | null;
 
 export interface DashboardState {
   getModel: GetMutableDashboardModelFn;

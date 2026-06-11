@@ -3358,7 +3358,7 @@
     },
     "/dashboards/db": {
       "post": {
-        "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.\n\nUse: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards",
+        "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.\n\nUse: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards",
         "tags": [
           "dashboards"
         ],
@@ -3709,7 +3709,7 @@
     },
     "/dashboards/uid/{uid}": {
       "get": {
-        "description": "Optional query parameter `apiVersion` selects the Kubernetes API version used to load the dashboard first\n(for example `v1beta1`). If that request fails, the default version is used instead. When omitted, only the default is used.\n\nWill return the dashboard given the dashboard unique identifier (uid).\n\nUse: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
+        "description": "Optional query parameter `apiVersion` selects the Kubernetes API version used to load the dashboard first\n(for example `v1beta1`). If that request fails, the default version is used instead. When omitted, only the default is used.\n\nWill return the dashboard given the dashboard unique identifier (uid).\n\nUse: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
         "tags": [
           "dashboards"
         ],
@@ -3746,7 +3746,7 @@
         }
       },
       "delete": {
-        "description": "Will delete the dashboard given the specified unique identifier (uid).\n\nUse: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
+        "description": "Will delete the dashboard given the specified unique identifier (uid).\n\nUse: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
         "tags": [
           "dashboards"
         ],
@@ -3782,7 +3782,7 @@
     },
     "/dashboards/uid/{uid}/permissions": {
       "get": {
-        "description": "Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}/access",
+        "description": "Use: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}/access",
         "tags": [
           "dashboards",
           "permissions"
@@ -3865,7 +3865,7 @@
     },
     "/dashboards/uid/{uid}/restore": {
       "post": {
-        "description": "This API will be removed when /apis/dashboards.grafana.app/v1 is released.\nYou can restore a dashboard by reading it from history, then creating it again.",
+        "description": "This API will be removed when /apis/dashboard.grafana.app/v1 is released.\nYou can restore a dashboard by reading it from history, then creating it again.",
         "tags": [
           "dashboards",
           "versions"
@@ -10111,60 +10111,6 @@
         "responses": {
           "302": {
             "$ref": "#/responses/okResponse"
-          }
-        }
-      }
-    },
-    "/user/helpflags/clear": {
-      "get": {
-        "tags": [
-          "signed_in_user"
-        ],
-        "summary": "Clear user help flag.",
-        "operationId": "clearHelpFlags",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/helpFlagResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/user/helpflags/{flag_id}": {
-      "put": {
-        "tags": [
-          "signed_in_user"
-        ],
-        "summary": "Set user help flag.",
-        "operationId": "setHelpFlag",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "flag_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/helpFlagResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
           }
         }
       }
@@ -24981,21 +24927,6 @@
       "description": "GoneError is returned when the requested endpoint was removed.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
-      }
-    },
-    "helpFlagResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "object",
-        "properties": {
-          "helpFlags1": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
       }
     },
     "importDashboardResponse": {

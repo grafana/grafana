@@ -380,15 +380,10 @@ type ResourceServerOptions struct {
 	// the RPC then returns Unimplemented.
 	Embedder *embedder.Embedder
 
-	// VectorBackfiller, when non-nil, is launched in a background
-	// goroutine after Init. The server tracks it in its WaitGroup so
-	// Stop blocks until it returns. nil = backfill feature off.
-	VectorBackfiller Runnable
-
-	// VectorReconciler, when non-nil, is launched alongside the
-	// backfiller; the server attaches its own broadcaster to it before
-	// starting Run so the reconciler's watch path lights up. nil =
-	// reconciler feature off.
+	// VectorReconciler, when non-nil, is launched after Init; the server
+	// attaches its own broadcaster to it before starting Run so the
+	// reconciler's watch path lights up. The reconciler owns the
+	// backfiller and runs it. nil = reconciler feature off.
 	VectorReconciler BroadcasterConsumer
 }
 
@@ -539,7 +534,6 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		quotasConfig:                   opts.QuotasConfig,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
-		vectorBackfiller:               opts.VectorBackfiller,
 		vectorWriteReconciler:          opts.VectorReconciler,
 	}
 
@@ -549,6 +543,11 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// Access to search is required when checking quotas.
+	if opts.OverridesService != nil && s.search == nil && opts.SearchClient == nil {
+		return nil, fmt.Errorf("overrides service requires search for quota checking")
 	}
 
 	return s, nil
@@ -641,9 +640,8 @@ type server struct {
 
 	bookmarkFrequency time.Duration
 
-	// Async vector indexers (backfiller + reconciler).
-	// Started in Init, joined in Stop via indexersWG.
-	vectorBackfiller      Runnable
+	// Vector reconciler (which owns the backfiller). Started in Init,
+	// joined in Stop via indexersWG.
 	vectorWriteReconciler BroadcasterConsumer
 	indexersWG            sync.WaitGroup
 }
@@ -680,18 +678,11 @@ func (s *server) Init(ctx context.Context) error {
 	return s.initErr
 }
 
-// startVectorIndexers launches the configured backfiller and
-// reconciler. Both are optional (nil = feature off). The reconciler
-// gets the server's broadcaster via UseBroadcaster before Run; the
-// backfiller doesn't need the watch path.
+// startVectorIndexers launches the vector reconciler (which owns and runs
+// the backfiller). Optional: nil = feature off. The reconciler gets the
+// server's broadcaster via UseBroadcaster before Run so its watch path
+// lights up.
 func (s *server) startVectorIndexers() {
-	if s.vectorBackfiller != nil {
-		s.indexersWG.Go(func() {
-			if err := s.vectorBackfiller.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
-				s.log.Error("vector backfiller stopped", "err", err)
-			}
-		})
-	}
 	if s.vectorWriteReconciler != nil {
 		if s.broadcaster != nil {
 			s.vectorWriteReconciler.UseBroadcaster(s.broadcaster)
@@ -984,7 +975,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	defer s.inflight.Done()
 
 	if r := verifyRequestKey(req.Key); r != nil {
-		return nil, fmt.Errorf("invalid request key: %s", r.Message)
+		return nil, status.Error(codes.InvalidArgument, r.Message)
 	}
 
 	rsp := &resourcepb.CreateResponse{}
@@ -1108,6 +1099,10 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 	}
 	defer s.inflight.Done()
 
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
+
 	rsp := &resourcepb.UpdateResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
@@ -1200,6 +1195,10 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		return nil, errStopping
 	}
 	defer s.inflight.Done()
+
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
 
 	rsp := &resourcepb.DeleteResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
@@ -1317,8 +1316,12 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 			}}, nil
 	}
 
-	if req.Key.Resource == "" {
-		return &resourcepb.ReadResponse{Error: NewBadRequestError("missing resource")}, nil
+	// Don't validate the name format here: a lookup with an odd or
+	// invalid-looking name should fall through to the backend and surface as
+	// NotFound, matching K8s Get semantics. Strict name validation belongs on
+	// writes (Create/Update/Delete).
+	if r := verifyRequestKeyCollection(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
 	}
 
 	var (
@@ -1374,8 +1377,15 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
-	span.SetAttributes(attribute.String("group", req.Options.Key.Group), attribute.String("resource", req.Options.Key.Resource))
 	defer span.End()
+
+	if req.Options == nil {
+		return nil, status.Error(codes.InvalidArgument, "missing list options")
+	}
+	if r := verifyRequestKeyCollection(req.Options.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
+	span.SetAttributes(attribute.String("group", req.Options.Key.Group), attribute.String("resource", req.Options.Key.Resource))
 
 	// The history + trash queries do not yet support additional filters
 	if req.Source != resourcepb.ListRequest_STORE {
@@ -1689,6 +1699,13 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		return apierrors.NewUnauthorized("no user found in context")
 	}
 
+	if req.Options == nil {
+		return status.Error(codes.InvalidArgument, "missing watch options")
+	}
+	if r := verifyRequestKeyCollection(req.Options.Key); r != nil {
+		return status.Error(codes.InvalidArgument, r.Message)
+	}
+
 	key := req.Options.Key
 	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 	checker, _, err := s.access.Compile(ctx, user, claims.ListRequest{
@@ -1923,18 +1940,51 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 		return nil, err
 	}
 
-	if s.search == nil {
-		// If the backend implements "GetStats", we can use it
-		srv, ok := s.backend.(StatsGetter)
-		if ok {
-			return srv.GetStats(ctx, req)
-		}
-		return nil, fmt.Errorf("search index not configured")
+	if s.search != nil {
+		return s.search.GetStats(ctx, req)
 	}
-	return s.search.GetStats(ctx, req)
+
+	if s.searchClient != nil {
+		return s.searchClient.GetStats(ctx, req)
+	}
+
+	// TODO: remove this fallback once the SQL backend is phased out; it's not implemented
+	// in the KV backend.
+	if srv, ok := s.backend.(StatsGetter); ok {
+		return srv.GetStats(ctx, req)
+	}
+
+	return nil, fmt.Errorf("search index not configured")
 }
 
+// requireUserNamespace is a cross-tenant safety net for delegated-only
+// RPCs. It does not replace resource-level access.Check; it only catches
+// the case where a caller authenticated for one namespace asks for data
+// in another.
+func requireUserNamespace(ctx context.Context, namespace string) *resourcepb.ErrorResult {
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+	}
+	if !claims.NamespaceMatches(user.GetNamespace(), namespace) {
+		return &resourcepb.ErrorResult{
+			Message: "namespace mismatch",
+			Code:    http.StatusForbidden,
+		}
+	}
+	return nil
+}
+
+// ListManagedObjects implements ManagedObjectIndexServer.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
+		return &resourcepb.ListManagedObjectsResponse{Error: errRes}, nil
+	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -1942,7 +1992,13 @@ func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListMan
 	return s.search.ListManagedObjects(ctx, req)
 }
 
+// CountManagedObjects implements ManagedObjectIndexServer.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
+	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
+		return &resourcepb.CountManagedObjectsResponse{Error: errRes}, nil
+	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -1955,12 +2011,59 @@ func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckReque
 	return s.diagnostics.IsHealthy(ctx, req) //nolint:staticcheck
 }
 
-// GetBlob implements BlobStore.
+// PutBlob implements BlobStore.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+	if req.Resource == nil {
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "missing resource key",
+			Code:    http.StatusBadRequest,
+		}}, nil
+	}
 	if s.blob == nil {
 		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
 			Message: "blob store not configured",
 			Code:    http.StatusNotImplemented,
+		}}, nil
+	}
+
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}}, nil
+	}
+
+	// Load the parent both to enforce existence (see proto) and to get its
+	// folder for access.Check.
+	parent := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: req.Resource})
+	switch {
+	case parent == nil:
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "parent resource not found",
+			Code:    http.StatusNotFound,
+		}}, nil
+	case parent.Error != nil:
+		// Surface backend status as-is; collapsing to 404 would hide
+		// transient 5xx as "not found".
+		return &resourcepb.PutBlobResponse{Error: parent.Error}, nil
+	}
+
+	a, err := s.access.Check(ctx, user, claims.CheckRequest{
+		Verb:      utils.VerbUpdate,
+		Group:     req.Resource.Group,
+		Resource:  req.Resource.Resource,
+		Namespace: req.Resource.Namespace,
+		Name:      req.Resource.Name,
+	}, parent.Folder)
+	if err != nil {
+		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
+	}
+	if !a.Allowed {
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Code: http.StatusForbidden,
 		}}, nil
 	}
 
@@ -1983,21 +2086,24 @@ func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRe
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 	}
-	usage, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	statsRsp, err := s.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		Namespace: nsr.Namespace,
+		Kinds:     []string{nsr.GroupResource()},
+	})
 	if err != nil {
 		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
+	}
+	if statsRsp.Error != nil {
+		return &resourcepb.QuotaUsageResponse{Error: statsRsp.Error}, nil
 	}
 	limit, err := s.overridesService.GetQuota(ctx, nsr)
 	if err != nil {
 		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
 	}
 
-	// handle case where no resources exist yet - very unlikely but possible
 	rsp := &resourcepb.QuotaUsageResponse{Limit: int64(limit.Limit)}
-	if len(usage) <= 0 {
-		rsp.Usage = 0
-	} else {
-		rsp.Usage = usage[0].Count
+	if len(statsRsp.Stats) > 0 {
+		rsp.Usage = statsRsp.Stats[0].Count
 	}
 
 	return rsp, nil
@@ -2029,7 +2135,18 @@ func (s *server) getPartialObject(ctx context.Context, key *resourcepb.ResourceK
 }
 
 // GetBlob implements BlobStore.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
+	if req.Resource == nil {
+		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "missing resource key",
+			Code:    http.StatusBadRequest,
+		}}, nil
+	}
+	if errRes := requireUserNamespace(ctx, req.Resource.Namespace); errRes != nil {
+		return &resourcepb.GetBlobResponse{Error: errRes}, nil
+	}
 	if s.blob == nil {
 		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
 			Message: "blob store not configured",
@@ -2113,7 +2230,13 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	}
 }
 
+// RebuildIndexes implements ResourceIndexServer.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
+		return &resourcepb.RebuildIndexesResponse{Error: errRes}, nil
+	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -2140,11 +2263,19 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 		return nil
 	}
 
-	stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	statsRsp, err := s.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		Namespace: nsr.Namespace,
+		Kinds:     []string{nsr.GroupResource()},
+	})
 	if err != nil {
 		s.log.FromContext(ctx).Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
 		return nil
 	}
+	if statsRsp.Error != nil {
+		s.log.FromContext(ctx).Error("call to GetStats returned error", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", statsRsp.Error.Message)
+		return nil
+	}
+	stats := statsRsp.Stats
 	if len(stats) > 0 {
 		s.log.FromContext(ctx).Debug("stats found", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "count", stats[0].Count)
 	} else {

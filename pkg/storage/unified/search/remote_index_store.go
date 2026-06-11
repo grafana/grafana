@@ -22,6 +22,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
 const (
@@ -37,14 +38,15 @@ const (
 )
 
 const (
-	snapshotStoreOpUploadFile             = "upload_file"
-	snapshotStoreOpUploadManifest         = "upload_manifest"
-	snapshotStoreOpDownloadFile           = "download_file"
-	snapshotStoreOpReadManifest           = "read_manifest"
-	snapshotStoreOpListIndexKeys          = "list_index_keys"
-	snapshotStoreOpListNamespaces         = "list_namespaces"
-	snapshotStoreOpListNamespaceResources = "list_namespace_resources"
-	snapshotStoreOpDeleteIndex            = "delete_index"
+	snapshotStoreOpUploadFile                       = "upload_file"
+	snapshotStoreOpUploadManifest                   = "upload_manifest"
+	snapshotStoreOpDownloadFile                     = "download_file"
+	snapshotStoreOpReadManifest                     = "read_manifest"
+	snapshotStoreOpListIndexKeys                    = "list_index_keys"
+	snapshotStoreOpListIndexKeysIncludingIncomplete = "list_index_keys_including_incomplete"
+	snapshotStoreOpListNamespaces                   = "list_namespaces"
+	snapshotStoreOpListNamespaceResources           = "list_namespace_resources"
+	snapshotStoreOpDeleteIndex                      = "delete_index"
 )
 
 var snapshotStoreRetryBackoffConfig = backoff.Config{
@@ -159,12 +161,22 @@ type RemoteIndexStore interface {
 	// returned NamespacedResource.
 	ListNamespaceResources(ctx context.Context, namespace string) ([]resource.NamespacedResource, error)
 
-	// ListIndexKeys returns the ULID keys of all index snapshots under the
-	// given namespaced resource. The returned list may include incomplete
-	// uploads (snapshots whose manifest has not yet been written); callers
-	// that need to distinguish complete from incomplete snapshots should
-	// follow up with the ReadIndexSnapshotManifest helper. Ordering is unspecified.
+	// ListIndexKeys returns the ULID keys of all index snapshots known
+	// under nsResource. Implementations may include or exclude incomplete
+	// uploads (data files written without a manifest) based on what is
+	// cheap on the backend; callers that need to confirm a particular key
+	// is backed by a valid manifest follow up with ReadIndexSnapshotManifest.
+	// Callers that must see incomplete uploads — notably
+	// CleanupIncompleteIndexSnapshots — use ListIndexKeysIncludingIncomplete
+	// instead. Ordering is unspecified.
 	ListIndexKeys(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error)
+
+	// ListIndexKeysIncludingIncomplete is like ListIndexKeys but is
+	// required to include incomplete uploads (snapshots that have data
+	// files on storage but no manifest). May be more expensive than
+	// ListIndexKeys on backends that must scan extra storage to detect
+	// partial uploads. Ordering is unspecified.
+	ListIndexKeysIncludingIncomplete(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error)
 
 	// DeleteIndex deletes all files for an index snapshot.
 	DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) error
@@ -261,6 +273,12 @@ func isRetryableSnapshotStoreError(ctx context.Context, err error) bool {
 	}
 	if errors.Is(err, ErrSnapshotNotFound) || errors.Is(err, ErrInvalidManifest) || errors.Is(err, resource.ErrWriteLimitExceeded) {
 		return false
+	}
+
+	// kv.ErrRetryable marks transient errors from KV backends (e.g. gRPC
+	// status codes, retryable filesystem errors) wrapped by KVRemoteIndexStore.
+	if errors.Is(err, kv.ErrRetryable) {
+		return true
 	}
 
 	switch gcerrors.Code(err) {
@@ -432,15 +450,22 @@ func listSubdirs[T any](ctx context.Context, bucket resource.CDKBucket, prefix, 
 }
 
 // ListIndexKeys returns the ULIDs of all snapshot prefixes under nsResource.
-// Non-ULID sibling directories (e.g. /locks) are skipped silently. The list
-// may include incomplete uploads whose manifest has not yet been written;
-// callers that need to filter to complete snapshots follow up with
-// ReadIndexSnapshotManifest (or the ListIndexSnapshots helper).
+// Non-ULID sibling directories (e.g. /locks) are skipped silently. Because
+// the listing is a subdir scan, the result naturally includes incomplete
+// uploads whose manifest has not yet been written; callers that depend on
+// that visibility should use ListIndexKeysIncludingIncomplete.
 func (s *BucketRemoteIndexStore) ListIndexKeys(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error) {
 	return listSubdirs(ctx, s.bucket, nsPrefix(nsResource), "listing index keys", func(name string) (ulid.ULID, bool) {
 		key, err := ulid.Parse(name)
 		return key, err == nil // skip non-ULID subdirs (e.g. /locks)
 	})
+}
+
+// ListIndexKeysIncludingIncomplete is identical to ListIndexKeys for the
+// bucket backend: subdir listing already surfaces incomplete uploads at
+// no extra cost.
+func (s *BucketRemoteIndexStore) ListIndexKeysIncludingIncomplete(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error) {
+	return s.ListIndexKeys(ctx, nsResource)
 }
 
 // ListNamespaces returns the namespaces currently known to the store.
@@ -791,8 +816,8 @@ func ListIndexSnapshots(ctx context.Context, store RemoteIndexStore, nsResource 
 // (store.LockNamespaceForCleanup) to avoid concurrent cleanup by different
 // instances.
 func CleanupIncompleteIndexSnapshots(ctx context.Context, store RemoteIndexStore, nsResource resource.NamespacedResource, olderThan time.Time, logger log.Logger) (int, error) {
-	keys, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, logger, func() ([]ulid.ULID, error) {
-		return store.ListIndexKeys(ctx, nsResource)
+	keys, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeysIncludingIncomplete, logger, func() ([]ulid.ULID, error) {
+		return store.ListIndexKeysIncludingIncomplete(ctx, nsResource)
 	})
 	if err != nil {
 		return 0, fmt.Errorf("listing index keys: %w", err)
