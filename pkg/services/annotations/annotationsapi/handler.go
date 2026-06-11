@@ -36,13 +36,18 @@ type ProxyHandler struct {
 }
 
 func ProvideProxyHandler(cfg *setting.Cfg, userSvc user.Service) (*ProxyHandler, error) {
+	phase := cfg.AnnotationAppPlatform.APIMigrationPhase
+	if phase != "off" && strings.TrimSpace(cfg.AnnotationAppPlatform.APIServerURL) == "" {
+		return nil, fmt.Errorf("annotation proxy: api_server_url must be set when api_migration_phase is %q", phase)
+	}
+
 	k8sClient, err := NewClient(cfg, userSvc)
 	if err != nil {
 		return nil, err
 	}
 	return &ProxyHandler{
 		client: k8sClient,
-		phase:  cfg.AnnotationAppPlatform.APIMigrationPhase,
+		phase:  phase,
 	}, nil
 }
 
