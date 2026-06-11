@@ -346,7 +346,7 @@ export interface GrafanaConfig {
   };
   analytics: {
     enabled: boolean;
-    recentUsersAgeMs?: number;
+    presenceIndicatorsEnabled?: boolean;
   };
 }
 

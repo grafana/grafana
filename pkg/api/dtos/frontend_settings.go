@@ -91,8 +91,8 @@ type FrontendSettingsReportingDTO struct {
 }
 
 type FrontendSettingsAnalyticsDTO struct {
-	Enabled          bool  `json:"enabled"`
-	RecentUsersAgeMs int64 `json:"recentUsersAgeMs"`
+	Enabled                   bool  `json:"enabled"`
+	PresenceIndicatorsEnabled *bool `json:"presenceIndicatorsEnabled,omitempty"`
 }
 
 type FrontendSettingsUnifiedAlertingStateHistoryDTO struct {
