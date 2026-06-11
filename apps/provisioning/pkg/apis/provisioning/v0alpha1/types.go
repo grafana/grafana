@@ -563,6 +563,14 @@ type RepositoryStatus struct {
 
 	// Quota contains the configured quota limits for this repository
 	Quota QuotaStatus `json:"quota,omitempty"`
+
+	// AuthorName is the git author name used when writing commits. Defaults to
+	// "Grafana", replaced by the bot identity when a GitHub App connection is used.
+	AuthorName string `json:"authorName,omitempty"`
+
+	// AuthorEmail is the git author email used when writing commits. Defaults to
+	// "noreply@grafana.com", replaced by the bot identity when a GitHub App connection is used.
+	AuthorEmail string `json:"authorEmail,omitempty"`
 }
 
 func (RepositoryStatus) OpenAPIModelName() string {

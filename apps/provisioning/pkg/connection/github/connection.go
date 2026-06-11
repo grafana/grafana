@@ -351,6 +351,42 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 	}, nil
 }
 
+// GetAuthor derives the git author from the GitHub App identity.
+// The bot user ID in the email is what links commits to the App on GitHub.
+func (c *Connection) GetAuthor(ctx context.Context) (name, email string, err error) {
+	if c.obj.Spec.GitHub == nil {
+		return "", "", errors.New("connection is not a GitHub connection")
+	}
+
+	token, err := GenerateJWTToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
+	if err != nil {
+		return "", "", fmt.Errorf("generate jwt token: %w", err)
+	}
+
+	ghClient := c.ghFactory.New(ctx, token)
+
+	app, err := ghClient.GetApp(ctx)
+	if err != nil {
+		return "", "", fmt.Errorf("get app: %w", err)
+	}
+
+	// The user lookup is a regular REST call, which the App JWT cannot make.
+	// Use an installation token instead.
+	installationToken, err := ghClient.CreateInstallationAccessToken(ctx, c.obj.Spec.GitHub.InstallationID, "")
+	if err != nil {
+		return "", "", fmt.Errorf("create installation access token: %w", err)
+	}
+
+	userID, err := c.ghFactory.New(ctx, common.RawSecureValue(installationToken.Token)).GetBotUserID(ctx, app.Slug)
+	if err != nil {
+		return "", "", fmt.Errorf("get bot user id: %w", err)
+	}
+
+	return fmt.Sprintf("%s[bot]", app.Slug),
+		fmt.Sprintf("%d+%s[bot]@users.noreply.github.com", userID, app.Slug),
+		nil
+}
+
 // GenerateRepositoryToken generates a repository-scoped access token.
 func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (*connection.ExpirableSecureValue, error) {
 	if repo == nil {
@@ -554,6 +590,7 @@ func toAppPermissionString(permissions Permission) string {
 }
 
 var (
-	_ connection.Connection      = (*Connection)(nil)
-	_ connection.TokenConnection = (*Connection)(nil)
+	_ connection.Connection       = (*Connection)(nil)
+	_ connection.TokenConnection  = (*Connection)(nil)
+	_ connection.AuthorConnection = (*Connection)(nil)
 )

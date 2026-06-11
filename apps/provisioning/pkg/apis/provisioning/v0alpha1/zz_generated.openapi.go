@@ -2514,6 +2514,20 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 							Ref:         ref(QuotaStatus{}.OpenAPIModelName()),
 						},
 					},
+					"authorName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AuthorName is the git author name used when writing commits. Defaults to \"Grafana\", replaced by the bot identity when a GitHub App connection is used.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"authorEmail": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AuthorEmail is the git author email used when writing commits. Defaults to \"noreply@grafana.com\", replaced by the bot identity when a GitHub App connection is used.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"observedGeneration", "health", "sync", "webhook"},
 			},

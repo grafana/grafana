@@ -24,6 +24,7 @@ var (
 //go:generate mockery --name Client --structname MockClient --inpackage --filename client_mock.go --with-expecter
 type Client interface {
 	GetApp(ctx context.Context) (App, error)
+	GetBotUserID(ctx context.Context, slug string) (int64, error)
 	GetAppInstallation(ctx context.Context, installationID string) (AppInstallation, error)
 	ListInstallationRepositories(ctx context.Context) ([]Repository, error)
 	CreateInstallationAccessToken(ctx context.Context, installationID string, repo string) (InstallationToken, error)
@@ -123,6 +124,28 @@ func (r *githubClient) GetApp(ctx context.Context) (App, error) {
 			Webhooks:     toPermission(app.GetPermissions().GetRepositoryHooks()),
 		},
 	}, nil
+}
+
+// GetBotUserID returns the user ID of the App's bot account ("<slug>[bot]").
+// This ID is used in the commit author email so GitHub attributes commits to the App.
+func (r *githubClient) GetBotUserID(ctx context.Context, slug string) (int64, error) {
+	user, _, err := r.gh.Users.Get(ctx, slug+"[bot]")
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response != nil {
+			switch ghErr.Response.StatusCode {
+			case http.StatusUnauthorized, http.StatusForbidden:
+				return 0, ErrAuthentication
+			case http.StatusNotFound:
+				return 0, fmt.Errorf("bot user: %w", ErrNotFound)
+			case http.StatusServiceUnavailable:
+				return 0, ErrServiceUnavailable
+			}
+		}
+		return 0, err
+	}
+
+	return user.GetID(), nil
 }
 
 // GetAppInstallation gets the installation of the app related to the given token.
