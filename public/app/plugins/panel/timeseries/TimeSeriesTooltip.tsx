@@ -19,11 +19,10 @@ import {
   VizTooltipHeader,
   VizTooltipWrapper,
   getFieldDisplayItems,
+  isTooltipScrollable,
 } from '@grafana/ui';
 
 import { getFieldActions } from '../status-history/utils';
-
-import { isTooltipScrollable } from './utils';
 
 // exemplar / annotation / time region hovering?
 // add annotation UI / alert dismiss UI?
