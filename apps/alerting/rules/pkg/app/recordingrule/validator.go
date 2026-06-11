@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/schemavalidation"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/util"
 	prom_model "github.com/prometheus/common/model"
 )
@@ -94,7 +95,7 @@ func validateMetric(r *model.RecordingRule) error {
 	return nil
 }
 
-func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
+func NewValidator(cfg config.RuntimeConfig, sv *schemavalidation.SpecValidator) *simple.Validator {
 	return &simple.Validator{
 		ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
 			// req.Object will not cast to *RecordingRule for delete requests,
@@ -106,6 +107,13 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 			r, ok := req.Object.(*model.RecordingRule)
 			if !ok {
 				return fmt.Errorf("object is not of type *v0alpha1.RecordingRule")
+			}
+
+			// Validate against the openAPI spec first
+			if sv != nil {
+				if err := sv.ValidateOpenAPISpec(r.Name, r.Spec); err != nil {
+					return err
+				}
 			}
 			var oldRule *model.RecordingRule
 			if req.OldObject != nil {

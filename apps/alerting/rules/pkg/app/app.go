@@ -8,12 +8,14 @@ import (
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/alertrule"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/recordingrule"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/rulesequence"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/schemavalidation"
 )
 
 func New(cfg app.Config) (app.App, error) {
@@ -22,11 +24,20 @@ func New(cfg app.Config) (app.App, error) {
 	if !ok {
 		return nil, config.ErrInvalidRuntimeConfig
 	}
+
+	specValidators, err := schemavalidation.BuildAll(cfg.ManifestData, schema.GroupVersion{
+		Group: cfg.ManifestData.Group,
+		// TODO: handle multiple versions
+		Version: cfg.ManifestData.Versions[0].Name,
+	})
+	if err != nil {
+		return nil, err
+	}
 	for _, kinds := range apis.GetKinds() {
 		for _, kind := range kinds {
 			managedKind := simple.AppManagedKind{
 				Kind:      kind,
-				Validator: buildKindValidator(kind, runtimeCfg),
+				Validator: buildKindValidator(kind, runtimeCfg, specValidators[kind.Kind()]),
 				Mutator:   buildKindMutator(kind, runtimeCfg),
 				Watcher:   buildKindWatcher(kind, runtimeCfg),
 			}
@@ -65,14 +76,14 @@ func New(cfg app.Config) (app.App, error) {
 	return a, nil
 }
 
-func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig) *simple.Validator {
+func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig, sv *schemavalidation.SpecValidator) *simple.Validator {
 	switch kind.Kind() {
 	case "AlertRule":
-		return alertrule.NewValidator(cfg)
+		return alertrule.NewValidator(cfg, sv)
 	case "RecordingRule":
-		return recordingrule.NewValidator(cfg)
+		return recordingrule.NewValidator(cfg, sv)
 	case "RuleSequence":
-		return rulesequence.NewValidator(cfg)
+		return rulesequence.NewValidator(cfg, sv)
 	}
 	return nil
 }
