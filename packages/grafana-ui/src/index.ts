@@ -153,6 +153,7 @@ export {
   ColorPlacement,
   type VizTooltipItem,
   DEFAULT_COLOR_INDICATOR,
+  getFieldDisplayItems,
   SeriesTable,
   type SeriesTableProps,
   SeriesTableRow,

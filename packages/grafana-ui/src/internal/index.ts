@@ -97,7 +97,6 @@ export {
 export { VizTooltipHeader } from '../components/VizTooltip/VizTooltipHeader';
 export { VizTooltipWrapper } from '../components/VizTooltip/VizTooltipWrapper';
 export { VizTooltipRow } from '../components/VizTooltip/VizTooltipRow';
-export { getContentItems } from '../components/VizTooltip/utils';
 export { ColorIndicator, ColorPlacement, type VizTooltipItem } from '../components/VizTooltip/types';
 export { mapMouseEventToMode } from '../components/VizLegend/utils';
 export { Carousel } from '../components/Carousel/Carousel';

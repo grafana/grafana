@@ -6,4 +6,5 @@ export { VizTooltipWrapper } from './VizTooltipWrapper';
 export { VizTooltipFooter, type AdHocFilterModel, type FilterByGroupedLabelsModel } from './VizTooltipFooter';
 export { VizTooltipHeader } from './VizTooltipHeader';
 export { ColorIndicator, ColorPlacement, type VizTooltipItem, DEFAULT_COLOR_INDICATOR } from './types';
+export { getFieldDisplayItems } from './utils';
 export { SeriesTable, SeriesTableRow, type SeriesTableProps, type SeriesTableRowProps } from './SeriesTable';

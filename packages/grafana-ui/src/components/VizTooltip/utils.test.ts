@@ -3,7 +3,12 @@ import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { type ColorIndicatorStyles } from './VizTooltipColorIndicator';
 import { ColorIndicator } from './types';
-import { calculateTooltipPosition, getColorIndicatorClass, getContentItems, getTooltipDisplayValue } from './utils';
+import {
+  calculateTooltipPosition,
+  getColorIndicatorClass,
+  getFieldDisplayItems,
+  getTooltipDisplayValue,
+} from './utils';
 
 describe('utils', () => {
   describe('calculateTooltipPosition', () => {
@@ -168,7 +173,7 @@ describe('utils', () => {
     });
   });
 
-  describe('it tests getContentItems with numeric values', () => {
+  describe('getFieldDisplayItems with numeric values', () => {
     const timeValues = [1707833954056, 1707838274056, 1707842594056];
     const seriesAValues = [1, 20, 70];
     const seriesBValues = [-100, -26, null];
@@ -218,43 +223,50 @@ describe('utils', () => {
     const dataIdxs = [1, 1, 1];
 
     it('displays one series in single mode', () => {
-      const rows = getContentItems(fields, xField, dataIdxs, 2, TooltipDisplayMode.Single, SortOrder.None);
+      const rows = getFieldDisplayItems(fields, xField, dataIdxs, 2, TooltipDisplayMode.Single, SortOrder.None);
       expect(rows.length).toBe(1);
       expect(rows[0].value).toBe('-26');
     });
 
     it('displays the right content in multi mode', () => {
-      const rows = getContentItems(fields, xField, dataIdxs, null, TooltipDisplayMode.Multi, SortOrder.None);
+      const rows = getFieldDisplayItems(fields, xField, dataIdxs, null, TooltipDisplayMode.Multi, SortOrder.None);
       expect(rows.length).toBe(2);
       expect(rows[0].value).toBe('20');
       expect(rows[1].value).toBe('-26');
     });
 
     it('displays the values sorted ASC', () => {
-      const rows = getContentItems(fields, xField, dataIdxs, null, TooltipDisplayMode.Multi, SortOrder.Ascending);
+      const rows = getFieldDisplayItems(fields, xField, dataIdxs, null, TooltipDisplayMode.Multi, SortOrder.Ascending);
       expect(rows.length).toBe(2);
       expect(rows[0].value).toBe('-26');
       expect(rows[1].value).toBe('20');
     });
 
     it('displays the values sorted DESC', () => {
-      const rows = getContentItems(fields, xField, dataIdxs, null, TooltipDisplayMode.Multi, SortOrder.Descending);
+      const rows = getFieldDisplayItems(fields, xField, dataIdxs, null, TooltipDisplayMode.Multi, SortOrder.Descending);
       expect(rows.length).toBe(2);
       expect(rows[0].value).toBe('20');
       expect(rows[1].value).toBe('-26');
     });
 
     it('displays the correct value when NULL values', () => {
-      const rows = getContentItems(fields, xField, [2, 2, null], null, TooltipDisplayMode.Multi, SortOrder.Descending);
+      const rows = getFieldDisplayItems(
+        fields,
+        xField,
+        [2, 2, null],
+        null,
+        TooltipDisplayMode.Multi,
+        SortOrder.Descending
+      );
       expect(rows.length).toBe(1);
       expect(rows[0].value).toBe('70');
     });
 
-    it('filters out values when specified', () => {
+    it('filters out zeros when hideZeros is true', () => {
       const aField = { ...fields[1], values: [0, 3, 5] };
       const bField = { ...fields[2], values: [5, 0, 7] };
 
-      let rows = getContentItems(
+      let rows = getFieldDisplayItems(
         [fields[0], aField, bField],
         xField,
         dataIdxs,
@@ -268,7 +280,7 @@ describe('utils', () => {
       expect(rows.length).toBe(1);
       expect(rows[0].value).toBe('3');
 
-      rows = getContentItems(
+      rows = getFieldDisplayItems(
         [fields[0], aField, bField],
         xField,
         [0, 0, 0],
@@ -282,9 +294,79 @@ describe('utils', () => {
       expect(rows.length).toBe(1);
       expect(rows[0].value).toBe('5');
     });
+
+    it('marks the hovered series as active in multi mode', () => {
+      const rows = getFieldDisplayItems(fields, xField, dataIdxs, 1, TooltipDisplayMode.Multi, SortOrder.None);
+      expect(rows[0].isActive).toBe(true);
+      expect(rows[1].isActive).toBe(false);
+    });
+
+    it('uses field.state.displayName when available', () => {
+      const namedField = { ...fields[1], state: { displayName: 'Custom Name' } };
+      const rows = getFieldDisplayItems(
+        [fields[0], namedField],
+        xField,
+        dataIdxs,
+        null,
+        TooltipDisplayMode.Multi,
+        SortOrder.None
+      );
+      expect(rows[0].label).toBe('Custom Name');
+    });
+
+    it('skips fields with hideFrom.tooltip set', () => {
+      const hiddenField = { ...fields[1], config: { custom: { hideFrom: { tooltip: true } } } };
+      const rows = getFieldDisplayItems(
+        [fields[0], hiddenField, fields[2]],
+        xField,
+        dataIdxs,
+        null,
+        TooltipDisplayMode.Multi,
+        SortOrder.None
+      );
+      expect(rows.length).toBe(1);
+      expect(rows[0].label).toBe('B-series');
+    });
+
+    it('applies fieldFilter to exclude fields', () => {
+      const rows = getFieldDisplayItems(
+        fields,
+        xField,
+        dataIdxs,
+        null,
+        TooltipDisplayMode.Multi,
+        SortOrder.None,
+        (field) => field.name === 'A-series'
+      );
+      expect(rows.length).toBe(1);
+      expect(rows[0].label).toBe('A-series');
+    });
+
+    it('includes _restFields as isHiddenFromViz items', () => {
+      const restField = {
+        ...fields[1],
+        name: 'rest-series',
+        values: [99, 88, 77],
+        config: {},
+      };
+      const rows = getFieldDisplayItems(
+        [fields[0], fields[1]],
+        xField,
+        [1, 1],
+        null,
+        TooltipDisplayMode.Multi,
+        SortOrder.None,
+        undefined,
+        false,
+        [restField]
+      );
+      const restRow = rows.find((r) => r.label === 'rest-series');
+      expect(restRow).toBeDefined();
+      expect(restRow!.isHiddenFromViz).toBe(true);
+    });
   });
 
-  describe('it tests getContentItems with string values', () => {
+  describe('getFieldDisplayItems with string values', () => {
     const timeValues = [1707833954056, 1707838274056, 1707842594056];
     const seriesAValues = ['LOW', 'HIGH', 'NORMAL'];
     const seriesBValues = ['NORMAL', 'LOW', 'LOW'];
@@ -334,27 +416,27 @@ describe('utils', () => {
     const dataIdxs = [null, 0, 0];
 
     it('displays one series in single mode', () => {
-      const rows = getContentItems(fields, xField, [null, null, 0], 2, TooltipDisplayMode.Single, SortOrder.None);
+      const rows = getFieldDisplayItems(fields, xField, [null, null, 0], 2, TooltipDisplayMode.Single, SortOrder.None);
       expect(rows.length).toBe(1);
       expect(rows[0].value).toBe('NORMAL');
     });
 
     it('displays the right content in multi mode', () => {
-      const rows = getContentItems(fields, xField, dataIdxs, 2, TooltipDisplayMode.Multi, SortOrder.None);
+      const rows = getFieldDisplayItems(fields, xField, dataIdxs, 2, TooltipDisplayMode.Multi, SortOrder.None);
       expect(rows.length).toBe(2);
       expect(rows[0].value).toBe('LOW');
       expect(rows[1].value).toBe('NORMAL');
     });
 
     it('displays the values sorted ASC', () => {
-      const rows = getContentItems(fields, xField, dataIdxs, 2, TooltipDisplayMode.Multi, SortOrder.Ascending);
+      const rows = getFieldDisplayItems(fields, xField, dataIdxs, 2, TooltipDisplayMode.Multi, SortOrder.Ascending);
       expect(rows.length).toBe(2);
       expect(rows[0].value).toBe('LOW');
       expect(rows[1].value).toBe('NORMAL');
     });
 
     it('displays the values sorted DESC', () => {
-      const rows = getContentItems(
+      const rows = getFieldDisplayItems(
         frame.fields,
         frame.fields[0],
         dataIdxs,

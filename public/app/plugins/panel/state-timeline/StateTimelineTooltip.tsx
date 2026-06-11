@@ -9,8 +9,8 @@ import {
   VizTooltipFooter,
   VizTooltipHeader,
   VizTooltipWrapper,
+  getFieldDisplayItems,
 } from '@grafana/ui';
-import { getContentItems } from '@grafana/ui/internal';
 import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
 import { getFieldActions } from '../status-history/utils';
@@ -45,7 +45,7 @@ export const StateTimelineTooltip = ({
 
   mode = isPinned ? TooltipDisplayMode.Single : mode;
 
-  const contentItems = getContentItems(series.fields, xField, dataIdxs, seriesIdx, mode, sortOrder);
+  const contentItems = getFieldDisplayItems(series.fields, xField, dataIdxs, seriesIdx, mode, sortOrder);
   let endTime = null;
 
   // append duration in single mode
