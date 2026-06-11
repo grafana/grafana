@@ -14169,6 +14169,10 @@
       "query": "query",
       "transformation": "transformation"
     },
+    "queries-empty-state": {
+      "add-query": "Add query",
+      "message": "Add a query, expression, or transformation to get started"
+    },
     "sidebar": {
       "add-below": "Add below {{id}}",
       "add-expression": "Add expression",
@@ -14193,9 +14197,11 @@
       "footer-select": "Select...",
       "footer-select-label": "Select multiple items",
       "new-type": "New {{type}}",
+      "queries-empty": "No queries or expressions",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
+      "transformations-empty": "No transformations",
       "view-toggle": "View"
     },
     "stacked": {
