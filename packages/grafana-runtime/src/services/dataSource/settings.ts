@@ -122,6 +122,10 @@ export async function getDataSourceInstanceSettingsList(
  * @internal
  */
 export function setExpressionDataSourceInstanceSettings(settings: DataSourceInstanceSettings): void {
+  // We allow overriding in tests
+  if (expressionDsSettings && process.env.NODE_ENV !== 'test') {
+    throw new Error('setExpressionDataSourceInstanceSettings() function should only be called once, when Grafana is starting.');
+  }
   expressionDsSettings = settings;
   byUid[settings.uid] = settings;
 }

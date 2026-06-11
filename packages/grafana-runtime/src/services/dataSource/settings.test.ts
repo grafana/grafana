@@ -484,6 +484,24 @@ describe('instanceSettings', () => {
       expect(backendGet).toHaveBeenCalledWith('/api/frontend/settings');
     });
 
+    it('throws when called a second time outside of tests', () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      try {
+        setExpressionDataSourceInstanceSettings(fixtures.Expression);
+        expect(() => setExpressionDataSourceInstanceSettings(fixtures.Expression)).toThrow(
+          'setExpressionDataSourceInstanceSettings() function should only be called once'
+        );
+      } finally {
+        process.env.NODE_ENV = originalNodeEnv;
+      }
+    });
+
+    it('allows being called multiple times in tests', () => {
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      expect(() => setExpressionDataSourceInstanceSettings(fixtures.Expression)).not.toThrow();
+    });
+
     it('coexists with a runtime datasource and both survive a repopulate', async () => {
       setExpressionDataSourceInstanceSettings(fixtures.Expression);
       initDataSourceInstanceSettings(fixtures, 'Bravo');
