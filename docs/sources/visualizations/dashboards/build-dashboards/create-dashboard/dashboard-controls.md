@@ -21,39 +21,33 @@ In the **Dashboard controls** section of the sidebar, you can add variables, ann
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-controls-v13.0.png" max-width="400px" alt="Dashboard controls in the Dashboard options sidebar view" >}}
 
-## Filter and group by
+## Filter and Group by
 
+<!-- vale Grafana.WordList = NO -->
 <!-- vale Grafana.Spelling = NO -->
 
 {{< admonition type="note" >}}
-Filter and group by is currently in public preview.
-Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-
-This feature renames the **Filters** variable (formerly ad hoc filter) to **Filter and Group by** and extends it by adding grouping for Prometheus and Loki data sources.
-However, in the dashboard schema, it is still referred to as `"kind": "AdhocVariable"`.
-
-To use this feature, enable the `dashboardUnifiedDrilldownControls` feature toggle in your Grafana configuration file.
-
-For information on the generally available filters experience, refer to the [Variables documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
-While that documentation reflects the generally available experience, the information applies to the filter and group by feature as well.
+The **Filter and Group by** feature renames the **Ad hoc filters** variable and extends it by adding grouping for Prometheus and Loki data sources.
+However, in the dashboard schema, it's still referred to as `"kind": "AdhocVariable"`.
 {{< /admonition >}}
 
+<!-- vale Grafana.WordList = YES -->
 <!-- vale Grafana.Spelling = YES -->
 
-The filter and group by is one of the most complex and flexible variable options available.
-Instead of creating a variable for each dimension by which you want to filter, they automatically query your data source for available dimensions and let users add or remove filters and groupings on the dashboard dynamically.
+The **Filter and Group by** option is one of the most complex and flexible dashboard controls available.
+Instead of creating a variable for each dimension by which you want to filter, it automatically queries your data source for available dimensions and lets users add or remove filters and group by values on the dashboard dynamically.
 This allows you to quickly apply filters dashboard-wide.
 
 The group by function allows you to then group data by keys, letting you split it up.
-Group by is typically used with aggregation queries, such as `sum(your_metric_here)`, to split aggregated results by the selected dimensions.
+The Group by action is typically used with aggregation queries, such as `sum(your_metric_here)`, to split aggregated results by the selected dimensions.
 Then, you can use filters within panels to filter data in or out, drilling down further into the data.
 
 The filter and group by feature lets you add label/value filters that are automatically added to all queries that use the specified data source.
-Unlike other variables, you don't use these filters in queries.
+Unlike variables, you don't use these filters in queries.
 Instead, you use them to write filters for existing queries.
 
 The following data sources support filters.
-Data sources with an asterisk also support group by:
+Data sources with an asterisk also support the group by function:
 
 {{< column-list >}}
 
@@ -73,7 +67,7 @@ To add a filter and group by, follow these steps:
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. Click the **Add new element** icon (blue plus sign).
-   . Click **Filter and Group by**.
+1. Click **Filter and Group by**.
 1. Enter a **Name** for the filter.
 1. (Optional) In the **Label** field, enter the display name for the filter drop-down list.
 
@@ -106,7 +100,7 @@ To add a filter and group by, follow these steps:
 
 Now you can filter and group data on the dashboard.
 
-You can remove and reset default filters and groupings, and see your recent ones:
+You can remove and reset default filters and group by values, and see your recent ones:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-reset-default-v13.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" caption="Reset default filters and group by selections" >}}
 
@@ -271,7 +265,7 @@ To add a URL link to your dashboard, follow these steps:
 ## Manage dashboard controls
 
 After you add dashboard controls, you can manage them from the dashboard options.
-In this view, the sidebar includes collapsible sections for variables (including filter and group by), annotations, and links, including hidden controls that aren't otherwise visible on the dashboard:
+In this view, the sidebar includes collapsible sections for filters, variables, annotations, and links, including hidden controls that aren't otherwise visible on the dashboard:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-controls-mgmt-v13.0.png" max-width="450px" alt="Dashboard controls in the Dashboard options sidebar view" >}}
 
