@@ -75,5 +75,21 @@ describe('ProvisionedFormShell', () => {
       expect(screen.getByText('Repository not found')).toBeInTheDocument();
       expect(screen.queryByText('This repository is read only')).not.toBeInTheDocument();
     });
+
+    it('ignores the read-only message when the repository is missing', () => {
+      setup({ isMissingRepo: true, isReadOnly: true, readOnlyMessage: 'Custom read-only instructions.' });
+      expect(screen.getByText('Repository not found')).toBeInTheDocument();
+      expect(screen.queryByText(/Custom read-only instructions./)).not.toBeInTheDocument();
+    });
+
+    it('renders only the spinner when every flag is set', () => {
+      setup({ isLoading: true, isOrphaned: true, isError: true, isMissingRepo: true, isReadOnly: true });
+      expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+      expect(screen.queryByText('Provisioning repository no longer exists')).not.toBeInTheDocument();
+      expect(screen.queryByText('Error loading form')).not.toBeInTheDocument();
+      expect(screen.queryByText('Repository not found')).not.toBeInTheDocument();
+      expect(screen.queryByText('This repository is read only')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('form-content')).not.toBeInTheDocument();
+    });
   });
 });

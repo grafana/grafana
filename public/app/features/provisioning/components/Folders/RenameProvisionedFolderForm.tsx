@@ -191,7 +191,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
 }
 
 export function RenameProvisionedFolderForm({ folder, onDismiss }: RenameProvisionedFolderFormProps) {
-  const { repository, initialValues, isReadOnlyRepo, canPushToConfiguredBranch, isLoading } =
+  const { repository, initialValues, isReadOnlyRepo, isMissingRepo, canPushToConfiguredBranch, isLoading } =
     useProvisionedFolderFormData({
       folderUid: folder.uid,
       title: folder.title,
@@ -201,7 +201,7 @@ export function RenameProvisionedFolderForm({ folder, onDismiss }: RenameProvisi
   return (
     <ProvisionedFormShell
       isLoading={isLoading}
-      isMissingRepo={!isLoading && !isReadOnlyRepo && !initialValues}
+      isMissingRepo={isMissingRepo}
       isReadOnly={isReadOnlyRepo}
       readOnlyMessage={t(
         'browse-dashboards.rename-folder.read-only-message',

@@ -221,7 +221,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
 }
 
 export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteProvisionedFolderFormProps) {
-  const { canPushToConfiguredBranch, repository, initialValues, isReadOnlyRepo, isLoading } =
+  const { canPushToConfiguredBranch, repository, initialValues, isReadOnlyRepo, isMissingRepo, isLoading } =
     useProvisionedFolderFormData({
       folderUid: parentFolder?.uid,
       title: parentFolder?.title,
@@ -230,7 +230,7 @@ export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteP
   return (
     <ProvisionedFormShell
       isLoading={isLoading}
-      isMissingRepo={!isLoading && !isReadOnlyRepo && !initialValues}
+      isMissingRepo={isMissingRepo}
       isReadOnly={isReadOnlyRepo}
       readOnlyMessage={t(
         'browse-dashboards.delete-folder.read-only-message',

@@ -240,7 +240,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
 }
 
 export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
-  const { canPushToConfiguredBranch, repository, folder, initialValues, isReadOnlyRepo, isLoading } =
+  const { canPushToConfiguredBranch, repository, folder, initialValues, isReadOnlyRepo, isMissingRepo, isLoading } =
     useProvisionedFolderFormData({
       folderUid: parentFolder?.uid,
       title: '', // Empty title for new folders
@@ -249,7 +249,7 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
   return (
     <ProvisionedFormShell
       isLoading={isLoading}
-      isMissingRepo={!isLoading && !isReadOnlyRepo && !initialValues}
+      isMissingRepo={isMissingRepo}
       isReadOnly={isReadOnlyRepo}
       readOnlyMessage={t(
         'browse-dashboards.new-folder.read-only-message',

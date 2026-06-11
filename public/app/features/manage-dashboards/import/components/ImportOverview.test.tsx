@@ -19,6 +19,7 @@ const mockRepoView: ReturnType<typeof useGetResourceRepositoryView> = {
   isLoading: false,
   isInstanceManaged: false,
   isReadOnlyRepo: false,
+  isMissingRepo: true,
 };
 
 // Track which folderName the hook is called with so tests can configure per-folder responses.

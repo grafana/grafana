@@ -26,6 +26,8 @@ export interface ProvisionedFolderFormDataResult {
   initialValues?: BaseProvisionedFormData;
   isReadOnlyRepo: boolean;
   isLoading: boolean;
+  /** True when loading has settled and no repository could be resolved. See useGetResourceRepositoryView. */
+  isMissingRepo: boolean;
 }
 
 /**
@@ -36,7 +38,9 @@ export function useProvisionedFolderFormData({
   title,
   branchPrefix = 'folder',
 }: UseProvisionedFolderFormDataProps): ProvisionedFolderFormDataResult {
-  const { repository, folder, isLoading, isReadOnlyRepo } = useGetResourceRepositoryView({ folderName: folderUid });
+  const { repository, folder, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
+    folderName: folderUid,
+  });
 
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
 
@@ -62,5 +66,6 @@ export function useProvisionedFolderFormData({
     initialValues,
     isReadOnlyRepo,
     isLoading: Boolean(isLoading),
+    isMissingRepo,
   };
 }

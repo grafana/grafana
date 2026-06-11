@@ -144,6 +144,7 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
   folder: mockFolder,
   initialValues: mockFormData,
   isReadOnlyRepo: false,
+  isMissingRepo: false,
   canPushToConfiguredBranch: true,
   isLoading: false,
 };
@@ -217,8 +218,8 @@ describe('DeleteProvisionedFolderForm', () => {
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
     });
 
-    it('should not render if initialValues is null', () => {
-      setup({}, { ...defaultHookData, initialValues: undefined });
+    it('should not render the form when the repository is missing', () => {
+      setup({}, { ...defaultHookData, repository: undefined, initialValues: undefined, isMissingRepo: true });
       expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     });
   });

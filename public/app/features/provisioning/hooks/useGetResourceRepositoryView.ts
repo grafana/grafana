@@ -33,15 +33,29 @@ interface RepositoryViewData {
   isLoading?: boolean; // TODO: status now contains loading state, this can be removed
   isInstanceManaged: boolean;
   isReadOnlyRepo: boolean;
+  /**
+   * True when loading has settled and no repository could be resolved (and the
+   * target is not read-only). Consumers gating forms (e.g. ProvisionedFormShell)
+   * should use this instead of re-deriving it from isLoading/isReadOnlyRepo/repository.
+   */
+  isMissingRepo: boolean;
 }
 
 // This is safe to call as a viewer (you do not need full access to the Repository configs)
-export const useGetResourceRepositoryView = ({
+export const useGetResourceRepositoryView = (args: GetResourceRepositoryArgs): RepositoryViewData => {
+  const data = useResourceRepositoryViewData(args);
+  return {
+    ...data,
+    isMissingRepo: !data.isLoading && !data.isReadOnlyRepo && !data.repository,
+  };
+};
+
+const useResourceRepositoryViewData = ({
   name,
   folderName,
   skipQuery,
   includeInstance,
-}: GetResourceRepositoryArgs): RepositoryViewData => {
+}: GetResourceRepositoryArgs): Omit<RepositoryViewData, 'isMissingRepo'> => {
   const provisioningEnabled = config.featureToggles.provisioning;
   // Skip when caller has no target. This query is shared across many
   // components, so a failing fetch would cycle all of them through retries.

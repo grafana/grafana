@@ -232,7 +232,7 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
     resolvedRepoUID.current = selectedItemsRepoUID;
   }
 
-  const { repository, folder, isReadOnlyRepo, isLoading } = useGetResourceRepositoryView({
+  const { repository, folder, isReadOnlyRepo, isMissingRepo, isLoading } = useGetResourceRepositoryView({
     folderName: isRootPage ? resolvedRepoUID.current : folderUid,
   });
 
@@ -246,11 +246,7 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
   };
 
   return (
-    <ProvisionedFormShell
-      isLoading={isLoading}
-      isMissingRepo={!isLoading && !isReadOnlyRepo && !repository}
-      isReadOnly={isReadOnlyRepo}
-    >
+    <ProvisionedFormShell isLoading={isLoading} isMissingRepo={isMissingRepo} isReadOnly={isReadOnlyRepo}>
       <FormContent
         selectedItems={selectedItems}
         onDismiss={onDismiss}

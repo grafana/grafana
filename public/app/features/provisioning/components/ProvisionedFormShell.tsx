@@ -23,15 +23,15 @@ export interface ProvisionedFormShellProps {
  * Maps repository/form-data state to the appropriate fallback, in priority order:
  * loading > orphaned > error > missingRepo > readOnly > children.
  *
- * Fail-closed by construction: children render only when every flag is false.
+ * Children render only when none of the gate flags are truthy.
  *
- * Recipe:
+ * How to wire up the flags:
  * - Dashboard wrappers (useProvisionedDashboardData): map `repoDataStatus` to
  *   `isLoading`/`isOrphaned`, and `repoDataStatus === Error || !defaultValues` to `isError`.
  *   Keep the hook's `readOnly` inside the form (inline banner + disabled submit).
  * - Folder/bulk wrappers (useProvisionedFolderFormData / useGetResourceRepositoryView):
- *   `isLoading={isLoading}`, `isMissingRepo={!isLoading && !isReadOnlyRepo && !data}`,
- *   `isReadOnly={isReadOnlyRepo}` with the form-specific `readOnlyMessage`.
+ *   pass the hook's `isLoading`, `isMissingRepo`, and `isReadOnly={isReadOnlyRepo}`
+ *   straight through, with the form-specific `readOnlyMessage`.
  */
 export function ProvisionedFormShell({
   isLoading,
@@ -55,14 +55,12 @@ export function ProvisionedFormShell({
     return <FormLoadingErrorAlert error={error} />;
   }
 
-  if (isMissingRepo || isReadOnly) {
-    return (
-      <RepoInvalidStateBanner
-        noRepository={Boolean(isMissingRepo)}
-        isReadOnlyRepo={Boolean(isReadOnly)}
-        readOnlyMessage={readOnlyMessage}
-      />
-    );
+  if (isMissingRepo) {
+    return <RepoInvalidStateBanner noRepository isReadOnlyRepo={false} />;
+  }
+
+  if (isReadOnly) {
+    return <RepoInvalidStateBanner noRepository={false} isReadOnlyRepo readOnlyMessage={readOnlyMessage} />;
   }
 
   return <>{children}</>;

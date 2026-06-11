@@ -25,7 +25,12 @@ export function FixFolderMetadataDrawer({ repositoryName, onDismiss }: FixFolder
   const [submittedJob, setSubmittedJob] = useState<Job>();
   const [jobError, setJobError] = useState<string | StatusInfo>();
   const [jobSuccess, setJobSuccess] = useState<string | StatusInfo>();
-  const { repository, isReadOnlyRepo, isLoading: repoLoading } = useGetResourceRepositoryView({ name: repositoryName });
+  const {
+    repository,
+    isReadOnlyRepo,
+    isMissingRepo,
+    isLoading: repoLoading,
+  } = useGetResourceRepositoryView({ name: repositoryName });
 
   const handleJobStatusChange = useCallback((statusInfo: StepStatusInfo) => {
     if (statusInfo.status === 'success') {
@@ -57,7 +62,7 @@ export function FixFolderMetadataDrawer({ repositoryName, onDismiss }: FixFolder
     <Drawer title={drawerTitle} onClose={onDismiss}>
       <ProvisionedFormShell
         isLoading={repoLoading}
-        isMissingRepo={!repoLoading && !isReadOnlyRepo && !repository}
+        isMissingRepo={isMissingRepo}
         isReadOnly={isReadOnlyRepo}
         readOnlyMessage={t(
           'provisioning.fix-folder-metadata-drawer.read-only-message',

@@ -154,7 +154,7 @@ export function BulkDeleteProvisionedResource({
   }
 
   // For root provisioned folders, the folder UID is the repository name
-  const { repository, isReadOnlyRepo, isLoading } = useGetResourceRepositoryView({
+  const { repository, isReadOnlyRepo, isMissingRepo, isLoading } = useGetResourceRepositoryView({
     folderName: isRootPage ? resolvedRepoUID.current : folderUid,
   });
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
@@ -167,11 +167,7 @@ export function BulkDeleteProvisionedResource({
   };
 
   return (
-    <ProvisionedFormShell
-      isLoading={isLoading}
-      isMissingRepo={!isLoading && !isReadOnlyRepo && !repository}
-      isReadOnly={isReadOnlyRepo}
-    >
+    <ProvisionedFormShell isLoading={isLoading} isMissingRepo={isMissingRepo} isReadOnly={isReadOnlyRepo}>
       <FormContent
         selectedItems={selectedItems}
         onDismiss={onDismiss}
