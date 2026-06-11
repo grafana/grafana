@@ -132,17 +132,19 @@ func Test_profileToDataFrame(t *testing.T) {
 			},
 			Total:   987,
 			MaxSelf: 123,
+			MappingNames: []string{"file1", "file2", "file3"},
 		},
 		Units: "short",
 	}
 	frame := responseToDataFrames(profile, 15.0, "goroutine:goroutine:count:goroutine:count")
-	require.Equal(t, 4, len(frame.Fields))
+	require.Equal(t, 5, len(frame.Fields))
 	require.Equal(t, data.NewField("level", nil, []int64{0, 1, 1}), frame.Fields[0])
 	require.Equal(t, data.NewField("value", nil, []int64{20, 10, 5}).SetConfig(&data.FieldConfig{Unit: "short"}), frame.Fields[1])
 	require.Equal(t, data.NewField("self", nil, []int64{1, 3, 5}).SetConfig(&data.FieldConfig{Unit: "short"}), frame.Fields[2])
-	require.Equal(t, "label", frame.Fields[3].Name)
-	require.Equal(t, []data.EnumItemIndex{0, 1, 2}, fieldValues[data.EnumItemIndex](frame.Fields[3]))
-	require.Equal(t, []string{"func1", "func2", "func3"}, frame.Fields[3].Config.TypeConfig.Enum.Text)
+	require.Equal(t, data.NewField("filename", nil, []string{"file1", "file2", "file3"}), frame.Fields[3])
+	require.Equal(t, "label", frame.Fields[4].Name)
+	require.Equal(t, []data.EnumItemIndex{0, 1, 2}, fieldValues[data.EnumItemIndex](frame.Fields[4]))
+	require.Equal(t, []string{"func1", "func2", "func3"}, frame.Fields[4].Config.TypeConfig.Enum.Text)
 }
 
 // This is where the tests for the datasource backend live.
@@ -154,15 +156,15 @@ func Test_levelsToTree(t *testing.T) {
 			{Values: []int64{0, 15, 0, 3}},
 		}
 
-		tree := levelsToTree(levels, []string{"root", "func1", "func2", "func1:func3"})
+		tree := levelsToTree(levels, []string{"root", "func1", "func2", "func1:func3"}, []string{"", "file1", "file2", "file1"})
 		require.Equal(t, &ProfileTree{
-			Start: 0, Value: 100, Level: 0, Name: "root", Nodes: []*ProfileTree{
+			Start: 0, Value: 100, Level: 0, Name: "root", Mapping: "", Nodes: []*ProfileTree{
 				{
-					Start: 0, Value: 40, Level: 1, Name: "func1", Nodes: []*ProfileTree{
-						{Start: 0, Value: 15, Level: 2, Name: "func1:func3"},
+					Start: 0, Value: 40, Level: 1, Name: "func1", Mapping: "file1", Nodes: []*ProfileTree{
+						{Start: 0, Value: 15, Level: 2, Name: "func1:func3", Mapping: "file1"},
 					},
 				},
-				{Start: 40, Value: 30, Level: 1, Name: "func2"},
+				{Start: 40, Value: 30, Level: 1, Name: "func2", Mapping: "file2"},
 			},
 		}, tree)
 	})
@@ -174,18 +176,19 @@ func Test_levelsToTree(t *testing.T) {
 			{Values: []int64{0, 20, 0, 4, 50, 10, 0, 5}},
 		}
 
-		tree := levelsToTree(levels, []string{"root", "func1", "func2", "func3", "func1:func4", "func3:func5"})
+		tree := levelsToTree(levels, []string{"root", "func1", "func2", "func3", "func1:func4", "func3:func5"},
+							[]string{"", "file1", "file2", "file3", "file1", "file3"})
 		require.Equal(t, &ProfileTree{
-			Start: 0, Value: 100, Level: 0, Name: "root", Nodes: []*ProfileTree{
+			Start: 0, Value: 100, Level: 0, Name: "root", Mapping: "", Nodes: []*ProfileTree{
 				{
-					Start: 0, Value: 40, Level: 1, Name: "func1", Nodes: []*ProfileTree{
-						{Start: 0, Value: 20, Level: 2, Name: "func1:func4"},
+					Start: 0, Value: 40, Level: 1, Name: "func1", Mapping: "file1", Nodes: []*ProfileTree{
+						{Start: 0, Value: 20, Level: 2, Name: "func1:func4", Mapping: "file1"},
 					},
 				},
-				{Start: 40, Value: 30, Level: 1, Name: "func2"},
+				{Start: 40, Value: 30, Level: 1, Name: "func2", Mapping: "file2"},
 				{
-					Start: 70, Value: 30, Level: 1, Name: "func3", Nodes: []*ProfileTree{
-						{Start: 70, Value: 10, Level: 2, Name: "func3:func5"},
+					Start: 70, Value: 30, Level: 1, Name: "func3", Mapping: "file3", Nodes: []*ProfileTree{
+						{Start: 70, Value: 10, Level: 2, Name: "func3:func5", Mapping: "file3"},
 					},
 				},
 			},
@@ -196,13 +199,13 @@ func Test_levelsToTree(t *testing.T) {
 func Test_treeToNestedDataFrame(t *testing.T) {
 	t.Run("sample profile tree", func(t *testing.T) {
 		tree := &ProfileTree{
-			Value: 100, Level: 0, Self: 1, Name: "root", Nodes: []*ProfileTree{
+			Value: 100, Level: 0, Self: 1, Name: "root", Mapping: "", Nodes: []*ProfileTree{
 				{
-					Value: 40, Level: 1, Self: 2, Name: "func1",
+					Value: 40, Level: 1, Self: 2, Name: "func1", Mapping: "file1",
 				},
-				{Value: 30, Level: 1, Self: 3, Name: "func2", Nodes: []*ProfileTree{
-					{Value: 15, Level: 2, Self: 4, Name: "func1:func3"},
-					{Value: 10, Level: 2, Self: 4, Name: "func1"},
+				{Value: 30, Level: 1, Self: 3, Name: "func2", Mapping: "file2", Nodes: []*ProfileTree{
+					{Value: 15, Level: 2, Self: 4, Name: "func1:func3", Mapping: "file1"},
+					{Value: 10, Level: 2, Self: 4, Name: "func1", Mapping: "file1"},
 				}},
 			},
 		}
@@ -221,19 +224,20 @@ func Test_treeToNestedDataFrame(t *testing.T) {
 				data.NewField("level", nil, []int64{0, 1, 1, 2, 2}),
 				data.NewField("value", nil, []int64{100, 40, 30, 15, 10}).SetConfig(&data.FieldConfig{Unit: "short"}),
 				data.NewField("self", nil, []int64{1, 2, 3, 4, 4}).SetConfig(&data.FieldConfig{Unit: "short"}),
+				data.NewField("filename", nil, []string{"", "file1", "file2", "file1", "file1"}),
 				data.NewField("label", nil, []data.EnumItemIndex{0, 1, 2, 3, 1}).SetConfig(labelConfig),
 			}, frame.Fields)
 	})
 
 	t.Run("nil profile tree", func(t *testing.T) {
 		frame := treeToNestedSetDataFrame(nil, "short", 15.0, "goroutine:goroutine:count:goroutine:count")
-		require.Equal(t, 4, len(frame.Fields))
+		require.Equal(t, 5, len(frame.Fields))
 		require.Equal(t, 0, frame.Fields[0].Len())
 	})
 
 	t.Run("no rateCalculated metadata for flamegraph", func(t *testing.T) {
 		tree := &ProfileTree{
-			Value: 100, Level: 0, Self: 1, Name: "root",
+			Value: 100, Level: 0, Self: 1, Name: "root", Mapping: "",
 		}
 		frame := treeToNestedSetDataFrame(tree, "short", 15.0, "process_cpu:cpu:nanoseconds:cpu:nanoseconds")
 		require.NotNil(t, frame.Meta)
@@ -242,7 +246,7 @@ func Test_treeToNestedDataFrame(t *testing.T) {
 
 	t.Run("no rateCalculated metadata for instant profile", func(t *testing.T) {
 		tree := &ProfileTree{
-			Value: 100, Level: 0, Self: 1, Name: "root",
+			Value: 100, Level: 0, Self: 1, Name: "root", Mapping: "",
 		}
 		frame := treeToNestedSetDataFrame(tree, "short", 15.0, "goroutine:goroutine:count:goroutine:count")
 		require.NotNil(t, frame.Meta)
@@ -251,7 +255,7 @@ func Test_treeToNestedDataFrame(t *testing.T) {
 
 	t.Run("CPU time keeps original values and units for flamegraph", func(t *testing.T) {
 		tree := &ProfileTree{
-			Value: 3000000000, Level: 0, Self: 1500000000, Name: "root", // 3s total, 1.5s self in nanoseconds
+			Value: 3000000000, Level: 0, Self: 1500000000, Name: "root", Mapping: "", // 3s total, 1.5s self in nanoseconds
 		}
 		// Test CPU profile flamegraph - should keep original cumulative values and units
 		frame := treeToNestedSetDataFrame(tree, "ns", 15.0, "process_cpu:cpu:nanoseconds:cpu:nanoseconds")
@@ -627,6 +631,7 @@ func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID, labelSelecto
 			},
 			Total:   100,
 			MaxSelf: 56,
+			MappingNames: []string{"foo_file", "bar_file", "baz_file"},
 		},
 		Units: "count",
 	}, nil
@@ -643,6 +648,7 @@ func (f *FakeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSel
 			},
 			Total:   100,
 			MaxSelf: 56,
+			MappingNames: []string{"foo_file", "bar_file", "baz_file"},
 		},
 		Units: "count",
 	}, nil

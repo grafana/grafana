@@ -300,7 +300,7 @@ func (d *PyroscopeDatasource) queryHeatmap(ctx context.Context, span trace.Span,
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
 func responseToDataFrames(resp *ProfileResponse, stepDurationSec float64, profileTypeID string) *data.Frame {
-	tree := levelsToTree(resp.Flamebearer.Levels, resp.Flamebearer.Names)
+	tree := levelsToTree(resp.Flamebearer.Levels, resp.Flamebearer.Names, resp.Flamebearer.MappingNames)
 	return treeToNestedSetDataFrame(tree, resp.Units, stepDurationSec, profileTypeID)
 }
 
@@ -325,22 +325,32 @@ type ProfileTree struct {
 	Self  int64
 	Level int
 	Name  string
+	Mapping string
 	Nodes []*ProfileTree
+}
+
+func getMapping(mappingNames []string, idx int64) string {
+    if int(idx) < len(mappingNames) {
+        return mappingNames[int(idx)]
+    }
+    return ""
 }
 
 // levelsToTree converts flamebearer format into a tree. This is needed to then convert it into nested set format
 // dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Pyroscope API.
-func levelsToTree(levels []*Level, names []string) *ProfileTree {
+func levelsToTree(levels []*Level, names []string, mappingNames []string) *ProfileTree {
 	if len(levels) == 0 {
 		return nil
 	}
 
+	nameIndex := levels[0].Values[0]
 	tree := &ProfileTree{
 		Start: 0,
 		Value: levels[0].Values[VALUE_OFFSET],
 		Self:  levels[0].Values[SELF_OFFSET],
 		Level: 0,
-		Name:  names[levels[0].Values[0]],
+		Name:    names[nameIndex],
+		Mapping: getMapping(mappingNames, nameIndex),
 	}
 
 	parentsStack := []*ProfileTree{tree}
@@ -371,12 +381,14 @@ func levelsToTree(levels []*Level, names []string) *ProfileTree {
 
 			if itemStart >= currentParent.Start && itemEnd <= parentEnd {
 				// We have an item that is in the bounds of current parent item, so it should be its child
+				nameIndex := levels[currentLevel].Values[itemIndex+NAME_OFFSET]
 				treeItem := &ProfileTree{
 					Start: itemStart,
 					Value: itemValue,
 					Self:  selfValue,
 					Level: currentLevel,
-					Name:  names[levels[currentLevel].Values[itemIndex+NAME_OFFSET]],
+					Name:  names[nameIndex],
+					Mapping: getMapping(mappingNames, nameIndex),
 				}
 				// Add to parent
 				currentParent.Nodes = append(currentParent.Nodes, treeItem)
@@ -470,11 +482,12 @@ func treeToNestedSetDataFrame(tree *ProfileTree, unit string, stepDurationSec fl
 	levelField := data.NewField("level", nil, []int64{})
 	valueField := data.NewField("value", nil, []int64{})
 	selfField := data.NewField("self", nil, []int64{})
+	filenameField := data.NewField("filename", nil, []string{})
 
 	// profileTypeID should encode the type of the profile with unit being the 3rd part
 	valueField.Config = &data.FieldConfig{Unit: unit}
 	selfField.Config = &data.FieldConfig{Unit: unit}
-	frame.Fields = data.Fields{levelField, valueField, selfField}
+	frame.Fields = data.Fields{levelField, valueField, selfField, filenameField}
 
 	labelField := NewEnumField("label", nil)
 
@@ -486,6 +499,7 @@ func treeToNestedSetDataFrame(tree *ProfileTree, unit string, stepDurationSec fl
 			valueField.Append(tree.Value)
 			selfField.Append(tree.Self)
 			labelField.Append(tree.Name)
+			filenameField.Append(tree.Mapping)
 		})
 	}
 

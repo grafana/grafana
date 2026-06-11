@@ -41,7 +41,7 @@ describe('walkTree', () => {
       1,
       100,
       container.getCollapsedMap(),
-      (item, x, y, width, height, label, collapsed) => {
+      (item, x, y, width, height, label, filename, collapsed) => {
         expect(item).toEqual(root);
         expect(x).toEqual(0);
         expect(y).toEqual(0);
@@ -78,7 +78,7 @@ describe('walkTree', () => {
       1,
       100,
       container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
+      (item, x, y, width, height, label, filename, muted) => {
         renderData.push({ item, x, y, width, height, label, muted });
       }
     );
@@ -114,7 +114,7 @@ describe('walkTree', () => {
       1,
       100,
       container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
+      (item, x, y, width, height, label, filename, muted) => {
         renderData.push({ item, x, y, width, height, label, muted });
       }
     );
@@ -150,7 +150,7 @@ describe('walkTree', () => {
       1,
       100,
       container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
+      (item, x, y, width, height, label, filename, muted) => {
         renderData.push({ item, x, y, width, height, label, muted });
       }
     );
@@ -176,7 +176,7 @@ describe('walkTree', () => {
       1,
       14,
       container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
+      (item, x, y, width, height, label, filename, muted) => {
         renderData.push({ item, x, y, width, height, label, muted });
       }
     );

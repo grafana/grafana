@@ -19,7 +19,7 @@ import {
   FLAMEGRAPH_CONTAINER_HEIGHT,
 } from './constants';
 import { useColorScheme } from './hooks';
-import { type ClickedItemData, PaneView, SelectedView, type TextAlign, ViewMode } from './types';
+import { type ClickedItemData, PaneView, SelectedView, type TextAlign, ViewMode, DataSourceType } from './types';
 import { getAssistantContextFromDataFrame } from './utils';
 
 const ufuzzy = new uFuzzy();
@@ -97,6 +97,12 @@ export type Props = {
    * Enable the new pane-based UI with call tree support.
    */
   enableNewUI?: boolean;
+
+  /**
+   * Specifies the flame graph data source type.
+   * Affects frame classification rules (e.g. kernel vs user-space detection for Pyroscope).
+   */
+  dataSource?: DataSourceType;
 };
 
 const FlameGraphContainer = ({
@@ -115,8 +121,10 @@ const FlameGraphContainer = ({
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant = true,
   enableNewUI,
+  dataSource,
 }: Props) => {
   const theme = useMemo(() => getTheme(), [getTheme]);
+
 
   if (enableNewUI) {
     return (
@@ -135,6 +143,7 @@ const FlameGraphContainer = ({
         keepFocusOnDataChange={keepFocusOnDataChange}
         getExtraContextMenuButtons={getExtraContextMenuButtons}
         showAnalyzeWithAssistant={showAnalyzeWithAssistant}
+        dataSource={dataSource}
       />
     );
   }
@@ -155,6 +164,7 @@ const FlameGraphContainer = ({
       keepFocusOnDataChange={keepFocusOnDataChange}
       getExtraContextMenuButtons={getExtraContextMenuButtons}
       showAnalyzeWithAssistant={showAnalyzeWithAssistant}
+      dataSource={dataSource}
     />
   );
 };
@@ -174,6 +184,7 @@ type InternalProps = {
   keepFocusOnDataChange?: boolean;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
   showAnalyzeWithAssistant: boolean;
+  dataSource?: DataSourceType;
 };
 
 const LegacyContainer = ({
@@ -191,6 +202,7 @@ const LegacyContainer = ({
   keepFocusOnDataChange,
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant,
+  dataSource
 }: InternalProps) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
@@ -216,11 +228,10 @@ const LegacyContainer = ({
     if (!data) {
       return;
     }
-
-    const container = new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
+    const container = new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme, dataSource);
     setCollapsedMap(container.getCollapsedMap());
     return container;
-  }, [data, theme, disableCollapsing]);
+  }, [data, theme, disableCollapsing, dataSource]);
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
   const styles = getStyles(theme);
   const matchedLabels = useLabelSearch(search, dataContainer);
@@ -444,6 +455,7 @@ const NewUIContainer = ({
   keepFocusOnDataChange,
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant,
+  dataSource
 }: InternalProps) => {
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Split);
@@ -484,8 +496,7 @@ const NewUIContainer = ({
     if (!data) {
       return;
     }
-
-    return new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
+    return new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme, dataSource);
   }, [data, theme, disableCollapsing]);
 
   const styles = getStyles(theme);
