@@ -1,12 +1,12 @@
+import { API_GROUP as DASHBOARD_BUCKET } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { API_GROUP as FOLDER_BUCKET } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { t } from '@grafana/i18n';
 import { type ManagerStats, type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
-export const FOLDER_GROUPS = ['folder.grafana.app', 'folders'];
-export const DASHBOARD_GROUPS = ['dashboard.grafana.app'];
-
-const DASHBOARD_BUCKET = 'dashboard.grafana.app';
-const FOLDER_BUCKET = 'folder.grafana.app';
+// `folders` is the legacy storage group; the app-platform group is FOLDER_BUCKET.
+export const FOLDER_GROUPS: string[] = [FOLDER_BUCKET, 'folders'];
+export const DASHBOARD_GROUPS: string[] = [DASHBOARD_BUCKET];
 
 /**
  * Classify a stats entry into the dashboard or folder bucket, keyed by BOTH
@@ -66,10 +66,10 @@ export function resourceLabel(group: string): string {
  * report any, so the cards read consistently.
  */
 export function computeBreakdowns(data?: ResourceStats): GroupBreakdown[] {
-  const seedKeys = ['folder.grafana.app', 'dashboard.grafana.app'];
+  const seedKeys = [FOLDER_BUCKET, DASHBOARD_BUCKET];
   const seedResources: Record<string, string> = {
-    'folder.grafana.app': 'folders',
-    'dashboard.grafana.app': 'dashboards',
+    [FOLDER_BUCKET]: 'folders',
+    [DASHBOARD_BUCKET]: 'dashboards',
   };
 
   const map = new Map<string, GroupBreakdown>();
