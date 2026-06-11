@@ -117,6 +117,8 @@ export interface PanelSpec {
 	data: QueryGroupKind;
 	vizConfig: VizConfigKind;
 	transparent?: boolean;
+	// Operational intent declared by the panel author.
+	intent?: PanelIntent;
 }
 
 export const defaultPanelSpec = (): PanelSpec => ({
@@ -636,6 +638,61 @@ export interface DynamicConfigValue {
 
 export const defaultDynamicConfigValue = (): DynamicConfigValue => ({
 	id: "",
+});
+
+export interface PanelIntent {
+	schemaVersion?: number;
+	purpose?: string;
+	owner?: string;
+	expectedBehavior?: IntentExpectedBehavior;
+	failureModes?: IntentFailureMode[];
+	relatedSlos?: IntentRelatedSLO[];
+	runbooks?: IntentRunbook[];
+	provenance?: Record<string, string>;
+	lastVerifiedAt?: string;
+}
+
+export const defaultPanelIntent = (): PanelIntent => ({
+	schemaVersion: 1,
+});
+
+// Expected operating behavior for a dashboard or panel.
+export interface IntentExpectedBehavior {
+	normalRange?: string;
+	alertThreshold?: string;
+	notes?: string;
+}
+
+export const defaultIntentExpectedBehavior = (): IntentExpectedBehavior => ({
+});
+
+export interface IntentFailureMode {
+	tag: string;
+	description?: string;
+}
+
+export const defaultIntentFailureMode = (): IntentFailureMode => ({
+	tag: "",
+});
+
+export interface IntentRelatedSLO {
+	name: string;
+	target?: string;
+	url?: string;
+}
+
+export const defaultIntentRelatedSLO = (): IntentRelatedSLO => ({
+	name: "",
+});
+
+export interface IntentRunbook {
+	title: string;
+	url: string;
+}
+
+export const defaultIntentRunbook = (): IntentRunbook => ({
+	title: "",
+	url: "",
 });
 
 export interface LibraryPanelKind {
@@ -1578,6 +1635,22 @@ export interface Preferences {
 export const defaultPreferences = (): Preferences => ({
 });
 
+export interface DashboardIntent {
+	schemaVersion?: number;
+	purpose?: string;
+	owner?: string;
+	expectedBehavior?: IntentExpectedBehavior;
+	failureModes?: IntentFailureMode[];
+	relatedSlos?: IntentRelatedSLO[];
+	runbooks?: IntentRunbook[];
+	provenance?: Record<string, string>;
+	lastVerifiedAt?: string;
+}
+
+export const defaultDashboardIntent = (): DashboardIntent => ({
+	schemaVersion: 1,
+});
+
 export interface Spec {
 	annotations: AnnotationQueryKind[];
 	// Configuration of dashboard cursor sync behavior.
@@ -1610,6 +1683,8 @@ export interface Spec {
 	// Configured template variables.
 	variables: VariableKind[];
 	preferences?: Preferences;
+	// Operational intent declared by the dashboard author.
+	intent?: DashboardIntent;
 }
 
 export const defaultSpec = (): Spec => ({

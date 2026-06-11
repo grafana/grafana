@@ -464,6 +464,105 @@ describe('transformSceneToSaveModel', () => {
         },
       ]);
     });
+
+    it('Given panel with intent block — round-trips intent in the save model', () => {
+      // Dashboard Intent (Phase C) lives under `panel.intent`. The scene
+      // carries it as a PanelIntentChips title item so the chips render
+      // at the panel header; saving must lift it back out so consumers
+      // (assistant, exports, version history) see the same intent block
+      // they would have seen before the scene round-trip.
+      const intent = {
+        schemaVersion: 1,
+        purpose: 'Track checkout p99 latency.',
+        owner: '@checkout-team',
+        expectedBehavior: {
+          normalRange: 'p99 < 250ms',
+          alertThreshold: 'p99 > 500ms for 5m',
+        },
+        failureModes: [{ tag: 'db-slow', description: 'DB latency spike.' }],
+        provenance: {
+          purpose: 'author-written',
+          'expected_behavior.normal_range': 'author-written',
+          'expected_behavior.alert_threshold': 'lifted-from-alert',
+          failure_modes: 'assistant-unconfirmed',
+        },
+      };
+      const gridItem = buildGridItemFromPanelSchema({
+        // Seed a non-empty description so the E.2 mirror does NOT
+        // touch it — round-trip must preserve the exact intent block
+        // and the author's description independently.
+        description: 'Author-written description.',
+        title: 'p99 latency',
+        type: 'timeseries',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        intent,
+      });
+
+      const saveModel = gridItemToPanel(gridItem);
+      expect(saveModel.intent).toEqual(intent);
+      expect(saveModel.description).toBe('Author-written description.');
+    });
+
+    it('Phase E.2: mirrors intent.purpose into the panel description when description is empty', () => {
+      // No description authored; intent.purpose should populate
+      // description on save so viewers see the purpose via the info
+      // icon hover without us building a separate viewer surface.
+      const intent = {
+        schemaVersion: 1,
+        purpose: 'Track checkout p99 latency.',
+        provenance: { purpose: 'author-written' as const },
+      };
+      const gridItem = buildGridItemFromPanelSchema({
+        title: 'p99 latency',
+        type: 'timeseries',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        intent,
+      });
+
+      const saveModel = gridItemToPanel(gridItem);
+      expect(saveModel.description).toBe('Track checkout p99 latency.');
+      expect(saveModel.intent?.purpose).toBe('Track checkout p99 latency.');
+    });
+
+    it('Phase E.2: preserves a non-empty author-provided description when intent.purpose is also set', () => {
+      // Both description and intent.purpose authored — the mirror
+      // must leave description alone so authors can keep the two
+      // strings divergent (e.g. description = short label, purpose =
+      // operational context).
+      const intent = {
+        schemaVersion: 1,
+        purpose: 'Detailed operational context for the on-caller.',
+        provenance: { purpose: 'author-written' as const },
+      };
+      const gridItem = buildGridItemFromPanelSchema({
+        description: 'Short author-written description.',
+        title: 'p99 latency',
+        type: 'timeseries',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        intent,
+      });
+
+      const saveModel = gridItemToPanel(gridItem);
+      expect(saveModel.description).toBe('Short author-written description.');
+      expect(saveModel.intent?.purpose).toBe('Detailed operational context for the on-caller.');
+    });
+
+    it('Phase E.2: leaves description undefined when neither description nor intent.purpose is set', () => {
+      const intent = {
+        schemaVersion: 1,
+        owner: '@checkout-team',
+      };
+      const gridItem = buildGridItemFromPanelSchema({
+        title: 'p99 latency',
+        type: 'timeseries',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        intent,
+      });
+
+      const saveModel = gridItemToPanel(gridItem);
+      expect(saveModel.description).toBeUndefined();
+      expect(saveModel.intent?.owner).toBe('@checkout-team');
+    });
   });
 
   describe('Library panels', () => {
@@ -1173,6 +1272,51 @@ describe('transformSceneToSaveModel', () => {
       gridItem.setState({ height: 34 });
       saveModel = transformSceneToSaveModel(scene);
       expect(saveModel.panels?.[1].gridPos?.h).toBe(34);
+    });
+  });
+
+  describe('Dashboard intent', () => {
+    const intentBlock = {
+      schemaVersion: 1,
+      purpose: 'Monitor latency for the payments service.',
+      owner: 'payments-team',
+      expectedBehavior: {
+        normalRange: 'p99 < 200ms',
+        alertThreshold: '500ms',
+        notes: 'Spikes expected during batch settlement windows.',
+      },
+      failureModes: [
+        { tag: 'db-slow', description: 'Database queries exceed threshold.' },
+        { tag: 'downstream-timeout', description: 'External payment provider unreachable.' },
+      ],
+      relatedSlos: [{ name: 'Payments latency SLO', target: '99.9%', url: 'https://example.com/slo' }],
+      runbooks: [{ title: 'Payments on-call runbook', url: 'https://example.com/runbook' }],
+      provenance: {
+        purpose: 'author-written',
+        owner: 'author-written',
+        'expectedBehavior.alertThreshold': 'lifted-from-alert',
+        failureModes: 'assistant-unconfirmed',
+      },
+      lastVerifiedAt: '2026-05-20T12:00:00Z',
+    };
+
+    it('should preserve the intent block through a serialize → deserialize round-trip', () => {
+      const dashboardWithIntent = {
+        ...dashboard_to_load1,
+        intent: intentBlock,
+      };
+
+      const scene = transformSaveModelToScene({ dashboard: dashboardWithIntent as DashboardDataDTO, meta: {} });
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel.intent).toEqual(intentBlock);
+    });
+
+    it('should produce no intent field when none was provided', () => {
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel.intent).toBeUndefined();
     });
   });
 });

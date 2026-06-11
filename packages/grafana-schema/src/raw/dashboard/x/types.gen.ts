@@ -896,6 +896,95 @@ export interface Panel {
    */
   id?: number;
   /**
+   * Operational intent declared by the panel author.
+   * Provides machine-readable context for the Grafana Assistant and panel context chips.
+   * This block is optional and has no effect on rendering.
+   */
+  intent?: {
+    /**
+     * Version of the intent schema. Always 1 for this revision.
+     */
+    schemaVersion?: number;
+    /**
+     * One-sentence description of what this panel measures and why it matters.
+     */
+    purpose?: string;
+    /**
+     * Team or individual responsible for this panel.
+     */
+    owner?: string;
+    /**
+     * Expected operating behavior for this panel's metric.
+     */
+    expectedBehavior?: {
+      /**
+       * Human-readable description of what metric values look like during normal operation.
+       */
+      normalRange?: string;
+      /**
+       * The alert threshold as declared in a linked alert rule (lifted verbatim when available).
+       */
+      alertThreshold?: string;
+      /**
+       * Additional notes about expected behavior not captured by the structured fields above.
+       */
+      notes?: string;
+    };
+    /**
+     * Known failure modes that this panel is designed to surface.
+     */
+    failureModes?: Array<{
+      /**
+       * Short tag identifying the failure mode (e.g. "db-slow", "pod-oom").
+       */
+      tag: string;
+      /**
+       * Human-readable description of what this failure mode looks like.
+       */
+      description?: string;
+    }>;
+    /**
+     * Related SLO definitions.
+     */
+    relatedSlos?: Array<{
+      /**
+       * Human-readable name of the SLO.
+       */
+      name: string;
+      /**
+       * Target value expressed as a percentage string (e.g. "99.9%").
+       */
+      target?: string;
+      /**
+       * URL to the SLO definition.
+       */
+      url?: string;
+    }>;
+    /**
+     * Links to runbooks relevant to this panel.
+     */
+    runbooks?: Array<{
+      /**
+       * Human-readable title of the runbook.
+       */
+      title: string;
+      /**
+       * URL to the runbook.
+       */
+      url: string;
+    }>;
+    /**
+     * Per-field provenance tags. Keys match field names above.
+     * Valid values: author-written, assistant-confirmed, assistant-unconfirmed,
+     * lifted-from-alert, lifted-from-slo, computed-from-history.
+     */
+    provenance?: Record<string, string>;
+    /**
+     * ISO 8601 timestamp of the last time the intent was reviewed and verified.
+     */
+    lastVerifiedAt?: string;
+  };
+  /**
    * The min time interval setting defines a lower limit for the $__interval and $__interval_ms variables.
    * This value must be formatted as a number followed by a valid time
    * identifier like: "40s", "3d", etc.
@@ -1239,6 +1328,96 @@ export interface Dashboard {
    * `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
    */
   id?: (number | null); // TODO eliminate this null option
+  /**
+   * Operational intent declared by the dashboard author.
+   * Provides machine-readable context (purpose, expected behavior, failure modes,
+   * owner, runbooks, SLOs) for the Grafana Assistant and external agents.
+   * This block is optional and has no effect on rendering.
+   */
+  intent?: {
+    /**
+     * Version of the intent schema. Always 1 for this revision.
+     */
+    schemaVersion?: number;
+    /**
+     * One-sentence description of what this dashboard monitors and why it exists.
+     */
+    purpose?: string;
+    /**
+     * Team or individual responsible for this dashboard.
+     */
+    owner?: string;
+    /**
+     * Expected operating behavior at the dashboard level.
+     */
+    expectedBehavior?: {
+      /**
+       * Human-readable description of what metric values look like during normal operation.
+       */
+      normalRange?: string;
+      /**
+       * The alert threshold as declared in a linked alert rule (lifted verbatim when available).
+       */
+      alertThreshold?: string;
+      /**
+       * Additional notes about expected behavior not captured by the structured fields above.
+       */
+      notes?: string;
+    };
+    /**
+     * Known failure modes that this dashboard is designed to surface.
+     */
+    failureModes?: Array<{
+      /**
+       * Short tag identifying the failure mode (e.g. "db-slow", "pod-oom").
+       */
+      tag: string;
+      /**
+       * Human-readable description of what this failure mode looks like.
+       */
+      description?: string;
+    }>;
+    /**
+     * Related SLO definitions.
+     */
+    relatedSlos?: Array<{
+      /**
+       * Human-readable name of the SLO.
+       */
+      name: string;
+      /**
+       * Target value expressed as a percentage string (e.g. "99.9%").
+       */
+      target?: string;
+      /**
+       * URL to the SLO definition.
+       */
+      url?: string;
+    }>;
+    /**
+     * Links to runbooks relevant to this dashboard.
+     */
+    runbooks?: Array<{
+      /**
+       * Human-readable title of the runbook.
+       */
+      title: string;
+      /**
+       * URL to the runbook.
+       */
+      url: string;
+    }>;
+    /**
+     * Per-field provenance tags. Keys match field names above.
+     * Valid values: author-written, assistant-confirmed, assistant-unconfirmed,
+     * lifted-from-alert, lifted-from-slo, computed-from-history.
+     */
+    provenance?: Record<string, string>;
+    /**
+     * ISO 8601 timestamp of the last time the intent was reviewed and verified.
+     */
+    lastVerifiedAt?: string;
+  };
   /**
    * Links with references to other dashboards or external websites.
    */

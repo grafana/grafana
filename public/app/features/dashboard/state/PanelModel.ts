@@ -22,7 +22,7 @@ import {
   generateUUID,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
-import { type LibraryPanel, type LibraryPanelRef } from '@grafana/schema';
+import { type LibraryPanel, type LibraryPanelRef, type Panel } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import {
@@ -183,6 +183,12 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   declare transparent: boolean;
 
   libraryPanel?: LibraryPanelRef | LibraryPanel;
+
+  /**
+   * Operational intent for the panel. Passed through opaquely on
+   * load/save; not interpreted by the panel model itself.
+   */
+  intent?: Panel['intent'];
 
   autoMigrateFrom?: string;
 

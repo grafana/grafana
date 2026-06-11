@@ -46,6 +46,9 @@ DashboardSpec: {
 	variables: [...VariableKind] | *[]
 
 	preferences?: Preferences
+
+	// Operational intent declared by the dashboard author.
+	intent?: DashboardIntent
 }
 
 // Supported dashboard elements
@@ -706,6 +709,9 @@ PanelSpec: {
 	data:         QueryGroupKind
 	vizConfig:    VizConfigKind
 	transparent?: bool
+
+	// Operational intent declared by the panel author.
+	intent?: PanelIntent
 }
 
 PanelKind: {
@@ -1118,4 +1124,51 @@ ConditionalRenderingTimeRangeSizeSpec: {
 Preferences: {
 	// default layout template to be used when new containers are created
 	layout?: AutoGridLayoutKind | GridLayoutKind
+}
+
+// Expected operating behavior for a dashboard or panel.
+IntentExpectedBehavior: {
+	normalRange?:     string
+	alertThreshold?:  string
+	notes?:           string
+}
+
+IntentFailureMode: {
+	tag:          string
+	description?: string
+}
+
+IntentRelatedSLO: {
+	name:    string
+	target?: string
+	url?:    string
+}
+
+IntentRunbook: {
+	title: string
+	url:   string
+}
+
+DashboardIntent: {
+	schemaVersion?:      int | *1
+	purpose?:            string
+	owner?:              string
+	expectedBehavior?:   IntentExpectedBehavior
+	failureModes?:       [...IntentFailureMode]
+	relatedSlos?:        [...IntentRelatedSLO]
+	runbooks?:           [...IntentRunbook]
+	provenance?:         {[string]: string}
+	lastVerifiedAt?:     string
+}
+
+PanelIntent: {
+	schemaVersion?:      int | *1
+	purpose?:            string
+	owner?:              string
+	expectedBehavior?:   IntentExpectedBehavior
+	failureModes?:       [...IntentFailureMode]
+	relatedSlos?:        [...IntentRelatedSLO]
+	runbooks?:           [...IntentRunbook]
+	provenance?:         {[string]: string}
+	lastVerifiedAt?:     string
 }

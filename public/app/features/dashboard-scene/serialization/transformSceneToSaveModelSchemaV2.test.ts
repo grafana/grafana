@@ -52,6 +52,7 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
+import { PanelIntentChips } from '../scene/PanelIntentChips';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
@@ -1565,6 +1566,83 @@ describe('vizPanelToSchemaV2 snapshot repeat clones', () => {
     expect(snapshotElement.kind).toBe('Panel');
     expect(snapshotElement.spec.id).toBe(djb2Hash(cloneKey));
     expect(snapshotElement.spec.id).not.toBe(normalElement.spec.id);
+  });
+});
+
+describe('vizPanelToSchemaV2 panel intent', () => {
+  it('round-trips intent from PanelIntentChips title item', () => {
+    const intent = {
+      schemaVersion: 1,
+      purpose: 'Track checkout p99 latency.',
+      expectedBehavior: { normalRange: 'p99 < 250ms' },
+    };
+    const panel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Test',
+      // Seed a non-empty description so the E.2 mirror does NOT
+      // touch it — round-trip must preserve intent and the author's
+      // description independently.
+      description: 'Author-written description.',
+      titleItems: [new PanelIntentChips({ intent })],
+    });
+
+    const result = vizPanelToSchemaV2(panel, undefined, false);
+    expect(result.kind).toEqual('Panel');
+    expect((result.spec as PanelSpec).intent).toEqual(intent);
+    expect((result.spec as PanelSpec).description).toBe('Author-written description.');
+  });
+
+  it('Phase E.2: mirrors intent.purpose into the panel description when description is empty', () => {
+    const intent = {
+      schemaVersion: 1,
+      purpose: 'Track checkout p99 latency.',
+      provenance: { purpose: 'author-written' as const },
+    };
+    const panel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Test',
+      // Description deliberately omitted; v2 defaults it to ''.
+      titleItems: [new PanelIntentChips({ intent })],
+    });
+
+    const result = vizPanelToSchemaV2(panel, undefined, false);
+    expect((result.spec as PanelSpec).description).toBe('Track checkout p99 latency.');
+    expect((result.spec as PanelSpec).intent?.purpose).toBe('Track checkout p99 latency.');
+  });
+
+  it('Phase E.2: preserves a non-empty author-provided description when intent.purpose is also set', () => {
+    const intent = {
+      schemaVersion: 1,
+      purpose: 'Detailed operational context for the on-caller.',
+      provenance: { purpose: 'author-written' as const },
+    };
+    const panel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Test',
+      description: 'Short author-written description.',
+      titleItems: [new PanelIntentChips({ intent })],
+    });
+
+    const result = vizPanelToSchemaV2(panel, undefined, false);
+    expect((result.spec as PanelSpec).description).toBe('Short author-written description.');
+    expect((result.spec as PanelSpec).intent?.purpose).toBe('Detailed operational context for the on-caller.');
+  });
+
+  it('Phase E.2: leaves description as the v2 default empty string when neither field is set', () => {
+    const panel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Test',
+      // No description, no intent — v2 schema requires a string so
+      // the default empty stays empty.
+    });
+
+    const result = vizPanelToSchemaV2(panel, undefined, false);
+    expect((result.spec as PanelSpec).description).toBe('');
+    expect((result.spec as PanelSpec).intent).toBeUndefined();
   });
 });
 

@@ -27,6 +27,7 @@ import {
 } from '../assistant/DashboardAssistantViewMode';
 import { ViewModePanelPromptCard } from '../assistant/ViewModePanelPromptCard';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { DashboardIntentSummaryBar } from '../scene/DashboardIntentSummaryBar';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
@@ -59,7 +60,10 @@ function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
       <div className={styles.canvasWrappperOld}>
         <NavToolbarActions dashboard={dashboard} />
         <div className={styles.controlsWrapperSticky}>{controls}</div>
-        <div className={styles.body}>{body}</div>
+        <div className={styles.body}>
+          <DashboardIntentSummaryBar dashboard={dashboard} />
+          {body}
+        </div>
       </div>
     </NativeScrollbar>
   );
@@ -186,7 +190,10 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
           className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk)}
           data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
         >
-          <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>{body}</NativeScrollbar>
+          <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
+            <DashboardIntentSummaryBar dashboard={dashboard} />
+            {body}
+          </NativeScrollbar>
         </div>
       );
     }
@@ -203,6 +210,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
           onPointerDown={onClearSelection}
           data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
         >
+          <DashboardIntentSummaryBar dashboard={dashboard} />
           {body}
         </div>
 

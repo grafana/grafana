@@ -43,6 +43,7 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { PanelIntentChips } from '../scene/PanelIntentChips';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
@@ -413,6 +414,7 @@ export function createDashboardSceneFromDashboardModel(
       tags: oldModel.tags || [],
       title: oldModel.title,
       version: oldModel.version,
+      intent: oldModel.intent,
       scopeMeta,
       body,
       $timeRange: new SceneTimeRange({
@@ -466,6 +468,14 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   );
 
   titleItems.push(new PanelNotices());
+
+  // Surface declared panel intent as a row of compact chips in the
+  // panel title area. Only added when the panel actually has an intent
+  // block, so panels without authored intent see no change in their
+  // header layout.
+  if (panel.intent) {
+    titleItems.push(new PanelIntentChips({ intent: panel.intent }));
+  }
 
   const timeOverrideShown = (panel.timeFrom || panel.timeShift) && !panel.hideTimeOverride;
 
@@ -600,3 +610,4 @@ export const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
     panel.snapshotData = [];
   }
 };
+

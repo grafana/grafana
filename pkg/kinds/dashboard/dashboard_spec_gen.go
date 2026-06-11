@@ -73,6 +73,11 @@ type Spec struct {
 	Annotations *AnnotationContainer `json:"annotations,omitempty"`
 	// Links with references to other dashboards or external websites.
 	Links []DashboardLink `json:"links,omitempty"`
+	// Operational intent declared by the dashboard author.
+	// Provides machine-readable context (purpose, expected behavior, failure modes,
+	// owner, runbooks, SLOs) for the Grafana Assistant and external agents.
+	// This block is optional and has no effect on rendering.
+	Intent *DashboardIntent `json:"intent,omitempty"`
 	// Snapshot options. They are present only if the dashboard is a snapshot.
 	Snapshot *Snapshot `json:"snapshot,omitempty"`
 	// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
@@ -194,6 +199,10 @@ type Panel struct {
 	// Compare the current time range with a previous period
 	// For example "1d" to compare current period but shifted back 1 day
 	TimeCompare *string `json:"timeCompare,omitempty"`
+	// Operational intent declared by the panel author.
+	// Provides machine-readable context for the Grafana Assistant and panel context chips.
+	// This block is optional and has no effect on rendering.
+	Intent *PanelIntent `json:"intent,omitempty"`
 	// Dynamically load the panel
 	LibraryPanel *LibraryPanelRef `json:"libraryPanel,omitempty"`
 	// Sets panel queries cache timeout.
@@ -384,6 +393,96 @@ const (
 	MatcherScopeAnnotation MatcherScope = "annotation"
 	MatcherScopeExemplar   MatcherScope = "exemplar"
 )
+
+// Panel-level operational intent block.
+// Authored by the panel owner; consumed by the Grafana Assistant
+// and panel context chips.
+// All fields are optional — omitting a field means "not declared".
+type PanelIntent struct {
+	// Version of the intent schema. Always 1 for this revision.
+	SchemaVersion *uint8 `json:"schemaVersion,omitempty"`
+	// One-sentence description of what this panel measures and why it matters.
+	Purpose *string `json:"purpose,omitempty"`
+	// Team or individual responsible for this panel.
+	Owner *string `json:"owner,omitempty"`
+	// Expected operating behavior for this panel's metric.
+	ExpectedBehavior *IntentExpectedBehavior `json:"expectedBehavior,omitempty"`
+	// Known failure modes that this panel is designed to surface.
+	FailureModes []IntentFailureMode `json:"failureModes,omitempty"`
+	// Related SLO definitions.
+	RelatedSlos []IntentRelatedSLO `json:"relatedSlos,omitempty"`
+	// Links to runbooks relevant to this panel.
+	Runbooks []IntentRunbook `json:"runbooks,omitempty"`
+	// Per-field provenance tags. Keys match field names above.
+	// Valid values: author-written, assistant-confirmed, assistant-unconfirmed,
+	// lifted-from-alert, lifted-from-slo, computed-from-history.
+	Provenance map[string]string `json:"provenance,omitempty"`
+	// ISO 8601 timestamp of the last time the intent was reviewed and verified.
+	LastVerifiedAt *string `json:"lastVerifiedAt,omitempty"`
+}
+
+// NewPanelIntent creates a new PanelIntent object.
+func NewPanelIntent() *PanelIntent {
+	return &PanelIntent{
+		SchemaVersion: (func(input uint8) *uint8 { return &input })(1),
+	}
+}
+
+// Expected operating behavior for a dashboard or panel.
+type IntentExpectedBehavior struct {
+	// Human-readable description of what metric values look like during normal operation.
+	NormalRange *string `json:"normalRange,omitempty"`
+	// The alert threshold as declared in a linked alert rule (lifted verbatim when available).
+	AlertThreshold *string `json:"alertThreshold,omitempty"`
+	// Additional notes about expected behavior not captured by the structured fields above.
+	Notes *string `json:"notes,omitempty"`
+}
+
+// NewIntentExpectedBehavior creates a new IntentExpectedBehavior object.
+func NewIntentExpectedBehavior() *IntentExpectedBehavior {
+	return &IntentExpectedBehavior{}
+}
+
+// A known failure mode for the dashboard or panel.
+type IntentFailureMode struct {
+	// Short tag identifying the failure mode (e.g. "db-slow", "pod-oom").
+	Tag string `json:"tag"`
+	// Human-readable description of what this failure mode looks like.
+	Description *string `json:"description,omitempty"`
+}
+
+// NewIntentFailureMode creates a new IntentFailureMode object.
+func NewIntentFailureMode() *IntentFailureMode {
+	return &IntentFailureMode{}
+}
+
+// A related SLO reference.
+type IntentRelatedSLO struct {
+	// Human-readable name of the SLO.
+	Name string `json:"name"`
+	// Target value expressed as a percentage string (e.g. "99.9%").
+	Target *string `json:"target,omitempty"`
+	// URL to the SLO definition.
+	Url *string `json:"url,omitempty"`
+}
+
+// NewIntentRelatedSLO creates a new IntentRelatedSLO object.
+func NewIntentRelatedSLO() *IntentRelatedSLO {
+	return &IntentRelatedSLO{}
+}
+
+// A runbook link.
+type IntentRunbook struct {
+	// Human-readable title of the runbook.
+	Title string `json:"title"`
+	// URL to the runbook.
+	Url string `json:"url"`
+}
+
+// NewIntentRunbook creates a new IntentRunbook object.
+func NewIntentRunbook() *IntentRunbook {
+	return &IntentRunbook{}
+}
 
 // A library panel is a reusable panel that you can use in any dashboard.
 // When you make a change to a library panel, that change propagates to all instances of where the panel is used.
@@ -1090,6 +1189,40 @@ func NewAnnotationTarget() *AnnotationTarget {
 // Annotation Query placement. Defines where the annotation query should be displayed.
 // - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
 const AnnotationQueryPlacement = "inControlsMenu"
+
+// Dashboard-level operational intent block.
+// Authored by the dashboard owner; consumed by the Grafana Assistant,
+// panel context chips, the dashboard summary bar, and external agents via MCP.
+// All fields are optional — omitting a field means "not declared".
+type DashboardIntent struct {
+	// Version of the intent schema. Always 1 for this revision.
+	SchemaVersion *uint8 `json:"schemaVersion,omitempty"`
+	// One-sentence description of what this dashboard monitors and why it exists.
+	Purpose *string `json:"purpose,omitempty"`
+	// Team or individual responsible for this dashboard.
+	Owner *string `json:"owner,omitempty"`
+	// Expected operating behavior at the dashboard level.
+	ExpectedBehavior *IntentExpectedBehavior `json:"expectedBehavior,omitempty"`
+	// Known failure modes that this dashboard is designed to surface.
+	FailureModes []IntentFailureMode `json:"failureModes,omitempty"`
+	// Related SLO definitions.
+	RelatedSlos []IntentRelatedSLO `json:"relatedSlos,omitempty"`
+	// Links to runbooks relevant to this dashboard.
+	Runbooks []IntentRunbook `json:"runbooks,omitempty"`
+	// Per-field provenance tags. Keys match field names above.
+	// Valid values: author-written, assistant-confirmed, assistant-unconfirmed,
+	// lifted-from-alert, lifted-from-slo, computed-from-history.
+	Provenance map[string]string `json:"provenance,omitempty"`
+	// ISO 8601 timestamp of the last time the intent was reviewed and verified.
+	LastVerifiedAt *string `json:"lastVerifiedAt,omitempty"`
+}
+
+// NewDashboardIntent creates a new DashboardIntent object.
+func NewDashboardIntent() *DashboardIntent {
+	return &DashboardIntent{
+		SchemaVersion: (func(input uint8) *uint8 { return &input })(1),
+	}
+}
 
 // A dashboard snapshot shares an interactive dashboard publicly.
 // It is a read-only version of a dashboard, and is not editable.

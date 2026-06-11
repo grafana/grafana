@@ -3,6 +3,7 @@ import { type VizPanel } from '@grafana/scenes';
 import { PanelDataPaneNext } from '../PanelEditNext/PanelDataPaneNext';
 
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
+import { PanelDataContextTab } from './PanelDataContextTab';
 import { PanelDataPane, shouldShowAlertingTab } from './PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
@@ -30,6 +31,8 @@ export function createPanelDataPane(panel: VizPanel, useQueryEditorNext: boolean
   if (shouldShowAlertingTab(panel.state.pluginId)) {
     tabs.push(new PanelDataAlertingTab({ panelRef }));
   }
+
+  tabs.push(new PanelDataContextTab({ panelRef }));
 
   return new PanelDataPane({
     panelRef,

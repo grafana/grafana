@@ -1,7 +1,9 @@
 import { VizPanel, sceneGraph, behaviors, type SceneObject, SceneGridRow } from '@grafana/scenes';
+import { type Panel } from '@grafana/schema';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { PanelIntentChips } from '../scene/PanelIntentChips';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -26,8 +28,124 @@ function getPanelLinks(panel: VizPanel) {
   return null;
 }
 
+function getPanelIntentChips(panel: VizPanel): PanelIntentChips | null {
+  if (panel.state.titleItems && Array.isArray(panel.state.titleItems)) {
+    const chips = panel.state.titleItems.find((item) => item instanceof PanelIntentChips);
+    return chips ?? null;
+  }
+  return null;
+}
+
 function getVizPanels(scene: DashboardScene): VizPanel[] {
   return scene.state.body.getVizPanels();
+}
+
+type PanelIntent = NonNullable<Panel['intent']>;
+type FailureMode = NonNullable<PanelIntent['failureModes']>[number];
+type Runbook = NonNullable<PanelIntent['runbooks']>[number];
+
+/**
+ * A failure mode / runbook aggregated up from one or more panels, carrying the
+ * titles of the panels it was sourced from so the dashboard summary bar can
+ * attribute it in a tooltip.
+ */
+export interface AggregatedFailureMode extends FailureMode {
+  panels: string[];
+}
+export interface AggregatedRunbook extends Runbook {
+  panels: string[];
+}
+export interface AggregatedPanelIntent {
+  failureModes: AggregatedFailureMode[];
+  runbooks: AggregatedRunbook[];
+}
+
+/**
+ * Collects failure modes and runbooks from every panel's intent into a single
+ * deduplicated list for the dashboard-level summary bar. Failure modes dedupe
+ * by `tag`, runbooks by `url || title`. The dashboard header is a read-only
+ * summary of the operational knowledge declared on the panels below it; owner
+ * and purpose live on the dashboard-level intent block, not here.
+ */
+function getAggregatedPanelIntent(scene: DashboardScene): AggregatedPanelIntent {
+  const failureModesByTag = new Map<string, AggregatedFailureMode>();
+  const runbooksByKey = new Map<string, AggregatedRunbook>();
+
+  for (const panel of getVizPanels(scene)) {
+    const intent = getPanelIntentChips(panel)?.state.intent;
+    if (!intent) {
+      continue;
+    }
+    const panelTitle = panel.state.title || getPanelIdForVizPanel(panel).toString();
+
+    const failureModes = Array.isArray(intent.failureModes) ? intent.failureModes : [];
+    for (const fm of failureModes) {
+      if (!fm.tag) {
+        continue;
+      }
+      const existing = failureModesByTag.get(fm.tag);
+      if (existing) {
+        if (!existing.panels.includes(panelTitle)) {
+          existing.panels.push(panelTitle);
+        }
+        // Keep the first non-empty description we encounter.
+        if (!existing.description && fm.description) {
+          existing.description = fm.description;
+        }
+      } else {
+        failureModesByTag.set(fm.tag, { ...fm, panels: [panelTitle] });
+      }
+    }
+
+    const runbooks = Array.isArray(intent.runbooks) ? intent.runbooks : [];
+    for (const rb of runbooks) {
+      const key = rb.url || rb.title;
+      if (!key) {
+        continue;
+      }
+      const existing = runbooksByKey.get(key);
+      if (existing) {
+        if (!existing.panels.includes(panelTitle)) {
+          existing.panels.push(panelTitle);
+        }
+      } else {
+        runbooksByKey.set(key, { ...rb, panels: [panelTitle] });
+      }
+    }
+  }
+
+  return {
+    failureModes: Array.from(failureModesByTag.values()),
+    runbooks: Array.from(runbooksByKey.values()),
+  };
+}
+
+/** A panel currently matching one or more of its declared failure modes. */
+export interface AnomalousPanel {
+  title: string;
+  tags: string[];
+}
+
+/**
+ * Collects panels that are actively matching a declared failure mode (Phase
+ * F-lite). A panel is anomalous when its `PanelIntentChips` has an `activeMatch`
+ * (set while it breaches its alert threshold and declares failure modes). Used
+ * by the dashboard summary bar to render a "needs attention" health strip.
+ */
+function getAnomalousPanels(scene: DashboardScene): AnomalousPanel[] {
+  const anomalous: AnomalousPanel[] = [];
+  for (const panel of getVizPanels(scene)) {
+    const chips = getPanelIntentChips(panel);
+    if (!chips?.state.activeMatch) {
+      continue;
+    }
+    const failureModes = Array.isArray(chips.state.intent.failureModes) ? chips.state.intent.failureModes : [];
+    anomalous.push({
+      title: panel.state.title || getPanelIdForVizPanel(panel).toString(),
+      tags: failureModes.map((fm) => fm.tag).filter(Boolean),
+    });
+  }
+  return anomalous;
 }
 
 /**
@@ -111,6 +229,9 @@ export const dashboardSceneGraph = {
   getTimePicker,
   getRefreshPicker,
   getPanelLinks,
+  getPanelIntentChips,
+  getAggregatedPanelIntent,
+  getAnomalousPanels,
   getVizPanels,
   getDataLayers,
   getCursorSync,

@@ -187,6 +187,8 @@ type DashboardPanelSpec struct {
 	Data        DashboardQueryGroupKind `json:"data"`
 	VizConfig   DashboardVizConfigKind  `json:"vizConfig"`
 	Transparent *bool                   `json:"transparent,omitempty"`
+	// Operational intent declared by the panel author.
+	Intent *DashboardPanelIntent `json:"intent,omitempty"`
 }
 
 // NewDashboardPanelSpec creates a new DashboardPanelSpec object.
@@ -1008,6 +1010,98 @@ func NewDashboardDynamicConfigValue() *DashboardDynamicConfigValue {
 // OpenAPIModelName returns the OpenAPI model name for DashboardDynamicConfigValue.
 func (DashboardDynamicConfigValue) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardDynamicConfigValue"
+}
+
+// +k8s:openapi-gen=true
+type DashboardPanelIntent struct {
+	SchemaVersion    *int64                           `json:"schemaVersion,omitempty"`
+	Purpose          *string                          `json:"purpose,omitempty"`
+	Owner            *string                          `json:"owner,omitempty"`
+	ExpectedBehavior *DashboardIntentExpectedBehavior `json:"expectedBehavior,omitempty"`
+	FailureModes     []DashboardIntentFailureMode     `json:"failureModes,omitempty"`
+	RelatedSlos      []DashboardIntentRelatedSLO      `json:"relatedSlos,omitempty"`
+	Runbooks         []DashboardIntentRunbook         `json:"runbooks,omitempty"`
+	Provenance       map[string]string                `json:"provenance,omitempty"`
+	LastVerifiedAt   *string                          `json:"lastVerifiedAt,omitempty"`
+}
+
+// NewDashboardPanelIntent creates a new DashboardPanelIntent object.
+func NewDashboardPanelIntent() *DashboardPanelIntent {
+	return &DashboardPanelIntent{
+		SchemaVersion: (func(input int64) *int64 { return &input })(1),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardPanelIntent.
+func (DashboardPanelIntent) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardPanelIntent"
+}
+
+// Expected operating behavior for a dashboard or panel.
+// +k8s:openapi-gen=true
+type DashboardIntentExpectedBehavior struct {
+	NormalRange    *string `json:"normalRange,omitempty"`
+	AlertThreshold *string `json:"alertThreshold,omitempty"`
+	Notes          *string `json:"notes,omitempty"`
+}
+
+// NewDashboardIntentExpectedBehavior creates a new DashboardIntentExpectedBehavior object.
+func NewDashboardIntentExpectedBehavior() *DashboardIntentExpectedBehavior {
+	return &DashboardIntentExpectedBehavior{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardIntentExpectedBehavior.
+func (DashboardIntentExpectedBehavior) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardIntentExpectedBehavior"
+}
+
+// +k8s:openapi-gen=true
+type DashboardIntentFailureMode struct {
+	Tag         string  `json:"tag"`
+	Description *string `json:"description,omitempty"`
+}
+
+// NewDashboardIntentFailureMode creates a new DashboardIntentFailureMode object.
+func NewDashboardIntentFailureMode() *DashboardIntentFailureMode {
+	return &DashboardIntentFailureMode{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardIntentFailureMode.
+func (DashboardIntentFailureMode) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardIntentFailureMode"
+}
+
+// +k8s:openapi-gen=true
+type DashboardIntentRelatedSLO struct {
+	Name   string  `json:"name"`
+	Target *string `json:"target,omitempty"`
+	Url    *string `json:"url,omitempty"`
+}
+
+// NewDashboardIntentRelatedSLO creates a new DashboardIntentRelatedSLO object.
+func NewDashboardIntentRelatedSLO() *DashboardIntentRelatedSLO {
+	return &DashboardIntentRelatedSLO{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardIntentRelatedSLO.
+func (DashboardIntentRelatedSLO) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardIntentRelatedSLO"
+}
+
+// +k8s:openapi-gen=true
+type DashboardIntentRunbook struct {
+	Title string `json:"title"`
+	Url   string `json:"url"`
+}
+
+// NewDashboardIntentRunbook creates a new DashboardIntentRunbook object.
+func NewDashboardIntentRunbook() *DashboardIntentRunbook {
+	return &DashboardIntentRunbook{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardIntentRunbook.
+func (DashboardIntentRunbook) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardIntentRunbook"
 }
 
 // +k8s:openapi-gen=true
@@ -2528,6 +2622,31 @@ func (DashboardPreferences) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
+type DashboardDashboardIntent struct {
+	SchemaVersion    *int64                           `json:"schemaVersion,omitempty"`
+	Purpose          *string                          `json:"purpose,omitempty"`
+	Owner            *string                          `json:"owner,omitempty"`
+	ExpectedBehavior *DashboardIntentExpectedBehavior `json:"expectedBehavior,omitempty"`
+	FailureModes     []DashboardIntentFailureMode     `json:"failureModes,omitempty"`
+	RelatedSlos      []DashboardIntentRelatedSLO      `json:"relatedSlos,omitempty"`
+	Runbooks         []DashboardIntentRunbook         `json:"runbooks,omitempty"`
+	Provenance       map[string]string                `json:"provenance,omitempty"`
+	LastVerifiedAt   *string                          `json:"lastVerifiedAt,omitempty"`
+}
+
+// NewDashboardDashboardIntent creates a new DashboardDashboardIntent object.
+func NewDashboardDashboardIntent() *DashboardDashboardIntent {
+	return &DashboardDashboardIntent{
+		SchemaVersion: (func(input int64) *int64 { return &input })(1),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardIntent.
+func (DashboardDashboardIntent) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardDashboardIntent"
+}
+
+// +k8s:openapi-gen=true
 type DashboardSpec struct {
 	Annotations []DashboardAnnotationQueryKind `json:"annotations"`
 	// Configuration of dashboard cursor sync behavior.
@@ -2560,6 +2679,8 @@ type DashboardSpec struct {
 	// Configured template variables.
 	Variables   []DashboardVariableKind `json:"variables"`
 	Preferences *DashboardPreferences   `json:"preferences,omitempty"`
+	// Operational intent declared by the dashboard author.
+	Intent *DashboardDashboardIntent `json:"intent,omitempty"`
 }
 
 // NewDashboardSpec creates a new DashboardSpec object.

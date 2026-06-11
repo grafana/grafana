@@ -56,6 +56,7 @@ import {
   type Preferences,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { PanelIntentChips } from '../scene/PanelIntentChips';
 import { type DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { isLinkEditable } from '../settings/links/utils';
@@ -129,6 +130,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
         ...(link.placement !== undefined && { placement: link.placement }),
       })),
     tags: sceneDash.tags ?? defaultDashboardV2Spec().tags,
+    intent: sceneDash.intent,
     // EOF dashboard settings
 
     // time settings
@@ -286,6 +288,16 @@ export function vizPanelToSchemaV2(
     overrides: vizPanel.state.fieldConfig?.overrides ?? [],
   };
 
+  // Phase E.2: lift intent before building the spec so the
+  // description can mirror `intent.purpose` when no description has
+  // been authored. The v2 spec stores description as a required
+  // string (defaulting to ''), so the empty-check is "description is
+  // empty string", not "description is undefined". We never overwrite
+  // a non-empty author-provided description.
+  const intent = panelIntentFromVizPanel(vizPanel);
+  const authoredDescription = vizPanel.state.description ?? '';
+  const description = authoredDescription === '' && intent?.purpose ? intent.purpose : authoredDescription;
+
   const elementSpec: PanelKind = {
     kind: 'Panel',
     spec: {
@@ -296,7 +308,7 @@ export function vizPanelToSchemaV2(
           ? djb2Hash(vizPanel.state.key)
           : getPanelIdForVizPanel(vizPanel),
       title: vizPanel.state.title,
-      description: vizPanel.state.description ?? '',
+      description,
       links: getPanelLinks(vizPanel),
       transparent: vizPanel.state.displayMode === 'transparent' ? true : undefined,
       data: {
@@ -316,9 +328,20 @@ export function vizPanelToSchemaV2(
           fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
         },
       },
+      intent,
     },
   };
   return elementSpec;
+}
+
+function panelIntentFromVizPanel(vizPanel: VizPanel): PanelKind['spec']['intent'] | undefined {
+  const titleItems = vizPanel.state.titleItems;
+  if (!Array.isArray(titleItems)) {
+    return undefined;
+  }
+
+  const intentChips = titleItems.find((item): item is PanelIntentChips => item instanceof PanelIntentChips);
+  return intentChips?.state.intent;
 }
 
 function handleFieldConfigDefaultsConversion(vizPanel: VizPanel) {

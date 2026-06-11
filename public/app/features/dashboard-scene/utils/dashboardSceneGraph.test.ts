@@ -1,10 +1,11 @@
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel, behaviors } from '@grafana/scenes';
-import { DashboardCursorSync } from '@grafana/schema';
+import { DashboardCursorSync, type Panel } from '@grafana/schema';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
+import { PanelIntentChips } from '../scene/PanelIntentChips';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -82,6 +83,45 @@ describe('dashboardSceneGraph', () => {
       grid.state.grid.setState({ children: [] });
       const id = getNextPanelId(scene);
       expect(id).toBe(1);
+    });
+  });
+
+  describe('getAnomalousPanels', () => {
+    function sceneWithPanels(
+      panels: Array<{ title: string; intent?: NonNullable<Panel['intent']>; activeMatch?: { since: number } }>
+    ) {
+      const vizPanels = panels.map(
+        (p, i) =>
+          new VizPanel({
+            key: `panel-${i}`,
+            title: p.title,
+            pluginId: 'timeseries',
+            titleItems: p.intent ? [new PanelIntentChips({ intent: p.intent, activeMatch: p.activeMatch })] : [],
+          })
+      );
+      return new DashboardScene({
+        uid: 'dash-1',
+        title: 'Test',
+        meta: {},
+        body: DefaultGridLayoutManager.fromVizPanels(vizPanels),
+      });
+    }
+
+    it('returns only panels with an active match, including their failure-mode tags', () => {
+      const scene = sceneWithPanels([
+        { title: 'CPU', intent: { failureModes: [{ tag: 'cpu-saturation' }, { tag: 'noisy-neighbor' }] }, activeMatch: { since: 1 } },
+        { title: 'Memory', intent: { failureModes: [{ tag: 'oom' }] } },
+        { title: 'No intent' },
+      ]);
+
+      const result = dashboardSceneGraph.getAnomalousPanels(scene);
+
+      expect(result).toEqual([{ title: 'CPU', tags: ['cpu-saturation', 'noisy-neighbor'] }]);
+    });
+
+    it('returns an empty array when no panel is matching', () => {
+      const scene = sceneWithPanels([{ title: 'CPU', intent: { failureModes: [{ tag: 'cpu-saturation' }] } }]);
+      expect(dashboardSceneGraph.getAnomalousPanels(scene)).toEqual([]);
     });
   });
 });

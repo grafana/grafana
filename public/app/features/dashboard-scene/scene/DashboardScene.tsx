@@ -119,7 +119,17 @@ import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { type LayoutParent } from './types/LayoutParent';
 
-export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
+export const PERSISTED_PROPS = [
+  'title',
+  'description',
+  'tags',
+  'editable',
+  'graphTooltip',
+  'links',
+  'meta',
+  'preload',
+  'intent',
+];
 export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
 export const PANELS_PER_ROW_VAR = 'systemDynamicRowSizeVar';
 
@@ -192,6 +202,8 @@ export interface DashboardSceneState extends SceneObjectState {
   meta: Omit<DashboardMeta, 'isNew'>;
   /** Version of the dashboard */
   version?: number;
+  /** Operational intent declared by the dashboard author. Passed through opaquely; not interpreted by the scene. */
+  intent?: Dashboard['intent'];
   /** Panel to inspect */
   inspectPanelKey?: string;
   /** Panel key to view in fullscreen */
