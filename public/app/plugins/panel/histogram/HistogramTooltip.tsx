@@ -10,9 +10,8 @@ import {
   VizTooltipWrapper,
   getFieldDisplayItems,
   getFieldDisplayLinks,
+  isTooltipScrollable,
 } from '@grafana/ui';
-
-import { isTooltipScrollable } from '../timeseries/utils';
 
 export interface HistogramTooltipProps {
   // aligned series frame

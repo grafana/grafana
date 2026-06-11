@@ -10,12 +10,12 @@ import {
   VizTooltipHeader,
   VizTooltipWrapper,
   getFieldDisplayItems,
+  isTooltipScrollable,
 } from '@grafana/ui';
 import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
 import { getFieldActions } from '../status-history/utils';
 import { type TimeSeriesTooltipProps } from '../timeseries/TimeSeriesTooltip';
-import { isTooltipScrollable } from '../timeseries/utils';
 
 interface StateTimelineTooltipProps extends TimeSeriesTooltipProps {
   timeRange: TimeRange;

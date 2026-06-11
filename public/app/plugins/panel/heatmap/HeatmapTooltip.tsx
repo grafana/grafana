@@ -23,6 +23,7 @@ import {
   VizTooltipHeader,
   VizTooltipWrapper,
   getFieldDisplayLinks,
+  isTooltipScrollable,
   useTheme2,
 } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
@@ -32,7 +33,6 @@ import { getDisplayValuesAndLinks } from 'app/features/visualization/data-hover/
 import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 
 import { getFieldActions } from '../status-history/utils';
-import { isTooltipScrollable } from '../timeseries/utils';
 
 import { type HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';

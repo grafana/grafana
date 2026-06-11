@@ -9,6 +9,7 @@ import {
   getFieldDisplayItems,
   getFieldDisplayLinks,
   getTooltipDisplayValue,
+  isTooltipScrollable,
 } from './utils';
 
 describe('utils', () => {
@@ -655,6 +656,24 @@ describe('utils', () => {
       expect(getLinks).toHaveBeenCalledWith(
         expect.objectContaining({ calculatedValue: expect.objectContaining({ text: '10', numeric: 10 }) })
       );
+    });
+  });
+
+  describe('isTooltipScrollable', () => {
+    it('returns false when mode is Single', () => {
+      expect(isTooltipScrollable({ mode: TooltipDisplayMode.Single, maxHeight: 200 })).toBe(false);
+    });
+
+    it('returns false when mode is Multi but maxHeight is undefined', () => {
+      expect(isTooltipScrollable({ mode: TooltipDisplayMode.Multi })).toBe(false);
+    });
+
+    it('returns true when mode is Multi and maxHeight is set', () => {
+      expect(isTooltipScrollable({ mode: TooltipDisplayMode.Multi, maxHeight: 200 })).toBe(true);
+    });
+
+    it('returns false when maxHeight is null', () => {
+      expect(isTooltipScrollable({ mode: TooltipDisplayMode.Multi, maxHeight: undefined })).toBe(false);
     });
   });
 });

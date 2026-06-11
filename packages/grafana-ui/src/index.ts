@@ -157,6 +157,8 @@ export {
   DEFAULT_COLOR_INDICATOR,
   getFieldDisplayItems,
   getFieldDisplayLinks,
+  isTooltipScrollable,
+  type TooltipScrollableOptions,
   SeriesTable,
   type SeriesTableProps,
   SeriesTableRow,

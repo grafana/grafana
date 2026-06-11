@@ -8,6 +8,11 @@ import {
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
+export interface TooltipScrollableOptions {
+  mode: TooltipDisplayMode;
+  maxHeight?: number;
+}
+
 import { type ColorIndicatorStyles } from './VizTooltipColorIndicator';
 import { ColorIndicator, ColorPlacement, type VizTooltipItem } from './types';
 
@@ -258,4 +263,15 @@ const getIndicatorAndPlacement = (field: Field) => {
   }
 
   return { colorIndicator, colorPlacement };
+};
+
+/**
+ * Returns true when the tooltip content area should be vertically scrollable.
+ *
+ * Scrolling is enabled only in `Multi` mode with an explicit `maxHeight` set —
+ * single-series tooltips are always short enough to not need it, and without a
+ * `maxHeight` there is nothing to constrain the height against.
+ */
+export const isTooltipScrollable = ({ mode, maxHeight }: TooltipScrollableOptions): boolean => {
+  return mode === TooltipDisplayMode.Multi && maxHeight != null;
 };
