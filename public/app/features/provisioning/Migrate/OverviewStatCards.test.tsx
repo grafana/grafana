@@ -6,7 +6,7 @@ describe('OverviewStatCards', () => {
   it('renders a status card per resource type plus a combined "All resources" card', () => {
     render(
       <OverviewStatCards
-        totals={{ instanceTotal: 100, managed: 50, unmanaged: 50, gitSync: 40 }}
+        totals={{ instanceTotal: 100, managed: 50 }}
         folderCounts={{ managed: 6, total: 8 }}
       />
     );
@@ -29,7 +29,7 @@ describe('OverviewStatCards', () => {
   it('omits the folders card when there are no folders', () => {
     render(
       <OverviewStatCards
-        totals={{ instanceTotal: 10, managed: 0, unmanaged: 10, gitSync: 0 }}
+        totals={{ instanceTotal: 10, managed: 0 }}
         folderCounts={{ managed: 0, total: 0 }}
       />
     );

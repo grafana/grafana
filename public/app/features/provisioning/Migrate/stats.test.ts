@@ -46,7 +46,6 @@ describe('computeBreakdowns', () => {
     expect(dashboards.total).toBe(100);
     expect(dashboards.gitSyncCount).toBe(40);
     expect(dashboards.otherManagedCount).toBe(10);
-    expect(dashboards.managedByKind).toEqual({ terraform: 10 });
     expect(dashboards.unmanagedCount).toBe(50);
 
     const folders = breakdowns.find((b) => b.group === 'folder.grafana.app')!;
@@ -95,7 +94,7 @@ describe('computeBreakdowns', () => {
 describe('aggregateTotals', () => {
   it('reports dashboard-only totals', () => {
     const totals = aggregateTotals(computeBreakdowns(stats));
-    expect(totals).toEqual({ instanceTotal: 100, managed: 50, unmanaged: 50, gitSync: 40 });
+    expect(totals).toEqual({ instanceTotal: 100, managed: 50 });
   });
 });
 
