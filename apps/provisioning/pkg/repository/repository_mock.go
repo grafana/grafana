@@ -56,24 +56,6 @@ func (_m *MockRepository) Create(ctx context.Context, path string, ref string, d
 	return r0
 }
 
-// CreateBatch provides a mock function with given fields: ctx, ref, pathsAndData, message
-func (_m *MockRepository) CreateBatch(ctx context.Context, ref string, pathsAndData map[string][]byte, message string) error {
-	ret := _m.Called(ctx, ref, pathsAndData, message)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateBatch")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string][]byte, string) error); ok {
-		r0 = rf(ctx, ref, pathsAndData, message)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // Delete provides a mock function with given fields: ctx, path, ref, message
 func (_m *MockRepository) Delete(ctx context.Context, path string, ref string, message string) error {
 	ret := _m.Called(ctx, path, ref, message)

@@ -397,20 +397,27 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 
 	// Create or update
 	if create {
-		creations := make(map[string][]byte)
-		if r.folderMetadataEnabled && !safepath.IsDir(opts.Path) {
-			var metaErr error
-			creations, metaErr = r.folderMetadataCreations(ctx, opts.Path, opts.Ref, opts.Message)
-			if metaErr != nil {
-				return nil, fmt.Errorf("checking for folder metadata creations: %w", metaErr)
+		// Write the resource file together with any missing ancestor _folder.json
+		// files in a single commit using the staging mechanism. When the repository
+		// does not support staging (e.g. local repos), writes are applied directly.
+		writeFn := func(stagedRepo repository.Repository, _ bool) error {
+			rw, ok := stagedRepo.(repository.ReaderWriter)
+			if !ok {
+				return fmt.Errorf("repository does not support read/write operations")
 			}
+			if r.folderMetadataEnabled && !safepath.IsDir(opts.Path) {
+				if err := r.writeAncestorFolderMetadata(ctx, rw, opts.Path, opts.Ref, opts.Message); err != nil {
+					return err
+				}
+			}
+			return rw.Create(ctx, opts.Path, opts.Ref, data, opts.Message)
 		}
-		if len(creations) > 0 {
-			creations[opts.Path] = data
-			err = r.repo.CreateBatch(ctx, opts.Ref, creations, opts.Message)
-		} else {
-			err = r.repo.Create(ctx, opts.Path, opts.Ref, data, opts.Message)
+		stageOptions := repository.StageOptions{
+			Ref:                   opts.Ref,
+			Mode:                  repository.StageModeCommitOnlyOnce,
+			CommitOnlyOnceMessage: opts.Message,
 		}
+		err = repository.WrapWithStageAndPushIfPossible(ctx, r.repo, stageOptions, writeFn)
 	} else {
 		err = r.repo.Update(ctx, opts.Path, opts.Ref, data, opts.Message)
 	}
@@ -452,22 +459,25 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 	return parsed, nil
 }
 
-func (r *DualReadWriter) folderMetadataCreations(ctx context.Context, filePath, ref, message string) (map[string][]byte, error) {
+// writeAncestorFolderMetadata walks the ancestor directories of filePath and
+// writes a _folder.json for any that does not have one yet, generating a stable
+// UID. Reads and writes go through the provided ReaderWriter (the staged repo
+// during a staged write) so reads observe writes made earlier in the same stage.
+func (r *DualReadWriter) writeAncestorFolderMetadata(ctx context.Context, rw repository.ReaderWriter, filePath, ref, message string) error {
 	dir := safepath.Dir(filePath)
 	if dir == "" {
-		return nil, nil
+		return nil
 	}
 
-	creations := make(map[string][]byte)
-	err := safepath.Walk(ctx, dir, func(ctx context.Context, segPath string) error {
-		// Folder still exists in tree, no need to write metadata
+	return safepath.Walk(ctx, dir, func(ctx context.Context, segPath string) error {
+		// Folder already exists in tree, no need to write metadata
 		if _, ok := r.folders.Tree().GetByPath(segPath); ok {
 			return nil
 		}
 
-		_, _, readErr := ReadFolderMetadata(ctx, r.repo, segPath, ref)
+		_, _, readErr := ReadFolderMetadata(ctx, rw, segPath, ref)
 		if errors.Is(readErr, repository.ErrRefNotFound) {
-			_, _, readErr = ReadFolderMetadata(ctx, r.repo, segPath, "")
+			_, _, readErr = ReadFolderMetadata(ctx, rw, segPath, "")
 		}
 		if readErr == nil {
 			return nil
@@ -475,20 +485,13 @@ func (r *DualReadWriter) folderMetadataCreations(ctx context.Context, filePath, 
 		if !errors.Is(readErr, repository.ErrFileNotFound) {
 			return fmt.Errorf("read folder metadata for %q: %w", segPath, readErr)
 		}
-		uid := util.GenerateShortUID()
-		manifestBlob, err := marshalFolderManifest(NewFolderManifest(uid, safepath.Base(segPath), r.folders.FolderGVK()))
-		if err != nil {
-			return fmt.Errorf("marshal folder manifest for %q: %w", segPath, err)
-		}
 
-		creations[safepath.Join(segPath, folderMetadataFileName)] = manifestBlob
+		manifest := NewFolderManifest(util.GenerateShortUID(), safepath.Base(segPath), r.folders.FolderGVK())
+		if _, err := WriteFolderMetadata(ctx, rw, segPath, manifest, ref, message); err != nil {
+			return fmt.Errorf("write folder metadata for %q: %w", segPath, err)
+		}
 		return nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return creations, nil
 }
 
 // MoveResource moves a resource from one path to another in the repository

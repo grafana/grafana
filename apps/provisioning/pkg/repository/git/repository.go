@@ -482,32 +482,6 @@ func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byt
 	return r.commitAndPush(ctx, writer, comment)
 }
 
-func (r *gitRepository) CreateBatch(ctx context.Context, ref string, pathsAndData map[string][]byte, comment string) error {
-	if ref == "" {
-		ref = r.gitConfig.Branch
-	}
-
-	ctx, logger := r.withGitContext(ctx, ref)
-	branchRef, err := r.ensureBranchExists(ctx, ref)
-	if err != nil {
-		return err
-	}
-
-	writer, err := r.client.NewStagedWriter(ctx, branchRef)
-	if err != nil {
-		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
-	}
-
-	for path, data := range pathsAndData {
-		logger.Info("create repository path", "path", path)
-		if err := r.create(ctx, path, data, writer); err != nil {
-			return err
-		}
-	}
-
-	return r.commitAndPush(ctx, writer, comment)
-}
-
 func (r *gitRepository) create(ctx context.Context, path string, data []byte, writer nanogit.StagedWriter) error {
 	finalPath := safepath.Join(r.gitConfig.Path, path)
 	// Create .keep file if it is a directory

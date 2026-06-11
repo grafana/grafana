@@ -1413,22 +1413,33 @@ func TestUpdateFolderMetadata(t *testing.T) {
 	}
 }
 
-func TestFolderMetadataCreations(t *testing.T) {
-	t.Run("returns _folder.json entry for new folder", func(t *testing.T) {
+func TestWriteAncestorFolderMetadata(t *testing.T) {
+	t.Run("writes _folder.json with stable UID for new folder", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Read", mock.Anything, "new-folder/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
 
+		var writtenData []byte
+		rw.On("Create", mock.Anything, "new-folder/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg").
+			Run(func(args mock.Arguments) { writtenData = args.Get(3).([]byte) }).
+			Return(nil)
+
 		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
 		dw := &DualReadWriter{repo: rw, folders: fm, folderMetadataEnabled: true}
-		creations, err := dw.folderMetadataCreations(context.Background(), "new-folder/dashboard.json", "test-ref", "msg")
+		err := dw.writeAncestorFolderMetadata(context.Background(), rw, "new-folder/dashboard.json", "test-ref", "msg")
 
 		require.NoError(t, err)
-		require.Contains(t, creations, "new-folder/_folder.json")
-		require.NotEmpty(t, creations["new-folder/_folder.json"])
+		rw.AssertCalled(t, "Create", mock.Anything, "new-folder/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg")
+
+		// UID must be a stable short UID, not the hash-derived folder ID.
+		var manifest folders.Folder
+		require.NoError(t, json.Unmarshal(writtenData, &manifest))
+		hashID := ParseFolder("new-folder/", "test-repo").ID
+		require.NotEmpty(t, manifest.Name)
+		require.NotEqual(t, hashID, manifest.Name)
 	})
 
-	t.Run("returns empty map when _folder.json already exists", func(t *testing.T) {
+	t.Run("does not write when _folder.json already exists", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 
 		existingManifest := NewFolderManifest("existing-uid", "existing-folder", FolderKind)
@@ -1438,38 +1449,40 @@ func TestFolderMetadataCreations(t *testing.T) {
 
 		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
 		dw := &DualReadWriter{repo: rw, folders: fm, folderMetadataEnabled: true}
-		creations, err := dw.folderMetadataCreations(context.Background(), "existing-folder/dashboard.json", "test-ref", "msg")
+		err := dw.writeAncestorFolderMetadata(context.Background(), rw, "existing-folder/dashboard.json", "test-ref", "msg")
 
 		require.NoError(t, err)
-		require.Empty(t, creations)
+		rw.AssertNotCalled(t, "Create", mock.Anything, "existing-folder/_folder.json", mock.Anything, mock.Anything, mock.Anything)
 	})
 
-	t.Run("returns entries for each ancestor in nested path", func(t *testing.T) {
+	t.Run("writes _folder.json for each missing ancestor in nested path", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Read", mock.Anything, "a/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
 		rw.On("Read", mock.Anything, "a/b/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
+		rw.On("Create", mock.Anything, "a/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg").
+			Return(nil)
+		rw.On("Create", mock.Anything, "a/b/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg").
+			Return(nil)
 
 		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
 		dw := &DualReadWriter{repo: rw, folders: fm, folderMetadataEnabled: true}
-		creations, err := dw.folderMetadataCreations(context.Background(), "a/b/dashboard.json", "test-ref", "msg")
+		err := dw.writeAncestorFolderMetadata(context.Background(), rw, "a/b/dashboard.json", "test-ref", "msg")
 
 		require.NoError(t, err)
-		require.Contains(t, creations, "a/_folder.json")
-		require.Contains(t, creations, "a/b/_folder.json")
-		require.NotEmpty(t, creations["a/_folder.json"])
-		require.NotEmpty(t, creations["a/b/_folder.json"])
+		rw.AssertCalled(t, "Create", mock.Anything, "a/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg")
+		rw.AssertCalled(t, "Create", mock.Anything, "a/b/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg")
 	})
 
-	t.Run("returns nil for root-level file", func(t *testing.T) {
+	t.Run("no-op for root-level file", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 
 		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
 		dw := &DualReadWriter{repo: rw, folders: fm, folderMetadataEnabled: true}
-		creations, err := dw.folderMetadataCreations(context.Background(), "dashboard.json", "test-ref", "msg")
+		err := dw.writeAncestorFolderMetadata(context.Background(), rw, "dashboard.json", "test-ref", "msg")
 
 		require.NoError(t, err)
-		require.Nil(t, creations)
+		rw.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 }
