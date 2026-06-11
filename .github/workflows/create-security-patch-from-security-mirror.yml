@@ -13,18 +13,56 @@ on:
       - "v*.*.*"
       - "release-*.*.*"
 
-# This is run before the pull request has been merged, so we'll run against the src branch
+concurrency:
+  group: create-patch-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
-  trigger_downstream_create_security_patch:
-    concurrency: create-patch-${{ github.ref_name }}
-    uses: grafana/security-patch-actions/.github/workflows/create-patch.yml@main # zizmor: ignore[unpinned-uses]
-    if: github.repository == 'grafana/grafana-security-mirror'
-    with:
-      repo: "${{ github.repository }}"
-      src_ref: "${{ github.head_ref }}" # this is the source branch name, Ex: "feature/newthing"
-      patch_ref: "${{ github.base_ref }}" # this is the target branch name, Ex: "main"
-      patch_repo: "grafana/grafana-security-patches"
-      patch_prefix: "${{ github.event.pull_request.number }}"
-      sender: "${{ github.event.pull_request.user.login }}"
-      comment: "Closes: ${{ github.repository }}#${{ github.event.pull_request.number }}"
-    secrets: inherit # zizmor: ignore[secrets-inherit]
+  # Dispatch create-patch via REST API rather than workflow_call. The previous
+  # workflow_call approach relied on get-vault-secrets + tibdex inside the called
+  # workflow (which is no longer permitted); switching to createWorkflowDispatch lets
+  # the called workflow use the per-workflow token broker (create-github-app-token).
+  dispatch-create-patch:
+    if: ${{ github.repository == 'grafana/grafana-security-mirror' }}
+    runs-on: ubuntu-arm64-small
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      REPO: ${{ github.repository }}
+      SRC_REF: ${{ github.head_ref }}
+      PATCH_REF: ${{ github.base_ref }}
+      PATCH_PREFIX: ${{ github.event.pull_request.number }}
+      SENDER: ${{ github.event.pull_request.user.login }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-releases-oss
+      - name: Dispatch create-patch in security-patch-actions
+        uses: actions/github-script@v8
+        env:
+          COMMENT: "Closes: ${{ github.repository }}#${{ github.event.pull_request.number }}"
+        with:
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
+          script: |
+            const {REPO, SRC_REF, PATCH_REF, PATCH_PREFIX, SENDER, COMMENT} = process.env;
+            await github.rest.actions.createWorkflowDispatch({
+              owner: 'grafana',
+              repo: 'security-patch-actions',
+              workflow_id: 'create-patch.yml',
+              ref: 'main',
+              inputs: {
+                repo: REPO,
+                src_ref: SRC_REF,
+                patch_ref: PATCH_REF,
+                patch_repo: 'grafana/grafana-security-patches',
+                patch_prefix: PATCH_PREFIX,
+                sender: SENDER,
+                comment: COMMENT,
+              },
+            })

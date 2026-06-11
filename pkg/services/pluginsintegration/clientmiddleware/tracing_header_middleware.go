@@ -48,6 +48,7 @@ func (m *TracingHeaderMiddleware) applyHeaders(ctx context.Context, req backend.
 		query.HeaderPanelPluginId,
 		query.HeaderDashboardTitle,
 		query.HeaderPanelTitle,
+		query.HeaderCallerID,
 	}
 
 	for _, headerName := range headersList {

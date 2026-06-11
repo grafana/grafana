@@ -74,7 +74,7 @@ function PendingPickerHeader({
  * Props for the standalone ContentHeader component.
  * This interface defines everything needed to render the header without Scene coupling.
  */
-export interface ContentHeaderProps {
+interface ContentHeaderProps {
   selectedAlert: AlertRule | null;
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
@@ -148,7 +148,7 @@ export function ContentHeader({
     return (
       <PendingPickerHeader
         editorType={QueryEditorType.Expression}
-        label={<Trans i18nKey="query-editor-next.header.pending-expression">Select an Expression</Trans>}
+        label={<Trans i18nKey="query-editor-next.header.pending-expression">Select an expression</Trans>}
         onCancel={onCancelPendingExpression}
         cancelLabel={<Trans i18nKey="query-editor-next.header.pending-expression-cancel">Cancel</Trans>}
         styles={styles}
@@ -161,7 +161,7 @@ export function ContentHeader({
     return (
       <PendingPickerHeader
         editorType={QueryEditorType.Transformation}
-        label={<Trans i18nKey="query-editor-next.header.pending-transformation">Select a Transformation</Trans>}
+        label={<Trans i18nKey="query-editor-next.header.pending-transformation">Select a transformation</Trans>}
         onCancel={onCancelPendingTransformation}
         cancelLabel={<Trans i18nKey="query-editor-next.header.pending-transformation-cancel">Cancel</Trans>}
         styles={styles}
@@ -258,6 +258,8 @@ export function ContentHeaderSceneWrapper({
     selectedQuery,
     selectedTransformation,
     selectedQueryRefIds,
+    selectedTransformationIds,
+    multiSelectMode,
     cardType,
     pendingExpression,
     setPendingExpression,
@@ -281,7 +283,7 @@ export function ContentHeaderSceneWrapper({
       onCancelPendingTransformation={() => setPendingTransformation(null)}
       onChangeDataSource={changeDataSource}
       onUpdateQuery={updateSelectedQuery}
-      isMultiSelection={selectedQueryRefIds.length > 1}
+      isMultiSelection={multiSelectMode && (selectedQueryRefIds.length > 0 || selectedTransformationIds.length > 0)}
       renderHeaderExtras={renderHeaderExtras}
       typeConfig={typeConfig}
     />

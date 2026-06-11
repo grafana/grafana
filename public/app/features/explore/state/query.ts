@@ -112,7 +112,7 @@ export interface CancelQueriesPayload {
 }
 export const cancelQueriesAction = createAction<CancelQueriesPayload>('explore/cancelQueries');
 
-export interface QueriesImportedPayload {
+interface QueriesImportedPayload {
   exploreId: string;
   queries: DataQuery[];
 }
@@ -133,7 +133,7 @@ const setSupplementaryQueryEnabledAction = createAction<{
   enabled: boolean;
 }>('explore/setSupplementaryQueryEnabledAction');
 
-export interface StoreSupplementaryQueryDataProvider {
+interface StoreSupplementaryQueryDataProvider {
   exploreId: string;
   dataProvider?: Observable<DataQueryResponse>;
   type: SupplementaryQueryType;
@@ -159,7 +159,7 @@ export const cleanSupplementaryQueryAction = createAction<{ exploreId: string; t
   'explore/cleanSupplementaryQueryAction'
 );
 
-export interface StoreSupplementaryQueryDataSubscriptionPayload {
+interface StoreSupplementaryQueryDataSubscriptionPayload {
   exploreId: string;
   dataSubscription?: SubscriptionLike;
   type: SupplementaryQueryType;
@@ -234,7 +234,7 @@ export const scanStopAction = createAction<ScanStopPayload>('explore/scanStop');
  * Adds query results to cache.
  * This is currently used to cache last 5 query results for log queries run from logs navigation (pagination).
  */
-export interface AddResultsToCachePayload {
+interface AddResultsToCachePayload {
   exploreId: string;
   cacheKey: string;
   queryResponse: ExplorePanelData;
@@ -244,7 +244,7 @@ export const addResultsToCacheAction = createAction<AddResultsToCachePayload>('e
 /**
  *  Clears cache.
  */
-export interface ClearCachePayload {
+interface ClearCachePayload {
   exploreId: string;
 }
 export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCache');
