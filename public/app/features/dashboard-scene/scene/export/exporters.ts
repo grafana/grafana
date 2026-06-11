@@ -1,4 +1,4 @@
-import { defaults, each, sortBy } from 'lodash';
+import { cloneDeep, defaults, each, sortBy } from 'lodash';
 
 import { type DataSourceRef, type VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -16,6 +16,7 @@ import {
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
+import { type ObjectMeta } from 'app/features/apiserver/types';
 import { buildPanelKind } from 'app/features/dashboard/api/ResponseTransformers';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type PanelModel, type GridPos } from 'app/features/dashboard/state/PanelModel';
@@ -567,4 +568,31 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
       error: err,
     };
   }
+}
+
+export function stripMetadataForExport(metadata: ObjectMeta, isSharingExternally: boolean): Partial<ObjectMeta> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result: Record<string, any> = cloneDeep(metadata);
+
+  delete result['managedFields'];
+
+  if (isSharingExternally) {
+    delete result['uid'];
+    delete result['resourceVersion'];
+    delete result['namespace'];
+
+    for (const key in result['labels']) {
+      if (key.startsWith('grafana.app/')) {
+        delete result['labels'][key];
+      }
+    }
+
+    for (const key in result['annotations']) {
+      if (key.startsWith('grafana.app/')) {
+        delete result['annotations'][key];
+      }
+    }
+  }
+
+  return result;
 }

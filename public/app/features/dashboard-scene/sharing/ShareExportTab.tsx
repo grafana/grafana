@@ -1,6 +1,5 @@
 import saveAs from 'file-saver';
 import yaml from 'js-yaml';
-import { cloneDeep } from 'lodash';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -18,7 +17,7 @@ import { shareDashboardType } from 'app/features/dashboard/components/ShareModal
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 
-import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
+import { makeExportableV1, makeExportableV2, stripMetadataForExport } from '../scene/export/exporters';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor, hasLibraryPanelsInV1Dashboard } from '../utils/utils';
@@ -258,33 +257,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       action: 'copy',
     });
   };
-}
-
-function stripMetadataForExport(metadata: ObjectMeta, isSharingExternally: boolean): Partial<ObjectMeta> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const result: Record<string, any> = cloneDeep(metadata);
-
-  delete result['managedFields'];
-
-  if (isSharingExternally) {
-    delete result['uid'];
-    delete result['resourceVersion'];
-    delete result['namespace'];
-
-    for (const key in result['labels']) {
-      if (key.startsWith('grafana.app/')) {
-        delete result['labels'][key];
-      }
-    }
-
-    for (const key in result['annotations']) {
-      if (key.startsWith('grafana.app/')) {
-        delete result['annotations'][key];
-      }
-    }
-  }
-
-  return result;
 }
 
 function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) {

@@ -1,15 +1,27 @@
-import { css } from '@emotion/css';
-import { useCallback, useState } from 'react';
+import { css, cx } from '@emotion/css';
+import { useCallback, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
-import { Alert, Button, IconButton, Modal, Sidebar, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  ClipboardButton,
+  Icon,
+  IconButton,
+  InlineToast,
+  Modal,
+  Sidebar,
+  Stack,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
-import { applyJsonToDashboard, getDashboardJsonText } from './codePaneUtils';
+import { applyJsonToDashboard, formatForEditor, getDashboardJsonText, getSharingExportText } from './codePaneUtils';
 
 export class DashboardCodePane extends SceneObjectBase {
   public static Component = DashboardCodePaneRenderer;
@@ -29,6 +41,8 @@ export function DashboardCodePaneRenderer({ model }: SceneComponentProps<Dashboa
   const [jsonText, setJsonText] = useState(() => getDashboardJsonText(dashboard));
   const [isExpanded, setIsExpanded] = useState(false);
   const [editorFormat, setEditorFormat] = useState<SchemaEditorFormat>('json');
+  const [sharingCopied, setSharingCopied] = useState(false);
+  const sharingButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleChange = useCallback((value: string) => {
     setJsonText(value);
@@ -44,6 +58,23 @@ export function DashboardCodePaneRenderer({ model }: SceneComponentProps<Dashboa
     }
   }, [dashboard, jsonText]);
 
+  const handleCopyForSharing = useCallback(async () => {
+    setApplyError(null);
+
+    try {
+      const text = await getSharingExportText(dashboard, jsonText, editorFormat);
+      await navigator.clipboard.writeText(text);
+      setSharingCopied(true);
+      setTimeout(() => setSharingCopied(false), 2000);
+    } catch (error) {
+      setApplyError(
+        error instanceof Error
+          ? error.message
+          : t('dashboard.code-pane.copy-for-sharing-error', 'Failed to copy dashboard for sharing')
+      );
+    }
+  }, [dashboard, jsonText, editorFormat]);
+
   const applyTooltip =
     editorFormat === 'yaml'
       ? t(
@@ -58,6 +89,42 @@ export function DashboardCodePaneRenderer({ model }: SceneComponentProps<Dashboa
         {t('dashboard.schema-editor.apply-button', 'Apply changes')}
       </Button>
     </Tooltip>
+  );
+
+  const actionButtons = (
+    <Stack direction="row" gap={1} alignItems="center">
+      {applyButton}
+      <ClipboardButton
+        icon="copy"
+        variant="secondary"
+        size="sm"
+        disabled={hasValidationErrors}
+        getText={() => formatForEditor(jsonText, editorFormat)}
+      >
+        {t('dashboard.code-pane.copy-to-clipboard', 'Copy to clipboard')}
+      </ClipboardButton>
+      {sharingCopied && (
+        <InlineToast placement="top" referenceElement={sharingButtonRef.current}>
+          {t('dashboard.code-pane.copy-for-sharing-copied', 'Copied')}
+        </InlineToast>
+      )}
+      <Button
+        ref={sharingButtonRef}
+        icon="copy"
+        variant={sharingCopied ? 'success' : 'secondary'}
+        size="sm"
+        disabled={hasValidationErrors}
+        onClick={handleCopyForSharing}
+        className={cx(styles.copyButton, sharingCopied && styles.copyButtonSuccess)}
+      >
+        {t('dashboard.code-pane.copy-for-sharing', 'Copy for sharing')}
+        {sharingCopied && (
+          <div className={styles.copySuccessOverlay}>
+            <Icon name="check" />
+          </div>
+        )}
+      </Button>
+    </Stack>
   );
 
   const errorAlert = applyError ? (
@@ -88,7 +155,7 @@ export function DashboardCodePaneRenderer({ model }: SceneComponentProps<Dashboa
           <DashboardSchemaEditor {...editorProps} containerStyles={styles.codeEditor} />
         </div>
         <div className={styles.toolbar}>
-          {applyButton}
+          {actionButtons}
           <IconButton
             name="expand-arrows"
             size="sm"
@@ -112,7 +179,7 @@ export function DashboardCodePaneRenderer({ model }: SceneComponentProps<Dashboa
             {errorAlert}
             <DashboardSchemaEditor {...editorProps} />
             <div className={styles.toolbar}>
-              {applyButton}
+              {actionButtons}
               <IconButton
                 name="compress-arrows"
                 size="sm"
@@ -154,6 +221,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     flex: '0 0 auto',
+  }),
+  copyButton: css({
+    position: 'relative',
+  }),
+  copyButtonSuccess: css({
+    '> *': {
+      visibility: 'hidden',
+    },
+  }),
+  copySuccessOverlay: css({
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    left: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    visibility: 'visible',
   }),
   modal: css({
     width: '90vw',

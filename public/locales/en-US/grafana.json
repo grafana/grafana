@@ -5373,6 +5373,10 @@
     },
     "code-pane": {
       "collapse": "Collapse editor",
+      "copy-for-sharing": "Copy for sharing",
+      "copy-for-sharing-copied": "Copied",
+      "copy-for-sharing-error": "Failed to copy dashboard for sharing",
+      "copy-to-clipboard": "Copy to clipboard",
       "expand": "Expand editor",
       "header": "Edit as code",
       "modal-title": "Edit dashboard as code"
