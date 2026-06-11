@@ -78,6 +78,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `opentsdbBackendMigration`                   | Run queries through the data source backend                                                                                                                   |                    |
 | `multiPropsVariables`                        | Enables support for variables whose values can have multiple properties                                                                                       | Yes                |
 | `dashboardSectionVariables`                  | Enables support for section level variables (rows and tabs)                                                                                                   | Yes                |
+| `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                                                      | Yes                |
 | `alertingMultiplePolicies`                   | Enables the ability to create multiple notification policies in alerting                                                                                      | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                                            |                    |
 
