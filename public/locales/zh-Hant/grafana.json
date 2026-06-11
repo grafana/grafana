@@ -1096,9 +1096,6 @@
       },
       "unknown": "未知"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "您似乎沒有任何相容的資料來源。"
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "開始警報的評估",
       "pending-period": "待處理期間",
@@ -5907,9 +5904,6 @@
       "select-source": "選擇來源",
       "unknown": "未知物件：{{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "無中繼資料檢查器"
-    },
     "inspect-stats": {
       "data-title": "資料來源統計資訊",
       "data-traceids": "追蹤 ID",
@@ -6388,7 +6382,6 @@
       "playlist-next": "前往下一個儀表板",
       "playlist-previous": "前往上一個儀表板",
       "playlist-stop": "停止播放清單",
-      "read-only": "唯讀",
       "refresh": "重新整理儀表板",
       "save": "儲存儀表板",
       "save-as-template": {
@@ -6525,28 +6518,6 @@
     },
     "view-panel": {
       "not-found": ""
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "變更視覺效果",
-      "aria-label-close": "關閉選項窗格",
-      "aria-label-show": "顯示選項窗格",
-      "tooltip-click-to-change-visualization": "按一下以變更視覺效果",
-      "tooltip-close": "關閉選項窗格",
-      "tooltip-show": "顯示選項窗格"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "搜尋…",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "可在多個儀表板之間共用的可重複使用面板。"
-        },
-        "label": {
-          "library-panels": "資料庫面板",
-          "suggestions": "建議",
-          "visualizations": "視覺化"
-        }
-      },
-      "title-close": "關閉"
     },
     "viz-panel": {
       "delete-panel-text": "刪除此面板也會移除所有查詢項目。確定要繼續嗎？",
@@ -9002,9 +8973,6 @@
     "select-aria-label": "資料夾篩選條件",
     "select-placeholder": "按資料夾篩選"
   },
-  "folder-repo": {
-    "read-only-badge": "唯讀"
-  },
   "folders": {
     "api": {
       "anonymous-user": "",
@@ -10970,6 +10938,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "",
       "show-all-series": "…顯示所有 {{total}} 個項目"
     }
   },
@@ -10991,10 +10960,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "建立資料庫面板"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "變更",
-      "confirmText-replace": "取代"
     },
     "confirm": {
       "delete-panel": "要刪除此面板嗎？"
@@ -11033,9 +10998,6 @@
       "select-placeholder": "開始輸入以搜尋儀表板",
       "title": "在儀表板中檢視面板",
       "body_other": "此面板正在 {{count}} 個儀表板中使用。請選擇要在其中檢視面板的儀表板："
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "建立新的資料庫面板"
     },
     "save": {
       "error": "儲存資料庫面板時發生錯誤：「{{errorMsg}}」",
@@ -13560,6 +13522,9 @@
       "message-resource_other": "您的帳戶限於每個儲存庫 {{count}} 個同步的資源。",
       "message-resource-onprem_other": "您的執行個體限於每個儲存庫 {{count}} 個同步的資源。"
     },
+    "read-only-badge": {
+      "text": ""
+    },
     "read-only-local-tooltip": "此資源為唯讀，並透過檔案佈建進行佈建。若要進行任何變更，請更新連線的儲存庫。若要修改設定，請依序前往「管理」>「佈建」>「儲存庫」。",
     "read-only-remote-tooltip": "此資源為唯讀，並透過 Git 進行佈建。若要進行任何變更，請更新連線的儲存庫。若要修改設定，請依序前往「管理」>「佈建」>「儲存庫」。",
     "recent-jobs": {
@@ -13580,7 +13545,6 @@
     },
     "repository-card": {
       "last-sync": "上次同步：{{date}}",
-      "read-only-badge": "唯讀",
       "settings": "設定",
       "view": "檢視"
     },
@@ -16542,9 +16506,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "找不到重新命名或遺失的變數。"
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "無法載入變數"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "何時更新此變數的值",

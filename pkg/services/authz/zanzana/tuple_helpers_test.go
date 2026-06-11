@@ -17,7 +17,7 @@ func TestTupleStringWithoutCondition(t *testing.T) {
 			Name: "group_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"group_resource": structpb.NewStringValue("dashboards.grafana.app/dashboards"),
+					"group_resource": structpb.NewStringValue("dashboard.grafana.app/dashboards"),
 				},
 			},
 		},

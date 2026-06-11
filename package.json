@@ -92,7 +92,7 @@
     "@grafana/eslint-config": "8.2.0",
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
     "@grafana/levitate": "0.17.2",
-    "@grafana/plugin-e2e": "3.7.1-canary.2604.25387292549.0",
+    "@grafana/plugin-e2e": "3.7.2",
     "@grafana/test-utils": "workspace:*",
     "@manypkg/get-packages": "^3.0.0",
     "@npmcli/package-json": "^6.0.0",
