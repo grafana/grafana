@@ -19,37 +19,11 @@ import (
 
 const teamIDScopePrefix = "teams:id:"
 
-// bulkTeamClient resolves teams from a per-namespace map sourced from unified storage
-// (the deprecatedInternalID label). It satisfies idresolver.TeamClient and is the
-// mode-5 backing for the reconciler, which has no legacy SQL. The map is built for a
-// single namespace, so the ns argument is ignored.
-type bulkTeamClient struct {
-	byID  map[int64]string
-	byUID map[string]int64
-}
-
-var _ idresolver.TeamClient = (*bulkTeamClient)(nil)
-
-func (c *bulkTeamClient) UIDByID(_ context.Context, _ claims.NamespaceInfo, id int64) (string, error) {
-	uid, ok := c.byID[id]
-	if !ok {
-		return "", idresolver.ErrNotFound
-	}
-	return uid, nil
-}
-
-func (c *bulkTeamClient) IDByUID(_ context.Context, _ claims.NamespaceInfo, uid string) (int64, error) {
-	id, ok := c.byUID[uid]
-	if !ok {
-		return 0, idresolver.ErrNotFound
-	}
-	return id, nil
-}
-
 // buildTeamResolver lists the namespace's Team CRDs and returns an idresolver.Resolver
-// backed by a uid<->id map (from the deprecatedInternalID label, assigned by unified
-// storage). It works in mode 5: no legacy SQL and no feature toggles, so team lookups
-// always go through the client.
+// backed by a uid<->id index (from the deprecatedInternalID label, assigned by unified
+// storage). The bulk indexing/lookup lives in idresolver; this only extracts (uid, id)
+// from the listed objects. It works in mode 5: no legacy SQL and no feature toggles, so
+// team lookups always go through the client.
 func (r *Reconciler) buildTeamResolver(ctx context.Context, namespace string) (idresolver.Resolver, error) {
 	ctx, span := r.tracer.Start(ctx, "reconciler.buildTeamResolver")
 	defer span.End()
@@ -65,16 +39,14 @@ func (r *Reconciler) buildTeamResolver(ctx context.Context, namespace string) (i
 		return nil, tracing.Errorf(span, "failed to get client for %s: %w", crd.String(), err)
 	}
 
-	byID := make(map[int64]string)
-	byUID := make(map[string]int64)
+	var teams []idresolver.TeamRef
 	err = listAndProcess(ctx, resourceClient, r.cfg.listPageSize(), func(item *unstructured.Unstructured) error {
 		meta, err := utils.MetaAccessor(item)
 		if err != nil {
 			return err
 		}
 		if id := meta.GetDeprecatedInternalID(); id != 0 { //nolint:staticcheck
-			byID[id] = item.GetName()
-			byUID[item.GetName()] = id
+			teams = append(teams, idresolver.TeamRef{UID: item.GetName(), ID: id})
 		}
 		return nil
 	})
@@ -82,7 +54,7 @@ func (r *Reconciler) buildTeamResolver(ctx context.Context, namespace string) (i
 		return nil, tracing.Error(span, err)
 	}
 
-	return idresolver.NewResolver(nil, &bulkTeamClient{byID: byID, byUID: byUID}, nil), nil
+	return idresolver.NewResolver(nil, idresolver.NewBulkTeamClient(teams), nil), nil
 }
 
 // rolesReconciled reports whether this reconcile pass involves Role or GlobalRole

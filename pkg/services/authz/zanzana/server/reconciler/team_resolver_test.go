@@ -97,10 +97,9 @@ func TestTranslateRoleToTuples_TeamPermissions(t *testing.T) {
 		},
 	}
 
-	resolver := idresolver.NewResolver(nil, &bulkTeamClient{
-		byID:  map[int64]string{5: "team-five"},
-		byUID: map[string]int64{"team-five": 5},
-	}, nil)
+	resolver := idresolver.NewResolver(nil, idresolver.NewBulkTeamClient([]idresolver.TeamRef{
+		{UID: "team-five", ID: 5},
+	}), nil)
 
 	tuples, err := TranslateRoleToTuples(context.Background(), toUnstructured(t, role), nil, resolver, claims.NamespaceInfo{}, log.NewNopLogger())
 	require.NoError(t, err)
