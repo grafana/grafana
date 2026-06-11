@@ -71,6 +71,8 @@ func TestIntegrationAlertRuleCompatCreateViaK8s(t *testing.T) {
 			Trigger: v0alpha1.AlertRuleIntervalTrigger{
 				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 			},
+			NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+			ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 		},
 	}
 
@@ -248,8 +250,8 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioning(t *testing.T) {
 			for k, v := range expectedModel {
 				require.EqualValues(t, v, retrievedModel[k], "Model field %s should match", k)
 			}
-			require.EqualValues(t, r.NoDataState, retrievedRule.Spec.NoDataState)
-			require.EqualValues(t, r.ExecErrState, retrievedRule.Spec.ExecErrState)
+			require.Equal(t, common.ToK8sNoDataState(ngmodels.NoDataState(r.NoDataState)), retrievedRule.Spec.NoDataState)
+			require.Equal(t, common.ToK8sExecErrState(ngmodels.ExecutionErrorState(r.ExecErrState)), retrievedRule.Spec.ExecErrState)
 
 			// change the title of the rule and check that it's updated in k8s and provisioning API
 			updatedRule := retrievedRule.DeepCopy()
@@ -388,8 +390,8 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioningChangeGroupInK8s(t *test
 			for k, v := range expectedModel {
 				require.EqualValues(t, v, retrievedModel[k], "Model field %s should match", k)
 			}
-			require.EqualValues(t, r.NoDataState, retrievedRule.Spec.NoDataState)
-			require.EqualValues(t, r.ExecErrState, retrievedRule.Spec.ExecErrState)
+			require.Equal(t, common.ToK8sNoDataState(ngmodels.NoDataState(r.NoDataState)), retrievedRule.Spec.NoDataState)
+			require.Equal(t, common.ToK8sExecErrState(ngmodels.ExecutionErrorState(r.ExecErrState)), retrievedRule.Spec.ExecErrState)
 
 			// - change group should be allowed and reflected in the provisioning api
 			updatedRule := retrievedRule.DeepCopy()

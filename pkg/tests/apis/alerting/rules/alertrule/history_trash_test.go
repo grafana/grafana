@@ -53,8 +53,8 @@ func makeAlertRuleSpec(t *testing.T, folder, title string) *v0alpha1.AlertRule {
 			Trigger: v0alpha1.AlertRuleIntervalTrigger{
 				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 			},
-			NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-			ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+			NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+			ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 		},
 	}
 }
