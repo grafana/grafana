@@ -342,7 +342,7 @@ describe('utils', () => {
       expect(rows[0].label).toBe('A-series');
     });
 
-    it('includes _restFields as isHiddenFromViz items', () => {
+    it('includes extraFields as isHiddenFromViz items', () => {
       const restField = {
         ...fields[1],
         name: 'rest-series',
