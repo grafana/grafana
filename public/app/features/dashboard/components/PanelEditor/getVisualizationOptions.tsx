@@ -313,7 +313,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
  */
 export function fillOptionsPaneItems(
   idPrefix: string,
-  supplier: PanelOptionsSupplier<unknown>,
+  supplier: PanelOptionsSupplier<any>,
   access: NestedValueAccess,
   getOptionsPaneCategory: categoryGetter,
   context: StandardEditorContext<unknown, unknown>,

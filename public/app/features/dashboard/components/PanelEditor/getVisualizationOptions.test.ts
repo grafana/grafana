@@ -5,12 +5,10 @@ import {
   FieldType,
   getDefaultTimeRange,
   LoadingState,
-  PanelOptionsEditorBuilder,
   type PanelPlugin,
   Registry,
   toDataFrame,
 } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test';
 import { VizPanel } from '@grafana/scenes';
 
 import { getStandardEditorContext, getVisualizationOptions2 } from './getVisualizationOptions';
