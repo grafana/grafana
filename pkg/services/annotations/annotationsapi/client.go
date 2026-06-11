@@ -20,8 +20,8 @@ import (
 
 const annotationServerAudience = "annotation.grafana.app"
 
-// NewClient returns nil when APIServerURL is empty (proxy disabled).
-func NewClient(cfg *setting.Cfg, userSvc user.Service) (client.K8sHandler, error) {
+// newClient returns nil when APIServerURL is empty (proxy disabled).
+func newClient(cfg *setting.Cfg, userSvc user.Service) (client.K8sHandler, error) {
 	url := strings.TrimSpace(cfg.AnnotationAppPlatform.APIServerURL)
 	if url == "" {
 		return nil, nil

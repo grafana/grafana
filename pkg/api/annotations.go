@@ -80,14 +80,14 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 
 func (hs *HTTPServer) findAnnotations(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	isAlertQuery := query.Type == "alert" || query.AlertID != 0 || query.AlertUID != ""
-	if hs.annotationProxyHandler.Enabled() && !isAlertQuery {
-		newItems, err := hs.annotationProxyHandler.List(ctx, query.OrgID, query)
+	if hs.annotationMigrationProxy.Enabled() && !isAlertQuery {
+		newItems, err := hs.annotationMigrationProxy.List(ctx, query.OrgID, query)
 		if err != nil {
 			return nil, err
 		}
 
 		newItems = annotationsapi.FilterByTags(newItems, query.Tags, query.MatchAny)
-		if hs.annotationProxyHandler.ProxyAll() {
+		if hs.annotationMigrationProxy.ProxyAll() {
 			return newItems, nil
 		}
 
@@ -176,8 +176,8 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		Tags:         cmd.Tags,
 	}
 
-	if hs.annotationProxyHandler.Enabled() {
-		legacyID, err := hs.annotationProxyHandler.Create(c.Req.Context(), c.GetOrgID(), &item)
+	if hs.annotationMigrationProxy.Enabled() {
+		legacyID, err := hs.annotationMigrationProxy.Create(c.Req.Context(), c.GetOrgID(), &item)
 		if err != nil {
 			return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save annotation", err)
 		}
@@ -263,8 +263,8 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) respons
 		Tags:   tagsArray,
 	}
 
-	if hs.annotationProxyHandler.Enabled() {
-		legacyID, err := hs.annotationProxyHandler.Create(c.Req.Context(), c.GetOrgID(), &item)
+	if hs.annotationMigrationProxy.Enabled() {
+		legacyID, err := hs.annotationMigrationProxy.Create(c.Req.Context(), c.GetOrgID(), &item)
 		if err != nil {
 			return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save Graphite annotation", err)
 		}
@@ -306,7 +306,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 
 	userID, _ := identity.UserIdentifier(c.GetID())
 
-	if hs.annotationProxyHandler.Enabled() {
+	if hs.annotationMigrationProxy.Enabled() {
 		item := annotations.Item{
 			OrgID: c.GetOrgID(), UserID: userID,
 			Epoch: cmd.Time, EpochEnd: cmd.TimeEnd, Text: cmd.Text, Tags: cmd.Tags,
@@ -314,7 +314,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		if cmd.Data != nil {
 			item.Data = cmd.Data
 		}
-		if err := hs.annotationProxyHandler.Update(c.Req.Context(), c.GetOrgID(), annotationID, &item); err == nil {
+		if err := hs.annotationMigrationProxy.Update(c.Req.Context(), c.GetOrgID(), annotationID, &item); err == nil {
 			return response.Success("Annotation updated")
 		} else if !errors.Is(err, annotationsapi.ErrNotFound) {
 			return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update annotation", err)
@@ -375,16 +375,15 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 
 	userID, _ := identity.UserIdentifier(c.GetID())
 
-	if hs.annotationProxyHandler.Enabled() {
-		k8sObj, err := hs.annotationProxyHandler.FindByLegacyID(c.Req.Context(), c.GetOrgID(), annotationID)
+	if hs.annotationMigrationProxy.Enabled() {
+		base, err := hs.annotationMigrationProxy.Get(c.Req.Context(), c.GetOrgID(), annotationID)
 		if err != nil && !errors.Is(err, annotationsapi.ErrNotFound) {
 			return response.ErrOrFallback(http.StatusInternalServerError, "Failed to patch annotation", err)
 		}
 		if err == nil {
-			epoch, epochEnd, text, tags := annotationsapi.SpecFromObject(k8sObj)
 			existing := annotations.Item{
 				OrgID: c.GetOrgID(), UserID: userID,
-				Epoch: epoch, EpochEnd: epochEnd, Text: text, Tags: tags,
+				Epoch: base.Time, EpochEnd: base.TimeEnd, Text: base.Text, Tags: base.Tags,
 			}
 			if cmd.Tags != nil {
 				existing.Tags = cmd.Tags
@@ -398,7 +397,7 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 			if cmd.TimeEnd > 0 && cmd.TimeEnd != existing.EpochEnd {
 				existing.EpochEnd = cmd.TimeEnd
 			}
-			if err := hs.annotationProxyHandler.Update(c.Req.Context(), c.GetOrgID(), annotationID, &existing); err != nil {
+			if err := hs.annotationMigrationProxy.Update(c.Req.Context(), c.GetOrgID(), annotationID, &existing); err != nil {
 				return response.ErrOrFallback(http.StatusInternalServerError, "Failed to patch annotation", err)
 			}
 			return response.Success("Annotation patched")
@@ -544,8 +543,8 @@ func (hs *HTTPServer) GetAnnotationByID(c *contextmodel.ReqContext) response.Res
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
-	if hs.annotationProxyHandler.Enabled() {
-		dto, err := hs.annotationProxyHandler.Get(c.Req.Context(), c.GetOrgID(), annotationID)
+	if hs.annotationMigrationProxy.Enabled() {
+		dto, err := hs.annotationMigrationProxy.Get(c.Req.Context(), c.GetOrgID(), annotationID)
 		if err == nil {
 			if dto.Email != "" {
 				dto.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, dto.Email)
@@ -555,7 +554,10 @@ func (hs *HTTPServer) GetAnnotationByID(c *contextmodel.ReqContext) response.Res
 		if !errors.Is(err, annotationsapi.ErrNotFound) {
 			return response.Error(http.StatusInternalServerError, "Failed to get annotation", err)
 		}
-		// ErrNotFound: fall through to legacy (pre-migration record)
+		if hs.annotationMigrationProxy.ProxyAll() {
+			return response.Error(http.StatusNotFound, "Annotation not found", err)
+		}
+		// ErrNotFound in proxy-writes: fall through to legacy (pre-migration record)
 	}
 
 	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
@@ -587,8 +589,8 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
-	if hs.annotationProxyHandler.Enabled() {
-		if err := hs.annotationProxyHandler.Delete(c.Req.Context(), c.GetOrgID(), annotationID); err == nil {
+	if hs.annotationMigrationProxy.Enabled() {
+		if err := hs.annotationMigrationProxy.Delete(c.Req.Context(), c.GetOrgID(), annotationID); err == nil {
 			return response.Success("Annotation deleted")
 		} else if !errors.Is(err, annotationsapi.ErrNotFound) {
 			return response.Error(http.StatusInternalServerError, "Failed to delete annotation", err)
@@ -620,7 +622,7 @@ func findAnnotationByID(ctx context.Context, repo annotations.Repository, annota
 	}
 
 	if len(items) == 0 {
-		return nil, response.Error(http.StatusNotFound, "Annotation not found", nil)
+		return nil, response.Error(http.StatusNotFound, "Annotation not found", err)
 	}
 
 	return items[0], nil

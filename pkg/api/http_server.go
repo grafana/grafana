@@ -192,7 +192,7 @@ type HTTPServer struct {
 	AvatarCacheServer            *avatar.AvatarCacheServer
 	preferenceService            pref.Service
 	preferenceK8sHandler         *prefapi.K8sHandler
-	annotationProxyHandler       *annotationsapi.ProxyHandler
+	annotationMigrationProxy     *annotationsapi.MigrationProxy
 	Csrf                         csrf.Service
 	folderPermissionsService     accesscontrol.FolderPermissionsService
 	dashboardPermissionsService  accesscontrol.DashboardPermissionsService
@@ -268,7 +268,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	preferenceK8sHandler *prefapi.K8sHandler,
-	annotationProxyHandler *annotationsapi.ProxyHandler,
+	annotationMigrationProxy *annotationsapi.MigrationProxy,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
@@ -355,7 +355,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		AvatarCacheServer:            avatarCacheServer,
 		preferenceService:            preferenceService,
 		preferenceK8sHandler:         preferenceK8sHandler,
-		annotationProxyHandler:       annotationProxyHandler,
+		annotationMigrationProxy:     annotationMigrationProxy,
 		Csrf:                         csrfService,
 		folderPermissionsService:     folderPermissionsService,
 		dashboardPermissionsService:  dashboardPermissionsService,

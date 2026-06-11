@@ -392,7 +392,7 @@ var wireBasicSet = wire.NewSet(
 	publicdashboards.ProvideApi,
 	starApi.ProvideApi,
 	prefapi.ProvideK8sHandler,
-	annotationsapi.ProvideProxyHandler,
+	annotationsapi.ProvideMigrationProxy,
 	starApi.ProvideK8sClients,
 	userimpl.ProvideService,
 	wire.Bind(new(user.Service), new(*userimpl.Service)),

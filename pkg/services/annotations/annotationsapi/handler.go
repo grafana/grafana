@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -21,53 +20,52 @@ import (
 // ErrNotFound is returned by proxy methods when the annotation is not in the new storage
 var ErrNotFound = errors.New("annotation not found in new store")
 
-// ProxyHandler carries the k8s client for the standalone annotation API server.
-//
-// When enabled (api_migration_phase = proxy-writes or proxy-all):
-//   - Creates go to the new store only; the legacy DB is not written.
-//   - Updates and deletes try the new store first. ErrNotFound means the record
-//     predates the migration and has not been backfilled yet — the caller falls
-//     back to the legacy DB for those.
-//
-// client is nil when api_migration_phase is "off", keeping all behaviour unchanged.
-type ProxyHandler struct {
-	client client.K8sHandler
+// MigrationProxy routes annotation writes to the new API server.
+// When phase is "off" or api_server_url is empty, all methods are no-ops and callers fall back to legacy.
+type MigrationProxy struct {
+	client *annotationAPIClient
 	phase  string
 }
 
-func ProvideProxyHandler(cfg *setting.Cfg, userSvc user.Service) (*ProxyHandler, error) {
+func ProvideMigrationProxy(cfg *setting.Cfg, userSvc user.Service) (*MigrationProxy, error) {
 	phase := cfg.AnnotationAppPlatform.APIMigrationPhase
 	if phase != "off" && strings.TrimSpace(cfg.AnnotationAppPlatform.APIServerURL) == "" {
 		return nil, fmt.Errorf("annotation proxy: api_server_url must be set when api_migration_phase is %q", phase)
 	}
 
-	k8sClient, err := NewClient(cfg, userSvc)
+	k8sClient, err := newClient(cfg, userSvc)
 	if err != nil {
 		return nil, err
 	}
-	return &ProxyHandler{
-		client: k8sClient,
+
+	var c *annotationAPIClient
+	if k8sClient != nil {
+		c = &annotationAPIClient{k8sClient: k8sClient}
+	}
+
+	return &MigrationProxy{
+		client: c,
 		phase:  phase,
 	}, nil
 }
 
-func (h *ProxyHandler) Enabled() bool {
+func (h *MigrationProxy) Enabled() bool {
 	return h.client != nil && (h.phase == "proxy-writes" || h.phase == "proxy-all")
 }
 
-func (h *ProxyHandler) ProxyAll() bool {
+func (h *MigrationProxy) ProxyAll() bool {
 	return h.client != nil && h.phase == "proxy-all"
 }
 
 // List fetches annotations from the new store matching query and returns them as ItemDTOs.
 // Tags are not supported as k8s field selectors — callers must filter by tags after this call.
-func (h *ProxyHandler) List(ctx context.Context, orgID int64, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+func (h *MigrationProxy) List(ctx context.Context, orgID int64, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	listOpts := v1.ListOptions{Limit: query.Limit}
 	if fs := buildFieldSelector(query); fs != "" {
 		listOpts.FieldSelector = fs
 	}
 
-	list, err := h.client.List(ctx, orgID, listOpts)
+	annos, err := h.client.List(ctx, orgID, listOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -75,8 +73,8 @@ func (h *ProxyHandler) List(ctx context.Context, orgID int64, query *annotations
 	// Collect unique createdBy values for batch user hydration.
 	seen := make(map[string]bool)
 	var createdByMeta []string
-	for _, obj := range list.Items {
-		if cb := obj.GetAnnotations()["grafana.com/createdBy"]; cb != "" && !seen[cb] {
+	for _, anno := range annos {
+		if cb := anno.GetAnnotations()["grafana.com/createdBy"]; cb != "" && !seen[cb] {
 			createdByMeta = append(createdByMeta, cb)
 			seen[cb] = true
 		}
@@ -86,11 +84,10 @@ func (h *ProxyHandler) List(ctx context.Context, orgID int64, query *annotations
 		userMap, _ = h.client.GetUsersFromMeta(ctx, createdByMeta)
 	}
 
-	dtos := make([]*annotations.ItemDTO, 0, len(list.Items))
-	for i := range list.Items {
-		obj := &list.Items[i]
-		dto := objectToItemDTO(obj)
-		if cb := obj.GetAnnotations()["grafana.com/createdBy"]; cb != "" {
+	dtos := make([]*annotations.ItemDTO, 0, len(annos))
+	for _, anno := range annos {
+		dto := annoToItemDTO(anno)
+		if cb := anno.GetAnnotations()["grafana.com/createdBy"]; cb != "" {
 			if u, ok := userMap[cb]; ok {
 				applyUserToDTO(u, dto)
 			}
@@ -197,61 +194,46 @@ func hasAllTags(itemTags, queryTags []string) bool {
 }
 
 // Create writes to new store and returns the assigned legacy ID.
-func (h *ProxyHandler) Create(ctx context.Context, orgID int64, item *annotations.Item) (int64, error) {
-	obj := itemToObject(item)
-	result, err := h.client.Create(ctx, obj, orgID, v1.CreateOptions{})
+func (h *MigrationProxy) Create(ctx context.Context, orgID int64, item *annotations.Item) (int64, error) {
+	result, err := h.client.Create(ctx, orgID, itemToAnnotation(item))
 	if err != nil {
 		return 0, err
 	}
-	return legacyIDFromObject(result), nil
+	return legacyIDFromAnnotation(result), nil
 }
 
 // Update writes to new store. Returns ErrNotFound if the record is not there yet, caller falls back to legacy.
-func (h *ProxyHandler) Update(ctx context.Context, orgID int64, annotationID int64, item *annotations.Item) error {
-	existing, err := h.FindByLegacyID(ctx, orgID, annotationID)
+func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID int64, item *annotations.Item) error {
+	existing, err := h.client.GetByLegacyID(ctx, orgID, annotationID)
 	if err != nil {
 		return err
 	}
-	obj := itemToObject(item)
-	obj.SetName(existing.GetName())
-	obj.SetResourceVersion(existing.GetResourceVersion())
-	_, err = h.client.Update(ctx, obj, orgID, v1.UpdateOptions{})
+	anno := itemToAnnotation(item)
+	anno.SetName(existing.GetName())
+	anno.SetResourceVersion(existing.GetResourceVersion())
+	_, err = h.client.Update(ctx, orgID, anno)
 	return err
 }
 
 // Delete removes from new store. Returns ErrNotFound if the record is not there yet — caller falls back to legacy.
-func (h *ProxyHandler) Delete(ctx context.Context, orgID int64, annotationID int64) error {
-	existing, err := h.FindByLegacyID(ctx, orgID, annotationID)
+func (h *MigrationProxy) Delete(ctx context.Context, orgID int64, annotationID int64) error {
+	existing, err := h.client.GetByLegacyID(ctx, orgID, annotationID)
 	if err != nil {
 		return err
 	}
-	return h.client.Delete(ctx, existing.GetName(), orgID, v1.DeleteOptions{})
-}
-
-// FindByLegacyID returns ErrNotFound when absent.
-func (h *ProxyHandler) FindByLegacyID(ctx context.Context, orgID int64, annotationID int64) (*unstructured.Unstructured, error) {
-	list, err := h.client.List(ctx, orgID, v1.ListOptions{
-		FieldSelector: fmt.Sprintf("metadata.legacyID=%d", annotationID),
-	})
-	if err != nil {
-		return nil, err
-	}
-	if len(list.Items) == 0 {
-		return nil, ErrNotFound
-	}
-	return &list.Items[0], nil
+	return h.client.Delete(ctx, orgID, existing.GetName())
 }
 
 // TODO: soft-delete not yet implemented
-func (h *ProxyHandler) Get(ctx context.Context, orgID int64, annotationID int64) (*annotations.ItemDTO, error) {
-	obj, err := h.FindByLegacyID(ctx, orgID, annotationID)
+func (h *MigrationProxy) Get(ctx context.Context, orgID int64, annotationID int64) (*annotations.ItemDTO, error) {
+	anno, err := h.client.GetByLegacyID(ctx, orgID, annotationID)
 	if err != nil {
 		return nil, err
 	}
 
-	dto := objectToItemDTO(obj)
+	dto := annoToItemDTO(anno)
 
-	createdBy := obj.GetAnnotations()["grafana.com/createdBy"]
+	createdBy := anno.GetAnnotations()["grafana.com/createdBy"]
 	if createdBy != "" {
 		if users, err := h.client.GetUsersFromMeta(ctx, []string{createdBy}); err == nil {
 			if u, ok := users[createdBy]; ok {
@@ -270,74 +252,55 @@ func applyUserToDTO(u *user.User, dto *annotations.ItemDTO) {
 	dto.Email = u.Email
 }
 
-func objectToItemDTO(obj *unstructured.Unstructured) *annotations.ItemDTO {
-	spec, _ := obj.Object["spec"].(map[string]any)
-
-	dto := &annotations.ItemDTO{ID: legacyIDFromObject(obj)}
-	dto.Text, _ = spec["text"].(string)
-	if t, ok := spec["time"].(float64); ok {
-		dto.Time = int64(t)
+func annoToItemDTO(anno *annotationV0.Annotation) *annotations.ItemDTO {
+	dto := &annotations.ItemDTO{
+		ID:           legacyIDFromAnnotation(anno),
+		Text:         anno.Spec.Text,
+		Time:         anno.Spec.Time,
+		Tags:         anno.Spec.Tags,
+		DashboardUID: anno.Spec.DashboardUID,
 	}
-	if te, ok := spec["timeEnd"].(float64); ok {
-		dto.TimeEnd = int64(te)
+	if anno.Spec.TimeEnd != nil {
+		dto.TimeEnd = *anno.Spec.TimeEnd
 	}
-	if uid, ok := spec["dashboardUID"].(string); ok {
-		dto.DashboardUID = &uid
+	if anno.Spec.PanelID != nil {
+		dto.PanelID = *anno.Spec.PanelID
 	}
-	if pid, ok := spec["panelID"].(float64); ok {
-		dto.PanelID = int64(pid)
-	}
-	if rawTags, ok := spec["tags"].([]any); ok {
-		for _, rt := range rawTags {
-			if s, ok := rt.(string); ok {
-				dto.Tags = append(dto.Tags, s)
-			}
-		}
-	}
-	if ts := obj.GetCreationTimestamp(); !ts.IsZero() {
+	if ts := anno.GetCreationTimestamp(); !ts.IsZero() {
 		dto.Created = ts.UnixMilli()
 	}
 	return dto
 }
 
-func itemToObject(item *annotations.Item) *unstructured.Unstructured {
-	spec := map[string]any{
-		"text": item.Text,
-		"time": item.Epoch,
+func itemToAnnotation(item *annotations.Item) *annotationV0.Annotation {
+	spec := annotationV0.AnnotationSpec{
+		Text: item.Text,
+		Time: item.Epoch,
+		Tags: item.Tags,
 	}
 	if item.EpochEnd != 0 {
-		spec["timeEnd"] = item.EpochEnd
+		spec.TimeEnd = &item.EpochEnd
 	}
 	if item.DashboardUID != "" {
-		spec["dashboardUID"] = item.DashboardUID
+		spec.DashboardUID = &item.DashboardUID
 	}
 	if item.PanelID != 0 {
-		spec["panelID"] = item.PanelID
-	}
-	if len(item.Tags) > 0 {
-		tags := make([]any, len(item.Tags))
-		for i, t := range item.Tags {
-			tags[i] = t
-		}
-		spec["tags"] = tags
+		spec.PanelID = &item.PanelID
 	}
 
-	obj := &unstructured.Unstructured{Object: map[string]any{
-		"apiVersion": annotationV0.GroupVersion.String(),
-		"kind":       "Annotation",
-		"metadata":   map[string]any{},
-		"spec":       spec,
-	}}
+	anno := &annotationV0.Annotation{Spec: spec}
+	anno.APIVersion = annotationV0.GroupVersion.String()
+	anno.Kind = "Annotation"
 	if item.UserID != 0 {
-		obj.SetAnnotations(map[string]string{
+		anno.SetAnnotations(map[string]string{
 			"grafana.com/createdBy": fmt.Sprintf("user:%d", item.UserID),
 		})
 	}
-	return obj
+	return anno
 }
 
-func legacyIDFromObject(obj *unstructured.Unstructured) int64 {
-	labels := obj.GetLabels()
+func legacyIDFromAnnotation(anno *annotationV0.Annotation) int64 {
+	labels := anno.GetLabels()
 	if labels == nil {
 		return 0
 	}
@@ -345,22 +308,10 @@ func legacyIDFromObject(obj *unstructured.Unstructured) int64 {
 	return id
 }
 
-// JSON numbers unmarshal as float64, so we cast to int64 explicitly.
-func SpecFromObject(obj *unstructured.Unstructured) (epoch, epochEnd int64, text string, tags []string) {
-	spec, _ := obj.Object["spec"].(map[string]any)
-	text, _ = spec["text"].(string)
-	if t, ok := spec["time"].(float64); ok {
-		epoch = int64(t)
+// NewK8sHandler is used only in tests to inject a fake K8sHandler directly.
+func NewK8sHandler(h client.K8sHandler) *MigrationProxy {
+	return &MigrationProxy{
+		client: &annotationAPIClient{k8sClient: h},
+		phase:  "proxy-writes",
 	}
-	if te, ok := spec["timeEnd"].(float64); ok {
-		epochEnd = int64(te)
-	}
-	if rawTags, ok := spec["tags"].([]any); ok {
-		for _, rt := range rawTags {
-			if s, ok := rt.(string); ok {
-				tags = append(tags, s)
-			}
-		}
-	}
-	return
 }
