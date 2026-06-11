@@ -17,6 +17,14 @@ type Item struct {
 	Folder      string          // folder UID for authz filtering
 }
 
+// PendingDeleteChecker reports whether a namespace belongs to a tenant
+// marked for deletion. Implemented by resource.PendingDeleteStore; the
+// backfiller and reconciler use it to avoid embedding resources that are
+// about to be deleted.
+type PendingDeleteChecker interface {
+	IsPendingDelete(ctx context.Context, namespace string) (bool, error)
+}
+
 // Builder adapts a resource type into embeddable Items. One per
 // (group, resource). Mirrors the bleve DocumentBuilder pattern.
 type Builder interface {

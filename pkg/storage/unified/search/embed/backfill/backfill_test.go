@@ -519,3 +519,122 @@ func (fakeNonDashboardBuilder) MaxItemsPerResource() int { return 0 }
 func (fakeNonDashboardBuilder) Extract(context.Context, *resourcepb.ResourceKey, []byte, string) ([]embed.Item, error) {
 	return nil, nil
 }
+
+// newBackfillerWithPendingDelete mirrors newBackfiller but wires a
+// pending-delete checker (and optionally a stats provider).
+func newBackfillerWithPendingDelete(t *testing.T, storage *fakeStorage, vec *fakeVector, pd embed.PendingDeleteChecker, stats builders.DashboardStats) *VectorBackfiller {
+	t.Helper()
+	emb := newFakeEmbedder(&fakeText{dim: 4})
+	b, err := NewVectorBackfiller(Options{
+		Storage:        storage,
+		VectorBackend:  vec,
+		BatchEmbedder:  embedder.NewBatchEmbedder(*emb),
+		Builders:       []embed.Builder{dashboard.New()},
+		DashboardStats: stats,
+		PendingDelete:  pd,
+	})
+	require.NoError(t, err)
+	return b
+}
+
+// Integration: items in a pending-delete namespace are filtered out of
+// the backfill pipeline while other namespaces still embed, and the job
+// completes.
+func TestRunBackfillJob_PendingDeleteFilter_SkipsPendingDeleteNamespaces(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{
+		makeListItem("doomed", "dash-a", 50),
+		makeListItem("live", "dash-b", 60),
+	}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	pd := newFakePendingDeleteChecker()
+	pd.markPendingDelete("doomed")
+
+	o := newBackfillerWithPendingDelete(t, storage, vec, pd, nil)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1, "only the live namespace should be embedded")
+	assert.Equal(t, "dash-b", vec.upserts[0][0].UID)
+	require.Len(t, vec.completedJobIDs, 1, "job still completes when items are filtered")
+}
+
+// Integration: the pending-delete lookup is memoized per namespace within
+// a run so N items in one namespace cost one KV lookup.
+func TestRunBackfillJob_PendingDeleteFilter_MemoizedPerNamespace(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{
+		makeListItem("ns", "dash-a", 50),
+		makeListItem("ns", "dash-b", 60),
+	}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	pd := newFakePendingDeleteChecker()
+
+	o := newBackfillerWithPendingDelete(t, storage, vec, pd, nil)
+	o.runBackfill(context.Background())
+
+	assert.Len(t, vec.upserts, 2)
+	assert.Equal(t, 1, pd.calls, "one lookup per namespace per run")
+}
+
+// Integration: the pending-delete check must run before the stats lookup
+// so doomed tenants don't burn a usageinsights call.
+func TestRunBackfillJob_PendingDeleteFilter_RunsBeforeStatsLookup(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("doomed", "dash-a", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	pd := newFakePendingDeleteChecker()
+	pd.markPendingDelete("doomed")
+	stats := newFakeDashboardStats()
+
+	o := newBackfillerWithPendingDelete(t, storage, vec, pd, stats)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.upserts)
+	assert.Equal(t, 0, stats.calls, "pending-delete skip must come before stats lookup")
+}
+
+// shouldSkipPendingDelete branch coverage. Tests call the predicate
+// directly; the integration tests above cover wiring.
+
+func TestShouldSkipPendingDelete_Pending_Skips(t *testing.T) {
+	pd := newFakePendingDeleteChecker()
+	pd.markPendingDelete("ns")
+	b := newBackfillerWithPendingDelete(t, newFakeStorage(), newFakeVector(), pd, nil)
+	assert.True(t, b.shouldSkipPendingDelete(context.Background(), "ns"))
+}
+
+func TestShouldSkipPendingDelete_NotPending_DoesNotSkip(t *testing.T) {
+	pd := newFakePendingDeleteChecker()
+	b := newBackfillerWithPendingDelete(t, newFakeStorage(), newFakeVector(), pd, nil)
+	assert.False(t, b.shouldSkipPendingDelete(context.Background(), "ns"))
+}
+
+func TestShouldSkipPendingDelete_CheckerError_DoesNotSkip(t *testing.T) {
+	pd := newFakePendingDeleteChecker()
+	pd.err = fmt.Errorf("boom")
+	b := newBackfillerWithPendingDelete(t, newFakeStorage(), newFakeVector(), pd, nil)
+	assert.False(t, b.shouldSkipPendingDelete(context.Background(), "ns"))
+}
+
+func TestShouldSkipPendingDelete_CheckerError_NotMemoized(t *testing.T) {
+	pd := newFakePendingDeleteChecker()
+	pd.err = fmt.Errorf("boom")
+	b := newBackfillerWithPendingDelete(t, newFakeStorage(), newFakeVector(), pd, nil)
+	assert.False(t, b.shouldSkipPendingDelete(context.Background(), "ns"))
+	assert.False(t, b.shouldSkipPendingDelete(context.Background(), "ns"))
+	assert.Equal(t, 2, pd.calls, "errors must not be memoized")
+}
+
+func TestShouldSkipPendingDelete_NilChecker_DoesNotSkip(t *testing.T) {
+	b := newBackfillerWithPendingDelete(t, newFakeStorage(), newFakeVector(), nil, nil)
+	assert.False(t, b.shouldSkipPendingDelete(context.Background(), "ns"))
+}

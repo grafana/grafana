@@ -41,6 +41,8 @@ type Options struct {
 	Builders      []embed.Builder
 	// DashboardStats is optional; nil disables the views filter.
 	DashboardStats builders.DashboardStats
+	// PendingDelete is optional; nil disables the pending-delete filter.
+	PendingDelete embed.PendingDeleteChecker
 	// Metrics is optional; when nil the backfiller runs without
 	// observability instrumentation (handy for unit tests).
 	Metrics *resource.VectorMetrics
@@ -59,9 +61,15 @@ type VectorBackfiller struct {
 	// immutable after construction.
 	sortedBuilders []embed.Builder
 	dashboardStats builders.DashboardStats
-	log            log.Logger
-	metrics        *resource.VectorMetrics
-	interval       time.Duration
+	pendingDelete  embed.PendingDeleteChecker
+	// pendingDeleteMemo caches IsPendingDelete results per namespace so a
+	// run costs one lookup per tenant. Reset at the start of each
+	// runBackfill cycle so cleared tenants embed again on the next tick.
+	// No lock needed: the backfiller processes items serially.
+	pendingDeleteMemo map[string]bool
+	log               log.Logger
+	metrics           *resource.VectorMetrics
+	interval          time.Duration
 }
 
 const defaultBackfillInterval = time.Minute
@@ -104,15 +112,17 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	}
 
 	return &VectorBackfiller{
-		storage:        opts.Storage,
-		vectorBackend:  opts.VectorBackend,
-		batchEmbedder:  opts.BatchEmbedder,
-		builders:       builders,
-		sortedBuilders: sorted,
-		dashboardStats: opts.DashboardStats,
-		log:            log.New("backfill"),
-		metrics:        opts.Metrics,
-		interval:       interval,
+		storage:           opts.Storage,
+		vectorBackend:     opts.VectorBackend,
+		batchEmbedder:     opts.BatchEmbedder,
+		builders:          builders,
+		sortedBuilders:    sorted,
+		dashboardStats:    opts.DashboardStats,
+		pendingDelete:     opts.PendingDelete,
+		pendingDeleteMemo: make(map[string]bool),
+		log:               log.New("backfill"),
+		metrics:           opts.Metrics,
+		interval:          interval,
 	}, nil
 }
 
@@ -146,6 +156,7 @@ func (b *VectorBackfiller) Run(ctx context.Context) error {
 // runBackfill processes every incomplete vector_backfill_jobs row serially.
 func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 	log := b.log.FromContext(ctx)
+	clear(b.pendingDeleteMemo)
 
 	jobs, err := b.vectorBackend.ListIncompleteBackfillJobs(ctx, b.batchEmbedder.Model())
 	if err != nil {
@@ -350,6 +361,11 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return nil
 	}
 
+	if b.shouldSkipPendingDelete(ctx, namespace) {
+		statusLabel = "skipped_pending_delete"
+		return nil
+	}
+
 	if b.shouldSkipForZeroViews(ctx, builder, namespace, name) {
 		statusLabel = "skipped_zero_views"
 		return nil
@@ -383,6 +399,30 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return fmt.Errorf("upsert %s/%s: %w", namespace, name, err)
 	}
 	return nil
+}
+
+// shouldSkipPendingDelete returns true only when the checker definitively
+// reports the namespace's tenant as pending delete. Anything ambiguous
+// (nil checker, empty namespace, lookup error) returns false — embed it.
+// Successful lookups are memoized per namespace for the current run;
+// errors are not, so transient failures retry on the next item.
+func (b *VectorBackfiller) shouldSkipPendingDelete(ctx context.Context, namespace string) bool {
+	if b.pendingDelete == nil || namespace == "" {
+		return false
+	}
+	if pending, ok := b.pendingDeleteMemo[namespace]; ok {
+		return pending
+	}
+	pending, err := b.pendingDelete.IsPendingDelete(ctx, namespace)
+	if err != nil {
+		b.log.Error("backfill: pending delete check failed", "namespace", namespace, "err", err)
+		return false
+	}
+	b.pendingDeleteMemo[namespace] = pending
+	if pending {
+		b.log.FromContext(ctx).Debug("backfill: skipping pending-delete namespace", "namespace", namespace)
+	}
+	return pending
 }
 
 // shouldSkipForZeroViews returns true only when the stats provider
