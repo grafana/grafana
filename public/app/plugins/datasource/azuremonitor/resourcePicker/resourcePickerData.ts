@@ -49,7 +49,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     this.azureMonitorDatasource = azureMonitorDatasource;
     this.azureResourceGraphDatasource = azureResourceGraphDatasource;
     const creds = getCredentials(instanceSettings);
-    this.cloudName = ('azureCloud' in creds && creds.azureCloud) ? creds.azureCloud : getDefaultAzureCloud();
+    this.cloudName = 'azureCloud' in creds && creds.azureCloud ? creds.azureCloud : getDefaultAzureCloud();
   }
 
   async fetchInitialRows(
