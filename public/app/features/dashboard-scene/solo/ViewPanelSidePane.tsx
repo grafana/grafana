@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { type PanelData } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import {
   type SceneComponentProps,
@@ -72,6 +73,7 @@ export function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPan
               onClick={() => dashboard.setState({ viewPanel: undefined })}
               size="sm"
               fullWidth
+              data-testid={selectors.components.ViewPanelSidePane.goBackButton}
             >
               <Trans i18nKey="dashboard.view-panel.back-to-dashboard">Back to dashboard</Trans>
             </Button>
