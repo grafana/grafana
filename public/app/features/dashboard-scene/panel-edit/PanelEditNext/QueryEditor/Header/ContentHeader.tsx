@@ -74,7 +74,7 @@ function PendingPickerHeader({
  * Props for the standalone ContentHeader component.
  * This interface defines everything needed to render the header without Scene coupling.
  */
-export interface ContentHeaderProps {
+interface ContentHeaderProps {
   selectedAlert: AlertRule | null;
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
@@ -118,7 +118,7 @@ export interface ContentHeaderProps {
  * All data and callbacks are passed via props, making it reusable across
  * different architectural patterns.
  */
-export function ContentHeader({
+function ContentHeader({
   selectedAlert,
   selectedQuery,
   selectedTransformation,
@@ -258,6 +258,8 @@ export function ContentHeaderSceneWrapper({
     selectedQuery,
     selectedTransformation,
     selectedQueryRefIds,
+    selectedTransformationIds,
+    multiSelectMode,
     cardType,
     pendingExpression,
     setPendingExpression,
@@ -281,7 +283,7 @@ export function ContentHeaderSceneWrapper({
       onCancelPendingTransformation={() => setPendingTransformation(null)}
       onChangeDataSource={changeDataSource}
       onUpdateQuery={updateSelectedQuery}
-      isMultiSelection={selectedQueryRefIds.length > 1}
+      isMultiSelection={multiSelectMode && (selectedQueryRefIds.length > 0 || selectedTransformationIds.length > 0)}
       renderHeaderExtras={renderHeaderExtras}
       typeConfig={typeConfig}
     />

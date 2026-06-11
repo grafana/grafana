@@ -22,7 +22,7 @@ interface Props {
 
 const headerTooltip = `Sync LDAP, OAuth or SAML groups with your Grafana teams.`;
 
-export const TeamGroupSync = ({ isReadOnly, teamUid }: Props) => {
+const TeamGroupSync = ({ isReadOnly, teamUid }: Props) => {
   const [isAddBoxVisible, setIsAddBoxVisible] = useState(false);
   const [newGroupId, setNewGroupId] = useState('');
   const styles = useStyles2(getStyles);

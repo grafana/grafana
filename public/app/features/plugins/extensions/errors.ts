@@ -1,6 +1,3 @@
-export const INVALID_EXTENSION_POINT_ID =
-  'Invalid usage of extension point. Reason: Extension point id should be prefixed with your plugin id, e.g "myorg-foo-app/toolbar/v1". Returning an empty array of extensions.';
-
 export const INVALID_EXTENSION_POINT_ID_PLUGIN = (pluginId: string, extensionPointId: string) =>
   `Invalid usage of extension point. Reason: Extension point id should be prefixed with your plugin id, e.g "${pluginId}/${extensionPointId}".`;
 
@@ -13,8 +10,6 @@ export const EXTENSION_POINT_META_INFO_MISSING =
   'Invalid usage of extension point. Reason: The extension point is not recorded in the "plugin.json" file. Extension points must be listed in the section "extensions.extensionPoints[]". Returning an empty array of extensions.';
 
 export const TITLE_MISSING = 'Title is missing.';
-
-export const DESCRIPTION_MISSING = 'Description is missing.';
 
 export const INVALID_EXTENSION_FUNCTION = 'The "fn" argument is invalid, it should be a function.';
 

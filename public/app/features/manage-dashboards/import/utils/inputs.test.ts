@@ -7,7 +7,7 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type Dashboard, type Panel, type VariableModel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { ExportFormat } from 'app/features/dashboard/api/types';
-import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
+import { ExportDatasourceName, ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
 import {
   type DashboardInputs,
@@ -347,6 +347,132 @@ describe('extractV2Inputs', () => {
   it('should handle empty dashboard gracefully', async () => {
     const result = await extractV2Inputs({});
     expect(result).toEqual(emptyInputs);
+  });
+
+  it('surfaces the original datasource name on the input label', async () => {
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: {
+            name: 'var1',
+            query: {
+              group: 'mysql',
+              labels: { [ExportLabel]: 'mysql-1', [ExportDatasourceName]: 'Production MySQL' },
+            },
+          },
+        },
+        {
+          kind: 'QueryVariable',
+          spec: {
+            name: 'var2',
+            query: {
+              group: 'mysql',
+              labels: { [ExportLabel]: 'mysql-2', [ExportDatasourceName]: 'Reports MySQL' },
+            },
+          },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources).toHaveLength(2);
+    expect(result.dataSources[0].name).toBe('mysql-1');
+    expect(result.dataSources[0].label).toBe('mysql-1 (Production MySQL)');
+    expect(result.dataSources[0].description).toBe('Select a mysql data source');
+    expect(result.dataSources[1].name).toBe('mysql-2');
+    expect(result.dataSources[1].label).toBe('mysql-2 (Reports MySQL)');
+  });
+
+  it('pre-selects the datasource when its name matches an existing one of the same plugin type', async () => {
+    mockGetDataSourceSrv.getList.mockReturnValueOnce([
+      { uid: 'ds-prod', name: 'Production MySQL', type: 'mysql' },
+      { uid: 'ds-stage', name: 'Staging MySQL', type: 'mysql' },
+    ]);
+
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: {
+            name: 'var1',
+            query: {
+              group: 'mysql',
+              labels: { [ExportLabel]: 'mysql-1', [ExportDatasourceName]: 'Production MySQL' },
+            },
+          },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources[0].matchedDatasource).toEqual({
+      uid: 'ds-prod',
+      name: 'Production MySQL',
+      type: 'mysql',
+    });
+  });
+
+  it('does not pre-select a datasource when no name matches', async () => {
+    mockGetDataSourceSrv.getList.mockReturnValueOnce([{ uid: 'ds-stage', name: 'Staging MySQL', type: 'mysql' }]);
+
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: {
+            name: 'var1',
+            query: {
+              group: 'mysql',
+              labels: { [ExportLabel]: 'mysql-1', [ExportDatasourceName]: 'Production MySQL' },
+            },
+          },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources[0].matchedDatasource).toBeUndefined();
+  });
+
+  it('does not pre-select when no original name is present', async () => {
+    mockGetDataSourceSrv.getList.mockReturnValueOnce([{ uid: 'ds-prod', name: 'Production MySQL', type: 'mysql' }]);
+
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'var1', query: { group: 'mysql', labels: { [ExportLabel]: 'mysql-1' } } },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources[0].matchedDatasource).toBeUndefined();
+  });
+
+  it('falls back to the export label when no datasource name is present', async () => {
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'var1', query: { group: 'mysql', labels: { [ExportLabel]: 'mysql-1' } } },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+    expect(result.dataSources[0].label).toBe('mysql-1');
+    expect(result.dataSources[0].description).toBe('Select a mysql data source');
   });
 
   it('should keep distinct datasource labels', async () => {
@@ -981,7 +1107,7 @@ describe('applyV2Inputs', () => {
                     spec: {
                       query: {
                         group: 'prometheus',
-                        labels: { [ExportLabel]: 'prometheus-1' },
+                        labels: { [ExportLabel]: 'prometheus-1', [ExportDatasourceName]: 'Original Prometheus' },
                         datasource: { name: 'old-ds' },
                       },
                     },
@@ -998,7 +1124,7 @@ describe('applyV2Inputs', () => {
           spec: {
             query: {
               group: 'prometheus',
-              labels: { [ExportLabel]: 'prometheus-1' },
+              labels: { [ExportLabel]: 'prometheus-1', [ExportDatasourceName]: 'Original Prometheus' },
               datasource: { name: 'old-ds' },
             },
           },
@@ -1010,7 +1136,7 @@ describe('applyV2Inputs', () => {
           spec: {
             query: {
               group: 'prometheus',
-              labels: { [ExportLabel]: 'prometheus-1' },
+              labels: { [ExportLabel]: 'prometheus-1', [ExportDatasourceName]: 'Original Prometheus' },
               datasource: { name: 'old-ds' },
             },
           },
@@ -1039,6 +1165,14 @@ describe('applyV2Inputs', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const querySpec = updatedQuery?.spec as any;
     expect(querySpec?.query?.datasource?.name).toBe('ds-uid');
+
+    // export-only labels must be stripped after applying inputs
+    expect(updatedAnnotation.spec.query?.labels?.[ExportLabel]).toBeUndefined();
+    expect(updatedAnnotation.spec.query?.labels?.[ExportDatasourceName]).toBeUndefined();
+    expect(updatedVariable.spec.query?.labels?.[ExportLabel]).toBeUndefined();
+    expect(updatedVariable.spec.query?.labels?.[ExportDatasourceName]).toBeUndefined();
+    expect(querySpec?.query?.labels?.[ExportLabel]).toBeUndefined();
+    expect(querySpec?.query?.labels?.[ExportDatasourceName]).toBeUndefined();
   });
 
   it('uses datasource labels to keep selections independent', () => {
@@ -1508,6 +1642,41 @@ describe('replaceDatasourcesInDashboard', () => {
       expect(variable).toBeDefined();
       expect(variable?.datasource?.name).toBe(expectedDs);
     });
+
+    it('strips export-only labels after replacing the datasource', () => {
+      const variable = createAdhocVariable('loki', 'old-loki-uid');
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [{ ...variable, labels: { [ExportLabel]: 'loki', [ExportDatasourceName]: 'Original Loki' } }],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, mappings);
+      const updated = getAdhocVariable(result);
+
+      expect(updated?.datasource?.name).toBe('new-loki-uid');
+      // labels held only export-only keys, so the object is omitted entirely
+      expect(updated?.labels).toBeUndefined();
+    });
+
+    it('keeps non-export labels while stripping export-only ones', () => {
+      const variable = createAdhocVariable('loki', 'old-loki-uid');
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [
+          {
+            ...variable,
+            labels: { [ExportLabel]: 'loki', [ExportDatasourceName]: 'Original Loki', team: 'observability' },
+          },
+        ],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, mappings);
+      const updated = getAdhocVariable(result);
+
+      expect(updated?.labels).toEqual({ team: 'observability' });
+    });
   });
 
   describe('GroupBy variable', () => {
@@ -1541,6 +1710,24 @@ describe('replaceDatasourcesInDashboard', () => {
 
       expect(variable).toBeDefined();
       expect(variable?.datasource?.name).toBe(expectedDs);
+    });
+
+    it('strips export-only labels after replacing the datasource', () => {
+      const variable = createGroupByVariable('prometheus', 'old-prom-uid');
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [
+          { ...variable, labels: { [ExportLabel]: 'prometheus', [ExportDatasourceName]: 'Original Prometheus' } },
+        ],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, mappings);
+      const updated = getGroupByVariable(result);
+
+      expect(updated?.datasource?.name).toBe('new-prom-uid');
+      // labels held only export-only keys, so the object is omitted entirely
+      expect(updated?.labels).toBeUndefined();
     });
   });
 

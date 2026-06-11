@@ -284,7 +284,7 @@ export const getNormalizedRotatedOffset = (div: HTMLDivElement, x: number, y: nu
   return { x: normalizedX, y: normalizedY };
 };
 
-export const getRotatedConnectionPoint = (div: HTMLDivElement, normalizedX: number, normalizedY: number) => {
+const getRotatedConnectionPoint = (div: HTMLDivElement, normalizedX: number, normalizedY: number) => {
   const { left, top, width, height, rotation } = getElementTransformAndDimensions(div);
   const centerX = left + width / 2;
   const centerY = top + height / 2;

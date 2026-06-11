@@ -40,6 +40,19 @@ describe('addTranslationsToI18n', () => {
     server.close();
   });
 
+  it('should not load translations when resolved language matches fallback language', async () => {
+    await addTranslationsToI18n({
+      resolvedLanguage: 'en-US',
+      fallbackLanguage: 'en-US',
+      pluginId: 'test-panel',
+      translations: {
+        'en-US': '/public/plugins/test-panel/locales/en-US/test-panel.json',
+      },
+    });
+
+    expect(addResourceBundleSpy).not.toHaveBeenCalled();
+  });
+
   it('should add translations that match the resolved language first', async () => {
     const translations = {
       'en-US': '/public/plugins/test-panel/locales/en-US/test-panel.json',
@@ -104,16 +117,16 @@ describe('addTranslationsToI18n', () => {
     const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     await addTranslationsToI18n({
-      resolvedLanguage: 'en-US',
+      resolvedLanguage: 'pt-BR',
       fallbackLanguage: 'en-US',
       pluginId: 'test-panel',
       translations,
     });
 
     expect(consoleSpy).toHaveBeenCalledWith('Could not find default export for plugin test-panel', {
-      resolvedLanguage: 'en-US',
+      resolvedLanguage: 'pt-BR',
       fallbackLanguage: 'en-US',
-      path: '/public/plugins/test-panel/locales/en-US/no-default-export.json',
+      path: '/public/plugins/test-panel/locales/pt-BR/no-default-export.json',
     });
   });
 
@@ -126,17 +139,17 @@ describe('addTranslationsToI18n', () => {
     const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     await addTranslationsToI18n({
-      resolvedLanguage: 'en-US',
-      fallbackLanguage: 'pt-BR',
+      resolvedLanguage: 'pt-BR',
+      fallbackLanguage: 'en-US',
       pluginId: 'test-panel',
       translations,
     });
 
     expect(consoleSpy).toHaveBeenCalledWith('Could not load translation for plugin test-panel', {
-      resolvedLanguage: 'en-US',
-      fallbackLanguage: 'pt-BR',
+      resolvedLanguage: 'pt-BR',
+      fallbackLanguage: 'en-US',
       error: new TypeError('Failed to fetch'),
-      path: '/public/plugins/test-panel/locales/en-US/unknown.json',
+      path: '/public/plugins/test-panel/locales/pt-BR/unknown.json',
     });
   });
 });
