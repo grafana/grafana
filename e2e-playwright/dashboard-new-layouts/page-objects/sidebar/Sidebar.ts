@@ -32,16 +32,20 @@ export class Sidebar extends PageObject {
     return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.container);
   }
 
-  getGoBackButton() {
-    return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.goBack);
+  async clickGoBackButton() {
+    await test.step('Click go back button in sidebar', async () => {
+      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.goBack).click();
+    });
   }
 
   getDockToggle() {
     return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.dockToggle);
   }
 
-  getCloseButton() {
-    return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.closePane);
+  async clickCloseButton() {
+    await test.step('Click close button in sidebar', async () => {
+      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.closePane).click();
+    });
   }
 
   async clickDeleteButton(options: { confirm: boolean } = { confirm: false }) {
