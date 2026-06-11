@@ -222,6 +222,7 @@ export class GrafanaBootConfig {
   };
   analytics = {
     enabled: true,
+    recentUsersAgeMs: 10 * 60 * 1000,
   };
   googleAnalyticsId?: string;
   googleAnalytics4Id?: string;
