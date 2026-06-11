@@ -40,25 +40,12 @@ export interface FeatureRequest {
   comments: number;
 }
 
-export interface PullRequest {
-  number: number;
-  title: string;
-  author: { login: string };
-  createdAt: string;
-  updatedAt: string;
-  additions: number;
-  deletions: number;
-  files: { path: string }[];
-  labels: { name: string }[];
-  reviewDecision: string | null;
-}
-
-export interface Cluster {
+interface Cluster {
   name: string;
   issue_numbers: number[];
 }
 
-export interface PRCluster {
+interface PRCluster {
   name: string;
   pr_numbers: number[];
 }

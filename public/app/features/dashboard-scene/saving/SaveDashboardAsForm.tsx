@@ -217,7 +217,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   );
 }
 
-export interface TitleLabelProps {
+interface TitleLabelProps {
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 
@@ -237,7 +237,7 @@ export function TitleFieldLabel(props: TitleLabelProps) {
   );
 }
 
-export interface DescriptionLabelProps {
+interface DescriptionLabelProps {
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 

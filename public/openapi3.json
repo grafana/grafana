@@ -17538,7 +17538,7 @@
     "/dashboards/db": {
       "post": {
         "deprecated": true,
-        "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.\n\nUse: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards",
+        "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.\n\nUse: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards",
         "operationId": "postDashboard",
         "requestBody": {
           "content": {
@@ -17903,7 +17903,7 @@
     "/dashboards/uid/{uid}": {
       "delete": {
         "deprecated": true,
-        "description": "Will delete the dashboard given the specified unique identifier (uid).\n\nUse: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
+        "description": "Will delete the dashboard given the specified unique identifier (uid).\n\nUse: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
         "operationId": "deleteDashboardByUID",
         "parameters": [
           {
@@ -17939,7 +17939,7 @@
       },
       "get": {
         "deprecated": true,
-        "description": "Optional query parameter `apiVersion` selects the Kubernetes API version used to load the dashboard first\n(for example `v1beta1`). If that request fails, the default version is used instead. When omitted, only the default is used.\n\nWill return the dashboard given the dashboard unique identifier (uid).\n\nUse: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
+        "description": "Optional query parameter `apiVersion` selects the Kubernetes API version used to load the dashboard first\n(for example `v1beta1`). If that request fails, the default version is used instead. When omitted, only the default is used.\n\nWill return the dashboard given the dashboard unique identifier (uid).\n\nUse: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
         "operationId": "getDashboardByUID",
         "parameters": [
           {
@@ -17980,7 +17980,7 @@
     "/dashboards/uid/{uid}/permissions": {
       "get": {
         "deprecated": true,
-        "description": "Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}/access",
+        "description": "Use: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}/access",
         "operationId": "getDashboardPermissionsListByUID",
         "parameters": [
           {
@@ -18070,7 +18070,7 @@
     "/dashboards/uid/{uid}/restore": {
       "post": {
         "deprecated": true,
-        "description": "This API will be removed when /apis/dashboards.grafana.app/v1 is released.\nYou can restore a dashboard by reading it from history, then creating it again.",
+        "description": "This API will be removed when /apis/dashboard.grafana.app/v1 is released.\nYou can restore a dashboard by reading it from history, then creating it again.",
         "operationId": "restoreDashboardVersionByUID",
         "parameters": [
           {

@@ -427,6 +427,9 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	if cmd.IsProvisioned != nil {
 		existing.Spec.Provisioned = *cmd.IsProvisioned
 	}
+	if cmd.OrgRole != nil {
+		existing.Spec.Role = *cmd.OrgRole
+	}
 
 	_, err = client.Update(ctx, existing, resource.UpdateOptions{})
 	if err != nil {
@@ -802,6 +805,7 @@ func toUser(u *iamv0alpha1.User, orgID int64) *user.User {
 		IsDisabled:    u.Spec.Disabled,
 		EmailVerified: u.Spec.EmailVerified,
 		IsProvisioned: u.Spec.Provisioned,
+		OrgRole:       u.Spec.Role,
 		Created:       u.CreationTimestamp.Time,
 		Updated:       u.GetUpdateTimestamp(),
 		LastSeenAt:    time.Unix(u.Status.LastSeenAt, 0),

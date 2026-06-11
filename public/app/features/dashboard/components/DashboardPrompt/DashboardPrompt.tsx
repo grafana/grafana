@@ -17,7 +17,7 @@ import { DashboardModel } from '../../state/DashboardModel';
 import { discardPanelChanges, exitPanelEditor } from '../PanelEditor/state/actions';
 import { UnsavedChangesModal } from '../SaveDashboard/UnsavedChangesModal';
 
-export interface Props {
+interface Props {
   dashboard: DashboardModel;
 }
 

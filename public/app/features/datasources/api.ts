@@ -41,7 +41,7 @@ export interface DatasourceInstanceK8sSpec {
   readOnly?: boolean;
 }
 
-export interface DatasourceAccessK8s {
+interface DatasourceAccessK8s {
   kind: string;
   apiVersion: string;
   Permissions: Record<string, boolean>;
@@ -97,7 +97,7 @@ export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
   let k8sMetadata: K8sMetadata = {
     name: dsSettings.uid,
     namespace: namespace,
-    resourceVersion: '',
+    resourceVersion: dsSettings.version ? dsSettings.version.toString() : '',
     labels: { 'grafana.app/deprecatedInternalID': dsSettings.id.toString() },
     annotations: {},
   };
@@ -138,6 +138,10 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
   // TODO: remove this once we figure out what code is using the deprecated
   // id field.
   let id = parseInt(dsK8sSettings.metadata.labels?.[DeprecatedInternalId] || '', 10);
+  let version = 0;
+  if (dsK8sSettings.metadata.resourceVersion) {
+    version = parseInt(dsK8sSettings.metadata.resourceVersion, 10);
+  }
   let dsSettings: DataSourceSettings = {
     id: id,
     uid: dsK8sSettings.metadata.name!,
@@ -145,6 +149,7 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
     name: dsK8sSettings.spec.title,
     typeLogoUrl: '',
     type: dsK8sSettings.apiVersion.replace(/\.datasource\.grafana\.app\/[a-z0-9]+$/, ''),
+    version: version,
     typeName: '',
     access: dsK8sSettings.spec.access,
     url: dsK8sSettings.spec.url,
