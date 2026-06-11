@@ -380,15 +380,10 @@ type ResourceServerOptions struct {
 	// the RPC then returns Unimplemented.
 	Embedder *embedder.Embedder
 
-	// VectorBackfiller, when non-nil, is launched in a background
-	// goroutine after Init. The server tracks it in its WaitGroup so
-	// Stop blocks until it returns. nil = backfill feature off.
-	VectorBackfiller Runnable
-
-	// VectorReconciler, when non-nil, is launched alongside the
-	// backfiller; the server attaches its own broadcaster to it before
-	// starting Run so the reconciler's watch path lights up. nil =
-	// reconciler feature off.
+	// VectorReconciler, when non-nil, is launched after Init; the server
+	// attaches its own broadcaster to it before starting Run so the
+	// reconciler's watch path lights up. The reconciler owns the
+	// backfiller and runs it. nil = reconciler feature off.
 	VectorReconciler BroadcasterConsumer
 }
 
@@ -539,7 +534,6 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		quotasConfig:                   opts.QuotasConfig,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
-		vectorBackfiller:               opts.VectorBackfiller,
 		vectorWriteReconciler:          opts.VectorReconciler,
 	}
 
@@ -646,9 +640,8 @@ type server struct {
 
 	bookmarkFrequency time.Duration
 
-	// Async vector indexers (backfiller + reconciler).
-	// Started in Init, joined in Stop via indexersWG.
-	vectorBackfiller      Runnable
+	// Vector reconciler (which owns the backfiller). Started in Init,
+	// joined in Stop via indexersWG.
 	vectorWriteReconciler BroadcasterConsumer
 	indexersWG            sync.WaitGroup
 }
@@ -685,18 +678,11 @@ func (s *server) Init(ctx context.Context) error {
 	return s.initErr
 }
 
-// startVectorIndexers launches the configured backfiller and
-// reconciler. Both are optional (nil = feature off). The reconciler
-// gets the server's broadcaster via UseBroadcaster before Run; the
-// backfiller doesn't need the watch path.
+// startVectorIndexers launches the vector reconciler (which owns and runs
+// the backfiller). Optional: nil = feature off. The reconciler gets the
+// server's broadcaster via UseBroadcaster before Run so its watch path
+// lights up.
 func (s *server) startVectorIndexers() {
-	if s.vectorBackfiller != nil {
-		s.indexersWG.Go(func() {
-			if err := s.vectorBackfiller.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
-				s.log.Error("vector backfiller stopped", "err", err)
-			}
-		})
-	}
 	if s.vectorWriteReconciler != nil {
 		if s.broadcaster != nil {
 			s.vectorWriteReconciler.UseBroadcaster(s.broadcaster)

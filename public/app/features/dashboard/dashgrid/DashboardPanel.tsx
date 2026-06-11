@@ -46,7 +46,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export class DashboardPanelUnconnected extends PureComponent<Props> {
+class DashboardPanelUnconnected extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     lazy: true,
   };

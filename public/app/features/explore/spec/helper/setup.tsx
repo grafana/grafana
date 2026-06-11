@@ -52,15 +52,11 @@ import { QueriesDrawerContextProvider } from '../../QueriesDrawer/QueriesDrawerC
 
 import { mockData } from './mocks';
 
-export const setBooleanFlags = (flags: Record<string, boolean>) => {
-  setTestFlags(flags);
-};
-
-export const QueryLibraryMocks = {
+const QueryLibraryMocks = {
   data: mockData.all,
 };
 
-export const IdentityServiceMocks = {
+const IdentityServiceMocks = {
   data: mockData.identityDisplay,
 };
 
@@ -339,11 +335,6 @@ export const withinExplore = (exploreId: string) => {
 
 export const withinQueryHistory = () => {
   const container = screen.getByTestId('data-testid QueryHistory');
-  return within(container);
-};
-
-export const withinQueryLibrary = () => {
-  const container = screen.getByRole('dialog', { name: /Query library/ });
   return within(container);
 };
 

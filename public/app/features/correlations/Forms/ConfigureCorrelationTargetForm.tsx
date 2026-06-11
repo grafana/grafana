@@ -32,7 +32,7 @@ type CorrelationTypeOptions = {
   description: string;
 };
 
-export const CORR_TYPES_SELECT: Record<CorrelationType, CorrelationTypeOptions> = {
+const CORR_TYPES_SELECT: Record<CorrelationType, CorrelationTypeOptions> = {
   query: {
     value: 'query',
     label: 'Query',

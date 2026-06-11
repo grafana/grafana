@@ -93,7 +93,7 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
   );
 }
 
-export function useDraftVariable(variable: CustomVariable) {
+function useDraftVariable(variable: CustomVariable) {
   const draftVariableRef = useRef<CustomVariable>(undefined);
   if (!draftVariableRef.current) {
     draftVariableRef.current = new CustomVariable(variable.state);

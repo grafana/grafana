@@ -75,6 +75,13 @@ type VectorBackend interface {
 	// own. Operators add rows via SQL migrations; the resource embedder drains them.
 	ListIncompleteBackfillJobs(ctx context.Context, model string) ([]BackfillJob, error)
 
+	// EnsureResourcePartition creates the embeddings_<resource> partition leaf (idempotent).
+	EnsureResourcePartition(ctx context.Context, resource string) error
+
+	// CreateBackfillJob creates a backfill job for (model, resource, stoppingRV).
+	// No-op if a job already exists for (model, resource).
+	CreateBackfillJob(ctx context.Context, model, resource string, stoppingRV int64) error
+
 	// UpdateBackfillJobCheckpoint writes the cursor + optional error after
 	// each processed resource. Best-effort — race with another writer is
 	// acceptable since the resource embedder is single-goroutine.

@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
@@ -246,7 +247,44 @@ func (s *UserK8sService) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery
 }
 
 func (s *UserK8sService) GetByUID(ctx context.Context, cmd *user.GetUserByUIDQuery) (*user.User, error) {
-	return nil, errors.New("not implemented")
+	ctx, span := s.tracer.Start(ctx, "user.getByUID", trace.WithAttributes(
+		attribute.String("userUID", cmd.UID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID, err := s.getOrgID(ctx, ctxLogger)
+	if err != nil {
+		ctxLogger.Error("failed to get orgID from context in GetByUID", "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
+
+	client, err := s.getUserClient(ctx)
+	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	found, err := client.Get(ctx, resource.Identifier{Namespace: namespace, Name: cmd.UID})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, user.ErrUserNotFound
+		}
+		ctxLogger.Error("k8s user get by UID failed", "namespace", namespace, "userUID", cmd.UID, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	return toUser(found, orgID), nil
 }
 
 func (s *UserK8sService) ListByIdOrUID(ctx context.Context, ids []string, intIDs []int64) ([]*user.User, error) {
@@ -388,6 +426,9 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	}
 	if cmd.IsProvisioned != nil {
 		existing.Spec.Provisioned = *cmd.IsProvisioned
+	}
+	if cmd.OrgRole != nil {
+		existing.Spec.Role = *cmd.OrgRole
 	}
 
 	_, err = client.Update(ctx, existing, resource.UpdateOptions{})
@@ -760,6 +801,7 @@ func toUser(u *iamv0alpha1.User, orgID int64) *user.User {
 		IsDisabled:    u.Spec.Disabled,
 		EmailVerified: u.Spec.EmailVerified,
 		IsProvisioned: u.Spec.Provisioned,
+		OrgRole:       u.Spec.Role,
 		Created:       u.CreationTimestamp.Time,
 		Updated:       u.GetUpdateTimestamp(),
 		LastSeenAt:    time.Unix(u.Status.LastSeenAt, 0),

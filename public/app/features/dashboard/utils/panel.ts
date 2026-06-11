@@ -96,10 +96,6 @@ export const unlinkLibraryPanel = (panel: PanelModel) => {
   );
 };
 
-export const refreshPanel = (panel: PanelModel) => {
-  panel.refresh();
-};
-
 export const toggleLegend = (panel: PanelModel) => {
   const newOptions = { ...panel.options };
   newOptions.legend.showLegend === true
@@ -171,13 +167,6 @@ export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange)
   }
 
   return newTimeData;
-}
-
-export function getResolution(panel: PanelModel): number {
-  const htmlEl = document.getElementsByTagName('html')[0];
-  const width = htmlEl.getBoundingClientRect().width; // https://stackoverflow.com/a/21454625
-
-  return panel.maxDataPoints ? panel.maxDataPoints : Math.ceil(width * (panel.gridPos.w / 24));
 }
 
 export function calculateInnerPanelHeight(panel: PanelModel, containerHeight: number): number {

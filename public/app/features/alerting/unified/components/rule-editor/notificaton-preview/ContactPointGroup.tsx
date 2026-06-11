@@ -82,7 +82,7 @@ interface ContactPointGroupInnerProps extends Omit<ContactPointGroupProps, 'name
   children: ReactNode;
 }
 
-export function ContactPointGroup({
+function ContactPointGroup({
   name,
   description,
   matchedInstancesCount,

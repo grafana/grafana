@@ -89,7 +89,7 @@ const info: PluginMetaInfo = {
   version: '',
 };
 
-export const meta: DataSourcePluginMeta<CloudWatchJsonData> = {
+const meta: DataSourcePluginMeta<CloudWatchJsonData> = {
   id: '',
   name: '',
   type: PluginType.datasource,
