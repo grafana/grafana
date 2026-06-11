@@ -21,14 +21,8 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-const createResourcePickerData = (
-  responses: AzureGraphResponse[],
-  noNamespaces?: boolean,
-  cloudName?: string
-) => {
-  const instanceSettings = createMockInstanceSetttings(
-    cloudName ? { jsonData: { cloudName } } : undefined
-  );
+const createResourcePickerData = (responses: AzureGraphResponse[], noNamespaces?: boolean, cloudName?: string) => {
+  const instanceSettings = createMockInstanceSetttings(cloudName ? { jsonData: { cloudName } } : undefined);
   const azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
   const postResource = jest.fn();
   responses.forEach((res) => {
