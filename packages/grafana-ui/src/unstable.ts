@@ -12,6 +12,8 @@
 export * from './utils/skeleton';
 
 export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
+export { CodeMirrorInlineInput } from './components/CodeMirror/InlineInput';
+export type { CodeMirrorInlineInputProps } from './components/CodeMirror/InlineInput';
 export type {
   CodeMirrorCompletion,
   CodeMirrorCompletionContext,
@@ -20,6 +22,7 @@ export type {
   CodeMirrorCompletionSource,
   CodeMirrorEditorLanguage,
   CodeMirrorEditorProps,
+  CodeMirrorEditorTheme,
   CodeMirrorExtension,
 } from './components/CodeMirror/types';
 export { TableNG } from './components/Table/TableNG/TableNG';

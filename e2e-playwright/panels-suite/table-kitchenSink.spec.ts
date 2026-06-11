@@ -287,9 +287,11 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
       // DataLinks dialog has popped open - fill it in and add a global datalink.
       await expect(page.getByRole('dialog')).toBeVisible();
       await page.getByRole('dialog').locator('#link-title').fill(title);
-      await page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]').focus();
-      await page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]').fill(url);
-      await page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]').blur();
+      // The URL field is a CodeMirror editor (contenteditable); `fill()` is
+      // unreliable on it, so click to focus and type the value key by key.
+      const urlInput = page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]');
+      await urlInput.click();
+      await urlInput.pressSequentially(url);
       await page.getByRole('dialog').locator('button[aria-disabled="false"]').filter({ hasText: 'Save' }).click();
       await expect(page.getByRole('dialog')).not.toBeVisible();
     };
