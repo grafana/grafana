@@ -9,10 +9,17 @@ import { VizTooltipRow } from './VizTooltipRow';
 import { type VizTooltipItem } from './types';
 
 interface VizTooltipContentProps {
+  /** The rows to render, one per series or field. */
   items: VizTooltipItem[];
   children?: ReactNode;
+  /** When true the content area becomes vertically scrollable, constrained by `maxHeight`. */
   scrollable?: boolean;
+  /**
+   * Whether the tooltip is currently pinned (locked open by the user).
+   * When pinned, label and value cells become clickable to copy their text to the clipboard.
+   */
   isPinned: boolean;
+  /** Maximum height in pixels of the scrollable content area. Only applied when `scrollable` is true. */
   maxHeight?: number;
 }
 

@@ -104,6 +104,19 @@ export const getTooltipDisplayValue = (
   return { text: formattedValueToString(display), numeric: display.numeric, color: display.color };
 };
 
+/**
+ * Builds the list of {@link VizTooltipItem} rows to display in a visualization tooltip.
+ *
+ * @param fields - All fields in the aligned data frame (including the x/time field).
+ * @param xField - The x-axis or time field; it is excluded from the output rows.
+ * @param dataIdxs - Per-field data row indices for the hovered point. A `null` entry means that field has no hovered value and is omitted.
+ * @param seriesIdx - Index of the closest/hovered series. In `Single` mode only this series is shown; in `Multi` mode it controls the `isActive` highlight.
+ * @param mode - Whether to show only the hovered series (`Single`) or all series (`Multi`).
+ * @param sortOrder - How to sort the output rows. Use `SortOrder.None` to preserve field order.
+ * @param fieldFilter - Optional predicate to exclude specific fields. Defaults to including all fields.
+ * @param hideZeros - When `true`, rows whose value is exactly `0` are omitted.
+ * @param extraFields - Additional fields appended after the main rows as supplementary context (e.g. fields not shown in the visualization). These rows have `isHiddenFromViz: true` and are not sorted.
+ */
 export const getFieldDisplayItems = (
   fields: Field[],
   xField: Field,
@@ -113,7 +126,7 @@ export const getFieldDisplayItems = (
   sortOrder: SortOrder,
   fieldFilter = (field: Field) => true,
   hideZeros = false,
-  _restFields?: Field[]
+  extraFields?: Field[]
 ): VizTooltipItem[] => {
   let rows: VizTooltipItem[] = [];
 
@@ -176,7 +189,7 @@ export const getFieldDisplayItems = (
     });
   }
 
-  _restFields?.forEach((field) => {
+  extraFields?.forEach((field) => {
     if (!field.config.custom?.hideFrom?.tooltip) {
       const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
       const rawValue = field.values[dataIdxs[0]!];
