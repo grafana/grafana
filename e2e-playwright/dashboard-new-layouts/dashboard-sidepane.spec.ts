@@ -28,15 +28,15 @@ test.describe(
       const panel = new Panel(page, dashboardPage, selectors);
 
       await sidebar.addOptions.clickNewPanelButton();
-      await sidebar.panelOptions.getTitleInput().fill('Panel 1');
-      await sidebar.getGoBackButton().click();
+      await sidebar.panelOptions.setTitle('Panel 1');
+      await sidebar.clickGoBackButton();
 
       // Add another panel
       await sidebar.addOptions.clickNewPanelButton();
-      await sidebar.panelOptions.getTitleInput().fill('Panel 2');
+      await sidebar.panelOptions.setTitle('Panel 2');
 
       // go back to add pane
-      await sidebar.getGoBackButton().click();
+      await sidebar.clickGoBackButton();
 
       await sidebar.addOptions.clickNewPanelButton();
 
@@ -51,10 +51,10 @@ test.describe(
       await sidebar.toolbar.clickButton('Outline');
 
       // Select panel 1
-      await sidebar.contentOutline.getItem('Panel 1').click();
+      await sidebar.contentOutline.clickItem('Panel 1');
 
       // Go back to outline
-      await sidebar.getGoBackButton().click();
+      await sidebar.clickGoBackButton();
 
       await expect(dashboardPage.getByGrafanaSelector('data-testid sidebar-pane-header-title')).toHaveText(
         'Content outline'
