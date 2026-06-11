@@ -88,16 +88,16 @@ func TestSearchFieldsFromTableColumns(t *testing.T) {
 		assert.Equal(t, SearchFieldTypeDate, got[0].Type)
 	})
 
-	t.Run("object and binary types are not represented", func(t *testing.T) {
+	t.Run("object and binary types map to unknown", func(t *testing.T) {
 		// OBJECT and BINARY have no corresponding SearchFieldType because the
-		// new design omits them; they map to the empty type.
+		// new design omits them; they map to SearchFieldTypeUnknown.
 		got := searchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
 			{Name: "obj", Type: resourcepb.ResourceTableColumnDefinition_OBJECT},
 			{Name: "bin", Type: resourcepb.ResourceTableColumnDefinition_BINARY},
 		})
 		require.Len(t, got, 2)
-		assert.Equal(t, SearchFieldType(""), got[0].Type)
-		assert.Equal(t, SearchFieldType(""), got[1].Type)
+		assert.Equal(t, SearchFieldTypeUnknown, got[0].Type)
+		assert.Equal(t, SearchFieldTypeUnknown, got[1].Type)
 	})
 
 	t.Run("nil entries are dropped", func(t *testing.T) {
@@ -121,29 +121,29 @@ func TestSearchFieldDefinition_HasCapability(t *testing.T) {
 }
 
 func TestMapProvider_FieldsLookup(t *testing.T) {
-	grv := GroupResourceVersion{Group: "iam.grafana.app", Resource: "users", Version: "v0alpha1"}
+	gvr := schema.GroupVersionResource{Group: "iam.grafana.app", Version: "v0alpha1", Resource: "users"}
 	fields := []SearchFieldDefinition{
 		{Name: "email", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
 	}
 	p := NewMapProvider(
-		map[GroupResourceVersion][]SearchFieldDefinition{grv: fields},
+		map[schema.GroupVersionResource][]SearchFieldDefinition{gvr: fields},
 		nil,
 	)
 
-	assert.Equal(t, fields, p.Fields(grv))
+	assert.Equal(t, fields, p.Fields(gvr))
 
 	// Unknown version returns nil; caller is expected to fall back via PreferredVersion.
-	assert.Nil(t, p.Fields(GroupResourceVersion{Group: "iam.grafana.app", Resource: "users", Version: "v99"}))
+	assert.Nil(t, p.Fields(schema.GroupVersionResource{Group: "iam.grafana.app", Version: "v99", Resource: "users"}))
 	// Unknown group/resource returns nil.
-	assert.Nil(t, p.Fields(GroupResourceVersion{Group: "nope", Resource: "nope", Version: "v0alpha1"}))
+	assert.Nil(t, p.Fields(schema.GroupVersionResource{Group: "nope", Version: "v0alpha1", Resource: "nope"}))
 }
 
 func TestMapProvider_PreferredVersionFallback(t *testing.T) {
 	gr := schema.GroupResource{Group: "iam.grafana.app", Resource: "users"}
-	v1 := GroupResourceVersion{Group: gr.Group, Resource: gr.Resource, Version: "v0alpha1"}
+	v1 := schema.GroupVersionResource{Group: gr.Group, Version: "v0alpha1", Resource: gr.Resource}
 
 	p := NewMapProvider(
-		map[GroupResourceVersion][]SearchFieldDefinition{
+		map[schema.GroupVersionResource][]SearchFieldDefinition{
 			v1: {{Name: "email", Type: SearchFieldTypeString}},
 		},
 		map[schema.GroupResource]string{gr: "v0alpha1"},
@@ -155,11 +155,11 @@ func TestMapProvider_PreferredVersionFallback(t *testing.T) {
 
 	// Caller-side fallback pattern: when the requested version is unknown,
 	// re-look-up using PreferredVersion.
-	requested := GroupResourceVersion{Group: gr.Group, Resource: gr.Resource, Version: "vUnknown"}
+	requested := schema.GroupVersionResource{Group: gr.Group, Version: "vUnknown", Resource: gr.Resource}
 	if fs := p.Fields(requested); fs == nil {
 		preferred := p.PreferredVersion(requested.Group, requested.Resource)
 		require.NotEmpty(t, preferred)
-		fs = p.Fields(GroupResourceVersion{Group: requested.Group, Resource: requested.Resource, Version: preferred})
+		fs = p.Fields(schema.GroupVersionResource{Group: requested.Group, Version: preferred, Resource: requested.Resource})
 		assert.Len(t, fs, 1)
 	}
 

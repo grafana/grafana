@@ -29,6 +29,10 @@ const (
 type SearchFieldType string
 
 const (
+	// SearchFieldTypeUnknown is the zero value, used for column shapes that
+	// have no corresponding SearchFieldType (OBJECT, BINARY, UNKNOWN_TYPE from
+	// the protobuf enum). Downstream switches can reference it by name.
+	SearchFieldTypeUnknown SearchFieldType = ""
 	SearchFieldTypeString  SearchFieldType = "string"
 	SearchFieldTypeInt32   SearchFieldType = "int32"
 	SearchFieldTypeInt64   SearchFieldType = "int64"
@@ -85,7 +89,7 @@ func (f SearchFieldDefinition) HasCapability(c SearchCapability) bool {
 //   - everything else      -> [retrieve]
 //
 // Nil entries are dropped. Protobuf types that have no corresponding
-// SearchFieldType (OBJECT, BINARY, UNKNOWN_TYPE) yield an empty Type.
+// SearchFieldType (OBJECT, BINARY, UNKNOWN_TYPE) yield SearchFieldTypeUnknown.
 func searchFieldsFromTableColumns(cols []*resourcepb.ResourceTableColumnDefinition) []SearchFieldDefinition {
 	out := make([]SearchFieldDefinition, 0, len(cols))
 	for _, c := range cols {
@@ -110,8 +114,8 @@ func searchFieldsFromTableColumns(cols []*resourcepb.ResourceTableColumnDefiniti
 
 // searchFieldTypeFromProto maps the protobuf column type to the new
 // SearchFieldType. DATE_TIME collapses to date because the new design omits
-// a separate dateTime type. OBJECT, BINARY, and UNKNOWN_TYPE yield an empty
-// SearchFieldType because they are not part of the new type set.
+// a separate dateTime type. OBJECT, BINARY, and UNKNOWN_TYPE return
+// SearchFieldTypeUnknown because they are not part of the new type set.
 func searchFieldTypeFromProto(t resourcepb.ResourceTableColumnDefinition_ColumnType) SearchFieldType {
 	switch t {
 	case resourcepb.ResourceTableColumnDefinition_STRING:
@@ -130,32 +134,27 @@ func searchFieldTypeFromProto(t resourcepb.ResourceTableColumnDefinition_ColumnT
 		resourcepb.ResourceTableColumnDefinition_DATE_TIME:
 		return SearchFieldTypeDate
 	default:
-		return ""
+		return SearchFieldTypeUnknown
 	}
-}
-
-// GroupResourceVersion identifies a specific version of a kind. It is the key
-// used to look up search field declarations.
-type GroupResourceVersion struct {
-	Group    string
-	Resource string
-	Version  string
 }
 
 // SearchFieldsProvider is the read-only interface that consumers of the new
 // manifest-driven search metadata use to ask "what searchable fields does this
-// (group, resource, version) declare?"
+// (group, version, resource) declare?"
 //
-// The provider is keyed by {group, resource, version}. For requests that carry
-// an apiVersion the server does not know about, callers may fall back to
-// PreferredVersion. That fallback is the consumer's responsibility; the Fields
-// method itself does not perform it.
+// The provider is keyed by schema.GroupVersionResource. For requests that
+// carry an apiVersion the server does not know about, callers may fall back
+// to PreferredVersion. That fallback is the consumer's responsibility; the
+// Fields method itself does not perform it.
 type SearchFieldsProvider interface {
 	// Fields returns the declared search fields for the exact
-	// {group, resource, version}. Returns nil if nothing is registered for
-	// that key; the caller decides how to handle missing versions (usually
-	// by retrying with PreferredVersion).
-	Fields(grv GroupResourceVersion) []SearchFieldDefinition
+	// GroupVersionResource. Returns nil if nothing is registered for that
+	// key; the caller decides how to handle missing versions (usually by
+	// retrying with PreferredVersion).
+	//
+	// The returned slice is owned by the provider; callers must not mutate
+	// it.
+	Fields(gvr schema.GroupVersionResource) []SearchFieldDefinition
 
 	// PreferredVersion returns the served version that callers should use
 	// when the requested apiVersion is unknown. Returns the empty string
@@ -167,16 +166,16 @@ type SearchFieldsProvider interface {
 // registrations. It is the default implementation until the provider can read
 // declarations directly from CUE-generated manifest data.
 type mapProvider struct {
-	fields           map[GroupResourceVersion][]SearchFieldDefinition
+	fields           map[schema.GroupVersionResource][]SearchFieldDefinition
 	preferredVersion map[schema.GroupResource]string
 }
 
 // NewMapProvider returns a SearchFieldsProvider backed by the given in-memory
 // maps. Both arguments may be nil. The provider takes ownership of the maps;
 // callers must not mutate them after the call.
-func NewMapProvider(fields map[GroupResourceVersion][]SearchFieldDefinition, preferredVersions map[schema.GroupResource]string) SearchFieldsProvider {
+func NewMapProvider(fields map[schema.GroupVersionResource][]SearchFieldDefinition, preferredVersions map[schema.GroupResource]string) SearchFieldsProvider {
 	if fields == nil {
-		fields = map[GroupResourceVersion][]SearchFieldDefinition{}
+		fields = map[schema.GroupVersionResource][]SearchFieldDefinition{}
 	}
 	if preferredVersions == nil {
 		preferredVersions = map[schema.GroupResource]string{}
@@ -187,8 +186,8 @@ func NewMapProvider(fields map[GroupResourceVersion][]SearchFieldDefinition, pre
 	}
 }
 
-func (p *mapProvider) Fields(grv GroupResourceVersion) []SearchFieldDefinition {
-	return p.fields[grv]
+func (p *mapProvider) Fields(gvr schema.GroupVersionResource) []SearchFieldDefinition {
+	return p.fields[gvr]
 }
 
 func (p *mapProvider) PreferredVersion(group, resource string) string {
