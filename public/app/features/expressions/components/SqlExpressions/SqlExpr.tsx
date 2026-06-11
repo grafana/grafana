@@ -5,8 +5,8 @@ import { useLocalStorage, useMeasure } from 'react-use';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { CompletionItemKind, type LanguageDefinition, type TableIdentifier } from '@grafana/plugin-ui';
+import { t, Trans } from '@grafana/i18n';
+import { CompletionItemKind, type TableIdentifier } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { formatSQL } from '@grafana/sql';
@@ -100,14 +100,12 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
     [interpolationFilters, interpolationRange, interpolationScopedVars, queries, refIds]
   );
 
-  const editorLanguageDefinition = useMemo<LanguageDefinition>(
-    () => ({
-      id: 'mysql',
-      completionProvider: legacyCompletionProvider,
-      formatter: formatSQL,
-    }),
-    [legacyCompletionProvider]
-  );
+  // Define the language definition for MySQL syntax highlighting and autocomplete
+  const EDITOR_LANGUAGE_DEFINITION = {
+    id: 'mysql',
+    completionProvider: legacyCompletionProvider,
+    formatter: formatSQL,
+  };
 
   const initialQuery = `SELECT
   *
@@ -281,7 +279,7 @@ LIMIT
                 <SQLEditor
                   query={query.expression ?? initialQuery}
                   onChange={onEditorChange}
-                  language={editorLanguageDefinition}
+                  language={EDITOR_LANGUAGE_DEFINITION}
                   width={width}
                   height={editorHeight}
                 >
