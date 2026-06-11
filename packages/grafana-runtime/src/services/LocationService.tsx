@@ -69,8 +69,7 @@ export class HistoryWrapper implements LocationService, H.History {
   // keep `this` and the orgId injection still fires.
   push: H.History['push'] = (location, state) => this.base.push(this.appendOrgId(location), state);
   replace: H.History['replace'] = (location, state) => this.base.replace(this.appendOrgId(location), state);
-  createHref: H.History['createHref'] = (location) =>
-    this.base.createHref(this.appendOrgId(location) as H.LocationDescriptorObject);
+  createHref: H.History['createHref'] = (location) => this.base.createHref(this.appendOrgId(location));
 
   go: H.History['go'] = (n) => this.base.go(n);
   goBack: H.History['goBack'] = () => this.base.goBack();
@@ -82,6 +81,8 @@ export class HistoryWrapper implements LocationService, H.History {
     this.orgIdGetter = fn;
   }
 
+  appendOrgId(location: H.LocationDescriptorObject): H.LocationDescriptorObject;
+  appendOrgId(location: H.Path | H.LocationDescriptor): H.Path | H.LocationDescriptor;
   appendOrgId(location: H.Path | H.LocationDescriptor): H.Path | H.LocationDescriptor {
     const orgId = this.orgIdGetter?.() ?? 0;
     if (!Number.isFinite(orgId) || orgId <= 0) {
@@ -150,10 +151,17 @@ export class HistoryWrapper implements LocationService, H.History {
   }
 
   reload() {
-    const prevState = (this.base.location.state as any)?.routeReloadCounter;
+    const state = this.base.location.state;
+    let prevCounter: number | undefined;
+    if (state !== null && typeof state === 'object' && 'routeReloadCounter' in state) {
+      const counter = state.routeReloadCounter;
+      if (typeof counter === 'number') {
+        prevCounter = counter;
+      }
+    }
     this.base.replace({
       ...this.base.location,
-      state: { routeReloadCounter: prevState ? prevState + 1 : 1 },
+      state: { routeReloadCounter: prevCounter !== undefined ? prevCounter + 1 : 1 },
     });
   }
 

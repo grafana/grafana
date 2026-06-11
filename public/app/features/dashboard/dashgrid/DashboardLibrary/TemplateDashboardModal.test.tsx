@@ -33,6 +33,7 @@ jest.mock('@grafana/runtime', () => {
     locationService: {
       ...actual.locationService,
       push: jest.fn(),
+      getHistory: () => actual.locationService,
     },
   };
 });
