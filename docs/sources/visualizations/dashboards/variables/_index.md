@@ -87,6 +87,7 @@ For example, if you administer a dashboard that monitors several servers, it can
 {{< admonition type="note">}}
 Grafana documentation and the application typically refer to a _template query_ as a _query_, but the terms _variable_ and _template variable_ are often used interchangeably.
 {{< /admonition >}}
+
 ```text
 groupByNode(movingAverage(apps.$app.$server.counters.requests.count, 10), 2, 'sum')
 ```
@@ -98,7 +99,6 @@ The following image shows a panel in edit mode using the query:
 {{< admonition type="note">}}
 Grafana documentation and the application typically refer to a _template query_ as a _query_, but the terms _variable_ and _template variable_ are often used interchangeably.
 {{< /admonition >}}
-
 
 ### Variables in URLs
 
