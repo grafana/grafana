@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints, type GrafanaTheme2 } from '@grafana/data';
@@ -76,7 +76,7 @@ export function DashboardTabs() {
     return response.view.toArray();
   }, []);
 
-  const mostUsedAvailable = useMemo(() => isMostUsedAvailable(), []);
+  const mostUsedAvailable = isMostUsedAvailable();
 
   const {
     value: mostUsedDashboards,
@@ -88,9 +88,11 @@ export function DashboardTabs() {
     [mostUsedAvailable]
   );
 
-  const { foldersByUid } = useDashboardLocationInfo(
-    (recentDashboards?.length ?? 0) > 0 || (mostUsedDashboards?.length ?? 0) > 0 || (starredDashboards?.length ?? 0) > 0
-  );
+  const hasDashboards =
+    (recentDashboards?.length ?? 0) > 0 ||
+    (mostUsedDashboards?.length ?? 0) > 0 ||
+    (starredDashboards?.length ?? 0) > 0;
+  const { foldersByUid } = useDashboardLocationInfo(hasDashboards);
 
   const { components: extensionComponents } = usePluginComponents<HomepageTabExtensionProps>({
     extensionPointId: PluginExtensionPoints.HomepageTabs,

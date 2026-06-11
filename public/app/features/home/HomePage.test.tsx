@@ -47,9 +47,6 @@ describe('HomePage', () => {
   afterEach(() => {
     config.buildInfo = { ...originalBuildInfo };
     config.namespace = originalNamespace;
-  });
-
-  afterAll(() => {
     jest.restoreAllMocks();
   });
 
