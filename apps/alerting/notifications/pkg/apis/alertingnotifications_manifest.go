@@ -559,7 +559,7 @@ var appManifestData = app.ManifestData{
 
 		{
 			Name:   "v1beta1",
-			Served: false,
+			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
 					Kind:       "InhibitionRule",

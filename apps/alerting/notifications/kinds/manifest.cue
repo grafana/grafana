@@ -34,8 +34,6 @@ manifest: {
 			}
 		}
 		"v1beta1": {
-			// Explicitly set to false to keep the app disabled by default for testing.
-			served: false
 			codegen: {
 				ts: {enabled: false}
 				go: {enabled: true}
