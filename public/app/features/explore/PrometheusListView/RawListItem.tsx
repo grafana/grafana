@@ -21,7 +21,7 @@ export interface RawListProps {
 }
 
 export type RawListValue = { key: string; value: string };
-export const rawListExtraSpaceAtEndOfLine = '20px';
+const rawListExtraSpaceAtEndOfLine = '20px';
 export const rawListItemColumnWidth = '80px';
 export const rawListPaddingToHoldSpaceForCopyIcon = '25px';
 

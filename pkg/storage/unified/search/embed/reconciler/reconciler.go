@@ -8,18 +8,32 @@ package reconciler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/embed/reconciler")
+
+// Backfiller drains historical resources into the vector index. The
+// reconciler ensures a job exists per builder, then runs it once.
+type Backfiller interface {
+	Run(ctx context.Context) error
+}
 
 const DefaultInterval = time.Minute
 
@@ -72,8 +86,12 @@ type Options struct {
 	VectorBackend     vector.VectorBackend
 	BatchEmbedder     *embedder.BatchEmbedder
 	Builders          []embed.Builder
+	Backfiller        Backfiller
 	Interval          time.Duration
 	LockRetryInterval time.Duration
+	// Metrics is optional; when nil the reconciler runs without
+	// observability instrumentation (handy for unit tests).
+	Metrics *resource.VectorMetrics
 }
 
 // Reconciler keeps the vector index in sync with ongoing writes. The
@@ -86,15 +104,20 @@ type Reconciler struct {
 	vectorBackend     vector.VectorBackend
 	batchEmbedder     *embedder.BatchEmbedder
 	builders          map[string]embed.Builder
+	backfiller        Backfiller
 	interval          time.Duration
 	lockRetryInterval time.Duration
 	log               log.Logger
+	metrics           *resource.VectorMetrics
 
 	// broadcaster is attached after construction by the resource server,
 	broadcaster resource.Broadcaster[*resource.WrittenEvent]
 
 	pendingMu sync.Mutex
 	pending   map[string]*pendingEvent
+
+	// ensuredResources tracks provisioned resources (have partition leaf and backfill job)
+	ensuredResources map[string]struct{}
 }
 
 // New constructs the embedding reconciler.
@@ -123,10 +146,13 @@ func New(opts Options) (*Reconciler, error) {
 		vectorBackend:     opts.VectorBackend,
 		batchEmbedder:     opts.BatchEmbedder,
 		builders:          builders,
+		backfiller:        opts.Backfiller,
 		interval:          opts.Interval,
 		lockRetryInterval: opts.LockRetryInterval,
 		log:               log.New("embeddings_reconciler"),
+		metrics:           opts.Metrics,
 		pending:           make(map[string]*pendingEvent),
+		ensuredResources:  make(map[string]struct{}),
 	}, nil
 }
 
@@ -150,6 +176,9 @@ func (s *Reconciler) enqueue(ev *pendingEvent) {
 		return
 	}
 	s.pending[k] = ev
+	if s.metrics != nil {
+		s.metrics.ReconcilerPendingEvents.Set(float64(len(s.pending)))
+	}
 }
 
 func (s *Reconciler) drainPending() []*pendingEvent {
@@ -163,6 +192,9 @@ func (s *Reconciler) drainPending() []*pendingEvent {
 		out = append(out, ev)
 	}
 	s.pending = make(map[string]*pendingEvent)
+	if s.metrics != nil {
+		s.metrics.ReconcilerPendingEvents.Set(0)
+	}
 	return out
 }
 
@@ -188,6 +220,20 @@ func (s *Reconciler) Run(ctx context.Context) error {
 	}
 	defer release()
 	s.log.Info("reconciler: lock acquired; entering active state")
+
+	// Backfill jobs are created lazily on the write path (the first event for
+	// a resource); the backfiller drains them in the background on its own
+	// advisory lock.
+	if s.backfiller != nil {
+		backfillDone := make(chan struct{})
+		defer func() { <-backfillDone }()
+		go func() {
+			defer close(backfillDone)
+			if err := s.backfiller.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+				s.log.Error("reconciler: backfiller stopped", "err", err)
+			}
+		}()
+	}
 
 	// Subscribe before startupReconcile so events between the
 	// startupReconcile snapshot and the subscription join can't slip through;
@@ -270,7 +316,7 @@ func (s *Reconciler) consumeWatchEvents(ctx context.Context, ch <-chan *resource
 				namespace: ev.Key.Namespace,
 				name:      ev.Key.Name,
 				value:     ev.Value,
-				rv:        ev.ResourceVersion,
+				rv:        resource.ToSnowflakeRV(ev.ResourceVersion),
 			})
 			s.log.Debug("reconciler: watch event enqueued",
 				"namespace", ev.Key.Namespace,
@@ -281,9 +327,41 @@ func (s *Reconciler) consumeWatchEvents(ctx context.Context, ch <-chan *resource
 	}
 }
 
+// ensureResourceInitialized provisions a resource's partition leaf + backfill
+// job on its first write event, once per process (idempotent via
+// ensuredResources and the DB row). stoppingRV is the event's RV, bounding the
+// backfill of pre-existing rows for that resource.
+func (s *Reconciler) ensureResourceInitialized(ctx context.Context, b embed.Builder, stoppingRV int64) error {
+	r := b.Resource()
+	if _, ok := s.ensuredResources[r]; ok {
+		return nil
+	}
+
+	if err := s.vectorBackend.EnsureResourcePartition(ctx, r); err != nil {
+		return fmt.Errorf("ensure partition for %q: %w", r, err)
+	}
+
+	if err := s.vectorBackend.CreateBackfillJob(ctx, s.batchEmbedder.Model(), r, stoppingRV); err != nil {
+		return fmt.Errorf("create backfill job for %q: %w", r, err)
+	}
+	s.ensuredResources[r] = struct{}{}
+	return nil
+}
+
+// checkpointRV canonicalizes the persisted checkpoint to snowflake so it
+// compares against event RVs across a SQL<->KV backend swap (a micro
+// checkpoint from the sql backend would otherwise mis-compare).
+func (s *Reconciler) checkpointRV(ctx context.Context) (int64, error) {
+	rv, err := s.vectorBackend.GetLatestRV(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return resource.ToSnowflakeRV(rv), nil
+}
+
 // startupReconcile enqueues changes since the last processed RV.
 func (s *Reconciler) startupReconcile(ctx context.Context) {
-	sinceRv, err := s.vectorBackend.GetLatestRV(ctx)
+	sinceRv, err := s.checkpointRV(ctx)
 	if err != nil {
 		s.log.Error("reconciler: startupReconcile read checkpoint", "err", err)
 		return
@@ -371,7 +449,7 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 			namespace: mr.Key.Namespace,
 			name:      mr.Key.Name,
 			value:     mr.Value,
-			rv:        mr.ResourceVersion,
+			rv:        resource.ToSnowflakeRV(mr.ResourceVersion),
 		}
 		// Skip iter events that watch has already superseded with a
 		// newer write — re-embedding the older copy would just be
@@ -450,7 +528,7 @@ func (s *Reconciler) processBatch(ctx context.Context, batch []*pendingEvent) {
 	}
 	logger := s.log.FromContext(ctx)
 
-	sinceRv, err := s.vectorBackend.GetLatestRV(ctx)
+	sinceRv, err := s.checkpointRV(ctx)
 	if err != nil {
 		logger.Error("reconciler: read checkpoint", "err", err)
 		s.requeue(batch)
@@ -497,6 +575,7 @@ func (s *Reconciler) processBatch(ctx context.Context, batch []*pendingEvent) {
 // don't accidentally filter out lower-RV events after an earlier batch
 // would have bumped the checkpoint. abort is true if ctx was cancelled
 // mid-loop; the caller should treat all events as un-processed.
+// For new resources, it ensures a partition and backfill job is created
 func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, batch []*pendingEvent) (maxRv, lowestFailedRv int64, failed, successes []*pendingEvent, abort bool) {
 	logger := s.log.FromContext(ctx)
 	maxRv = sinceRv
@@ -519,6 +598,14 @@ func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, batch []*
 		// post-increment value when deciding whether to retry.
 		ev.attempts++
 
+		// Ensure partition + backfill job before processing the event.
+		if err := s.ensureResourceInitialized(ctx, builder, ev.rv); err != nil {
+			logger.Error("reconciler: ensure resource for event",
+				"group", ev.group, "resource", ev.resource, "err", err)
+			lowestFailedRv = s.recordFailure(ev, &failed, lowestFailedRv, logger)
+			continue
+		}
+
 		if err := s.processEvent(ctx, builder, ev); err != nil {
 			logger.Warn("reconciler: process event",
 				"namespace", ev.namespace, "name", ev.name,
@@ -535,26 +622,53 @@ func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, batch []*
 	return maxRv, lowestFailedRv, failed, successes, false
 }
 
-func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev *pendingEvent) error {
-	switch ev.action {
-	case resourcepb.WatchEvent_DELETED:
-		return s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name)
-	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
-		return s.embedAndUpsert(ctx, builder, ev)
-	default:
-		return fmt.Errorf("unknown action %v", ev.action)
-	}
-}
-
-// embedAndUpsert routes through UpsertReplaceSubresources so removing
-// stale subresources and writing the new ones commit atomically — a
-// failure mid-way leaves the dashboard in its previous self-consistent
-// state.
+// processEvent dispatches on the event action and runs the per-event
+// pipeline. The status label tracked through the function powers the
+// reconciler_process_duration histogram observed in the deferred closure.
 //
 // TODO: only re-embed subresources whose content actually changed
 // since the last write. Today every dashboard write re-embeds every
 // panel, which is wasteful when only one panel changed.
-func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, ev *pendingEvent) error {
+func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev *pendingEvent) (retErr error) {
+	ctx, span := tracer.Start(ctx, "unified.reconciler.processEvent")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("group", ev.group),
+		attribute.String("resource", ev.resource),
+		attribute.String("action", ev.action.String()),
+		attribute.Int64("rv", ev.rv),
+		attribute.Int("attempt", ev.attempts),
+	)
+
+	start := time.Now()
+	statusLabel := "success"
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		if s.metrics != nil {
+			metricutil.ObserveWithExemplar(ctx,
+				s.metrics.ReconcilerProcessDuration.WithLabelValues(ev.group, ev.resource, statusLabel),
+				time.Since(start).Seconds(),
+			)
+		}
+	}()
+
+	switch ev.action {
+	case resourcepb.WatchEvent_DELETED:
+		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
+			statusLabel = "delete_error"
+			return err
+		}
+		return nil
+	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
+		// code execution continues below to extract → embed → upsert
+	default:
+		statusLabel = "unknown_action"
+		return fmt.Errorf("unknown action %v", ev.action)
+	}
+
 	if len(ev.value) == 0 {
 		return nil
 	}
@@ -564,8 +678,10 @@ func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, 
 		Namespace: ev.namespace,
 		Name:      ev.name,
 	}
+
 	items, err := builder.Extract(ctx, key, ev.value, "")
 	if err != nil {
+		statusLabel = "extract_error"
 		return fmt.Errorf("extract: %w", err)
 	}
 	if maxItems := builder.MaxItemsPerResource(); maxItems > 0 && len(items) > maxItems {
@@ -575,17 +691,31 @@ func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, 
 	// An empty extract means the dashboard has no embeddable content;
 	// drop everything stored under this UID rather than leaving orphans.
 	if len(items) == 0 {
-		return s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name)
+		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
+			statusLabel = "delete_error"
+			return err
+		}
+		return nil
 	}
 
 	vectors, err := s.batchEmbedder.Embed(ctx, ev.namespace, builder.Resource(), ev.rv, items)
 	if err != nil {
+		statusLabel = "embed_error"
 		return fmt.Errorf("embed: %w", err)
 	}
 	if len(vectors) == 0 {
-		return s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name)
+		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
+			statusLabel = "delete_error"
+			return err
+		}
+		return nil
 	}
+
+	// UpsertReplaceSubresources commits the stale-delete and the new
+	// inserts atomically — a failure mid-way leaves the dashboard in
+	// its previous self-consistent state.
 	if err := s.vectorBackend.UpsertReplaceSubresources(ctx, vectors); err != nil {
+		statusLabel = "upsert_error"
 		return fmt.Errorf("upsert: %w", err)
 	}
 	return nil
@@ -598,6 +728,9 @@ func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, 
 func (s *Reconciler) requeue(events []*pendingEvent) {
 	for _, ev := range events {
 		s.enqueue(ev)
+		if s.metrics != nil {
+			s.metrics.ReconcilerRetriesTotal.WithLabelValues(ev.group, ev.resource).Inc()
+		}
 	}
 }
 
@@ -609,6 +742,11 @@ func (s *Reconciler) recordFailure(ev *pendingEvent, failed *[]*pendingEvent, lo
 		logger.Error("reconciler: dropping event past retry cap; cursor will advance past it",
 			"namespace", ev.namespace, "name", ev.name,
 			"rv", ev.rv, "attempts", ev.attempts, "action", ev.action)
+		if s.metrics != nil {
+			s.metrics.ReconcilerEventsDroppedTotal.
+				WithLabelValues(ev.group, ev.resource, "retries_exhausted").
+				Inc()
+		}
 		return lowestFailedRv
 	}
 	*failed = append(*failed, ev)

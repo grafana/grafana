@@ -36,7 +36,7 @@ export interface ChangeSizePayload {
   width: number;
 }
 
-export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
+const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
 
 interface ChangeCompactModePayload {
   exploreId: string;
@@ -112,12 +112,6 @@ interface InitializeExplorePayload {
 }
 
 const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExploreAction');
-
-export interface SetUrlReplacedPayload {
-  exploreId: string;
-}
-
-export const setUrlReplacedAction = createAction<SetUrlReplacedPayload>('explore/setUrlReplaced');
 
 export interface SaveCorrelationsPayload {
   exploreId: string;

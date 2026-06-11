@@ -9,11 +9,10 @@ import (
 	"github.com/fullstorydev/grpchan"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	otgrpc "github.com/opentracing-contrib/go-grpc"
-	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
@@ -27,16 +26,19 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	authnGrpcUtils "github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
@@ -52,6 +54,8 @@ type Options struct {
 	VectorBackend  vector.VectorBackend
 	Embedder       *embedder.Embedder
 	DashboardStats builders.DashboardStats
+	KV             kv.KV
+	EDB            sqldb.DBProvider
 }
 
 type clientMetrics struct {
@@ -63,6 +67,7 @@ type clientMetrics struct {
 func ProvideUnifiedStorageClient(opts *Options,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
+	vectorMetrics *resource.VectorMetrics,
 ) (resource.ResourceClient, error) {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
@@ -73,7 +78,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.DashboardStats)
+	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.DashboardStats, opts.KV, opts.EDB)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -92,23 +97,25 @@ func ProvideUnifiedStorageClient(opts *Options,
 func newClient(opts options.StorageOptions,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	authzc types.AccessClient,
 	docs resource.DocumentBuilderSupplier,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
+	vectorMetrics *resource.VectorMetrics,
 	secure secrets.InlineSecureValueSupport,
 	vectorBackend vector.VectorBackend,
 	embedderInstance *embedder.Embedder,
 	dashboardStats builders.DashboardStats,
+	kvStore kv.KV,
+	eDB sqldb.DBProvider,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
 	switch opts.StorageType {
 	case options.StorageTypeFile:
-		backend, err := sql.NewFileBackend(cfg)
+		backend, err := sql.NewFileBackend(cfg, kvStore)
 		if err != nil {
 			return nil, err
 		}
@@ -155,12 +162,12 @@ func newClient(opts options.StorageOptions,
 		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
 
 	default:
-		searchOptions, err := search.NewSearchOptions(features, cfg, docs, indexMetrics, nil)
+		searchOptions, err := search.NewSearchOptions(features, cfg, docs, indexMetrics, nil, nil)
 		if err != nil {
 			return nil, err
 		}
 
-		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, false)
+		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore)
 		if err != nil {
 			return nil, err
 		}
@@ -182,6 +189,7 @@ func newClient(opts options.StorageOptions,
 			SearchOptions:  searchOptions,
 			StorageMetrics: storageMetrics,
 			IndexMetrics:   indexMetrics,
+			VectorMetrics:  vectorMetrics,
 			Features:       features,
 			SecureValues:   secure,
 			DashboardStats: dashboardStats,
@@ -234,11 +242,11 @@ func newClient(opts options.StorageOptions,
 	}
 }
 
-func NewStorageApiSearchClient(cfg *setting.Cfg) (resourcepb.ResourceIndexClient, error) {
+func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
 	var searchClient resourcepb.ResourceIndexClient
 	var err error
 	if cfg.EnableSearchClient {
-		searchClient, err = NewSearchClient(cfg)
+		searchClient, err = NewSearchClient(cfg, features)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create search client: %w", err)
 		}
@@ -246,7 +254,7 @@ func NewStorageApiSearchClient(cfg *setting.Cfg) (resourcepb.ResourceIndexClient
 	return searchClient, nil
 }
 
-func NewSearchClient(cfg *setting.Cfg) (resourcepb.ResourceIndexClient, error) {
+func NewSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	searchServerAddress := apiserverCfg.Key("search_server_address").MustString("")
 	grpcClientKeepaliveTime := apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0)
@@ -259,6 +267,29 @@ func NewSearchClient(cfg *setting.Cfg) (resourcepb.ResourceIndexClient, error) {
 	conn, err := grpcConn(searchServerAddress, metrics, grpcClientKeepaliveTime)
 	if err != nil {
 		return nil, err
+	}
+
+	// When the modern grpc client auth is enabled, mirror NewRemoteResourceClient
+	// and use the authlib interceptor with IDTokenExtractor.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features != nil && features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
+		clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
+		clientInt, err := resource.NewAuthnGrpcClientInterceptor(
+			otel.Tracer("github.com/grafana/grafana/pkg/storage/unified"),
+			resource.RemoteResourceClientConfig{
+				Token:            clientCfg.Token,
+				TokenExchangeURL: clientCfg.TokenExchangeURL,
+				Audiences:        []string{"resourceStore"},
+				Namespace:        clientCfg.TokenNamespace,
+				AllowInsecure:    cfg.Env == setting.Dev,
+				IsDev:            cfg.Env == setting.Dev,
+			},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("could not create authn interceptor for search client: %w", err)
+		}
+		cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+		return resourcepb.NewResourceIndexClient(cc), nil
 	}
 
 	cc := grpchan.InterceptClientConn(conn, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
@@ -323,10 +354,8 @@ func GrpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 // and middleware.StreamClientUserHeaderInterceptor as we don't need them.
 func instrument(requestDuration *prometheus.HistogramVec, instrumentationLabelOptions ...middleware.InstrumentationOption) ([]grpc.UnaryClientInterceptor, []grpc.StreamClientInterceptor) {
 	return []grpc.UnaryClientInterceptor{
-			otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer()),
 			middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
 		}, []grpc.StreamClientInterceptor{
-			otgrpc.OpenTracingStreamClientInterceptor(opentracing.GlobalTracer()),
 			middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
 		}
 }

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,6 +16,45 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+// Anchors what semver.NewVersion accepts for the strings we feed it from
+// cfg.BuildVersion / cfg.MinFileIndexBuildVersion (options.go) and from snapshot
+// metadata (bleve_snapshot.go, remote_index_cleanup.go). Parsing failures are
+// not fatal at call sites — they fall back to nil — but a change here would
+// quietly hide or expose snapshots, so it's worth pinning.
+func TestBuildVersionParsing(t *testing.T) {
+	tests := []struct {
+		input    string
+		wantOK   bool
+		wantNorm string // expected v.String() when wantOK
+	}{
+		{input: "11.5.0", wantOK: true, wantNorm: "11.5.0"},
+		{input: "11.5.0-pre1", wantOK: true, wantNorm: "11.5.0-pre1"},
+		{input: "11.5.0+meta", wantOK: true, wantNorm: "11.5.0+meta"},
+		{input: "v11.5.0", wantOK: true, wantNorm: "11.5.0"}, // v-prefix is stripped
+		{input: "11.5", wantOK: true, wantNorm: "11.5.0"},    // missing patch is filled in
+		// Real build versions seen in production.
+		{input: "13.1.0-ephemeral-enterprise-11758-10265-1", wantOK: true, wantNorm: "13.1.0-ephemeral-enterprise-11758-10265-1"},
+		{input: "13.1.0-ephemeral-oss-123137-102418-1", wantOK: true, wantNorm: "13.1.0-ephemeral-oss-123137-102418-1"},
+		{input: "13.0.0-23069273608.patch13", wantOK: true, wantNorm: "13.0.0-23069273608.patch13"},
+		{input: "13.1.0-25901809875", wantOK: true, wantNorm: "13.1.0-25901809875"},
+		{input: "dev", wantOK: false},
+		{input: "main", wantOK: false},
+		{input: "a1b2c3d4", wantOK: false}, // git SHA-like
+	}
+	for _, tc := range tests {
+		t.Run(tc.input, func(t *testing.T) {
+			v, err := semver.NewVersion(tc.input)
+			if tc.wantOK {
+				require.NoError(t, err)
+				require.NotNil(t, v)
+				assert.Equal(t, tc.wantNorm, v.String())
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
 
 func TestSnapshotLockHeartbeat(t *testing.T) {
 	tests := []struct {
@@ -49,7 +89,7 @@ func TestBuildSnapshotOptionsGating(t *testing.T) {
 		cfg.IndexSnapshotEnabled = false
 		cfg.IndexSnapshotBucketURL = "://not-a-valid-url"
 
-		snapshot, err := buildSnapshotOptions(cfg, nil)
+		snapshot, err := buildSnapshotOptions(cfg, nil, nil)
 		require.NoError(t, err)
 		assert.Nil(t, snapshot.Store)
 	})
@@ -59,7 +99,7 @@ func TestBuildSnapshotOptionsGating(t *testing.T) {
 		cfg.IndexSnapshotEnabled = true
 		cfg.IndexSnapshotBucketURL = ""
 
-		snapshot, err := buildSnapshotOptions(cfg, nil)
+		snapshot, err := buildSnapshotOptions(cfg, nil, nil)
 		require.NoError(t, err)
 		assert.Nil(t, snapshot.Store)
 	})
@@ -69,7 +109,7 @@ func TestBuildSnapshotOptionsGating(t *testing.T) {
 		cfg.IndexSnapshotEnabled = true
 		cfg.IndexSnapshotBucketURL = fileBucketURL(t, t.TempDir())
 
-		snapshot, err := buildSnapshotOptions(cfg, nil)
+		snapshot, err := buildSnapshotOptions(cfg, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, snapshot.Store)
 	})
@@ -79,11 +119,47 @@ func TestBuildSnapshotOptionsGating(t *testing.T) {
 		cfg.IndexSnapshotEnabled = true
 		cfg.IndexSnapshotBucketURL = "mem://snapshot-test"
 
-		snapshot, err := buildSnapshotOptions(cfg, nil)
+		snapshot, err := buildSnapshotOptions(cfg, nil, nil)
 		require.Error(t, err)
 		assert.Nil(t, snapshot.Store)
 		assert.Contains(t, err.Error(), "unsupported blob provider")
 	})
+}
+
+func TestBuildSnapshotOptionsInjectedStore(t *testing.T) {
+	t.Run("injected store overrides bucket URL and is used as-is", func(t *testing.T) {
+		cfg := snapshotOptionsTestCfg(t)
+		cfg.IndexSnapshotEnabled = true
+		// Bucket URL is intentionally set to ensure the injected store takes precedence.
+		cfg.IndexSnapshotBucketURL = fileBucketURL(t, t.TempDir())
+		cfg.IndexSnapshotThreshold = 12345
+		cfg.IndexSnapshotMaxAge = 7 * 24 * time.Hour
+
+		injected := &fakeRemoteIndexStore{}
+		snapshot, err := buildSnapshotOptions(cfg, nil, injected)
+		require.NoError(t, err)
+		assert.Same(t, injected, snapshot.Store)
+		// Non-Store fields still come from cfg.
+		assert.Equal(t, int64(12345), snapshot.MinDocCount)
+		assert.Equal(t, 7*24*time.Hour, snapshot.MaxIndexAge)
+	})
+
+	t.Run("injected store is ignored when snapshots are disabled", func(t *testing.T) {
+		cfg := snapshotOptionsTestCfg(t)
+		cfg.IndexSnapshotEnabled = false
+
+		injected := &fakeRemoteIndexStore{}
+		snapshot, err := buildSnapshotOptions(cfg, nil, injected)
+		require.NoError(t, err)
+		assert.Nil(t, snapshot.Store)
+	})
+}
+
+// fakeRemoteIndexStore is a stand-in RemoteIndexStore used to verify that
+// buildSnapshotOptions wires an injected store through as-is. Methods
+// are unimplemented because the test never exercises them.
+type fakeRemoteIndexStore struct {
+	RemoteIndexStore
 }
 
 func TestBuildSnapshotOptionsFileBucketUsesProcessLocalLocks(t *testing.T) {
@@ -91,7 +167,7 @@ func TestBuildSnapshotOptionsFileBucketUsesProcessLocalLocks(t *testing.T) {
 	cfg.IndexSnapshotEnabled = true
 	cfg.IndexSnapshotBucketURL = fileBucketURL(t, t.TempDir())
 
-	snapshot, err := buildSnapshotOptions(cfg, nil)
+	snapshot, err := buildSnapshotOptions(cfg, nil, nil)
 	require.NoError(t, err)
 
 	ns := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
@@ -113,7 +189,7 @@ func TestNewSearchOptionsPassesFileSnapshotStoreToBleveBackend(t *testing.T) {
 	cfg.IndexSnapshotBucketURL = fileBucketURL(t, t.TempDir())
 
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
-	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil)
+	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil, nil)
 	require.NoError(t, err)
 
 	backend, ok := opts.Backend.(*bleveBackend)

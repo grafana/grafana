@@ -47,10 +47,6 @@ import {
   compileFrameToRecords,
 } from './utils';
 
-export interface FilteredRowsOptions {
-  hasNestedFrames: boolean;
-}
-
 export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFrames?: boolean) {
   const [filter, setFilter] = useState<FilterType>({});
   const filterResult = useMemo(
@@ -734,9 +730,15 @@ export function useNestedColWidths({
 export function useColWidths(
   visibleFields: Field[],
   availableWidth: number,
-  frozenColumns?: number
+  frozenColumns?: number,
+  resetKey?: Symbol
 ): [number[], number] {
-  const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
+  const widths = useMemo(
+    () => computeColWidths(visibleFields, availableWidth),
+    // Width override removals can mutate width config onto existing field objects.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [visibleFields, availableWidth, resetKey]
+  );
 
   // this is to avoid buggy situations where all visible columns are frozen
   const numFrozenColsFullyInView = useMemo(() => {

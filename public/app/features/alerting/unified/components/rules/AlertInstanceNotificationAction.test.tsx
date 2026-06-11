@@ -34,7 +34,11 @@ describe('AlertInstanceNotificationAction', () => {
       rulerRule: mockGrafanaRulerRule(), // no receiver, no notification_settings
     });
     render(<AlertInstanceNotificationAction rule={rule} instance={instance} />);
-    expect(await screen.findByRole('button', { name: /view route(s)?/i })).toBeInTheDocument();
+    // Button is rendered immediately but disabled while routing data is loading.
+    const button = screen.getByRole('button', { name: /view route(s)?/i });
+    expect(button).toBeDisabled();
+    // Once routing resolves the button becomes enabled.
+    await waitFor(() => expect(button).toBeEnabled());
   });
 
   it('shows a contact point name and View route button when routing resolves to a single receiver', async () => {
@@ -43,7 +47,8 @@ describe('AlertInstanceNotificationAction', () => {
     render(<AlertInstanceNotificationAction rule={rule} instance={instance} />);
     // ContactPointLink renders the receiver name once routing settles
     expect(await screen.findByText('provisioned-contact-point')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /view route/i })).toBeInTheDocument();
+    // Button is enabled once routing is fresh.
+    expect(screen.getByRole('button', { name: /view route/i })).toBeEnabled();
   });
 
   it('shows only the View route button when routing resolves to multiple receivers', async () => {
@@ -58,12 +63,12 @@ describe('AlertInstanceNotificationAction', () => {
     });
     const rule = mockCombinedRule({ rulerRule: mockGrafanaRulerRule() });
     render(<AlertInstanceNotificationAction rule={rule} instance={multiReceiverInstance} />);
-    expect(await screen.findByRole('button', { name: /view route/i })).toBeInTheDocument();
     // singlePolicyReceiver is undefined when multiple receivers match — no contact point name shown
     expect(screen.queryByText('a-receiver')).not.toBeInTheDocument();
     expect(screen.queryByText('provisioned-contact-point')).not.toBeInTheDocument();
     // Instead, a clickable "N contact points" affordance is shown above the View policies button.
     // Tests render the singular source default; runtime uses the _other plural form.
-    expect(screen.getByRole('button', { name: /2 contact point/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /2 contact point/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /view route/i })).toBeInTheDocument();
   });
 });

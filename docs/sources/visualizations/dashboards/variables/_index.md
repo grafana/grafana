@@ -37,11 +37,11 @@ This reduces dashboard duplication and maintenance.
 You can use variables in:
 
 - Data source queries
-- [Panel repeating options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-panels)
-- [Dashboard and panel links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/)
+- [Panel repeating options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-panel-options/#configure-repeating-panels)
+- [Dashboard and panel links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/)
 - Titles
 - Descriptions
-- [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/)
+- [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/transform-data/)
 
 To work with variables, you typically do the following:
 

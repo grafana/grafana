@@ -1,13 +1,16 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { useFlagGrafanaOrgDashboardTemplates } from '@grafana/runtime/internal';
 import { Button, ButtonGroup, Dropdown, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enterprise-components/SaveAsTemplateFormExtension';
 
 import { type ToolbarActionProps } from '../types';
 
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   const { meta, isDirty, uid, editview, editPanel } = dashboard.state;
+  const isDashboardTemplatesFlagEnabled = useFlagGrafanaOrgDashboardTemplates();
 
   const isNew = !Boolean(uid || dashboard.isManaged());
   const isManaged = dashboard.isManaged();
@@ -18,6 +21,24 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
     reportInteraction('grafana_dashboard_save_as_copy_clicked');
     dashboard.openSaveDrawer({ saveAsCopy: true });
   };
+
+  // Template edit flow
+  if (isDashboardTemplatesFlagEnabled && meta.isDashboardTemplate) {
+    if (!meta.canSave) {
+      return null;
+    }
+    return (
+      <Button
+        onClick={() => dashboard.openSaveDrawer({ saveDashboardTemplate: true })}
+        tooltip={t('dashboard.toolbar.new.save-template.tooltip', 'Save template changes')}
+        size={buttonSize}
+        variant={isDirty ? 'primary' : 'secondary'}
+        data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
+      >
+        <Trans i18nKey="dashboard.toolbar.new.save-template.label">Save</Trans>
+      </Button>
+    );
+  }
 
   // if we only can save
   if (isNew) {
@@ -73,6 +94,15 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
               icon="copy"
               onClick={onSaveAsCopy}
             />
+            {isDashboardTemplatesFlagEnabled && meta.canSave && getSaveAsTemplateForm() !== null && (
+              <Menu.Item
+                label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
+                icon="grid"
+                onClick={() => {
+                  dashboard.openSaveDrawer({ saveAsDashboardTemplate: true });
+                }}
+              />
+            )}
           </Menu>
         }
       >

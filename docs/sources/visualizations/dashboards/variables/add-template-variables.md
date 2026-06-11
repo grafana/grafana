@@ -145,8 +145,8 @@ Query expressions are different for each data source. For more information, refe
    | Refresh             | Select when the variable should update options:<ul><li>**On dashboard load** - Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.</li><li>**On time range change** - Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.</li></ul> |
    | Use static options  | (Optional) Toggle on the switch to add custom options in addition to the query results:<ul><li>Make entries in the **Value** and **Display text** fields.</li><li>Click **+ Add new option** to add another static option.</li></ul> Repeat these steps as many times as needed.                                                                                                                                                                                                                                                        |
    | Multi-value         | Enables multiple values to be selected at the same time. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                                                                                                                                                                                                                                                     |
-   | Allow custom values | Enables users to add custom values to the list. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                                                                                                                                                                                                                                                              |
-   | Include All option  | Enables an option to include all variables. Enter a value in the **Custom all value** field to set your own "all" option.                                                                                                                                                                                                                                                                                                                                                                                                               |
+   | Allow custom values | Enables users to add custom values to the list. Only applies to CSV custom values. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                                                                                                                                                                                                                           |
+   | Include All option  | Enables an option to include all variables. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 1. Click **Run query** to test the variable.
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
@@ -179,13 +179,13 @@ For example, if you have server names or region names that never change, then yo
 1. [Enter general options](#enter-general-options-for-any-variable).
 1. Configure the following options:
 
-   | Option              | Description                                                                                                                                                                                                                                                                                                                     |
-   | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | CSV                 | Enter a flat list of values for the variable in a comma-separated list. You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.                                                                                                                      |
-   | JSON                | Provide a JSON array of objects where each object can have any number of properties that can be referenced. For more information refer, to [Configure multi-property variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/advanced-variables/#configure-multi-property-variables). |
-   | Multi-value         | Enables multiple values to be selected at the same time. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                                             |
-   | Allow custom values | Enables users to add custom values to the list. Only applies to CSV custom values. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                   |
-   | Include All option  | Enables an option to include all variables. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                                                          |
+   | Option              | Description                                                                                                                                                                                                                                                                                                           |
+   | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | CSV                 | Enter a flat list of values for the variable in a comma-separated list. You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.                                                                                                            |
+   | JSON                | Provide a JSON array of objects where each object can have any number of properties that can be referenced. For more information refer, to [Configure multi-property variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/advanced-variables/#multi-property-variables). |
+   | Multi-value         | Enables multiple values to be selected at the same time. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                                   |
+   | Allow custom values | Enables users to add custom values to the list. Only applies to CSV custom values. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                         |
+   | Include All option  | Enables an option to include all variables. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                                                |
 
 1. Click **Run query** to test the variable.
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. If you've entered a JSON array, the preview is a table that includes all the value properties. Review them to ensure they match what you expect.
@@ -330,7 +330,7 @@ To create a filter, follow these steps:
 1. Enter an optional description of your changes and click **Save**.
 1. Click **Back to dashboard** and then **Exit edit**.
 
-Now you can [filter data on the dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#filter-dashboard-data).
+Now you can [filter data on the dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/use-dashboards/#filter-dashboard-data).
 
 {{< admonition type="tip" >}}
 You can use data links to link back to the dashboard you are currently on. This enables "panel-to-panel filtering," where clicking a data point in one panel updates the dashboard variables and filters the rest of the dashboard.
@@ -346,7 +346,7 @@ Filters on the current dashboard are automatically preserved.
 Learn more in:
 
 - [Configure data links and actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-data-links/)
-- [Create dashboard URL variables > Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/#ad-hoc-filters)
+- [Create dashboard URL variables > Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/#filters)
   {{< /admonition >}}
 
 ### Filter any data using the Dashboard data source
@@ -404,7 +404,7 @@ If one of the panels in the dashboard using that data source doesn't include tha
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-no-data-v12.2.png" max-width="650px" alt="Table, filtered and bar chart returning no results" >}}
 
 In cases where the data source you're using doesn't support filtering, consider using the special Dashboard data source.
-For more information, refer to [Filter any data using the Dashboard data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#filter-any-data-using-the-dashboard-data-source).
+For more information, refer to [Filter any data using the Dashboard data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#filter-any-data-using-the-dashboard-data-source).
 
 ## Add a switch variable
 
@@ -500,10 +500,6 @@ If you don't want Grafana to do this automatic regular expression escaping and f
 - Turn off the **Multi-value** or **Include All option** options.
 - Use the [raw variable format](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/variable-syntax/#raw).
 
-### Include All option
-
-Grafana adds an `All` option to the variable drop-down list. If a user selects this option, then all variable options are selected.
-
 ### Custom all value
 
 This option is only visible if the **Include All option** is selected.
@@ -513,3 +509,7 @@ Enter regular expressions, globs, or Lucene syntax in the **Custom all value** f
 By default the `All` value includes all options in combined expression. This can become very long and can have performance problems. Sometimes it can be better to specify a custom all value, like a wildcard regular expression.
 
 In order to have custom regular expression, globs, or Lucene syntax in the **Custom all value** option, it's never escaped so you have to think about what's a valid value for your data source.
+
+### Include All option
+
+Grafana adds an `All` option to the variable drop-down list. If a user selects this option, then all variable options are selected.

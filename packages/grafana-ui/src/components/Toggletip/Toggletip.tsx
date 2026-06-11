@@ -170,7 +170,7 @@ export const Toggletip = memo(
 
 Toggletip.displayName = 'Toggletip';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const info = buildTooltipTheme(
     theme,
     theme.colors.background.primary,

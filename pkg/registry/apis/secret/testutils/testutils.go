@@ -171,7 +171,8 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		cfg,
 		secureValueMetadataStorage,
 		keeperMetadataStorage,
-		keeperService)
+		keeperService,
+		tracer)
 
 	return Sut{
 		SecureValueService:              secureValueService,

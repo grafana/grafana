@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -23,7 +22,7 @@ type DSInfo struct {
 
 // ApplyRoute should use the plugin route data to set auth headers and custom headers.
 func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.Route,
-	ds DSInfo, cfg *setting.Cfg) {
+	ds DSInfo, settings *DataSourceProxySettings) {
 	proxyPath = strings.TrimPrefix(proxyPath, route.Path)
 	data := templateData{
 		URL:            ds.URL,
@@ -70,7 +69,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		ctxLogger.Error("Failed to set plugin route body content", "error", err)
 	}
 
-	if tokenProvider, err := getTokenProvider(ctx, cfg, ds, route, data); err != nil {
+	if tokenProvider, err := getTokenProvider(ctx, settings, ds, route, data); err != nil {
 		ctxLogger.Error("Failed to resolve auth token provider", "error", err)
 	} else if tokenProvider != nil {
 		if token, err := tokenProvider.GetAccessToken(); err != nil {
@@ -80,12 +79,12 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		}
 	}
 
-	if cfg.DataProxyLogging {
+	if settings.DataProxyLogging {
 		ctxLogger.Debug("Requesting", "url", req.URL.String())
 	}
 }
 
-func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds DSInfo, pluginRoute *plugins.Route,
+func getTokenProvider(ctx context.Context, settings *DataSourceProxySettings, ds DSInfo, pluginRoute *plugins.Route,
 	data templateData) (accessTokenProvider, error) {
 	authType := pluginRoute.AuthType
 
@@ -108,7 +107,7 @@ func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds DSInfo, pluginRo
 		if tokenAuth == nil {
 			return nil, fmt.Errorf("'tokenAuth' not configured for authentication type '%s'", authType)
 		}
-		return newAzureAccessTokenProvider(ctx, cfg, tokenAuth)
+		return newAzureAccessTokenProvider(ctx, settings, tokenAuth)
 
 	case "gce":
 		if jwtTokenAuth == nil {

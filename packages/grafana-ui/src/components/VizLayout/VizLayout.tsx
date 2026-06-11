@@ -74,7 +74,9 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
       break;
     case 'right':
       containerStyle.flexDirection = 'row';
-      legendStyle.maxWidth = maxWidth;
+      if (legend.props.width == null) {
+        legendStyle.maxWidth = maxWidth;
+      }
 
       if (legendMeasure.width) {
         size = { width: width - legendMeasure.width, height };
@@ -107,10 +109,13 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   );
 };
 
-export const getVizStyles = (theme: GrafanaTheme2) => {
+const getVizStyles = (theme: GrafanaTheme2) => {
   return {
     viz: css({
       flexGrow: 2,
+      // without this, minWidth becomes `min-content`, which means the canvas will
+      // never collapse down below its initial size. this means that the legend can never scale up in size
+      minWidth: 0,
       borderRadius: theme.shape.radius.default,
       '&:focus-visible': getFocusStyles(theme),
     }),

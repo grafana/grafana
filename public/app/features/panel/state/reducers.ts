@@ -2,14 +2,14 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import { type PanelPlugin } from '@grafana/data';
 
-export type RootPanelsState = Record<string, PanelState>;
+type RootPanelsState = Record<string, PanelState>;
 
-export interface PanelState {
+interface PanelState {
   plugin?: PanelPlugin;
   instanceState?: unknown | null;
 }
 
-export const initialState: RootPanelsState = {};
+const initialState: RootPanelsState = {};
 
 const panelsSlice = createSlice({
   name: 'panels',
@@ -36,20 +36,19 @@ const panelsSlice = createSlice({
   },
 });
 
-export interface PanelModelAndPluginReadyPayload {
+interface PanelModelAndPluginReadyPayload {
   key: string;
   plugin: PanelPlugin;
 }
 
-export interface SetPanelInstanceStatePayload {
+interface SetPanelInstanceStatePayload {
   key: string;
   value: unknown;
 }
 
-export const { panelModelAndPluginReady, setPanelInstanceState, changePanelKey, removePanel, removeAllPanels } =
-  panelsSlice.actions;
+export const { panelModelAndPluginReady, setPanelInstanceState, removePanel, removeAllPanels } = panelsSlice.actions;
 
-export const panelsReducer = panelsSlice.reducer;
+const panelsReducer = panelsSlice.reducer;
 
 export default {
   panels: panelsReducer,

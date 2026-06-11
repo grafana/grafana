@@ -4,7 +4,7 @@ import { memo, useState, useEffect } from 'react';
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import {
   Alert,
   Box,
@@ -17,7 +17,6 @@ import {
   isWeekStart,
   Label,
   Stack,
-  TextLink,
   TimeZonePicker,
   useStyles2,
   type WeekStart,
@@ -173,20 +172,6 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
             loading={isLoading}
             disabled={isLoading}
             label={t('shared-preferences.fields.theme-label', 'Interface theme')}
-            description={
-              config.featureToggles.grafanaconThemes && config.feedbackLinksEnabled ? (
-                <Trans i18nKey="shared-preferences.fields.theme-description">
-                  Enjoying the experimental themes? Tell us what you&apos;d like to see{' '}
-                  <TextLink
-                    variant="bodySmall"
-                    external
-                    href="https://docs.google.com/forms/d/e/1FAIpQLSeRKAY8nUMEVIKSYJ99uOO-dimF6Y69_If1Q1jTLOZRWqK1cw/viewform?usp=dialog"
-                  >
-                    here.
-                  </TextLink>
-                </Trans>
-              ) : undefined
-            }
           >
             <Combobox
               options={themeOptions}

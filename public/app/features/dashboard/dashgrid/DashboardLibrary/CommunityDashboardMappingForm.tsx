@@ -167,7 +167,14 @@ export const CommunityDashboardMappingForm = ({
           <Alert title="" severity="info">
             <Stack direction="column" gap={1}>
               <Text>
-                <Trans i18nKey="dashboard-library.community-mapping-form.auto-mapped" count={existingMappings.length}>
+                <Trans
+                  i18nKey="dashboard-library.community-mapping-form.auto-mapped"
+                  count={existingMappings.length}
+                  tOptions={{
+                    defaultValue_one: '{{count}} datasources were automatically configured:',
+                    defaultValue_other: '{{count}} datasources were automatically configured:',
+                  }}
+                >
                   {{ count: existingMappings.length }} datasources were automatically configured:
                 </Trans>
               </Text>

@@ -6,7 +6,7 @@ on:
 jobs:
   gen-swagger:
     name: Alerting Swagger spec generation cron job
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
     permissions:
       contents: read
 

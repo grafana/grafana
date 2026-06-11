@@ -19,7 +19,6 @@ export const addTagTypes = [
   'health',
   'folders',
   'permissions',
-  'group_attribute_sync',
   'library_elements',
   'licensing',
   'saml',
@@ -886,34 +885,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['folders', 'permissions'],
       }),
-      getMappedGroups: build.query<GetMappedGroupsApiResponse, GetMappedGroupsApiArg>({
-        query: () => ({ url: `/groupsync/groups` }),
-        providesTags: ['group_attribute_sync', 'enterprise'],
-      }),
-      deleteGroupMappings: build.mutation<DeleteGroupMappingsApiResponse, DeleteGroupMappingsApiArg>({
-        query: (queryArg) => ({ url: `/groupsync/groups/${queryArg.groupId}`, method: 'DELETE' }),
-        invalidatesTags: ['group_attribute_sync', 'enterprise'],
-      }),
-      createGroupMappings: build.mutation<CreateGroupMappingsApiResponse, CreateGroupMappingsApiArg>({
-        query: (queryArg) => ({
-          url: `/groupsync/groups/${queryArg.groupId}`,
-          method: 'POST',
-          body: queryArg.groupAttributes,
-        }),
-        invalidatesTags: ['group_attribute_sync', 'enterprise'],
-      }),
-      updateGroupMappings: build.mutation<UpdateGroupMappingsApiResponse, UpdateGroupMappingsApiArg>({
-        query: (queryArg) => ({
-          url: `/groupsync/groups/${queryArg.groupId}`,
-          method: 'PUT',
-          body: queryArg.groupAttributes,
-        }),
-        invalidatesTags: ['group_attribute_sync', 'enterprise'],
-      }),
-      getGroupRoles: build.query<GetGroupRolesApiResponse, GetGroupRolesApiArg>({
-        query: (queryArg) => ({ url: `/groupsync/groups/${queryArg.groupId}/roles` }),
-        providesTags: ['group_attribute_sync', 'enterprise'],
-      }),
       getHealth: build.query<GetHealthApiResponse, GetHealthApiArg>({
         query: () => ({ url: `/health` }),
         providesTags: ['health'],
@@ -1583,14 +1554,6 @@ const injectedRtkApi = api
       updateUserEmail: build.query<UpdateUserEmailApiResponse, UpdateUserEmailApiArg>({
         query: () => ({ url: `/user/email/update` }),
         providesTags: ['user'],
-      }),
-      clearHelpFlags: build.query<ClearHelpFlagsApiResponse, ClearHelpFlagsApiArg>({
-        query: () => ({ url: `/user/helpflags/clear` }),
-        providesTags: ['signed_in_user'],
-      }),
-      setHelpFlag: build.mutation<SetHelpFlagApiResponse, SetHelpFlagApiArg>({
-        query: (queryArg) => ({ url: `/user/helpflags/${queryArg.flagId}`, method: 'PUT' }),
-        invalidatesTags: ['signed_in_user'],
       }),
       getSignedInUserOrgList: build.query<GetSignedInUserOrgListApiResponse, GetSignedInUserOrgListApiArg>({
         query: () => ({ url: `/user/orgs` }),
@@ -2423,27 +2386,6 @@ export type UpdateFolderPermissionsApiArg = {
   folderUid: string;
   updateDashboardAclCommand: UpdateDashboardAclCommand;
 };
-export type GetMappedGroupsApiResponse = /** status 200 (empty) */ GetGroupsResponse;
-export type GetMappedGroupsApiArg = void;
-export type DeleteGroupMappingsApiResponse =
-  /** status 204 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type DeleteGroupMappingsApiArg = {
-  groupId: string;
-};
-export type CreateGroupMappingsApiResponse = /** status 201 (empty) */ MessageResponse;
-export type CreateGroupMappingsApiArg = {
-  groupId: string;
-  groupAttributes: GroupAttributes;
-};
-export type UpdateGroupMappingsApiResponse = /** status 201 (empty) */ MessageResponse;
-export type UpdateGroupMappingsApiArg = {
-  groupId: string;
-  groupAttributes: GroupAttributes;
-};
-export type GetGroupRolesApiResponse = /** status 200 (empty) */ RoleDto[];
-export type GetGroupRolesApiArg = {
-  groupId: string;
-};
 export type GetHealthApiResponse = /** status 200 healthResponse */ HealthResponse;
 export type GetHealthApiArg = void;
 export type GetLibraryElementsApiResponse =
@@ -3049,18 +2991,6 @@ export type GetUserAuthTokensApiResponse = /** status 200 (empty) */ UserToken[]
 export type GetUserAuthTokensApiArg = void;
 export type UpdateUserEmailApiResponse = unknown;
 export type UpdateUserEmailApiArg = void;
-export type ClearHelpFlagsApiResponse = /** status 200 (empty) */ {
-  helpFlags1?: number;
-  message?: string;
-};
-export type ClearHelpFlagsApiArg = void;
-export type SetHelpFlagApiResponse = /** status 200 (empty) */ {
-  helpFlags1?: number;
-  message?: string;
-};
-export type SetHelpFlagApiArg = {
-  flagId: string;
-};
 export type GetSignedInUserOrgListApiResponse = /** status 200 (empty) */ UserOrgDto[];
 export type GetSignedInUserOrgListApiArg = void;
 export type ChangeUserPasswordApiResponse =
@@ -4300,20 +4230,6 @@ export type DashboardAclUpdateItem = {
 export type UpdateDashboardAclCommand = {
   items?: DashboardAclUpdateItem[];
 };
-export type Group = {
-  groupID?: string;
-  mappings?: any;
-};
-export type GetGroupsResponse = {
-  groups?: Group[];
-  total?: number;
-};
-export type MessageResponse = {
-  message?: string;
-};
-export type GroupAttributes = {
-  roles?: string[];
-};
 export type HealthResponse = {
   apiserver?: string;
   commit?: string;
@@ -4508,6 +4424,8 @@ export type PreferencesQueryHistoryPreference = {
 export type PreferencesSpec = {
   /** UID for the home dashboard */
   homeDashboardUID?: string;
+  /** Explicit home URL (NOTE: this can only be modified in the system settings) */
+  homeURL?: string;
   /** Selected language */
   language?: string;
   navbar?: PreferencesNavbarPreference;
@@ -5649,13 +5567,6 @@ export const {
   useEnableDataSourceCacheMutation,
   useQueryMetricsWithExpressionsMutation,
   useUpdateFolderPermissionsMutation,
-  useGetMappedGroupsQuery,
-  useLazyGetMappedGroupsQuery,
-  useDeleteGroupMappingsMutation,
-  useCreateGroupMappingsMutation,
-  useUpdateGroupMappingsMutation,
-  useGetGroupRolesQuery,
-  useLazyGetGroupRolesQuery,
   useGetHealthQuery,
   useLazyGetHealthQuery,
   useGetLibraryElementsQuery,
@@ -5819,9 +5730,6 @@ export const {
   useLazyGetUserAuthTokensQuery,
   useUpdateUserEmailQuery,
   useLazyUpdateUserEmailQuery,
-  useClearHelpFlagsQuery,
-  useLazyClearHelpFlagsQuery,
-  useSetHelpFlagMutation,
   useGetSignedInUserOrgListQuery,
   useLazyGetSignedInUserOrgListQuery,
   useChangeUserPasswordMutation,

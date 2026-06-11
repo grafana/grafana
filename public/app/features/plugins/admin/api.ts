@@ -1,4 +1,4 @@
-import { type PluginError, type PluginMeta, renderMarkdown } from '@grafana/data';
+import { type PluginError, renderMarkdown } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { installPluginMeta, logPluginMetaError, uninstallPluginMeta } from '@grafana/runtime/internal';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
@@ -262,16 +262,6 @@ export async function uninstallPlugin(id: string) {
   return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall`);
 }
 
-export async function updatePluginSettings(id: string, data: Partial<PluginMeta>) {
-  const response = await getBackendSrv().datasourceRequest({
-    url: `/api/plugins/${id}/settings`,
-    method: 'POST',
-    data,
-  });
-
-  return response?.data;
-}
-
 export async function getPluginEntitlement(id: string): Promise<boolean> {
   try {
     await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/entitlement`);
@@ -289,5 +279,3 @@ export async function getPluginEntitlement(id: string): Promise<boolean> {
     return false;
   }
 }
-
-export const api = { getRemotePlugins, getInstalledPlugins: getLocalPlugins, installPlugin, uninstallPlugin };

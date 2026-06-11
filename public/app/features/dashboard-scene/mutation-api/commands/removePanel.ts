@@ -12,7 +12,7 @@ import { getLayoutManagerFor, getVizPanelKeyForPanelId } from '../../utils/utils
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
-export const removePanelPayloadSchema = payloads.removePanel;
+const removePanelPayloadSchema = payloads.removePanel;
 
 export type RemovePanelPayload = z.infer<typeof removePanelPayloadSchema>;
 

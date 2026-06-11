@@ -255,7 +255,7 @@ For example, if you have a series of four linked variables (country, region, ser
 
 Using the **Regex** query option, you filter the list of options returned by the variable query or modify the options returned.
 
-This page shows how to use a regular expression to filter/modify values in the variable drop-down list.
+This section shows how to use a regular expression to filter or modify values in the variable drop-down list.
 
 Using the **Regex** query option, you filter the list of options returned by the Variable query or modify the options returned. For more information, refer to the Mozilla guide on [Regular expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions).
 

@@ -13,4 +13,3 @@
 // limitations under the License.
 
 export const FALLBACK_DAG_MAX_NUM_SERVICES = 100;
-export const FALLBACK_TRACE_NAME = '<trace-without-root-span>';
