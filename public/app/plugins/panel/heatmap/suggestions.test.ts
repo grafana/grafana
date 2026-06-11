@@ -73,12 +73,9 @@ describe('heatmap suggestions', () => {
         .spyOn(fields, 'prepareHeatmapData')
         .mockReturnValue({ heatmap: frame, xBucketSize: 1, yBucketSize: 1 });
 
-      try {
-        const suggestions = heatmapSuggestionsSupplier(dataSummary);
-        expect(suggestions).toBeUndefined();
-      } finally {
-        prepareSpy.mockRestore();
-      }
+      const suggestions = heatmapSuggestionsSupplier(dataSummary);
+      expect(suggestions).toBeUndefined();
+      prepareSpy.mockRestore();
     });
 
     describe('first field shape determines whether a heatmap suggestion is offered', () => {

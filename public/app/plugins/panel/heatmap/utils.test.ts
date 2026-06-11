@@ -443,7 +443,7 @@ describe('prepConfig', () => {
 
       it('does not declare the x facet as sorted when xBucketSize is negative', () => {
         const builder = buildBuilderWithInvalidBucketSize(-50);
-        expect(getHeatmapSeriesXFacetSorted(builder)).not.toBe(1);
+        expect(getHeatmapSeriesXFacetSorted(builder)).toBe(0);
       });
 
       it('does not declare the x facet as sorted when xBucketSize is zero', () => {

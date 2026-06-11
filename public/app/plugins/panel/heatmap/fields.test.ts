@@ -723,7 +723,7 @@ describe('Heatmap data', () => {
       const heatmap = prepareHeatmapData({ ...tpl, frames: [frame1, frame2], palette: ['#000', '#fff'] });
 
       expect(heatmap.warning).toBeUndefined();
-      expect(heatmap.xBucketSize).toBeGreaterThan(0);
+      expect(heatmap.xBucketSize).toEqual(1000);
     });
   });
 
