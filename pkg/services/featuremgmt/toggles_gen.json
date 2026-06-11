@@ -473,15 +473,17 @@
     {
       "metadata": {
         "name": "alertingMultiplePolicies",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1781102456776",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-10 14:40:56.776063699 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables the ability to create multiple alerting policies",
-        "stage": "experimental",
+        "description": "Enables the ability to create multiple notification policies in alerting",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1461,6 +1463,23 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardNotebookLayout",
+        "resourceVersion": "1781098889122",
+        "creationTimestamp": "2026-06-10T13:08:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-10 13:41:29.122290475 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -3986,14 +4005,17 @@
     {
       "metadata": {
         "name": "profilesExemplars",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-01-07T12:25:42Z"
+        "resourceVersion": "1780997707204",
+        "creationTimestamp": "2026-01-07T12:25:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-09 09:35:07.204275 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables profiles exemplars support in profiles drilldown",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/observability-traces-and-profiling",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

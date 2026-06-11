@@ -339,6 +339,11 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels
+  * @default false
+  */
+  dashboardNotebookLayout?: boolean;
+  /**
   * Enables default layout selector in dashboard settings
   * @default true
   */
@@ -1382,7 +1387,7 @@ export interface FeatureToggles {
   secretsManagementAppPlatformAwsKeeper?: boolean;
   /**
   * Enables profiles exemplars support in profiles drilldown
-  * @default false
+  * @default true
   */
   profilesExemplars?: boolean;
   /**
@@ -1451,8 +1456,8 @@ export interface FeatureToggles {
   */
   kubernetesUsersRedirect?: boolean;
   /**
-  * Enables the ability to create multiple alerting policies
-  * @default false
+  * Enables the ability to create multiple notification policies in alerting
+  * @default true
   */
   alertingMultiplePolicies?: boolean;
   /**

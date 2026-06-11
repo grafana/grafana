@@ -1096,9 +1096,6 @@
       },
       "unknown": "알 수 없음"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "호환되는 데이터 소스가 없는 것 같습니다."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "경고를 시작하기 위한 평가",
       "pending-period": "보류 기간",
@@ -5907,9 +5904,6 @@
       "select-source": "소스 선택",
       "unknown": "알 수 없는 개체: {{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "메타데이터 검사기 없음"
-    },
     "inspect-stats": {
       "data-title": "데이터 소스 통계",
       "data-traceids": "추적 ID",
@@ -6388,7 +6382,6 @@
       "playlist-next": "다음 대시보드로 이동",
       "playlist-previous": "이전 대시보드로 이동",
       "playlist-stop": "플레이리스트 중지",
-      "read-only": "읽기 전용",
       "refresh": "대시보드 새로 고침",
       "save": "대시보드 저장",
       "save-as-template": {
@@ -6525,28 +6518,6 @@
     },
     "view-panel": {
       "not-found": ""
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "시각화 변경",
-      "aria-label-close": "옵션 창 닫기",
-      "aria-label-show": "옵션 창 표시",
-      "tooltip-click-to-change-visualization": "시각화를 변경하려면 클릭하세요",
-      "tooltip-close": "옵션 창 닫기",
-      "tooltip-show": "옵션 창 표시"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "검색…",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "여러 대시보드 간에 공유할 수 있는 재사용 가능한 패널."
-        },
-        "label": {
-          "library-panels": "라이브러리 패널",
-          "suggestions": "제안",
-          "visualizations": "시각화"
-        }
-      },
-      "title-close": "닫기"
     },
     "viz-panel": {
       "delete-panel-text": "이 패널을 삭제하면 쿼리도 모두 삭제됩니다. 정말 계속하시겠어요?",
@@ -9002,9 +8973,6 @@
     "select-aria-label": "폴더 필터",
     "select-placeholder": "폴더별로 필터링"
   },
-  "folder-repo": {
-    "read-only-badge": "읽기 전용"
-  },
   "folders": {
     "api": {
       "anonymous-user": "",
@@ -10970,6 +10938,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "",
       "show-all-series": "... {{total}}개 항목 모두 표시"
     }
   },
@@ -10991,10 +10960,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "라이브러리 패널 생성"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "변경",
-      "confirmText-replace": "교체"
     },
     "confirm": {
       "delete-panel": "이 패널을 삭제하시겠어요?"
@@ -11033,9 +10998,6 @@
       "select-placeholder": "입력하여 대시보드 검색",
       "title": "대시보드에서 패널 보기",
       "body_other": "이 패널은 {{count}}개의 대시보드에서 사용 중입니다. 패널을 표시할 대시보드를 선택하세요."
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "새 라이브러리 패널 생성"
     },
     "save": {
       "error": "라이브러리 패널 저장 중 오류 발생: '{{errorMsg}}'",
@@ -13560,6 +13522,9 @@
       "message-resource_other": "계정은 리포지토리당 동기화 가능한 리소스가 {{count}}개로 제한되어 있습니다.",
       "message-resource-onprem_other": "인스턴스는 리포지토리당 동기화 가능한 리소스가 {{count}}개로 제한되어 있습니다."
     },
+    "read-only-badge": {
+      "text": ""
+    },
     "read-only-local-tooltip": "이 리소스는 읽기 전용이며 파일 프로비저닝을 통해 프로비저닝됩니다. 변경하려면 연결된 리포지토리를 업데이트하세요. 설정을 수정하려면 관리 > 프로비저닝 > 리포지토리로 이동하세요.",
     "read-only-remote-tooltip": "이 리소스는 읽기 전용이며 Git을 통해 프로비저닝됩니다. 변경하려면 연결된 리포지토리를 업데이트하세요. 설정을 수정하려면 관리 > 프로비저닝 > 리포지토리로 이동하세요.",
     "recent-jobs": {
@@ -13580,7 +13545,6 @@
     },
     "repository-card": {
       "last-sync": "마지막 동기화: {{date}}",
-      "read-only-badge": "읽기 전용",
       "settings": "설정",
       "view": "보기"
     },
@@ -16542,9 +16506,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "이름이 변경되었거나 누락된 변수가 없습니다."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "변수를 로딩하지 못했습니다"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "이 변수의 값을 업데이트할 시점",

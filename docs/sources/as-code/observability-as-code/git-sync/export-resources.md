@@ -31,20 +31,13 @@ aliases:
 
 You can add dashboards to Git Sync using any of the following options:
 
-- [Add a dashboard using Import dashboards](#add-a-dashboard-using-import-dashboards)
 - [Export an existing dashboard from the Grafana UI as a copy](#copy-an-existing-dashboard-from-the-grafana-ui)
 - [Export a dashboard with Grafana CLI](#add-a-dashboard-with-the-grafana-cli)
 - [Copy a dashboard as JSON and commit to the repository](#add-a-dashboard-via-json-export)
 
-## Add a dashboard using Import dashboards
-
-You can import dashboards directly into your Git Sync provisioned folders using the Grafana UI or the HTTP API.
-
-For more information refer to [Import dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/import-dashboards/) in the Data Visualization documentation.
-
 ## Copy an existing dashboard from the Grafana UI
 
-You can also save a copy of dashboard directly from the Grafana UI to your provisioned folder.
+You can save a copy of dashboard directly from the Grafana UI to your provisioned folder.
 
 To do so, follow these steps:
 

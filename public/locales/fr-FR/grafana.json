@@ -1103,9 +1103,6 @@
       },
       "unknown": "Inconnu"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "Vous ne semblez pas avoir de sources de données compatibles."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Évaluations pour commencer à alerter",
       "pending-period": "Période en attente",
@@ -5939,9 +5936,6 @@
       "select-source": "Sélectionner la source",
       "unknown": "Objet inconnu : {{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "Pas d'inspecteur de métadonnées"
-    },
     "inspect-stats": {
       "data-title": "Statistiques de source de données",
       "data-traceids": "ID de suivi",
@@ -6421,7 +6415,6 @@
       "playlist-next": "Accéder au tableau de bord suivant",
       "playlist-previous": "Accéder au tableau de bord précédent",
       "playlist-stop": "Arrêter la liste de lecture",
-      "read-only": "Lecture seule",
       "refresh": "Actualiser le tableau de bord",
       "save": "Enregistrer le tableau de bord",
       "save-as-template": {
@@ -6558,28 +6551,6 @@
     },
     "view-panel": {
       "not-found": ""
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Modifier la visualisation",
-      "aria-label-close": "Fermer le volet d’options",
-      "aria-label-show": "Afficher le volet d’options",
-      "tooltip-click-to-change-visualization": "Cliquer pour modifier la visualisation",
-      "tooltip-close": "Fermer le volet d’options",
-      "tooltip-show": "Afficher le volet d’options"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Rechercher…",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Panneaux réutilisables que vous pouvez partager entre plusieurs tableaux de bord."
-        },
-        "label": {
-          "library-panels": "Panneaux de bibliothèque",
-          "suggestions": "Suggestions",
-          "visualizations": "Visualisations"
-        }
-      },
-      "title-close": "Fermer"
     },
     "viz-panel": {
       "delete-panel-text": "La suppression de ce panneau supprimera également toutes les requêtes. Voulez-vous vraiment continuer ?",
@@ -9052,9 +9023,6 @@
     "select-aria-label": "Filtre de dossier",
     "select-placeholder": "Filtrer par dossier"
   },
-  "folder-repo": {
-    "read-only-badge": "Lecture seule"
-  },
   "folders": {
     "api": {
       "anonymous-user": "",
@@ -11032,6 +11000,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "",
       "show-all-series": "…afficher les {{total}} éléments"
     }
   },
@@ -11053,10 +11022,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "Créer un panneau Bibliothèque"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "Modifier",
-      "confirmText-replace": "Remplacer"
     },
     "confirm": {
       "delete-panel": "Voulez-vous vraiment supprimer ce panneau ?"
@@ -11097,9 +11062,6 @@
       "title": "Voir le panneau dans le tableau de bord",
       "body_one": "Ce panneau est utilisé dans {{count}} tableau de bord. Choisissez dans quel tableau de bord le panneau sera affiché :",
       "body_other": "Ce panneau est utilisé dans {{count}} tableau de bord. Choisissez dans quel tableau de bord le panneau sera affiché :"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "Créer un nouveau panneau de bibliothèque"
     },
     "save": {
       "error": "Erreur lors de l'enregistrement du panneau de bibliothèque : \"{{errorMsg}}\"",
@@ -13645,6 +13607,9 @@
       "message-resource-onprem_one": "Votre instance est limitée à {{count}} ressource synchronisée par référentiel.",
       "message-resource-onprem_other": "Votre instance est limitée à {{count}} ressources synchronisées par référentiel."
     },
+    "read-only-badge": {
+      "text": ""
+    },
     "read-only-local-tooltip": "Cette ressource est en lecture seule et provisionnée via le provisionnement par fichiers. Pour effectuer des modifications, mettez à jour le référentiel connecté. Pour modifier les paramètres, accédez à Administration > Provisionnement > Référentiels.",
     "read-only-remote-tooltip": "Cette ressource est en lecture seule et provisionnée via Git. Pour effectuer des modifications, mettez à jour le référentiel connecté. Pour modifier les paramètres, accédez à Administration > Provisionnement > Référentiels.",
     "recent-jobs": {
@@ -13665,7 +13630,6 @@
     },
     "repository-card": {
       "last-sync": "Dernière synchronisation : {{date}}",
-      "read-only-badge": "Lecture seule",
       "settings": "Paramètres",
       "view": "Afficher"
     },
@@ -16638,9 +16602,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "Aucune variable renommée ou manquante n’a été trouvée."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "Impossible de charger la variable"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "Quand mettre à jour les valeurs de cette variable",

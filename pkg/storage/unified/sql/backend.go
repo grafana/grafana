@@ -208,7 +208,7 @@ func NewStorageBackend(
 
 	if cfg.EnableKVLeases {
 		kvBackendOpts.EnableKVLeases = true
-		kvBackendOpts.Holder = resolveLeaseHolder(cfg)
+		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)
@@ -225,7 +225,11 @@ func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, e
 	})
 }
 
-func resolveLeaseHolder(cfg *setting.Cfg) string {
+// ResolveLeaseHolder builds a stable-per-process identifier used for KV
+// lease ownership. Exported so other unified-storage backend wirings
+// (e.g. the enterprise unified-kv-grpc backend) can produce the same
+// holder format without duplicating the logic.
+func ResolveLeaseHolder(cfg *setting.Cfg) string {
 	id := "unknown"
 	if cfg.InstanceID != "" {
 		id = cfg.InstanceID
