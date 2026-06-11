@@ -1103,9 +1103,6 @@
       },
       "unknown": "Unbekannt"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "Anscheinend haben Sie keine kompatiblen Datenquellen."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluierungen, um Warnungen zu starten",
       "pending-period": "Wartezeit",
@@ -5939,9 +5936,6 @@
       "select-source": "Quelle auswählen",
       "unknown": "Unbekanntes Objekt: {{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "Kein Metadaten-Inspektor"
-    },
     "inspect-stats": {
       "data-title": "Statistiken zu Datenquellen",
       "data-traceids": "IDs nachverfolgen",
@@ -6421,7 +6415,6 @@
       "playlist-next": "Zum nächsten Dashboard",
       "playlist-previous": "Zum vorherigen Dashboard",
       "playlist-stop": "Wiedergabeliste stoppen",
-      "read-only": "Schreibgeschützt",
       "refresh": "Dashboard aktualisieren",
       "save": "Dashboard speichern",
       "save-as-template": {
@@ -6558,28 +6551,6 @@
     },
     "view-panel": {
       "not-found": ""
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Visualisierung ändern",
-      "aria-label-close": "Optionsbereich schließen",
-      "aria-label-show": "Optionsbereich anzeigen",
-      "tooltip-click-to-change-visualization": "Klicken, um Visualisierung zu ändern",
-      "tooltip-close": "Optionsbereich schließen",
-      "tooltip-show": "Optionsbereich anzeigen"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Suche nach ...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Wiederverwendbare Panels, die Sie zwischen mehreren Dashboards teilen können."
-        },
-        "label": {
-          "library-panels": "Bibliotheks-Panels",
-          "suggestions": "Vorschläge",
-          "visualizations": "Visualisierungen"
-        }
-      },
-      "title-close": "Schließen"
     },
     "viz-panel": {
       "delete-panel-text": "Wenn Sie dieses Panel löschen, werden auch alle Abfragen entfernt. Sind Sie sicher, dass Sie fortfahren möchten?",
@@ -9052,9 +9023,6 @@
     "select-aria-label": "Ordnerfilter",
     "select-placeholder": "Nach Ordner filtern"
   },
-  "folder-repo": {
-    "read-only-badge": "Schreibgeschützt"
-  },
   "folders": {
     "api": {
       "anonymous-user": "",
@@ -11032,6 +11000,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "",
       "show-all-series": "... alle {{total}} Elemente anzeigen"
     }
   },
@@ -11053,10 +11022,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "Bibliotheksleiste erstellen"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "Ändern",
-      "confirmText-replace": "Ersetzen"
     },
     "confirm": {
       "delete-panel": "Möchten Sie dieses Panel löschen?"
@@ -11097,9 +11062,6 @@
       "title": "Fenster im Dashboard anzeigen",
       "body_one": "Dieses Fenster wird in {{count}} Dashboard verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
       "body_other": "Dieses Fenster wird in {{count}} Dashboards verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "Neues Bibliotheks-Panel erstellen"
     },
     "save": {
       "error": "Fehler beim Speichern des Bibliotheks-Panels: „{{errorMsg}}“",
@@ -13645,6 +13607,9 @@
       "message-resource-onprem_one": "Ihre Instanz ist auf {{count}} synchronisierte Ressource pro Repository beschränkt.",
       "message-resource-onprem_other": "Ihre Instanz ist auf {{count}} synchronisierte Ressourcen pro Repository beschränkt."
     },
+    "read-only-badge": {
+      "text": ""
+    },
     "read-only-local-tooltip": "Diese Ressource ist schreibgeschützt und wird über die Dateibereitstellung bereitgestellt. Um Änderungen vorzunehmen, aktualisieren Sie bitte das verbundene Repository. Um die Einstellungen zu ändern, gehen Sie zu Administration > Bereitstellung > Repositorys.",
     "read-only-remote-tooltip": "Diese Ressource ist schreibgeschützt und wird über Git bereitgestellt. Um Änderungen vorzunehmen, aktualisieren Sie bitte das verbundene Repository. Um die Einstellungen zu ändern, gehen Sie zu Administration > Bereitstellung > Repositorys.",
     "recent-jobs": {
@@ -13665,7 +13630,6 @@
     },
     "repository-card": {
       "last-sync": "Letzte Synchronisierung: {{date}}",
-      "read-only-badge": "Schreibgeschützt",
       "settings": "Einstellungen",
       "view": "Anzeigen"
     },
@@ -16638,9 +16602,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "Keine umbenannten oder fehlenden Variablen gefunden."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "Variable konnte nicht geladen werden"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "Wann die Werte dieser Variable aktualisiert werden sollen",

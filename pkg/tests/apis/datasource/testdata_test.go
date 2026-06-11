@@ -85,6 +85,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "test", out.GetName())
 	require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
+	require.Equal(t, "1", out.GetResourceVersion())
 
 	t.Run("get", func(t *testing.T) {
 		out, err := client.Get(ctx, "test", metav1.GetOptions{})
@@ -105,7 +106,8 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			Object: map[string]any{
 				"apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
 				"metadata": map[string]any{
-					"name": "test",
+					"name":            "test",
+					"resourceVersion": out.GetResourceVersion(),
 				},
 				"spec": map[string]any{
 					"title":     "test",
@@ -131,6 +133,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		}, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, "test", out.GetName())
+		require.Equal(t, "2", out.GetResourceVersion())
 		require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
 
 		ds, err := datasourceV0alpha1.FromUnstructured(out)

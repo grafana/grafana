@@ -1117,9 +1117,6 @@
       },
       "unknown": "Nieznana"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "Nie masz żadnych zgodnych źródeł danych."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Oceny umożliwiające uruchomienie alertu",
       "pending-period": "Okres oczekiwania",
@@ -6003,9 +6000,6 @@
       "select-source": "Wybierz źródło",
       "unknown": "Nieznany obiekt: {{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "Brak inspektora metadanych"
-    },
     "inspect-stats": {
       "data-title": "Statystyki źródła danych",
       "data-traceids": "Identyfikatory śledzenia",
@@ -6487,7 +6481,6 @@
       "playlist-next": "Przejdź do następnego pulpitu",
       "playlist-previous": "Przejdź do poprzedniego pulpitu",
       "playlist-stop": "Zatrzymaj autoodtwarzanie",
-      "read-only": "Tylko do odczytu",
       "refresh": "Odśwież pulpit",
       "save": "Zapisz pulpit",
       "save-as-template": {
@@ -6624,28 +6617,6 @@
     },
     "view-panel": {
       "not-found": ""
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Zmień wizualizację",
-      "aria-label-close": "Zamknij okienko opcji",
-      "aria-label-show": "Pokaż okienko opcji",
-      "tooltip-click-to-change-visualization": "Kliknij, aby zmienić wizualizację",
-      "tooltip-close": "Zamknij okienko opcji",
-      "tooltip-show": "Pokaż okienko opcji"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Szukaj…",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Panele wielokrotnego użytku, które mogą być współdzielone między wieloma pulpitami."
-        },
-        "label": {
-          "library-panels": "Panele biblioteki",
-          "suggestions": "Sugestie",
-          "visualizations": "Wizualizacje"
-        }
-      },
-      "title-close": "Zamknij"
     },
     "viz-panel": {
       "delete-panel-text": "Usunięcie tego panelu spowoduje również usunięcie wszystkich zapytań. Na pewno chcesz kontynuować?",
@@ -9152,9 +9123,6 @@
     "select-aria-label": "Filtr folderów",
     "select-placeholder": "Filtruj wg folderu"
   },
-  "folder-repo": {
-    "read-only-badge": "Tylko do odczytu"
-  },
   "folders": {
     "api": {
       "anonymous-user": "",
@@ -11156,6 +11124,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "",
       "show-all-series": "…pokaż wszystkie elementy ({{total}})"
     }
   },
@@ -11177,10 +11146,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "Utwórz panel biblioteki"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "Zmień",
-      "confirmText-replace": "Zastąp"
     },
     "confirm": {
       "delete-panel": "Czy chcesz usunąć ten panel?"
@@ -11225,9 +11190,6 @@
       "body_few": "Ten panel jest używany na {{count}} pulpitach. Wybierz pulpit, na którym chcesz wyświetlić panel:",
       "body_many": "Ten panel jest używany na {{count}} pulpitach. Wybierz pulpit, na którym chcesz wyświetlić panel:",
       "body_other": "Ten panel jest używany na {{count}} pulpitu. Wybierz pulpit, na którym chcesz wyświetlić panel:"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "Utwórz nowy panel biblioteki"
     },
     "save": {
       "error": "Błąd podczas zapisywania panelu biblioteki: „{{errorMsg}}”",
@@ -13815,6 +13777,9 @@
       "message-resource-onprem_many": "W Twojej instancji obowiązuje limit {{count}} zsynchronizowanych zasobów na repozytorium.",
       "message-resource-onprem_other": "W Twojej instancji obowiązuje limit {{count}} zsynchronizowanych zasobów na repozytorium."
     },
+    "read-only-badge": {
+      "text": ""
+    },
     "read-only-local-tooltip": "Ten zasób jest tylko do odczytu i jest udostępniany poprzez aprowizację plików. Aby wprowadzić zmiany, zaktualizuj połączone repozytorium. Aby zmodyfikować ustawienia, przejdź do sekcji „Administracja” > „Aprowizacja” > „Repozytoria”.",
     "read-only-remote-tooltip": "Ten zasób jest tylko do odczytu i jest aprowizowany przez usługę Git. Aby wprowadzić zmiany, zaktualizuj połączone repozytorium. Aby zmodyfikować ustawienia, przejdź do sekcji „Administracja” > „Aprowizacja” > „Repozytoria”.",
     "recent-jobs": {
@@ -13835,7 +13800,6 @@
     },
     "repository-card": {
       "last-sync": "Ostatnia synchronizacja: {{date}}",
-      "read-only-badge": "Tylko do odczytu",
       "settings": "Ustawienia",
       "view": "Wyświetl"
     },
@@ -16830,9 +16794,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "Nie znaleziono przemianowanych ani brakujących zmiennych."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "Nie można wczytać zmiennej"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "Kiedy aktualizować wartości tej zmiennej",

@@ -25,7 +25,7 @@ import {
 import { setAlertmanagerChoices, setFolderResponse } from 'app/features/alerting/unified/mocks/server/configure';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { captureRequests, serializeRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/search';
+import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { MANUAL_ROUTING_KEY } from 'app/features/alerting/unified/utils/rule-form';

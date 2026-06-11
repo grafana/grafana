@@ -471,10 +471,10 @@ export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationO
  *
  * **Details:**
  * - flag key: `provisioning.readmes`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.readmes", false, options).value;
+  return useFlag("provisioning.readmes", true, options).value;
 };
 
 /**

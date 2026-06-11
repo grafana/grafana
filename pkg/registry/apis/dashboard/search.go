@@ -637,8 +637,13 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		// hijacks the "name" query param to only search for shared dashboard UIDs
 		names = append(names, dashboardUIDs...)
 	} else if folder != "" {
-		// A root folder UID ("general" or the legacy "") is expanded to match
-		// both root sentinels by the search backend, so pass it through unchanged.
+		// Collapse the canonical "general" root sentinel to the legacy empty
+		// value before querying. A search backend on the same version expands
+		// "" back to both root sentinels, but the backend is deployed separately
+		// and may lag this API server; an un-upgraded backend only matches the
+		// "" that root-parented resources are still indexed with, so normalizing
+		// here keeps root search working across the rollout skew.
+		folder = foldermodel.ToLegacyFolderUID(folder)
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      "folder",
 			Operator: string(selection.Equals),

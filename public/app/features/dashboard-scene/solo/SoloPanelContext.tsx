@@ -112,7 +112,7 @@ export function SoloPanelContextProvider({
   );
 }
 
-export interface SoloPanelNotFoundProps {
+interface SoloPanelNotFoundProps {
   /**
    * Controls panel not found error message
    */
