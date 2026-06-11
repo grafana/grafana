@@ -23,10 +23,10 @@ var _ grafanarest.Storage = (*legacyStorage)(nil)
 // InhibitionRuleService defines the interface for inhibition rule operations
 type InhibitionRuleService interface {
 	GetInhibitionRules(ctx context.Context, orgID int64) ([]v1.InhibitionRule, error)
-	GetInhibitionRule(ctx context.Context, name string, orgID int64) (v1.InhibitionRule, error)
+	GetInhibitionRule(ctx context.Context, uid v1.ResourceUID, orgID int64) (v1.InhibitionRule, error)
 	CreateInhibitionRule(ctx context.Context, rule v1.InhibitionRule, orgID int64) (v1.InhibitionRule, error)
-	UpdateInhibitionRule(ctx context.Context, name string, rule v1.InhibitionRule, version string, orgID int64) (v1.InhibitionRule, error)
-	DeleteInhibitionRule(ctx context.Context, name string, orgID int64, provenance ngmodels.Provenance, version string) error
+	UpdateInhibitionRule(ctx context.Context, rule v1.InhibitionRule, version string, orgID int64) (v1.InhibitionRule, error)
+	DeleteInhibitionRule(ctx context.Context, uid v1.ResourceUID, orgID int64, provenance ngmodels.Provenance, version string) error
 }
 
 type legacyStorage struct {
@@ -77,7 +77,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		return nil, err
 	}
 
-	rule, err := s.service.GetInhibitionRule(ctx, name, info.OrgID)
+	rule, err := s.service.GetInhibitionRule(ctx, v1.ResourceUID(name), info.OrgID)
 	if err != nil {
 		if stderrors.Is(err, ngmodels.ErrInhibitionRuleNotFound) {
 			return nil, errors.NewNotFound(ResourceInfo.GroupResource(), name)
@@ -154,7 +154,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return old, false, err
 	}
 
-	updated, err := s.service.UpdateInhibitionRule(ctx, name, rule, p.ResourceVersion, info.OrgID)
+	updated, err := s.service.UpdateInhibitionRule(ctx, rule, p.ResourceVersion, info.OrgID)
 	if err != nil {
 		return nil, false, err
 	}
@@ -190,7 +190,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if err != nil {
 		return nil, false, errors.NewBadRequest(err.Error())
 	}
-	err = s.service.DeleteInhibitionRule(ctx, p.Name, info.OrgID, prov, version)
+	err = s.service.DeleteInhibitionRule(ctx, v1.ResourceUID(p.Name), info.OrgID, prov, version)
 	return old, false, err // false - will be deleted async
 }
 

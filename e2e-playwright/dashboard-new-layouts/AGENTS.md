@@ -16,7 +16,7 @@ All page objects live in `page-objects/` and are re-exported from `page-objects/
 | `Toolbar`          | `sidebar/Toolbar.ts`          | Icon strip — accessed via `sidebar.toolbar`             | `getButton(name)`, `clickButton(name)`, `getVisibilityToggle()`                                                                                                   |
 | `DashboardOptions` | `sidebar/DashboardOptions.ts` | Dashboard options pane — via `sidebar.dashboardOptions` | `getTitleInput()`, `getDescriptionTextarea()`                                                                                                                     |
 | `PanelOptions`     | `sidebar/PanelOptions.ts`     | Panel options pane — via `sidebar.panelOptions`         | `getTitleInput()`, `getDescriptionTextarea()`, `toggleTransparentBackground()`                                                                                    |
-| `Panel`            | `Panel.ts`                    | A dashboard panel in the edit canvas                    | `getContainerByTitle()`, `getHeaderByTitle()`, `selectByTitle(title \| titles[])`, `deselectAll()`                                                                |
+| `Panel`            | `Panel.ts`                    | A dashboard panel in the edit canvas                    | `getContainerByTitle()`, `getHeaderByTitle()`, `selectByTitle(title \| titles[])`, `deselectAll()`, `clickMenuItem(panelTitle, menuPath[])`                       |
 
 > The show/hide visibility toggle is a **Toolbar** control (`sidebar.toolbar.getVisibilityToggle()`), even though its selector lives under `components.Sidebar.*`. `Toolbar.getButton(name)` resolves buttons by accessible name, scoped to the sidebar container.
 
@@ -141,6 +141,7 @@ await expect(titleInput).toHaveValue(newTitle);
 | `dashboard-mobile-sidebar.spec.ts`                | Migrated    |
 | `dashboard-hide-sidebar.spec.ts`                  | Migrated    |
 | `dashboards-remove-panel.spec.ts`                 | Migrated    |
-| 20 remaining specs                                | Not started |
+| `dashboard-duplicate-panel.spec.ts`               | Migrated    |
+| 19 remaining specs                                | Not started |
 
 See [`_page_objects_strategy.md`](./_page_objects_strategy.md) for the full migration plan.
