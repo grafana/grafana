@@ -43,6 +43,8 @@ interface AlertMessageProps extends HTMLAttributes<HTMLDivElement> {
   onSuggestedDashboardsClick?: () => void;
   onDashboardLinkClicked: () => void;
   extensionLinks?: PluginExtensionLink[];
+  /** Optional custom follow-up message returned by the plugin's health check. When set, replaces the default "Next, you can start to visualize data..." text. */
+  followUpMessage?: string;
 }
 
 const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
@@ -72,12 +74,17 @@ const AlertSuccessMessage = ({
   hasDashboards,
   onSuggestedDashboardsClick,
   onDashboardLinkClicked,
+  followUpMessage,
 }: AlertMessageProps) => {
   const theme = useTheme2();
 
   const hasTitle = Boolean(title);
   const styles = getStyles(theme, hasTitle);
   const canExploreDataSources = contextSrv.hasAccessToExplore();
+
+  if (followUpMessage) {
+    return <div className={styles.content}>{followUpMessage}</div>;
+  }
 
   return (
     <div className={styles.content}>
@@ -209,6 +216,10 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
   const detailsMessage = testingStatus?.details?.message;
   const detailsVerboseMessage = testingStatus?.details?.verboseMessage;
   const errorDetailsLink = testingStatus?.details?.errorDetailsLink;
+  const followUpMessage =
+    typeof testingStatus?.details?.followUpMessage === 'string'
+      ? testingStatus.details.followUpMessage
+      : undefined;
   const onDashboardLinkClicked = () => {
     trackCreateDashboardClicked({
       grafana_version: config.buildInfo.version,
@@ -295,6 +306,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
                           hasDashboards={hasDashboards}
                           onSuggestedDashboardsClick={onSuggestedDashboardsClick}
                           onDashboardLinkClicked={onDashboardLinkClicked}
+                          followUpMessage={followUpMessage}
                         />
                       );
                     }}
@@ -305,6 +317,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
                     exploreUrl={exploreUrl}
                     dataSourceId={dataSource.uid}
                     onDashboardLinkClicked={onDashboardLinkClicked}
+                    followUpMessage={followUpMessage}
                   />
                 )
               ) : null}
