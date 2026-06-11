@@ -292,7 +292,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 							References: resource.ResourceReferences{
 								{
 									Relation: "depends-on",
-									Group:    "dashboards.grafana.app",
+									Group:    "dashboard.grafana.app",
 									Kind:     "LibraryPanel",
 									Name:     "lib-panel-1",
 								},
@@ -312,7 +312,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 							References: resource.ResourceReferences{
 								{
 									Relation: "depends-on",
-									Group:    "dashboards.grafana.app",
+									Group:    "dashboard.grafana.app",
 									Kind:     "LibraryPanel",
 									Name:     "lib-panel-2",
 								},
