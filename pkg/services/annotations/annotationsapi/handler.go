@@ -35,7 +35,6 @@ type ProxyHandler struct {
 	phase  string
 }
 
-// ProvideProxyHandler is the Wire provider.
 func ProvideProxyHandler(cfg *setting.Cfg, userSvc user.Service) (*ProxyHandler, error) {
 	k8sClient, err := NewClient(cfg, userSvc)
 	if err != nil {
@@ -47,12 +46,11 @@ func ProvideProxyHandler(cfg *setting.Cfg, userSvc user.Service) (*ProxyHandler,
 	}, nil
 }
 
-// Enabled reports whether the proxy is active.
 func (h *ProxyHandler) Enabled() bool {
 	return h.client != nil && (h.phase == "proxy-writes" || h.phase == "proxy-all")
 }
 
-// Create sends the annotation to the k8s API server and returns the assigned legacy ID.
+// Create writes to new store and returns the assigned legacy ID.
 func (h *ProxyHandler) Create(ctx context.Context, orgID int64, item *annotations.Item) (int64, error) {
 	obj := itemToObject(item)
 	result, err := h.client.Create(ctx, obj, orgID, v1.CreateOptions{})
@@ -62,8 +60,7 @@ func (h *ProxyHandler) Create(ctx context.Context, orgID int64, item *annotation
 	return legacyIDFromObject(result), nil
 }
 
-// Update replaces the k8s annotation identified by annotationID. Returns ErrNotFound
-// if the annotation is not in the k8s store (caller should fall back to legacy).
+// Update writes to new store. Returns ErrNotFound if the record is not there yet, caller falls back to legacy.
 func (h *ProxyHandler) Update(ctx context.Context, orgID int64, annotationID int64, item *annotations.Item) error {
 	existing, err := h.findByLegacyID(ctx, orgID, annotationID)
 	if err != nil {
@@ -76,8 +73,7 @@ func (h *ProxyHandler) Update(ctx context.Context, orgID int64, annotationID int
 	return err
 }
 
-// Delete removes the k8s annotation identified by annotationID. Returns ErrNotFound
-// if the annotation is not in the k8s store (caller should fall back to legacy).
+// Delete removes from new store. Returns ErrNotFound if the record is not there yet — caller falls back to legacy.
 func (h *ProxyHandler) Delete(ctx context.Context, orgID int64, annotationID int64) error {
 	existing, err := h.findByLegacyID(ctx, orgID, annotationID)
 	if err != nil {
@@ -86,8 +82,7 @@ func (h *ProxyHandler) Delete(ctx context.Context, orgID int64, annotationID int
 	return h.client.Delete(ctx, existing.GetName(), orgID, v1.DeleteOptions{})
 }
 
-// FindByLegacyID returns the k8s annotation object with the given legacy numeric ID.
-// Returns ErrNotFound when absent.
+// FindByLegacyID returns ErrNotFound when absent.
 func (h *ProxyHandler) FindByLegacyID(ctx context.Context, orgID int64, annotationID int64) (*unstructured.Unstructured, error) {
 	return h.findByLegacyID(ctx, orgID, annotationID)
 }
@@ -105,8 +100,6 @@ func (h *ProxyHandler) findByLegacyID(ctx context.Context, orgID int64, annotati
 	return &list.Items[0], nil
 }
 
-// itemToObject converts a legacy annotations.Item to a k8s unstructured object.
-// The Data field is not stored in the k8s annotation spec.
 func itemToObject(item *annotations.Item) *unstructured.Unstructured {
 	spec := map[string]any{
 		"text": item.Text,
@@ -143,7 +136,6 @@ func itemToObject(item *annotations.Item) *unstructured.Unstructured {
 	return obj
 }
 
-// legacyIDFromObject reads the grafana.app/legacyID label. Returns 0 if absent.
 func legacyIDFromObject(obj *unstructured.Unstructured) int64 {
 	labels := obj.GetLabels()
 	if labels == nil {
@@ -207,8 +199,7 @@ func objectToItemDTO(obj *unstructured.Unstructured) *annotations.ItemDTO {
 	return dto
 }
 
-// SpecFromObject extracts spec fields from a k8s unstructured annotation.
-// JSON numbers are float64 after unmarshaling, so we convert explicitly.
+// JSON numbers unmarshal as float64, so we cast to int64 explicitly.
 func SpecFromObject(obj *unstructured.Unstructured) (epoch, epochEnd int64, text string, tags []string) {
 	spec, _ := obj.Object["spec"].(map[string]any)
 	text, _ = spec["text"].(string)

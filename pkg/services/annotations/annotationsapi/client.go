@@ -20,8 +20,7 @@ import (
 
 const annotationServerAudience = "annotation.grafana.app"
 
-// NewClient builds a K8sHandler that calls the standalone annotation API server.
-// Returns nil when APIServerURL is empty (proxy disabled).
+// NewClient returns nil when APIServerURL is empty (proxy disabled).
 func NewClient(cfg *setting.Cfg, userSvc user.Service) (client.K8sHandler, error) {
 	url := strings.TrimSpace(cfg.AnnotationAppPlatform.APIServerURL)
 	if url == "" {
@@ -46,7 +45,7 @@ func NewClient(cfg *setting.Cfg, userSvc user.Service) (client.K8sHandler, error
 		annotationV0.AnnotationKind().GroupVersionResource(),
 		func(_ context.Context) (*rest.Config, error) { return restCfg, nil },
 		userSvc,
-		nil, // no search/stats needed
+		nil,
 	), nil
 }
 
