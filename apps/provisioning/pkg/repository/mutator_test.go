@@ -323,11 +323,12 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 
 func TestCopySecureValues(t *testing.T) {
 	tests := []struct {
-		name       string
-		new        *provisioning.Repository
-		old        *provisioning.Repository
-		wantToken  common.InlineSecureValue
-		wantSecret common.InlineSecureValue
+		name           string
+		new            *provisioning.Repository
+		old            *provisioning.Repository
+		wantToken      common.InlineSecureValue
+		wantSecret     common.InlineSecureValue
+		wantSigningKey common.InlineSecureValue
 	}{
 		{
 			name: "copies token from old to new when new is zero",
@@ -348,6 +349,16 @@ func TestCopySecureValues(t *testing.T) {
 				},
 			},
 			wantSecret: common.InlineSecureValue{Name: "old-secret"},
+		},
+		{
+			name: "copies commit signing key from old to new when new is zero",
+			new:  &provisioning.Repository{},
+			old: &provisioning.Repository{
+				Secure: provisioning.SecureValues{
+					CommitSigningKey: common.InlineSecureValue{Name: "old-signing-key"},
+				},
+			},
+			wantSigningKey: common.InlineSecureValue{Name: "old-signing-key"},
 		},
 		{
 			name: "does not overwrite existing token in new",
@@ -382,6 +393,7 @@ func TestCopySecureValues(t *testing.T) {
 			CopySecureValues(tt.new, tt.old)
 			assert.Equal(t, tt.wantToken, tt.new.Secure.Token)
 			assert.Equal(t, tt.wantSecret, tt.new.Secure.WebhookSecret)
+			assert.Equal(t, tt.wantSigningKey, tt.new.Secure.CommitSigningKey)
 		})
 	}
 }
