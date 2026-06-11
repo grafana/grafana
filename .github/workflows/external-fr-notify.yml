@@ -39,7 +39,7 @@ jobs:
 
       - name: Get vault secrets
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@c2f1df59dba624b3fd509e5181aa8da5217120c0 # main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@259ba21cb3ff07724f331e26d926d655d24b317b # main
         with:
           repo_secrets: |
             SLACK_BOT_TOKEN=community-slack-bot:token
