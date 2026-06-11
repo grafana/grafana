@@ -45,7 +45,8 @@ type User struct {
 
 	IsAdmin          bool
 	IsServiceAccount bool
-	OrgID            int64 `xorm:"org_id"`
+	OrgID            int64  `xorm:"org_id"`
+	OrgRole          string `xorm:"-"`
 
 	Created    time.Time
 	Updated    time.Time
@@ -98,6 +99,7 @@ type UpdateUserCommand struct {
 	OrgID         *int64      `json:"-"`
 	HelpFlags1    *HelpFlags1 `json:"-"`
 	IsProvisioned *bool       `json:"-"`
+	OrgRole       *string     `json:"-"`
 }
 
 type UpdateUserLastSeenAtCommand struct {

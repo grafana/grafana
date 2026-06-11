@@ -9,21 +9,21 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/types"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/util/retry"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
+	"github.com/grafana/authlib/types"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -121,6 +121,11 @@ func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePer
 	}
 	orgID := namespaceInfo.OrgID
 
+	// Resolve subject names with a service identity: the caller is already authorized
+	// to read this resource's permissions but may lack users:read (e.g. an editor),
+	// which would otherwise leave the subject unnamed. Mirrors the legacy SQL join.
+	lookupCtx, _ := identity.WithServiceIdentity(ctx, orgID)
+
 	permissions := resourcePerm.Spec.Permissions
 	dto := make(getResourcePermissionsResponse, 0, len(permissions))
 
@@ -154,7 +159,7 @@ func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePer
 
 		switch kind {
 		case iamv0.ResourcePermissionSpecPermissionKindUser, iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
-			userDetails, err := a.service.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: name})
+			userDetails, err := a.service.userService.GetByUID(lookupCtx, &user.GetUserByUIDQuery{UID: name})
 			if err == nil {
 				permDTO.UserID = userDetails.ID
 				permDTO.UserUID = userDetails.UID
@@ -165,7 +170,7 @@ func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePer
 				permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, orgID)
 			}
 		case iamv0.ResourcePermissionSpecPermissionKindTeam:
-			teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+			teamDetails, err := a.service.teamService.GetTeamByID(lookupCtx, &team.GetTeamByIDQuery{
 				UID:   name,
 				OrgID: orgID,
 			})
@@ -210,6 +215,11 @@ func (a *api) getAPIGroup() string {
 	if a.service.options.APIGroup != "" {
 		return a.service.options.APIGroup
 	}
+	switch a.service.options.Resource {
+	case folderv1.RESOURCE:
+		return folderv1.APIGroup
+	}
+	// ????? This should likely be a setup error -- the assumption is VERY often wrong
 	return fmt.Sprintf("%s.grafana.app", a.service.options.Resource)
 }
 
