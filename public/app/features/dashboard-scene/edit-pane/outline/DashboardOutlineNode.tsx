@@ -70,23 +70,20 @@ export function DashboardOutlineNode({
   const onNodeClicked = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    if (isSelected) {
-      return;
+    if (!isSelected) {
+      if (
+        sceneObject instanceof LinkEdit ||
+        sceneObject instanceof DashboardLinksSet ||
+        sceneObject instanceof DashboardFiltersSet ||
+        sceneObject instanceof SectionFiltersSet
+      ) {
+        // Select directly via editPane.selectObject because these objects are not
+        // in the scene graph, so sceneGraph.findByKey (used by onSelect) can't find them.
+        editPane.selectObject(sceneObject);
+      } else {
+        onSelect?.(e);
+      }
     }
-
-    if (
-      sceneObject instanceof LinkEdit ||
-      sceneObject instanceof DashboardLinksSet ||
-      sceneObject instanceof DashboardFiltersSet ||
-      sceneObject instanceof SectionFiltersSet
-    ) {
-      // Select directly via editPane.selectObject because these objects are not
-      // in the scene graph, so sceneGraph.findByKey (used by onSelect) can't find them.
-      editPane.selectObject(sceneObject);
-      return;
-    }
-
-    onSelect?.(e);
 
     editableElement.scrollIntoView?.();
     DashboardInteractions.outlineItemClicked({ index, depth, isEditing });
