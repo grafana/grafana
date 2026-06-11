@@ -513,6 +513,14 @@ func TestReceiverService_Create(t *testing.T) {
 			expectedErr: models.ErrReceiverInvalidBase,
 		},
 		{
+			name: "create with case-only duplicate of secret field fails",
+			user: writer,
+			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(
+				models.CopyIntegrationWith(slackIntegration, models.IntegrationMuts.AddSetting("TOKEN", "duplicate")),
+			)),
+			expectedErr: models.ErrReceiverInvalidBase,
+		},
+		{
 			name: "create integration with no normal settings should not store nil settings",
 			user: writer,
 			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(
@@ -870,6 +878,15 @@ func TestReceiverService_Update(t *testing.T) {
 			expectedErr: models.ErrReceiverInvalidBase,
 		},
 		{
+			name: "update with case-only duplicate of secret field fails",
+			user: writer,
+			receiver: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				models.CopyIntegrationWith(slackIntegration, im.AddSetting("TOKEN", "duplicate")),
+			)),
+			existing:    new(baseReceiver.Clone()),
+			expectedErr: models.ErrReceiverInvalidBase,
+		},
+		{
 			name:        "receivers with non-Grafana origin are not accepted",
 			user:        writer,
 			receiver:    models.CopyReceiverWith(baseReceiver, rm.WithOrigin(models.ResourceOriginImported)),
@@ -1127,6 +1144,95 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, recv.Name, actual.Name)
 	})
+}
+
+func TestReceiverService_validateNoDuplicateSecretFields(t *testing.T) {
+	// The method does not depend on any ReceiverService state, only on the
+	// integration schema lookup, so a zero value receiver is sufficient.
+	rs := &ReceiverService{}
+
+	cases := []struct {
+		name        string
+		integration string
+		settings    map[string]any
+		wantErr     string // empty means no error expected
+	}{
+		{
+			name:        "canonical secret key passes",
+			integration: "slack",
+			settings:    map[string]any{"recipient": "#chan", "token": "secret"},
+		},
+		{
+			name:        "single non-canonical secret key passes",
+			integration: "slack",
+			settings:    map[string]any{"recipient": "#chan", "TOKEN": "secret"},
+		},
+		{
+			name:        "case-only duplicate at top level rejected",
+			integration: "slack",
+			settings:    map[string]any{"recipient": "#chan", "token": "a", "TOKEN": "b"},
+			wantErr:     "duplicate keys found for secret field token",
+		},
+		{
+			name:        "case-only duplicate at nested path rejected",
+			integration: "webhook",
+			settings: map[string]any{
+				"url": "https://example.com",
+				"hmacConfig": map[string]any{
+					"secret": "a",
+					"SECRET": "b",
+				},
+			},
+			wantErr: "duplicate keys found for secret field hmacConfig.secret",
+		},
+		{
+			name:        "case-only duplicate at parent segment rejected",
+			integration: "webhook",
+			settings: map[string]any{
+				"url":        "https://example.com",
+				"hmacConfig": map[string]any{"secret": "a"},
+				"HMACCONFIG": map[string]any{"secret": "b"},
+			},
+			wantErr: "duplicate keys found for secret field hmacConfig.secret",
+		},
+		{
+			name:        "secret path absent is no-op",
+			integration: "slack",
+			settings:    map[string]any{"recipient": "#chan"},
+		},
+		{
+			name:        "non-map intermediate value does not panic",
+			integration: "webhook",
+			settings: map[string]any{
+				"url":        "https://example.com",
+				"hmacConfig": "not-a-map",
+			},
+		},
+		{
+			name:        "non-string leaf value does not panic",
+			integration: "slack",
+			settings:    map[string]any{"recipient": "#chan", "token": 12345},
+		},
+		{
+			name:        "nil settings is no-op",
+			integration: "slack",
+			settings:    nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			integrationGenerator := models.IntegrationGen(models.IntegrationMuts.WithName(tc.name), models.IntegrationMuts.WithValidConfig(schema.IntegrationType(tc.integration)), models.IntegrationMuts.WithSettings(tc.settings))
+			integration := integrationGenerator()
+			err := rs.validateNoDuplicateSecretFields(integration.Config, integration.Settings)
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tc.wantErr)
+		})
+	}
 }
 
 func TestReceiverServiceAC_Read(t *testing.T) {

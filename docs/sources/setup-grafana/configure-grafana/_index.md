@@ -686,6 +686,16 @@ Optionally, use this option to override the default endpoint address for Applica
 
 Optionally, use this to configure `enableAutoRouteTracking` in Azure Application Insights. Defaults to `true`. For more details, refer to the [Azure documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/app/application-insights-faq#is-there-a-way-to-see-fewer-events-per-transaction-when-i-use-the-application-insights-javascript-sdk)
 
+#### `posthog_token`
+
+If you want to track Grafana usage via PostHog, specify _your_ PostHog project API key here.
+By default this feature is disabled.
+
+#### `posthog_host`
+
+Optional PostHog instance host URL. Defaults to `https://us.i.posthog.com` (PostHog US Cloud).
+Set this if you use PostHog EU Cloud (`https://eu.i.posthog.com`) or a self-hosted instance.
+
 #### `feedback_links_enabled`
 
 Set to `false` to remove all feedback links from the UI. Default is `true`.
@@ -1376,6 +1386,8 @@ clouds_config = `[
 
 Specifies whether Grafana is running in Azure with Managed Identity configured (for example, running in a Azure Virtual Machines instance). Disabled by default, needs to be explicitly enabled.
 
+When enabled, Grafana automatically forwards the Azure platform's managed-identity discovery environment variables (`IDENTITY_ENDPOINT`, `IDENTITY_HEADER`, `IDENTITY_SERVER_THUMBPRINT`, `IMDS_ENDPOINT`, `MSI_ENDPOINT`, `MSI_SECRET`) to the Grafana-owned Azure plugins listed in [`forward_settings_to_plugins`](#forward_settings_to_plugins). This is required for the Azure SDK inside the plugin process to obtain tokens on Azure App Service, Azure Container Apps, Azure Arc, and Service Fabric, where managed-identity endpoints are not reachable via IMDS.
+
 #### `managed_identity_client_id`
 
 The client ID to use for user-assigned managed identity.
@@ -1389,6 +1401,8 @@ Specifies whether Entra ID Workload Identity authentication should be enabled in
 For more documentation on Entra ID Workload Identity, review [Entra ID Workload Identity](https://azure.github.io/azure-workload-identity/docs/) documentation.
 
 Disabled by default, needs to be explicitly enabled.
+
+When enabled, Grafana automatically forwards the workload-identity environment variables injected by the AKS `azure-workload-identity` webhook (`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_FEDERATED_TOKEN_FILE`, `AZURE_AUTHORITY_HOST`) to the Grafana-owned Azure plugins listed in [`forward_settings_to_plugins`](#forward_settings_to_plugins). This is required for the Azure SDK inside the plugin process to perform federated token exchange.
 
 #### `workload_identity_tenant_id`
 

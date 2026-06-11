@@ -13,7 +13,7 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { Spacer } from '../Spacer';
 
-export interface FormValues {
+interface FormValues {
   configJSON: string;
 }
 

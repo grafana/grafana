@@ -1,4 +1,4 @@
-export type ResourceAction = 'create' | 'delete' | 'update';
+type ResourceAction = 'create' | 'delete' | 'update';
 
 type ResourceBranchUrlOptions = {
   baseUrl?: string;

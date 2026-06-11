@@ -34,6 +34,11 @@ type SecureValues struct {
 
 	// Some webhooks (including github) require a secret key value
 	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
+
+	// Private key used to sign commits the repository writes back. The format
+	// is selected by spec.commit.signingMethod. When unset, commits are
+	// unsigned.
+	CommitSigningKey common.InlineSecureValue `json:"commitSigningKey,omitzero,omitempty"`
 }
 
 func (SecureValues) OpenAPIModelName() string {
@@ -41,7 +46,7 @@ func (SecureValues) OpenAPIModelName() string {
 }
 
 func (v SecureValues) IsZero() bool {
-	return v.Token.IsZero() && v.WebhookSecret.IsZero()
+	return v.Token.IsZero() && v.WebhookSecret.IsZero() && v.CommitSigningKey.IsZero()
 }
 
 type LocalRepositoryConfig struct {
@@ -324,7 +329,35 @@ type CommitOptions struct {
 	// SingleResourceMessageTemplate and rendered read-only. The
 	// Grafana-saved-by trailer is always appended regardless of this setting.
 	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+	// Name used as the commit signer. Required for the signing key's identity
+	// to match the commit, which providers need to mark commits as Verified. When
+	// empty, defaults to "Grafana".
+	SignerName string `json:"signerName,omitempty"`
+
+	// Email used as the commit signer. Must match the signing key's identity
+	// and a verified email on the account where the matching public key is
+	// registered. When empty, defaults to "noreply@grafana.com".
+	SignerEmail string `json:"signerEmail,omitempty"`
+
+	// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
+	// When empty, commits are not signed.
+	SigningMethod SigningMethod `json:"signingMethod,omitempty"`
+
+	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
+	// signingMethod is "smime". This is public (not a secret) and is embedded
+	// in the commit signature. Unused for the gpg and ssh formats.
+	SMIMECertificate string `json:"smimeCertificate,omitempty"`
 }
+
+// SigningMethod selects how commits are signed.
+// +enum
+type SigningMethod string
+
+const (
+	GPGSigningMethod   SigningMethod = "gpg"
+	SSHSigningMethod   SigningMethod = "ssh"
+	SMIMESigningMethod SigningMethod = "smime"
+)
 
 func (CommitOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "CommitOptions"
@@ -453,10 +486,6 @@ const (
 	// repository path root become top-level resources and subdirectories become
 	// top-level folders. Ownership is tracked per-resource via manager
 	// annotations rather than by folder containment.
-	//
-	// NOTE: The folderless target is not fully implemented yet. It is gated by
-	// the provisioning `allowed_targets` setting (which defaults to `folder`),
-	// so it must be explicitly enabled, and its behavior may still change.
 	SyncTargetTypeFolderless SyncTargetType = "folderless"
 )
 
