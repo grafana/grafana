@@ -32,6 +32,10 @@ jobs:
               - 'pkg/services/dashboards/**'
               - 'pkg/services/folder/**'
               - 'pkg/services/search/**'
+              - 'pkg/services/stats/**'
+              - 'pkg/services/team/search/**'
+              - 'pkg/infra/leaderelection/kvlease/**'
+              - 'pkg/storage/legacysql/**'
               # client-side unified storage code, runs inside the Grafana process
               - 'pkg/storage/unified/apistore/**'
               - 'pkg/storage/unified/federated/**'

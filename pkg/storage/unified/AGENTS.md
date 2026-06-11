@@ -30,7 +30,7 @@ When run as separate services, the storage/search servers are deployed independe
 
 Because of independent deployment, **any mix of versions must work during rollout**: a new API layer with an old storage/search server, and an old API layer with a new storage/search server.
 
-- **Client side** (runs in Grafana): `apistore/`, `federated/`, the root client files (`client.go`, `client_retry.go`), and API-layer callers in `pkg/registry/apis/`, `pkg/services/apiserver/`, `pkg/services/dashboards/`, `pkg/services/folder/`, `pkg/services/search/`.
+- **Client side** (runs in Grafana): `apistore/`, `federated/`, the root client files (`client.go`, `client_retry.go`), and callers such as `pkg/registry/apis/`, `pkg/services/apiserver/`, `pkg/services/dashboards/`, `pkg/services/folder/`, `pkg/services/search/`, `pkg/services/stats/`, `pkg/services/team/search/`, `pkg/infra/leaderelection/kvlease/`, `pkg/storage/legacysql/`.
 - **Server side** (may be deployed separately): `resource/`, `sql/`, `search/`.
 
 Rules:
@@ -40,3 +40,5 @@ Rules:
 3. **Behavior changes need a fallback.** If the client starts relying on new server behavior (e.g. new query semantics), keep handling the old behavior until the server change is fully rolled out.
 
 The CI check `pr-unified-storage-compatibility.yml` fails PRs that change both the API layer and `pkg/storage/unified/`. If changes truly cannot be separated, add the `no-check-unified-storage-compatibility` label and justify it in the PR description.
+
+The check covers the common client-side callers, not every importer — it is a heuristic, not a proof. The compatibility rules above apply regardless of whether the check fires.
