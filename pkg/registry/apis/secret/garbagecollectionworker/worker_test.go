@@ -234,13 +234,14 @@ func TestProperty(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
 		sut := testutils.Setup(tt)
 		model := testutils.NewModelGsm(nil)
+		allVersions := make([]*secretv1beta1.SecureValue, 0)
 
 		t.Repeat(map[string]func(*rapid.T){
 			// Called before and after every action to check for invariants
 			"": func(t *rapid.T) {
 				// Count how many times each {namespace, name, version} appear to ensure that versions are never reused.
 				count := make(map[string]int)
-				for _, sv := range model.AllVersions {
+				for _, sv := range allVersions {
 					key := fmt.Sprintf("%+v-%+v-%+v", sv.Namespace, sv.Name, sv.Status.Version)
 					count[key] += 1
 					require.Equal(t, 1, count[key], "secure value version use more than once for a namespace and name combination")
@@ -259,6 +260,7 @@ func TestProperty(t *testing.T) {
 				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv))
 				if err == nil {
 					svCopy.UID = createdSv.UID
+					allVersions = append(allVersions, createdSv)
 				}
 				_, modelErr := model.Create(sut.Clock.Now(), svCopy)
 				require.ErrorIs(t, err, modelErr)

@@ -211,13 +211,14 @@ func TestStateMachine(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
 		sut := testutils.Setup(tt)
 		model := testutils.NewModelGsm(sut.ModelSecretsManager)
+		allVersions := make([]*secretv1beta1.SecureValue, 0)
 
 		t.Repeat(map[string]func(*rapid.T){
 			// Called before and after every action to check for invariants
 			"": func(t *rapid.T) {
 				// Count how many times each {namespace, name, version} appear to ensure that versions are never reused.
 				count := make(map[string]int)
-				for _, sv := range model.AllVersions {
+				for _, sv := range allVersions {
 					key := fmt.Sprintf("%+v-%+v-%+v", sv.Namespace, sv.Name, sv.Status.Version)
 					count[key] += 1
 					require.Equal(t, 1, count[key], "secure value version use more than once for a namespace and name combination")
@@ -235,6 +236,7 @@ func TestStateMachine(t *testing.T) {
 				require.Equal(t, modelCreatedSv.Namespace, createdSv.Namespace)
 				require.Equal(t, modelCreatedSv.Name, createdSv.Name)
 				require.Equal(t, modelCreatedSv.Status.Version, createdSv.Status.Version)
+				allVersions = append(allVersions, createdSv)
 			},
 			"createSecureValueWithRef": func(t *rapid.T) {
 				sv := testutils.AnySecureValueWithRefGen.Draw(t, "sv")

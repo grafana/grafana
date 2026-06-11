@@ -36,8 +36,6 @@ type ModelGsm struct {
 	SecureValues        []*ModelSecureValue
 	Keepers             []*ModelKeeper
 	modelSecretsManager *ModelAWSSecretsManager
-	// Append-only list of all secure value versions ever created.
-	AllVersions []*ModelSecureValue
 }
 
 func NewModelGsm(modelSecretsManager *ModelAWSSecretsManager) *ModelGsm {
@@ -102,8 +100,6 @@ func (m *ModelGsm) Create(now time.Time, sv *secretv1beta1.SecureValue) (*secret
 	modelSv.Status.Keeper = keeper.name
 	m.SecureValues = append(m.SecureValues, modelSv)
 	m.SetVersionToActive(modelSv.Namespace, modelSv.Name, modelSv.Status.Version)
-
-	m.AllVersions = append(m.AllVersions, modelSv)
 
 	return modelSv.SecureValue, nil
 }

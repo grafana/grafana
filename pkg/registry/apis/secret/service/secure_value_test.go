@@ -1,10 +1,13 @@
 package service_test
 
 import (
+	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"pgregory.net/rapid"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -547,5 +550,43 @@ func Test_SetAsActive(t *testing.T) {
 		keeperName, _, err = sut.KeeperMetadataStorage.GetActiveKeeperConfig(t.Context(), k2.Namespace)
 		require.NoError(t, err)
 		require.Equal(t, k2.Name, keeperName)
+	})
+}
+
+func TestPropertyCreateSecureValuesConcurrently(tt *testing.T) {
+	tt.Parallel()
+
+	tt.Run("secure value version numbers are never reused even with concurrent requests", func(tt *testing.T) {
+		rapid.Check(tt, func(t *rapid.T) {
+			sut := testutils.Setup(tt)
+			_ = sut
+
+			// Rapid expects generators to be called deterministically, so generate inputs up front
+			inputs := rapid.SliceOfN(testutils.AnySecureValueGen, 1, 10).Draw(t, "secureValuesToCreate")
+
+			wg := sync.WaitGroup{}
+			wg.Add(len(inputs))
+
+			secureValues := make([]*secretv1beta1.SecureValue, len(inputs))
+
+			for i, input := range inputs {
+				go func() {
+					defer wg.Done()
+					sv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(input))
+					require.NoError(t, err)
+					secureValues[i] = sv
+				}()
+			}
+
+			wg.Wait()
+
+			// Count how many time a version is used per namespace + name.
+			count := make(map[string]int)
+			for _, sv := range secureValues {
+				key := fmt.Sprintf("%+v-%+v-%+v", sv.Namespace, sv.Name, sv.Status.Version)
+				count[key] += 1
+				require.LessOrEqual(t, count[key], 1, "secure value version reused")
+			}
+		})
 	})
 }
