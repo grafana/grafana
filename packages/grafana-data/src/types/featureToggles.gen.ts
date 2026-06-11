@@ -214,11 +214,6 @@ export interface FeatureToggles {
   */
   kubernetesLibraryPanels?: boolean;
   /**
-  * Enables usage of the new annotations API client
-  * @default false
-  */
-  kubernetesAnnotationsClient?: boolean;
-  /**
   * Enables k8s short URL API and uses it under the hood when handling legacy /api
   * @default true
   */
@@ -343,6 +338,11 @@ export interface FeatureToggles {
   * @default true
   */
   dashboardNewLayouts?: boolean;
+  /**
+  * Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels
+  * @default false
+  */
+  dashboardNotebookLayout?: boolean;
   /**
   * Enables default layout selector in dashboard settings
   * @default true
@@ -540,7 +540,7 @@ export interface FeatureToggles {
   newDashboardWithFiltersAndGroupBy?: boolean;
   /**
   * Renders ad hoc filters and group by in a single unified control
-  * @default false
+  * @default true
   */
   dashboardUnifiedDrilldownControls?: boolean;
   /**
@@ -920,11 +920,6 @@ export interface FeatureToggles {
   */
   newLogsPanel?: boolean;
   /**
-  * Enables the temporary themes for GrafanaCon
-  * @default true
-  */
-  grafanaconThemes?: boolean;
-  /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   * @default false
   */
@@ -1257,12 +1252,12 @@ export interface FeatureToggles {
   pluginInstallAPISync?: boolean;
   /**
   * Enable style actions (copy/paste) in the panel editor
-  * @default false
+  * @default true
   */
   panelStyleActions?: boolean;
   /**
   * Enable visualization presets
-  * @default false
+  * @default true
   */
   vizPresets?: boolean;
   /**
@@ -1272,7 +1267,7 @@ export interface FeatureToggles {
   nestedFramesFieldOverrides?: boolean;
   /**
   * Enable faceted labels filter for series visibility in the legend
-  * @default false
+  * @default true
   */
   vizLegendFacetedFilter?: boolean;
   /**
@@ -1411,11 +1406,6 @@ export interface FeatureToggles {
   */
   queryEditorNext?: boolean;
   /**
-  * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
-  * @default false
-  */
-  queryEditorNextMultiSelect?: boolean;
-  /**
   * Enables team APIs in the app platform
   * @default false
   */
@@ -1466,8 +1456,8 @@ export interface FeatureToggles {
   */
   kubernetesUsersRedirect?: boolean;
   /**
-  * Enables the ability to create multiple alerting policies
-  * @default false
+  * Enables the ability to create multiple notification policies in alerting
+  * @default true
   */
   alertingMultiplePolicies?: boolean;
   /**
@@ -1561,11 +1551,6 @@ export interface FeatureToggles {
   */
   inlineLogDetailsNoScrolls?: boolean;
   /**
-  * Enables the new colorblind-friendly themes
-  * @default false
-  */
-  colorblindThemes?: boolean;
-  /**
   * Enables fine-grained Y-axis tick options beyond the auto-ticks
   * @default false
   */
@@ -1612,7 +1597,7 @@ export interface FeatureToggles {
   tracesDrilldownTimeSeeker?: boolean;
   /**
   * Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176
-  * @default false
+  * @default true
   */
   clearPreviousFieldValues?: boolean;
   /**
@@ -1625,11 +1610,6 @@ export interface FeatureToggles {
   * @default false
   */
   cacheConfigUnifiedStorageMigration?: boolean;
-  /**
-  * Boots the frontend using the boot.js script built from TS instead of the embedded boot script
-  * @default false
-  */
-  compiledBootScript?: boolean;
   /**
   * Enables validation on the InfluxDB data source configuration page
   * @default false

@@ -181,11 +181,6 @@ export function getLanguage() {
 export function getResolvedLanguage() {
   return getI18nInstance()?.resolvedLanguage || DEFAULT_LANGUAGE;
 }
-
-export function getNamespaces() {
-  return getI18nInstance()?.options.ns;
-}
-
 export async function changeLanguage(language?: string) {
   const validLanguage = VALID_LANGUAGES.find((lang) => lang.code === language)?.code ?? DEFAULT_LANGUAGE;
   await getI18nInstance().changeLanguage(validLanguage);

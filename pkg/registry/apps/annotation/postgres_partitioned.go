@@ -127,7 +127,7 @@ func (s *PostgreSQLStore) Close() error {
 func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error) {
 	query := `
 		SELECT namespace, name, time, time_end, dashboard_uid, panel_id,
-		       text, tags, scopes, created_by, created_at
+		       text, tags, scopes, created_by, created_at, legacy_id
 		FROM annotations
 		WHERE namespace = $1 AND name = $2
 		LIMIT 1
@@ -143,10 +143,11 @@ func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*ann
 		panelID           *int64
 		tags, scopes      []string
 		createdBy         *string
+		legacyID          *int64
 	)
 
 	err := row.Scan(&ns, &n, &timeMs, &timeEnd, &dashboardUID, &panelID,
-		&text, &tags, &scopes, &createdBy, &createdAt)
+		&text, &tags, &scopes, &createdBy, &createdAt, &legacyID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
@@ -154,7 +155,7 @@ func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*ann
 		return nil, fmt.Errorf("failed to scan annotation: %w", err)
 	}
 
-	return rowToAnnotation(ns, n, timeMs, timeEnd, dashboardUID, panelID, text, tags, scopes, createdBy, createdAt), nil
+	return rowToAnnotation(ns, n, timeMs, timeEnd, dashboardUID, panelID, text, tags, scopes, createdBy, createdAt, legacyID), nil
 }
 
 // Create creates a new annotation
@@ -180,15 +181,20 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 	createdBy := anno.GetCreatedBy()
 	createdAt := time.Now().UTC().UnixMilli()
 
+	var legacyID *int64
+	if id := getLegacyID(anno); id > 0 {
+		legacyID = &id
+	}
+
 	query := `
 		INSERT INTO annotations
-		(namespace, name, time, time_end, dashboard_uid, panel_id, text, tags, scopes, created_by, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		(namespace, name, time, time_end, dashboard_uid, panel_id, text, tags, scopes, created_by, created_at, legacy_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
 
 	_, err := s.pool.Exec(ctx, query,
 		namespace, name, timeMs, timeEnd, dashboardUID, panelID,
-		text, pq.Array(tags), pq.Array(scopes), createdBy, createdAt,
+		text, pq.Array(tags), pq.Array(scopes), createdBy, createdAt, legacyID,
 	)
 	if err != nil {
 		// Check for unique constraint violation
@@ -283,15 +289,16 @@ func (s *PostgreSQLStore) List(ctx context.Context, namespace string, opts ListO
 			panelID           *int64
 			tags, scopes      []string
 			createdBy         *string
+			legacyID          *int64
 		)
 
 		err := rows.Scan(&ns, &n, &timeMs, &timeEnd, &dashboardUID, &panelID,
-			&text, &tags, &scopes, &createdBy, &createdAt)
+			&text, &tags, &scopes, &createdBy, &createdAt, &legacyID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan annotation row: %w", err)
 		}
 
-		results = append(results, *rowToAnnotation(ns, n, timeMs, timeEnd, dashboardUID, panelID, text, tags, scopes, createdBy, createdAt))
+		results = append(results, *rowToAnnotation(ns, n, timeMs, timeEnd, dashboardUID, panelID, text, tags, scopes, createdBy, createdAt, legacyID))
 	}
 
 	if err := rows.Err(); err != nil {
@@ -382,10 +389,17 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 		argNum++
 	}
 
+	// Deprecated internal ID filter
+	if opts.LegacyID > 0 {
+		conditions = append(conditions, fmt.Sprintf("legacy_id = $%d", argNum))
+		args = append(args, opts.LegacyID)
+		argNum++
+	}
+
 	// Construct query
 	query := `
 		SELECT namespace, name, time, time_end, dashboard_uid, panel_id,
-		       text, tags, scopes, created_by, created_at
+		       text, tags, scopes, created_by, created_at, legacy_id
 		FROM annotations
 		WHERE ` + strings.Join(conditions, " AND ") + `
 		ORDER BY time DESC, name
@@ -401,7 +415,7 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 // rowToAnnotation converts database row values to an Annotation object
 func rowToAnnotation(namespace, name string, timeMs int64, timeEnd *int64,
 	dashboardUID *string, panelID *int64, text string, tags, scopes []string,
-	createdBy *string, createdAt int64) *annotationV0.Annotation {
+	createdBy *string, createdAt int64, legacyID *int64) *annotationV0.Annotation {
 	anno := &annotationV0.Annotation{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -426,6 +440,11 @@ func rowToAnnotation(namespace, name string, timeMs int64, timeEnd *int64,
 
 	// Set creation timestamp
 	anno.CreationTimestamp = metav1.NewTime(time.UnixMilli(createdAt))
+
+	// Populate the legacy ID label if the column has a value
+	if legacyID != nil && *legacyID != 0 {
+		setLegacyID(anno, *legacyID)
+	}
 
 	return anno
 }

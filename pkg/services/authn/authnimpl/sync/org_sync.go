@@ -11,10 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature"
 )
+
+var ofClient = openfeature.NewDefaultClient()
 
 func ProvideOrgSync(userService user.Service, orgService org.Service, accessControl accesscontrol.Service, cfg *setting.Cfg, tracer tracing.Tracer) *OrgSync {
 	return &OrgSync{userService, orgService, accessControl, cfg, log.New("org.sync"), tracer}
@@ -32,6 +36,13 @@ type OrgSync struct {
 func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
 	ctx, span := s.tracer.Start(ctx, "org.sync.SyncOrgRolesHook")
 	defer span.End()
+
+	// Single-org RBAC + K8s users redirect: multi-org sync is meaningless and
+	// the K8s users API doesn't track per-user org membership.
+	if s.cfg.RBAC.SingleOrganization && ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		s.log.FromContext(ctx).Debug("Skipping org sync: rbac.single_organization and kubernetesUsersRedirect are enabled", "id", id.ID, "login", id.Login)
+		return nil
+	}
 
 	if !id.ClientParams.SyncOrgRoles {
 		return nil

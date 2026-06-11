@@ -261,6 +261,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Index snapshot settings
 	cfg.IndexSnapshotEnabled = section.Key("index_snapshot_enabled").MustBool(false)
 	cfg.IndexSnapshotBucketURL = section.Key("index_snapshot_bucket_url").String()
+	cfg.IndexSnapshotStorageKV = section.Key("index_snapshot_storage_kv").MustBool(false)
+	cfg.IndexSnapshotKVChunkConcurrency = section.Key("index_snapshot_kv_chunk_concurrency").MustInt(1)
 	cfg.IndexSnapshotThreshold = section.Key("index_snapshot_threshold").MustInt(5000)
 	if cfg.IndexSnapshotThreshold < cfg.IndexFileThreshold {
 		cfg.Logger.Warn("index_snapshot_threshold is smaller than index_file_threshold, overriding", "configured", cfg.IndexSnapshotThreshold, "index_file_threshold", cfg.IndexFileThreshold)
@@ -273,6 +275,16 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	}
 	cfg.IndexSnapshotCleanupGracePeriod = section.Key("index_snapshot_cleanup_grace_period").MustDuration(30 * time.Minute)
 
+	// Periodic on-disk cleanup of leftover bleve index folders.
+	// disk_index_cleanup_interval = 0 disables the loop (default).
+	cfg.DiskIndexCleanupInterval = section.Key("disk_index_cleanup_interval").MustDuration(0)
+	cfg.DiskIndexCleanupGracePeriod = section.Key("disk_index_cleanup_grace_period").MustDuration(time.Hour)
+	// disk_index_cleanup_unopened_grace_period only applies to the newest on-disk
+	// index for a resource this pod owns but has not opened in this process.
+	// Keeping it longer lets a later BuildIndex for that resource reuse the
+	// existing index instead of rebuilding from scratch.
+	cfg.DiskIndexCleanupUnopenedGracePeriod = section.Key("disk_index_cleanup_unopened_grace_period").MustDuration(24 * time.Hour)
+
 	// Vector storage (separate pgvector database)
 	vectorSection := cfg.Raw.Section("database_vector")
 	cfg.VectorDBHost = vectorSection.Key("db_host").String()
@@ -283,6 +295,13 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.VectorDBSSLMode = vectorSection.Key("db_sslmode").MustString("disable")
 	cfg.VectorPromotionThreshold = vectorSection.Key("promotion_threshold").MustInt(10000)
 	cfg.VectorPromoterInterval = vectorSection.Key("promoter_interval").MustDuration(0) // zero means disabled
+
+	// Per-tenant query-embedding cache + rate limit.
+	cfg.VectorQueryCacheEnabled = vectorSection.Key("query_cache_enabled").MustBool(true)
+	cfg.VectorQueryCacheMaxPerTenant = vectorSection.Key("query_cache_max_per_tenant").MustInt(1000)
+	cfg.VectorRateLimitEnabled = vectorSection.Key("rate_limit_enabled").MustBool(true)
+	cfg.VectorRateLimitPerTenant = vectorSection.Key("rate_limit_per_tenant").MustInt(60)
+	cfg.VectorRateLimitWindow = vectorSection.Key("rate_limit_window").MustDuration(time.Minute)
 
 	// Embedding provider for the VectorSearch RPC. Empty = disabled (RPC
 	// returns Unimplemented). When set, the matching provider's connection

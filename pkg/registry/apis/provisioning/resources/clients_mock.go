@@ -280,6 +280,53 @@ func (_c *MockResourceClients_User_Call) RunAndReturn(run func(context.Context) 
 	return _c
 }
 
+// SupportedResources provides a mock function with given fields:
+func (_m *MockResourceClients) SupportedResources() []SupportedResource {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for SupportedResources")
+	}
+
+	var r0 []SupportedResource
+	if rf, ok := ret.Get(0).(func() []SupportedResource); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]SupportedResource)
+		}
+	}
+
+	return r0
+}
+
+// MockResourceClients_SupportedResources_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SupportedResources'
+type MockResourceClients_SupportedResources_Call struct {
+	*mock.Call
+}
+
+// SupportedResources is a helper method to define mock.On call
+func (_e *MockResourceClients_Expecter) SupportedResources() *MockResourceClients_SupportedResources_Call {
+	return &MockResourceClients_SupportedResources_Call{Call: _e.mock.On("SupportedResources")}
+}
+
+func (_c *MockResourceClients_SupportedResources_Call) Run(run func()) *MockResourceClients_SupportedResources_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockResourceClients_SupportedResources_Call) Return(_a0 []SupportedResource) *MockResourceClients_SupportedResources_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockResourceClients_SupportedResources_Call) RunAndReturn(run func() []SupportedResource) *MockResourceClients_SupportedResources_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockResourceClients creates a new instance of MockResourceClients. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockResourceClients(t interface {

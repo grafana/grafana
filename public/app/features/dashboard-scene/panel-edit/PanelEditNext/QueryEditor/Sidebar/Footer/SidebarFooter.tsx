@@ -1,5 +1,4 @@
 import { css, keyframes } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -13,7 +12,7 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from '../../QueryEditorContext';
-import { BulkActionsBar, hasActionableSelection } from '../BulkActionsBar';
+import { BulkActionsBar, getBulkActionsVisibility } from '../BulkActionsBar';
 
 export function SidebarFooter() {
   const { queries } = useQueryRunnerContext();
@@ -21,7 +20,6 @@ export function SidebarFooter() {
   const { alertRules } = useAlertingContext();
   const { cardType, setMultiSelectMode, selectedQueryRefIds, selectedTransformationIds, multiSelectMode } =
     useQueryEditorUIContext();
-  const isMultiSelectEnabled = useBooleanFlagValue('queryEditorNextMultiSelect', false);
   const styles = useStyles2(getStyles);
 
   const isAlertView = cardType === QueryEditorType.Alert;
@@ -32,16 +30,26 @@ export function SidebarFooter() {
   const visible = total - hidden;
 
   const suffixText = isAlertView
-    ? t('query-editor-next.sidebar.footer-items-alert', '{{count}} alerts', { count: total })
-    : t('query-editor-next.sidebar.footer-items', '{{count}} items', { count: total });
+    ? t('query-editor-next.sidebar.footer-items-alert', '', {
+        count: total,
+        defaultValue_one: '{{count}} alerts',
+        defaultValue_other: '{{count}} alerts',
+      })
+    : t('query-editor-next.sidebar.footer-items', '', {
+        count: total,
+        defaultValue_one: '{{count}} items',
+        defaultValue_other: '{{count}} items',
+      });
 
   // Render the bar OR the counts — never both. Keeping both in the DOM at
   // once would leave the obscured count Stack (incl. the Select… button) in
   // tab order and screen-reader output, even though the overlay covers it.
-  const hasBulkActions =
-    !isAlertView &&
-    (hasActionableSelection(selectedQueryRefIds.length, multiSelectMode) ||
-      hasActionableSelection(selectedTransformationIds.length, multiSelectMode));
+  const { shouldRender } = getBulkActionsVisibility({
+    selectedQueryCount: selectedQueryRefIds.length,
+    selectedTransformationCount: selectedTransformationIds.length,
+    multiSelectMode,
+  });
+  const hasBulkActions = !isAlertView && shouldRender;
 
   const handleSelectClick = () => {
     setMultiSelectMode(true);
@@ -58,7 +66,7 @@ export function SidebarFooter() {
             <Text weight="medium" variant="bodySmall">
               {suffixText}
             </Text>
-            {!isAlertView && isMultiSelectEnabled && (
+            {!isAlertView && (
               <Button
                 fill="text"
                 size="sm"

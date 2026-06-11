@@ -355,6 +355,8 @@ export const MOCK_SILENCE_ID_EXISTING = 'f209e273-0e4e-434f-9f66-e72f092025a2';
 export const MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID = '5f7d08cd-ac62-432e-8449-8c20c95c19b6';
 export const MOCK_SILENCE_ID_EXPIRED = '145884a8-ee20-4864-9f84-661305fb7d82';
 export const MOCK_SILENCE_ID_LACKING_PERMISSIONS = '31063317-f0d2-4d98-baf3-ec9febc1fa83';
+export const MOCK_SILENCE_ID_DANGLING_ALERT_RULE = '8d2c3d6a-3e2c-4d44-9b8e-5e5fa3ab2f9c';
+export const MOCK_DANGLING_ALERT_RULE_UID = 'deleted-rule-uid-0001';
 
 export const mockSilences = [
   mockSilence({ id: MOCK_SILENCE_ID_EXISTING, comment: 'Happy path silence' }),
@@ -368,6 +370,7 @@ export const mockSilences = [
     matchers: parsePromQLStyleMatcherLooseSafe(`__alert_rule_uid__=${MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID}`),
     comment: 'Silence with alert rule UID matcher',
     metadata: {
+      rule_uid: MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID,
       rule_title: MOCK_GRAFANA_ALERT_RULE_TITLE,
     },
   }),
@@ -381,6 +384,14 @@ export const mockSilences = [
     id: MOCK_SILENCE_ID_EXPIRED,
     status: { state: SilenceState.Expired },
     comment: 'Silence which is expired',
+  }),
+  mockSilence({
+    id: MOCK_SILENCE_ID_DANGLING_ALERT_RULE,
+    matchers: parsePromQLStyleMatcherLooseSafe(`__alert_rule_uid__=${MOCK_DANGLING_ALERT_RULE_UID}`),
+    comment: 'Silence pointing to a deleted alert rule',
+    metadata: {
+      rule_uid: MOCK_DANGLING_ALERT_RULE_UID,
+    },
   }),
 ];
 

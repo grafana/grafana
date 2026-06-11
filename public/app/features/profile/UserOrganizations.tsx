@@ -5,7 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, LoadingPlaceholder, ScrollContainer, Text } from '@grafana/ui';
 import { type UserDTO, type UserOrg } from 'app/types/user';
 
-export interface Props {
+interface Props {
   user: UserDTO | null;
   orgs: UserOrg[];
   isLoading: boolean;
