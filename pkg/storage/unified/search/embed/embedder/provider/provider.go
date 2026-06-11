@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/prometheus/client_golang/prometheus"
@@ -72,8 +73,15 @@ func newVertexEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*em
 }
 
 func newBedrockEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*embedder.Embedder, error) {
+	// Adaptive retry adds a client-side rate limiter that backs off request
+	// issuance when Bedrock returns ThrottlingException (429), which the
+	// default standard retryer does not; combined with a higher attempt
+	// ceiling it lets transient token-quota throttling recover instead of
+	// failing the embed at the default 3 attempts.
 	awsCfg, err := awsconfig.LoadDefaultConfig(context.Background(),
 		awsconfig.WithRegion(cfg.BedrockRegion),
+		awsconfig.WithRetryMode(aws.RetryModeAdaptive),
+		awsconfig.WithRetryMaxAttempts(cfg.BedrockMaxAttempts),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("aws config: %w", err)
@@ -81,7 +89,7 @@ func newBedrockEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*e
 	rt := bedrockruntime.NewFromConfig(awsCfg)
 	client := bedrock.NewClient(rt)
 	model := "bedrock/" + cfg.BedrockModel
-	dense := bedrock.NewDenseEmbedder(client, cfg.BedrockModel, cfg.BedrockDimensions, cfg.VertexBatchSize)
+	dense := bedrock.NewDenseEmbedder(client, cfg.BedrockModel, cfg.BedrockDimensions, cfg.BedrockBatchSize)
 	return &embedder.Embedder{
 		TextEmbedder: embedder.Instrument(dense, model, duration),
 		Model:        model,
