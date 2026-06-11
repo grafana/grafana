@@ -129,7 +129,7 @@ describe('FiringAlertsCard', () => {
     render(<FiringAlertsCard />);
 
     await waitFor(() => {
-      expect(screen.getByText('No firing alerts.')).toBeInTheDocument();
+      expect(screen.getByText('You have no firing alerts.')).toBeInTheDocument();
     });
   });
 });

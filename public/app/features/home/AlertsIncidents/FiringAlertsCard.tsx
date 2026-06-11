@@ -169,7 +169,7 @@ function FiringAlertsCardInner() {
             <Text color="secondary">
               {hasTeams && !showAllAlerts
                 ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
-                : t('home.firing-alerts-card.empty', 'No firing alerts.')}
+                : t('home.firing-alerts-card.empty', 'You have no firing alerts.')}
             </Text>
             {hasTeams && !showAllAlerts && (
               <Button variant="secondary" size="sm" fill="text" onClick={() => setShowAllAlerts(true)}>

@@ -10762,7 +10762,7 @@
     "firing-alerts-card": {
       "critical-count_one": "{{count}} critical",
       "critical-count_other": "{{count}} critical",
-      "empty": "No firing alerts.",
+      "empty": "You have no firing alerts.",
       "empty-teams": "No firing alerts for your teams.",
       "error-title": "Could not load firing alerts",
       "high-count_one": "{{count}} high",
