@@ -73,7 +73,7 @@ function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchFilter: 
   });
 }
 
-export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => {
+const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => {
   let sortFunc;
 
   if (sortOrder === SortOrder.Ascending) {

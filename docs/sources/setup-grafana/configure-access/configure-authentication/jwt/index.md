@@ -200,6 +200,28 @@ If the JWT token's header specifies a `kid` (Key ID), then the Key ID must be se
 key_id = my-key-id
 ```
 
+### Verify token using an inline key or key set
+
+When you can't place a file on disk, put the key material directly in the configuration. This is useful when you provision configuration to a managed instance. Both options use the same content as their file-based counterparts, base64-encoded so it fits on one line.
+
+Inline a single PEM-encoded public key instead of `key_file`:
+
+```ini
+key_value = <base64-encoded PEM key>
+```
+
+Inline a JWKS document instead of `jwk_set_file`:
+
+```ini
+jwk_set_value = <base64-encoded JWKS JSON>
+```
+
+To generate a value from an existing file, run `base64 < key.pem | tr -d '\n'`. The `key_id` option applies to `key_value` just as it does to `key_file`.
+
+{{< admonition type="note" >}}
+Configure the key set with exactly one of `key_file`, `key_value`, `jwk_set_file`, `jwk_set_value`, or `jwk_set_url`. Setting more than one is an error.
+{{< /admonition >}}
+
 ## Validate claims
 
 By default, only `"exp"`, `"nbf"` and `"iat"` claims are validated.

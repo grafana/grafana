@@ -37,16 +37,6 @@ export const isStreamingResponseData = <T extends StreamingResponseDataType>(
   type: T
 ): responseData is StreamingResponseData<T> => 'type' in responseData && responseData.type === type;
 
-const AllStreamingResponseDataTypes = Object.values(StreamingResponseDataType);
-
-/**
- * @alpha -- experimental
- */
-export const isAnyStreamingResponseData = (
-  responseData: DataQueryResponseData
-): responseData is StreamingResponseData =>
-  'type' in responseData && AllStreamingResponseDataTypes.includes(responseData.type);
-
 /**
  * @alpha -- experimental
  */

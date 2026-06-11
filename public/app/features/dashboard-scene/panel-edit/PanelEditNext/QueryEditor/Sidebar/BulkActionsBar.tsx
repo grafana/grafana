@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { type ReactNode, useState } from 'react';
 import { useMeasure } from 'react-use';
 
@@ -204,11 +204,6 @@ function BulkTransformationActions({ barWidth }: BulkTransformationActionsProps)
   );
 }
 
-interface BulkActionsBarProps {
-  /** Optional class for layout/animation overrides applied by the consumer. */
-  className?: string;
-}
-
 interface BulkActionsVisibilityOptions {
   selectedQueryCount: number;
   selectedTransformationCount: number;
@@ -238,7 +233,7 @@ export function getBulkActionsVisibility({
   };
 }
 
-export function BulkActionsBar({ className }: BulkActionsBarProps = {}) {
+export function BulkActionsBar() {
   const styles = useStyles2(getStyles);
   const [barRef, { width: barWidth }] = useMeasure<HTMLDivElement>();
   const { selectedQueryRefIds, selectedTransformationIds, setMultiSelectMode, multiSelectMode } =
@@ -262,7 +257,7 @@ export function BulkActionsBar({ className }: BulkActionsBarProps = {}) {
   return (
     <div
       ref={barRef}
-      className={cx(styles.bar, className)}
+      className={styles.bar}
       role="toolbar"
       aria-label={t('query-editor-next.bulk-actions.toolbar-label', 'Bulk actions')}
     >

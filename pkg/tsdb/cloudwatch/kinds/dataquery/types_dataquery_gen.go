@@ -334,6 +334,8 @@ type CloudWatchLogsQuery struct {
 	LogGroups []LogGroup `json:"logGroups,omitempty"`
 	// @deprecated use logGroups
 	LogGroupNames []string `json:"logGroupNames,omitempty"`
+	// Data sources to query
+	LogDataSources []LogDataSource `json:"logDataSources,omitempty"`
 	// Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
 	QueryLanguage *LogsQueryLanguage `json:"queryLanguage,omitempty"`
 	// Log group selection scope - determines how log groups are selected for the query
@@ -379,6 +381,18 @@ type LogGroup struct {
 // NewLogGroup creates a new LogGroup object.
 func NewLogGroup() *LogGroup {
 	return &LogGroup{}
+}
+
+type LogDataSource struct {
+	// Name of the data source
+	Name string `json:"name"`
+	// Type of the data source
+	Type string `json:"type"`
+}
+
+// NewLogDataSource creates a new LogDataSource object.
+func NewLogDataSource() *LogDataSource {
+	return &LogDataSource{}
 }
 
 // Shape of a Cloudwatch Log Anomalies query

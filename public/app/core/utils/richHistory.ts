@@ -242,7 +242,7 @@ export function createDateStringFromTs(ts: number) {
   });
 }
 
-export function getQueryDisplayText(query: DataQuery): string {
+function getQueryDisplayText(query: DataQuery): string {
   /* If datasource doesn't have getQueryDisplayText, create query display text by
    * stringifying query that was stripped of key, refId and datasource for nicer
    * formatting and improved readability
@@ -298,7 +298,7 @@ export function createDatasourcesList() {
     });
 }
 
-export function notEmptyQuery(query: DataQuery) {
+function notEmptyQuery(query: DataQuery) {
   /* Check if query has any other properties besides key, refId and datasource.
    * If not, then we consider it empty query.
    */
