@@ -57,7 +57,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
       tables: () =>
         refIds.map((refId) => ({
           label: refId.label || refId.value || '',
-          insertText: refId.label || refId.value || '',
+          insertText: refId.value || refId.label || '',
           kind: 'table',
           boost: 99,
         })),

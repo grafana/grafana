@@ -198,7 +198,7 @@ describe('SqlExpr', () => {
     setTestFlags({ sqlExpressionsCodeMirror: true });
 
     const onChange = jest.fn();
-    const refIds = [{ value: 'A' }];
+    const refIds = [{ label: 'Query A', value: 'A' }];
     const query = { refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery;
 
     render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
@@ -209,6 +209,10 @@ describe('SqlExpr', () => {
         completionProvider: expect.any(Object),
       })
     );
+
+    expect(SqlEditorMock.mock.calls[0][0].completionProvider?.tables?.()).toEqual([
+      expect.objectContaining({ label: 'Query A', insertText: 'A' }),
+    ]);
   });
 
   describe('autocomplete metadata', () => {
