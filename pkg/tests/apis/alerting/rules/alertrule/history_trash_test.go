@@ -325,8 +325,9 @@ func TestIntegrationListTrash(t *testing.T) {
 				},
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
-				Title:  "cross-type-recording-trash",
-				Metric: v0alpha1.RecordingRuleMetricName(recRule.Record.Metric),
+				Title:               "cross-type-recording-trash",
+				Metric:              v0alpha1.RecordingRuleMetricName(recRule.Record.Metric),
+				TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(recRule.Record.TargetDatasourceUID),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     new("query"),
