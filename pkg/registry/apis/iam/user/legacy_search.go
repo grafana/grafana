@@ -34,7 +34,7 @@ var (
 	fieldEmail                                      = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_EMAIL)
 	fieldLastSeenAt                                 = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LAST_SEEN_AT)
 	fieldRole                                       = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_ROLE)
-	fieldDisabled                                   = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_IS_DISABLED)
+	fieldDisabled                                   = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_DISABLED)
 	wildcardsMatcher                                = regexp.MustCompile(`[\*\?\\]`)
 
 	userSortFieldMapping = map[string]string{

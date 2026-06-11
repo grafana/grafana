@@ -408,7 +408,7 @@ func TestParseResults(t *testing.T) {
 		{Name: builders.USER_LOGIN},
 		{Name: builders.USER_LAST_SEEN_AT},
 		{Name: builders.USER_ROLE},
-		{Name: builders.USER_IS_DISABLED},
+		{Name: builders.USER_DISABLED},
 		{Name: resource.SEARCH_FIELD_CREATED},
 		{Name: resource.SEARCH_FIELD_LEGACY_ID},
 	}

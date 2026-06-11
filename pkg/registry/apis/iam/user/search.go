@@ -484,7 +484,7 @@ func parseUserHit(row *resourcepb.ResourceTableRow, colIdx map[string]int) iamv0
 		InternalId: asInt64(resource.SEARCH_FIELD_LEGACY_ID),
 	}
 
-	if b := cell(builders.USER_IS_DISABLED); len(b) > 0 {
+	if b := cell(builders.USER_DISABLED); len(b) > 0 {
 		hit.Disabled = b[0] == 1
 	}
 	if b := cell(builders.USER_LAST_SEEN_AT); len(b) == 8 {
