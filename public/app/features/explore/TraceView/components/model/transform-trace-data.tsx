@@ -74,7 +74,11 @@ function extractSpanAggregation(tags: TraceKeyValuePair[]): SpanAggregation | un
   ] as const;
   for (const [key, field] of numericFields) {
     if (byKey.has(key)) {
-      const value = Number(byKey.get(key));
+      // Accept real numbers and numeric strings only. Number() would coerce null/boolean/[]/''
+      // to a misleading 0 or 1, so restrict the input before coercing rather than relying on a
+      // NaN check alone (the tag value type is `any`).
+      const raw = byKey.get(key);
+      const value = typeof raw === 'number' ? raw : typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : NaN;
       if (!Number.isNaN(value)) {
         aggregation[field] = value;
       }

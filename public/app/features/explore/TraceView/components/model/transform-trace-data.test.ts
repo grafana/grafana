@@ -317,6 +317,24 @@ describe('transformTraceData() pruned span detection', () => {
     expect(agg.durationMinNs).toBe(4_000_000);
   });
 
+  // Number() coerces null/boolean/empty-string to a misleading 0 or 1, which a bare NaN check
+  // would let through; the type guard must reject these. (Copilot review, 2026-06-11)
+  it.each([
+    ['null', null],
+    ['boolean false', false],
+    ['boolean true', true],
+    ['empty string', ''],
+  ])('drops a %s span_count instead of coercing it to 0/1', (_label, bad) => {
+    const fixture = structuredClone(summaryDefaultsOnly);
+    const tags = fixture.spans.find((s) => s.spanID === 'summ00000000a101')!.tags!;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tags.find((t) => t.key === 'aggregation.span_count')!.value = bad as any;
+
+    const agg = spanById(transformTraceData(fixture)!, 'summ00000000a101').aggregation!;
+    expect(agg.isSummary).toBe(true);
+    expect(agg.spanCount).toBeUndefined();
+  });
+
   // Regression lock for the shared-fixture contract: transformTraceData mutates its input,
   // so callers must clone. This proves repeated transforms are stable AND the singleton is
   // never touched - if a future edit drops a structuredClone, the snapshot assertion fails.
