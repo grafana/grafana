@@ -165,16 +165,33 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   }
 }
 
+/**
+ * Provides read and write access to a specific path within a parent options object.
+ * Used as the value accessor when building nested panel option editors via
+ * {@link PanelOptionsEditorBuilder.addNestedOptions}.
+ */
 export interface NestedValueAccess {
   getValue: (path: string) => any;
   onChange: (path: string, value: any) => void;
   getContext?: (parent: StandardEditorContext<any>) => StandardEditorContext<any>;
 }
+
+/**
+ * Configuration for a nested sub-section of panel options, used with
+ * {@link PanelOptionsEditorBuilder.addNestedOptions}.
+ *
+ * @typeParam TSub - The type of the nested options object.
+ */
 export interface NestedPanelOptions<TSub = any> {
+  /** The dot-separated path within the parent options object where the sub-options live. */
   path: string;
+  /** Optional category label(s) for grouping in the options pane. */
   category?: string[];
+  /** Default value for the sub-options object. */
   defaultValue?: TSub;
+  /** Builder function that declares the editors for the sub-options. */
   build: PanelOptionsSupplier<TSub>;
+  /** Optional override for how values are read/written relative to the parent accessor. */
   values?: (parent: NestedValueAccess) => NestedValueAccess;
 }
 
