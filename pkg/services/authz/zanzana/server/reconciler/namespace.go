@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/types"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -116,7 +116,7 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 	// in mode 5 (no legacy SQL). A nil resolver makes resolveTeamScopes a no-op.
 	// ns is only used by the SQL-backed resolver path; the reconciler's client-backed
 	// resolver ignores it, so a parse failure is non-fatal here.
-	ns, _ := claims.ParseNamespace(namespace)
+	ns, _ := types.ParseNamespace(namespace)
 	var teamResolver idresolver.Resolver
 	if r.rolesReconciled(globalRolePerms) {
 		tr, err := r.buildTeamResolver(ctx, namespace)
