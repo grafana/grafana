@@ -78,8 +78,9 @@
     "generate:api-client": "yarn workspace @grafana/api-clients generate:api-client",
     "generate:openapi": "yarn workspace @grafana/openapi generate:openapi",
     "gen-plugin-schema-types": "jq '.title = \"PluginSchema\"' docs/sources/developers/plugins/plugin.schema.json | yarn json2ts --ignoreMinAndMaxItems > \"${PLUGIN_SCHEMA_TYPES_OUT:-./plugin-schema.d.ts}\"",
-    "knip": "knip",
-    "knip:fix": "knip --fix --allow-remove-files"
+    "check-enterprise-linked": "./scripts/check-enterprise-linked.sh",
+    "knip": "yarn check-enterprise-linked && knip",
+    "knip:fix": "yarn check-enterprise-linked && knip --fix --allow-remove-files"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v%[1]s-%[2]s/",

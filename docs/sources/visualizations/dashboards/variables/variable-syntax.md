@@ -1,6 +1,5 @@
 ---
 aliases:
-  - ../../../reference/templating/ # /docs/grafana/next/reference/templating/
   - ../../../variables/advanced-variable-format-options/ # /docs/grafana/next/variables/advanced-variable-format-options/
   - ../../../variables/syntax/ # /docs/grafana/next/variables/syntax/
   - ../../../dashboards/variables/variable-syntax/ # /docs/grafana/next/dashboards/variables/variable-syntax/
@@ -18,7 +17,7 @@ labels:
     - oss
 title: Variable syntax
 description: Learn about different types of variable syntax
-weight: 300
+weight: 400
 ---
 
 # Variable syntax

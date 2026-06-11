@@ -172,18 +172,20 @@ describe('SidebarFooter', () => {
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
     });
 
-    it('does not keep the count layout in the DOM while the bar is shown (a11y)', () => {
-      // The bar and the counts render mutually exclusively so the obscured
-      // Select… button and item-count text aren't left in the tab order /
-      // screen-reader sequence.
+    it('hides the count layout from the a11y tree while the bar is shown (a11y)', () => {
+      // The counts stay mounted underneath the bar but are marked inert +
+      // aria-hidden, so the obscured Select… button and item-count text are kept
+      // out of the tab order / screen-reader sequence.
       renderWithQueryEditorProvider(<SidebarFooter />, {
         queries,
         uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], multiSelectMode: true },
       });
 
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+      // Role queries respect the a11y tree, so the obscured control resolves as absent.
       expect(screen.queryByRole('button', { name: /select multiple items/i })).not.toBeInTheDocument();
-      expect(screen.queryByText('2 items')).not.toBeInTheDocument();
+      // The count text is still in the DOM, but inside the aria-hidden counts layer.
+      expect(screen.getByText('2 items').closest('[aria-hidden="true"]')).toBeInTheDocument();
     });
 
     it('does not render the bar when items are selected but multi-select mode is off', () => {
