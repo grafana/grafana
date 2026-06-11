@@ -249,7 +249,7 @@ export function stringifyIdentifier(identifier: RuleIdentifier): string {
     .join('$');
 }
 
-export function hash(value: string): number {
+function hash(value: string): number {
   let hash = 0;
   if (value.length === 0) {
     return hash;
@@ -355,7 +355,7 @@ export function hashQuery(query: string) {
   return query.split('').sort().join('');
 }
 
-export function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
+function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
   return JSON.stringify(Object.entries(item || {}).sort((a, b) => a[0].localeCompare(b[0])));
 }
 

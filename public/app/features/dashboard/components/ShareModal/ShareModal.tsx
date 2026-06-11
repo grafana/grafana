@@ -27,10 +27,6 @@ export function addDashboardShareTab(tab: ShareModalTabModel) {
   customDashboardTabs.push(tab);
 }
 
-export function addPanelShareTab(tab: ShareModalTabModel) {
-  customPanelTabs.push(tab);
-}
-
 function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: string) {
   const linkLabel = t('share-modal.tab-title.link', 'Link');
   const tabs: ShareModalTabModel[] = [{ label: linkLabel, value: shareDashboardType.link, component: ShareLink }];

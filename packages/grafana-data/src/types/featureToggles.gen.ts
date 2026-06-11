@@ -419,6 +419,11 @@ export interface FeatureToggles {
   */
   canvasPanelPanZoom?: boolean;
   /**
+  * Load Canvas panel from an external plugin instead of the bundled core plugin
+  * @default false
+  */
+  canvasExternalPlugin?: boolean;
+  /**
   * Enables time comparison option in supported panels
   * @default false
   */

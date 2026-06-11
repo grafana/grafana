@@ -13,7 +13,7 @@ import { resolveLayoutPath, resolveParentPath } from './layoutPathResolver';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
-export const moveTabPayloadSchema = payloads.moveTab;
+const moveTabPayloadSchema = payloads.moveTab;
 
 export type MoveTabPayload = z.infer<typeof moveTabPayloadSchema>;
 

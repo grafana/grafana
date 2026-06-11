@@ -6,7 +6,7 @@ const emptyRepos: Repository[] = [];
 
 const getBaseSelector = () => provisioningAPI.endpoints.listRepository.select({});
 
-export const selectAllRepos = () => createSelector(getBaseSelector(), (result) => result.data?.items || emptyRepos);
+const selectAllRepos = () => createSelector(getBaseSelector(), (result) => result.data?.items || emptyRepos);
 
 export const selectFolderRepository = () =>
   createSelector(
