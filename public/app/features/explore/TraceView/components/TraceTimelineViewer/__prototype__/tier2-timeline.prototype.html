@@ -320,7 +320,6 @@
               <span className="name-badges">
                 {pruningAware && isSummary && <span className="badge count">{span.agg.spanCount} spans</span>}
                 {pruningAware && isOutlier && <span className="badge outlier">outlier</span>}
-                <button className="zoom-btn" title="Zoom timeline to this span" onClick={(e) => { e.stopPropagation(); dispatch({ type: 'zoom', span }); }}>{'⌖'}</button>
               </span>
             </div>
             <div className="view-cell" onClick={() => dispatch({ type: 'select', id: span.id })}>
@@ -416,7 +415,6 @@
         const [traceKey, setTraceKey] = useState('mixed');
         const [pruningAware, setPruningAware] = useState(true);
         const [selectedId, setSelectedId] = useState(null);
-        const [zoom, setZoom] = useState(null); // {startUs, durUs} or null = full trace
         const [tip, setTipState] = useState(null);
         const tipRef = useRef(null);
 
@@ -424,17 +422,15 @@
         const spans = trace.spans;
         const selectedSpan = spans.find((s) => s.id === selectedId) || null;
 
-        const winStart = zoom ? zoom.startUs : 0;
-        const winDur = zoom ? zoom.durUs : trace.rootDurUs;
+        const winDur = trace.rootDurUs;
         const view = {
-          toPct: (us) => ((us - winStart) / winDur) * 100,
+          toPct: (us) => (us / winDur) * 100,
           spanPct: (us) => (us / winDur) * 100, // a duration magnitude as % of window
         };
 
         const dispatch = (action) => {
           switch (action.type) {
             case 'select': setSelectedId((cur) => (cur === action.id ? null : action.id)); break;
-            case 'zoom': setZoom({ startUs: action.span.startUs, durUs: action.span.durUs }); break;
             default: break;
           }
         };
@@ -452,7 +448,7 @@
             <div className="controls">
               <div className="group">
                 <label>Trace</label>
-                <select value={traceKey} onChange={(e) => { setTraceKey(e.target.value); setSelectedId(null); setZoom(null); }}>
+                <select value={traceKey} onChange={(e) => { setTraceKey(e.target.value); setSelectedId(null); }}>
                   {Object.entries(TRACES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                 </select>
               </div>
@@ -463,7 +459,6 @@
                   <button className={pruningAware ? 'on' : ''} onClick={() => setPruningAware(true)}>Pruning-aware (Tier 2)</button>
                 </div>
               </div>
-              {zoom && <button onClick={() => setZoom(null)}>Reset zoom</button>}
               <div className="spacer" />
               <div className="legend">
                 <span><span className="sw" style={{ background: SVC_COLOR }} />normal</span>
@@ -495,7 +490,7 @@
             </div>
 
             <p className="sub" style={{ marginTop: 14 }}>
-              Try: hover a summary bar, click a row to expand, click the crosshair on the summary to zoom the timeline to its window,
+              Try: hover a summary bar, click a row to expand its detail,
               select a summary to highlight its preserved-outlier siblings (red), then select an outlier to jump back.
             </p>
 

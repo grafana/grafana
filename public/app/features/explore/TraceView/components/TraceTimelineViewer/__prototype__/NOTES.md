@@ -76,13 +76,26 @@ does not gate the browser). Data is hardcoded from `../model/pruned-spans.fixtur
 - `TraceTimelineViewer/SpanDetail/` - aggregate stat grid + outlier list.
 - Zoom already exists via the SpanGraph minimap; reuse rather than reinvent.
 
-## Verdict
+## Eval notes (2026-06-11)
 
-TODO (fill in after playing with it): which interactions are keepers, which to drop,
-what is missing. Candidate open questions:
-- Are the nested bands legible at real (un-zoomed) bar widths, or is the count chip +
-  tooltip the only thing that survives at small sizes?
+- **Visual fidelity vs mockups:** prototype intentionally does NOT match the Figma
+  look; the exercise was the interaction model, not pixel fidelity.
+- **Zoom-to-span: TABLED.** Buggy (bars shift / overlap labels), not existing TraceView
+  behavior, and user value unclear. Removed from the prototype.
+- **Click-to-expand detail: KEEP, already exists.** Verified in `VirtualizedTraceView.tsx`
+  (`detailToggle` / `detailStates` / `SpanDetailRow` / `isDetailExpanded`) and
+  `SpanBarRow.tsx`. The Tier 2 work is changing what the expanded panel *shows* for a
+  summary span (aggregate stat grid + outlier list), not adding the expand affordance.
+- **Hover tooltip on the bar: NET NEW.** Verified there is no stats tooltip on span bars
+  today (`SpanBar.tsx` only has a Tooltip for critical-path segments and a Popover for
+  log markers; hover currently just swaps the inline text label). Filed as a future
+  enhancement: grafana/grafana-adaptivetraces-app#1052 (under tracker #1018);
+  out of scope for Tier 1/2 core but worth considering.
+
+## Open questions (still to play with)
+
+- Are the nested min/median/max bands legible at real bar widths, or do only the count
+  chip + tooltip survive at small sizes?
 - Should min/median/max bands be left-anchored (distribution feel) or positioned in
-  real time? Left-anchored is a magnitude view, not a time view - is that confusing
-  next to a time-axis waterfall?
-- Is zoom-to-span discoverable enough, or does the summary need an always-on affordance?
+  real time? Left-anchored is a magnitude view, not a time view - confusing next to a
+  time-axis waterfall, or fine?
