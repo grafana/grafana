@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
+var LegacyIDField = resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID
+
 func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.GetSearchTeamsResponse, error) {
 	if result == nil {
 		return v0alpha1.GetSearchTeamsResponse{}, nil
@@ -39,7 +41,7 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 			provisionedIDX = i
 		case builders.TEAM_SEARCH_EXTERNAL_UID:
 			externalUIDIDX = i
-		case resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID:
+		case LegacyIDField:
 			legacyIDIDX = i
 		}
 	}
