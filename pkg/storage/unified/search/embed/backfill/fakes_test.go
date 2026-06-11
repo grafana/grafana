@@ -270,6 +270,10 @@ func (f *fakeVector) SetLatestRV(context.Context, int64) error   { return nil }
 func (f *fakeVector) TryAcquireReconcilerLock(context.Context) (func(), bool, error) {
 	return func() {}, true, nil
 }
+func (f *fakeVector) EnsureResourcePartition(context.Context, string) error { return nil }
+func (f *fakeVector) CreateBackfillJob(_ context.Context, _, _ string, _ int64) error {
+	return nil
+}
 func (f *fakeVector) ListIncompleteBackfillJobs(_ context.Context, model string) ([]vector.BackfillJob, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()

@@ -79,6 +79,31 @@ func TestNewKvStorageBackend(t *testing.T) {
 	assert.NotNil(t, backend.snowflake)
 }
 
+// TestKvStorageBackend_Accessors verifies that KV() returns the configured
+// store and that LeaseManager() reflects whether EnableKVLeases is set.
+// These accessors let other subsystems (e.g. KV-backed search snapshots)
+// share the backend's KV store and lease manager rather than opening
+// their own.
+func TestKvStorageBackend_Accessors(t *testing.T) {
+	t.Run("KV returns configured store", func(t *testing.T) {
+		backend := setupTestStorageBackend(t)
+		assert.Same(t, backend.kv, backend.KV())
+	})
+
+	t.Run("LeaseManager is nil when leases are disabled", func(t *testing.T) {
+		backend := setupTestStorageBackend(t)
+		assert.Nil(t, backend.LeaseManager())
+	})
+
+	t.Run("LeaseManager is non-nil when leases are enabled", func(t *testing.T) {
+		backend := setupTestStorageBackend(t, func(o *KVBackendOptions) {
+			o.EnableKVLeases = true
+			o.Holder = "test-holder"
+		})
+		assert.NotNil(t, backend.LeaseManager())
+	})
+}
+
 func TestKvStorageBackend_WriteEvent_Success(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()

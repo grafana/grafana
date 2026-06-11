@@ -40,6 +40,7 @@ function setReadmeResult(overrides: Partial<UseFolderReadmeResult> = {}) {
     folder: mockFolder,
     readmePath: 'dashboards/team-a/README.md',
     status: 'ok',
+    isLoading: false,
     markdownContent: '# Hello\n\nThis is a README.',
     refetch: jest.fn(),
     ...overrides,
@@ -190,20 +191,19 @@ describe('FolderReadmePanel', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders nothing while the repository view is loading', () => {
-    setReadmeResult({ status: 'loading' });
+  it('shows a loading indicator while the repository view is loading', () => {
+    setReadmeResult({ status: 'loading', isLoading: true, repository: undefined });
 
-    const { container } = render(<FolderReadmePanel folderUID="test-folder" />);
-    expect(container).toBeEmptyDOMElement();
+    render(<FolderReadmePanel folderUID="test-folder" />);
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+    expect(screen.getByText('README.md')).toBeInTheDocument();
   });
 
-  it('shows a spinner while the README itself is loading', () => {
-    // When status is 'loading', the panel returns null — the layout shows the
-    // dashboards list as-is while loading; the panel appears once data arrives.
-    setReadmeResult({ status: 'loading', markdownContent: undefined });
+  it('shows a loading indicator while the README file is loading', () => {
+    setReadmeResult({ status: 'loading', isLoading: true, markdownContent: undefined });
 
-    const { container } = render(<FolderReadmePanel folderUID="test-folder" />);
-    expect(container).toBeEmptyDOMElement();
+    render(<FolderReadmePanel folderUID="test-folder" />);
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
   });
 
   it('renders an empty README without the parse-error message', () => {
