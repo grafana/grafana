@@ -21,20 +21,13 @@ import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../.
 import { type TabItem } from './TabItem';
 import { type TabsLayoutManager } from './TabsLayoutManager';
 
-export interface Props {
+interface Props {
   tab: TabItem;
   manager: TabsLayoutManager;
   variable: MultiValueVariable;
 }
 
-export function TabItemRepeater({
-  tab,
-  variable,
-}: {
-  tab: TabItem;
-  manager: TabsLayoutManager;
-  variable: MultiValueVariable;
-}) {
+export function TabItemRepeater({ tab, variable }: Props) {
   const { repeatedTabs } = tab.useState();
   const styles = useStyles2(getStyles);
 
@@ -137,7 +130,7 @@ function getPrevRepeatValues(mainTab: TabItem, varName: string): VariableValueSi
   return values;
 }
 
-export function createTabRepeats({
+function createTabRepeats({
   values,
   texts,
   variable,

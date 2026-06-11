@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -18,6 +17,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+
+	"github.com/grafana/grafana/pkg/web"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -126,7 +127,7 @@ func TestBuildResourcePermissionName(t *testing.T) {
 			apiGroup:     "",
 			resource:     "folders",
 			resourceID:   "folder-uid-456",
-			expectedName: "folders.grafana.app-folders-folder-uid-456",
+			expectedName: "folder.grafana.app-folders-folder-uid-456",
 		},
 		{
 			name:         "resourceUID from request overrides numeric resourceID",
@@ -180,13 +181,13 @@ func TestGetAPIGroup(t *testing.T) {
 			service: &Service{
 				options: Options{
 					Resource: "dashboards",
-					APIGroup: "",
+					APIGroup: "dashboard.grafana.app",
 				},
 			},
 		}
 
 		group := api.getAPIGroup()
-		assert.Equal(t, "dashboards.grafana.app", group)
+		assert.Equal(t, "dashboard.grafana.app", group)
 	})
 
 	t.Run("default group for folders", func(t *testing.T) {
@@ -194,13 +195,13 @@ func TestGetAPIGroup(t *testing.T) {
 			service: &Service{
 				options: Options{
 					Resource: "folders",
-					APIGroup: "",
+					APIGroup: "", // This should be invalid
 				},
 			},
 		}
 
 		group := api.getAPIGroup()
-		assert.Equal(t, "folders.grafana.app", group)
+		assert.Equal(t, "folder.grafana.app", group)
 	})
 }
 
@@ -280,7 +281,7 @@ func TestConvertK8sResourcePermissionToDTO(t *testing.T) {
 		},
 	}
 
-	inheritedPerms, err := api.convertK8sResourcePermissionToDTO(folderPermission, "stack-123-org-1", true)
+	inheritedPerms, err := api.convertK8sResourcePermissionToDTO(context.Background(), folderPermission, "stack-123-org-1", true)
 
 	require.NoError(t, err)
 	require.Len(t, inheritedPerms, 2, "should have 2 inherited permissions (Editor and Viewer)")

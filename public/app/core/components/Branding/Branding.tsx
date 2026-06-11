@@ -14,7 +14,7 @@ export interface BrandComponentProps {
   children?: JSX.Element | JSX.Element[];
 }
 
-export const LoginLogo: FC<BrandComponentProps & { logo?: string }> = ({ className, logo }) => {
+const LoginLogo: FC<BrandComponentProps & { logo?: string }> = ({ className, logo }) => {
   return <img className={className} src={`${logo ? logo : grafanaIconSvg}`} alt="Grafana" />;
 };
 

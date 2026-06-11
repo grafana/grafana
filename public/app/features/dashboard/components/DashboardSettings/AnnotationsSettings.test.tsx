@@ -1,6 +1,7 @@
 import { render, screen, within } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
@@ -26,6 +27,10 @@ function setup(dashboard: DashboardModel, editIndex?: number) {
 }
 
 describe('AnnotationsSettings', () => {
+  beforeAll(() => {
+    mockBoundingClientRect();
+  });
+
   let dashboard: DashboardModel;
 
   const dataSources = {

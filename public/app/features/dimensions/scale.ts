@@ -15,7 +15,7 @@ export function getScaledDimension(
   return getScaledDimensionForField(findField(frame, config?.field), config);
 }
 
-export function getScaledDimensionForField(
+function getScaledDimensionForField(
   field: Field | undefined,
   config: ScaleDimensionConfig,
   mode?: ScaleDimensionMode

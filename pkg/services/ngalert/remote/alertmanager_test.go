@@ -621,7 +621,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		},
 		{
 			name:                  "no error, with managed routes",
-			config:                *postableUserConfigToAPI(policy_exports.Config()),
+			config:                mustPostableUserConfigToAPI(t, policy_exports.Config()),
 			enabledMultipleRoutes: true,
 			expCfg: &client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
@@ -635,7 +635,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		},
 		{
 			name:                  "no error, with managed routes but flag disabled",
-			config:                *postableUserConfigToAPI(policy_exports.Config()),
+			config:                mustPostableUserConfigToAPI(t, policy_exports.Config()),
 			enabledMultipleRoutes: false,
 			expCfg: &client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
@@ -709,12 +709,9 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	}
 }
 
-// TestCompareAndSendConfigurationConvertsMimirReceivers exercises the same
-// extra-configurations cases as TestCompareAndSendConfiguration but with the
-// FlagAlertingDisableV0ReceiverConversion disabled, so that PrepareConfig converts
-// V0/Mimir receivers to Grafana managed receivers. Asserts on the converted
-// receiver structure rather than the full byte-level config diff (which is
-// affected by the encryption pass re-marshaling settings).
+// TestCompareAndSendConfigurationConvertsMimirReceivers verifies that when an imported
+// (Mimir-format) extra config is merged, its V0/Mimir receivers are converted to Grafana
+// managed receivers before being sent to the remote Alertmanager.
 func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 	const tenantID = "test"
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
@@ -755,21 +752,16 @@ func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		name                  string
-		config                v1.AMConfigDB
-		enabledMultipleRoutes bool
+		name   string
+		config v1.AMConfigDB
+		expErr string
 	}{
 		{
-			name:   "no error, with extra configurations",
+			name:   "converts mimir receivers from extra config",
 			config: *cfgWithExtraUnmerged,
 		},
 		{
-			name:                  "no error, with extra configurations and managed routes enabled",
-			config:                *cfgWithExtraUnmerged,
-			enabledMultipleRoutes: true,
-		},
-		{
-			name: "do not add managed route from extra config if name conflict",
+			name: "fails when extra config identifier conflicts with an existing managed route",
 			config: func() v1.AMConfigDB {
 				c, err := loadDBModel(cfgWithExtraUnmergedBytes)
 				require.NoError(t, err)
@@ -778,7 +770,7 @@ func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 				}
 				return *c
 			}(),
-			enabledMultipleRoutes: true,
+			expErr: "imported",
 		},
 	}
 
@@ -787,11 +779,7 @@ func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 			ctx := context.Background()
 			got = ""
 
-			flags := []any{}
-			if test.enabledMultipleRoutes {
-				flags = append(flags, featuremgmt.FlagAlertingMultiplePolicies)
-			}
-			features := featuremgmt.WithFeatures(flags...)
+			features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies)
 			moa, _ := newRemoteMOA(t, cfg, nil, features, secretsService)
 
 			dbConfig := func() *ngmodels.AlertConfiguration {
@@ -803,6 +791,11 @@ func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 				}
 			}()
 			applied, err := moa.ApplyConfig(ctx, 1, dbConfig)
+			if test.expErr != "" {
+				require.ErrorContains(t, err, test.expErr)
+				require.False(t, applied)
+				return
+			}
 			require.NoError(t, err)
 			require.True(t, applied)
 
@@ -960,7 +953,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 				}
 				return c
 			}(),
-			expected: true,
+			expected: false,
 		},
 		{
 			name: "default config with ManagedInhibitionRules and FF enabled",
@@ -1084,7 +1077,7 @@ receivers:
 		PromoteConfig: true,
 	}
 
-	moa, _ := newRemoteMOA(t, c, nil, featuremgmt.WithFeatures(), secretsService)
+	moa, _ := newRemoteMOA(t, c, nil, featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies), secretsService)
 
 	dbConfig := func() *ngmodels.AlertConfiguration {
 		raw, err := json.Marshal(cfg)
@@ -1192,7 +1185,7 @@ receivers:
 		PromoteConfig: true,
 	}
 
-	moa, _ := newRemoteMOA(t, c, nil, featuremgmt.WithFeatures(), secretsService)
+	moa, _ := newRemoteMOA(t, c, nil, featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies), secretsService)
 
 	dbConfig := func() *ngmodels.AlertConfiguration {
 		raw, err := legacy_storage.SerializeAlertmanagerConfig(cfg)
@@ -1805,4 +1798,8 @@ func loadDBModel(rawConfig []byte) (*v1.AMConfigDB, error) {
 	return cfg, nil
 }
 
-var postableUserConfigToAPI = v1.ToDBModel
+func mustPostableUserConfigToAPI(t *testing.T, in *v1.AMConfigV1) v1.AMConfigDB {
+	dbModel, err := v1.ToDBModel(in)
+	require.NoError(t, err)
+	return *dbModel
+}

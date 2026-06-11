@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -84,7 +85,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				parsedInterval, err = gtime.ParseDuration(dsJson.MinStep)
 				if err != nil {
 					parsedInterval = time.Second * 15
-					logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
+					d.logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
 				}
 			}
 
@@ -122,7 +123,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			if err != nil {
 				span.RecordError(err)
 				span.SetStatus(codes.Error, err.Error())
-				logger.Error("Querying SelectSeries()", "err", err, "function", logEntrypoint())
+				d.logger.Error("Querying SelectSeries()", "err", err, "function", logEntrypoint())
 				return err
 			}
 			// add the frames to the response.
@@ -134,7 +135,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			if err != nil {
 				span.RecordError(err)
 				span.SetStatus(codes.Error, err.Error())
-				logger.Error("Querying SelectSeries()", "err", err, "function", logEntrypoint())
+				d.logger.Error("Querying SelectSeries()", "err", err, "function", logEntrypoint())
 				return err
 			}
 			response.Frames = append(response.Frames, frames...)
@@ -147,22 +148,22 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 		g.Go(func() error {
 			var profileResp *ProfileResponse
 			if len(qm.SpanSelector) > 0 {
-				logger.Debug("Calling GetSpanProfile", "queryModel", qm, "function", logEntrypoint())
+				d.logger.Debug("Calling GetSpanProfile", "queryModel", qm, "function", logEntrypoint())
 				prof, err := d.client.GetSpanProfile(gCtx, profileTypeId, labelSelector, qm.SpanSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
 				if err != nil {
 					span.RecordError(err)
 					span.SetStatus(codes.Error, err.Error())
-					logger.Error("Error GetSpanProfile()", "err", err, "function", logEntrypoint())
+					d.logger.Error("Error GetSpanProfile()", "err", err, "function", logEntrypoint())
 					return err
 				}
 				profileResp = prof
 			} else {
-				logger.Debug("Calling GetProfile", "queryModel", qm, "function", logEntrypoint())
+				d.logger.Debug("Calling GetProfile", "queryModel", qm, "function", logEntrypoint())
 				prof, err := d.client.GetProfile(gCtx, profileTypeId, labelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes, qm.ProfileIdSelector)
 				if err != nil {
 					span.RecordError(err)
 					span.SetStatus(codes.Error, err.Error())
-					logger.Error("Error GetProfile()", "err", err, "function", logEntrypoint())
+					d.logger.Error("Error GetProfile()", "err", err, "function", logEntrypoint())
 					return err
 				}
 				profileResp = prof
@@ -183,11 +184,11 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 					parsedInterval, err = gtime.ParseDuration(dsJson.MinStep)
 					if err != nil {
 						parsedInterval = time.Second * 15
-						logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
+						d.logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
 					}
 				}
 				stepDuration := math.Max(query.Interval.Seconds(), parsedInterval.Seconds())
-				frame = responseToDataFrames(profileResp, stepDuration, profileTypeId)
+				frame = responseToDataFrames(profileResp, stepDuration, profileTypeId, d.logger)
 
 				// If query called with streaming on then return a channel
 				// to subscribe on a client-side and consume updates from a plugin.
@@ -245,7 +246,7 @@ func (d *PyroscopeDatasource) queryHeatmap(ctx context.Context, span trace.Span,
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		logger.Error("Querying SelectHeatmap()", "err", err, "function", logEntrypoint())
+		d.logger.Error("Querying SelectHeatmap()", "err", err, "function", logEntrypoint())
 		return nil, err
 	}
 
@@ -299,8 +300,8 @@ func (d *PyroscopeDatasource) queryHeatmap(ctx context.Context, span trace.Span,
 // responseToDataFrames turns Pyroscope response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
-func responseToDataFrames(resp *ProfileResponse, stepDurationSec float64, profileTypeID string) *data.Frame {
-	tree := levelsToTree(resp.Flamebearer.Levels, resp.Flamebearer.Names)
+func responseToDataFrames(resp *ProfileResponse, stepDurationSec float64, profileTypeID string, logger log.Logger) *data.Frame {
+	tree := levelsToTree(resp.Flamebearer.Levels, resp.Flamebearer.Names, logger)
 	return treeToNestedSetDataFrame(tree, resp.Units, stepDurationSec, profileTypeID)
 }
 
@@ -330,7 +331,7 @@ type ProfileTree struct {
 
 // levelsToTree converts flamebearer format into a tree. This is needed to then convert it into nested set format
 // dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Pyroscope API.
-func levelsToTree(levels []*Level, names []string) *ProfileTree {
+func levelsToTree(levels []*Level, names []string, logger log.Logger) *ProfileTree {
 	if len(levels) == 0 {
 		return nil
 	}

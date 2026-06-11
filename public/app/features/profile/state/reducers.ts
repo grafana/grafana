@@ -39,7 +39,7 @@ export const initialUserState: UserState = {
   user: null,
 };
 
-export const slice = createSlice({
+const slice = createSlice({
   name: 'user/profile',
   initialState: initialUserState,
   reducers: {
@@ -131,7 +131,7 @@ export const updateWeekStartForSession = (weekStart?: WeekStart): ThunkResult<vo
   };
 };
 
-export const {
+const {
   setUpdating,
   initLoadOrgs,
   orgsLoaded,
@@ -145,6 +145,20 @@ export const {
   updateWeekStart,
   updateFiscalYearStartMonth,
 } = slice.actions;
+
+export {
+  setUpdating,
+  initLoadOrgs,
+  orgsLoaded,
+  initLoadTeams,
+  teamsLoaded,
+  userLoaded,
+  userSessionRevoked,
+  initLoadSessions,
+  sessionsLoaded,
+  updateTimeZone,
+  updateWeekStart,
+};
 
 export const userReducer = slice.reducer;
 export default { user: slice.reducer };

@@ -124,6 +124,92 @@ func TestIntegrationVerifyUsingJWKSetFile(t *testing.T) {
 	}, configure)
 }
 
+func TestIntegrationVerifyUsingPKIXPublicKeyValue(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	key := rsaKeys[0]
+	unknownKey := rsaKeys[1]
+
+	scenario(t, "verifies a token", func(t *testing.T, sc scenarioContext) {
+		token := sign(t, key, jwt.Claims{
+			Subject: subject,
+		}, nil)
+		verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
+		require.NoError(t, err)
+		assert.Equal(t, verifiedClaims["sub"], subject)
+	}, configurePKIXPublicKeyValue)
+
+	scenario(t, "rejects a token signed by unknown key", func(t *testing.T, sc scenarioContext) {
+		token := sign(t, unknownKey, jwt.Claims{
+			Subject: subject,
+		}, nil)
+		_, err := sc.authJWTSvc.Verify(sc.ctx, token)
+		require.Error(t, err)
+	}, configurePKIXPublicKeyValue)
+
+	publicKeyID := "some-key-id"
+	scenario(t, "verifies a token with a specified kid", func(t *testing.T, sc scenarioContext) {
+		token := sign(t, key, jwt.Claims{
+			Subject: subject,
+		}, (&jose.SignerOptions{}).WithHeader("kid", publicKeyID))
+		verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
+		require.NoError(t, err)
+		assert.Equal(t, verifiedClaims["sub"], subject)
+	}, configurePKIXPublicKeyValue, func(t *testing.T, cfg *setting.Cfg) {
+		t.Helper()
+		cfg.JWTAuth.KeyID = publicKeyID
+	})
+
+	t.Run("should fail to start with malformed base64", func(t *testing.T) {
+		_, err := initAuthService(t, func(t *testing.T, cfg *setting.Cfg) {
+			cfg.JWTAuth.KeyValue = "not-valid-base64!!!"
+		})
+		require.ErrorIs(t, err, ErrFailedToDecodeKeyValue)
+	})
+}
+
+func TestIntegrationVerifyUsingJWKSetValue(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	configure := func(t *testing.T, cfg *setting.Cfg) {
+		t.Helper()
+
+		jwksJSON, err := json.Marshal(jwksPublic)
+		require.NoError(t, err)
+
+		cfg.JWTAuth.JWKSetValue = base64.StdEncoding.EncodeToString(jwksJSON)
+	}
+
+	scenario(t, "verifies a token signed with a key from the set", func(t *testing.T, sc scenarioContext) {
+		token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject}, nil)
+		verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
+		require.NoError(t, err)
+		assert.Equal(t, verifiedClaims["sub"], subject)
+	}, configure)
+
+	scenario(t, "verifies a token signed with another key from the set", func(t *testing.T, sc scenarioContext) {
+		token := sign(t, &jwKeys[1], jwt.Claims{Subject: subject}, nil)
+		verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
+		require.NoError(t, err)
+		assert.Equal(t, verifiedClaims["sub"], subject)
+	}, configure)
+
+	scenario(t, "rejects a token signed with a key not from the set", func(t *testing.T, sc scenarioContext) {
+		token := sign(t, jwKeys[2], jwt.Claims{Subject: subject}, nil)
+		_, err := sc.authJWTSvc.Verify(sc.ctx, token)
+		require.Error(t, err)
+	}, configure)
+}
+
+func TestIntegrationKeySetConfigurationIsExclusive(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("should fail to start when both key_file and key_value are set", func(t *testing.T) {
+		_, err := initAuthService(t, configurePKIXPublicKeyFile, configurePKIXPublicKeyValue)
+		require.ErrorIs(t, err, ErrKeySetConfigurationAmbiguous)
+	})
+}
+
 func TestIntegrationVerifyUsingJWKSetURL(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -651,6 +737,20 @@ func configurePKIXPublicKeyFile(t *testing.T, cfg *setting.Cfg) {
 	require.NoError(t, file.Close())
 
 	cfg.JWTAuth.KeyFile = file.Name()
+}
+
+func configurePKIXPublicKeyValue(t *testing.T, cfg *setting.Cfg) {
+	t.Helper()
+
+	blockBytes, err := x509.MarshalPKIXPublicKey(rsaKeys[0].Public())
+	require.NoError(t, err)
+
+	pemBytes := pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: blockBytes,
+	})
+
+	cfg.JWTAuth.KeyValue = base64.StdEncoding.EncodeToString(pemBytes)
 }
 
 func createTestRootCAFile(t *testing.T) (filename string) {

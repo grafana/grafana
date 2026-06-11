@@ -60,6 +60,22 @@ describe('useSilenceAbility', () => {
       expect(result.current.preview.granted).toBe(true);
     });
 
+    it('should grant View and Preview when only AlertingSilenceRead is held', () => {
+      const amSource = setupGrafanaAlertmanager();
+      grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingSilenceRead]);
+
+      const { result } = renderHook(
+        () => ({
+          view: useSilenceAbility({ action: SilenceAction.View }),
+          preview: useSilenceAbility({ action: SilenceAction.Preview }),
+        }),
+        { wrapper: createAlertmanagerWrapper(amSource) }
+      );
+
+      expect(result.current.view.granted).toBe(true);
+      expect(result.current.preview.granted).toBe(true);
+    });
+
     it('should deny Update when accessControl.write is false on the silence entity', () => {
       const amSource = setupGrafanaAlertmanager();
       grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingInstanceUpdate]);
@@ -80,6 +96,28 @@ describe('useSilenceAbility', () => {
 
       expect(result.current.updateDenied.granted).toBe(false);
       expect(result.current.updateAllowed.granted).toBe(true);
+    });
+
+    it('should grant Update when only AlertingSilenceUpdate is held', () => {
+      const amSource = setupGrafanaAlertmanager();
+      grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingSilenceUpdate]);
+
+      const { result } = renderHook(() => useSilenceAbility({ action: SilenceAction.Update }), {
+        wrapper: createAlertmanagerWrapper(amSource),
+      });
+
+      expect(result.current.granted).toBe(true);
+    });
+
+    it('should grant Create when only AlertingSilenceCreate is held', () => {
+      const amSource = setupGrafanaAlertmanager();
+      grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingSilenceCreate]);
+
+      const { result } = renderHook(() => useSilenceAbility({ action: SilenceAction.Create }), {
+        wrapper: createAlertmanagerWrapper(amSource),
+      });
+
+      expect(result.current.granted).toBe(true);
     });
   });
 
@@ -105,6 +143,82 @@ describe('useSilenceAbility', () => {
 
       expect(result.current.granted).toBe(false);
     });
+
+    it('should grant View and Preview when AlertingInstancesExternalRead is held', () => {
+      setupMimirAlertmanager(MIMIR_DATASOURCE_UID);
+      grantUserPermissions([EXTERNAL_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingInstancesExternalRead]);
+
+      const { result } = renderHook(
+        () => ({
+          view: useSilenceAbility({ action: SilenceAction.View }),
+          preview: useSilenceAbility({ action: SilenceAction.Preview }),
+        }),
+        { wrapper: createAlertmanagerWrapper(MIMIR_DATASOURCE_UID) }
+      );
+
+      expect(result.current.view.granted).toBe(true);
+      expect(result.current.preview.granted).toBe(true);
+    });
+
+    it('should deny View and Preview when only the Grafana AM read permission is held', () => {
+      setupMimirAlertmanager(MIMIR_DATASOURCE_UID);
+      grantUserPermissions([EXTERNAL_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingInstanceRead]);
+
+      const { result } = renderHook(
+        () => ({
+          view: useSilenceAbility({ action: SilenceAction.View }),
+          preview: useSilenceAbility({ action: SilenceAction.Preview }),
+        }),
+        { wrapper: createAlertmanagerWrapper(MIMIR_DATASOURCE_UID) }
+      );
+
+      expect(result.current.view.granted).toBe(false);
+      expect(result.current.preview.granted).toBe(false);
+    });
+
+    it('should grant Update when AlertingInstancesExternalWrite is held', () => {
+      setupMimirAlertmanager(MIMIR_DATASOURCE_UID);
+      grantUserPermissions([EXTERNAL_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingInstancesExternalWrite]);
+
+      const { result } = renderHook(() => useSilenceAbility({ action: SilenceAction.Update }), {
+        wrapper: createAlertmanagerWrapper(MIMIR_DATASOURCE_UID),
+      });
+
+      expect(result.current.granted).toBe(true);
+    });
+
+    it('should deny Update when only the Grafana AM update permission is held', () => {
+      setupMimirAlertmanager(MIMIR_DATASOURCE_UID);
+      grantUserPermissions([EXTERNAL_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingInstanceUpdate]);
+
+      const { result } = renderHook(() => useSilenceAbility({ action: SilenceAction.Update }), {
+        wrapper: createAlertmanagerWrapper(MIMIR_DATASOURCE_UID),
+      });
+
+      expect(result.current.granted).toBe(false);
+    });
+
+    it('should deny Update when accessControl.write is false on the silence entity', () => {
+      setupMimirAlertmanager(MIMIR_DATASOURCE_UID);
+      grantUserPermissions([EXTERNAL_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingInstancesExternalWrite]);
+
+      const { result } = renderHook(
+        () => ({
+          updateDenied: useSilenceAbility({
+            action: SilenceAction.Update,
+            context: { accessControl: { write: false } } as never,
+          }),
+          updateAllowed: useSilenceAbility({
+            action: SilenceAction.Update,
+            context: { accessControl: { write: true } } as never,
+          }),
+        }),
+        { wrapper: createAlertmanagerWrapper(MIMIR_DATASOURCE_UID) }
+      );
+
+      expect(result.current.updateDenied.granted).toBe(false);
+      expect(result.current.updateAllowed.granted).toBe(true);
+    });
   });
 
   describe('unresolved alertmanager (selectedAlertmanager is undefined)', () => {
@@ -121,6 +235,24 @@ describe('useSilenceAbility', () => {
       });
 
       expect(isLoading(result.current)).toBe(true);
+    });
+
+    it('should return Loading for View, Preview, and Update when no AM resolves in context', () => {
+      const amSource = setupVanillaPrometheusAlertmanager();
+      grantUserPermissions([]);
+
+      const { result } = renderHook(
+        () => ({
+          view: useSilenceAbility({ action: SilenceAction.View }),
+          preview: useSilenceAbility({ action: SilenceAction.Preview }),
+          update: useSilenceAbility({ action: SilenceAction.Update }),
+        }),
+        { wrapper: createAlertmanagerWrapper(amSource) }
+      );
+
+      expect(isLoading(result.current.view)).toBe(true);
+      expect(isLoading(result.current.preview)).toBe(true);
+      expect(isLoading(result.current.update)).toBe(true);
     });
   });
 });
