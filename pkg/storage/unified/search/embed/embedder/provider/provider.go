@@ -89,8 +89,7 @@ func newBedrockEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*e
 	rt := bedrockruntime.NewFromConfig(awsCfg)
 	client := bedrock.NewClient(rt)
 	model := "bedrock/" + cfg.BedrockModel
-	dense := bedrock.NewDenseEmbedder(client, cfg.BedrockModel, cfg.BedrockDimensions, cfg.BedrockBatchSize,
-		bedrock.WithCallTimeout(cfg.BedrockCallTimeout))
+	dense := bedrock.NewDenseEmbedder(client, cfg.BedrockModel, cfg.BedrockDimensions, cfg.BedrockBatchSize, cfg.BedrockCallTimeout)
 	return &embedder.Embedder{
 		TextEmbedder: embedder.Instrument(dense, model, duration),
 		Model:        model,

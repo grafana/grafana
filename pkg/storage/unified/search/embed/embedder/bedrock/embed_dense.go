@@ -27,31 +27,19 @@ type DenseEmbedder struct {
 
 var _ embedder.TextEmbedder = (*DenseEmbedder)(nil)
 
-// Option configures a DenseEmbedder at construction.
-type Option func(*DenseEmbedder)
-
-// WithCallTimeout overrides the per-batch call timeout. Values <= 0 are
-// ignored and the default is kept.
-func WithCallTimeout(d time.Duration) Option {
-	return func(e *DenseEmbedder) {
-		if d > 0 {
-			e.callTimeout = d
-		}
+// NewDenseEmbedder builds a Bedrock dense embedder. A callTimeout <= 0 falls
+// back to defaultCallTimeout.
+func NewDenseEmbedder(client Client, model string, dim, batchSize int, callTimeout time.Duration) *DenseEmbedder {
+	if callTimeout <= 0 {
+		callTimeout = defaultCallTimeout
 	}
-}
-
-func NewDenseEmbedder(client Client, model string, dim, batchSize int, opts ...Option) *DenseEmbedder {
-	e := &DenseEmbedder{
+	return &DenseEmbedder{
 		client:      client,
 		model:       model,
 		dim:         dim,
 		batchSize:   batchSize,
-		callTimeout: defaultCallTimeout,
+		callTimeout: callTimeout,
 	}
-	for _, opt := range opts {
-		opt(e)
-	}
-	return e
 }
 
 // EmbedText splits inputs into batches sized to e.batchSize, calls the
