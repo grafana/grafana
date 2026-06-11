@@ -124,15 +124,26 @@ export function useSelectionState({
   // to seed stale ids into the bulk set.
   useEffect(() => {
     if (activeQueryRefId !== null && !queries.some((q) => q.refId === activeQueryRefId)) {
-      setActiveQueryRefId(queries[0]?.refId ?? null);
+      const nextQueryRefId = queries[0]?.refId ?? null;
+      setActiveQueryRefId(nextQueryRefId);
+      // No queries left: fall back to the first transformation so a card stays
+      // active (and gets seeded into multi-select on re-entry).
+      if (nextQueryRefId === null) {
+        setActiveTransformationId(transformations[0]?.transformId ?? null);
+      }
     }
-  }, [queries, activeQueryRefId]);
+  }, [queries, activeQueryRefId, transformations]);
 
   useEffect(() => {
     if (activeTransformationId !== null && !transformations.some((t) => t.transformId === activeTransformationId)) {
       setActiveTransformationId(null);
+      // No transformations left: promote the first query to active so a card stays
+      // active (and gets seeded into multi-select on re-entry).
+      if (transformations.length === 0) {
+        setActiveQueryRefId(queries[0]?.refId ?? null);
+      }
     }
-  }, [transformations, activeTransformationId]);
+  }, [transformations, activeTransformationId, queries]);
 
   const onCardSelectionChange = useCallback(
     (queryRefId: string | null, transformationId: string | null, options?: { seedBulk?: boolean }) => {

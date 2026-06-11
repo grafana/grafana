@@ -525,6 +525,83 @@ describe('useSelectionState', () => {
       rerender({ ...defaultProps, transformations: mockTransformations.filter((t) => t.transformId !== 'tx-1') });
       expect(result.current.activeTransformationId).toBeNull();
     });
+
+    it('falls back to the first query when all transformations are removed', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: defaultProps,
+      });
+      act(() => result.current.activateTransformation(mockTransformations[1]));
+      expect(result.current.activeTransformationId).toBe('tx-1');
+      expect(result.current.activeQueryRefId).toBeNull();
+      rerender({ ...defaultProps, transformations: [] });
+      expect(result.current.activeTransformationId).toBeNull();
+      expect(result.current.activeQueryRefId).toBe('A');
+    });
+
+    it('clears the active card when all transformations are removed and no queries exist', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: { ...defaultProps, queries: [] },
+      });
+      act(() => result.current.activateTransformation(mockTransformations[1]));
+      expect(result.current.activeTransformationId).toBe('tx-1');
+      rerender({ ...defaultProps, queries: [], transformations: [] });
+      expect(result.current.activeTransformationId).toBeNull();
+      expect(result.current.activeQueryRefId).toBeNull();
+    });
+
+    it('seeds the first query into multi-select after all transformations are removed', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: defaultProps,
+      });
+      act(() => result.current.activateTransformation(mockTransformations[1]));
+      rerender({ ...defaultProps, transformations: [] });
+      act(() => result.current.selectActiveInMultiSelection());
+      expect(result.current.selectedTransformationIds).toEqual([]);
+      expect(result.current.selectedQueryRefIds).toEqual(['A']);
+    });
+  });
+
+  describe('reconciling the active query with the list', () => {
+    it('falls back to the first remaining query when the active query is removed', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: defaultProps,
+      });
+      act(() => result.current.activateQuery({ refId: 'B' }));
+      expect(result.current.activeQueryRefId).toBe('B');
+      rerender({ ...defaultProps, queries: mockQueries.filter((q) => q.refId !== 'B') });
+      expect(result.current.activeQueryRefId).toBe('A');
+      expect(result.current.activeTransformationId).toBeNull();
+    });
+
+    it('falls back to the first transformation when all queries are removed', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: defaultProps,
+      });
+      expect(result.current.activeQueryRefId).toBe('A');
+      rerender({ ...defaultProps, queries: [] });
+      expect(result.current.activeQueryRefId).toBeNull();
+      expect(result.current.activeTransformationId).toBe('tx-0');
+    });
+
+    it('clears the active card when all queries are removed and no transformations exist', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: { ...defaultProps, transformations: [] },
+      });
+      expect(result.current.activeQueryRefId).toBe('A');
+      rerender({ ...defaultProps, queries: [], transformations: [] });
+      expect(result.current.activeQueryRefId).toBeNull();
+      expect(result.current.activeTransformationId).toBeNull();
+    });
+
+    it('seeds the first transformation into multi-select after all queries are removed', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: defaultProps,
+      });
+      rerender({ ...defaultProps, queries: [] });
+      act(() => result.current.selectActiveInMultiSelection());
+      expect(result.current.selectedQueryRefIds).toEqual([]);
+      expect(result.current.selectedTransformationIds).toEqual(['tx-0']);
+    });
   });
 
   describe('range selection with an unknown card', () => {
