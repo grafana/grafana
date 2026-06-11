@@ -50,8 +50,9 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 			},
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
-			Title:  rule.Title,
-			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+			Title:               rule.Title,
+			Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+			TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
 					QueryType:     new(rule.Data[0].QueryType),
@@ -148,8 +149,9 @@ func TestIntegrationAccessControl(t *testing.T) {
 			},
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
-			Title:  rule.Title,
-			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+			Title:               rule.Title,
+			Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+			TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
 					QueryType:     new(rule.Data[0].QueryType),
@@ -233,8 +235,9 @@ func TestIntegrationCRUD(t *testing.T) {
 				},
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
-				Title:  rule.Title,
-				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				Title:               rule.Title,
+				Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     new(rule.Data[0].QueryType),
@@ -285,8 +288,9 @@ func TestIntegrationCRUD(t *testing.T) {
 				},
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
-				Title:  rule.Title,
-				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				Title:               rule.Title,
+				Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     new(rule.Data[0].QueryType),
@@ -343,8 +347,9 @@ func TestIntegrationCRUD(t *testing.T) {
 				},
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
-				Title:  rule.Title,
-				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				Title:               rule.Title,
+				Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     new(rule.Data[0].QueryType),
@@ -395,8 +400,9 @@ func TestIntegrationCRUD(t *testing.T) {
 				},
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
-				Title:  rule.Title,
-				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				Title:               rule.Title,
+				Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     new(rule.Data[0].QueryType),
@@ -431,8 +437,9 @@ func TestIntegrationCRUD(t *testing.T) {
 				},
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
-				Title:  rule.Title,
-				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				Title:               rule.Title,
+				Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     new(rule.Data[0].QueryType),
@@ -485,8 +492,9 @@ func TestIntegrationPatch(t *testing.T) {
 			},
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
-			Title:  rule.Title,
-			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+			Title:               rule.Title,
+			Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+			TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
 					QueryType:     new(rule.Data[0].QueryType),
@@ -586,8 +594,9 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 				},
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
-				Title:  rule.Title,
-				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				Title:               rule.Title,
+				Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     new(rule.Data[0].QueryType),
@@ -631,8 +640,9 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 				Annotations: map[string]string{},
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
-				Title:  rule.Title,
-				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				Title:               rule.Title,
+				Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     new(rule.Data[0].QueryType),
@@ -668,8 +678,9 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 				},
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
-				Title:  rule.Title,
-				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				Title:               rule.Title,
+				Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     new(rule.Data[0].QueryType),
@@ -718,8 +729,9 @@ func TestIntegrationListWithLabelSelectors(t *testing.T) {
 				},
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
-				Title:  rule.Title,
-				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				Title:               rule.Title,
+				Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     new(rule.Data[0].QueryType),
@@ -802,8 +814,9 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 				},
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
-				Title:  rule.Title,
-				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				Title:               rule.Title,
+				Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     new(rule.Data[0].QueryType),

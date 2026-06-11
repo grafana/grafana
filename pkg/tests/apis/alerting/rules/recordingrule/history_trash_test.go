@@ -37,8 +37,9 @@ func makeRecordingRuleSpec(t *testing.T, folder, title string) *v0alpha1.Recordi
 			},
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
-			Title:  title,
-			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+			Title:               title,
+			Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+			TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
 					QueryType:     new("query"),
