@@ -339,6 +339,11 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels
+  * @default false
+  */
+  dashboardNotebookLayout?: boolean;
+  /**
   * Enables default layout selector in dashboard settings
   * @default true
   */
@@ -1382,7 +1387,7 @@ export interface FeatureToggles {
   secretsManagementAppPlatformAwsKeeper?: boolean;
   /**
   * Enables profiles exemplars support in profiles drilldown
-  * @default false
+  * @default true
   */
   profilesExemplars?: boolean;
   /**
@@ -1451,8 +1456,8 @@ export interface FeatureToggles {
   */
   kubernetesUsersRedirect?: boolean;
   /**
-  * Enables the ability to create multiple alerting policies
-  * @default false
+  * Enables the ability to create multiple notification policies in alerting
+  * @default true
   */
   alertingMultiplePolicies?: boolean;
   /**
@@ -1605,11 +1610,6 @@ export interface FeatureToggles {
   * @default false
   */
   cacheConfigUnifiedStorageMigration?: boolean;
-  /**
-  * Boots the frontend using the boot.js script built from TS instead of the embedded boot script
-  * @default false
-  */
-  compiledBootScript?: boolean;
   /**
   * Enables validation on the InfluxDB data source configuration page
   * @default false

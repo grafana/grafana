@@ -6415,7 +6415,6 @@
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
-      "read-only": "Read only",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
       "save-as-template": {
@@ -9024,9 +9023,6 @@
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
-  "folder-repo": {
-    "read-only-badge": "Read only"
-  },
   "folders": {
     "api": {
       "anonymous-user": "Anonymous",
@@ -11004,6 +11000,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "Series color",
       "show-all-series": "...show all {{total}} items"
     }
   },
@@ -13132,6 +13129,14 @@
       "update-configuration-action": "View configuration docs",
       "upgrade-action": "Upgrade account"
     },
+    "branch-options": {
+      "description-enforce-template": "Make the branch name read-only in save dialogs so users cannot override the generated name.",
+      "description-name-template": "Template for the branch created by the branch (pull request) workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}, {{randomVar}} (a short random token to avoid collisions). The result is sanitised into a valid Git branch name. Leave empty to use the auto-generated name.",
+      "label-branch-options": "Branch options (advanced)",
+      "label-enforce-template": "Enforce branch name template",
+      "label-name-template": "Branch name template",
+      "placeholder-name-template": "grafana/{{actionVar}}-{{titleVar}}-{{randomVar}}"
+    },
     "cloud-info-box": {
       "body": "Skip the setup and get Git Sync fully managed and hosted on Grafana Cloud with the <2>free-forever Grafana Cloud plan</2>.",
       "title": "You can also use Git Sync on Grafana Cloud"
@@ -13151,12 +13156,17 @@
       "folder-rename-default": "Rename folder: {{title}}",
       "folder-update-default": "Save folder: {{title}}"
     },
+    "commit-options": {
+      "description-enforce-template": "Pre-fill the commit message in save dialogs from the template above and make it read-only.",
+      "label-commit-options": "Commit options (advanced)",
+      "label-enforce-template": "Enforce commit message template"
+    },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
-      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. A \"Grafana-saved-by: <name> (<login>)\" trailer is appended automatically. Leave empty to use the built-in defaults.",
+      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. Leave empty to use the built-in defaults.",
       "description-connection": "Select the GitHub App connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
@@ -13588,6 +13598,14 @@
         }
       }
     },
+    "pull-request-options": {
+      "description-enforce-template": "Pre-fill the pull request title in save dialogs from the template above and make it read-only.",
+      "description-title-template": "Template for the pull request title opened by the branch workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Leave empty to use the first line of the commit message.",
+      "label-enforce-template": "Enforce pull request title template",
+      "label-pull-request-options": "Pull request options (advanced)",
+      "label-title-template": "Pull request title template",
+      "placeholder-title-template": "{{actionVar}}: {{titleVar}}"
+    },
     "quota-limit": {
       "message-both-repositories_one": "Your account is limited to {{count}} connected repositories",
       "message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
@@ -13610,6 +13628,9 @@
       "update-configuration-link": "update your Grafana configuration",
       "upgrade-link": "upgrade your account"
     },
+    "read-only-badge": {
+      "text": "Read only"
+    },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "recent-jobs": {
@@ -13630,7 +13651,6 @@
     },
     "repository-card": {
       "last-sync": "Last sync: {{date}}",
-      "read-only-badge": "Read only",
       "settings": "Settings",
       "view": "View"
     },

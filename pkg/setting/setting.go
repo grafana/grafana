@@ -735,16 +735,17 @@ type Cfg struct {
 	VectorRateLimitWindow    time.Duration
 
 	// Embedding provider used by the VectorSearch RPC. "" = disabled.
-	EmbeddingProvider string // "vertex" | "bedrock" | ""
-	VertexProjectID   string
-	VertexLocation    string // default "us-central1"
-	VertexModel       string // default "gemini-embedding-001"
-	VertexDimensions  int    // default 768
-	VertexBatchSize   int    // texts per Vertex predict call; default 50
-	BedrockRegion     string // default "us-east-1"
-	BedrockModel      string // default "cohere.embed-v4:0"
-	BedrockDimensions int    // default 1024
-	BedrockBatchSize  int    // texts per Bedrock invoke call; default 50
+	EmbeddingProvider  string // "vertex" | "bedrock" | ""
+	VertexProjectID    string
+	VertexLocation     string // default "us-central1"
+	VertexModel        string // default "gemini-embedding-001"
+	VertexDimensions   int    // default 768
+	VertexBatchSize    int    // texts per Vertex predict call; default 50
+	BedrockRegion      string // default "us-east-1"
+	BedrockModel       string // default "cohere.embed-v4:0"
+	BedrockDimensions  int    // default 1024
+	BedrockBatchSize   int    // texts per Bedrock invoke call; default 50
+	BedrockMaxAttempts int    // max InvokeModel attempts per call under throttling; default 5
 
 	// Overrides/Quotas
 	OverridesFilePath             string
@@ -1134,14 +1135,19 @@ type AnnotationAppPlatformSettings struct {
 	PostgresConnMaxLifetime  time.Duration // Maximum lifetime of a connection
 	PostgresTagCacheTTL      time.Duration // TTL for tag query cache
 	PostgresTagCacheSize     int           // Size of the tag query cache
+
+	// EnableLegacyID controls whether a grafana.app/legacyID label is generated
+	// for new annotations.
+	EnableLegacyID bool
 }
 
 func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
 	appPlatformSection := cfg.Section("annotations.app_platform")
 	return AnnotationAppPlatformSettings{
-		Enabled:      appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend: appPlatformSection.Key("store_backend").MustString("legacy-sql"),
-		RetentionTTL: appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
+		Enabled:        appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend:   appPlatformSection.Key("store_backend").MustString("legacy-sql"),
+		RetentionTTL:   appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
+		EnableLegacyID: appPlatformSection.Key("enable_legacy_id").MustBool(false),
 
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
 		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),

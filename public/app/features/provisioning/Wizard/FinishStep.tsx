@@ -5,7 +5,10 @@ import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { BranchOptionsSection } from '../Config/BranchOptionsSection';
+import { CommitOptionsSection } from '../Config/CommitOptionsSection';
 import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfiguredBranchOption';
+import { PullRequestOptionsSection } from '../Config/PullRequestOptionsSection';
 import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
 import { isGitProvider } from '../utils/repositoryTypes';
 
@@ -112,6 +115,29 @@ export const FinishStep = memo(function FinishStep() {
           readOnly={readOnly}
           registerName="repository.enablePushToConfiguredBranch"
         />
+      )}
+
+      {isGitBased && (
+        <>
+          <BranchOptionsSection<WizardFormData>
+            register={register}
+            nameTemplateName="repository.branchOptions.nameTemplate"
+            enforceTemplateName="repository.branchOptions.enforceTemplate"
+          />
+          <CommitOptionsSection<WizardFormData>
+            register={register}
+            messageTemplateName="repository.commit.singleResourceMessageTemplate"
+            enforceTemplateName="repository.commit.enforceTemplate"
+          />
+          {/* Pull requests are not supported by the pure git type. */}
+          {type !== 'git' && (
+            <PullRequestOptionsSection<WizardFormData>
+              register={register}
+              titleTemplateName="repository.pullRequest.titleTemplate"
+              enforceTemplateName="repository.pullRequest.enforceTemplate"
+            />
+          )}
+        </>
       )}
 
       {isGithub && imageRenderingAllowed && (
