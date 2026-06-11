@@ -78,10 +78,6 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	return nil
 }
 
-// nestMaintenanceWindowsUnderSLO moves the Maintenance Windows app under the SLO
-// app's nav node when both apps are enabled, so it appears as a child page of SLO
-// instead of a standalone app. When the SLO app is not present, Maintenance Windows
-// keeps its own standalone nav entry.
 func (s *ServiceImpl) nestMaintenanceWindowsUnderSLO(treeRoot *navtree.NavTreeRoot) {
 	const sloPluginID = "grafana-slo-app"
 	const mwPluginID = "grafana-maintenancewindows-app"
@@ -92,16 +88,15 @@ func (s *ServiceImpl) nestMaintenanceWindowsUnderSLO(treeRoot *navtree.NavTreeRo
 		return
 	}
 
-	// Remove the standalone Maintenance Windows app node so it only appears nested under SLO.
 	treeRoot.RemoveSectionByID(mwNode.Id)
 
-	sloNode.Children = append(sloNode.Children, &navtree.NavLink{
-		Text:     "Maintenance windows",
-		Id:       mwPluginID,
-		Url:      s.cfg.AppSubURL + "/a/" + mwPluginID + "/maintenance-windows",
-		PluginID: mwPluginID,
-		IsNew:    true,
-	})
+	mwNode.Id = "standalone-plugin-page-" + mwPluginID
+	mwNode.IsNew = true
+	sloNode.Children = append(sloNode.Children, mwNode)
+
+	if appsNode := treeRoot.FindById(navtree.NavIDApps); appsNode != nil && len(appsNode.Children) == 0 {
+		treeRoot.RemoveSectionByID(navtree.NavIDApps)
+	}
 }
 
 // shouldIncludeInvestigations checks if the investigations feature should be included for the assistant app

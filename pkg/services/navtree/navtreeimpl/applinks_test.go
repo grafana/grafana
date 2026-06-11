@@ -671,6 +671,9 @@ func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 			pluginSettings: &pluginsettings.FakePluginSettings{Plugins: ps},
 			features:       featuremgmt.WithFeatures(),
 			pluginStore:    &pluginstore.FakePluginStore{PluginList: list},
+			navigationAppConfig: map[string]NavigationAppConfig{
+				"grafana-slo-app": {SectionID: navtree.NavIDRoot},
+			},
 		}
 	}
 
@@ -680,15 +683,18 @@ func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
 
-		// Maintenance Windows should not have its own standalone app node.
 		require.Nil(t, treeRoot.FindById("plugin-page-grafana-maintenancewindows-app"))
 
 		sloNode := treeRoot.FindById("plugin-page-grafana-slo-app")
 		require.NotNil(t, sloNode)
 		mwChild := navtree.FindByURL(sloNode.Children, "/a/grafana-maintenancewindows-app/maintenance-windows")
 		require.NotNil(t, mwChild)
-		require.Equal(t, "Maintenance windows", mwChild.Text)
+		require.Equal(t, "Maintenance Windows", mwChild.Text)
 		require.Equal(t, "grafana-maintenancewindows-app", mwChild.PluginID)
+		require.Equal(t, "standalone-plugin-page-grafana-maintenancewindows-app", mwChild.Id)
+		require.True(t, mwChild.IsNew)
+
+		require.Nil(t, treeRoot.FindById(navtree.NavIDApps))
 	})
 
 	t.Run("Should keep Maintenance Windows as its own app when SLO is not enabled", func(t *testing.T) {
