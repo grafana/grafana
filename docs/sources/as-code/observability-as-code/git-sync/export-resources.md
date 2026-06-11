@@ -49,7 +49,7 @@ To access the Import dashboard tool from the Git Sync UI:
 1. Select **Import dashboard** and you'll be redirected to the wizard.
 1. Upload or paste the dashboard JSON.
 1. Fill in the relevant fields, including the branch and repository folder, and press **Import**.
-1. Open the pull request, follow your regular workflow, and merge.  
+1. Open the pull request, follow your regular workflow, and merge.
 
 Keep in mind the following:
 
