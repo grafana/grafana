@@ -77,9 +77,6 @@ async function fetchAndPopulate(): Promise<void> {
 }
 
 export async function reloadDataSourceInstanceSettings(): Promise<void> {
-  // Transition-period: while the legacy DataSourceSrv exists, route through it so a single
-  // fetch refreshes BOTH caches and clears both resolved-instance caches. When DataSourceSrv
-  // is removed, getDataSourceSrv() returns undefined and this falls back to a standalone refetch.
   const srv = getDataSourceSrv();
   if (srv) {
     await srv.reload();
