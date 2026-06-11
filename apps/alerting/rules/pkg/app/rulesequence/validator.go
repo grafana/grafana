@@ -9,15 +9,23 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/schemavalidation"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/util"
 )
 
-func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
+func NewValidator(cfg config.RuntimeConfig, sv *schemavalidation.SpecValidator) *simple.Validator {
 	return &simple.Validator{
 		ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
 			r, ok := req.Object.(*model.RuleSequence)
 			if !ok || r == nil {
 				return fmt.Errorf("object is not of type *v0alpha1.RuleSequence")
+			}
+
+			// Validate against the openAPI spec first
+			if sv != nil {
+				if err := sv.ValidateOpenAPISpec(r.Name, r.Spec); err != nil {
+					return err
+				}
 			}
 
 			sourceProv := r.GetProvenanceStatus()
