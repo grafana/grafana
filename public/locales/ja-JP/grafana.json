@@ -1096,9 +1096,6 @@
       },
       "unknown": "不明な"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "互換性のあるデータソースが見つかりません。"
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "アラートを開始するための評価",
       "pending-period": "保留期間",
@@ -5907,9 +5904,6 @@
       "select-source": "ソースを選択",
       "unknown": "不明なオブジェクト：{{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "メタデータインスペクターなし"
-    },
     "inspect-stats": {
       "data-title": "データソースの統計",
       "data-traceids": "トレースID",
@@ -6388,7 +6382,6 @@
       "playlist-next": "次のダッシュボードに移動",
       "playlist-previous": "前のダッシュボードに戻る",
       "playlist-stop": "プレイリストを停止",
-      "read-only": "読み取り専用",
       "refresh": "ダッシュボードを更新",
       "save": "ダッシュボードを保存",
       "save-as-template": {
@@ -6525,28 +6518,6 @@
     },
     "view-panel": {
       "not-found": ""
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "可視化を変更",
-      "aria-label-close": "オプションパネルを閉じる",
-      "aria-label-show": "オプションパネルを表示",
-      "tooltip-click-to-change-visualization": "クリックして可視化を変更",
-      "tooltip-close": "オプションパネルを閉じる",
-      "tooltip-show": "オプションパネルを表示"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "次を検索...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "複数のダッシュボード間で共有できる再利用可能パネル。"
-        },
-        "label": {
-          "library-panels": "ライブラリパネル",
-          "suggestions": "提案",
-          "visualizations": "可視化"
-        }
-      },
-      "title-close": "閉じる"
     },
     "viz-panel": {
       "delete-panel-text": "このパネルを削除すると、すべてのクエリも削除されます。続行してもよろしいですか？",
@@ -9002,9 +8973,6 @@
     "select-aria-label": "フォルダフィルター",
     "select-placeholder": "フォルダでフィルタリング"
   },
-  "folder-repo": {
-    "read-only-badge": "読み取り専用"
-  },
   "folders": {
     "api": {
       "anonymous-user": "",
@@ -10970,6 +10938,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "",
       "show-all-series": "...{{total}}件の項目をすべて表示"
     }
   },
@@ -10991,10 +10960,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "ライブラリパネルを作成"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "変更",
-      "confirmText-replace": "置換"
     },
     "confirm": {
       "delete-panel": "このパネルを削除しますか？"
@@ -11033,9 +10998,6 @@
       "select-placeholder": "ダッシュボードを検索するために入力を開始します",
       "title": "ダッシュボードでパネルを表示...",
       "body_other": "このパネルは、{{count}}件のダッシュボードで使用されています。パネルを表示するダッシュボードを選択してください。"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "新規ライブラリパネルを作成"
     },
     "save": {
       "error": "ライブラリパネルの保存中にエラーが発生しました：「{{errorMsg}}」",
@@ -13560,6 +13522,9 @@
       "message-resource_other": "アカウントのリポジトリあたりの同期リソース数は{{count}}件までに制限されています。",
       "message-resource-onprem_other": "インスタンスのリポジトリあたりの同期リソース数は{{count}}件までに制限されています。"
     },
+    "read-only-badge": {
+      "text": ""
+    },
     "read-only-local-tooltip": "このリソースは読み取り専用であり、ファイルプロビジョニングを通じてプロビジョニングされます。変更を加えるには、接続されているリポジトリを更新します。設定を変更するには、「管理」>「プロビジョニング」>「リポジトリ」の順で移動します。",
     "read-only-remote-tooltip": "このリソースは読み取り専用で、Gitを介してプロビジョニングされます。変更を加えるには、接続されているリポジトリを更新します。設定を変更するには、「管理」>「プロビジョニング」>「リポジトリ」の順で移動します。",
     "recent-jobs": {
@@ -13580,7 +13545,6 @@
     },
     "repository-card": {
       "last-sync": "最後の同期日：{{date}}",
-      "read-only-badge": "読み取り専用",
       "settings": "設定",
       "view": "表示"
     },
@@ -16542,9 +16506,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "名前が変更された変数や欠落している変数は見つかりませんでした。"
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "変数を読み込めませんでした"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "この変数の値を更新するタイミング",

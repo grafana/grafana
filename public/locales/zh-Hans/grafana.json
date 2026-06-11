@@ -1096,9 +1096,6 @@
       },
       "unknown": "未知"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "您似乎没有兼容的数据源。"
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "触发警报的评估",
       "pending-period": "待处理时段",
@@ -5907,9 +5904,6 @@
       "select-source": "选择源",
       "unknown": "未知对象：{{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "没有元数据检查器"
-    },
     "inspect-stats": {
       "data-title": "数据源统计信息",
       "data-traceids": "轨迹 ID",
@@ -6388,7 +6382,6 @@
       "playlist-next": "前往下一个仪表板",
       "playlist-previous": "前往上一个仪表板",
       "playlist-stop": "停止播放列表",
-      "read-only": "只读",
       "refresh": "刷新仪表板",
       "save": "保存仪表板",
       "save-as-template": {
@@ -6525,28 +6518,6 @@
     },
     "view-panel": {
       "not-found": ""
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "更改可视化",
-      "aria-label-close": "关闭选项窗格",
-      "aria-label-show": "显示选项窗格",
-      "tooltip-click-to-change-visualization": "点击可更改可视化",
-      "tooltip-close": "关闭选项窗格",
-      "tooltip-show": "显示选项窗格"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "搜索...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "您可以在多个数据面板之间共享的可重复使用面板。"
-        },
-        "label": {
-          "library-panels": "库面板",
-          "suggestions": "建议",
-          "visualizations": "可视化"
-        }
-      },
-      "title-close": "关闭"
     },
     "viz-panel": {
       "delete-panel-text": "删除此面板也将移除所有查询。您确认要继续吗？",
@@ -9002,9 +8973,6 @@
     "select-aria-label": "文件夹筛选",
     "select-placeholder": "按文件夹筛选"
   },
-  "folder-repo": {
-    "read-only-badge": "只读"
-  },
   "folders": {
     "api": {
       "anonymous-user": "",
@@ -10970,6 +10938,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "",
       "show-all-series": "显示全部 {{total}} 个项目"
     }
   },
@@ -10991,10 +10960,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "创建库面板"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "更改",
-      "confirmText-replace": "替换"
     },
     "confirm": {
       "delete-panel": "要删除这个面板吗？"
@@ -11033,9 +10998,6 @@
       "select-placeholder": "开始输入以搜索仪表板",
       "title": "在仪表板中查看面板",
       "body_other": "此面板在 {{count}} 个仪表板中使用。请选择要在哪个仪表板中查看此面板："
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "创建新的库面板"
     },
     "save": {
       "error": "保存库面板时出错：\"{{errorMsg}}\"",
@@ -13560,6 +13522,9 @@
       "message-resource_other": "您的账户中的每个存储库最多可拥有 {{count}} 个同步资源。",
       "message-resource-onprem_other": "您的实例中的每个存储库最多可拥有 {{count}} 个同步资源。"
     },
+    "read-only-badge": {
+      "text": ""
+    },
     "read-only-local-tooltip": "此资源是只读的，并通过文件预置方式进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
     "read-only-remote-tooltip": "此资源是只读的，并通过 Git 进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
     "recent-jobs": {
@@ -13580,7 +13545,6 @@
     },
     "repository-card": {
       "last-sync": "上次同步日期：{{date}}",
-      "read-only-badge": "只读",
       "settings": "设置",
       "view": "查看"
     },
@@ -16542,9 +16506,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "未找到重命名或缺失的变量。"
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "无法加载变量"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "何时更新此变量的值",

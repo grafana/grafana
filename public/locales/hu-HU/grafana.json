@@ -1103,9 +1103,6 @@
       },
       "unknown": "Ismeretlen"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "Úgy tűnik, nincs kompatibilis adatforrása."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Értékelések a riasztás megkezdéséhez",
       "pending-period": "Függőben lévő időszak",
@@ -5939,9 +5936,6 @@
       "select-source": "Forrás kijelölése",
       "unknown": "Ismeretlen objektum: {{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "Nincs metaadat-ellenőrző"
-    },
     "inspect-stats": {
       "data-title": "Adatforrás statisztikái",
       "data-traceids": "Nyomkövetési azonosítók",
@@ -6421,7 +6415,6 @@
       "playlist-next": "Ugrás a következő irányítópulthoz",
       "playlist-previous": "Ugrás az előző irányítópulthoz",
       "playlist-stop": "Lejátszási lista leállítása",
-      "read-only": "Csak olvasható",
       "refresh": "Irányítópult frissítése",
       "save": "Irányítópult mentése",
       "save-as-template": {
@@ -6558,28 +6551,6 @@
     },
     "view-panel": {
       "not-found": ""
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Vizualizáció módosítása",
-      "aria-label-close": "Beállítások ablaktábla bezárása",
-      "aria-label-show": "Beállítások ablaktábla megjelenítése",
-      "tooltip-click-to-change-visualization": "Kattintson a vizualizáció módosításához",
-      "tooltip-close": "Beállítások ablaktábla bezárása",
-      "tooltip-show": "Beállítások ablaktábla megjelenítése"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Keresés a következőre…",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Újrafelhasználható panelek, amelyeket több irányítópult között is megoszthat."
-        },
-        "label": {
-          "library-panels": "Könyvtárpanelek",
-          "suggestions": "Javaslatok",
-          "visualizations": "Vizualizációk"
-        }
-      },
-      "title-close": "Bezárás"
     },
     "viz-panel": {
       "delete-panel-text": "A panel törlésével az összes lekérdezést is eltávolítja. Biztosan folytatja?",
@@ -9052,9 +9023,6 @@
     "select-aria-label": "Mappaszűrő",
     "select-placeholder": "Szűrés mappa alapján"
   },
-  "folder-repo": {
-    "read-only-badge": "Csak olvasható"
-  },
   "folders": {
     "api": {
       "anonymous-user": "",
@@ -11032,6 +11000,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "",
       "show-all-series": "…mind a(z) {{total}} elem megjelenítése"
     }
   },
@@ -11053,10 +11022,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "Könyvtárpanel létrehozása"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "Módosítás",
-      "confirmText-replace": "Csere"
     },
     "confirm": {
       "delete-panel": "Biztosan törli ezt a panelt?"
@@ -11097,9 +11062,6 @@
       "title": "Panel megtekintése az irányítópulton",
       "body_one": "Ez a panel {{count}} irányítópulton van használatban. Válassza ki, melyik irányítópulton szeretné megtekinteni a panelt:",
       "body_other": "Ez a panel {{count}} irányítópulton van használatban. Válassza ki, melyik irányítópulton szeretné megtekinteni a panelt:"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "Új könyvtárpanel létrehozása"
     },
     "save": {
       "error": "Hiba történt a könyvtárpanel mentésekor: „{{errorMsg}}”",
@@ -13645,6 +13607,9 @@
       "message-resource-onprem_one": "A példányánál a szinkronizált erőforrások maximális száma adattáranként {{count}}.",
       "message-resource-onprem_other": "A példányánál a szinkronizált erőforrások maximális száma adattáranként {{count}}."
     },
+    "read-only-badge": {
+      "text": ""
+    },
     "read-only-local-tooltip": "Ez az erőforrás írásvédett, és fájlkonfiguráláson keresztül van kiépítve. Módosítások végrehajtásához frissítse a csatlakoztatott adattárat. A beállítások módosításához lépjen az Adminisztráció > Konfiguráció > Adattárak menüpontra.",
     "read-only-remote-tooltip": "Ez az erőforrás írásvédett, és Giten keresztül van kiépítve. Módosítások végrehajtásához frissítse a csatlakoztatott adattárat. A beállítások módosításához lépjen az Adminisztráció > Konfiguráció > Adattárak menüpontra.",
     "recent-jobs": {
@@ -13665,7 +13630,6 @@
     },
     "repository-card": {
       "last-sync": "Legutóbbi szinkronizálás: {{date}}",
-      "read-only-badge": "Csak olvasható",
       "settings": "Beállítások",
       "view": "Nézet"
     },
@@ -16638,9 +16602,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "Nem található átnevezett vagy hiányzó változó."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "A változó betöltése nem sikerült"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "Mikor kell frissíteni ennek a változónak az értékeit?",

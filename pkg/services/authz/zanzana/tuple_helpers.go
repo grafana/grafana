@@ -542,7 +542,7 @@ func NewResourceTuple(object string, resource *authzextv1.Resource, perm *authze
 	}
 
 	// For resources we add a condition to filter by apiGroup/resource
-	// e.g "group_filter": {"group_resource": "dashboards.grafana.app/dashboards"}
+	// e.g "group_filter": {"group_resource": "dashboard.grafana.app/dashboards"}
 	if typ == TypeResource {
 		key.Condition = &openfgav1.RelationshipCondition{
 			Name: "group_filter",

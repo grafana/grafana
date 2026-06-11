@@ -708,6 +708,14 @@ func TestIsActionSetEnabledResource_ServiceAccount(t *testing.T) {
 
 func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, team.Service) {
 	t.Helper()
+	service, userSvc, teamSvc, _ := setupTestEnvironmentWithCfg(t, ops, featuremgmt.WithFeatures())
+	return service, userSvc, teamSvc
+}
+
+// setupTestEnvironmentWithCfg is like setupTestEnvironment but lets the caller pass feature
+// toggles and returns the *setting.Cfg so tests can tweak it (e.g. the dual-writer mode).
+func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt.FeatureToggles) (*Service, user.Service, team.Service, *setting.Cfg) {
+	t.Helper()
 
 	sql := db.InitTestDB(t)
 	cfg := setting.NewCfg()
@@ -728,7 +736,6 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	acService := &actest.FakeService{}
-	features := featuremgmt.WithFeatures()
 	ac := acimpl.ProvideAccessControl(features)
 	service, err := New(
 		cfg, ops, features, routing.NewRouteRegister(), license,
@@ -736,5 +743,5 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 	)
 	require.NoError(t, err)
 
-	return service, userSvc, teamSvc
+	return service, userSvc, teamSvc, cfg
 }
