@@ -64,7 +64,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		query.DashboardUID = dqResult.UID
 	}
 
-	items, err := hs.annotationsRepo.Find(c.Req.Context(), query)
+	items, err := hs.findAnnotations(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get annotations", err)
 	}
@@ -76,6 +76,30 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 	}
 
 	return response.JSON(http.StatusOK, items)
+}
+
+func (hs *HTTPServer) findAnnotations(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+	isAlertQuery := query.Type == "alert" || query.AlertID != 0 || query.AlertUID != ""
+	if hs.annotationProxyHandler.Enabled() && !isAlertQuery {
+		newItems, err := hs.annotationProxyHandler.List(ctx, query.OrgID, query)
+		if err != nil {
+			return nil, err
+		}
+
+		newItems = annotationsapi.FilterByTags(newItems, query.Tags, query.MatchAny)
+		if hs.annotationProxyHandler.ProxyAll() {
+			return newItems, nil
+		}
+
+		legacyItems, err := hs.annotationsRepo.Find(ctx, query)
+		if err != nil {
+			return nil, err
+		}
+
+		return annotationsapi.Merge(newItems, legacyItems, query.Limit), nil
+	}
+
+	return hs.annotationsRepo.Find(ctx, query)
 }
 
 type AnnotationError struct {

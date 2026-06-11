@@ -19,8 +19,6 @@ import (
 // ErrNotFound is returned by proxy methods when the annotation is not in the new storage
 var ErrNotFound = errors.New("annotation not found in new store")
 
-const labelKeyLegacyID = "grafana.app/legacyID"
-
 // ProxyHandler carries the k8s client for the standalone annotation API server.
 //
 // When enabled (api_migration_phase = proxy-writes or proxy-all):
@@ -48,6 +46,169 @@ func ProvideProxyHandler(cfg *setting.Cfg, userSvc user.Service) (*ProxyHandler,
 
 func (h *ProxyHandler) Enabled() bool {
 	return h.client != nil && (h.phase == "proxy-writes" || h.phase == "proxy-all")
+}
+
+func (h *ProxyHandler) ProxyAll() bool {
+	return h.client != nil && h.phase == "proxy-all"
+}
+
+// List fetches annotations from the new store matching query and returns them as ItemDTOs.
+// Tags are not supported as k8s field selectors — callers must filter by tags after this call.
+func (h *ProxyHandler) List(ctx context.Context, orgID int64, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+	listOpts := v1.ListOptions{Limit: query.Limit}
+	if fs := buildFieldSelector(query); fs != "" {
+		listOpts.FieldSelector = fs
+	}
+
+	list, err := h.client.List(ctx, orgID, listOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Collect unique createdBy values for batch user hydration.
+	seen := make(map[string]bool)
+	var createdByMeta []string
+	for _, obj := range list.Items {
+		if cb := obj.GetAnnotations()["grafana.com/createdBy"]; cb != "" && !seen[cb] {
+			createdByMeta = append(createdByMeta, cb)
+			seen[cb] = true
+		}
+	}
+	userMap := map[string]*user.User{}
+	if len(createdByMeta) > 0 {
+		userMap, _ = h.client.GetUsersFromMeta(ctx, createdByMeta)
+	}
+
+	dtos := make([]*annotations.ItemDTO, 0, len(list.Items))
+	for i := range list.Items {
+		obj := &list.Items[i]
+		dto := objectToItemDTO(obj)
+		if cb := obj.GetAnnotations()["grafana.com/createdBy"]; cb != "" {
+			if u, ok := userMap[cb]; ok {
+				dto.UserID = u.ID
+				dto.UserUID = u.UID
+				dto.Login = u.Login
+				dto.Email = u.Email
+			}
+		}
+		dtos = append(dtos, dto)
+	}
+	return dtos, nil
+}
+
+// buildFieldSelector converts supported query fields to a k8s field selector string.
+// Tags, alertId, type, and userId have no field selector support and are omitted.
+func buildFieldSelector(q *annotations.ItemQuery) string {
+	var parts []string
+	if q.DashboardUID != "" {
+		parts = append(parts, "spec.dashboardUID="+q.DashboardUID)
+	}
+	if q.PanelID != 0 {
+		parts = append(parts, fmt.Sprintf("spec.panelID=%d", q.PanelID))
+	}
+	if q.From != 0 {
+		parts = append(parts, fmt.Sprintf("spec.time=%d", q.From))
+	}
+	if q.To != 0 {
+		parts = append(parts, fmt.Sprintf("spec.timeEnd=%d", q.To))
+	}
+	return joinParts(parts)
+}
+
+func joinParts(parts []string) string {
+	result := ""
+	for i, p := range parts {
+		if i > 0 {
+			result += ","
+		}
+		result += p
+	}
+	return result
+}
+
+// Merge combines new-store and legacy items, deduplicates by legacyID (new store wins),
+// sorts by time descending, and applies limit.
+func Merge(newItems, legacyItems []*annotations.ItemDTO, limit int64) []*annotations.ItemDTO {
+	inNew := make(map[int64]bool, len(newItems))
+	for _, item := range newItems {
+		inNew[item.ID] = true
+	}
+
+	merged := make([]*annotations.ItemDTO, 0, len(newItems)+len(legacyItems))
+	merged = append(merged, newItems...)
+	for _, item := range legacyItems {
+		if !inNew[item.ID] {
+			merged = append(merged, item)
+		}
+	}
+
+	sortByTime(merged)
+
+	if limit > 0 && int64(len(merged)) > limit {
+		merged = merged[:limit]
+	}
+	return merged
+}
+
+func sortByTime(items []*annotations.ItemDTO) {
+	for i := 1; i < len(items); i++ {
+		for j := i; j > 0; j-- {
+			a, b := items[j-1], items[j]
+			if a.TimeEnd < b.TimeEnd || (a.TimeEnd == b.TimeEnd && a.Time < b.Time) {
+				items[j-1], items[j] = items[j], items[j-1]
+			} else {
+				break
+			}
+		}
+	}
+}
+
+// FilterByTags removes items that do not match the tag query.
+// matchAny=true: item must have at least one of the tags.
+// matchAny=false: item must have all of the tags.
+func FilterByTags(items []*annotations.ItemDTO, tags []string, matchAny bool) []*annotations.ItemDTO {
+	if len(tags) == 0 {
+		return items
+	}
+	result := items[:0]
+	for _, item := range items {
+		if matchAny {
+			if hasAnyTag(item.Tags, tags) {
+				result = append(result, item)
+			}
+		} else {
+			if hasAllTags(item.Tags, tags) {
+				result = append(result, item)
+			}
+		}
+	}
+	return result
+}
+
+func hasAnyTag(itemTags, queryTags []string) bool {
+	set := make(map[string]bool, len(itemTags))
+	for _, t := range itemTags {
+		set[t] = true
+	}
+	for _, t := range queryTags {
+		if set[t] {
+			return true
+		}
+	}
+	return false
+}
+
+func hasAllTags(itemTags, queryTags []string) bool {
+	set := make(map[string]bool, len(itemTags))
+	for _, t := range itemTags {
+		set[t] = true
+	}
+	for _, t := range queryTags {
+		if !set[t] {
+			return false
+		}
+	}
+	return true
 }
 
 // Create writes to new store and returns the assigned legacy ID.
@@ -141,7 +302,7 @@ func legacyIDFromObject(obj *unstructured.Unstructured) int64 {
 	if labels == nil {
 		return 0
 	}
-	id, _ := strconv.ParseInt(labels[labelKeyLegacyID], 10, 64)
+	id, _ := strconv.ParseInt(labels["grafana.app/legacyID"], 10, 64)
 	return id
 }
 
