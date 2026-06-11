@@ -52,7 +52,7 @@ export function DashboardOutlineNode({
   const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
 
   const elementInfo = editableElement.getEditableElementInfo();
-  const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
+  const instanceName = elementInfo.instanceName || noTitleText;
   const outlineRename = useOutlineRename(editableElement, isEditing);
   const isContainer = editableElement.getOutlineChildren ? true : false;
   const visibleChildren = useMemo(
