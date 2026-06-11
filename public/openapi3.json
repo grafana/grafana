@@ -12779,6 +12779,12 @@
       },
       "UserSearchHitDTO": {
         "properties": {
+          "accessControl": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
           "authLabels": {
             "items": {
               "type": "string"
