@@ -64,7 +64,8 @@ export type TraceSpanData = {
 };
 
 /**
- * Aggregation metadata extracted from a pruned span's `aggregation.*` tags.
+ * Aggregation metadata extracted from the `aggregation.*` tags that span
+ * pruning writes onto summary spans and preserved-outlier spans.
  *
  * The span pruning processor replaces a group of similar spans with a single
  * "summary span" carrying these attributes, and reparents any preserved
@@ -95,10 +96,6 @@ export type SpanAggregation = {
   // On a preserved outlier span, the spanID of the summary span it was preserved from
   // (`aggregation.summary_span_id`).
   summarySpanId?: string;
-  // TODO: Tier 2 stats display may also surface `duration_total_ns` and the histogram
-  // attributes (`histogram_bucket_bounds_s` / `histogram_bucket_counts`). They are left
-  // unextracted here because Tier 1 has no use for them, and histograms are config-gated
-  // in the processor (not emitted by ops today). (grafana/grafana-adaptivetraces-app#1018)
 };
 
 export type TraceSpan = TraceSpanData & {
