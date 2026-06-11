@@ -112,14 +112,13 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 
 	// Build the team id->uid resolver only when Roles/GlobalRoles are reconciled:
 	// they can carry id-based team scopes (teams:id:N) that would otherwise be dropped
-	// during translation. The resolver reads team uids from unified storage, so it works
-	// in mode 5 (no legacy SQL). A nil resolver makes resolveTeamScopes a no-op.
-	// ns is only used by the SQL-backed resolver path; the reconciler's client-backed
-	// resolver ignores it, so a parse failure is non-fatal here.
+	// during translation. A bulk resolver lists the namespace's teams once and answers
+	// from memory; it reads from unified storage, so it works in mode 5 (no legacy SQL).
+	// A nil resolver makes resolveTeamScopes a no-op.
 	ns, _ := types.ParseNamespace(namespace)
 	var teamResolver idresolver.Resolver
 	if r.rolesReconciled(globalRolePerms) {
-		tr, err := r.buildTeamResolver(ctx, namespace)
+		tr, err := idresolver.NewBulkResolver(ctx, ns, r)
 		if err != nil {
 			return nil, tracing.Errorf(span, "failed to build team id resolver: %w", err)
 		}

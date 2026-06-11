@@ -2,12 +2,16 @@
 // identity reference between its legacy numeric id and its app-platform uid (the
 // Kubernetes object name), in both directions, for teams, users and service accounts.
 //
-// A single Resolver implementation is meant to back every permission-translation site
-// (the Zanzana reconciler, the legacy<->Zanzana merge, the delegation check, v0->v1
-// conversion) instead of each re-deriving id<->uid knowledge. It resolves through the
-// legacy SQL store by default; for teams it switches to an app-platform client when the
-// kubernetesTeamsApi flag is enabled (or when no legacy store is configured), so it
-// works in mode 5 with no legacy SQL.
+// One Resolver interface, two implementations chosen by access pattern:
+//   - NewResolver does one fetch per lookup (legacy SQL, or an app-platform client for
+//     teams when the kubernetesTeamsApi flag is on). Suited to call sites that resolve
+//     a handful of references per request, e.g. the role/delegation translations.
+//   - NewBulkResolver lists everything up front and answers from memory. Suited to call
+//     sites that resolve many references, e.g. the Zanzana reconciler and the
+//     legacy<->Zanzana merge.
+//
+// Both work in mode 5 (no legacy SQL): the single resolver via the team client, the bulk
+// resolver via its lister.
 package idresolver
 
 import (
@@ -16,6 +20,7 @@ import (
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -35,57 +40,51 @@ const (
 	KindServiceAccount Kind = "serviceaccounts"
 )
 
-// Resolver translates an identity reference between its legacy numeric id and its
-// app-platform uid, in both directions, one at a time or in bulk.
+// Resolver translates a single identity reference between its legacy numeric id and its
+// app-platform uid, in both directions. Returns ErrNotFound when the identity is absent.
+// Call it in a loop for many references; pick the implementation (single vs bulk) to
+// match the access pattern.
 type Resolver interface {
-	// IDToUID resolves a legacy numeric id to the uid. Returns ErrNotFound if absent.
 	IDToUID(ctx context.Context, ns claims.NamespaceInfo, kind Kind, id int64) (uid string, err error)
-	// UIDToID resolves a uid to the legacy numeric id. Returns ErrNotFound if absent.
 	UIDToID(ctx context.Context, ns claims.NamespaceInfo, kind Kind, uid string) (id int64, err error)
-
-	// IDsToUIDs resolves many ids in one call. The returned map holds only the ids
-	// that resolved; ids with no matching identity are omitted rather than erroring,
-	// so a single orphan doesn't fail the batch. A non-not-found failure aborts.
-	IDsToUIDs(ctx context.Context, ns claims.NamespaceInfo, kind Kind, ids []int64) (map[int64]string, error)
-	// UIDsToIDs is the reverse bulk lookup; unresolved uids are omitted.
-	UIDsToIDs(ctx context.Context, ns claims.NamespaceInfo, kind Kind, uids []string) (map[string]int64, error)
 }
 
-// TeamClient resolves teams from the app platform (unified storage). It is the mode-5
-// backing used when there is no legacy SQL. Implementations must return ErrNotFound
-// for a missing team.
+// TeamClient resolves a single team from the app platform (unified storage). It is the
+// mode-5 backing for the single resolver. Implementations must return ErrNotFound for a
+// missing team.
 type TeamClient interface {
 	UIDByID(ctx context.Context, ns claims.NamespaceInfo, id int64) (uid string, err error)
 	IDByUID(ctx context.Context, ns claims.NamespaceInfo, uid string) (id int64, err error)
 }
 
-type resolver struct {
+// singleResolver resolves one identity per call. Teams go through teamClient when the
+// kubernetesTeamsApi flag is enabled, or when no legacy store is configured (e.g. the
+// multi-tenant deployment, inherently mode 5); otherwise they use the legacy SQL store.
+// Users and service accounts always use the legacy store for now.
+type singleResolver struct {
 	legacyStore legacy.ScopeResolverStore
 	teamClient  TeamClient
-	features    featuremgmt.FeatureToggles
 }
 
-// NewResolver returns the default Resolver. Team lookups use teamClient when the
-// kubernetesTeamsApi flag is enabled, or when no legacy store is configured (e.g. the
-// multi-tenant reconciler, which is inherently mode 5 with no SQL); otherwise they use
-// the legacy SQL store. Users and service accounts always use the legacy store for now.
-func NewResolver(legacyStore legacy.ScopeResolverStore, teamClient TeamClient, features featuremgmt.FeatureToggles) Resolver {
-	return &resolver{legacyStore: legacyStore, teamClient: teamClient, features: features}
+// NewResolver returns a Resolver that does one fetch per lookup.
+func NewResolver(legacyStore legacy.ScopeResolverStore, teamClient TeamClient) Resolver {
+	return &singleResolver{legacyStore: legacyStore, teamClient: teamClient}
 }
 
 // useTeamClient reports whether team lookups should go through the app-platform client
-// instead of legacy SQL.
-func (r *resolver) useTeamClient(ctx context.Context) bool {
+// instead of legacy SQL. The kubernetesTeamsApi flag is evaluated per-request via
+// OpenFeature so cloud/stack targeting is respected.
+func (r *singleResolver) useTeamClient(ctx context.Context) bool {
 	if r.teamClient == nil {
 		return false
 	}
 	if r.legacyStore == nil {
 		return true
 	}
-	return r.features != nil && r.features.IsEnabled(ctx, featuremgmt.FlagKubernetesTeamsApi)
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(ctx))
 }
 
-func (r *resolver) IDToUID(ctx context.Context, ns claims.NamespaceInfo, kind Kind, id int64) (string, error) {
+func (r *singleResolver) IDToUID(ctx context.Context, ns claims.NamespaceInfo, kind Kind, id int64) (string, error) {
 	switch kind {
 	case KindTeam:
 		if r.useTeamClient(ctx) {
@@ -123,7 +122,7 @@ func (r *resolver) IDToUID(ctx context.Context, ns claims.NamespaceInfo, kind Ki
 	}
 }
 
-func (r *resolver) UIDToID(ctx context.Context, ns claims.NamespaceInfo, kind Kind, uid string) (int64, error) {
+func (r *singleResolver) UIDToID(ctx context.Context, ns claims.NamespaceInfo, kind Kind, uid string) (int64, error) {
 	switch kind {
 	case KindTeam:
 		if r.useTeamClient(ctx) {
@@ -159,42 +158,6 @@ func (r *resolver) UIDToID(ctx context.Context, ns claims.NamespaceInfo, kind Ki
 	default:
 		return 0, fmt.Errorf("unknown identity kind %q", kind)
 	}
-}
-
-func (r *resolver) IDsToUIDs(ctx context.Context, ns claims.NamespaceInfo, kind Kind, ids []int64) (map[int64]string, error) {
-	out := make(map[int64]string, len(ids))
-	for _, id := range ids {
-		if _, done := out[id]; done {
-			continue
-		}
-		uid, err := r.IDToUID(ctx, ns, kind, id)
-		if err != nil {
-			if errors.Is(err, ErrNotFound) {
-				continue
-			}
-			return nil, err
-		}
-		out[id] = uid
-	}
-	return out, nil
-}
-
-func (r *resolver) UIDsToIDs(ctx context.Context, ns claims.NamespaceInfo, kind Kind, uids []string) (map[string]int64, error) {
-	out := make(map[string]int64, len(uids))
-	for _, uid := range uids {
-		if _, done := out[uid]; done {
-			continue
-		}
-		id, err := r.UIDToID(ctx, ns, kind, uid)
-		if err != nil {
-			if errors.Is(err, ErrNotFound) {
-				continue
-			}
-			return nil, err
-		}
-		out[uid] = id
-	}
-	return out, nil
 }
 
 func errNoStore(kind Kind) error {

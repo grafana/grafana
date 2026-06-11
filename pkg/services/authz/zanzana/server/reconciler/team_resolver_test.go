@@ -22,6 +22,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/idresolver"
 )
 
+type fakeTeamLister struct {
+	teams []idresolver.TeamRef
+}
+
+func (f fakeTeamLister) ListTeams(_ context.Context, _ claims.NamespaceInfo) ([]idresolver.TeamRef, error) {
+	return f.teams, nil
+}
+
 func teamUnstructured(t *testing.T, name, namespace string, internalID int64) *unstructured.Unstructured {
 	t.Helper()
 	obj := &unstructured.Unstructured{}
@@ -34,9 +42,10 @@ func teamUnstructured(t *testing.T, name, namespace string, internalID int64) *u
 	return obj
 }
 
-// TestBuildTeamResolver exercises the mode-5 path: team uids are mapped from the
-// deprecatedInternalID label on Team objects read from unified storage (no legacy SQL).
-func TestBuildTeamResolver(t *testing.T) {
+// TestReconcilerListTeams exercises the mode-5 path: the reconciler lists teams from
+// unified storage and maps each to its deprecatedInternalID label (no legacy SQL). The
+// bulk resolver is then built from that list.
+func TestReconcilerListTeams(t *testing.T) {
 	const namespace = "stacks-1"
 	gvr := iamv0.TeamResourceInfo.GroupVersionResource()
 
@@ -59,11 +68,11 @@ func TestBuildTeamResolver(t *testing.T) {
 	cf.On("Clients", mock.Anything, namespace).Return(rcs, nil)
 
 	r := newReconcilerForTest(&stubServer{}, cf)
+	ns := claims.NamespaceInfo{Value: namespace}
 
-	resolver, err := r.buildTeamResolver(context.Background(), namespace)
+	// The reconciler is the TeamLister; the bulk resolver lists once and answers from memory.
+	resolver, err := idresolver.NewBulkResolver(context.Background(), ns, r)
 	require.NoError(t, err)
-
-	ns := claims.NamespaceInfo{}
 
 	uid, err := resolver.IDToUID(context.Background(), ns, idresolver.KindTeam, 5)
 	require.NoError(t, err)
@@ -76,7 +85,6 @@ func TestBuildTeamResolver(t *testing.T) {
 	_, err = resolver.IDToUID(context.Background(), ns, idresolver.KindTeam, 999)
 	require.ErrorIs(t, err, idresolver.ErrNotFound)
 
-	// Reverse direction is backed by the same map.
 	id, err := resolver.UIDToID(context.Background(), ns, idresolver.KindTeam, "team-five")
 	require.NoError(t, err)
 	require.Equal(t, int64(5), id)
@@ -97,9 +105,10 @@ func TestTranslateRoleToTuples_TeamPermissions(t *testing.T) {
 		},
 	}
 
-	resolver := idresolver.NewResolver(nil, idresolver.NewBulkTeamClient([]idresolver.TeamRef{
-		{UID: "team-five", ID: 5},
-	}), nil)
+	resolver, err := idresolver.NewBulkResolver(context.Background(), claims.NamespaceInfo{}, fakeTeamLister{
+		teams: []idresolver.TeamRef{{UID: "team-five", ID: 5}},
+	})
+	require.NoError(t, err)
 
 	tuples, err := TranslateRoleToTuples(context.Background(), toUnstructured(t, role), nil, resolver, claims.NamespaceInfo{}, log.NewNopLogger())
 	require.NoError(t, err)

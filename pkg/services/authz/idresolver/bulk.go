@@ -2,33 +2,45 @@ package idresolver
 
 import (
 	"context"
+	"fmt"
 
 	claims "github.com/grafana/authlib/types"
 )
 
 // TeamRef pairs a team's app-platform uid (Kubernetes object name) with its legacy
-// internal id. It is the unit a bulk TeamClient is built from.
+// internal id.
 type TeamRef struct {
 	UID string
 	ID  int64
 }
 
-// bulkTeamClient resolves teams from an in-memory index built once from a full team
-// list. It satisfies TeamClient and is meant for batch callers (e.g. the Zanzana
-// reconciler) that resolve many teams per namespace and prefer a single list over N
-// point lookups. It is built for a single namespace's teams, so the ns argument is
-// ignored.
-type bulkTeamClient struct {
+// TeamLister returns all teams in a namespace, sourced from the app platform (unified
+// storage). It is the bulk resolver's data source; the implementation owns the client
+// (e.g. a dynamic list), keeping this package free of client plumbing.
+type TeamLister interface {
+	ListTeams(ctx context.Context, ns claims.NamespaceInfo) ([]TeamRef, error)
+}
+
+// bulkResolver answers team lookups from an in-memory index built once at construction.
+// It is namespace-scoped (built from one namespace's teams) and only resolves teams;
+// other kinds are unsupported. Suited to call sites that resolve many references and can
+// amortise a single list over them.
+type bulkResolver struct {
 	byID  map[int64]string
 	byUID map[string]int64
 }
 
-var _ TeamClient = (*bulkTeamClient)(nil)
+var _ Resolver = (*bulkResolver)(nil)
 
-// NewBulkTeamClient indexes the given teams by id and uid and returns a map-backed
-// TeamClient. Entries with a zero id or empty uid are skipped. Compose it with
-// NewResolver(nil, client, nil) for a mode-5 batch resolver.
-func NewBulkTeamClient(teams []TeamRef) TeamClient {
+// NewBulkResolver lists every team in the namespace once via lister and indexes them by
+// id and uid. Subsequent lookups are served from memory. Teams with a zero id or empty
+// uid are skipped.
+func NewBulkResolver(ctx context.Context, ns claims.NamespaceInfo, lister TeamLister) (Resolver, error) {
+	teams, err := lister.ListTeams(ctx, ns)
+	if err != nil {
+		return nil, fmt.Errorf("listing teams for bulk resolver: %w", err)
+	}
+
 	byID := make(map[int64]string, len(teams))
 	byUID := make(map[string]int64, len(teams))
 	for _, t := range teams {
@@ -38,19 +50,25 @@ func NewBulkTeamClient(teams []TeamRef) TeamClient {
 		byID[t.ID] = t.UID
 		byUID[t.UID] = t.ID
 	}
-	return &bulkTeamClient{byID: byID, byUID: byUID}
+	return &bulkResolver{byID: byID, byUID: byUID}, nil
 }
 
-func (c *bulkTeamClient) UIDByID(_ context.Context, _ claims.NamespaceInfo, id int64) (string, error) {
-	uid, ok := c.byID[id]
+func (r *bulkResolver) IDToUID(_ context.Context, _ claims.NamespaceInfo, kind Kind, id int64) (string, error) {
+	if kind != KindTeam {
+		return "", fmt.Errorf("bulk resolver only supports teams, got %q", kind)
+	}
+	uid, ok := r.byID[id]
 	if !ok {
 		return "", ErrNotFound
 	}
 	return uid, nil
 }
 
-func (c *bulkTeamClient) IDByUID(_ context.Context, _ claims.NamespaceInfo, uid string) (int64, error) {
-	id, ok := c.byUID[uid]
+func (r *bulkResolver) UIDToID(_ context.Context, _ claims.NamespaceInfo, kind Kind, uid string) (int64, error) {
+	if kind != KindTeam {
+		return 0, fmt.Errorf("bulk resolver only supports teams, got %q", kind)
+	}
+	id, ok := r.byUID[uid]
 	if !ok {
 		return 0, ErrNotFound
 	}
