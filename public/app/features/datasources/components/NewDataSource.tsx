@@ -38,7 +38,7 @@ export function NewDataSource() {
   );
 }
 
-export type ViewProps = {
+type ViewProps = {
   dataSources: DataSourcePluginMeta[];
   dataSourceCategories: DataSourcePluginCategory[];
   searchQuery: string;

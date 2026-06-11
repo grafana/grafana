@@ -11,7 +11,7 @@
         "graph-ng"
       ],
       "folder": "general",
-      "score": 0.16
+      "score": 0.131
     },
     {
       "resource": "dashboards",
@@ -23,8 +23,8 @@
         "graph-ng"
       ],
       "folder": "general",
-      "score": 0.155
+      "score": 0.123
     }
   ],
-  "maxScore": 0.16
+  "maxScore": 0.131
 }

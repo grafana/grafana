@@ -113,16 +113,13 @@ func (m *service) starting(ctx context.Context) error {
 		return err
 	}
 	if err := m.serviceManager.AwaitHealthy(ctx); err != nil {
-		// If our context was cancelled while waiting for inner services to
-		// become healthy (i.e. Shutdown landed mid-startup), return nil so
-		// dskit's BasicService.main detects the cancellation via
-		// serviceContext.Err() and routes through stoppingFn. stoppingFn
-		// calls m.serviceManager.StopAsync()+AwaitStopped(), guaranteeing
-		// every registered service is told to stop and is awaited. Without
-		// this, BasicService goes straight from Starting to Failed and skips
-		// stoppingFn, leaking running background services past Shutdown.
-		if ctx.Err() != nil {
-			return nil
+		m.serviceManager.StopAsync()
+		stopErr := m.serviceManager.AwaitStopped(context.Background())
+		if failure := m.firstServiceManagerFailure(); failure != nil {
+			return failure
+		}
+		if stopErr != nil {
+			return errors.Join(err, stopErr)
 		}
 		return err
 	}
@@ -159,16 +156,14 @@ func (m *service) stopping(failureReason error) error {
 		return err
 	}
 
+	return m.firstServiceManagerFailure()
+}
+
+func (m *service) firstServiceManagerFailure() error {
 	failed := m.serviceManager.ServicesByState()[services.Failed]
 	for _, f := range failed {
-		// the service listener will log error details for all modules that failed,
-		// so here we return the first error that is not ErrStopProcess.
-		// context.Canceled is also expected during shutdown (it just means a
-		// child service observed its context being cancelled and surfaced
-		// that as its failure case) and must not be treated as a real
-		// failure, otherwise modules.service ends in Failed which cascades
-		// up as "invalid service state: Failed, expected: Terminated,
-		// failure: context canceled" from Server.Run/ManagerAdapter.
+		// The service listener logs error details for all failed modules, so here we return
+		// the first error that is not an expected shutdown signal.
 		cause := f.FailureCase()
 		if errors.Is(cause, modules.ErrStopProcess) || errors.Is(cause, context.Canceled) {
 			continue

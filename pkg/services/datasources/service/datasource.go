@@ -216,7 +216,29 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 		}
 		query.AliasIDs = p.AliasIDs
 	}
-	return s.SQLStore.GetDataSourcesByType(ctx, query)
+
+	all, err := s.SQLStore.GetDataSourcesByType(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	// System/background callers have no requester in context — return all values.
+	user, err := identity.GetRequester(ctx)
+	if err != nil || user == nil {
+		return all, nil
+	}
+
+	filtered := make([]*datasources.DataSource, 0, len(all))
+	for _, ds := range all {
+		// Skip datasources they can not see
+		evaluator := accesscontrol.EvalPermission(datasources.ActionRead,
+			datasources.ScopeProvider.GetResourceScopeUID(ds.UID))
+		if ok, _ := s.ac.Evaluate(ctx, user, evaluator); !ok {
+			continue
+		}
+		filtered = append(filtered, ds)
+	}
+	return filtered, nil
 }
 
 // ListConnections implements v0alpha1.DataSourceConnectionProvider.
@@ -265,10 +287,16 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 			dss = []*datasources.DataSource{ds} // will check authz before returning
 		}
 	} else if query.Plugin != "" {
-		dss, err = s.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
+		q := &datasources.GetDataSourcesByTypeQuery{
 			OrgID: ns.OrgID,
-			Type:  query.Plugin, // will support alias
-		})
+			Type:  query.Plugin,
+		}
+		p, found := s.pluginStore.Plugin(ctx, query.Plugin)
+		if !found {
+			return nil, fmt.Errorf("plugin %s not found", query.Plugin)
+		}
+		q.AliasIDs = p.AliasIDs
+		dss, err = s.SQLStore.GetDataSourcesByType(ctx, q) // Authz NOT applied
 	} else {
 		dss, err = s.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
 			OrgID:           ns.OrgID,

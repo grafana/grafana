@@ -62,7 +62,16 @@ func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 	// Special case for creating folders and resources in the root folder
 	if r.GetVerb() == utils.VerbCreate {
 		if resource.IsFolderResource() && resource.name == "" {
-			resource.name = accesscontrol.GeneralFolderUID
+			// Create checks use an empty Name. For a subfolder, Folder is the parent;
+			// permission must be evaluated on the parent folder (can_create), not on
+			// "general". A root-parented folder may carry any root sentinel ("",
+			// "general", or "root") depending on whether the apistore has stamped it.
+			if !foldermodel.IsRootFolderUID(resource.folder) {
+				resource.name = resource.folder
+				resource.folder = ""
+			} else {
+				resource.name = accesscontrol.GeneralFolderUID
+			}
 		} else if resource.HasFolderSupport() && foldermodel.IsRootFolderUID(resource.folder) {
 			// Zanzana's permission graph models the root as the synthetic
 			// "general" folder, regardless of which sentinel ("", "general",
@@ -112,12 +121,14 @@ func NewResourceInfoFromBatchCheckItem(item *authzv1.BatchCheckItem) ResourceInf
 	// Special case for creating folders and resources in the root folder
 	if item.GetVerb() == utils.VerbCreate {
 		if resource.IsFolderResource() && resource.name == "" {
-			resource.name = accesscontrol.GeneralFolderUID
+			// See NewResourceInfoFromCheck for the rationale.
+			if !foldermodel.IsRootFolderUID(resource.folder) {
+				resource.name = resource.folder
+				resource.folder = ""
+			} else {
+				resource.name = accesscontrol.GeneralFolderUID
+			}
 		} else if resource.HasFolderSupport() && foldermodel.IsRootFolderUID(resource.folder) {
-			// Zanzana's permission graph models the root as the synthetic
-			// "general" folder, regardless of which sentinel ("", "general",
-			// or "root") the apistore stamped on the request. Normalize so
-			// the create check resolves against that one entity.
 			resource.folder = accesscontrol.GeneralFolderUID
 			// See NewResourceInfoFromCheck for the rationale.
 			resource.rootForCreate = true

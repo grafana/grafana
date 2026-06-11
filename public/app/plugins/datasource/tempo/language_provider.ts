@@ -16,7 +16,7 @@ import { enumIntrinsics, intrinsicsV1 } from './traceql/traceql';
 import { type Scope } from './types';
 
 // Limit maximum tags retrieved from the backend
-export const TAGS_LIMIT = 5000;
+const TAGS_LIMIT = 5000;
 
 // Limit maximum options in select dropdowns
 export const OPTIONS_LIMIT = 1000;

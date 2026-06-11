@@ -131,6 +131,66 @@ describe('useGetResourceRepositoryView', () => {
     });
   });
 
+  describe('settings 403 (no provisioning.settings:read access)', () => {
+    const forbidden = { status: 403, data: { message: 'forbidden' } };
+
+    it('degrades to Ready with no repository for an unannotated folder', () => {
+      setupMocks({ settingsError: forbidden, folder: folderData() });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.repository).toBeUndefined();
+      expect(result.current.isInstanceManaged).toBe(false);
+    });
+
+    it('degrades to Ready when the folder query is skipped (root import)', () => {
+      setupMocks({ settingsError: forbidden });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: '', includeInstance: true }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.repository).toBeUndefined();
+    });
+
+    it('stays Error for a repo-managed folder', () => {
+      const folder = folderData({
+        [AnnoKeyManagerKind]: ManagerKind.Repo,
+        [AnnoKeyManagerIdentity]: 'my-repo',
+      });
+      setupMocks({ settingsError: forbidden, folder });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'nested-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Error);
+      expect(result.current.error).toBe(forbidden);
+    });
+
+    it('stays Error for a name-based lookup', () => {
+      setupMocks({ settingsError: forbidden });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ name: 'my-repo' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Error);
+    });
+
+    it('stays Error when the folder query also failed', () => {
+      setupMocks({ settingsError: forbidden, folderError: { status: 403, data: {} } });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Error);
+    });
+
+    it('stays Loading while the folder query is still in flight', () => {
+      setupMocks({ settingsError: forbidden, folderLoading: true });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Loading);
+    });
+  });
+
   describe('name-based lookup', () => {
     it('returns Ready with matching repository', () => {
       const repo = repoView();

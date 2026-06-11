@@ -17,6 +17,7 @@ import {
   type ExternalAlertmanagersStatusResponse,
   type GrafanaAlertingConfiguration,
   type Matcher,
+  type PostableGrafanaAlertingConfiguration,
 } from '../../../../plugins/datasource/alertmanager/types';
 import { withPerformanceLogging } from '../Analytics';
 import { matcherToMatcherField } from '../utils/alertmanager';
@@ -28,7 +29,7 @@ import {
 import { retryWhile } from '../utils/misc';
 import { messageFromError, withSerializedError } from '../utils/redux';
 
-import { alertingApi } from './alertingApi';
+import { type WithNotificationOptions, alertingApi } from './alertingApi';
 import { fetchAlertManagerConfig, fetchStatus } from './alertmanager';
 import { featureDiscoveryApi } from './featureDiscoveryApi';
 
@@ -197,12 +198,16 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       providesTags: ['AlertmanagerConnectionStatus'],
     }),
 
-    updateGrafanaAlertingConfiguration: build.mutation<{ message: string }, GrafanaAlertingConfiguration>({
-      query: (config) => ({
+    updateGrafanaAlertingConfiguration: build.mutation<
+      { message: string },
+      WithNotificationOptions<PostableGrafanaAlertingConfiguration>
+    >({
+      query: ({ notificationOptions, ...config }) => ({
         url: '/api/v1/ngalert/admin_config',
         method: 'POST',
         data: config,
         showSuccessAlert: false,
+        notificationOptions,
       }),
       invalidatesTags: [...ALERTMANAGER_PROVIDED_ENTITY_TAGS],
     }),

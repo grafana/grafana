@@ -7,6 +7,7 @@ import {
   type DataFrame,
   EventBusSrv,
   type ExplorePanelsState,
+  FieldType,
   LoadingState,
   LogLevel,
   type LogRowModel,
@@ -193,6 +194,18 @@ describe('Logs', () => {
         name: /scan for older logs/i,
       })
     ).toBeInTheDocument();
+  });
+
+  it('should render an actionable message when frames have rows but no time field', () => {
+    const frameWithoutTime = createDataFrame({
+      fields: [{ name: 'message', type: FieldType.string, values: ['log message 1', 'log message 2'] }],
+    });
+    setup({}, frameWithoutTime, []);
+
+    expect(
+      screen.getByText('The Logs visualization requires a time field. Add a time-typed column to your query.')
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/no logs found\./i)).not.toBeInTheDocument();
   });
 
   it('should render a load more button', () => {

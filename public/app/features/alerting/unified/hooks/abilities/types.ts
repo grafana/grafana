@@ -86,7 +86,7 @@ export enum AlertmanagerAdminAction {
 }
 
 /** Union of all alertmanager entity action enums. */
-export type AlertmanagerAction =
+type AlertmanagerAction =
   | ContactPointAction
   | NotificationTemplateAction
   | NotificationPolicyAction
@@ -113,7 +113,7 @@ export enum EnrichmentAction {
   Write = 'write-enrichment',
 }
 
-export type Action =
+type Action =
   | AlertmanagerAction
   | ExternalAlertmanagerAction
   | RuleAction
@@ -162,7 +162,8 @@ export type Ability =
   | { granted: false; cause: 'NOT_SUPPORTED' }
   | { granted: false; cause: 'PROVISIONED' }
   | { granted: false; cause: 'IS_PLUGIN_MANAGED' }
-  | { granted: false; cause: 'INSUFFICIENT_PERMISSIONS'; anyOfPermissions: AccessControlAction[] };
+  | { granted: false; cause: 'INSUFFICIENT_PERMISSIONS'; anyOfPermissions: AccessControlAction[] }
+  | { granted: false; cause: 'IN_USE'; blockedBy: Array<'routes' | 'rules'> };
 
 /**
  * Extends {@link Ability} with a `LOADING` variant for hooks that depend on async data
@@ -220,7 +221,21 @@ export function InsufficientPermissions(anyOfPermissions: AccessControlAction[])
   return { granted: false, cause: 'INSUFFICIENT_PERMISSIONS', anyOfPermissions };
 }
 
+/**
+ * The entity cannot be deleted because it is currently referenced by one or more routes or rules.
+ * `blockedBy` lists which entity types are holding a reference.
+ * UI convention: show the button disabled with a tooltip explaining which references must be removed first.
+ */
+export function InUse(blockedBy: Extract<Ability, { cause: 'IN_USE' }>['blockedBy']): Ability {
+  return { granted: false, cause: 'IN_USE', blockedBy };
+}
+
 // ── Type-guard functions ──────────────────────────────────────────────────────
+
+/** Narrows to the `IN_USE` variant. When `true`, TypeScript knows `ability.blockedBy` is present. */
+export function isInUse(ability: AsyncAbility): ability is Extract<Ability, { cause: 'IN_USE' }> {
+  return !ability.granted && ability.cause === 'IN_USE';
+}
 
 /**
  * Narrows to the `INSUFFICIENT_PERMISSIONS` variant.

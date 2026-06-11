@@ -60,6 +60,17 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 	if err != nil {
 		return nil, err
 	}
+
+	// Request default permissions for new root folders via the App Platform path; the folder API
+	// server's permission setter acts on this annotation. Root-only (nested inherit from the parent).
+	if folder.IsRootFolderUID(cmd.ParentUID) {
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return nil, err
+		}
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
+	}
+
 	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID, v1.CreateOptions{
 		FieldValidation: v1.FieldValidationIgnore})
 	if err != nil {
@@ -231,16 +242,12 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		q.Page = 1
 	}
 
-	// Match both "" and "general" at the root: new writes use the canonical
-	// sentinel, but rows from before the apistore migration still carry "".
-	folderValues := []string{q.UID}
-	if q.UID == "" {
-		folderValues = append(folderValues, folder.GeneralFolderUID)
-	}
+	// A root folder UID ("" or "general") is expanded to match both root
+	// sentinels by the search backend, so pass q.UID through unchanged.
 	fields := []*resourcepb.Requirement{{
 		Key:      resource.SEARCH_FIELD_FOLDER,
 		Operator: string(selection.In),
-		Values:   folderValues,
+		Values:   []string{q.UID},
 	}}
 	// only filter the folder UIDs if they are provided in the query
 	if len(q.FolderUIDs) > 0 {

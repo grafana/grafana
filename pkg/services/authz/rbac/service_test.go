@@ -336,6 +336,63 @@ func TestService_checkPermission(t *testing.T) {
 			},
 			expected: true,
 		},
+		{
+			name: "wildcard grant must NOT pass permissions:type:escalate check (SkipWildcard)",
+			permissions: []accesscontrol.Permission{
+				// permissions:type:delegate resolves to "*" in the scope map
+				{
+					Action: "roles:write",
+					Scope:  "*",
+					Kind:   "*",
+				},
+			},
+			check: checkRequest{
+				Action:   "roles:write",
+				Group:    "iam.grafana.app",
+				Resource: "permissions",
+				Verb:     utils.VerbPatch,
+				Name:     "escalate",
+			},
+			expected: false,
+		},
+		{
+			name: "explicit permissions:type:escalate scope passes escalate check",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "roles:write",
+					Scope:      "permissions:type:escalate",
+					Kind:       "permissions",
+					Attribute:  "type",
+					Identifier: "escalate",
+				},
+			},
+			check: checkRequest{
+				Action:   "roles:write",
+				Group:    "iam.grafana.app",
+				Resource: "permissions",
+				Verb:     utils.VerbPatch,
+				Name:     "escalate",
+			},
+			expected: true,
+		},
+		{
+			name: "wildcard grant still passes normal roles check (SkipWildcard only affects permissions resource)",
+			permissions: []accesscontrol.Permission{
+				{
+					Action: "roles:write",
+					Scope:  "*",
+					Kind:   "*",
+				},
+			},
+			check: checkRequest{
+				Action:   "roles:write",
+				Group:    "iam.grafana.app",
+				Resource: "roles",
+				Verb:     utils.VerbPatch,
+				Name:     "some-role-uid",
+			},
+			expected: true,
+		},
 	}
 
 	for _, tc := range testCases {

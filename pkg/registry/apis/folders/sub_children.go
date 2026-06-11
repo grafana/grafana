@@ -8,6 +8,7 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -74,18 +75,6 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 			return
 		}
 
-		// Root children carry either the legacy empty value or the canonical
-		// "general" sentinel in the index, so match both at the root.
-		folderRequirement := &resourcepb.Requirement{
-			Key:      resource.SEARCH_FIELD_FOLDER,
-			Operator: "=",
-			Values:   []string{name},
-		}
-		if isRoot {
-			folderRequirement.Operator = "in"
-			folderRequirement.Values = []string{"", folder.GeneralFolderUID}
-		}
-
 		gvr := folders.FolderResourceInfo.GroupVersionResource()
 		resp, err := r.searcher.Search(ctx, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
@@ -94,7 +83,11 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 					Group:     gvr.Group,
 					Resource:  gvr.Resource,
 				},
-				Fields: []*resourcepb.Requirement{folderRequirement},
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_FOLDER,
+					Operator: string(selection.Equals),
+					Values:   []string{name},
+				}},
 			},
 			Fields: []string{resource.SEARCH_FIELD_TITLE},
 			Limit:  limit,
