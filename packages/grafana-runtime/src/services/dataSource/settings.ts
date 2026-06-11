@@ -9,7 +9,7 @@ import {
 import { ExpressionDatasourceRef, isExpressionReference } from '../../utils/DataSourceWithBackend';
 import { getCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
-import { type GetDataSourceListFilters } from '../dataSourceSrv';
+import { getDataSourceSrv, type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
 
 import { clearPluginCache } from './pluginCache';
@@ -77,11 +77,41 @@ async function fetchAndPopulate(): Promise<void> {
 }
 
 export async function reloadDataSourceInstanceSettings(): Promise<void> {
+  // Transition-period: while the legacy DataSourceSrv exists, route through it so a single
+  // fetch refreshes BOTH caches and clears both resolved-instance caches. When DataSourceSrv
+  // is removed, getDataSourceSrv() returns undefined and this falls back to a standalone refetch.
+  const srv = getDataSourceSrv();
+  if (srv) {
+    await srv.reload();
+    return;
+  }
   clearPluginCache();
   await getCachedPromise(fetchAndPopulate, {
     cacheKey: RELOAD_CACHE_KEY,
     invalidate: true,
   });
+}
+
+interface SyncDataSourceSettings {
+  datasources: Record<string, DataSourceInstanceSettings>;
+  defaultDatasource: string;
+}
+
+/**
+ * Sync the instance-settings cache from an already-fetched `/api/frontend/settings`
+ * payload, without issuing another backend request. Built-in (e.g. expression) and
+ * runtime data sources survive because `populateMaps` re-applies them.
+ *
+ * Transition-period helper: while both the legacy `DataSourceSrv` and the new async
+ * datasource APIs exist, `DataSourceSrv.reload()` calls this so a single fetch updates
+ * both caches. Remove once `DataSourceSrv` is gone.
+ *
+ * @internal
+ */
+export function syncDataSourceInstanceSettings(settings: SyncDataSourceSettings): void {
+  clearPluginCache();
+  populateMaps(settings.datasources);
+  defaultName = settings.defaultDatasource;
 }
 
 /**

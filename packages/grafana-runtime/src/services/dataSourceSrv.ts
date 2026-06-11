@@ -47,7 +47,7 @@ export interface DataSourceSrv {
    *
    * @deprecated Use `reloadDataSourceInstanceSettings` from `@grafana/runtime/unstable` instead.
    */
-  reload(): void;
+  reload(): void | Promise<void>;
 
   /**
    * Registers a runtime data source. Make sure your data source uid is unique.

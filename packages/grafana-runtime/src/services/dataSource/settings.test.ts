@@ -1,6 +1,7 @@
 import { type DataSourceInstanceSettings } from '@grafana/data';
 
 import { setBackendSrv } from '../backendSrv';
+import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import {
@@ -10,6 +11,7 @@ import {
   initDataSourceInstanceSettings,
   setExpressionDataSourceInstanceSettings,
   reloadDataSourceInstanceSettings,
+  syncDataSourceInstanceSettings,
   upsertRuntimeDataSourceInstanceSettings,
 } from './settings';
 
@@ -118,6 +120,8 @@ beforeAll(() => {
 beforeEach(() => {
   _resetForTests();
   backendGet.mockReset();
+  // No legacy srv by default — reloadDataSourceInstanceSettings() should use the fetch path.
+  setDataSourceSrv(undefined as unknown as DataSourceSrv);
 });
 
 describe('instanceSettings', () => {
@@ -436,6 +440,50 @@ describe('instanceSettings', () => {
       expect(backendGet).toHaveBeenCalledWith('/api/frontend/settings');
       const result = await getDataSourceInstanceSettings(null);
       expect(result?.name).toBe('Alpha');
+    });
+
+    it('delegates to DataSourceSrv.reload when a legacy srv is registered, without fetching directly', async () => {
+      const reload = jest.fn();
+      setDataSourceSrv({ reload } as unknown as DataSourceSrv);
+
+      await reloadDataSourceInstanceSettings();
+
+      expect(reload).toHaveBeenCalledTimes(1);
+      expect(backendGet).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('syncDataSourceInstanceSettings', () => {
+    it('populates the cache from a prefetched payload without fetching', async () => {
+      initDataSourceInstanceSettings({ Bravo: fixtures.Bravo }, 'Bravo');
+
+      syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
+
+      expect(backendGet).not.toHaveBeenCalled();
+      const list = await getDataSourceInstanceSettingsList({ all: true });
+      expect(list.map((x) => x.name)).toEqual(['Alpha']);
+      expect((await getDataSourceInstanceSettings(null))?.name).toBe('Alpha');
+    });
+
+    it('preserves a built-in datasource and keeps it out of the list', async () => {
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+      // Sync a payload that does not include the expression datasource.
+      syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
+
+      expect((await getDataSourceInstanceSettings('__expr__'))?.uid).toBe('__expr__');
+      const items = await getDataSourceInstanceSettingsList({ all: true });
+      expect(items.some((x) => x.uid === '__expr__')).toBe(false);
+    });
+
+    it('preserves a runtime datasource', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      upsertRuntimeDataSourceInstanceSettings(ds({ uid: 'runtime-ds', name: 'Runtime', type: 'runtime' }));
+
+      syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
+
+      expect((await getDataSourceInstanceSettings('runtime-ds'))?.name).toBe('Runtime');
     });
   });
 

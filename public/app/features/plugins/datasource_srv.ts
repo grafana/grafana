@@ -25,6 +25,7 @@ import {
   logPluginMetaError,
   logPluginMetaWarning,
   refetchDatasourcePluginMetas,
+  syncDataSourceInstanceSettings,
   UserStorage,
 } from '@grafana/runtime/internal';
 import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
@@ -394,6 +395,12 @@ export class DatasourceSrv implements DataSourceService {
     config.datasources = settings.datasources;
     config.defaultDatasource = settings.defaultDatasource;
     this.init(settings.datasources, settings.defaultDatasource);
+    // Keep the new async instance-settings cache in sync with the legacy srv during the
+    // transition where both exist. Reuses the payload just fetched — no extra request.
+    syncDataSourceInstanceSettings({
+      datasources: settings.datasources,
+      defaultDatasource: settings.defaultDatasource,
+    });
     // Refresh the deduplicated plugin metadata cache in the background.
     // This does not need to block reload since init() already has the full data.
     refetchDatasourcePluginMetas(settings).catch((error) => {
