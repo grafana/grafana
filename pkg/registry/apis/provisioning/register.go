@@ -1338,7 +1338,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 							Examples: map[string]*spec3.Example{
 								"dashboard": {
 									ExampleProps: spec3.ExampleProps{
-										Value: `apiVersion: dashboards.grafana.app/v0alpha1
+										Value: `apiVersion: dashboard.grafana.app/v0alpha1
 kind: Dashboard
 spec:
   title: Sample dashboard

@@ -1117,9 +1117,6 @@
       },
       "unknown": "Neznámý"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "Zdá se, že nemáte žádné kompatibilní zdroje dat."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Hodnocení, která spustí upozorňování",
       "pending-period": "Období čekání",
@@ -6003,9 +6000,6 @@
       "select-source": "Vyberte zdroj",
       "unknown": "Neznámý objekt: {{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "Žádný inspektor metadat"
-    },
     "inspect-stats": {
       "data-title": "Statistiky zdroje dat",
       "data-traceids": "ID trasování",
@@ -6487,7 +6481,6 @@
       "playlist-next": "Přejít na další nástěnku",
       "playlist-previous": "Přejít na předchozí nástěnku",
       "playlist-stop": "Zastavit playlist",
-      "read-only": "Jen pro čtení",
       "refresh": "Obnovit nástěnku",
       "save": "Uložit nástěnku",
       "save-as-template": {
@@ -6624,28 +6617,6 @@
     },
     "view-panel": {
       "not-found": ""
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Změnit vizualizaci",
-      "aria-label-close": "Zavřít podokno možností",
-      "aria-label-show": "Zobrazit podokno možností",
-      "tooltip-click-to-change-visualization": "Klikněte pro změnu vizualizace",
-      "tooltip-close": "Zavřít podokno možností",
-      "tooltip-show": "Zobrazit podokno možností"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Hledat…",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Opakovaně použitelné panely, které můžete sdílet mezi více nástěnkami."
-        },
-        "label": {
-          "library-panels": "Panely knihovny",
-          "suggestions": "Návrhy",
-          "visualizations": "Vizualizace"
-        }
-      },
-      "title-close": "Zavřít"
     },
     "viz-panel": {
       "delete-panel-text": "Odstraněním tohoto panelu dojde také k odebrání všech dotazů. Opravdu chcete pokračovat?",
@@ -9152,9 +9123,6 @@
     "select-aria-label": "Filtr složky",
     "select-placeholder": "Filtrovat podle složky"
   },
-  "folder-repo": {
-    "read-only-badge": "Jen pro čtení"
-  },
   "folders": {
     "api": {
       "anonymous-user": "",
@@ -11156,6 +11124,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "",
       "show-all-series": "...zobrazit všechny položky ({{total}})"
     }
   },
@@ -11177,10 +11146,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "Vytvořit panel knihovny"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "Změnit",
-      "confirmText-replace": "Nahradit"
     },
     "confirm": {
       "delete-panel": "Chcete tento panel odstranit?"
@@ -11225,9 +11190,6 @@
       "body_few": "Tento panel je používán na {{count}} nástěnce. Vyberte, na které nástěnce chcete panel zobrazit:",
       "body_many": "Tento panel je používán na {{count}} nástěnce. Vyberte, na které nástěnce chcete panel zobrazit:",
       "body_other": "Tento panel je používán na {{count}} nástěnce. Vyberte, na které nástěnce chcete panel zobrazit:"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "Vytvořit nový panel knihovny"
     },
     "save": {
       "error": "Chyba při ukládání panelu knihovny: „{{errorMsg}}“",
@@ -13815,6 +13777,9 @@
       "message-resource-onprem_many": "Vaše instance je omezena na {{count}} synchronizovaných zdrojů na úložiště.",
       "message-resource-onprem_other": "Vaše instance je omezena na {{count}} synchronizovaných zdrojů na úložiště."
     },
+    "read-only-badge": {
+      "text": ""
+    },
     "read-only-local-tooltip": "Tento zdroj je jen pro čtení a je zajištěn prostřednictvím zajištění souborů. Chcete-li provést jakékoli změny, aktualizujte připojené úložiště. Chcete-li upravit nastavení, přejděte do části Správa > Zajištění > Úložiště.",
     "read-only-remote-tooltip": "Tento zdroj je jen pro čtení a je zajištěn prostřednictvím Gitu. Chcete-li provést jakékoli změny, aktualizujte připojené úložiště. Chcete-li upravit nastavení, přejděte do části Správa > Zajištění > Úložiště.",
     "recent-jobs": {
@@ -13835,7 +13800,6 @@
     },
     "repository-card": {
       "last-sync": "Poslední synchronizace: {{date}}",
-      "read-only-badge": "Jen pro čtení",
       "settings": "Nastavení",
       "view": "Zobrazit"
     },
@@ -16830,9 +16794,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "Nebyly nalezeny žádné přejmenované nebo chybějící proměnné."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "Proměnnou se nepodařilo načíst"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "Kdy aktualizovat hodnoty této proměnné",

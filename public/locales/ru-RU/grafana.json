@@ -1117,9 +1117,6 @@
       },
       "unknown": "Неизвестно"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "Похоже, у вас нет совместимых источников данных."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Оценки для запуска отправки оповещений",
       "pending-period": "Период ожидания",
@@ -6003,9 +6000,6 @@
       "select-source": "Выбрать источник",
       "unknown": "Неизвестный объект: {{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "Нет инспектора метаданных"
-    },
     "inspect-stats": {
       "data-title": "Статистика источника данных",
       "data-traceids": "Идентификаторы трассировки",
@@ -6487,7 +6481,6 @@
       "playlist-next": "Перейти к следующему дашборду",
       "playlist-previous": "Перейти к предыдущему дашборду",
       "playlist-stop": "Остановить плейлист",
-      "read-only": "Только для чтения",
       "refresh": "Обновить дашборд",
       "save": "Сохранить дашборд",
       "save-as-template": {
@@ -6624,28 +6617,6 @@
     },
     "view-panel": {
       "not-found": "Панель не найдена"
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Изменить визуализацию",
-      "aria-label-close": "Закрыть область параметров",
-      "aria-label-show": "Показать область параметров",
-      "tooltip-click-to-change-visualization": "Нажмите, чтобы изменить визуализацию",
-      "tooltip-close": "Закрыть область параметров",
-      "tooltip-show": "Показать область параметров"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Поиск...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Панели многократного использования, которые можно применить к нескольким дашбордам."
-        },
-        "label": {
-          "library-panels": "Панели библиотеки",
-          "suggestions": "Предложения",
-          "visualizations": "Визуализации"
-        }
-      },
-      "title-close": "Закрыть"
     },
     "viz-panel": {
       "delete-panel-text": "Удаление этой панели также приведет к удалению всех запросов. Действительно продолжить?",
@@ -9152,9 +9123,6 @@
     "select-aria-label": "Фильтр папок",
     "select-placeholder": "Фильтровать по папкам"
   },
-  "folder-repo": {
-    "read-only-badge": "Только для чтения"
-  },
   "folders": {
     "api": {
       "anonymous-user": "",
@@ -11156,6 +11124,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "",
       "show-all-series": "... показать все элементы ({{total}})"
     }
   },
@@ -11177,10 +11146,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "Создание панели библиотеки"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "Изменить",
-      "confirmText-replace": "Заменить"
     },
     "confirm": {
       "delete-panel": "Удалить панель?"
@@ -11225,9 +11190,6 @@
       "body_few": "Эта панель используется на {{count}} дашбордах. Выберите дашборд для просмотра панели:",
       "body_many": "Эта панель используется на {{count}} дашбордах. Выберите дашборд для просмотра панели:",
       "body_other": "Эта панель используется на {{count}} дашборда. Выберите дашборд для просмотра панели:"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "Создать новую панель библиотеки"
     },
     "save": {
       "error": "Ошибка при сохранении панели библиотеки: «{{errorMsg}}»",
@@ -13815,6 +13777,9 @@
       "message-resource-onprem_many": "В вашем экземпляре не может быть больше {{count}} синхронизируемых ресурсов на репозиторий.",
       "message-resource-onprem_other": "В вашем экземпляре не может быть больше {{count}} синхронизируемого ресурса на репозиторий."
     },
+    "read-only-badge": {
+      "text": ""
+    },
     "read-only-local-tooltip": "Ресурс предназначен только для чтения и предоставлен в рамках подготовки файлов. Чтобы внести изменения, обновите подключенный репозиторий. Чтобы изменить настройки, перейдите в раздел «Администрирование > Подготовка > Репозитории».",
     "read-only-remote-tooltip": "Ресурс предназначен только для чтения и предоставлен в формате GIT. Чтобы внести изменения, обновите подключенный репозиторий. Чтобы изменить настройки, перейдите в раздел «Администрирование > Подготовка > Репозитории».",
     "recent-jobs": {
@@ -13835,7 +13800,6 @@
     },
     "repository-card": {
       "last-sync": "Последняя синхронизация: {{date}}",
-      "read-only-badge": "Только для чтения",
       "settings": "Параметры",
       "view": "Просмотр"
     },
@@ -16830,9 +16794,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "Переименованные или отсутствующие переменные не найдены."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "Не удалось загрузить переменную"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "Когда следует обновлять значения этой переменной.",

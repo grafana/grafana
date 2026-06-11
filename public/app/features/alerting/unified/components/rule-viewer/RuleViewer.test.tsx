@@ -299,7 +299,12 @@ describe('RuleViewer', () => {
 
         await user.click(screen.getByLabelText('1'));
         await user.click(screen.getByLabelText('2'));
-        await user.click(screen.getByRole('button', { name: /Compare versions/i }));
+        // The button becomes enabled only after both checkboxes have been processed and the
+        // component re-renders with canCompare=true. Wait explicitly rather than relying on
+        // userEvent's implicit act() flush, which can lose the race on a loaded CI runner.
+        const compareButton = screen.getByRole('button', { name: /Compare versions/i });
+        await waitFor(() => expect(compareButton).toBeEnabled());
+        await user.click(compareButton);
         await screen.findByText(/comparing versions/i);
         // "Pending period" appears in both the always-visible sidebar and the version diff
         expect((await screen.findAllByText(/pending period/i)).length).toBeGreaterThanOrEqual(1);
@@ -314,7 +319,9 @@ describe('RuleViewer', () => {
 
         await user.click(screen.getByLabelText('6'));
         await user.click(screen.getByLabelText('5'));
-        await user.click(screen.getByRole('button', { name: /Compare versions/i }));
+        const compareButton = screen.getByRole('button', { name: /Compare versions/i });
+        await waitFor(() => expect(compareButton).toBeEnabled());
+        await user.click(compareButton);
         await screen.findByText(/comparing versions/i);
 
         const versionSummary = screen.getByRole('heading', { level: 4 });

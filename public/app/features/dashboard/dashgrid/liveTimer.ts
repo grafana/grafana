@@ -109,7 +109,7 @@ class LiveTimer {
 
 const FIVE_MINS = 5 * 60 * 1000;
 
-export function getLiveTimerInterval(delta: number, width: number): number {
+function getLiveTimerInterval(delta: number, width: number): number {
   const millisPerPixel = Math.ceil(delta / width / 100) * 100;
   if (millisPerPixel > FIVE_MINS) {
     return FIVE_MINS;

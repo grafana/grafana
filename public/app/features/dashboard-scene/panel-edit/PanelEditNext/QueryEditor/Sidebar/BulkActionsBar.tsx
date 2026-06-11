@@ -8,6 +8,7 @@ import { isExpressionReference } from '@grafana/runtime';
 import { Button, ConfirmModal, type IconName, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 
+import { trackMultiSelectToggle } from '../../tracking';
 import {
   useActionsContext,
   usePanelContext,
@@ -249,6 +250,7 @@ export function BulkActionsBar() {
   }
 
   const handleClear = () => {
+    trackMultiSelectToggle('exit');
     setMultiSelectMode(false);
   };
 

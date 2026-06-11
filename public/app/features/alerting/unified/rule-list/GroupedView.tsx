@@ -61,10 +61,6 @@ interface DataSourceLoaderProps {
   onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
 }
 
-export function GrafanaDataSourceLoader() {
-  return <DataSourceSection name="Grafana" application="grafana" uid="grafana" isLoading={true} />;
-}
-
 function DataSourceLoader({
   rulesSourceIdentifier,
   groupFilter,

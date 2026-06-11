@@ -4,7 +4,7 @@ declare global {
   }
 }
 
-export class Profiler {
+class Profiler {
   panelsRendered = 0;
   enabled?: boolean = undefined;
 

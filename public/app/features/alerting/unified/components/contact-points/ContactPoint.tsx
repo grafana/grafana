@@ -118,7 +118,7 @@ interface ContactPointReceiverTitleRowProps {
   pluginMetadata?: ReceiverPluginMetadata;
 }
 
-export function ContactPointReceiverTitleRow(props: ContactPointReceiverTitleRowProps) {
+function ContactPointReceiverTitleRow(props: ContactPointReceiverTitleRowProps) {
   const { name, type, description, pluginMetadata } = props;
 
   const iconName = INTEGRATION_ICONS[type];
