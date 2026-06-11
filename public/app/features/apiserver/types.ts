@@ -11,7 +11,7 @@
 import { type Observable } from 'rxjs';
 
 /** The object type and version */
-export interface TypeMeta<K = string> {
+interface TypeMeta<K = string> {
   apiVersion: string;
   kind: K;
 }
@@ -50,6 +50,8 @@ export enum ManagerKind {
   Terraform = 'terraform',
   Kubectl = 'kubectl',
   Plugin = 'plugin',
+  /** @deprecated shim/migration path for legacy file provisioning */
+  ClassicFP = 'classic-file-provisioning',
 }
 
 export const AnnoKeyManagerKind = 'grafana.app/managedBy';
@@ -166,6 +168,42 @@ export interface ResourceList<T, S = object, K = string> extends TypeMeta {
   items: Array<Resource<T, S, K>>;
 }
 
+/** Kubernetes Table column definition (meta.k8s.io/v1) */
+export interface TableColumnDefinition {
+  name: string;
+  type: string;
+  format?: string;
+  description?: string;
+  priority?: number;
+}
+
+/** Minimal metadata returned in Table row objects */
+export interface PartialObjectMetadata {
+  metadata: ObjectMeta;
+}
+
+/** A single row in a Kubernetes Table response */
+export interface TableRow<T = PartialObjectMetadata> {
+  cells: unknown[];
+  object: T;
+}
+
+/** Kubernetes Table response (meta.k8s.io/v1) */
+export interface TableResponse<T = PartialObjectMetadata> extends TypeMeta {
+  metadata: ListMeta;
+  columnDefinitions: TableColumnDefinition[];
+  rows: Array<TableRow<T>>;
+}
+
+/** Empty Kubernetes Table response, used as a no-op / fallback return value. */
+export const EMPTY_TABLE_RESPONSE: TableResponse = {
+  apiVersion: 'meta.k8s.io/v1',
+  kind: 'Table',
+  metadata: { resourceVersion: '0' },
+  columnDefinitions: [],
+  rows: [],
+};
+
 export type ListOptionsLabelSelector =
   | string
   | Array<
@@ -256,12 +294,13 @@ export type ResourceClientWriteParams = {
 };
 
 export interface ResourceClient<T = object, S = object, K = string> {
-  get(name: string): Promise<Resource<T, S, K>>;
+  get(name: string, params?: Record<string, unknown>): Promise<Resource<T, S, K>>;
   create(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>>;
   update(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>>;
   delete(name: string, showSuccessAlert?: boolean): Promise<MetaStatus>;
   list(opts?: ListOptions): Promise<ResourceList<T, S, K>>;
   subresource<S>(name: string, path: string, params?: Record<string, unknown>): Promise<S>;
+  listAsTable(opts?: ListOptions): Promise<TableResponse>;
   watch(opts?: WatchOptions): Observable<ResourceEvent<T, S, K>>;
 }
 
@@ -278,8 +317,8 @@ export interface K8sAPIGroupList {
 /**
  * Generic types to match the generated k8s API types in the RTK query clients
  */
-export interface GeneratedObjectMeta extends Partial<ObjectMeta> {}
-export interface GeneratedResource<T = object, S = object, K = string> extends Partial<TypeMeta<K>> {
+interface GeneratedObjectMeta extends Partial<ObjectMeta> {}
+interface GeneratedResource<T = object, S = object, K = string> extends Partial<TypeMeta<K>> {
   metadata?: GeneratedObjectMeta;
   spec?: T;
   status?: S;

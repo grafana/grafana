@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaPanelEditNextFeedbackEvent } from '@grafana/runtime/internal';
 import { Button, Icon, IconButton, useStyles2 } from '@grafana/ui';
 
 import { startFeedbackSurvey, trackBannerDismiss, trackFeedbackClick } from './PanelEditNext/tracking';
@@ -15,6 +16,7 @@ interface Props {
 
 export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss, className }: Props) {
   const styles = useStyles2(getStyles);
+  const feedbackEventEnabled = useFlagGrafanaPanelEditNextFeedbackEvent();
 
   return (
     <div className={cx(styles.banner, className)}>
@@ -38,7 +40,7 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
         </span>
       </div>
       <div className={styles.right}>
-        {useQueryExperienceNext && (
+        {useQueryExperienceNext && feedbackEventEnabled && (
           <Button
             variant="primary"
             fill="text"

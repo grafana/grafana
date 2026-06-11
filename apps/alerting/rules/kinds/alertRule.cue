@@ -17,6 +17,7 @@ alertRulev0alpha1: alertRuleKind & {
 		operations: [
 			"CREATE",
 			"UPDATE",
+			"DELETE",
 		]
 	}
 	mutation: {

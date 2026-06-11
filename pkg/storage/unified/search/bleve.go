@@ -30,16 +30,15 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/selection"
 
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
-
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 const (
@@ -263,6 +262,9 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 	be.bgTasksWg.Add(1)
 	go be.evictExpiredOrUnownedIndexesPeriodically(ctx)
 
+	be.bgTasksWg.Add(1)
+	go be.writeOpenIndexListPeriodically(ctx)
+
 	if opts.Snapshot.Store != nil {
 		// Initialise snapshot metric label series only on instances where the
 		// feature is actually wired up; ProvideIndexMetrics deliberately skips
@@ -430,10 +432,20 @@ func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveI
 	if err != nil {
 		return false, fmt.Errorf("reading snapshot mutation count for %v: %w", key, err)
 	}
-	if mutationCount < int64(b.opts.Snapshot.MinDocChanges) {
+	if mutationCount >= int64(b.opts.Snapshot.MinDocChanges) {
+		return true, nil
+	}
+
+	if b.opts.Snapshot.MaxIndexAge <= 0 {
 		return false, nil
 	}
-	return true, nil
+
+	// Refresh stable indexes well before cleanup can age out the remote snapshot.
+	refreshInterval := b.opts.Snapshot.MaxIndexAge / 3
+	if refreshInterval <= 0 {
+		refreshInterval = b.opts.Snapshot.MaxIndexAge
+	}
+	return now.Sub(lastUploadTime) >= refreshInterval, nil
 }
 
 func (b *bleveBackend) setUploadTracking(key resource.NamespacedResource, uploadedAt time.Time) {
@@ -1506,10 +1518,15 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 
 // Stop closes all indexes and stops background tasks.
 func (b *bleveBackend) Stop() {
-	b.closeAllIndexes()
-
 	b.bgTasksCancel()
 	b.bgTasksWg.Wait()
+
+	// Stop the periodic writer before the final write so shutdown writes one stable list.
+	if err := b.WriteOpenIndexStats(time.Now()); err != nil {
+		b.log.Warn("failed to write open index stats during shutdown", "err", err)
+	}
+
+	b.closeAllIndexes()
 }
 
 func (b *bleveBackend) closeAllIndexes() {
@@ -2129,6 +2146,32 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	// filters
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
+			// Temporarily expand a root-folder filter so it matches both the
+			// legacy empty sentinel ("") and the canonical "general" UID. This
+			// keeps results consistent whether the index was written before or
+			// after the apistore started stamping "general" on root-parented
+			// resources. Done here so every caller stays agnostic of the
+			// sentinel used on disk.
+			if v.Key == resource.SEARCH_FIELD_FOLDER &&
+				(v.Operator == string(selection.Equals) || v.Operator == string(selection.In)) {
+				expanded := false
+				values := make([]string, 0, len(v.Values)+1)
+				for _, val := range v.Values {
+					if !foldermodel.IsRootFolderUID(val) {
+						values = append(values, val)
+						continue
+					}
+					if !expanded {
+						values = append(values, "", foldermodel.GeneralFolderUID)
+						expanded = true
+					}
+				}
+				if expanded {
+					v.Operator = string(selection.In)
+					v.Values = values
+				}
+			}
+
 			// Fields should already have correct prefix (either "fields." or "selectableFields.")
 			q, err := requirementQuery(v, "")
 			if err != nil {
