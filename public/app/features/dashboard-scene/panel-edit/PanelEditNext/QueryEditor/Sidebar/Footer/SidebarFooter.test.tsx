@@ -112,7 +112,8 @@ describe('SidebarFooter', () => {
 
       expect(setMultiSelectMode).toHaveBeenCalledWith(true);
       expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', {
-        action: 'click_multi_select',
+        action: 'toggle_multi_select',
+        direction: 'enter',
       });
     });
   });

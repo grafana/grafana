@@ -2430,6 +2430,130 @@ func TestUserSync_SyncUserHook_AlignsOrgIDForK8sRole(t *testing.T) {
 	}
 }
 
+func strPtr(s string) *string { return &s }
+
+func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
+	tests := []struct {
+		name                    string
+		singleOrganization      bool
+		kubernetesUsersRedirect bool
+		syncOrgRoles            bool
+		currentRole             string
+		assertedRole            org.RoleType
+		wantUpdateRole          *string
+	}{
+		{
+			name:                    "role change is synced in single-org k8s mode",
+			singleOrganization:      true,
+			kubernetesUsersRedirect: true,
+			syncOrgRoles:            true,
+			currentRole:             "Admin",
+			assertedRole:            org.RoleEditor,
+			wantUpdateRole:          strPtr("Editor"),
+		},
+		{
+			name:                    "explicit None role is synced (demotion)",
+			singleOrganization:      true,
+			kubernetesUsersRedirect: true,
+			syncOrgRoles:            true,
+			currentRole:             "Editor",
+			assertedRole:            org.RoleNone,
+			wantUpdateRole:          strPtr("None"),
+		},
+		{
+			name:                    "unchanged role is not synced",
+			singleOrganization:      true,
+			kubernetesUsersRedirect: true,
+			syncOrgRoles:            true,
+			currentRole:             "Editor",
+			assertedRole:            org.RoleEditor,
+			wantUpdateRole:          nil,
+		},
+		{
+			name:                    "no sync when SyncOrgRoles is disabled",
+			singleOrganization:      true,
+			kubernetesUsersRedirect: true,
+			syncOrgRoles:            false,
+			currentRole:             "Admin",
+			assertedRole:            org.RoleEditor,
+			wantUpdateRole:          nil,
+		},
+		{
+			name:                    "no sync when not in single-org mode",
+			singleOrganization:      false,
+			kubernetesUsersRedirect: true,
+			syncOrgRoles:            true,
+			currentRole:             "Admin",
+			assertedRole:            org.RoleEditor,
+			wantUpdateRole:          nil,
+		},
+		{
+			name:                    "no sync when k8s users redirect is disabled",
+			singleOrganization:      true,
+			kubernetesUsersRedirect: false,
+			syncOrgRoles:            true,
+			currentRole:             "Admin",
+			assertedRole:            org.RoleEditor,
+			wantUpdateRole:          nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, tt.kubernetesUsersRedirect),
+			})
+
+			var captured *user.UpdateUserCommand
+			fakeUserSvc := &usertest.FakeUserService{
+				UpdateFn: func(_ context.Context, cmd *user.UpdateUserCommand) error {
+					captured = cmd
+					return nil
+				},
+			}
+
+			cfg := setting.NewCfg()
+			cfg.RBAC.SingleOrganization = tt.singleOrganization
+
+			s := ProvideUserSync(
+				fakeUserSvc,
+				&authinfoimpl.OSSUserProtectionImpl{},
+				&authinfotest.FakeService{},
+				&quotatest.FakeQuotaService{},
+				tracing.InitializeTracerForTest(),
+				featuremgmt.WithFeatures(),
+				cfg,
+				nil,
+			)
+
+			usr := &user.User{ID: 1, Login: "proxyuser", OrgID: 1, OrgRole: tt.currentRole}
+			id := &authn.Identity{
+				ID:              "1",
+				Login:           "proxyuser",
+				AuthenticatedBy: login.AuthProxyAuthModule,
+				OrgID:           1,
+				OrgRoles:        map[int64]org.RoleType{1: tt.assertedRole},
+				ClientParams:    authn.ClientParams{SyncUser: true, SyncOrgRoles: tt.syncOrgRoles},
+			}
+
+			// userAuth is non-nil so no auth-connection creation is attempted.
+			err := s.updateUserAttributes(context.Background(), usr, id, &login.UserAuth{})
+			require.NoError(t, err)
+
+			if tt.wantUpdateRole == nil {
+				if captured != nil {
+					assert.Nil(t, captured.OrgRole, "OrgRole must not be set on the update command")
+				}
+				return
+			}
+
+			require.NotNil(t, captured, "an update should have been issued")
+			require.NotNil(t, captured.OrgRole)
+			assert.Equal(t, *tt.wantUpdateRole, *captured.OrgRole)
+		})
+	}
+}
+
 // Pins: id.Groups ← usr.TeamUIDs; id.ExternalGroups preserved.
 func TestSyncSignedInUserToIdentity_GroupsContract(t *testing.T) {
 	usr := &user.SignedInUser{

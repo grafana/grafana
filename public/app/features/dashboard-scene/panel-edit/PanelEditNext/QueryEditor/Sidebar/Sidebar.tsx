@@ -7,7 +7,7 @@ import { IconButton, ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { SegmentedToggle, type SegmentedToggleProps } from '../../SegmentedToggle';
 import { QueryEditorType, type SidebarSize } from '../../constants';
-import { trackSidebarViewChange } from '../../tracking';
+import { trackSidebarViewChange, trackStackedViewToggle } from '../../tracking';
 import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
 import { getSelectedStackedItem } from '../StackedEditor/utils';
 import { EMPTY_ALERT } from '../types';
@@ -44,6 +44,16 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
   const handleViewChange = (view: QueryEditorType) => {
     trackSidebarViewChange(view);
     setSelectedAlert(view === QueryEditorType.Alert ? (alertRules[0] ?? EMPTY_ALERT) : null);
+  };
+
+  const handleStackedModeToggle = () => {
+    if (stackedMode.enabled) {
+      trackStackedViewToggle('exit');
+      stackedMode.exit();
+    } else {
+      trackStackedViewToggle('enter');
+      stackedMode.enter();
+    }
   };
 
   const toggleValue = cardType === QueryEditorType.Alert ? QueryEditorType.Alert : QueryEditorType.Query;
@@ -83,7 +93,7 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
               size="sm"
               variant="secondary"
               className={cx({ [styles.stackedModeActionButtonActive]: stackedMode.enabled })}
-              onClick={stackedMode.enabled ? stackedMode.exit : stackedMode.enter}
+              onClick={handleStackedModeToggle}
               aria-label={stackedModeLabel}
               aria-pressed={stackedMode.enabled}
               tooltip={stackedModeLabel}

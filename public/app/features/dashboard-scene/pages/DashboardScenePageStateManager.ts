@@ -114,7 +114,7 @@ export interface LoadDashboardOptions {
   defaultLinks?: DashboardLink[];
 }
 
-export type HomeDashboardDTO = DashboardDTO & {
+type HomeDashboardDTO = DashboardDTO & {
   dashboard: DashboardDataDTO | DashboardV2Spec;
 };
 
@@ -124,7 +124,7 @@ export type HomeDashboardDTO = DashboardDTO & {
  * Kubernetes-style dashboard resource returned verbatim from the backend when
  * `default_home_dashboard_path` points at a `dashboard.grafana.app/*` file.
  */
-export type HomeDashboardFetchResult =
+type HomeDashboardFetchResult =
   | HomeDashboardDTO
   | DashboardWithAccessInfo<DashboardV2Spec>
   | DashboardWithAccessInfo<DashboardDataDTO>;

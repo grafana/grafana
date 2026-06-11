@@ -154,7 +154,7 @@ function extractOptionProps(source: Record<string, unknown>, props: readonly str
   return result;
 }
 
-export interface DashboardScenePreferences {
+interface DashboardScenePreferences {
   defaultLayoutTemplate?: DashboardLayoutManager;
 }
 

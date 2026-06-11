@@ -1103,9 +1103,6 @@
       },
       "unknown": "Unknown"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "You do not appear to have any compatible datasources."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluations to start alerting",
       "pending-period": "Pending period",
@@ -5376,6 +5373,8 @@
     },
     "code-pane": {
       "collapse": "Collapse editor",
+      "copy-as-resource": "Copy as resource",
+      "copy-as-resource-tooltip": "Copy dashboard as resource (with apiVersion, kind and metadata) for use in provisioning files",
       "expand": "Expand editor",
       "header": "Edit as code",
       "modal-title": "Edit dashboard as code"
@@ -5939,9 +5938,6 @@
       "select-source": "Select source",
       "unknown": "Unknown Object: {{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "No Metadata Inspector"
-    },
     "inspect-stats": {
       "data-title": "Data source stats",
       "data-traceids": "Trace IDs",
@@ -6421,7 +6417,6 @@
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
-      "read-only": "Read only",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
       "save-as-template": {
@@ -6558,28 +6553,6 @@
     },
     "view-panel": {
       "not-found": "Panel not found"
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Change visualization",
-      "aria-label-close": "Close options pane",
-      "aria-label-show": "Show options pane",
-      "tooltip-click-to-change-visualization": "Click to change visualization",
-      "tooltip-close": "Close options pane",
-      "tooltip-show": "Show options pane"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Search for...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Reusable panels you can share between multiple dashboards."
-        },
-        "label": {
-          "library-panels": "Library panels",
-          "suggestions": "Suggestions",
-          "visualizations": "Visualizations"
-        }
-      },
-      "title-close": "Close"
     },
     "viz-panel": {
       "delete-panel-text": "Deleting this panel will also remove all queries. Are you sure you want to continue?",
@@ -9054,9 +9027,6 @@
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
-  "folder-repo": {
-    "read-only-badge": "Read only"
-  },
   "folders": {
     "api": {
       "anonymous-user": "Anonymous",
@@ -11034,6 +11004,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "Series color",
       "show-all-series": "...show all {{total}} items"
     }
   },
@@ -11055,10 +11026,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "Create library panel"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "Change",
-      "confirmText-replace": "Replace"
     },
     "confirm": {
       "delete-panel": "Do you want to delete this panel?"
@@ -11099,9 +11066,6 @@
       "select-no-options-message": "No dashboards found",
       "select-placeholder": "Start typing to search for dashboard",
       "title": "View panel in dashboard"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "Create new library panel"
     },
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
@@ -13169,6 +13133,14 @@
       "update-configuration-action": "View configuration docs",
       "upgrade-action": "Upgrade account"
     },
+    "branch-options": {
+      "description-enforce-template": "Make the branch name read-only in save dialogs so users cannot override the generated name.",
+      "description-name-template": "Template for the branch created by the branch (pull request) workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}, {{randomVar}} (a short random token to avoid collisions). The result is sanitised into a valid Git branch name. Leave empty to use the auto-generated name.",
+      "label-branch-options": "Branch options (advanced)",
+      "label-enforce-template": "Enforce branch name template",
+      "label-name-template": "Branch name template",
+      "placeholder-name-template": "grafana/{{actionVar}}-{{titleVar}}-{{randomVar}}"
+    },
     "cloud-info-box": {
       "body": "Skip the setup and get Git Sync fully managed and hosted on Grafana Cloud with the <2>free-forever Grafana Cloud plan</2>.",
       "title": "You can also use Git Sync on Grafana Cloud"
@@ -13188,12 +13160,17 @@
       "folder-rename-default": "Rename folder: {{title}}",
       "folder-update-default": "Save folder: {{title}}"
     },
+    "commit-options": {
+      "description-enforce-template": "Pre-fill the commit message in save dialogs from the template above and make it read-only.",
+      "label-commit-options": "Commit options (advanced)",
+      "label-enforce-template": "Enforce commit message template"
+    },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
-      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. A \"Grafana-saved-by: <name> (<login>)\" trailer is appended automatically. Leave empty to use the built-in defaults.",
+      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. Leave empty to use the built-in defaults.",
       "description-connection": "Select the GitHub App connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
@@ -13625,6 +13602,14 @@
         }
       }
     },
+    "pull-request-options": {
+      "description-enforce-template": "Pre-fill the pull request title in save dialogs from the template above and make it read-only.",
+      "description-title-template": "Template for the pull request title opened by the branch workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Leave empty to use the first line of the commit message.",
+      "label-enforce-template": "Enforce pull request title template",
+      "label-pull-request-options": "Pull request options (advanced)",
+      "label-title-template": "Pull request title template",
+      "placeholder-title-template": "{{actionVar}}: {{titleVar}}"
+    },
     "quota-limit": {
       "message-both-repositories_one": "Your account is limited to {{count}} connected repositories",
       "message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
@@ -13647,6 +13632,9 @@
       "update-configuration-link": "update your Grafana configuration",
       "upgrade-link": "upgrade your account"
     },
+    "read-only-badge": {
+      "text": "Read only"
+    },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "recent-jobs": {
@@ -13667,7 +13655,6 @@
     },
     "repository-card": {
       "last-sync": "Last sync: {{date}}",
-      "read-only-badge": "Read only",
       "settings": "Settings",
       "view": "View"
     },
@@ -16689,9 +16676,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "No renamed or missing variables found."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "Couldn't load variable"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "When to update the values of this variable",
