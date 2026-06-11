@@ -13,7 +13,7 @@ const (
 	USER_LOGIN        = "login"
 	USER_LAST_SEEN_AT = "lastSeenAt"
 	USER_ROLE         = "role"
-	USER_DISABLED  = "disabled"
+	USER_DISABLED     = "disabled"
 )
 
 // UserSortableExtraFields are the additional fields that can be used for sorting user search results.
