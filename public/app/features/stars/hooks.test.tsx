@@ -22,13 +22,14 @@ setupMockServer();
 
 /** Renders the hook plus a read-only component that reflects Redux starred state */
 const TestHarness = () => {
-  const { isLoading } = useSyncStarredItemsInNav();
+  const { isLoading, isError } = useSyncStarredItemsInNav();
   const navTree = useSelector((state) => state.navBarTree);
   const starred = navTree.find((item) => item.id === 'starred');
 
   return (
     <>
       <span data-testid="loading-state">{String(isLoading)}</span>
+      <span data-testid="error-state">{String(isError)}</span>
       <ul data-testid="starred-list">
         {starred?.children?.map((child) => (
           <li key={child.id} data-testid={`synced-${child.id}`}>
@@ -143,6 +144,22 @@ describe('useSyncStarredItemsInNav', () => {
       await waitFor(() => {
         expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
       });
+    });
+
+    it('reports an error and leaves the nav untouched when search fails', async () => {
+      const mockSearcher = setupSearchMock([]);
+      mockSearcher.search.mockRejectedValue(new Error('search unavailable'));
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      render(<TestHarness />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('error-state')).toHaveTextContent('true');
+      });
+
+      // Loading resolved instead of spinning forever, and no items were dispatched
+      expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
+      expect(screen.getByTestId('starred-list').children).toHaveLength(0);
     });
   });
 });

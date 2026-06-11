@@ -36,7 +36,7 @@ export const MegaMenu = memo(
     const state = chrome.useState();
     const [patchPreferences] = usePatchUserPreferencesMutation();
     const pinnedItems = usePinnedItems();
-    const { isLoading: starredItemsLoading } = useSyncStarredItemsInNav();
+    const { isLoading: starredItemsLoading, isError: starredItemsError } = useSyncStarredItemsInNav();
 
     // Remove profile + help from tree
     const navItems = navTree
@@ -120,6 +120,7 @@ export const MegaMenu = memo(
                     activeItem={activeItem}
                     onPin={onPinItem}
                     loadingChildren={link.id === 'starred' && starredItemsLoading}
+                    childrenLoadError={link.id === 'starred' && starredItemsError}
                   />
                 ))}
               </ul>

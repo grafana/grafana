@@ -121,10 +121,11 @@ const STARRED_NAV_CAP = 50;
  * Replaces whatever the backend shipped in bootData (which is empty in dual-writer mode 5).
  */
 export const useSyncStarredItemsInNav = () => {
-  const { data: uids, isLoading } = useStarredItems('dashboard.grafana.app', 'Dashboard');
+  const { data: uids, isLoading, isError } = useStarredItems('dashboard.grafana.app', 'Dashboard');
   // Initialized from the stars query so a remount with a warm RTK cache doesn't
   // flash a loading state — the nav tree is already correct from the prior sync
   const [hasSynced, setHasSynced] = useState(!isLoading);
+  const [searchFailed, setSearchFailed] = useState(false);
 
   // Stable identity so the effect doesn't re-fire when the array ref changes but content is identical
   const uidKey = useMemo(() => {
@@ -142,6 +143,7 @@ export const useSyncStarredItemsInNav = () => {
     if (uidKey === '') {
       dispatch(setStarredItems({ uids: [], items: [] }));
       setHasSynced(true);
+      setSearchFailed(false);
       return;
     }
 
@@ -161,11 +163,13 @@ export const useSyncStarredItemsInNav = () => {
         }
         dispatch(setStarredItems({ uids: names, items }));
         setHasSynced(true);
+        setSearchFailed(false);
       })
       .catch((err) => {
         console.error('Failed to sync starred items to nav', err);
-        // Fall back to the empty message rather than showing a loading state forever
+        // Resolve the loading state rather than showing it forever
         setHasSynced(true);
+        setSearchFailed(true);
       });
 
     return () => {
@@ -173,5 +177,5 @@ export const useSyncStarredItemsInNav = () => {
     };
   }, [uidKey, isLoading]);
 
-  return { isLoading: isLoading || !hasSynced };
+  return { isLoading: isLoading || !hasSynced, isError: isError || searchFailed };
 };

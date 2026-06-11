@@ -24,11 +24,22 @@ interface Props {
   isPinned: (id?: string) => boolean;
   /** Section-level only: children are being fetched, show placeholders instead of the empty message */
   loadingChildren?: boolean;
+  /** Section-level only: fetching children failed, show an error instead of the empty message */
+  childrenLoadError?: boolean;
 }
 
 const MAX_DEPTH = 2;
 
-export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPinned, loadingChildren }: Props) {
+export function MegaMenuItem({
+  link,
+  activeItem,
+  level = 0,
+  onClick,
+  onPin,
+  isPinned,
+  loadingChildren,
+  childrenLoadError,
+}: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const menuIsDocked = state.megaMenuDocked;
@@ -39,7 +50,8 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
     `grafana.navigation.expanded[${link.text}]`,
     Boolean(hasActiveChild)
   );
-  const showExpandButton = level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage || loadingChildren);
+  const showExpandButton =
+    level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage || loadingChildren || childrenLoadError);
   const item = useRef<HTMLLIElement>(null);
 
   const styles = useStyles2(getStyles);
@@ -165,6 +177,10 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
               <Skeleton width={120} />
               <Skeleton width={90} />
             </Box>
+          ) : childrenLoadError ? (
+            <div className={styles.emptyMessage} aria-live="polite">
+              {t('navigation.megamenu-item.children-error', 'Failed to load items')}
+            </div>
           ) : (
             <div className={styles.emptyMessage} aria-live="polite">
               {link.emptyMessage}

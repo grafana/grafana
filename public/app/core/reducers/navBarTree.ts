@@ -113,8 +113,11 @@ const navTreeSlice = createSlice({
         if (item) {
           children.push({ id: ID_PREFIX + uid, text: item.title, url: item.url });
         } else {
-          // The search index is eventually consistent, so a freshly starred dashboard may
-          // be missing from the response — keep the optimistic entry added by setStarred
+          // A starred uid can be missing from the search response when the eventually
+          // consistent index hasn't caught up with a fresh star yet, or when the dashboard
+          // was deleted. Keep the already-rendered entry (e.g. the optimistic one from
+          // setStarred) so a just-starred item doesn't vanish; a deleted dashboard has no
+          // entry to keep and is dropped on the next full page load either way.
           const prev = existing.get(ID_PREFIX + uid);
           if (prev) {
             children.push(prev);
