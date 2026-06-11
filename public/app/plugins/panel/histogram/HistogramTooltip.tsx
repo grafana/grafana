@@ -9,9 +9,9 @@ import {
   VizTooltipHeader,
   VizTooltipWrapper,
   getFieldDisplayItems,
+  getFieldDisplayLinks,
 } from '@grafana/ui';
 
-import { getDataLinks } from '../status-history/utils';
 import { isTooltipScrollable } from '../timeseries/utils';
 
 export interface HistogramTooltipProps {
@@ -65,7 +65,7 @@ export const HistogramTooltip = ({
   if (isPinned && seriesIdx != null) {
     const field = series.fields[seriesIdx];
     const dataIdx = dataIdxs[seriesIdx]!;
-    const links = getDataLinks(field, dataIdx);
+    const links = getFieldDisplayLinks(field, dataIdx);
 
     footer = <VizTooltipFooter dataLinks={links} />;
   }
