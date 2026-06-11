@@ -133,8 +133,8 @@ func TestDiscoverNamespaces_Pagination(t *testing.T) {
 		},
 	}
 	r := &Runner{
-		checksClient: mockClient,
-		log:          &logging.NoOpLogger{},
+		checksMetadata: metadataGetterFromClient(mockClient),
+		log:            &logging.NoOpLogger{},
 	}
 	ns, last, err := r.discoverNamespaces(context.Background(), &logging.NoOpLogger{})
 	assert.NoError(t, err)
@@ -189,8 +189,8 @@ func TestDiscoverNamespaces_IgnoresNonStacksNamespaces(t *testing.T) {
 		},
 	}
 	r := &Runner{
-		checksClient: mockClient,
-		log:          &logging.NoOpLogger{},
+		checksMetadata: metadataGetterFromClient(mockClient),
+		log:            &logging.NoOpLogger{},
 	}
 	ns, last, err := r.discoverNamespaces(context.Background(), &logging.NoOpLogger{})
 	assert.NoError(t, err)
@@ -394,6 +394,7 @@ func createTestMTRunnerWithConcurrency(checkClient, typesClient *MockClient, che
 	return &Runner{
 		checkRegistry:       checkRegistry,
 		checksClient:        checkClient,
+		checksMetadata:      metadataGetterFromClient(checkClient),
 		typesClient:         typesClient,
 		defaultEvalInterval: 5 * time.Millisecond,
 		maxHistory:          defaultMaxHistory,

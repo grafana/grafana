@@ -11,9 +11,9 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
 	"golang.org/x/sync/errgroup"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const maxConcurrency = 10
@@ -97,41 +97,28 @@ func (r *Runner) discoverNamespaces(ctx context.Context, log logging.Logger) ([]
 		}
 	}()
 
-	lastCreated := make(map[string]time.Time)
-	opts := resource.ListOptions{Limit: 1000}
-	page := 0
+	// List Check metadata cluster-wide (namespace ""); discovery only reads
+	// each Check's namespace and creation timestamp.
+	items, err := r.listChecksMetadata(ctx, log, metav1.NamespaceAll)
+	if err != nil {
+		log.Debug("checkscheduler discoverNamespaces cluster-wide Check list failed", "error", err)
+		discoveryErr = err
+		return nil, nil, err
+	}
 
-	for {
-		page++
-		log.Debug("checkscheduler discoverNamespaces list page", "page", page, "continue_set", opts.Continue != "")
-		list, err := r.checksClient.List(ctx, resource.NamespaceAll, opts)
-		if err != nil {
-			log.Debug("checkscheduler discoverNamespaces cluster-wide Check list failed",
-				"page", page, "continue", opts.Continue, "error", err)
-			discoveryErr = err
-			return nil, nil, err
+	lastCreated := make(map[string]time.Time)
+	skipped := 0
+	for i := range items {
+		ns := items[i].GetNamespace()
+		info, parseErr := types.ParseNamespace(ns)
+		if parseErr != nil || info.StackID == 0 {
+			skipped++
+			continue
 		}
-		items := list.GetItems()
-		pageSkipped := 0
-		for _, item := range items {
-			ns := item.GetNamespace()
-			info, parseErr := types.ParseNamespace(ns)
-			if parseErr != nil || info.StackID == 0 {
-				pageSkipped++
-				continue
-			}
-			itemCreated := item.GetCreationTimestamp().Time
-			if itemCreated.After(lastCreated[ns]) {
-				lastCreated[ns] = itemCreated
-			}
+		itemCreated := items[i].GetCreationTimestamp().Time
+		if itemCreated.After(lastCreated[ns]) {
+			lastCreated[ns] = itemCreated
 		}
-		cont := list.GetContinue()
-		log.Debug("checkscheduler discoverNamespaces page done", "page", page, "items_in_page", len(items),
-			"stack_namespaces_known", len(lastCreated), "skipped_non_stack_in_page", pageSkipped, "has_more", cont != "")
-		if cont == "" {
-			break
-		}
-		opts = resource.ListOptions{Continue: cont, Limit: 1000}
 	}
 
 	namespaces := make([]string, 0, len(lastCreated))
@@ -140,7 +127,8 @@ func (r *Runner) discoverNamespaces(ctx context.Context, log logging.Logger) ([]
 	}
 	sort.Strings(namespaces)
 	metrics.MTSchedulerNamespacesDiscovered.Set(float64(len(namespaces)))
-	log.Debug("checkscheduler discoverNamespaces complete", "pages", page, "stack_namespace_count", len(namespaces))
+	log.Debug("checkscheduler discoverNamespaces complete", "checks_total", len(items),
+		"skipped_non_stack", skipped, "stack_namespace_count", len(namespaces))
 	return namespaces, lastCreated, nil
 }
 
