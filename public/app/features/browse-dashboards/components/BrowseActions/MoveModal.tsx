@@ -8,6 +8,7 @@ import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/compone
 import { type DashboardTreeSelection } from '../../types';
 
 import { AffectedFolderContents } from './AffectedFolderContents';
+import { getSelectedFolderUIDs } from './utils';
 
 export interface Props {
   isOpen: boolean;
@@ -20,7 +21,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
   const [moveTarget, setMoveTarget] = useState<string>();
   const [isMoving, setIsMoving] = useState(false);
 
-  const selectedFolders = Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]);
+  const selectedFolders = getSelectedFolderUIDs(selectedItems);
 
   const onMove = async () => {
     if (moveTarget !== undefined) {

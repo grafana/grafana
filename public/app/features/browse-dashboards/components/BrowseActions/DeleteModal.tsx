@@ -8,6 +8,7 @@ import { type DashboardTreeSelection } from '../../types';
 import { DeletedDashboardsInfo } from '../DeletedDashboardsInfo';
 
 import { AffectedFolderContents } from './AffectedFolderContents';
+import { getSelectedFolderUIDs } from './utils';
 
 export interface Props {
   isOpen: boolean;
@@ -19,7 +20,7 @@ export interface Props {
 export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const selectedFolders = Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]);
+  const selectedFolders = getSelectedFolderUIDs(selectedItems);
 
   const onDelete = async () => {
     reportInteraction('grafana_manage_dashboards_delete_clicked', {

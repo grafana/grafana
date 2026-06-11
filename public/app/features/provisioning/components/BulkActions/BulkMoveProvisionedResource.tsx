@@ -10,6 +10,7 @@ import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, type Job } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
+import { getSelectedFolderUIDs } from 'app/features/browse-dashboards/components/BrowseActions/utils';
 import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import {
@@ -173,7 +174,7 @@ function FormContent({
                   'browse-dashboards.bulk-move-resources-form.folder-not-empty',
                   'Selected folder contains other resources that will be moved with it',
                   {
-                    count: Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]).length,
+                    count: getSelectedFolderUIDs(selectedItems).length,
                     defaultValue_other: 'Selected folders contain other resources that will be moved with them',
                   }
                 )}
@@ -194,7 +195,7 @@ function FormContent({
                   repositoryName={repository.name}
                   // selectedItems.folder contains false entries from deselect ancestor propagation
                   // in setItemSelectionState reducer - filter to only truly-selected UIDs
-                  excludeUIDs={Object.keys(selectedItems?.folder ?? {}).filter((uid) => selectedItems.folder[uid])}
+                  excludeUIDs={getSelectedFolderUIDs(selectedItems)}
                 />
               </Field>
               <ResourceEditFormSharedFields

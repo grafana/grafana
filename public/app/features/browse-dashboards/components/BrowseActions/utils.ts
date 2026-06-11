@@ -1,70 +1,18 @@
-import { t } from '@grafana/i18n';
 import { type DescendantCount } from 'app/types/folders';
 
 import { type DashboardTreeSelection } from '../../types';
 
-export function buildBreakdownString(
-  folderCount: number,
-  dashboardCount: number,
-  libraryPanelCount: number,
-  alertRuleCount: number
-) {
-  const total = folderCount + dashboardCount + libraryPanelCount + alertRuleCount;
-  const parts = [];
-  if (folderCount) {
-    parts.push(
-      t('browse-dashboards.counts.folder', '', {
-        count: folderCount,
-        defaultValue_one: '{{count}} folder',
-        defaultValue_other: '{{count}} folders',
-      })
-    );
-  }
-  if (dashboardCount) {
-    parts.push(
-      t('browse-dashboards.counts.dashboard', '', {
-        count: dashboardCount,
-        defaultValue_one: '{{count}} dashboard',
-        defaultValue_other: '{{count}} dashboards',
-      })
-    );
-  }
-  if (libraryPanelCount) {
-    parts.push(
-      t('browse-dashboards.counts.libraryPanel', '', {
-        count: libraryPanelCount,
-        defaultValue_one: '{{count}} library panel',
-        defaultValue_other: '{{count}} library panels',
-      })
-    );
-  }
-  if (alertRuleCount) {
-    parts.push(
-      t('browse-dashboards.counts.alertRule', '', {
-        count: alertRuleCount,
-        defaultValue_one: '{{count}} alert rule',
-        defaultValue_other: '{{count}} alert rules',
-      })
-    );
-  }
-  let breakdownString = t('browse-dashboards.counts.total', '', {
-    count: total,
-    defaultValue_one: '{{count}} item',
-    defaultValue_other: '{{count}} items',
-  });
-  if (parts.length > 0) {
-    breakdownString += `: ${parts.join(', ')}`;
-  }
-  return breakdownString;
+/** Returns the UIDs of folders that are currently selected in the tree selection. */
+export function getSelectedFolderUIDs(selectedItems: Pick<DashboardTreeSelection, 'folder'>): string[] {
+  return Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]);
 }
 
 /**
  * Returns true when the selected folders have no remaining descendants once items the user explicitly selected
- * (folders/dashboards) are subtracted from the affected-items totals. Returns undefined while counts haven't loaded
- * yet so callers can render a loading state.
+ * (folders/dashboards) are subtracted from the affected-items totals.
  *
- * We do this mainly because the way the API works, ie returning affected items does not currently match the UI, which
- * only needs whether folders have children items.
+ * We do this mainly because the way the API works, i.e. returning affected items, does not currently match the UI,
+ * which only needs whether folders have children items.
  */
 export function getFolderIsEmpty(
   affectedItems: DescendantCount,
@@ -80,5 +28,5 @@ export function getFolderIsEmpty(
     affectedItems.library_elements +
     affectedItems.alertrules;
 
-  return remaining === 0;
+  return remaining <= 0;
 }

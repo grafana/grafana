@@ -7,7 +7,7 @@ import { useGetAffectedItems } from 'app/api/clients/folder/v1beta1/hooks';
 
 import { type DashboardTreeSelection } from '../../types';
 
-import { getFolderIsEmpty } from './utils';
+import { getFolderIsEmpty, getSelectedFolderUIDs } from './utils';
 
 interface Props {
   selectedItems: Pick<DashboardTreeSelection, 'folder' | 'dashboard'>;
@@ -28,7 +28,7 @@ interface Props {
  * warn about otherwise. `defaultMessage` is always rendered.
  */
 export function AffectedFolderContents({ selectedItems, defaultMessage, emptyMessage, nonEmptyMessage }: Props) {
-  const selectedFolders = Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]);
+  const selectedFolders = getSelectedFolderUIDs(selectedItems);
   const { data, isLoading, isFetching, error } = useGetAffectedItems(selectedItems);
 
   let contents: ReactNode = undefined;
