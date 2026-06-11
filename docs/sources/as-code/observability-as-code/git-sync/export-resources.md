@@ -37,7 +37,7 @@ You can add dashboards to Git Sync using any of the following options:
 
 ## Copy an existing dashboard from the Grafana UI
 
-You can also save a copy of dashboard directly from the Grafana UI to your provisioned folder.
+You can save a copy of dashboard directly from the Grafana UI to your provisioned folder.
 
 To do so, follow these steps:
 
