@@ -1,10 +1,5 @@
 import { reportInteraction } from '@grafana/runtime';
 
-// Config Section
-export const trackInfluxDBConfigV2FeedbackButtonClicked = () => {
-  reportInteraction('influxdb-config-v2-feedback-button-clicked');
-};
-
 // URL and Auth Section
 export const trackInfluxDBConfigV2URLInputField = () => {
   reportInteraction('influxdb-config-v2-url-input-field');

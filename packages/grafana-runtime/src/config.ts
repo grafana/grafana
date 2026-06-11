@@ -143,7 +143,7 @@ export class GrafanaBootConfig {
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  featureToggles: FeatureToggles & { kubernetesDashboards?: boolean } = {};
+  featureToggles: FeatureToggles = {};
   anonymousEnabled = false;
   anonymousDeviceLimit?: number;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
@@ -232,6 +232,8 @@ export class GrafanaBootConfig {
   rudderstackV3SdkUrl?: string;
   rudderstackConfigUrl?: string;
   rudderstackIntegrationsUrl?: string;
+  postHogToken?: string;
+  postHogHost?: string;
   analyticsConsoleReporting = false;
   dashboardPerformanceMetrics: string[] = [];
   panelSeriesLimit = 0;
@@ -284,7 +286,6 @@ export class GrafanaBootConfig {
     overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
 
-    this.featureToggles.kubernetesDashboards = true; // Force true
     this.bootData.settings.featureToggles = this.featureToggles;
 
     // Creating theme after applying feature toggle overrides in case we need to toggle anything

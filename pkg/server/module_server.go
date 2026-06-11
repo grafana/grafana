@@ -90,7 +90,7 @@ func newModuleServer(opts Options,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
-	searchClient, err := unified.NewStorageApiSearchClient(cfg)
+	searchClient, err := unified.NewStorageApiSearchClient(cfg, features)
 	if err != nil {
 		shutdownFn()
 		return nil, fmt.Errorf("failed to create storage api search client: %w", err)
@@ -237,11 +237,18 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterInvisibleModule(modules.UnifiedBackend, func() (services.Service, error) {
-		var err error
 		if s.storageBackend == nil {
 			// If storage server not being used, disable GC, pruner, and RV manager
 			disableStorageServices := !m.IsModuleEnabled(modules.StorageServer)
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, disableStorageServices)
+			eDB, err := sql.ProvideResourceDB(s.cfg, nil)
+			if err != nil {
+				return nil, err
+			}
+			kvStore, err := sql.ProvideKV(s.cfg, eDB)
+			if err != nil {
+				return nil, err
+			}
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore)
 			if err != nil {
 				return nil, err
 			}

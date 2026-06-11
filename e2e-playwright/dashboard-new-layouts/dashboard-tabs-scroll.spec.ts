@@ -5,6 +5,7 @@ import { groupIntoTab, saveDashboard } from './utils';
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
+    dashboardUnifiedDrilldownControls: false,
   },
   // Narrow viewport guarantees the tabs overflow horizontally so the scroll
   // buttons and auto-scroll behaviour are actually exercised.
@@ -93,7 +94,7 @@ test.describe(
         if (await scrollLeftButton.isVisible()) {
           await scrollLeftButton.click();
         }
-        await expect(scrollLeftButton).toBeHidden();
+        await expect(scrollLeftButton).toBeHidden({ timeout: 2_000 });
       }).toPass();
 
       // At the start of the list the first tab is in view and only the right

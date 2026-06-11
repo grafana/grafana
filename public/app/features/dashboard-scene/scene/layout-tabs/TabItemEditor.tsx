@@ -92,9 +92,7 @@ export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPan
       title: t('dashboard.tabs-layout.tab-options.section-filters.title', 'Filters'),
       id: 'tab-section-filters',
       isOpenDefault: true,
-      renderTitle: (isExpanded: boolean) => (
-        <SectionFiltersCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
-      ),
+      renderTitle: () => <SectionFiltersCategoryTitle />,
     });
 
     category.addItem(

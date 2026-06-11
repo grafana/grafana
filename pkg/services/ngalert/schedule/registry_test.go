@@ -128,187 +128,187 @@ func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
 	})
 }
 
-func TestRuleChainsNeedUpdate(t *testing.T) {
+func TestRuleSequencesNeedUpdate(t *testing.T) {
 	newRegistry := func() alertRulesRegistry {
 		return alertRulesRegistry{rules: make(map[models.AlertRuleKey]*models.AlertRule)}
 	}
 
-	t.Run("empty registry and empty chains returns false", func(t *testing.T) {
+	t.Run("empty registry and empty sequences returns false", func(t *testing.T) {
 		r := newRegistry()
-		r.set(nil, nil, []models.SchedulableRuleChain{})
-		assert.False(t, r.ruleChainsNeedUpdate(nil))
-		assert.False(t, r.ruleChainsNeedUpdate([]models.SchedulableRuleChain{}))
+		r.set(nil, nil, []models.SchedulableRuleSequence{})
+		assert.False(t, r.ruleSequencesNeedUpdate(nil))
+		assert.False(t, r.ruleSequencesNeedUpdate([]models.SchedulableRuleSequence{}))
 	})
 
-	t.Run("empty registry with new chains returns true", func(t *testing.T) {
+	t.Run("empty registry with new sequences returns true", func(t *testing.T) {
 		r := newRegistry()
-		r.set(nil, nil, []models.SchedulableRuleChain{})
-		chains := []models.SchedulableRuleChain{
-			{UID: "chain-1", IntervalSeconds: 30},
+		r.set(nil, nil, []models.SchedulableRuleSequence{})
+		sequences := []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
 		}
-		assert.True(t, r.ruleChainsNeedUpdate(chains))
+		assert.True(t, r.ruleSequencesNeedUpdate(sequences))
 	})
 
-	t.Run("matching chains returns false", func(t *testing.T) {
+	t.Run("matching sequences returns false", func(t *testing.T) {
 		r := newRegistry()
-		chains := []models.SchedulableRuleChain{
-			{UID: "chain-1", IntervalSeconds: 30},
-			{UID: "chain-2", IntervalSeconds: 60},
+		sequences := []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
+			{UID: "seq-2", IntervalSeconds: 60},
 		}
-		r.set(nil, nil, chains)
-		assert.False(t, r.ruleChainsNeedUpdate(chains))
+		r.set(nil, nil, sequences)
+		assert.False(t, r.ruleSequencesNeedUpdate(sequences))
 	})
 
 	t.Run("interval change returns true", func(t *testing.T) {
 		r := newRegistry()
-		r.set(nil, nil, []models.SchedulableRuleChain{
-			{UID: "chain-1", IntervalSeconds: 30},
+		r.set(nil, nil, []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
 		})
-		chains := []models.SchedulableRuleChain{
-			{UID: "chain-1", IntervalSeconds: 60},
+		sequences := []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 60},
 		}
-		assert.True(t, r.ruleChainsNeedUpdate(chains))
+		assert.True(t, r.ruleSequencesNeedUpdate(sequences))
 	})
 
-	t.Run("chain added returns true", func(t *testing.T) {
+	t.Run("sequence added returns true", func(t *testing.T) {
 		r := newRegistry()
-		r.set(nil, nil, []models.SchedulableRuleChain{
-			{UID: "chain-1", IntervalSeconds: 30},
+		r.set(nil, nil, []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
 		})
-		chains := []models.SchedulableRuleChain{
-			{UID: "chain-1", IntervalSeconds: 30},
-			{UID: "chain-2", IntervalSeconds: 60},
+		sequences := []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
+			{UID: "seq-2", IntervalSeconds: 60},
 		}
-		assert.True(t, r.ruleChainsNeedUpdate(chains))
+		assert.True(t, r.ruleSequencesNeedUpdate(sequences))
 	})
 
-	t.Run("chain removed returns true", func(t *testing.T) {
+	t.Run("sequence removed returns true", func(t *testing.T) {
 		r := newRegistry()
-		r.set(nil, nil, []models.SchedulableRuleChain{
-			{UID: "chain-1", IntervalSeconds: 30},
-			{UID: "chain-2", IntervalSeconds: 60},
+		r.set(nil, nil, []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
+			{UID: "seq-2", IntervalSeconds: 60},
 		})
-		chains := []models.SchedulableRuleChain{
-			{UID: "chain-1", IntervalSeconds: 30},
+		sequences := []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
 		}
-		assert.True(t, r.ruleChainsNeedUpdate(chains))
+		assert.True(t, r.ruleSequencesNeedUpdate(sequences))
 	})
 
-	t.Run("chain replaced with different UID returns true", func(t *testing.T) {
+	t.Run("sequence replaced with different UID returns true", func(t *testing.T) {
 		r := newRegistry()
-		r.set(nil, nil, []models.SchedulableRuleChain{
-			{UID: "chain-1", IntervalSeconds: 30},
+		r.set(nil, nil, []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
 		})
-		chains := []models.SchedulableRuleChain{
-			{UID: "chain-new", IntervalSeconds: 30},
+		sequences := []models.SchedulableRuleSequence{
+			{UID: "seq-new", IntervalSeconds: 30},
 		}
-		assert.True(t, r.ruleChainsNeedUpdate(chains))
+		assert.True(t, r.ruleSequencesNeedUpdate(sequences))
 	})
 
-	t.Run("nil registry map with empty chains returns false", func(t *testing.T) {
-		// A fresh registry has a nil fingerprints map. With no chains,
-		// len(nil) == len([]models.SchedulableRuleChain{}) == 0, so no update needed.
+	t.Run("nil registry map with empty sequences returns false", func(t *testing.T) {
+		// A fresh registry has a nil fingerprints map. With no sequences,
+		// len(nil) == len([]models.SchedulableRuleSequence{}) == 0, so no update needed.
 		r := newRegistry()
-		assert.False(t, r.ruleChainsNeedUpdate(nil))
+		assert.False(t, r.ruleSequencesNeedUpdate(nil))
 	})
 
 	t.Run("membership change without interval change returns true", func(t *testing.T) {
 		r := newRegistry()
-		chains := []models.SchedulableRuleChain{
+		sequences := []models.SchedulableRuleSequence{
 			{
-				UID:               "chain-1",
+				UID:               "seq-1",
 				IntervalSeconds:   30,
 				RecordingRuleRefs: []string{"rule-a"},
 				AlertRuleRefs:     []string{"rule-b"},
 			},
 		}
 
-		r.set(nil, nil, chains)
-		assert.False(t, r.ruleChainsNeedUpdate(chains))
+		r.set(nil, nil, sequences)
+		assert.False(t, r.ruleSequencesNeedUpdate(sequences))
 
 		// Change membership: add a new rule ref without changing the interval.
-		changed := []models.SchedulableRuleChain{
+		changed := []models.SchedulableRuleSequence{
 			{
-				UID:               "chain-1",
+				UID:               "seq-1",
 				IntervalSeconds:   30,
 				RecordingRuleRefs: []string{"rule-a", "rule-c"},
 				AlertRuleRefs:     []string{"rule-b"},
 			},
 		}
-		assert.True(t, r.ruleChainsNeedUpdate(changed), "membership change should be detected even without interval change")
+		assert.True(t, r.ruleSequencesNeedUpdate(changed), "membership change should be detected even without interval change")
 	})
 
 	t.Run("membership reorder without interval change returns true", func(t *testing.T) {
 		r := newRegistry()
-		chains := []models.SchedulableRuleChain{
+		sequences := []models.SchedulableRuleSequence{
 			{
-				UID:               "chain-1",
+				UID:               "seq-1",
 				IntervalSeconds:   30,
 				RecordingRuleRefs: []string{"rule-a", "rule-b"},
 			},
 		}
 
-		r.set(nil, nil, chains)
-		assert.False(t, r.ruleChainsNeedUpdate(chains))
+		r.set(nil, nil, sequences)
+		assert.False(t, r.ruleSequencesNeedUpdate(sequences))
 
 		// Reorder the refs: this changes evaluation order, so should be detected.
-		reordered := []models.SchedulableRuleChain{
+		reordered := []models.SchedulableRuleSequence{
 			{
-				UID:               "chain-1",
+				UID:               "seq-1",
 				IntervalSeconds:   30,
 				RecordingRuleRefs: []string{"rule-b", "rule-a"},
 			},
 		}
-		assert.True(t, r.ruleChainsNeedUpdate(reordered), "membership reorder should be detected")
+		assert.True(t, r.ruleSequencesNeedUpdate(reordered), "membership reorder should be detected")
 	})
 
 	t.Run("rule moved between recording and alerting refs returns true", func(t *testing.T) {
 		r := newRegistry()
-		chains := []models.SchedulableRuleChain{
+		sequences := []models.SchedulableRuleSequence{
 			{
-				UID:               "chain-1",
+				UID:               "seq-1",
 				IntervalSeconds:   30,
 				RecordingRuleRefs: []string{"rule-a"},
 				AlertRuleRefs:     []string{"rule-b"},
 			},
 		}
 
-		r.set(nil, nil, chains)
-		assert.False(t, r.ruleChainsNeedUpdate(chains))
+		r.set(nil, nil, sequences)
+		assert.False(t, r.ruleSequencesNeedUpdate(sequences))
 
 		// Move rule-a from recording to alerting refs.
-		moved := []models.SchedulableRuleChain{
+		moved := []models.SchedulableRuleSequence{
 			{
-				UID:             "chain-1",
+				UID:             "seq-1",
 				IntervalSeconds: 30,
 				AlertRuleRefs:   []string{"rule-a", "rule-b"},
 			},
 		}
-		assert.True(t, r.ruleChainsNeedUpdate(moved), "moving a rule between ref types should be detected")
+		assert.True(t, r.ruleSequencesNeedUpdate(moved), "moving a rule between ref types should be detected")
 	})
 
-	t.Run("after set with chains, matching chains return false", func(t *testing.T) {
+	t.Run("after set with sequences, matching sequences return false", func(t *testing.T) {
 		r := newRegistry()
-		chains := []models.SchedulableRuleChain{
-			{UID: "chain-1", IntervalSeconds: 30},
-			{UID: "chain-2", IntervalSeconds: 60},
+		sequences := []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
+			{UID: "seq-2", IntervalSeconds: 60},
 		}
 
-		// Before storing, the registry has no chain data, so it reports an update is needed.
-		assert.True(t, r.ruleChainsNeedUpdate(chains))
+		// Before storing, the registry has no sequence data, so it reports an update is needed.
+		assert.True(t, r.ruleSequencesNeedUpdate(sequences))
 
-		// Store the chain intervals via set.
-		r.set(nil, nil, chains)
+		// Store the sequence intervals via set.
+		r.set(nil, nil, sequences)
 
-		// Now the same chains should not need an update.
-		assert.False(t, r.ruleChainsNeedUpdate(chains))
+		// Now the same sequences should not need an update.
+		assert.False(t, r.ruleSequencesNeedUpdate(sequences))
 
 		// A changed interval should still be detected.
-		changed := []models.SchedulableRuleChain{
-			{UID: "chain-1", IntervalSeconds: 30},
-			{UID: "chain-2", IntervalSeconds: 120},
+		changed := []models.SchedulableRuleSequence{
+			{UID: "seq-1", IntervalSeconds: 30},
+			{UID: "seq-2", IntervalSeconds: 120},
 		}
-		assert.True(t, r.ruleChainsNeedUpdate(changed))
+		assert.True(t, r.ruleSequencesNeedUpdate(changed))
 	})
 }
 

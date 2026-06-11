@@ -69,7 +69,9 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	if maxOpenConn > 0 {
 		dbSection.Key("max_open_conn").SetValue(strconv.Itoa(maxOpenConn))
 	}
-	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false)
+	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
+	require.NoError(t, err)
+	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	backendService, ok := backend.(services.Service)
@@ -170,7 +172,7 @@ func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBacke
 
 	// Create search options
 	features := featuremgmt.WithFeatures()
-	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
+	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil, nil)
 	require.NoError(t, err)
 
 	// Create ResourceServer with search enabled
@@ -223,7 +225,9 @@ func TestClientServer(t *testing.T) {
 
 	registerer := prometheus.NewPedanticRegistry()
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false)
+	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
+	require.NoError(t, err)
+	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil)
 	require.NoError(t, err)
 
 	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
@@ -333,7 +337,9 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 
 	registerer := prometheus.NewPedanticRegistry()
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false)
+	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
+	require.NoError(t, err)
+	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil)
 	require.NoError(t, err)
 	backendService := backend.(services.Service)
 	require.NotNil(t, backendService)

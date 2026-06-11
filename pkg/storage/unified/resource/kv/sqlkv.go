@@ -22,12 +22,25 @@ import (
 )
 
 const (
-	DataSection           = "unified/data"
-	EventsSection         = "unified/events"
-	LastImportTimeSection = "unified/lastimport"
-	PendingDeleteSection  = "unified/pendingdelete"
-	LeasesSection         = "unified/leases"
+	DataSection                   = "unified/data"
+	EventsSection                 = "unified/events"
+	LastImportTimeSection         = "unified/lastimport"
+	PendingDeleteSection          = "unified/pendingdelete"
+	LeasesSection                 = "unified/leases"
+	SearchSnapshotManifestSection = "search/snapshot-manifest"
+	SearchSnapshotDataSection     = "search/snapshot-data"
 )
+
+// validSaveSections is the set of sections accepted by SqlKV.Save.
+var validSaveSections = map[string]bool{
+	DataSection:                   true,
+	EventsSection:                 true,
+	PendingDeleteSection:          true,
+	LastImportTimeSection:         true,
+	LeasesSection:                 true,
+	SearchSnapshotManifestSection: true,
+	SearchSnapshotDataSection:     true,
+}
 
 var _ KV = &SqlKV{}
 
@@ -104,6 +117,10 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "pending_tenant_deletions"
 	case LeasesSection:
 		tableName = "kv_leases"
+	case SearchSnapshotManifestSection:
+		tableName = "search_snapshot_manifest"
+	case SearchSnapshotDataSection:
+		tableName = "search_snapshot_data"
 	default:
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
@@ -382,7 +399,7 @@ func (k *SqlKV) Save(ctx context.Context, section string, key string) (io.WriteC
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
 	}
-	if section != DataSection && section != EventsSection && section != PendingDeleteSection && section != LastImportTimeSection && section != LeasesSection {
+	if !validSaveSections[section] {
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 
@@ -435,11 +452,10 @@ func (w *sqlWriteCloser) Close() error {
 
 	keyPath := getKeyPath(w.section, w.key)
 
-	// Do regular kv save: simple key_path + value insert with conflict check.
-	// Used for sections that map to dedicated key-value tables (resource_events,
-	// pending_tenant_deletions, kv_leases). DataSection still goes through the
-	// resource_history-specific path below until the legacy columns are dropped.
-	if w.section == EventsSection || w.section == PendingDeleteSection || w.section == LeasesSection {
+	// Do regular kv save for sections that map to dedicated key-value tables.
+	// DataSection still goes through the resource_history-specific path below
+	// until the legacy columns are dropped.
+	if w.section != DataSection {
 		query, args := qb.buildUpsertQuery(keyPath, value)
 		_, err := w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 		if err != nil {

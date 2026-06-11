@@ -46,7 +46,7 @@ const mapDispatchToProps = {
 
 const connector = connect(null, mapDispatchToProps);
 
-export interface OwnProps {
+interface OwnProps {
   dashboard: DashboardModel;
   isFullscreen: boolean;
   kioskMode?: KioskMode | null;

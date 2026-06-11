@@ -10,7 +10,7 @@ import { Box, Button } from '@grafana/ui';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
-import { isEditableVariableType } from '../../settings/variables/utils';
+import { getDefaultTopPlacementLabel, isEditableVariableType } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
@@ -28,15 +28,29 @@ const DROPPABLE_TO_HIDE: Record<string, VariableHide> = {
   [ID_HIDDEN_LIST]: VariableHide.hideVariable,
 };
 
-export function DashboardVariablesList({ variableSet }: { variableSet: SceneVariableSet }) {
-  const { variables } = variableSet.useState();
+interface DashboardVariablesListProps {
+  sourceVariableSet: SceneVariableSet;
+  renderVariables?: SceneVariable[];
+  topPlacementLabel?: string;
+  includeAdHoc?: boolean;
+}
+
+export function DashboardVariablesList({
+  sourceVariableSet,
+  renderVariables,
+  topPlacementLabel,
+  includeAdHoc = false,
+}: DashboardVariablesListProps) {
+  const { variables: allVariables } = sourceVariableSet.useState();
+  const listVariables = renderVariables ?? allVariables;
+  const resolvedTopPlacementLabel = topPlacementLabel ? topPlacementLabel : getDefaultTopPlacementLabel();
   const editable = useMemo(() => {
-    const { editable } = partitionVariablesByEditability(variables);
-    if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
+    const { editable } = partitionVariablesByEditability(listVariables);
+    if (!config.featureToggles.dashboardUnifiedDrilldownControls || includeAdHoc) {
       return editable;
     }
     return editable.filter((v) => !sceneUtils.isAdHocVariable(v));
-  }, [variables]);
+  }, [includeAdHoc, listVariables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(editable), [editable]);
 
   const onClickVariable = useCallback((variable: SceneVariable) => {
@@ -47,7 +61,7 @@ export function DashboardVariablesList({ variableSet }: { variableSet: SceneVari
   const onDragEnd = useMemo(
     () =>
       createDragEndHandler(
-        variableSet,
+        sourceVariableSet,
         { visible: ID_VISIBLE_LIST, controlsMenu: ID_CONTROLS_MENU_LIST, hidden: ID_HIDDEN_LIST },
         visible,
         controlsMenu,
@@ -58,7 +72,7 @@ export function DashboardVariablesList({ variableSet }: { variableSet: SceneVari
         ),
         DROPPABLE_TO_HIDE
       ),
-    [variableSet, visible, controlsMenu, hidden]
+    [sourceVariableSet, visible, controlsMenu, hidden]
   );
 
   return (
@@ -66,10 +80,11 @@ export function DashboardVariablesList({ variableSet }: { variableSet: SceneVari
       <DraggableList
         items={visible}
         droppableId={ID_VISIBLE_LIST}
-        title={t('dashboard-scene.variables-list.title-above-dashboard', '', {
+        title={t('dashboard-scene.variables-list.title-top-placement', '', {
+          placement: resolvedTopPlacementLabel,
           count: visible.length,
-          defaultValue_one: 'Above dashboard ({{count}})',
-          defaultValue_other: 'Above dashboard ({{count}})',
+          defaultValue_one: '{{placement}} ({{count}})',
+          defaultValue_other: '{{placement}} ({{count}})',
         })}
         onClickItem={onClickVariable}
         renderItemLabel={renderItemLabel}

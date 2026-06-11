@@ -201,6 +201,22 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "queryHistory.localOnly",
+			Description: "Store query history in browser IndexedDB instead of server-side",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "queryHistory.recentQueriesUI",
+			Description: "Replace the Query History drawer with a new Recent Queries modal UI",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageGeneralAvailability,
@@ -265,10 +281,19 @@ var (
 		{
 			Name:        "provisioning.readmes",
 			Description: "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAppPlatformSquad,
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:            "provisioning.gitConventions",
+			Description:     "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+			Generate:        Generate{Go: true, React: true},
 		},
 		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
@@ -390,13 +415,13 @@ var (
 			Generate:     Generate{LegacyGo: true},
 		},
 		{
-			Name:            "kubernetesAnnotationsClient",
+			Name:            "grafana.kubernetesAnnotationsClient",
 			Description:     "Enables usage of the new annotations API client",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{React: true},
 		},
 		{
 			Name:            "kubernetesShortURLs",
@@ -415,6 +440,7 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Expression:  "true",
 		},
+
 		{
 			Name:            "kubernetesCorrelations",
 			Description:     "Adds support for Kubernetes correlations",
@@ -639,6 +665,14 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
+		},
+		{
+			Name:        "dashboardNotebookLayout",
+			Description: "Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
 		},
 		{
 			Name:        "dashboardDefaultLayoutSelector",
@@ -989,11 +1023,11 @@ var (
 		{
 			Name:         "dashboardUnifiedDrilldownControls",
 			Description:  "Renders ad hoc filters and group by in a single unified control",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			Generate:     Generate{LegacyFrontend: true},
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "adHocFilterDefaultValues",
@@ -1335,13 +1369,12 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "groupToNestedTableV2",
-			Description:  "Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatavizSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+			Name:        "groupToNestedTableV2",
+			Description: "Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "alertingQueryAndExpressionsStepMode",
@@ -1636,16 +1669,6 @@ var (
 			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "true",
-		},
-		{
-			Name:            "grafanaconThemes",
-			Description:     "Enables the temporary themes for GrafanaCon",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaFrontendPlatformSquad,
-			HideFromDocs:    true,
-			RequiresRestart: true,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "alertingJiraIntegration",
@@ -2232,18 +2255,18 @@ var (
 		{
 			Name:        "panelStyleActions",
 			Description: "Enable style actions (copy/paste) in the panel editor",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "vizPresets",
 			Description: "Enable visualization presets",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "nestedFramesFieldOverrides",
@@ -2256,15 +2279,15 @@ var (
 		{
 			Name:        "vizLegendFacetedFilter",
 			Description: "Enable faceted labels filter for series visibility in the legend",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "heatmapRowsAxisOptions",
 			Description: "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
@@ -2516,14 +2539,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "queryEditorNextMultiSelect",
-			Description: "Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true, React: true},
-			Owner:       grafanaDataProSquad,
-			Expression:  "false",
-		},
-		{
 			Name:         "kubernetesTeamsApi",
 			Description:  "Enables team APIs in the app platform",
 			Stage:        FeatureStageExperimental,
@@ -2614,13 +2629,12 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "alertingMultiplePolicies",
-			Description:  "Enables the ability to create multiple alerting policies",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+			Name:        "alertingMultiplePolicies",
+			Description: "Enables the ability to create multiple notification policies in alerting",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "true",
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "alertingPolicyRoutingSettings",
@@ -2768,10 +2782,10 @@ var (
 		{
 			Name:         "grafana.scenesFlickeringFix",
 			Description:  "Prevents flickering in dashboards",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{React: true},
 		},
 		{
@@ -2815,16 +2829,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-		},
-		{
-			Name:            "colorblindThemes",
-			Description:     "Enables the new colorblind-friendly themes",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaFrontendPlatformSquad,
-			HideFromDocs:    true,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		}, {
 			Name:        "yAxisTickControl",
 			Description: "Enables fine-grained Y-axis tick options beyond the auto-ticks",
@@ -2912,10 +2916,10 @@ var (
 		{
 			Name:         "clearPreviousFieldValues",
 			Description:  "Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Generate:     Generate{LegacyFrontend: true},
 			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
+			Expression:   "true",
 			HideFromDocs: true,
 		},
 		{
@@ -2958,15 +2962,6 @@ var (
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 			Generate:    Generate{Go: true},
-		},
-		{
-			Name:         "compiledBootScript",
-			Description:  "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "false",
-			HideFromDocs: true,
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "influxDBConfigValidation",
@@ -3148,6 +3143,14 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:        "plugins.initDataSourcesAsync",
+			Description: "Initializes data source instance settings asynchronously from the API instead of synchronously from boot data",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaCatalogSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "frontendService.reducedBootDataAPI",
 			Description:  "Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed",
 			Stage:        FeatureStageExperimental,
@@ -3155,6 +3158,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "grafana.panelEditNextFeedbackEvent",
+			Description:  "Enables firing an event for PanelEditNext feedback that triggers an in-house survey",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataProSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

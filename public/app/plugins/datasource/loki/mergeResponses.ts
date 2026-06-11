@@ -135,7 +135,7 @@ export function replaceResponses(currentResponse: DataQueryResponse | null, newR
 /**
  * Given two data frames, merge their values. Overlapping values will be added together.
  */
-export function mergeFrames(dest: DataFrame, source: DataFrame) {
+function mergeFrames(dest: DataFrame, source: DataFrame) {
   const destTimeField = dest.fields.find((field) => field.type === FieldType.time);
   const destIdField = dest.fields.find((field) => field.type === FieldType.string && field.name === 'id');
   const sourceTimeField = source.fields.find((field) => field.type === FieldType.time);
