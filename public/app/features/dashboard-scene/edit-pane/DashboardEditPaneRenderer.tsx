@@ -9,6 +9,7 @@ import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/sc
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
+import { useFlagGrafanaViewPanelPane } from '../../../../../packages/grafana-runtime/src/internal/openFeature/openfeature.gen';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
@@ -43,6 +44,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const isEmbedded = meta.isEmbedded;
   const selectedObject = editPane.getSelectedObject();
   const sidebarContext = useSidebarContext();
+  const viewPanelPane = useFlagGrafanaViewPanelPane();
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       editPane.closePane();
@@ -145,7 +147,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             )}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
           {renderEnterpriseItems()}
-          {viewPanel && (
+          {viewPanel && viewPanelPane && (
             <Sidebar.Button
               icon="layer-group"
               onClick={() => editPane.publishEvent(new ToggleViewPanePaneEvent())}
