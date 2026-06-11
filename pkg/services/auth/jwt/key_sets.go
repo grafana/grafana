@@ -31,6 +31,7 @@ var ErrKeySetIsNotConfigured = errors.New("key set for jwt verification is not c
 var ErrKeySetConfigurationAmbiguous = errors.New("key set configuration is ambiguous: you should set only one of key_file, key_value, jwk_set_file, jwk_set_value or jwk_set_url")
 var ErrJWTSetURLMustHaveHTTPSScheme = errors.New("jwt_set_url must have https scheme")
 var ErrFailedToDecodeKeyValue = errors.New("failed to base64-decode inline key value")
+var ErrPrivateKeyNotSupported = errors.New("private keys are not supported for JWT verification; configure the corresponding public key")
 
 type keySet interface {
 	Key(ctx context.Context, kid string) ([]jose.JSONWebKey, error)
@@ -231,22 +232,14 @@ func parsePEMPublicKey(data []byte, keyID string) (*keySetJWKS, error) {
 		if key, err = x509.ParsePKIXPublicKey(block.Bytes); err != nil {
 			return nil, err
 		}
-	case "PRIVATE KEY":
-		if key, err = x509.ParsePKCS8PrivateKey(block.Bytes); err != nil {
-			return nil, err
-		}
 	case "RSA PUBLIC KEY":
 		if key, err = x509.ParsePKCS1PublicKey(block.Bytes); err != nil {
 			return nil, err
 		}
-	case "RSA PRIVATE KEY":
-		if key, err = x509.ParsePKCS1PrivateKey(block.Bytes); err != nil {
-			return nil, err
-		}
-	case "EC PRIVATE KEY":
-		if key, err = x509.ParseECPrivateKey(block.Bytes); err != nil {
-			return nil, err
-		}
+	case "PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY":
+		// JWT tokens are verified with the public key; a private key here is a
+		// configuration mistake and is unusable anyway (go-jose rejects it at verify time).
+		return nil, ErrPrivateKeyNotSupported
 	default:
 		return nil, fmt.Errorf("unknown pem block type %q", block.Type)
 	}
