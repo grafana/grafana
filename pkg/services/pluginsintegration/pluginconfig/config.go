@@ -21,10 +21,19 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		allowedUnsigned = strings.Split(plugins.KeyValue("allow_loading_unsigned_plugins").Value(), ",")
 	}
 
+	pluginSettings := extractPluginSettings(settingProvider)
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagCanvasExternalPlugin) {
+		if pluginSettings["canvas"] == nil {
+			pluginSettings["canvas"] = make(map[string]string)
+		}
+		pluginSettings["canvas"]["as_external"] = "true"
+	}
+
 	return config.NewPluginManagementCfg(
 		settingProvider.KeyValue("", "app_mode").MustBool(cfg.Env == setting.Dev),
 		cfg.PluginsPaths,
-		extractPluginSettings(settingProvider),
+		pluginSettings,
 		allowedUnsigned,
 		cfg.PluginsCDNURLTemplate,
 		cfg.AppURL,

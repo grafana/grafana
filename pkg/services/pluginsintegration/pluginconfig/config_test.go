@@ -5,10 +5,30 @@ import (
 
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestProvidePluginManagementConfig_canvasExternalPlugin(t *testing.T) {
+	raw, err := ini.Load([]byte(`[plugins]`))
+	require.NoError(t, err)
+	cfg := setting.NewCfg()
+	cfg.Raw = raw
+
+	t.Run("sets canvas as_external when canvasExternalPlugin flag is enabled", func(t *testing.T) {
+		pCfg, err := ProvidePluginManagementConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(featuremgmt.FlagCanvasExternalPlugin))
+		require.NoError(t, err)
+		require.Equal(t, "true", pCfg.PluginSettings["canvas"]["as_external"])
+	})
+
+	t.Run("does not set canvas as_external when canvasExternalPlugin flag is disabled", func(t *testing.T) {
+		pCfg, err := ProvidePluginManagementConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+		require.NotEqual(t, "true", pCfg.PluginSettings["canvas"]["as_external"])
+	})
+}
 
 func TestPluginSettings(t *testing.T) {
 	raw, err := ini.Load([]byte(`
