@@ -19,8 +19,7 @@ type CommitOptionsApplyConfiguration struct {
 	// When empty, a built-in default is used (e.g. "Save dashboard: <title>").
 	SingleResourceMessageTemplate *string `json:"singleResourceMessageTemplate,omitempty"`
 	// When true, the Comment field in Save drawers is pre-filled from
-	// SingleResourceMessageTemplate and rendered read-only. The
-	// Grafana-saved-by trailer is always appended regardless of this setting.
+	// SingleResourceMessageTemplate and rendered read-only.
 	EnforceTemplate *bool `json:"enforceTemplate,omitempty"`
 	// Name used as the commit signer. Required for the signing key's identity
 	// to match the commit, which providers need to mark commits as Verified. When

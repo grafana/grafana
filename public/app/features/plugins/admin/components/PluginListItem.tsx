@@ -12,7 +12,7 @@ import { type CatalogPlugin, PluginIconName } from '../types';
 import { PluginListItemBadges } from './PluginListItemBadges';
 import { PluginLogo } from './PluginLogo';
 
-export const LOGO_SIZE = '48px';
+const LOGO_SIZE = '48px';
 
 type Props = {
   plugin: CatalogPlugin;
@@ -94,7 +94,7 @@ const PluginListItemSkeleton: SkeletonComponent = ({ rootProps }) => {
 export const PluginListItem = attachSkeleton(PluginListItemComponent, PluginListItemSkeleton);
 
 // Styles shared between the different type of list items
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'grid',

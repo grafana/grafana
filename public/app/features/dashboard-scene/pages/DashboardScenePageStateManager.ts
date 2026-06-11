@@ -94,7 +94,7 @@ export const DASHBOARD_CACHE_TTL = 500;
 const LOAD_SCENE_MEASUREMENT = 'loadDashboardScene';
 
 /** Only used by cache in loading home in DashboardPageProxy and initDashboard (Old arch), can remove this after old dashboard arch is gone */
-export const HOME_DASHBOARD_CACHE_KEY = '__grafana_home_uid__';
+const HOME_DASHBOARD_CACHE_KEY = '__grafana_home_uid__';
 
 interface DashboardCacheEntry<T> {
   dashboard: T;
@@ -1259,7 +1259,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   }
 }
 
-export function shouldForceV2API(): boolean {
+function shouldForceV2API(): boolean {
   return Boolean(config.featureToggles.dashboardNewLayouts);
 }
 
