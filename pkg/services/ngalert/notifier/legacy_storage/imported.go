@@ -38,7 +38,7 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 		return nil, nil
 	}
 	original := e.rev.Config.AlertmanagerConfig.GetReceivers()
-	merged, _ := merge.Receivers(original, e.importedConfig.GetReceivers(), e.identifier)
+	merged, _, _ := merge.Receivers(original, e.importedConfig.GetReceivers(), e.identifier)
 
 	capacity := len(uids)
 	if capacity == 0 {
@@ -78,7 +78,7 @@ func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]v1.MuteTimeInterval, e
 	grafanaTime := e.rev.Config.AlertmanagerConfig.TimeIntervals
 
 	// Merge to get the renames map (only renamed if name collision occurs)
-	_, renames := merge.TimeIntervals(
+	_, renames, _ := merge.TimeIntervals(
 		grafanaMute,
 		grafanaTime,
 		importedMute,
@@ -114,7 +114,7 @@ func (e ImportedConfigRevision) ReceiverUseByName() map[string]int {
 	}
 	m := make(map[string]int)
 	receiverUseCounts([]*v1.Route{e.importedConfig.Route}, m)
-	_, renames := merge.Receivers(e.rev.Config.AlertmanagerConfig.GetReceivers(), e.importedConfig.GetReceivers(), e.identifier)
+	_, renames, _ := merge.Receivers(e.rev.Config.AlertmanagerConfig.GetReceivers(), e.importedConfig.GetReceivers(), e.identifier)
 	for original, renamed := range renames {
 		if cnt, ok := m[original]; ok {
 			delete(m, original)
@@ -139,7 +139,7 @@ func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
 	return mr, nil
 }
 
-func (e ImportedConfigRevision) GetInhibitRules() (v1.ManagedInhibitionRules, error) {
+func (e ImportedConfigRevision) GetInhibitRules() (map[v1.ResourceUID]v1.InhibitionRule, error) {
 	if e.importedConfig == nil {
 		return nil, nil
 	}
@@ -149,5 +149,5 @@ func (e ImportedConfigRevision) GetInhibitRules() (v1.ManagedInhibitionRules, er
 		return nil, nil
 	}
 
-	return merge.BuildManagedInhibitionRules(e.identifier, importedRules)
+	return merge.BuildManagedInhibitionRules(e.identifier, importedRules, models.ProvenanceConvertedPrometheus)
 }

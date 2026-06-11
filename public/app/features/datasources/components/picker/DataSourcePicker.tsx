@@ -323,7 +323,7 @@ function getStylesDropdown(theme: GrafanaTheme2, props: DataSourcePickerProps) {
   };
 }
 
-export interface PickerContentProps extends DataSourcePickerProps {
+interface PickerContentProps extends DataSourcePickerProps {
   keyboardEvents: Observable<React.KeyboardEvent>;
   style: React.CSSProperties;
   filterTerm?: string;
@@ -421,7 +421,7 @@ function calculateMinWidth(width: string): string {
   return `min(700px, ${width})`;
 }
 
-export interface FooterProps extends PickerContentProps {}
+interface FooterProps extends PickerContentProps {}
 
 function Footer({ onClose, onChange, ...props }: FooterProps) {
   const styles = useStyles2(getStylesFooter);

@@ -1544,6 +1544,22 @@ func TestDeleteAlertRule(t *testing.T) {
 			deletes := getDeleteQueries(ruleStore)
 			require.Empty(t, deletes)
 		})
+		t.Run("delete of non-existent rule is idempotent", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+
+			err := service.DeleteAlertRule(context.Background(), u, "nonexistent-uid", groupProvenance)
+			require.NoError(t, err, "non-admin delete of non-existent rule should be idempotent")
+
+			require.Len(t, ac.Calls, 1)
+			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+
+			deletes := getDeleteQueries(ruleStore)
+			require.Empty(t, deletes, "no store delete when rule already gone")
+		})
 	})
 
 	// NoGroup-specific behaviors
@@ -3213,6 +3229,24 @@ func TestDeleteRuleGroups(t *testing.T) {
 
 		deletes := getDeletedRules(t, ruleStore)
 		require.Empty(t, deletes)
+	})
+
+	t.Run("succeeds even when quota is exceeded", func(t *testing.T) {
+		filterOpts := &FilterOptions{
+			NamespaceUIDs: []string{"namespace1"},
+			RuleGroups:    []string{"group1"},
+		}
+
+		service, _, _, ac := initServiceWithData(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+		checker := &MockQuotaChecker{}
+		checker.EXPECT().LimitExceeded()
+		service.quotas = checker
+
+		err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+		require.NoError(t, err)
 	})
 }
 

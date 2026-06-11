@@ -198,7 +198,10 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                   <Field
                     noMargin
                     htmlFor="folder-path"
-                    label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-folder', 'Folder')}
+                    label={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.label-repository-folder',
+                      'Repository folder'
+                    )}
                     description={t(
                       'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder',
                       'Folder inside the repository. Leave empty for the repository root.'

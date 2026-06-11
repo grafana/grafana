@@ -8,13 +8,17 @@ This suite contains Playwright E2E tests for the V2 dashboard layout system. Tes
 
 All page objects live in `page-objects/` and are re-exported from `page-objects/index.ts`. Every page object extends the abstract `PageObject` base class (`PageObject.ts`), which holds the shared `page`, `dashboardPage`, and `selectors` dependencies as `protected` fields.
 
-| Class              | File                   | UI Region                                 | Key Methods / Getters                                     |
-| ------------------ | ---------------------- | ----------------------------------------- | --------------------------------------------------------- |
-| `PageObject`       | `PageObject.ts`        | _(abstract base — not used directly)_     | Shared constructor (`page`, `dashboardPage`, `selectors`) |
-| `Controls`         | `Controls.ts`          | Top nav bar (edit, save, ...)             | `enterEditMode()`                                         |
-| `Toolbar`          | `Toolbar.ts`           | Vertical icon bar (options, outline, add) | `openDashboardOptions()`                                  |
-| `Sidebar`          | `Sidebar.ts`           | Slide-out container                       | `.dashboardOptions` sub-object                            |
-| `DashboardOptions` | `Sidebar.ts` (private) | Dashboard options pane inside sidebar     | `getTitleInput()`, `getDescriptionTextarea()`             |
+| Class              | File                          | UI Region                                               | Key Methods / Getters                                                                                                                                             |
+| ------------------ | ----------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PageObject`       | `PageObject.ts`               | _(abstract base — not used directly)_                   | Shared constructor (`page`, `dashboardPage`, `selectors`)                                                                                                         |
+| `Controls`         | `Controls.ts`                 | Top nav bar (edit, save, ...)                           | `enterEditMode()`                                                                                                                                                 |
+| `Sidebar`          | `sidebar/Sidebar.ts`          | Whole sidebar region (toolbar + open pane)              | `.toolbar`, `.dashboardOptions`, `.panelOptions` sub-objects; `getContainer()`, `getGoBackButton()`, `getDockToggle()`, `getCloseButton()`, `clickDeleteButton()` |
+| `Toolbar`          | `sidebar/Toolbar.ts`          | Icon strip — accessed via `sidebar.toolbar`             | `getButton(name)`, `clickButton(name)`, `getVisibilityToggle()`                                                                                                   |
+| `DashboardOptions` | `sidebar/DashboardOptions.ts` | Dashboard options pane — via `sidebar.dashboardOptions` | `getTitleInput()`, `getDescriptionTextarea()`                                                                                                                     |
+| `PanelOptions`     | `sidebar/PanelOptions.ts`     | Panel options pane — via `sidebar.panelOptions`         | `getTitleInput()`, `getDescriptionTextarea()`, `toggleTransparentBackground()`                                                                                    |
+| `Panel`            | `Panel.ts`                    | A dashboard panel in the edit canvas                    | `getContainerByTitle()`, `getHeaderByTitle()`, `selectByTitle(title \| titles[])`, `deselectAll()`, `clickMenuItem(panelTitle, menuPath[])`                       |
+
+> The show/hide visibility toggle is a **Toolbar** control (`sidebar.toolbar.getVisibilityToggle()`), even though its selector lives under `components.Sidebar.*`. `Toolbar.getButton(name)` resolves buttons by accessible name, scoped to the sidebar container.
 
 > This table grows as specs are migrated — only methods needed by migrated specs exist.
 
@@ -54,7 +58,7 @@ test('example', async ({ gotoDashboardPage, selectors, page }) => {
 ```typescript
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { Controls, Sidebar, Toolbar } from './page-objects';
+import { Controls, Sidebar } from './page-objects';
 
 test.use({
   featureToggles: {
@@ -72,17 +76,16 @@ test.describe(
       const dashboardPage = await gotoDashboardPage({ uid: 'dashboard-uid' });
 
       const controls = new Controls(page, dashboardPage, selectors);
-      const toolbar = new Toolbar(page, dashboardPage, selectors);
       const sidebar = new Sidebar(page, dashboardPage, selectors);
 
       await controls.enterEditMode();
-      // ... test body using page objects
+      // ... test body using page objects (the toolbar is reached via sidebar.toolbar)
     });
   }
 );
 ```
 
-3. **Verify locally:**
+1. **Verify locally:**
 
 ```bash
 yarn e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <spec-filename>
@@ -118,7 +121,7 @@ yarn e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <
 
 ```typescript
 await controls.enterEditMode();
-await toolbar.openDashboardOptions();
+await sidebar.toolbar.clickButton('Options');
 
 const titleInput = sidebar.dashboardOptions.getTitleInput();
 await expect(titleInput).toHaveValue('Annotation filtering');
@@ -130,9 +133,15 @@ await expect(titleInput).toHaveValue(newTitle);
 
 ## Migration Status
 
-| Spec                                   | Status      |
-| -------------------------------------- | ----------- |
-| `dashboards-title-description.spec.ts` | Migrated    |
-| 25 remaining specs                     | Not started |
+| Spec                                              | Status      |
+| ------------------------------------------------- | ----------- |
+| `dashboards-title-description.spec.ts`            | Migrated    |
+| `dashboards-edit-panel-title-description.spec.ts` | Migrated    |
+| `dashboards-edit-panel-transparent-bg.spec.ts`    | Migrated    |
+| `dashboard-mobile-sidebar.spec.ts`                | Migrated    |
+| `dashboard-hide-sidebar.spec.ts`                  | Migrated    |
+| `dashboards-remove-panel.spec.ts`                 | Migrated    |
+| `dashboard-duplicate-panel.spec.ts`               | Migrated    |
+| 19 remaining specs                                | Not started |
 
 See [`_page_objects_strategy.md`](./_page_objects_strategy.md) for the full migration plan.

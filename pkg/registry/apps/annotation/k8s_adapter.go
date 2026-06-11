@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,6 +28,11 @@ import (
 )
 
 var annotationGR = annotationV0.AnnotationKind().GroupVersionResource().GroupResource()
+
+// maxSafeJSInt is 2^52 - 1. IDs are masked to this range so they remain
+// lossless when serialised to JSON and consumed by JavaScript.
+// This follows the convention in pkg/storage/unified/apistore/prepare.go.
+const maxSafeJSInt = (1 << 52) - 1
 
 // toAPIError maps store-layer sentinels to the right k8s apierror so HTTP
 // status + telemetry classification agree. Already-typed apierrors and unknown
@@ -69,6 +75,8 @@ type k8sRESTAdapter struct {
 	accessClient   authtypes.AccessClient
 	folderResolver DashboardFolderResolver
 	installer      *AppInstaller
+
+	snowflakeNode *snowflake.Node
 
 	tracer  trace.Tracer
 	metrics *Metrics
@@ -224,6 +232,13 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	}
 	annotation.SetCreatedBy(user.GetUID())
 
+	if s.snowflakeNode != nil {
+		if getLegacyID(annotation) == 0 {
+			id := s.snowflakeNode.Generate().Int64() & maxSafeJSInt
+			setLegacyID(annotation, id)
+		}
+	}
+
 	created, err := s.store.Create(ctx, annotation)
 	if err != nil {
 		return nil, toAPIError(err, annotation.Name)
@@ -362,6 +377,12 @@ func parseFieldSelector(fs fields.Selector, opts *ListOptions) error {
 				return fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
 			}
 			opts.To = v
+		case "metadata.legacyID":
+			v, err := strconv.ParseInt(r.Value, 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid legacyID value %q: %w", r.Value, err)
+			}
+			opts.LegacyID = v
 		default:
 			return fmt.Errorf("unsupported field selector: %s", r.Field)
 		}

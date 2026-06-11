@@ -6,17 +6,17 @@ export interface Link {
   href: string;
 }
 
-export interface Screenshot {
+interface Screenshot {
   links: Link[];
 }
 
-export interface LogoImage {
+interface LogoImage {
   content: string;
   filename: string;
   type: string;
 }
 
-export interface Logo {
+interface Logo {
   small?: LogoImage;
   large?: LogoImage;
 }

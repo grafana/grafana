@@ -97,6 +97,7 @@ describe('ImportOverviewV2', () => {
       deleteDashboard: jest.fn(),
       listDeletedDashboards: jest.fn(),
       restoreDashboard: jest.fn(),
+      getDashboard: jest.fn(),
       listDashboardHistory: jest.fn(),
       getDashboardHistoryVersions: jest.fn(),
       restoreDashboardVersion: jest.fn(),
@@ -246,6 +247,28 @@ describe('ImportOverviewV2', () => {
       const uidField = document.querySelector('input[name="k8s.name"]') as HTMLInputElement;
       await user.clear(uidField);
       await user.type(uidField, 'custom-uid');
+
+      const datasourcePicker = screen.getByTestId('datasource-picker-prometheus');
+      await user.type(datasourcePicker, 'prom-uid');
+      await user.click(screen.getByRole('button', { name: /import/i }));
+
+      await waitFor(() => {
+        expect(saveDashboard).toHaveBeenCalled();
+      });
+
+      const savedData = saveDashboard.mock.calls[0][0];
+      expect(savedData.k8s?.name).toBe('custom-uid');
+    });
+
+    it('trims uid before save', async () => {
+      const layout = defaultGridLayoutKind();
+      renderCmp(layout, 'resource-uid');
+
+      await user.click(screen.getByRole('button', { name: /change uid/i }));
+
+      const uidField = document.querySelector('input[name="k8s.name"]') as HTMLInputElement;
+      await user.clear(uidField);
+      await user.type(uidField, '  custom-uid  ');
 
       const datasourcePicker = screen.getByTestId('datasource-picker-prometheus');
       await user.type(datasourcePicker, 'prom-uid');
