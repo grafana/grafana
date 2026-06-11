@@ -1,70 +1,37 @@
-import {
-  type BranchOptions,
-  type CommitOptions,
-  type PullRequestOptions,
-  type RepositorySpec,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type RepositoryFormData } from '../types';
 
-// Build the spec-level commit options from the form, omitting empty values so we
-// don't persist blank templates. Returns undefined when nothing is configured.
-const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined => {
-  const singleResourceMessageTemplate = data.commit?.singleResourceMessageTemplate?.trim();
-  const enforceTemplate = data.commit?.enforceTemplate;
+// Template field names across the git-convention option groups.
+type TemplateFieldKey = 'singleResourceMessageTemplate' | 'nameTemplate' | 'titleTemplate';
 
-  if (!singleResourceMessageTemplate && !enforceTemplate) {
-    return undefined;
-  }
-
-  const commit: CommitOptions = {};
-  if (singleResourceMessageTemplate) {
-    commit.singleResourceMessageTemplate = singleResourceMessageTemplate;
-  }
-  if (enforceTemplate) {
-    commit.enforceTemplate = enforceTemplate;
-  }
-  return commit;
+// The git-convention option groups (commit, branch, pull request — and signing
+// next) all share the same shape: a single template string field whose name
+// varies per group, plus an enforce toggle.
+type TemplateOptions<TemplateKey extends TemplateFieldKey> = Partial<Record<TemplateKey, string>> & {
+  enforceTemplate?: boolean;
 };
 
-// Build the spec-level branch naming options from the form, omitting empty
-// values. Returns undefined when nothing is configured.
-const buildBranchOptions = (data: RepositoryFormData): BranchOptions | undefined => {
-  const nameTemplate = data.branchOptions?.nameTemplate?.trim();
-  const enforceTemplate = data.branchOptions?.enforceTemplate;
+// Build a spec-level options group from its form values, trimming the template
+// and omitting empty fields so we don't persist blank templates. Returns
+// undefined when nothing is configured. Keeps all the groups in sync.
+const buildTemplateOptions = <TemplateKey extends TemplateFieldKey>(
+  templateKey: TemplateKey,
+  template: string | undefined,
+  enforceTemplate: boolean | undefined
+): TemplateOptions<TemplateKey> | undefined => {
+  const trimmedTemplate = template?.trim();
 
-  if (!nameTemplate && !enforceTemplate) {
+  if (!trimmedTemplate && !enforceTemplate) {
     return undefined;
   }
 
-  const branch: BranchOptions = {};
-  if (nameTemplate) {
-    branch.nameTemplate = nameTemplate;
-  }
-  if (enforceTemplate) {
-    branch.enforceTemplate = enforceTemplate;
-  }
-  return branch;
-};
-
-// Build the spec-level pull request options from the form, omitting empty
-// values. Returns undefined when nothing is configured.
-const buildPullRequestOptions = (data: RepositoryFormData): PullRequestOptions | undefined => {
-  const titleTemplate = data.pullRequest?.titleTemplate?.trim();
-  const enforceTemplate = data.pullRequest?.enforceTemplate;
-
-  if (!titleTemplate && !enforceTemplate) {
-    return undefined;
+  const templatePart: Partial<Record<TemplateKey, string>> = {};
+  if (trimmedTemplate) {
+    templatePart[templateKey] = trimmedTemplate;
   }
 
-  const pullRequest: PullRequestOptions = {};
-  if (titleTemplate) {
-    pullRequest.titleTemplate = titleTemplate;
-  }
-  if (enforceTemplate) {
-    pullRequest.enforceTemplate = enforceTemplate;
-  }
-  return pullRequest;
+  return { ...templatePart, ...(enforceTemplate ? { enforceTemplate } : {}) };
 };
 
 export const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflows'] => {
@@ -88,17 +55,29 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
     workflows: getWorkflows(data),
   };
 
-  const commit = buildCommitOptions(data);
+  const commit = buildTemplateOptions(
+    'singleResourceMessageTemplate',
+    data.commit?.singleResourceMessageTemplate,
+    data.commit?.enforceTemplate
+  );
   if (commit) {
     spec.commit = commit;
   }
 
-  const branch = buildBranchOptions(data);
+  const branch = buildTemplateOptions(
+    'nameTemplate',
+    data.branchOptions?.nameTemplate,
+    data.branchOptions?.enforceTemplate
+  );
   if (branch) {
     spec.branch = branch;
   }
 
-  const pullRequest = buildPullRequestOptions(data);
+  const pullRequest = buildTemplateOptions(
+    'titleTemplate',
+    data.pullRequest?.titleTemplate,
+    data.pullRequest?.enforceTemplate
+  );
   if (pullRequest) {
     spec.pullRequest = pullRequest;
   }
