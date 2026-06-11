@@ -6949,12 +6949,12 @@
     "dashboard-settings": {
       "annotations": {
         "button-moved": "Take me there",
-        "description-moved": "Annotation settings have been moved to the dashboard's sidebar.",
+        "description-moved": "Annotation settings have moved to the dashboard's sidebar.",
         "title-moved": "Looking for annotations?"
       },
       "variables": {
         "button-moved": "Take me there",
-        "description-moved": "Variable settings has been moved to the dashboard's sidebar.",
+        "description-moved": "Variable settings have moved to the dashboard's sidebar.",
         "title-moved": "Looking for variable settings?"
       }
     },

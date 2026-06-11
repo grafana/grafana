@@ -24,14 +24,9 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    let rows: Locator | undefined;
     let variableValueInput: Locator | undefined;
 
     const refetchItems = (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
-      rows = dashboardPage.getByGrafanaSelector(
-        selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.row
-      );
-
       variableValueInput = dashboardPage.getByGrafanaSelector(
         selectors.components.PanelEditor.ElementEditPane.CustomVariable.customValueInput
       );
@@ -69,7 +64,7 @@ test.describe(
       variableValueInput = undefined;
     });
 
-    test.only('can add a new custom variable', async ({ gotoDashboardPage, selectors, page }) => {
+    test('can add a new custom variable', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
 

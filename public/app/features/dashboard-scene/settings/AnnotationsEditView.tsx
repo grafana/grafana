@@ -168,6 +168,24 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
 
     DashboardInteractions.takeMeToSidebarClicked({ item: 'annotations' });
   };
+  if (isDynamicDashboardsEnabled && isSettingsPageRedesignEnabled) {
+    return (
+      <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
+        <NavToolbarActions dashboard={dashboard} />
+        <Alert
+          severity="info"
+          title={t('dashboard-scene.dashboard-settings.annotations.title-moved', 'Looking for annotations?')}
+        >
+          <Trans i18nKey="dashboard-scene.dashboard-settings.annotations.description-moved">
+            Annotation settings have moved to the dashboard&apos;s sidebar.
+          </Trans>
+          <Button onClick={goToSidebar} fill="text" variant="primary" size="md">
+            <Trans i18nKey="dashboard-scene.dashboard-settings.annotations.button-moved">Take me there</Trans>
+          </Button>
+        </Alert>
+      </Page>
+    );
+  }
 
   if (editIndex != null && editIndex < annotationLayers.length) {
     return (
@@ -188,27 +206,13 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
-      {isDynamicDashboardsEnabled && isSettingsPageRedesignEnabled ? (
-        <Alert
-          severity="info"
-          title={t('dashboard-scene.dashboard-settings.annotations.title-moved', 'Looking for annotations?')}
-        >
-          <Trans i18nKey="dashboard-scene.dashboard-settings.annotations.description-moved">
-            Annotation settings have been moved to the dashboard&apos;s sidebar.
-          </Trans>
-          <Button onClick={goToSidebar} fill="text" variant="primary" size="md">
-            <Trans i18nKey="dashboard-scene.dashboard-settings.annotations.button-moved">Take me there</Trans>
-          </Button>
-        </Alert>
-      ) : (
-        <AnnotationSettingsList
-          annotations={annotations}
-          onNew={model.onNew}
-          onEdit={model.onEdit}
-          onDelete={model.onDelete}
-          onMove={model.onMove}
-        />
-      )}
+      <AnnotationSettingsList
+        annotations={annotations}
+        onNew={model.onNew}
+        onEdit={model.onEdit}
+        onDelete={model.onDelete}
+        onMove={model.onMove}
+      />
     </Page>
   );
 }

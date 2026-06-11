@@ -273,10 +273,10 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
           title={t('dashboard-scene.dashboard-settings.variables.title-moved', 'Looking for variable settings?')}
         >
           <Trans i18nKey="dashboard-scene.dashboard-settings.variables.description-moved">
-            Variable settings has been moved to the dashboard&apos;s sidebar.
+            Variable settings have moved to the dashboard&apos;s sidebar.
           </Trans>
           <Button onClick={goToSidebar} fill="text" variant="primary" size="md">
-            {t('dashboard-scene.dashboard-settings.variables.button-moved', 'Take me there')}
+            <Trans i18nKey="dashboard-scene.dashboard-settings.variables.button-moved">Take me there</Trans>
           </Button>
         </Alert>
       </Page>
