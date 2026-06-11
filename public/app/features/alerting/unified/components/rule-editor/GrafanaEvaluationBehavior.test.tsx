@@ -1,5 +1,5 @@
 import { FormProvider, useForm } from 'react-hook-form';
-import { render, screen } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
@@ -154,6 +154,67 @@ function GroupCreationModalWrapper() {
     </FormProvider>
   );
 }
+
+function EvaluationBehaviorWrapper({
+  existing,
+  group,
+  isUngroupedRuleGroup,
+}: {
+  existing: boolean;
+  group: string;
+  isUngroupedRuleGroup: boolean;
+}) {
+  const formApi = useForm<RuleFormValues>({
+    defaultValues: { ...getDefaultFormValues(), group, isUngroupedRuleGroup },
+    mode: 'onChange',
+  });
+  return (
+    <FormProvider {...formApi}>
+      <GrafanaEvaluationBehaviorStep existing={existing} enableProvisionedGroups={false} />
+    </FormProvider>
+  );
+}
+
+const ungroupWarning = /Removing this rule from its group is irreversible/i;
+
+describe('GrafanaEvaluationBehaviorStep — ungroup warning (rulesAPIV2)', () => {
+  testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
+
+  it('warns when an existing grouped rule is switched to ungrouped', async () => {
+    const { user } = render(<EvaluationBehaviorWrapper existing group="my-group" isUngroupedRuleGroup={false} />);
+
+    expect(screen.queryByText(ungroupWarning)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: 'Set interval' }));
+
+    expect(await screen.findByText(ungroupWarning)).toBeInTheDocument();
+  });
+
+  it('hides the warning again when switching back to using groups', async () => {
+    const { user } = render(<EvaluationBehaviorWrapper existing group="my-group" isUngroupedRuleGroup={false} />);
+
+    await user.click(screen.getByRole('radio', { name: 'Set interval' }));
+    expect(await screen.findByText(ungroupWarning)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: 'Use groups (Legacy)' }));
+    expect(screen.queryByText(ungroupWarning)).not.toBeInTheDocument();
+  });
+
+  it('does not show the picker or warning for a rule that was already ungrouped', () => {
+    render(<EvaluationBehaviorWrapper existing group={`no_group_for_rule_${'a'.repeat(36)}`} isUngroupedRuleGroup />);
+
+    expect(screen.queryByRole('radio', { name: 'Set interval' })).not.toBeInTheDocument();
+    expect(screen.queryByText(ungroupWarning)).not.toBeInTheDocument();
+  });
+
+  it('does not warn when a new (non-existing) rule is set to ungrouped', async () => {
+    const { user } = render(<EvaluationBehaviorWrapper existing={false} group="" isUngroupedRuleGroup={false} />);
+
+    await user.click(screen.getByRole('radio', { name: 'Set interval' }));
+
+    expect(screen.queryByText(ungroupWarning)).not.toBeInTheDocument();
+  });
+});
 
 describe('GrafanaEvaluationBehaviorStep — evaluateEvery validation (rule-based mode)', () => {
   it('shows an error for "none" value', async () => {
