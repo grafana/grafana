@@ -69,7 +69,7 @@ func TestMultiOrgAlertmanager_SaveAndApplyExtraConfiguration(t *testing.T) {
   receiver: test-receiver`,
 		}
 
-		_, err := mam.SaveAndApplyExtraConfiguration(ctx, 999, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, false)
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, 999, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, false, false)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "failed to get current configuration")
 	})
@@ -88,7 +88,7 @@ receivers:
   - name: test-receiver`,
 		}
 
-		renamed, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, false)
+		renamed, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, false, false)
 		require.NoError(t, err)
 		require.Empty(t, renamed.Receivers, "no renaming should occur")
 		require.Empty(t, renamed.TimeIntervals, "no renaming should occur")
@@ -123,7 +123,7 @@ receivers:
 		}
 
 		// Call with dryRun=true
-		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, true)
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, true, false)
 		require.NoError(t, err)
 
 		// Verify configuration was NOT saved
@@ -148,7 +148,7 @@ receivers:
   - name: original-receiver`,
 		}
 
-		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, originalConfig, false, false)
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, originalConfig, false, false, false)
 		require.NoError(t, err)
 
 		// Now replace it
@@ -161,7 +161,7 @@ receivers:
   - name: updated-receiver`,
 		}
 
-		_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, updatedConfig, false, false)
+		_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, updatedConfig, false, false, false)
 		require.NoError(t, err)
 
 		// Verify only one config exists with updated content
@@ -191,7 +191,7 @@ receivers:
 			}`,
 		}
 
-		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, firstConfig, false, false)
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, firstConfig, false, false, false)
 		require.NoError(t, err)
 
 		secondConfig := v1.ExtraConfiguration{
@@ -208,13 +208,13 @@ receivers:
 			}`,
 		}
 
-		_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, secondConfig, false, false)
+		_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, secondConfig, false, false, false)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "multiple extra configurations are not supported")
 		require.ErrorContains(t, err, "first-config")
 
 		t.Run("replaces if replace=true", func(t *testing.T) {
-			_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, secondConfig, true, false)
+			_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, secondConfig, true, false, false)
 			require.NoError(t, err)
 
 			gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
@@ -271,7 +271,7 @@ receivers:
   - name: original-receiver`,
 		}
 
-		_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, originalConfig, false, false)
+		_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, originalConfig, false, false, false)
 		require.ErrorIs(t, err, ErrIdentifierAlreadyExists)
 	})
 }
@@ -294,7 +294,7 @@ receivers:
   - name: test-receiver`,
 		}
 
-		renamed, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, false)
+		renamed, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, false, false)
 		require.NoError(t, err)
 		require.Empty(t, renamed.Receivers, "no renaming should occur")
 		require.Empty(t, renamed.TimeIntervals, "no renaming should occur")
@@ -347,7 +347,7 @@ receivers:
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		authz := stubExtraConfigAuthz{createErr: errors.New("forbidden")}
-		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, authz, validConfig, false, false)
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, authz, validConfig, false, false, false)
 		require.Error(t, err)
 
 		// Verify no config was saved.
@@ -361,12 +361,12 @@ receivers:
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		// Save the config first with noop authz.
-		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, validConfig, false, false)
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, validConfig, false, false, false)
 		require.NoError(t, err)
 
 		// Try updating with update denied.
 		authz := stubExtraConfigAuthz{updateErr: errors.New("forbidden")}
-		_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, authz, validConfig, false, false)
+		_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, authz, validConfig, false, false, false)
 		require.Error(t, err)
 	})
 
@@ -382,7 +382,7 @@ receivers:
 receivers:
   - name: test-receiver`,
 		}
-		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, configA, false, false)
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, configA, false, false, false)
 		require.NoError(t, err)
 
 		// Try to save config B with replace=true, but delete is denied.
@@ -394,7 +394,7 @@ receivers:
   - name: test-receiver`,
 		}
 		authz := stubExtraConfigAuthz{deleteErr: errors.New("forbidden")}
-		_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, authz, configB, true, false)
+		_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, authz, configB, true, false, false)
 		require.Error(t, err)
 	})
 
@@ -403,7 +403,7 @@ receivers:
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		// Save config first.
-		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, validConfig, false, false)
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, validConfig, false, false, false)
 		require.NoError(t, err)
 
 		// Try to delete with delete denied.

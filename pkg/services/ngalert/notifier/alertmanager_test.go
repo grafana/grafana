@@ -124,7 +124,7 @@ receivers:
         smarthost: 'smtp.gmail.com:587'
         auth_username: 'grafana@example.com'
         auth_password: 'another-secret-password'`,
-	}, false, false)
+	}, false, false, false)
 	require.NoError(t, err)
 
 	savedConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(context.Background(), am.(*alertmanager).Base.TenantID())
