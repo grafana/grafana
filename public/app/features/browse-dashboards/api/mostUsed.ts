@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
-export const MOST_USED_SORT = '-views_last_30_days';
+const MOST_USED_SORT = '-views_last_30_days';
 
 /** Enterprise analytics license is required to sort by view counts. */
 export function isMostUsedAvailable() {
