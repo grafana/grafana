@@ -1,6 +1,6 @@
 import { type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
 
-import { aggregateFolderCounts, aggregateTotals, computeBreakdowns, percent } from './stats';
+import { aggregateDashboardTotals, aggregateFolderCounts, computeBreakdowns, percent } from './stats';
 
 // 100 dashboards total, 40 managed by Git Sync, 10 by Terraform => 50 managed,
 // 50 unmanaged. 8 folders total, 6 managed (4 git sync + 2 terraform).
@@ -91,9 +91,9 @@ describe('computeBreakdowns', () => {
   });
 });
 
-describe('aggregateTotals', () => {
+describe('aggregateDashboardTotals', () => {
   it('reports dashboard-only totals', () => {
-    const totals = aggregateTotals(computeBreakdowns(stats));
+    const totals = aggregateDashboardTotals(computeBreakdowns(stats));
     expect(totals).toEqual({ instanceTotal: 100, managed: 50 });
   });
 });

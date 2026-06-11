@@ -92,7 +92,7 @@ export function computeBreakdowns(data?: ResourceStats): GroupBreakdown[] {
   return Array.from(map.values());
 }
 
-export function aggregateTotals(breakdowns: GroupBreakdown[]): MigrationTotals {
+export function aggregateDashboardTotals(breakdowns: GroupBreakdown[]): MigrationTotals {
   // The Migrate to GitOps page is dashboard-centric: the KPI row reports
   // dashboard counts (folders are tracked separately by the gauge card). Skip
   // non-dashboard groups so totals don't double-count.

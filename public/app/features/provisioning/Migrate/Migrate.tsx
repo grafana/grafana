@@ -8,7 +8,7 @@ import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1'
 import { MigrateToGitopsHeader } from './MigrateToGitopsHeader';
 import { MigrationGuideNote } from './MigrationGuideNote';
 import { OverviewStatCards } from './OverviewStatCards';
-import { aggregateFolderCounts, aggregateTotals, computeBreakdowns } from './stats';
+import { aggregateDashboardTotals, aggregateFolderCounts, computeBreakdowns } from './stats';
 
 /**
  * Migrate to GitOps tab. Shows an overview of how much of the instance is
@@ -20,7 +20,7 @@ export function Migrate() {
   const { data, isLoading, isError, error } = useGetResourceStatsQuery();
 
   const breakdowns = useMemo(() => computeBreakdowns(data), [data]);
-  const totals = useMemo(() => aggregateTotals(breakdowns), [breakdowns]);
+  const totals = useMemo(() => aggregateDashboardTotals(breakdowns), [breakdowns]);
   const folderCounts = useMemo(() => aggregateFolderCounts(breakdowns), [breakdowns]);
 
   if (isLoading) {
