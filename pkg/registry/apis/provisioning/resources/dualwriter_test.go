@@ -1416,7 +1416,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 func TestWriteAncestorFolderMetadata(t *testing.T) {
 	t.Run("writes _folder.json with stable UID for new folder", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
-		rw.On("Read", mock.Anything, "new-folder/_folder.json", "test-ref").
+		rw.On("Read", mock.Anything, "new-folder/", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
 
 		var writtenData []byte
@@ -1439,13 +1439,11 @@ func TestWriteAncestorFolderMetadata(t *testing.T) {
 		require.NotEqual(t, hashID, manifest.Name)
 	})
 
-	t.Run("does not write when _folder.json already exists", func(t *testing.T) {
+	t.Run("does not write when folder already exists", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
-
-		existingManifest := NewFolderManifest("existing-uid", "existing-folder", FolderKind)
-		existingData, _ := json.Marshal(existingManifest)
-		rw.On("Read", mock.Anything, "existing-folder/_folder.json", "test-ref").
-			Return(&repository.FileInfo{Data: existingData, Hash: "abc"}, nil)
+		// Folder directory already exists in the repo (with or without metadata).
+		rw.On("Read", mock.Anything, "existing-folder/", "test-ref").
+			Return(&repository.FileInfo{Path: "existing-folder/"}, nil)
 
 		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
 		dw := &DualReadWriter{repo: rw, folders: fm, folderMetadataEnabled: true}
@@ -1457,9 +1455,9 @@ func TestWriteAncestorFolderMetadata(t *testing.T) {
 
 	t.Run("writes _folder.json for each missing ancestor in nested path", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
-		rw.On("Read", mock.Anything, "a/_folder.json", "test-ref").
+		rw.On("Read", mock.Anything, "a/", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
-		rw.On("Read", mock.Anything, "a/b/_folder.json", "test-ref").
+		rw.On("Read", mock.Anything, "a/b/", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
 		rw.On("Create", mock.Anything, "a/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg").
 			Return(nil)

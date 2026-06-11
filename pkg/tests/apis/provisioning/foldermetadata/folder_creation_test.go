@@ -16,7 +16,12 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "folder-metadata-test-repo"
-	helper.CreateLocalRepo(t, common.TestRepo{Name: repo, SyncTarget: "instance", Workflows: []string{"write"}, SkipResourceAssertions: true})
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name: repo, SyncTarget: "instance", Workflows: []string{"write"}, SkipResourceAssertions: true,
+		Copies: map[string]string{
+			"../testdata/.keep": "no-meta-existing-folder/.keep",
+		},
+	})
 
 	files := helper.NewFilesClient(repo)
 
@@ -95,6 +100,19 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 
 		_, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
 		require.NoError(t, err, "parent Grafana folder should exist")
+		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		require.NoError(t, err, "child Grafana folder should exist")
+	})
+
+	t.Run("dashboard created on existing folder with no meta doesn't write _folder.json", func(t *testing.T) {
+		body := common.DashboardJSON("nested-dash-002", "Nested Dashboard", 1)
+		resp := files.Post(t, "no-meta-existing-folder/should-have-meta/dashboard.json", body)
+		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested dashboard should succeed: %s", string(resp.Body))
+
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "no-meta-existing-folder/_folder.json")
+		require.Error(t, err, "_folder.json should not exist when flag is enabled")
+
+		childUID, _ := files.RequireValidFolderMetadata(t, ctx, "no-meta-existing-folder/should-have-meta/_folder.json")
 		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
 		require.NoError(t, err, "child Grafana folder should exist")
 	})
