@@ -119,6 +119,14 @@ export async function getDataSourceInstanceSettingsList(
  * @internal
  */
 export function registerBuiltInDataSourceInstanceSettings(settings: DataSourceInstanceSettings): void {
+  if (!settings.uid) {
+    settings = { ...settings, uid: settings.name };
+  }
+  // Allow re-registering the same built-in uid (idempotent), but refuse to
+  // clobber a uid that was registered via a different path (init or runtime).
+  if (byUid[settings.uid] && !builtInByUid[settings.uid]) {
+    throw new Error(`A data source with uid ${settings.uid} has already been registered`);
+  }
   builtInByUid[settings.uid] = settings;
   byUid[settings.uid] = settings;
 }

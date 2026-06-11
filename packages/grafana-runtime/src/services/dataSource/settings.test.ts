@@ -501,6 +501,19 @@ describe('instanceSettings', () => {
       registerBuiltInDataSourceInstanceSettings(fixtures.Expression);
       expect(() => registerBuiltInDataSourceInstanceSettings(fixtures.Expression)).not.toThrow();
     });
+
+    it('throws when the uid collides with a datasource registered via a different path', () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      expect(() => registerBuiltInDataSourceInstanceSettings(fixtures.Alpha)).toThrow(/already been registered/);
+    });
+
+    it('normalizes a missing uid to the name, matching populateMaps behaviour', async () => {
+      const noUid = ds({ uid: '', name: 'no-uid-ds', type: 'test-db' });
+      registerBuiltInDataSourceInstanceSettings(noUid);
+      initDataSourceInstanceSettings({}, '');
+      const result = await getDataSourceInstanceSettings('no-uid-ds');
+      expect(result?.name).toBe('no-uid-ds');
+    });
   });
 
   describe('upsertRuntimeDataSourceInstanceSettings', () => {
