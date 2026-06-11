@@ -174,6 +174,18 @@ func InstallAPIs(
 	for _, installer := range appInstallers {
 		logger.Debug("Installing APIs for app installer", "app", installer.ManifestData().AppName)
 
+		hasServedVersion := false
+		for _, v := range installer.ManifestData().Versions {
+			if v.Served {
+				hasServedVersion = true
+				break
+			}
+		}
+		if !hasServedVersion {
+			logger.Debug("Skipping app with no served versions", "app", installer.ManifestData().AppName)
+			continue
+		}
+
 		// Register per-resource storage options (e.g. folder support).
 		// Must happen before InstallAPIs so the RESTOptionsGetter has
 		// the options when it creates the underlying storage.
@@ -206,6 +218,16 @@ func RegisterPostStartHooks(
 		md := installer.ManifestData()
 		if md == nil {
 			return fmt.Errorf("app installer has nil manifest data: %T", installer)
+		}
+		hasServedVersion := false
+		for _, v := range md.Versions {
+			if v.Served {
+				hasServedVersion = true
+				break
+			}
+		}
+		if !hasServedVersion {
+			continue
 		}
 		hook := createPostStartHook(installer)
 		if err := serverConfig.AddPostStartHook(md.AppName, hook); err != nil {
