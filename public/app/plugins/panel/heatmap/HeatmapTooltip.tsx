@@ -22,6 +22,7 @@ import {
   VizTooltipFooter,
   VizTooltipHeader,
   VizTooltipWrapper,
+  getFieldDisplayLinks,
   useTheme2,
 } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
@@ -30,7 +31,7 @@ import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHe
 import { getDisplayValuesAndLinks } from 'app/features/visualization/data-hover/DataHoverView';
 import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 
-import { getDataLinks, getFieldActions } from '../status-history/utils';
+import { getFieldActions } from '../status-history/utils';
 import { isTooltipScrollable } from '../timeseries/utils';
 
 import { type HeatmapData } from './fields';
@@ -326,7 +327,7 @@ const HeatmapHoverCell = ({
       const hasLinks = (linksField.config.links?.length ?? 0) > 0;
 
       if (visible && hasLinks) {
-        links = getDataLinks(linksField, xValueIdx);
+        links = getFieldDisplayLinks(linksField, xValueIdx);
       }
 
       actions = canExecuteActions

@@ -156,6 +156,7 @@ export {
   type VizTooltipItem,
   DEFAULT_COLOR_INDICATOR,
   getFieldDisplayItems,
+  getFieldDisplayLinks,
   SeriesTable,
   type SeriesTableProps,
   SeriesTableRow,
