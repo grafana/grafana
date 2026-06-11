@@ -21,6 +21,8 @@ type mockSecureValues struct {
 	tokenErr      error
 	webhookSecret common.RawSecureValue
 	webhookErr    error
+	signingKey    common.RawSecureValue
+	signingErr    error
 }
 
 func (m *mockSecureValues) Token(_ context.Context) (common.RawSecureValue, error) {
@@ -29,6 +31,10 @@ func (m *mockSecureValues) Token(_ context.Context) (common.RawSecureValue, erro
 
 func (m *mockSecureValues) WebhookSecret(_ context.Context) (common.RawSecureValue, error) {
 	return m.webhookSecret, m.webhookErr
+}
+
+func (m *mockSecureValues) CommitSigningKey(_ context.Context) (common.RawSecureValue, error) {
+	return m.signingKey, m.signingErr
 }
 
 func TestExtra_Type(t *testing.T) {
@@ -222,6 +228,68 @@ func TestExtra_Build(t *testing.T) {
 				return mockWebhook
 			},
 			expectedError: "decrypt webhookSecret",
+		},
+		{
+			name: "error decrypting signing key",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/test/repo",
+						Branch: "main",
+					},
+					Commit: &provisioning.CommitOptions{
+						SigningMethod: provisioning.SSHSigningMethod,
+					},
+				},
+			},
+			setupDecrypter: func() repository.Decrypter {
+				return func(r *provisioning.Repository) repository.SecureValues {
+					return &mockSecureValues{
+						token:      common.RawSecureValue("test-token"),
+						signingErr: errors.New("signing key decryption failed"),
+					}
+				}
+			},
+			setupWebhook:  func(t *testing.T, repo *provisioning.Repository) github.WebhookURLBuilder { return nil },
+			expectedError: "unable to decrypt signing key",
+		},
+		{
+			name: "success with commit signing",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/test/repo",
+						Branch: "main",
+					},
+					Commit: &provisioning.CommitOptions{
+						SigningMethod: provisioning.SSHSigningMethod,
+					},
+				},
+			},
+			setupDecrypter: func() repository.Decrypter {
+				return func(r *provisioning.Repository) repository.SecureValues {
+					return &mockSecureValues{
+						token:      common.RawSecureValue("test-token"),
+						signingKey: common.RawSecureValue("ssh-key"),
+					}
+				}
+			},
+			setupWebhook: func(t *testing.T, repo *provisioning.Repository) github.WebhookURLBuilder {
+				return nil
+			},
+			validateResult: func(t *testing.T, repo repository.Repository) {
+				assert.NotNil(t, repo)
+			},
 		},
 		{
 			name: "success with custom path",

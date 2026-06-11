@@ -1103,9 +1103,6 @@
       },
       "unknown": "Desconhecido"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "Parece que você não tem fontes de dados compatíveis."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Avaliações para começar a alertar",
       "pending-period": "Período pendente",
@@ -5939,9 +5936,6 @@
       "select-source": "Selecionar fonte",
       "unknown": "Objeto desconhecido: {{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "Sem inspetor de metadados"
-    },
     "inspect-stats": {
       "data-title": "Estatísticas de fonte de dados",
       "data-traceids": "IDs de rastreamento",
@@ -6421,7 +6415,6 @@
       "playlist-next": "Ir para o próximo painel de controle",
       "playlist-previous": "Ir para o painel de controle anterior",
       "playlist-stop": "Parar lista de reprodução",
-      "read-only": "Somente leitura",
       "refresh": "Atualizar painel de controle",
       "save": "Salvar painel de controle",
       "save-as-template": {
@@ -6558,28 +6551,6 @@
     },
     "view-panel": {
       "not-found": "Painel não encontrado"
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Alterar visualização",
-      "aria-label-close": "Fechar painel de opções",
-      "aria-label-show": "Exibir painel de opções",
-      "tooltip-click-to-change-visualization": "Clique para alterar a visualização",
-      "tooltip-close": "Fechar painel de opções",
-      "tooltip-show": "Exibir painel de opções"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Pesquisar por…",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Painéis reutilizáveis que você pode compartilhar entre vários painéis."
-        },
-        "label": {
-          "library-panels": "Painéis de biblioteca",
-          "suggestions": "Sugestões",
-          "visualizations": "Visualizações"
-        }
-      },
-      "title-close": "Fechar"
     },
     "viz-panel": {
       "delete-panel-text": "A exclusão deste painel também removerá todas as consultas. Tem certeza de que deseja continuar?",
@@ -9052,9 +9023,6 @@
     "select-aria-label": "Filtro de pasta",
     "select-placeholder": "Filtrar por pasta"
   },
-  "folder-repo": {
-    "read-only-badge": "Somente leitura"
-  },
   "folders": {
     "api": {
       "anonymous-user": "",
@@ -11032,6 +11000,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "",
       "show-all-series": "…mostrar todos os {{total}} itens"
     }
   },
@@ -11053,10 +11022,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "Criar painel de biblioteca"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "Alterar",
-      "confirmText-replace": "Substituir"
     },
     "confirm": {
       "delete-panel": "Deseja excluir este painel?"
@@ -11097,9 +11062,6 @@
       "title": "Visualizar painel no painel de controle",
       "body_one": "Este painel está sendo usado em {{count}} painel de controle. Escolha em qual painel de controle você poderá visualizar:",
       "body_other": "Este painel está sendo usado em {{count}} painéis de controle. Escolha em qual painel de controle você poderá visualizar:"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "Criar novo painel da biblioteca"
     },
     "save": {
       "error": "Erro ao salvar painel de biblioteca: \"{{errorMsg}}\"",
@@ -13645,6 +13607,9 @@
       "message-resource-onprem_one": "Sua instância está limitada a {{count}} recurso sincronizado por repositório.",
       "message-resource-onprem_other": "Sua instância está limitada a {{count}} recursos sincronizados por repositório."
     },
+    "read-only-badge": {
+      "text": ""
+    },
     "read-only-local-tooltip": "Este recurso é somente leitura e é provisionado por meio do provisionamento de arquivos. Para fazer qualquer alteração, atualize o repositório conectado. Para modificar as configurações, acesse Administração > Provisionamento > Repositórios.",
     "read-only-remote-tooltip": "Este recurso é somente leitura e é provisionado por meio do Git. Para fazer qualquer alteração, atualize o repositório conectado. Para modificar as configurações, acesse Administração > Provisionamento > Repositórios.",
     "recent-jobs": {
@@ -13665,7 +13630,6 @@
     },
     "repository-card": {
       "last-sync": "Última sincronização: {{date}}",
-      "read-only-badge": "Somente leitura",
       "settings": "Configurações",
       "view": "Visualizar"
     },
@@ -16638,9 +16602,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "Nenhuma variável renomeada ou ausente foi encontrada."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "Não foi possível carregar a variável"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "Quando atualizar os valores desta variável",

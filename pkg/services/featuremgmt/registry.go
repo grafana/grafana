@@ -667,6 +667,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "dashboardNotebookLayout",
+			Description: "Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboardDefaultLayoutSelector",
 			Description: "Enables default layout selector in dashboard settings",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2491,10 +2499,10 @@ var (
 		{
 			Name:        "profilesExemplars",
 			Description: "Enables profiles exemplars support in profiles drilldown",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "pyroscopeUTF8LabelNames",
@@ -2621,13 +2629,12 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "alertingMultiplePolicies",
-			Description:  "Enables the ability to create multiple alerting policies",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+			Name:        "alertingMultiplePolicies",
+			Description: "Enables the ability to create multiple notification policies in alerting",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "true",
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "alertingPolicyRoutingSettings",
