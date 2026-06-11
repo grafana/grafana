@@ -1,7 +1,6 @@
 SELECT
   {{ .Ident "created" }},
   {{ .Ident "created_by" }},
-  {{ .Ident "version" }},
   {{ .Ident "active" }},
   {{ .Ident "namespace" }},
   {{ .Ident "name" }}

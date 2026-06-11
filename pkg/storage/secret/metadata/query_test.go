@@ -196,6 +196,40 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlCreateVersionCounterForSecureValue: {
+				{
+					Name: "create version counter for secure value row",
+					Data: &createVersionCounterForSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+						Counter:     1,
+					},
+				},
+			},
+			sqlReadVersionCounterForSecureValue: {
+				{
+					Name: "read version counter for secure value row",
+					Data: &readVersionCounterForSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+					},
+				},
+			},
+			sqlUpdateVersionCounterForSecureValue: {
+				{
+
+					Name: "update version counter for secure value row",
+					Data: &updateVersionCounterForSecureValue{
+						SQLTemplate:    mocks.NewTestingSQLTemplate(),
+						Name:           "name",
+						Namespace:      "ns",
+						CurrentCounter: 1,
+						Counter:        2,
+					},
+				},
+			},
 			sqlSecureValueRead: {
 				{
 					Name: "read",

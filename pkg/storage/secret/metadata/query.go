@@ -38,6 +38,9 @@ var (
 	sqlSecureValueSetInactiveAllFromGroup = mustTemplate("secure_value_set_inactive_all_from_group.sql")
 
 	sqlGetLatestSecureValueVersionAndCreatedAt = mustTemplate("secure_value_get_latest_version_and_created_at.sql")
+	sqlCreateVersionCounterForSecureValue      = mustTemplate("secure_value_create_version_counter_for_secure_value.sql")
+	sqlReadVersionCounterForSecureValue        = mustTemplate("secure_value_read_version_counter_for_secure_value.sql")
+	sqlUpdateVersionCounterForSecureValue      = mustTemplate("secure_value_update_version_counter_for_secure_value.sql")
 	sqlSecureValueSetVersionToActive           = mustTemplate("secure_value_set_version_to_active.sql")
 	sqlSecureValueSetVersionToInactive         = mustTemplate("secure_value_set_version_to_inactive.sql")
 )
@@ -296,5 +299,41 @@ type addGCAttemptCountSecureValues struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r addGCAttemptCountSecureValues) Validate() error {
+	return nil // TODO
+}
+
+type createVersionCounterForSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+	Counter   int64
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r createVersionCounterForSecureValue) Validate() error {
+	return nil // TODO
+}
+
+type updateVersionCounterForSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace      string
+	Name           string
+	CurrentCounter int64
+	Counter        int64
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r updateVersionCounterForSecureValue) Validate() error {
+	return nil // TODO
+}
+
+type readVersionCounterForSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r readVersionCounterForSecureValue) Validate() error {
 	return nil // TODO
 }

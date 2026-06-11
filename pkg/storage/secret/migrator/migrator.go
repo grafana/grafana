@@ -12,10 +12,11 @@ import (
 )
 
 const (
-	TableNameKeeper         = "secret_keeper"
-	TableNameSecureValue    = "secret_secure_value"
-	TableNameDataKey        = "secret_data_key"
-	TableNameEncryptedValue = "secret_encrypted_value"
+	TableNameKeeper             = "secret_keeper"
+	TableNameSecureValue        = "secret_secure_value"
+	TableNameSecureValueCounter = "secret_secure_value_counter"
+	TableNameDataKey            = "secret_data_key"
+	TableNameEncryptedValue     = "secret_encrypted_value"
 )
 
 type SecretDB struct {
@@ -133,7 +134,19 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 			{Cols: []string{"namespace", "name", "version"}, Type: migrator.UniqueIndex},
 		},
 	}
+
 	tables = append(tables, encryptedValueTable)
+
+	secureValueCounterTable := migrator.Table{
+		Name: TableNameSecureValueCounter,
+		Columns: []*migrator.Column{
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
+			{Name: "counter", Type: migrator.DB_BigInt, Nullable: false},
+		},
+		PrimaryKeys: []string{"namespace", "name"},
+	}
+	tables = append(tables, secureValueCounterTable)
 
 	// Initialize all tables
 	for t := range tables {
@@ -254,4 +267,12 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		Type:    migrator.DB_Integer,
 		Default: "0",
 	}))
+
+	mg.AddMigration("backfill secret_secure_value_counter", migrator.NewRawSQLMigration(
+		`
+	INSERT INTO secret_secure_value_counter (namespace, name, counter)
+	SELECT namespace, name, MAX(version) from secret_secure_value
+	GROUP BY namespace, name;
+	`,
+	))
 }

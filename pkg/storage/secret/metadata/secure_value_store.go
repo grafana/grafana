@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -22,6 +23,8 @@ import (
 )
 
 var _ contracts.SecureValueMetadataStorage = (*secureValueMetadataStorage)(nil)
+
+var ErrVersionConflict = errors.New("secure value version is already being used")
 
 func ProvideSecureValueMetadataStorage(
 	clock contracts.Clock,
@@ -86,90 +89,83 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 		return nil, fmt.Errorf("fetching latest secure value version: %w", err)
 	}
 
-	version := int64(1)
-	if latest.version > 0 {
-		version = latest.version + 1
+	version, err := s.getNextVersionNumberForSecureValue(ctx, sv.Namespace, sv.Name)
+	if err != nil {
+		return nil, fmt.Errorf("fetching version number for new secure value: %w", err)
 	}
 
-	// Some other concurrent request may have created the version we're trying to create,
-	// if that's the case, we'll retry with a new version up to max attempts.
-	maxAttempts := 3
-	attempts := 0
-	for {
-		sv.Status.Version = version
+	sv.Status.Version = version
 
-		now := s.clock.Now().UTC().Unix()
+	now := s.clock.Now().UTC().Unix()
 
-		createdAt := now
-		if latest.createdAt > 0 {
-			createdAt = latest.createdAt
-		}
-		updatedAt := now
-
-		createdBy := actorUID
-		if latest.createdBy != "" {
-			createdBy = latest.createdBy
-		}
-		updatedBy := actorUID
-
-		row, err := toCreateRow(createdAt, updatedAt, keeper, sv, createdBy, updatedBy)
-		if err != nil {
-			return nil, fmt.Errorf("to create row: %w", err)
-		}
-
-		req := createSecureValue{
-			SQLTemplate: sqltemplate.New(s.dialect),
-			Row:         row,
-		}
-
-		query, err := sqltemplate.Execute(sqlSecureValueCreate, req)
-		if err != nil {
-			return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueCreate.Name(), err)
-		}
-
-		res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
-		if err != nil {
-			if sql.IsRowAlreadyExistsError(err) {
-				if attempts < maxAttempts {
-					attempts += 1
-					version += 1
-					continue
-				}
-				return nil, fmt.Errorf("namespace=%+v name=%+v %w", sv.Namespace, sv.Name, contracts.ErrSecureValueAlreadyExists)
-			}
-			return nil, fmt.Errorf("inserting row: %w", err)
-		}
-
-		rowsAffected, err := res.RowsAffected()
-		if err != nil {
-			return nil, fmt.Errorf("getting rows affected: %w", err)
-		}
-
-		if rowsAffected != 1 {
-			return nil, fmt.Errorf("expected 1 row affected, got %d for %s on %s", rowsAffected, row.Name, row.Namespace)
-		}
-
-		createdSecureValue, err := row.toKubernetes()
-		if err != nil {
-			return nil, fmt.Errorf("convert to kubernetes object: %w", err)
-		}
-
-		return createdSecureValue, nil
+	createdAt := now
+	if latest.createdAt > 0 {
+		createdAt = latest.createdAt
 	}
+	updatedAt := now
+
+	createdBy := actorUID
+	if latest.createdBy != "" {
+		createdBy = latest.createdBy
+	}
+	updatedBy := actorUID
+
+	row, err := toCreateRow(createdAt, updatedAt, keeper, sv, createdBy, updatedBy)
+	if err != nil {
+		return nil, fmt.Errorf("to create row: %w", err)
+	}
+
+	req := createSecureValue{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Row:         row,
+	}
+
+	query, err := sqltemplate.Execute(sqlSecureValueCreate, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueCreate.Name(), err)
+	}
+
+	res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		if sql.IsRowAlreadyExistsError(err) {
+			return nil, fmt.Errorf("namespace=%+v name=%+v %w", sv.Namespace, sv.Name, contracts.ErrSecureValueAlreadyExists)
+		}
+		return nil, fmt.Errorf("inserting row: %w", err)
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("getting rows affected: %w", err)
+	}
+
+	if rowsAffected != 1 {
+		return nil, fmt.Errorf("expected 1 row affected, got %d for %s on %s", rowsAffected, row.Name, row.Namespace)
+	}
+
+	createdSecureValue, err := row.toKubernetes()
+	if err != nil {
+		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
+	}
+
+	return createdSecureValue, nil
 }
 
 type versionAndCreated struct {
 	createdAt int64
 	createdBy string
-	version   int64
 }
 
-func (s *secureValueMetadataStorage) getLatestVersionAndCreated(ctx context.Context, namespace xkube.Namespace, name string) (versionAndCreated, error) {
+func (s *secureValueMetadataStorage) getLatestVersionAndCreated(ctx context.Context, namespace xkube.Namespace, name string) (out versionAndCreated, err error) {
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.getLatestVersionAndCreated", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace.String()),
 	))
-	defer span.End()
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+		}
+		span.End()
+	}()
 
 	req := getLatestSecureValueVersionAndCreatedAt{
 		SQLTemplate: sqltemplate.New(s.dialect),
@@ -199,12 +195,11 @@ func (s *secureValueMetadataStorage) getLatestVersionAndCreated(ctx context.Cont
 	var (
 		createdAt       int64
 		createdBy       string
-		version         int64
 		active          bool
 		namespaceFromDB string
 		nameFromDB      string
 	)
-	if err := rows.Scan(&createdAt, &createdBy, &version, &active, &namespaceFromDB, &nameFromDB); err != nil {
+	if err := rows.Scan(&createdAt, &createdBy, &active, &namespaceFromDB, &nameFromDB); err != nil {
 		return versionAndCreated{}, fmt.Errorf("scanning version and created from returned rows: %w", err)
 	}
 
@@ -221,8 +216,194 @@ func (s *secureValueMetadataStorage) getLatestVersionAndCreated(ctx context.Cont
 	return versionAndCreated{
 		createdAt: createdAt,
 		createdBy: createdBy,
-		version:   version,
 	}, nil
+}
+
+func (s *secureValueMetadataStorage) getNextVersionNumberForSecureValue(ctx context.Context, namespace string, name string) (out int64, err error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.getNextVersionNumberForSecureValue", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace),
+	))
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+		}
+		span.End()
+	}()
+
+	// Insert the counter row for the first time for the {namespace, name} combination
+	version, err := s.insertVersionCounterRowForSecureValue(ctx, namespace, name)
+	if err == nil {
+		// Insertion succeeded, just return the first version
+		return version, nil
+	}
+
+	if !sql.IsRowAlreadyExistsError(err) {
+		return version, fmt.Errorf("inserting version counter row for secure value: %w", err)
+	}
+
+	// A version already exists, increment the counter and return the new counter value.
+	// Try more than once for better success rate at the cost of increased latency when there's concurrency.
+	maxAttempts := 3 // TODO: make configurable
+	for range maxAttempts {
+		version, err := s.updateVersionCounterRowForSecureValue(ctx, namespace, name)
+		if err != nil {
+			if errors.Is(err, ErrVersionConflict) {
+				continue
+			}
+			return version, fmt.Errorf("updating version counter row for secure value: %w", err)
+		}
+
+		return version, nil
+	}
+
+	return 0, fmt.Errorf("unable to allocate a version number for secure value")
+}
+
+func (s *secureValueMetadataStorage) insertVersionCounterRowForSecureValue(ctx context.Context, namespace string, name string) (out int64, err error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.insertVersionCounterRowForSecureValue", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace),
+	))
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+		}
+		span.End()
+	}()
+
+	counter := int64(1)
+	req := createVersionCounterForSecureValue{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace,
+		Name:        name,
+		Counter:     counter,
+	}
+
+	query, err := sqltemplate.Execute(sqlCreateVersionCounterForSecureValue, req)
+	if err != nil {
+		return 0, fmt.Errorf("execute template %q: %w", sqlCreateVersionCounterForSecureValue.Name(), err)
+	}
+
+	res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return 0, fmt.Errorf("inserting row: %w", err)
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("getting rows affected: %w", err)
+	}
+
+	if rowsAffected != 1 {
+		return 0, fmt.Errorf("expected 1 row affected, got %d for %s on %s", rowsAffected, name, namespace)
+	}
+
+	return counter, nil
+}
+
+func (s *secureValueMetadataStorage) updateVersionCounterRowForSecureValue(ctx context.Context, namespace string, name string) (out int64, err error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.updateVersionCounterRowForSecureValue", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace),
+	))
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+		}
+		span.End()
+	}()
+
+	version, err := s.readVersionCounterForSecureValue(ctx, namespace, name)
+	if err != nil {
+		return 0, fmt.Errorf("reading version counter for secure value: %w", err)
+	}
+
+	newVersion := version + 1
+	req := updateVersionCounterForSecureValue{
+		SQLTemplate:    sqltemplate.New(s.dialect),
+		Namespace:      namespace,
+		Name:           name,
+		CurrentCounter: version,
+		Counter:        newVersion,
+	}
+
+	query, err := sqltemplate.Execute(sqlUpdateVersionCounterForSecureValue, req)
+	if err != nil {
+		return 0, fmt.Errorf("execute template %q: %w", sqlUpdateVersionCounterForSecureValue.Name(), err)
+	}
+
+	res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return 0, fmt.Errorf("updating row: %w", err)
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("getting rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return 0, ErrVersionConflict
+	}
+
+	if rowsAffected > 1 {
+		return 0, fmt.Errorf("expected 1 row affected, got %d for %s on %s", rowsAffected, name, namespace)
+	}
+
+	return newVersion, nil
+}
+
+func (s *secureValueMetadataStorage) readVersionCounterForSecureValue(ctx context.Context, namespace string, name string) (out int64, err error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.readVersionCounterForSecureValue", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace),
+	))
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+		}
+		span.End()
+	}()
+
+	req := readVersionCounterForSecureValue{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace,
+		Name:        name,
+	}
+
+	query, err := sqltemplate.Execute(sqlReadVersionCounterForSecureValue, req)
+	if err != nil {
+		return 0, fmt.Errorf("execute template %q: %w", sqlReadVersionCounterForSecureValue.Name(), err)
+	}
+
+	rows, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return 0, fmt.Errorf("querying row: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	if !rows.Next() {
+		return 0, fmt.Errorf("row not found")
+	}
+	var (
+		namespaceRead string
+		nameRead      string
+		counterRead   int64
+	)
+	if err := rows.Scan(&namespaceRead, &nameRead, &counterRead); err != nil {
+		return 0, fmt.Errorf("scanning row: %w", err)
+	}
+	// Sanity check
+	if namespaceRead != namespace || nameRead != name {
+		return 0, fmt.Errorf("read unexpected row: expected namespace=%s and name %s but got namespace=%s and name=%s", namespace, name, namespaceRead, nameRead)
+	}
+
+	if err := rows.Err(); err != nil {
+		return 0, fmt.Errorf("error while reading rows: %w", err)
+	}
+
+	return counterRead, nil
 }
 
 func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (secureValueDB, error) {

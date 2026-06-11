@@ -1,6 +1,7 @@
 package metadata_test
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 	"time"
@@ -212,6 +213,16 @@ func TestStateMachine(t *testing.T) {
 		model := testutils.NewModelGsm(sut.ModelSecretsManager)
 
 		t.Repeat(map[string]func(*rapid.T){
+			// Called before and after every action to check for invariants
+			"": func(t *rapid.T) {
+				// Count how many times each {namespace, name, version} appear to ensure that versions are never reused.
+				count := make(map[string]int)
+				for _, sv := range model.AllVersions {
+					key := fmt.Sprintf("%+v-%+v-%+v", sv.Namespace, sv.Name, sv.Status.Version)
+					count[key] += 1
+					require.Equal(t, 1, count[key], "secure value version use more than once for a namespace and name combination")
+				}
+			},
 			"createSecureValueWithSecretValue": func(t *rapid.T) {
 				sv := testutils.AnySecureValueGen.Draw(t, "sv")
 

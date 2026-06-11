@@ -1,7 +1,6 @@
 SELECT
   "created",
   "created_by",
-  "version",
   "active",
   "namespace",
   "name"
