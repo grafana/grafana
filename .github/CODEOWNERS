@@ -244,6 +244,7 @@
 /devenv/scopes/ @grafana/grafana-operator-experience-squad
 /devenv/secrets/ @grafana/grafana-operator-experience-squad
 
+/devenv/dev-dashboards/vizlegend @grafana/dataviz-squad
 /devenv/dev-dashboards/annotations @grafana/dataviz-squad
 /devenv/dev-dashboards/migrations @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-barchart @grafana/dataviz-squad
@@ -798,6 +799,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /.gitignore @grafana/frontend-ops
 /.ignore @grafana/frontend-ops
 /.nvmrc @grafana/frontend-ops
+/mise.toml @grafana/frontend-ops
 /.prettierignore @grafana/frontend-ops
 /.yarn @grafana/frontend-ops
 /.yarnrc.yml @grafana/frontend-ops
@@ -931,10 +933,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/ConfigProvider.tsx @grafana/grafana-frontend-platform
 /public/app/core/utils/CorsSharedWorker.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/CorsWorker.ts @grafana/grafana-frontend-platform
-/public/app/core/utils/connectWithReduxStore.tsx @grafana/grafana-frontend-platform
 /public/app/core/utils/dag* @grafana/grafana-frontend-platform
-/public/app/core/utils/deferred.ts @grafana/grafana-frontend-platform
-/public/app/core/utils/docsLinks.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/errors* @grafana/grafana-frontend-platform
 /public/app/core/utils/explore* @grafana/datapro
 /public/app/core/utils/factors.ts @grafana/dashboards-squad
@@ -977,7 +976,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/scopes/ @grafana/grafana-operator-experience-squad
 /public/app/features/datasources/ @grafana/grafana-catalog
 /public/app/features/dimensions/ @grafana/dataviz-squad
-/public/app/features/dataframe-import/ @grafana/dataviz-squad
 /public/app/features/explore/ @grafana/datapro
 /public/app/features/expressions/ @grafana/datapro
 /public/app/features/folders/ @grafana/grafana-frontend-navigation
@@ -1332,7 +1330,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/i18n-verify.yml @grafana/grafana-frontend-platform
 /.github/workflows/deploy-storybook.yml @grafana/grafana-frontend-platform
 /.github/workflows/deploy-storybook-preview.yml @grafana/grafana-frontend-platform
-/.github/workflows/scripts/crowdin/create-tasks.ts @grafana/grafana-frontend-platform
 /.github/workflows/scripts/publish-frontend-metrics.mts @grafana/grafana-frontend-platform
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-dependabot-update-go-workspace.yml @grafana/grafana-app-platform-squad
@@ -1368,9 +1365,12 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/defaults-ini-docs-reminder.yml @grafana/docs-tooling @jtvdez
 /.github/workflows/pr-build-grafana.yml @grafana/grafana-backend-services-squad
 /.github/workflows/build-docker-variants.yml @grafana/grafana-backend-services-squad
+/.github/workflows/create-release-tag.yml @grafana/grafana-backend-services-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
+/packages/grafana-runtime/src/internal/openFeature/openfeature-types.gen.d.ts @grafanabot
+/packages/grafana-runtime/src/internal/openFeature/openfeature.gen.ts @grafanabot
 /docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md @grafanabot
 /pkg/services/featuremgmt/toggles_gen.csv @grafanabot
 /pkg/services/featuremgmt/toggles_gen.go @grafanabot

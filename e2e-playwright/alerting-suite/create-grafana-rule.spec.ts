@@ -5,6 +5,11 @@ import { test, expect } from '@grafana/plugin-e2e';
 import { AlertRuleEditPage } from './pages/AlertRuleEditPage';
 import { AlertRuleViewPage } from './pages/AlertRuleViewPage';
 
+// All tests in this file share the same SQLite-backed Grafana instance.
+// Running them serially (one worker) prevents concurrent beforeEach folder
+// writes from saturating the 2-connection pool and returning SQLITE_BUSY.
+test.describe.configure({ mode: 'serial' });
+
 test.use({
   featureToggles: {
     'alerting.rulesAPIV2': true,
@@ -24,9 +29,18 @@ let dataSourceUid: string;
 test.beforeEach(async ({ request }) => {
   folderTitle = `Infrastructure alerts ${crypto.randomUUID().slice(0, 8)}`;
 
-  const response = await request.post('/api/folders', { data: { title: folderTitle } });
-  expect(response.ok()).toBeTruthy();
-  folderUid = (await response.json()).uid;
+  // Retry folder creation to handle transient SQLite-busy / connection-pool errors that can
+  // occur under the parallelism of CI (4 workers, SQLite max_open_conn cap).
+  await expect
+    .poll(async () => {
+      const res = await request.post('/api/folders', { data: { title: folderTitle } });
+      if (!res.ok()) {
+        throw new Error(`POST /api/folders failed: ${res.status()} ${await res.text()}`);
+      }
+      folderUid = (await res.json()).uid;
+      return folderUid;
+    })
+    .toBeTruthy();
 
   // Ruler API needs the datasource UID, not its name — the UI form resolves this via the
   // datasource picker. We mirror that lookup here so seeds work regardless of how the
@@ -148,55 +162,61 @@ test.describe('Grafana-managed alert rule creation', () => {
       const settings = await request.get('/api/frontend/settings');
       const { namespace } = await settings.json();
 
-      const response = await request.post(
-        `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/alertrules`,
-        {
-          data: {
-            apiVersion: 'rules.alerting.grafana.app/v0alpha1',
-            kind: 'AlertRule',
-            metadata: { annotations: { 'grafana.app/folder': folderUid } },
-            spec: {
-              title: seededRuleName,
-              trigger: { interval: '1m' },
-              noDataState: 'NoData',
-              execErrState: 'Error',
-              notificationSettings: { type: 'SimplifiedRouting', receiver: contactPoint },
-              expressions: {
-                A: {
-                  model: {
-                    datasource: { type: 'grafana-testdata-datasource', uid: dataSourceUid },
-                    refId: 'A',
-                    scenarioId: 'random_walk',
-                  },
-                  datasourceUID: dataSourceUid,
-                  queryType: '',
-                  relativeTimeRange: { from: '10m', to: '0' },
-                  source: false,
-                },
-                B: {
-                  model: { type: 'reduce', reducer: 'last', expression: 'A', refId: 'B' },
-                  datasourceUID: '__expr__',
-                  queryType: '',
-                  source: false,
-                },
-                C: {
-                  model: {
-                    type: 'threshold',
-                    expression: 'B',
-                    conditions: [{ evaluator: { type: 'gt', params: [0] } }],
-                    refId: 'C',
-                  },
-                  datasourceUID: '__expr__',
-                  queryType: '',
-                  source: true,
-                },
+      const data = {
+        apiVersion: 'rules.alerting.grafana.app/v0alpha1',
+        kind: 'AlertRule',
+        metadata: { annotations: { 'grafana.app/folder': folderUid } },
+        spec: {
+          title: seededRuleName,
+          trigger: { interval: '1m' },
+          noDataState: 'NoData',
+          execErrState: 'Error',
+          notificationSettings: { type: 'SimplifiedRouting', receiver: contactPoint },
+          expressions: {
+            A: {
+              model: {
+                datasource: { type: 'grafana-testdata-datasource', uid: dataSourceUid },
+                refId: 'A',
+                scenarioId: 'random_walk',
               },
+              datasourceUID: dataSourceUid,
+              queryType: '',
+              relativeTimeRange: { from: '10m', to: '0' },
+              source: false,
+            },
+            B: {
+              model: { type: 'reduce', reducer: 'last', expression: 'A', refId: 'B' },
+              datasourceUID: '__expr__',
+              queryType: '',
+              source: false,
+            },
+            C: {
+              model: {
+                type: 'threshold',
+                expression: 'B',
+                conditions: [{ evaluator: { type: 'gt', params: [0] } }],
+                refId: 'C',
+              },
+              datasourceUID: '__expr__',
+              queryType: '',
+              source: true,
             },
           },
-        }
-      );
-      expect(response.ok()).toBeTruthy();
-      seededRuleUid = (await response.json()).metadata.name;
+        },
+      };
+      await expect
+        .poll(async () => {
+          const res = await request.post(
+            `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/alertrules`,
+            { data }
+          );
+          if (!res.ok()) {
+            throw new Error(`POST alertrules failed: ${res.status()} ${await res.text()}`);
+          }
+          seededRuleUid = (await res.json()).metadata.name;
+          return seededRuleUid;
+        })
+        .toBeTruthy();
     });
 
     test('edits a pre-existing rule-based interval rule and verifies the viewer', async ({ page }) => {

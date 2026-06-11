@@ -35,7 +35,7 @@ interface Props {
   }) => JSX.Element;
 }
 
-export const LoginCtrl = memo(({ resetCode, children }: Props) => {
+const LoginCtrl = memo(({ resetCode, children }: Props) => {
   const [result, setResult] = useState<LoginDTO | undefined>();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);

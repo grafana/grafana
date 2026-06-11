@@ -75,6 +75,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
       onConfirm={onDelete}
       title={t('browse-dashboards.action.delete-modal-title', 'Delete')}
       {...props}
+      disabled={isDeleting}
     />
   );
 };

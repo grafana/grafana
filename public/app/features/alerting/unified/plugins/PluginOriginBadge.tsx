@@ -1,8 +1,7 @@
 import { t } from '@grafana/i18n';
+import { usePluginSettings } from '@grafana/runtime/unstable';
 import { Badge, type IconSize, Tooltip } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
-
-import { useGetPluginSettingsQuery } from '../api/pluginsApi';
 
 interface PluginOriginBadgeProps {
   pluginId: string;
@@ -10,7 +9,7 @@ interface PluginOriginBadgeProps {
 }
 
 export function PluginOriginBadge({ pluginId, size = 'md' }: PluginOriginBadgeProps) {
-  const { data: pluginMeta, isLoading: loading } = useGetPluginSettingsQuery(pluginId);
+  const { value: pluginMeta, loading } = usePluginSettings(pluginId);
 
   if (loading) {
     return null;

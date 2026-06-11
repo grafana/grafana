@@ -86,7 +86,7 @@ export const createShortLink = memoizeOne(async (path: string): Promise<string> 
  * @param path - The long path to share.
  * @returns A ClipboardItem for the shortened link.
  */
-export const createShortLinkClipboardItem = (path: string) => {
+const createShortLinkClipboardItem = (path: string) => {
   return new ClipboardItem({
     'text/plain': createShortLink(path),
   });

@@ -89,7 +89,7 @@ export const silencesPermissions = {
   },
 };
 
-export const provisioningPermissions = {
+const provisioningPermissions = {
   read: AccessControlAction.AlertingProvisioningRead,
   readSecrets: AccessControlAction.AlertingProvisioningReadSecrets,
   write: AccessControlAction.AlertingProvisioningWrite,

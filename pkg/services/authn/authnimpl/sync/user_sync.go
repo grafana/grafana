@@ -110,6 +110,7 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 	return &UserSync{
 		isUserProvisioningEnabled: staticConfig.IsUserProvisioningEnabled,
 		rejectNonProvisionedUsers: staticConfig.RejectNonProvisionedUsers,
+		cfg:                       cfg,
 		userService:               userService,
 		authInfoService:           authInfoService,
 		userProtectionService:     userProtectionService,
@@ -127,6 +128,7 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 type UserSync struct {
 	isUserProvisioningEnabled bool
 	rejectNonProvisionedUsers bool
+	cfg                       *setting.Cfg
 	userService               user.Service
 	authInfoService           login.AuthInfoService
 	userProtectionService     login.UserProtectionService
@@ -291,6 +293,15 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 
 	if !id.ClientParams.SyncUser {
 		return nil
+	}
+
+	// Auth proxy and LDAP key the asserted role by DefaultOrgID but never set OrgID,
+	// so GetOrgRole() looks up key 0 and resolves to RoleNone. Align OrgID to DefaultOrgID so the
+	// asserted role is written to the k8s user's Spec.Role on create/update.
+	if id.OrgID == 0 &&
+		(id.AuthenticatedBy == login.AuthProxyAuthModule || id.AuthenticatedBy == login.LDAPAuthModule) &&
+		s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		id.OrgID = s.cfg.DefaultOrgID()
 	}
 
 	// Does user exist in the database?
@@ -538,6 +549,18 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		updateCmd.IsGrafanaAdmin = id.IsGrafanaAdmin
 		usr.IsAdmin = *id.IsGrafanaAdmin
 		needsUpdate = true
+	}
+
+	// Sync the asserted org role onto the k8s user's Spec.Role
+	if id.ClientParams.SyncOrgRoles && len(id.OrgRoles) > 0 &&
+		s.cfg.RBAC.SingleOrganization &&
+		s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		if assertedRole, ok := id.OrgRoles[id.OrgID]; ok && string(assertedRole) != usr.OrgRole {
+			role := string(assertedRole)
+			updateCmd.OrgRole = &role
+			usr.OrgRole = role
+			needsUpdate = true
+		}
 	}
 
 	span.SetAttributes(

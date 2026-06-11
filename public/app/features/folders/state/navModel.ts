@@ -12,8 +12,6 @@ export const FOLDER_ID = 'manage-folder';
 export const getDashboardsTabID = (folderUID: string) => `folder-dashboards-${folderUID}`;
 export const getLibraryPanelsTabID = (folderUID: string) => `folder-library-panels-${folderUID}`;
 export const getAlertingTabID = (folderUID: string) => `folder-alerting-${folderUID}`;
-export const getPermissionsTabID = (folderUID: string) => `folder-permissions-${folderUID}`;
-export const getSettingsTabID = (folderUID: string) => `folder-settings-${folderUID}`;
 
 export function buildNavModel(
   folder: FolderDTO | FolderParent,

@@ -304,7 +304,7 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 		}
 		if p.LibraryPanel != "" {
 			doc.References = append(doc.References, resource.ResourceReference{
-				Group:    "dashboards.grafana.app",
+				Group:    "dashboard.grafana.app",
 				Kind:     "LibraryPanel",
 				Name:     p.LibraryPanel,
 				Relation: "depends-on",

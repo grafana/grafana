@@ -22,7 +22,7 @@ import { serializeResultLayoutItem } from './panelSerialization';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
-export const movePanelPayloadSchema = payloads.movePanel;
+const movePanelPayloadSchema = payloads.movePanel;
 
 export type MovePanelPayload = z.infer<typeof movePanelPayloadSchema>;
 

@@ -120,8 +120,8 @@ import { type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { type LayoutParent } from './types/LayoutParent';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
-export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
-export const PANELS_PER_ROW_VAR = 'systemDynamicRowSizeVar';
+const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
+const PANELS_PER_ROW_VAR = 'systemDynamicRowSizeVar';
 
 type PanelStyles = {
   fieldConfig?: { defaults: Partial<FieldConfig> };
@@ -154,7 +154,7 @@ function extractOptionProps(source: Record<string, unknown>, props: readonly str
   return result;
 }
 
-export interface DashboardScenePreferences {
+interface DashboardScenePreferences {
   defaultLayoutTemplate?: DashboardLayoutManager;
 }
 
@@ -1392,7 +1392,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 }
 
-export class DashboardVariableDependency implements SceneVariableDependencyConfigLike {
+class DashboardVariableDependency implements SceneVariableDependencyConfigLike {
   private _emptySet = new Set<string>();
 
   public constructor(private _dashboard: DashboardScene) {}

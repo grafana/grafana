@@ -15,6 +15,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { setRunRequest } from '@grafana/runtime';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
@@ -73,6 +74,10 @@ jest.mock('app/features/variables/editor/getVariableQueryEditor', () => ({
 }));
 
 describe('QueryVariableEditorForm', () => {
+  beforeAll(() => {
+    mockBoundingClientRect();
+  });
+
   const mockOnDataSourceChange = jest.fn();
   const mockOnQueryChange = jest.fn();
   const mockOnLegacyQueryChange = jest.fn();
