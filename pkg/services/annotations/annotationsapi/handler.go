@@ -1,14 +1,13 @@
 package annotationsapi
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
-	"context"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -152,6 +151,60 @@ func legacyIDFromObject(obj *unstructured.Unstructured) int64 {
 	}
 	id, _ := strconv.ParseInt(labels[labelKeyLegacyID], 10, 64)
 	return id
+}
+
+// TODO: soft-delete not yet implemented
+func (h *ProxyHandler) Get(ctx context.Context, orgID int64, annotationID int64) (*annotations.ItemDTO, error) {
+	obj, err := h.findByLegacyID(ctx, orgID, annotationID)
+	if err != nil {
+		return nil, err
+	}
+
+	dto := objectToItemDTO(obj)
+
+	createdBy := obj.GetAnnotations()["grafana.com/createdBy"]
+	if createdBy != "" {
+		if users, err := h.client.GetUsersFromMeta(ctx, []string{createdBy}); err == nil {
+			if u, ok := users[createdBy]; ok {
+				dto.UserID = u.ID
+				dto.UserUID = u.UID
+				dto.Login = u.Login
+				dto.Email = u.Email
+			}
+		}
+	}
+
+	return dto, nil
+}
+
+func objectToItemDTO(obj *unstructured.Unstructured) *annotations.ItemDTO {
+	spec, _ := obj.Object["spec"].(map[string]any)
+
+	dto := &annotations.ItemDTO{ID: legacyIDFromObject(obj)}
+	dto.Text, _ = spec["text"].(string)
+	if t, ok := spec["time"].(float64); ok {
+		dto.Time = int64(t)
+	}
+	if te, ok := spec["timeEnd"].(float64); ok {
+		dto.TimeEnd = int64(te)
+	}
+	if uid, ok := spec["dashboardUID"].(string); ok {
+		dto.DashboardUID = &uid
+	}
+	if pid, ok := spec["panelID"].(float64); ok {
+		dto.PanelID = int64(pid)
+	}
+	if rawTags, ok := spec["tags"].([]any); ok {
+		for _, rt := range rawTags {
+			if s, ok := rt.(string); ok {
+				dto.Tags = append(dto.Tags, s)
+			}
+		}
+	}
+	if ts := obj.GetCreationTimestamp(); !ts.IsZero() {
+		dto.Created = ts.UnixMilli()
+	}
+	return dto
 }
 
 // SpecFromObject extracts spec fields from a k8s unstructured annotation.

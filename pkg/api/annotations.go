@@ -520,6 +520,20 @@ func (hs *HTTPServer) GetAnnotationByID(c *contextmodel.ReqContext) response.Res
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
+	if hs.annotationProxyHandler.Enabled() {
+		dto, err := hs.annotationProxyHandler.Get(c.Req.Context(), c.GetOrgID(), annotationID)
+		if err == nil {
+			if dto.Email != "" {
+				dto.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, dto.Email)
+			}
+			return response.JSON(http.StatusOK, dto)
+		}
+		if !errors.Is(err, annotationsapi.ErrNotFound) {
+			return response.Error(http.StatusInternalServerError, "Failed to get annotation", err)
+		}
+		// ErrNotFound: fall through to legacy (pre-migration record)
+	}
+
 	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
 	if resp != nil {
 		return resp
