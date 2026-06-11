@@ -594,6 +594,9 @@ func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery)
 	if cmd.Query != "" {
 		req = req.Param("query", cmd.Query)
 	}
+	if cmd.IncludeAccessControl {
+		req = req.Param("accesscontrol", "true")
+	}
 	for _, sortParam := range legacysort.ConvertToSortParams(cmd.SortOpts, iamuser.UserSortFieldMapping()) {
 		req = req.Param("sort", sortParam)
 	}
@@ -623,6 +626,7 @@ func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery)
 			Login:         hit.Login,
 			Email:         hit.Email,
 			Role:          hit.Role,
+			AccessControl: hit.AccessControl,
 			LastSeenAt:    time.Unix(hit.LastSeenAt, 0),
 			LastSeenAtAge: hit.LastSeenAtAge,
 			Created:       time.UnixMilli(hit.Created),

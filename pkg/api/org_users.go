@@ -124,7 +124,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) respo
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
 		User:  c.SignedInUser,
-	}, false)
+	})
 
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
@@ -184,7 +184,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext)
 		Limit:                    c.QueryInt("limit"),
 		User:                     c.SignedInUser,
 		DontEnforceAccessControl: !hs.License.FeatureEnabled("accesscontrol.enforcement"),
-	}, false)
+	})
 
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
@@ -230,7 +230,7 @@ func (hs *HTTPServer) GetOrgUsers(c *contextmodel.ReqContext) response.Response 
 		Query: "",
 		Limit: 0,
 		User:  c.SignedInUser,
-	}, false)
+	})
 
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get users for organization", err)
@@ -282,7 +282,7 @@ func (hs *HTTPServer) SearchOrgUsers(c *contextmodel.ReqContext) response.Respon
 		Limit:    perPage,
 		User:     c.SignedInUser,
 		SortOpts: sortOpts,
-	}, false)
+	})
 
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get users for organization", err)
@@ -318,7 +318,15 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) respo
 		SortOpts: sortOpts,
 	}
 
-	result, err := hs.searchOrgUsersHelper(c, query, true)
+	ctx := c.Req.Context()
+	kubernetesUsersRedirect := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx))
+
+	var result *org.SearchOrgUsersQueryResult
+	if kubernetesUsersRedirect {
+		result, err = hs.searchOrgUsersUsingK8s(c, query)
+	} else {
+		result, err = hs.searchOrgUsersHelper(c, query)
+	}
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
 	}
@@ -326,19 +334,10 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) respo
 	return response.JSON(http.StatusOK, result)
 }
 
-func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery, useK8s bool) (*org.SearchOrgUsersQueryResult, error) {
+func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
 	query.ExcludeHiddenUsers = true
 
-	ctx := c.Req.Context()
-	kubernetesUsersRedirect := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx))
-
-	var result *org.SearchOrgUsersQueryResult
-	var err error
-	if useK8s && kubernetesUsersRedirect {
-		result, err = hs.searchOrgUsersUsingK8s(c, query)
-	} else {
-		result, err = hs.orgService.SearchOrgUsers(ctx, query)
-	}
+	result, err := hs.orgService.SearchOrgUsers(c.Req.Context(), query)
 	if err != nil {
 		return nil, err
 	}
@@ -393,12 +392,13 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 
 func (hs *HTTPServer) searchOrgUsersUsingK8s(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
 	searchResult, err := hs.userService.Search(c.Req.Context(), &user.SearchUsersQuery{
-		SignedInUser: query.User,
-		OrgID:        query.OrgID,
-		Query:        query.Query,
-		Page:         query.Page,
-		Limit:        query.Limit,
-		SortOpts:     query.SortOpts,
+		SignedInUser:         query.User,
+		OrgID:                query.OrgID,
+		Query:                query.Query,
+		Page:                 query.Page,
+		Limit:                query.Limit,
+		SortOpts:             query.SortOpts,
+		IncludeAccessControl: c.QueryBool("accesscontrol"),
 	})
 	if err != nil {
 		return nil, err
@@ -417,6 +417,8 @@ func (hs *HTTPServer) searchOrgUsersUsingK8s(c *contextmodel.ReqContext, query *
 			Name:          u.Name,
 			Login:         u.Login,
 			Role:          u.Role,
+			AvatarURL:     dtos.GetGravatarUrl(hs.Cfg, u.Email),
+			AccessControl: u.AccessControl,
 			LastSeenAt:    u.LastSeenAt,
 			LastSeenAtAge: u.LastSeenAtAge,
 			Created:       u.Created,

@@ -123,8 +123,9 @@ type SearchUsersQuery struct {
 	SortOpts     []model.SortOption
 	Filters      []Filter
 
-	IsDisabled    *bool
-	IsProvisioned *bool
+	IsDisabled           *bool
+	IsProvisioned        *bool
+	IncludeAccessControl bool
 }
 
 type SearchUserQueryResult struct {
@@ -141,6 +142,7 @@ type UserSearchHitDTO struct {
 	Login         string               `json:"login"`
 	Email         string               `json:"email"`
 	Role          string               `json:"role"`
+	AccessControl map[string]bool      `json:"accessControl,omitempty"`
 	AvatarURL     string               `json:"avatarUrl" xorm:"avatar_url"`
 	IsAdmin       bool                 `json:"isAdmin"`
 	IsDisabled    bool                 `json:"isDisabled"`

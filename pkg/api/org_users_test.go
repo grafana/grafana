@@ -777,6 +777,7 @@ func TestSearchOrgUsersUsingK8s(t *testing.T) {
 			Login:         "jdoe",
 			Email:         "jdoe@example.com",
 			Role:          "Admin",
+			AccessControl: map[string]bool{"org.users:write": true},
 			LastSeenAt:    lastSeen,
 			LastSeenAtAge: "5 days",
 			Created:       created,
@@ -788,6 +789,7 @@ func TestSearchOrgUsersUsingK8s(t *testing.T) {
 
 	newHS := func() *HTTPServer {
 		return &HTTPServer{
+			Cfg: setting.NewCfg(),
 			userService: &usertest.FakeUserService{
 				ExpectedSearchUsers: user.SearchUserQueryResult{TotalCount: 2, Users: hits, Page: 1, PerPage: 50},
 			},
@@ -816,6 +818,8 @@ func TestSearchOrgUsersUsingK8s(t *testing.T) {
 		assert.Equal(t, created, got.Created)
 		assert.True(t, got.IsDisabled)
 		assert.True(t, got.IsProvisioned)
+		assert.Equal(t, map[string]bool{"org.users:write": true}, got.AccessControl)
+		assert.NotEmpty(t, got.AvatarURL)
 	})
 
 	t.Run("filters by UserID and adjusts total", func(t *testing.T) {
