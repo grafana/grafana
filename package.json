@@ -21,7 +21,7 @@
     "codeowners-manifest:raw": "node ./scripts/codeowners-manifest/raw.js",
     "dev": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.ts",
     "e2e:schema-v2": "KUBERNETES_DASHBOARDS=true yarn playwright test --project dashboards",
-    "e2e:playwright": "NODE_OPTIONS='-C @grafana-app/source' yarn playwright test --grep-invert @cloud-plugins",
+    "e2e:playwright": "STRICT_CSP=1 NODE_OPTIONS='-C @grafana-app/source' yarn playwright test --grep-invert @cloud-plugins",
     "e2e:pw": "NODE_OPTIONS='-C @grafana-app/source' yarn playwright test",
     "e2e:playwright:debug": "yarn e2e:pw --debug -x --trace on",
     "e2e:playwright:10x": "yarn e2e:pw --repeat-each=10",
