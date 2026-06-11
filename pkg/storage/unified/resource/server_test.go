@@ -706,7 +706,7 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 }
 
 func TestGetQuotaUsage(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("returns error when overrides service is not configured", func(t *testing.T) {
 		s := &server{
@@ -738,26 +738,30 @@ func TestGetQuotaUsage(t *testing.T) {
 `
 		require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
 
-		// Create a real OverridesService with the temp file
 		overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tracing.NewNoopTracerService(), ReloadOptions{
 			FilePath: tmpFile,
 		})
 		require.NoError(t, err)
-		require.NoError(t, overridesService.init(ctx))
-		defer func() {
-			_ = overridesService.stop(ctx)
-		}()
 
-		// Create a mock backend that returns resource stats (reusing mockStorageBackend from search_test.go)
-		mockBackend := &mockStorageBackend{
-			resourceStats: []ResourceStats{{Count: 42}},
+		// Stats flow through GetStats -> searchClient.
+		searchClient := newFakeResourceIndexClient()
+		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
+			Stats: []*resourcepb.ResourceStatsResponse_Stats{{
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+				Count:    42,
+			}},
 		}
 
-		s := &server{
-			backend:          mockBackend,
-			overridesService: overridesService,
-			log:              log.NewNopLogger(),
-		}
+		s, err := NewResourceServer(ResourceServerOptions{
+			Backend:          &mockStorageBackend{},
+			SearchClient:     searchClient,
+			OverridesService: overridesService,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = s.Stop(ctx)
+		})
 
 		resp, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
 			Key: &resourcepb.ResourceKey{
@@ -770,6 +774,49 @@ func TestGetQuotaUsage(t *testing.T) {
 		require.Nil(t, resp.Error)
 		assert.Equal(t, int64(42), resp.Usage)
 		assert.Equal(t, int64(500), resp.Limit)
+	})
+
+	t.Run("surfaces stats response error on the response", func(t *testing.T) {
+		tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
+		content := `overrides:
+  "123":
+    quotas:
+      dashboard.grafana.app/dashboards:
+        limit: 500
+`
+		require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
+
+		overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tracing.NewNoopTracerService(), ReloadOptions{
+			FilePath: tmpFile,
+		})
+		require.NoError(t, err)
+
+		searchClient := newFakeResourceIndexClient()
+		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
+			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
+		}
+
+		s, err := NewResourceServer(ResourceServerOptions{
+			Backend:          &mockStorageBackend{},
+			SearchClient:     searchClient,
+			OverridesService: overridesService,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = s.Stop(ctx)
+		})
+
+		resp, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "stacks-123",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp.Error)
+		assert.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+		assert.Equal(t, "stats blew up", resp.Error.Message)
 	})
 }
 
@@ -808,7 +855,7 @@ func TestCheckQuotas(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 
 			overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
 			overrides := fmt.Sprintf(`overrides:
@@ -831,13 +878,18 @@ func TestCheckQuotas(t *testing.T) {
 				Resource:  "dashboards",
 			}
 
+			searchClient := newFakeResourceIndexClient()
+			searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{{
+					Group:    nsr.Group,
+					Resource: nsr.Resource,
+					Count:    1,
+				}},
+			}
+
 			server, err := NewResourceServer(ResourceServerOptions{
-				Backend: &mockStorageBackend{
-					resourceStats: []ResourceStats{{
-						NamespacedResource: nsr,
-						Count:              1,
-					}},
-				},
+				Backend:          &mockStorageBackend{},
+				SearchClient:     searchClient,
 				OverridesService: overridesService,
 				QuotasConfig:     QuotasConfig{EnforcedResources: tt.enforcedResources},
 			})
@@ -854,6 +906,88 @@ func TestCheckQuotas(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+
+	t.Run("stats response error fails open (no quota error returned)", func(t *testing.T) {
+		ctx := t.Context()
+
+		overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
+		overrides := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1
+`
+		require.NoError(t, os.WriteFile(overridesFile, []byte(overrides), 0644))
+
+		tcr := tracing.NewNoopTracerService()
+		overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tcr.Tracer, ReloadOptions{
+			FilePath: overridesFile,
+		})
+		require.NoError(t, err)
+
+		nsr := NamespacedResource{
+			Namespace: "stacks-123",
+			Group:     "grafana.dashboard.app",
+			Resource:  "dashboards",
+		}
+
+		searchClient := newFakeResourceIndexClient()
+		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
+			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
+		}
+
+		server, err := NewResourceServer(ResourceServerOptions{
+			Backend:          &mockStorageBackend{},
+			SearchClient:     searchClient,
+			OverridesService: overridesService,
+			QuotasConfig:     QuotasConfig{EnforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true}},
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = server.Stop(ctx)
+		})
+
+		require.NoError(t, server.checkQuota(ctx, nsr))
+	})
+}
+
+func TestNewResourceServer_RequiresStatsSourceWhenQuotasEnabled(t *testing.T) {
+	ctx := t.Context()
+
+	overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
+	overrides := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1
+`
+	require.NoError(t, os.WriteFile(overridesFile, []byte(overrides), 0644))
+
+	tcr := tracing.NewNoopTracerService()
+	overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tcr.Tracer, ReloadOptions{
+		FilePath: overridesFile,
+	})
+	require.NoError(t, err)
+
+	t.Run("errors when neither search server nor search client is configured", func(t *testing.T) {
+		_, err := NewResourceServer(ResourceServerOptions{
+			Backend:          &mockStorageBackend{},
+			OverridesService: overridesService,
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("succeeds when a search client is configured", func(t *testing.T) {
+		server, err := NewResourceServer(ResourceServerOptions{
+			Backend:          &mockStorageBackend{},
+			SearchClient:     newFakeResourceIndexClient(),
+			OverridesService: overridesService,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = server.Stop(ctx)
+		})
+	})
 }
 
 func TestShouldEnforce(t *testing.T) {

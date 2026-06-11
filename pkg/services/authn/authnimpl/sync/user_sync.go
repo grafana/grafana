@@ -295,10 +295,11 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		return nil
 	}
 
-	// Auth proxy keys the role asserted in the header by DefaultOrgID but never sets OrgID,
+	// Auth proxy and LDAP key the asserted role by DefaultOrgID but never set OrgID,
 	// so GetOrgRole() looks up key 0 and resolves to RoleNone. Align OrgID to DefaultOrgID so the
 	// asserted role is written to the k8s user's Spec.Role on create/update.
-	if id.OrgID == 0 && id.AuthenticatedBy == login.AuthProxyAuthModule &&
+	if id.OrgID == 0 &&
+		(id.AuthenticatedBy == login.AuthProxyAuthModule || id.AuthenticatedBy == login.LDAPAuthModule) &&
 		s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
 		id.OrgID = s.cfg.DefaultOrgID()
 	}

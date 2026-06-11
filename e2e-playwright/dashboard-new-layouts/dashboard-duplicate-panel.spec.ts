@@ -1,8 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
-
-import { flows } from './utils';
+import { Controls, Panel, Sidebar } from './page-objects';
+import { importTestDashboard, saveDashboard } from './utils';
 
 test.use({
   featureToggles: {
@@ -19,40 +18,30 @@ test.describe(
   },
   () => {
     test('can duplicate a panel', async ({ dashboardPage, selectors, page }) => {
-      await page.goto(selectors.pages.ImportDashboard.url);
-      await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(JSON.stringify(testV2Dashboard));
-      await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
-      await page.getByTestId(selectors.components.ImportDashboardForm.name).fill('Paste tab');
-      await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
-      await page.locator('div[data-testid="data-source-card"]').first().click();
-      await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
+      await importTestDashboard(page, selectors, 'Paste tab');
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      const controls = new Controls(page, dashboardPage, selectors);
+      const panel = new Panel(page, dashboardPage, selectors);
+      const sidebar = new Sidebar(page, dashboardPage, selectors);
+
+      await controls.enterEditMode();
+
       const oldPanelTitle = 'New panel';
       const panelTitle = 'Unique';
-      await flows.changePanelTitle(dashboardPage, selectors, oldPanelTitle, panelTitle);
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(panelTitle))
-      ).toBeVisible();
+      await panel.selectByTitle(oldPanelTitle);
+      await sidebar.panelOptions.getTitleInput().fill(panelTitle);
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Panel.menu(panelTitle))
-        .click({ force: true });
-      await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.menuItems('More...')).hover();
-      await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.menuItems('Duplicate')).click();
+      await expect(panel.getContainerByTitle(panelTitle)).toHaveCount(1);
 
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(panelTitle))).toHaveCount(
-        2
-      );
+      await panel.clickMenuItem(panelTitle, ['More...', 'Duplicate']);
 
-      // Save, reload, and ensure duplicate has persisted
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
+      await expect(panel.getContainerByTitle(panelTitle)).toHaveCount(2);
+
+      await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(panelTitle))).toHaveCount(
-        2
-      );
+
+      await expect(panel.getContainerByTitle(panelTitle)).toHaveCount(2);
     });
   }
 );

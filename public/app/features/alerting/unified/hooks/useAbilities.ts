@@ -1,12 +1,11 @@
 import { useMemo } from 'react';
 
-import { config } from '@grafana/runtime';
+import { config, useAppPluginEnabled } from '@grafana/runtime';
 import { contextSrv as ctx } from 'app/core/services/context_srv';
-import { PERMISSIONS_CONTACT_POINTS_READ } from 'app/features/alerting/unified/components/contact-points/permissions';
 import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
-} from 'app/features/alerting/unified/components/mute-timings/permissions';
+} from 'app/features/alerting/unified/hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -14,7 +13,6 @@ import { type CombinedRule, type RuleGroupIdentifierV2 } from 'app/types/unified
 import { type GrafanaPromRuleDTO, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
-import { useGetPluginSettingsQuery } from '../api/pluginsApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
 import { getGroupOriginName, groupIdentifier } from '../utils/groupIdentifier';
@@ -319,14 +317,10 @@ export function useAllRulerRuleAbilities(
   const canSilence = useCanSilence(rule);
 
   const pluginOrigin = getRulePluginOrigin(rule);
-  // Check plugin installation - use skipToken to prevent query when no pluginId
-  const { data: pluginSettings, isLoading: pluginCheckLoading } = useGetPluginSettingsQuery(
-    pluginOrigin?.pluginId ?? '',
-    {
-      skip: !pluginOrigin?.pluginId,
-    }
+  // Check plugin installation - only fires when pluginOrigin is present (empty string returns false)
+  const { value: isPluginInstalled = false, loading: pluginCheckLoading } = useAppPluginEnabled(
+    pluginOrigin?.pluginId ?? ''
   );
-  const isPluginInstalled = pluginSettings?.enabled ?? false;
 
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
     const isProvisioned = rule ? isProvisionedRule(rule) : false;
@@ -400,15 +394,10 @@ export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefi
   const canSilenceInFolder = useCanSilenceInFolder(rule?.folderUid);
 
   const promPluginOrigin = getRulePluginOrigin(rule);
-  // Only check plugin installation if rule has a plugin origin label
-  // Skip the query if no pluginId to avoid unnecessary API calls
-  const { data: promPluginSettings, isLoading: promPluginCheckLoading } = useGetPluginSettingsQuery(
-    promPluginOrigin?.pluginId ?? '',
-    {
-      skip: !promPluginOrigin?.pluginId,
-    }
+  // Check plugin installation - only fires when promPluginOrigin is present (empty string returns false)
+  const { value: isPromPluginInstalled = false, loading: promPluginCheckLoading } = useAppPluginEnabled(
+    promPluginOrigin?.pluginId ?? ''
   );
-  const isPromPluginInstalled = promPluginSettings?.enabled ?? false;
 
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
     const isProvisioned = rule ? isProvisionedPromRule(rule) : false;
@@ -569,7 +558,7 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     [AlertmanagerAction.ViewContactPoint]: toAbility(
       AlwaysSupported,
       notificationsPermissions.read,
-      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_CONTACT_POINTS_READ : [])
+      ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingReceiversRead] : [])
     ),
     [AlertmanagerAction.UpdateContactPoint]: toAbility(
       hasConfigurationAPI,

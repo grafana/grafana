@@ -23,7 +23,7 @@ import { type Trace } from '../../types/trace';
 
 import NextPrevResult from './NextPrevResult';
 
-export type TracePageSearchBarProps = {
+type TracePageSearchBarProps = {
   trace: Trace;
   search: TraceSearchProps;
   spanFilterMatches: Set<string> | undefined;

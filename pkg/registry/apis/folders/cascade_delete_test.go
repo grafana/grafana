@@ -16,7 +16,7 @@ import (
 var featureFlagsProvider = oftesting.NewTestProvider()
 
 func TestMain(m *testing.M) {
-	if err := openfeature.SetProvider(featureFlagsProvider); err != nil {
+	if err := openfeature.SetProviderAndWait(featureFlagsProvider); err != nil {
 		panic(err)
 	}
 	os.Exit(m.Run())
