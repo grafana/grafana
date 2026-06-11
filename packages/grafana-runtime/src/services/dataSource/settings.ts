@@ -18,7 +18,7 @@ let byName: Record<string, DataSourceInstanceSettings> = {};
 let byUid: Record<string, DataSourceInstanceSettings> = {};
 let byId: Record<string, DataSourceInstanceSettings> = {};
 let runtimeByUid: Record<string, DataSourceInstanceSettings> = {};
-let builtInByUid: Record<string, DataSourceInstanceSettings> = {};
+let expressionDsSettings: DataSourceInstanceSettings | undefined;
 let defaultName = '';
 
 function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
@@ -42,9 +42,9 @@ function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
     byUid[ds.uid] = ds;
   }
 
-  // Re-apply built-in, client-injected data sources (e.g. the expression datasource).
-  for (const ds of Object.values(builtInByUid)) {
-    byUid[ds.uid] = ds;
+  // Re-apply the expression datasource so it survives a cache repopulate.
+  if (expressionDsSettings) {
+    byUid[expressionDsSettings.uid] = expressionDsSettings;
   }
 }
 
@@ -112,22 +112,17 @@ export async function getDataSourceInstanceSettingsList(
 }
 
 /**
- * Register a built-in, client-injected data source (e.g. the expression
- * datasource) that is not part of /api/frontend/settings. Re-applied on every
- * populate so it survives a cache repopulate. Idempotent.
+ * Set the instance settings for the expression pseudo-datasource, which is not
+ * part of /api/frontend/settings and must be injected client-side. Re-applied
+ * on every populate so it survives a cache repopulate.
+ *
+ * This is a temporary bridge until ExpressionDatasource moves from core to
+ * @grafana/runtime, at which point it can be imported directly.
  *
  * @internal
  */
-export function registerBuiltInDataSourceInstanceSettings(settings: DataSourceInstanceSettings): void {
-  if (!settings.uid) {
-    settings = { ...settings, uid: settings.name };
-  }
-  // Allow re-registering the same built-in uid (idempotent), but refuse to
-  // clobber a uid that was registered via a different path (init or runtime).
-  if (byUid[settings.uid] && !builtInByUid[settings.uid]) {
-    throw new Error(`A data source with uid ${settings.uid} has already been registered`);
-  }
-  builtInByUid[settings.uid] = settings;
+export function setExpressionDataSourceInstanceSettings(settings: DataSourceInstanceSettings): void {
+  expressionDsSettings = settings;
   byUid[settings.uid] = settings;
 }
 
@@ -327,6 +322,6 @@ export function _resetForTests(): void {
   byUid = {};
   byId = {};
   runtimeByUid = {};
-  builtInByUid = {};
+  expressionDsSettings = undefined;
   defaultName = '';
 }

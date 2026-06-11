@@ -47,7 +47,7 @@ import {
   getPanelPluginMetas,
   initDataSourceInstanceSettings,
   initOpenFeature,
-  registerBuiltInDataSourceInstanceSettings,
+  setExpressionDataSourceInstanceSettings,
   setDataSourcePluginImporter,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
@@ -255,7 +255,7 @@ export class GrafanaApp {
       // Init async data source services (populates cache from boot data so
       // new `getInstanceSettings` / `getInstanceSettingsList` callers don't
       // need to wait on a network round trip).
-      registerBuiltInDataSourceInstanceSettings(expressionInstanceSettings);
+      setExpressionDataSourceInstanceSettings(expressionInstanceSettings);
       initDataSourceInstanceSettings(config.datasources, config.defaultDatasource);
       setDataSourcePluginImporter(pluginImporter.importDataSource.bind(pluginImporter));
 

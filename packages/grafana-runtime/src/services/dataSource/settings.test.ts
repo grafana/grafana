@@ -8,7 +8,7 @@ import {
   getDataSourceInstanceSettingsList,
   getDataSourceInstanceSettings,
   initDataSourceInstanceSettings,
-  registerBuiltInDataSourceInstanceSettings,
+  setExpressionDataSourceInstanceSettings,
   reloadDataSourceInstanceSettings,
   upsertRuntimeDataSourceInstanceSettings,
 } from './settings';
@@ -439,40 +439,40 @@ describe('instanceSettings', () => {
     });
   });
 
-  describe('registerBuiltInDataSourceInstanceSettings', () => {
-    it('makes the settings available by uid after init', async () => {
-      registerBuiltInDataSourceInstanceSettings(fixtures.Expression);
+  describe('setExpressionDataSourceInstanceSettings', () => {
+    it('makes the expression datasource available by uid after init', async () => {
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
       initDataSourceInstanceSettings({}, '');
       const result = await getDataSourceInstanceSettings('__expr__');
       expect(result?.uid).toBe('__expr__');
     });
 
     it('resolves by name via isExpressionReference path', async () => {
-      registerBuiltInDataSourceInstanceSettings(fixtures.Expression);
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
       initDataSourceInstanceSettings({}, '');
       const result = await getDataSourceInstanceSettings('Expression');
       expect(result?.uid).toBe('__expr__');
     });
 
     it('resolves by legacy id -100 via isExpressionReference path', async () => {
-      registerBuiltInDataSourceInstanceSettings(fixtures.Expression);
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
       initDataSourceInstanceSettings({}, '');
       const result = await getDataSourceInstanceSettings('-100');
       expect(result?.uid).toBe('__expr__');
     });
 
     it('is not returned by getDataSourceInstanceSettingsList (byUid-only, matching legacy)', async () => {
-      // Register as built-in, but do NOT include it in the init map — it must
-      // only live in byUid so list results are unaffected.
+      // Set via the expression setter, but do NOT include it in the init map — it
+      // must only live in byUid so list results are unaffected.
       const { Expression: _expr, ...withoutExpression } = fixtures;
-      registerBuiltInDataSourceInstanceSettings(fixtures.Expression);
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
       initDataSourceInstanceSettings(withoutExpression, 'Bravo');
       const items = await getDataSourceInstanceSettingsList({ all: true });
       expect(items.some((x) => x.uid === '__expr__')).toBe(false);
     });
 
     it('survives a cache repopulate via no-arg reload', async () => {
-      registerBuiltInDataSourceInstanceSettings(fixtures.Expression);
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
       initDataSourceInstanceSettings(fixtures, 'Bravo');
 
       // Reload with a payload that does not include the expression datasource.
@@ -485,7 +485,7 @@ describe('instanceSettings', () => {
     });
 
     it('coexists with a runtime datasource and both survive a repopulate', async () => {
-      registerBuiltInDataSourceInstanceSettings(fixtures.Expression);
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
       initDataSourceInstanceSettings(fixtures, 'Bravo');
       const runtime = ds({ uid: 'runtime-ds', name: 'Runtime', type: 'runtime' });
       upsertRuntimeDataSourceInstanceSettings(runtime);
@@ -495,24 +495,6 @@ describe('instanceSettings', () => {
 
       expect((await getDataSourceInstanceSettings('__expr__'))?.uid).toBe('__expr__');
       expect((await getDataSourceInstanceSettings('runtime-ds'))?.name).toBe('Runtime');
-    });
-
-    it('is idempotent — re-registering the same uid overwrites without throwing', () => {
-      registerBuiltInDataSourceInstanceSettings(fixtures.Expression);
-      expect(() => registerBuiltInDataSourceInstanceSettings(fixtures.Expression)).not.toThrow();
-    });
-
-    it('throws when the uid collides with a datasource registered via a different path', () => {
-      initDataSourceInstanceSettings(fixtures, 'Bravo');
-      expect(() => registerBuiltInDataSourceInstanceSettings(fixtures.Alpha)).toThrow(/already been registered/);
-    });
-
-    it('normalizes a missing uid to the name, matching populateMaps behaviour', async () => {
-      const noUid = ds({ uid: '', name: 'no-uid-ds', type: 'test-db' });
-      registerBuiltInDataSourceInstanceSettings(noUid);
-      initDataSourceInstanceSettings({}, '');
-      const result = await getDataSourceInstanceSettings('no-uid-ds');
-      expect(result?.name).toBe('no-uid-ds');
     });
   });
 
