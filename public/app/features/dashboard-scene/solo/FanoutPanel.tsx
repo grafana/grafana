@@ -70,7 +70,7 @@ interface SplitGroup {
   frames: DataFrame[];
 }
 
-export function groupDataByMode(panel: VizPanel, data: PanelData, mode: string, theme: GrafanaTheme2): SplitGroup[] {
+function groupDataByMode(panel: VizPanel, data: PanelData, mode: string, theme: GrafanaTheme2): SplitGroup[] {
   const fieldConfig = panel.state.fieldConfig.defaults;
 
   if (mode === bySeriesMode) {

@@ -35,7 +35,7 @@ export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
   }
 }
 
-export function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSidePane>) {
+function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSidePane>) {
   const dashboard = getDashboardSceneFor(model);
   const { viewPanel } = dashboard.useState();
   const { panelRef } = model.useState();
@@ -175,7 +175,7 @@ function extractLabelsFromData(panelData: PanelData | undefined): string[] {
   return Array.from(labelSet);
 }
 
-export function getModeForLabel(label: string) {
+function getModeForLabel(label: string) {
   return `$__by_label__${label}`;
 }
 
