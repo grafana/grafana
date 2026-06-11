@@ -5241,7 +5241,7 @@
       "target-time-range-field-tooltip": "Specify a field to use as the base for the range offsets. If not specified while a custom range is specified, the base will be the current time.",
       "target-time-range-label": "Custom Time Range",
       "target-time-range-range-label": "Range",
-      "target-time-range-range-tooltip": "Specify the offset to use against the range. If not specified while a custom field is specified, the range will be ± 24 hours",
+      "target-time-range-range-tooltip": "Specify the offset to use against the range. If not specified while a custom field is specified, the range will be ± 1 hour",
       "target-type-description": "Specify the type of correlation",
       "title": "Setup the target for the correlation (Step 2 of 3)",
       "type-label": "Type"

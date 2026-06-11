@@ -211,7 +211,7 @@ export const ConfigureCorrelationTargetForm = () => {
                         label={t('correlations.target-form.target-time-range-range-label', 'Range')}
                         tooltip={t(
                           'correlations.target-form.target-time-range-range-tooltip',
-                          'Specify the offset to use against the range. If not specified while a custom field is specified, the range will be ± 24 hours'
+                          'Specify the offset to use against the range. If not specified while a custom field is specified, the range will be ± 1 hour'
                         )}
                       >
                         <Controller
@@ -219,7 +219,7 @@ export const ConfigureCorrelationTargetForm = () => {
                           name="config.timeRange.range"
                           render={({ field: { onChange, value } }) => (
                             <RelativeTimeRangePicker
-                              timeRange={{ from: value?.from ?? 86400, to: value?.to ?? -86400 }}
+                              timeRange={{ from: value?.from ?? 3600, to: value?.to ?? -3600 }}
                               onChange={(e) => {
                                 onChange(e);
                               }}

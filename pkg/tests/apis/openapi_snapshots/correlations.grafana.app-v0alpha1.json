@@ -664,7 +664,13 @@
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationTargetSpec"
           },
           "timeRange": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationTimeRangeSpec"
+            "description": "null is for PATCH/edit when we want to clear the value, undefined is if it's not valid for the correlation type",
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationTimeRangeSpec"
+              }
+            ]
           },
           "transformations": {
             "type": "array",

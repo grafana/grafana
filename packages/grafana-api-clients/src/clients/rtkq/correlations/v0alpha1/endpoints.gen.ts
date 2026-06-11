@@ -326,7 +326,8 @@ export type CorrelationTransformationSpec = {
 export type CorrelationConfigSpec = {
   field: string;
   target: CorrelationTargetSpec;
-  timeRange?: CorrelationTimeRangeSpec;
+  /** null is for PATCH/edit when we want to clear the value, undefined is if it's not valid for the correlation type */
+  timeRange?: CorrelationTimeRangeSpec | null;
   transformations?: CorrelationTransformationSpec[];
 };
 export type CorrelationDataSourceRef = {

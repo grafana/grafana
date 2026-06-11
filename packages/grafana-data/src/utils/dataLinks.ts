@@ -60,27 +60,26 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
   const interpolatedCorrelationData = interpolateObject(link.meta?.correlationData, scopedVars, replaceVariables);
   const title = link.title ? link.title : internalLink.datasourceName;
   let exploreRange = range ? { ...range } : undefined;
-  // only do custom range if the field is not specified or if it's a defined variable
-  const noTimeRangeFieldOrExistsAsVar =
-    link.meta?.timeRange?.field === undefined ? true : Object.keys(scopedVars).includes(link.meta.timeRange.field);
 
-  // the time range passed in is the default (from the source pane). if the correlation defined a custom one, override it
   if (
     link.meta?.timeRange !== undefined &&
-    (link.meta?.timeRange.field !== undefined || link.meta?.timeRange.range !== undefined) &&
-    noTimeRangeFieldOrExistsAsVar
+    (link.meta?.timeRange.field !== undefined || link.meta?.timeRange.range !== undefined)
   ) {
-    let timeRangeField = link.meta.timeRange.field;
-    if (timeRangeField !== undefined && !isCustomVariableValue(timeRangeField)) {
-      timeRangeField = `\$\{${timeRangeField}\}`;
+    const timeRangeField = link.meta?.timeRange?.field;
+    // default to "now", if field is not defined or is not a valid variable
+    let baseTimeStr: string | undefined = 'now';
+
+    if (
+      timeRangeField !== undefined &&
+      Object.keys(scopedVars).includes(timeRangeField) &&
+      !isCustomVariableValue(timeRangeField)
+    ) {
+      const varStringTimeRangeField = `\$\{${timeRangeField}\}`;
+      baseTimeStr = interpolateObject(varStringTimeRangeField, scopedVars, replaceVariables);
     }
 
-    // if we need a field and it's not defined, use 'now'
-    const interpolatedBaseTimeStr =
-      link.meta.timeRange.field !== undefined ? interpolateObject(timeRangeField, scopedVars, replaceVariables) : 'now';
-
     try {
-      const interpolatedBaseTime = dateTime(interpolatedBaseTimeStr, 'x');
+      const interpolatedBaseTime = dateTime(baseTimeStr, 'x');
 
       // if we need a timerange but to and/or from are not defined, make it an hour (3600 seconds)
       exploreRange = rangeUtil.relativeToTimeRange(
@@ -91,7 +90,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
         interpolatedBaseTime
       );
     } catch (e) {
-      // silently fail if any part of this interpolation does not succeed, it will use the left pane range
+      // silently fail if this doesn't convert properly, it will use the left pane range
     }
   }
 
