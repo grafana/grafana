@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, FormProvider, type RegisterOptions, useForm, useFormContext } from 'react-hook-form';
-import { useFirstMountState } from 'react-use';
+import { useFirstMountState, useUpdateEffect } from 'react-use';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -224,16 +224,31 @@ export function GrafanaEvaluationBehaviorStep({
   const handleEvalGroupCreation = (groupName: string, evaluationInterval: string) => {
     setValue('group', groupName);
     setValue('evaluateEvery', evaluationInterval);
-
-    // Auto-adjust pending period so it's never shorter than the new evaluation interval
-    const currentFor = getValues('evaluateFor');
-    const millisFor = safeParsePrometheusDuration(currentFor);
-    const millisEvery = safeParsePrometheusDuration(evaluationInterval);
-    if (millisFor !== 0 && millisFor < millisEvery) {
-      setValue('evaluateFor', evaluationInterval);
+    // Inline bump: evaluateEvery may already equal evaluationInterval (if the user
+    // typed the same value as the current interval), so we cannot rely solely on
+    // the useUpdateEffect in ForInput — that only fires when evaluateEvery changes.
+    const bump = increasePendingPeriod(getValues('evaluateFor'), evaluationInterval);
+    if (bump) {
+      setValue('evaluateFor', bump);
     }
-
     setIsCreatingEvaluationGroup(false);
+  };
+
+  const handleEvalGroupSelection = (fieldOnChange: (value: string) => void, selected: SelectableValue<string>) => {
+    fieldOnChange(selected.label ?? '');
+    // Inline bump: evaluateEvery is synced from the selected group by a useEffect
+    // (line ~202), but that effect only fires when evaluateEvery changes. If
+    // evaluateEvery already equals the group's interval the useUpdateEffect in
+    // ForInput never sees a change, so we bump evaluateFor here directly.
+    const selectedGroup = Object.values(rulerNamespace ?? {})
+      .flat()
+      .find((ruleGroup) => ruleGroup.name === (selected.label ?? ''));
+    if (selectedGroup?.interval) {
+      const bump = increasePendingPeriod(getValues('evaluateFor'), selectedGroup.interval);
+      if (bump) {
+        setValue('evaluateFor', bump);
+      }
+    }
   };
 
   const defaultGroupValue = group ? { value: group, label: group } : undefined;
@@ -305,9 +320,7 @@ export function GrafanaEvaluationBehaviorStep({
                       disabled={!folder?.uid || loadingGroups}
                       inputId="group"
                       {...field}
-                      onChange={(group) => {
-                        field.onChange(group.label ?? '');
-                      }}
+                      onChange={(selected) => handleEvalGroupSelection(field.onChange, selected)}
                       isLoading={loadingGroups}
                       invalid={Boolean(folder?.uid) && !group && Boolean(fieldState.error)}
                       cacheOptions
@@ -704,6 +717,15 @@ export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
     trigger('evaluateFor');
   }, [evaluateEvery, currentPendingPeriod, trigger, isFirstMount]);
 
+  // Auto-bump pending period when the evaluation interval grows past it.
+  // Runs only on updates (not on mount) so the initial form values are preserved.
+  useUpdateEffect(() => {
+    const bump = increasePendingPeriod(getValues('evaluateFor'), evaluateEvery);
+    if (bump) {
+      setValue('evaluateFor', bump);
+    }
+  }, [evaluateEvery]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const setPendingPeriod = (pendingPeriod: string) => {
     setValue('evaluateFor', pendingPeriod);
   };
@@ -898,3 +920,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(2),
   }),
 });
+
+/**
+ * Returns `interval` when `currentFor` should be bumped up to match it, or
+ * `null` when no bump is needed. The `0s` / `0` immediate-fire sentinel
+ * (safeParsePrometheusDuration returns 0 for it) is never bumped.
+ */
+function increasePendingPeriod(currentFor: string, interval: string): string | null {
+  const millisFor = safeParsePrometheusDuration(currentFor);
+  const millisEvery = safeParsePrometheusDuration(interval);
+  return millisFor !== 0 && millisFor < millisEvery ? interval : null;
+}
