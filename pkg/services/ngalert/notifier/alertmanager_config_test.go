@@ -224,6 +224,86 @@ receivers:
 		})
 	})
 
+	t.Run("promote merges extra config into main config", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		identifier := "promoted-config"
+		extraConfig := v1.ExtraConfiguration{
+			Identifier:    identifier,
+			TemplateFiles: map[string]string{"promoted.tmpl": `{{ define "promoted" }}Promoted{{ end }}`},
+			AlertmanagerConfig: `route:
+  receiver: promoted-receiver
+receivers:
+  - name: promoted-receiver`,
+		}
+
+		result, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, false, true)
+		require.NoError(t, err)
+		require.Equal(t, identifier, result.AddedRoute)
+		require.Contains(t, result.AddedReceivers, "promoted-receiver")
+		require.Contains(t, result.AddedTemplates, "promoted.tmpl")
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		// Promoted config is merged into main config, so ExtraConfigs should be empty.
+		require.Empty(t, gettableConfig.ExtraConfigs)
+		// The promoted receiver should appear in the main alertmanager config.
+		receiverNames := make([]string, 0, len(gettableConfig.AlertmanagerConfig.Receivers))
+		for _, r := range gettableConfig.AlertmanagerConfig.Receivers {
+			receiverNames = append(receiverNames, r.Name)
+		}
+		require.Contains(t, receiverNames, "promoted-receiver")
+
+		// Promoted resources must not be provisioned (ProvenanceNone), so they remain editable.
+		rawCfg, err := mam.configStore.GetLatestAlertmanagerConfiguration(ctx, orgID)
+		require.NoError(t, err)
+		cfg, err := Load([]byte(rawCfg.AlertmanagerConfiguration))
+		require.NoError(t, err)
+		for _, tmpl := range cfg.Templates {
+			if tmpl.Title == "promoted.tmpl" {
+				require.Equal(t, models.ProvenanceNone, tmpl.Provenance,
+					"promoted template must have ProvenanceNone, not provisioned")
+				return
+			}
+		}
+		t.Fatal("promoted.tmpl not found in raw config templates")
+	})
+
+	t.Run("non-promoted extra config templates are provisioned", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		extraConfig := v1.ExtraConfiguration{
+			Identifier:    "imported-config",
+			TemplateFiles: map[string]string{"imported.tmpl": `{{ define "imported" }}Imported{{ end }}`},
+			AlertmanagerConfig: `route:
+  receiver: imported-receiver
+receivers:
+  - name: imported-receiver`,
+		}
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, false, false)
+		require.NoError(t, err)
+
+		// Non-promoted templates stay in ExtraConfigs and are not merged into cfg.Templates.
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, gettableConfig.ExtraConfigs, 1)
+
+		// The merged (runtime) config still carries the template with ConvertedPrometheus provenance.
+		rawCfg, err := mam.configStore.GetLatestAlertmanagerConfiguration(ctx, orgID)
+		require.NoError(t, err)
+		cfg, err := Load([]byte(rawCfg.AlertmanagerConfiguration))
+		require.NoError(t, err)
+		// Raw config should have no templates at the top level — they live in ExtraConfigs.
+		for _, tmpl := range cfg.Templates {
+			require.NotEqual(t, "imported.tmpl", tmpl.Title, "non-promoted template must not appear in top-level Templates")
+		}
+	})
+
 	t.Run("fail to create extra configuration with identifier that used in managed routes", func(t *testing.T) {
 		mam := setupMam(t, nil)
 		ctx := context.Background()
@@ -396,6 +476,20 @@ receivers:
 		authz := stubExtraConfigAuthz{deleteErr: errors.New("forbidden")}
 		_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, authz, configB, true, false, false)
 		require.Error(t, err)
+	})
+
+	t.Run("SaveAndApply promote=true: AuthorizePromote denied", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		authz := stubExtraConfigAuthz{promoteErr: errors.New("forbidden")}
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, authz, validConfig, false, false, true)
+		require.Error(t, err)
+
+		// Verify no config was saved.
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, gettableConfig.ExtraConfigs, 0)
 	})
 
 	t.Run("Delete: AuthorizeDelete denied", func(t *testing.T) {
