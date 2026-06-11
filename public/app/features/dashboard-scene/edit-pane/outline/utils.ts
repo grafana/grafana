@@ -44,7 +44,7 @@ export function computeSearchMatches(
 
     const key = node.state.key;
     if (depth > 0 && key) {
-      const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
+      const instanceName = elementInfo.instanceName || noTitleText;
       const description =
         'description' in node.state && typeof node.state.description === 'string' ? node.state.description : '';
       nodeKeys.push(key);
