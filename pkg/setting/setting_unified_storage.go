@@ -317,7 +317,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.BedrockModel = embedSection.Key("bedrock_model").MustString("cohere.embed-v4:0")
 	cfg.BedrockDimensions = embedSection.Key("bedrock_dimensions").MustInt(1024)
 	cfg.BedrockBatchSize = embedSection.Key("bedrock_batch_size").MustInt(50)
-	cfg.BedrockMaxAttempts = embedSection.Key("bedrock_max_attempts").MustInt(10)
+	cfg.BedrockMaxAttempts = embedSection.Key("bedrock_max_attempts").MustInt(5)
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,

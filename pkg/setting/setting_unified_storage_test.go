@@ -210,7 +210,7 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			assert.NoError(t, err)
 			cfg.setUnifiedStorageConfig()
 			assert.Equal(t, 50, cfg.BedrockBatchSize)
-			assert.Equal(t, 10, cfg.BedrockMaxAttempts)
+			assert.Equal(t, 5, cfg.BedrockMaxAttempts)
 		})
 
 		t.Run("reads configured values independent of vertex_batch_size", func(t *testing.T) {

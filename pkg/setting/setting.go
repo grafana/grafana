@@ -745,7 +745,7 @@ type Cfg struct {
 	BedrockModel       string // default "cohere.embed-v4:0"
 	BedrockDimensions  int    // default 1024
 	BedrockBatchSize   int    // texts per Bedrock invoke call; default 50
-	BedrockMaxAttempts int    // max InvokeModel attempts per call under throttling; default 10
+	BedrockMaxAttempts int    // max InvokeModel attempts per call under throttling; default 5
 
 	// Overrides/Quotas
 	OverridesFilePath             string
