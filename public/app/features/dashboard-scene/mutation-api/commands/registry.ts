@@ -63,9 +63,6 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   updateDashboardSettingsCommand,
 ];
 
-/** All valid command names. */
-export const MUTATION_TYPES = ALL_COMMANDS.map((cmd) => cmd.name);
-
 /** Lookup command by name (case-insensitive). */
 function findCommand(command: string): MutationCommand | undefined {
   const normalized = command.toUpperCase();

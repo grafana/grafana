@@ -104,7 +104,9 @@ describe('SidebarFooter', () => {
 
     it('should enable multi-select mode and track when select is clicked', async () => {
       const setMultiSelectMode = jest.fn();
+      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
       const { user } = renderWithQueryEditorProvider(<SidebarFooter />, {
+        queries,
         uiStateOverrides: { setMultiSelectMode },
       });
 
@@ -112,8 +114,22 @@ describe('SidebarFooter', () => {
 
       expect(setMultiSelectMode).toHaveBeenCalledWith(true);
       expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', {
-        action: 'click_multi_select',
+        action: 'toggle_multi_select',
+        direction: 'enter',
       });
+    });
+
+    it('should disable the select button when there are no items', () => {
+      renderWithQueryEditorProvider(<SidebarFooter />);
+
+      expect(screen.getByRole('button', { name: /select multiple items/i })).toBeDisabled();
+    });
+
+    it('should enable the select button when there is at least one item', () => {
+      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
+      renderWithQueryEditorProvider(<SidebarFooter />, { queries });
+
+      expect(screen.getByRole('button', { name: /select multiple items/i })).toBeEnabled();
     });
   });
 

@@ -8,17 +8,17 @@ This suite contains Playwright E2E tests for the V2 dashboard layout system. Tes
 
 All page objects live in `page-objects/` and are re-exported from `page-objects/index.ts`. Every page object extends the abstract `PageObject` base class (`PageObject.ts`), which holds the shared `page`, `dashboardPage`, and `selectors` dependencies as `protected` fields.
 
-| Class              | File                          | UI Region                                                              | Key Methods / Getters                                                                                                                                                                                           |
-| ------------------ | ----------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PageObject`       | `PageObject.ts`               | _(abstract base — not used directly)_                                  | Shared constructor (`page`, `dashboardPage`, `selectors`)                                                                                                                                                       |
-| `Controls`         | `Controls.ts`                 | Top nav bar (edit, save, ...)                                          | `enterEditMode()`                                                                                                                                                                                               |
-| `Sidebar`          | `sidebar/Sidebar.ts`          | Whole sidebar region (toolbar + open pane)                             | `.toolbar`, `.addOptions`, `.dashboardOptions`, `.panelOptions`, `.contentOutline` sub-objects; `getContainer()`, `getGoBackButton()`, `getDockToggle()`, `getCloseButton()`, `clickDeleteButton({ confirm? })` |
-| `Toolbar`          | `sidebar/Toolbar.ts`          | Icon strip — accessed via `sidebar.toolbar`                            | `getButton(name)`, `clickButton(name)`, `getVisibilityToggle()`                                                                                                                                                 |
-| `AddOptions`       | `sidebar/AddOptions.ts`       | "Add" pane (default pane on new dashboards) — via `sidebar.addOptions` | `clickNewPanelButton()`                                                                                                                                                                                         |
-| `ContentOutline`   | `sidebar/ContentOutline.ts`   | Content outline pane — via `sidebar.contentOutline`                    | `getItem(name)`                                                                                                                                                                                                 |
-| `DashboardOptions` | `sidebar/DashboardOptions.ts` | Dashboard options pane — via `sidebar.dashboardOptions`                | `getTitleInput()`, `getDescriptionTextarea()`                                                                                                                                                                   |
-| `PanelOptions`     | `sidebar/PanelOptions.ts`     | Panel options pane — via `sidebar.panelOptions`                        | `getTitleInput()`, `getDescriptionTextarea()`, `toggleTransparentBackground()`                                                                                                                                  |
-| `Panel`            | `Panel.ts`                    | A dashboard panel in the edit canvas                                   | `getContainerByTitle()`, `getHeaderByTitle()`, `selectByTitle(title \| titles[])`, `deselectAll()`, `clickMenuItem(panelTitle, menuPath[])`                                                                     |
+| Class              | File                          | UI Region                                                              | Key Methods / Getters                                                                                                                                                                                               |
+| ------------------ | ----------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PageObject`       | `PageObject.ts`               | _(abstract base — not used directly)_                                  | Shared constructor (`page`, `dashboardPage`, `selectors`)                                                                                                                                                           |
+| `Controls`         | `Controls.ts`                 | Top nav bar (edit, save, ...)                                          | `enterEditMode()`                                                                                                                                                                                                   |
+| `Sidebar`          | `sidebar/Sidebar.ts`          | Whole sidebar region (toolbar + open pane)                             | `.toolbar`, `.addOptions`, `.dashboardOptions`, `.panelOptions`, `.contentOutline` sub-objects; `getContainer()`, `clickGoBackButton()`, `getDockToggle()`, `clickCloseButton()`, `clickDeleteButton({ confirm? })` |
+| `Toolbar`          | `sidebar/Toolbar.ts`          | Icon strip — accessed via `sidebar.toolbar`                            | `getButton(name)`, `clickButton(name)`, `getVisibilityToggle()`                                                                                                                                                     |
+| `AddOptions`       | `sidebar/AddOptions.ts`       | "Add" pane (default pane on new dashboards) — via `sidebar.addOptions` | `clickNewPanelButton()`                                                                                                                                                                                             |
+| `ContentOutline`   | `sidebar/ContentOutline.ts`   | Content outline pane — via `sidebar.contentOutline`                    | `clickItem(name)`                                                                                                                                                                                                   |
+| `DashboardOptions` | `sidebar/DashboardOptions.ts` | Dashboard options pane — via `sidebar.dashboardOptions`                | `getTitleInput()`, `getDescriptionTextarea()`                                                                                                                                                                       |
+| `PanelOptions`     | `sidebar/PanelOptions.ts`     | Panel options pane — via `sidebar.panelOptions`                        | `getTitleInput()`, `setTitle(title)`, `getDescriptionTextarea()`, `toggleTransparentBackground()`                                                                                                                   |
+| `Panel`            | `Panel.ts`                    | A dashboard panel in the edit canvas                                   | `getContainerByTitle()`, `getHeaderByTitle()`, `selectByTitle(title \| titles[])`, `deselectAll()`, `clickMenuItem(panelTitle, menuPath[])`                                                                         |
 
 > The show/hide visibility toggle is a **Toolbar** control (`sidebar.toolbar.getVisibilityToggle()`), even though its selector lives under `components.Sidebar.*`. `Toolbar.getButton(name)` resolves buttons by accessible name, scoped to the sidebar container.
 
@@ -97,8 +97,9 @@ yarn e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <
 
 ### Page objects
 
-- **Locator getters** (e.g. `getTitleInput()`) return a Playwright `Locator`. The test owns the assertion — never the page object.
-- **Action methods** (e.g. `enterEditMode()`) wrap multi-step interactions and use `test.step()` so the HTML report shows named steps.
+- **Locator getters** (e.g. `getTitleInput()`) return a Playwright `Locator` — for elements that specs assert on (or both act on and assert on). The test owns the assertion — never the page object.
+- **Action methods** (e.g. `enterEditMode()`, `clickCloseButton()`) wrap interactions — multi-step flows or single clicks on act-only elements — and use `test.step()` so the HTML report shows named steps.
+- **When a spec needs both**, pair them: the action method delegates to the getter (see `Toolbar.getButton()` / `clickButton()`).
 - **No speculative methods.** Only add methods needed by the spec being migrated.
 - **No waits or retries inside page objects** unless the pre-refactor code had them. Keep `toPass()` retries, drag-and-drop, scroll logic, and `boundingBox()` in the spec or in `utils.ts`.
 
@@ -113,8 +114,8 @@ yarn e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <
 
 1. Find the raw selector chain in the spec you're migrating.
 2. Copy it into the appropriate page object class — mechanical extraction, no rewrites. New page objects must extend `PageObject` from `PageObject.ts`.
-3. For multi-step interactions, wrap in `test.step('Human-readable name', async () => { ... })`.
-4. For single-element access, return a `Locator` (getter pattern, no `test.step` needed).
+3. For interactions (multi-step flows or single clicks on act-only elements), wrap in `test.step('Human-readable name', async () => { ... })`.
+4. For elements the spec asserts on, return a `Locator` (getter pattern, no `test.step` needed).
 5. Run `--repeat-each=3` on the migrated spec.
 
 ## Canonical Example

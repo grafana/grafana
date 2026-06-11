@@ -577,13 +577,12 @@ function getDashboardFolder(dashboardUid?: string) {
 }
 
 export const {
-  endpoints,
   useDeleteFolderMutation,
   useDeleteFoldersMutation,
   useDeleteDashboardsMutation,
   useGetAffectedItemsQuery,
   useGetFolderQuery,
-  useLazyGetFolderQuery,
+
   useMoveFolderMutation,
   useMoveDashboardsMutation,
   useMoveFoldersMutation,
@@ -591,5 +590,4 @@ export const {
   useSaveDashboardMutation,
   useSaveFolderMutation,
   useRestoreDashboardMutation,
-  useListDeletedDashboardsQuery,
 } = browseDashboardsAPI;

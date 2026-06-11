@@ -104,7 +104,7 @@ test.describe(
       await expect(sidebar.getDockToggle()).not.toBeVisible();
 
       // Close the pane (de-select) via the X button — sidebar should re-hide
-      await sidebar.getCloseButton().click();
+      await sidebar.clickCloseButton();
 
       await expect(sidebar.getContainer()).not.toBeVisible();
       await expect(sidebar.toolbar.getVisibilityToggle()).toBeVisible();
