@@ -133,8 +133,8 @@ func TestIntegrationListHistory(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", alertingRule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(alertingRule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(alertingRule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(alertingRule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(alertingRule.ExecErrState),
 			},
 		}
 		alertingCreated, err := alertingClient.Create(ctx, alerting, v1.CreateOptions{})
@@ -285,8 +285,8 @@ func TestIntegrationListTrash(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", alertingRule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(alertingRule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(alertingRule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(alertingRule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(alertingRule.ExecErrState),
 			},
 		}
 		alertingCreated, err := alertingClient.Create(ctx, alerting, v1.CreateOptions{})
