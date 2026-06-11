@@ -32,8 +32,12 @@ export function QueriesAndTransformationsView() {
   const showSavedQueryGhost = !!pendingSavedQuery && !pendingSavedQuery.insertAfter;
   const showTransformationGhost = !!pendingTransformation && !pendingTransformation.insertAfter;
 
-  const isQueriesEmpty = queries.length === 0 && !showExpressionGhost && !showSavedQueryGhost;
-  const isTransformationsEmpty = transformations.length === 0 && !showTransformationGhost;
+  // Only surface the per-section placeholders when the whole panel is empty. Showing "No
+  // transformations yet" on every panel that simply hasn't added a transformation (the common
+  // case) would be noise.
+  const isPanelEmpty = queries.length === 0 && transformations.length === 0;
+  const showQueriesEmptyState = isPanelEmpty && !showExpressionGhost && !showSavedQueryGhost;
+  const showTransformationsEmptyState = isPanelEmpty && !showTransformationGhost;
 
   return (
     <>
@@ -54,7 +58,7 @@ export function QueriesAndTransformationsView() {
         )}
         {showExpressionGhost && <GhostSidebarCard id={PENDING_CARD_ID.expression} type={QueryEditorType.Expression} />}
         {showSavedQueryGhost && <GhostSidebarCard id={PENDING_CARD_ID.savedQuery} type={QueryEditorType.Query} />}
-        {isQueriesEmpty && (
+        {showQueriesEmptyState && (
           <SectionEmptyState message={t('query-editor-next.sidebar.queries-empty', 'No queries or expressions')} />
         )}
       </CollapsableSection>
@@ -76,7 +80,7 @@ export function QueriesAndTransformationsView() {
         {showTransformationGhost && (
           <GhostSidebarCard id={PENDING_CARD_ID.transformation} type={QueryEditorType.Transformation} />
         )}
-        {isTransformationsEmpty && (
+        {showTransformationsEmptyState && (
           <SectionEmptyState message={t('query-editor-next.sidebar.transformations-empty', 'No transformations')} />
         )}
       </CollapsableSection>

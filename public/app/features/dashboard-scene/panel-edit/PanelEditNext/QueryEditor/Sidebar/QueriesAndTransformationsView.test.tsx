@@ -44,7 +44,7 @@ describe('QueryEditorSidebar', () => {
     expect(screen.getByText('No transformations')).toBeInTheDocument();
   });
 
-  it('shows only the transformations empty state when queries exist but transformations do not', () => {
+  it('does not show section empty states when queries exist but transformations do not', () => {
     const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
 
     renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
@@ -54,7 +54,7 @@ describe('QueryEditorSidebar', () => {
     });
 
     expect(screen.queryByText('No queries or expressions')).not.toBeInTheDocument();
-    expect(screen.getByText('No transformations')).toBeInTheDocument();
+    expect(screen.queryByText('No transformations')).not.toBeInTheDocument();
   });
 
   it('hides the queries empty state while a pending expression ghost card is shown', () => {
