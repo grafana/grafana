@@ -89,6 +89,35 @@ describe('config from data', () => {
     expect(results[0].fields[1].config.decimals).toBe(5);
   });
 
+  it.each([-3, 2.5, 16])('skips invalid decimals value %s', (decimals) => {
+    const invalidConfig = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1] },
+        { name: 'Decimals', type: FieldType.number, values: [decimals] },
+      ],
+      refId: 'A',
+    });
+    const series = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1] },
+        {
+          name: 'Value',
+          type: FieldType.number,
+          values: [0],
+          config: { decimals: 1 },
+        },
+      ],
+    });
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [{ fieldName: 'Decimals', handlerKey: 'decimals' }],
+    };
+
+    const results = extractConfigFromQuery(options, [invalidConfig, series]);
+
+    expect(results[0].fields[1].config.decimals).toBe(1);
+  });
+
   it('With custom reducer', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
