@@ -8,6 +8,8 @@ import { type z } from 'zod';
 
 import { type AnnotationQueryKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
+import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from '../types';
+
 import {
   buildAnnotationLayer,
   findAnnotationLayer,
@@ -16,7 +18,6 @@ import {
   replaceAnnotationLayers,
 } from './annotationUtils';
 import { payloads } from './schemas';
-import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
 type AddAnnotationPayload = z.infer<typeof payloads.addAnnotation>;
 

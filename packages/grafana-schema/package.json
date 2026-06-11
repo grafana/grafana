@@ -29,6 +29,12 @@
       "@grafana-app/source": "./src/schema/dashboard/*/index.ts",
       "types": "./dist/types/schema/dashboard/*/index.d.ts"
     },
+    "./apis/dashboard.grafana.app/*/zod": {
+      "@grafana-app/source": "./src/schema/dashboard/*/types.spec.zod.gen.ts",
+      "types": "./dist/types/schema/dashboard/*/types.spec.zod.gen.d.ts",
+      "import": "./dist/esm/schema/dashboard/*/types.spec.zod.gen.mjs",
+      "require": "./dist/cjs/schema/dashboard/*/types.spec.zod.gen.cjs"
+    },
     "./dist/esm/raw/composable/annotationslist/panelcfg/x/AnnotationsListPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/annotationslist/panelcfg/x/types.gen.ts",
       "types": "./dist/types/raw/composable/annotationslist/panelcfg/x/types.gen.d.ts",

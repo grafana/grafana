@@ -1,11 +1,11 @@
 import { dataLayers, type SceneDataLayerProvider } from '@grafana/scenes';
 import type { AnnotationQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
-import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
-import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
-import type { DashboardScene } from '../../scene/DashboardScene';
-import { DashboardMutationClient } from '../DashboardMutationClient';
-import type { MutationResult } from '../types';
+import { DashboardAnnotationsDataLayer } from '../../../scene/DashboardAnnotationsDataLayer';
+import { DashboardDataLayerSet } from '../../../scene/DashboardDataLayerSet';
+import type { DashboardScene } from '../../../scene/DashboardScene';
+import { DashboardMutationClient } from '../../DashboardMutationClient';
+import type { MutationResult } from '../../types';
 
 const grafanaBuiltInLayer = (): DashboardAnnotationsDataLayer =>
   new DashboardAnnotationsDataLayer({

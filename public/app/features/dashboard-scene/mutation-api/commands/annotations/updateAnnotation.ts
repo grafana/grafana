@@ -12,6 +12,8 @@ import { type z } from 'zod';
 
 import { type AnnotationQueryKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
+import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from '../types';
+
 import {
   annotationLayerToKind,
   buildAnnotationLayer,
@@ -20,7 +22,6 @@ import {
   replaceAnnotationLayers,
 } from './annotationUtils';
 import { payloads } from './schemas';
-import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
 type UpdateAnnotationPayload = z.infer<typeof payloads.updateAnnotation>;
 
