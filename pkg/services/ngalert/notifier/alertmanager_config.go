@@ -392,16 +392,15 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 	if err != nil {
 		return merge.MergeResult{}, fmt.Errorf("cannot merge imported configuration into Grafana: %w", err)
 	}
-
-	if dryRun {
-		moa.logger.Debug("Dry run: extra configuration validated successfully", "org", org)
-		return mergeResult, nil
-	}
 	if promote {
 		if err := authz.AuthorizePromote(ctx, user, mergeResult); err != nil {
 			return merge.MergeResult{}, err
 		}
 		cfg = &mergedConfig
+	}
+	if dryRun {
+		moa.logger.Debug("Dry run: extra configuration validated successfully", "org", org)
+		return mergeResult, nil
 	}
 
 	am, err := moa.AlertmanagerFor(org)
