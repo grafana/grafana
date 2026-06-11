@@ -8,30 +8,50 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 )
 
-// callTimeout bounds the whole per-batch InvokeModel attempt sequence (the
-// AWS SDK respects the context deadline across retries). Sized to give the
-// adaptive retryer room to back off and retry under throttling rather than
-// being cut short mid-sequence.
-const callTimeout = 60 * time.Second
+// defaultCallTimeout bounds the whole per-batch InvokeModel attempt sequence
+// (the AWS SDK respects the context deadline across retries). It must exceed
+// the model's throttle window so the adaptive retryer's backoff can wait out
+// a token-per-minute (TPM) quota reset and retry in a fresh window, rather
+// than being cut short mid-sequence inside the same throttled minute.
+const defaultCallTimeout = 180 * time.Second
 
 // DenseEmbedder embeds text via Bedrock InvokeModel and returns dense
 // float32 vectors.
 type DenseEmbedder struct {
-	client    Client
-	model     string
-	dim       int
-	batchSize int
+	client      Client
+	model       string
+	dim         int
+	batchSize   int
+	callTimeout time.Duration
 }
 
 var _ embedder.TextEmbedder = (*DenseEmbedder)(nil)
 
-func NewDenseEmbedder(client Client, model string, dim, batchSize int) *DenseEmbedder {
-	return &DenseEmbedder{
-		client:    client,
-		model:     model,
-		dim:       dim,
-		batchSize: batchSize,
+// Option configures a DenseEmbedder at construction.
+type Option func(*DenseEmbedder)
+
+// WithCallTimeout overrides the per-batch call timeout. Values <= 0 are
+// ignored and the default is kept.
+func WithCallTimeout(d time.Duration) Option {
+	return func(e *DenseEmbedder) {
+		if d > 0 {
+			e.callTimeout = d
+		}
 	}
+}
+
+func NewDenseEmbedder(client Client, model string, dim, batchSize int, opts ...Option) *DenseEmbedder {
+	e := &DenseEmbedder{
+		client:      client,
+		model:       model,
+		dim:         dim,
+		batchSize:   batchSize,
+		callTimeout: defaultCallTimeout,
+	}
+	for _, opt := range opts {
+		opt(e)
+	}
+	return e
 }
 
 // EmbedText splits inputs into batches sized to e.batchSize, calls the
@@ -44,7 +64,7 @@ func (e *DenseEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextI
 	inputType := cohereInputType(input.Task)
 
 	results, err := embedder.BatchProcess(ctx, input.Texts, e.batchSize, func(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
-		callCtx, cancel := context.WithTimeoutCause(ctx, callTimeout, ErrCallTimeout)
+		callCtx, cancel := context.WithTimeoutCause(ctx, e.callTimeout, ErrCallTimeout)
 		defer cancel()
 
 		res, err := e.client.EmbedTexts(callCtx, e.model, texts, inputType, e.dim)
