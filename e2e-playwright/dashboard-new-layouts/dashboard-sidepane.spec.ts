@@ -1,5 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { Panel, Sidebar } from './page-objects';
+
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
@@ -22,47 +24,37 @@ test.describe(
     test('Can go back to previous selection or pane', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({});
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
+      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const panel = new Panel(page, dashboardPage, selectors);
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
-        .fill('Panel 1');
-
-      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.goBack).click();
+      await sidebar.addOptions.clickNewPanelButton();
+      await sidebar.panelOptions.getTitleInput().fill('Panel 1');
+      await sidebar.getGoBackButton().click();
 
       // Add another panel
-      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
-
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
-        .fill('Panel 2');
+      await sidebar.addOptions.clickNewPanelButton();
+      await sidebar.panelOptions.getTitleInput().fill('Panel 2');
 
       // go back to add pane
-      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.goBack).click();
+      await sidebar.getGoBackButton().click();
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
+      await sidebar.addOptions.clickNewPanelButton();
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-        .filter({ hasText: 'Panel 2' })
-        .click();
+      await panel.selectByTitle('Panel 2');
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.deleteButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
+      await sidebar.clickDeleteButton({ confirm: true });
 
-      // When deleting the selected item it shoudl move to previous selection
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
-      ).toHaveValue('New panel');
+      // When deleting the selected item it should move to previous selection
+      await expect(sidebar.panelOptions.getTitleInput()).toHaveValue('New panel');
 
       // Switch to outline
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
+      await sidebar.toolbar.clickButton('Outline');
 
       // Select panel 1
-      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Panel 1')).click();
+      await sidebar.contentOutline.getItem('Panel 1').click();
 
       // Go back to outline
-      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.goBack).click();
+      await sidebar.getGoBackButton().click();
 
       await expect(dashboardPage.getByGrafanaSelector('data-testid sidebar-pane-header-title')).toHaveText(
         'Content outline'
