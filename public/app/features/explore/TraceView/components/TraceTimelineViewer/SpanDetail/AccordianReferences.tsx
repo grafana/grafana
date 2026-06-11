@@ -125,7 +125,7 @@ type ReferenceItemProps = {
 };
 
 // export for test
-export function References(props: ReferenceItemProps) {
+function References(props: ReferenceItemProps) {
   const { data, createFocusSpanLink, openedItems, onItemToggle, interactive } = props;
   const styles = useStyles2(getStyles);
 

@@ -1008,6 +1008,8 @@ func TestUserK8sService_GetByLogin(t *testing.T) {
 	}
 }
 
+func strPtr(s string) *string { return &s }
+
 func TestUserK8sService_Update(t *testing.T) {
 	trueVal := true
 	falseVal := false
@@ -1123,6 +1125,53 @@ func TestUserK8sService_Update(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{Name: "some-uid", Namespace: "org-1"},
 					Spec:       v0alpha1.UserSpec{Login: "user7", Disabled: true, GrafanaAdmin: true},
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
+		},
+		{
+			name:           "updates the org role",
+			requesterOrgID: 1,
+			cmd: &user.UpdateUserCommand{
+				UserID:  7,
+				OrgRole: strPtr("Editor"),
+			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				if r.Method == http.MethodGet {
+					resp := v0alpha1.User{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: v0alpha1.GroupVersion.Identifier(),
+							Kind:       "User",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "some-uid",
+							Namespace: "org-1",
+							Labels:    map[string]string{"grafana.app/deprecatedInternalID": "7"},
+						},
+						Spec: v0alpha1.UserSpec{Login: "user7", Role: "Admin"},
+					}
+					list := map[string]any{
+						"apiVersion": "v1",
+						"kind":       "List",
+						"items":      []any{resp},
+					}
+					w.Header().Set("Content-Type", "application/json")
+					_ = json.NewEncoder(w).Encode(list)
+					return
+				}
+				var body map[string]any
+				_ = json.NewDecoder(r.Body).Decode(&body)
+				spec := body["spec"].(map[string]any)
+				assert.Equal(t, "Editor", spec["role"])
+
+				resp := v0alpha1.User{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: v0alpha1.GroupVersion.Identifier(),
+						Kind:       "User",
+					},
+					ObjectMeta: metav1.ObjectMeta{Name: "some-uid", Namespace: "org-1"},
+					Spec:       v0alpha1.UserSpec{Login: "user7", Role: "Editor"},
 				}
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(resp)

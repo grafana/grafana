@@ -1096,9 +1096,6 @@
       },
       "unknown": "Tidak diketahui"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "Anda tampaknya tidak memiliki sumber data yang kompatibel."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluasi untuk mulai memperingatkan",
       "pending-period": "Periode tertunda",
@@ -5907,9 +5904,6 @@
       "select-source": "Pilih sumber",
       "unknown": "Objek Tidak Diketahui: {{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "Tidak Ada Pemeriksa Metadata"
-    },
     "inspect-stats": {
       "data-title": "Statistik sumber data",
       "data-traceids": "ID Pelacakan",
@@ -6388,7 +6382,6 @@
       "playlist-next": "Buka dasbor berikutnya",
       "playlist-previous": "Buka dasbor sebelumnya",
       "playlist-stop": "Hentikan daftar putar",
-      "read-only": "Hanya baca",
       "refresh": "Muat ulang dasbor",
       "save": "Simpan dasbor",
       "save-as-template": {
@@ -6525,28 +6518,6 @@
     },
     "view-panel": {
       "not-found": "Panel tidak ditemukan"
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Ubah visualisasi",
-      "aria-label-close": "Tutup panel opsi",
-      "aria-label-show": "Tampilkan panel opsi",
-      "tooltip-click-to-change-visualization": "Klik untuk mengubah visualisasi",
-      "tooltip-close": "Tutup panel opsi",
-      "tooltip-show": "Tampilkan panel opsi"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Cari...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Panel pakai ulang yang dapat Anda bagikan di beberapa dasbor."
-        },
-        "label": {
-          "library-panels": "Panel pustaka",
-          "suggestions": "Saran",
-          "visualizations": "Visualisasi"
-        }
-      },
-      "title-close": "Tutup"
     },
     "viz-panel": {
       "delete-panel-text": "Menghapus panel ini juga akan menghapus semua kueri. Anda yakin ingin melanjutkan?",
@@ -9002,9 +8973,6 @@
     "select-aria-label": "Filter folder",
     "select-placeholder": "Filter berdasarkan folder"
   },
-  "folder-repo": {
-    "read-only-badge": "Hanya baca"
-  },
   "folders": {
     "api": {
       "anonymous-user": "",
@@ -10970,6 +10938,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "",
       "show-all-series": "...tampilkan ke-{{total}} item"
     }
   },
@@ -10991,10 +10960,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "Buat panel pustaka"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "Ubah",
-      "confirmText-replace": "Ganti"
     },
     "confirm": {
       "delete-panel": "Ingin menghapus panel ini?"
@@ -11033,9 +10998,6 @@
       "select-placeholder": "Mulai mengetik untuk mencari dasbor",
       "title": "Lihat panel di dasbor",
       "body_other": "Panel ini digunakan di {{count}} dasbor. Pilih dasbor mana untuk digunakan melihat panel:"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "Buat panel pustaka baru"
     },
     "save": {
       "error": "Kesalahan saat menyimpan panel pustaka: \"{{errorMsg}}\"",
@@ -13560,6 +13522,9 @@
       "message-resource_other": "Akun Anda dibatasi hingga {{count}} sumber daya yang disinkronkan per repositori.",
       "message-resource-onprem_other": "Instance Anda dibatasi hingga {{count}} sumber daya yang disinkronkan per repositori."
     },
+    "read-only-badge": {
+      "text": ""
+    },
     "read-only-local-tooltip": "Sumber daya ini hanya-baca dan disediakan melalui penyediaan file. Untuk membuat perubahan, perbarui repositori yang terhubung. Untuk mengubah pengaturan, buka Administrasi > Penyediaan > Repositori.",
     "read-only-remote-tooltip": "Sumber daya ini hanya-baca dan disediakan melalui Git. Untuk membuat perubahan, perbarui repositori yang terhubung. Untuk mengubah pengaturan, buka Administrasi > Penyediaan > Repositori.",
     "recent-jobs": {
@@ -13580,7 +13545,6 @@
     },
     "repository-card": {
       "last-sync": "Terakhir disinkronkan: {{date}}",
-      "read-only-badge": "Hanya baca",
       "settings": "Pengaturan",
       "view": "Lihat"
     },
@@ -16542,9 +16506,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "Tidak ada variabel yang diganti namanya atau tidak ada yang ditemukan."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "Tidak dapat memuat variabel"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "Kapan memperbarui nilai variabel ini",
