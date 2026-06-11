@@ -288,6 +288,35 @@ describe('transformTraceData() pruned span detection', () => {
     expect(spanById(trace, 'summ00000000a101').aggregation).toBeUndefined();
   });
 
+  // Characterization lock for the defensive numeric coercion. span_count / duration_*_ns are
+  // int64 (PutInt) and reach here as JS numbers on the Tempo path, but the tag value type is
+  // `any` and transformTraceData is data-source-agnostic, so extractSpanAggregation coerces via
+  // Number(). A numeric string must still yield a number. See transform-trace-data.tsx.
+  it('coerces numeric-string aggregation values to numbers', () => {
+    const fixture = structuredClone(summaryDefaultsOnly);
+    const tags = fixture.spans.find((s) => s.spanID === 'summ00000000a101')!.tags!;
+    tags.find((t) => t.key === 'aggregation.span_count')!.value = '8';
+    tags.find((t) => t.key === 'aggregation.duration_min_ns')!.value = '4000000';
+
+    const agg = spanById(transformTraceData(fixture)!, 'summ00000000a101').aggregation!;
+    expect(agg.spanCount).toBe(8);
+    expect(agg.durationMinNs).toBe(4_000_000);
+  });
+
+  // The Number.isNaN guard drops a non-numeric value rather than writing NaN into a number field.
+  // The span is still detected as a summary (is_summary is unaffected) and sibling numeric values
+  // are still extracted.
+  it('drops a non-numeric aggregation value instead of storing NaN', () => {
+    const fixture = structuredClone(summaryDefaultsOnly);
+    const tags = fixture.spans.find((s) => s.spanID === 'summ00000000a101')!.tags!;
+    tags.find((t) => t.key === 'aggregation.span_count')!.value = 'not-a-number';
+
+    const agg = spanById(transformTraceData(fixture)!, 'summ00000000a101').aggregation!;
+    expect(agg.isSummary).toBe(true);
+    expect(agg.spanCount).toBeUndefined();
+    expect(agg.durationMinNs).toBe(4_000_000);
+  });
+
   // Regression lock for the shared-fixture contract: transformTraceData mutates its input,
   // so callers must clone. This proves repeated transforms are stable AND the singleton is
   // never touched - if a future edit drops a structuredClone, the snapshot assertion fails.
