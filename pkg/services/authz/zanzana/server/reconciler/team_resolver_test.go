@@ -18,17 +18,9 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/services/authz/idresolver"
 )
-
-type fakeTeamLister struct {
-	teams []idresolver.TeamRef
-}
-
-func (f fakeTeamLister) ListTeams(_ context.Context, _ claims.NamespaceInfo) ([]idresolver.TeamRef, error) {
-	return f.teams, nil
-}
 
 func teamUnstructured(t *testing.T, name, namespace string, internalID int64) *unstructured.Unstructured {
 	t.Helper()
@@ -42,10 +34,10 @@ func teamUnstructured(t *testing.T, name, namespace string, internalID int64) *u
 	return obj
 }
 
-// TestReconcilerListTeams exercises the mode-5 path: the reconciler lists teams from
-// unified storage and maps each to its deprecatedInternalID label (no legacy SQL). The
-// bulk resolver is then built from that list.
-func TestReconcilerListTeams(t *testing.T) {
+// TestBuildTeamScopeStore exercises the mode-5 path: the reconciler lists teams from
+// unified storage and indexes each by its deprecatedInternalID label (no legacy SQL),
+// producing a bulk legacy.ScopeResolverStore.
+func TestBuildTeamScopeStore(t *testing.T) {
 	const namespace = "stacks-1"
 	gvr := iamv0.TeamResourceInfo.GroupVersionResource()
 
@@ -70,29 +62,29 @@ func TestReconcilerListTeams(t *testing.T) {
 	r := newReconcilerForTest(&stubServer{}, cf)
 	ns := claims.NamespaceInfo{Value: namespace}
 
-	// The reconciler is the TeamLister; the bulk resolver lists once and answers from memory.
-	resolver, err := idresolver.NewBulkResolver(context.Background(), ns, r)
+	store, err := r.buildTeamScopeStore(context.Background(), ns)
 	require.NoError(t, err)
 
-	uid, err := resolver.IDToUID(context.Background(), ns, idresolver.KindTeam, 5)
+	res, err := store.GetTeamUIDByID(context.Background(), ns, legacy.GetTeamUIDByIDQuery{ID: 5})
 	require.NoError(t, err)
-	require.Equal(t, "team-five", uid)
+	require.Equal(t, "team-five", res.UID)
 
-	uid, err = resolver.IDToUID(context.Background(), ns, idresolver.KindTeam, 7)
+	res, err = store.GetTeamUIDByID(context.Background(), ns, legacy.GetTeamUIDByIDQuery{ID: 7})
 	require.NoError(t, err)
-	require.Equal(t, "team-seven", uid)
+	require.Equal(t, "team-seven", res.UID)
 
-	_, err = resolver.IDToUID(context.Background(), ns, idresolver.KindTeam, 999)
-	require.ErrorIs(t, err, idresolver.ErrNotFound)
+	_, err = store.GetTeamUIDByID(context.Background(), ns, legacy.GetTeamUIDByIDQuery{ID: 999})
+	require.True(t, legacy.IsNotFoundError(err))
 
-	id, err := resolver.UIDToID(context.Background(), ns, idresolver.KindTeam, "team-five")
+	idRes, err := store.GetTeamInternalID(context.Background(), ns, legacy.GetTeamInternalIDQuery{UID: "team-five"})
 	require.NoError(t, err)
-	require.Equal(t, int64(5), id)
+	require.Equal(t, int64(5), idRes.ID)
 }
 
 // TestTranslateRoleToTuples_TeamPermissions verifies the reconciler end-to-end:
 // a Role carrying id-based team-management scopes is resolved to uid through the shared
-// resolver and emitted as per-instance team tuples; orphaned ids are dropped.
+// legacy.ResolveIDScopeToUID helper and emitted as per-instance team tuples; orphaned
+// ids are dropped.
 func TestTranslateRoleToTuples_TeamPermissions(t *testing.T) {
 	role := &iamv0.Role{
 		ObjectMeta: metav1.ObjectMeta{Name: "team-mgr"},
@@ -105,12 +97,12 @@ func TestTranslateRoleToTuples_TeamPermissions(t *testing.T) {
 		},
 	}
 
-	resolver, err := idresolver.NewBulkResolver(context.Background(), claims.NamespaceInfo{}, fakeTeamLister{
-		teams: []idresolver.TeamRef{{UID: "team-five", ID: 5}},
-	})
-	require.NoError(t, err)
+	store := &teamScopeStore{
+		uidByID: map[int64]string{5: "team-five"},
+		idByUID: map[string]int64{"team-five": 5},
+	}
 
-	tuples, err := TranslateRoleToTuples(context.Background(), toUnstructured(t, role), nil, resolver, claims.NamespaceInfo{}, log.NewNopLogger())
+	tuples, err := TranslateRoleToTuples(context.Background(), toUnstructured(t, role), nil, store, claims.NamespaceInfo{}, log.NewNopLogger())
 	require.NoError(t, err)
 
 	require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{

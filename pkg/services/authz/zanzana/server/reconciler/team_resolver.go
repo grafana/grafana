@@ -3,7 +3,6 @@ package reconciler
 import (
 	"context"
 	"errors"
-	"strconv"
 	"strings"
 
 	claims "github.com/grafana/authlib/types"
@@ -13,20 +12,66 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/authz/idresolver"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/team"
 )
 
 const teamIDScopePrefix = "teams:id:"
 
-var _ idresolver.TeamLister = (*Reconciler)(nil)
+// errTeamStoreUnsupported is returned by the bulk team store for non-team lookups. The
+// reconciler only resolves team scopes, so user/service-account methods are never called.
+var errTeamStoreUnsupported = errors.New("bulk team store only resolves teams")
 
-// ListTeams implements idresolver.TeamLister: it lists the namespace's Team CRDs from
-// unified storage and returns each team's uid (object name) with its deprecatedInternalID
-// label (assigned by unified storage). It works in mode 5 — no legacy SQL — and backs the
-// bulk resolver the reconciler uses.
-func (r *Reconciler) ListTeams(ctx context.Context, ns claims.NamespaceInfo) ([]idresolver.TeamRef, error) {
-	ctx, span := r.tracer.Start(ctx, "reconciler.ListTeams")
+// teamScopeStore is a legacy.ScopeResolverStore backed by an in-memory team index built
+// once per namespace from unified storage (the deprecatedInternalID label). It lets the
+// reconciler reuse the shared legacy.ResolveIDScopeToUID helper without legacy SQL or N
+// point lookups — the bulk fetch happens at construction. Only the team methods are
+// implemented; the rest fail loudly if ever reached.
+type teamScopeStore struct {
+	uidByID map[int64]string
+	idByUID map[string]int64
+}
+
+var _ legacy.ScopeResolverStore = (*teamScopeStore)(nil)
+
+func (s *teamScopeStore) GetTeamUIDByID(_ context.Context, _ claims.NamespaceInfo, q legacy.GetTeamUIDByIDQuery) (*legacy.GetTeamUIDByIDResult, error) {
+	uid, ok := s.uidByID[q.ID]
+	if !ok {
+		return nil, team.ErrTeamNotFound
+	}
+	return &legacy.GetTeamUIDByIDResult{UID: uid}, nil
+}
+
+func (s *teamScopeStore) GetTeamInternalID(_ context.Context, _ claims.NamespaceInfo, q legacy.GetTeamInternalIDQuery) (*legacy.GetTeamInternalIDResult, error) {
+	id, ok := s.idByUID[q.UID]
+	if !ok {
+		return nil, team.ErrTeamNotFound
+	}
+	return &legacy.GetTeamInternalIDResult{ID: id}, nil
+}
+
+func (s *teamScopeStore) GetUserInternalID(context.Context, claims.NamespaceInfo, legacy.GetUserInternalIDQuery) (*legacy.GetUserInternalIDResult, error) {
+	return nil, errTeamStoreUnsupported
+}
+
+func (s *teamScopeStore) GetServiceAccountInternalID(context.Context, claims.NamespaceInfo, legacy.GetServiceAccountInternalIDQuery) (*legacy.GetServiceAccountInternalIDResult, error) {
+	return nil, errTeamStoreUnsupported
+}
+
+func (s *teamScopeStore) GetUserUIDByID(context.Context, claims.NamespaceInfo, legacy.GetUserUIDByIDQuery) (*legacy.GetUserUIDByIDResult, error) {
+	return nil, errTeamStoreUnsupported
+}
+
+func (s *teamScopeStore) GetServiceAccountUIDByID(context.Context, claims.NamespaceInfo, legacy.GetUserUIDByIDQuery) (*legacy.GetUserUIDByIDResult, error) {
+	return nil, errTeamStoreUnsupported
+}
+
+// buildTeamScopeStore lists the namespace's Team CRDs once and indexes them by uid and
+// deprecatedInternalID (assigned by unified storage), returning a bulk
+// legacy.ScopeResolverStore. It works in mode 5 — no legacy SQL.
+func (r *Reconciler) buildTeamScopeStore(ctx context.Context, ns claims.NamespaceInfo) (legacy.ScopeResolverStore, error) {
+	ctx, span := r.tracer.Start(ctx, "reconciler.buildTeamScopeStore")
 	defer span.End()
 
 	crd := iamv0.TeamResourceInfo.GroupVersionResource()
@@ -40,14 +85,15 @@ func (r *Reconciler) ListTeams(ctx context.Context, ns claims.NamespaceInfo) ([]
 		return nil, tracing.Errorf(span, "failed to get client for %s: %w", crd.String(), err)
 	}
 
-	var teams []idresolver.TeamRef
+	store := &teamScopeStore{uidByID: map[int64]string{}, idByUID: map[string]int64{}}
 	err = listAndProcess(ctx, resourceClient, r.cfg.listPageSize(), func(item *unstructured.Unstructured) error {
 		meta, err := utils.MetaAccessor(item)
 		if err != nil {
 			return err
 		}
 		if id := meta.GetDeprecatedInternalID(); id != 0 { //nolint:staticcheck
-			teams = append(teams, idresolver.TeamRef{UID: item.GetName(), ID: id})
+			store.uidByID[id] = item.GetName()
+			store.idByUID[item.GetName()] = id
 		}
 		return nil
 	})
@@ -55,7 +101,7 @@ func (r *Reconciler) ListTeams(ctx context.Context, ns claims.NamespaceInfo) ([]
 		return nil, tracing.Error(span, err)
 	}
 
-	return teams, nil
+	return store, nil
 }
 
 // rolesReconciled reports whether this reconcile pass involves Role or GlobalRole
@@ -74,51 +120,36 @@ func (r *Reconciler) rolesReconciled(globalRolePerms map[string][]*authzextv1.Ro
 }
 
 // resolveTeamScopes rewrites legacy id-based team scopes (teams:id:N) to their uid form
-// (teams:uid:X) using the resolver, so the translation layer can emit per-instance team
-// tuples. Wildcard team scopes (teams:id:*) and every non-team scope pass through
-// untouched. Permissions whose team no longer exists are dropped with a warning: the
-// reconciler is a background sync, so one orphaned scope must not fail the namespace.
-// The input slice and its elements are never mutated.
-func resolveTeamScopes(ctx context.Context, resolver idresolver.Resolver, ns claims.NamespaceInfo, logger log.Logger, perms []*authzextv1.RolePermission) ([]*authzextv1.RolePermission, error) {
-	if resolver == nil {
+// (teams:uid:X) via the shared legacy.ResolveIDScopeToUID helper, so the translation layer
+// can emit per-instance team tuples. Only team scopes are routed through the store; every
+// other scope passes through untouched. Permissions whose team no longer exists are
+// dropped (the helper logs a warning) so one orphan doesn't fail the namespace. The input
+// slice and its elements are never mutated.
+func resolveTeamScopes(ctx context.Context, store legacy.ScopeResolverStore, ns claims.NamespaceInfo, logger log.Logger, perms []*authzextv1.RolePermission) ([]*authzextv1.RolePermission, error) {
+	if store == nil {
 		return perms, nil
 	}
 
 	out := make([]*authzextv1.RolePermission, 0, len(perms))
 	for _, p := range perms {
-		id, ok := parseTeamIDScope(p.Scope)
-		if !ok {
+		if !strings.HasPrefix(p.Scope, teamIDScopePrefix) {
 			out = append(out, p)
 			continue
 		}
 
-		uid, err := resolver.IDToUID(ctx, ns, idresolver.KindTeam, id)
+		resolved, drop, err := legacy.ResolveIDScopeToUID(ctx, store, ns, p.Scope, logger)
 		if err != nil {
-			if errors.Is(err, idresolver.ErrNotFound) {
-				if logger != nil {
-					logger.Warn("Dropping permission with orphaned team scope", "action", p.Action, "scope", p.Scope)
-				}
-				continue
-			}
 			return nil, err
 		}
-
-		out = append(out, &authzextv1.RolePermission{Action: p.Action, Scope: "teams:uid:" + uid})
+		if drop {
+			continue
+		}
+		if resolved == p.Scope {
+			out = append(out, p)
+			continue
+		}
+		out = append(out, &authzextv1.RolePermission{Action: p.Action, Scope: resolved})
 	}
 
 	return out, nil
-}
-
-// parseTeamIDScope returns the numeric id of a specific team id-scope (teams:id:N).
-// Wildcards (teams:id:*) and non-team / non-numeric scopes return ok=false.
-func parseTeamIDScope(scope string) (int64, bool) {
-	idStr, ok := strings.CutPrefix(scope, teamIDScopePrefix)
-	if !ok || idStr == "*" {
-		return 0, false
-	}
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		return 0, false
-	}
-	return id, true
 }

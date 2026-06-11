@@ -12,11 +12,11 @@ import (
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/authz/idresolver"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/roleeffective"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -48,13 +48,13 @@ func TranslateFolderToTuples(obj *unstructured.Unstructured) ([]*openfgav1.Tuple
 
 // TranslateRoleToTuples converts a Role CRD to permission tuples.
 // globalRolePerms, if non-nil, is used to resolve RoleRefs + PermissionsOmitted via the shared resolver.
-// teamResolver, if non-nil, resolves id-based team scopes (teams:id:N) to uid so per-instance
-// team-management permissions are emitted instead of dropped; a nil resolver is a no-op.
+// teamStore, if non-nil, resolves id-based team scopes (teams:id:N) to uid so per-instance
+// team-management permissions are emitted instead of dropped; a nil store is a no-op.
 func TranslateRoleToTuples(
 	ctx context.Context,
 	obj *unstructured.Unstructured,
 	globalRolePerms map[string][]*authzextv1.RolePermission,
-	teamResolver idresolver.Resolver,
+	teamStore legacy.ScopeResolverStore,
 	ns claims.NamespaceInfo,
 	logger log.Logger,
 ) ([]*openfgav1.TupleKey, error) {
@@ -91,7 +91,7 @@ func TranslateRoleToTuples(
 		perms = append(perms, &authzextv1.RolePermission{Action: p.Action, Scope: p.Scope})
 	}
 
-	resolved, err := resolveTeamScopes(ctx, teamResolver, ns, logger, perms)
+	resolved, err := resolveTeamScopes(ctx, teamStore, ns, logger, perms)
 	if err != nil {
 		return nil, err
 	}
