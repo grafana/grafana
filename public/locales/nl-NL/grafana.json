@@ -1103,9 +1103,6 @@
       },
       "unknown": "Onbekend"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "Je hebt blijkbaar geen compatibele gegevensbronnen."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluaties om te beginnen met waarschuwen",
       "pending-period": "Wachttijd",
@@ -5939,9 +5936,6 @@
       "select-source": "Bron selecteren",
       "unknown": "Onbekend object: {{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "Geen metagegevensinspecteur"
-    },
     "inspect-stats": {
       "data-title": "Statistieken van gegevensbron",
       "data-traceids": "Traceer-ID's",
@@ -6421,7 +6415,6 @@
       "playlist-next": "Naar het volgende dashboard",
       "playlist-previous": "Naar het vorige dashboard",
       "playlist-stop": "Afspeellijst stoppen",
-      "read-only": "Alleen lezen",
       "refresh": "Dashboard vernieuwen",
       "save": "Dashboard opslaan",
       "save-as-template": {
@@ -6558,28 +6551,6 @@
     },
     "view-panel": {
       "not-found": ""
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Visualisatie wijzigen",
-      "aria-label-close": "Deelvenster Opties sluiten",
-      "aria-label-show": "Deelvenster Opties weergeven",
-      "tooltip-click-to-change-visualization": "Klik om de visualisatie te wijzigen",
-      "tooltip-close": "Deelvenster Opties sluiten",
-      "tooltip-show": "Deelvenster Opties weergeven"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Zoeken naar...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Herbruikbare panelen die je kunt delen tussen meerdere dashboards."
-        },
-        "label": {
-          "library-panels": "Bibliotheekpanelen",
-          "suggestions": "Suggesties",
-          "visualizations": "Visualisaties"
-        }
-      },
-      "title-close": "Sluiten"
     },
     "viz-panel": {
       "delete-panel-text": "Als je dit paneel verwijdert, worden ook alle vragen verwijderd. Weet je zeker dat je wilt doorgaan?",
@@ -9052,9 +9023,6 @@
     "select-aria-label": "Mapfilter",
     "select-placeholder": "Filteren op map"
   },
-  "folder-repo": {
-    "read-only-badge": "Alleen lezen"
-  },
   "folders": {
     "api": {
       "anonymous-user": "",
@@ -11032,6 +11000,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "",
       "show-all-series": "...alle {{total}} items weergeven"
     }
   },
@@ -11053,10 +11022,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "Bibliotheekpaneel aanmaken"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "Wijzigen",
-      "confirmText-replace": "Vervangen"
     },
     "confirm": {
       "delete-panel": "Wil je dit paneel verwijderen?"
@@ -11097,9 +11062,6 @@
       "title": "Paneel bekijken in dashboard",
       "body_one": "Dit paneel wordt gebruikt in {{count}} dashboard. Kies in welk dashboard je het paneel wilt bekijken:",
       "body_other": "Dit paneel wordt gebruikt in {{count}} dashboard. Kies in welk dashboard je het paneel wilt bekijken:"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "Nieuw bibliotheekpaneel maken"
     },
     "save": {
       "error": "Fout bij opslaan bibliotheekpaneel: '{{errorMsg}}'",
@@ -13645,6 +13607,9 @@
       "message-resource-onprem_one": "Je instantie is beperkt tot {{count}} gesynchroniseerde bronnen per repository.",
       "message-resource-onprem_other": "Je instantie is beperkt tot {{count}} gesynchroniseerde bronnen per repository."
     },
+    "read-only-badge": {
+      "text": ""
+    },
     "read-only-local-tooltip": "Deze bron is alleen-lezen en wordt beheerd via bestandsvoorziening. Om wijzigingen aan te brengen, werk je de verbonden repository bij. Om de instellingen te wijzigen ga je naar Beheer > Voorziening > Repositories.",
     "read-only-remote-tooltip": "Deze bron is alleen-lezen en wordt beheerd via Git. Om wijzigingen aan te brengen, werk je de verbonden repository bij. Om de instellingen te wijzigen ga je naar Beheer > Voorziening > Repositories.",
     "recent-jobs": {
@@ -13665,7 +13630,6 @@
     },
     "repository-card": {
       "last-sync": "Laatste synchronisatie: {{date}}",
-      "read-only-badge": "Alleen lezen",
       "settings": "Instellingen",
       "view": "Weergave"
     },
@@ -16638,9 +16602,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "Geen hernoemde of ontbrekende variabelen gevonden."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "Kan variabele niet laden"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "Wanneer de waarden van deze variabele moeten worden bijgewerkt",
