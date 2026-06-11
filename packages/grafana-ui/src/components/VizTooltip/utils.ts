@@ -104,7 +104,7 @@ export const getTooltipDisplayValue = (
   return { text: formattedValueToString(display), numeric: display.numeric, color: display.color };
 };
 
-export const getContentItems = (
+export const getFieldDisplayItems = (
   fields: Field[],
   xField: Field,
   dataIdxs: Array<number | null>,

@@ -18,8 +18,8 @@ import {
   VizTooltipFooter,
   VizTooltipHeader,
   VizTooltipWrapper,
+  getFieldDisplayItems,
 } from '@grafana/ui';
-import { getContentItems } from '@grafana/ui/internal';
 
 import { getFieldActions } from '../status-history/utils';
 
@@ -85,7 +85,7 @@ export const TimeSeriesTooltip = ({
 
   const xDisp = formattedValueToString(xField.display!(xVal));
 
-  const contentItems = getContentItems(
+  const contentItems = getFieldDisplayItems(
     series.fields,
     xField,
     dataIdxs,

@@ -8,8 +8,8 @@ import {
   VizTooltipFooter,
   VizTooltipHeader,
   VizTooltipWrapper,
+  getFieldDisplayItems,
 } from '@grafana/ui';
-import { getContentItems } from '@grafana/ui/internal';
 
 import { getDataLinks } from '../status-history/utils';
 import { isTooltipScrollable } from '../timeseries/utils';
@@ -56,7 +56,7 @@ export const HistogramTooltip = ({
   };
 
   const contentItems = useMemo(
-    () => getContentItems(xMinOnlyFrame.fields, xMinField, dataIdxs, seriesIdx, mode, sortOrder),
+    () => getFieldDisplayItems(xMinOnlyFrame.fields, xMinField, dataIdxs, seriesIdx, mode, sortOrder),
     [xMinOnlyFrame.fields, xMinField, dataIdxs, seriesIdx, mode, sortOrder]
   );
 
