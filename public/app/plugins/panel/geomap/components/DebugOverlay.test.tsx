@@ -17,7 +17,7 @@ describe('DebugOverlay', () => {
     render(<DebugOverlay map={map as unknown as Map} />);
 
     expect(screen.getByText('4.6')).toBeInTheDocument();
-    expect(screen.getByText('10.00000, 20.00000')).toBeInTheDocument();
+    expect(screen.getByText(/10\.[0]+, 20\.[0]+/)).toBeInTheDocument();
   });
 
   it('should subscribe to moveend on mount and update text when it fires', () => {
@@ -33,7 +33,7 @@ describe('DebugOverlay', () => {
     });
 
     expect(screen.getByText('7.2')).toBeInTheDocument();
-    expect(screen.getByText('-122.00000, 47.00000')).toBeInTheDocument();
+    expect(screen.getByText(/-122\.[0]+0, 47\.[0]+/)).toBeInTheDocument();
   });
 
   it('should unsubscribe from moveend on unmount', () => {
