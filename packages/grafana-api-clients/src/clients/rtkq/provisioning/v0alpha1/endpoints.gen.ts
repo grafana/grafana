@@ -1463,6 +1463,8 @@ export type GitHubConnectionConfig = {
   appID: string;
   /** GitHub App installation ID */
   installationID: string;
+  /** WebhookDisabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet. */
+  webhookDisabled?: boolean;
 };
 export type GitHubEnterpriseConnectionConfig = {
   /** GitHub App ID */
