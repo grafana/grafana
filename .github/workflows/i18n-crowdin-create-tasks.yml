@@ -6,6 +6,9 @@ on:
   schedule:
     - cron: "0 0 1 * *"
 
+permissions:
+  contents: read
+
 jobs:
   create-tasks-in-crowdin:
     runs-on: ubuntu-x64
