@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
+	"strings"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -85,10 +87,7 @@ func (h *ProxyHandler) List(ctx context.Context, orgID int64, query *annotations
 		dto := objectToItemDTO(obj)
 		if cb := obj.GetAnnotations()["grafana.com/createdBy"]; cb != "" {
 			if u, ok := userMap[cb]; ok {
-				dto.UserID = u.ID
-				dto.UserUID = u.UID
-				dto.Login = u.Login
-				dto.Email = u.Email
+				applyUserToDTO(u, dto)
 			}
 		}
 		dtos = append(dtos, dto)
@@ -112,18 +111,7 @@ func buildFieldSelector(q *annotations.ItemQuery) string {
 	if q.To != 0 {
 		parts = append(parts, fmt.Sprintf("spec.timeEnd=%d", q.To))
 	}
-	return joinParts(parts)
-}
-
-func joinParts(parts []string) string {
-	result := ""
-	for i, p := range parts {
-		if i > 0 {
-			result += ","
-		}
-		result += p
-	}
-	return result
+	return strings.Join(parts, ",")
 }
 
 // Merge combines new-store and legacy items, deduplicates by legacyID (new store wins),
@@ -142,25 +130,17 @@ func Merge(newItems, legacyItems []*annotations.ItemDTO, limit int64) []*annotat
 		}
 	}
 
-	sortByTime(merged)
+	sort.Slice(merged, func(i, j int) bool {
+		if merged[i].TimeEnd != merged[j].TimeEnd {
+			return merged[i].TimeEnd > merged[j].TimeEnd
+		}
+		return merged[i].Time > merged[j].Time
+	})
 
 	if limit > 0 && int64(len(merged)) > limit {
 		merged = merged[:limit]
 	}
 	return merged
-}
-
-func sortByTime(items []*annotations.ItemDTO) {
-	for i := 1; i < len(items); i++ {
-		for j := i; j > 0; j-- {
-			a, b := items[j-1], items[j]
-			if a.TimeEnd < b.TimeEnd || (a.TimeEnd == b.TimeEnd && a.Time < b.Time) {
-				items[j-1], items[j] = items[j], items[j-1]
-			} else {
-				break
-			}
-		}
-	}
 }
 
 // FilterByTags removes items that do not match the tag query.
@@ -223,7 +203,7 @@ func (h *ProxyHandler) Create(ctx context.Context, orgID int64, item *annotation
 
 // Update writes to new store. Returns ErrNotFound if the record is not there yet, caller falls back to legacy.
 func (h *ProxyHandler) Update(ctx context.Context, orgID int64, annotationID int64, item *annotations.Item) error {
-	existing, err := h.findByLegacyID(ctx, orgID, annotationID)
+	existing, err := h.FindByLegacyID(ctx, orgID, annotationID)
 	if err != nil {
 		return err
 	}
@@ -236,7 +216,7 @@ func (h *ProxyHandler) Update(ctx context.Context, orgID int64, annotationID int
 
 // Delete removes from new store. Returns ErrNotFound if the record is not there yet — caller falls back to legacy.
 func (h *ProxyHandler) Delete(ctx context.Context, orgID int64, annotationID int64) error {
-	existing, err := h.findByLegacyID(ctx, orgID, annotationID)
+	existing, err := h.FindByLegacyID(ctx, orgID, annotationID)
 	if err != nil {
 		return err
 	}
@@ -245,10 +225,6 @@ func (h *ProxyHandler) Delete(ctx context.Context, orgID int64, annotationID int
 
 // FindByLegacyID returns ErrNotFound when absent.
 func (h *ProxyHandler) FindByLegacyID(ctx context.Context, orgID int64, annotationID int64) (*unstructured.Unstructured, error) {
-	return h.findByLegacyID(ctx, orgID, annotationID)
-}
-
-func (h *ProxyHandler) findByLegacyID(ctx context.Context, orgID int64, annotationID int64) (*unstructured.Unstructured, error) {
 	list, err := h.client.List(ctx, orgID, v1.ListOptions{
 		FieldSelector: fmt.Sprintf("metadata.legacyID=%d", annotationID),
 	})
@@ -259,6 +235,64 @@ func (h *ProxyHandler) findByLegacyID(ctx context.Context, orgID int64, annotati
 		return nil, ErrNotFound
 	}
 	return &list.Items[0], nil
+}
+
+// TODO: soft-delete not yet implemented
+func (h *ProxyHandler) Get(ctx context.Context, orgID int64, annotationID int64) (*annotations.ItemDTO, error) {
+	obj, err := h.FindByLegacyID(ctx, orgID, annotationID)
+	if err != nil {
+		return nil, err
+	}
+
+	dto := objectToItemDTO(obj)
+
+	createdBy := obj.GetAnnotations()["grafana.com/createdBy"]
+	if createdBy != "" {
+		if users, err := h.client.GetUsersFromMeta(ctx, []string{createdBy}); err == nil {
+			if u, ok := users[createdBy]; ok {
+				applyUserToDTO(u, dto)
+			}
+		}
+	}
+
+	return dto, nil
+}
+
+func applyUserToDTO(u *user.User, dto *annotations.ItemDTO) {
+	dto.UserID = u.ID
+	dto.UserUID = u.UID
+	dto.Login = u.Login
+	dto.Email = u.Email
+}
+
+func objectToItemDTO(obj *unstructured.Unstructured) *annotations.ItemDTO {
+	spec, _ := obj.Object["spec"].(map[string]any)
+
+	dto := &annotations.ItemDTO{ID: legacyIDFromObject(obj)}
+	dto.Text, _ = spec["text"].(string)
+	if t, ok := spec["time"].(float64); ok {
+		dto.Time = int64(t)
+	}
+	if te, ok := spec["timeEnd"].(float64); ok {
+		dto.TimeEnd = int64(te)
+	}
+	if uid, ok := spec["dashboardUID"].(string); ok {
+		dto.DashboardUID = &uid
+	}
+	if pid, ok := spec["panelID"].(float64); ok {
+		dto.PanelID = int64(pid)
+	}
+	if rawTags, ok := spec["tags"].([]any); ok {
+		for _, rt := range rawTags {
+			if s, ok := rt.(string); ok {
+				dto.Tags = append(dto.Tags, s)
+			}
+		}
+	}
+	if ts := obj.GetCreationTimestamp(); !ts.IsZero() {
+		dto.Created = ts.UnixMilli()
+	}
+	return dto
 }
 
 func itemToObject(item *annotations.Item) *unstructured.Unstructured {
@@ -304,60 +338,6 @@ func legacyIDFromObject(obj *unstructured.Unstructured) int64 {
 	}
 	id, _ := strconv.ParseInt(labels["grafana.app/legacyID"], 10, 64)
 	return id
-}
-
-// TODO: soft-delete not yet implemented
-func (h *ProxyHandler) Get(ctx context.Context, orgID int64, annotationID int64) (*annotations.ItemDTO, error) {
-	obj, err := h.findByLegacyID(ctx, orgID, annotationID)
-	if err != nil {
-		return nil, err
-	}
-
-	dto := objectToItemDTO(obj)
-
-	createdBy := obj.GetAnnotations()["grafana.com/createdBy"]
-	if createdBy != "" {
-		if users, err := h.client.GetUsersFromMeta(ctx, []string{createdBy}); err == nil {
-			if u, ok := users[createdBy]; ok {
-				dto.UserID = u.ID
-				dto.UserUID = u.UID
-				dto.Login = u.Login
-				dto.Email = u.Email
-			}
-		}
-	}
-
-	return dto, nil
-}
-
-func objectToItemDTO(obj *unstructured.Unstructured) *annotations.ItemDTO {
-	spec, _ := obj.Object["spec"].(map[string]any)
-
-	dto := &annotations.ItemDTO{ID: legacyIDFromObject(obj)}
-	dto.Text, _ = spec["text"].(string)
-	if t, ok := spec["time"].(float64); ok {
-		dto.Time = int64(t)
-	}
-	if te, ok := spec["timeEnd"].(float64); ok {
-		dto.TimeEnd = int64(te)
-	}
-	if uid, ok := spec["dashboardUID"].(string); ok {
-		dto.DashboardUID = &uid
-	}
-	if pid, ok := spec["panelID"].(float64); ok {
-		dto.PanelID = int64(pid)
-	}
-	if rawTags, ok := spec["tags"].([]any); ok {
-		for _, rt := range rawTags {
-			if s, ok := rt.(string); ok {
-				dto.Tags = append(dto.Tags, s)
-			}
-		}
-	}
-	if ts := obj.GetCreationTimestamp(); !ts.IsZero() {
-		dto.Created = ts.UnixMilli()
-	}
-	return dto
 }
 
 // JSON numbers unmarshal as float64, so we cast to int64 explicitly.
