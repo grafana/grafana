@@ -40,7 +40,7 @@ You can add dashboards to Git Sync using any of the following options:
 
 You can import dashboards directly into your Git Sync provisioned folders using the Grafana UI or the HTTP API.
 
-![Import dashboard](/static/img/docs/ascode/gitsync-dashboard-import.png)
+![Import dashboard](/static/img/docs/ascode/gitsync-dashboards-import.png)
 
 To access the Import dashboard tool from the Git Sync UI:
 
