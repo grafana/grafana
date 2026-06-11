@@ -2,7 +2,6 @@ package reconciler
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"strings"
 
@@ -77,40 +76,61 @@ func (r *Reconciler) rolesReconciled(globalRolePerms map[string][]*authzextv1.Ro
 // team tuples. Wildcard team scopes (teams:id:*) and every non-team scope pass through
 // untouched. Permissions whose team no longer exists are dropped with a warning: the
 // reconciler is a background sync, so one orphaned scope must not fail the namespace.
-// The input slice and its elements are never mutated.
+// All team ids are resolved in one bulk call. The input slice and its elements are never
+// mutated.
 func resolveTeamScopes(ctx context.Context, resolver idresolver.Resolver, ns claims.NamespaceInfo, logger log.Logger, perms []*authzextv1.RolePermission) ([]*authzextv1.RolePermission, error) {
 	if resolver == nil {
 		return perms, nil
 	}
 
+	// Collect the specific team ids referenced across all permissions and resolve them
+	// in a single bulk call.
+	var ids []int64
+	for _, p := range perms {
+		if id, ok := parseTeamIDScope(p.Scope); ok {
+			ids = append(ids, id)
+		}
+	}
+	if len(ids) == 0 {
+		return perms, nil
+	}
+
+	uidByID, err := resolver.IDsToUIDs(ctx, ns, idresolver.KindTeam, ids)
+	if err != nil {
+		return nil, err
+	}
+
 	out := make([]*authzextv1.RolePermission, 0, len(perms))
 	for _, p := range perms {
-		idStr, ok := strings.CutPrefix(p.Scope, teamIDScopePrefix)
-		if !ok || idStr == "*" {
+		id, ok := parseTeamIDScope(p.Scope)
+		if !ok {
 			out = append(out, p)
 			continue
 		}
-
-		id, err := strconv.ParseInt(idStr, 10, 64)
-		if err != nil {
-			// Not a numeric id — leave it for the translation layer to handle/drop.
-			out = append(out, p)
-			continue
-		}
-
-		uid, err := resolver.IDToUID(ctx, ns, idresolver.KindTeam, id)
-		if err != nil {
-			if errors.Is(err, idresolver.ErrNotFound) {
-				if logger != nil {
-					logger.Warn("Dropping permission with orphaned team scope", "action", p.Action, "scope", p.Scope)
-				}
-				continue
+		uid, found := uidByID[id]
+		if !found {
+			// Team no longer exists — IDsToUIDs omits orphaned ids.
+			if logger != nil {
+				logger.Warn("Dropping permission with orphaned team scope", "action", p.Action, "scope", p.Scope)
 			}
-			return nil, err
+			continue
 		}
-
 		out = append(out, &authzextv1.RolePermission{Action: p.Action, Scope: "teams:uid:" + uid})
 	}
 
 	return out, nil
+}
+
+// parseTeamIDScope returns the numeric id of a specific team id-scope (teams:id:N).
+// Wildcards (teams:id:*) and non-team / non-numeric scopes return ok=false.
+func parseTeamIDScope(scope string) (int64, bool) {
+	idStr, ok := strings.CutPrefix(scope, teamIDScopePrefix)
+	if !ok || idStr == "*" {
+		return 0, false
+	}
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return 0, false
+	}
+	return id, true
 }

@@ -36,12 +36,19 @@ const (
 )
 
 // Resolver translates an identity reference between its legacy numeric id and its
-// app-platform uid, in both directions.
+// app-platform uid, in both directions, one at a time or in bulk.
 type Resolver interface {
 	// IDToUID resolves a legacy numeric id to the uid. Returns ErrNotFound if absent.
 	IDToUID(ctx context.Context, ns claims.NamespaceInfo, kind Kind, id int64) (uid string, err error)
 	// UIDToID resolves a uid to the legacy numeric id. Returns ErrNotFound if absent.
 	UIDToID(ctx context.Context, ns claims.NamespaceInfo, kind Kind, uid string) (id int64, err error)
+
+	// IDsToUIDs resolves many ids in one call. The returned map holds only the ids
+	// that resolved; ids with no matching identity are omitted rather than erroring,
+	// so a single orphan doesn't fail the batch. A non-not-found failure aborts.
+	IDsToUIDs(ctx context.Context, ns claims.NamespaceInfo, kind Kind, ids []int64) (map[int64]string, error)
+	// UIDsToIDs is the reverse bulk lookup; unresolved uids are omitted.
+	UIDsToIDs(ctx context.Context, ns claims.NamespaceInfo, kind Kind, uids []string) (map[string]int64, error)
 }
 
 // TeamClient resolves teams from the app platform (unified storage). It is the mode-5
@@ -152,6 +159,42 @@ func (r *resolver) UIDToID(ctx context.Context, ns claims.NamespaceInfo, kind Ki
 	default:
 		return 0, fmt.Errorf("unknown identity kind %q", kind)
 	}
+}
+
+func (r *resolver) IDsToUIDs(ctx context.Context, ns claims.NamespaceInfo, kind Kind, ids []int64) (map[int64]string, error) {
+	out := make(map[int64]string, len(ids))
+	for _, id := range ids {
+		if _, done := out[id]; done {
+			continue
+		}
+		uid, err := r.IDToUID(ctx, ns, kind, id)
+		if err != nil {
+			if errors.Is(err, ErrNotFound) {
+				continue
+			}
+			return nil, err
+		}
+		out[id] = uid
+	}
+	return out, nil
+}
+
+func (r *resolver) UIDsToIDs(ctx context.Context, ns claims.NamespaceInfo, kind Kind, uids []string) (map[string]int64, error) {
+	out := make(map[string]int64, len(uids))
+	for _, uid := range uids {
+		if _, done := out[uid]; done {
+			continue
+		}
+		id, err := r.UIDToID(ctx, ns, kind, uid)
+		if err != nil {
+			if errors.Is(err, ErrNotFound) {
+				continue
+			}
+			return nil, err
+		}
+		out[uid] = id
+	}
+	return out, nil
 }
 
 func errNoStore(kind Kind) error {
