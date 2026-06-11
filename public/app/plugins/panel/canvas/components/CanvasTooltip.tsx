@@ -14,14 +14,18 @@ import {
   type ValueLinkConfig,
   type ActionModel,
 } from '@grafana/data';
-import { Portal, useStyles2, useTheme2, VizTooltipContainer, usePanelContext } from '@grafana/ui';
 import {
+  CloseButton,
+  Portal,
+  type VizTooltipItem,
+  VizTooltipContainer,
   VizTooltipContent,
   VizTooltipFooter,
   VizTooltipHeader,
-  type VizTooltipItem,
-  CloseButton,
-} from '@grafana/ui/internal';
+  usePanelContext,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 import { getActions, getActionsDefaultField } from 'app/features/actions/utils';
 import { type Scene } from 'app/features/canvas/runtime/scene';
 

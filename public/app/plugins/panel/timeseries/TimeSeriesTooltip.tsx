@@ -11,15 +11,15 @@ import {
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import {
+  type AdHocFilterModel,
+  type FilterByGroupedLabelsModel,
+  type VizTooltipItem,
   VizTooltipContent,
   VizTooltipFooter,
   VizTooltipHeader,
   VizTooltipWrapper,
-  getContentItems,
-  type VizTooltipItem,
-  type AdHocFilterModel,
-  type FilterByGroupedLabelsModel,
-} from '@grafana/ui/internal';
+} from '@grafana/ui';
+import { getContentItems } from '@grafana/ui/internal';
 
 import { getFieldActions } from '../status-history/utils';
 
