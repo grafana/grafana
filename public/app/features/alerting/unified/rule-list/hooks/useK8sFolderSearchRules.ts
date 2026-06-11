@@ -122,7 +122,7 @@ function buildFolderSearchArgs(
   ruleFilter?: K8sRuleFilter
 ): GetSearchRulesApiArg {
   // Single-value filters here, so the generated `string`-typed args fit without coercion.
-  const args: GetSearchRulesApiArg = { folders: folderUid, sort: 'group' };
+  const args: GetSearchRulesApiArg = { folders: folderUid, sort: 'title' };
 
   if (groupFilter?.trim()) {
     args.groups = groupFilter.trim();
