@@ -102,6 +102,22 @@ describe('FiringAlertsCard', () => {
     expect(screen.getByText(/1 high/i)).toBeInTheDocument();
   });
 
+  it('renders an alert with no severity label without crashing', async () => {
+    const noSeverityAlert = makeAlert({ labels: { alertname: 'No Severity', team: 'platform' } });
+    mockTeams([]);
+    mockAlerts([noSeverityAlert]);
+
+    render(<FiringAlertsCard />);
+
+    await waitFor(() => {
+      expect(screen.getByText('No Severity')).toBeInTheDocument();
+    });
+
+    // Missing severity must not crash canonicalSeverity and must not be counted in either badge
+    expect(screen.queryByText(/\d+ critical/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\d+ high/i)).not.toBeInTheDocument();
+  });
+
   it('builds team matchers when user has teams', async () => {
     const capturedRequests: Request[] = [];
     mockTeams([{ name: 'platform' }, { name: 'infra' }]);

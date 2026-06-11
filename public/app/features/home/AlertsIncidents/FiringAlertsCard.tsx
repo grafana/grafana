@@ -10,7 +10,7 @@ import { Alert, Badge, Box, Button, LinkButton, Stack, Text, TextLink, useStyles
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { canonicalSeverity, SEVERITY_DEFINITIONS } from 'app/features/alerting/unified/triage/scene/filters/severity';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
+import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -18,21 +18,27 @@ import { useUserTeams } from './useUserTeams';
 
 const MAX_ALERTS = 5;
 
-/** Extract pathname from an absolute generatorURL, falling back to the raw value. */
+/** Extract the path (with query string) from an absolute generatorURL, falling back to the raw value. */
 function alertDetailHref(alert: AlertmanagerAlert) {
   const raw = alert.generatorURL;
   if (!raw) {
     return undefined;
   }
   try {
-    return new URL(raw).pathname;
+    const url = new URL(raw);
+    return url.pathname + url.search;
   } catch {
     return raw;
   }
 }
 
+/** Canonical severity level for an alert, tolerant of a missing severity label so the card never crashes. */
+function alertSeverityLevel(alert: AlertmanagerAlert) {
+  return canonicalSeverity(alert.labels.severity ?? '');
+}
+
 function severityRank(alert: AlertmanagerAlert) {
-  const level = canonicalSeverity(alert.labels.severity);
+  const level = alertSeverityLevel(alert);
   return level ? SEVERITY_DEFINITIONS.findIndex((d) => d.level === level) : -1;
 }
 
@@ -59,6 +65,7 @@ function FiringAlertsCardInner() {
   const styles = useStyles2(getStyles);
   const [showAllAlerts, setShowAllAlerts] = useState(false);
 
+  // A failed teams fetch leaves teams undefined, so the card intentionally shows all org alerts unfiltered.
   const { value: teams, loading: teamsLoading } = useUserTeams();
 
   const teamNames = useMemo(() => (teams ?? []).map((t) => t.name), [teams]);
@@ -102,10 +109,10 @@ function FiringAlertsCardInner() {
 
   const displayed = sorted.slice(0, MAX_ALERTS);
 
-  const criticalCount = alerts?.filter((a) => canonicalSeverity(a.labels.severity) === 'critical').length ?? 0;
-  const highCount = alerts?.filter((a) => canonicalSeverity(a.labels.severity) === 'major').length ?? 0;
+  const criticalCount = alerts?.filter((a) => alertSeverityLevel(a) === 'critical').length ?? 0;
+  const highCount = alerts?.filter((a) => alertSeverityLevel(a) === 'major').length ?? 0;
 
-  const viewAllHref = `/alerting/groups?dataSource=${GRAFANA_RULES_SOURCE_NAME}`;
+  const viewAllHref = `/alerting/groups?${ALERTMANAGER_NAME_QUERY_KEY}=${GRAFANA_RULES_SOURCE_NAME}`;
 
   return (
     <Box backgroundColor="canvas" borderRadius="default" padding={3} flex={1} minWidth="320px">
@@ -186,7 +193,7 @@ function FiringAlertsCardInner() {
               const detailHref = alertDetailHref(alert);
               return (
                 <li key={alert.fingerprint} className={styles.row}>
-                  <span className={styles.severityDot} data-severity={alert.labels.severity} />
+                  <span className={styles.severityDot} data-severity={alertSeverityLevel(alert)} />
                   {detailHref ? (
                     <TextLink href={detailHref} inline={false} className={styles.alertName}>
                       {alert.labels.alertname}
@@ -251,10 +258,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&[data-severity="critical"]': {
       backgroundColor: theme.colors.error.main,
     },
-    '&[data-severity="high"]': {
+    '&[data-severity="major"]': {
       backgroundColor: theme.colors.warning.main,
     },
-    '&[data-severity="warning"]': {
+    '&[data-severity="minor"]': {
       backgroundColor: theme.colors.warning.text,
     },
   }),
