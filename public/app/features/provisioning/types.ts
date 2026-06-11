@@ -1,5 +1,6 @@
 import {
   type BitbucketRepositoryConfig,
+  type BranchOptions,
   type ConnectionSpec,
   type GitHubRepositoryConfig,
   type GitLabRepositoryConfig,
@@ -13,7 +14,11 @@ export type JobType = 'sync' | 'delete' | 'move' | 'fix' | 'releaseResources' | 
 // Repository type definition - extracted from API client
 export type RepoWorkflows = RepositorySpec['workflows'];
 
-export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySpec['type']> &
+// `branch` is omitted because the spec-level `branch` (BranchOptions: naming
+// template / enforcement) collides with the git config `branch` (the branch
+// name string). The branch name keeps the flat `branch` field below; the
+// BranchOptions live under `branchOptions`.
+export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | 'branch' | RepositorySpec['type']> &
   BitbucketRepositoryConfig &
   GitRepositoryConfig &
   GitHubRepositoryConfig &
@@ -26,6 +31,8 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySp
     token?: string;
     // GitHub App connection name (when using app-based auth instead of PAT)
     connectionName?: string;
+    // Spec-level branch naming options (maps to RepositorySpec.branch)
+    branchOptions?: BranchOptions;
   };
 
 // Connection type definition - extracted from API client
