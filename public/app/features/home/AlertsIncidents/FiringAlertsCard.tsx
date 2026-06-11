@@ -121,13 +121,21 @@ function FiringAlertsCardInner() {
             <Stack direction="row" gap={1}>
               {criticalCount > 0 && (
                 <Badge
-                  text={t('home.firing-alerts-card.critical-count', '{{count}} critical', { count: criticalCount })}
+                  text={t('home.firing-alerts-card.critical-count', '', {
+                    count: criticalCount,
+                    defaultValue_one: '{{count}} critical',
+                    defaultValue_other: '{{count}} critical',
+                  })}
                   color="red"
                 />
               )}
               {highCount > 0 && (
                 <Badge
-                  text={t('home.firing-alerts-card.high-count', '{{count}} high', { count: highCount })}
+                  text={t('home.firing-alerts-card.high-count', '', {
+                    count: highCount,
+                    defaultValue_one: '{{count}} high',
+                    defaultValue_other: '{{count}} high',
+                  })}
                   color="orange"
                 />
               )}
