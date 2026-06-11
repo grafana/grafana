@@ -4,12 +4,7 @@ import { OverviewStatCards } from './OverviewStatCards';
 
 describe('OverviewStatCards', () => {
   it('renders a status card per resource type plus a combined "All resources" card', () => {
-    render(
-      <OverviewStatCards
-        totals={{ instanceTotal: 100, managed: 50 }}
-        folderCounts={{ managed: 6, total: 8 }}
-      />
-    );
+    render(<OverviewStatCards totals={{ instanceTotal: 100, managed: 50 }} folderCounts={{ managed: 6, total: 8 }} />);
 
     // Dashboards card: 50 of 100 managed => 50%.
     expect(screen.getByText('Dashboards')).toBeInTheDocument();
@@ -27,12 +22,7 @@ describe('OverviewStatCards', () => {
   });
 
   it('omits the folders card when there are no folders', () => {
-    render(
-      <OverviewStatCards
-        totals={{ instanceTotal: 10, managed: 0 }}
-        folderCounts={{ managed: 0, total: 0 }}
-      />
-    );
+    render(<OverviewStatCards totals={{ instanceTotal: 10, managed: 0 }} folderCounts={{ managed: 0, total: 0 }} />);
 
     expect(screen.getByText('Dashboards')).toBeInTheDocument();
     expect(screen.queryByText('Folders')).not.toBeInTheDocument();
