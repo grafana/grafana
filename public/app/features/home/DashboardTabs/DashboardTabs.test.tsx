@@ -4,15 +4,27 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
-import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
+import { config, reportInteraction, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
+import { tabChanged } from '../analytics/main';
+
 import { DashboardTabs } from './DashboardTabs';
 import { type HomepageTabExtensionProps } from './types';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+jest.mock('../analytics/main', () => ({
+  tabChanged: jest.fn(),
+  clearHistoryClicked: jest.fn(),
+  emptyCtaClicked: jest.fn(),
+}));
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -52,6 +64,7 @@ function seedStars(uids: string[]) {
 }
 
 beforeEach(() => {
+  jest.clearAllMocks();
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   window.localStorage.removeItem(impressionKey);
   seedStars([]);
@@ -217,6 +230,35 @@ describe('DashboardTabs', () => {
       });
 
       expect(screen.getByRole('tab', { name: /recent/i })).toHaveAttribute('aria-selected', 'true');
+    });
+
+    it('tracks a user click on the Most used tab', async () => {
+      config.licenseInfo.enabledFeatures = { analytics: true };
+      // recent non-empty keeps us on the Recent tab so the only tabChanged call comes from the click below
+      seedRecent(['recent-1', 'recent-2']);
+      server.use(getCustomSearchHandler(allHits));
+
+      const { user } = render(<DashboardTabs />);
+
+      await user.click(await screen.findByRole('tab', { name: /most used/i }));
+
+      expect(jest.mocked(tabChanged)).toHaveBeenCalledWith({ tab: 'most-used' });
+    });
+
+    it('tracks clicks on a dashboard in the Most used tab', async () => {
+      config.licenseInfo.enabledFeatures = { analytics: true };
+      seedRecent(['recent-1', 'recent-2']);
+      server.use(getCustomSearchHandler(allHits));
+
+      const { user } = render(<DashboardTabs />);
+
+      await user.click(await screen.findByRole('tab', { name: /most used/i }));
+      await user.click(await screen.findByText('Most Used Dashboard 1'));
+
+      expect(jest.mocked(reportInteraction)).toHaveBeenCalledWith(
+        'grafana_browse_dashboards_page_click_list_item',
+        expect.objectContaining({ source: 'homepage_mostUsedTab' })
+      );
     });
   });
   it('renders extension tabs from plugins', async () => {
