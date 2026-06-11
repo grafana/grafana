@@ -730,7 +730,7 @@ replace (
 
 	// Use our fork of dolthub/go-mysql-server which adds TableHintedTable for FOR (...) hints
 	// and makes non-cgo the default for developer builds.
-	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.3-0.20260610145402-3a4aa94cef0c
+	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana-4
 	github.com/dolthub/vitess => github.com/grafana/vitess v0.0.0-grafana-1
 
 	// Use our fork of memberlist which includes some fixes that haven't been merged upstream yet.
