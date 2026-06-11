@@ -91,8 +91,8 @@ type FrontendSettingsReportingDTO struct {
 }
 
 type FrontendSettingsAnalyticsDTO struct {
-	Enabled                   bool  `json:"enabled"`
-	PresenceIndicatorsEnabled *bool `json:"presenceIndicatorsEnabled,omitempty"`
+	Enabled                    bool `json:"enabled"`
+	PresenceIndicatorsDisabled bool `json:"presenceIndicatorsDisabled,omitempty"`
 }
 
 type FrontendSettingsUnifiedAlertingStateHistoryDTO struct {
