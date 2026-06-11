@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsapi"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -151,6 +152,14 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		Tags:         cmd.Tags,
 	}
 
+	if hs.annotationProxyHandler.Enabled() {
+		legacyID, err := hs.annotationProxyHandler.Create(c.Req.Context(), c.GetOrgID(), &item)
+		if err != nil {
+			return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save annotation", err)
+		}
+		return response.JSON(http.StatusOK, util.DynMap{"message": "Annotation added", "id": legacyID})
+	}
+
 	if err := hs.annotationsRepo.Save(c.Req.Context(), &item); err != nil {
 		if errors.Is(err, annotations.ErrTimerangeMissing) {
 			return response.Error(http.StatusBadRequest, "Failed to save annotation", err)
@@ -230,6 +239,14 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) respons
 		Tags:   tagsArray,
 	}
 
+	if hs.annotationProxyHandler.Enabled() {
+		legacyID, err := hs.annotationProxyHandler.Create(c.Req.Context(), c.GetOrgID(), &item)
+		if err != nil {
+			return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save Graphite annotation", err)
+		}
+		return response.JSON(http.StatusOK, util.DynMap{"message": "Graphite annotation added", "id": legacyID})
+	}
+
 	if err := hs.annotationsRepo.Save(c.Req.Context(), &item); err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save Graphite annotation", err)
 	}
@@ -263,12 +280,29 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
+	userID, _ := identity.UserIdentifier(c.GetID())
+
+	if hs.annotationProxyHandler.Enabled() {
+		item := annotations.Item{
+			OrgID: c.GetOrgID(), UserID: userID,
+			Epoch: cmd.Time, EpochEnd: cmd.TimeEnd, Text: cmd.Text, Tags: cmd.Tags,
+		}
+		if cmd.Data != nil {
+			item.Data = cmd.Data
+		}
+		if err := hs.annotationProxyHandler.Update(c.Req.Context(), c.GetOrgID(), annotationID, &item); err == nil {
+			return response.Success("Annotation updated")
+		} else if !errors.Is(err, annotationsapi.ErrNotFound) {
+			return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update annotation", err)
+		}
+		// ErrNotFound: fall through to legacy path (annotation predates migration)
+	}
+
 	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
 	if resp != nil {
 		return resp
 	}
 
-	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
 		OrgID:    c.GetOrgID(),
 		UserID:   userID,
@@ -315,12 +349,44 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
+	userID, _ := identity.UserIdentifier(c.GetID())
+
+	if hs.annotationProxyHandler.Enabled() {
+		k8sObj, err := hs.annotationProxyHandler.FindByLegacyID(c.Req.Context(), c.GetOrgID(), annotationID)
+		if err != nil && !errors.Is(err, annotationsapi.ErrNotFound) {
+			return response.ErrOrFallback(http.StatusInternalServerError, "Failed to patch annotation", err)
+		}
+		if err == nil {
+			epoch, epochEnd, text, tags := annotationsapi.SpecFromObject(k8sObj)
+			existing := annotations.Item{
+				OrgID: c.GetOrgID(), UserID: userID,
+				Epoch: epoch, EpochEnd: epochEnd, Text: text, Tags: tags,
+			}
+			if cmd.Tags != nil {
+				existing.Tags = cmd.Tags
+			}
+			if cmd.Text != "" && cmd.Text != existing.Text {
+				existing.Text = cmd.Text
+			}
+			if cmd.Time > 0 && cmd.Time != existing.Epoch {
+				existing.Epoch = cmd.Time
+			}
+			if cmd.TimeEnd > 0 && cmd.TimeEnd != existing.EpochEnd {
+				existing.EpochEnd = cmd.TimeEnd
+			}
+			if err := hs.annotationProxyHandler.Update(c.Req.Context(), c.GetOrgID(), annotationID, &existing); err != nil {
+				return response.ErrOrFallback(http.StatusInternalServerError, "Failed to patch annotation", err)
+			}
+			return response.Success("Annotation patched")
+		}
+		// ErrNotFound: fall through to legacy path (annotation predates migration)
+	}
+
 	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
 	if resp != nil {
 		return resp
 	}
 
-	userID, _ := identity.UserIdentifier(c.GetID())
 	existing := annotations.Item{
 		OrgID:    c.GetOrgID(),
 		UserID:   userID,
@@ -481,6 +547,15 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.
 	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
+	}
+
+	if hs.annotationProxyHandler.Enabled() {
+		if err := hs.annotationProxyHandler.Delete(c.Req.Context(), c.GetOrgID(), annotationID); err == nil {
+			return response.Success("Annotation deleted")
+		} else if !errors.Is(err, annotationsapi.ErrNotFound) {
+			return response.Error(http.StatusInternalServerError, "Failed to delete annotation", err)
+		}
+		// ErrNotFound: fall through to legacy path (annotation predates migration)
 	}
 
 	err = hs.annotationsRepo.Delete(c.Req.Context(), &annotations.DeleteParams{
