@@ -17,8 +17,8 @@ type TemplateOptions<TemplateKey extends TemplateFieldKey> = Partial<Record<Temp
 // undefined when nothing is configured. Keeps all the groups in sync.
 const buildTemplateOptions = <TemplateKey extends TemplateFieldKey>(
   templateKey: TemplateKey,
-  template: string | undefined,
-  enforceTemplate: boolean | undefined
+  template?: string,
+  enforceTemplate?: boolean
 ): TemplateOptions<TemplateKey> | undefined => {
   const trimmedTemplate = template?.trim();
 
