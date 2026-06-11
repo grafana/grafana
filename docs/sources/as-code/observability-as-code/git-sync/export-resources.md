@@ -54,7 +54,7 @@ To access the Import dashboard tool from the Git Sync UI:
 Keep in mind the following:
 
 - UIDs are globally unique per org. Two repositories with dashboards sharing a UID will conflict.
-- Two dashboards can share a title as long as they live at different file paths in the repo. If a file with the same name already exists at the target path, the import is stopped before it overwrites anything.
+- Two dashboards can share a title as long as they live at different paths in the repo. If a file with the same name already exists at the target path, the import is stopped before it overwrites anything.
 
 For more information refer to [Import dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/import-dashboards/) in the Data Visualization documentation.
 
