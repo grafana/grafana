@@ -78,6 +78,7 @@ const config: KnipConfig = {
         '!e2e-playwright/test-plugins/**',
         '!packages/**',
         '!pkg/**',
+        '!scripts/grafana-server/tmp/**',
         ...externalisedDatasources.map((ds) => `!public/app/plugins/datasource/${ds}/**`),
       ],
       entry: [
@@ -89,6 +90,7 @@ const config: KnipConfig = {
         'public/app/extensions/api/clients/**/index.ts',
         'public/app/plugins/**/module.{ts,tsx,js}',
         'scripts/**/*.{t,j,mt,mj,cj}s*',
+        '!scripts/grafana-server/tmp/**',
 
         // reporter for playwright
         'e2e-playwright/utils/axe-a11y/reporter.ts',
