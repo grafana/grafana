@@ -51,7 +51,7 @@ To access the Import dashboard tool from the Git Sync UI:
 1. Fill in the relevant fields, including the branch and repository folder, and press **Import**.
 1. Open the pull request, follow your regular workflow, and merge.  
 
-The following applies:
+Keep in mind the following:
 
 - UIDs are globally unique per org. Two repos with dashboards sharing a UID will conflict.
 - Two dashboards can share a title as long as they live at different file paths in the repo. If a file with the same name already exists at the target path, the import is stopped before it overwrites anything.
