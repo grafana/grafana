@@ -3,13 +3,13 @@ import { type ReactNode, useMemo } from 'react';
 import { type DataFrame, formattedValueToString } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import {
+  type VizTooltipItem,
   VizTooltipContent,
   VizTooltipFooter,
   VizTooltipHeader,
   VizTooltipWrapper,
-  getContentItems,
-  type VizTooltipItem,
-} from '@grafana/ui/internal';
+} from '@grafana/ui';
+import { getContentItems } from '@grafana/ui/internal';
 
 import { getDataLinks } from '../status-history/utils';
 import { isTooltipScrollable } from '../timeseries/utils';
