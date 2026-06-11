@@ -38,11 +38,11 @@ export function OverviewStatCards({ totals, folderCounts }: OverviewStatCardsPro
 const getStyles = (theme: GrafanaTheme2) => ({
   statCardsRow: css({
     display: 'grid',
-    // Cap each card's width and center the group rather than stretching the
+    // Cap each card's width and left-align the group rather than stretching the
     // cards edge-to-edge. auto-fit collapses the empty tracks so the row stays
     // responsive and wraps on narrow viewports.
     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 240px))',
-    justifyContent: 'center',
+    justifyContent: 'start',
     alignItems: 'start',
     gap: theme.spacing(1.5),
   }),
