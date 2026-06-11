@@ -142,7 +142,7 @@ type ConvertPrometheusSrv struct {
 
 type Alertmanager interface {
 	DeleteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, identifier string) error
-	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, extraConfig v1.ExtraConfiguration, replace bool, dryRun bool) (merge.RenameResources, error)
+	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, extraConfig v1.ExtraConfiguration, replace bool, dryRun bool) (merge.MergeResult, error)
 	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error)
 	IsExternalAMSyncConfiguredForOrg(ctx context.Context, orgID int64) (bool, error)
 }
@@ -644,34 +644,41 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 		return errorToResponse(err)
 	}
 
-	renamed, err := srv.am.SaveAndApplyExtraConfiguration(c.Req.Context(), c.GetOrgID(), c.SignedInUser, srv.importsAuthz, ec, replace, dryRun)
+	result, err := srv.am.SaveAndApplyExtraConfiguration(c.Req.Context(), c.GetOrgID(), c.SignedInUser, srv.importsAuthz, ec, replace, dryRun)
 	if err != nil {
 		logger.Error("Failed to save alertmanager configuration", "error", err, "identifier", identifier)
 		return errorToResponse(fmt.Errorf("failed to save alertmanager configuration: %w", err))
 	}
 
-	// Convert merge.RenameResources to API RenameResources type
-	var apiRenamed *apimodels.RenameResources
-	if len(renamed.Receivers) > 0 || len(renamed.TimeIntervals) > 0 {
-		apiRenamed = &apimodels.RenameResources{
-			Receivers:     renamed.Receivers,
-			TimeIntervals: renamed.TimeIntervals,
-		}
-	}
+	apiResp := buildConvertResponse(result)
 
 	if dryRun {
 		logger.Info("Dry run: alertmanager configuration validated successfully", "identifier", identifier, "replace", replace)
-		return response.JSON(http.StatusOK, apimodels.ConvertAlertmanagerResponse{
-			Status:          "success",
-			RenameResources: apiRenamed,
-		})
+		return response.JSON(http.StatusOK, apiResp)
 	}
 
 	logger.Info("Successfully updated alertmanager configuration with imported Prometheus config", "identifier", identifier, "replace", replace)
-	return response.JSON(http.StatusAccepted, apimodels.ConvertAlertmanagerResponse{
-		Status:          "success",
-		RenameResources: apiRenamed,
-	})
+	return response.JSON(http.StatusAccepted, apiResp)
+}
+
+func buildConvertResponse(result merge.MergeResult) apimodels.ConvertAlertmanagerResponse {
+	resp := apimodels.ConvertAlertmanagerResponse{
+		Status: "success",
+		Stats: &apimodels.MergeStats{
+			AddedRoute:           result.AddedRoute,
+			AddedReceivers:       result.AddedReceivers,
+			AddedTimeIntervals:   result.AddedTimeIntervals,
+			AddedTemplates:       result.AddedTemplates,
+			AddedInhibitionRules: result.AddedInhibitionRules,
+		},
+	}
+	if len(result.Receivers) > 0 || len(result.TimeIntervals) > 0 {
+		resp.RenameResources = &apimodels.RenameResources{
+			Receivers:     result.Receivers,
+			TimeIntervals: result.TimeIntervals,
+		}
+	}
+	return resp
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {

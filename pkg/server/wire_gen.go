@@ -296,6 +296,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
+	prometheus2 "github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -1958,33 +1959,34 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	return apiServerFactory, nil
 }
 
-func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSupplier, error) {
-	featureManager, err := featuremgmt.ProvideManagerService(cfg)
+// InitializeSearchSupport builds the document builders together with the
+// dashboard stats they use, so the storage-server target shares a single
+// stats instance (and a single metrics registration) between the search
+// document builders and the vector backfiller. It receives the dependencies
+// the module server has already constructed so they aren't recreated.
+func InitializeSearchSupport(cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg prometheus2.Registerer) (SearchSupport, error) {
+	ossMigrations := migrations.ProvideOSSMigrations(features)
+	inProcBus := bus.ProvideBus(tracer)
+	sqlStore, err := sqlstore.ProvideService(cfg, features, ossMigrations, inProcBus, tracer)
 	if err != nil {
-		return nil, err
-	}
-	featureToggles := featuremgmt.ProvideToggles(featureManager)
-	ossMigrations := migrations.ProvideOSSMigrations(featureToggles)
-	configProvider, err := configprovider.ProvideService(cfg)
-	if err != nil {
-		return nil, err
-	}
-	tracingConfig, err := tracing.ProvideTracingConfig(configProvider)
-	if err != nil {
-		return nil, err
-	}
-	tracingService, err := tracing.ProvideService(tracingConfig)
-	if err != nil {
-		return nil, err
-	}
-	inProcBus := bus.ProvideBus(tracingService)
-	sqlStore, err := sqlstore.ProvideService(cfg, featureToggles, ossMigrations, inProcBus, tracingService)
-	if err != nil {
-		return nil, err
+		return SearchSupport{}, err
 	}
 	ossDashboardStats := builders.ProvideDashboardStats()
 	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats)
-	return documentBuilderSupplier, nil
+	searchSupport := SearchSupport{
+		DocBuilders:    documentBuilderSupplier,
+		DashboardStats: ossDashboardStats,
+	}
+	return searchSupport, nil
+}
+
+// InitializeDashboardStats builds only the dashboard stats dependency used by
+// the vector backfiller views filter, for the storage-server target running
+// without enable_search. It receives the dependencies the module server has
+// already constructed so they aren't recreated.
+func InitializeDashboardStats(cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg prometheus2.Registerer) (builders.DashboardStats, error) {
+	ossDashboardStats := builders.ProvideDashboardStats()
+	return ossDashboardStats, nil
 }
 
 // wire.go:

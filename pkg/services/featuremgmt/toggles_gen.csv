@@ -291,7 +291,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,globalDashboardVariables,experimental,@grafana/dashboards-squad,false,true,false
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
 2026-01-06,secretsManagementAppPlatformAwsKeeper,experimental,@grafana/grafana-operator-experience-squad,false,false,false
-2026-01-07,profilesExemplars,preview,@grafana/observability-traces-and-profiling,false,false,false
+2026-01-07,profilesExemplars,GA,@grafana/observability-traces-and-profiling,false,false,false
 2026-05-22,pyroscopeUTF8LabelNames,preview,@grafana/observability-traces-and-profiling,false,false,false
 2026-01-14,alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false
 2026-05-22,queryWithAssistant,experimental,@grafana/data-sources-plugins,false,false,true
@@ -306,7 +306,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,kubernetesExternalGroupMappingsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesTeamSync,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesUsersRedirect,experimental,@grafana/identity-access-team,false,false,false
-2026-05-22,alertingMultiplePolicies,experimental,@grafana/alerting-squad,false,false,false
+2026-05-22,alertingMultiplePolicies,GA,@grafana/alerting-squad,false,false,false
 2026-05-22,alertingPolicyRoutingSettings,experimental,@grafana/alerting-squad,false,false,true
 2026-05-22,appplugins.registerAPIServer,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-22,appplugins.handleProxyRequests,experimental,@grafana/grafana-catalog,false,true,false
