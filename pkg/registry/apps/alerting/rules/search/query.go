@@ -237,12 +237,15 @@ func sortRules(rules []*ngmodels.AlertRule, field string, desc bool) {
 			if a.RuleGroupIndex != b.RuleGroupIndex {
 				return a.RuleGroupIndex < b.RuleGroupIndex
 			}
-			return a.Title < b.Title
+			return strings.ToLower(a.Title) < strings.ToLower(b.Title)
 		}
 	default:
+		// Case-insensitive so CamelCase alert titles and lowercase recording-rule
+		// titles interleave alphabetically instead of all-upper sorting before all-lower.
 		less = func(a, b *ngmodels.AlertRule) bool {
-			if a.Title != b.Title {
-				return a.Title < b.Title
+			at, bt := strings.ToLower(a.Title), strings.ToLower(b.Title)
+			if at != bt {
+				return at < bt
 			}
 			return a.UID < b.UID
 		}
