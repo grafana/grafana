@@ -472,10 +472,7 @@ func (r *DualReadWriter) writeAncestorFolderMetadata(ctx context.Context, rw rep
 	}
 
 	return safepath.Walk(ctx, dir, func(ctx context.Context, segPath string) error {
-		folderPath := segPath
-		if !safepath.IsDir(folderPath) {
-			folderPath += "/" // trailing slash indicates a folder
-		}
+		folderPath := safepath.EnsureTrailingSlash(segPath)
 
 		// Skip folders that already exist in the repository (with or without metadata).
 		_, err := rw.Read(ctx, folderPath, ref)
