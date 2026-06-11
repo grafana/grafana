@@ -2,8 +2,9 @@ package checkscheduler
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"sort"
 	"strconv"
 	"time"
@@ -409,8 +410,7 @@ func (r *Runner) getNextEvalTime(defaultEvaluationInterval time.Duration, lastCr
 
 	// Calculate the next evaluation time and add random variation
 	nextEvalTime = time.Until(baseTime.Add(nextEvalTime))
-	randomVariation := time.Duration(rand.Int63n(evalIntervalRandomVariation.Nanoseconds()))
-	nextEvalTime += randomVariation
+	nextEvalTime += randomJitter(evalIntervalRandomVariation)
 
 	// Ensure we always return a positive duration to avoid ticker panics
 	if nextEvalTime <= 0 {
@@ -418,6 +418,21 @@ func (r *Runner) getNextEvalTime(defaultEvaluationInterval time.Duration, lastCr
 	}
 
 	return nextEvalTime
+}
+
+// randomJitter returns a uniformly distributed duration in [0, max) drawn from
+// crypto/rand. The value only spreads scheduler ticks so a CSPRNG isn't strictly
+// required, but using one keeps us off math/rand. On the effectively impossible
+// error path (or a non-positive max) it returns 0, i.e. no jitter.
+func randomJitter(max time.Duration) time.Duration {
+	if max <= 0 {
+		return 0
+	}
+	n, err := rand.Int(rand.Reader, big.NewInt(max.Nanoseconds()))
+	if err != nil {
+		return 0
+	}
+	return time.Duration(n.Int64())
 }
 
 func getMaxHistory(pluginConfig map[string]string) (int, error) {

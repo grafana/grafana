@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"maps"
-	"math/rand"
 	"sort"
 	"sync"
 	"time"
@@ -79,7 +78,7 @@ func (r *Runner) runMT(ctx context.Context, logger logging.Logger) error {
 // Instead we fire on a fixed cadence and let tickNamespace skip per-namespace
 // work that isn't stale yet.
 func (r *Runner) mtTickInterval() time.Duration {
-	jitter := time.Duration(rand.Int63n(evalIntervalRandomVariation.Nanoseconds()))
+	jitter := randomJitter(evalIntervalRandomVariation)
 	return r.defaultEvalInterval + jitter
 }
 
