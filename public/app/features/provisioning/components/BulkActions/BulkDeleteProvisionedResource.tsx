@@ -115,22 +115,16 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
                     This will delete selected folders and their descendants.
                   </Trans>
                 }
-                emptyMessage={t(
-                  'browse-dashboards.bulk-delete-resources-form.folder-empty',
-                  'Selected folder is empty',
-                  {
-                    count: getSelectedFolderUIDs(selectedItems).length,
-                    defaultValue_other: 'Selected folders are empty',
-                  }
-                )}
-                nonEmptyMessage={t(
-                  'browse-dashboards.bulk-delete-resources-form.folder-not-empty',
-                  'Selected folder contains other resources that will be deleted',
-                  {
-                    count: getSelectedFolderUIDs(selectedItems).length,
-                    defaultValue_other: 'Selected folders contain other resources that will be deleted',
-                  }
-                )}
+                emptyMessage={t('browse-dashboards.bulk-delete-resources-form.folder-empty', '', {
+                  count: getSelectedFolderUIDs(selectedItems).length,
+                  defaultValue_one: 'Selected folder is empty',
+                  defaultValue_other: 'Selected folders are empty',
+                })}
+                nonEmptyMessage={t('browse-dashboards.bulk-delete-resources-form.folder-not-empty', '', {
+                  count: getSelectedFolderUIDs(selectedItems).length,
+                  defaultValue_one: 'Selected folder contains other resources that will be deleted',
+                  defaultValue_other: 'Selected folders contain other resources that will be deleted',
+                })}
               />
               <ResourceEditFormSharedFields
                 resourceType="folder"

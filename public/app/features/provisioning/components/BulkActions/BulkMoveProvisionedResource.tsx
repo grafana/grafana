@@ -170,14 +170,11 @@ function FormContent({
               <MoveActionAvailableTargetWarning />
               <AffectedFolderContents
                 selectedItems={selectedItems}
-                nonEmptyMessage={t(
-                  'browse-dashboards.bulk-move-resources-form.folder-not-empty',
-                  'Selected folder contains other resources that will be moved with it',
-                  {
-                    count: getSelectedFolderUIDs(selectedItems).length,
-                    defaultValue_other: 'Selected folders contain other resources that will be moved with them',
-                  }
-                )}
+                nonEmptyMessage={t('browse-dashboards.bulk-move-resources-form.folder-not-empty', '', {
+                  count: getSelectedFolderUIDs(selectedItems).length,
+                  defaultValue_one: 'Selected folder contains other resources that will be moved with it',
+                  defaultValue_other: 'Selected folders contain other resources that will be moved with them',
+                })}
               />
               {/* Target folder selection */}
               <Field

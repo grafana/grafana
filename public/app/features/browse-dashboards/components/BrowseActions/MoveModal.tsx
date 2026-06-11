@@ -51,14 +51,11 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
 
       <AffectedFolderContents
         selectedItems={selectedItems}
-        nonEmptyMessage={t(
-          'browse-dashboards.action.move-modal-folder-not-empty',
-          'Selected folder contains other resources that will be moved with it',
-          {
-            count: selectedFolders.length,
-            defaultValue_other: 'Selected folders contain other resources that will be moved with them',
-          }
-        )}
+        nonEmptyMessage={t('browse-dashboards.action.move-modal-folder-not-empty', '', {
+          count: selectedFolders.length,
+          defaultValue_one: 'Selected folder contains other resources that will be moved with it',
+          defaultValue_other: 'Selected folders contain other resources that will be moved with them',
+        })}
       />
 
       <Space v={3} />
