@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -30,11 +31,15 @@ func (noopExtraConfigAuthz) AuthorizeUpdate(_ context.Context, _ identity.Reques
 func (noopExtraConfigAuthz) AuthorizeDelete(_ context.Context, _ identity.Requester, _ string) error {
 	return nil
 }
+func (noopExtraConfigAuthz) AuthorizePromote(_ context.Context, _ identity.Requester, _ merge.MergeResult) error {
+	return nil
+}
 
 type stubExtraConfigAuthz struct {
-	createErr error
-	updateErr error
-	deleteErr error
+	createErr  error
+	updateErr  error
+	deleteErr  error
+	promoteErr error
 }
 
 func (s stubExtraConfigAuthz) AuthorizeCreate(_ context.Context, _ identity.Requester) error {
@@ -45,6 +50,9 @@ func (s stubExtraConfigAuthz) AuthorizeUpdate(_ context.Context, _ identity.Requ
 }
 func (s stubExtraConfigAuthz) AuthorizeDelete(_ context.Context, _ identity.Requester, _ string) error {
 	return s.deleteErr
+}
+func (s stubExtraConfigAuthz) AuthorizePromote(_ context.Context, _ identity.Requester, _ merge.MergeResult) error {
+	return s.promoteErr
 }
 
 func TestMultiOrgAlertmanager_SaveAndApplyExtraConfiguration(t *testing.T) {

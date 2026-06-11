@@ -27,6 +27,7 @@ type ExtraConfigAuthz interface {
 	AuthorizeCreate(ctx context.Context, user identity.Requester) error
 	AuthorizeUpdate(ctx context.Context, user identity.Requester, identifier string) error
 	AuthorizeDelete(ctx context.Context, user identity.Requester, identifier string) error
+	AuthorizePromote(ctx context.Context, user identity.Requester, result merge.MergeResult) error
 }
 
 var (
@@ -350,11 +351,15 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 
 // modifyAndApplyExtraConfiguration is a helper function that loads the current configuration,
 // applies a modification function to the ExtraConfigs, and saves the result.
+// If promote is true, the saved config is immediately promoted into the main Grafana config.
 func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 	ctx context.Context,
 	org int64,
+	user identity.Requester,
+	authz ExtraConfigAuthz,
 	modifyFn func([]v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error),
 	dryRun bool,
+	promote bool,
 ) (merge.MergeResult, error) {
 	currentCfg, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
 	if err != nil {
@@ -379,7 +384,11 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		}
 	}
 
-	_, mergeResult, err := merge.MergeExtraConfig(ctx, cfg, models.ProvenanceConvertedPrometheus)
+	provenance := models.ProvenanceConvertedPrometheus
+	if promote {
+		provenance = models.ProvenanceNone
+	}
+	mergedConfig, mergeResult, err := merge.MergeExtraConfig(ctx, cfg, provenance)
 	if err != nil {
 		return merge.MergeResult{}, fmt.Errorf("cannot merge imported configuration into Grafana: %w", err)
 	}
@@ -387,6 +396,12 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 	if dryRun {
 		moa.logger.Debug("Dry run: extra configuration validated successfully", "org", org)
 		return mergeResult, nil
+	}
+	if promote {
+		if err := authz.AuthorizePromote(ctx, user, mergeResult); err != nil {
+			return merge.MergeResult{}, err
+		}
+		cfg = &mergedConfig
 	}
 
 	am, err := moa.AlertmanagerFor(org)
@@ -406,7 +421,7 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		return merge.MergeResult{}, AlertmanagerConfigRejectedError{err}
 	}
 
-	moa.logger.Info("Applied alertmanager configuration with extra config", "org", org)
+	moa.logger.Info("Applied alertmanager configuration with extra config", "org", org, "promoted", promote)
 	return mergeResult, nil
 }
 
@@ -451,7 +466,7 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 		return []v1.ExtraConfiguration{extraConfig}, nil
 	}
 
-	result, err := moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc, dryRun)
+	result, err := moa.modifyAndApplyExtraConfiguration(ctx, org, user, authz, modifyFunc, dryRun, false)
 	if err != nil {
 		return merge.MergeResult{}, err
 	}
@@ -479,7 +494,7 @@ func (moa *MultiOrgAlertmanager) DeleteExtraConfiguration(ctx context.Context, o
 		return filtered, nil
 	}
 
-	_, err := moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc, false)
+	_, err := moa.modifyAndApplyExtraConfiguration(ctx, org, user, authz, modifyFunc, false, false)
 	return err
 }
 
