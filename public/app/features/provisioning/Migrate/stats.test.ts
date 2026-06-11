@@ -106,9 +106,10 @@ describe('aggregateFolderCounts', () => {
 });
 
 describe('percent', () => {
-  it('rounds the percentage', () => {
+  it('floors the percentage so a partial migration never reads as complete', () => {
     expect(percent(50, 100)).toBe('50%');
     expect(percent(1, 3)).toBe('33%');
+    expect(percent(999, 1000)).toBe('99%');
   });
 
   it('returns 0% when the total is zero', () => {

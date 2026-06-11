@@ -122,5 +122,7 @@ export function percent(part: number, total: number): string {
   if (total === 0) {
     return '0%';
   }
-  return `${Math.round((part / total) * 100)}%`;
+  // Floor rather than round so a partial migration never reads as 100% (e.g.
+  // 999/1000 stays at 99%, not 100%).
+  return `${Math.floor((part / total) * 100)}%`;
 }

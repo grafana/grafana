@@ -20,9 +20,9 @@ describe('OverviewStatCards', () => {
     expect(screen.getByText('75%')).toBeInTheDocument();
     expect(screen.getByText('6 of 8 managed')).toBeInTheDocument();
 
-    // All resources card: 56 of 108 managed => 52%.
+    // All resources card: 56 of 108 managed => 51% (floored from 51.8%).
     expect(screen.getByText('All resources')).toBeInTheDocument();
-    expect(screen.getByText('52%')).toBeInTheDocument();
+    expect(screen.getByText('51%')).toBeInTheDocument();
     expect(screen.getByText('56 of 108 managed')).toBeInTheDocument();
   });
 
