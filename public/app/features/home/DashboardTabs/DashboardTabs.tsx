@@ -11,6 +11,8 @@ import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
+import { tabChanged } from '../analytics/main';
+
 import { RecentDashboardsTab } from './RecentDashboardsTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
 import { type HomepageTabExtensionProps, type HomepageTab, validateHomepageTab } from './types';
@@ -144,7 +146,10 @@ export function DashboardTabs() {
               label={isActive ? (tab.activeLabel ?? tab.label) : tab.label}
               active={isActive}
               counter={tab.counter}
-              onChangeTab={() => setActiveTab(tab.id)}
+              onChangeTab={() => {
+                setActiveTab(tab.id);
+                tabChanged({ tab: tab.id });
+              }}
             />
           );
         })}
