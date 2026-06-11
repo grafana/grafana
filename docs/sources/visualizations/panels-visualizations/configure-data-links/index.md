@@ -214,13 +214,15 @@ You can also use template variables in your data links or actions URLs. For more
 
 These variables allow you to include the current time range in the data link or action URL:
 
-| Variable           | Description                                                              |
-| ------------------ | ------------------------------------------------------------------------ |
-| `__url_time_range` | Current dashboard's time range (for example, `?from=now-6h&to=now`)      |
-| `__from`           | For more information, refer to [Global variables](ref:global-variables). |
-| `__to`             | For more information, refer to [Global variables](ref:global-variables). |
+| Variable           | Description                                                          |
+| ------------------ | -------------------------------------------------------------------- |
+| `__url_time_range` | Current dashboard's time range (for example, `?from=now-6h&to=now`). |
+| `__from`           | A specific start time.                                               |
+| `__to`             | A specific end time.                                                 |
 
 When you create data links and actions using time range variables like `__url_time_range` in the URL, you have to form the query parameter syntax yourself; that is, you must format the URL by appending query parameters using the question mark (`?`) and ampersand (`&`) syntax. These characters aren't automatically generated.
+
+For more information about these variables, refer to the [Global variables documentation](ref:global-variables).
 
 ### Series variables
 
