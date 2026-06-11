@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
 
 import { type PanelPlugin } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
+import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
+import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 
 export interface Props {
@@ -10,10 +13,12 @@ export interface Props {
 }
 
 export function ViewPanelQuickToggles({ panel, plugin }: Props) {
-  const category = useMemo(() => {
+  const { options, fieldConfig } = panel.useState();
+
+  const optionHits = useMemo(() => {
     const quickToggles = plugin.viewPanelOptions?.quickToggles;
     if (!quickToggles) {
-      return null;
+      return [];
     }
 
     const categories = getVisualizationOptions2({
@@ -21,19 +26,33 @@ export function ViewPanelQuickToggles({ panel, plugin }: Props) {
       plugin,
       eventBus: panel.getPanelContext().eventBus,
       instanceState: panel.getPanelContext().instanceState,
-      quickToggles: true,
+      currentOptions: options,
+      currentFieldConfig: fieldConfig,
     });
 
-    if (categories.length === 0) {
-      return null;
+    const toggles: OptionsPaneItemDescriptor[] = [];
+
+    for (const category of categories) {
+      for (const option of category.items) {
+        if (quickToggles.optionProperties.includes(option.props.id)) {
+          toggles.push(option);
+        }
+        if (quickToggles.fieldConfigProperties.includes(option.props.id)) {
+          toggles.push(option);
+        }
+      }
     }
 
-    return categories[0];
-  }, [panel, plugin]);
+    return toggles;
+  }, [panel, plugin, options, fieldConfig]);
 
-  if (!category) {
-    return null;
-  }
-
-  return category.renderElement();
+  return (
+    <OptionsPaneCategory
+      id="quick-toggles"
+      title={t('dashboard.sidebar.view-panel.quick-toggles', 'Quick toggles')}
+      forceOpen={true}
+    >
+      {optionHits.map((hit) => hit.renderElement('asd'))}
+    </OptionsPaneCategory>
+  );
 }

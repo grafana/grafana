@@ -7,6 +7,7 @@ import {
   type PanelPlugin,
   type StandardEditorContext,
   type VariableSuggestionsScope,
+  type FieldConfigSource,
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
 import { type NestedValueAccess, isNestedPanelOptions, type PanelOptionsSupplier } from '@grafana/data/internal';
@@ -94,7 +95,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
   };
 
   // Load the options into categories
-  fillOptionsPaneItems(plugin.meta.id, plugin.getPanelOptionsSupplier(), access, getOptionsPaneCategory, context);
+  fillOptionsPaneItems('', plugin.getPanelOptionsSupplier(), access, getOptionsPaneCategory, context);
 
   /**
    * Field options
@@ -131,7 +132,8 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
       category.props.itemsCount = fieldOption.getItemsCount(value);
     }
 
-    const htmlId = `${plugin.meta.id}-${fieldOption.path}`;
+    const htmlId = fieldOption.path;
+
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
@@ -203,14 +205,28 @@ export interface OptionPaneRenderProps2 {
   plugin: PanelPlugin;
   data?: PanelData;
   instanceState: unknown;
-  quickToggles?: boolean;
+  currentOptions: Record<string, unknown>;
+  currentFieldConfig: FieldConfigSource;
 }
 
 export function getVisualizationOptions2(props: OptionPaneRenderProps2): OptionsPaneCategoryDescriptor[] {
-  const { plugin, panel, data, eventBus, instanceState, quickToggles } = props;
+  const { plugin, panel, data, eventBus, instanceState, currentOptions, currentFieldConfig } = props;
 
-  const currentOptions = panel.state.options;
-  const currentFieldConfig = panel.state.fieldConfig;
+  const categoryIndex: Record<string, OptionsPaneCategoryDescriptor> = {};
+  const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneCategoryDescriptor => {
+    const categoryName = categoryNames?.[0] ?? plugin.meta.name;
+    const category = categoryIndex[categoryName];
+
+    if (category) {
+      return category;
+    }
+
+    return (categoryIndex[categoryName] = new OptionsPaneCategoryDescriptor({
+      title: categoryName,
+      id: categoryName,
+      sandboxId: plugin.meta.id,
+    }));
+  };
 
   const access: NestedValueAccess = {
     getValue: (path) => lodashGet(currentOptions, path),
@@ -236,85 +252,43 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     instanceState,
   });
 
-  // When quickToggles is true (view panel in fullscreen) we only return specified options in a single category
-  const quickTogglesConfig = quickToggles ? plugin.viewPanelOptions?.quickToggles : undefined;
+  // Load the options into categories
+  fillOptionsPaneItems('', plugin.getPanelOptionsSupplier(), access, getOptionsPaneCategory, context);
 
-  // Set up category infrastructure — closures differ between quick-toggles mode and normal mode
-  let getCategory: categoryGetter;
-  let getResults: () => OptionsPaneCategoryDescriptor[];
-
-  if (quickTogglesConfig) {
-    const quickTogglesCategory = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.sidebar.view-panel.quick-toggles', 'Quick toggles'),
-      id: 'quick-toggles',
-    });
-    getCategory = () => quickTogglesCategory;
-    getResults = () => [quickTogglesCategory];
-  } else {
-    const categoryIndex: Record<string, OptionsPaneCategoryDescriptor> = {};
-    getCategory = (categoryNames?: string[]) => {
-      const categoryName = categoryNames?.[0] ?? plugin.meta.name;
-      const category = categoryIndex[categoryName];
-      if (category) {
-        return category;
-      }
-      return (categoryIndex[categoryName] = new OptionsPaneCategoryDescriptor({
-        title: categoryName,
-        id: categoryName,
-        sandboxId: plugin.meta.id,
-      }));
-    };
-    getResults = () => Object.values(categoryIndex);
-  }
-
-  // Load panel options into categories
-  fillOptionsPaneItems(
-    plugin.meta.id,
-    plugin.getPanelOptionsSupplier(),
-    access,
-    getCategory,
-    context,
-    undefined,
-    quickTogglesConfig?.optionProperties
-  );
-
-  // Load field config options into categories
+  // Field options
   for (const fieldOption of plugin.fieldConfigRegistry.list()) {
-    if (quickTogglesConfig && !quickTogglesConfig.fieldConfigProperties.includes(fieldOption.id)) {
-      continue;
-    }
-
     const hideOption =
       fieldOption.showIf &&
       (fieldOption.isCustom
         ? !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series, data?.annotations)
         : !fieldOption.showIf(currentFieldConfig.defaults, data?.series, data?.annotations));
-
     if (fieldOption.hideFromDefaults || hideOption) {
       continue;
     }
 
-    const category = getCategory(fieldOption.category);
+    const category = getOptionsPaneCategory(fieldOption.category);
     const Editor = fieldOption.editor;
     const defaults = currentFieldConfig.defaults;
+
     const value = fieldOption.isCustom
       ? defaults.custom
         ? lodashGet(defaults.custom, fieldOption.path)
         : undefined
       : lodashGet(defaults, fieldOption.path);
-    const id = quickTogglesConfig ? fieldOption.path : `${plugin.meta.id}-${fieldOption.path}`;
 
     if (fieldOption.getItemsCount) {
       category.props.itemsCount = fieldOption.getItemsCount(value);
     }
 
+    const htmlId = `${fieldOption.isCustom ? 'custom.' : ''}${fieldOption.path}`;
+
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
-        id,
-        useFieldset: quickTogglesConfig ? undefined : fieldOption.useFieldset,
-        description: quickTogglesConfig ? undefined : fieldOption.description,
-        overrides: quickTogglesConfig ? undefined : getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
+        id: htmlId,
+        useFieldset: fieldOption.useFieldset,
+        description: fieldOption.description,
+        overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
           const onChange = (v: unknown) => {
             panel.onFieldConfigChange(
@@ -322,13 +296,14 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
               true
             );
           };
-          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={id} />;
+
+          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={htmlId} />;
         },
       })
     );
   }
 
-  return getResults();
+  return Object.values(categoryIndex);
 }
 
 /**
@@ -342,32 +317,27 @@ export function fillOptionsPaneItems(
   access: NestedValueAccess,
   getOptionsPaneCategory: categoryGetter,
   context: StandardEditorContext<unknown, unknown>,
-  parentCategory?: OptionsPaneCategoryDescriptor,
-  filterIds?: string[]
+  parentCategory?: OptionsPaneCategoryDescriptor
 ) {
   const builder = new PanelOptionsEditorBuilder();
   supplier(builder, context);
 
   for (const pluginOption of builder.getItems()) {
-    if (filterIds && !filterIds.includes(pluginOption.id)) {
-      continue;
-    }
-
     if (pluginOption.showIf && !pluginOption.showIf(context.options, context.data, context.annotations)) {
       continue;
     }
 
-    const htmlId = `${idPrefix}-${pluginOption.id}`;
+    const htmlId = `${idPrefix}${pluginOption.id}`;
 
     let category = parentCategory;
     if (!category) {
       category = getOptionsPaneCategory(pluginOption.category);
-    } else if (!filterIds && pluginOption.category?.[0]?.length) {
+    } else if (pluginOption.category?.[0]?.length) {
       category = category.getCategory(pluginOption.category[0]);
     }
 
-    // Nested options get passed up one level (skipped when filtering)
-    if (!filterIds && isNestedPanelOptions(pluginOption)) {
+    // Nested options get passed up one level
+    if (isNestedPanelOptions(pluginOption)) {
       const subAccess = pluginOption.getNestedValueAccess(access);
       const subContext = subAccess.getContext
         ? subAccess.getContext(context)

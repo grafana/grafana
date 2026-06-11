@@ -52,7 +52,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
     fanout: { enabled: true },
     quickToggles: {
       optionProperties: ['legend.showLegend'],
-      fieldConfigProperties: ['custom.stacking.mode'],
+      fieldConfigProperties: ['custom.stacking'],
     },
   })
   .setDataSupport({ annotations: true, alertStates: true });

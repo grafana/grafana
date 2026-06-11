@@ -32,36 +32,6 @@ export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
   public onSetMode(value: string | undefined) {
     this.setState({ fanoutMode: value });
   }
-
-  // public onToggleLegend(show: boolean) {
-  //   const panel = this.state.panelRef.resolve();
-  //   panel.onOptionsChange({
-  //     ...panel.state.options,
-  //     //@ts-expect-error
-  //     legend: { ...panel.state.options?.legend, showLegend: show },
-  //   });
-  // }
-
-  // public onToggleStacking(stacking: string) {
-  //   const panel = this.state.panelRef.resolve();
-  //   panel.onFieldConfigChange(
-  //     {
-  //       ...panel.state.fieldConfig,
-  //       defaults: {
-  //         ...panel.state.fieldConfig?.defaults,
-  //         custom: {
-  //           ...panel.state.fieldConfig?.defaults?.custom,
-  //           stacking: {
-  //             // @ts-expect-error
-  //             ...panel.state.fieldConfig?.defaults?.custom?.stacking,
-  //             mode: stacking,
-  //           },
-  //         },
-  //       },
-  //     },
-  //     true
-  //   );
-  // }
 }
 
 export function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSidePane>) {
@@ -91,19 +61,12 @@ export function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPan
 
   const viewPanelOptions = plugin.value.viewPanelOptions;
 
-  // // const modeValue = fanoutMode ?? '$__none__$';
-  // // //@ts-expect-error
-  // // const showLegend = options.legend?.showLegend ?? false;
-  // // //@ts-expect-error
-  // // const stacking = fieldConfig.defaults?.custom?.stacking?.mode ?? StackingMode.None;
-  // // const stackingOptions = getGraphFieldOptions().stacking;
-
   return (
     <Box display="flex" direction="column" flex={1} height="100%">
-      <Sidebar.PaneHeader title={t('dashboard.sidebar.view-panel-fanout.pane-header', 'View panel')} />
+      <Sidebar.PaneHeader title={t('dashboard.sidebar.view-panel.pane-header', 'View panel')} />
       <ScrollContainer showScrollIndicators={true}>
-        <Box padding={0} gap={2} display="flex" direction="column">
-          <Box display="flex" direction="column" gap={0} padding={2} paddingBottom={0}>
+        <Box padding={0} gap={0} display="flex" direction="column">
+          <Box display="flex" direction="column" gap={0} padding={2} paddingBottom={2}>
             <Button
               variant="secondary"
               onClick={() => dashboard.setState({ viewPanel: undefined })}
@@ -113,34 +76,8 @@ export function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPan
               <Trans i18nKey="dashboard.view-panel.back-to-dashboard">Back to dashboard</Trans>
             </Button>
           </Box>
-          {viewPanelOptions?.fanout?.enabled && <ViewPanelFanoutOptions panel={panel} pane={model} />}
           {viewPanelOptions?.quickToggles && <ViewPanelQuickToggles panel={panel} plugin={plugin.value} />}
-          {/* <OptionsPaneCategory
-            title={t('dashboard.view-panel.quick-toggles', 'Quick toggles')}
-            id="quick-toggles"
-            isOpenDefault={true}
-          >
-            <Box direction="column" gap={2} display="flex" paddingLeft={1}>
-              <Field label={t('dashboard.view-panel.show-legend', 'Show legend')} noMargin>
-                <Switch value={showLegend} onChange={(e) => model.onToggleLegend(e.currentTarget.checked)} />
-              </Field>
-              <Field label={t('dashboard.view-panel.stacking', 'Stacking')} noMargin>
-                <RadioButtonGroup
-                  value={stacking}
-                  options={stackingOptions}
-                  onChange={(value) => model.onToggleStacking(value)}
-                />
-              </Field>
-            </Box>
-          </OptionsPaneCategory> */}
-
-          {/* <OptionsPaneCategory title="Toggle queries" id="toggle-queries" isOpenDefault={false}>
-            <Box direction="column" gap={1} display="flex" paddingLeft={1} alignItems="flex-start">
-              <Checkbox id="toggle-queries-checkbox" checked={true} onChange={() => {}} label="Query A" />
-              <Checkbox id="toggle-queries-checkbox" checked={true} onChange={() => {}} label="Query B" />
-              <Checkbox id="toggle-queries-checkbox" checked={true} onChange={() => {}} label="Query C" />
-            </Box>
-          </OptionsPaneCategory> */}
+          {viewPanelOptions?.fanout?.enabled && <ViewPanelFanoutOptions panel={panel} pane={model} />}
         </Box>
       </ScrollContainer>
     </Box>
@@ -173,7 +110,7 @@ function ViewPanelFanoutOptions({ panel, pane }: ViewPaneFanoutOptionsProps) {
 
   return (
     <OptionsPaneCategory
-      title={t('dashboard.view-panel.fanout-by-series-or-label', 'Fan-out by series or label')}
+      title={t('dashboard.sidebar.view-panel.fanout-category', 'Fan-out by series or label')}
       id="fanout"
       isOpenDefault={true}
     >
@@ -181,27 +118,27 @@ function ViewPanelFanoutOptions({ panel, pane }: ViewPaneFanoutOptionsProps) {
         <RadioButtonDot
           name="fanout"
           id="$__none__$"
-          label={t('dashboard.view-panel.disabled', 'Disabled')}
+          label={t('dashboard.sidebar.view-panel.disabled', 'Disabled')}
           checked={modeValue === '$__none__$'}
           onClick={() => pane.onSetMode(undefined)}
         />
         <RadioButtonDot
           name="fanout"
           id={bySeriesMode}
-          label={t('dashboard.view-panel.by-series', 'By series')}
+          label={t('dashboard.sidebar.view-panel.fanout-by-series', 'By series')}
           checked={modeValue === bySeriesMode}
           onClick={() => pane.onSetMode(bySeriesMode)}
         />
       </Box>
       <Box padding={1}>
         <Text variant="bodySmall" weight="medium">
-          {t('dashboard.view-panel.labels', 'Labels')}
+          {t('dashboard.sidebar.view-panel.fanout-labels', 'Labels')}
         </Text>
       </Box>
       <Box direction="column" gap={1} display="flex" paddingLeft={1}>
         {labels && labels.length === 0 && (
           <Text italic variant="bodySmall">
-            {t('dashboard.view-panel.no-labels-found', 'Data has no labels')}
+            {t('dashboard.sidebar.view-panel.fanout-no-labels', 'Data has no labels')}
           </Text>
         )}
         {labels?.map((label) => (
