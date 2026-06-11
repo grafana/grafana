@@ -1103,9 +1103,6 @@
       },
       "unknown": "Bilinmeyen"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "Uyumlu bir veri kaynağınız bulunmuyor."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Uyarı vermeye başlamak için değerlendirmeler",
       "pending-period": "Bekleme süresi",
@@ -5939,9 +5936,6 @@
       "select-source": "Kaynak seçin",
       "unknown": "Bilinmeyen nesne: {{show}}"
     },
-    "inspect-meta": {
-      "no-inspector": "Meta Veri Denetçisi Yok"
-    },
     "inspect-stats": {
       "data-title": "Veri kaynağı istatistikleri",
       "data-traceids": "İzleme Kimlikleri",
@@ -6421,7 +6415,6 @@
       "playlist-next": "Sonraki panoya git",
       "playlist-previous": "Önceki panoya git",
       "playlist-stop": "Oynatma listesini durdur",
-      "read-only": "Salt okunur",
       "refresh": "Panoyu yenile",
       "save": "Panoyu kaydet",
       "save-as-template": {
@@ -6558,28 +6551,6 @@
     },
     "view-panel": {
       "not-found": "Panel bulunamadı"
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Görselleştirmeyi değiştir",
-      "aria-label-close": "Seçenekler bölmesini kapat",
-      "aria-label-show": "Seçenekler bölmesini göster",
-      "tooltip-click-to-change-visualization": "Görselleştirmeyi değiştirmek için tıklayın",
-      "tooltip-close": "Seçenekler bölmesini kapat",
-      "tooltip-show": "Seçenekler bölmesini göster"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Ara...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Birden fazla pano arasında paylaşabileceğiniz yeniden kullanılabilir paneller."
-        },
-        "label": {
-          "library-panels": "Kütüphane panelleri",
-          "suggestions": "Öneriler",
-          "visualizations": "Görselleştirmeler"
-        }
-      },
-      "title-close": "Kapat"
     },
     "viz-panel": {
       "delete-panel-text": "Bu panel silindiğinde tüm sorgular da kaldırılacak. Devam etmek istediğinizden emin misiniz?",
@@ -9052,9 +9023,6 @@
     "select-aria-label": "Klasör filtresi",
     "select-placeholder": "Klasöre göre filtrele"
   },
-  "folder-repo": {
-    "read-only-badge": "Salt okunur"
-  },
   "folders": {
     "api": {
       "anonymous-user": "",
@@ -11032,6 +11000,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "",
       "show-all-series": "...{{total}} ögenin tamamını göster"
     }
   },
@@ -11053,10 +11022,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "Kütüphane paneli oluştur"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "Değiştir",
-      "confirmText-replace": "Değiştir"
     },
     "confirm": {
       "delete-panel": "Bu paneli kaldırmak istiyor musunuz?"
@@ -11097,9 +11062,6 @@
       "title": "Paneli panoda görüntüle",
       "body_one": "Bu panel {{count}} panoda kullanılıyor. Paneli görüntülemek için lütfen bir pano seçin:",
       "body_other": "Bu panel {{count}} panoda kullanılıyor. Paneli görüntülemek için lütfen bir pano seçin:"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "Yeni kütüphane paneli oluştur"
     },
     "save": {
       "error": "Kütüphane paneli kaydedilirken hata oluştu: \"{{errorMsg}}\"",
@@ -13645,6 +13607,9 @@
       "message-resource-onprem_one": "Örneğiniz depo başına {{count}} senkronize edilmiş kaynak ile sınırlıdır.",
       "message-resource-onprem_other": "Örneğiniz depo başına {{count}} senkronize edilmiş kaynak ile sınırlıdır."
     },
+    "read-only-badge": {
+      "text": ""
+    },
     "read-only-local-tooltip": "Bu kaynak salt okunurdur ve dosya sağlama yoluyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",
     "read-only-remote-tooltip": "Bu kaynak salt okunurdur ve Git aracılığıyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",
     "recent-jobs": {
@@ -13665,7 +13630,6 @@
     },
     "repository-card": {
       "last-sync": "Son eşitleme: {{date}}",
-      "read-only-badge": "Salt okunur",
       "settings": "Ayarlar",
       "view": "Görüntüle"
     },
@@ -16638,9 +16602,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "Yeniden adlandırılmış veya eksik değişken bulunamadı."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "Değişken yüklenemedi"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "Bu değişkenin değerlerinin ne zaman güncelleneceği",
