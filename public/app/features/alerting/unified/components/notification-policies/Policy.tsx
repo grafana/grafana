@@ -484,7 +484,7 @@ interface MetadataRowProps {
   ) => void;
 }
 
-export function MetadataRow({
+function MetadataRow({
   numberOfAlertInstances,
   numberOfSubpolicies,
   isDefaultPolicy,

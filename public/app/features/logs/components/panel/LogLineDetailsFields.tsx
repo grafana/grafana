@@ -140,7 +140,7 @@ interface LogLineDetailsFieldProps {
   log: LogListModel;
 }
 
-export const LogLineDetailsField = ({
+const LogLineDetailsField = ({
   disableActions = false,
   fieldIndex,
   getLogs,

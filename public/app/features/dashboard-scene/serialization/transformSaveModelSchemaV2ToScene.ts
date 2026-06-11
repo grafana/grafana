@@ -554,7 +554,7 @@ function getDataQueryForVariable(variable: QueryVariableKind) {
     : variable.spec.query.spec;
 }
 
-export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKind, intervals: string[]): string {
+function getCurrentValueForOldIntervalModel(variable: IntervalVariableKind, intervals: string[]): string {
   // Handle missing current object or value
   const currentValue = variable.spec.current?.value;
   const selectedInterval = Array.isArray(currentValue) ? currentValue[0] : currentValue;
@@ -583,7 +583,7 @@ export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKin
   return intervals[0];
 }
 
-export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSet {
+function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSet {
   const variableObjects = (dashboard.variables ?? [])
     .map((v) => {
       try {
@@ -637,7 +637,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
 }
 
 /** Snapshots variables are read-only and should not be updated */
-export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVariable {
+function createSnapshotVariable(variable: TypedVariableModelV2): SceneVariable {
   let snapshotVariable: SnapshotVariable;
   let current: { value: string | string[]; text: string | string[] };
   if (variable.kind === 'IntervalVariable') {
