@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -578,60 +577,6 @@ func redirectToChangePassword(c *contextmodel.ReqContext) {
 	c.Redirect("/profile/password", 302)
 }
 
-// Set user help flag.
-//
-// Responses:
-// 200: helpFlagResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 500: internalServerError
-func (hs *HTTPServer) SetHelpFlag(c *contextmodel.ReqContext) response.Response {
-	flag, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
-	}
-
-	userID, errResponse := hs.getUserID(c)
-	if errResponse != nil {
-		return errResponse
-	}
-
-	usr, err := hs.userService.GetByID(c.Req.Context(), &user.GetUserByIDQuery{ID: userID})
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
-	}
-
-	bitmask := &usr.HelpFlags1
-	bitmask.AddFlag(user.HelpFlags1(flag))
-
-	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, HelpFlags1: bitmask}); err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update help flag", err)
-	}
-
-	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": *bitmask})
-}
-
-// Clear user help flag.
-//
-// Responses:
-// 200: helpFlagResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 500: internalServerError
-func (hs *HTTPServer) ClearHelpFlags(c *contextmodel.ReqContext) response.Response {
-	userID, errResponse := hs.getUserID(c)
-	if errResponse != nil {
-		return errResponse
-	}
-
-	flags := user.HelpFlags1(0)
-	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, HelpFlags1: &flags}); err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update help flag", err)
-	}
-
-	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": flags})
-}
-
 func (hs *HTTPServer) getUserID(c *contextmodel.ReqContext) (int64, *response.NormalResponse) {
 	if !c.IsIdentityType(claims.TypeUser) {
 		hs.log.Debug("Requested endpoint only available to users")
@@ -692,13 +637,6 @@ type UserSetUsingOrgParams struct {
 	// in:path
 	// required:true
 	OrgID int64 `json:"org_id"`
-}
-
-// swagger:parameters setHelpFlag
-type SetHelpFlagParams struct {
-	// in:path
-	// required:true
-	FlagID string `json:"flag_id"`
 }
 
 // swagger:parameters changeUserPassword
@@ -782,13 +720,4 @@ type GetSignedInUserTeamListResponse struct {
 	// The response message
 	// in: body
 	Body []*team.TeamDTO `json:"body"`
-}
-
-type HelpFlagResponse struct {
-	// The response message
-	// in: body
-	Body struct {
-		HelpFlags1 int64  `json:"helpFlags1"`
-		Message    string `json:"message"`
-	} `json:"body"`
 }

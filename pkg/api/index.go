@@ -144,7 +144,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			WeekStart:                  weekStart,
 			Locale:                     locale,
 			Language:                   language,
-			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
 			Analytics:                  hs.buildUserAnalyticsSettings(c),
 			AuthenticatedBy:            c.GetAuthenticatedBy(),

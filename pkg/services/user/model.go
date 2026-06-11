@@ -7,19 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
-type HelpFlags1 uint64
-
-func (f HelpFlags1) HasFlag(flag HelpFlags1) bool { return f&flag != 0 }
-func (f *HelpFlags1) AddFlag(flag HelpFlags1)     { *f |= flag }
-
-const (
-	HelpFlagGettingStartedPanelDismissed HelpFlags1 = 1 << iota
-	HelpFlagDashboardHelp1
-	HelpFlagEnterpriseAuth1
-	HelpFlagSyntheticMonitoring1
-	HelpFlagIRM1
-)
-
 type UpdateEmailActionType string
 
 const (
@@ -40,7 +27,6 @@ type User struct {
 	Company       string
 	EmailVerified bool
 	Theme         string
-	HelpFlags1    HelpFlags1 `xorm:"help_flags1"`
 	IsDisabled    bool
 
 	IsAdmin          bool
@@ -95,9 +81,8 @@ type UpdateUserCommand struct {
 	// If old password is included it will be validated against users current password.
 	OldPassword *Password `json:"-"`
 	// If OrgID is included update current org for user
-	OrgID         *int64      `json:"-"`
-	HelpFlags1    *HelpFlags1 `json:"-"`
-	IsProvisioned *bool       `json:"-"`
+	OrgID         *int64 `json:"-"`
+	IsProvisioned *bool  `json:"-"`
 }
 
 type UpdateUserLastSeenAtCommand struct {
