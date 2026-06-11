@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -17,6 +18,7 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/authz/idresolver"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
@@ -108,6 +110,22 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 	globalRolePerms := r.getGlobalRolePerms()
 	expectedMap := make(map[string]*openfgav1.TupleKey, len(globalRolePerms)*2)
 
+	// Build the team id->uid resolver only when Roles/GlobalRoles are reconciled:
+	// they can carry id-based team scopes (teams:id:N) that would otherwise be dropped
+	// during translation. The resolver reads team uids from unified storage, so it works
+	// in mode 5 (no legacy SQL). A nil resolver makes resolveTeamScopes a no-op.
+	// ns is only used by the SQL-backed resolver path; the reconciler's client-backed
+	// resolver ignores it, so a parse failure is non-fatal here.
+	ns, _ := claims.ParseNamespace(namespace)
+	var teamResolver idresolver.Resolver
+	if r.rolesReconciled(globalRolePerms) {
+		tr, err := r.buildTeamResolver(ctx, namespace)
+		if err != nil {
+			return nil, tracing.Errorf(span, "failed to build team id resolver: %w", err)
+		}
+		teamResolver = tr
+	}
+
 	// Track which GlobalRoles are referenced by namespace Roles via RoleRefs.
 	// Those have their permissions inlined and must not be added as standalone tuples.
 	referencedGlobalRoles := make(map[string]bool)
@@ -123,7 +141,7 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 					referencedGlobalRoles[ref.Name] = true
 				}
 			}
-			return TranslateRoleToTuples(obj, globalRolePerms)
+			return TranslateRoleToTuples(ctx, obj, globalRolePerms, teamResolver, ns, r.logger)
 		},
 		"rolebindings":        TranslateRoleBindingToTuples,
 		"resourcepermissions": TranslateResourcePermissionToTuples,
@@ -150,7 +168,11 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 		if referencedGlobalRoles[roleName] {
 			continue
 		}
-		tuples, err := zanzana.RoleToTuples(roleName, perms)
+		resolvedPerms, err := resolveTeamScopes(ctx, teamResolver, ns, r.logger, perms)
+		if err != nil {
+			return nil, tracing.Errorf(span, "failed to resolve team scopes for GlobalRole %s: %w", roleName, err)
+		}
+		tuples, err := zanzana.RoleToTuples(roleName, resolvedPerms)
 		if err != nil {
 			return nil, tracing.Errorf(span, "failed to generate tuples for unlinked GlobalRole %s: %w", roleName, err)
 		}

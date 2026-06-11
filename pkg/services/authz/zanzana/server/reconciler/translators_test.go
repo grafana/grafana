@@ -11,8 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	claims "github.com/grafana/authlib/types"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -569,7 +571,7 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 			},
 		}
 
-		tuples, err := TranslateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+		tuples, err := TranslateRoleToTuples(context.Background(), toUnstructured(t, role), globalRolePerms, nil, claims.NamespaceInfo{}, log.NewNopLogger())
 		require.NoError(t, err)
 		// Expects: dashboards:read/d1 (inherited) + dashboards:read/d2 (own addition),
 		// dashboards:write/d1 is omitted.
@@ -586,7 +588,7 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 			},
 		}
 
-		tuples, err := TranslateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+		tuples, err := TranslateRoleToTuples(context.Background(), toUnstructured(t, role), globalRolePerms, nil, claims.NamespaceInfo{}, log.NewNopLogger())
 		require.NoError(t, err)
 		require.NotEmpty(t, tuples)
 	})
@@ -606,11 +608,11 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 		}
 
 		// nil globalRolePerms — no composition.
-		tuplesNoComposition, err := TranslateRoleToTuples(toUnstructured(t, role), nil)
+		tuplesNoComposition, err := TranslateRoleToTuples(context.Background(), toUnstructured(t, role), nil, nil, claims.NamespaceInfo{}, log.NewNopLogger())
 		require.NoError(t, err)
 
 		// With composition, the same role also inherits dashboards:write from global-role-a.
-		tuplesWithComposition, err := TranslateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+		tuplesWithComposition, err := TranslateRoleToTuples(context.Background(), toUnstructured(t, role), globalRolePerms, nil, claims.NamespaceInfo{}, log.NewNopLogger())
 		require.NoError(t, err)
 
 		// Composition produces more (or equal if deduped) tuples than no-composition.
@@ -630,7 +632,7 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 			},
 		}
 
-		tuples, err := TranslateRoleToTuples(toUnstructured(t, role), nil)
+		tuples, err := TranslateRoleToTuples(context.Background(), toUnstructured(t, role), nil, nil, claims.NamespaceInfo{}, log.NewNopLogger())
 		require.NoError(t, err)
 		// Only own Permissions are used — global role not inherited.
 		require.NotEmpty(t, tuples)
@@ -659,7 +661,7 @@ func TestTranslateRoleToTuples_RoleManagementPermissions(t *testing.T) {
 		},
 	}
 
-	tuples, err := TranslateRoleToTuples(toUnstructured(t, role), nil)
+	tuples, err := TranslateRoleToTuples(context.Background(), toUnstructured(t, role), nil, nil, claims.NamespaceInfo{}, log.NewNopLogger())
 	require.NoError(t, err)
 
 	require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{

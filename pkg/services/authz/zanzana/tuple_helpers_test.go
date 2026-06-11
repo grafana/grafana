@@ -527,6 +527,41 @@ func TestTeamManagementToTuples(t *testing.T) {
 		require.Nil(t, TeamManagementToTuples(subject, RolePermission{Action: "users:read", Kind: "users", Identifier: "*"}))
 		require.Nil(t, TeamManagementToTuples(subject, RolePermission{Action: "teams:enable", Kind: "teams", Identifier: "*"}))
 	})
+
+	t.Run("emits per-instance tuples for uid scopes on the teams resource", func(t *testing.T) {
+		cases := []struct {
+			action   string
+			expected []*openfgav1.TupleKey
+		}{
+			{"teams:read", []*openfgav1.TupleKey{{User: subject, Relation: "get", Object: "team:t1"}}},
+			{"teams:write", []*openfgav1.TupleKey{{User: subject, Relation: "update", Object: "team:t1"}}},
+			{"teams:delete", []*openfgav1.TupleKey{{User: subject, Relation: "delete", Object: "team:t1"}}},
+			{"teams.permissions:read", []*openfgav1.TupleKey{{User: subject, Relation: "get_permissions", Object: "team:t1"}}},
+			{"teams.permissions:write", []*openfgav1.TupleKey{{User: subject, Relation: "set_permissions", Object: "team:t1"}}},
+		}
+		for _, tc := range cases {
+			t.Run(tc.action, func(t *testing.T) {
+				tuples := TeamManagementToTuples(subject, RolePermission{
+					Action: tc.action, Kind: "teams", Attribute: "uid", Identifier: "t1",
+				})
+				require.ElementsMatch(t, tupleKeyStrings(tc.expected), tupleKeyStrings(tuples))
+			})
+		}
+	})
+
+	t.Run("drops uid scopes for rolebindings-mapped team actions", func(t *testing.T) {
+		// teams.roles:* gate the wildcard-only rolebindings group_resource; a specific
+		// team uid has no per-instance representation there.
+		require.Nil(t, TeamManagementToTuples(subject, RolePermission{Action: "teams.roles:read", Kind: "teams", Attribute: "uid", Identifier: "t1"}))
+		require.Nil(t, TeamManagementToTuples(subject, RolePermission{Action: "teams.roles:add", Kind: "teams", Attribute: "uid", Identifier: "t1"}))
+	})
+
+	t.Run("drops id-based instance scopes (unresolved to uid)", func(t *testing.T) {
+		// Attribute "id" means the scope wasn't resolved to a uid; dropped to avoid
+		// emitting team:<numeric-id>, which would be a wrong (non-existent) object.
+		require.Nil(t, TeamManagementToTuples(subject, RolePermission{Action: "teams:read", Kind: "teams", Attribute: "id", Identifier: "5"}))
+		require.Nil(t, TeamManagementToTuples(subject, RolePermission{Action: "teams.permissions:write", Kind: "teams", Attribute: "id", Identifier: "5"}))
+	})
 }
 
 // tupleKeyStrings returns the prototext (`.String()`) form of each tuple.
