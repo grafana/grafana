@@ -143,9 +143,16 @@ describe('useRecentQueriesData', () => {
     const initialQueries = [makeQuery({ id: '1' })];
     const afterFilterQueries = [makeQuery({ id: '2' }), makeQuery({ id: '3' })];
 
-    (getRichHistory as jest.Mock)
-      .mockResolvedValueOnce({ richHistory: initialQueries, total: 1 })
-      .mockResolvedValueOnce({ richHistory: afterFilterQueries, total: 2 });
+    // When showing "All", the hook fetches in-range queries plus all starred queries
+    // and merges them. Drive the in-range result by the search filter; no starred queries here.
+    (getRichHistory as jest.Mock).mockImplementation(({ starred, search }) => {
+      if (starred) {
+        return Promise.resolve({ richHistory: [], total: 0 });
+      }
+      return search === 'new search'
+        ? Promise.resolve({ richHistory: afterFilterQueries, total: 2 })
+        : Promise.resolve({ richHistory: initialQueries, total: 1 });
+    });
 
     const { result } = await renderAndSettle();
     await waitFor(() => {
@@ -158,6 +165,76 @@ describe('useRecentQueriesData', () => {
       expect(result.current.queries).toHaveLength(2);
       expect(result.current.queries.map((q) => q.id)).toEqual(['2', '3']);
     });
+  });
+
+  it('merges starred queries outside the retention range into the "All" results', async () => {
+    const inRange = [makeQuery({ id: '1', createdAt: 2000 })];
+    // Starred query older than the retention window — only returned by the unbounded starred fetch.
+    const oldStarred = makeQuery({ id: '99', createdAt: 1, starred: true });
+
+    (getRichHistory as jest.Mock).mockImplementation(({ starred }) =>
+      starred
+        ? Promise.resolve({ richHistory: [oldStarred], total: 1 })
+        : Promise.resolve({ richHistory: inRange, total: 1 })
+    );
+
+    const { result } = await renderAndSettle();
+
+    await waitFor(() => {
+      // Both the in-range query and the out-of-range starred query are present, newest first.
+      expect(result.current.queries.map((q) => q.id)).toEqual(['1', '99']);
+    });
+
+    // "All" issues both an in-range (time-bounded) fetch and an unbounded starred fetch.
+    expect(getRichHistory).toHaveBeenCalledWith(expect.objectContaining({ starred: false, from: 0, to: 14 }));
+    const starredCall = (getRichHistory as jest.Mock).mock.calls.find(([args]) => args.starred === true)?.[0];
+    expect(starredCall).toEqual(expect.objectContaining({ starred: true }));
+    expect(starredCall.from).toBeUndefined();
+    expect(starredCall.to).toBeUndefined();
+  });
+
+  it('de-duplicates starred queries that are also within range', async () => {
+    const starredInRange = makeQuery({ id: '5', createdAt: 3000, starred: true });
+
+    // The same query comes back from both the in-range and starred fetches.
+    (getRichHistory as jest.Mock).mockResolvedValue({ richHistory: [starredInRange], total: 1 });
+
+    const { result } = await renderAndSettle();
+
+    await waitFor(() => {
+      expect(result.current.queries).toHaveLength(1);
+      expect(result.current.queries[0].id).toBe('5');
+    });
+  });
+
+  it('still shows in-range results when the supplementary starred fetch fails', async () => {
+    const inRange = [makeQuery({ id: '1', createdAt: 2000 })];
+
+    (getRichHistory as jest.Mock).mockImplementation(({ starred }) =>
+      starred ? Promise.reject(new Error('starred fetch failed')) : Promise.resolve({ richHistory: inRange, total: 1 })
+    );
+
+    const { result } = await renderAndSettle();
+
+    await waitFor(() => {
+      expect(result.current.queries.map((q) => q.id)).toEqual(['1']);
+    });
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('issues a single unbounded fetch when showing starred only', async () => {
+    const { result } = await renderAndSettle();
+    (getRichHistory as jest.Mock).mockClear();
+
+    await act(async () => result.current.setFilters({ showStarredOnly: true }));
+
+    await waitFor(() => {
+      expect(getRichHistory).toHaveBeenCalledTimes(1);
+    });
+    const call = (getRichHistory as jest.Mock).mock.calls[0][0];
+    expect(call).toEqual(expect.objectContaining({ starred: true }));
+    expect(call.from).toBeUndefined();
+    expect(call.to).toBeUndefined();
   });
 
   it('restores stored filter defaults when rememberFilters was true', async () => {
@@ -214,8 +291,11 @@ describe('useRecentQueriesData', () => {
         jest.advanceTimersByTime(300);
       });
 
-      expect(getRichHistoryMock).toHaveBeenCalledTimes(1);
-      expect(getRichHistoryMock).toHaveBeenCalledWith(expect.objectContaining({ search: 'abc' }));
+      // "All" fires two fetches per settled change (in-range + unbounded starred), but only once
+      // after the debounce settles — not once per intermediate keystroke.
+      expect(getRichHistoryMock).toHaveBeenCalledTimes(2);
+      expect(getRichHistoryMock).toHaveBeenCalledWith(expect.objectContaining({ search: 'abc', starred: false }));
+      expect(getRichHistoryMock).toHaveBeenCalledWith(expect.objectContaining({ search: 'abc', starred: true }));
     } finally {
       jest.useRealTimers();
     }

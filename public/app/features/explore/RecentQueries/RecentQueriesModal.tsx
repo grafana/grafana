@@ -66,7 +66,10 @@ export function RecentQueriesModal({ isOpen, onClose, onSelectQuery }: Props) {
         </TabsBar>
       </div>
       <Text color="secondary">
-        {t('recent-queries.description', "Recent queries are queries that you've run in Explore")}
+        {t(
+          'recent-queries.description',
+          "Recent queries are queries that you've run in Explore within the past two weeks"
+        )}
       </Text>
       <Divider spacing={0} />
     </div>
@@ -91,6 +94,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '90vw',
     maxWidth: '1400px',
     '& [class*="modalHeader"]': {
+      // Title is a tall column (tabs + description), so top-align the header row
+      // to keep the close button near the top instead of vertically centered.
+      alignItems: 'flex-start',
       '> div:last-child': {
         flexGrow: 0,
         marginLeft: theme.spacing(2),

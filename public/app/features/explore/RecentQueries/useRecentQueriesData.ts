@@ -3,6 +3,7 @@ import { useAsync, useDebounce } from 'react-use';
 
 import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { sortQueries } from 'app/core/history/richHistoryLocalStorageUtils';
 import { getRichHistory, getRichHistorySettings, updateStarredInRichHistory } from 'app/core/utils/richHistory';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';
@@ -101,14 +102,39 @@ export function useRecentQueriesData(): UseRecentQueriesDataReturn {
     if (retentionPeriod === undefined) {
       return undefined;
     }
-    return getRichHistory({
-      search: debouncedSearch,
-      sortOrder,
-      datasourceFilters,
-      starred: showStarredOnly,
-      from: 0,
-      to: retentionPeriod,
-    });
+
+    // Showing starred only: a single unbounded starred fetch is enough.
+    if (showStarredOnly) {
+      return getRichHistory({ search: debouncedSearch, sortOrder, datasourceFilters, starred: true });
+    }
+
+    // Showing "All": the remote backend time-bounds non-starred queries and only
+    // drops the time bound for starred-only requests, so starred queries older than
+    // the retention period never come back in the in-range result. Fetch the
+    // in-range queries and all starred queries, then merge so starred queries are
+    // always shown regardless of age (matching local storage behaviour).
+    const [inRange, starred] = await Promise.all([
+      getRichHistory({
+        search: debouncedSearch,
+        sortOrder,
+        datasourceFilters,
+        starred: false,
+        from: 0,
+        to: retentionPeriod,
+      }),
+      // The starred fetch only augments the in-range results, so a failure here must
+      // not blank the whole list — fall back to no extra starred queries.
+      getRichHistory({ search: debouncedSearch, sortOrder, datasourceFilters, starred: true }).catch(() => ({
+        richHistory: [],
+      })),
+    ]);
+
+    const byId = new Map<string, RichHistoryQuery>();
+    for (const query of [...inRange.richHistory, ...starred.richHistory]) {
+      byId.set(query.id, query);
+    }
+    const merged = sortQueries(Array.from(byId.values()), sortOrder);
+    return { richHistory: merged, total: merged.length };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- datasourceFiltersKey is a stable string derived from datasourceFilters
   }, [debouncedSearch, sortOrder, datasourceFiltersKey, showStarredOnly, retentionPeriod]);
 

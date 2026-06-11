@@ -63,54 +63,66 @@ export const RecentQueriesList = memo(function RecentQueriesList({
 
   const mappedQueriesToHeadings = useMemo(() => mapQueriesToHeadings(queries, sortOrder), [queries, sortOrder]);
 
+  let content;
   if (isLoading) {
-    return (
+    content = (
       <div className={styles.centered}>
         <Spinner />
         <Text color="secondary">{t('recent-queries.list.loading', 'Loading...')}</Text>
       </div>
     );
-  }
-
-  if (queries.length === 0) {
-    return <EmptyState variant="not-found" message={t('recent-queries.list.empty', 'No recent queries found')} />;
-  }
-
-  return (
-    <ScrollContainer>
-      <div className={styles.listContent}>
-        {Object.entries(mappedQueriesToHeadings).map(([heading, groupQueries]) => (
-          <div key={heading}>
-            <h4 className={styles.heading}>{heading}</h4>
-            <div className={styles.group}>
-              {groupQueries.map((query) => {
-                const dsApi = dsApiMap?.get(query.datasourceUid);
-                const logo = dsApi?.meta?.info?.logos?.small;
-                const displayText = createQueryText(query.queries[0], dsApi);
-
-                return (
-                  <RecentQueryRow
-                    key={query.id}
-                    query={query}
-                    queryDisplayText={displayText}
-                    datasourceLogo={logo}
-                    onSelectQuery={onSelectQuery}
-                    onStarQuery={onStarQuery}
-                    onSaveQuery={onSaveQuery}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        ))}
+  } else if (queries.length === 0) {
+    content = (
+      <div className={styles.centered}>
+        <EmptyState variant="not-found" message={t('recent-queries.list.empty', 'No recent queries found')} />
       </div>
-    </ScrollContainer>
-  );
+    );
+  } else {
+    content = (
+      <ScrollContainer>
+        <div className={styles.listContent}>
+          {Object.entries(mappedQueriesToHeadings).map(([heading, groupQueries]) => (
+            <div key={heading}>
+              <h4 className={styles.heading}>{heading}</h4>
+              <div className={styles.group}>
+                {groupQueries.map((query) => {
+                  const dsApi = dsApiMap?.get(query.datasourceUid);
+                  const logo = dsApi?.meta?.info?.logos?.small;
+                  const displayText = createQueryText(query.queries[0], dsApi);
+
+                  return (
+                    <RecentQueryRow
+                      key={query.id}
+                      query={query}
+                      queryDisplayText={displayText}
+                      datasourceLogo={logo}
+                      onSelectQuery={onSelectQuery}
+                      onStarQuery={onStarQuery}
+                      onSaveQuery={onSaveQuery}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </ScrollContainer>
+    );
+  }
+
+  return <div className={styles.root}>{content}</div>;
 });
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  root: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    minWidth: 0,
+  }),
   centered: css({
     display: 'flex',
+    flex: 1,
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
