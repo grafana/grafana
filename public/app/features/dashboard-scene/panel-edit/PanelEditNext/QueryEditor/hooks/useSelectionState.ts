@@ -136,10 +136,11 @@ export function useSelectionState({
 
   useEffect(() => {
     if (activeTransformationId !== null && !transformations.some((t) => t.transformId === activeTransformationId)) {
-      setActiveTransformationId(null);
-      // No transformations left: promote the first query to active so a card stays
+      const nextTransformationId = transformations[0]?.transformId ?? null;
+      setActiveTransformationId(nextTransformationId);
+      // No transformations left: fall back to the first query so a card stays
       // active (and gets seeded into multi-select on re-entry).
-      if (transformations.length === 0) {
+      if (nextTransformationId === null) {
         setActiveQueryRefId(queries[0]?.refId ?? null);
       }
     }
@@ -320,7 +321,18 @@ export function useSelectionState({
 
   const removeTransformationFromSelection = useCallback((transformId: string) => {
     setSelectedTransformationIds((current) => current.filter((id) => id !== transformId));
-    setActiveTransformationId((current) => (current === transformId ? null : current));
+    if (activeTransformationIdRef.current === transformId) {
+      const remaining = transformationsRef.current.filter((t) => t.transformId !== transformId);
+      if (remaining.length > 0) {
+        // Stay within transformations: promote the next one so a real card stays active.
+        setActiveTransformationId(remaining[0].transformId);
+      } else {
+        // No transformations left — promote the first query so re-entering multi-select seeds a
+        // real, checkable card instead of useSelectedCard's display-only fallback.
+        setActiveTransformationId(null);
+        setActiveQueryRefId(queriesRef.current[0]?.refId ?? null);
+      }
+    }
     if (transformationAnchorRef.current === transformId) {
       transformationAnchorRef.current = null;
     }

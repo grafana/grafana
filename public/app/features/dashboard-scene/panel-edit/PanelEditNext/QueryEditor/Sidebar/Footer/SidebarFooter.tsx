@@ -72,6 +72,7 @@ export function SidebarFooter() {
                 size="sm"
                 variant="secondary"
                 icon="checkbox-multiple"
+                disabled={total === 0}
                 onClick={handleSelectClick}
                 aria-label={t('query-editor-next.sidebar.footer-select-label', 'Select multiple items')}
               >
