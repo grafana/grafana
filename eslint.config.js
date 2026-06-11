@@ -224,6 +224,8 @@ module.exports = [
       'unicorn/no-empty-file': 'error',
       'no-constant-condition': 'error',
       '@grafana/define-feature-events': 'error',
+      '@grafana/t-plural-defaults': 'error',
+      '@grafana/trans-plural-defaults': 'error',
       '@grafana/no-plain-links': 'error',
       'react-hooks/exhaustive-deps': [
         'error',
