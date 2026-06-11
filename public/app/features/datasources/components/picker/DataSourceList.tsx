@@ -70,21 +70,21 @@ export function DataSourceList(props: DataSourceListProps) {
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
   const sortedDataSources = useSortedDataSources(props, current, recentlyUsedDataSources, favoriteDataSources);
 
-  const sharedProps = {
-    sortedDataSources,
-    enableKeyboardNavigation,
-    keyboardEvents: props.keyboardEvents,
-    current,
-    favoriteDataSources,
-    onChange,
-    pushRecentlyUsedDataSource,
-    scrollRef,
-  };
-
   return (
     <div className={cx(className, styles.container)} data-testid={selectors.components.DataSourcePicker.dataSourceList}>
       {sortedDataSources.length === 0 && <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />}
-      {sortedDataSources.length > 0 && <VirtualizedList {...sharedProps} />}
+      {sortedDataSources.length > 0 && (
+        <VirtualizedList
+          sortedDataSources={sortedDataSources}
+          enableKeyboardNavigation={enableKeyboardNavigation}
+          keyboardEvents={props.keyboardEvents}
+          current={current}
+          favoriteDataSources={favoriteDataSources}
+          onChange={onChange}
+          pushRecentlyUsedDataSource={pushRecentlyUsedDataSource}
+          scrollRef={scrollRef}
+        />
+      )}
     </div>
   );
 }

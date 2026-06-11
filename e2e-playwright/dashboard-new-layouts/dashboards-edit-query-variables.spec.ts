@@ -46,6 +46,7 @@ test.describe(
         .click();
       // select a core data source that just runs a query during preview
       const dataSource = 'gdev-cloudwatch';
+      // this will trigger an API call to get the query options
       await components.dataSourcePicker.set(dataSource);
 
       // show the preview of the query results
