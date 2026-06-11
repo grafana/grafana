@@ -142,6 +142,17 @@ export { BarGauge } from './components/BarGauge/BarGauge';
 export {
   VizTooltip,
   VizTooltipContainer,
+  VizTooltipContent,
+  VizTooltipRow,
+  VizTooltipWrapper,
+  VizTooltipFooter,
+  type AdHocFilterModel,
+  type FilterByGroupedLabelsModel,
+  VizTooltipHeader,
+  ColorIndicator,
+  ColorPlacement,
+  type VizTooltipItem,
+  DEFAULT_COLOR_INDICATOR,
   SeriesTable,
   type SeriesTableProps,
   SeriesTableRow,
@@ -357,6 +368,7 @@ export { XYCanvas } from './components/uPlot/geometries/XYCanvas';
 export { Marker } from './components/uPlot/geometries/Marker';
 export { EventsCanvas } from './components/uPlot/geometries/EventsCanvas';
 export { TooltipPlugin2 } from './components/uPlot/plugins/TooltipPlugin2';
+export { CloseButton } from './components/uPlot/plugins/CloseButton';
 export { EventBusPlugin } from './components/uPlot/plugins/EventBusPlugin';
 export { KeyboardPlugin } from './components/uPlot/plugins/KeyboardPlugin';
 export { XAxisInteractionAreaPlugin } from './components/uPlot/plugins/XAxisInteractionAreaPlugin';
