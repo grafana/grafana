@@ -18,6 +18,7 @@ let byName: Record<string, DataSourceInstanceSettings> = {};
 let byUid: Record<string, DataSourceInstanceSettings> = {};
 let byId: Record<string, DataSourceInstanceSettings> = {};
 let runtimeByUid: Record<string, DataSourceInstanceSettings> = {};
+let builtInByUid: Record<string, DataSourceInstanceSettings> = {};
 let defaultName = '';
 
 function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
@@ -38,6 +39,11 @@ function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
 
   // Re-apply any previously registered runtime data sources so they survive a refetch.
   for (const ds of Object.values(runtimeByUid)) {
+    byUid[ds.uid] = ds;
+  }
+
+  // Re-apply built-in, client-injected data sources (e.g. the expression datasource).
+  for (const ds of Object.values(builtInByUid)) {
     byUid[ds.uid] = ds;
   }
 }
@@ -103,6 +109,18 @@ export async function getDataSourceInstanceSettingsList(
   filters?: GetDataSourceListFilters
 ): Promise<DataSourceInstanceSettings[]> {
   return applyFilters(filters);
+}
+
+/**
+ * Register a built-in, client-injected data source (e.g. the expression
+ * datasource) that is not part of /api/frontend/settings. Re-applied on every
+ * populate so it survives a cache repopulate. Idempotent.
+ *
+ * @internal
+ */
+export function registerBuiltInDataSourceInstanceSettings(settings: DataSourceInstanceSettings): void {
+  builtInByUid[settings.uid] = settings;
+  byUid[settings.uid] = settings;
 }
 
 /**
@@ -301,5 +319,6 @@ export function _resetForTests(): void {
   byUid = {};
   byId = {};
   runtimeByUid = {};
+  builtInByUid = {};
   defaultName = '';
 }
