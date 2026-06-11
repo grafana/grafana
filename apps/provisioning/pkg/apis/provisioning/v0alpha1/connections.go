@@ -54,10 +54,10 @@ type GitHubConnectionConfig struct {
 	// GitHub App installation ID
 	InstallationID string `json:"installationID"`
 
-	// PollingOnly tells Grafana to sync this connection by polling rather than relying on
-	// GitHub webhook events. When set, the GitHub App does not require webhooks:write permission.
-	// Use this when Grafana runs on a private network and cannot receive callbacks from GitHub.
-	PollingOnly bool `json:"pollingOnly,omitempty"`
+	// WebhookDisabled disables webhook integration for this connection. When true, the GitHub
+	// App does not require webhooks:write permission and Grafana will not register or receive
+	// webhook events. Use this when Grafana is not reachable from the public internet.
+	WebhookDisabled bool `json:"webhookDisabled,omitempty"`
 }
 
 func (GitHubConnectionConfig) OpenAPIModelName() string {

@@ -747,17 +747,17 @@ func TestConnection_Test(t *testing.T) {
 			},
 		},
 		{
-			// PollingOnly skips the webhooks check at both the app and installation level,
+			// WebhookDisabled skips the webhooks check at both the app and installation level,
 			// so a GitHub App without webhooks:write can still connect successfully.
-			name: "success - polling only, no webhooks permission on app or installation",
+			name: "success - webhook disabled, no webhooks permission on app or installation",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          appID,
-						InstallationID: "456",
-						PollingOnly:    true,
+						AppID:           appID,
+						InstallationID:  "456",
+						WebhookDisabled: true,
 					},
 				},
 			},
@@ -792,16 +792,16 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: true,
 		},
 		{
-			// PollingOnly only skips the webhooks check; other required permissions still apply.
-			name: "failure - polling only does not exempt missing contents permission",
+			// WebhookDisabled only skips the webhooks check; other required permissions still apply.
+			name: "failure - webhook disabled does not exempt missing contents permission",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          appID,
-						InstallationID: "456",
-						PollingOnly:    true,
+						AppID:           appID,
+						InstallationID:  "456",
+						WebhookDisabled: true,
 					},
 				},
 			},
