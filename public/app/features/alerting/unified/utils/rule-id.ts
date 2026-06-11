@@ -324,7 +324,7 @@ export function stripPromQLComments(query: string): string {
     .replace(/#[^\n]*/g, '') // strip from # to end of line (inline and full-line comments)
     .split('\n')
     .map((line) => line.trim())
-    .filter((line) => line)
+    .filter((line) => Boolean(line))
     .join('\n');
 }
 
