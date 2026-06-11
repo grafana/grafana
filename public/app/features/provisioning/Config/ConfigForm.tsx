@@ -38,9 +38,11 @@ import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions } from '../utils/git';
 import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
 
-import { CommitMessageTemplateField } from './CommitMessageTemplateField';
+import { BranchOptionsSection } from './BranchOptionsSection';
+import { CommitOptionsSection } from './CommitOptionsSection';
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
+import { PullRequestOptionsSection } from './PullRequestOptionsSection';
 import { getDefaultValues } from './defaults';
 
 // This needs to be a function for translations to work
@@ -48,6 +50,7 @@ const getTargetOptions = (allowedTargets: string[]) => {
   const allOptions = [
     { value: 'instance', label: t('provisioning.config-form.option-entire-instance', 'Entire instance') },
     { value: 'folder', label: t('provisioning.config-form.option-managed-folder', 'Managed folder') },
+    { value: 'folderless', label: t('provisioning.config-form.option-folderless', 'Folderless') },
   ];
 
   return allOptions.filter((option) => allowedTargets.includes(option.value));
@@ -193,7 +196,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
             placeholder={t('provisioning.config-form.placeholder-my-config', 'My config')}
           />
         </Field>
-        <CommitMessageTemplateField register={register} />
         {gitFields && (
           <>
             {usesGitHubApp ? (
@@ -378,6 +380,28 @@ export function ConfigForm({ data }: ConfigFormProps) {
             registerName="enablePushToConfiguredBranch"
             readOnly={readOnly}
           />
+        )}
+        {isGitBased && (
+          <>
+            <BranchOptionsSection<RepositoryFormData>
+              register={register}
+              nameTemplateName="branchOptions.nameTemplate"
+              enforceTemplateName="branchOptions.enforceTemplate"
+            />
+            <CommitOptionsSection<RepositoryFormData>
+              register={register}
+              messageTemplateName="commit.singleResourceMessageTemplate"
+              enforceTemplateName="commit.enforceTemplate"
+            />
+            {/* Pull requests are not supported by the pure git type. */}
+            {type !== 'git' && (
+              <PullRequestOptionsSection<RepositoryFormData>
+                register={register}
+                titleTemplateName="pullRequest.titleTemplate"
+                enforceTemplateName="pullRequest.enforceTemplate"
+              />
+            )}
+          </>
         )}
         {type === 'github' && <ConfigFormGithubCollapse register={register} />}
 

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import type { SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getUserOrganizations, setUserOrganization } from 'app/features/org/state/actions';
@@ -15,13 +15,18 @@ import { OrganizationSelect } from './OrganizationSelect';
 export function OrganizationSwitcher() {
   const dispatch = useDispatch();
   const orgs = useSelector((state) => state.organization.userOrgs);
-  const onSelectChange = (option: SelectableValue<UserOrg>) => {
-    if (option.value) {
-      setUserOrganization(option.value.orgId);
-      locationService.push(`/?orgId=${option.value.orgId}`);
-      // TODO how to reload the current page
-      window.location.reload();
+  const onSelectChange = async (option: SelectableValue<UserOrg>) => {
+    if (!option.value) {
+      return;
     }
+    try {
+      // Await so /api/user/using/:orgId completes before navigation
+      await dispatch(setUserOrganization(option.value.orgId));
+    } catch {
+      // backendSrv shows the error toast; abort so we don't reload into the wrong org
+      return;
+    }
+    window.location.assign(`${config.appSubUrl}/?orgId=${option.value.orgId}`);
   };
   useEffect(() => {
     if (

@@ -1,5 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { Controls, Panel, Sidebar } from './page-objects';
+
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
@@ -16,25 +18,22 @@ test.describe(
   },
   () => {
     test('hide button is available in view mode on desktop', async ({ gotoDashboardPage, selectors, page }) => {
-      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      const sidebar = new Sidebar(page, dashboardPage, selectors);
 
-      const container = page.getByTestId(selectors.components.Sidebar.container);
-      await expect(container).toBeVisible();
-
-      const hideButton = container.getByTestId(selectors.components.Sidebar.showHideToggle);
-      await expect(hideButton).toBeVisible();
+      await expect(sidebar.getContainer()).toBeVisible();
+      await expect(sidebar.toolbar.getVisibilityToggle()).toBeVisible();
     });
 
     test('hide button is available in edit mode on desktop', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      const controls = new Controls(page, dashboardPage, selectors);
+      const sidebar = new Sidebar(page, dashboardPage, selectors);
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await controls.enterEditMode();
 
-      const container = page.getByTestId(selectors.components.Sidebar.container);
-      await expect(container).toBeVisible();
-
-      const hideButton = container.getByTestId(selectors.components.Sidebar.showHideToggle);
-      await expect(hideButton).toBeVisible();
+      await expect(sidebar.getContainer()).toBeVisible();
+      await expect(sidebar.toolbar.getVisibilityToggle()).toBeVisible();
     });
 
     test('clicking hide in view mode hides the sidebar and shows the toggle', async ({
@@ -42,39 +41,40 @@ test.describe(
       selectors,
       page,
     }) => {
-      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      const sidebar = new Sidebar(page, dashboardPage, selectors);
 
-      const container = page.getByTestId(selectors.components.Sidebar.container);
-      await container.getByTestId(selectors.components.Sidebar.showHideToggle).click();
+      await sidebar.toolbar.getVisibilityToggle().click();
 
-      await expect(container).not.toBeVisible();
+      await expect(sidebar.getContainer()).not.toBeVisible();
       // The show toggle (rendered when hidden) remains so the user can re-show
-      await expect(page.getByTestId(selectors.components.Sidebar.showHideToggle)).toBeVisible();
+      await expect(sidebar.toolbar.getVisibilityToggle()).toBeVisible();
     });
 
     test('clicking show re-displays the sidebar after hiding it', async ({ gotoDashboardPage, selectors, page }) => {
-      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      const sidebar = new Sidebar(page, dashboardPage, selectors);
 
-      const container = page.getByTestId(selectors.components.Sidebar.container);
-      await container.getByTestId(selectors.components.Sidebar.showHideToggle).click();
-      await expect(container).not.toBeVisible();
+      await sidebar.toolbar.getVisibilityToggle().click();
+      await expect(sidebar.getContainer()).not.toBeVisible();
 
-      await page.getByTestId(selectors.components.Sidebar.showHideToggle).click();
-      await expect(container).toBeVisible();
+      await sidebar.toolbar.getVisibilityToggle().click();
+      await expect(sidebar.getContainer()).toBeVisible();
     });
 
     test('hidden state is shared between view mode and edit mode', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      const controls = new Controls(page, dashboardPage, selectors);
+      const sidebar = new Sidebar(page, dashboardPage, selectors);
 
       // Hide in view mode
-      const container = page.getByTestId(selectors.components.Sidebar.container);
-      await container.getByTestId(selectors.components.Sidebar.showHideToggle).click();
-      await expect(container).not.toBeVisible();
+      await sidebar.toolbar.getVisibilityToggle().click();
+      await expect(sidebar.getContainer()).not.toBeVisible();
 
       // Enter edit mode — sidebar should still be hidden
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await expect(container).not.toBeVisible();
-      await expect(page.getByTestId(selectors.components.Sidebar.showHideToggle)).toBeVisible();
+      await controls.enterEditMode();
+      await expect(sidebar.getContainer()).not.toBeVisible();
+      await expect(sidebar.toolbar.getVisibilityToggle()).toBeVisible();
     });
 
     test('selecting a panel while hidden temporarily shows the sidebar and de-selecting re-hides it', async ({
@@ -83,30 +83,31 @@ test.describe(
       page,
     }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      const controls = new Controls(page, dashboardPage, selectors);
+      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const panel = new Panel(page, dashboardPage, selectors);
 
       // Enter edit mode
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await controls.enterEditMode();
 
-      const container = page.getByTestId(selectors.components.Sidebar.container);
-      await expect(container).toBeVisible();
+      await expect(sidebar.getContainer()).toBeVisible();
 
       // Hide the sidebar
-      await container.getByTestId(selectors.components.Sidebar.showHideToggle).click();
-      await expect(container).not.toBeVisible();
+      await sidebar.toolbar.getVisibilityToggle().click();
+      await expect(sidebar.getContainer()).not.toBeVisible();
 
       // Select a panel — sidebar should reappear temporarily
-      const firstPanel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer).first();
-      await firstPanel.click();
+      await panel.selectByTitle('No Data Points Warning');
 
-      await expect(container).toBeVisible();
+      await expect(sidebar.getContainer()).toBeVisible();
       // The dock toggle is hidden during temp-show — the user shouldn't dock from this state
-      await expect(container.getByTestId(selectors.components.Sidebar.dockToggle)).not.toBeVisible();
+      await expect(sidebar.getDockToggle()).not.toBeVisible();
 
       // Close the pane (de-select) via the X button — sidebar should re-hide
-      await container.getByTestId(selectors.components.Sidebar.closePane).click();
+      await sidebar.getCloseButton().click();
 
-      await expect(container).not.toBeVisible();
-      await expect(page.getByTestId(selectors.components.Sidebar.showHideToggle)).toBeVisible();
+      await expect(sidebar.getContainer()).not.toBeVisible();
+      await expect(sidebar.toolbar.getVisibilityToggle()).toBeVisible();
     });
   }
 );

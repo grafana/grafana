@@ -39,5 +39,5 @@
     "dev": "webpack -w -c ./webpack.config.ts --env development",
     "i18n-extract": "i18next-cli extract --sync-primary"
   },
-  "packageManager": "yarn@4.11.0"
+  "packageManager": "yarn@4.15.0"
 }

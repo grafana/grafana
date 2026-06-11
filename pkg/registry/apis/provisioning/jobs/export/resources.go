@@ -60,45 +60,70 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 // (manager-identity skip, conversion shim, UID regeneration) but resolves
 // items via Get rather than listing the namespace.
 //
-// The admission validator restricts Resources to unmanaged Dashboards; this
-// function trusts that constraint and short-circuits anything else with a
-// recorded warning so a misconfigured caller surfaces in the job summary
-// rather than silently failing.
+// Each reference is resolved against its own kind/group via discovery, so any
+// kind the admission validator accepts can be selectively exported. The
+// dashboard conversion shim is applied only to dashboards; other kinds are
+// written as returned. Folders are exported as a tree by ExportFolders, so a
+// folder reference is skipped here to avoid writing a conflicting standalone
+// file. A reference whose kind cannot be resolved is recorded as a failed item
+// so a misconfigured caller surfaces in the job summary rather than silently
+// failing.
 func ExportSpecificResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
 	progress.SetMessage(ctx, "start selective resource export")
 
-	// ForKind resolves the preferred version when Version is empty.
-	dashboardGVK := schema.GroupVersionKind{
-		Group: resources.DashboardKind.Group,
-		Kind:  resources.DashboardKind.Kind,
+	// resolvedKind caches the per-kind client and (for dashboards only) the
+	// conversion shim, so repeated references to the same kind don't re-run
+	// discovery.
+	type resolvedKind struct {
+		client dynamic.ResourceInterface
+		gvr    schema.GroupVersionResource
+		shim   conversionShim
 	}
-	dashClient, dashGVR, err := clients.ForKind(ctx, dashboardGVK)
-	if err != nil {
-		return fmt.Errorf("get dashboard client: %w", err)
-	}
-	shim := newDashboardConversionShim(dashGVR, clients)
+	resolved := make(map[schema.GroupVersionKind]resolvedKind)
 
 	for _, ref := range options.Resources {
-		// Leave the action unset on the error paths below: the recorder
-		// treats FileActionIgnored results as non-fatal, and we want the
-		// caller's bad/unresolvable reference to escalate the job state.
-		result := jobs.NewGroupKindResult(ref.Name, resources.DashboardKind.Group, resources.DashboardKind.Kind)
+		// ForKind resolves the preferred version when Version is empty.
+		gvk := schema.GroupVersionKind{Group: ref.Group, Kind: ref.Kind}
 
-		if ref.Kind != "" && ref.Kind != resources.DashboardKind.Kind {
-			result.WithError(fmt.Errorf("resource %s/%s is not a %s", ref.Kind, ref.Name, resources.DashboardKind.Kind))
-			progress.Record(ctx, result.Build())
-			if err := progress.TooManyErrors(); err != nil {
-				return err
+		// Leave the action unset on the error paths below: the recorder treats
+		// FileActionIgnored results as non-fatal, and we want the caller's
+		// bad/unresolvable reference to escalate the job state.
+		result := jobs.NewGroupKindResult(ref.Name, ref.Group, ref.Kind)
+
+		rk, ok := resolved[gvk]
+		if !ok {
+			client, gvr, err := clients.ForKind(ctx, gvk)
+			if err != nil {
+				result.WithError(fmt.Errorf("resolve client for kind %q: %w", kindLabel(ref.Kind), err))
+				progress.Record(ctx, result.Build())
+				if err := progress.TooManyErrors(); err != nil {
+					return err
+				}
+				continue
 			}
+
+			rk = resolvedKind{client: client, gvr: gvr}
+			// Dashboards may need their original apiVersion preserved on export.
+			if gvr.GroupResource() == resources.DashboardResource.GroupResource() {
+				rk.shim = newDashboardConversionShim(gvr, clients)
+			}
+			resolved[gvk] = rk
+		}
+
+		// Folders are exported as a tree by ExportFolders; skip them here so we
+		// don't write a conflicting standalone folder file.
+		if rk.gvr.GroupResource() == resources.FolderResource.GroupResource() {
+			result.WithAction(repository.FileActionIgnored)
+			progress.Record(ctx, result.Build())
 			continue
 		}
 
-		item, err := dashClient.Get(ctx, ref.Name, metav1.GetOptions{})
+		item, err := rk.client.Get(ctx, ref.Name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				result.WithError(fmt.Errorf("dashboard %q not found", ref.Name))
+				result.WithError(fmt.Errorf("%s %q not found", kindLabel(ref.Kind), ref.Name))
 			} else {
-				result.WithError(fmt.Errorf("get dashboard %q: %w", ref.Name, err))
+				result.WithError(fmt.Errorf("get %s %q: %w", kindLabel(ref.Kind), ref.Name, err))
 			}
 			progress.Record(ctx, result.Build())
 			if err := progress.TooManyErrors(); err != nil {
@@ -107,12 +132,22 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 			continue
 		}
 
-		if err := exportItem(ctx, item, options, shim, repositoryResources, progress, generateNewUIDs, true); err != nil {
+		if err := exportItem(ctx, item, options, rk.shim, repositoryResources, progress, generateNewUIDs, true); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// kindLabel returns a human-readable label for a resource kind, falling back to
+// a generic noun when the kind is unset so user-facing messages still read
+// correctly.
+func kindLabel(kind string) string {
+	if kind == "" {
+		return "resource"
+	}
+	return kind
 }
 
 func exportResource(ctx context.Context,
@@ -151,10 +186,7 @@ func exportItem(ctx context.Context,
 
 	// Derive a human name from the item's kind so user-facing messages read
 	// correctly for any exported resource, not just dashboards.
-	kindName := gvk.Kind
-	if kindName == "" {
-		kindName = "resource"
-	}
+	kindName := kindLabel(gvk.Kind)
 
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
