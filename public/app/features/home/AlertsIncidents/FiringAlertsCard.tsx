@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
+import { escapeRegExp } from 'lodash';
 import { useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
@@ -39,7 +40,7 @@ function buildTeamMatchers(teamNames: string[]) {
   if (teamNames.length === 0) {
     return [];
   }
-  return [{ name: 'team', value: teamNames.join('|'), isRegex: true, isEqual: true }];
+  return [{ name: 'team', value: teamNames.map(escapeRegExp).join('|'), isRegex: true, isEqual: true }];
 }
 
 export function FiringAlertsCard() {
@@ -101,8 +102,8 @@ function FiringAlertsCardInner() {
 
   const displayed = sorted.slice(0, MAX_ALERTS);
 
-  const criticalCount = alerts?.filter((a) => a.labels.severity === 'critical').length ?? 0;
-  const highCount = alerts?.filter((a) => a.labels.severity === 'high').length ?? 0;
+  const criticalCount = alerts?.filter((a) => canonicalSeverity(a.labels.severity) === 'critical').length ?? 0;
+  const highCount = alerts?.filter((a) => canonicalSeverity(a.labels.severity) === 'major').length ?? 0;
 
   const viewAllHref = `/alerting/groups?dataSource=${GRAFANA_RULES_SOURCE_NAME}`;
 
@@ -181,30 +182,33 @@ function FiringAlertsCardInner() {
 
         {!loading && !alertsError && displayed.length > 0 && (
           <ul className={styles.list}>
-            {displayed.map((alert) => (
-              <li key={alert.fingerprint} className={styles.row}>
-                <span className={styles.severityDot} data-severity={alert.labels.severity} />
-                {alertDetailHref(alert) ? (
-                  <TextLink href={alertDetailHref(alert)!} inline={false} className={styles.alertName}>
-                    {alert.labels.alertname}
-                  </TextLink>
-                ) : (
-                  <Text truncate weight="medium">
-                    {alert.labels.alertname}
-                  </Text>
-                )}
-                {alert.labels.team && (
-                  <Text color="secondary" variant="bodySmall" truncate>
-                    {alert.labels.team}
-                  </Text>
-                )}
-                <span className={styles.age}>
-                  <Text color="secondary" variant="bodySmall">
-                    {formatDistanceToNowStrict(new Date(alert.startsAt), { addSuffix: true })}
-                  </Text>
-                </span>
-              </li>
-            ))}
+            {displayed.map((alert) => {
+              const detailHref = alertDetailHref(alert);
+              return (
+                <li key={alert.fingerprint} className={styles.row}>
+                  <span className={styles.severityDot} data-severity={alert.labels.severity} />
+                  {detailHref ? (
+                    <TextLink href={detailHref} inline={false} className={styles.alertName}>
+                      {alert.labels.alertname}
+                    </TextLink>
+                  ) : (
+                    <Text truncate weight="medium">
+                      {alert.labels.alertname}
+                    </Text>
+                  )}
+                  {alert.labels.team && (
+                    <Text color="secondary" variant="bodySmall" truncate>
+                      {alert.labels.team}
+                    </Text>
+                  )}
+                  <span className={styles.age}>
+                    <Text color="secondary" variant="bodySmall">
+                      {formatDistanceToNowStrict(new Date(alert.startsAt), { addSuffix: true })}
+                    </Text>
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         )}
 

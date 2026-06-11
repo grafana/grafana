@@ -30,6 +30,8 @@ function makeAlert(overrides: Partial<AlertmanagerAlert> & { labels: Alertmanage
 const criticalAlert = makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical', team: 'platform' } });
 const highAlert = makeAlert({ labels: { alertname: 'Memory High', severity: 'high', team: 'platform' } });
 const warningAlert = makeAlert({ labels: { alertname: 'Disk Warning', severity: 'warning', team: 'infra' } });
+const critAliasAlert = makeAlert({ labels: { alertname: 'Crit Alias', severity: 'crit', team: 'platform' } });
+const sev2Alert = makeAlert({ labels: { alertname: 'Sev2 Alert', severity: 'SEV2', team: 'platform' } });
 
 function mockTeams(teams: Array<{ name: string }>) {
   server.use(
@@ -85,6 +87,21 @@ describe('FiringAlertsCard', () => {
     expect(screen.getByText(/1 high/i)).toBeInTheDocument();
   });
 
+  it('counts non-canonical severity aliases by canonical level', async () => {
+    mockTeams([]);
+    mockAlerts([critAliasAlert, sev2Alert]);
+
+    render(<FiringAlertsCard />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Crit Alias')).toBeInTheDocument();
+    });
+
+    // 'crit' canonicalizes to critical, 'SEV2' to major (shown as the "high" badge)
+    expect(screen.getByText(/1 critical/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 high/i)).toBeInTheDocument();
+  });
+
   it('builds team matchers when user has teams', async () => {
     const capturedRequests: Request[] = [];
     mockTeams([{ name: 'platform' }, { name: 'infra' }]);
@@ -107,6 +124,29 @@ describe('FiringAlertsCard', () => {
     const url = new URL(lastReq.url);
     const filters = url.searchParams.getAll('filter');
     expect(filters.some((f) => f.includes('team') && f.includes('platform|infra'))).toBe(true);
+  });
+
+  it('escapes regex metacharacters in team names', async () => {
+    const capturedRequests: Request[] = [];
+    mockTeams([{ name: 'team.one' }]);
+
+    server.use(
+      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+        capturedRequests.push(request);
+        return HttpResponse.json([criticalAlert]);
+      })
+    );
+
+    render(<FiringAlertsCard />);
+
+    await waitFor(() => {
+      expect(screen.getByText('CPU Critical')).toBeInTheDocument();
+    });
+
+    // buildTeamMatchers escapes the '.' to '\.', then quoteWithEscape doubles the backslash on the wire
+    const lastReq = capturedRequests[capturedRequests.length - 1];
+    const filters = new URL(lastReq.url).searchParams.getAll('filter');
+    expect(filters.some((f) => f.includes('team\\\\.one'))).toBe(true);
   });
 
   it('shows empty state with "Show all" toggle when team-filtered result is empty', async () => {
