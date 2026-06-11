@@ -2711,10 +2711,10 @@ var (
 		{
 			Name:        "react19",
 			Description: "Whether to use the new React 19 runtime",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:         "frontendServiceUseSettingsService",
