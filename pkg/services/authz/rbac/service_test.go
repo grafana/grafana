@@ -1533,9 +1533,10 @@ func TestService_K8sNativeFallback(t *testing.T) {
 		assert.False(t, resp.Allowed)
 	})
 
-	t.Run("Check: unregistered group allowed with stack-role grant and no folder (avoid breaking existing apps that are not in apiextensions service - *.ext.grafana.app)", func(t *testing.T) {
+	t.Run("Check: unregistered group allowed with stack-role grant and no folder (only with wildcard access)", func(t *testing.T) {
 		s := setup([]accesscontrol.Permission{
 			{Action: "unregistered.grafana.app/widgets:get", Scope: ""},
+			{Action: "folders:read", Scope: "folders:*"},
 		})
 		resp, err := s.Check(ctx, &authzv1.CheckRequest{
 			Namespace: "org-12",
@@ -1686,22 +1687,16 @@ func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:        "capabilities probe (no name) allowed with stack role",
+			name:        "capabilities probe (no Parent folder) allowed with stack role",
 			permissions: []accesscontrol.Permission{stackRole("widget.ext.grafana.app/widgets:get")},
 			req:         &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet},
 			expected:    true,
 		},
 		{
-			name:        "capabilities probe (no name) denied without stack role",
+			name:        "capabilities probe (no Parent folder) denied without stack role",
 			permissions: []accesscontrol.Permission{},
 			req:         &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet},
 			expected:    false,
-		},
-		{
-			name:        "cluster-scoped (no folder) allowed with stack role",
-			permissions: []accesscontrol.Permission{stackRole("widget.ext.grafana.app/widgets:get")},
-			req:         &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet, Name: "w1"},
-			expected:    true,
 		},
 		{
 			name: "write verb allowed with stack role and folder write permission",

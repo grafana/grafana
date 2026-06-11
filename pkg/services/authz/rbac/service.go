@@ -958,29 +958,18 @@ func (s *Service) checkPermissionWithMapping(ctx context.Context, scopeMap map[s
 // here only affects user identities that hold a resource-type wildcard
 // without a matching folder grant.
 func (s *Service) checkPermissionWithFolderAuthz(ctx context.Context, scopeMap map[string]bool, req *checkRequest, getTree folderTreeGetter) (bool, error) {
-	ctxLogger := s.logger.FromContext(ctx)
+	ctxLogger := s.logger.FromContext(ctx).New("namespace", req.Namespace.Value, "group", req.Group, "resource", req.Resource, "verb", req.Verb, "name", req.Name, "parent_folder", req.ParentFolder)
 
 	hasStackRole := scopeMap[""]
-
-	// Capabilities probe (no name, not Create): only the stack role
-	// counts. Folder grants on this resource do not light up
-	// "can the user do X anywhere?".
-	if req.Name == "" && req.Verb != utils.VerbCreate {
-		return hasStackRole, nil
-	}
 
 	// No stack role at all (can't proceed regardless of folder grants).
 	if !hasStackRole {
 		return false, nil
 	}
 
-	// No parent folder: the object does not live in a folder, so the stack
-	// role is sufficient.
-	// If the item should have actually been in a folder, it would get rejected from the apistore layer (apistore.StorageOptions.RequireFolder).
+	// Capabilities check
 	if req.ParentFolder == "" {
-		ctxLogger.Debug("folderAuthz: no parent folder, stack role sufficient",
-			"group", req.Group, "resource", req.Resource, "verb", req.Verb,
-			"name", req.Name, "namespace", req.Namespace.Value)
+		ctxLogger.Debug("folderAuthz: no parent folder provided, capabilities check")
 		return true, nil
 	}
 
@@ -1008,9 +997,8 @@ func (s *Service) checkPermissionWithFolderAuthz(ctx context.Context, scopeMap m
 	}
 
 	ctxLogger.Debug("folderAuthz: walking folder inheritance",
-		"group", req.Group, "resource", req.Resource, "verb", req.Verb,
-		"name", req.Name, "parent_folder", req.ParentFolder,
-		"folder_action", folderAction, "folder_action_sets", folderActionSets,
+		"folder_action", folderAction,
+		"folder_action_sets", folderActionSets,
 		"folder_scope_count", len(folderScopeMap))
 	allowed, err := s.checkInheritedPermissions(ctx, folderScopeMap, req, getTree)
 	return allowed, err
