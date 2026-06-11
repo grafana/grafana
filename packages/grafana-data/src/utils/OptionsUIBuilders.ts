@@ -243,6 +243,10 @@ class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<TSub, a
   };
 }
 
+/**
+ * Type guard that returns true if `item` is a {@link NestedPanelOptions} builder instance.
+ * Useful when iterating over registered panel option items to identify and handle nested sub-options.
+ */
 export function isNestedPanelOptions(item: unknown): item is NestedPanelOptionsBuilder {
   return isObject(item) && 'id' in item && item.id === 'nested-panel-options';
 }
