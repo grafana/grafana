@@ -19,12 +19,12 @@ type RBACSettings struct {
 	// PluginsCleanup lists plugin IDs whose RBAC data (roles, permissions, seed assignments)
 	// should be purged from the database at startup.
 	PluginsCleanup []string
-	// BasicRoleAggregatorEnabled turns the enterprise basic-role aggregator
-	// background service on or off. Defaults to false: the aggregator is
-	// opt-in while the basic-role override path is being stabilised. When
-	// false the service reports IsDisabled() regardless of Mode 5 or license
-	// state.
-	BasicRoleAggregatorEnabled bool
+	// GlobalRoleSeedingEnabled turns the enterprise GlobalRole seeding process
+	// on or off as a whole — both the fixed-role GlobalRole seeder and the
+	// basic-role aggregator background services. Defaults to false: seeding is
+	// opt-in while the Mode 5 GlobalRole path is being stabilised. When false
+	// both services report IsDisabled() regardless of Mode 5 or license state.
+	GlobalRoleSeedingEnabled bool
 	// LeaderElection configures HA leader election for the single-tenant
 	// GlobalRole seeder and basic-role aggregator background services. When
 	// disabled (the default) those services run with an always-leader elector,
@@ -50,7 +50,7 @@ func (cfg *Cfg) readRBACSettings() {
 	s.ResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
 	s.SingleOrganization = rbac.Key("single_organization").MustBool(false)
 	s.PluginsCleanup = util.SplitString(rbac.Key("plugins_cleanup").MustString(""))
-	s.BasicRoleAggregatorEnabled = rbac.Key("basic_role_aggregator_enabled").MustBool(false)
+	s.GlobalRoleSeedingEnabled = rbac.Key("global_role_seeding_enabled").MustBool(false)
 
 	// Leader election for the GlobalRole seeder / basic-role aggregator. The
 	// LeaseName is intentionally left empty here and set per-service in the
