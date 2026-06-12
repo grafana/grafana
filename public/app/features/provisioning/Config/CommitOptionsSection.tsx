@@ -13,7 +13,6 @@ import {
 
 import { t } from '@grafana/i18n';
 import {
-  Button,
   Checkbox,
   ControlledCollapse,
   Field,
@@ -152,28 +151,21 @@ export function CommitOptionsSection<T extends FieldValues>({
               hasTokenInstructions ? <CommitSigningInfo type={type} /> : gitFields.signingMethodConfig.description
             }
           >
-            <Stack gap={2} alignItems="center">
-              <Controller
-                name={signingMethodName}
-                control={control}
-                render={({ field: { ref, ...field } }) => (
-                  <RadioButtonGroup
-                    {...field}
-                    options={getSigningMethodOptions()}
-                    disabled={signingEnabled && signingKeyConfigured}
-                    onChange={(value) => {
-                      field.onChange(value);
-                      resetSigning();
-                    }}
-                  />
-                )}
-              />
-              {signingEnabled && signingKeyConfigured && (
-                <Button variant="secondary" onClick={resetSigning}>
-                  {t('provisioning.commit-options.label-reset-signing', 'Reset')}
-                </Button>
+            <Controller
+              name={signingMethodName}
+              control={control}
+              render={({ field: { ref, ...field } }) => (
+                <RadioButtonGroup
+                  {...field}
+                  options={getSigningMethodOptions()}
+                  disabled={signingEnabled && signingKeyConfigured}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    resetSigning();
+                  }}
+                />
               )}
-            </Stack>
+            />
           </Field>
         )}
         {signingEnabled && gitFields?.signingKeyConfig && (
@@ -192,26 +184,17 @@ export function CommitOptionsSection<T extends FieldValues>({
                   error={fieldState.error?.message}
                   invalid={!!fieldState.error}
                 >
-                  {signingKeyConfigured ? (
-                    <TextArea
-                      id="commit-signing-key"
-                      disabled
-                      value={t('provisioning.commit-options.signing-key-configured', 'Configured')}
-                      rows={1}
-                    />
-                  ) : (
-                    <SecretTextArea
-                      {...field}
-                      id="commit-signing-key"
-                      spellCheck={false}
-                      invalid={!!fieldState.error}
-                      placeholder={getSigningKeyPlaceholder(signingMethod)}
-                      isConfigured={false}
-                      onReset={resetSigning}
-                      rows={8}
-                      grow
-                    />
-                  )}
+                  <SecretTextArea
+                    {...field}
+                    id="commit-signing-key"
+                    spellCheck={false}
+                    invalid={!!fieldState.error}
+                    placeholder={getSigningKeyPlaceholder(signingMethod)}
+                    isConfigured={signingKeyConfigured}
+                    onReset={resetSigning}
+                    rows={8}
+                    grow
+                  />
                 </Field>
               )}
             />

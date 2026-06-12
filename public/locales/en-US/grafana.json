@@ -13160,9 +13160,7 @@
       "description-enforce-template": "Pre-fill the commit message in save dialogs from the template above and make it read-only.",
       "label-commit-options": "Commit options (advanced)",
       "label-enforce-template": "Enforce commit message template",
-      "label-reset-signing": "Reset",
       "signer-required": "Required when commit signing is enabled.",
-      "signing-key-configured": "Configured",
       "signing-key-required": "Signing key is required",
       "smime-certificate-configured": "Configured",
       "smime-certificate-required": "Certificate is required"
