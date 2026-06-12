@@ -45,6 +45,53 @@ Click the **Saved searches** button to open the list of previously saved searche
 
 {{< figure src="/media/docs/alerting/alerting-saved-searches.png" max-width="750px" alt="Alert rule filter options" >}}
 
+### Search syntax
+
+The search input accepts a structured `key:value` syntax. The key on the left of the colon is the filter type, and the value on the right is what you want to match. Use quotation marks around values that contain spaces, for example `rule:"High CPU usage"`.
+
+The following filter types are supported:
+
+- `datasource`
+- `namespace`
+- `label`
+- `group`
+- `rule`
+- `state`
+- `type`
+- `health`
+
+For example:
+
+- `label:severity` filters rules by the `severity` label.
+- `health:error` filters rules whose health is in an error state.
+- `rule:"High CPU usage"` filters rules by name.
+
+You can combine multiple filters in a single search. Any text entered without a `key:` prefix is treated as a query that filters alert rules by name.
+
+#### Match labels with regular expressions
+
+The `label` filter accepts Prometheus-style matchers, so you can match label values with regular expressions instead of exact strings. The other filter types don't support regular expressions.
+
+A label matcher uses the form `label:<KEY><OPERATOR><VALUE>`. The following operators are supported:
+
+- `=`: matches rules whose label value is exactly equal to the value.
+- `!=`: matches rules whose label value isn't equal to the value.
+- `=~`: matches rules whose label value matches the regular expression.
+- `!~`: matches rules whose label value doesn't match the regular expression.
+
+For example:
+
+- `label:severity=~crit.*` matches rules where the `severity` label matches the regular expression, such as `critical` or `crit-high`.
+- `label:team!~fe.*` matches rules where the `team` label doesn't start with `fe`.
+
+Wrap the matcher in quotation marks when the key or value contains spaces or special characters, for example `label:"team=~fe.*devs"`.
+
+Regular expressions use [RE2 syntax](https://github.com/google/re2/wiki/Syntax) and are fully anchored, so the pattern must match the entire label value. Use `.*` or `.+` to match part of a value, for example `label:severity=~.*crit.*`. Matching is case-sensitive by default. To match without case sensitivity, add the `(?i)` inline flag, for example `label:severity=~(?i)critical`.
+
+Label matchers apply to both the alert rule's labels and the labels on its alert instances, so a rule matches when either set of labels satisfies the matcher. For labels whose values are set by Go templates, the matcher runs against the rendered static value, not the template expression, so you can't use a template query to find a match.
+
+The search input and the **Filter** popup are kept in sync, so changes made in either place are reflected in the other.
+
 ## Change alert rules list view
 
 You can also change how the rule list is displayed using the **View as** option.

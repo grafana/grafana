@@ -22,6 +22,7 @@ import { getAPINamespace } from 'app/api/utils';
 import { appEvents } from 'app/core/app_events';
 import { isK8sAnnotationsClientEnabled } from 'app/features/annotations/api';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 interface DisplayItem {
   identity: { type: string; name: string };
@@ -239,9 +240,13 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       return;
     }
 
-    const result = await getBackendSrv().get('/api/search', { dashboardUIDs: anno.dashboardUID });
-    if (result && result.length && result[0].uid === anno.dashboardUID) {
-      const dash = result[0];
+    const result = await getGrafanaSearcher().search({
+      uid: [anno.dashboardUID],
+      kind: ['dashboard'],
+      limit: 1,
+    });
+    const dash = result.view.toArray()[0];
+    if (dash?.uid === anno.dashboardUID) {
       const url = new URL(dash.url, window.location.origin);
       url.searchParams.set('from', String(params.from));
       url.searchParams.set('to', String(params.to));

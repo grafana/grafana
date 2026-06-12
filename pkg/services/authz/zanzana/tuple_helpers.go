@@ -28,6 +28,114 @@ const (
 	actionRolesDelete = "roles:delete"
 )
 
+// User-management actions. Hardcoded for the same reason as the role-management
+// actions above: the enterprise-only users.roles:* actions live in pkg/extensions
+// and these shared helpers must not depend on it.
+const (
+	actionUsersCreate = "users:create"
+	actionUsersRead   = "users:read"
+	actionUsersWrite  = "users:write"
+	actionUsersDelete = "users:delete"
+
+	actionUsersPermissionsRead  = "users.permissions:read"
+	actionUsersPermissionsWrite = "users.permissions:write"
+
+	actionUsersRolesRead   = "users.roles:read"
+	actionUsersRolesAdd    = "users.roles:add"
+	actionUsersRolesRemove = "users.roles:remove"
+
+	actionOrgUsersRead   = "org.users:read"
+	actionOrgUsersWrite  = "org.users:write"
+	actionOrgUsersAdd    = "org.users:add"
+	actionOrgUsersRemove = "org.users:remove"
+)
+
+// Team-management actions. Hardcoded for the same reason as the user-management
+// actions above (the enterprise-only teams.roles:* actions live in pkg/extensions).
+const (
+	actionTeamsCreate = "teams:create"
+	actionTeamsRead   = "teams:read"
+	actionTeamsWrite  = "teams:write"
+	actionTeamsDelete = "teams:delete"
+
+	actionTeamsPermissionsRead  = "teams.permissions:read"
+	actionTeamsPermissionsWrite = "teams.permissions:write"
+
+	actionTeamsRolesRead   = "teams.roles:read"
+	actionTeamsRolesAdd    = "teams.roles:add"
+	actionTeamsRolesRemove = "teams.roles:remove"
+)
+
+// iam.grafana.app group and the resources user- and team-management actions gate.
+var (
+	iamGroup             = iamv0.UserResourceInfo.GroupResource().Group
+	usersResource        = iamv0.UserResourceInfo.GroupResource().Resource
+	teamsResource        = iamv0.TeamResourceInfo.GroupResource().Resource
+	roleBindingsResource = iamv0.RoleBindingInfo.GroupResource().Resource
+)
+
+// iamActionMapping describes the group_resource (within iamGroup) and relation(s) an
+// iam-management action grants. Shared by the user- and team-management mappings.
+type iamActionMapping struct {
+	resource  string
+	relations []string
+	// skipScope marks actions the mapper authorizes without a scope (create verbs).
+	skipScope bool
+}
+
+// userManagementMappings maps each user-management action to the iam group_resource
+// relation(s) it grants.
+//
+// On iam.grafana.app/users the global (users:*) and org (org.users:*) families gate
+// the same verbs, so both map to the same relation. This union is safe because the
+// privileged changes (grafanaAdmin, disabled, profile vs. org role) are gated by the
+// iam admission validators (pkg/registry/apis/iam/user/validate.go) independently of
+// this grant — so the relation only decides "may you attempt this verb".
+//
+// users.roles:* gate rolebindings, not users. Actions with no iam verb
+// (users:enable/disable/logout, users.authtoken/password/quotas) gate only legacy HTTP
+// endpoints and are omitted.
+var userManagementMappings = map[string]iamActionMapping{
+	actionUsersRead:    {resource: usersResource, relations: []string{RelationGet}},
+	actionOrgUsersRead: {resource: usersResource, relations: []string{RelationGet}},
+
+	actionUsersWrite:    {resource: usersResource, relations: []string{RelationUpdate}},
+	actionOrgUsersWrite: {resource: usersResource, relations: []string{RelationUpdate}},
+
+	actionUsersCreate: {resource: usersResource, relations: []string{RelationCreate}, skipScope: true},
+	// Skipping this one until we have a better picture of the whole org permissions
+	// actionOrgUsersAdd: {resource: usersResource, relations: []string{RelationCreate}},
+
+	actionUsersDelete:    {resource: usersResource, relations: []string{RelationDelete}},
+	actionOrgUsersRemove: {resource: usersResource, relations: []string{RelationDelete}},
+
+	actionUsersPermissionsRead:  {resource: usersResource, relations: []string{RelationGetPermissions}},
+	actionUsersPermissionsWrite: {resource: usersResource, relations: []string{RelationSetPermissions}},
+
+	actionUsersRolesRead:   {resource: roleBindingsResource, relations: []string{RelationGet}},
+	actionUsersRolesAdd:    {resource: roleBindingsResource, relations: []string{RelationCreate, RelationUpdate}},
+	actionUsersRolesRemove: {resource: roleBindingsResource, relations: []string{RelationDelete}},
+}
+
+// teamManagementMappings maps each team-management action to the iam group_resource
+// relation(s) it grants, inverting the iam "teams" and "rolebindings" mapper entries.
+// Core team actions gate iam.grafana.app/teams; teams.roles:* gate
+// iam.grafana.app/rolebindings (the same resource user role-bindings gate — team and
+// user role-assignments are not distinguished at the group_resource level).
+var teamManagementMappings = map[string]iamActionMapping{
+	actionTeamsRead:   {resource: teamsResource, relations: []string{RelationGet}},
+	actionTeamsWrite:  {resource: teamsResource, relations: []string{RelationUpdate}},
+	actionTeamsCreate: {resource: teamsResource, relations: []string{RelationCreate}, skipScope: true},
+	actionTeamsDelete: {resource: teamsResource, relations: []string{RelationDelete}},
+
+	actionTeamsPermissionsRead:  {resource: teamsResource, relations: []string{RelationGetPermissions}},
+	actionTeamsPermissionsWrite: {resource: teamsResource, relations: []string{RelationSetPermissions}},
+
+	actionTeamsRolesRead:   {resource: roleBindingsResource, relations: []string{RelationGet}},
+	actionTeamsRolesAdd:    {resource: roleBindingsResource, relations: []string{RelationCreate, RelationUpdate}},
+	actionTeamsRolesRemove: {resource: roleBindingsResource, relations: []string{RelationDelete}},
+}
+
 // Scope fragments produced by splitScope for the two "all roles" scopes we
 // honor when translating role-management permissions:
 //   - permissions:type:delegate → kind="permissions", identifier="delegate"
@@ -89,6 +197,24 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 		// actions are intentionally dropped (see RoleManagementToTuples).
 		if isRoleManagementAction(perm.Action) {
 			for _, t := range RoleManagementToTuples(subject, perm) {
+				tupleMap[t.String()] = t
+			}
+			continue
+		}
+
+		// User-management actions map onto iam group_resources via a dedicated path,
+		// like the role-management actions above (see UserManagementToTuples).
+		if isUserManagementAction(perm.Action) {
+			for _, t := range UserManagementToTuples(subject, perm) {
+				tupleMap[t.String()] = t
+			}
+			continue
+		}
+
+		// Team-management actions map onto iam group_resources via a dedicated path,
+		// like the user-management actions above (see TeamManagementToTuples).
+		if isTeamManagementAction(perm.Action) {
+			for _, t := range TeamManagementToTuples(subject, perm) {
 				tupleMap[t.String()] = t
 			}
 			continue
@@ -238,6 +364,88 @@ func isRolesWildcardScope(kind, identifier string) bool {
 	return false
 }
 
+// UserManagementToTuples translates a user-management permission into iam tuples.
+// Only "all" scopes translate (see isAllUsersScope); specific-instance scopes are
+// dropped, since the FGA users type is uid-based while the legacy scope is id-based
+// and rolebindings is wildcard-only. users:create is unscoped and always translates.
+func UserManagementToTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
+	m, ok := userManagementMappings[permission.Action]
+	if !ok {
+		return nil
+	}
+
+	if !m.skipScope && !isAllUsersScope(permission.Kind, permission.Identifier) {
+		return nil
+	}
+
+	tuples := make([]*openfgav1.TupleKey, 0, len(m.relations))
+	for _, relation := range m.relations {
+		tuples = append(tuples, NewGroupResourceTuple(subject, relation, iamGroup, m.resource, ""))
+	}
+	return tuples
+}
+
+// isUserManagementAction reports whether the action is one of the user-management
+// actions handled by UserManagementToTuples.
+func isUserManagementAction(action string) bool {
+	_, ok := userManagementMappings[action]
+	return ok
+}
+
+// isAllUsersScope reports whether the (kind, identifier) pair represents an "all"
+// scope for the user-management actions. The legacy shapes that appear are:
+//   - users:* / global.users:*  → identifier="*" (users.permissions:*, users:delete, users.roles:read)
+//   - permissions:type:delegate → kind="permissions", identifier="delegate" (users.roles:add/remove)
+//
+// Specific instance scopes (e.g. users:id:5) match none of these and are dropped.
+func isAllUsersScope(kind, identifier string) bool {
+	if identifier == scopeIdentifierWildcard {
+		return true
+	}
+	return kind == scopeKindPermissions && identifier == scopeIdentifierDelegate
+}
+
+// TeamManagementToTuples translates a team-management permission into iam tuples.
+// Only "all" scopes translate (see isAllTeamsScope); specific-instance scopes are
+// dropped, since the FGA teams type is uid-based while the legacy scope is id-based
+// and rolebindings is wildcard-only. teams:create is unscoped and always translates.
+func TeamManagementToTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
+	m, ok := teamManagementMappings[permission.Action]
+	if !ok {
+		return nil
+	}
+
+	if !m.skipScope && !isAllTeamsScope(permission.Kind, permission.Identifier) {
+		return nil
+	}
+
+	tuples := make([]*openfgav1.TupleKey, 0, len(m.relations))
+	for _, relation := range m.relations {
+		tuples = append(tuples, NewGroupResourceTuple(subject, relation, iamGroup, m.resource, ""))
+	}
+	return tuples
+}
+
+// isTeamManagementAction reports whether the action is one of the team-management
+// actions handled by TeamManagementToTuples.
+func isTeamManagementAction(action string) bool {
+	_, ok := teamManagementMappings[action]
+	return ok
+}
+
+// isAllTeamsScope reports whether the (kind, identifier) pair represents an "all"
+// scope for the team-management actions. The legacy shapes that appear are:
+//   - teams:* / teams:id:*      → identifier="*" (teams:read/write/delete, teams.permissions:*, teams.roles:read)
+//   - permissions:type:delegate → kind="permissions", identifier="delegate" (teams.roles:add/remove)
+//
+// Specific instance scopes (e.g. teams:id:5) match none of these and are dropped.
+func isAllTeamsScope(kind, identifier string) bool {
+	if identifier == scopeIdentifierWildcard {
+		return true
+	}
+	return kind == scopeKindPermissions && identifier == scopeIdentifierDelegate
+}
+
 func splitScope(scope string) (string, string, string) {
 	if scope == "" {
 		return "", "", ""
@@ -334,7 +542,7 @@ func NewResourceTuple(object string, resource *authzextv1.Resource, perm *authze
 	}
 
 	// For resources we add a condition to filter by apiGroup/resource
-	// e.g "group_filter": {"group_resource": "dashboards.grafana.app/dashboards"}
+	// e.g "group_filter": {"group_resource": "dashboard.grafana.app/dashboards"}
 	if typ == TypeResource {
 		key.Condition = &openfgav1.RelationshipCondition{
 			Name: "group_filter",
@@ -378,9 +586,9 @@ func toZanzanaSubject(kind string, name string) (string, error) {
 	return "", errUnknownKind
 }
 
-// GetTeamBindingTuple maps a team binding subject, team name, and permission to the corresponding
+// GetTeamMemberTuple maps a team binding subject, team name, and permission to the corresponding
 // Zanzana tuple. This is the canonical mapping used throughout the system.
-func GetTeamBindingTuple(subject string, team string, permission string) (*openfgav1.TupleKey, error) {
+func GetTeamMemberTuple(subject string, team string, permission string) (*openfgav1.TupleKey, error) {
 	if subject == "" {
 		return nil, errors.New("subject name cannot be empty")
 	}

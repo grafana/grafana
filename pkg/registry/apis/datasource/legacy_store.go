@@ -147,7 +147,7 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		return nil, false, fmt.Errorf("expected a datasource object")
 	}
 
-	oldDS, ok := obj.(*v0alpha1.DataSource)
+	oldDS, ok := old.(*v0alpha1.DataSource)
 	if !ok {
 		return nil, false, fmt.Errorf("expected a datasource object (old)")
 	}
@@ -178,6 +178,9 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 
 	// Keep all the old secure values
 	if len(oldDS.Secure) > 0 {
+		if ds.Secure == nil {
+			ds.Secure = map[string]common.InlineSecureValue{}
+		}
 		for k, v := range oldDS.Secure {
 			_, found := ds.Secure[k]
 			if !found {

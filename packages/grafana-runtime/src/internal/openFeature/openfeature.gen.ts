@@ -49,12 +49,14 @@ export const FlagKeys = {
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables org-defined dashboard templates for enterprise */
   GrafanaOrgDashboardTemplates: "grafana.orgDashboardTemplates",
-  /** Replaces the Intercom survey for PanelEditNext feedback with an event that triggers an in-house survey */
+  /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
+  /** Enables the new visual design refresh for the Grafana UI */
+  GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Use stream shards to split queries into smaller subqueries */
@@ -75,14 +77,18 @@ export const FlagKeys = {
   PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
   PluginsUseMTPlugins: "plugins.useMTPlugins",
+  /** Enable configurable commit message, branch name, and pull request title conventions for Git Sync */
+  ProvisioningGitConventions: "provisioning.gitConventions",
   /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
   ProvisioningReadmes: "provisioning.readmes",
   /** Allow setting folder metadata for provisioned folders */
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
   QueryEditorNext: "queryEditorNext",
-  /** Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor */
-  QueryEditorNextMultiSelect: "queryEditorNextMultiSelect",
+  /** Store query history in browser IndexedDB instead of server-side */
+  QueryHistoryLocalOnly: "queryHistory.localOnly",
+  /** Replace the Query History drawer with a new Recent Queries modal UI */
+  QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
@@ -296,7 +302,7 @@ export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluatio
 };
 
 /**
- * Replaces the Intercom survey for PanelEditNext feedback with an event that triggers an in-house survey
+ * Enables firing an event for PanelEditNext feedback that triggers an in-house survey
  *
  * **Details:**
  * - flag key: `grafana.panelEditNextFeedbackEvent`
@@ -326,6 +332,17 @@ export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationO
  */
 export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.unifiedHomepage", false, options).value;
+};
+
+/**
+ * Enables the new visual design refresh for the Grafana UI
+ *
+ * **Details:**
+ * - flag key: `grafana.visualDesignRefresh`
+ * - default value: `false`
+ */
+export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.visualDesignRefresh", false, options).value;
 };
 
 /**
@@ -439,14 +456,25 @@ export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions)
 };
 
 /**
+ * Enable configurable commit message, branch name, and pull request title conventions for Git Sync
+ *
+ * **Details:**
+ * - flag key: `provisioning.gitConventions`
+ * - default value: `false`
+ */
+export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("provisioning.gitConventions", false, options).value;
+};
+
+/**
  * Render the README.md of a Git Sync provisioned folder inline below its dashboards list
  *
  * **Details:**
  * - flag key: `provisioning.readmes`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.readmes", false, options).value;
+  return useFlag("provisioning.readmes", true, options).value;
 };
 
 /**
@@ -472,14 +500,25 @@ export const useFlagQueryEditorNext = (options?: ReactFlagEvaluationOptions): bo
 };
 
 /**
- * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
+ * Store query history in browser IndexedDB instead of server-side
  *
  * **Details:**
- * - flag key: `queryEditorNextMultiSelect`
+ * - flag key: `queryHistory.localOnly`
  * - default value: `false`
  */
-export const useFlagQueryEditorNextMultiSelect = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("queryEditorNextMultiSelect", false, options).value;
+export const useFlagQueryHistoryLocalOnly = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryHistory.localOnly", false, options).value;
+};
+
+/**
+ * Replace the Query History drawer with a new Recent Queries modal UI
+ *
+ * **Details:**
+ * - flag key: `queryHistory.recentQueriesUI`
+ * - default value: `false`
+ */
+export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryHistory.recentQueriesUI", false, options).value;
 };
 
 /**

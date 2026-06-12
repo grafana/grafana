@@ -22,9 +22,9 @@
 
 import { z } from 'zod';
 
-import type { AutoGridLayoutItemKind, GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import type { GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
-export const dataQueryKindSchema = z.object({
+const dataQueryKindSchema = z.object({
   kind: z.literal('DataQuery').optional().default('DataQuery'),
   group: z.string().describe('Datasource type (e.g., "prometheus", "loki", "mysql")'),
   version: z.string().optional().default('v0'),
@@ -38,7 +38,7 @@ export const dataQueryKindSchema = z.object({
 
 // Variable building-block schemas (v2beta1)
 
-export const variableOptionSchema = z.object({
+const variableOptionSchema = z.object({
   selected: z.boolean().optional().describe('Flag indicating if the value is selected'),
   text: z.string().or(z.array(z.string())).describe('The text or list of texts of the current value'),
   value: z.string().or(z.array(z.string())).describe('The value or list of values of the current value'),
@@ -130,7 +130,7 @@ const commonVariableSpecFields = {
 
 // Per-type variable kind schemas (v2beta1)
 
-export const queryVariableKindSchema = z
+const queryVariableKindSchema = z
   .object({
     kind: z.literal('QueryVariable'),
     spec: z.object({
@@ -188,7 +188,7 @@ export const queryVariableKindSchema = z
     'QueryVariable: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.'
   );
 
-export const customVariableKindSchema = z
+const customVariableKindSchema = z
   .object({
     kind: z.literal('CustomVariable'),
     spec: z.object({
@@ -220,7 +220,7 @@ export const customVariableKindSchema = z
   })
   .describe('CustomVariable: Define the variable options manually using a comma-separated list.');
 
-export const datasourceVariableKindSchema = z
+const datasourceVariableKindSchema = z
   .object({
     kind: z.literal('DatasourceVariable'),
     spec: z.object({
@@ -261,7 +261,7 @@ export const datasourceVariableKindSchema = z
   })
   .describe('DatasourceVariable: Quickly change the data source for an entire dashboard.');
 
-export const intervalVariableKindSchema = z
+const intervalVariableKindSchema = z
   .object({
     kind: z.literal('IntervalVariable'),
     spec: z.object({
@@ -300,7 +300,7 @@ export const intervalVariableKindSchema = z
   })
   .describe('IntervalVariable: Represents time spans (e.g., "1m", "1h") for controlling time aggregations in queries.');
 
-export const constantVariableKindSchema = z
+const constantVariableKindSchema = z
   .object({
     kind: z.literal('ConstantVariable'),
     spec: z.object({
@@ -320,7 +320,7 @@ export const constantVariableKindSchema = z
     "ConstantVariable: A hidden, fixed value. Useful for internal dashboard logic or complex query parts you don't want users to change."
   );
 
-export const textVariableKindSchema = z
+const textVariableKindSchema = z
   .object({
     kind: z.literal('TextVariable'),
     spec: z.object({
@@ -334,7 +334,7 @@ export const textVariableKindSchema = z
   })
   .describe('TextVariable: A free-form text input field for user-provided filters or parameters.');
 
-export const groupByVariableKindSchema = z
+const groupByVariableKindSchema = z
   .object({
     kind: z.literal('GroupByVariable'),
     group: z.string().describe('Datasource type (e.g., "prometheus", "loki")'),
@@ -354,7 +354,7 @@ export const groupByVariableKindSchema = z
     'GroupByVariable: Group-by dimension selector. Allows grouping query results by a dimension. Has top-level group and datasource fields for data source binding.'
   );
 
-export const adhocVariableKindSchema = z
+const adhocVariableKindSchema = z
   .object({
     kind: z.literal('AdhocVariable'),
     group: z.string().describe('Datasource type (e.g., "prometheus", "loki")'),
@@ -379,7 +379,7 @@ export const adhocVariableKindSchema = z
     'AdhocVariable: Filter builder that adds key/value filters to all queries for a data source. Has top-level group and datasource fields for data source binding.'
   );
 
-export const switchVariableKindSchema = z
+const switchVariableKindSchema = z
   .object({
     kind: z.literal('SwitchVariable'),
     spec: z.object({
@@ -401,7 +401,7 @@ export const switchVariableKindSchema = z
     'SwitchVariable: A boolean toggle variable. Uses current as a string ("true"/"false"), not VariableOption.'
   );
 
-export const variableKindSchema = z.discriminatedUnion('kind', [
+const variableKindSchema = z.discriminatedUnion('kind', [
   queryVariableKindSchema,
   customVariableKindSchema,
   datasourceVariableKindSchema,
@@ -413,16 +413,16 @@ export const variableKindSchema = z.discriminatedUnion('kind', [
   switchVariableKindSchema,
 ]);
 
-export const emptyPayloadSchema = z.object({}).strict();
+const emptyPayloadSchema = z.object({}).strict();
 
 // Layout building-block schemas (v2beta1)
 
-export const elementReferenceSchema = z.object({
+const elementReferenceSchema = z.object({
   kind: z.literal('ElementReference').optional().default('ElementReference'),
   name: z.string().describe('Element key in the dashboard elements map'),
 });
 
-export const layoutPathSchema = z
+const layoutPathSchema = z
   .string()
   .regex(/^\/([a-z]+\/\d+(\/[a-z]+\/\d+)*)?$/)
   .describe(
@@ -430,7 +430,7 @@ export const layoutPathSchema = z
       'Examples: "/" (root), "/rows/0" (first row), "/tabs/1/rows/0" (first row inside second tab).'
   );
 
-export const gridPositionSchema = z
+const gridPositionSchema = z
   .object({
     x: z.number().optional().describe('Column position (0-23 in a 24-column grid)'),
     y: z.number().optional().describe('Row position'),
@@ -439,21 +439,21 @@ export const gridPositionSchema = z
   })
   .describe('Grid position (partial GridLayoutItemSpec). Keeps current values for omitted fields.');
 
-export const rowRepeatOptionsSchema = z
+const rowRepeatOptionsSchema = z
   .object({
     mode: z.literal('variable'),
     value: z.string().describe('Variable name to repeat by'),
   })
   .describe('Repeat options matching v2beta1 RowRepeatOptions');
 
-export const tabRepeatOptionsSchema = z
+const tabRepeatOptionsSchema = z
   .object({
     mode: z.literal('variable'),
     value: z.string().describe('Variable name to repeat by'),
   })
   .describe('Repeat options matching v2beta1 TabRepeatOptions');
 
-export const repeatOptionsSchema = z
+const repeatOptionsSchema = z
   .object({
     mode: z.literal('variable'),
     value: z.string().describe('Variable name to repeat by'),
@@ -485,7 +485,7 @@ const conditionalRenderingTimeRangeSizeKindSchema = z.object({
   }),
 });
 
-export const conditionalRenderingGroupKindSchema = z.object({
+const conditionalRenderingGroupKindSchema = z.object({
   kind: z.literal('ConditionalRenderingGroup').optional().default('ConditionalRenderingGroup'),
   spec: z.object({
     visibility: z.enum(['show', 'hide']).describe('Whether to show or hide the element when conditions match'),
@@ -502,7 +502,7 @@ export const conditionalRenderingGroupKindSchema = z.object({
   }),
 });
 
-export const rowsLayoutRowSpecSchema = z.object({
+const rowsLayoutRowSpecSchema = z.object({
   title: z.string().optional().describe('Row heading title'),
   collapse: z.boolean().optional().default(false).describe('Whether the row starts collapsed'),
   hideHeader: z.boolean().optional().default(false).describe('Hide the row header'),
@@ -511,7 +511,7 @@ export const rowsLayoutRowSpecSchema = z.object({
   conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this row'),
 });
 
-export const partialRowSpecSchema = z
+const partialRowSpecSchema = z
   .object({
     title: z.string().optional().describe('Row heading title'),
     collapse: z.boolean().optional().describe('Whether the row is collapsed'),
@@ -526,13 +526,13 @@ export const partialRowSpecSchema = z
   })
   .describe('Fields to update (partial RowsLayoutRowSpec)');
 
-export const tabsLayoutTabSpecSchema = z.object({
+const tabsLayoutTabSpecSchema = z.object({
   title: z.string().optional().describe('Tab title'),
   repeat: tabRepeatOptionsSchema.optional().describe('Repeat tab for each value of a variable'),
   conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this tab'),
 });
 
-export const partialTabSpecSchema = z
+const partialTabSpecSchema = z
   .object({
     title: z.string().optional().describe('Tab title'),
     repeat: tabRepeatOptionsSchema
@@ -560,7 +560,7 @@ const annotationEventFieldMappingSchema = z.object({
   regex: z.string().optional().describe('Regular expression applied to the field value'),
 });
 
-export const annotationQueryKindSchema = z.object({
+const annotationQueryKindSchema = z.object({
   kind: z.literal('AnnotationQuery').optional().default('AnnotationQuery'),
   spec: z.object({
     name: z.string().describe('Annotation name. Must be unique within the dashboard.'),
@@ -623,7 +623,7 @@ const partialDataQueryKindSchema = z.object({
     .describe('Query-specific fields. Deep-merged into the existing query spec.'),
 });
 
-export const partialAnnotationQueryKindSchema = z.object({
+const partialAnnotationQueryKindSchema = z.object({
   kind: z.literal('AnnotationQuery').optional(),
   spec: z
     .object({
@@ -644,28 +644,28 @@ export const partialAnnotationQueryKindSchema = z.object({
 // These compose the building-block schemas above into the exact shape
 // each command's `payload` field expects.
 
-export const addVariablePayloadSchema = z.object({
+const addVariablePayloadSchema = z.object({
   variable: variableKindSchema.describe('Variable definition (VariableKind)'),
   position: z.number().optional().describe('Position in variables list (optional, appends if not set)'),
 });
 
-export const updateVariablePayloadSchema = z.object({
+const updateVariablePayloadSchema = z.object({
   name: z.string().describe('Variable name to update'),
   variable: variableKindSchema.describe('New variable definition (VariableKind)'),
 });
 
-export const removeVariablePayloadSchema = z.object({
+const removeVariablePayloadSchema = z.object({
   name: z.string().describe('Variable name to remove'),
 });
 
 // Annotation payload schemas
 
-export const addAnnotationPayloadSchema = z.object({
+const addAnnotationPayloadSchema = z.object({
   annotation: annotationQueryKindSchema.describe('Annotation definition (AnnotationQueryKind)'),
   position: z.number().optional().describe('Position in annotations list (optional, appends if not set)'),
 });
 
-export const updateAnnotationPayloadSchema = z.object({
+const updateAnnotationPayloadSchema = z.object({
   name: z.string().describe('Annotation name to update'),
   annotation: partialAnnotationQueryKindSchema.describe(
     'Partial annotation update. Only provided fields are applied. Object fields are deep-merged. ' +
@@ -673,15 +673,15 @@ export const updateAnnotationPayloadSchema = z.object({
   ),
 });
 
-export const removeAnnotationPayloadSchema = z.object({
+const removeAnnotationPayloadSchema = z.object({
   name: z.string().describe('Annotation name to remove'),
 });
 
 // Layout payload schemas
 
-export const getLayoutPayloadSchema = emptyPayloadSchema;
+const getLayoutPayloadSchema = emptyPayloadSchema;
 
-export const addRowPayloadSchema = z.object({
+const addRowPayloadSchema = z.object({
   row: z.object({
     kind: z.literal('RowsLayoutRow').optional().default('RowsLayoutRow'),
     spec: rowsLayoutRowSpecSchema,
@@ -693,19 +693,19 @@ export const addRowPayloadSchema = z.object({
   position: z.number().optional().describe('Zero-based index within the parent to insert at (appends if omitted)'),
 });
 
-export const removeRowPayloadSchema = z.object({
+const removeRowPayloadSchema = z.object({
   path: layoutPathSchema.describe('Path to the row (e.g., "/rows/1", "/tabs/0/rows/2")'),
   moveContentTo: layoutPathSchema
     .optional()
     .describe('Path to another group to move contained content to. Content is deleted if omitted.'),
 });
 
-export const updateRowPayloadSchema = z.object({
+const updateRowPayloadSchema = z.object({
   path: layoutPathSchema.describe('Path to the row'),
   spec: partialRowSpecSchema,
 });
 
-export const moveRowPayloadSchema = z.object({
+const moveRowPayloadSchema = z.object({
   path: layoutPathSchema.describe('Current path to the row (e.g., "/rows/2", "/tabs/0/rows/1")'),
   toParent: layoutPathSchema
     .optional()
@@ -713,7 +713,7 @@ export const moveRowPayloadSchema = z.object({
   toPosition: z.number().optional().describe('Zero-based index at the destination (appends if omitted)'),
 });
 
-export const addTabPayloadSchema = z.object({
+const addTabPayloadSchema = z.object({
   tab: z.object({
     kind: z.literal('TabsLayoutTab').optional().default('TabsLayoutTab'),
     spec: tabsLayoutTabSpecSchema,
@@ -725,19 +725,19 @@ export const addTabPayloadSchema = z.object({
   position: z.number().optional().describe('Zero-based index within the parent to insert at (appends if omitted)'),
 });
 
-export const removeTabPayloadSchema = z.object({
+const removeTabPayloadSchema = z.object({
   path: layoutPathSchema.describe('Path to the tab (e.g., "/tabs/1", "/rows/0/tabs/2")'),
   moveContentTo: layoutPathSchema
     .optional()
     .describe('Path to another group to move contained content to. Content is deleted if omitted.'),
 });
 
-export const updateTabPayloadSchema = z.object({
+const updateTabPayloadSchema = z.object({
   path: layoutPathSchema.describe('Path to the tab'),
   spec: partialTabSpecSchema,
 });
 
-export const moveTabPayloadSchema = z.object({
+const moveTabPayloadSchema = z.object({
   path: layoutPathSchema.describe('Current path to the tab (e.g., "/tabs/2", "/rows/0/tabs/1")'),
   toParent: layoutPathSchema
     .optional()
@@ -745,7 +745,7 @@ export const moveTabPayloadSchema = z.object({
   toPosition: z.number().optional().describe('Zero-based index at the destination (appends if omitted)'),
 });
 
-export const layoutTypeSchema = z.enum(['RowsLayout', 'TabsLayout', 'GridLayout', 'AutoGridLayout']);
+const layoutTypeSchema = z.enum(['RowsLayout', 'TabsLayout', 'GridLayout', 'AutoGridLayout']);
 
 export const autoGridOptionsSchema = z
   .object({
@@ -769,13 +769,13 @@ export const autoGridOptionsSchema = z
 
 // Panel building-block schemas (v2beta1)
 
-export const dataLinkSchema = z.object({
+const dataLinkSchema = z.object({
   title: z.string().describe('Link title'),
   url: z.string().describe('Link URL'),
   targetBlank: z.boolean().optional().describe('Open link in new tab'),
 });
 
-export const panelQueryKindSchema = z
+const panelQueryKindSchema = z
   .object({
     kind: z.literal('PanelQuery').optional().default('PanelQuery'),
     spec: z.object({
@@ -788,7 +788,7 @@ export const panelQueryKindSchema = z
 
 export type PanelQueryKind = z.infer<typeof panelQueryKindSchema>;
 
-export const transformationKindSchema = z
+const transformationKindSchema = z
   .object({
     kind: z.literal('Transformation').describe('Fixed literal "Transformation"'),
     group: z.string().describe('Transformation ID (e.g., "organize", "sortBy", "filterByValue")'),
@@ -812,7 +812,7 @@ export const transformationKindSchema = z
 
 export type TransformationKind = z.infer<typeof transformationKindSchema>;
 
-export const queryOptionsSpecSchema = z
+const queryOptionsSpecSchema = z
   .object({
     timeFrom: z.string().optional().describe('Relative time override (e.g., "1h", "6h")'),
     maxDataPoints: z.number().optional().describe('Maximum data points to return'),
@@ -825,7 +825,7 @@ export const queryOptionsSpecSchema = z
   })
   .describe('Query options for time range overrides and data point limits');
 
-export const fieldConfigSchema = z
+const fieldConfigSchema = z
   .object({
     defaults: z
       .record(z.string(), z.unknown())
@@ -853,7 +853,7 @@ export const fieldConfigSchema = z
   })
   .describe('Field configuration (defaults and overrides)');
 
-export const vizConfigKindSchema = z
+const vizConfigKindSchema = z
   .object({
     kind: z.literal('VizConfig').optional().default('VizConfig'),
     group: z
@@ -878,7 +878,7 @@ export const vizConfigKindSchema = z
   })
   .describe('Visualization configuration (plugin + options + field config)');
 
-export const queryGroupKindSchema = z
+const queryGroupKindSchema = z
   .object({
     kind: z.literal('QueryGroup').optional().default('QueryGroup'),
     spec: z.object({
@@ -896,7 +896,7 @@ export const queryGroupKindSchema = z
   })
   .describe('Query group containing queries, transformations, and query options');
 
-export const panelKindSchema = z
+const panelKindSchema = z
   .object({
     kind: z.literal('Panel').optional().default('Panel'),
     spec: z.object({
@@ -910,7 +910,7 @@ export const panelKindSchema = z
   })
   .describe('A dashboard panel element (v2beta1 PanelKind)');
 
-export const partialPanelKindSchema = z
+const partialPanelKindSchema = z
   .object({
     kind: z.literal('Panel').optional().default('Panel'),
     spec: z.object({
@@ -954,7 +954,7 @@ export const partialPanelKindSchema = z
 // Canonical schemas match the generated v2beta1 types exactly (validated via `satisfies`).
 // The input schema (`layoutItemInputSchema`) is derived with relaxed constraints for callers.
 
-export const gridLayoutItemKindSchema = z.object({
+const gridLayoutItemKindSchema = z.object({
   kind: z.literal('GridLayoutItem').optional().default('GridLayoutItem'),
   spec: z.object({
     x: z.number().describe('Column position (0-23 in a 24-column grid)'),
@@ -966,21 +966,7 @@ export const gridLayoutItemKindSchema = z.object({
   }),
 }) satisfies z.ZodType<GridLayoutItemKind>;
 
-export const autoGridLayoutItemKindSchema = z.object({
-  kind: z.literal('AutoGridLayoutItem').optional().default('AutoGridLayoutItem'),
-  spec: z.object({
-    element: elementReferenceSchema,
-    repeat: z
-      .object({
-        mode: z.literal('variable'),
-        value: z.string().describe('Variable name to repeat by'),
-      })
-      .optional()
-      .describe('Repeat for each value of a variable'),
-  }),
-}) satisfies z.ZodType<AutoGridLayoutItemKind>;
-
-export const layoutItemInputSchema = z
+const layoutItemInputSchema = z
   .object({
     kind: z
       .enum(['GridLayoutItem', 'AutoGridLayoutItem'])
@@ -1009,7 +995,7 @@ export const layoutItemInputSchema = z
       'For GridLayout targets, provide x/y/width/height in spec. For AutoGridLayout targets, position is auto-arranged.'
   );
 
-export const updateLayoutPayloadSchema = z.object({
+const updateLayoutPayloadSchema = z.object({
   path: layoutPathSchema.describe('Path to the layout node (e.g. "/", "/rows/0", "/tabs/0")'),
   layoutType: layoutTypeSchema
     .optional()
@@ -1022,7 +1008,7 @@ export const updateLayoutPayloadSchema = z.object({
 
 // Panel payload schemas
 
-export const addPanelPayloadSchema = z.object({
+const addPanelPayloadSchema = z.object({
   panel: panelKindSchema.describe('Panel to add (v2beta1 PanelKind). The id field is ignored and auto-assigned.'),
   parentPath: layoutPathSchema
     .optional()
@@ -1036,7 +1022,7 @@ export const addPanelPayloadSchema = z.object({
     ),
 });
 
-export const updatePanelPayloadSchema = z
+const updatePanelPayloadSchema = z
   .object({
     element: elementReferenceSchema.describe('Panel to update, identified by element name'),
     panel: partialPanelKindSchema
@@ -1059,11 +1045,11 @@ export const updatePanelPayloadSchema = z
     }
   });
 
-export const removePanelPayloadSchema = z.object({
+const removePanelPayloadSchema = z.object({
   elements: z.array(elementReferenceSchema).max(10).describe('Panels to remove, identified by element name'),
 });
 
-export const listPanelsPayloadSchema = z.object({
+const listPanelsPayloadSchema = z.object({
   elements: z
     .array(z.string())
     .optional()
@@ -1082,7 +1068,7 @@ export const listPanelsPayloadSchema = z.object({
     ),
 });
 
-export const movePanelPayloadSchema = z.object({
+const movePanelPayloadSchema = z.object({
   element: elementReferenceSchema.describe('Element to move, identified by name'),
   toParent: layoutPathSchema
     .optional()
@@ -1097,7 +1083,7 @@ export const movePanelPayloadSchema = z.object({
   position: gridPositionSchema.optional().describe('DEPRECATED: Use layoutItem instead.'),
 });
 
-export const updateDashboardSettingsPayloadSchema = z.object({
+const updateDashboardSettingsPayloadSchema = z.object({
   title: z.string().optional().describe('Dashboard title'),
   description: z.string().optional().describe('Dashboard description'),
   tags: z.array(z.string()).optional().describe('Dashboard tags'),
