@@ -1,63 +1,58 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { type UseFormRegister } from 'react-hook-form';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { useForm } from 'react-hook-form';
+import { render, screen } from 'test/test-utils';
 
-import { checkPublicAccess } from '../GettingStarted/features';
+import { config } from '@grafana/runtime';
+
 import { type RepositoryFormData } from '../types';
 
 import { WebhookSection } from './WebhookSection';
 
-jest.mock('../GettingStarted/features', () => ({
-  checkPublicAccess: jest.fn(),
-}));
-
-const mockCheckPublicAccess = checkPublicAccess as jest.MockedFunction<typeof checkPublicAccess>;
-
-function setup(options: { isPublic?: boolean } = {}) {
-  const { isPublic = true } = options;
-
-  mockCheckPublicAccess.mockReturnValue(isPublic);
-
-  const registerMock = jest.fn().mockReturnValue({});
-
-  const renderResult = render(
-    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <WebhookSection register={registerMock as unknown as UseFormRegister<RepositoryFormData>} />
-    </MemoryRouter>
-  );
-
-  return { renderResult, registerMock };
-}
-
-// The section is collapsed by default, so expand it to assert on its contents.
-async function expandSection() {
-  await userEvent.click(screen.getByText('Webhook'));
+function Wrapper() {
+  const { register } = useForm<RepositoryFormData>();
+  return <WebhookSection register={register} />;
 }
 
 describe('WebhookSection', () => {
+  let originalAppUrl: string;
+
   beforeEach(() => {
-    jest.clearAllMocks();
+    originalAppUrl = config.appUrl;
   });
 
-  it('renders the webhook URL field and registers webhook.baseUrl', async () => {
-    const { registerMock } = setup({ isPublic: true });
-    await expandSection();
+  afterEach(() => {
+    config.appUrl = originalAppUrl;
+  });
+
+  it('renders collapsed by default, hiding the webhook URL field', () => {
+    render(<Wrapper />);
+
+    expect(screen.getByText('Webhook')).toBeInTheDocument();
+    expect(screen.queryByText('Webhook URL')).not.toBeInTheDocument();
+  });
+
+  it('registers the webhook URL input under webhook.baseUrl when expanded', async () => {
+    const { user } = render(<Wrapper />);
+
+    await user.click(screen.getByText('Webhook'));
 
     expect(screen.getByText('Webhook URL')).toBeInTheDocument();
-    expect(registerMock).toHaveBeenCalledWith('webhook.baseUrl');
+    expect(screen.getByRole('textbox')).toHaveAttribute('name', 'webhook.baseUrl');
   });
 
   it('shows the learn more link on private instances', async () => {
-    setup({ isPublic: false });
-    await expandSection();
+    config.appUrl = 'http://localhost:3000/';
+    const { user } = render(<Wrapper />);
+
+    await user.click(screen.getByText('Webhook'));
 
     expect(screen.getByRole('link', { name: 'Learn more' })).toBeInTheDocument();
   });
 
   it('hides the learn more link on public instances', async () => {
-    setup({ isPublic: true });
-    await expandSection();
+    config.appUrl = 'https://grafana.example.com/';
+    const { user } = render(<Wrapper />);
+
+    await user.click(screen.getByText('Webhook'));
 
     expect(screen.queryByRole('link', { name: 'Learn more' })).not.toBeInTheDocument();
   });

@@ -1,34 +1,26 @@
-import { render, screen } from '@testing-library/react';
-import { type UseFormRegister } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
+import { render, screen } from 'test/test-utils';
 
 import { type RepositoryFormData } from '../types';
 
 import { GitHubDashboardPreviewField } from './GitHubDashboardPreviewField';
 
-function setup(options: { disabled?: boolean } = {}) {
-  const registerMock = jest.fn().mockReturnValue({});
-
-  render(
-    <GitHubDashboardPreviewField
-      register={registerMock as unknown as UseFormRegister<RepositoryFormData>}
-      disabled={options.disabled}
-    />
-  );
-
-  return { registerMock };
+function Wrapper({ disabled }: { disabled?: boolean }) {
+  const { register } = useForm<RepositoryFormData>();
+  return <GitHubDashboardPreviewField register={register} disabled={disabled} />;
 }
 
 describe('GitHubDashboardPreviewField', () => {
   it('renders the previews checkbox and registers generateDashboardPreviews', () => {
-    const { registerMock } = setup();
+    render(<Wrapper />);
 
     const checkbox = screen.getByRole('checkbox', { name: /Enable dashboard previews in pull requests/i });
     expect(checkbox).toBeEnabled();
-    expect(registerMock).toHaveBeenCalledWith('generateDashboardPreviews');
+    expect(checkbox).toHaveAttribute('name', 'generateDashboardPreviews');
   });
 
   it('disables the checkbox when disabled is set', () => {
-    setup({ disabled: true });
+    render(<Wrapper disabled />);
 
     expect(screen.getByRole('checkbox', { name: /Enable dashboard previews in pull requests/i })).toBeDisabled();
   });
