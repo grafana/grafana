@@ -15,6 +15,10 @@ import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { FieldConfig, Options } from './panelcfg.gen';
 import { tableSuggestionsSupplier } from './suggestions';
 
+function getTableNoValuePlaceholder(): string {
+  return t('table.no-value-placeholder', 'No rows');
+}
+
 export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
@@ -22,6 +26,11 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
     standardOptions: {
       [FieldConfigProperty.Actions]: {
         hideFromDefaults: false,
+      },
+      [FieldConfigProperty.NoValue]: {
+        settings: {
+          placeholder: getTableNoValuePlaceholder(),
+        },
       },
     },
     useCustomConfig: (builder) => {

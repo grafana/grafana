@@ -48,6 +48,7 @@ import { TableCellDisplayMode } from '../types';
 import { DataLinksActionsTooltipState } from '../utils';
 
 import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
+import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
 import { HeaderCell } from './components/HeaderCell';
 import { RowExpander } from './components/RowExpander';
 import { SummaryCell } from './components/SummaryCell';
@@ -128,6 +129,7 @@ export function TableNG(props: TableNGProps) {
     initialSortBy,
     maxRowHeight: _maxRowHeight,
     noHeader,
+    noValue,
     onCellFilterAdded,
     onColumnResize,
     onSortByChange,
@@ -140,7 +142,7 @@ export function TableNG(props: TableNGProps) {
   } = props;
   const uniqueId = useId();
   const theme = useTheme2();
-  const styles = useStyles2(getGridStyles, enablePagination, transparent);
+
   const panelContext = usePanelContext();
   const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
 
@@ -265,6 +267,10 @@ export function TableNG(props: TableNGProps) {
     headerHeight: hasHeader ? TABLE.HEADER_HEIGHT : 0,
     rowHeight,
   });
+
+  const numRows = sortedRows.length;
+  const showPagination = enablePagination && numRows > 0;
+  const styles = useStyles2(getGridStyles, showPagination, transparent);
 
   const [scrollToIndex, setScrollToIndex] = useState(initialRowIndex);
   useEffect(() => {
@@ -855,7 +861,6 @@ export function TableNG(props: TableNGProps) {
   // we need to have variables with these exact names for the localization to work properly
   const itemsRangeStart = pageRangeStart;
   const displayedEnd = pageRangeEnd;
-  const numRows = sortedRows.length;
 
   let rendered = (
     <>
@@ -910,10 +915,14 @@ export function TableNG(props: TableNGProps) {
             event.preventGridDefault();
           }
         }}
-        renderers={{ renderRow, renderCell: renderCellRoot }}
+        renderers={{
+          renderRow,
+          renderCell: renderCellRoot,
+          noRowsFallback: <EmptyTablePlaceholder noValue={noValue} />,
+        }}
       />
 
-      {enablePagination && (
+      {enablePagination && numRows > 0 && (
         <div className={styles.paginationContainer}>
           <Pagination
             className="table-ng-pagination"
