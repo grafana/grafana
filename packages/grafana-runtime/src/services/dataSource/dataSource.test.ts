@@ -1,6 +1,7 @@
 import { DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 
 import { RuntimeDataSource } from '../RuntimeDataSource';
+import { setLogger } from '../logging/registry';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import {
@@ -54,10 +55,20 @@ function ds(overrides: Partial<DataSourceInstanceSettings> = {}): DataSourceInst
   } as DataSourceInstanceSettings;
 }
 
+const logError = jest.fn();
+
 beforeEach(() => {
   resetInstanceSettings();
   resetPlugin();
   resetPluginCache();
+  logError.mockClear();
+  setLogger('grafana/runtime.plugins.datasource', {
+    logDebug: jest.fn(),
+    logError,
+    logInfo: jest.fn(),
+    logMeasurement: jest.fn(),
+    logWarning: jest.fn(),
+  });
 });
 
 describe('plugin', () => {
@@ -135,6 +146,20 @@ describe('plugin', () => {
       setDataSourcePluginImporter(jest.fn().mockRejectedValue(new Error('module not found')));
 
       await expect(getDataSourceInstance(settings.uid)).rejects.toThrow(/module not found/);
+    });
+
+    it('logs the failure with the raw error as cause and does not sanitize the rethrow', async () => {
+      const settings = ds();
+      initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+      const importError = new Error('module not found');
+      setDataSourcePluginImporter(jest.fn().mockRejectedValue(importError));
+
+      await expect(getDataSourceInstance(settings.uid)).rejects.toBe(importError);
+
+      expect(logError).toHaveBeenCalledTimes(1);
+      const [loggedError] = logError.mock.calls[0];
+      expect(loggedError).toBeInstanceOf(Error);
+      expect(loggedError.cause).toBe(importError);
     });
 
     it('returns the same instance for name-based and uid-based lookups', async () => {

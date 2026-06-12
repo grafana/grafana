@@ -5,6 +5,7 @@ import { UserStorage } from '../../utils/userStorage';
 import { type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
 import { getExpressionDataSourceInstance } from './expressionDs';
+import { logDataSourceInstanceError } from './logging';
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
 import { getDataSourceInstanceSettings, upsertRuntimeDataSourceInstanceSettings } from './settings';
 import { type ImportDataSourcePluginFn } from './types';
@@ -80,7 +81,16 @@ async function loadDataSourceInstance(cacheUid: string, settings: DataSourceInst
     throw new Error('Data source importer has not been set. Call setDataSourcePluginImporter during application boot.');
   }
 
-  const dsPlugin = await importDataSourcePlugin(settings.meta);
+  let dsPlugin;
+  try {
+    dsPlugin = await importDataSourcePlugin(settings.meta);
+  } catch (error) {
+    logDataSourceInstanceError(`Failed to import datasource plugin ${settings.name} (${settings.uid})`, error, {
+      pluginId: settings.meta.id,
+      uid: settings.uid,
+    });
+    throw error;
+  }
 
   const racedCache = getCachedPlugin(cacheUid);
   if (racedCache) {
