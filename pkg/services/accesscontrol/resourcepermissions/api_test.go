@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -814,6 +815,7 @@ func contextProvider(tc *testContext) web.Handler {
 
 var testOptions = Options{
 	Resource:          "dashboards",
+	APIGroup:          dashboardv1.APIGroup,
 	ResourceAttribute: "id",
 	Assignments: Assignments{
 		Users:        true,
