@@ -240,6 +240,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RudderstackV3SdkUrl:                  hs.Cfg.RudderstackV3SDKURL,
 		RudderstackConfigUrl:                 hs.Cfg.RudderstackConfigURL,
 		RudderstackIntegrationsUrl:           hs.Cfg.RudderstackIntegrationsURL,
+		PostHogToken:                         hs.Cfg.PostHogToken,
+		PostHogHost:                          hs.Cfg.PostHogHost,
 		AnalyticsConsoleReporting:            hs.Cfg.FrontendAnalyticsConsoleReporting,
 		DashboardPerformanceMetrics:          hs.Cfg.DashboardPerformanceMetrics,
 		PanelSeriesLimit:                     hs.Cfg.PanelSeriesLimit,
@@ -533,11 +535,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			Translations:              plugin.Translations,
 		}
 
-		if ds.JsonData == nil {
-			dsDTO.JSONData = make(map[string]any)
-		} else {
-			dsDTO.JSONData = ds.JsonData.MustMap()
-		}
+		dsDTO.JSONData = ds.JsonDataMap()
 
 		if ds.Access == datasources.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {

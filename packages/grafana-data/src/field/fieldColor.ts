@@ -270,7 +270,7 @@ interface FieldColorSchemeModeGetColors extends BaseFieldColorSchemeModeOptions 
 
 type FieldColorSchemeModeOptions = FieldColorSchemeModeGetColors | FieldColorSchemeModeInterpolator;
 
-export class FieldColorSchemeMode implements FieldColorMode {
+class FieldColorSchemeMode implements FieldColorMode {
   id: FieldColorModeId;
   name: string;
   description?: string;

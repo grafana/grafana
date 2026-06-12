@@ -9,7 +9,7 @@ interface Props {
   onSelect: (interval: string) => void;
 }
 
-export function getPendingPeriodQuickOptions(groupEvaluationInterval: string): string[] {
+function getPendingPeriodQuickOptions(groupEvaluationInterval: string): string[] {
   const groupEvaluationIntervalMillis = safeParsePrometheusDuration(groupEvaluationInterval);
 
   // Guard against invalid or incomplete interval strings (e.g. "3" typed mid-keystroke).
@@ -57,6 +57,6 @@ export function DurationQuickPick({ selectedDuration, groupEvaluationInterval, o
   );
 }
 
-export function stringifyPendingPeriod(duration: string): string {
+function stringifyPendingPeriod(duration: string): string {
   return duration === '0s' ? t('alerting.duration-quick-pick.none', 'None') : duration;
 }

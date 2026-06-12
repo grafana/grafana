@@ -1,4 +1,5 @@
 import { memoize } from 'lodash';
+import { lastValueFrom } from 'rxjs';
 
 import { type DataSourceInstanceSettings, type SelectableValue } from '@grafana/data';
 import { getBackendSrv, type TemplateSrv } from '@grafana/runtime';
@@ -12,6 +13,7 @@ import {
   type ResourceResponse,
   type DescribeLogGroupsRequest,
   type LogGroupResponse,
+  type LogGroupsResponse,
   type GetMetricsRequest,
   type GetDimensionKeysRequest,
   type GetDimensionValuesRequest,
@@ -20,18 +22,45 @@ import {
   type RegionResponse,
 } from './types';
 
+function parseNextLinkToken(linkHeader: string): string | undefined {
+  const match = /<\?([^>]*)>;\s*rel="next"/.exec(linkHeader);
+  if (!match) {
+    return undefined;
+  }
+  return new URLSearchParams(match[1]).get('nextToken') ?? undefined;
+}
+
 export class ResourcesAPI extends CloudWatchRequest {
   private memoizedGetRequest;
+  private memoizedFetchLogGroupsRequest;
 
   constructor(instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>, templateSrv: TemplateSrv) {
     super(instanceSettings, templateSrv);
     this.memoizedGetRequest = memoize(this.getRequest.bind(this), (path, parameters) =>
       JSON.stringify({ path, parameters })
     );
+    this.memoizedFetchLogGroupsRequest = memoize(this.fetchLogGroupsRequest.bind(this), (params) =>
+      JSON.stringify(params)
+    );
   }
 
   private getRequest<T>(subtype: string, parameters?: Record<string, string | string[] | number>): Promise<T> {
     return getBackendSrv().get(`/api/datasources/uid/${this.instanceSettings.uid}/resources/${subtype}`, parameters);
+  }
+
+  private async fetchLogGroupsRequest(params: Record<string, string | string[] | number>): Promise<LogGroupsResponse> {
+    const response = await lastValueFrom(
+      getBackendSrv().fetch<Array<ResourceResponse<LogGroupResponse>>>({
+        url: `/api/datasources/uid/${this.instanceSettings.uid}/resources/log-groups`,
+        params,
+        method: 'GET',
+        showErrorAlert: false,
+      })
+    );
+    const results: Array<ResourceResponse<LogGroupResponse>> = response.data;
+    const linkHeader = response.headers.get('Link');
+    const nextToken = linkHeader ? parseNextLinkToken(linkHeader) : undefined;
+    return { results, nextToken };
   }
 
   async getExternalId(): Promise<string> {
@@ -69,13 +98,19 @@ export class ResourcesAPI extends CloudWatchRequest {
     );
   }
 
-  getLogGroups(params: DescribeLogGroupsRequest): Promise<Array<ResourceResponse<LogGroupResponse>>> {
-    return this.memoizedGetRequest<Array<ResourceResponse<LogGroupResponse>>>('log-groups', {
+  getLogGroups(params: DescribeLogGroupsRequest): Promise<LogGroupsResponse> {
+    const requestParams: Record<string, string | string[] | number> = {
       ...params,
       region: this.templateSrv.replace(this.getActualRegion(params.region)),
       accountId: this.templateSrv.replace(params.accountId),
       listAllLogGroups: params.listAllLogGroups ? 'true' : 'false',
-    });
+    };
+    // When nextToken is present, bypass memoized cache to avoid stale results
+    if (params.nextToken) {
+      requestParams.nextToken = params.nextToken;
+      return this.fetchLogGroupsRequest(requestParams);
+    }
+    return this.memoizedFetchLogGroupsRequest(requestParams);
   }
 
   getLogGroupFields(region: string, logGroupName: string): Promise<Array<ResourceResponse<LogGroupField>>> {

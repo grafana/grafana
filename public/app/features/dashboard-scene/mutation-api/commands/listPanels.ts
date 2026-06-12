@@ -23,7 +23,7 @@ import { serializeResultLayoutItem } from './panelSerialization';
 import { payloads } from './schemas';
 import { readOnly, type MutationCommand } from './types';
 
-export const listPanelsPayloadSchema = payloads.listPanels;
+const listPanelsPayloadSchema = payloads.listPanels;
 
 export type ListPanelsPayload = z.infer<typeof listPanelsPayloadSchema>;
 

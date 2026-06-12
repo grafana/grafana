@@ -7,13 +7,6 @@ import { getExploreUrl } from 'app/core/utils/explore';
 import { getDatasourceFromQueryRunner } from './getDatasourceFromQueryRunner';
 import { getQueryRunnerFor } from './utils';
 
-export function getViewPanelUrl(vizPanel: VizPanel) {
-  return locationUtil.getUrlForPartial(locationService.getLocation(), {
-    viewPanel: vizPanel.getPathId(),
-    editPanel: undefined,
-  });
-}
-
 export function getEditPanelUrl(panelId: number) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), { editPanel: panelId, viewPanel: undefined });
 }

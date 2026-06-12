@@ -4,6 +4,7 @@ import {
   encodeMatcher,
   getMatcherQueryParams,
   isPromQLStyleMatcher,
+  isValidRE2Regex,
   labelsToMatchersParam,
   matcherToObjectMatcher,
   normalizeMatchers,
@@ -318,5 +319,28 @@ describe('labelsToMatchersParam', () => {
 
   it('should handle labels with special characters', () => {
     expect(labelsToMatchersParam({ 'job-name': 'my\\job' })).toBe('{job-name="my\\\\job"}');
+  });
+});
+
+describe('isValidRE2Regex', () => {
+  it('accepts valid regex patterns', () => {
+    expect(isValidRE2Regex('foo.*bar')).toBe(true);
+    expect(isValidRE2Regex('frontend|backend')).toBe(true);
+    expect(isValidRE2Regex('[a-z]+')).toBe(true);
+    expect(isValidRE2Regex('')).toBe(true);
+  });
+
+  it('rejects invalid regex patterns', () => {
+    expect(isValidRE2Regex('[')).toBe(false);
+    expect(isValidRE2Regex('(unclosed')).toBe(false);
+    expect(isValidRE2Regex('*invalid')).toBe(false);
+  });
+
+  it('accepts RE2 inline flag groups that would throw in plain JS', () => {
+    expect(isValidRE2Regex('(?i)foo')).toBe(true);
+    expect(isValidRE2Regex('(?s)foo.bar')).toBe(true);
+    expect(isValidRE2Regex('(?im)foo')).toBe(true);
+    expect(isValidRE2Regex('(?-i)foo')).toBe(true);
+    expect(isValidRE2Regex('(?i)(?m)foo')).toBe(true);
   });
 });

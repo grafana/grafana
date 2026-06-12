@@ -32,7 +32,9 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.arrowMenu).click();
 
       const createResponse = page.waitForResponse(
-        (response) => response.url().includes('/api/short-urls') && response.request().method() === 'POST'
+        (response) =>
+          response.url().includes('/apis/shorturl.grafana.app/v1beta1/namespaces/') &&
+          response.request().method() === 'POST'
       );
 
       await dashboardPage
@@ -64,10 +66,10 @@ test.describe(
 
       // Wait for the short URL creation
       const response = await createResponse;
-      expect(response.status()).toBe(200);
+      expect(response.status()).toBe(201);
 
       const responseBody = await response.json();
-      expect(responseBody.url).toContain('goto');
+      expect(responseBody.metadata?.name).toBeTruthy();
     });
 
     test('Create a relative time range short link', async ({ page, gotoDashboardPage, selectors }) => {
@@ -84,7 +86,9 @@ test.describe(
         .click();
 
       const updateResponse = page.waitForResponse(
-        (response) => response.url().includes('/api/short-urls') && response.request().method() === 'POST'
+        (response) =>
+          response.url().includes('/apis/shorturl.grafana.app/v1beta1/namespaces/') &&
+          response.request().method() === 'POST'
       );
 
       // Toggle the lock time range switch
@@ -111,10 +115,10 @@ test.describe(
 
       // Wait for the API response
       const response = await updateResponse;
-      expect(response.status()).toBe(200);
+      expect(response.status()).toBe(201);
 
       const responseBody = await response.json();
-      expect(responseBody.url).toContain('goto');
+      expect(responseBody.metadata?.name).toBeTruthy();
     });
 
     test('Share button gets configured link', async ({ page, gotoDashboardPage, selectors }) => {

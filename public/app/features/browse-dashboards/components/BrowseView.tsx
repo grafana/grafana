@@ -1,11 +1,14 @@
+import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useMemo } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui';
+import { CallToActionCard, EmptyState, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { FolderReadmePanel } from 'app/features/provisioning/components/Folders/FolderReadmePanel';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { type DashboardViewItem } from 'app/features/search/types';
@@ -149,9 +152,11 @@ export function BrowseView({
   );
 
   const provisioningReadmesEnabled = useBooleanFlagValue('provisioning.readmes', false);
+  const showReadme = provisioningReadmesEnabled && isProvisionedFolder && folderUID;
+  const styles = useStyles2(getStyles);
 
   const flatTreeWithReadme = useMemo(() => {
-    if (!provisioningReadmesEnabled || !isProvisionedFolder || !folderUID || flatTree.length === 0) {
+    if (!showReadme || flatTree.length === 0) {
       return flatTree;
     }
 
@@ -163,7 +168,7 @@ export function BrowseView({
         isOpen: false,
       },
     ];
-  }, [flatTree, isProvisionedFolder, folderUID, provisioningReadmesEnabled]);
+  }, [flatTree, showReadme, folderUID]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
@@ -181,7 +186,7 @@ export function BrowseView({
 
   if (status === 'fulfilled' && flatTree.length === 0) {
     return (
-      <div style={{ width }}>
+      <div className={styles.emptyState} style={{ width }}>
         {canSelect ? (
           <EmptyState
             variant="call-to-action"
@@ -219,6 +224,7 @@ export function BrowseView({
             }
           />
         )}
+        {showReadme && <FolderReadmePanel folderUID={folderUID} />}
       </div>
     );
   }
@@ -260,3 +266,11 @@ function hasSelectedDescendants(
     return hasSelectedDescendants(v, childrenByParentUID, selectedItems);
   });
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  emptyState: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
+  }),
+});

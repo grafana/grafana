@@ -63,6 +63,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
         slug,
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
+        dashboardTemplateUid: queryParams.dashboardTemplateUid,
+        editTemplate: queryParams.editTemplate === true,
       });
     }
 
@@ -86,6 +88,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     type,
     queryParams.path,
     queryParams.gnetId,
+    queryParams.dashboardTemplateUid,
+    queryParams.editTemplate,
   ]);
 
   useEffect(() => {

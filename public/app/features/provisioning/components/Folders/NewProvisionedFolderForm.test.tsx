@@ -326,6 +326,41 @@ describe('NewProvisionedFolderForm', () => {
     expect(request.body).toEqual({ title: 'Branch Folder', type: 'folder' });
   });
 
+  it('renders the message from the repo commit template when comment is empty', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-folder' } } },
+        });
+      })
+    );
+    const { user } = setup(
+      {},
+      {
+        ...mockHookData,
+        repository: {
+          ...mockHookData.repository!,
+          commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
+        },
+      }
+    );
+
+    const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
+    await user.clear(folderNameInput);
+    await user.type(folderNameInput, 'Templated Folder');
+
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+
+    const request = requireCapturedRequest(capturedRequest);
+    expect(request.url.searchParams.get('message')).toBe('chore(folders): create Templated Folder');
+  });
+
   // Error response handling (alertError publish, onDismiss) is tested in useProvisionedRequestHandler.test.ts.
   // This test verifies the correct request is sent; the handler mock prevents response side-effects.
   it('should send correct request body when folder creation fails', async () => {

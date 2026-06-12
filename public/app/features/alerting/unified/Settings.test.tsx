@@ -1,5 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react';
-import { render } from 'test/test-utils';
+import { render, testWithFeatureToggles } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import SettingsPage from './Settings';
@@ -8,6 +8,7 @@ import { setupGrafanaManagedServer, withExternalOnlySetting } from './components
 import { setupMswServer } from './mockApi';
 import { grantUserRole } from './mocks';
 import { addSettingsSection, clearSettingsExtensions } from './settings/extensions';
+import { setupDataSources } from './testSetup/datasources';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -19,6 +20,7 @@ const server = setupMswServer();
 const ui = {
   builtInAlertmanagerSection: byText('Built-in Alertmanager'),
   otherAlertmanagerSection: byText('Other Alertmanagers'),
+  autoSyncCard: byRole('region', { name: /auto-sync configuration/i }),
 
   alertmanagerCard: (name: string) => byTestId(`alertmanager-card-${name}`),
   builtInAlertmanagerCard: byTestId('alertmanager-card-Grafana built-in'),
@@ -256,5 +258,32 @@ describe('Alerting settings', () => {
     expect(ui.alertmanagerTab.get()).toBeInTheDocument();
     expect(ui.enrichmentTab.query()).not.toBeInTheDocument();
     expect(ui.notificationsTab.query()).not.toBeInTheDocument();
+  });
+
+  it('should not render the auto-sync configuration card when the feature flag is off', async () => {
+    render(<SettingsPage />);
+
+    await waitFor(() => expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument());
+    expect(ui.autoSyncCard.query()).not.toBeInTheDocument();
+  });
+
+  describe('with alerting.syncExternalAlertmanager feature flag enabled', () => {
+    testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
+
+    it('renders the auto-sync configuration card above the Built-in Alertmanager section', async () => {
+      // DataSourcePicker reads from getDataSourceSrv(); initialise it (empty list is fine here).
+      setupDataSources();
+      render(<SettingsPage />);
+
+      await waitFor(() => expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument());
+
+      const card = await ui.autoSyncCard.find();
+      expect(card).toBeInTheDocument();
+
+      // The card should precede the Built-in Alertmanager heading in document order.
+      const builtInHeading = ui.builtInAlertmanagerSection.get();
+      // eslint-disable-next-line no-bitwise
+      expect(card.compareDocumentPosition(builtInHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
   });
 });

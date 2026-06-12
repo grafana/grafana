@@ -1,18 +1,17 @@
-import { getBackendSrv } from '@grafana/runtime';
 import { createDebugLog } from 'app/core/utils/debugLog';
-import { type K8sAPIGroup } from 'app/features/apiserver/types';
+import { getAPIGroupVersions } from 'app/features/apiserver/discovery';
 
 const debugLog = createDebugLog('dashboardAPI', 'Dashboard API');
 
-export type DashboardV1Version = 'v1' | 'v1beta1';
+type DashboardV1Version = 'v1' | 'v1beta1';
 export type DashboardV2Version = 'v2' | 'v2beta1';
 
-export interface ResolvedDashboardVersions {
+interface ResolvedDashboardVersions {
   v1: DashboardV1Version;
   v2: DashboardV2Version;
 }
 
-const DASHBOARD_API_GROUP = 'dashboard.grafana.app';
+export const DASHBOARD_API_GROUP = 'dashboard.grafana.app';
 const BETA_V1: DashboardV1Version = 'v1beta1';
 const BETA_V2: DashboardV2Version = 'v2beta1';
 
@@ -69,20 +68,18 @@ class DashboardAPIVersionResolver {
   }
 
   private async discover(): Promise<ResolvedDashboardVersions> {
-    const group = await getBackendSrv().get<K8sAPIGroup>(`/apis/${DASHBOARD_API_GROUP}/`, undefined, undefined, {
-      showErrorAlert: false,
-    });
-    const availableVersions = new Set(group.versions.map((v) => v.version));
-    const preferred = group.preferredVersion?.version;
+    const group = await getAPIGroupVersions(DASHBOARD_API_GROUP);
+    const versions = group?.versions ?? new Set<string>();
+    const preferred = group?.preferred;
 
     const v1: DashboardV1Version =
-      preferred === 'v1' || preferred === 'v1beta1' ? preferred : availableVersions.has('v1') ? 'v1' : BETA_V1;
+      preferred === 'v1' || preferred === 'v1beta1' ? preferred : versions.has('v1') ? 'v1' : BETA_V1;
 
     const v2: DashboardV2Version =
-      preferred === 'v2' || preferred === 'v2beta1' ? preferred : availableVersions.has('v2') ? 'v2' : BETA_V2;
+      preferred === 'v2' || preferred === 'v2beta1' ? preferred : versions.has('v2') ? 'v2' : BETA_V2;
 
     debugLog(
-      `Version negotiation: v1=${v1}, v2=${v2}, preferred=${preferred ?? 'none'} (available: ${Array.from(availableVersions).join(', ')})`
+      `Version negotiation: v1=${v1}, v2=${v2}, preferred=${preferred ?? 'none'} (available: ${Array.from(versions).join(', ')})`
     );
 
     return { v1, v2 };

@@ -2,9 +2,11 @@ package preferences
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -18,13 +20,10 @@ func TestAPIBuilder_Validate(t *testing.T) {
 	prefsGVR := preferences.GroupVersion.WithResource("preferences")
 	otherGVR := preferences.GroupVersion.WithResource("other")
 
-	newPrefs := func(theme, timezone *string) *preferences.Preferences {
+	newPrefs := func(spec preferences.PreferencesSpec) *preferences.Preferences {
 		return &preferences.Preferences{
 			ObjectMeta: metav1.ObjectMeta{Name: "user-1", Namespace: "default"},
-			Spec: preferences.PreferencesSpec{
-				Theme:    theme,
-				Timezone: timezone,
-			},
+			Spec:       spec,
 		}
 	}
 
@@ -35,118 +34,193 @@ func TestAPIBuilder_Validate(t *testing.T) {
 		op         admission.Operation
 		resource   schema.GroupVersionResource
 		wantErr    bool
-		errMessage string
+		errMessage string             // expected substring of err.Error()
+		errFields  []string           // expected spec.<field> paths in StatusDetails causes, in order
+		errTypes   []metav1.CauseType // expected cause types per field, in same order as errFields
 	}{
 		{
-			name:     "valid create with no theme or timezone",
-			obj:      newPrefs(nil, nil),
+			name:     "valid create with empty spec",
+			obj:      newPrefs(preferences.PreferencesSpec{}),
 			op:       admission.Create,
 			resource: prefsGVR,
 		},
 		{
 			name:     "valid create with empty theme",
-			obj:      newPrefs(new(""), nil),
+			obj:      newPrefs(preferences.PreferencesSpec{Theme: new("")}),
 			op:       admission.Create,
 			resource: prefsGVR,
 		},
 		{
-			name:     "valid create with valid theme",
-			obj:      newPrefs(new("dark"), nil),
+			name:     "valid create with built-in theme",
+			obj:      newPrefs(preferences.PreferencesSpec{Theme: new("dark")}),
 			op:       admission.Create,
 			resource: prefsGVR,
 		},
 		{
 			name:     "valid create with extra theme",
-			obj:      newPrefs(new("aubergine"), nil),
+			obj:      newPrefs(preferences.PreferencesSpec{Theme: new("aubergine")}),
 			op:       admission.Create,
 			resource: prefsGVR,
 		},
 		{
 			name:       "invalid theme on create",
-			obj:        newPrefs(new("not-a-real-theme"), nil),
+			obj:        newPrefs(preferences.PreferencesSpec{Theme: new("not-a-real-theme")}),
 			op:         admission.Create,
 			resource:   prefsGVR,
 			wantErr:    true,
-			errMessage: "invalid theme",
+			errMessage: "is invalid",
+			errFields:  []string{"spec.theme"},
+			errTypes:   []metav1.CauseType{metav1.CauseTypeFieldValueInvalid},
 		},
 		{
 			name:     "valid update with valid theme",
-			obj:      newPrefs(new("light"), nil),
-			oldObj:   newPrefs(new("dark"), nil),
+			obj:      newPrefs(preferences.PreferencesSpec{Theme: new("light")}),
+			oldObj:   newPrefs(preferences.PreferencesSpec{Theme: new("dark")}),
 			op:       admission.Update,
 			resource: prefsGVR,
 		},
 		{
 			name:       "invalid theme on update",
-			obj:        newPrefs(new("bogus"), nil),
-			oldObj:     newPrefs(new("dark"), nil),
+			obj:        newPrefs(preferences.PreferencesSpec{Theme: new("bogus")}),
+			oldObj:     newPrefs(preferences.PreferencesSpec{Theme: new("dark")}),
 			op:         admission.Update,
 			resource:   prefsGVR,
 			wantErr:    true,
-			errMessage: "invalid theme",
+			errMessage: "is invalid",
+			errFields:  []string{"spec.theme"},
+			errTypes:   []metav1.CauseType{metav1.CauseTypeFieldValueInvalid},
 		},
 		{
 			name:     "valid utc timezone",
-			obj:      newPrefs(nil, new("utc")),
+			obj:      newPrefs(preferences.PreferencesSpec{Timezone: new("utc")}),
 			op:       admission.Create,
 			resource: prefsGVR,
 		},
 		{
 			name:     "valid browser timezone",
-			obj:      newPrefs(nil, new("browser")),
+			obj:      newPrefs(preferences.PreferencesSpec{Timezone: new("browser")}),
 			op:       admission.Create,
 			resource: prefsGVR,
 		},
 		{
 			name:     "valid empty timezone",
-			obj:      newPrefs(nil, new("")),
+			obj:      newPrefs(preferences.PreferencesSpec{Timezone: new("")}),
 			op:       admission.Create,
 			resource: prefsGVR,
 		},
 		{
 			name:     "valid IANA timezone",
-			obj:      newPrefs(nil, new("America/New_York")),
+			obj:      newPrefs(preferences.PreferencesSpec{Timezone: new("America/New_York")}),
 			op:       admission.Create,
 			resource: prefsGVR,
 		},
 		{
 			name:       "invalid timezone",
-			obj:        newPrefs(nil, new("Mars/Olympus_Mons")),
+			obj:        newPrefs(preferences.PreferencesSpec{Timezone: new("Mars/Olympus_Mons")}),
 			op:         admission.Create,
 			resource:   prefsGVR,
 			wantErr:    true,
-			errMessage: "invalid timezone",
+			errMessage: "is invalid",
+			errFields:  []string{"spec.timezone"},
+			errTypes:   []metav1.CauseType{metav1.CauseTypeFieldValueInvalid},
 		},
 		{
 			name:       "invalid timezone on update",
-			obj:        newPrefs(nil, new("Not/A_Zone")),
-			oldObj:     newPrefs(nil, new("utc")),
+			obj:        newPrefs(preferences.PreferencesSpec{Timezone: new("Not/A_Zone")}),
+			oldObj:     newPrefs(preferences.PreferencesSpec{Timezone: new("utc")}),
 			op:         admission.Update,
 			resource:   prefsGVR,
 			wantErr:    true,
-			errMessage: "invalid timezone",
+			errMessage: "is invalid",
+			errFields:  []string{"spec.timezone"},
+			errTypes:   []metav1.CauseType{metav1.CauseTypeFieldValueInvalid},
 		},
 		{
 			name:     "valid theme and timezone together",
-			obj:      newPrefs(new("system"), new("Europe/London")),
+			obj:      newPrefs(preferences.PreferencesSpec{Theme: new("system"), Timezone: new("Europe/London")}),
 			op:       admission.Create,
 			resource: prefsGVR,
 		},
 		{
+			name:       "homeURL is rejected on create",
+			obj:        newPrefs(preferences.PreferencesSpec{HomeURL: new("https://example.com")}),
+			op:         admission.Create,
+			resource:   prefsGVR,
+			wantErr:    true,
+			errMessage: "is invalid",
+			errFields:  []string{"spec.homeURL"},
+			errTypes:   []metav1.CauseType{metav1.CauseTypeForbidden},
+		},
+		{
+			name:       "homeURL is rejected even when empty",
+			obj:        newPrefs(preferences.PreferencesSpec{HomeURL: new("")}),
+			op:         admission.Create,
+			resource:   prefsGVR,
+			wantErr:    true,
+			errMessage: "is invalid",
+			errFields:  []string{"spec.homeURL"},
+			errTypes:   []metav1.CauseType{metav1.CauseTypeForbidden},
+		},
+		{
+			name:       "homeURL is rejected on update",
+			obj:        newPrefs(preferences.PreferencesSpec{HomeURL: new("https://example.com")}),
+			oldObj:     newPrefs(preferences.PreferencesSpec{}),
+			op:         admission.Update,
+			resource:   prefsGVR,
+			wantErr:    true,
+			errMessage: "is invalid",
+			errFields:  []string{"spec.homeURL"},
+			errTypes:   []metav1.CauseType{metav1.CauseTypeForbidden},
+		},
+		{
+			name: "all invalid fields are reported together",
+			obj: newPrefs(preferences.PreferencesSpec{
+				HomeURL:  new("https://example.com"),
+				Timezone: new("Not/A_Zone"),
+				Theme:    new("not-a-real-theme"),
+			}),
+			op:         admission.Create,
+			resource:   prefsGVR,
+			wantErr:    true,
+			errMessage: "is invalid",
+			errFields:  []string{"spec.homeURL", "spec.timezone", "spec.theme"},
+			errTypes: []metav1.CauseType{
+				metav1.CauseTypeForbidden,
+				metav1.CauseTypeFieldValueInvalid,
+				metav1.CauseTypeFieldValueInvalid,
+			},
+		},
+		{
+			name: "invalid timezone and theme are both reported",
+			obj: newPrefs(preferences.PreferencesSpec{
+				Theme:    new("not-a-real-theme"),
+				Timezone: new("Not/A_Zone"),
+			}),
+			op:         admission.Create,
+			resource:   prefsGVR,
+			wantErr:    true,
+			errMessage: "is invalid",
+			errFields:  []string{"spec.timezone", "spec.theme"},
+			errTypes: []metav1.CauseType{
+				metav1.CauseTypeFieldValueInvalid,
+				metav1.CauseTypeFieldValueInvalid,
+			},
+		},
+		{
 			name:     "delete operation is skipped",
-			obj:      newPrefs(new("not-a-real-theme"), new("Not/A_Zone")),
+			obj:      newPrefs(preferences.PreferencesSpec{Theme: new("not-a-real-theme"), Timezone: new("Not/A_Zone"), HomeURL: new("https://x")}),
 			op:       admission.Delete,
 			resource: prefsGVR,
 		},
 		{
 			name:     "connect operation is skipped",
-			obj:      newPrefs(new("not-a-real-theme"), nil),
+			obj:      newPrefs(preferences.PreferencesSpec{Theme: new("not-a-real-theme")}),
 			op:       admission.Connect,
 			resource: prefsGVR,
 		},
 		{
 			name:     "non-preferences resource is skipped",
-			obj:      newPrefs(new("not-a-real-theme"), new("Not/A_Zone")),
+			obj:      newPrefs(preferences.PreferencesSpec{Theme: new("not-a-real-theme"), HomeURL: new("https://x")}),
 			op:       admission.Create,
 			resource: otherGVR,
 		},
@@ -178,12 +252,34 @@ func TestAPIBuilder_Validate(t *testing.T) {
 			)
 
 			err := b.Validate(context.Background(), attrs, nil)
-			if tt.wantErr {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.errMessage)
+			if !tt.wantErr {
+				require.NoError(t, err)
 				return
 			}
-			require.NoError(t, err)
+
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tt.errMessage)
+
+			if tt.errFields == nil {
+				return
+			}
+
+			statusErr, ok := errors.AsType[*apierrors.StatusError](err)
+			require.True(t, ok, "expected *apierrors.StatusError, got %T", err)
+			require.Equal(t, metav1.StatusReasonInvalid, statusErr.ErrStatus.Reason)
+			require.NotNil(t, statusErr.ErrStatus.Details, "expected StatusDetails to be populated")
+
+			gotFields := make([]string, 0, len(statusErr.ErrStatus.Details.Causes))
+			gotTypes := make([]metav1.CauseType, 0, len(statusErr.ErrStatus.Details.Causes))
+			for _, cause := range statusErr.ErrStatus.Details.Causes {
+				require.NotEmpty(t, cause.Message, "cause message must not be empty for field %s", cause.Field)
+				gotFields = append(gotFields, cause.Field)
+				gotTypes = append(gotTypes, cause.Type)
+			}
+			require.Equal(t, tt.errFields, gotFields)
+			if tt.errTypes != nil {
+				require.Equal(t, tt.errTypes, gotTypes)
+			}
 		})
 	}
 }

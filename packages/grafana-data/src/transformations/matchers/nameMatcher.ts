@@ -104,7 +104,7 @@ const multipleFieldNamesMatcher: FieldMatcherInfo<ByNamesMatcherOptions> = {
 // naming conventions need to get normalized. However, many existing setups
 // exist that would no longer match names if that changes.  This injects
 // fallback logic when the data frame has not type version specified
-export function fieldNameFallback(fields: Set<string>) {
+function fieldNameFallback(fields: Set<string>) {
   let fallback: FieldMatcher | undefined = undefined;
 
   if (fields.has(TIME_SERIES_VALUE_FIELD_NAME)) {

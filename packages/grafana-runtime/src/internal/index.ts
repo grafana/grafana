@@ -70,3 +70,15 @@ export {
 export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
 export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta/logging';
 export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginSettings';
+export { invalidatePluginSettingsCache } from '../services/pluginSettings/invalidatePluginSettingsCache';
+
+export {
+  initDataSourceInstanceSettings,
+  setExpressionDataSourceInstanceSettings,
+  getDataSourceInstanceSettingsList,
+} from '../services/dataSource/settings';
+export { setDataSourcePluginImporter } from '../services/dataSource/dataSource';
+export {
+  useDataSourceInstanceSettingsList,
+  type UseDataSourceInstanceSettingsListResult,
+} from '../services/dataSource/hooks';

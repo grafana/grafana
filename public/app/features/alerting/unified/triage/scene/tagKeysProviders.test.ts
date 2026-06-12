@@ -1,12 +1,6 @@
 import { type DataSourceApi, type MetricFindValue } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import {
-  AdHocFiltersVariable,
-  EmbeddedScene,
-  GroupByVariable,
-  SceneTimeRange,
-  SceneVariableSet,
-} from '@grafana/scenes';
+import { AdHocFiltersVariable, EmbeddedScene, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 
 import { getAdHocTagKeysProvider, getAdHocTagValuesProvider, getGroupByTagKeysProvider } from './tagKeysProviders';
 
@@ -26,7 +20,7 @@ function mockGetDataSourceSrv(dsOverrides: Partial<DataSourceApi> = {}) {
   } as ReturnType<typeof getDataSourceSrv>);
 }
 
-function activateWithScene(variable: GroupByVariable | AdHocFiltersVariable) {
+function activateWithScene(variable: AdHocFiltersVariable) {
   const scene = new EmbeddedScene({
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
     $variables: new SceneVariableSet({ variables: [variable] }),
@@ -49,7 +43,7 @@ describe('tagKeysProviders', () => {
         ] satisfies MetricFindValue[]),
       });
 
-      const variable = new GroupByVariable({ name: 'groupBy', datasource: { uid: 'test' } });
+      const variable = new AdHocFiltersVariable({ name: 'groupBy', datasource: { uid: 'test' } });
       activateWithScene(variable);
 
       const result = await getGroupByTagKeysProvider(variable, null);
@@ -69,7 +63,7 @@ describe('tagKeysProviders', () => {
         getTagKeys: jest.fn().mockResolvedValue([] satisfies MetricFindValue[]),
       });
 
-      const variable = new GroupByVariable({ name: 'groupBy', datasource: { uid: 'test' } });
+      const variable = new AdHocFiltersVariable({ name: 'groupBy', datasource: { uid: 'test' } });
       activateWithScene(variable);
 
       const result = await getGroupByTagKeysProvider(variable, null);
@@ -297,7 +291,7 @@ describe('tagKeysProviders', () => {
     it('should return promoted labels only when DS lacks getTagKeys', async () => {
       mockGetDataSourceSrv({});
 
-      const variable = new GroupByVariable({ name: 'groupBy', datasource: { uid: 'test' } });
+      const variable = new AdHocFiltersVariable({ name: 'groupBy', datasource: { uid: 'test' } });
       activateWithScene(variable);
 
       const result = await getGroupByTagKeysProvider(variable, null);

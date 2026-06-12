@@ -36,6 +36,21 @@ type ServiceAccountPermissionsService struct {
 	*resourcepermissions.Service
 }
 
+// ServiceAccountPermissionsRoleRegistrations returns the templated reader/writer
+// fixed roles for service account resource permissions
+// (fixed:serviceaccounts.permissions:reader and :writer). These mirror the roles
+// declared by ProvideServiceAccountPermissions through resourcepermissions.New;
+// the identity fields below must match the Options passed there.
+func ServiceAccountPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
+	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
+		Resource:       serviceAccountPermissionsResource,
+		APIGroup:       serviceAccountPermissionsAPIGroup,
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      serviceAccountPermissionsRoleGroup,
+	})
+}
+
 func ProvideServiceAccountPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, serviceAccountRetrieverService *retriever.Service, service accesscontrol.Service,
@@ -43,9 +58,9 @@ func ProvideServiceAccountPermissions(
 	restConfigProvider apiserver.DirectRestConfigProvider,
 ) (*ServiceAccountPermissionsService, error) {
 	options := resourcepermissions.Options{
-		Resource:           "serviceaccounts",
+		Resource:           serviceAccountPermissionsResource,
 		ResourceAttribute:  "id",
-		APIGroup:           "iam.grafana.app",
+		APIGroup:           serviceAccountPermissionsAPIGroup,
 		ResourceTranslator: serviceaccounts.UIDToIDHandler(serviceAccountRetrieverService),
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideServiceAccountPermissions.ResourceValidator")
@@ -70,9 +85,9 @@ func ProvideServiceAccountPermissions(
 			"Edit":  ServiceAccountEditActions,
 			"Admin": ServiceAccountAdminActions,
 		},
-		ReaderRoleName:     "Permission reader",
-		WriterRoleName:     "Permission writer",
-		RoleGroup:          "Service accounts",
+		ReaderRoleName:     permissionReaderRoleName,
+		WriterRoleName:     permissionWriterRoleName,
+		RoleGroup:          serviceAccountPermissionsRoleGroup,
 		RestConfigProvider: restConfigProvider,
 	}
 

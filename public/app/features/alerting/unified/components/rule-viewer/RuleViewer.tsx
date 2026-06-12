@@ -113,7 +113,7 @@ const RuleViewer = () => {
   const grafanaAlertingRuleUid = rulerRuleType.grafana.alertingRule(rulerRule)
     ? rulerRule.grafana_alert.uid
     : undefined;
-  const { hasInhibitedInstances } = useHasInhibitedInstances(grafanaAlertingRuleUid);
+  const { hasInhibitedInstances, isFetching: isInhibitionFetching } = useHasInhibitedInstances(grafanaAlertingRuleUid);
 
   const showError = hasError && !isPaused;
   const ruleOrigin = rulerRule ? getRulePluginOrigin(rulerRule) : getRulePluginOrigin(promRule);
@@ -132,7 +132,7 @@ const RuleViewer = () => {
           isProvisioned={isProvisioned}
           provenance={rulerRuleType.grafana.rule(rulerRule) ? rulerRule.grafana_alert.provenance : undefined}
           state={prometheusRuleType.alertingRule(promRule) ? promRule.state : undefined}
-          isInhibited={hasInhibitedInstances}
+          isInhibited={hasInhibitedInstances && !isInhibitionFetching}
           health={promRule?.health}
           ruleType={promRule?.type}
           ruleOrigin={ruleOrigin}
@@ -348,7 +348,7 @@ export const Title = ({
         />
       )}
       {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} size="lg" />}
-      <Text variant="h1" truncate>
+      <Text element="h1" variant="h1" truncate>
         {name}
       </Text>
       {isProvisioned && <ProvisioningBadge tooltip provenance={provenance} />}
