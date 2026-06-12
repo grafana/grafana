@@ -63,6 +63,19 @@ func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.Rou
 
 // shouldUseK8sAPIs returns true if both feature flags for K8s API redirect are enabled
 func (a *api) shouldUseK8sAPIs(ctx context.Context) bool {
+	return k8sResourcePermissionRedirectEnabled(ctx)
+}
+
+// k8sResourcePermissionRedirectEnabled reports whether both feature flags that
+// gate the K8s resource-permission adapter are enabled for ctx. Both must be on:
+//   - ...ResourcePermissionApis registers the K8s ResourcePermission /apis
+//     endpoints (the destination must exist), and
+//   - ...ResourcePermissionsRedirect redirects legacy permission traffic to them.
+//
+// It is the single source of truth for the redirect gate, shared by the runtime
+// path (shouldUseK8sAPIs) and the startup validation (requiresAPIGroup in
+// service.go) so the two cannot drift.
+func k8sResourcePermissionRedirectEnabled(ctx context.Context) bool {
 	return ofClient.Boolean(ctx, featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect, false, openfeature.TransactionContext(ctx)) &&
 		ofClient.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
 }

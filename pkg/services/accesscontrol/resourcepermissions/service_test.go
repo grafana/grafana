@@ -597,6 +597,24 @@ func TestService_K8sActionFormat(t *testing.T) {
 	}
 }
 
+// enableRedirectFlags installs a global OpenFeature provider where both K8s
+// resource-permission redirect flags resolve to true, restoring the noop provider
+// on cleanup. Mirrors how the flags are read in production (via OpenFeature).
+func enableRedirectFlags(t *testing.T) {
+	t.Helper()
+	openfeatureTestMutex.Lock()
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect, true),
+		featuremgmt.FlagKubernetesAuthzResourcePermissionApis:      setting.NewInMemoryFlag(featuremgmt.FlagKubernetesAuthzResourcePermissionApis, true),
+	})
+	require.NoError(t, err)
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openfeatureTestMutex.Unlock()
+	})
+}
+
 func TestRequiresAPIGroup(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -616,16 +634,10 @@ func TestRequiresAPIGroup(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var features featuremgmt.FeatureToggles
 			if tt.redirectFlags {
-				features = featuremgmt.WithFeatures(
-					featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect,
-					featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
-				)
-			} else {
-				features = featuremgmt.WithFeatures()
+				enableRedirectFlags(t)
 			}
-			got := requiresAPIGroup(tt.resource, tt.k8sActionFormat, features)
+			got := requiresAPIGroup(context.Background(), tt.resource, tt.k8sActionFormat)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -678,20 +690,15 @@ func TestService_APIGroupRequiredWhenRedirectEnabled(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.redirectFlags {
+				enableRedirectFlags(t)
+			}
+
 			sql := db.InitTestDB(t)
 			cfg := setting.NewCfg()
 			license := licensingtest.NewFakeLicensing()
 			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
-
-			var features featuremgmt.FeatureToggles
-			if tt.redirectFlags {
-				features = featuremgmt.WithFeatures(
-					featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect,
-					featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
-				)
-			} else {
-				features = featuremgmt.WithFeatures()
-			}
+			features := featuremgmt.WithFeatures()
 			ac := acimpl.ProvideAccessControl(features)
 
 			_, err := New(

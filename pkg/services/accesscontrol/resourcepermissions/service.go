@@ -79,7 +79,7 @@ func New(cfg *setting.Cfg,
 ) (*Service, error) {
 	// Fail fast at startup if a Kubernetes-native flow needs an APIGroup but none
 	// is configured.
-	if options.APIGroup == "" && requiresAPIGroup(options.Resource, options.K8sActionFormat, features) {
+	if options.APIGroup == "" && requiresAPIGroup(context.Background(), options.Resource, options.K8sActionFormat) {
 		return nil, fmt.Errorf("APIGroup is required for resource %q when Kubernetes-native permissions are enabled (K8sActionFormat or the resource-permission redirect)", options.Resource)
 	}
 
@@ -726,27 +726,32 @@ func (s *Service) scopeResource() string {
 // APIGroup configured, since it can no longer be guessed (see getAPIGroup). It is
 // required for any Kubernetes-native flow:
 //   - K8sActionFormat is enabled (K8s-format actions/scopes), or
-//   - the resource-permission redirect is statically enabled for a resource that
-//     routes through the generic K8s adapter.
+//   - the resource-permission redirect is enabled for a resource that routes
+//     through the generic K8s adapter.
 //
-// The redirect check only sees statically-configured flags; dynamically-enabled
-// redirects are guarded at runtime by getAPIGroup.
-func requiresAPIGroup(resource string, k8sActionFormat bool, features featuremgmt.FeatureToggles) bool {
+// The redirect gate is read through the same OpenFeature helper used at runtime
+// (k8sResourcePermissionRedirectEnabled), so this startup check stays aligned with
+// when getAPIGroup is actually exercised. Called at construction with a background
+// context, so it sees the global flag values; per-tenant overrides are still
+// guarded at runtime by getAPIGroup.
+func requiresAPIGroup(ctx context.Context, resource string, k8sActionFormat bool) bool {
 	if k8sActionFormat {
 		return true
 	}
 
 	// These resources never resolve a single static APIGroup via getAPIGroup, so
 	// they are exempt from the redirect requirement:
-	//   - teams use the Team.Spec.Members path (see the `Resource != "teams"`
-	//     guards in api.go) and never resolve an APIGroup.
+	//   - teams use the Team.Spec.Members path: the `Resource != "teams"` guards in
+	//     api.go dispatch to the member helpers in api_adapter.go, which never
+	//     resolve an APIGroup.
 	//   - datasources resolve a per-plugin group at request time (the group is a
-	//     wildcard, e.g. loki.datasource.grafana.app), so there is no single value.
+	//     wildcard, e.g. loki.datasource.grafana.app, configured in
+	//     pkg/extensions/accesscontrol/permission_services.go), so there is no
+	//     single value.
 	switch resource {
 	case iamv0.TeamResourceInfo.GetName(), datasources.ScopeRoot:
 		return false
 	}
 
-	return features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect) && //nolint:staticcheck // not yet migrated to OpenFeature
-		features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) //nolint:staticcheck // not yet migrated to OpenFeature
+	return k8sResourcePermissionRedirectEnabled(ctx)
 }
