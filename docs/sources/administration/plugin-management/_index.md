@@ -66,11 +66,11 @@ We strongly recommend running the latest plugin version. Use [Grafana Advisor](h
 
 ### Install a plugin
 
-The most common way to install a plugin is through the Grafana UI.
+The default way to install a plugin is through the Grafana UI.
 
-1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
-1. Browse and find a plugin.
-1. Click the plugin's logo.
+1. In Grafana, go to **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
+1. Browse and find the plugin you want to install.
+1. Click on the plugin's logo.
 1. Click **Install**.
 
 {{< admonition type="note" >}}
@@ -86,9 +86,9 @@ To update a plugin:
 1. Click the plugin's logo.
 1. Click **Update**.
 
-When the update is complete, a confirmation message will indicate the installation was successful.
+When the update is complete, a confirmation message indicates the installation was successful.
 
-#### Update plugins managed by Grafana
+#### Update Grafana-managed plugins 
 
 {{< admonition type="note" >}}
 Available in [Grafana Cloud](/docs/grafana-cloud).
