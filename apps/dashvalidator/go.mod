@@ -175,7 +175,7 @@ require (
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lestrrat-go/strftime v1.0.4 // indirect
-	github.com/lib/pq v1.10.9 // indirect
+	github.com/lib/pq v1.12.3 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
