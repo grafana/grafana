@@ -306,9 +306,8 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   };
 
   onUserClick = (anno: AnnotationEvent) => {
-    // Both paths filter by the creator's uid. The k8s client exposes it via the identity
-    // ref ("user:<uid>") on createdBy; the legacy /api/annotations response carries it as
-    // userUID. Stash whichever is present so the next query can filter by it.
+    // Normalize the creator's uid: the k8s client wraps it as "user:<uid>" in createdBy,
+    // the legacy response exposes it directly as userUID. Either way, doSearch filters by uid.
     const createdBy = 'createdBy' in anno && typeof anno.createdBy === 'string' ? anno.createdBy : undefined;
     const uid = createdBy?.startsWith('user:') ? createdBy.slice('user:'.length) : anno.userUID;
     this.setState({
