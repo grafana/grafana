@@ -77,34 +77,22 @@ func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig, md app.Man
 	gk := schema.GroupKind{Group: kind.Group(), Kind: kind.Kind()}
 	switch kind.Kind() {
 	case "AlertRule":
-		schemaStep, err := validation.OpenAPISpec[*v0alpha1.AlertRule](md, gk)
-		if err != nil {
-			return nil, err
-		}
 		return validation.NewBuilder[*v0alpha1.AlertRule]().
-			OnWrite(schemaStep).
+			WithOpenAPIValidation(md, gk).
 			OnWrite(alertrule.ValidateWrite(cfg)).
 			OnDelete(alertrule.ValidateDelete(cfg)).
-			Build(), nil
+			Build()
 	case "RecordingRule":
-		schemaStep, err := validation.OpenAPISpec[*v0alpha1.RecordingRule](md, gk)
-		if err != nil {
-			return nil, err
-		}
 		return validation.NewBuilder[*v0alpha1.RecordingRule]().
-			OnWrite(schemaStep).
+			WithOpenAPIValidation(md, gk).
 			OnWrite(recordingrule.ValidateWrite(cfg)).
 			OnDelete(recordingrule.ValidateDelete(cfg)).
-			Build(), nil
+			Build()
 	case "RuleSequence":
-		schemaStep, err := validation.OpenAPISpec[*v0alpha1.RuleSequence](md, gk)
-		if err != nil {
-			return nil, err
-		}
 		return validation.NewBuilder[*v0alpha1.RuleSequence]().
-			OnWrite(schemaStep).
+			WithOpenAPIValidation(md, gk).
 			OnWrite(rulesequence.ValidateWrite(cfg)).
-			Build(), nil
+			Build()
 	}
 	return nil, nil
 }

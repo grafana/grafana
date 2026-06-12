@@ -7,6 +7,7 @@ import (
 
 	sdkapp "github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -22,6 +23,13 @@ func newAlertRule(name string) *v1.AlertRule {
 	return r
 }
 
+func mustBuild[T resource.Object](t *testing.T, b *Builder[T]) *simple.Validator {
+	t.Helper()
+	v, err := b.Build()
+	require.NoError(t, err)
+	return v
+}
+
 func TestBuilder_ActionScopingAndOrder(t *testing.T) {
 	var ran []string
 	record := func(label string) ValidateFunc[*v1.AlertRule] {
@@ -31,11 +39,10 @@ func TestBuilder_ActionScopingAndOrder(t *testing.T) {
 		}
 	}
 
-	v := NewBuilder[*v1.AlertRule]().
+	v := mustBuild(t, NewBuilder[*v1.AlertRule]().
 		OnWrite(record("write-1")).
 		OnWrite(record("write-2")).
-		OnDelete(record("delete")).
-		Build()
+		OnDelete(record("delete")))
 
 	obj := newAlertRule("r1")
 
@@ -51,10 +58,9 @@ func TestBuilder_ActionScopingAndOrder(t *testing.T) {
 func TestBuilder_ShortCircuitsOnFirstError(t *testing.T) {
 	var ran []string
 	boom := errors.New("boom")
-	v := NewBuilder[*v1.AlertRule]().
+	v := mustBuild(t, NewBuilder[*v1.AlertRule]().
 		OnWrite(func(_ context.Context, _ Request[*v1.AlertRule]) error { ran = append(ran, "a"); return boom }).
-		OnWrite(func(_ context.Context, _ Request[*v1.AlertRule]) error { ran = append(ran, "b"); return nil }).
-		Build()
+		OnWrite(func(_ context.Context, _ Request[*v1.AlertRule]) error { ran = append(ran, "b"); return nil }))
 
 	err := v.Validate(context.Background(), &sdkapp.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: newAlertRule("r1")})
 	require.ErrorIs(t, err, boom)
@@ -66,10 +72,9 @@ func TestBuilder_TypedObjects(t *testing.T) {
 	cur := newAlertRule("cur")
 
 	var seen Request[*v1.AlertRule]
-	v := NewBuilder[*v1.AlertRule]().
+	v := mustBuild(t, NewBuilder[*v1.AlertRule]().
 		OnWrite(func(_ context.Context, req Request[*v1.AlertRule]) error { seen = req; return nil }).
-		OnDelete(func(_ context.Context, req Request[*v1.AlertRule]) error { seen = req; return nil }).
-		Build()
+		OnDelete(func(_ context.Context, req Request[*v1.AlertRule]) error { seen = req; return nil }))
 
 	// UPDATE populates both Object and OldObject.
 	require.NoError(t, v.Validate(context.Background(), &sdkapp.AdmissionRequest{Action: resource.AdmissionActionUpdate, Object: cur, OldObject: old}))
@@ -90,9 +95,8 @@ func TestBuilder_TypedObjects(t *testing.T) {
 }
 
 func TestBuilder_WrongObjectType(t *testing.T) {
-	v := NewBuilder[*v1.AlertRule]().
-		OnWrite(func(_ context.Context, _ Request[*v1.AlertRule]) error { return nil }).
-		Build()
+	v := mustBuild(t, NewBuilder[*v1.AlertRule]().
+		OnWrite(func(_ context.Context, _ Request[*v1.AlertRule]) error { return nil }))
 	err := v.Validate(context.Background(), &sdkapp.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: &v1.RecordingRule{}})
 	require.Error(t, err)
 }
@@ -100,9 +104,8 @@ func TestBuilder_WrongObjectType(t *testing.T) {
 func TestBuilder_NoApplicableSkipsCast(t *testing.T) {
 	// Only a delete step is registered. A CREATE has no applicable steps, so the
 	// builder returns nil without attempting to cast req.Object.
-	v := NewBuilder[*v1.AlertRule]().
-		OnDelete(func(_ context.Context, _ Request[*v1.AlertRule]) error { return errors.New("should not run") }).
-		Build()
+	v := mustBuild(t, NewBuilder[*v1.AlertRule]().
+		OnDelete(func(_ context.Context, _ Request[*v1.AlertRule]) error { return errors.New("should not run") }))
 	require.NoError(t, v.Validate(context.Background(), &sdkapp.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: &v1.RecordingRule{}}))
 }
 
