@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 
-import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, EmptyState, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { EmptyState, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
+
+import { DashboardTabError } from './DashboardTabError';
 
 interface Props {
   dashboards: DashboardQueryResult[];
@@ -23,14 +25,9 @@ export function MostUsedDashboardsTab({ dashboards, loading, error, retry, folde
 
   if (error) {
     return (
-      <Alert
-        severity="warning"
+      <DashboardTabError
         title={t('home.most-used-dashboards-tab.error-title', 'Could not load most viewed dashboards')}
-        action={
-          <Button onClick={retry} variant="secondary" size="sm">
-            <Trans i18nKey="home.most-used-dashboards-tab.retry">Retry</Trans>
-          </Button>
-        }
+        retry={retry}
       />
     );
   }

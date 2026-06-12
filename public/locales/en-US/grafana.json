@@ -10665,6 +10665,7 @@
       "most-used-active": "Most used dashboards",
       "recent": "Recent",
       "recent-active": "Recent dashboards",
+      "retry": "Retry",
       "starred": "Starred",
       "starred-active": "Starred dashboards"
     },
@@ -10697,8 +10698,7 @@
     "most-used-dashboards-tab": {
       "empty": "Most viewed dashboards in your organization will appear here once usage data is collected.",
       "error-title": "Could not load most viewed dashboards",
-      "loading": "Loading most viewed dashboards...",
-      "retry": "Retry"
+      "loading": "Loading most viewed dashboards..."
     },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",
@@ -10707,15 +10707,13 @@
       "empty": "Dashboards you've recently viewed will appear here.",
       "empty-description": "After you've connected data, you can use dashboards to query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "error-title": "Could not load recently viewed dashboards",
-      "loading": "Loading recently viewed dashboards...",
-      "retry": "Retry"
+      "loading": "Loading recently viewed dashboards..."
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
       "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
       "error-title": "Could not load starred dashboards",
-      "loading": "Loading starred dashboards...",
-      "retry": "Retry"
+      "loading": "Loading starred dashboards..."
     }
   },
   "import-overview": {

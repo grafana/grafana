@@ -4,20 +4,25 @@ import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { escapeRegExp } from 'lodash';
 import { useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
+import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { getBackendSrv } from '@grafana/runtime';
 import { Alert, Badge, Button, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
-import { canonicalSeverity, SEVERITY_DEFINITIONS } from 'app/features/alerting/unified/triage/scene/filters/severity';
+import {
+  canonicalSeverity,
+  SEVERITY_DEFINITIONS,
+  type SeverityLevel,
+} from 'app/features/alerting/unified/triage/scene/filters/severity';
 import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
+import { type Team } from 'app/types/teams';
 
 import { HomeSection } from '../HomeSection';
-
-import { useUserTeams } from './useUserTeams';
 
 const MAX_ALERTS = 5;
 
@@ -40,8 +45,7 @@ function alertSeverityLevel(alert: AlertmanagerAlert) {
   return canonicalSeverity(alert.labels.severity ?? '');
 }
 
-function severityRank(alert: AlertmanagerAlert) {
-  const level = alertSeverityLevel(alert);
+function severityRank(level: SeverityLevel | undefined) {
   return level ? SEVERITY_DEFINITIONS.findIndex((d) => d.level === level) : -1;
 }
 
@@ -68,17 +72,16 @@ function FiringAlertsCardInner() {
   const styles = useStyles2(getStyles);
   const [showAllAlerts, setShowAllAlerts] = useState(false);
 
-  // A failed teams fetch leaves teams undefined, so the card intentionally shows all org alerts unfiltered.
-  const { value: teams, loading: teamsLoading } = useUserTeams();
+  // Fetched once — teams change at login granularity. A failed fetch leaves teams
+  // undefined, so the card intentionally shows all org alerts unfiltered.
+  const { value: teams, loading: teamsLoading } = useAsync(() => getBackendSrv().get<Team[]>('/api/user/teams'), []);
 
-  const teamNames = useMemo(() => (teams ?? []).map((t) => t.name), [teams]);
+  const teamNames = (teams ?? []).map((t) => t.name);
   const hasTeams = teamNames.length > 0;
 
-  // When showAllAlerts is toggled, drop the team matchers
-  const matchers = useMemo(
-    () => (hasTeams && !showAllAlerts ? buildTeamMatchers(teamNames) : []),
-    [hasTeams, showAllAlerts, teamNames]
-  );
+  // When showAllAlerts is toggled, drop the team matchers. No memo needed:
+  // RTK Query serializes query args, so referential identity doesn't matter.
+  const matchers = hasTeams && !showAllAlerts ? buildTeamMatchers(teamNames) : [];
 
   const {
     data: alerts,
@@ -97,35 +100,26 @@ function FiringAlertsCardInner() {
 
   const loading = teamsLoading || alertsLoading;
 
-  const sorted = useMemo(() => {
-    if (!alerts) {
-      return [];
-    }
-    return [...alerts].sort((a, b) => {
-      const s = severityRank(b) - severityRank(a);
-      if (s !== 0) {
-        return s;
+  // Severity and timestamp are derived once per alert so the sort comparator,
+  // the badge counts, and the rows don't recompute them.
+  const { sorted, criticalCount, highCount } = useMemo(() => {
+    let criticalCount = 0;
+    let highCount = 0;
+    const decorated = (alerts ?? []).map((alert) => {
+      const level = alertSeverityLevel(alert);
+      if (level === 'critical') {
+        criticalCount++;
+      } else if (level === 'major') {
+        highCount++;
       }
-      // Most recent first within the same severity
-      return new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime();
+      return { alert, level, rank: severityRank(level), startedAt: new Date(alert.startsAt).getTime() };
     });
+    // Most severe first, most recent first within the same severity
+    decorated.sort((a, b) => b.rank - a.rank || b.startedAt - a.startedAt);
+    return { sorted: decorated, criticalCount, highCount };
   }, [alerts]);
 
   const displayed = sorted.slice(0, MAX_ALERTS);
-
-  const [criticalCount, highCount] = useMemo(() => {
-    let critical = 0;
-    let high = 0;
-    for (const alert of alerts ?? []) {
-      const level = alertSeverityLevel(alert);
-      if (level === 'critical') {
-        critical++;
-      } else if (level === 'major') {
-        high++;
-      }
-    }
-    return [critical, high];
-  }, [alerts]);
 
   return (
     <HomeSection padding={3} flex={1} minWidth="320px">
@@ -201,11 +195,11 @@ function FiringAlertsCardInner() {
 
         {!loading && !alertsError && displayed.length > 0 && (
           <ul className={styles.list}>
-            {displayed.map((alert) => {
+            {displayed.map(({ alert, level, startedAt }) => {
               const detailHref = alertDetailHref(alert);
               return (
                 <li key={alert.fingerprint} className={styles.row}>
-                  <span className={styles.severityDot} data-severity={alertSeverityLevel(alert)} />
+                  <span className={styles.severityDot} data-severity={level} />
                   {detailHref ? (
                     <TextLink href={detailHref} inline={false} className={styles.alertName}>
                       {alert.labels.alertname}
@@ -222,7 +216,7 @@ function FiringAlertsCardInner() {
                   )}
                   <span className={styles.age}>
                     <Text color="secondary" variant="bodySmall">
-                      {formatDistanceToNowStrict(new Date(alert.startsAt), { addSuffix: true })}
+                      {formatDistanceToNowStrict(startedAt, { addSuffix: true })}
                     </Text>
                   </span>
                 </li>
