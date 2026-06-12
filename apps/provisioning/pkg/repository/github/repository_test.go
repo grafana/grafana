@@ -99,7 +99,7 @@ func TestNewGitHub(t *testing.T) {
 				require.NotNil(t, repo)
 				assert.Equal(t, tt.expectedOwner, repo.Owner())
 				assert.Equal(t, tt.expectedRepo, repo.Repo())
-				concreteRepo, ok := repo.(*githubRepository)
+				concreteRepo, ok := repo.(*GithubRepositoryImpl)
 				require.True(t, ok)
 				assert.Equal(t, gitRepo, concreteRepo.GitRepository)
 			}
@@ -231,7 +231,7 @@ func TestGitHubRepositoryTest(t *testing.T) {
 				tt.mockSetup(mockGitRepo)
 			}
 
-			repo := &githubRepository{
+			repo := &GithubRepositoryImpl{
 				config:        tt.config,
 				GitRepository: mockGitRepo,
 				owner:         "grafana",
@@ -570,7 +570,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 				tt.mockSetup(mockClient)
 			}
 
-			repo := &githubRepository{
+			repo := &GithubRepositoryImpl{
 				config: tt.config,
 				gh:     mockClient,
 				owner:  "grafana",
@@ -680,7 +680,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := &githubRepository{
+			repo := &GithubRepositoryImpl{
 				config: tt.config,
 				owner:  "grafana",
 				repo:   "grafana",
@@ -766,7 +766,7 @@ func TestGitHubRepositoryRefURLs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := &githubRepository{
+			repo := &GithubRepositoryImpl{
 				config: tt.config,
 				owner:  "grafana",
 				repo:   "grafana",
@@ -807,7 +807,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo := git.NewMockGitRepository(t)
 		mockGitRepo.On("Config").Return(config)
 
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config:        config,
 			GitRepository: mockGitRepo,
 		}
@@ -827,7 +827,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		}
 		mockGitRepo.On("Read", ctx, "test.yaml", "main").Return(expectedFileInfo, nil)
 
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config:        config,
 			GitRepository: mockGitRepo,
 		}
@@ -845,7 +845,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		}
 		mockGitRepo.On("ReadTree", ctx, "main").Return(expectedEntries, nil)
 
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config:        config,
 			GitRepository: mockGitRepo,
 		}
@@ -861,7 +861,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		data := []byte("test content")
 		mockGitRepo.On("Create", ctx, "new-file.yaml", "main", data, "Create new file").Return(nil)
 
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config:        config,
 			GitRepository: mockGitRepo,
 		}
@@ -876,7 +876,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		data := []byte("updated content")
 		mockGitRepo.On("Update", ctx, "existing-file.yaml", "main", data, "Update file").Return(nil)
 
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config:        config,
 			GitRepository: mockGitRepo,
 		}
@@ -891,7 +891,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		data := []byte("file content")
 		mockGitRepo.On("Write", ctx, "file.yaml", "main", data, "Write file").Return(nil)
 
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config:        config,
 			GitRepository: mockGitRepo,
 		}
@@ -905,7 +905,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo := git.NewMockGitRepository(t)
 		mockGitRepo.On("Delete", ctx, "file.yaml", "main", "Delete file").Return(nil)
 
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config:        config,
 			GitRepository: mockGitRepo,
 		}
@@ -920,7 +920,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		expectedRef := "abc123def456"
 		mockGitRepo.On("LatestRef", ctx).Return(expectedRef, nil)
 
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config:        config,
 			GitRepository: mockGitRepo,
 		}
@@ -940,7 +940,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		}
 		mockGitRepo.On("ListRefs", ctx).Return(gitRepoRefs, nil)
 
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config:        config,
 			GitRepository: mockGitRepo,
 		}
@@ -976,7 +976,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		}
 		mockGitRepo.On("CompareFiles", ctx, "main", "feature-branch").Return(expectedChanges, nil)
 
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config:        config,
 			GitRepository: mockGitRepo,
 		}
@@ -996,7 +996,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		}
 		mockGitRepo.On("Stage", ctx, opts).Return(mockStagedRepo, nil)
 
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config:        config,
 			GitRepository: mockGitRepo,
 		}
@@ -1020,7 +1020,7 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 	}
 
 	t.Run("Owner returns correct owner", func(t *testing.T) {
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config: config,
 			owner:  "grafana",
 			repo:   "grafana",
@@ -1031,7 +1031,7 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 	})
 
 	t.Run("Repo returns correct repo", func(t *testing.T) {
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config: config,
 			owner:  "grafana",
 			repo:   "grafana",
@@ -1044,7 +1044,7 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 	t.Run("Client returns correct client", func(t *testing.T) {
 		mockClient := NewMockClient(t)
 
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config: config,
 			gh:     mockClient,
 			owner:  "grafana",
@@ -1056,7 +1056,7 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 	})
 
 	t.Run("GetCurrentBranch returns branch from config", func(t *testing.T) {
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config: config,
 			owner:  "grafana",
 			repo:   "grafana",
@@ -1076,7 +1076,7 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 			},
 		}
 
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config: emptyBranchConfig,
 			owner:  "grafana",
 			repo:   "grafana",
@@ -1090,7 +1090,7 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 		mockGitRepo := git.NewMockGitRepository(t)
 		mockGitRepo.On("SetBranch", "develop").Once()
 
-		repo := &githubRepository{
+		repo := &GithubRepositoryImpl{
 			config:        config,
 			GitRepository: mockGitRepo,
 			owner:         "grafana",
@@ -1169,7 +1169,7 @@ func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
 				},
 			}
 
-			repo := &githubRepository{
+			repo := &GithubRepositoryImpl{
 				config: config,
 				gh:     mockClient,
 				owner:  "grafana",
@@ -1257,7 +1257,7 @@ func TestGithubRepository_Move(t *testing.T) {
 				},
 			}
 
-			githubRepo := &githubRepository{
+			githubRepo := &GithubRepositoryImpl{
 				config:        config,
 				GitRepository: mockGitRepo,
 				owner:         "example",
@@ -1417,7 +1417,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 				}
 			}
 
-			repo := &githubRepository{
+			repo := &GithubRepositoryImpl{
 				config:        config,
 				GitRepository: mockGitRepo,
 				gh:            mockClient,
@@ -1634,7 +1634,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 					Once()
 			}
 
-			repo := &githubRepository{
+			repo := &GithubRepositoryImpl{
 				config:        config,
 				GitRepository: mockGitRepo,
 				gh:            mockClient,
@@ -1789,7 +1789,7 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 					Once()
 			}
 
-			repo := &githubRepository{
+			repo := &GithubRepositoryImpl{
 				config:        config,
 				GitRepository: mockGitRepo,
 				gh:            mockClient,
@@ -1957,7 +1957,7 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 				},
 			}
 
-			githubRepo := &githubRepository{
+			githubRepo := &GithubRepositoryImpl{
 				config:        config,
 				GitRepository: mockGitRepo,
 				gh:            mockClient,

@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/google/go-github/v82/github"
@@ -29,18 +30,28 @@ func ProvideFactory() *Factory {
 	}
 }
 
-func (r *Factory) New(ctx context.Context, ghToken common.RawSecureValue) Client {
+// An empty customServerURL will default to creating a client pointing to the cloud github.com
+func (r *Factory) New(ctx context.Context, ghToken common.RawSecureValue, customServerURL string) (Client, error) {
 	if r.Client != nil {
-		return NewClient(github.NewClient(r.Client))
+		return NewClient(github.NewClient(r.Client)), nil
 	}
 
+	httpClient := &http.Client{}
 	if !ghToken.IsZero() {
 		tokenSrc := oauth2.StaticTokenSource(
 			&oauth2.Token{AccessToken: string(ghToken)},
 		)
-		tokenClient := oauth2.NewClient(ctx, tokenSrc)
-		return NewClient(github.NewClient(tokenClient))
+		httpClient = oauth2.NewClient(ctx, tokenSrc)
 	}
 
-	return NewClient(github.NewClient(&http.Client{}))
+	ghClient := github.NewClient(httpClient)
+	if customServerURL != "" {
+		enterprise, err := ghClient.WithEnterpriseURLs(customServerURL, customServerURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to configure Github Enterprise URLs for %s: %w", customServerURL, err)
+		}
+		ghClient = enterprise
+	}
+
+	return NewClient(ghClient), nil
 }

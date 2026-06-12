@@ -18,11 +18,11 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-// Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
-type githubRepository struct {
+// Make sure all public functions of this struct call the (*GithubRepositoryImpl).logger function, to ensure the GH repo details are included.
+type GithubRepositoryImpl struct {
 	git.GitRepository
 	config *provisioning.Repository
-	gh     Client // assumes github.com base URL
+	gh     Client
 
 	owner string
 	repo  string
@@ -52,33 +52,47 @@ func NewRepository(
 	factory *Factory,
 	token common.RawSecureValue,
 ) (GithubRepository, error) {
-	owner, repo, err := ParseOwnerRepoGithub(config.Spec.GitHub.URL)
+	owner, repo, err := ParseOwnerRepoGithub(config.URL())
 	if err != nil {
 		return nil, fmt.Errorf("parse owner and repo: %w", err)
 	}
 
-	return &githubRepository{
+	ghClient, err := factory.New(ctx, token, serverURLFromConfig(config))
+	if err != nil {
+		return nil, fmt.Errorf("create github client: %w", err)
+	}
+
+	return &GithubRepositoryImpl{
 		config:        config,
 		GitRepository: gitRepo,
-		gh:            factory.New(ctx, token), // TODO, baseURL from config
+		gh:            ghClient,
 		owner:         owner,
 		repo:          repo,
 	}, nil
 }
 
-func (r *githubRepository) Owner() string {
+// serverURLFromConfig returns the custom GitHub server URL for the repository, or "" for
+// repositories hosted on github.com (in which case the factory targets api.github.com).
+func serverURLFromConfig(config *provisioning.Repository) string {
+	if config.Spec.GitHubEnterprise != nil {
+		return config.Spec.GitHubEnterprise.ServerURL
+	}
+	return ""
+}
+
+func (r *GithubRepositoryImpl) Owner() string {
 	return r.owner
 }
 
-func (r *githubRepository) Repo() string {
+func (r *GithubRepositoryImpl) Repo() string {
 	return r.repo
 }
 
-func (r *githubRepository) Client() Client {
+func (r *GithubRepositoryImpl) Client() Client {
 	return r.gh
 }
 
-func (r *githubRepository) GetDefaultBranch(ctx context.Context) (string, error) {
+func (r *GithubRepositoryImpl) GetDefaultBranch(ctx context.Context) (string, error) {
 	repo, err := r.gh.GetRepository(ctx, r.owner, r.repo)
 	if err != nil {
 		return "", fmt.Errorf("failed to get repository metadata: %w", err)
@@ -86,11 +100,11 @@ func (r *githubRepository) GetDefaultBranch(ctx context.Context) (string, error)
 	return repo.DefaultBranch, nil
 }
 
-func (r *githubRepository) GetCurrentBranch() string {
+func (r *GithubRepositoryImpl) GetCurrentBranch() string {
 	return r.config.Spec.GitHub.Branch
 }
 
-func (r *githubRepository) SetBranch(branch string) {
+func (r *GithubRepositoryImpl) SetBranch(branch string) {
 	r.config.Spec.GitHub.Branch = branch
 	r.GitRepository.SetBranch(branch)
 }
@@ -113,7 +127,7 @@ func ParseOwnerRepoGithub(giturl string) (owner string, repo string, err error) 
 }
 
 // Test implements provisioning.Repository.
-func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
+func (r *GithubRepositoryImpl) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	url := r.config.Spec.GitHub.URL
 	_, _, err := ParseOwnerRepoGithub(url)
 	if err != nil {
@@ -184,7 +198,7 @@ func testResultFromGetDefaultBranchError(url string, err error) *provisioning.Te
 // checkBranchProtection validates that branch protection rules and repository rulesets
 // do not block direct pushes when the write workflow is configured.
 // Returns nil if the check passes or is not applicable.
-func (r *githubRepository) checkBranchProtection(ctx context.Context) *provisioning.TestResults {
+func (r *GithubRepositoryImpl) checkBranchProtection(ctx context.Context) *provisioning.TestResults {
 	if !r.hasWriteWorkflow() {
 		return nil
 	}
@@ -249,7 +263,7 @@ func (r *githubRepository) checkBranchProtection(ctx context.Context) *provision
 	return nil
 }
 
-func (r *githubRepository) hasWriteWorkflow() bool {
+func (r *GithubRepositoryImpl) hasWriteWorkflow() bool {
 	for _, w := range r.config.Spec.Workflows {
 		if w == provisioning.WriteWorkflow {
 			return true
@@ -258,7 +272,7 @@ func (r *githubRepository) hasWriteWorkflow() bool {
 	return false
 }
 
-func (r *githubRepository) History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error) {
+func (r *GithubRepositoryImpl) History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error) {
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
 	}
@@ -304,7 +318,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 }
 
 // ListRefs list refs from the git repository and add the ref URL to the ref item
-func (r *githubRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem, error) {
+func (r *GithubRepositoryImpl) ListRefs(ctx context.Context) ([]provisioning.RefItem, error) {
 	refs, err := r.GitRepository.ListRefs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list refs: %w", err)
@@ -318,7 +332,7 @@ func (r *githubRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem
 }
 
 // ResourceURLs implements RepositoryWithURLs.
-func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.FileInfo) (*provisioning.RepositoryURLs, error) {
+func (r *GithubRepositoryImpl) ResourceURLs(ctx context.Context, file *repository.FileInfo) (*provisioning.RepositoryURLs, error) {
 	cfg := r.config.Spec.GitHub
 	if file.Path == "" || cfg == nil {
 		return nil, nil
@@ -345,7 +359,7 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 }
 
 // RefURLs implements RepositoryWithURLs.
-func (r *githubRepository) RefURLs(ctx context.Context, ref string) (*provisioning.RepositoryURLs, error) {
+func (r *GithubRepositoryImpl) RefURLs(ctx context.Context, ref string) (*provisioning.RepositoryURLs, error) {
 	cfg := r.config.Spec.GitHub
 	if cfg == nil || ref == "" {
 		return nil, nil
