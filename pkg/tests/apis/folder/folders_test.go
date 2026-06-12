@@ -92,8 +92,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 						"get",
 						"list",
 						"patch",
-						"update",
-						"watch"
+						"update"
 					]
 				},
 				{
