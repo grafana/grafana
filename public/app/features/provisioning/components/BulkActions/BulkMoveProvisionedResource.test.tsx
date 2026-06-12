@@ -193,6 +193,7 @@ describe('BulkMoveProvisionedResource', () => {
       defaultRepository,
       expect.objectContaining({
         action: 'move',
+        message: expect.stringContaining('Move resources'),
         move: expect.objectContaining({
           targetPath: expect.any(String),
           resources: expect.arrayContaining([

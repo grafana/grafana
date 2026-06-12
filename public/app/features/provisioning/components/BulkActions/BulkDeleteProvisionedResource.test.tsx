@@ -152,6 +152,7 @@ describe('BulkDeleteProvisionedResource', () => {
       defaultRepository,
       expect.objectContaining({
         action: 'delete',
+        message: expect.stringContaining('Delete resources'),
         delete: expect.objectContaining({
           resources: expect.arrayContaining([
             expect.objectContaining({ name: 'folder-1', kind: 'Folder' }),

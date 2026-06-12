@@ -4269,6 +4269,7 @@
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
+      "default-commit-message": "Delete resources",
       "delete-warning": "This will delete selected folders and their descendants.",
       "error-deleting-resources": "Error deleting resources",
       "folder-empty_one": "Selected folder is empty",
@@ -4280,6 +4281,7 @@
       "button-cancel": "Cancel",
       "button-move": "Move",
       "button-moving": "Moving...",
+      "default-commit-message": "Move resources",
       "error": {
         "read-only-message": "If you have direct access to the target, please make modifications directly in the target repository.",
         "read-only-saving-message": "Repository is read-only and provisioned in git. {{readOnlyMessage}}",
@@ -6023,9 +6025,6 @@
       "only-overrides-button-tooltip": "Show only overrides",
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
-    },
-    "panel-editor-table-view": {
-      "title-raw-data": "Raw data"
     },
     "panel-links": {
       "aria-label-panel-links": "Panel links"
@@ -8916,6 +8915,11 @@
     },
     "sql-expr": {
       "button-run-query": "Run query"
+    },
+    "sql-expression": {
+      "editor": {
+        "aria-label": "SQL expression editor"
+      }
     },
     "sql-schema": {
       "error-title": "Error",
@@ -12144,8 +12148,10 @@
       "undock": "Undock menu"
     },
     "megamenu-item": {
+      "children-error": "Failed to load items",
       "collapse-aria-label": "Collapse section: {{sectionName}}",
-      "expand-aria-label": "Expand section: {{sectionName}}"
+      "expand-aria-label": "Expand section: {{sectionName}}",
+      "loading-aria-label": "Loading {{sectionName}}"
     },
     "org-switcher": {
       "aria-label": "Change organization"
@@ -13251,6 +13257,7 @@
     },
     "fix-folder-metadata-drawer": {
       "cancel": "Cancel",
+      "default-commit-message": "Fix folder metadata",
       "error-message": "Failed to start folder metadata fix job. Please try again.",
       "error-title": "Error fixing folder metadata",
       "loading": "Loading repository...",
