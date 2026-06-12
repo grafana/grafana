@@ -2,7 +2,7 @@ import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type RepositoryFormData } from '../types';
 
-import { dataToSpec, generateRepositoryTitle, specToData } from './data';
+import { dataToSpec, deriveSigningKeySecret, generateRepositoryTitle, specToData } from './data';
 
 const baseSync = {
   enabled: true,
@@ -546,5 +546,27 @@ describe('generateRepositoryTitle', () => {
 
   it('returns path for local type', () => {
     expect(generateRepositoryTitle({ type: 'local', path: '/path/to/repo' })).toBe('/path/to/repo');
+  });
+});
+
+describe('deriveSigningKeySecret', () => {
+  it('creates the key when signing is enabled and a new key was entered', () => {
+    const form = { ...makeFormData('github'), signingMethod: 'gpg' as const, commitSigningKey: 'key-material' };
+    expect(deriveSigningKeySecret(form, false)).toEqual({ create: 'key-material' });
+  });
+
+  it('returns undefined when signing is enabled but no new key was entered (keep existing)', () => {
+    const form = { ...makeFormData('github'), signingMethod: 'gpg' as const, commitSigningKey: '' };
+    expect(deriveSigningKeySecret(form, true)).toBeUndefined();
+  });
+
+  it('removes the key when signing is disabled but a key was previously stored', () => {
+    const form = { ...makeFormData('github'), signingMethod: '' as const, commitSigningKey: '' };
+    expect(deriveSigningKeySecret(form, true)).toEqual({ remove: true });
+  });
+
+  it('returns undefined when signing is disabled and nothing was stored', () => {
+    const form = { ...makeFormData('github'), signingMethod: '' as const, commitSigningKey: '' };
+    expect(deriveSigningKeySecret(form, false)).toBeUndefined();
   });
 });

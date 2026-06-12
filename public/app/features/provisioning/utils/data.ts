@@ -1,4 +1,4 @@
-import { type CommitOptions, type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { type CommitOptions, type InlineSecureValue, type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type RepositoryFormData } from '../types';
 
@@ -155,6 +155,24 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
 
   // We need to deep clone the data, so it doesn't become immutable
   return structuredClone(spec);
+};
+
+/**
+ * Derive the `secure.commitSigningKey` entry from the form's signing state.
+ * Returns `{ create }` when signing is enabled and a new key was entered,
+ * `{ remove: true }` when signing is disabled but a key was previously stored,
+ * and `undefined` when there is nothing to change. Both submit paths
+ * (config edit and wizard create) share this so the set/keep/remove decision
+ * lives in one place.
+ */
+export const deriveSigningKeySecret = (
+  data: RepositoryFormData,
+  existingKeyConfigured: boolean
+): InlineSecureValue | undefined => {
+  if (data.signingMethod) {
+    return data.commitSigningKey ? { create: data.commitSigningKey } : undefined;
+  }
+  return existingKeyConfigured ? { remove: true } : undefined;
 };
 
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {

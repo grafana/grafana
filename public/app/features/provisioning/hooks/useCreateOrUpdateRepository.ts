@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { generateUUID } from '@grafana/data';
 import {
+  type InlineSecureValue,
   type RepositorySpec,
   type SecureValues,
   useCreateRepositoryMutation,
@@ -15,15 +16,13 @@ export function useCreateOrUpdateRepository(name?: string) {
   const [testConfig, testRequest] = useCreateRepositoryTestMutation();
 
   const updateOrCreate = useCallback(
-    async (data: RepositorySpec, token?: string, commitSigningKey?: string, removeSigningKey?: boolean) => {
+    async (data: RepositorySpec, token?: string, signingKeySecret?: InlineSecureValue) => {
       const secureEntries: SecureValues = {};
       if (token?.length) {
         secureEntries.token = { create: token };
       }
-      if (commitSigningKey?.length) {
-        secureEntries.commitSigningKey = { create: commitSigningKey };
-      } else if (removeSigningKey) {
-        secureEntries.commitSigningKey = { remove: true };
+      if (signingKeySecret) {
+        secureEntries.commitSigningKey = signingKeySecret;
       }
       const secure = Object.keys(secureEntries).length ? secureEntries : undefined;
 

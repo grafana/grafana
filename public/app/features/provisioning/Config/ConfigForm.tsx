@@ -33,7 +33,7 @@ import { PROVISIONING_URL } from '../constants';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { type RepositoryFormData } from '../types';
-import { dataToSpec } from '../utils/data';
+import { dataToSpec, deriveSigningKeySecret } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions } from '../utils/git';
 import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
@@ -139,8 +139,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
     setSubmitError(undefined);
     try {
       const spec = dataToSpec(form);
-      const removeSigningKey = !form.signingMethod && Boolean(data?.secure?.commitSigningKey?.name);
-      await submitData(spec, form.token, form.signingMethod ? form.commitSigningKey : undefined, removeSigningKey);
+      const signingKeySecret = deriveSigningKeySecret(form, Boolean(data?.secure?.commitSigningKey?.name));
+      await submitData(spec, form.token, signingKeySecret);
     } catch (err) {
       if (isFetchError(err)) {
         const fieldErrors = getConfigFormErrors(err.data);
