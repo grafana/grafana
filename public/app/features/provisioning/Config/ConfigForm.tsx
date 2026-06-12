@@ -405,7 +405,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
             )}
           </>
         )}
-        {type === 'github' && <WebhookSection register={register} />}
+        {type === 'github' && <WebhookSection<RepositoryFormData> register={register} name="webhook.baseUrl" />}
 
         {isGitBased && (
           <ControlledCollapse

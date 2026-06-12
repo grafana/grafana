@@ -1,17 +1,17 @@
-import { type UseFormRegister } from 'react-hook-form';
+import { type FieldValues, type Path, type UseFormRegister } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { ControlledCollapse, Field, Input, Stack, TextLink } from '@grafana/ui';
 
 import { checkPublicAccess } from '../GettingStarted/features';
 import { GETTING_STARTED_URL } from '../constants';
-import { type RepositoryFormData } from '../types';
 
-export interface WebhookSectionProps {
-  register: UseFormRegister<RepositoryFormData>;
+export interface WebhookSectionProps<T extends FieldValues> {
+  register: UseFormRegister<T>;
+  name: Path<T>;
 }
 
-export function WebhookSection({ register }: WebhookSectionProps) {
+export function WebhookSection<T extends FieldValues>({ register, name }: WebhookSectionProps<T>) {
   const isPublic = checkPublicAccess();
 
   return (
@@ -37,7 +37,7 @@ export function WebhookSection({ register }: WebhookSectionProps) {
           }
         >
           <Input
-            {...register('webhook.baseUrl')}
+            {...register(name)}
             placeholder={t('provisioning.webhook-section.placeholder-webhook-url', 'https://grafana.example.com')}
           />
         </Field>

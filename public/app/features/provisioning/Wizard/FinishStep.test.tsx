@@ -21,9 +21,9 @@ jest.mock('../GettingStarted/features', () => ({
 // The frontend-settings request is served by the default provisioning MSW handlers.
 setupProvisioningMswServer();
 
-const BRANCH_LABEL = 'Branch options (advanced)';
-const COMMIT_LABEL = 'Commit options (advanced)';
-const PR_LABEL = 'Pull request options (advanced)';
+const BRANCH_LABEL = 'Branch options';
+const COMMIT_LABEL = 'Commit options';
+const PR_LABEL = 'Pull request options';
 
 function FormWrapper({ children, type }: { children: ReactNode; type: RepoType }) {
   const methods = useForm<WizardFormData>({
@@ -94,6 +94,19 @@ describe('FinishStep', () => {
       expect(screen.queryByText(BRANCH_LABEL)).not.toBeInTheDocument();
       expect(screen.queryByText(COMMIT_LABEL)).not.toBeInTheDocument();
       expect(screen.queryByText(PR_LABEL)).not.toBeInTheDocument();
+    });
+
+    it('shows the webhook section for a GitHub repository', async () => {
+      setup('github');
+
+      expect(await screen.findByText('Webhook')).toBeInTheDocument();
+    });
+
+    it('does not show the webhook section for a non-GitHub repository', async () => {
+      setup('gitlab');
+
+      expect(await screen.findByText(PR_LABEL)).toBeInTheDocument();
+      expect(screen.queryByText('Webhook')).not.toBeInTheDocument();
     });
   });
 

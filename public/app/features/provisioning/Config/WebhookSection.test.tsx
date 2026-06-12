@@ -9,7 +9,7 @@ import { WebhookSection } from './WebhookSection';
 
 function Wrapper() {
   const { register } = useForm<RepositoryFormData>();
-  return <WebhookSection register={register} />;
+  return <WebhookSection register={register} name="webhook.baseUrl" />;
 }
 
 describe('WebhookSection', () => {
