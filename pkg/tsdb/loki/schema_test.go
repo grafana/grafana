@@ -148,8 +148,8 @@ func TestSchemaProvider_Columns_withParserProbe(t *testing.T) {
 	})
 
 	cr, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
-		Tables:          []string{"carts"},
-		TableParameters: map[string]string{"PARSER": "json"},
+		Tables:        []string{"carts"},
+		SchemaContext: map[string]string{"PARSER": "json"},
 	})
 	require.NoError(t, err)
 	require.True(t, queryRangeCalled.Load())
@@ -157,6 +157,36 @@ func TestSchemaProvider_Columns_withParserProbe(t *testing.T) {
 	names := columnNames(cr.Columns["carts"])
 	require.Contains(t, names, "level")
 	require.Contains(t, names, "env")
+}
+
+func TestSchemaProvider_Columns_withPatternProbe(t *testing.T) {
+	var queryRangeCalled atomic.Bool
+	p := newTestSchemaProvider(t, func(req *http.Request) (int, string, []byte) {
+		switch {
+		case strings.HasSuffix(req.URL.Path, "/loki/api/v1/labels") && req.URL.Query().Get("query") == "":
+			return 200, "", []byte(`{"status":"success","data":["service_name"]}`)
+		case strings.HasSuffix(req.URL.Path, "/loki/api/v1/labels") && strings.Contains(req.URL.Query().Get("query"), `service_name="nginx"`):
+			return 200, "", []byte(`{"status":"success","data":["env","service_name"]}`)
+		case strings.Contains(req.URL.Path, "/loki/api/v1/query_range"):
+			queryRangeCalled.Store(true)
+			require.Contains(t, req.URL.Query().Get("query"), `| pattern "<status>"`)
+			return 200, "", []byte(`{"status":"success","data":{"resultType":"streams","result":[{"stream":{"env":"prod","method":"GET","service_name":"nginx","status":"500"},"values":[["1700000000000000000","{}"]]}]}}`)
+		default:
+			t.Fatalf("unexpected request: %s", req.URL.String())
+		}
+		return 0, "", nil
+	})
+
+	cr, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
+		Tables:        []string{"nginx"},
+		SchemaContext: map[string]string{"PARSER": "pattern", "PATTERN": "<status>"},
+	})
+	require.NoError(t, err)
+	require.True(t, queryRangeCalled.Load())
+
+	names := columnNames(cr.Columns["nginx"])
+	require.Contains(t, names, "status")
+	require.Contains(t, names, "method")
 }
 
 func TestSchemaProvider_Columns_withParserSchemaContext(t *testing.T) {
