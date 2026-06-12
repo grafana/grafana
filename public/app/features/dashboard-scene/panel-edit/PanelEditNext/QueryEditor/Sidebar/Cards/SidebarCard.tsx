@@ -131,17 +131,23 @@ export const SidebarCard = ({
   return (
     <div className={styles.wrapper}>
       <div className={styles.cardRow}>
-        {multiSelectMode && onToggleMultiSelect && (
-          <div onMouseDownCapture={handleBulkCheckboxMouseDownCapture}>
-            <Checkbox
-              value={isMultiSelected}
-              onChange={handleCheckboxChange}
-              aria-label={t('query-editor-next.sidebar.card-multi-select', 'Include card {{id}} in bulk selection', {
-                id,
-              })}
-            />
-          </div>
-        )}
+        <div
+          aria-hidden={!multiSelectMode}
+          className={cx(styles.checkboxWrapper, multiSelectMode && styles.checkboxWrapperOpen)}
+          {...(!multiSelectMode && { inert: '' })}
+        >
+          {onToggleMultiSelect && (
+            <div onMouseDownCapture={handleBulkCheckboxMouseDownCapture}>
+              <Checkbox
+                value={isMultiSelected}
+                onChange={handleCheckboxChange}
+                aria-label={t('query-editor-next.sidebar.card-multi-select', 'Include card {{id}} in bulk selection', {
+                  id,
+                })}
+              />
+            </div>
+          )}
+        </div>
         <div
           className={styles.card}
           onClick={handleCardClick}
@@ -377,12 +383,28 @@ function getStyles(
       alignItems: 'center',
       gap: theme.spacing(1.25),
     }),
-    // bulkCheckbox: css({
-    //   display: 'flex',
-    //   alignItems: 'center',
-    //   justifyContent: 'center',
-    //   flexShrink: 0,
-    // }),
+
+    // Slot for the always-rendered checkbox: width animates open/closed to slide
+    // the card and reveal/clip it. Negative margin cancels `cardRow`'s gap when closed.
+    checkboxWrapper: css({
+      display: 'flex',
+      alignItems: 'center',
+      overflow: 'hidden',
+      width: 0,
+      flexShrink: 0,
+      lineHeight: 0,
+      marginRight: `-${theme.spacing(1.25)}`,
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['width', 'margin-right'], {
+          duration: theme.transitions.duration.short,
+          easing: theme.transitions.easing.easeOut,
+        }),
+      },
+    }),
+    checkboxWrapperOpen: css({
+      width: theme.spacing(2),
+      marginRight: 0,
+    }),
     ghostCard: css({
       border: `1px solid ${ghostBorderColor}`,
       background: ghostBackgroundColor,

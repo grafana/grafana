@@ -1173,12 +1173,6 @@
       "label-metric": "메트릭",
       "label-pending-period": "보류 기간"
     },
-    "evaluation-group": {
-      "label-delete": "삭제",
-      "label-export": "내보내기",
-      "label-reorder-rules": "규칙 순서 변경",
-      "text-provisioned": "프로비저닝됨"
-    },
     "evaluation-group-creation-modal": {
       "description-group-name": "그룹은 동일한 평가 간격으로 모든 규칙을 평가합니다.",
       "description-often-rules-group-evaluated": "그룹의 모든 규칙을 평가하는 빈도입니다.",
@@ -1187,9 +1181,6 @@
       },
       "placeholder-enter-a-name": "이름을 입력하세요",
       "title-new-evaluation-group": "새 평가 그룹"
-    },
-    "evaluation-group-loader": {
-      "title-something-wrong-trying-fetch-group-details": "그룹 세부 정보를 가져오는 중에 문제가 발생했습니다"
     },
     "existing-rule-editor": {
       "sorry-permission": "죄송합니다! 이 규칙을 편집할 수 있는 권한이 없습니다.",
@@ -1956,9 +1947,7 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "이 데이터 소스에는 규칙이 구성되어 있지 않습니다",
         "new-alert-rule": "새 경고 규칙",
-        "new-ds-managed-alerting-rule": "새 데이터 소스 관리 경고 규칙",
         "new-ds-managed-recording-rule": "새 데이터 소스 관리 기록 규칙",
         "new-grafana-alerting-rule": "새 경고 규칙",
         "new-grafana-recording-rule": "새 기록 규칙",
@@ -2522,22 +2511,9 @@
         "aria-label": "정책 추가",
         "text": "새 알림 정책"
       },
-      "delete-reasons": {
-        "no-permissions": "이 알림 정책을 삭제하는 데 필요한 권한이 없습니다.",
-        "provisioned": "알림 정책이 프로비저닝되어 UI를 통해 삭제할 수 없습니다."
-      },
-      "delete-text": "다음과 같은 이유로 알림 정책을 삭제할 수 없습니다.",
-      "empty-state": {
-        "message": "정책을 찾을 수 없습니다"
-      },
       "fetch": {
         "error": "정책 가져오기 실패"
       },
-      "reset-reasons": {
-        "no-permissions": "이 알림 정책을 재설정하는 데 필요한 권한이 없습니다.",
-        "provisioned": "알림 정책이 프로비저닝되어 UI를 통해 재설정할 수 없습니다."
-      },
-      "reset-text": "다음과 같은 이유로 알림 정책을 재설정할 수 없습니다.",
       "text-loading": "로딩 중...."
     },
     "policies-tree-wrapper": {
@@ -2747,16 +2723,6 @@
       "label-override-timings": "타이밍 재정의",
       "repeat-interval": "반복 간격: <strong>{{repeatIntervalValue}}</strong>"
     },
-    "routing-tree-filter": {
-      "aria-label-clear": "지우기",
-      "aria-label-search-routing-trees": "라우팅 트리 검색",
-      "clear": "지우기",
-      "label-search-by-name-or-receiver": "정책 이름 또는 연락처로 검색",
-      "placeholder-search": "검색"
-    },
-    "routing-tree-header": {
-      "reset": "초기화"
-    },
     "rule-actions-buttons": {
       "title-edit": "편집",
       "title-view": "보기"
@@ -2962,7 +2928,6 @@
       "return-button": {
         "title": "경고 규칙"
       },
-      "rulerrule-loading-error": "규칙 로딩 실패",
       "toggle": {
         "use-new-experience": "새로운 환경 사용",
         "view-previous-experience": "이전 환경으로 되돌리기"
@@ -3556,9 +3521,6 @@
       "collapse": "접기",
       "collapse-all": "모두 접기",
       "collapse-sidebar": "사이드바 접기",
-      "compact-firing": "발생 중",
-      "compact-pending": "대기 중",
-      "compact-rules": "규칙",
       "error-loading-rule": "규칙 로딩 중 오류 발생",
       "expand": "펼치기",
       "expand-all": "모두 펼치기",
@@ -5341,6 +5303,8 @@
     },
     "code-pane": {
       "collapse": "편집기 접기",
+      "copy-as-resource": "",
+      "copy-as-resource-tooltip": "",
       "expand": "편집기 펼치기",
       "header": "코드로 편집",
       "modal-title": "대시보드를 코드로 편집"
@@ -5640,8 +5604,7 @@
           "apply": "적용",
           "change-value": "변수 값 변경",
           "discard": "무시",
-          "modal-title": "사용자 지정 옵션",
-          "values": "쉼표로 구분된 값"
+          "modal-title": "사용자 지정 옵션"
         },
         "datasource-options": {
           "name-filter": "이름 필터",
@@ -5866,7 +5829,6 @@
     },
     "inspect": {
       "data-tab": "데이터",
-      "error-tab": "오류",
       "json-tab": "JSON",
       "meta-tab": "메타 데이터",
       "query-tab": "쿼리",
@@ -5981,13 +5943,6 @@
       "new-row": {
         "title": {
           "row-title": "행 제목"
-        }
-      }
-    },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "위젯 제목"
         }
       }
     },
@@ -8731,19 +8686,6 @@
     "span-bar-row": {
       "tooltip-adaptive-traces-restored": ""
     },
-    "span-bar-section": {
-      "description-link": "트레이스 보기의 스팬 바 행에서 서비스 및 작업 옆에 추가 정보를 추가합니다.",
-      "title-span-bar": "스팬 바"
-    },
-    "span-bar-settings": {
-      "aria-label-selectlabelname": "라벨 이름 선택",
-      "label-label": "라벨",
-      "label-tag-key": "태그 키",
-      "placeholder-duration": "지속 시간",
-      "placeholder-enter-tag-key": "태그 키 입력",
-      "tooltip-default-duration": "기본값: 지속 시간",
-      "tooltip-tag-key": "태그 값을 가져오는 데 사용할 태그 키입니다. 태그 키를 찾기 위해 스팬의 속성과 리소스를 검색합니다"
-    },
     "span-detail": {
       "label": {
         "kind": "종류:",
@@ -8980,13 +8922,6 @@
       "folder-deleted-success": "폴더 삭제됨",
       "folder-move-error-provisioned": "프로비저닝된 폴더를 이동할 수 없습니다. 이동하려면 리포지토리에서 이동하고 동기화해 변경 사항을 적용하세요.",
       "folder-moved-success": "폴더 이동됨"
-    },
-    "get-loading-nav": {
-      "main": {
-        "title": {
-          "loading": "로딩 중"
-        }
-      }
     }
   },
   "forgot-password": {
@@ -11548,11 +11483,6 @@
     "noOptionsMessage-no-options-found": "옵션을 찾을 수 없습니다"
   },
   "migrate-to-cloud": {
-    "build-snapshot": {
-      "description": "이 도구를 사용하면 현재 설치 인스턴스에서 클라우드 스택으로 일부 리소스를 마이그레이션할 수 있습니다. 시작하려면 이 설치 인스턴스에 대한 스냅샷을 생성해야 합니다. 스냅샷을 생성하는 데는 일반적으로 2분이 채 걸리지 않습니다. 현재 Grafana 설치 인스턴스와 함께 해당 스냅샷이 저장됩니다.",
-      "title": "스냅샷이 존재하지 않습니다.",
-      "when-complete": "스냅샷이 완료되면 클라우드 스택에 업로드할 수 있습니다."
-    },
     "building-snapshot": {
       "description": "Grafana Cloud로 마이그레이션하기 위한 리소스를 수집하고 있습니다. 잠시만 기다려 주세요.",
       "description-eta": "스냅샷을 생성하는 데는 일반적으로 2분이 채 걸리지 않습니다.",
@@ -12407,13 +12337,6 @@
       "search": "검색",
       "starred-dashboards": "별표 표시된 대시보드"
     },
-    "get-calculation-value-data-links-variable-suggestions": {
-      "value-calc-var": {
-        "label": {
-          "calculation-name": "계산 이름"
-        }
-      }
-    },
     "get-data-links-variable-suggestions": {
       "value-time-var": {
         "label": {
@@ -13055,6 +12978,14 @@
       "files-count_other": "파일 {{count}}개",
       "folders-count_other": "폴더 {{count}}개"
     },
+    "branch-options": {
+      "description-enforce-template": "",
+      "description-name-template": "",
+      "label-branch-options": "",
+      "label-enforce-template": "",
+      "label-name-template": "",
+      "placeholder-name-template": ""
+    },
     "cloud-info-box": {
       "body": "설정을 건너뛰고 <2>평생 무료 Grafana Cloud 플랜</2>에서 Git Sync를 완전 관리형으로 이용하세요.",
       "title": "Grafana Cloud에서 Git 동기화를 사용할 수도 있습니다."
@@ -13073,6 +13004,11 @@
       "folder-move-default": "",
       "folder-rename-default": "",
       "folder-update-default": ""
+    },
+    "commit-options": {
+      "description-enforce-template": "",
+      "label-commit-options": "",
+      "label-enforce-template": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "리포지토리 설정이 저장되었습니다",
@@ -13507,6 +13443,14 @@
           "repository-request-failed": "리포지토리 요청 실패"
         }
       }
+    },
+    "pull-request-options": {
+      "description-enforce-template": "",
+      "description-title-template": "",
+      "label-enforce-template": "",
+      "label-pull-request-options": "",
+      "label-title-template": "",
+      "placeholder-title-template": ""
     },
     "quota-limit": {
       "note": "참고:",
@@ -14126,6 +14070,10 @@
       "query": "",
       "transformation": ""
     },
+    "queries-empty-state": {
+      "add-query": "",
+      "message": ""
+    },
     "sidebar": {
       "add-below": "{{id}} 아래에 추가",
       "add-expression": "표현식 추가",
@@ -14144,9 +14092,11 @@
       "footer-select": "",
       "footer-select-label": "",
       "new-type": "새 {{type}}",
+      "queries-empty": "",
       "queries-expressions": "쿼리 및 표현식",
       "toggle-size": "사이드바 크기 토글",
       "transformations": "변환",
+      "transformations-empty": "",
       "view-toggle": "보기",
       "alerts_other": "경고({{count}})",
       "footer-items_other": "{{count}}개 항목",

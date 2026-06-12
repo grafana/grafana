@@ -7,7 +7,7 @@ import { locationService } from '@grafana/runtime';
 import { generateExploreId, type GetExploreUrlArguments } from 'app/core/utils/explore';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
-import { type CorrelationEditorDetailsUpdate, type ExploreItemState, type ExploreState } from 'app/types/explore';
+import { type CorrelationEditorDetailsUpdate, type ExploreState } from 'app/types/explore';
 import { createAsyncThunk, type ThunkResult } from 'app/types/store';
 
 import { type RichHistoryResults } from '../../../core/history/RichHistoryStorage';
@@ -52,11 +52,6 @@ export const evenPaneResizeAction = createAction('explore/evenPaneResizeAction')
  * Close the pane with the given id.
  */
 export const splitClose = createAction<string>('explore/splitClose');
-
-interface SetPaneStateActionPayload {
-  [itemId: string]: Partial<ExploreItemState>;
-}
-export const setPaneState = createAction<SetPaneStateActionPayload>('explore/setPaneState');
 
 export const clearPanes = createAction('explore/clearPanes');
 

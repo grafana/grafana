@@ -735,7 +735,7 @@ type Cfg struct {
 	VectorRateLimitWindow    time.Duration
 
 	// Embedding provider used by the VectorSearch RPC. "" = disabled.
-	EmbeddingProvider  string // "vertex" | "bedrock" | ""
+	EmbeddingProvider  string // "vertex" | "bedrock" | "azure" | ""
 	VertexProjectID    string
 	VertexLocation     string // default "us-central1"
 	VertexModel        string // default "gemini-embedding-001"
@@ -746,6 +746,11 @@ type Cfg struct {
 	BedrockDimensions  int    // default 1024
 	BedrockBatchSize   int    // texts per Bedrock invoke call; default 50
 	BedrockMaxAttempts int    // max InvokeModel attempts per call under throttling; default 5
+	AzureEndpoint      string // Azure OpenAI resource endpoint, e.g. https://<resource>.openai.azure.com
+	AzureDeployment    string // Azure OpenAI embeddings deployment name; default "text-embedding-3-small"
+	AzureAPIVersion    string // Azure OpenAI REST API version; default "2024-02-01"
+	AzureDimensions    int    // requested output dimensionality; default 1024 (text-embedding-3-small reduced from native 1536)
+	AzureBatchSize     int    // texts per Azure embeddings call; default 50
 
 	// Overrides/Quotas
 	OverridesFilePath             string

@@ -5,7 +5,7 @@ import { sendAppNotification } from './core/copy/appNotification';
 import { PreferencesService } from './core/services/PreferencesService';
 import { AppNotificationSeverity } from './types/appNotifications';
 
-export const STORAGE_MOCK_API_KEY = 'grafana.dev.mockApi';
+const STORAGE_MOCK_API_KEY = 'grafana.dev.mockApi';
 
 export const currentMockApiState = () => {
   return store.getBool(STORAGE_MOCK_API_KEY, false);

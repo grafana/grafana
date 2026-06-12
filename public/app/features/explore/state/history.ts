@@ -1,6 +1,3 @@
-import { createAction } from '@reduxjs/toolkit';
-
-import { type HistoryItem } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
 import {
   addToRichHistory,
@@ -25,15 +22,6 @@ import {
   richHistoryStorageFullAction,
   richHistoryUpdatedAction,
 } from './main';
-
-//
-// Actions and Payloads
-//
-
-interface HistoryUpdatedPayload {
-  history: HistoryItem[];
-}
-export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore/historyUpdated');
 
 //
 // Action creators

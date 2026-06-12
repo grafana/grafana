@@ -1140,6 +1140,19 @@
     },
     {
       "metadata": {
+        "name": "canvasExternalPlugin",
+        "resourceVersion": "1780948766147",
+        "creationTimestamp": "2026-06-08T19:59:26Z"
+      },
+      "spec": {
+        "description": "Load Canvas panel from an external plugin instead of the bundled core plugin",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "canvasPanelNesting",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2022-05-31T19:03:34Z"
