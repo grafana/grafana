@@ -32,8 +32,8 @@ keywords:
 # Query and transform data
 
 Grafana supports many types of [data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/).
-Data source _queries_ return data that Grafana can _transform_ and visualize.
-Each data source uses its own query language, and data source plugins each implement a query-building user interface called a query editor.
+Data source _queries_ return data that Grafana can _transform_ and visualize. <!-- TODO: Add glossary pop-up for transform here -->
+Each data source uses its own query language, and data source plugins each implement a query-building user interface called a _query editor_.
 
 ## About queries
 
@@ -50,16 +50,13 @@ For more information, refer to [Data sources](https://grafana.com/docs/grafana/<
 
 ### Query editors
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-queries-tab-v11.6.png" max-width="750px" alt="The InfluxDB query editor" >}}
-
 Each data source's query editor provides a customized user interface that helps you write queries that take advantage of its unique capabilities.
 
 Because of the differences between query languages, each data source query editor looks and functions differently.
 Depending on your data source, the query editor might provide auto-completion features, metric names, variable suggestions, or a visual query-building interface.
 
-For example, this video demonstrates the visual Prometheus query builder:
-
-{{< vimeo 720004179 >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-queries-tab-v11.6.png" max-width="750px" alt="The InfluxDB query editor" >}}
+<!-- TODO: Update screenshot -->
 
 For details on a specific data source's unique query editor features, refer to its documentation:
 
@@ -143,6 +140,7 @@ You can apply all the same search, filter, and sort options in the **Starred que
 To access your saved queries, click **+ Add from saved queries** or open the **Saved queries** drop-down menu and click **Replace query** in the query editor:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-add-save-reuse-query-v13.0.png" max-width="750px" alt="Access saved queries" >}}
+<!-- TODO: Update screenshot -->
 
 Clicking **+ Add from saved queries** adds an additional query, while clicking **Replace query** in the **Saved queries** drop-down menu updates your existing query.
 
@@ -173,6 +171,7 @@ To save a query you've created:
 1. From the query editor, open the **Saved queries** drop-down menu and click the **Save query** option:
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-save-query-v13.0.png" max-width="750px" alt="Save a query" >}}
+   <!-- TODO: Update screenshot -->
 
 1. In the **Saved queries** dialog box, enter a title for the query that makes it easier to find later.
 1. (Optional) Enter a description and relevant tags.
@@ -205,6 +204,7 @@ In Explore, you can map variables to custom values.
 - If you have multiple queries open in Explore and you edit one of them by way of the **Edit in Explore** function in the **Saved queries** dialog box, the edited query replaces your open queries in Explore.
 
 ## Navigate the Queries tab {#navigate-the-query-tab}
+<!-- TODO: Update this section -->
 
 A panel's **Queries** tab consists of the following elements:
 
@@ -217,8 +217,10 @@ A panel's **Queries** tab consists of the following elements:
   For more information about expressions, refer to [Use expressions to manipulate data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/expression-queries/).
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-queries-tab2-v11.6.png" max-width="750px" alt="The Query tab of the panel editor" >}}
+<!-- TODO: Update screenshot -->
 
 ## Add a query
+<!-- TODO: Update this section -->
 
 A query returns data that Grafana visualizes in dashboard panels.
 When you create a panel, Grafana automatically selects the default data source.
@@ -254,6 +256,7 @@ To add a query, follow these steps:
 Grafana queries the data source and visualizes the data.
 
 ## Manage queries
+<!-- TODO: Fix wording and add Replace -->
 
 Grafana organizes queries in collapsible query rows.
 Each query row contains a query editor and is identified with a letter (A, B, C, and so on).
@@ -273,6 +276,7 @@ You can:
 <!-- prettier-ignore-end -->
 
 ## Query options
+<!-- TODO: Update this section for navigation and make these H3s -->
 
 Click **Query options** next to the data source selector to see settings for the selected data source.
 Changes you make here affect only queries made in this panel.
