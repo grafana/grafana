@@ -203,7 +203,7 @@ In Explore, you can map variables to custom values.
 - You can save a maximum of 1000 queries.
 - If you have multiple queries open in Explore and you edit one of them by way of the **Edit in Explore** function in the **Saved queries** dialog box, the edited query replaces your open queries in Explore.
 
-## Navigate the Queries tab {#navigate-the-query-tab}
+## Navigate the query editor
 <!-- TODO: Update this section -->
 
 A panel's **Queries** tab consists of the following elements:
