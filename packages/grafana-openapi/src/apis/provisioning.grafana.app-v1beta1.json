@@ -3752,7 +3752,7 @@
         "type": "object",
         "properties": {
           "enforceTemplate": {
-            "description": "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. The Grafana-saved-by trailer is always appended regardless of this setting.",
+            "description": "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only.",
             "type": "boolean"
           },
           "signerEmail": {
@@ -4130,6 +4130,10 @@
             "description": "GitHub App installation ID",
             "type": "string",
             "default": ""
+          },
+          "webhookDisabled": {
+            "description": "WebhookDisabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
+            "type": "boolean"
           }
         }
       },

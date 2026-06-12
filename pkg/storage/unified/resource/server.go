@@ -1691,8 +1691,20 @@ func (s *server) initWatcher() error {
 }
 
 //nolint:gocyclo
-func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) error {
+func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) (retErr error) {
 	ctx := srv.Context()
+
+	// When our context is canceled (e.g. client disconnects), downstream calls
+	// like srv.Send may surface that cancellation back to us. Treat it as a
+	// clean shutdown to match the explicit `case <-ctx.Done(): return nil`
+	// branch in the watch loop. Context errors from other contexts are still
+	// propagated.
+	defer func() {
+		if retErr != nil && ctx.Err() != nil &&
+			(errors.Is(retErr, context.Canceled) || errors.Is(retErr, context.DeadlineExceeded)) {
+			retErr = nil
+		}
+	}()
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {

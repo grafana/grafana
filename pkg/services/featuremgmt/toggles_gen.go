@@ -239,6 +239,10 @@ const (
 	// Enables render binding support for report rendering
 	FlagReportRenderBinding = "reportRenderBinding"
 
+	// FlagCanvasExternalPlugin
+	// Load Canvas panel from an external plugin instead of the bundled core plugin
+	FlagCanvasExternalPlugin = "canvasExternalPlugin"
+
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
 	FlagCloudRBACRoles = "cloudRBACRoles"
