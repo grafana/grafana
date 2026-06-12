@@ -86,7 +86,6 @@ func (hs *HTTPServer) findAnnotations(ctx context.Context, query *annotations.It
 			return nil, err
 		}
 
-		newItems = annotationsapi.FilterByTags(newItems, query.Tags, query.MatchAny)
 		if hs.annotationMigrationProxy.ProxyAll() {
 			return newItems, nil
 		}

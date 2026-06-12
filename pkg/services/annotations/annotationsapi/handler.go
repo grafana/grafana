@@ -7,8 +7,6 @@ import (
 	"sort"
 	"strings"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	annotationpkg "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -32,14 +30,9 @@ func ProvideMigrationProxy(cfg *setting.Cfg, userSvc user.Service) (*MigrationPr
 		return nil, fmt.Errorf("annotation proxy: api_server_url must be set when api_migration_phase is %q", phase)
 	}
 
-	k8sClient, err := newClient(cfg, userSvc)
+	c, err := newAnnotationAPIClient(cfg, userSvc)
 	if err != nil {
 		return nil, err
-	}
-
-	var c *annotationAPIClient
-	if k8sClient != nil {
-		c = &annotationAPIClient{k8sClient: k8sClient}
 	}
 
 	return &MigrationProxy{
@@ -57,14 +50,9 @@ func (h *MigrationProxy) ProxyAll() bool {
 }
 
 // List fetches annotations from the new store matching query and returns them as ItemDTOs.
-// Tags are not supported as k8s field selectors — callers must filter by tags after this call.
+// All filtering including tags is handled server-side via the /search custom route.
 func (h *MigrationProxy) List(ctx context.Context, orgID int64, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
-	listOpts := v1.ListOptions{Limit: query.Limit}
-	if fs := buildFieldSelector(query); fs != "" {
-		listOpts.FieldSelector = fs
-	}
-
-	annos, err := h.client.List(ctx, orgID, listOpts)
+	annos, err := h.client.Search(ctx, orgID, query)
 	if err != nil {
 		return nil, err
 	}
@@ -96,25 +84,6 @@ func (h *MigrationProxy) List(ctx context.Context, orgID int64, query *annotatio
 	return dtos, nil
 }
 
-// buildFieldSelector converts supported query fields to a k8s field selector string.
-// Tags, alertId, type, and userId have no field selector support and are omitted.
-func buildFieldSelector(q *annotations.ItemQuery) string {
-	var parts []string
-	if q.DashboardUID != "" {
-		parts = append(parts, "spec.dashboardUID="+q.DashboardUID)
-	}
-	if q.PanelID != 0 {
-		parts = append(parts, fmt.Sprintf("spec.panelID=%d", q.PanelID))
-	}
-	if q.From != 0 {
-		parts = append(parts, fmt.Sprintf("spec.time=%d", q.From))
-	}
-	if q.To != 0 {
-		parts = append(parts, fmt.Sprintf("spec.timeEnd=%d", q.To))
-	}
-	return strings.Join(parts, ",")
-}
-
 // Merge combines new-store and legacy items, deduplicates by legacyID (new store wins),
 // sorts by time descending, and applies limit.
 func Merge(newItems, legacyItems []*annotations.ItemDTO, limit int64) []*annotations.ItemDTO {
@@ -142,54 +111,6 @@ func Merge(newItems, legacyItems []*annotations.ItemDTO, limit int64) []*annotat
 		merged = merged[:limit]
 	}
 	return merged
-}
-
-// FilterByTags removes items that do not match the tag query.
-// matchAny=true: item must have at least one of the tags.
-// matchAny=false: item must have all of the tags.
-func FilterByTags(items []*annotations.ItemDTO, tags []string, matchAny bool) []*annotations.ItemDTO {
-	if len(tags) == 0 {
-		return items
-	}
-	result := items[:0]
-	for _, item := range items {
-		if matchAny {
-			if hasAnyTag(item.Tags, tags) {
-				result = append(result, item)
-			}
-		} else {
-			if hasAllTags(item.Tags, tags) {
-				result = append(result, item)
-			}
-		}
-	}
-	return result
-}
-
-func hasAnyTag(itemTags, queryTags []string) bool {
-	set := make(map[string]bool, len(itemTags))
-	for _, t := range itemTags {
-		set[t] = true
-	}
-	for _, t := range queryTags {
-		if set[t] {
-			return true
-		}
-	}
-	return false
-}
-
-func hasAllTags(itemTags, queryTags []string) bool {
-	set := make(map[string]bool, len(itemTags))
-	for _, t := range itemTags {
-		set[t] = true
-	}
-	for _, t := range queryTags {
-		if !set[t] {
-			return false
-		}
-	}
-	return true
 }
 
 // Create writes to new store and returns the assigned legacy ID.
