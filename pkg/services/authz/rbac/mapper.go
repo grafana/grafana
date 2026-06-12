@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 )
 
@@ -243,34 +244,71 @@ func newServiceAccountTranslation() translation {
 	return saTranslation
 }
 
-// newAlertingNotificationsTranslation maps the notifications.alerting.grafana.app
-// resources (receivers, routingtrees, templategroups, timeintervals,
-// inhibitionrules) to the coarse org-level alerting notification actions.
-func newAlertingNotificationsTranslation() translation {
+// newRoutingTreeTranslation maps the notifications.alerting.grafana.app
+// routingtrees resource to the granular, per-resource managed route actions
+// (notifications.alerting.grafana.app/routingtrees:get, ...:uid:<name>) and to
+// the view/edit/admin action sets registered by RoutePermissionsService.
+func newRoutingTreeTranslation() translation {
+	verbMapping := map[string]string{
+		utils.VerbGet:              accesscontrol.ActionAlertingManagedRoutesRead,
+		utils.VerbList:             accesscontrol.ActionAlertingManagedRoutesRead,
+		utils.VerbWatch:            accesscontrol.ActionAlertingManagedRoutesRead,
+		utils.VerbCreate:           accesscontrol.ActionAlertingManagedRoutesCreate,
+		utils.VerbUpdate:           accesscontrol.ActionAlertingManagedRoutesWrite,
+		utils.VerbPatch:            accesscontrol.ActionAlertingManagedRoutesWrite,
+		utils.VerbDelete:           accesscontrol.ActionAlertingManagedRoutesDelete,
+		utils.VerbDeleteCollection: accesscontrol.ActionAlertingManagedRoutesDelete,
+		utils.VerbGetPermissions:   accesscontrol.ActionAlertingRoutesPermissionsWrite,
+		utils.VerbSetPermissions:   accesscontrol.ActionAlertingRoutesPermissionsRead,
+	}
+
+	const (
+		viewSet  = "notifications.alerting.grafana.app/routingtrees:view"
+		editSet  = "notifications.alerting.grafana.app/routingtrees:edit"
+		adminSet = "notifications.alerting.grafana.app/routingtrees:admin"
+	)
+
+	actionSetMapping := make(map[string][]string)
+	for verb, action := range verbMapping {
+		switch {
+		case slices.Contains(ossaccesscontrol.RoutesViewActions, action):
+			actionSetMapping[verb] = []string{viewSet, editSet, adminSet}
+		case slices.Contains(ossaccesscontrol.RoutesEditActions, action):
+			actionSetMapping[verb] = []string{editSet, adminSet}
+		case slices.Contains(ossaccesscontrol.RoutesAdminActions, action):
+			actionSetMapping[verb] = []string{adminSet}
+		}
+	}
+
 	return translation{
-		resource:  "alert.notifications",
-		attribute: "",
+		resource:         accesscontrol.AlertingRoutesKind,
+		attribute:        "uid",
+		verbMapping:      verbMapping,
+		actionSetMapping: actionSetMapping,
+		folderSupport:    false,
+		skipScopeOnVerb:  map[string]bool{utils.VerbCreate: true},
+	}
+}
+
+// newAlertmanagerImportsTranslation maps the notifications.alerting.grafana.app
+// alertmanagerimports resource to its granular, per-resource actions. There is
+// no resource permissions service for this resource, so it has no action sets.
+func newAlertmanagerImportsTranslation() translation {
+	return translation{
+		resource:  accesscontrol.AlertingAlertmanagerImportsKind,
+		attribute: "uid",
 		verbMapping: map[string]string{
-			utils.VerbGet:              "alert.notifications:read",
-			utils.VerbList:             "alert.notifications:read",
-			utils.VerbWatch:            "alert.notifications:read",
-			utils.VerbCreate:           "alert.notifications:write",
-			utils.VerbUpdate:           "alert.notifications:write",
-			utils.VerbPatch:            "alert.notifications:write",
-			utils.VerbDelete:           "alert.notifications:write",
-			utils.VerbDeleteCollection: "alert.notifications:write",
+			utils.VerbGet:              accesscontrol.ActionAlertingAlertmanagerImportsRead,
+			utils.VerbList:             accesscontrol.ActionAlertingAlertmanagerImportsRead,
+			utils.VerbWatch:            accesscontrol.ActionAlertingAlertmanagerImportsRead,
+			utils.VerbCreate:           accesscontrol.ActionAlertingAlertmanagerImportsCreate,
+			utils.VerbUpdate:           accesscontrol.ActionAlertingAlertmanagerImportsWrite,
+			utils.VerbPatch:            accesscontrol.ActionAlertingAlertmanagerImportsWrite,
+			utils.VerbDelete:           accesscontrol.ActionAlertingAlertmanagerImportsDelete,
+			utils.VerbDeleteCollection: accesscontrol.ActionAlertingAlertmanagerImportsDelete,
 		},
-		folderSupport: false,
-		skipScopeOnVerb: map[string]bool{
-			utils.VerbGet:              true,
-			utils.VerbList:             true,
-			utils.VerbWatch:            true,
-			utils.VerbCreate:           true,
-			utils.VerbUpdate:           true,
-			utils.VerbPatch:            true,
-			utils.VerbDelete:           true,
-			utils.VerbDeleteCollection: true,
-		},
+		folderSupport:   false,
+		skipScopeOnVerb: map[string]bool{utils.VerbCreate: true},
 	}
 }
 
@@ -290,11 +328,8 @@ func NewMapperRegistry() MapperRegistry {
 
 	mapper := mapper(map[string]map[string]translation{
 		"notifications.alerting.grafana.app": {
-			"receivers":       newAlertingNotificationsTranslation(),
-			"routingtrees":    newAlertingNotificationsTranslation(),
-			"templategroups":  newAlertingNotificationsTranslation(),
-			"timeintervals":   newAlertingNotificationsTranslation(),
-			"inhibitionrules": newAlertingNotificationsTranslation(),
+			"routingtrees":        newRoutingTreeTranslation(),
+			"alertmanagerimports": newAlertmanagerImportsTranslation(),
 		},
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
