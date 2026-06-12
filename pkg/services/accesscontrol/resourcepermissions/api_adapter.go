@@ -259,9 +259,7 @@ func (a *api) getFolderHierarchyPermissions(ctx context.Context, namespace strin
 	// Read inherited permissions with a service identity: the caller is authorized to read this
 	// resource's permissions but may lack permissions:read on ancestor folders, which would otherwise
 	// drop inherited assignments. Mirrors the subject lookup in convertK8sResourcePermissionToDTO.
-	if nsInfo, err := types.ParseNamespace(namespace); err == nil {
-		ctx, _ = identity.WithServiceIdentity(ctx, nsInfo.OrgID)
-	}
+	ctx = identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
 
 	foldersGVR := schema.GroupVersionResource{
 		Group:    folderv1.APIGroup,
