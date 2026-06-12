@@ -8,6 +8,7 @@ import {
   getDataSourceInstance,
   registerRuntimeDataSourceInstance,
   setDataSourcePluginImporter,
+  setExpressionDataSourceInstance,
 } from './dataSource';
 import { _resetForTests as resetPluginCache } from './pluginCache';
 import {
@@ -256,6 +257,63 @@ describe('plugin', () => {
 
       const result = await getDataSourceInstance('runtime-uid');
       expect(result).toBe(runtime);
+    });
+  });
+
+  describe('expression short-circuit', () => {
+    function registerExpression(): DataSourceApi {
+      const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      // The expression singleton retains its full instance settings as a public field.
+      (instance as unknown as { instanceSettings: DataSourceInstanceSettings }).instanceSettings = ds({
+        id: 0,
+        uid: '__expr__',
+        name: 'Expression',
+        type: '__expr__',
+      });
+      setExpressionDataSourceInstance(instance);
+      return instance;
+    }
+
+    it('returns the registered singleton without importing a plugin', async () => {
+      initDataSourceInstanceSettings({}, '');
+      const expr = registerExpression();
+      const mockImport = jest.fn();
+      setDataSourcePluginImporter(mockImport);
+
+      const result = await getDataSourceInstance('__expr__');
+
+      expect(result).toBe(expr);
+      expect(mockImport).not.toHaveBeenCalled();
+    });
+
+    it('resolves legacy id -100 and name Expression to the same singleton', async () => {
+      initDataSourceInstanceSettings({}, '');
+      const expr = registerExpression();
+      setDataSourcePluginImporter(jest.fn());
+
+      expect(await getDataSourceInstance('-100')).toBe(expr);
+      expect(await getDataSourceInstance('Expression')).toBe(expr);
+    });
+
+    it('resolves a DataSourceRef with the expression type', async () => {
+      initDataSourceInstanceSettings({}, '');
+      const expr = registerExpression();
+      setDataSourcePluginImporter(jest.fn());
+
+      const result = await getDataSourceInstance({ type: '__expr__', uid: '__expr__' });
+      expect(result).toBe(expr);
+    });
+
+    it('survives a reload (stored as a runtime cache entry)', async () => {
+      initDataSourceInstanceSettings({}, '');
+      const expr = registerExpression();
+
+      jest.spyOn(require('../../services/backendSrv'), 'getBackendSrv').mockReturnValue({
+        get: jest.fn().mockResolvedValue({ datasources: {}, defaultDatasource: '' }),
+      });
+      await reloadDataSourceInstanceSettings();
+
+      expect(await getDataSourceInstance('__expr__')).toBe(expr);
     });
   });
 });

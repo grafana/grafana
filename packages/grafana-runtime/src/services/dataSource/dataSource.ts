@@ -1,5 +1,12 @@
-import { DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef, type ScopedVars } from '@grafana/data';
+import {
+  DataSourceApi,
+  type DataQuery,
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+  type ScopedVars,
+} from '@grafana/data';
 
+import { ExpressionDatasourceRef, isExpressionReference } from '../../utils/DataSourceWithBackend';
 import { UserStorage } from '../../utils/userStorage';
 import { type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
@@ -33,6 +40,16 @@ export async function getDataSourceInstance(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceApi> {
+  // Expression references resolve to the preloaded singleton — its meta.module
+  // is empty, so it must never go through the plugin importer. Mirrors the
+  // legacy DatasourceSrv.get() short-circuit.
+  if (isExpressionReference(ref)) {
+    const cached = getCachedPlugin(ExpressionDatasourceRef.uid);
+    if (cached) {
+      return cached;
+    }
+  }
+
   const settings = await getDataSourceInstanceSettings(ref, scopedVars);
   if (!settings) {
     throw new Error(`Datasource ${describeRef(ref)} was not found`);
@@ -115,6 +132,26 @@ export function registerRuntimeDataSourceInstance(entry: RuntimeDataSourceRegist
 
   upsertRuntimeDataSourceInstanceSettings(dataSource.instanceSettings);
   setRuntimePlugin(dataSource.uid, dataSource);
+}
+
+/**
+ * Inject the expression pseudo-datasource singleton into the runtime plugin
+ * cache so {@link getDataSourceInstance} returns it without importing a plugin
+ * module (its meta.module is empty), and {@link getDataSourceInstanceSettings}
+ * can read its settings off the instance. Stored as a runtime entry so it
+ * survives {@link reloadDataSourceInstanceSettings}. Called once at boot.
+ *
+ * This is a temporary bridge until ExpressionDatasource moves from core to
+ * @grafana/runtime, at which point it can be imported directly.
+ *
+ * @internal
+ */
+export function setExpressionDataSourceInstance<TQuery extends DataQuery>(instance: DataSourceApi<TQuery>): void {
+  // The expression singleton is a DataSourceApi<ExpressionQuery>, which is not
+  // assignable to the base DataSourceApi because the query type is invariant.
+  // The legacy DatasourceSrv casts the same singleton when caching it.
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  setRuntimePlugin(ExpressionDatasourceRef.uid, instance as DataSourceApi);
 }
 
 function describeRef(ref: DataSourceRef | string | null | undefined): string {

@@ -12,13 +12,12 @@ import { getBackendSrv } from '../backendSrv';
 import { getDataSourceSrv, type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
 
-import { clearPluginCache } from './pluginCache';
+import { clearPluginCache, getCachedPlugin } from './pluginCache';
 
 let byName: Record<string, DataSourceInstanceSettings> = {};
 let byUid: Record<string, DataSourceInstanceSettings> = {};
 let byId: Record<string, DataSourceInstanceSettings> = {};
 let runtimeByUid: Record<string, DataSourceInstanceSettings> = {};
-let expressionDsSettings: DataSourceInstanceSettings | undefined;
 let defaultName = '';
 
 function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
@@ -40,11 +39,6 @@ function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
   // Re-apply any previously registered runtime data sources so they survive a refetch.
   for (const ds of Object.values(runtimeByUid)) {
     byUid[ds.uid] = ds;
-  }
-
-  // Re-apply the expression datasource so it survives a cache repopulate.
-  if (expressionDsSettings) {
-    byUid[expressionDsSettings.uid] = expressionDsSettings;
   }
 }
 
@@ -146,27 +140,6 @@ export async function getDataSourceInstanceSettingsList(
 }
 
 /**
- * Set the instance settings for the expression pseudo-datasource, which is not
- * part of /api/frontend/settings and must be injected client-side. Re-applied
- * on every populate so it survives a cache repopulate.
- *
- * This is a temporary bridge until ExpressionDatasource moves from core to
- * @grafana/runtime, at which point it can be imported directly.
- *
- * @internal
- */
-export function setExpressionDataSourceInstanceSettings(settings: DataSourceInstanceSettings): void {
-  // We allow overriding in tests
-  if (expressionDsSettings && process.env.NODE_ENV !== 'test') {
-    throw new Error(
-      'setExpressionDataSourceInstanceSettings() function should only be called once, when Grafana is starting.'
-    );
-  }
-  expressionDsSettings = settings;
-  byUid[settings.uid] = settings;
-}
-
-/**
  * Register the instance settings for a runtime data source so it is returned
  * by future lookups. Throws if the uid is already in use.
  *
@@ -185,7 +158,11 @@ function lookupFromMaps(
   scopedVars: ScopedVars | undefined
 ): DataSourceInstanceSettings | undefined {
   if (isExpressionReference(ref)) {
-    return byUid[ExpressionDatasourceRef.uid];
+    const inst = getCachedPlugin(ExpressionDatasourceRef.uid);
+    // The expression singleton retains its full instance settings as a public
+    // field, which the base DataSourceApi type does not expose.
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return inst ? (inst as { instanceSettings?: DataSourceInstanceSettings }).instanceSettings : undefined;
   }
 
   const nameOrUid = getNameOrUid(ref);
@@ -362,6 +339,5 @@ export function _resetForTests(): void {
   byUid = {};
   byId = {};
   runtimeByUid = {};
-  expressionDsSettings = undefined;
   defaultName = '';
 }
