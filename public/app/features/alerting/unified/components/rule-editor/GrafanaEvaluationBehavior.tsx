@@ -158,7 +158,7 @@ export function GrafanaEvaluationBehaviorStep({
     setValue,
     getValues,
     clearErrors,
-    formState: { errors },
+    formState: { errors, defaultValues },
     control,
     register,
   } = useFormContext<RuleFormValues>();
@@ -210,7 +210,7 @@ export function GrafanaEvaluationBehaviorStep({
   const v2Enabled = shouldUseRulesAPIV2();
   const isEditingUngroupedRule = Boolean(existing && group && isUngroupedRuleGroup(group));
   const [lastSelectedGroup, setLastSelectedGroup] = useState(group);
-  const [wasGroupedRule] = useState(() => existing && Boolean(group) && !isUngroupedRuleGroup(group));
+  const wasGroupedRule = Boolean(existing && defaultValues?.group && !isUngroupedRuleGroup(defaultValues.group));
   const evaluationMode: EvaluationMode = isUngroupedRule ? 'rule-based' : 'group-based';
   const showGroupSelection = evaluationMode === 'group-based';
 
