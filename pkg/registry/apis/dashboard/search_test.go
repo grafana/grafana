@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
@@ -10,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -41,6 +44,95 @@ func TestSearch(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
+	})
+}
+
+func TestVectorSearch(t *testing.T) {
+	newHandler := func(client *MockClient) SearchHandler {
+		return SearchHandler{
+			log:      log.New("test", "test"),
+			client:   client,
+			tracer:   tracing.NewNoopTracerService(),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch),
+		}
+	}
+
+	doRequest := func(handler SearchHandler, rawQuery string) *httptest.ResponseRecorder {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search/vector?"+rawQuery, nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+		handler.DoVectorSearch(rr, req)
+		return rr
+	}
+
+	t.Run("calls VectorSearch and maps results to hits", func(t *testing.T) {
+		// The backend returns results ordered by score (ascending cosine distance,
+		// closest first); the mock mirrors that contract.
+		mockClient := &MockClient{
+			VectorSearchResponse: &resourcepb.VectorSearchResponse{
+				Results: []*resourcepb.VectorSearchResult{
+					{Name: "d1", Title: "CPU usage", Folder: "f1", Score: 0.12},
+					{Name: "d2", Title: "Memory usage", Folder: "f2", Score: 0.34},
+					{Name: "d3", Title: "Disk I/O", Folder: "f1", Score: 0.51},
+				},
+			},
+		}
+		handler := newHandler(mockClient)
+
+		rr := doRequest(handler, "query=cpu&folder=f1&limit=10")
+
+		require.NotNil(t, mockClient.LastVectorSearchRequest)
+		assert.Equal(t, 1, mockClient.VectorSearchCallCount)
+		assert.Equal(t, 0, mockClient.CallCount, "lexical search should not be called")
+		assert.Equal(t, "cpu", mockClient.LastVectorSearchRequest.Query)
+		assert.Equal(t, int64(10), mockClient.LastVectorSearchRequest.Limit)
+		require.Len(t, mockClient.LastVectorSearchRequest.Filters, 1)
+		assert.Equal(t, "folder", mockClient.LastVectorSearchRequest.Filters[0].Key)
+		assert.Equal(t, []string{"f1"}, mockClient.LastVectorSearchRequest.Filters[0].Values)
+
+		resp := rr.Result()
+		defer func() { require.NoError(t, resp.Body.Close()) }()
+		p := &v0alpha1.SearchResults{}
+		require.NoError(t, json.NewDecoder(resp.Body).Decode(p))
+		require.Len(t, p.Hits, 3)
+		assert.Equal(t, int64(3), p.TotalHits)
+
+		// Hits preserve the backend's score order (closest first).
+		assert.Equal(t, []string{"d1", "d2", "d3"}, []string{p.Hits[0].Name, p.Hits[1].Name, p.Hits[2].Name})
+		assert.Equal(t, []float64{0.12, 0.34, 0.51}, []float64{p.Hits[0].Score, p.Hits[1].Score, p.Hits[2].Score})
+		assert.Equal(t, 0.12, p.MaxScore)
+
+		assert.Equal(t, "CPU usage", p.Hits[0].Title)
+		assert.Equal(t, "f1", p.Hits[0].Folder)
+		assert.Equal(t, "dashboards", p.Hits[0].Resource)
+	})
+
+	t.Run("returns 501 and does not fall back when vector search is unimplemented", func(t *testing.T) {
+		mockClient := &MockClient{
+			VectorSearchErr: status.Error(codes.Unimplemented, "vector search not configured"),
+		}
+		handler := newHandler(mockClient)
+
+		rr := doRequest(handler, "query=cpu")
+
+		assert.Equal(t, 1, mockClient.VectorSearchCallCount)
+		assert.Equal(t, 0, mockClient.CallCount, "must not fall back to lexical search")
+		assert.Equal(t, http.StatusNotImplemented, rr.Result().StatusCode)
+	})
+
+	t.Run("route is registered only when the feature toggle is enabled", func(t *testing.T) {
+		hasVectorRoute := func(features featuremgmt.FeatureToggles) bool {
+			h := SearchHandler{features: features}
+			for _, route := range h.GetAPIRoutes(nil).Namespace {
+				if route.Path == "search/vector" {
+					return true
+				}
+			}
+			return false
+		}
+
+		assert.False(t, hasVectorRoute(featuremgmt.WithFeatures()), "route should be absent when toggle off")
+		assert.True(t, hasVectorRoute(featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch)), "route should be present when toggle on")
 	})
 }
 
@@ -1142,6 +1234,18 @@ type MockClient struct {
 	MockResponses []*resourcepb.ResourceSearchResponse
 	MockCalls     []*resourcepb.ResourceSearchRequest
 	CallCount     int
+
+	// Vector search
+	LastVectorSearchRequest *resourcepb.VectorSearchRequest
+	VectorSearchResponse    *resourcepb.VectorSearchResponse
+	VectorSearchErr         error
+	VectorSearchCallCount   int
+}
+
+func (m *MockClient) VectorSearch(ctx context.Context, in *resourcepb.VectorSearchRequest, opts ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
+	m.LastVectorSearchRequest = in
+	m.VectorSearchCallCount++
+	return m.VectorSearchResponse, m.VectorSearchErr
 }
 
 type MockResult struct {
