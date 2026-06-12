@@ -423,9 +423,7 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 			}
 		} else {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "success").Inc()
-			if a.unifiedStorageIsAuthoritative(iamv0.ResourcePermissionInfo.GroupResource().String()) {
-				return permissionSetResponse(cmd)
-			}
+			return permissionSetResponse(cmd)
 		}
 	}
 
@@ -512,9 +510,7 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 			}
 		} else {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_team", a.service.options.Resource, "success").Inc()
-			if a.unifiedStorageIsAuthoritative(iamv0.ResourcePermissionInfo.GroupResource().String()) {
-				return permissionSetResponse(cmd)
-			}
+			return permissionSetResponse(cmd)
 		}
 	}
 
@@ -598,9 +594,7 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 			}
 		} else {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_builtin_role", a.service.options.Resource, "success").Inc()
-			if a.unifiedStorageIsAuthoritative(iamv0.ResourcePermissionInfo.GroupResource().String()) {
-				return permissionSetResponse(cmd)
-			}
+			return permissionSetResponse(cmd)
 		}
 	}
 
@@ -679,9 +673,7 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 			}
 		} else {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_bulk", a.service.options.Resource, "success").Inc()
-			if a.unifiedStorageIsAuthoritative(iamv0.ResourcePermissionInfo.GroupResource().String()) {
-				return response.Success("Permissions updated")
-			}
+			return response.Success("Permissions updated")
 		}
 	}
 
