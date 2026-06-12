@@ -175,7 +175,7 @@ function aggregate(
   const allDashboardsByFolder = new Map<string, FolderPeekDashboard[]>();
   const rootDirectDashboards: FolderPeekDashboard[] = [];
   // rootDashboardCount and rootDirectDashboards only track *migratable* root
-  // dashboards (i.e. unmanaged) — they feed the FoldersToMigrate UI which is
+  // dashboards (i.e. unmanaged) — they feed the ResourcesToMigrate UI which is
   // scoped to migration targets. rootTotalDashboards tracks every root
   // dashboard so the General row still appears (with the right managedBy)
   // when every root dashboard is already provisioned.
@@ -268,7 +268,7 @@ function aggregate(
         : undefined;
     rows.push({
       uid: GENERAL_FOLDER_UID,
-      title: t('provisioning.migrate.general-folder-title', 'General (root dashboards)'),
+      title: t('provisioning.migrate.general-folder-title', 'General (root resources)'),
       managedBy: generalManagedBy,
       dashboardCount: rootDashboardCount,
       directDashboards: rootDirectDashboards,

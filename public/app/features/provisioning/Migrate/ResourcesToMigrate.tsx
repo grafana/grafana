@@ -17,6 +17,7 @@ import {
 } from '@grafana/ui';
 
 import { type FolderRow } from './hooks/useFolderMigrationData';
+import { isMigratableFolder } from './selection';
 
 type SortKey = 'count-desc' | 'count-asc' | 'title-asc' | 'title-desc';
 
@@ -49,26 +50,37 @@ interface Props {
   selectedDashboardUids: Set<string>;
   onToggleFolder: (uid: string) => void;
   onToggleDashboard: (uid: string) => void;
-  /** Folders + independently-ticked dashboards, shown in the migrate button. */
+  /** Folders + independently-ticked resources, shown in the migrate button. */
   selectedCount: number;
+  /** True when every migratable folder is selected — migrates everything. */
+  allSelected: boolean;
+  /** True when at least one folder/resource is selected (drives the indeterminate select-all). */
+  someSelected: boolean;
+  onToggleSelectAll: () => void;
   onMigrateSelected: () => void;
   migrateDisabled: boolean;
   migrateTooltip?: string;
 }
 
 /**
- * Foldable, searchable list of unmanaged folders with their direct dashboards.
- * Folders and individual dashboards can be selected; the "Migrate selected"
- * footer action hands the selection to the migrate drawer. Already-managed
- * folders are filtered out — the panel is scoped to migration targets only.
+ * Foldable, searchable list of unmanaged folders with the resources inside
+ * them. Folders and individual resources can be selected; the migrate footer
+ * action hands the selection to the migrate drawer. Already-managed folders are
+ * filtered out — the panel is scoped to migration targets only.
+ *
+ * Resources are dashboards today, but the wording stays resource-generic so the
+ * panel reads correctly as more resource types become migratable.
  */
-export function FoldersToMigrate({
+export function ResourcesToMigrate({
   folders,
   selectedFolderUids,
   selectedDashboardUids,
   onToggleFolder,
   onToggleDashboard,
   selectedCount,
+  allSelected,
+  someSelected,
+  onToggleSelectAll,
   onMigrateSelected,
   migrateDisabled,
   migrateTooltip,
@@ -78,7 +90,7 @@ export function FoldersToMigrate({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>('count-desc');
 
-  const unmanagedFolders = useMemo(() => folders.filter((f) => !f.managedBy && f.dashboardCount > 0), [folders]);
+  const unmanagedFolders = useMemo(() => folders.filter(isMigratableFolder), [folders]);
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const matched = !q
@@ -93,9 +105,9 @@ export function FoldersToMigrate({
     return matched;
   }, [unmanagedFolders, search, sortKey]);
 
-  // Dashboards inside a selected folder appear ticked but can't be toggled
+  // Resources inside a selected folder appear ticked but can't be toggled
   // individually — the user deselects the folder first. Recomputed here (never
-  // stored) so deselecting one folder doesn't strip dashboards covered by
+  // stored) so deselecting one folder doesn't strip resources covered by
   // another.
   const folderCoveredDashboardUids = useMemo(() => {
     const covered = new Set<string>();
@@ -120,14 +132,14 @@ export function FoldersToMigrate({
   };
 
   return (
-    <div className={styles.panel} id="folders-to-migrate">
+    <div className={styles.panel} id="resources-to-migrate">
       <Stack direction="column" gap={0.5}>
         <Text variant="h5">
-          <Trans i18nKey="provisioning.migrate.dashboards-to-migrate-heading">Dashboards to migrate</Trans>
+          <Trans i18nKey="provisioning.migrate.resources-to-migrate-heading">Resources to migrate</Trans>
         </Text>
         <Text color="secondary" variant="bodySmall">
-          <Trans i18nKey="provisioning.migrate.dashboards-to-migrate-subtitle">
-            Pick whole folders or individual dashboards. Selecting a folder migrates everything inside it.
+          <Trans i18nKey="provisioning.migrate.resources-to-migrate-subtitle">
+            Pick whole folders or individual resources. Selecting a folder migrates everything inside it.
           </Trans>
         </Text>
       </Stack>
@@ -135,7 +147,7 @@ export function FoldersToMigrate({
       <Stack direction="row" gap={1} alignItems="center" wrap>
         <div className={styles.searchInput}>
           <FilterInput
-            placeholder={t('provisioning.migrate.dashboards-to-migrate-search', 'Search folders and dashboards')}
+            placeholder={t('provisioning.migrate.resources-to-migrate-search', 'Search folders and resources')}
             value={search}
             onChange={setSearch}
           />
@@ -145,16 +157,16 @@ export function FoldersToMigrate({
             options={[
               {
                 value: 'count-desc',
-                label: t('provisioning.migrate.dashboards-sort-count-desc', 'Most dashboards'),
+                label: t('provisioning.migrate.resources-sort-count-desc', 'Most resources'),
               },
               {
                 value: 'count-asc',
-                label: t('provisioning.migrate.dashboards-sort-count-asc', 'Fewest dashboards'),
+                label: t('provisioning.migrate.resources-sort-count-asc', 'Fewest resources'),
               },
-              { value: 'title-asc', label: t('provisioning.migrate.dashboards-sort-title-asc', 'Name (A–Z)') },
+              { value: 'title-asc', label: t('provisioning.migrate.resources-sort-title-asc', 'Name (A–Z)') },
               {
                 value: 'title-desc',
-                label: t('provisioning.migrate.dashboards-sort-title-desc', 'Name (Z–A)'),
+                label: t('provisioning.migrate.resources-sort-title-desc', 'Name (Z–A)'),
               },
             ]}
             value={sortKey}
@@ -163,20 +175,31 @@ export function FoldersToMigrate({
                 setSortKey(opt.value);
               }
             }}
-            aria-label={t('provisioning.migrate.dashboards-sort-aria', 'Sort folders')}
+            aria-label={t('provisioning.migrate.resources-sort-aria', 'Sort folders')}
           />
         </div>
       </Stack>
+
+      {unmanagedFolders.length > 0 && (
+        <div className={styles.selectAllRow}>
+          <Checkbox
+            value={allSelected}
+            indeterminate={someSelected && !allSelected}
+            onChange={onToggleSelectAll}
+            label={t('provisioning.migrate.resources-select-all', 'Select all')}
+          />
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <EmptyState
           variant="not-found"
           message={
             unmanagedFolders.length === 0
-              ? t('provisioning.migrate.dashboards-to-migrate-all-managed', 'All folders are already managed.')
+              ? t('provisioning.migrate.resources-to-migrate-all-managed', 'All folders are already managed.')
               : t(
-                  'provisioning.migrate.dashboards-to-migrate-empty',
-                  'No folders or dashboards match the current search.'
+                  'provisioning.migrate.resources-to-migrate-empty',
+                  'No folders or resources match the current search.'
                 )
           }
         />
@@ -200,7 +223,7 @@ export function FoldersToMigrate({
 
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between" wrap>
         <Text variant="bodySmall" color="secondary">
-          {t('provisioning.migrate.dashboards-to-migrate-footer', 'Showing {{count}} of {{total}} folders', {
+          {t('provisioning.migrate.resources-to-migrate-footer', 'Showing {{count}} of {{total}} folders', {
             count: filtered.length,
             total: unmanagedFolders.length,
           })}
@@ -213,9 +236,13 @@ export function FoldersToMigrate({
             disabled={selectedCount === 0 || migrateDisabled}
             tooltip={migrateDisabled ? migrateTooltip : undefined}
           >
-            {t('provisioning.migrate.dashboards-to-migrate-migrate-selected', 'Migrate selected ({{count}})', {
-              count: selectedCount,
-            })}
+            {allSelected
+              ? t('provisioning.migrate.resources-to-migrate-migrate-all', 'Migrate all ({{count}})', {
+                  count: selectedCount,
+                })
+              : t('provisioning.migrate.resources-to-migrate-migrate-selected', 'Migrate selected ({{count}})', {
+                  count: selectedCount,
+                })}
           </Button>
         )}
       </Stack>
@@ -252,15 +279,15 @@ function FolderEntry({
           name={isExpanded ? 'angle-down' : 'angle-right'}
           aria-label={
             isExpanded
-              ? t('provisioning.migrate.dashboards-collapse', 'Collapse {{folder}}', { folder: folder.title })
-              : t('provisioning.migrate.dashboards-expand', 'Expand {{folder}}', { folder: folder.title })
+              ? t('provisioning.migrate.resources-collapse', 'Collapse {{folder}}', { folder: folder.title })
+              : t('provisioning.migrate.resources-expand', 'Expand {{folder}}', { folder: folder.title })
           }
           onClick={onToggleExpanded}
         />
         <Checkbox
           value={isSelected}
           onChange={onToggleFolder}
-          aria-label={t('provisioning.migrate.dashboards-select-folder', 'Select folder {{folder}}', {
+          aria-label={t('provisioning.migrate.resources-select-folder', 'Select folder {{folder}}', {
             folder: folder.title,
           })}
         />
@@ -268,7 +295,7 @@ function FolderEntry({
         <Stack direction="column" gap={0} flex={1}>
           <Text>{folder.title}</Text>
           <Text variant="bodySmall" color="secondary">
-            {t('provisioning.migrate.dashboards-folder-summary', '{{count}} dashboards', {
+            {t('provisioning.migrate.resources-folder-summary', '{{count}} resources', {
               count: folder.dashboardCount,
             })}
           </Text>
@@ -278,8 +305,8 @@ function FolderEntry({
         <div className={styles.children}>
           {folder.directDashboards.length === 0 ? (
             <Text variant="bodySmall" color="secondary">
-              <Trans i18nKey="provisioning.migrate.dashboards-folder-only-subfolders">
-                Dashboards in this folder live in subfolders. Migrate the folder to bring them all in one go.
+              <Trans i18nKey="provisioning.migrate.resources-folder-only-subfolders">
+                Resources in this folder live in subfolders. Migrate the folder to bring them all in one go.
               </Trans>
             </Text>
           ) : (
@@ -323,6 +350,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   sortInput: css({
     flex: '0 0 auto',
     minWidth: 200,
+  }),
+  selectAllRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    paddingLeft: theme.spacing(0.5),
   }),
   list: css({
     display: 'flex',

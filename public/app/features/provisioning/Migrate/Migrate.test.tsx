@@ -143,19 +143,35 @@ describe('Migrate', () => {
       expect(screen.getByText('56 of 108 managed')).toBeInTheDocument();
     });
 
-    it('opens the migrate drawer from the Start migration button', async () => {
+    it('migrates everything via select-all and the Migrate all button', async () => {
+      mockFolders([
+        {
+          uid: 'team-a',
+          title: 'Team A',
+          dashboardCount: 2,
+          directDashboards: [
+            { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
+            { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
+          ],
+          subfolders: [],
+          allDashboards: [
+            { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
+            { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
+          ],
+        },
+      ]);
+
       const { user } = render(<Migrate />);
 
-      const startButton = await screen.findByRole('button', { name: /start migration/i });
-      expect(screen.queryByText(/all dashboards and folders will be migrated/i)).not.toBeInTheDocument();
+      // Select-all flips the action to the explicit "Migrate all" everything flow.
+      await user.click(await screen.findByRole('checkbox', { name: /select all/i }));
+      await user.click(screen.getByRole('button', { name: /migrate all \(1\)/i }));
 
-      await user.click(startButton);
-
-      // The real drawer opens with its repository-selection copy.
-      expect(await screen.findByText(/all dashboards and folders will be migrated/i)).toBeInTheDocument();
+      // The drawer opens in the everything mode, not the selective summary.
+      expect(await screen.findByText(/all folders and resources will be migrated/i)).toBeInTheDocument();
     });
 
-    it('lists unmanaged folders in the Dashboards to migrate table', async () => {
+    it('lists unmanaged folders in the Resources to migrate table', async () => {
       mockFolders([
         {
           uid: 'team-a',
@@ -175,11 +191,13 @@ describe('Migrate', () => {
 
       render(<Migrate />);
 
-      expect(await screen.findByText('Dashboards to migrate')).toBeInTheDocument();
+      expect(await screen.findByText('Resources to migrate')).toBeInTheDocument();
       expect(screen.getByText('Team A')).toBeInTheDocument();
     });
 
     it('opens the drawer scoped to the selection when migrating selected folders', async () => {
+      // Two folders so picking one is a partial selection ("Migrate selected"),
+      // not the everything flow.
       mockFolders([
         {
           uid: 'team-a',
@@ -195,21 +213,29 @@ describe('Migrate', () => {
             { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
           ],
         },
+        {
+          uid: 'team-b',
+          title: 'Team B',
+          dashboardCount: 1,
+          directDashboards: [{ uid: 'd3', title: 'Dashboard Three', url: '/d/d3' }],
+          subfolders: [],
+          allDashboards: [{ uid: 'd3', title: 'Dashboard Three', url: '/d/d3' }],
+        },
       ]);
 
       const { user } = render(<Migrate />);
 
-      // Picking the folder cascades to its two dashboards.
+      // Picking just one folder cascades to its two dashboards.
       await user.click(await screen.findByRole('checkbox', { name: /select folder team a/i }));
       await user.click(screen.getByRole('button', { name: /migrate selected \(1\)/i }));
 
-      // The drawer opens in selective mode summarizing the two dashboards.
-      expect(await screen.findByText(/2 selected dashboards/i)).toBeInTheDocument();
-      expect(screen.queryByText(/all dashboards and folders will be migrated/i)).not.toBeInTheDocument();
+      // The drawer opens in selective mode summarizing the two resources.
+      expect(await screen.findByText(/2 selected resources/i)).toBeInTheDocument();
+      expect(screen.queryByText(/all folders and resources will be migrated/i)).not.toBeInTheDocument();
     });
   });
 
-  it('shows an "all managed" note and no migrate action when nothing is unmanaged', async () => {
+  it('shows the all-managed empty state and no migrate action when nothing is unmanaged', async () => {
     respondWithStats({
       instance: [
         { group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 },
@@ -225,10 +251,12 @@ describe('Migrate', () => {
         },
       ],
     });
+    // No migratable folders, so the table shows its all-managed empty state.
+    mockFolders([]);
 
     render(<Migrate />);
 
-    expect(await screen.findByText(/already managed in git/i)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /start migration/i })).not.toBeInTheDocument();
+    expect(await screen.findByText('All folders are already managed.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /migrate (selected|all)/i })).not.toBeInTheDocument();
   });
 });

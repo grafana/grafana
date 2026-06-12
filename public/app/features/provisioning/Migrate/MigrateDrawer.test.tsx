@@ -113,8 +113,8 @@ describe('MigrateDrawer', () => {
 
       expect(await screen.findByRole('button', { name: /migrate selected/i })).toBeInTheDocument();
       // The "migrate everything" copy must not show in selective mode.
-      expect(screen.queryByText(/all dashboards and folders will be migrated/i)).not.toBeInTheDocument();
-      expect(screen.getByText(/2 selected dashboards/i)).toBeInTheDocument();
+      expect(screen.queryByText(/all folders and resources will be migrated/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/2 selected resources/i)).toBeInTheDocument();
     });
 
     it('runs a migrate job scoped to the selected dashboard resources', async () => {

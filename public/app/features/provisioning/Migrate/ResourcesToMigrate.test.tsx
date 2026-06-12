@@ -1,6 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import { FoldersToMigrate } from './FoldersToMigrate';
+import { ResourcesToMigrate } from './ResourcesToMigrate';
 import { type FolderRow } from './hooks/useFolderMigrationData';
 
 const folders: FolderRow[] = [
@@ -29,7 +29,7 @@ const folders: FolderRow[] = [
   },
 ];
 
-function setup(overrides: Partial<React.ComponentProps<typeof FoldersToMigrate>> = {}) {
+function setup(overrides: Partial<React.ComponentProps<typeof ResourcesToMigrate>> = {}) {
   const props = {
     folders,
     selectedFolderUids: new Set<string>(),
@@ -37,23 +37,27 @@ function setup(overrides: Partial<React.ComponentProps<typeof FoldersToMigrate>>
     onToggleFolder: jest.fn(),
     onToggleDashboard: jest.fn(),
     selectedCount: 0,
+    allSelected: false,
+    someSelected: false,
+    onToggleSelectAll: jest.fn(),
     onMigrateSelected: jest.fn(),
     migrateDisabled: false,
     ...overrides,
   };
-  return { props, ...render(<FoldersToMigrate {...props} />) };
+  return { props, ...render(<ResourcesToMigrate {...props} />) };
 }
 
-describe('FoldersToMigrate', () => {
+describe('ResourcesToMigrate', () => {
   it('lists unmanaged folders and hides managed ones', () => {
     setup();
 
+    expect(screen.getByText('Resources to migrate')).toBeInTheDocument();
     expect(screen.getByText('Team A')).toBeInTheDocument();
     expect(screen.queryByText('Managed Folder')).not.toBeInTheDocument();
     expect(screen.getByText('Showing 1 of 1 folders')).toBeInTheDocument();
   });
 
-  it('expands a folder to reveal its direct dashboards', async () => {
+  it('expands a folder to reveal its resources', async () => {
     const { user } = setup();
 
     expect(screen.queryByText('Dashboard One')).not.toBeInTheDocument();
@@ -71,13 +75,21 @@ describe('FoldersToMigrate', () => {
     expect(props.onToggleFolder).toHaveBeenCalledWith('team-a');
   });
 
+  it('toggles select-all through the callback', async () => {
+    const { props, user } = setup();
+
+    await user.click(screen.getByRole('checkbox', { name: /select all/i }));
+
+    expect(props.onToggleSelectAll).toHaveBeenCalled();
+  });
+
   it('disables the migrate button until something is selected', () => {
     setup({ selectedCount: 0 });
 
     expect(screen.getByRole('button', { name: /migrate selected \(0\)/i })).toBeDisabled();
   });
 
-  it('enables the migrate button and shows the count when there is a selection', async () => {
+  it('shows "Migrate selected (N)" for a partial selection', async () => {
     const { props, user } = setup({ selectedCount: 1 });
 
     const button = screen.getByRole('button', { name: /migrate selected \(1\)/i });
@@ -85,6 +97,13 @@ describe('FoldersToMigrate', () => {
 
     await user.click(button);
     expect(props.onMigrateSelected).toHaveBeenCalled();
+  });
+
+  it('shows "Migrate all (N)" when everything is selected', () => {
+    setup({ selectedCount: 1, allSelected: true, someSelected: true });
+
+    expect(screen.getByRole('button', { name: /migrate all \(1\)/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /migrate selected/i })).not.toBeInTheDocument();
   });
 
   it('shows a tooltip and keeps the button disabled when no repository is connected', () => {

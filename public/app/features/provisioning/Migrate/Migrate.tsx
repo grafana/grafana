@@ -1,18 +1,18 @@
 import { useMemo, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, EmptyState, Spinner, Stack, Text } from '@grafana/ui';
+import { Alert, EmptyState, Spinner, Stack } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useRepositoryList } from '../hooks/useRepositoryList';
 
-import { FoldersToMigrate } from './FoldersToMigrate';
 import { MigrateDrawer } from './MigrateDrawer';
 import { MigrateToGitopsHeader } from './MigrateToGitopsHeader';
 import { OverviewStatCards } from './OverviewStatCards';
+import { ResourcesToMigrate } from './ResourcesToMigrate';
 import { useFolderMigrationData } from './hooks/useFolderMigrationData';
-import { resolveSelection } from './selection';
+import { isMigratableFolder, resolveSelection } from './selection';
 import { aggregateDashboardTotals, aggregateFolderCounts, computeBreakdowns } from './stats';
 
 type DrawerScope = 'all' | 'selected';
@@ -69,14 +69,27 @@ export function Migrate() {
     );
   }
 
-  const unmanagedTotal =
-    Math.max(0, totals.instanceTotal - totals.managed) + Math.max(0, folderCounts.total - folderCounts.managed);
   const hasRepo = (repos ?? []).length > 0;
+  // Select-all and the "migrate everything" affordance operate on the full set
+  // of migratable folders, not just the search-filtered view.
+  const migratableUids = folders.filter(isMigratableFolder).map((f) => f.uid);
+  const allSelected = migratableUids.length > 0 && migratableUids.every((uid) => selectedFolderUids.has(uid));
+  const someSelected = selection.items > 0;
 
   const closeDrawer = () => setDrawerScope(null);
   const clearSelection = () => {
     setSelectedFolderUids(new Set());
     setSelectedDashboardUids(new Set());
+  };
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      clearSelection();
+    } else {
+      // Selecting every folder covers every resource, so any individually
+      // ticked resource is redundant — reset to the clean "all folders" state.
+      setSelectedFolderUids(new Set(migratableUids));
+      setSelectedDashboardUids(new Set());
+    }
   };
 
   return (
@@ -84,41 +97,32 @@ export function Migrate() {
       <MigrateToGitopsHeader />
       <OverviewStatCards totals={totals} folderCounts={folderCounts} />
 
-      {unmanagedTotal > 0 ? (
-        <Stack direction="row" justifyContent="flex-start">
-          <Button variant="primary" onClick={() => setDrawerScope('all')}>
-            <Trans i18nKey="provisioning.migrate.start-button">Start migration</Trans>
-          </Button>
-        </Stack>
-      ) : (
-        <Text color="secondary">
-          <Trans i18nKey="provisioning.migrate.all-managed">
-            All of your dashboards and folders are already managed in Git.
-          </Trans>
-        </Text>
-      )}
-
       {isFoldersError ? (
         <Alert
           severity="warning"
-          title={t('provisioning.migrate.folders-error-title', 'Could not load the list of folders to migrate')}
+          title={t('provisioning.migrate.folders-error-title', 'Could not load the list of resources to migrate')}
         >
           <Trans i18nKey="provisioning.migrate.folders-error-body">
-            The overview above is still accurate. Refresh the page to try loading the folder list again.
+            The overview above is still accurate. Refresh the page to try loading the list again.
           </Trans>
         </Alert>
       ) : (
-        <FoldersToMigrate
+        <ResourcesToMigrate
           folders={folders}
           selectedFolderUids={selectedFolderUids}
           selectedDashboardUids={selectedDashboardUids}
           onToggleFolder={(uid) => setSelectedFolderUids((prev) => toggle(prev, uid))}
           onToggleDashboard={(uid) => setSelectedDashboardUids((prev) => toggle(prev, uid))}
           selectedCount={selection.items}
-          onMigrateSelected={() => setDrawerScope('selected')}
+          allSelected={allSelected}
+          someSelected={someSelected}
+          onToggleSelectAll={toggleSelectAll}
+          // Selecting everything runs the legacy "migrate all unmanaged" job;
+          // a partial selection scopes the job to the picked resources.
+          onMigrateSelected={() => setDrawerScope(allSelected ? 'all' : 'selected')}
           migrateDisabled={!hasRepo}
           migrateTooltip={t(
-            'provisioning.migrate.dashboards-to-migrate-no-repo-tooltip',
+            'provisioning.migrate.resources-to-migrate-no-repo-tooltip',
             'Connect a repository before migrating.'
           )}
         />
