@@ -1,5 +1,7 @@
 import { screen } from '@testing-library/react';
 
+import { reportInteraction } from '@grafana/runtime';
+
 import { SidebarSize } from '../../constants';
 import { type QueryEditorUIState } from '../QueryEditorContext';
 import { ds1SettingsMock, makeStackedMode, renderWithQueryEditorProvider } from '../testUtils';
@@ -11,7 +13,10 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({
     getInstanceSettings: () => ds1SettingsMock,
   }),
+  reportInteraction: jest.fn(),
 }));
+
+const mockReportInteraction = jest.mocked(reportInteraction);
 
 describe('QueryEditorSidebar', () => {
   beforeEach(() => {
@@ -84,6 +89,24 @@ describe('QueryEditorSidebar', () => {
       expect(enter).toHaveBeenCalled();
     });
 
+    it('tracks an interaction when entering stacked mode', async () => {
+      const { user } = renderWithQueryEditorProvider(
+        <Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />,
+        {
+          uiStateOverrides: {
+            stackedMode: makeStackedMode({ enabled: false }),
+          } satisfies Partial<QueryEditorUIState>,
+        }
+      );
+
+      await user.click(screen.getByRole('button', { name: /enter stacked view/i }));
+
+      expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', {
+        action: 'toggle_stacked_view',
+        direction: 'enter',
+      });
+    });
+
     it('clicking exits stacked mode when currently enabled', async () => {
       const exit = jest.fn();
       const { user } = renderWithQueryEditorProvider(
@@ -98,6 +121,24 @@ describe('QueryEditorSidebar', () => {
       await user.click(screen.getByRole('button', { name: /exit stacked view/i }));
 
       expect(exit).toHaveBeenCalled();
+    });
+
+    it('tracks an interaction when exiting stacked mode', async () => {
+      const { user } = renderWithQueryEditorProvider(
+        <Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />,
+        {
+          uiStateOverrides: {
+            stackedMode: makeStackedMode({ enabled: true }),
+          } satisfies Partial<QueryEditorUIState>,
+        }
+      );
+
+      await user.click(screen.getByRole('button', { name: /exit stacked view/i }));
+
+      expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', {
+        action: 'toggle_stacked_view',
+        direction: 'exit',
+      });
     });
   });
 });

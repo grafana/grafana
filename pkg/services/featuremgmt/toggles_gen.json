@@ -1140,6 +1140,19 @@
     },
     {
       "metadata": {
+        "name": "canvasExternalPlugin",
+        "resourceVersion": "1780948766147",
+        "creationTimestamp": "2026-06-08T19:59:26Z"
+      },
+      "spec": {
+        "description": "Load Canvas panel from an external plugin instead of the bundled core plugin",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "canvasPanelNesting",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2022-05-31T19:03:34Z"
@@ -2472,6 +2485,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.visualDesignRefresh",
+        "resourceVersion": "1781257253520",
+        "creationTimestamp": "2026-06-12T09:40:53Z"
+      },
+      "spec": {
+        "description": "Enables the new visual design refresh for the Grafana UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

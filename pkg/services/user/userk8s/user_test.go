@@ -1008,6 +1008,8 @@ func TestUserK8sService_GetByLogin(t *testing.T) {
 	}
 }
 
+func strPtr(s string) *string { return &s }
+
 func TestUserK8sService_Update(t *testing.T) {
 	trueVal := true
 	falseVal := false
@@ -1123,6 +1125,53 @@ func TestUserK8sService_Update(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{Name: "some-uid", Namespace: "org-1"},
 					Spec:       v0alpha1.UserSpec{Login: "user7", Disabled: true, GrafanaAdmin: true},
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
+		},
+		{
+			name:           "updates the org role",
+			requesterOrgID: 1,
+			cmd: &user.UpdateUserCommand{
+				UserID:  7,
+				OrgRole: strPtr("Editor"),
+			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				if r.Method == http.MethodGet {
+					resp := v0alpha1.User{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: v0alpha1.GroupVersion.Identifier(),
+							Kind:       "User",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "some-uid",
+							Namespace: "org-1",
+							Labels:    map[string]string{"grafana.app/deprecatedInternalID": "7"},
+						},
+						Spec: v0alpha1.UserSpec{Login: "user7", Role: "Admin"},
+					}
+					list := map[string]any{
+						"apiVersion": "v1",
+						"kind":       "List",
+						"items":      []any{resp},
+					}
+					w.Header().Set("Content-Type", "application/json")
+					_ = json.NewEncoder(w).Encode(list)
+					return
+				}
+				var body map[string]any
+				_ = json.NewDecoder(r.Body).Decode(&body)
+				spec := body["spec"].(map[string]any)
+				assert.Equal(t, "Editor", spec["role"])
+
+				resp := v0alpha1.User{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: v0alpha1.GroupVersion.Identifier(),
+						Kind:       "User",
+					},
+					ObjectMeta: metav1.ObjectMeta{Name: "some-uid", Namespace: "org-1"},
+					Spec:       v0alpha1.UserSpec{Login: "user7", Role: "Editor"},
 				}
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(resp)
@@ -2356,4 +2405,51 @@ func setupServiceAndCtx(t *testing.T, s svcTestSetup) (*UserK8sService, context.
 	}
 
 	return svc, ctx
+}
+
+func TestUserK8sService_Search_MapsExtendedFields(t *testing.T) {
+	created := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC)
+	lastSeen := time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC)
+
+	var gotAccessControlParam string
+	svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+		requesterOrgID: 1,
+		serverResponse: func(w http.ResponseWriter, r *http.Request) {
+			gotAccessControlParam = r.URL.Query().Get("accesscontrol")
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(v0alpha1.GetSearchUsersResponse{
+				TotalHits: 1,
+				Hits: []v0alpha1.GetSearchUsersUserHit{{
+					Name:          "uid-one",
+					Title:         "John Doe",
+					Login:         "jdoe",
+					Email:         "jdoe@example.com",
+					Role:          "Admin",
+					AccessControl: map[string]bool{"org.users:write": true},
+					LastSeenAt:    lastSeen.Unix(),
+					LastSeenAtAge: "5 days",
+					Provisioned:   true,
+					Disabled:      true,
+					InternalId:    42,
+					Created:       created.UnixMilli(),
+				}},
+			})
+		},
+	})
+
+	result, err := svc.Search(ctx, &user.SearchUsersQuery{IncludeAccessControl: true})
+	require.NoError(t, err)
+	require.Len(t, result.Users, 1)
+
+	assert.Equal(t, "true", gotAccessControlParam)
+
+	got := result.Users[0]
+	assert.Equal(t, int64(42), got.ID)
+	assert.Equal(t, "uid-one", got.UID)
+	assert.Equal(t, "Admin", got.Role)
+	assert.Equal(t, map[string]bool{"org.users:write": true}, got.AccessControl)
+	assert.True(t, got.IsDisabled)
+	assert.True(t, got.IsProvisioned)
+	assert.Equal(t, created.UTC(), got.Created.UTC())
+	assert.Equal(t, lastSeen.UTC(), got.LastSeenAt.UTC())
 }

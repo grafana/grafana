@@ -33,9 +33,9 @@ interface BacktestRequest {
   namespace_uid?: string;
 }
 
-export const BACKTEST_URL = '/api/v1/rule/backtest';
+const BACKTEST_URL = '/api/v1/rule/backtest';
 
-export const backtestApi = alertingApi.injectEndpoints({
+const backtestApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     runBacktest: build.mutation<DataFrameJSON, BacktestRequest>({
       query: (requestBody) => ({
