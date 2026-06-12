@@ -171,6 +171,90 @@ describe('plugin', () => {
       const result = await getDataSourceInstance('${dsVar}');
       expect(result).toBe(instance);
     });
+
+    describe('reference resolution parity with DatasourceSrv.get', () => {
+      // Two test-db sources, Bravo is the default.
+      const seedAlphaBravo = () => {
+        const alpha = ds();
+        const bravo = ds({ id: 2, uid: 'uid-bravo', name: 'Bravo', isDefault: true });
+        initDataSourceInstanceSettings({ [alpha.name]: alpha, [bravo.name]: bravo }, bravo.name);
+        return { alpha, bravo };
+      };
+
+      const importerReturning = (instance: unknown) => {
+        const MockClass = jest.fn().mockReturnValue(instance);
+        setDataSourcePluginImporter(jest.fn().mockResolvedValue({ DataSourceClass: MockClass, components: {} }));
+        return MockClass;
+      };
+
+      it('loads the configured default datasource when ref is null', async () => {
+        const { bravo } = seedAlphaBravo();
+        const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+        const MockClass = importerReturning(instance);
+
+        const result = await getDataSourceInstance(null);
+
+        expect(MockClass).toHaveBeenCalledWith(bravo);
+        expect(result).toBe(instance);
+      });
+
+      it('resolves a type-only ref to the default datasource of that type', async () => {
+        const { bravo } = seedAlphaBravo();
+        const MockClass = importerReturning(Object.create(DataSourceApi.prototype));
+
+        await getDataSourceInstance({ type: 'test-db' });
+
+        expect(MockClass).toHaveBeenCalledWith(bravo);
+      });
+
+      it('falls back to the configured default for a type-only ref with no match', async () => {
+        const { bravo } = seedAlphaBravo();
+        const MockClass = importerReturning(Object.create(DataSourceApi.prototype));
+
+        await getDataSourceInstance({ type: 'does-not-exist' });
+
+        expect(MockClass).toHaveBeenCalledWith(bravo);
+      });
+
+      // Divergence from legacy DatasourceSrv.get(), which short-circuits expression refs to a
+      // preloaded singleton instance. getDataSourceInstance has no such short-circuit yet.
+      // Tracked in the async-vs-legacy divergences issue.
+      it.todo('resolves expression refs to the preloaded singleton without importing');
+    });
+
+    it('passes settings.meta to the importer', async () => {
+      const settings = ds();
+      initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+
+      const mockImport = jest.fn().mockResolvedValue({
+        DataSourceClass: jest.fn().mockReturnValue(Object.create(DataSourceApi.prototype)),
+        components: {},
+      });
+      setDataSourcePluginImporter(mockImport);
+
+      await getDataSourceInstance(settings.uid);
+
+      expect(mockImport).toHaveBeenCalledWith(settings.meta);
+    });
+
+    it('patches legacy plugins that do not extend DataSourceApi', async () => {
+      const settings = ds();
+      initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+
+      // A plain object instance — NOT an instanceof DataSourceApi — must be patched.
+      const legacyInstance: Record<string, unknown> = {};
+      const MockClass = jest.fn().mockReturnValue(legacyInstance);
+      setDataSourcePluginImporter(jest.fn().mockResolvedValue({ DataSourceClass: MockClass, components: {} }));
+
+      const result = (await getDataSourceInstance(settings.uid)) as unknown as Record<string, unknown>;
+
+      expect(result.name).toBe(settings.name);
+      expect(result.id).toBe(settings.id);
+      expect(result.type).toBe(settings.type);
+      expect(result.meta).toBe(settings.meta);
+      expect(result.uid).toBe(settings.uid);
+      expect((result.getRef as () => unknown)()).toEqual({ type: settings.type, uid: settings.uid });
+    });
   });
 
   describe('registerRuntimeDataSourceInstance', () => {
