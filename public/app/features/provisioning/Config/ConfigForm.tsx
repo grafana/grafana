@@ -399,7 +399,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 register={register}
                 titleTemplateName="pullRequest.titleTemplate"
                 enforceTemplateName="pullRequest.enforceTemplate"
-                isGithub={type === 'github'}
+                repoType={type}
                 dashboardPreviewName="generateDashboardPreviews"
               />
             )}

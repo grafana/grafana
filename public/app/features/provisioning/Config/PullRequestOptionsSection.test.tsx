@@ -3,23 +3,24 @@ import { act, render, screen } from 'test/test-utils';
 
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { type RepoType } from '../Wizard/types';
 import { type RepositoryFormData } from '../types';
 
 import { PullRequestOptionsSection } from './PullRequestOptionsSection';
 
 interface WrapperProps {
-  isGithub?: boolean;
+  repoType?: RepoType;
   dashboardPreviewName?: 'generateDashboardPreviews';
 }
 
-function Wrapper({ isGithub, dashboardPreviewName }: WrapperProps = {}) {
+function Wrapper({ repoType, dashboardPreviewName }: WrapperProps = {}) {
   const { register } = useForm<RepositoryFormData>();
   return (
     <PullRequestOptionsSection<RepositoryFormData>
       register={register}
       titleTemplateName="pullRequest.titleTemplate"
       enforceTemplateName="pullRequest.enforceTemplate"
-      isGithub={isGithub}
+      repoType={repoType}
       dashboardPreviewName={dashboardPreviewName}
     />
   );
@@ -73,7 +74,7 @@ describe('PullRequestOptionsSection', () => {
 
   it('renders the dashboard previews toggle for GitHub even when the gitConventions flag is off', async () => {
     setTestFlags({ 'provisioning.gitConventions': false });
-    const { user } = render(<Wrapper isGithub dashboardPreviewName="generateDashboardPreviews" />);
+    const { user } = render(<Wrapper repoType="github" dashboardPreviewName="generateDashboardPreviews" />);
 
     await user.click(screen.getByText('Pull request options'));
 
@@ -84,7 +85,7 @@ describe('PullRequestOptionsSection', () => {
 
   it('does not render the dashboard previews toggle for non-GitHub providers', () => {
     setTestFlags({ 'provisioning.gitConventions': false });
-    const { container } = render(<Wrapper dashboardPreviewName="generateDashboardPreviews" />);
+    const { container } = render(<Wrapper repoType="gitlab" dashboardPreviewName="generateDashboardPreviews" />);
 
     expect(container).toBeEmptyDOMElement();
   });

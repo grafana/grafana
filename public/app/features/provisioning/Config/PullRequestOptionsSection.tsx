@@ -6,6 +6,7 @@ import { Checkbox, ControlledCollapse, Field, Input, Stack } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
+import { type RepoType } from '../Wizard/types';
 
 import { DashboardPreviewField } from './DashboardPreviewField';
 
@@ -18,8 +19,8 @@ interface Props<T extends FieldValues> {
    * also require image rendering to be allowed and currently apply only to GitHub.
    */
   dashboardPreviewName?: Path<T>;
-  /** Dashboard previews currently apply only to GitHub pull requests. */
-  isGithub?: boolean;
+  /** Repository type; dashboard previews currently apply only to GitHub pull requests. */
+  repoType?: RepoType;
 }
 
 /**
@@ -35,13 +36,15 @@ export function PullRequestOptionsSection<T extends FieldValues>({
   titleTemplateName,
   enforceTemplateName,
   dashboardPreviewName,
-  isGithub,
+  repoType,
 }: Props<T>) {
   const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
   const settings = useGetFrontendSettingsQuery();
 
   // Dashboard previews currently apply only to GitHub and require image rendering to be allowed.
-  const showDashboardPreviews = Boolean(isGithub && dashboardPreviewName && checkImageRenderingAllowed(settings.data));
+  const showDashboardPreviews = Boolean(
+    repoType === 'github' && dashboardPreviewName && checkImageRenderingAllowed(settings.data)
+  );
 
   if (!gitConventionsEnabled && !showDashboardPreviews) {
     return null;
