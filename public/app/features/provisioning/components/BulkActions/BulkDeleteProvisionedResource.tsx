@@ -22,7 +22,6 @@ import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidati
 import { type StatusInfo } from '../../types';
 import { withSavedByTrailer } from '../../utils/currentUser';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
-import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getCanPushToConfiguredBranch, getDefaultWorkflow } from '../defaults';
 import { generateTimestamp } from '../utils/timestamp';

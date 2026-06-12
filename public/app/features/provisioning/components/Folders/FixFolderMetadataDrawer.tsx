@@ -14,7 +14,6 @@ import { type BaseProvisionedFormData } from '../../types/form';
 import { useGetActiveJob } from '../../useGetActiveJob';
 import { withSavedByTrailer } from '../../utils/currentUser';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
-import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
 
