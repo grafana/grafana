@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { Button, Combobox, type ComboboxOption, Drawer, Field, Stack, Text } from '@grafana/ui';
-import { type Job, type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job, type Repository, type ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
 import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
@@ -15,15 +15,30 @@ interface MigrateDrawerProps {
   onDismiss: () => void;
   /** Called once the migration job finishes successfully, so callers can refresh derived state. */
   onMigrated?: () => void;
+  /**
+   * Dashboards to migrate. When omitted, every unmanaged dashboard and folder
+   * is migrated ("migrate everything"). When provided, only these dashboards
+   * are migrated — the folders that contain them come along so parent paths
+   * resolve.
+   */
+  resources?: ResourceRef[];
+  /** Counts behind `resources`, used for the selective-mode summary copy. */
+  selection?: { folders: number; dashboards: number };
 }
 
 /**
- * Drawer for the "migrate everything" flow, mirroring how other provisioning
- * jobs run in a drawer. The user selects the target repository here, confirms,
- * and then the migration job's progress and result are shown in the same
- * drawer via the shared JobStatus view.
+ * Drawer for running a migration, mirroring how other provisioning jobs run in
+ * a drawer. The user selects the target repository here, confirms, and then the
+ * migration job's progress and result are shown in the same drawer via the
+ * shared JobStatus view.
+ *
+ * Two modes: "migrate everything" (no `resources`) exports every unmanaged
+ * dashboard and folder; selective (with `resources`) exports only the picked
+ * dashboards.
  */
-export function MigrateDrawer({ repos, onDismiss, onMigrated }: MigrateDrawerProps) {
+export function MigrateDrawer({ repos, onDismiss, onMigrated, resources, selection }: MigrateDrawerProps) {
+  const isSelective = Boolean(resources && resources.length > 0);
+
   const repoOptions = useMemo<Array<ComboboxOption<string>>>(
     () =>
       repos
@@ -50,7 +65,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated }: MigrateDrawerPro
     if (!selectedRepo) {
       return;
     }
-    const response = await createSyncJob(true);
+    const response = await createSyncJob(true, isSelective ? { resources } : undefined);
     if (response) {
       setJob(response);
     }
@@ -86,11 +101,21 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated }: MigrateDrawerPro
   return (
     <Drawer title={title} onClose={onDismiss}>
       <Stack direction="column" gap={2}>
-        <Text color="secondary">
-          <Trans i18nKey="provisioning.migrate.drawer-description">
-            All dashboards and folders will be migrated into the selected repository. This is a one-time operation.
-          </Trans>
-        </Text>
+        {isSelective ? (
+          <Text color="secondary">
+            {t(
+              'provisioning.migrate.drawer-description-selective',
+              '{{count}} selected dashboards (and the folders that contain them) will be migrated into the selected repository. This is a one-time operation.',
+              { count: selection?.dashboards ?? resources?.length ?? 0 }
+            )}
+          </Text>
+        ) : (
+          <Text color="secondary">
+            <Trans i18nKey="provisioning.migrate.drawer-description">
+              All dashboards and folders will be migrated into the selected repository. This is a one-time operation.
+            </Trans>
+          </Text>
+        )}
 
         <Field
           noMargin
@@ -115,12 +140,6 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated }: MigrateDrawerPro
           </Stack>
         </Field>
 
-        <Text color="secondary" variant="bodySmall">
-          <Trans i18nKey="provisioning.migrate.selective-coming-soon">
-            Migrating only selected dashboards and folders is coming soon.
-          </Trans>
-        </Text>
-
         <GitSyncLimitationsAlert syncTarget="instance" />
 
         <Stack direction="row" gap={2}>
@@ -137,7 +156,11 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated }: MigrateDrawerPro
                 : undefined
             }
           >
-            <Trans i18nKey="provisioning.migrate.migrate-button">Migrate everything</Trans>
+            {isSelective ? (
+              <Trans i18nKey="provisioning.migrate.migrate-button-selected">Migrate selected</Trans>
+            ) : (
+              <Trans i18nKey="provisioning.migrate.migrate-button">Migrate everything</Trans>
+            )}
           </Button>
         </Stack>
       </Stack>
