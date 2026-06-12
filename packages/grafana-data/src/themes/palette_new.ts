@@ -196,24 +196,20 @@ function resolveRefs(value: string): string {
   return value.replace(PALETTE_TOKEN_REGEX, (match, key) => (isPaletteKey(key) ? palette[key] : match));
 }
 
-export function resolvePaletteRefs<T>(input: T): T {
-  const walk = (node: T): T => {
-    if (typeof node === 'string') {
-      // can't avoid this type assertion unfortunately
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return resolveRefs(node) as T;
-    }
-    if (node === null || typeof node !== 'object') {
-      return node;
-    }
-    if (Array.isArray(node)) {
-      // can't avoid this type assertion unfortunately
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return node.map(walk) as T;
-    }
-    // can't avoid this type assertion unfortunately
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, walk(v)])) as T;
-  };
+function walk(node: unknown): unknown {
+  if (typeof node === 'string') {
+    return resolveRefs(node);
+  }
+  if (Array.isArray(node)) {
+    return node.map(walk);
+  }
+  if (node !== null && typeof node === 'object') {
+    return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, walk(v)]));
+  }
+  return node;
+}
+
+export function resolvePaletteRefs<T>(input: T): T;
+export function resolvePaletteRefs(input: unknown): unknown {
   return walk(input);
 }
