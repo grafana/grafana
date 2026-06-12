@@ -3,8 +3,8 @@ import { act, render, screen } from 'test/test-utils';
 
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { setupProvisioningMswServer } from '../mocks/server';
 import { type RepoType } from '../Wizard/types';
+import { setupProvisioningMswServer } from '../mocks/server';
 import { type RepositoryFormData } from '../types';
 
 import { PullRequestOptionsSection } from './PullRequestOptionsSection';
