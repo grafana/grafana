@@ -36,7 +36,7 @@ export function GrafanaRuleListItem({
   evalIntervalSeconds,
 }: GrafanaRuleListItemProps) {
   const { name, uid, labels, provenance } = rule;
-  const membership = useGrafanaRuleSequenceMembership(rule);
+  const membership = useGrafanaRuleSequenceMembership({ rule, namespaceUid: groupIdentifier.namespace.uid });
   const { openRuleSequenceDrawer } = useRuleSequenceDrawer();
 
   const groupUrl = groups.detailsPageLink(

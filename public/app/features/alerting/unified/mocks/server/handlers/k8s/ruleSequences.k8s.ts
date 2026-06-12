@@ -12,6 +12,9 @@ const RULES_API_DEFAULT_NAMESPACE_URL = '/apis/rules.alerting.grafana.app/v0alph
 /** UID of a rule sequence */
 export const RULE_SEQUENCE_UID_1 = 'seq-uid-1';
 
+/** Folder UID that the default rule sequence (and its rules) live in */
+export const RULE_SEQUENCE_FOLDER_UID_1 = 'seq-folder-uid-1';
+
 /** UID of alert rules */
 export const ALERT_RULE_UID_1 = 'alert-rule-uid-1';
 export const ALERT_RULE_UID_2 = 'alert-rule-uid-2';
@@ -41,6 +44,9 @@ const defaultRuleSequence: RuleSequence = {
     namespace: 'default',
     uid: RULE_SEQUENCE_UID_1,
     resourceVersion: 'e0270bfced786660',
+    labels: {
+      'grafana.app/folder': RULE_SEQUENCE_FOLDER_UID_1,
+    },
   },
   spec: {
     trigger: { interval: '1m' },
@@ -117,13 +123,24 @@ export const listNamespacedRuleSequencesHandler = () =>
   http.get(`${RULES_API_DEFAULT_NAMESPACE_URL}/rulesequences`, ({ request }) => {
     const url = new URL(request.url);
     const fieldSelector = url.searchParams.get('fieldSelector');
+    const labelSelector = url.searchParams.get('labelSelector');
 
-    if (fieldSelector && fieldSelector.includes('metadata.name')) {
-      const filteredItems = filterBySelector(allRuleSequences.items, fieldSelector);
-      return HttpResponse.json({ items: filteredItems });
+    let items = allRuleSequences.items;
+
+    // Folder-scoped fetch: labelSelector=grafana.app/folder=<uid>
+    if (labelSelector) {
+      const match = labelSelector.match(/^grafana\.app\/folder=(.+)$/);
+      if (match) {
+        const folderUid = match[1];
+        items = items.filter((seq) => seq.metadata.labels?.['grafana.app/folder'] === folderUid);
+      }
     }
 
-    return HttpResponse.json(allRuleSequences);
+    if (fieldSelector && fieldSelector.includes('metadata.name')) {
+      items = filterBySelector(items, fieldSelector);
+    }
+
+    return HttpResponse.json({ ...allRuleSequences, items });
   });
 
 export const getNamespacedRuleSequenceHandler = () =>

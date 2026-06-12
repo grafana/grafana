@@ -1,14 +1,18 @@
+import { getWrapper, renderHook, testWithFeatureToggles, waitFor } from 'test/test-utils';
+
 import type { RuleSequence } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { type GrafanaPromRuleDTO, PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../../mockApi';
 import {
   ALERT_RULE_UID_1,
   ALERT_RULE_UID_2,
   RECORDING_RULE_UID_1,
+  RULE_SEQUENCE_FOLDER_UID_1,
   RULE_SEQUENCE_UID_1,
 } from '../../mocks/server/handlers/k8s/ruleSequences.k8s';
 
-import { buildSequenceMembershipLookup } from './useGrafanaRuleSequenceMembership';
+import { buildSequenceMembershipLookup, useGrafanaRuleSequenceMembership } from './useGrafanaRuleSequenceMembership';
 
 setupMswServer();
 
@@ -106,5 +110,62 @@ describe('buildSequenceMembershipLookup', () => {
     const result2 = buildSequenceMembershipLookup(sequences);
 
     expect(result1).toBe(result2);
+  });
+});
+
+describe('useGrafanaRuleSequenceMembership', () => {
+  const grafanaRule: GrafanaPromRuleDTO = {
+    name: 'CPU alert',
+    uid: ALERT_RULE_UID_1,
+    query: '',
+    folderUid: RULE_SEQUENCE_FOLDER_UID_1,
+    isPaused: false,
+    health: 'ok',
+    state: PromAlertingRuleState.Inactive,
+    type: PromRuleType.Alerting,
+    totals: {},
+    totalsFiltered: {},
+  };
+
+  const wrapper = getWrapper({ renderWithRouter: true });
+
+  describe('when the rules API v2 toggle is enabled', () => {
+    testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
+
+    it('returns the sequence membership for a rule in the folder', async () => {
+      const { result } = renderHook(
+        () => useGrafanaRuleSequenceMembership({ rule: grafanaRule, namespaceUid: RULE_SEQUENCE_FOLDER_UID_1 }),
+        { wrapper }
+      );
+
+      await waitFor(() => {
+        expect(result.current).toEqual({ id: RULE_SEQUENCE_UID_1 });
+      });
+    });
+
+    it('does not return membership when scoped to a folder without the sequence', async () => {
+      const { result } = renderHook(
+        () => useGrafanaRuleSequenceMembership({ rule: grafanaRule, namespaceUid: 'other-folder-uid' }),
+        { wrapper }
+      );
+
+      // Give the scoped (and empty) query time to resolve before asserting it stays undefined.
+      await waitFor(() => {
+        expect(result.current).toBeUndefined();
+      });
+    });
+  });
+
+  describe('when the rules API v2 toggle is disabled', () => {
+    testWithFeatureToggles({ disable: ['alerting.rulesAPIV2'] });
+
+    it('does not query and returns undefined', () => {
+      const { result } = renderHook(
+        () => useGrafanaRuleSequenceMembership({ rule: grafanaRule, namespaceUid: RULE_SEQUENCE_FOLDER_UID_1 }),
+        { wrapper }
+      );
+
+      expect(result.current).toBeUndefined();
+    });
   });
 });

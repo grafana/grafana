@@ -2,6 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
 import { type RuleSequence, useListRuleSequenceQuery } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import type { GrafanaPromRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { shouldUseRulesAPIV2 } from '../../featureToggles';
@@ -34,8 +35,21 @@ export function buildSequenceMembershipLookup(sequences: RuleSequence[]): Map<st
   return lookup;
 }
 
-export function useGrafanaRuleSequenceMembership(rule: GrafanaPromRuleDTO): RuleSequenceMembership | undefined {
-  const { data } = useListRuleSequenceQuery(shouldUseRulesAPIV2() ? {} : skipToken);
+interface UseGrafanaRuleSequenceMembershipOptions {
+  rule: GrafanaPromRuleDTO;
+  namespaceUid: string;
+}
+
+export function useGrafanaRuleSequenceMembership({
+  rule,
+  namespaceUid,
+}: UseGrafanaRuleSequenceMembershipOptions): RuleSequenceMembership | undefined {
+  // Scope the request to the rule's folder so the list page only fetches sequences for the
+  // folders currently on screen. RTK Query caches per labelSelector, so each folder is fetched
+  // once and revisited pages are served from cache.
+  const queryArg =
+    shouldUseRulesAPIV2() && namespaceUid ? { labelSelector: `${AnnoKeyFolder}=${namespaceUid}` } : skipToken;
+  const { data } = useListRuleSequenceQuery(queryArg);
 
   const ruleUid = prometheusRuleType.grafana.rule(rule) ? rule.uid : undefined;
 
