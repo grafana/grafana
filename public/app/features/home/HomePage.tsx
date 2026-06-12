@@ -4,13 +4,14 @@ import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
-import { Box, Stack, useStyles2 } from '@grafana/ui';
+import { Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
+import { HomeSection } from './HomeSection';
 import useHomeGreeting from './useHomeGreeting';
 
 const getEdition = () => {
@@ -49,14 +50,14 @@ export default function HomePage() {
     >
       <Page.Contents>
         <Stack direction="column" gap={2}>
-          <Box backgroundColor="canvas" borderRadius="default" padding={4} direction="column" display="flex" gap={2}>
+          <HomeSection padding={4} direction="column" display="flex" gap={2}>
             {renderLimitedComponents({
               props: {},
               components: preComponents,
               pluginId: SETUPGUIDE_PLUGIN_ID,
             })}
             <DashboardTabs />
-          </Box>
+          </HomeSection>
           <FiringAlertsCard />
 
           {renderLimitedComponents({
@@ -65,9 +66,7 @@ export default function HomePage() {
             pluginId: SETUPGUIDE_PLUGIN_ID,
             wrapper: ({ children }) => (
               <div className={styles.extra}>
-                <Box backgroundColor="canvas" borderRadius="default" padding={4}>
-                  {children}
-                </Box>
+                <HomeSection padding={4}>{children}</HomeSection>
               </div>
             ),
           })}

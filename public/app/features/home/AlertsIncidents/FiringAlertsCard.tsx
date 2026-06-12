@@ -6,13 +6,15 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Badge, Box, Button, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, Button, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { canonicalSeverity, SEVERITY_DEFINITIONS } from 'app/features/alerting/unified/triage/scene/filters/severity';
 import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
+
+import { HomeSection } from '../HomeSection';
 
 import { useUserTeams } from './useUserTeams';
 
@@ -109,13 +111,24 @@ function FiringAlertsCardInner() {
 
   const displayed = sorted.slice(0, MAX_ALERTS);
 
-  const criticalCount = alerts?.filter((a) => alertSeverityLevel(a) === 'critical').length ?? 0;
-  const highCount = alerts?.filter((a) => alertSeverityLevel(a) === 'major').length ?? 0;
+  const [criticalCount, highCount] = useMemo(() => {
+    let critical = 0;
+    let high = 0;
+    for (const alert of alerts ?? []) {
+      const level = alertSeverityLevel(alert);
+      if (level === 'critical') {
+        critical++;
+      } else if (level === 'major') {
+        high++;
+      }
+    }
+    return [critical, high];
+  }, [alerts]);
 
   const viewAllHref = `/alerting/groups?${ALERTMANAGER_NAME_QUERY_KEY}=${GRAFANA_RULES_SOURCE_NAME}`;
 
   return (
-    <Box backgroundColor="canvas" borderRadius="default" padding={3} flex={1} minWidth="320px">
+    <HomeSection padding={3} flex={1} minWidth="320px">
       <Stack direction="column" gap={2}>
         {/* Header */}
         <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -228,7 +241,7 @@ function FiringAlertsCardInner() {
           </Stack>
         )}
       </Stack>
-    </Box>
+    </HomeSection>
   );
 }
 
