@@ -377,10 +377,8 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 
 	if hs.annotationMigrationProxy.Enabled() {
 		base, err := hs.annotationMigrationProxy.Get(c.Req.Context(), c.GetOrgID(), annotationID)
-		if err != nil && !errors.Is(err, annotationsapi.ErrNotFound) {
-			return response.ErrOrFallback(http.StatusInternalServerError, "Failed to patch annotation", err)
-		}
-		if err == nil {
+		switch {
+		case err == nil:
 			existing := annotations.Item{
 				OrgID: c.GetOrgID(), UserID: userID,
 				Epoch: base.Time, EpochEnd: base.TimeEnd, Text: base.Text, Tags: base.Tags,
@@ -388,21 +386,24 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 			if cmd.Tags != nil {
 				existing.Tags = cmd.Tags
 			}
-			if cmd.Text != "" && cmd.Text != existing.Text {
+			if cmd.Text != "" {
 				existing.Text = cmd.Text
 			}
-			if cmd.Time > 0 && cmd.Time != existing.Epoch {
+			if cmd.Time > 0 {
 				existing.Epoch = cmd.Time
 			}
-			if cmd.TimeEnd > 0 && cmd.TimeEnd != existing.EpochEnd {
+			if cmd.TimeEnd > 0 {
 				existing.EpochEnd = cmd.TimeEnd
 			}
 			if err := hs.annotationMigrationProxy.Update(c.Req.Context(), c.GetOrgID(), annotationID, &existing); err != nil {
 				return response.ErrOrFallback(http.StatusInternalServerError, "Failed to patch annotation", err)
 			}
 			return response.Success("Annotation patched")
+		case errors.Is(err, annotationsapi.ErrNotFound):
+			// fall through to legacy path (annotation predates migration)
+		default:
+			return response.ErrOrFallback(http.StatusInternalServerError, "Failed to patch annotation", err)
 		}
-		// ErrNotFound: fall through to legacy path (annotation predates migration)
 	}
 
 	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)

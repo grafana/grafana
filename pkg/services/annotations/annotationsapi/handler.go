@@ -5,14 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	annotationpkg "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -74,7 +73,7 @@ func (h *MigrationProxy) List(ctx context.Context, orgID int64, query *annotatio
 	seen := make(map[string]bool)
 	var createdByMeta []string
 	for _, anno := range annos {
-		if cb := anno.GetAnnotations()["grafana.com/createdBy"]; cb != "" && !seen[cb] {
+		if cb := anno.GetCreatedBy(); cb != "" && !seen[cb] {
 			createdByMeta = append(createdByMeta, cb)
 			seen[cb] = true
 		}
@@ -87,7 +86,7 @@ func (h *MigrationProxy) List(ctx context.Context, orgID int64, query *annotatio
 	dtos := make([]*annotations.ItemDTO, 0, len(annos))
 	for _, anno := range annos {
 		dto := annoToItemDTO(anno)
-		if cb := anno.GetAnnotations()["grafana.com/createdBy"]; cb != "" {
+		if cb := anno.GetCreatedBy(); cb != "" {
 			if u, ok := userMap[cb]; ok {
 				applyUserToDTO(u, dto)
 			}
@@ -199,7 +198,7 @@ func (h *MigrationProxy) Create(ctx context.Context, orgID int64, item *annotati
 	if err != nil {
 		return 0, err
 	}
-	return legacyIDFromAnnotation(result), nil
+	return annotationpkg.GetLegacyID(result), nil
 }
 
 // Update writes to new store. Returns ErrNotFound if the record is not there yet, caller falls back to legacy.
@@ -211,6 +210,7 @@ func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID i
 	anno := itemToAnnotation(item)
 	anno.SetName(existing.GetName())
 	anno.SetResourceVersion(existing.GetResourceVersion())
+	annotationpkg.SetLegacyID(anno, annotationID)
 	_, err = h.client.Update(ctx, orgID, anno)
 	return err
 }
@@ -233,7 +233,7 @@ func (h *MigrationProxy) Get(ctx context.Context, orgID int64, annotationID int6
 
 	dto := annoToItemDTO(anno)
 
-	createdBy := anno.GetAnnotations()["grafana.com/createdBy"]
+	createdBy := anno.GetCreatedBy()
 	if createdBy != "" {
 		if users, err := h.client.GetUsersFromMeta(ctx, []string{createdBy}); err == nil {
 			if u, ok := users[createdBy]; ok {
@@ -254,7 +254,7 @@ func applyUserToDTO(u *user.User, dto *annotations.ItemDTO) {
 
 func annoToItemDTO(anno *annotationV0.Annotation) *annotations.ItemDTO {
 	dto := &annotations.ItemDTO{
-		ID:           legacyIDFromAnnotation(anno),
+		ID:           annotationpkg.GetLegacyID(anno),
 		Text:         anno.Spec.Text,
 		Time:         anno.Spec.Time,
 		Tags:         anno.Spec.Tags,
@@ -272,6 +272,7 @@ func annoToItemDTO(anno *annotationV0.Annotation) *annotations.ItemDTO {
 	return dto
 }
 
+// TODO: item.Data is not stored — consider adding a legacy_data field to the annotation schema to preserve it during migration.
 func itemToAnnotation(item *annotations.Item) *annotationV0.Annotation {
 	spec := annotationV0.AnnotationSpec{
 		Text: item.Text,
@@ -292,26 +293,7 @@ func itemToAnnotation(item *annotations.Item) *annotationV0.Annotation {
 	anno.APIVersion = annotationV0.GroupVersion.String()
 	anno.Kind = "Annotation"
 	if item.UserID != 0 {
-		anno.SetAnnotations(map[string]string{
-			"grafana.com/createdBy": fmt.Sprintf("user:%d", item.UserID),
-		})
+		anno.SetCreatedBy(fmt.Sprintf("user:%d", item.UserID))
 	}
 	return anno
-}
-
-func legacyIDFromAnnotation(anno *annotationV0.Annotation) int64 {
-	labels := anno.GetLabels()
-	if labels == nil {
-		return 0
-	}
-	id, _ := strconv.ParseInt(labels["grafana.app/legacyID"], 10, 64)
-	return id
-}
-
-// NewK8sHandler is used only in tests to inject a fake K8sHandler directly.
-func NewK8sHandler(h client.K8sHandler) *MigrationProxy {
-	return &MigrationProxy{
-		client: &annotationAPIClient{k8sClient: h},
-		phase:  "proxy-writes",
-	}
 }

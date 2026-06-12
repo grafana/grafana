@@ -233,9 +233,9 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	annotation.SetCreatedBy(user.GetUID())
 
 	if s.snowflakeNode != nil {
-		if getLegacyID(annotation) == 0 {
+		if GetLegacyID(annotation) == 0 {
 			id := s.snowflakeNode.Generate().Int64() & maxSafeJSInt
-			setLegacyID(annotation, id)
+			SetLegacyID(annotation, id)
 		}
 	}
 
