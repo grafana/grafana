@@ -32,13 +32,7 @@ Grafana is migrating existing APIs to the new `/apis` model, a Kubernetes-style 
 
 ## API matrix
 
-The API migration process is underway and there may not be an exact `/apis` match to the legacy API you're using. Some legacy APIs may not be migrated at all.
-
-Currently the following replacements apply:
-
-- [Playlist API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/playlist/)
-- [Resource history API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/resource-history/)
-- [Secrets Management API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/secrets_management/)
+The API migration process is underway and there may not be an exact `/apis` match to the legacy API you're using. Some legacy APIs may not be migrated at all. Refer to the table for details:
 
 | **Feature**        | **New API**                                                                                                                                             | **Legacy API**      |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
