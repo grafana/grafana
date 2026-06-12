@@ -12,11 +12,11 @@ labels:
     - enterprise
     - oss
 title: Filter and Group by
-description: Filter and group by
+description: Learn how to add filter and group by controls to dynamically filter and group data across your Grafana dashboard.
 weight: 4
 ---
 
-# Filter and Group by
+# Filter and group by controls
 
 <!-- vale Grafana.WordList = NO -->
 <!-- vale Grafana.Spelling = NO -->
@@ -51,11 +51,11 @@ Data sources with an asterisk also support the group by function:
 - OpenSearch.
 - Special Dashboard data source - Use this special data source to [apply filters to data from unsupported data sources](#filter-any-data-using-the-dashboard-data-source).
 
-## Add filters and group by dimensions
+## Add filter and group by controls
 
 <!-- prettier-ignore-start -->
 
-To add filters and group by dimensions, follow these steps:
+To add filter and group by controls, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
@@ -95,18 +95,16 @@ To add filters and group by dimensions, follow these steps:
 
 Now you can filter and group data on the dashboard.
 
-You can remove and reset default filters and group by values, and see your recent ones:
-
-<!-- TODO: CHECK THIS ALT TEXT -->
+You can remove and reset default filters and group by dimensions, and see your recent ones:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-reset-default-v13.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" caption="_Reset default filters and group by selections_" >}}
 
-{{< figure src="/media/docs/grafana/screenshot-filters-group-recent-v13.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" caption="_Recent filter and group by settings_" >}}
+{{< figure src="/media/docs/grafana/screenshot-filters-group-recent-v13.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" caption="_Recent filters and group by dimensions" >}}
 
-To see every active filter and grouping across the dashboard all at once, click the filter icon in the toolbar to open an overview.
-The overview lets you see your current filters and group by dimensions, search for specific keys, and adjust them without scrolling through the dashboard controls:
+To see all active filters and group by dimensions across the dashboard all at once, click the filter icon in the toolbar to open an overview.
+The overview lets you search for specific keys, and adjust them, without scrolling through the dashboard controls:
 
-{{< figure src="/media/docs/grafana/screenshot-filters-overview-v12.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" >}}
+{{< figure src="/media/docs/grafana/screenshot-filters-overview-v12.0.png" max-width="500px" alt="Dashboard with the filters and group by dimensions" >}}
 
 Add an operator and value for a key to add it as a filter or select the **Group by** checkbox to set a group by dimension.
 You can use a key for both a filter and a group by.
@@ -121,9 +119,9 @@ Hover the cursor over any panel using the data source of the filter to show the 
 This can be helpful when you're working with a panel that's far away from the dashboard controls.
 Your selection is applied to the all the panels in the dashboard with the same data source.
 
-<!-- TODO: CHECK USE OF THE WORD VALUES -->
 You can also further filter a time series panel, which allows you to drill down further into your data.
-After setting your group by dimension and splitting your data, click on a series in a panel and click **Filter on this value** or `Filter out this value` which will filter by the labels found on that series, which are related to the set group by values.
+After setting your group by dimension and splitting your data, click on a series in a panel and click **Filter on this value** or **Filter out this value**.
+This filters by the labels found on that series, which are related to the already set group by dimensions.
 
 To enable this functionality, you need to add one or more overrides for the panel.
 In the following example, the override:
@@ -221,11 +219,3 @@ Learn more in:
 
 - [Configure data links and actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-data-links/)
 - [Create dashboard URL variables > Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/#ad-hoc-filters)
-
-## Filters best practices
-<!--TODO: figure out if this is relevant -->
-
-- Filter drop-down lists are displayed in the order in which they're listed in the **Filter and Group by** in dashboard settings, so put the variables that you'll change often at the top, so they're shown first.
-- By default, filters don't have a default value. This means that the topmost filter in the drop-down list is always preselected. If you want to pre-populate a filter with an empty value, you can use the following workaround in the **Filter and Group by** settings:
-  1. Select the **Include All Option** checkbox.
-  2. In the **Custom all value** field, enter a value like `.+`.
