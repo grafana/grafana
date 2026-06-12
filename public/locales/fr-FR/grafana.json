@@ -1180,12 +1180,6 @@
       "label-metric": "Métrique",
       "label-pending-period": "Période en attente"
     },
-    "evaluation-group": {
-      "label-delete": "Supprimer",
-      "label-export": "Exporter",
-      "label-reorder-rules": "Réorganiser les règles",
-      "text-provisioned": "Mis en service"
-    },
     "evaluation-group-creation-modal": {
       "description-group-name": "Un groupe évalue toutes ses règles sur le même intervalle d’évaluation.",
       "description-often-rules-group-evaluated": "Fréquence à laquelle toutes les règles du groupe sont évaluées.",
@@ -1194,9 +1188,6 @@
       },
       "placeholder-enter-a-name": "Saisir un nom",
       "title-new-evaluation-group": "Nouveau groupe d'évaluation"
-    },
-    "evaluation-group-loader": {
-      "title-something-wrong-trying-fetch-group-details": "Une erreur s’est produite lors de la récupération des détails du groupe"
     },
     "existing-rule-editor": {
       "sorry-permission": "Nous sommes désolés ! Vous n’avez pas la permission de modifier cette règle.",
@@ -1967,9 +1958,7 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "Cette source de données n’a pas de règles configurées",
         "new-alert-rule": "Nouvelle règle d'alerte",
-        "new-ds-managed-alerting-rule": "Nouvelle règle d’alerte gérée par la source de données",
         "new-ds-managed-recording-rule": "Nouvelle règle d'enregistrement gérée par la source de données",
         "new-grafana-alerting-rule": "Nouvelle règle d'alerte",
         "new-grafana-recording-rule": "Nouvelle règle d’enregistrement",
@@ -2540,22 +2529,9 @@
         "aria-label": "ajoutez une politique",
         "text": "Nouvelle politique de notification"
       },
-      "delete-reasons": {
-        "no-permissions": "Vous n’avez pas l’autorisation requise pour supprimer cette politique de notification",
-        "provisioned": "La politique de notification est mise en service et ne peut pas être supprimée depuis l’interface utilisateur"
-      },
-      "delete-text": "La politique de notification ne peut pas être supprimée pour les raisons suivantes :",
-      "empty-state": {
-        "message": "Aucune politique trouvée"
-      },
       "fetch": {
         "error": "Échec de la récupération des politiques"
       },
-      "reset-reasons": {
-        "no-permissions": "Vous n’avez pas l’autorisation requise pour réinitialiser cette politique de notification",
-        "provisioned": "La politique de notification est mise en service et ne peut pas être réinitialisée depuis l’interface utilisateur"
-      },
-      "reset-text": "La politique de notification ne peut pas être réinitialisée pour les raisons suivantes :",
       "text-loading": "Chargement…"
     },
     "policies-tree-wrapper": {
@@ -2765,16 +2741,6 @@
       "label-override-timings": "Remplacer les horaires",
       "repeat-interval": "Intervalle de répétition : <strong>{{repeatIntervalValue}}</strong>"
     },
-    "routing-tree-filter": {
-      "aria-label-clear": "effacer",
-      "aria-label-search-routing-trees": "rechercher des arborescences de routage",
-      "clear": "Effacer",
-      "label-search-by-name-or-receiver": "Rechercher par nom de politique ou par point de contact",
-      "placeholder-search": "Rechercher"
-    },
-    "routing-tree-header": {
-      "reset": "Réinitialiser"
-    },
     "rule-actions-buttons": {
       "title-edit": "Modifier",
       "title-view": "Afficher"
@@ -2980,7 +2946,6 @@
       "return-button": {
         "title": "Règles d'alerte"
       },
-      "rulerrule-loading-error": "Échec du chargement de la règle",
       "toggle": {
         "use-new-experience": "Utiliser la nouvelle expérience",
         "view-previous-experience": "Revenir à l’expérience précédente"
@@ -3577,9 +3542,6 @@
       "collapse": "Réduire",
       "collapse-all": "Tout réduire",
       "collapse-sidebar": "Réduire la barre latérale",
-      "compact-firing": "déclenchement",
-      "compact-pending": "en attente",
-      "compact-rules": "règles",
       "error-loading-rule": "Erreur lors du chargement de la règle",
       "expand": "Agrandir",
       "expand-all": "Tout développer",
@@ -5373,6 +5335,8 @@
     },
     "code-pane": {
       "collapse": "Réduire l’éditeur",
+      "copy-as-resource": "",
+      "copy-as-resource-tooltip": "",
       "expand": "Développer l’éditeur",
       "header": "Modifier en tant que code",
       "modal-title": "Modifier le tableau de bord en tant que code"
@@ -5672,8 +5636,7 @@
           "apply": "Appliquer",
           "change-value": "Modifier la valeur de la variable",
           "discard": "Abandonner",
-          "modal-title": "Personnaliser les options",
-          "values": "Valeurs séparées par une virgule"
+          "modal-title": "Personnaliser les options"
         },
         "datasource-options": {
           "name-filter": "Nom du filtre",
@@ -5898,7 +5861,6 @@
     },
     "inspect": {
       "data-tab": "Données",
-      "error-tab": "Erreur",
       "json-tab": "JSON",
       "meta-tab": "Métadonnées",
       "query-tab": "Requête",
@@ -6013,13 +5975,6 @@
       "new-row": {
         "title": {
           "row-title": "Titre de la ligne"
-        }
-      }
-    },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "Titre du widget"
         }
       }
     },
@@ -8781,19 +8736,6 @@
     "span-bar-row": {
       "tooltip-adaptive-traces-restored": ""
     },
-    "span-bar-section": {
-      "description-link": "Ajoutez des informations supplémentaires à côté du service et de l’opération sur une ligne de la barre d’espace dans la vue de la trace.",
-      "title-span-bar": "Barre d’espace"
-    },
-    "span-bar-settings": {
-      "aria-label-selectlabelname": "Sélectionner un nom d’étiquette",
-      "label-label": "Étiquette",
-      "label-tag-key": "Clé de balise",
-      "placeholder-duration": "Durée",
-      "placeholder-enter-tag-key": "Saisir la clé de balise",
-      "tooltip-default-duration": "Par défaut : durée",
-      "tooltip-tag-key": "Clé de balise qui sera utilisée pour obtenir la valeur de la balise. Les attributs et les ressources d’une période seront recherchés pour la clé de la balise"
-    },
     "span-detail": {
       "label": {
         "kind": "Type :",
@@ -9030,13 +8972,6 @@
       "folder-deleted-success": "Dossier supprimé",
       "folder-move-error-provisioned": "Impossible de déplacer le dossier provisionné. Pour le déplacer, effectuez l’opération dans le référentiel puis synchronisez afin d’appliquer les modifications.",
       "folder-moved-success": "Dossier déplacé"
-    },
-    "get-loading-nav": {
-      "main": {
-        "title": {
-          "loading": "Chargement en cours"
-        }
-      }
     }
   },
   "forgot-password": {
@@ -11616,11 +11551,6 @@
     "noOptionsMessage-no-options-found": "Aucune option trouvée"
   },
   "migrate-to-cloud": {
-    "build-snapshot": {
-      "description": "Cet outil permet de migrer certaines ressources de cette installation vers votre pile cloud. Pour commencer, vous devez créer un instantané de cette installation. La création d'un instantané prend généralement moins de deux minutes. L'instantané est stocké avec cette installation Grafana.",
-      "title": "Aucun instantané n'existe",
-      "when-complete": "Une fois l'instantané terminé, vous pourrez le télécharger sur votre pile cloud."
-    },
     "building-snapshot": {
       "description": "Nous rassemblons vos ressources pour la migration vers Grafana Cloud. Cela ne devrait prendre qu’un instant.",
       "description-eta": "La création d'un instantané prend généralement moins de deux minutes.",
@@ -12478,13 +12408,6 @@
       "search": "Rechercher",
       "starred-dashboards": "Tableaux de bord favoris"
     },
-    "get-calculation-value-data-links-variable-suggestions": {
-      "value-calc-var": {
-        "label": {
-          "calculation-name": "Nom du calcul"
-        }
-      }
-    },
     "get-data-links-variable-suggestions": {
       "value-time-var": {
         "label": {
@@ -13129,6 +13052,14 @@
       "folders-count_one": "{{count}} dossier",
       "folders-count_other": "{{count}} dossier"
     },
+    "branch-options": {
+      "description-enforce-template": "",
+      "description-name-template": "",
+      "label-branch-options": "",
+      "label-enforce-template": "",
+      "label-name-template": "",
+      "placeholder-name-template": ""
+    },
     "cloud-info-box": {
       "body": "Évitez la configuration et bénéficiez de Git Sync entièrement géré et hébergé sur Grafana Cloud avec l’<2>abonnement Grafana Cloud gratuit à vie</2>.",
       "title": "Vous pouvez également utiliser Git Sync sur Grafana Cloud"
@@ -13147,6 +13078,11 @@
       "folder-move-default": "",
       "folder-rename-default": "",
       "folder-update-default": ""
+    },
+    "commit-options": {
+      "description-enforce-template": "",
+      "label-commit-options": "",
+      "label-enforce-template": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Paramètres du référentiel enregistrés",
@@ -13584,6 +13520,14 @@
           "repository-request-failed": "Échec de la requête du référentiel"
         }
       }
+    },
+    "pull-request-options": {
+      "description-enforce-template": "",
+      "description-title-template": "",
+      "label-enforce-template": "",
+      "label-pull-request-options": "",
+      "label-title-template": "",
+      "placeholder-title-template": ""
     },
     "quota-limit": {
       "note": "Remarque :",
@@ -14214,6 +14158,10 @@
       "query": "",
       "transformation": ""
     },
+    "queries-empty-state": {
+      "add-query": "",
+      "message": ""
+    },
     "sidebar": {
       "add-below": "Ajouter sous {{id}}",
       "add-expression": "Ajouter une expression",
@@ -14232,9 +14180,11 @@
       "footer-select": "",
       "footer-select-label": "",
       "new-type": "Nouveau {{type}}",
+      "queries-empty": "",
       "queries-expressions": "Requêtes et expressions",
       "toggle-size": "Basculer la taille de la barre latérale",
       "transformations": "Transformations",
+      "transformations-empty": "",
       "view-toggle": "Afficher",
       "alerts_one": "Alerte ({{count}})",
       "alerts_other": "Alertes ({{count}})",
