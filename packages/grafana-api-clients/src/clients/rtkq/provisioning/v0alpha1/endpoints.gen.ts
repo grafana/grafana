@@ -1826,7 +1826,7 @@ export type CommitOptions = {
   /** Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to "Grafana". */
   signerName?: string;
   /** Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime". When empty, commits are not signed.
-    
+
     Possible enum values:
      - `"gpg"`
      - `"smime"`
