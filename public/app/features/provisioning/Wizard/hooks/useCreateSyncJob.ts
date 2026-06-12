@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
-import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { type ResourceRef, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
 import { withSavedByTrailer } from '../../utils/currentUser';
@@ -16,8 +16,8 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
   const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
 
   const createSyncJob = useCallback(
-    async (requiresMigration: boolean, options?: { skipStatusUpdates?: boolean }) => {
-      const { skipStatusUpdates = false } = options || {};
+    async (requiresMigration: boolean, options?: { skipStatusUpdates?: boolean; resources?: ResourceRef[] }) => {
+      const { skipStatusUpdates = false, resources } = options || {};
 
       if (!repoName) {
         if (!skipStatusUpdates) {
@@ -41,6 +41,10 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
                 message: withSavedByTrailer(
                   t('provisioning.sync-job.migrate-default-message', 'Migrate Grafana resources into repository')
                 ),
+                // When resources are passed, only those (unmanaged) dashboards
+                // are migrated; an empty/omitted list keeps the legacy
+                // "migrate everything unmanaged" behavior the wizard relies on.
+                ...(resources?.length ? { resources } : {}),
               },
             }
           : {

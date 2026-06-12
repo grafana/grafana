@@ -94,4 +94,55 @@ describe('MigrateDrawer', () => {
 
     await waitFor(() => expect(onMigrated).toHaveBeenCalledTimes(1));
   });
+
+  describe('selective migration', () => {
+    const resources = [
+      { name: 'dash-1', group: 'dashboard.grafana.app', kind: 'Dashboard' },
+      { name: 'dash-2', group: 'dashboard.grafana.app', kind: 'Dashboard' },
+    ];
+
+    it('labels the action "Migrate selected" and summarizes the selection', async () => {
+      render(
+        <MigrateDrawer
+          repos={[makeRepo('repo-1', 'My only repo')]}
+          resources={resources}
+          selection={{ folders: 1, dashboards: 2 }}
+          onDismiss={jest.fn()}
+        />
+      );
+
+      expect(await screen.findByRole('button', { name: /migrate selected/i })).toBeInTheDocument();
+      // The "migrate everything" copy must not show in selective mode.
+      expect(screen.queryByText(/all dashboards and folders will be migrated/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/2 selected dashboards/i)).toBeInTheDocument();
+    });
+
+    it('runs a migrate job scoped to the selected dashboard resources', async () => {
+      let postedBody = '';
+      server.use(
+        http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+          postedBody = await request.text();
+          return HttpResponse.json(createJob());
+        })
+      );
+      mockJobList(createJob());
+
+      const { user } = render(
+        <MigrateDrawer
+          repos={[makeRepo('repo-1', 'My only repo')]}
+          resources={resources}
+          selection={{ folders: 1, dashboards: 2 }}
+          onDismiss={jest.fn()}
+        />
+      );
+      await user.click(screen.getByRole('button', { name: /migrate selected/i }));
+
+      expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+      expect(postedBody).toContain('"action":"migrate"');
+      // The selected dashboard refs are forwarded to the migrate job.
+      expect(postedBody).toContain('"resources"');
+      expect(postedBody).toContain('dash-1');
+      expect(postedBody).toContain('dash-2');
+    });
+  });
 });
