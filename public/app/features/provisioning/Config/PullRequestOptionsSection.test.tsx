@@ -3,10 +3,15 @@ import { act, render, screen } from 'test/test-utils';
 
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { setupProvisioningMswServer } from '../mocks/server';
 import { type RepoType } from '../Wizard/types';
 import { type RepositoryFormData } from '../types';
 
 import { PullRequestOptionsSection } from './PullRequestOptionsSection';
+
+// PullRequestOptionsSection calls useGetFrontendSettingsQuery; the request is
+// served by the default provisioning MSW handlers.
+setupProvisioningMswServer();
 
 interface WrapperProps {
   repoType?: RepoType;

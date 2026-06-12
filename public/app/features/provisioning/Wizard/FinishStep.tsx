@@ -19,6 +19,7 @@ export const FinishStep = memo(function FinishStep() {
   const { setStepStatusInfo, hasStepError } = useStepStatus();
   const {
     register,
+    control,
     watch,
     setValue,
     formState: { errors },
@@ -121,8 +122,16 @@ export const FinishStep = memo(function FinishStep() {
           />
           <CommitOptionsSection<WizardFormData>
             register={register}
+            control={control}
+            setValue={setValue}
             messageTemplateName="repository.commit.singleResourceMessageTemplate"
             enforceTemplateName="repository.commit.enforceTemplate"
+            type={type}
+            signingMethodName="repository.signingMethod"
+            signingKeyName="repository.commitSigningKey"
+            smimeCertificateName="repository.smimeCertificate"
+            signerNameName="repository.commit.signerName"
+            signerEmailName="repository.commit.signerEmail"
           />
           {/* Pull requests are not supported by the pure git type. */}
           {type !== 'git' && (
