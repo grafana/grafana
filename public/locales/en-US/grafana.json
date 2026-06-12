@@ -5249,34 +5249,6 @@
       "redirect-link": "List in Grafana Alerting",
       "subtitle": "Alert rules related to this dashboard"
     },
-    "annotation-settings-edit": {
-      "apply": "Apply",
-      "delete": "Delete",
-      "description-color-annotation-event-markers": "Color to use for the annotation event markers",
-      "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
-      "description-hidden": "Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden.",
-      "error-loading-panels": "Failed to load panel plugins",
-      "label-color": "Color",
-      "label-data-source": "Data source",
-      "label-enabled": "Enabled",
-      "label-hidden": "Hidden",
-      "label-name": "Name",
-      "label-show-in": "Show in",
-      "placeholder-choose-panels": "Choose panels",
-      "preview-in-dashboard": "Preview in dashboard",
-      "query": "Query",
-      "title-annotation-support-source": "No annotation support for this data source"
-    },
-    "annotation-settings-list": {
-      "aria-label-delete": "Delete query with title \"{{title}}\"",
-      "built-in": "{{name}} (Built-in)",
-      "data-source": "Data source",
-      "disabled": "(Disabled) {{name}}",
-      "new-query": "New query",
-      "query-name": "Query name",
-      "tooltip-move-down": "Move down",
-      "tooltip-move-up": "Move up"
-    },
     "auto-grid": {
       "description": "Panels resize to fit and form uniform grids",
       "item-options": {
@@ -5774,18 +5746,6 @@
         "transform-data": "Transform data"
       }
     },
-    "get-panel-filters": {
-      "description": {
-        "annotation-following-panels": "Do not send annotation data to the following panels",
-        "annotation-panels-support-annotations": "Send the annotation data to all panels that support annotations",
-        "annotations-explicitly-listed-panels": "Send the annotations to the explicitly listed panels"
-      },
-      "label": {
-        "all-panels": "All panels",
-        "all-panels-except": "All panels except",
-        "selected-panels": "Selected panels"
-      }
-    },
     "get-panel-frame-category": {
       "descriptor": {
         "title": {
@@ -6114,9 +6074,6 @@
       "saving": "Saving...",
       "title": "Title"
     },
-    "save-dashboard-button": {
-      "save-dashboard": "Save dashboard"
-    },
     "save-dashboard-diff": {
       "full-json-diff": "Full JSON diff",
       "no-changes-in-the-dashboard-json": "No changes in the dashboard JSON",
@@ -6399,12 +6356,6 @@
       "title-delete-all-transformations": "Delete all transformations?",
       "tooltip-clear-search": "Clear search",
       "tooltip-close-picker": "Close picker"
-    },
-    "unsaved-changes-modal": {
-      "cancel": "Cancel",
-      "changes": "Do you want to save your changes?",
-      "discard": "Discard",
-      "title-unsaved-changes": "Unsaved changes"
     },
     "validation": {
       "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
@@ -7577,16 +7528,6 @@
       "title-delete-variable": "Delete variable",
       "tooltip-duplicate-variable": "Duplicate variable",
       "tooltip-remove-variable": "Remove variable"
-    },
-    "variable-hide-select": {
-      "hide_options": {
-        "label": {
-          "label": "Label",
-          "nothing": "Nothing",
-          "variable": "Variable"
-        }
-      },
-      "label": "Hide"
     },
     "variable-list": {
       "create-drag-end-handler": {
@@ -10920,17 +10861,6 @@
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
       "success": "Library panel saved"
-    },
-    "save-library-panel-modal": {
-      "affected-dashboards": "The following dashboards using the panel will be affected:",
-      "cancel": "Cancel",
-      "dashboard-name": "Dashboard name",
-      "discard": "Discard",
-      "loading-connected-dashboards": "Loading connected dashboards...",
-      "num-affected_one": "This update will affect <1>{{count}} dashboards.</1>",
-      "num-affected_other": "This update will affect <1>{{count}} dashboards.</1>",
-      "placeholder-search-affected-dashboards": "Search affected dashboards",
-      "update-all": "Update all"
     },
     "search-controls": {
       "label": {
@@ -16415,11 +16345,6 @@
       "shared-dashboard-users-tab-title": "Shared dashboard users"
     }
   },
-  "variabels": {
-    "variable-usages-button": {
-      "usage-title": "Showing usages for: {{variableId}}"
-    }
-  },
   "variable": {
     "adhoc": {
       "placeholder": "Select value"
@@ -16544,13 +16469,6 @@
     },
     "variable-options": {
       "aria-label-toggle-all-values": "Toggle all values"
-    },
-    "variable-usages-button": {
-      "tooltip-show-usages": "Show usages"
-    },
-    "variables-dependencies-button": {
-      "show-dependencies": "Show dependencies",
-      "title-dependencies": "Dependencies"
     },
     "variables-unknown-button": {
       "usage-title": "Showing usages for: {{variableId}}",
