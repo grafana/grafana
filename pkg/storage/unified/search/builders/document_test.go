@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -207,4 +208,40 @@ func TestBuildSelectableFields(t *testing.T) {
 	user := &iamv0.User{}
 	_, err = BuildSelectableFields(user, iamv0.TeamBindingKind())
 	require.Error(t, err)
+}
+
+func TestUserDocumentBuilder_InternalIDAndCreated(t *testing.T) {
+	info, err := GetUserBuilder()
+	require.NoError(t, err)
+
+	value := []byte(`{
+		"metadata": {
+			"name": "uid-1",
+			"creationTimestamp": "2024-01-02T03:04:05Z",
+			"labels": {"grafana.app/deprecatedInternalID": "42"}
+		},
+		"spec": {"login": "jdoe", "email": "jdoe@example.com", "role": "Admin"}
+	}`)
+
+	doc, err := info.Builder.BuildDocument(context.Background(),
+		&resourcepb.ResourceKey{Namespace: "default", Group: "iam.grafana.app", Resource: "users", Name: "uid-1"},
+		1, value)
+	require.NoError(t, err)
+
+	assert.Equal(t, int64(42), doc.Fields[USER_INTERNAL_ID])
+	assert.Equal(t, time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC).UnixMilli(), doc.Fields[USER_CREATED])
+}
+
+func TestUserDocumentBuilder_MissingInternalIDLabel(t *testing.T) {
+	info, err := GetUserBuilder()
+	require.NoError(t, err)
+
+	value := []byte(`{"metadata": {"name": "uid-2"}, "spec": {"login": "viewer"}}`)
+	doc, err := info.Builder.BuildDocument(context.Background(),
+		&resourcepb.ResourceKey{Namespace: "default", Group: "iam.grafana.app", Resource: "users", Name: "uid-2"},
+		1, value)
+	require.NoError(t, err)
+
+	_, ok := doc.Fields[USER_INTERNAL_ID]
+	assert.False(t, ok, "internalId should be absent when the label is missing")
 }

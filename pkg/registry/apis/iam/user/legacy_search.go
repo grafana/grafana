@@ -35,6 +35,8 @@ var (
 	fieldLastSeenAt                                 = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LAST_SEEN_AT)
 	fieldRole                                       = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_ROLE)
 	fieldDisabled                                   = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_DISABLED)
+	fieldInternalID                                 = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_INTERNAL_ID)
+	fieldCreated                                    = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_CREATED)
 	wildcardsMatcher                                = regexp.MustCompile(`[\*\?\\]`)
 
 	userSortFieldMapping = map[string]string{
@@ -211,6 +213,12 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_EMAIL])
 		case fieldLogin:
 			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_LOGIN])
+		case fieldDisabled:
+			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_DISABLED])
+		case fieldInternalID:
+			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_INTERNAL_ID])
+		case fieldCreated:
+			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_CREATED])
 		}
 	}
 	return cols
@@ -232,6 +240,20 @@ func createCells(u *org.OrgUserDTO, fields []string) [][]byte {
 			cells = append(cells, b)
 		case fieldRole:
 			cells = append(cells, []byte(u.Role))
+		case fieldDisabled:
+			if u.IsDisabled {
+				cells = append(cells, []byte{1})
+			} else {
+				cells = append(cells, []byte{0})
+			}
+		case fieldInternalID:
+			b := make([]byte, 8)
+			binary.BigEndian.PutUint64(b, uint64(u.UserID))
+			cells = append(cells, b)
+		case fieldCreated:
+			b := make([]byte, 8)
+			binary.BigEndian.PutUint64(b, uint64(u.Created.UnixMilli()))
+			cells = append(cells, b)
 		}
 	}
 	return cells

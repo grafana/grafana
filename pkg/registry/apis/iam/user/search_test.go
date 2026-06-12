@@ -409,8 +409,8 @@ func TestParseResults(t *testing.T) {
 		{Name: builders.USER_LAST_SEEN_AT},
 		{Name: builders.USER_ROLE},
 		{Name: builders.USER_DISABLED},
-		{Name: resource.SEARCH_FIELD_CREATED},
-		{Name: resource.SEARCH_FIELD_LEGACY_ID},
+		{Name: builders.USER_CREATED},
+		{Name: builders.USER_INTERNAL_ID},
 	}
 	created := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC).UnixMilli()
 	lastSeen := time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC).Unix()
