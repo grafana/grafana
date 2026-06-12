@@ -1,4 +1,4 @@
-import 'react-data-grid/lib/styles.css';
+import '@grafana/react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
@@ -15,18 +15,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import {
-  Cell,
-  type CellRendererProps,
-  DataGrid,
-  type DataGridHandle,
-  type DataGridProps,
-  type RenderCellProps,
-  type Renderers,
-  type RenderRowProps,
-  Row,
-  type SortColumn,
-} from 'react-data-grid';
 
 import {
   type DataFrame,
@@ -38,6 +26,18 @@ import {
   getDisplayProcessor,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import {
+  Cell,
+  type CellRendererProps,
+  DataGrid,
+  type DataGridHandle,
+  type DataGridProps,
+  type RenderCellProps,
+  type Renderers,
+  type RenderRowProps,
+  Row,
+  type SortColumn,
+} from '@grafana/react-data-grid';
 import { FieldColorModeId, TableCellTooltipPlacement, type TableFooterOptions } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
@@ -46,9 +46,9 @@ import { Pagination } from '../../Pagination/Pagination';
 import { type PanelContext, usePanelContext } from '../../PanelChrome';
 import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
+import { type DataLinksActionsTooltipState } from '../cellUtils';
 import { hasGeoCell, LazyOpenLayersProvider } from '../geo';
 import { TableCellDisplayMode } from '../types';
-import { type DataLinksActionsTooltipState } from '../utils';
 
 import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
 import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
@@ -306,7 +306,22 @@ export function TableNG(props: TableNGProps) {
 
   // https://github.com/grafana/grafana/issues/118984: nested tables don't support frozen columns yet.
   const frozenColumns = useMemo(() => (hasNestedFrames ? 0 : _frozenColumns), [hasNestedFrames, _frozenColumns]);
-  const [widths, numFrozenColsFullyInView] = useColWidths(visibleFields, availableWidth, frozenColumns);
+  const configuredWidthCount = visibleFields.reduce(
+    (count, field) => count + (field.config.custom?.width != null ? 1 : 0),
+    0
+  );
+  const prevConfiguredWidthCount = useRef(configuredWidthCount);
+  const widthConfigResetKey = configuredWidthCount < prevConfiguredWidthCount.current ? Symbol() : undefined;
+  const resetColumnWidths = widthConfigResetKey != null ? new Map() : undefined;
+
+  prevConfiguredWidthCount.current = configuredWidthCount;
+
+  const [widths, numFrozenColsFullyInView] = useColWidths(
+    visibleFields,
+    availableWidth,
+    frozenColumns,
+    widthConfigResetKey
+  );
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
@@ -1045,6 +1060,8 @@ export function TableNG(props: TableNGProps) {
         onSelectedRowsChange={setSelectedRows}
         headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
         headerRowHeight={headerHeight}
+        columnWidths={resetColumnWidths}
+        onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
         onColumnResize={resizeHandler}
         onCellClick={onCellClick}
         onCellKeyDown={({ column, row }, event) => {

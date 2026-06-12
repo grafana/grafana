@@ -8,11 +8,8 @@ import {
   type PluginErrorCode,
   type WithAccessControlMetadata,
 } from '@grafana/data';
-import { type IconName } from '@grafana/ui';
 import { type PluginsState } from 'app/types/plugins';
 import { type StoreState } from 'app/types/store';
-
-export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
 export enum PluginAdminRoutes {
   Home = 'plugins-home',
@@ -105,23 +102,9 @@ export const SCORE_LEVELS = {
   CRITICAL: 'Critical',
 } as const;
 
-export type ScoreLevel = (typeof SCORE_LEVELS)[keyof typeof SCORE_LEVELS];
+type ScoreLevel = (typeof SCORE_LEVELS)[keyof typeof SCORE_LEVELS];
 
-export const INSIGHT_CATEGORIES = {
-  SECURITY: 'security',
-  QUALITY: 'quality',
-  PERFORMANCE: 'performance',
-} as const;
-
-export const INSIGHT_LEVELS = {
-  GOOD: 'good',
-  OK: 'ok',
-  WARNING: 'warning',
-  DANGER: 'danger',
-  INFO: 'info',
-} as const;
-
-export interface InsightItem {
+interface InsightItem {
   id: string;
   name: string;
   description?: string;
@@ -129,7 +112,7 @@ export interface InsightItem {
   link?: string;
 }
 
-export interface InsightCategory {
+interface InsightCategory {
   name: string;
   items: InsightItem[];
   scoreValue: number;
@@ -143,7 +126,7 @@ export interface CatalogPluginInsights {
   insights: InsightCategory[];
 }
 
-export interface CatalogPluginInfo {
+interface CatalogPluginInfo {
   logos: { large: string; small: string };
   keywords: string[];
 }
@@ -261,7 +244,7 @@ interface Rel {
   url: string;
 }
 
-export interface Build {
+interface Build {
   time?: number;
   repo?: string;
   branch?: string;
@@ -277,24 +260,6 @@ export interface Version {
   angularDetected?: boolean;
   status?: string; // Status of the version: 'active', 'deprecated'
 }
-
-export interface PluginDetails {
-  remote?: RemotePlugin;
-  remoteVersions?: Version[];
-  local?: LocalPlugin;
-}
-
-export interface Org {
-  slug: string;
-  name: string;
-  url: string;
-  createdAt: string;
-  updatedAt: string;
-  avatar: string;
-  avatarUrl: string;
-}
-
-export type CatalogPluginsState = { loading: boolean; error?: Error; plugins: CatalogPlugin[] };
 
 export enum PluginStatus {
   INSTALL = 'INSTALL',
@@ -335,21 +300,13 @@ export enum RequestStatus {
   Fulfilled = 'Fulfilled',
   Rejected = 'Rejected',
 }
-export type RemotePluginResponse = { plugins: RemotePlugin[]; error?: Error };
 
-export type RequestInfo = {
+type RequestInfo = {
   status: RequestStatus;
   // The whole error object
   error?: any;
   // An optional error message
   errorMessage?: string;
-};
-
-export type PluginDetailsTab = {
-  label: PluginTabLabels | string;
-  icon?: IconName;
-  id: PluginTabIds | string;
-  href?: string;
 };
 
 // TODO<remove `PluginsState &` when the "plugin_admin_enabled" feature flag is removed>

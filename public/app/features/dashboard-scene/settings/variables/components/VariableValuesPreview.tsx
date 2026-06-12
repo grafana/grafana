@@ -71,7 +71,14 @@ export const VariableValuesPreview = ({ options, staticOptions }: VariableValues
   return (
     <div className={styles.previewContainer} style={{ gap: '8px' }}>
       <Text variant="bodySmall" weight="medium">
-        <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values" values={{ count: options.length }}>
+        <Trans
+          i18nKey="dashboard-scene.variable-values-preview.preview-of-values"
+          values={{ count: options.length }}
+          tOptions={{
+            defaultValue_one: 'Preview of values ({{count}})',
+            defaultValue_other: 'Preview of values ({{count}})',
+          }}
+        >
           Preview of values ({'{{count}}'})
         </Trans>
         {hasOptions && displayMultiPropsPreview && (
@@ -124,7 +131,7 @@ function VariableValuesWithPropsPreview({
 const sanitizeKey = (key: string) => key.replace(/\./g, '__dot__');
 const unsanitizeKey = (key: string) => key.replace(/__dot__/g, '.');
 
-export function VariableValuesWithoutPropsPreview({ options }: { options: VariableValueOption[] }) {
+function VariableValuesWithoutPropsPreview({ options }: { options: VariableValueOption[] }) {
   const styles = useStyles2(getStyles);
   const [previewLimit, setPreviewLimit] = useState(20);
   const [previewOptions, setPreviewOptions] = useState<VariableValueOption[]>([]);

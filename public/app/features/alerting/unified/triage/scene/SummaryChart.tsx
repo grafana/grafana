@@ -2,10 +2,10 @@ import { groupBy, map as lmap } from 'lodash';
 import { type Observable, map } from 'rxjs';
 
 import { type CustomTransformOperator, type DataFrame, FieldType } from '@grafana/data';
-import { SceneObjectBase, type SceneObjectState, VizConfigBuilders } from '@grafana/scenes';
+import { VizConfigBuilders } from '@grafana/scenes';
 import { VizPanel, useDataTransformer, useQueryRunner } from '@grafana/scenes-react';
 import { BarAlignment, GraphDrawStyle, VisibilityMode } from '@grafana/schema';
-import { LegendDisplayMode, StackingMode, TooltipDisplayMode } from '@grafana/ui';
+import { StackingMode, TooltipDisplayMode } from '@grafana/ui';
 
 import { overrideToFixedColor } from '../../home/Insights';
 
@@ -16,7 +16,7 @@ import { cleanAlertStateFilter, useQueryFilter } from './utils';
 /**
  * Viz config for the summary chart - used by the React component
  */
-export const summaryChartVizConfig = VizConfigBuilders.timeseries()
+const summaryChartVizConfig = VizConfigBuilders.timeseries()
   .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
   .setCustomFieldConfig('barWidthFactor', 1)
   .setCustomFieldConfig('barAlignment', BarAlignment.Center)
@@ -26,7 +26,6 @@ export const summaryChartVizConfig = VizConfigBuilders.timeseries()
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
   .setOption('legend', {
     showLegend: false,
-    displayMode: LegendDisplayMode.Hidden,
   })
   .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
   .setMin(0)
@@ -106,9 +105,4 @@ export function SummaryChartReact() {
   });
 
   return <VizPanel title="" viz={summaryChartVizConfig} dataProvider={dataProvider} hoverHeader={true} />;
-}
-
-// simple wrapper so we can render the Chart using a Scene parent
-export class SummaryChartScene extends SceneObjectBase<SceneObjectState> {
-  static Component = SummaryChartReact;
 }

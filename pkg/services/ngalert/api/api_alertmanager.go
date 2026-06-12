@@ -60,10 +60,6 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 		return ErrResp(http.StatusInternalServerError, err, "failed to get status for the Alertmanager")
 	}
 
-	if !c.HasRole(org.RoleAdmin) {
-		notifier.RemoveAutogenConfigIfExists(status.Config.Route)
-	}
-
 	return response.JSON(http.StatusOK, status)
 }
 

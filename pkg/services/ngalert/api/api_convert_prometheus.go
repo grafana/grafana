@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/alertmanager/pkg/labels"
 	prommodel "github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
@@ -31,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -55,10 +55,6 @@ const (
 	// notificationSettingsHeader is the header that specifies the notification settings to be used for the rules.
 	// The value should be a JSON-encoded AlertRuleNotificationSettings object.
 	notificationSettingsHeader = "X-Grafana-Alerting-Notification-Settings"
-
-	// mergeMatchersHeader is the header that specifies the merge matchers for imported Alertmanager config.
-	// The value should be comma-separated key=value pairs, e.g., "environment=production,team=alerting".
-	mergeMatchersHeader = "X-Grafana-Alerting-Merge-Matchers"
 
 	// extraLabelsHeader is the header that specifies extra labels to be added to all imported rules.
 	// The value should be comma-separated key=value pairs, e.g., "environment=production,team=alerting".
@@ -146,7 +142,7 @@ type ConvertPrometheusSrv struct {
 
 type Alertmanager interface {
 	DeleteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, identifier string) error
-	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, extraConfig apimodels.ExtraConfiguration, replace bool, dryRun bool) (merge.RenameResources, error)
+	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, extraConfig v1.ExtraConfiguration, replace bool, dryRun bool) (merge.MergeResult, error)
 	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error)
 	IsExternalAMSyncConfiguredForOrg(ctx context.Context, orgID int64) (bool, error)
 }
@@ -631,15 +627,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 		return errorToResponse(err)
 	}
 
-	mergeMatchers, err := parseMergeMatchersHeader(c)
-	if err != nil {
-		logger.Error("Failed to parse merge matchers header", "error", err, "identifier", identifier)
-		return errorToResponse(err)
-	}
-
-	ec := apimodels.ExtraConfiguration{
+	ec := v1.ExtraConfiguration{
 		Identifier:         identifier,
-		MergeMatchers:      mergeMatchers,
 		TemplateFiles:      amCfg.TemplateFiles,
 		AlertmanagerConfig: amCfg.AlertmanagerConfig,
 	}
@@ -655,34 +644,41 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 		return errorToResponse(err)
 	}
 
-	renamed, err := srv.am.SaveAndApplyExtraConfiguration(c.Req.Context(), c.GetOrgID(), c.SignedInUser, srv.importsAuthz, ec, replace, dryRun)
+	result, err := srv.am.SaveAndApplyExtraConfiguration(c.Req.Context(), c.GetOrgID(), c.SignedInUser, srv.importsAuthz, ec, replace, dryRun)
 	if err != nil {
 		logger.Error("Failed to save alertmanager configuration", "error", err, "identifier", identifier)
 		return errorToResponse(fmt.Errorf("failed to save alertmanager configuration: %w", err))
 	}
 
-	// Convert merge.RenameResources to API RenameResources type
-	var apiRenamed *apimodels.RenameResources
-	if len(renamed.Receivers) > 0 || len(renamed.TimeIntervals) > 0 {
-		apiRenamed = &apimodels.RenameResources{
-			Receivers:     renamed.Receivers,
-			TimeIntervals: renamed.TimeIntervals,
-		}
-	}
+	apiResp := buildConvertResponse(result)
 
 	if dryRun {
 		logger.Info("Dry run: alertmanager configuration validated successfully", "identifier", identifier, "replace", replace)
-		return response.JSON(http.StatusOK, apimodels.ConvertAlertmanagerResponse{
-			Status:          "success",
-			RenameResources: apiRenamed,
-		})
+		return response.JSON(http.StatusOK, apiResp)
 	}
 
 	logger.Info("Successfully updated alertmanager configuration with imported Prometheus config", "identifier", identifier, "replace", replace)
-	return response.JSON(http.StatusAccepted, apimodels.ConvertAlertmanagerResponse{
-		Status:          "success",
-		RenameResources: apiRenamed,
-	})
+	return response.JSON(http.StatusAccepted, apiResp)
+}
+
+func buildConvertResponse(result merge.MergeResult) apimodels.ConvertAlertmanagerResponse {
+	resp := apimodels.ConvertAlertmanagerResponse{
+		Status: "success",
+		Stats: &apimodels.MergeStats{
+			AddedRoute:           result.AddedRoute,
+			AddedReceivers:       result.AddedReceivers,
+			AddedTimeIntervals:   result.AddedTimeIntervals,
+			AddedTemplates:       result.AddedTemplates,
+			AddedInhibitionRules: result.AddedInhibitionRules,
+		},
+	}
+	if len(result.Receivers) > 0 || len(result.TimeIntervals) > 0 {
+		resp.RenameResources = &apimodels.RenameResources{
+			Receivers:     result.Receivers,
+			TimeIntervals: result.TimeIntervals,
+		}
+	}
+	return resp
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
@@ -731,7 +727,6 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 
 	resp := convertPrometheusResponse(c, http.StatusOK, respBody)
 	resp.SetHeader(configIdentifierHeader, extraCfg.Identifier)
-	resp.SetHeader(mergeMatchersHeader, formatMergeMatchers(extraCfg.MergeMatchers))
 
 	return resp
 }
@@ -834,7 +829,7 @@ func getWorkingFolderUID(c *contextmodel.ReqContext) string {
 	if folderUID != "" {
 		return folderUID
 	}
-	return folder.RootFolderUID
+	return folder.LegacyRootFolderUID //nolint:staticcheck
 }
 
 func namespaceErrorResponse(err error) response.Response {
@@ -913,32 +908,6 @@ func parseKeyValuePairs(input string, headerName string) (map[string]string, err
 	return result, nil
 }
 
-// parseMergeMatchersHeader parses the merge matchers header value.
-// Expected format: "key1=value1,key2=value2"
-func parseMergeMatchersHeader(c *contextmodel.ReqContext) (apimodels.Matchers, error) {
-	matchersStr := strings.TrimSpace(c.Req.Header.Get(mergeMatchersHeader))
-
-	if matchersStr == "" {
-		return nil, nil
-	}
-
-	kvPairs, err := parseKeyValuePairs(matchersStr, mergeMatchersHeader)
-	if err != nil {
-		return nil, err
-	}
-
-	matchers := apimodels.Matchers{}
-	for key, value := range kvPairs {
-		matchers = append(matchers, &labels.Matcher{
-			Type:  labels.MatchEqual,
-			Name:  key,
-			Value: value,
-		})
-	}
-
-	return matchers, nil
-}
-
 // parseExtraLabelsHeader parses the extra labels header value.
 // Expected format: "key1=value1,key2=value2"
 func parseExtraLabelsHeader(c *contextmodel.ReqContext) (map[string]string, error) {
@@ -954,16 +923,6 @@ func parseVersionMessageHeader(c *contextmodel.ReqContext) (string, error) {
 		return "", errInvalidHeaderValue(versionMessageHeader, errors.New("must be less than 500 characters"))
 	}
 	return str, nil
-}
-
-func formatMergeMatchers(matchers apimodels.Matchers) string {
-	var pairs []string
-	for _, matcher := range matchers {
-		if matcher.Type == labels.MatchEqual {
-			pairs = append(pairs, fmt.Sprintf("%s=%s", matcher.Name, matcher.Value))
-		}
-	}
-	return strings.Join(pairs, ",")
 }
 
 func readConfigIdentifierHeader(c *contextmodel.ReqContext) string {

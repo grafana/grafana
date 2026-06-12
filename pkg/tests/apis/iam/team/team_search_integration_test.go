@@ -2,6 +2,7 @@ package team
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -483,12 +484,6 @@ func doTeamSearchMemberCountTests(t *testing.T, helper *apis.K8sTestHelper) {
 		Namespace: namespace,
 		GVR:       gvrUsers,
 	})
-	tbClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: namespace,
-		GVR:       gvrTeamBindings,
-	})
-
 	// Create teamA with 3 members
 	teamA, err := teamClient.Resource.Create(ctx, createTeamObject(helper, "mc-team-a", "MemberCount Team A", "mc-team-a@example.com"), metav1.CreateOptions{})
 	require.NoError(t, err)
@@ -497,7 +492,11 @@ func doTeamSearchMemberCountTests(t *testing.T, helper *apis.K8sTestHelper) {
 	teamB, err := teamClient.Resource.Create(ctx, createTeamObject(helper, "mc-team-b", "MemberCount Team B", "mc-team-b@example.com"), metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	// Create 3 users and bind them to teamA
+	// Create 3 users and add them to teamA via the addmember subresource
+	// (Spec.Members is the source of truth for membership across all
+	// dual-writer modes; TeamBinding writes don't sync to Spec.Members in
+	// Mode 5).
+	addMemberPath := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/teams/%s/addmember", namespace, teamA.GetName())
 	for i := 1; i <= 3; i++ {
 		uObj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
 		uObj.Object["metadata"].(map[string]any)["name"] = fmt.Sprintf("mc-user-%d", i)
@@ -507,9 +506,19 @@ func doTeamSearchMemberCountTests(t *testing.T, helper *apis.K8sTestHelper) {
 		u, err := userClient.Resource.Create(ctx, uObj, metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		tbObj := createTeamBindingObject(helper, u.GetName(), teamA.GetName())
-		_, err = tbClient.Resource.Create(ctx, tbObj, metav1.CreateOptions{})
+		body, err := json.Marshal(map[string]any{
+			"name":       u.GetName(),
+			"permission": "member",
+			"external":   false,
+		})
 		require.NoError(t, err)
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodPost,
+			Path:   addMemberPath,
+			Body:   body,
+		}, &map[string]any{})
+		require.Equal(t, http.StatusCreated, rsp.Response.StatusCode, "addmember for %s: %s", u.GetName(), string(rsp.Body))
 	}
 
 	t.Run("should return correct member counts for teams with and without members", func(t *testing.T) {

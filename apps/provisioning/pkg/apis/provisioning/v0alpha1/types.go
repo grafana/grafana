@@ -34,6 +34,11 @@ type SecureValues struct {
 
 	// Some webhooks (including github) require a secret key value
 	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
+
+	// Private key used to sign commits the repository writes back. The format
+	// is selected by spec.commit.signingMethod. When unset, commits are
+	// unsigned.
+	CommitSigningKey common.InlineSecureValue `json:"commitSigningKey,omitzero,omitempty"`
 }
 
 func (SecureValues) OpenAPIModelName() string {
@@ -41,7 +46,7 @@ func (SecureValues) OpenAPIModelName() string {
 }
 
 func (v SecureValues) IsZero() bool {
-	return v.Token.IsZero() && v.WebhookSecret.IsZero()
+	return v.Token.IsZero() && v.WebhookSecret.IsZero() && v.CommitSigningKey.IsZero()
 }
 
 type LocalRepositoryConfig struct {
@@ -315,13 +320,79 @@ type CommitOptions struct {
 	// Template for commit messages produced by single-resource UI operations
 	// (dashboard save/delete/move, folder create/rename/delete).
 	// Bulk operations and sync jobs are out of scope and build their own messages.
-	// Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}.
+	// Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}},
+	// {{userName}}, {{userLogin}}, {{userEmail}}.
 	// When empty, a built-in default is used (e.g. "Save dashboard: <title>").
 	SingleResourceMessageTemplate string `json:"singleResourceMessageTemplate,omitempty"`
+
+	// When true, the Comment field in Save drawers is pre-filled from
+	// SingleResourceMessageTemplate and rendered read-only.
+	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+	// Name used as the commit signer. Required for the signing key's identity
+	// to match the commit, which providers need to mark commits as Verified. When
+	// empty, defaults to "Grafana".
+	SignerName string `json:"signerName,omitempty"`
+
+	// Email used as the commit signer. Must match the signing key's identity
+	// and a verified email on the account where the matching public key is
+	// registered. When empty, defaults to "noreply@grafana.com".
+	SignerEmail string `json:"signerEmail,omitempty"`
+
+	// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
+	// When empty, commits are not signed.
+	SigningMethod SigningMethod `json:"signingMethod,omitempty"`
+
+	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
+	// signingMethod is "smime". This is public (not a secret) and is embedded
+	// in the commit signature. Unused for the gpg and ssh formats.
+	SMIMECertificate string `json:"smimeCertificate,omitempty"`
 }
+
+// SigningMethod selects how commits are signed.
+// +enum
+type SigningMethod string
+
+const (
+	GPGSigningMethod   SigningMethod = "gpg"
+	SSHSigningMethod   SigningMethod = "ssh"
+	SMIMESigningMethod SigningMethod = "smime"
+)
 
 func (CommitOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "CommitOptions"
+}
+
+type BranchOptions struct {
+	// Template for the branch name created in branch workflow.
+	// Supports variables: {{action}}, {{resourceKind}}, {{title}},
+	// {{userLogin}}, {{random}}.
+	// {{random}} is a 6-character alphanumeric token generated at render
+	// time to avoid collisions. The result is sanitised to a valid git ref
+	// (lowercase, alphanumeric + dashes, max 100 chars).
+	// When empty, the current auto-generated name is preserved.
+	NameTemplate string `json:"nameTemplate,omitempty"`
+
+	// When true, the branch name field in Save drawers is read-only.
+	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+}
+
+func (BranchOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "BranchOptions"
+}
+
+type PullRequestOptions struct {
+	// Template for pull request titles.
+	// Supports the same variables as BranchOptions.NameTemplate
+	// ({{random}} is available but rarely useful here).
+	// When empty, the first line of the commit message is used.
+	TitleTemplate string `json:"titleTemplate,omitempty"`
+
+	// When true, the PR title field in Save drawers is read-only.
+	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+}
+
+func (PullRequestOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "PullRequestOptions"
 }
 
 type RepositorySpec struct {
@@ -334,6 +405,12 @@ type RepositorySpec struct {
 	// Commit message options. Currently only contains the template used by
 	// single-resource UI operations; future siblings (bulk, sync) can live here.
 	Commit *CommitOptions `json:"commit,omitempty"`
+
+	// Branch naming options. Only meaningful when Workflows includes "branch".
+	Branch *BranchOptions `json:"branch,omitempty"`
+
+	// Pull request options. Only meaningful when Workflows includes "branch".
+	PullRequest *PullRequestOptions `json:"pullRequest,omitempty"`
 
 	// UI driven Workflow that allow changes to the contends of the repository.
 	// The order is relevant for defining the precedence of the workflows.
@@ -400,6 +477,15 @@ const (
 	// It will contain a copy of everything from the remote
 	// The folder k8s name will be the same as the repository k8s name
 	SyncTargetTypeFolder SyncTargetType = "folder"
+
+	// Resources are saved at the top level without a wrapper folder.
+	// Like `folder`, multiple `folderless` repositories may coexist with each
+	// other, with `folder` repositories, and with unprovisioned resources.
+	// Unlike `folder`, no repo-named container folder is created: files at the
+	// repository path root become top-level resources and subdirectories become
+	// top-level folders. Ownership is tracked per-resource via manager
+	// annotations rather than by folder containment.
+	SyncTargetTypeFolderless SyncTargetType = "folderless"
 )
 
 type SyncOptions struct {

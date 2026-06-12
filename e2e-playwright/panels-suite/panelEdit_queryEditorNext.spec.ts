@@ -81,8 +81,8 @@ test.describe('Query Editor Next: Layout & Navigation', { tag: ['@panels', '@que
     await expect(page.getByRole('tab', { name: /Queries/i })).toHaveCount(0);
     await expect(page.getByRole('tab', { name: /Transformations/i })).toHaveCount(0);
 
-    await expect(page.getByText('Queries & Expressions')).toBeVisible();
-    await expect(page.getByText('Transformations')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Queries & Expressions' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Transformations' })).toBeVisible();
     await expect(page.getByRole('button', { name: /Query Options/i })).toBeVisible();
   });
 
@@ -169,6 +169,7 @@ test.describe('Query Editor Next: Sidebar Query Management', { tag: ['@panels', 
     const removeQueryButton = cardB.getByRole('button', { name: 'Remove Query' });
     await expect(removeQueryButton).toBeVisible();
     await removeQueryButton.click();
+    await cardB.getByRole('button', { name: 'Confirm' }).click();
 
     await expect(cardB).toBeHidden();
     await expect(page.locator('[data-query-sidebar-card="A"]')).toBeVisible();
@@ -301,7 +302,7 @@ test.describe('Query Editor Next: Transformations', { tag: ['@panels', '@queryEd
     await removeTransformationButton.click();
 
     // Transformations require delete confirmation
-    await page.getByRole('button', { name: 'Delete' }).click();
+    await transformCard.getByRole('button', { name: 'Confirm' }).click();
 
     await expect(page.getByTestId(selectors.components.TransformTab.transformationEditor('Reduce'))).toBeHidden();
   });

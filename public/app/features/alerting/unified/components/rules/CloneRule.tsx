@@ -70,7 +70,7 @@ interface CloneRuleButtonProps {
   className?: string;
 }
 
-export const CloneRuleButton = forwardRef<HTMLButtonElement, CloneRuleButtonProps>(
+const CloneRuleButton = forwardRef<HTMLButtonElement, CloneRuleButtonProps>(
   ({ text, ruleIdentifier, isProvisioned, className }, ref) => {
     const [redirectToClone, setRedirectToClone] = useState(false);
 

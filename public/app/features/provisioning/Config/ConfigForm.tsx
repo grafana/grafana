@@ -33,13 +33,16 @@ import { PROVISIONING_URL } from '../constants';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { type RepositoryFormData } from '../types';
-import { dataToSpec } from '../utils/data';
+import { dataToSpec, deriveSigningKeySecret } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions } from '../utils/git';
 import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
 
+import { BranchOptionsSection } from './BranchOptionsSection';
+import { CommitOptionsSection } from './CommitOptionsSection';
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
+import { PullRequestOptionsSection } from './PullRequestOptionsSection';
 import { getDefaultValues } from './defaults';
 
 // This needs to be a function for translations to work
@@ -47,6 +50,7 @@ const getTargetOptions = (allowedTargets: string[]) => {
   const allOptions = [
     { value: 'instance', label: t('provisioning.config-form.option-entire-instance', 'Entire instance') },
     { value: 'folder', label: t('provisioning.config-form.option-managed-folder', 'Managed folder') },
+    { value: 'folderless', label: t('provisioning.config-form.option-folderless', 'Folderless') },
   ];
 
   return allOptions.filter((option) => allowedTargets.includes(option.value));
@@ -135,7 +139,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
     setSubmitError(undefined);
     try {
       const spec = dataToSpec(form);
-      await submitData(spec, form.token);
+      const signingKeySecret = deriveSigningKeySecret(form, Boolean(data?.secure?.commitSigningKey?.name));
+      await submitData(spec, form.token, signingKeySecret);
     } catch (err) {
       if (isFetchError(err)) {
         const fieldErrors = getConfigFormErrors(err.data);
@@ -376,6 +381,37 @@ export function ConfigForm({ data }: ConfigFormProps) {
             registerName="enablePushToConfiguredBranch"
             readOnly={readOnly}
           />
+        )}
+        {isGitBased && (
+          <>
+            <BranchOptionsSection<RepositoryFormData>
+              register={register}
+              nameTemplateName="branchOptions.nameTemplate"
+              enforceTemplateName="branchOptions.enforceTemplate"
+            />
+            <CommitOptionsSection<RepositoryFormData>
+              register={register}
+              control={control}
+              setValue={setValue}
+              messageTemplateName="commit.singleResourceMessageTemplate"
+              enforceTemplateName="commit.enforceTemplate"
+              type={type}
+              signingMethodName="signingMethod"
+              signingKeyName="commitSigningKey"
+              smimeCertificateName="smimeCertificate"
+              signerNameName="commit.signerName"
+              signerEmailName="commit.signerEmail"
+              defaultSigningKeyConfigured={Boolean(data?.secure?.commitSigningKey?.name)}
+            />
+            {/* Pull requests are not supported by the pure git type. */}
+            {type !== 'git' && (
+              <PullRequestOptionsSection<RepositoryFormData>
+                register={register}
+                titleTemplateName="pullRequest.titleTemplate"
+                enforceTemplateName="pullRequest.enforceTemplate"
+              />
+            )}
+          </>
         )}
         {type === 'github' && <ConfigFormGithubCollapse register={register} />}
 

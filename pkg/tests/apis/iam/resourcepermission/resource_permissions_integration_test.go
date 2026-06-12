@@ -514,6 +514,10 @@ func createTestFolder(t *testing.T, helper *apis.K8sTestHelper, user apis.User, 
 		metadata["annotations"] = map[string]interface{}{
 			utils.AnnoKeyFolder: parentUID,
 		}
+	} else {
+		metadata["annotations"] = map[string]interface{}{
+			utils.AnnoKeyGrantPermissions: utils.AnnoGrantPermissionsDefault,
+		}
 	}
 
 	folder := &unstructured.Unstructured{

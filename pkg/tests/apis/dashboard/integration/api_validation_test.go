@@ -1007,9 +1007,13 @@ func createFolderObject(t *testing.T, title string, namespace string, parentFold
 		},
 	}
 
+	meta, _ := utils.MetaAccessor(folderObj)
 	if parentFolderUID != "" {
-		meta, _ := utils.MetaAccessor(folderObj)
 		meta.SetFolder(parentFolderUID)
+	} else {
+		// Root folders request default permissions so Editors/Viewers get access via the
+		// resource-permission path; nested folders inherit from their parent.
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 	}
 
 	return folderObj
@@ -1502,9 +1506,8 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext) {
 		err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 		require.NoError(t, err)
 
-		// In case kubernetesDashboards feature flag is set to true,
-		// we don't grant admin permission to dashboard creator on nested folders.
-		// This means that the viewer will not be able to delete the dashboard.
+		// Dashboard creators don't get admin permission on nested folders, so
+		// the viewer can't delete a dashboard inside one.
 		err = viewerClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
 		require.Error(t, err)
 		err = adminClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})

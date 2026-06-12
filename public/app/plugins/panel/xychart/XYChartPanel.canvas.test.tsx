@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { type CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
-import { removeCanvasTransforms } from 'jest-canvas-mock-compare';
 import type uPlot from 'uplot';
 
 import {
@@ -19,7 +18,8 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { applyDefaultUPlotAxisMeasureTextMock, removeCanvasTransforms } from '@grafana/test-utils/canvas';
 import { measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
 import { XYChartPanel2 } from 'app/plugins/panel/xychart/XYChartPanel';
 import {
@@ -32,20 +32,10 @@ import {
 
 import * as utils from './scatter';
 
-/**
- * Without mocking measureText, the text width is always measured incorrectly, resulting in test behavior which does not match expected behavior in the browser.
- * uPlot Y/X axis layout uses `measureText` from @grafana/ui (not `useMeasure` on the panel).
- * jest-canvas-mock reports `TextMetrics.width === text.length`, which starves the Y axis and
- * clips tick labels. This mock provides deterministic, ~browser-like widths for axis sizing.
- * Override in a test: `uPlotAxisMeasureText.mockImplementationOnce(...)`; default is re-applied in `beforeEach`.
- *
- * Using relative import since measureText is not exported from grafana/ui, we could override this in jest config e.g.:
- *   '^@grafana/ui/src/utils/measureText$': '<rootDir>/packages/grafana-ui/src/utils/measureText.ts',
- */
-jest.mock('../../../../../packages/grafana-ui/src/utils/measureText', () => {
-  const actual = jest.requireActual('../../../../../packages/grafana-ui/src/utils/measureText');
-  return { ...actual, measureText: jest.fn() };
-});
+let uPlotInstance: InstanceType<typeof uPlot> | undefined;
+jest.mock('@grafana/ui/src/utils/measureText', () =>
+  require('@grafana/test-utils/canvas').createGrafanaUiMeasureTextJestMock(() => uPlotInstance)
+);
 
 const height = 400;
 const width = 600;
@@ -204,7 +194,6 @@ function buildOptions(partial: Partial<Options> = {}): Options {
     mapping: partial.mapping ?? SeriesMapping.Auto,
     legend: {
       showLegend: false,
-      displayMode: LegendDisplayMode.Hidden,
       calcs: [],
       placement: 'bottom',
       ...partial.legend,
@@ -278,23 +267,9 @@ const setUp = (propsOverrides?: PanelOverrides, seriesOverride?: DataFrame[], ti
   return { result: render(component), props };
 };
 
-function defaultAxisTextWidthForTests(text: string | null, fontSize: number): number {
-  const AXIS_TEXT_WIDTH_PER_CHAR = 7.2;
-  const w = (text?.length ?? 1) * AXIS_TEXT_WIDTH_PER_CHAR * (fontSize / 12);
-  return Math.max(8, w);
-}
-
-function applyDefaultUPlotAxisMeasureTextMock() {
-  (uPlotAxisMeasureText as jest.Mock).mockImplementation(
-    (text: string, fontSize: number, _fontWeight = 400) =>
-      ({ width: defaultAxisTextWidthForTests(text, fontSize) }) as ReturnType<CanvasRenderingContext2D['measureText']>
-  );
-}
-
 describe('XYChartPanel2', () => {
   let prepConfigSpy: jest.SpyInstance;
   const { prepConfig: realPrepConfig } = jest.requireActual('./scatter');
-  let uPlotInstance: InstanceType<typeof uPlot> | undefined;
   let uPlotAxisEvents: CanvasRenderingContext2DEvent[] | null = null;
   let clearAxisEvents = true;
 
@@ -314,7 +289,7 @@ describe('XYChartPanel2', () => {
   };
 
   beforeEach(() => {
-    applyDefaultUPlotAxisMeasureTextMock();
+    applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
     // VizLayout always calls `useMeasure`; when legend is hidden the result is unused. Zeros match an unmeasured rect.
     prepConfigSpy = jest.spyOn(utils, 'prepConfig').mockImplementation((opts, theme) => {
       const result = realPrepConfig(opts, theme);

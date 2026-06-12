@@ -129,6 +129,9 @@ module.exports = [
       'public/build-swagger', // swagger build output
       'apps/plugins/plugin/src/generated/meta/v0alpha1',
       'apps/plugins/plugin/src/generated/plugin/v0alpha1',
+      'packages/get-document/index.js',
+      'packages/mapbox-jsonlint-lines-primitives/lib/jsonlint.js',
+      'packages/mapbox-jsonlint-lines-primitives/lib/formatter.js',
     ],
   },
   ...grafanaConfig,
@@ -221,6 +224,8 @@ module.exports = [
       'unicorn/no-empty-file': 'error',
       'no-constant-condition': 'error',
       '@grafana/define-feature-events': 'error',
+      '@grafana/t-plural-defaults': 'error',
+      '@grafana/trans-plural-defaults': 'error',
       '@grafana/no-plain-links': 'error',
       'react-hooks/exhaustive-deps': [
         'error',
@@ -264,6 +269,23 @@ module.exports = [
       '@emotion/jsx-import': 'off',
       'react/jsx-uses-react': 'off',
       'react/react-in-jsx-scope': 'off',
+    },
+  },
+  {
+    name: 'grafana/grafana-ui-no-test-utils',
+    files: ['packages/grafana-ui/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['@grafana/test-utils'],
+              message: "'@grafana/test-utils' creates a circular dependency with '@grafana/ui'",
+            },
+          ],
+        }),
+      ],
     },
   },
   {

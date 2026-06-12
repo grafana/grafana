@@ -52,7 +52,7 @@ interface PullRequestParamReturn {
   prURL?: string;
   newPrURL?: string;
   repoURL?: string;
-  repoType?: string;
+  repoType?: 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | 'git' | 'local';
 }
 
 interface FileQueryData {

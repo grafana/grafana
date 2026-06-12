@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -28,7 +29,6 @@ type dtoBuilder = func(dashboard runtime.Object, access *dashboard.DashboardAcce
 // The DTO returns everything the UI needs in a single request
 type DTOConnector struct {
 	getter                 rest.Getter
-	unified                resource.ResourceClient
 	accessClient           authlib.AccessClient
 	builder                dtoBuilder
 	publicDashboardService publicdashboards.Service
@@ -44,7 +44,6 @@ func NewDTOConnector(
 	return &DTOConnector{
 		getter:                 getter,
 		accessClient:           accessClient,
-		unified:                resourceClient,
 		builder:                builder,
 		publicDashboardService: publicDashboardService,
 	}, nil
@@ -106,10 +105,18 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
-		logger := logging.FromContext(ctx).With("logger", "dto-connector")
-		access := &dashboard.DashboardAccess{}
-		folder := obj.GetFolder()
-		ns := obj.GetNamespace()
+		if name == home.DASHBOARD_NAME {
+			dash, err := r.builder(rawobj, &dashboard.DashboardAccess{
+				Slug: "home",
+				Url:  dashboards.GetDashboardFolderURL(false, name, "home"),
+			})
+			if err != nil {
+				responder.Error(err)
+			} else {
+				responder.Object(http.StatusOK, dash)
+			}
+			return
+		}
 
 		authInfo, ok := authlib.AuthInfoFrom(ctx)
 		if !ok {
@@ -117,10 +124,13 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
+		logger := logging.FromContext(ctx).With("logger", "dto-connector")
+		access := &dashboard.DashboardAccess{}
+		folder := obj.GetFolder()
 		gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
 
 		checkRes, err := r.accessClient.BatchCheck(ctx, authInfo, authlib.BatchCheckRequest{
-			Namespace: ns,
+			Namespace: obj.GetNamespace(),
 			Checks: []authlib.BatchCheckItem{
 				{
 					CorrelationID: "dash_read",

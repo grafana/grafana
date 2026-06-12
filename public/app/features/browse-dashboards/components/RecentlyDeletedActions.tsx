@@ -8,7 +8,8 @@ import { buildNotificationButton } from 'app/core/components/AppNotifications/No
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
-import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { isRootFolderUID } from 'app/features/search/constants';
 import { useDispatch } from 'app/types/store';
 
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
@@ -46,11 +47,11 @@ export function RecentlyDeletedActions() {
         return undefined;
       }
 
-      // Searcher changes the location from empty string to 'general' for items with no parent,
-      // but the restore API doesn't work with 'general' folder UID, so we need to convert it back
-      // to an empty string
+      // Searcher reports root-parented items with the "general" UID, but the
+      // restore API doesn't accept it — convert back to "" so the dashboard
+      // is restored to the root.
       const location = searchState.result.view.fields.location.values[index];
-      const fixedLocation = location === GENERAL_FOLDER_UID ? '' : location;
+      const fixedLocation = isRootFolderUID(location) ? '' : location;
 
       if (originCandidate === undefined) {
         originCandidate = fixedLocation;
@@ -90,13 +91,16 @@ export function RecentlyDeletedActions() {
     setIsBulkRestoreLoading(true);
 
     const promises = selectedDashboards.map(async (uid) => {
-      const deletedDashboards = await deletedDashboardsCache.getAsResourceList();
-      const dashboard = deletedDashboards?.items.find((d) => d.metadata.name === uid);
-      if (!dashboard) {
+      const table = await deletedDashboardsCache.getAsTable();
+      const row = table.rows.find((r) => r.object.metadata.name === uid);
+      if (!row) {
         console.warn(`Dashboard ${uid} not found in deleted items`);
         return { uid, error: 'not_found' };
       }
-      // Clone the dashboard to be able to edit the immutable data from the store
+
+      const api = await getDashboardAPI();
+      const dashboard = await api.getDashboard(uid, { resourceVersion: row.object.metadata.resourceVersion });
+
       const copy = structuredClone(dashboard);
       copy.metadata = {
         ...copy.metadata,
@@ -136,15 +140,15 @@ export function RecentlyDeletedActions() {
       if (!foundItem) {
         continue;
       }
-      // Search API returns items with no parent with a location of 'general', so we
-      // need to convert that back to undefined
-      const folderUID = foundItem.location === GENERAL_FOLDER_UID ? undefined : foundItem.location;
+      // Search API reports root-parented items with the "general" UID —
+      // convert that back to undefined.
+      const folderUID = isRootFolderUID(foundItem.location) ? undefined : foundItem.location;
       parentUIDs.add(folderUID);
     }
     dispatch(clearFolders(Array.from(parentUIDs)));
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
 
-    deletedDashboardsCache.clear();
+    deletedDashboardsCache.removeItems(successful);
     await stateManager.doSearch();
 
     const notificationData = getRestoreNotificationData(successful, failed, restoreTarget);

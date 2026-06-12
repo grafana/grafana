@@ -7,7 +7,6 @@ package extensions
 
 import (
 	_ "github.com/alicebob/miniredis/v2"
-	_ "github.com/aws/aws-sdk-go/aws/client"
 	_ "github.com/grafana/authlib/authz/proto/v1"
 	_ "github.com/grafana/dataplane/examples"
 	_ "github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
@@ -22,6 +21,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	_ "github.com/grafana/grafana/pkg/services/anonymous/anontest"
 	_ "github.com/grafana/grafana/pkg/services/authn/authntest"
+	_ "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	_ "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 	_ "github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	_ "github.com/grafana/grafana/pkg/services/datasources/fakes"

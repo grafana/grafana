@@ -46,12 +46,10 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 	require.NoError(t, err)
 
 	identifier := "test-create-get-config"
-	mergeMatchers := "_imported=true"
 
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",
 		"X-Grafana-Alerting-Config-Identifier": identifier,
-		"X-Grafana-Alerting-Merge-Matchers":    mergeMatchers,
 	}
 	var amConfig apimodels.AlertmanagerUserConfig
 	require.NoError(t, yaml.Unmarshal(configYaml, &amConfig))

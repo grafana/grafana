@@ -397,7 +397,27 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 
 	// Create or update
 	if create {
-		err = r.repo.Create(ctx, opts.Path, opts.Ref, data, opts.Message)
+		// Write the resource file together with any missing ancestor _folder.json
+		// files in a single commit using the staging mechanism. When the repository
+		// does not support staging (e.g. local repos), writes are applied directly.
+		writeFn := func(stagedRepo repository.Repository, _ bool) error {
+			rw, ok := stagedRepo.(repository.ReaderWriter)
+			if !ok {
+				return fmt.Errorf("repository does not support read/write operations")
+			}
+			if r.folderMetadataEnabled && !safepath.IsDir(opts.Path) {
+				if err := r.writeAncestorFolderMetadata(ctx, rw, opts.Path, opts.Ref, opts.Message); err != nil {
+					return err
+				}
+			}
+			return rw.Create(ctx, opts.Path, opts.Ref, data, opts.Message)
+		}
+		stageOptions := repository.StageOptions{
+			Ref:                   opts.Ref,
+			Mode:                  repository.StageModeCommitOnlyOnce,
+			CommitOnlyOnceMessage: opts.Message,
+		}
+		err = repository.WrapWithStageAndPushIfPossible(ctx, r.repo, stageOptions, writeFn)
 	} else {
 		err = r.repo.Update(ctx, opts.Path, opts.Ref, data, opts.Message)
 	}
@@ -420,14 +440,59 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 			})
 		}
 
-		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref); err != nil {
+		parent, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref)
+		if err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
 
-		err = parsed.Run(ctx)
+		// In case the parent folder has a different ID than the one from the initially parsed resource,
+		// e.g. when the folder metadata has been generated as part of the create operation, we need to update it.
+		if parsed.Meta.GetFolder() != parent {
+			parsed.Meta.SetFolder(parent)
+		}
+
+		if err := parsed.Run(ctx); err != nil {
+			return nil, fmt.Errorf("run resource: %w", err)
+		}
 	}
 
-	return parsed, err
+	return parsed, nil
+}
+
+// writeAncestorFolderMetadata walks the ancestor directories of filePath and
+// writes a _folder.json with a stable UID for any folder that does not exist in
+// the repository yet. Folders that already exist (with or without metadata) are
+// left untouched — we never backfill metadata for pre-existing folders. Reads
+// and writes go through the provided ReaderWriter (the staged repo during a
+// staged write) so reads observe writes made earlier in the same stage.
+func (r *DualReadWriter) writeAncestorFolderMetadata(ctx context.Context, rw repository.ReaderWriter, filePath, ref, message string) error {
+	dir := safepath.Dir(filePath)
+	if dir == "" {
+		return nil
+	}
+
+	return safepath.Walk(ctx, dir, func(ctx context.Context, segPath string) error {
+		folderPath := safepath.EnsureTrailingSlash(segPath)
+
+		// Skip folders that already exist in the repository (with or without metadata).
+		_, err := rw.Read(ctx, folderPath, ref)
+		if errors.Is(err, repository.ErrRefNotFound) {
+			// Target branch not created yet; check the branch it will inherit from.
+			_, err = rw.Read(ctx, folderPath, "")
+		}
+		if err == nil {
+			return nil
+		}
+		if !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
+			return fmt.Errorf("check if folder exists for %q: %w", folderPath, err)
+		}
+
+		manifest := NewFolderManifest(util.GenerateShortUID(), safepath.Base(folderPath), r.folders.FolderGVK())
+		if _, err := WriteFolderMetadata(ctx, rw, folderPath, manifest, ref, message); err != nil {
+			return fmt.Errorf("write folder metadata for %q: %w", folderPath, err)
+		}
+		return nil
+	})
 }
 
 // MoveResource moves a resource from one path to another in the repository
