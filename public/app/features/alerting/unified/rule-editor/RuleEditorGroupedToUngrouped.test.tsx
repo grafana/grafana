@@ -14,10 +14,9 @@ import { DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
-import { grantUserPermissions, mockDataSource, mockFolder } from '../mocks';
+import { grantUserPermissions, mockFolder } from '../mocks';
 import { grafanaRulerGroup, grafanaRulerRule, mockPreviewApiResponse } from '../mocks/grafanaRulerApi';
-import { MIMIR_DATASOURCE_UID } from '../mocks/server/constants';
-import { setupDataSources } from '../testSetup/datasources';
+import { alertingFactory } from '../mocks/server/db';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
@@ -58,14 +57,7 @@ describe('RuleEditor - editing a grouped Grafana rule to ungrouped', () => {
       AccessControlAction.FoldersRead,
     ]);
 
-    setupDataSources(
-      mockDataSource({
-        uid: MIMIR_DATASOURCE_UID,
-        type: 'prometheus',
-        name: 'Mimir',
-        isDefault: true,
-      })
-    );
+    alertingFactory.dataSource.mimir().build({ isDefault: true });
     setFolderResponse(mockFolder(folder));
     mockPreviewApiResponse(server, []);
   });
