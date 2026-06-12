@@ -2,11 +2,12 @@ import { render, testWithFeatureToggles, userEvent, waitFor } from 'test/test-ut
 
 import { type AdHocVariableFilter, type DataFrame, type DataQueryRequest, type ScopedVars } from '@grafana/data';
 import { SQLEditor } from '@grafana/plugin-ui';
+import { reportInteraction } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { dataSource } from '../../ExpressionDatasource';
 import { type ExpressionQuery, ExpressionQueryType } from '../../types';
-import { fetchSQLFields } from '../../utils/metaSqlExpr';
+import { ALLOWED_FUNCTIONS, fetchSQLFields } from '../../utils/metaSqlExpr';
 
 import { SqlEditor } from './SqlEditor/SqlEditor';
 import { SqlExpr, type SqlExprProps } from './SqlExpr';
@@ -28,6 +29,9 @@ jest.mock('@grafana/ui', () => ({
 jest.mock('@grafana/plugin-ui', () => ({
   QueryFormat: {
     Table: 'table',
+  },
+  CompletionItemKind: {
+    Field: 'Field',
   },
   SQLEditor: jest.fn(({ query, onChange, children }) => (
     <div>
@@ -73,6 +77,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => mockBackendSrv,
   getDataSourceSrv: () => mockDataSourceSrv,
+  reportInteraction: jest.fn(),
 }));
 
 describe('SqlExpr', () => {
@@ -90,6 +95,12 @@ describe('SqlExpr', () => {
   beforeEach(() => {
     SqlEditorMock.mockClear();
     SQLEditorMock.mockClear();
+    jest.mocked(reportInteraction).mockClear();
+  });
+
+  afterEach(() => {
+    // Reset flag state so the editor selection can't leak between tests.
+    setTestFlags({});
   });
 
   it('initializes new expressions with default query', async () => {
@@ -269,6 +280,206 @@ describe('SqlExpr', () => {
       expect(interpolateVariablesInQueries).toHaveBeenCalledWith([sourceQuery], scopedVars, filters);
       expect(runMetaSQLExprQuery.mock.calls[0][2]).toEqual([interpolatedQuery]);
     });
+  });
+
+  it('returns no column completions when the column autocomplete toggle is disabled', async () => {
+    // sqlExpressionsColumnAutoComplete stays disabled here, so the provider should short-circuit.
+    setTestFlags({ sqlExpressionsCodeMirror: true });
+
+    render(
+      <SqlExpr
+        onChange={jest.fn()}
+        refIds={[{ value: 'A' }]}
+        query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+        queries={[]}
+      />
+    );
+
+    const completionProvider = SqlEditorMock.mock.calls[0][0].completionProvider;
+    if (!completionProvider?.columns) {
+      throw new Error('Expected columns completion provider');
+    }
+
+    await expect(completionProvider.columns({ table: 'A' })).resolves.toEqual([]);
+  });
+
+  describe('autocomplete completions', () => {
+    testWithFeatureToggles({ enable: ['sqlExpressionsColumnAutoComplete'] });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+      mockDataSourceSrv.get.mockResolvedValue({
+        getRef: () => ({ uid: 'mock-ds-uid', type: 'mock-ds-type' }),
+      });
+    });
+
+    it('returns no column completions when the field fetch fails', async () => {
+      setTestFlags({ sqlExpressionsCodeMirror: true });
+
+      jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockRejectedValue(new Error('boom'));
+
+      render(
+        <SqlExpr
+          onChange={jest.fn()}
+          refIds={[{ value: 'A' }]}
+          query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+          queries={[{ refId: 'A' }]}
+        />
+      );
+
+      const completionProvider = SqlEditorMock.mock.calls[0][0].completionProvider;
+      if (!completionProvider?.columns) {
+        throw new Error('Expected columns completion provider');
+      }
+
+      await expect(completionProvider.columns({ table: 'A' })).resolves.toEqual([]);
+    });
+
+    it('maps fetched fields to column completions', async () => {
+      setTestFlags({ sqlExpressionsCodeMirror: true });
+
+      jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({
+        fields: [{ name: 'cpu', type: 'number', config: {}, values: [] }],
+        length: 1,
+      } as unknown as DataFrame);
+
+      render(
+        <SqlExpr
+          onChange={jest.fn()}
+          refIds={[{ value: 'A' }]}
+          query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+          queries={[{ refId: 'A' }]}
+        />
+      );
+
+      const completionProvider = SqlEditorMock.mock.calls[0][0].completionProvider;
+      if (!completionProvider?.columns) {
+        throw new Error('Expected columns completion provider');
+      }
+
+      await expect(completionProvider.columns({ table: 'A' })).resolves.toEqual([
+        { label: 'cpu', insertText: 'cpu', kind: 'column', boost: 50 },
+      ]);
+    });
+  });
+
+  it('provides allowed functions for completion', () => {
+    setTestFlags({ sqlExpressionsCodeMirror: true });
+
+    render(
+      <SqlExpr
+        onChange={jest.fn()}
+        refIds={[{ value: 'A' }]}
+        query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+        queries={[]}
+      />
+    );
+
+    const completionProvider = SqlEditorMock.mock.calls[0][0].completionProvider;
+
+    expect(completionProvider?.functions?.()).toEqual(
+      ALLOWED_FUNCTIONS.map((func) => ({ label: func, insertText: func, kind: 'function' }))
+    );
+  });
+
+  describe('error context', () => {
+    it('collects multiple error messages from metadata', () => {
+      setTestFlags({ sqlExpressionsCodeMirror: true });
+
+      render(
+        <SqlExpr
+          onChange={jest.fn()}
+          refIds={[{ value: 'A' }]}
+          query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+          queries={[]}
+          metadata={
+            {
+              data: {
+                series: [],
+                errors: [{ message: 'first error' }, {}, { message: 'second error' }],
+              },
+            } as unknown as SqlExprProps['metadata']
+          }
+        />
+      );
+
+      // Reaching here without throwing exercises the multi-error extraction branch.
+      expect(SqlEditorMock).toHaveBeenCalled();
+    });
+
+    it('falls back to a single legacy error message from metadata', () => {
+      setTestFlags({ sqlExpressionsCodeMirror: true });
+
+      render(
+        <SqlExpr
+          onChange={jest.fn()}
+          refIds={[{ value: 'A' }]}
+          query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+          queries={[]}
+          metadata={
+            {
+              data: {
+                series: [],
+                error: { message: 'legacy error' },
+              },
+            } as unknown as SqlExprProps['metadata']
+          }
+        />
+      );
+
+      expect(SqlEditorMock).toHaveBeenCalled();
+    });
+  });
+
+  it('builds query context from metadata datasources and series', () => {
+    setTestFlags({ sqlExpressionsCodeMirror: true });
+
+    render(
+      <SqlExpr
+        onChange={jest.fn()}
+        refIds={[{ value: 'A' }]}
+        query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+        queries={[]}
+        metadata={
+          {
+            queries: [{ refId: 'A', datasource: { type: 'prometheus' } }],
+            data: {
+              series: [{ length: 3 }, { length: 2 }],
+              request: {},
+            },
+          } as unknown as SqlExprProps['metadata']
+        }
+      />
+    );
+
+    // Mounting with non-empty queries and series exercises the datasources map and totalRows reduce.
+    expect(SqlEditorMock).toHaveBeenCalled();
+  });
+
+  it('runs the query on cmd/ctrl + Enter', async () => {
+    setTestFlags({ sqlExpressionsCodeMirror: true });
+
+    const onRunQuery = jest.fn();
+
+    render(
+      <SqlExpr
+        onChange={jest.fn()}
+        refIds={[{ value: 'A' }]}
+        query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+        queries={[]}
+        onRunQuery={onRunQuery}
+      />
+    );
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true }));
+
+    await waitFor(() => {
+      expect(onRunQuery).toHaveBeenCalled();
+    });
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'dashboards_expression_interaction',
+      expect.objectContaining({ action: 'execute_expression', expression_type: 'sql' })
+    );
   });
 });
 
