@@ -100,6 +100,15 @@ describe('SoloPanelContextValueWithSearchStringFilter', () => {
     });
   });
 
+  describe('fallback for special characters', () => {
+    it('falls back to string match for special characters', () => {
+      const filter = new SoloPanelContextValueWithSearchStringFilter('a + b');
+      expect(filter.matches(makePanel('panel a + b'))).toBe(true);
+      expect(filter.matches(makePanel('panel a b'))).toBe(false);
+      expect(filter.matches(makePanel('panel a & b'))).toBe(false);
+    });
+  });
+
   describe('interpolation', () => {
     it('interpolates the search string before matching', () => {
       const panel = makePanel('CPU Usage');

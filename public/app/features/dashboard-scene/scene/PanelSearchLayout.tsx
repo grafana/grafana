@@ -66,6 +66,10 @@ export class SoloPanelContextValueWithSearchStringFilter {
       const regex = new RegExp(interpolatedSearchString, 'i');
       match = regex.test(interpolatedTitle);
     } catch {
+      match = false;
+    }
+
+    if (!match) {
       match = interpolatedTitle.toLowerCase().includes(interpolatedSearchString.toLowerCase());
     }
 
