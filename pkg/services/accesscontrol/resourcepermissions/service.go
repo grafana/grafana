@@ -10,6 +10,7 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -75,8 +77,10 @@ func New(cfg *setting.Cfg,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
 	teamService team.Service, userService user.Service, actionSetService ActionSetService,
 ) (*Service, error) {
-	if options.K8sActionFormat && options.APIGroup == "" {
-		return nil, fmt.Errorf("APIGroup is required when K8sActionFormat is enabled")
+	// Fail fast at startup if a Kubernetes-native flow needs an APIGroup but none
+	// is configured.
+	if options.APIGroup == "" && requiresAPIGroup(options.Resource, options.K8sActionFormat, features) {
+		return nil, fmt.Errorf("APIGroup is required for resource %q when Kubernetes-native permissions are enabled (K8sActionFormat or the resource-permission redirect)", options.Resource)
 	}
 
 	permissions := make([]string, 0, len(options.PermissionsToActions))
@@ -716,4 +720,33 @@ func (s *Service) scopeResource() string {
 		return fmt.Sprintf("%s/%s", s.options.APIGroup, s.options.Resource)
 	}
 	return s.options.Resource
+}
+
+// requiresAPIGroup reports whether a resource-permission service must have an
+// APIGroup configured, since it can no longer be guessed (see getAPIGroup). It is
+// required for any Kubernetes-native flow:
+//   - K8sActionFormat is enabled (K8s-format actions/scopes), or
+//   - the resource-permission redirect is statically enabled for a resource that
+//     routes through the generic K8s adapter.
+//
+// The redirect check only sees statically-configured flags; dynamically-enabled
+// redirects are guarded at runtime by getAPIGroup.
+func requiresAPIGroup(resource string, k8sActionFormat bool, features featuremgmt.FeatureToggles) bool {
+	if k8sActionFormat {
+		return true
+	}
+
+	// These resources never resolve a single static APIGroup via getAPIGroup, so
+	// they are exempt from the redirect requirement:
+	//   - teams use the Team.Spec.Members path (see the `Resource != "teams"`
+	//     guards in api.go) and never resolve an APIGroup.
+	//   - datasources resolve a per-plugin group at request time (the group is a
+	//     wildcard, e.g. loki.datasource.grafana.app), so there is no single value.
+	switch resource {
+	case iamv0.TeamResourceInfo.GetName(), datasources.ScopeRoot:
+		return false
+	}
+
+	return features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect) && //nolint:staticcheck // not yet migrated to OpenFeature
+		features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) //nolint:staticcheck // not yet migrated to OpenFeature
 }

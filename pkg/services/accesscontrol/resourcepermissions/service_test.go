@@ -597,6 +597,117 @@ func TestService_K8sActionFormat(t *testing.T) {
 	}
 }
 
+func TestRequiresAPIGroup(t *testing.T) {
+	tests := []struct {
+		name            string
+		resource        string
+		k8sActionFormat bool
+		redirectFlags   bool
+		want            bool
+	}{
+		{name: "nothing enabled", resource: "dashboards", want: false},
+		{name: "k8sActionFormat always requires it", resource: "dashboards", k8sActionFormat: true, want: true},
+		{name: "k8sActionFormat requires it even for exempt resource", resource: "teams", k8sActionFormat: true, want: true},
+		{name: "redirect requires it for a regular resource", resource: "dashboards", redirectFlags: true, want: true},
+		{name: "redirect requires it for receivers", resource: "receivers", redirectFlags: true, want: true},
+		{name: "redirect exempts teams", resource: "teams", redirectFlags: true, want: false},
+		{name: "redirect exempts datasources", resource: "datasources", redirectFlags: true, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var features featuremgmt.FeatureToggles
+			if tt.redirectFlags {
+				features = featuremgmt.WithFeatures(
+					featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect,
+					featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
+				)
+			} else {
+				features = featuremgmt.WithFeatures()
+			}
+			got := requiresAPIGroup(tt.resource, tt.k8sActionFormat, features)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestService_APIGroupRequiredWhenRedirectEnabled(t *testing.T) {
+	tests := []struct {
+		name          string
+		resource      string
+		apiGroup      string
+		redirectFlags bool
+		expectErr     bool
+	}{
+		{
+			name:          "non-teams resource without APIGroup and redirect enabled fails",
+			resource:      "dashboards",
+			apiGroup:      "",
+			redirectFlags: true,
+			expectErr:     true,
+		},
+		{
+			name:          "non-teams resource with APIGroup and redirect enabled succeeds",
+			resource:      "dashboards",
+			apiGroup:      "dashboard.grafana.app",
+			redirectFlags: true,
+			expectErr:     false,
+		},
+		{
+			name:          "teams resource without APIGroup is exempt even when redirect enabled",
+			resource:      "teams",
+			apiGroup:      "",
+			redirectFlags: true,
+			expectErr:     false,
+		},
+		{
+			name:          "datasources resource without APIGroup is exempt even when redirect enabled",
+			resource:      "datasources",
+			apiGroup:      "",
+			redirectFlags: true,
+			expectErr:     false,
+		},
+		{
+			name:          "non-teams resource without APIGroup is fine when redirect disabled",
+			resource:      "dashboards",
+			apiGroup:      "",
+			redirectFlags: false,
+			expectErr:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sql := db.InitTestDB(t)
+			cfg := setting.NewCfg()
+			license := licensingtest.NewFakeLicensing()
+			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+
+			var features featuremgmt.FeatureToggles
+			if tt.redirectFlags {
+				features = featuremgmt.WithFeatures(
+					featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect,
+					featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
+				)
+			} else {
+				features = featuremgmt.WithFeatures()
+			}
+			ac := acimpl.ProvideAccessControl(features)
+
+			_, err := New(
+				cfg, Options{Resource: tt.resource, APIGroup: tt.apiGroup}, features,
+				routing.NewRouteRegister(), license, ac, &actest.FakeService{}, sql, nil, nil, NewActionSetService(),
+			)
+
+			if tt.expectErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestGetActionSetName(t *testing.T) {
 	tests := []struct {
 		name       string

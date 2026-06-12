@@ -113,20 +113,21 @@ func TestBuildResourcePermissionName(t *testing.T) {
 		resourceID   string
 		resourceUID  string // when set, overrides resourceID in the name
 		expectedName string
+		expectErr    bool
 	}{
 		{
-			name:         "with custom API group",
+			name:         "with configured API group",
 			apiGroup:     "dashboard.grafana.app",
 			resource:     "dashboards",
 			resourceID:   "dashboard-uid-123",
 			expectedName: "dashboard.grafana.app-dashboards-dashboard-uid-123",
 		},
 		{
-			name:         "with default API group",
-			apiGroup:     "",
-			resource:     "folders",
-			resourceID:   "folder-uid-456",
-			expectedName: "folders.grafana.app-folders-folder-uid-456",
+			name:       "errors when API group is not configured",
+			apiGroup:   "",
+			resource:   "folders",
+			resourceID: "folder-uid-456",
+			expectErr:  true,
 		},
 		{
 			name:         "resourceUID from request overrides numeric resourceID",
@@ -153,7 +154,12 @@ func TestBuildResourcePermissionName(t *testing.T) {
 			if tt.resourceUID != "" {
 				req = web.SetURLParams(req, map[string]string{":resourceUID": tt.resourceUID})
 			}
-			name := api.buildResourcePermissionName(req, tt.resourceID)
+			name, err := api.buildResourcePermissionName(req, tt.resourceID)
+			if tt.expectErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
 			assert.Equal(t, tt.expectedName, name)
 		})
 	}
@@ -161,21 +167,22 @@ func TestBuildResourcePermissionName(t *testing.T) {
 
 // TestGetAPIGroup tests API group resolution
 func TestGetAPIGroup(t *testing.T) {
-	t.Run("returns custom API group when set", func(t *testing.T) {
+	t.Run("returns configured API group when set", func(t *testing.T) {
 		api := &api{
 			service: &Service{
 				options: Options{
 					Resource: "dashboards",
-					APIGroup: "custom.grafana.app",
+					APIGroup: "dashboard.grafana.app",
 				},
 			},
 		}
 
-		group := api.getAPIGroup()
-		assert.Equal(t, "custom.grafana.app", group)
+		group, err := api.getAPIGroup()
+		require.NoError(t, err)
+		assert.Equal(t, "dashboard.grafana.app", group)
 	})
 
-	t.Run("returns default API group when not set", func(t *testing.T) {
+	t.Run("returns an error when API group is not configured", func(t *testing.T) {
 		api := &api{
 			service: &Service{
 				options: Options{
@@ -185,22 +192,8 @@ func TestGetAPIGroup(t *testing.T) {
 			},
 		}
 
-		group := api.getAPIGroup()
-		assert.Equal(t, "dashboards.grafana.app", group)
-	})
-
-	t.Run("default group for folders", func(t *testing.T) {
-		api := &api{
-			service: &Service{
-				options: Options{
-					Resource: "folders",
-					APIGroup: "",
-				},
-			},
-		}
-
-		group := api.getAPIGroup()
-		assert.Equal(t, "folders.grafana.app", group)
+		_, err := api.getAPIGroup()
+		require.Error(t, err)
 	})
 }
 
