@@ -2406,3 +2406,50 @@ func setupServiceAndCtx(t *testing.T, s svcTestSetup) (*UserK8sService, context.
 
 	return svc, ctx
 }
+
+func TestUserK8sService_Search_MapsExtendedFields(t *testing.T) {
+	created := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC)
+	lastSeen := time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC)
+
+	var gotAccessControlParam string
+	svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+		requesterOrgID: 1,
+		serverResponse: func(w http.ResponseWriter, r *http.Request) {
+			gotAccessControlParam = r.URL.Query().Get("accesscontrol")
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(v0alpha1.GetSearchUsersResponse{
+				TotalHits: 1,
+				Hits: []v0alpha1.GetSearchUsersUserHit{{
+					Name:          "uid-one",
+					Title:         "John Doe",
+					Login:         "jdoe",
+					Email:         "jdoe@example.com",
+					Role:          "Admin",
+					AccessControl: map[string]bool{"org.users:write": true},
+					LastSeenAt:    lastSeen.Unix(),
+					LastSeenAtAge: "5 days",
+					Provisioned:   true,
+					Disabled:      true,
+					InternalId:    42,
+					Created:       created.UnixMilli(),
+				}},
+			})
+		},
+	})
+
+	result, err := svc.Search(ctx, &user.SearchUsersQuery{IncludeAccessControl: true})
+	require.NoError(t, err)
+	require.Len(t, result.Users, 1)
+
+	assert.Equal(t, "true", gotAccessControlParam)
+
+	got := result.Users[0]
+	assert.Equal(t, int64(42), got.ID)
+	assert.Equal(t, "uid-one", got.UID)
+	assert.Equal(t, "Admin", got.Role)
+	assert.Equal(t, map[string]bool{"org.users:write": true}, got.AccessControl)
+	assert.True(t, got.IsDisabled)
+	assert.True(t, got.IsProvisioned)
+	assert.Equal(t, created.UTC(), got.Created.UTC())
+	assert.Equal(t, lastSeen.UTC(), got.LastSeenAt.UTC())
+}

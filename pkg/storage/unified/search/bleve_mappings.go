@@ -13,6 +13,92 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+// addCapabilityFieldMappings adds bleve field mappings to parent for a single
+// declared search field. The field is placed under parent using def.Name as
+// the local name; this helper does not add any sub-document prefix (callers
+// scope by passing the right parent, e.g. the "fields" sub-document mapper).
+//
+// Mappings emitted are driven by def.Capabilities:
+//
+//   - filter / facet / sort   → keyword mapping at the keyword variant name
+//     (see keywordVariantName). sort enables DocValues.
+//   - text                    → standard-analyzer text mapping at def.Name.
+//   - partial                 → ngram mapping at def.Name + "_ngram".
+//   - retrieve                → Store: true on the canonical field
+//     (def.Name if text is declared, else the keyword variant).
+//
+// Special case: when a field has only [filter] (with or without retrieve) and
+// no text capability, the keyword variant is named def.Name directly, without
+// the "_keyword" suffix. This preserves the on-disk shape of today's
+// Filterable-STRING fields under the "fields." prefix.
+//
+// Special case: when def.Name == resource.SEARCH_FIELD_TITLE, the keyword
+// variant is named resource.SEARCH_FIELD_TITLE_PHRASE rather than
+// "<name>_keyword". In-tree gRPC clients reference "title_phrase" by name.
+func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.SearchFieldDefinition) {
+	hasFilter := def.HasCapability(resource.SearchCapabilityFilter)
+	hasText := def.HasCapability(resource.SearchCapabilityText)
+	hasPartial := def.HasCapability(resource.SearchCapabilityPartial)
+	hasSort := def.HasCapability(resource.SearchCapabilitySort)
+	hasFacet := def.HasCapability(resource.SearchCapabilityFacet)
+	hasRetrieve := def.HasCapability(resource.SearchCapabilityRetrieve)
+
+	needKeyword := hasFilter || hasFacet || hasSort
+	keywordName := keywordVariantName(def.Name, hasText)
+
+	if needKeyword {
+		m := bleve.NewKeywordFieldMapping()
+		m.IncludeTermVectors = false
+		m.SkipFreqNorm = true
+		m.DocValues = hasSort
+		// Canonical field for storage is the keyword variant only when no text
+		// mapping will also be created.
+		m.Store = hasRetrieve && !hasText
+		parent.AddFieldMappingsAt(keywordName, m)
+	}
+
+	if hasText {
+		m := bleve.NewTextFieldMapping()
+		m.Analyzer = standard.Name
+		m.IncludeTermVectors = false
+		m.DocValues = false
+		m.Store = hasRetrieve
+		parent.AddFieldMappingsAt(def.Name, m)
+	}
+
+	if hasPartial {
+		m := bleve.NewTextFieldMapping()
+		m.Analyzer = TITLE_ANALYZER
+		m.IncludeTermVectors = false
+		m.DocValues = false
+		// ngram variant is never the canonical retrieval target; the keyword
+		// or text variant already stores the value.
+		m.Store = false
+		parent.AddFieldMappingsAt(def.Name+"_ngram", m)
+	}
+
+	// retrieve without any other capability has no place to live; today's
+	// translation never produces such a shape. Silently ignored.
+}
+
+// keywordVariantName returns the name the keyword analyzer variant of a field
+// should occupy. Rules:
+//
+//   - name == "title" → "title_phrase" (legacy in-tree client compatibility).
+//   - text capability present → name + "_keyword" so the text variant can
+//     take name.
+//   - otherwise → name itself, so filter-only fields keep today's on-disk
+//     shape (no suffix).
+func keywordVariantName(name string, hasText bool) string {
+	if name == resource.SEARCH_FIELD_TITLE {
+		return resource.SEARCH_FIELD_TITLE_PHRASE
+	}
+	if hasText {
+		return name + "_keyword"
+	}
+	return name
+}
+
 func GetBleveMappings(fields resource.SearchableDocumentFields, selectableFields []string) (mapping.IndexMapping, error) {
 	mapper := bleve.NewIndexMapping()
 	mapper.DocValuesDynamic = false // only folder and title_phrase need DocValues
@@ -197,22 +283,20 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 
 	fieldMapper := bleve.NewDocumentMapping()
 	if fields != nil {
-		for _, field := range fields.Fields() {
-			def := fields.Field(field)
-
-			// Filterable should use keyword analyzer for exact matches
-			if def.Properties != nil && def.Properties.Filterable && def.Type == resourcepb.ResourceTableColumnDefinition_STRING {
-				keywordMapping := bleve.NewKeywordFieldMapping()
-				keywordMapping.Store = true
-				keywordMapping.DocValues = false
-				keywordMapping.IncludeTermVectors = false
-				keywordMapping.SkipFreqNorm = true
-
-				fieldMapper.AddFieldMappingsAt(def.Name, keywordMapping)
+		// Collect the per-kind column definitions so they can be translated
+		// in one shot. Anything the helper does not emit a mapping for (no
+		// filter/text/partial/facet/sort capability) is left to Bleve's
+		// dynamic mapping at index time, which is the previous behaviour for
+		// non-filterable fields.
+		names := fields.Fields()
+		cols := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(names))
+		for _, name := range names {
+			if def := fields.Field(name); def != nil {
+				cols = append(cols, def)
 			}
-			// For all other fields, we do nothing.
-			// Bleve will see them at index time and dynamically map them as
-			// numeric, datetime, boolean, or standard text based on their content.
+		}
+		for _, def := range resource.SearchFieldsFromTableColumns(cols) {
+			addCapabilityFieldMappings(fieldMapper, def)
 		}
 	}
 
