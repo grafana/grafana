@@ -233,7 +233,7 @@ You can also select these optional settings:
 
 Starting in Grafana 13.1.0, Git Sync allows you to enforce signed commits with your user's signing key, so your Git provider can mark them as _Verified_. If you don't configure a signing key, commits stay unsigned, same as before.
 
-GPG, SSH, and S/MIME keys are supported. Follow the UI wizard to set up any of these options. 
+GPG, SSH, and S/MIME keys are supported. Follow the UI wizard to set up any of these options.
 
 ## Verify your dashboards in Grafana
 
@@ -264,4 +264,3 @@ To learn more about using Git Sync refer to the following documents:
 - [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/provisioned-dashboards/)
 - [Add existing resources to your synced folder](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/export-resources/)
 - [Git Sync deployment scenarios](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios)
-
