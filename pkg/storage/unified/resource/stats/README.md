@@ -1,0 +1,48 @@
+# Unified Storage Usage Stats (POC)
+
+Phase 1 of the unified-storage usage stats design: ingest resource events,
+store per-object stats in KV, recompute rolling windows daily, and expose
+aggregates to the search index. See `unified-storage-stats-design.md` at the
+repo root for the full design.
+
+This is an in-process POC (single-tenant shape). It deliberately skips cloud
+rollout plumbing, the SQL-table `namespace` column / backup changes, enterprise
+endpoint retirement, multi-replica lease tuning, and orphan GC.
+
+## Pieces
+
+| File                  | Responsibility |
+|-----------------------|----------------|
+| `declaration.go`      | Hard-coded `StatsDeclaration` (metrics + windows) for `dashboard.grafana.app/dashboards`. |
+| `keys.go`             | KV key format: `{group}/{resource}/{namespace}/{name}/{day}/{metric}` (daily) and `.../{field}` (aggregates). |
+| `store.go`            | Daily buckets (source of truth, incl. overflow bucket) + derived aggregates cache over `KV`. |
+| `ingest.go`           | In-memory accumulator + `RecordEvent` (tracked-resource + metric validation, dropped-events metric) + grab-flush-release lease flush. |
+| `recalc.go`           | Daily reconcile: fold expiring buckets into overflow, recompute windows/totals. |
+| `dashboard_stats.go`  | Search read path (`KVDashboardStats`) satisfying search `builders.DashboardStats`, behind a feature flag. |
+| `backfill.go`         | Legacy `dashboard_usage_*` → KV seeding (idempotent, leaves today to go-forward). |
+
+## Data model
+
+- `stats/daily` is the source of truth: the trailing 30 day buckets + one
+  `overflow` bucket for everything older. `_total = overflow + sum(daily)`, so
+  it is fully reconcilable.
+- `stats/aggregates` is a derived cache (`*_last_1_days`, `*_last_7_days`,
+  `*_last_30_days`, `*_total`) recomputed on `Recalc`; best-effort bumped on
+  flush. It may be stale; staleness self-heals on recalc.
+- Windows are rolling and inclusive of the current partial day, so
+  `last_1 ≡ today`. Day boundaries are UTC, sourced from `KV.UnixTimestamp`.
+
+## Wiring the search read path
+
+`ProvideDashboardStats(store, enabled)` returns either the KV-backed reader or a
+no-op (legacy behaviour) based on a feature flag. To finish the cutover, swap
+`search/builders.ProvideDashboardStats` to delegate here once `*Store` and the
+flag are available in the search DI graph.
+
+## Not yet wired (follow-ups)
+
+- `RecordEvent` proto/RPC on `ResourceStore` (this POC exposes the Go
+  `Ingester.RecordEvent` entry point; the RPC is an additive proto change).
+- SqlKV section table migration with a real `namespace` column (needed for the
+  hosted-grafana backup `WHERE namespace=` filter).
+- Phase 2 incremental refresh via a `stats/log` section.
