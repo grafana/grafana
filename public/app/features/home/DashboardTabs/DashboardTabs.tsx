@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
-import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints, type GrafanaTheme2 } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { usePluginComponents } from '@grafana/runtime';
 import { ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
@@ -50,7 +49,11 @@ function DashboardExtensionTab({
   return <Component register={register} active={activeTab === id} />;
 }
 
-export function DashboardTabs() {
+interface Props {
+  extensionComponents: Array<ComponentTypeWithExtensionMeta<HomepageTabExtensionProps>>;
+}
+
+export function DashboardTabs({ extensionComponents }: Props) {
   const styles = useStyles2(getStyles);
   const [activeTab, setActiveTab] = useState(RECENT_TAB_ID);
   const [extensionTabs, setExtensionTabs] = useState<HomepageTab[]>([]);
@@ -75,10 +78,6 @@ export function DashboardTabs() {
   const { foldersByUid } = useDashboardLocationInfo(
     (recentDashboards?.length ?? 0) > 0 || (starredDashboards?.length ?? 0) > 0
   );
-
-  const { components: extensionComponents } = usePluginComponents<HomepageTabExtensionProps>({
-    extensionPointId: PluginExtensionPoints.HomepageTabs,
-  });
 
   const registerTab = useCallback((tab: HomepageTab) => {
     setExtensionTabs((prev) => [...prev, tab]);

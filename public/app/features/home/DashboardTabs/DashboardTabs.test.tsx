@@ -4,7 +4,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
-import { setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -47,7 +47,6 @@ function seedStars(uids: string[]) {
 }
 
 beforeEach(() => {
-  setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   window.localStorage.removeItem(impressionKey);
   seedStars([]);
 });
@@ -58,7 +57,7 @@ const createDashboardTabsExtensionComponent = (
   label: string,
   content: ReactNode,
   href?: string
-): ComponentTypeWithExtensionMeta<{}> =>
+): ComponentTypeWithExtensionMeta<HomepageTabExtensionProps> =>
   createComponentWithMeta(
     {
       pluginId,
@@ -69,14 +68,15 @@ const createDashboardTabsExtensionComponent = (
       }) as React.ComponentType,
     },
     PluginExtensionPoints.HomepageTabs
-  );
+    // createComponentWithMeta drops the props generic, narrow it back for the prop type
+  ) as ComponentTypeWithExtensionMeta<HomepageTabExtensionProps>;
 
 describe('DashboardTabs', () => {
   it('renders Recent tab as active by default and shows recent dashboards', async () => {
     seedRecent(['recent-1', 'recent-2']);
     server.use(getCustomSearchHandler([...recentHits, ...starredHits]));
 
-    render(<DashboardTabs />);
+    render(<DashboardTabs extensionComponents={[]} />);
 
     expect(screen.getByRole('tab', { name: /recent/i })).toHaveAttribute('aria-selected', 'true');
 
@@ -90,7 +90,7 @@ describe('DashboardTabs', () => {
     seedStars(['starred-1', 'starred-2', 'starred-3']);
     server.use(getCustomSearchHandler([...recentHits, ...starredHits]));
 
-    const { user } = render(<DashboardTabs />);
+    const { user } = render(<DashboardTabs extensionComponents={[]} />);
 
     await user.click(screen.getByRole('tab', { name: /starred/i }));
 
@@ -104,7 +104,7 @@ describe('DashboardTabs', () => {
   });
 
   it('shows empty state when no recent dashboards', async () => {
-    render(<DashboardTabs />);
+    render(<DashboardTabs extensionComponents={[]} />);
 
     await waitFor(() => {
       expect(screen.getByText("Dashboards you've recently viewed will appear here.")).toBeInTheDocument();
@@ -113,7 +113,7 @@ describe('DashboardTabs', () => {
 
   it('shows empty state when no starred dashboards', async () => {
     seedStars([]);
-    const { user } = render(<DashboardTabs />);
+    const { user } = render(<DashboardTabs extensionComponents={[]} />);
 
     await user.click(screen.getByRole('tab', { name: /starred/i }));
 
@@ -127,7 +127,7 @@ describe('DashboardTabs', () => {
     seedStars(['starred-1', 'starred-2', 'starred-3']);
     server.use(getCustomSearchHandler([...recentHits, ...starredHits]));
 
-    render(<DashboardTabs />);
+    render(<DashboardTabs extensionComponents={[]} />);
 
     await waitFor(() => {
       const recentTab = screen.getByRole('tab', { name: /recent/i });
@@ -144,7 +144,7 @@ describe('DashboardTabs', () => {
     seedStars(['starred-1', 'starred-2', 'starred-3']);
     server.use(getCustomSearchHandler(starredHits));
 
-    const { user } = render(<DashboardTabs />);
+    const { user } = render(<DashboardTabs extensionComponents={[]} />);
 
     await user.click(screen.getByRole('tab', { name: /starred/i }));
 
@@ -170,12 +170,7 @@ describe('DashboardTabs', () => {
       ),
     ];
 
-    setPluginComponentsHook(() => ({
-      components: extensionComponents,
-      isLoading: false,
-    }));
-
-    const { user } = render(<DashboardTabs />);
+    const { user } = render(<DashboardTabs extensionComponents={extensionComponents} />);
 
     expect(await screen.findByRole('tab', { name: 'Plugin Tab 1' })).toBeInTheDocument();
     await waitFor(() => {

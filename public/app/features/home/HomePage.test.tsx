@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { render, screen } from 'test/test-utils';
 
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
@@ -7,6 +8,7 @@ import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
+import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
 
 setBackendSrv(backendSrv);
@@ -131,5 +133,44 @@ describe('HomePage', () => {
     expect(await screen.findByText('Homepage extra extension 1')).toBeInTheDocument();
     expect(await screen.findByText('Homepage extra extension 2')).toBeInTheDocument();
     expect(screen.queryByText('Untrusted homepage extra extension')).not.toBeInTheDocument();
+  });
+
+  it('renders a skeleton instead of the page content while extensions are loading', async () => {
+    setPluginComponentsHook(() => ({ components: [], isLoading: true }));
+
+    render(<HomePage />);
+
+    expect(await screen.findByTestId('home-page-skeleton')).toBeInTheDocument();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  });
+
+  it('reveals extension tabs together with the built-in tabs', async () => {
+    const tabComponent = createComponentWithMeta(
+      {
+        pluginId: 'grafana-setupguide-app',
+        title: 'Plugin tab',
+        component: (({ register }: HomepageTabExtensionProps) => {
+          useEffect(() => register({ id: 'plugin-tab', label: 'Plugin tab' }), [register]);
+          return null;
+        }) as React.ComponentType,
+      },
+      PluginExtensionPoints.HomepageTabs
+    );
+
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: false,
+      components: extensionPointId === PluginExtensionPoints.HomepageTabs ? [tabComponent] : [],
+    }));
+
+    render(<HomePage />);
+
+    // render() flushes effects, so the extension tab must already be registered
+    // and visible in the same reveal as the built-in tabs — no later pop-in
+    expect(screen.getByRole('tab', { name: 'Plugin tab' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
+    expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
+
+    // let the dashboard fetches settle to avoid act() warnings
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
   });
 });
