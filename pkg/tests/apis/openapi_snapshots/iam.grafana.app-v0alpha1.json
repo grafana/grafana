@@ -4662,6 +4662,9 @@
           "lastSeenAt",
           "lastSeenAtAge",
           "provisioned",
+          "disabled",
+          "internalId",
+          "created",
           "score"
         ],
         "properties": {
@@ -4672,9 +4675,25 @@
               "default": false
             }
           },
+          "created": {
+            "description": "Creation timestamp, in epoch milliseconds.",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "disabled": {
+            "type": "boolean",
+            "default": false
+          },
           "email": {
             "type": "string",
             "default": ""
+          },
+          "internalId": {
+            "description": "Deprecated internal (legacy SQL) id of the user.",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           },
           "lastSeenAt": {
             "type": "integer",
