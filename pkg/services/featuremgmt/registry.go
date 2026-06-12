@@ -804,6 +804,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "canvasExternalPlugin",
+			Description: "Load Canvas panel from an external plugin instead of the bundled core plugin",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:        "timeComparison",
 			Description: "Enables time comparison option in supported panels",
 			Stage:       FeatureStagePublicPreview,
@@ -2499,10 +2507,10 @@ var (
 		{
 			Name:        "profilesExemplars",
 			Description: "Enables profiles exemplars support in profiles drilldown",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "pyroscopeUTF8LabelNames",

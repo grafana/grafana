@@ -67,7 +67,7 @@ export const getUserDefinedRoutingTree: (config: AlertManagerCortexConfig) => Ro
   return routingTreeFromSpec(ROOT_ROUTE_NAME, spec);
 };
 
-export const routingTreeFromSpec: (routeName: string, spec: RoutingTreeSpec, provenance?: string) => RoutingTree = (
+const routingTreeFromSpec: (routeName: string, spec: RoutingTreeSpec, provenance?: string) => RoutingTree = (
   routeName,
   spec,
   provenance = KnownProvenance.None

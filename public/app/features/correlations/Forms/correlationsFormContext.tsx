@@ -8,7 +8,7 @@ type CorrelationsFormContextData = {
   readOnly: boolean;
 };
 
-export const CorrelationsFormContext = createContext<CorrelationsFormContextData>({
+const CorrelationsFormContext = createContext<CorrelationsFormContextData>({
   loading: false,
   correlation: undefined,
   readOnly: false,
