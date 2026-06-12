@@ -327,7 +327,7 @@ export function fillOptionsPaneItems(
       continue;
     }
 
-    const htmlId = `${idPrefix}${pluginOption.id}`;
+    const htmlId = `${idPrefix ? `${idPrefix}-` : ''}${pluginOption.id}`;
 
     let category = parentCategory;
     if (!category) {
