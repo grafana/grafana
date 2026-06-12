@@ -22,42 +22,6 @@ labels:
 title: Query and transform data
 description: Query and transform your data
 weight: 40
-refs:
-  data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
-  built-in-core-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#built-in-core-data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#built-in-core-data-sources
-  use-expressions-to-manipulate-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries/
-  global-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#global-variables
-  plugin-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/
-  recorded-queries:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/
-  special-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#special-data-sources
 keywords:
   - saved queries
   - reuse queries
@@ -67,7 +31,7 @@ keywords:
 
 # Query and transform data
 
-Grafana supports many types of [data sources](ref:data-sources).
+Grafana supports many types of [data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/).
 Data source _queries_ return data that Grafana can _transform_ and visualize.
 Each data source uses its own query language, and data source plugins each implement a query-building user interface called a query editor.
 
@@ -81,7 +45,7 @@ Grafana supports up to 26 queries per panel.
 
 {{< admonition type="note" >}}
 You **must** be familiar with a data source's query language.
-For more information, refer to [Data sources](ref:data-sources).
+For more information, refer to [Data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/).
 {{< /admonition >}}
 
 ### Query editors
@@ -99,10 +63,10 @@ For example, this video demonstrates the visual Prometheus query builder:
 
 For details on a specific data source's unique query editor features, refer to its documentation:
 
-- For data sources included with Grafana, refer to [Built-in core data sources](ref:built-in-core-data-sources), which links to each core data source's documentation.
+- For data sources included with Grafana, refer to [Built-in core data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#built-in-core-data-sources), which links to each core data source's documentation.
 - For data sources installed as plugins, refer to the documentation for the plugin.
   - Data source plugins in Grafana's [plugin catalog](/grafana/plugins/) link to or include their documentation in their catalog listings.
-    For details about the plugin catalog, refer to [Plugin management](ref:plugin-management).
+    For details about the plugin catalog, refer to [Plugin management](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/).
   - For links to Grafana Enterprise data source plugin documentation, refer to the [Enterprise plugins index](/docs/plugins/).
 
 ### Query syntax
@@ -125,7 +89,7 @@ query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
 ### Special data sources
 
 Grafana also includes three special data sources: **Grafana**, **Mixed**, and **Dashboard**.
-For details, refer to [Data sources](ref:data-sources)
+For details, refer to [Data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/)
 
 ## Saved queries
 
@@ -245,12 +209,12 @@ In Explore, you can map variables to custom values.
 A panel's **Queries** tab consists of the following elements:
 
 - **Data source selector** - Selects the data source to query.
-  For more information about data sources, refer to [Data sources](ref:data-sources).
+  For more information about data sources, refer to [Data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/).
 - **Query options** - Sets maximum data retrieval parameters and query execution time intervals.
 - **Query inspector button** - Opens the query inspector panel, where you can view and optimize your query.
 - **Query editor list** - The list of queries you've written. Each query can be expanded or collapsed.
 - **Expressions** - Uses the expression builder to create alert expressions.
-  For more information about expressions, refer to [Use expressions to manipulate data](ref:use-expressions-to-manipulate-data).
+  For more information about expressions, refer to [Use expressions to manipulate data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/).
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-queries-tab2-v11.6.png" max-width="750px" alt="The Query tab of the panel editor" >}}
 
@@ -300,7 +264,7 @@ You can:
 | Icon    | Description                                  |
 | ------- | -------------------------------------------- |
 | {{< figure src="/static/img/docs/queries/query-editor-help-7-4.png" max-width="30px" max-height="30px" alt="Help icon" >}} | Toggles query editor help. If supported by the data source, click this icon to display information on how to use the query editor or provide quick access to common queries. |
-| {{< figure src="/media/docs/grafana/panels-visualizations/create-recorded-query-icon.png" max-width="30px" max-height="30px" alt="Create recorded query icon" >}} | Create [recorded queries](ref:recorded-queries) so you can see trends over time by taking a snapshot of a data point on a set interval (Enterprise and Cloud only). |
+| {{< figure src="/media/docs/grafana/panels-visualizations/create-recorded-query-icon.png" max-width="30px" max-height="30px" alt="Create recorded query icon" >}} | Create [recorded queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/) so you can see trends over time by taking a snapshot of a data point on a set interval (Enterprise and Cloud only). |
 | {{< figure src="/media/docs/grafana/panels-visualizations/save-to-query-icon.png" max-width="30px" max-height="30px" alt="Save query icon" >}} | Save query. Saves the query so it can be reused. Access saved queries by clicking **+ Add saved query**. For more information, refer to [Saved queries](#saved-queries) (Enterprise and Cloud only). |
 | {{< figure src="/static/img/docs/queries/duplicate-query-icon-7-0.png" max-width="30px" max-height="30px" alt="Duplicate icon" >}} | Copies a query. Duplicating queries is useful when working with multiple complex queries that are similar and you want to either experiment with different variants or do minor alterations. |
 | {{< figure src="/static/img/docs/queries/hide-query-icon-7-0.png" max-width="30px" max-height="30px" alt="Hide icon" >}} | Hides a query. Grafana does not send hidden queries to the data source. |
@@ -346,7 +310,7 @@ Panel data source query options include:
   You can also set this to a higher minimum than the scrape interval to retrieve queries that are more coarse-grained and well-functioning.
 
   {{< admonition type="note" >}}
-  The **Min interval** corresponds to the min step in Prometheus. Changing the Prometheus interval can change the start and end of the query range because Prometheus aligns the range to the interval. Refer to [Min step](https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#min-step) for more details.
+  The **Min interval** corresponds to the min step in Prometheus. Changing the Prometheus interval can change the start and end of the query range because Prometheus aligns the range to the interval. Refer to [Min step](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/query-editor/#min-step) for more details.
   {{< /admonition >}}
 
 - **Interval** - Sets a time span that you can use when aggregating or grouping data points by time.
@@ -361,7 +325,7 @@ Panel data source query options include:
   As the user zooms out on a visualization, the interval grows, resulting in a more coarse-grained aggregation.
   Likewise, if the user zooms in, the interval decreases, resulting in a more fine-grained aggregation.
 
-  For more information, refer to [Global variables](ref:global-variables).
+  For more information, refer to [Global variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables).
 
 - **Relative time** - Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard.
   You can use this to show metrics from different time periods or days on the same dashboard.
