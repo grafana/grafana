@@ -49,7 +49,7 @@
     "@rollup/plugin-node-resolve": "16.0.1",
     "@types/node": "24.10.1",
     "@types/semver": "7.7.1",
-    "esbuild": "0.25.8",
+    "esbuild": "0.28.1",
     "rimraf": "6.0.1",
     "rollup": "^4.60.1",
     "rollup-plugin-esbuild": "6.2.1",
