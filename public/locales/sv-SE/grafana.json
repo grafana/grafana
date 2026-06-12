@@ -1180,12 +1180,6 @@
       "label-metric": "Mått",
       "label-pending-period": "Väntande period"
     },
-    "evaluation-group": {
-      "label-delete": "Ta bort",
-      "label-export": "Exportera",
-      "label-reorder-rules": "Ändra ordning på regler",
-      "text-provisioned": "Provisionerad"
-    },
     "evaluation-group-creation-modal": {
       "description-group-name": "En grupp utvärderar alla dess regler under samma utvärderingsintervall.",
       "description-often-rules-group-evaluated": "Hur ofta alla regler i gruppen utvärderas.",
@@ -1194,9 +1188,6 @@
       },
       "placeholder-enter-a-name": "Ange ett namn",
       "title-new-evaluation-group": "Ny utvärderingsgrupp"
-    },
-    "evaluation-group-loader": {
-      "title-something-wrong-trying-fetch-group-details": "Något gick fel när du försökte hämta gruppinformation"
     },
     "existing-rule-editor": {
       "sorry-permission": "Tyvärr! Du har inte behörighet att redigera denna regel.",
@@ -1967,9 +1958,7 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "Denna datakälla har inga regler konfigurerade",
         "new-alert-rule": "Ny varningsregel",
-        "new-ds-managed-alerting-rule": "Ny varningsregel hanterad av datakälla",
         "new-ds-managed-recording-rule": "Ny inspelningsregel hanterad av datakälla",
         "new-grafana-alerting-rule": "Ny varningsregel",
         "new-grafana-recording-rule": "Ny inspelningsregel",
@@ -2540,22 +2529,9 @@
         "aria-label": "Lägg till policy",
         "text": "Ny aviseringspolicy"
       },
-      "delete-reasons": {
-        "no-permissions": "Du har inte behörighet att radera denna aviseringspolicy",
-        "provisioned": "Aviseringspolicyn är etablerad och kan inte raderas via användargränssnittet"
-      },
-      "delete-text": "Aviseringspolicyn kan inte raderas av följande skäl:",
-      "empty-state": {
-        "message": "Inga policyer hittades"
-      },
       "fetch": {
         "error": "Det gick inte att hämta policyer"
       },
-      "reset-reasons": {
-        "no-permissions": "Du har inte behörighet att återställa denna aviseringspolicy",
-        "provisioned": "Aviseringspolicyn är etablerad och kan inte återställas via användargränssnittet"
-      },
-      "reset-text": "Aviseringspolicyn kan inte återställas av följande skäl:",
       "text-loading": "Laddar …"
     },
     "policies-tree-wrapper": {
@@ -2765,16 +2741,6 @@
       "label-override-timings": "Åsidosätt tidsinställningar",
       "repeat-interval": "Upprepningsintervall: <strong>{{repeatIntervalValue}}</strong>"
     },
-    "routing-tree-filter": {
-      "aria-label-clear": "rensa",
-      "aria-label-search-routing-trees": "sök i dirigeringsträd",
-      "clear": "Rensa",
-      "label-search-by-name-or-receiver": "Sök efter policynamn eller kontaktpunkt",
-      "placeholder-search": "Sök"
-    },
-    "routing-tree-header": {
-      "reset": "Återställ"
-    },
     "rule-actions-buttons": {
       "title-edit": "Redigera",
       "title-view": "Visa"
@@ -2980,7 +2946,6 @@
       "return-button": {
         "title": "Varningsregler"
       },
-      "rulerrule-loading-error": "Det gick inte att ladda regeln",
       "toggle": {
         "use-new-experience": "Använd ny upplevelse",
         "view-previous-experience": "Återgå till föregående upplevelse"
@@ -3577,9 +3542,6 @@
       "collapse": "Dölj",
       "collapse-all": "Stäng alla",
       "collapse-sidebar": "Dölj sidofält",
-      "compact-firing": "utlöses",
-      "compact-pending": "väntande",
-      "compact-rules": "regler",
       "error-loading-rule": "Fel vid laddning av regel",
       "expand": "Expandera",
       "expand-all": "Visa alla",
@@ -5373,6 +5335,8 @@
     },
     "code-pane": {
       "collapse": "Minimera redigeraren",
+      "copy-as-resource": "",
+      "copy-as-resource-tooltip": "",
       "expand": "Expandera redigeraren",
       "header": "Redigera som kod",
       "modal-title": "Redigera instrumentpanel som kod"
@@ -5672,8 +5636,7 @@
           "apply": "Tillämpa",
           "change-value": "Ändra variabelvärde",
           "discard": "Kassera",
-          "modal-title": "Anpassade alternativ",
-          "values": "Värden åtskilda med kommatecken"
+          "modal-title": "Anpassade alternativ"
         },
         "datasource-options": {
           "name-filter": "Namnfilter",
@@ -5898,7 +5861,6 @@
     },
     "inspect": {
       "data-tab": "Data",
-      "error-tab": "Fel",
       "json-tab": "JSON",
       "meta-tab": "Metadata",
       "query-tab": "Fråga",
@@ -6013,13 +5975,6 @@
       "new-row": {
         "title": {
           "row-title": "Radrubrik"
-        }
-      }
-    },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "Widget-rubrik"
         }
       }
     },
@@ -8781,19 +8736,6 @@
     "span-bar-row": {
       "tooltip-adaptive-traces-restored": ""
     },
-    "span-bar-section": {
-      "description-link": "Lägg till ytterligare information bredvid tjänsten och operationen på en rad med spårfält i spårningsvyn.",
-      "title-span-bar": "Spårfält"
-    },
-    "span-bar-settings": {
-      "aria-label-selectlabelname": "Välj namn för etikett",
-      "label-label": "Etikett",
-      "label-tag-key": "Taggnyckel",
-      "placeholder-duration": "Varaktighet",
-      "placeholder-enter-tag-key": "Ange taggnyckel",
-      "tooltip-default-duration": "Standard: varaktighet",
-      "tooltip-tag-key": "Taggnyckel som kommer att användas för att få taggvärdet. Ett spårs attribut och resurser kommer att genomsökas efter taggnyckeln"
-    },
     "span-detail": {
       "label": {
         "kind": "Variant:",
@@ -9030,13 +8972,6 @@
       "folder-deleted-success": "Mappen raderad",
       "folder-move-error-provisioned": "Det går inte att flytta den tilldelade mappen. Om du vill flytta den flyttar du den i lagringsplatsen och synkroniserar för att tillämpa ändringarna.",
       "folder-moved-success": "Mappen flyttad"
-    },
-    "get-loading-nav": {
-      "main": {
-        "title": {
-          "loading": "Laddar"
-        }
-      }
     }
   },
   "forgot-password": {
@@ -11616,11 +11551,6 @@
     "noOptionsMessage-no-options-found": "Inga alternativ hittades"
   },
   "migrate-to-cloud": {
-    "build-snapshot": {
-      "description": "Det här verktyget kan migrera vissa resurser från den här installationen till din molnstack. För att komma igång måste du skapa en ögonblicksbild av den här installationen. Att skapa en ögonblicksbild tar vanligtvis mindre än två minuter. Ögonblicksbilden lagras tillsammans med den här Grafana-installationen.",
-      "title": "Det finns ingen ögonblicksbild",
-      "when-complete": "När ögonblicksbilden är klar kan du ladda upp den till din molnstack."
-    },
     "building-snapshot": {
       "description": "Vi samlar dina resurser för att migrera till Grafana Cloud. Det bör bara ta en kort stund.",
       "description-eta": "Att skapa en ögonblicksbild tar vanligtvis mindre än två minuter. ",
@@ -12478,13 +12408,6 @@
       "search": "Sök",
       "starred-dashboards": "Stjärnmärkta instrumentpaneler"
     },
-    "get-calculation-value-data-links-variable-suggestions": {
-      "value-calc-var": {
-        "label": {
-          "calculation-name": "Beräkningsnamn"
-        }
-      }
-    },
     "get-data-links-variable-suggestions": {
       "value-time-var": {
         "label": {
@@ -13129,6 +13052,14 @@
       "folders-count_one": "{{count}} mapp",
       "folders-count_other": "{{count}} mapp"
     },
+    "branch-options": {
+      "description-enforce-template": "",
+      "description-name-template": "",
+      "label-branch-options": "",
+      "label-enforce-template": "",
+      "label-name-template": "",
+      "placeholder-name-template": ""
+    },
     "cloud-info-box": {
       "body": "Hoppa över konfigurationen och få Git Sync fullt hanterat och värdbaserat på Grafana Cloud med <2>Grafana Cloud-prenumerationen gratis för alltid</2>.",
       "title": "Du kan även använda Git Sync i Grafana Cloud"
@@ -13147,6 +13078,11 @@
       "folder-move-default": "",
       "folder-rename-default": "",
       "folder-update-default": ""
+    },
+    "commit-options": {
+      "description-enforce-template": "",
+      "label-commit-options": "",
+      "label-enforce-template": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Inställningar för lagringsplats har sparats",
@@ -13584,6 +13520,14 @@
           "repository-request-failed": "Begäran om lagringsplats misslyckades"
         }
       }
+    },
+    "pull-request-options": {
+      "description-enforce-template": "",
+      "description-title-template": "",
+      "label-enforce-template": "",
+      "label-pull-request-options": "",
+      "label-title-template": "",
+      "placeholder-title-template": ""
     },
     "quota-limit": {
       "note": "Obs!",
@@ -14214,6 +14158,10 @@
       "query": "",
       "transformation": ""
     },
+    "queries-empty-state": {
+      "add-query": "",
+      "message": ""
+    },
     "sidebar": {
       "add-below": "Lägg till nedanför {{id}}",
       "add-expression": "Lägg till uttryck",
@@ -14232,9 +14180,11 @@
       "footer-select": "",
       "footer-select-label": "",
       "new-type": "Ny {{type}}",
+      "queries-empty": "",
       "queries-expressions": "Frågor och uttryck",
       "toggle-size": "Växla sidofältets storlek",
       "transformations": "Omvandlingar",
+      "transformations-empty": "",
       "view-toggle": "Visa",
       "alerts_one": "Larm ({{count}})",
       "alerts_other": "Larm ({{count}})",

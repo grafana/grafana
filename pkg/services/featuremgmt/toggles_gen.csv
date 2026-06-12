@@ -436,3 +436,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-26,plugins.initDataSourcesAsync,experimental,@grafana/grafana-catalog,false,false,true
 2026-05-22,frontendService.reducedBootDataAPI,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-05-27,grafana.panelEditNextFeedbackEvent,experimental,@grafana/datapro,false,false,true
+2026-06-12,grafana.visualDesignRefresh,experimental,@grafana/grafana-frontend-platform,false,false,true

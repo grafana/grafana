@@ -29,7 +29,7 @@
       "add-label": "Add a permission",
       "loading": "Loading permissions...",
       "no-permissions": "There are no permissions",
-      "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
+      "permissions-change-warning": "This will change permissions for this folder and all its descendants.",
       "role": "Role",
       "serviceaccount": "Service Account",
       "team": "Team",
@@ -4224,13 +4224,13 @@
       "cancel-button": "Cancel",
       "confirmation-text": "Delete",
       "delete-button": "Delete",
-      "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
-      "delete-modal-invalid-title": "Cannot delete folder",
+      "delete-modal-folder-empty_one": "Selected folder is empty",
+      "delete-modal-folder-empty_other": "Selected folders are empty",
+      "delete-modal-folder-not-empty_one": "Selected folder contains other resources that will be deleted",
+      "delete-modal-folder-not-empty_other": "Selected folders contain other resources that will be deleted",
       "delete-modal-restore-dashboards-common": "Deleted dashboards will be kept in the history for up to 12 months. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user. The history is limited to 1000 dashboards — older ones may be removed sooner if the limit is reached.",
       "delete-modal-restore-dashboards-prefix-folder": "This action will delete the selected folders immediately.",
       "delete-modal-restore-dashboards-suffix-folder": "Folders cannot be restored.",
-      "delete-modal-text": "This action will delete the following content:",
-      "delete-modal-text-one-folder": "This action will delete the folder \"<1>{{ folderName }}</1>\" and the following content:",
       "delete-modal-title": "Delete",
       "delete-provisioned-folder": "Delete provisioned folder",
       "deleting": "Deleting...",
@@ -4238,8 +4238,8 @@
       "move-button": "Move",
       "move-modal-alert": "Moving this item may change its permissions.",
       "move-modal-field-label": "Folder name",
-      "move-modal-text": "This action will move the following content:",
-      "move-modal-text-one-folder": "This action will move the folder \"<1>{{ folderName }}</1>\" and the following content:",
+      "move-modal-folder-not-empty_one": "Selected folder contains other resources that will be moved with it",
+      "move-modal-folder-not-empty_other": "Selected folders contain other resources that will be moved with them",
       "move-modal-title": "Move",
       "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
@@ -4254,6 +4254,7 @@
     "actions": {
       "button-to-recently-deleted": "Recently deleted"
     },
+    "affected-folder-contents-error": "We couldn't get information about folder contents.",
     "browse-folder-alerting-page": {
       "title-folder-not-found": "Folder not found",
       "title-ruler-namespace-error": "Cannot load rules"
@@ -4268,8 +4269,12 @@
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
-      "error-deleting-resources": "Error deleting resources"
+      "delete-warning": "This will delete selected folders and their descendants.",
+      "error-deleting-resources": "Error deleting resources",
+      "folder-empty_one": "Selected folder is empty",
+      "folder-empty_other": "Selected folders are empty",
+      "folder-not-empty_one": "Selected folder contains other resources that will be deleted",
+      "folder-not-empty_other": "Selected folders contain other resources that will be deleted"
     },
     "bulk-move-resources-form": {
       "button-cancel": "Cancel",
@@ -4285,22 +4290,11 @@
       "error-already-in-target-folder": "Selected resources are already in the target folder.",
       "error-moving-resources": "Error moving resources",
       "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
-      "move-total": "In total, this will affect:",
+      "folder-not-empty_one": "Selected folder contains other resources that will be moved with it",
+      "folder-not-empty_other": "Selected folders contain other resources that will be moved with them",
       "move-warning": "This will move selected folders and their descendants. Available target folders depend on the selected resources.",
       "move-warning-tooltip": "You can only move provisioned resources within their provisioned folder, and local resources to local folders.",
       "target-folder": "Target Folder"
-    },
-    "counts": {
-      "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rules",
-      "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboards",
-      "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folders",
-      "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panels",
-      "total_one": "{{count}} item",
-      "total_other": "{{count}} items"
     },
     "create-new": {
       "dashboard-group": "Dashboard"
@@ -4329,12 +4323,11 @@
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:",
+      "delete-warning": "This will delete this folder and all its descendants.",
+      "folder-empty": "Selected folder is empty",
+      "folder-not-empty": "Selected folder contains other resources that will be deleted",
       "missing-info": "Missing required fields",
       "success-message": "Folder deleted successfully"
-    },
-    "descendant-count": {
-      "title-unable-to-retrieve-descendant-information": "Unable to retrieve descendant information"
     },
     "empty-state": {
       "button-title": "Create dashboard",
@@ -5239,10 +5232,6 @@
       },
       "pane-header": "Add"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "Close 'Add Panel' widget",
-      "tooltip-close-widget": "Close widget"
-    },
     "add-menu": {
       "import": "Import from library",
       "paste-panel": "Paste panel",
@@ -6079,18 +6068,6 @@
       "confirmText-restore-version": "Yes, restore to version {{version}}",
       "title-restore-version": "Restore version"
     },
-    "row-options-button": {
-      "aria-label-row-options": "Row options"
-    },
-    "row-options-form": {
-      "cancel": "Cancel",
-      "label-repeat-for": "Repeat for",
-      "label-title": "Title",
-      "update": "Update"
-    },
-    "row-options-modal": {
-      "title-row-options": "Row options"
-    },
     "rows-layout": {
       "cancel": "Cancel",
       "convert-to": "Convert to {{name}}",
@@ -6460,16 +6437,6 @@
       "changes": "Do you want to save your changes?",
       "discard": "Discard",
       "title-unsaved-changes": "Unsaved changes"
-    },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Delete row",
-      "learn-more": "Learn more",
-      "title": {
-        "delete-row": "Delete row"
-      }
     },
     "validation": {
       "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
@@ -13066,7 +13033,7 @@
     "branch-options": {
       "description-enforce-template": "Make the branch name read-only in save dialogs so users cannot override the generated name.",
       "description-name-template": "Template for the branch created by the branch (pull request) workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}, {{randomVar}} (a short random token to avoid collisions). The result is sanitised into a valid Git branch name. Leave empty to use the auto-generated name.",
-      "label-branch-options": "Branch options (advanced)",
+      "label-branch-options": "Branch options",
       "label-enforce-template": "Enforce branch name template",
       "label-name-template": "Branch name template",
       "placeholder-name-template": "grafana/{{actionVar}}-{{titleVar}}-{{randomVar}}"
@@ -13092,8 +13059,15 @@
     },
     "commit-options": {
       "description-enforce-template": "Pre-fill the commit message in save dialogs from the template above and make it read-only.",
-      "label-commit-options": "Commit options (advanced)",
-      "label-enforce-template": "Enforce commit message template"
+      "label-commit-options": "Commit options",
+      "label-enforce-template": "Enforce commit message template",
+      "signer-required": "Required when commit signing is enabled.",
+      "signing-key-required": "Signing key is required",
+      "smime-certificate-configured": "Configured",
+      "smime-certificate-required": "Certificate is required"
+    },
+    "commit-signing-info": {
+      "description": "To enable verified commits, <2>set up commit signing</2> for your account."
     },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
@@ -13124,13 +13098,6 @@
       "placeholder-commit-message-template": "feat(dashboards): {{actionVar}} {{titleVar}}",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "My config"
-    },
-    "config-form-github-collapse": {
-      "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
-      "description-webhook-url-learn-more": "Learn more",
-      "label-git-hub-features": "GitHub features",
-      "label-webhook-url": "Webhook URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "connect-page": {
       "subTitle": {
@@ -13280,19 +13247,13 @@
     },
     "finish-step": {
       "description-enable-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
-      "description-generate-dashboard-previews": "Create preview links for pull requests",
       "description-image-rendering": "Requires image rendering. <2>Set up image rendering</2>",
-      "description-preview-requirements": "(requires <2>image rendering</2> and public access enabled)",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-sync-interval": "How often to sync changes from the repository",
-      "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
       "error-sync-interval-required": "Sync interval is required",
       "label-enable-previews": "Enable dashboard previews in pull requests",
-      "label-generate-dashboard-previews": "Generate Dashboard Previews",
       "label-read-only": "Read only",
-      "label-sync-interval": "Sync Interval (seconds)",
-      "label-webhook-url": "Webhook URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
+      "label-sync-interval": "Sync Interval (seconds)"
     },
     "fix-folder-metadata": {
       "button": "Fix folder IDs"
@@ -13536,7 +13497,7 @@
       "description-enforce-template": "Pre-fill the pull request title in save dialogs from the template above and make it read-only.",
       "description-title-template": "Template for the pull request title opened by the branch workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Leave empty to use the first line of the commit message.",
       "label-enforce-template": "Enforce pull request title template",
-      "label-pull-request-options": "Pull request options (advanced)",
+      "label-pull-request-options": "Pull request options",
       "label-title-template": "Pull request title template",
       "placeholder-title-template": "{{actionVar}}: {{titleVar}}"
     },
@@ -13706,11 +13667,24 @@
     "shared": {
       "branch-description": "The branch to use for provisioning",
       "branch-label": "Branch",
+      "commit-signer-email-description": "Must match the signing key identity.",
+      "commit-signer-email-label": "Signer email",
+      "commit-signer-email-placeholder": "noreply@grafana.com",
+      "commit-signer-name-description": "Name of the commit signer.",
+      "commit-signer-name-label": "Signer name",
+      "commit-signer-name-placeholder": "Grafana",
       "path-description": "Optional. Path to the subdirectory with the resources you want to sync.",
       "path-label": "Path",
       "progress-bar": {
         "aria-label": "Progress Bar"
       },
+      "signing-key-description": "Private key used to sign commits. No passphrase.",
+      "signing-key-label": "Signing key",
+      "signing-method-description": "Sign commits so their author can be cryptographically verified.",
+      "signing-method-label": "Commit signing",
+      "signing-method-none": "None",
+      "smime-certificate-description": "X.509 certificate paired with the signing key.",
+      "smime-certificate-label": "S/MIME certificate",
       "token-user-label": "Username",
       "url-label": "Repository URL",
       "url-pattern": "Must be a valid repository URL (https://hostname/owner/repo)"
@@ -13778,6 +13752,13 @@
     "watch-stream": {
       "error-description": "Real-time updates could not be started. Refresh the page to see the latest data.",
       "error-title": "Live updates unavailable"
+    },
+    "webhook-section": {
+      "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
+      "description-webhook-url-learn-more": "Learn more",
+      "label-webhook": "Webhook options",
+      "label-webhook-url": "Webhook URL",
+      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "wizard": {
       "alert-intro": "Please be aware of the following limitations. For more details, see the <2>Git Sync documentation</2>.",

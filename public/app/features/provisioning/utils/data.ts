@@ -1,4 +1,4 @@
-import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { type CommitOptions, type InlineSecureValue, type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type RepositoryFormData } from '../types';
 
@@ -10,6 +10,37 @@ type TemplateFieldKey = 'singleResourceMessageTemplate' | 'nameTemplate' | 'titl
 // varies per group, plus an enforce toggle.
 type TemplateOptions<TemplateKey extends TemplateFieldKey> = Partial<Record<TemplateKey, string>> & {
   enforceTemplate?: boolean;
+};
+
+// Commit options extend the shared template shape with signing fields.
+const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined => {
+  const base = buildTemplateOptions(
+    'singleResourceMessageTemplate',
+    data.commit?.singleResourceMessageTemplate,
+    data.commit?.enforceTemplate
+  );
+  const signerName = data.commit?.signerName?.trim();
+  const signerEmail = data.commit?.signerEmail?.trim();
+  const signingMethod = data.signingMethod;
+
+  if (!base && !signerName && !signerEmail && !signingMethod) {
+    return undefined;
+  }
+
+  const commit: CommitOptions = { ...base };
+  if (signerName) {
+    commit.signerName = signerName;
+  }
+  if (signerEmail) {
+    commit.signerEmail = signerEmail;
+  }
+  if (signingMethod) {
+    commit.signingMethod = signingMethod;
+  }
+  if (data.smimeCertificate) {
+    commit.smimeCertificate = data.smimeCertificate;
+  }
+  return commit;
 };
 
 // Build a spec-level options group from its form values, trimming the template
@@ -55,11 +86,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
     workflows: getWorkflows(data),
   };
 
-  const commit = buildTemplateOptions(
-    'singleResourceMessageTemplate',
-    data.commit?.singleResourceMessageTemplate,
-    data.commit?.enforceTemplate
-  );
+  const commit = buildCommitOptions(data);
   if (commit) {
     spec.commit = commit;
   }
@@ -130,6 +157,24 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
   return structuredClone(spec);
 };
 
+/**
+ * Derive the `secure.commitSigningKey` entry from the form's signing state.
+ * Returns `{ create }` when signing is enabled and a new key was entered,
+ * `{ remove: true }` when signing is disabled but a key was previously stored,
+ * and `undefined` when there is nothing to change. Both submit paths
+ * (config edit and wizard create) share this so the set/keep/remove decision
+ * lives in one place.
+ */
+export const deriveSigningKeySecret = (
+  data: RepositoryFormData,
+  existingKeyConfigured: boolean
+): InlineSecureValue | undefined => {
+  if (data.signingMethod) {
+    return data.commitSigningKey ? { create: data.commitSigningKey } : undefined;
+  }
+  return existingKeyConfigured ? { remove: true } : undefined;
+};
+
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
   const remoteConfig = spec.github || spec.gitlab || spec.bitbucket || spec.git;
   // tokenUser is only available for bitbucket and pure git
@@ -148,6 +193,10 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     prWorkflow: spec.workflows.includes('branch'),
     enablePushToConfiguredBranch: spec.workflows.includes('write'),
     connectionName: spec.connection?.name,
+    signingMethod: spec.commit?.signingMethod ?? '',
+    smimeCertificate: spec.commit?.smimeCertificate ?? '',
+    commitSigningKey: '',
+    commit: { ...spec.commit, signerName: spec.commit?.signerName ?? '', signerEmail: spec.commit?.signerEmail ?? '' },
   });
 };
 

@@ -55,8 +55,14 @@ export const FlagKeys = {
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
+<<<<<<< HEAD
   /** Enables the sidebar pane with new toggles and options in panel view mode */
   GrafanaViewPanelPane: "grafana.viewPanelPane",
+||||||| 8c7e01c44c7
+=======
+  /** Enables the new visual design refresh for the Grafana UI */
+  GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
+>>>>>>> 633d11ad7626ae8da8b2ce8e8231305700a0c788
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Use stream shards to split queries into smaller subqueries */
@@ -335,6 +341,7 @@ export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptio
 };
 
 /**
+<<<<<<< HEAD
  * Enables the sidebar pane with new toggles and options in panel view mode
  *
  * **Details:**
@@ -346,6 +353,20 @@ export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions
 };
 
 /**
+||||||| 8c7e01c44c7
+=======
+ * Enables the new visual design refresh for the Grafana UI
+ *
+ * **Details:**
+ * - flag key: `grafana.visualDesignRefresh`
+ * - default value: `false`
+ */
+export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.visualDesignRefresh", false, options).value;
+};
+
+/**
+>>>>>>> 633d11ad7626ae8da8b2ce8e8231305700a0c788
  * Enables an inline version of Log Details that creates no new scrolls
  *
  * **Details:**
