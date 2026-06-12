@@ -326,8 +326,8 @@ You must reload the connections with old certificates for them to work.
 
 #### `socket_gid`
 
-GID where the socket should be set when `protocol=socket`.
-Make sure that the target group is in the group of Grafana process and that Grafana process is the file owner before you change this setting.
+GID of the socket when `protocol=socket`.
+Make sure that the user running the Grafana process is a member of the target group and is the file owner before you change this setting.
 It is recommended to set the GID as HTTP server user GID.
 Not set when the value is `-1`.
 

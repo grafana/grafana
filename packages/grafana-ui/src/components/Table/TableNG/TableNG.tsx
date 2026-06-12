@@ -46,9 +46,9 @@ import { Pagination } from '../../Pagination/Pagination';
 import { type PanelContext, usePanelContext } from '../../PanelChrome';
 import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
+import { type DataLinksActionsTooltipState } from '../cellUtils';
 import { hasGeoCell, LazyOpenLayersProvider } from '../geo';
 import { TableCellDisplayMode } from '../types';
-import { type DataLinksActionsTooltipState } from '../utils';
 
 import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
 import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
