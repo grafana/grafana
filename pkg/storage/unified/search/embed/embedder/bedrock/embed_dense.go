@@ -3,6 +3,7 @@ package bedrock
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
@@ -58,7 +59,7 @@ func (e *DenseEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextI
 		res, err := e.client.EmbedTexts(callCtx, e.model, texts, inputType, e.dim)
 		if err != nil {
 			if errors.Is(context.Cause(callCtx), ErrCallTimeout) {
-				return nil, ErrCallTimeout
+				return nil, fmt.Errorf("%w: %w", ErrCallTimeout, err)
 			}
 			return nil, err
 		}
