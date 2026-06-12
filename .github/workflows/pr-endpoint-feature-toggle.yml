@@ -5,11 +5,18 @@ on:
     types: [opened, synchronize, reopened, labeled, unlabeled]
     branches: [main]
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   detect-changes:
+    timeout-minutes: 15
     runs-on: ubuntu-arm64-small
     outputs:
       frontend-strict: ${{ steps.changed-files.outputs.frontend_strict_any_changed }}
@@ -56,6 +63,7 @@ jobs:
               - 'scripts/go/**'
               - '.air.toml'
 
+    timeout-minutes: 15
   check-endpoint-migration:
     needs: detect-changes
     if: needs.detect-changes.outputs.frontend-strict == 'true' && needs.detect-changes.outputs.backend-strict != 'true'
@@ -90,6 +98,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
+    timeout-minutes: 15
   # Always-run job for use as required status check
   endpoint-toggle-result:
     if: always()

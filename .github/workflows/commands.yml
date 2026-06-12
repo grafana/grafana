@@ -13,6 +13,7 @@ permissions: {}
 
 jobs:
   config:
+    timeout-minutes: 15
     runs-on: ubuntu-arm64-small
     outputs:
       has-secrets: ${{ steps.check.outputs.has-secrets }}
@@ -25,6 +26,7 @@ jobs:
             echo "has-secrets=1" >> "$GITHUB_OUTPUT"
           fi
 
+    timeout-minutes: 15
   main:
     needs: config
     if: needs.config.outputs.has-secrets

@@ -15,6 +15,7 @@ permissions: {}
 
 jobs:
   detect-changes:
+    timeout-minutes: 15
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
@@ -278,6 +279,7 @@ jobs:
           path: blob-report
           retention-days: 1
 
+    timeout-minutes: 15
   required-playwright-tests:
     needs:
       - run-playwright-tests
@@ -353,6 +355,7 @@ jobs:
           if [ "$FAILED" = "true" ]; then
             exit 1
           fi
+    timeout-minutes: 15
 
   report-playwright-bench:
     needs:
@@ -392,6 +395,7 @@ jobs:
               --report-input playwright \
               --report-output log \
               --log-level DEBUG \
+    timeout-minutes: 15
               /home/bench/tests/playwright-results.json
 
   publish-metrics:
@@ -422,6 +426,7 @@ jobs:
         run: ./scripts/ci-frontend-metrics.sh | node --experimental-strip-types .github/workflows/scripts/publish-frontend-metrics.mts
         env:
           GRAFANA_MISC_STATS_API_KEY: ${{ fromJSON(steps.vault-secrets.outputs.secrets).GRAFANA_MISC_STATS_API_KEY }}
+    timeout-minutes: 15
 
   # 'All E2E tests complete' is still a required check. To help with this transition, we keep
   # a placeholder job to avoid needing to remove the required check from github yet.

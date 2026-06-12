@@ -6,10 +6,17 @@ on:
       - main
       - release-*.*.*
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   detect-changes:
+    timeout-minutes: 15
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
@@ -31,6 +38,7 @@ jobs:
         with:
           self: .github/workflows/pr-frontend-unit-tests.yml
 
+    timeout-minutes: 15
   generate-golden-files:
     permissions:
       contents: read
@@ -60,6 +68,7 @@ jobs:
           apps/dashboard/pkg/migration/testdata/dev-dashboards-output/
           apps/dashboard/pkg/migration/conversion/testdata/output/
           apps/dashboard/pkg/migration/conversion/testdata/migrated_dashboards_output/
+    timeout-minutes: 15
 
   frontend-unit-tests:
     permissions:
@@ -95,6 +104,7 @@ jobs:
       env:
         TEST_MAX_WORKERS: 4
         TEST_SHARD: ${{ matrix.shard }}
+    timeout-minutes: 15
         TEST_SHARD_TOTAL: ${{ matrix.total }}
 
   frontend-unit-tests-enterprise:
@@ -138,6 +148,7 @@ jobs:
     - run: yarn run test:ci
       env:
         TEST_MAX_WORKERS: 4
+    timeout-minutes: 15
         TEST_SHARD: ${{ matrix.shard }}
         TEST_SHARD_TOTAL: ${{ matrix.total }}
 
@@ -155,6 +166,7 @@ jobs:
         persist-credentials: false
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
+    timeout-minutes: 15
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run plugin:test:ci
@@ -176,6 +188,7 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run packages:test:ci
+    timeout-minutes: 15
 
   # This is the job that is actually required by rulesets.
   # We need to require EITHER the OSS or the Enterprise job to pass.
@@ -202,6 +215,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Check test suites
+    timeout-minutes: 15
         uses: ./.github/actions/check-jobs
         with:
           needs: ${{ toJson(needs) }}

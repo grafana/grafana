@@ -23,10 +23,17 @@ on:
         default: false
         description: When enabled, this workflow will print a preview instead of creating an actual post.
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   main:
+    timeout-minutes: 15
     runs-on: ubuntu-arm64-small
     permissions:
       contents: read

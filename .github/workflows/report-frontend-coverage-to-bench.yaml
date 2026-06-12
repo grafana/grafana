@@ -5,10 +5,17 @@ on:
     - cron: "0 0 * * *"
   workflow_dispatch:
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   setup:
+    timeout-minutes: 15
     name: Setup opted-in teams
     runs-on: ubuntu-x64-small
     outputs:
@@ -23,6 +30,7 @@ jobs:
       - name: Define opted-in teams
         run: echo "Opted-in teams defined in job outputs"
 
+    timeout-minutes: 15
   coverage-to-bench:
     name: Report coverage to Bench - ${{ matrix.codeowner }}
     needs: setup

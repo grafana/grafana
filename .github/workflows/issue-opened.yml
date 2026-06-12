@@ -14,6 +14,7 @@ permissions: {}
 
 jobs:
   main:
+    timeout-minutes: 15
     runs-on: ubuntu-arm64-small
     if: github.repository == 'grafana/grafana'
     permissions:
@@ -49,6 +50,7 @@ jobs:
           token: ${{ steps.get-github-app-token.outputs.token }}
           configPath: "issue-opened"
 
+    timeout-minutes: 15
   auto-triage:
     needs: [main]
     permissions:
@@ -117,6 +119,7 @@ jobs:
               "channel": "#triage-automation-ci"
             }
         env:
+    timeout-minutes: 15
           SLACK_WEBHOOK_URL:  ${{ env.AUTOTRIAGER_SLACK_WEBHOOK_URL }}
   auto-label-internal-issues:
     needs: [main]

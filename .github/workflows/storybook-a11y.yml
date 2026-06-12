@@ -6,10 +6,17 @@ on:
       - main
       - release-*.*.*
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   detect-changes:
+    timeout-minutes: 15
     name: Detect whether code changed
     runs-on: ubuntu-arm64-small
     permissions:
@@ -28,6 +35,7 @@ jobs:
         with:
           self: .github/workflows/storybook-a11y.yml
 
+    timeout-minutes: 15
   test-storybook-a11y:
     runs-on: ubuntu-x64-large
     permissions:
@@ -66,6 +74,7 @@ jobs:
       env:
         LANG: en_US
       run: yarn wait-on --timeout 120000 http://localhost:9001 && yarn test:storybook
+    timeout-minutes: 15
 
   storybook-a11y-result:
     name: "Storybook a11y tests"

@@ -9,11 +9,18 @@ on:
       - "main"
       - "release-*"
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 # This is run after the pull request has been merged, so we'll run against the target branch
 jobs:
   dispatch-job:
+    timeout-minutes: 15
     runs-on: ubuntu-arm64-small
     permissions:
       id-token: write

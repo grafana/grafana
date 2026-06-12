@@ -11,9 +11,16 @@ on:
       - '**/go.mod'
       - '**/go.sum'
       - '**.go'
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 jobs:
   update:
+    timeout-minutes: 15
     runs-on: ubuntu-arm64
     permissions:
       # Pushes use the app token explicitly in the git push URL; GITHUB_TOKEN needs only OIDC for Vault.

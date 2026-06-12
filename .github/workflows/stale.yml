@@ -3,10 +3,17 @@ on:
   schedule:
     - cron: '30 1 * * *'
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   stale:
+    timeout-minutes: 15
     runs-on: ubuntu-arm64-small
     permissions:
       issues: write

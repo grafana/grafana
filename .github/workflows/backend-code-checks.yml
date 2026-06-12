@@ -14,8 +14,18 @@ on:
       - 'docs/**'
       - 'latest.json'
 
+
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
   detect-changes:
+    timeout-minutes: 15
     name: Detect whether code changed
     runs-on: ubuntu-arm64-small
     permissions:
@@ -34,6 +44,7 @@ jobs:
         with:
           self: .github/workflows/backend-code-checks.yml
 
+    timeout-minutes: 15
   validate-configs:
     permissions:
       contents: read

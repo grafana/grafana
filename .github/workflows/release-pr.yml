@@ -41,11 +41,18 @@ on:
         type: string
         description: "Release date in format YYYY-MM-DD"
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   capture-date:
+    timeout-minutes: 15
     runs-on: ubuntu-arm64-small
     outputs:
       release_date: ${{ steps.set_release_date.outputs.release_date }}
@@ -69,6 +76,7 @@ jobs:
       - id: set_release_date
         run: echo "release_date=$release_date" >> "$GITHUB_OUTPUT"
 
+    timeout-minutes: 15
   push-changelog-to-main:
     needs: capture-date
     permissions:
@@ -88,6 +96,7 @@ jobs:
       dry_run: ${{ inputs.dry_run }}
       target: main
       work_branch: changelog/update-changelog-${{ needs.capture-date.outputs.release_date }}
+    timeout-minutes: 15
 
   create-prs:
     permissions:

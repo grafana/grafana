@@ -28,6 +28,7 @@ concurrency:
 
 jobs:
   run-actionlint:
+    timeout-minutes: 15
     name: Lint GitHub Actions files
     runs-on: ubuntu-x64-small
     permissions:

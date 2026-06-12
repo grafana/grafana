@@ -15,6 +15,7 @@ permissions: {}
 
 jobs:
   trufflehog:
+    timeout-minutes: 15
     name: Run Trufflehog
     runs-on: ubuntu-arm64-small
     permissions:

@@ -5,10 +5,17 @@ on:
   pull_request:
     branches: [main]
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   detect-changes:
+    timeout-minutes: 15
     name: Detect whether code changed
     runs-on: ubuntu-arm64-small
     permissions:
@@ -27,6 +34,7 @@ jobs:
         with:
           self: .github/workflows/pr-go-workspace-check.yml
 
+    timeout-minutes: 15
   check-workspace:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
@@ -74,6 +82,7 @@ jobs:
           echo "Please run 'make update-workspace' and commit the changes."
           exit 1
         fi
+    timeout-minutes: 15
 
   check-wire:
     needs: detect-changes
@@ -166,6 +175,7 @@ jobs:
         fi
 
   # This is the job that is actually required by rulesets.
+    timeout-minutes: 15
   # We want to only require one job instead of all the individual tests.
   # Future work also allows us to start skipping some tests based on changed files.
   required-go-workspace-check:

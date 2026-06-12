@@ -16,10 +16,17 @@ on:
         required: true
         type: string
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   create-tag:
+    timeout-minutes: 15
     runs-on: ubuntu-arm64-small
     permissions:
       id-token: write

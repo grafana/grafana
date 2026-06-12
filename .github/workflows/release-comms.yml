@@ -21,10 +21,17 @@ on:
     - 'main'
     - 'release-*.*.*'
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   setup:
+    timeout-minutes: 15
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')) }}
     name: Setup and establish latest
     outputs:
@@ -60,6 +67,7 @@ jobs:
           echo "latest=$LATEST"
           echo "version=$VERSION"
         } >> "$GITHUB_OUTPUT"
+    timeout-minutes: 15
   create_next_release_branch_grafana:
     name: Create next release branch (Grafana)
     needs: setup
@@ -69,6 +77,7 @@ jobs:
     uses: grafana/grafana/.github/workflows/create-next-release-branch.yml@main
     with:
       ownerRepo: 'grafana/grafana'
+    timeout-minutes: 15
       source: ${{ needs.setup.outputs.release_branch }}
   create_next_release_branch_enterprise:
     name: Create next release branch (Grafana Enterprise)
@@ -78,6 +87,7 @@ jobs:
       id-token: write
     uses: grafana/grafana/.github/workflows/create-next-release-branch.yml@main
     with:
+    timeout-minutes: 15
       ownerRepo: 'grafana/grafana-enterprise'
       source: ${{ needs.setup.outputs.release_branch }}
   create_security_branch_grafana:
@@ -87,6 +97,7 @@ jobs:
       id-token: write
     uses: grafana/grafana/.github/workflows/create-security-branch.yml@main
     with:
+    timeout-minutes: 15
       release_branch: ${{ needs.setup.outputs.release_branch }}
       security_branch_number: "01"
       repository: grafana/grafana-security-mirror
@@ -96,6 +107,7 @@ jobs:
     permissions:
       id-token: write
     uses: grafana/grafana/.github/workflows/create-security-branch.yml@main
+    timeout-minutes: 15
     with:
       release_branch: ${{ needs.setup.outputs.release_branch }}
       security_branch_number: "01"
@@ -107,6 +119,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    timeout-minutes: 15
     uses: grafana/grafana/.github/workflows/migrate-prs.yml@main
     with:
       ownerRepo: 'grafana/grafana'
@@ -125,6 +138,7 @@ jobs:
       from: ${{ needs.setup.outputs.release_branch }}
       to: ${{ needs.create_next_release_branch_enterprise.outputs.branch }}
   # Removed this for now since it doesn't work
+    timeout-minutes: 15
   # post_changelog_on_forum:
   #   needs: setup
   #   uses: grafana/grafana/.github/workflows/community-release.yml@main
@@ -137,6 +151,7 @@ jobs:
     # endpoint.
     needs: setup
     permissions:
+    timeout-minutes: 15
       contents: write
       id-token: write
     uses: grafana/grafana/.github/workflows/github-release.yml@main

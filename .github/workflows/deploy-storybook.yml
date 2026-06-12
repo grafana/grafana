@@ -25,6 +25,7 @@ permissions: {}
 
 jobs:
   detect-changes:
+    timeout-minutes: 15
     # Only run on push to main (not needed for workflow_call releases)
     if: github.repository == 'grafana/grafana' && github.event_name == 'push'
     name: Detect whether code changed
@@ -44,6 +45,7 @@ jobs:
         uses: ./.github/actions/change-detection
         with:
           self: .github/workflows/deploy-storybook.yml
+    timeout-minutes: 15
   deploy-storybook:
     name: Deploy Storybook
     runs-on: ubuntu-x64

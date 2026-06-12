@@ -12,6 +12,7 @@ concurrency:
 
 jobs:
   notify:
+    timeout-minutes: 15
     name: Notify team about new FR
     runs-on: ubuntu-arm64-small
     if: |

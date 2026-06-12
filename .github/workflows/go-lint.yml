@@ -9,11 +9,18 @@ on:
       - main
   pull_request:
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   detect-changes:
+    timeout-minutes: 15
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
@@ -34,6 +41,7 @@ jobs:
         with:
           self: .github/workflows/go-lint.yml
 
+    timeout-minutes: 15
   go-fmt:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
@@ -55,6 +63,7 @@ jobs:
             echo "${GOFMT}"
             exit 1
           fi
+    timeout-minutes: 15
 
   lint-go:
     needs: detect-changes

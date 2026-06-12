@@ -6,10 +6,17 @@ on:
       - main
       - release-*.*.*
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   detect-changes:
+    timeout-minutes: 15
     name: Detect whether code changed
     runs-on: ubuntu-arm64-small
     permissions:
@@ -31,6 +38,7 @@ jobs:
         with:
           self: .github/workflows/frontend-lint.yml
 
+    timeout-minutes: 15
   lint-frontend-prettier:
     needs: detect-changes
     permissions:
@@ -50,6 +58,7 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run prettier:check
+    timeout-minutes: 15
     - run: yarn run lint
   lint-frontend-prettier-enterprise:
     needs: detect-changes
@@ -77,6 +86,7 @@ jobs:
         token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
+    timeout-minutes: 15
     - run: yarn run prettier:check
     - run: yarn run lint
   lint-frontend-typecheck:
@@ -97,6 +107,7 @@ jobs:
         persist-credentials: false
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
+    timeout-minutes: 15
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run typecheck
@@ -125,6 +136,7 @@ jobs:
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
+    timeout-minutes: 15
         token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
@@ -154,6 +166,7 @@ jobs:
         github_app: grafana-ci-bot
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
+    timeout-minutes: 15
       with:
         token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Install yarn dependencies
@@ -183,6 +196,7 @@ jobs:
     - name: Verify generated clients
       run: |
         uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
+    timeout-minutes: 15
         file_diff="$(git diff ':!conf')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
@@ -220,6 +234,7 @@ jobs:
     - name: Verify generated specs
       run: |
         git add -N .
+    timeout-minutes: 15
         uncommited_error_message="ERROR! OpenAPI generation has not been committed. Please run 'yarn generate:openapi', commit the changes and push again."
         file_diff="$(git diff --name-only ':!conf')"
         if [ -n "$file_diff" ]; then
@@ -257,6 +272,7 @@ jobs:
         extract_error_message='ERROR! API client generation failed!'
         yarn generate-apis || (echo "${extract_error_message}" && false)
     - name: Verify generated clients
+    timeout-minutes: 15
       run: |
         uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
         file_diff="$(git diff ':!conf')"
@@ -279,6 +295,7 @@ jobs:
       with:
         persist-credentials: false
     - name: Setup Node
+    timeout-minutes: 15
       uses: ./.github/actions/setup-node
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
@@ -345,6 +362,7 @@ jobs:
         echo "$main_count"
     - name: Compare circular dependencies
       run: |
+    timeout-minutes: 15
         main_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/main-circular-clean.txt)
         pr_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/pr-circular-clean.txt)
         echo "Main branch circular dependencies: $main_count lines"
@@ -373,6 +391,7 @@ jobs:
       uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
       with:
         github_app: grafana-ci-bot
+    timeout-minutes: 15
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:

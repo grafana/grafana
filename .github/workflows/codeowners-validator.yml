@@ -4,10 +4,17 @@ on:
   pull_request:
     branches: [ main ]
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   codeowners-validator:
+    timeout-minutes: 15
     runs-on: ubuntu-x64-small
     permissions:
       contents: read

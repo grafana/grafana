@@ -50,8 +50,18 @@ on:
         required: false
         default: ''
 
+
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
   build:
+    timeout-minutes: 15
     name: ${{ matrix.variant }}
     runs-on: ubuntu-x64-large
     permissions:

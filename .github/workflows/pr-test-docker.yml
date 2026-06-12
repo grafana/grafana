@@ -1,5 +1,11 @@
 name: Test Dockerfile
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 on:
@@ -39,6 +45,7 @@ jobs:
   # Full source build inside Docker. Validates that the complete compilation
   # pipeline (go-builder + js-builder + final stage) works end-to-end.
   build-full:
+    timeout-minutes: 15
     name: build / full source (alpine)
     runs-on: ubuntu-x64-large
     permissions:
@@ -62,6 +69,7 @@ jobs:
   # → build all 6 Docker variants. Mirrors the release-build.yml structure so
   # the same code paths are exercised on every PR.
 
+    timeout-minutes: 15
   build-frontend:
     name: build / frontend
     runs-on: ubuntu-x64-large
@@ -81,6 +89,7 @@ jobs:
           name: pr-frontend
           path: public
           retention-days: 1
+    timeout-minutes: 15
 
   build-backend:
     name: build / backend (linux-amd64)
@@ -101,6 +110,7 @@ jobs:
         with:
           name: pr-backend-linux-amd64
           path: bin/linux/amd64
+    timeout-minutes: 15
           retention-days: 1
 
   build-source-targz:
@@ -126,6 +136,7 @@ jobs:
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: pr-source-targz
+    timeout-minutes: 15
           path: dist/*.tar.gz
           retention-days: 1
 

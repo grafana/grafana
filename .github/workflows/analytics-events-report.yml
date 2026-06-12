@@ -3,10 +3,17 @@ name: Analytics Events Report
 on:
   workflow_dispatch:
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   generate-report:
+    timeout-minutes: 15
     runs-on: ubuntu-arm64
     permissions:
       contents: read

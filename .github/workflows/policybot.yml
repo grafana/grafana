@@ -25,6 +25,7 @@ concurrency:
 
 jobs:
   check:
+    timeout-minutes: 15
     name: Check .policy.yml is valid
     runs-on: ubuntu-arm64-small
     permissions:

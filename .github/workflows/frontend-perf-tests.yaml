@@ -5,8 +5,18 @@ on:
     - cron: "0 * * * *" # Run hourly
   workflow_dispatch: # Allow manual triggering
 
+
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
   performance-tests:
+    timeout-minutes: 15
     permissions:
       contents: read
       id-token: write

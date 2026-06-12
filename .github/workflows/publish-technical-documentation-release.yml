@@ -9,8 +9,18 @@ on:
     paths:
       - "docs/sources/**"
   workflow_dispatch:
+
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
   sync:
+    timeout-minutes: 15
     if: github.repository == 'grafana/grafana'
     permissions:
       contents: read

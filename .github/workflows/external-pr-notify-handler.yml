@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   notify:
+    timeout-minutes: 15
     name: Notify and label external PR
     runs-on: ubuntu-arm64-small
     # Only run if trigger workflow succeeded

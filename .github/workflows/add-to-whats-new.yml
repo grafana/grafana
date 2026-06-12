@@ -3,8 +3,18 @@ on:
   pull_request:
     types: [labeled]
 
+
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
   add-comment:
+    timeout-minutes: 15
     if: ${{ ! github.event.pull_request.head.repo.fork && (contains(github.event.pull_request.labels.*.name, 'add to what''s new') || contains(github.event.pull_request.labels.*.name, 'breaking change') || contains(github.event.pull_request.labels.*.name, 'levitate breaking change')) }}
     runs-on: ubuntu-arm64-small
     permissions:

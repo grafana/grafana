@@ -15,6 +15,7 @@ concurrency:
   group: issue-label-when-in-project-${{ github.event.number }}
 jobs:
   main:
+    timeout-minutes: 15
     if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-arm64-small
     permissions:

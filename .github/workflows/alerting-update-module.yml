@@ -3,12 +3,16 @@ name: Update Alerting Module
 on:
   workflow_dispatch:
 
+
+permissions: {}
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   update-grafana:
+    timeout-minutes: 15
     runs-on: ubuntu-arm64
     permissions:
       contents: write

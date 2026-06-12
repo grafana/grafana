@@ -35,6 +35,7 @@ permissions: {}
 
 jobs:
   build-go:
+    timeout-minutes: 15
     name: ${{ matrix.name }}
     runs-on: ubuntu-x64-large-io
     permissions:
@@ -83,6 +84,7 @@ jobs:
           GOARM: ${{ matrix.goarm }}
         run: make build-go
 
+    timeout-minutes: 15
   build-go-enterprise:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     name: ${{ matrix.name }} (enterprise)
@@ -143,6 +145,7 @@ jobs:
           GOARM: ${{ matrix.goarm }}
         run: make build-go
 
+    timeout-minutes: 15
   # TODO: Build rpm in another workflow
   verify-rpm-stig:
     name: verify rpm stig (linux/amd64)

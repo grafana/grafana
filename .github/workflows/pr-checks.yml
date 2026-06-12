@@ -11,6 +11,7 @@ permissions: {}
 
 jobs:
   main:
+    timeout-minutes: 15
     runs-on: ubuntu-arm64-small
     permissions:
       statuses: write

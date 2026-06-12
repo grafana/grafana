@@ -3,8 +3,18 @@ on:
   schedule:
     - cron: '0 0 * * 1'
 
+
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
   gen-swagger:
+    timeout-minutes: 15
     name: Alerting Swagger spec generation cron job
     runs-on: ubuntu-arm64
     permissions:

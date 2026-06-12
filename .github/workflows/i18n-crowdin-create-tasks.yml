@@ -6,8 +6,18 @@ on:
   schedule:
     - cron: "0 0 1 * *"
 
+
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
   create-tasks-in-crowdin:
+    timeout-minutes: 15
     runs-on: ubuntu-x64
     permissions:
       contents: read

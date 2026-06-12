@@ -19,6 +19,7 @@ on:
 
 jobs:
   buildPR:
+    timeout-minutes: 15
     name: Build PR packages artifacts
     runs-on: ubuntu-arm64
     defaults:
@@ -58,6 +59,7 @@ jobs:
           name: buildPr
           path: './pr/pr_built_packages.zip'
 
+    timeout-minutes: 15
   buildBase:
     name: Build Base packages artifacts
     runs-on: ubuntu-arm64
@@ -104,6 +106,7 @@ jobs:
         with:
           name: buildBase
           path: './base/base_built_packages.zip'
+    timeout-minutes: 15
 
   Detect:
     name: Detect breaking changes between PR and base
@@ -179,6 +182,7 @@ jobs:
         with:
           name: levitate
           path: levitate/
+    timeout-minutes: 15
 
 
   Report:

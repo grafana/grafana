@@ -1,5 +1,11 @@
 name: Verify i18n
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -12,6 +18,7 @@ on:
 
 jobs:
   verify-i18n:
+    timeout-minutes: 15
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     uses: grafana/grafana-github-actions/.github/workflows/verify-i18n.yml@main

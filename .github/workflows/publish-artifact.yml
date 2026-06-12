@@ -37,8 +37,18 @@ on:
         type: string
         required: false
         default: github-hosted-ubuntu-x64-small
+
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
   publish:
+    timeout-minutes: 15
     runs-on: ${{ inputs.runs-on }}
     name: Publish
     permissions:

@@ -11,8 +11,18 @@ on:
     branches:
       - main
 
+
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
   upload-sources-to-crowdin:
+    timeout-minutes: 15
     if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-x64
     permissions:

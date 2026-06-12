@@ -9,10 +9,17 @@ on:
       - closed
       - labeled
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   trigger:
+    timeout-minutes: 15
     # Only run this job if the PR has been merged and has a label containing "backport v"
     if: |
       github.repository == 'grafana/grafana' &&

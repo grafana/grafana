@@ -3,10 +3,17 @@ name: Feature toggles CI
 on:
   pull_request:
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   detect-changes:
+    timeout-minutes: 15
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
@@ -28,6 +35,7 @@ jobs:
         with:
           self: .github/workflows/feature-toggles-ci.yml
 
+    timeout-minutes: 15
   test:
     needs: detect-changes
     if: needs.detect-changes.outputs.changedbackend == 'true' || needs.detect-changes.outputs.changeddocs == 'true'

@@ -16,6 +16,12 @@ on:
       - release-*.*.*
       - main
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -32,6 +38,7 @@ permissions:
 #
 jobs:
   setup:
+    timeout-minutes: 15
     name: setup
     runs-on: ubuntu-x64-small
     if: (github.repository == 'grafana/grafana') || (github.repository == 'grafana/grafana-security-mirror' && contains(github.ref_name, '+security'))
@@ -61,6 +68,7 @@ jobs:
           echo "grafana_commit=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
 
   # Triggers the same workflow in `grafana-enterprise` on the same ref
+    timeout-minutes: 15
   downstream:
     runs-on: ubuntu-x64-small
     needs: [setup]
@@ -112,6 +120,7 @@ jobs:
                   "upstream": REPO,
                 }
             })
+    timeout-minutes: 15
 
   build-frontend:
     name: build frontend
@@ -132,6 +141,7 @@ jobs:
         with:
           name: release-frontend
           path: public
+    timeout-minutes: 15
           retention-days: 1
 
   build-backend:
@@ -193,6 +203,7 @@ jobs:
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: release-backend-${{ matrix.name }}
+    timeout-minutes: 15
           path: bin/${{ matrix.os }}/${{ matrix.arch }}
           retention-days: 1
 
@@ -287,6 +298,7 @@ jobs:
           retention-days: 1
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
+    timeout-minutes: 15
           name: artifacts-packages-${{ matrix.name }}
           path: upload/artifacts-packages-${{ matrix.name }}
           retention-days: 1
@@ -387,6 +399,7 @@ jobs:
           path: upload/artifacts-list-deb-rpm-${{ matrix.name }}
           retention-days: 1
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+    timeout-minutes: 15
         with:
           name: artifacts-deb-rpm-${{ matrix.name }}
           path: upload/artifacts-deb-rpm-${{ matrix.name }}
@@ -408,6 +421,7 @@ jobs:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: artifacts-deb-rpm-linux-amd64
+    timeout-minutes: 15
           path: dist
       - name: Verify RPM permissions (DISA-STIG)
         run: |
@@ -424,6 +438,7 @@ jobs:
     with:
       targz-artifact-name: artifacts-packages-linux-amd64
       name: linux-amd64
+    timeout-minutes: 15
       os: linux
       arch: amd64
       arch-tag: amd64
@@ -440,6 +455,7 @@ jobs:
       id-token: write
     with:
       targz-artifact-name: artifacts-packages-linux-arm64
+    timeout-minutes: 15
       name: linux-arm64
       os: linux
       arch: arm64
@@ -456,6 +472,7 @@ jobs:
       contents: read
       id-token: write
     with:
+    timeout-minutes: 15
       targz-artifact-name: artifacts-packages-linux-s390x
       name: linux-s390x
       os: linux
@@ -474,6 +491,7 @@ jobs:
       id-token: write
     with:
       targz-artifact-name: artifacts-packages-linux-armv7
+    timeout-minutes: 15
       name: linux-armv7
       os: linux
       arch: arm
@@ -482,6 +500,7 @@ jobs:
       version: ${{ needs.setup.outputs.version }}
       build-number: ${{ github.run_id }}
       tag-prefix: "grafana/grafana-image-tags:"
+    timeout-minutes: 15
 
 
   verify-targz:
@@ -493,6 +512,7 @@ jobs:
       run-id: ${{ github.run_id }}
       targz-artifact-name: artifacts-packages-linux-amd64
 
+    timeout-minutes: 15
   verify-packages:
     name: verify packages (linux-amd64)
     needs:
@@ -575,6 +595,7 @@ jobs:
           for f in dist/*.zip dist/*.msi; do
             [ -e "$f" ] || continue
             cp "$f" "upload/artifacts-${{ matrix.name }}/"
+    timeout-minutes: 15
             cp "${f}.sha256" "upload/artifacts-${{ matrix.name }}/"
           done
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
@@ -606,6 +627,7 @@ jobs:
           - target: windows-arm64
           - target: darwin-amd64
           - target: darwin-arm64
+    timeout-minutes: 15
     uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
     permissions:
       id-token: write
@@ -633,6 +655,7 @@ jobs:
           - target: linux-armv7
           # riscv64 is not an officially supported architecture; failures are allowed.
           - target: linux-riscv64
+    timeout-minutes: 15
             allow-failure: true
     uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
     permissions:
@@ -659,6 +682,7 @@ jobs:
           - target: linux-s390x
           - target: linux-armv7
     uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
+    timeout-minutes: 15
     permissions:
       id-token: write
     needs:
@@ -685,6 +709,7 @@ jobs:
           - target: linux-arm64
           - target: linux-s390x
           - target: linux-armv7
+    timeout-minutes: 15
     uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
     permissions:
       id-token: write
@@ -711,6 +736,7 @@ jobs:
           - target: linux-amd64
           - target: linux-arm64
           - target: linux-s390x
+    timeout-minutes: 15
           - target: linux-armv7
     uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
     permissions:
@@ -737,6 +763,7 @@ jobs:
         include:
           - target: linux-amd64
           - target: linux-arm64
+    timeout-minutes: 15
           - target: linux-s390x
           - target: linux-armv7
     uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
@@ -763,6 +790,7 @@ jobs:
       matrix:
         include:
           - target: linux-amd64
+    timeout-minutes: 15
           - target: linux-arm64
           - target: linux-s390x
           - target: linux-armv7
@@ -789,6 +817,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+    timeout-minutes: 15
           - target: linux-amd64
           - target: linux-arm64
           - target: linux-s390x
@@ -809,6 +838,7 @@ jobs:
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
       runs-on: ubuntu-x64-small
+    timeout-minutes: 15
 
   publish-windows:
     name: Upload windows / ${{ matrix.target }}
@@ -866,6 +896,7 @@ jobs:
             exit 1
           fi
           IMAGE="$(docker load -i "$PACKAGE_PATH" | sed -n 's/^Loaded image: //p' | sed -n '1p')"
+    timeout-minutes: 15
           if [ -z "$IMAGE" ]; then
             echo "Unable to load Docker image from $PACKAGE_PATH"
             exit 1
@@ -890,6 +921,7 @@ jobs:
             GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
 
   dispatch-npm-canaries:
+    timeout-minutes: 15
     if: github.repository == 'grafana/grafana' && github.ref_name == 'main'
     name: Dispatch publish NPM canaries
     permissions:

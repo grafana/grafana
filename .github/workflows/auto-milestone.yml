@@ -7,12 +7,19 @@ on:
       - closed
       - ready_for_review
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 # Note: this action runs with write permissions on GITHUB_TOKEN even from forks
 # so it must not run untrusted code (such as checking out the pull request)
 jobs:
   main:
+    timeout-minutes: 15
     runs-on: ubuntu-x64-small
     permissions:
       # contents: read is needed to read package.json from the PR's base branch.

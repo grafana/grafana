@@ -35,10 +35,17 @@ on:
         description: 'The repository to create the security branch in (e.g., grafana/grafana-security-mirror)'
         required: true
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   main:
+    timeout-minutes: 15
     runs-on: ubuntu-arm64-small
     permissions:
       # Pushes use the app token via actions/checkout; GITHUB_TOKEN needs only OIDC for Vault.

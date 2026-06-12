@@ -25,6 +25,7 @@ jobs:
   # workflow (which is no longer permitted); switching to createWorkflowDispatch lets
   # the called workflow use the per-workflow token broker (create-github-app-token).
   dispatch-create-patch:
+    timeout-minutes: 15
     if: ${{ github.repository == 'grafana/grafana-security-mirror' }}
     runs-on: ubuntu-arm64-small
     permissions:

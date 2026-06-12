@@ -31,10 +31,17 @@ on:
         default: false
         type: boolean
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   main:
+    timeout-minutes: 15
     permissions:
       # contents: write allows the action(s) to create github releases
       contents: write
@@ -48,6 +55,7 @@ jobs:
           version: ${{ inputs.version }}
           latest: ${{ inputs.latest }}
           dry_run: ${{ inputs.dry_run }}
+    timeout-minutes: 15
   deploy-storybook:
     needs: main
     if: ${{ !inputs.dry_run && inputs.latest == '1' }}

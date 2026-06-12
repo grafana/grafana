@@ -5,8 +5,18 @@ on:
     paths:
       - 'conf/defaults.ini'
 
+
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
   add-comment:
+    timeout-minutes: 15
     if: ${{ ! github.event.pull_request.head.repo.fork }}
     runs-on: ubuntu-arm64-small
     permissions:

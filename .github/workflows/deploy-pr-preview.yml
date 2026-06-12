@@ -9,10 +9,17 @@ on:
     paths:
       - "docs/sources/**"
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   deploy-pr-preview:
+    timeout-minutes: 15
     permissions:
       contents: read # Clone repositories.
       id-token: write # Fetch Vault secrets.

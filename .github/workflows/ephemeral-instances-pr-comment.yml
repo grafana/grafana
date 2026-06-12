@@ -6,10 +6,17 @@ on:
   pull_request:
     types: [closed]
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   handle-ephemeral-instances:
+    timeout-minutes: 15
     if: |
       github.repository_owner == 'grafana' &&
       (

@@ -13,6 +13,7 @@ permissions: {}
 
 jobs:
   detect-changes:
+    timeout-minutes: 15
     # Gate the whole workflow behind this check
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
     name: Detect whether code changed
@@ -34,6 +35,7 @@ jobs:
         with:
           self: .github/workflows/pr-build-grafana.yml
 
+    timeout-minutes: 15
   setup:
     name: setup
     needs: [detect-changes]
@@ -53,6 +55,7 @@ jobs:
           BUILD_ID: ${{ github.run_id }}
       - id: output
         run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+    timeout-minutes: 15
 
   build-frontend:
     name: build frontend
@@ -73,6 +76,7 @@ jobs:
         with:
           name: pr-frontend
           path: public
+    timeout-minutes: 15
           retention-days: 1
 
   build-backend:
@@ -92,6 +96,7 @@ jobs:
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: pr-backend
+    timeout-minutes: 15
           path: bin/linux/amd64
           retention-days: 1
 
@@ -116,6 +121,7 @@ jobs:
           backend-artifact: pr-backend
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
+    timeout-minutes: 15
           name: pr-targz
           path: dist
           retention-days: 1
@@ -159,6 +165,7 @@ jobs:
           mkdir -p upload
           cp dist/*.docker.tar.gz upload/
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+    timeout-minutes: 15
         with:
           name: pr-docker
           path: upload
@@ -195,6 +202,7 @@ jobs:
           for f in *.docker.tar.gz; do break; done
           LOADED_IMAGE_NAME=$(docker load -i "$f" | sed 's/Loaded image: //g')
           VERSION=$(echo "${LOADED_IMAGE_NAME}" | cut -d ':' -f 2 | cut -d '-' -f 1)
+    timeout-minutes: 15
           DOCKER_IMAGE="us-docker.pkg.dev/grafanalabs-dev/docker-grafana-dev/grafana:${VERSION}-${BUILD_ID}"
           docker tag "${LOADED_IMAGE_NAME}" "${DOCKER_IMAGE}"
           docker push "${DOCKER_IMAGE}"

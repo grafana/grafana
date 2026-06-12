@@ -20,6 +20,12 @@ on:
         required: false
         type: string
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 env:
@@ -27,6 +33,7 @@ env:
 
 jobs:
   report:
+    timeout-minutes: 15
     runs-on: ubuntu-arm64-small
     environment: ${{ github.event_name == 'workflow_dispatch' && 'manual-trigger' || '' }}
     permissions:

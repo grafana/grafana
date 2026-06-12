@@ -33,6 +33,7 @@ permissions: {}
 
 jobs:
   detect-changes:
+    timeout-minutes: 15
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
@@ -54,6 +55,7 @@ jobs:
           self: .github/workflows/pr-test-integration.yml
 
   #### OSS
+    timeout-minutes: 15
   sqlite:
     # Run this workflow only for PRs from forks
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
@@ -84,6 +86,7 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
           go test -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+    timeout-minutes: 15
 
   mysql:
     # Run this workflow only for PRs from forks
@@ -134,6 +137,7 @@ jobs:
           echo "Precompiling, no tests will be run"
           CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
+    timeout-minutes: 15
           CGO_ENABLED=0 go test -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres:
@@ -182,6 +186,7 @@ jobs:
       - name: Cleanup Postgres
         if: always()
         run: |
+    timeout-minutes: 15
           make devenv-down sources=postgres_tests
 
   #### Enterprise
@@ -226,6 +231,7 @@ jobs:
           SHARD: ${{ matrix.shard }}
           CGO_ENABLED: 0
         run: |
+    timeout-minutes: 15
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
           go test -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
@@ -288,6 +294,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
+    timeout-minutes: 15
           echo "Precompiling, no tests will be run"
           CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"

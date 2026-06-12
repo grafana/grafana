@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   capture:
+    timeout-minutes: 15
     name: Capture PR metadata for handler
     runs-on: ubuntu-arm64-small
     if: |

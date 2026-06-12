@@ -4,8 +4,18 @@ on:
   schedule:
     - cron: "0 9 * * 1"
 
+
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
   cleanup-branches:
+    timeout-minutes: 15
     runs-on: ubuntu-arm64-small
     permissions:
       contents: write

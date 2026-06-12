@@ -12,8 +12,18 @@ on:
       - "apps/**"
       - "*.sum"
 
+
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
   check:
+    timeout-minutes: 15
     name: K8s Codegen Check
     runs-on: ubuntu-arm64
     permissions:

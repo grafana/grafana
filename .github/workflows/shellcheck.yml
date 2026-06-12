@@ -15,6 +15,7 @@ permissions: {}
 
 jobs:
   shellcheck:
+    timeout-minutes: 15
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Shellcheck scripts

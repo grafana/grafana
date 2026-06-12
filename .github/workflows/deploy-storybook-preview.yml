@@ -13,6 +13,7 @@ permissions: {}
 
 jobs:
   deploy-storybook-preview:
+    timeout-minutes: 15
     name: Deploy Storybook preview
     runs-on: ubuntu-x64
     # Don't run from forks for the moment. If we find this useful we can do the workflow_run dance

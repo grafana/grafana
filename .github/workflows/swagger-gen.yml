@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   detect-changes:
+    timeout-minutes: 15
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
@@ -35,6 +36,7 @@ jobs:
         with:
           self: .github/workflows/swagger-gen.yml
 
+    timeout-minutes: 15
   verify:
     name: Verify committed API specs match
     runs-on: ubuntu-arm64

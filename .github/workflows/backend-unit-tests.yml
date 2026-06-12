@@ -15,6 +15,7 @@ permissions: {}
 
 jobs:
   detect-changes:
+    timeout-minutes: 15
     name: Detect whether code changed
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
@@ -35,6 +36,7 @@ jobs:
         with:
           self: .github/workflows/backend-unit-tests.yml
 
+    timeout-minutes: 15
   grafana:
     # Run this workflow only for PRs from forks
     # the `pr-backend-unit-tests-enterprise` workflow will run instead
@@ -68,6 +70,7 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
           CGO_ENABLED=0 go test -short -timeout=30m "${PACKAGES[@]}"
+    timeout-minutes: 15
 
   grafana-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -126,6 +129,7 @@ jobs:
 
   # This is the job that is actually required by rulesets.
   # We need to require EITHER the OSS or the Enterprise job to pass.
+    timeout-minutes: 15
   # However, if one is skipped, GitHub won't flat-map the shards,
   #   so they won't be accepted by a ruleset.
   required-backend-unit-tests:

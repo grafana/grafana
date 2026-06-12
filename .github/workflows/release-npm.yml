@@ -35,6 +35,12 @@ on:
         description: 'Version type (canary, nightly, stable)'
         required: true
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
@@ -42,6 +48,7 @@ jobs:
   # If called with version_type 'canary', do nothing (temporarily stopping canary releases)
 
   publish:
+    timeout-minutes: 15
     name: Publish NPM packages
 
     # MUST use GitHub-hosted runners, as Trusted Publishing currently doesn't support self-hosted runners.cancel-timeout-minutes.

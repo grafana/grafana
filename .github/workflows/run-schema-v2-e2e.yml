@@ -8,8 +8,18 @@ on:
     branches:
       - '**'
 
+
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
   dashboard-schema-v2-e2e:
+    timeout-minutes: 15
     runs-on: ubuntu-x64-large
     continue-on-error: true
     if: github.event.pull_request.draft == false

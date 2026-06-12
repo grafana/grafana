@@ -5,11 +5,18 @@ on:
     types: [opened, synchronize, reopened, labeled, unlabeled]
     branches: [main]
 
+
+# Prevent concurrent runs of the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   check-separation:
+    timeout-minutes: 15
     runs-on: ubuntu-arm64-small
     permissions:
       pull-requests: read
