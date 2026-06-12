@@ -33,18 +33,18 @@ import (
 )
 
 const (
-	defaultCascadeWatcherPollInterval = 6 * time.Second
+	defaultCascadePollInterval = 60 * time.Second
 	// cascadeLockName is the serverlock action name guarding the sweep, so only one Grafana
 	// instance runs it per interval in an HA deployment.
 	cascadeLockName = "folder-cascade-delete"
 )
 
 // terminatingLabelField is the search return-field carrying the terminating label, so a child
-// hit reports whether its own deletion has already begun. It lets the watcher skip re-issuing
+// hit reports whether its own deletion has already begun. It lets the poller skip re-issuing
 // deletes for children already draining, without a second search or lookup.
 //
 // This relies on the search backend (bleve) echoing back "labels."-prefixed return fields. If a
-// backend does not, every child parses as not-terminating and the watcher falls back to
+// backend does not, every child parses as not-terminating and the poller falls back to
 // re-issuing deletes each tick -- still correct (deletes are idempotent), just less efficient.
 var terminatingLabelField = resource.SEARCH_FIELD_LABELS + "." + folders.TerminatingLabel
 
@@ -64,8 +64,8 @@ type orgLister interface {
 	Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*org.OrgDTO, error)
 }
 
-// CascadeWatcher drives terminating folders to completion. The folders API server marks a deleted
-// folder terminating and best-effort marks its subtree asynchronously; this watcher is the source
+// CascadePoller drives terminating folders to completion. The folders API server marks a deleted
+// folder terminating and best-effort marks its subtree asynchronously; this poller is the source
 // of truth: every poll interval it enumerates orgs and, per org, searches for folders carrying the
 // terminating label. For each one it marks any not-yet-terminating direct children terminating (so
 // the mark always reaches the leaves even if the API server's async pass didn't finish), and once
@@ -75,7 +75,7 @@ type orgLister interface {
 // Discovery is a periodic poll, not a List+Watch: one search per org per tick, cheap when nothing
 // is terminating thanks to the label filter. The sweep is guarded by serverlock so only one
 // Grafana instance runs it per interval in an HA deployment.
-type CascadeWatcher struct {
+type CascadePoller struct {
 	restConfig      apiserver.RestConfigProvider
 	orgs            orgLister
 	namespaceMapper request.NamespaceMapper
@@ -87,14 +87,14 @@ type CascadeWatcher struct {
 	pollInterval    time.Duration
 }
 
-func ProvideCascadeWatcher(
+func ProvideCascadePoller(
 	cfg *setting.Cfg,
 	restConfig apiserver.RestConfigProvider,
 	resourceClient resource.ResourceClient,
 	userService user.Service,
 	orgService org.Service,
 	serverLock *serverlock.ServerLockService,
-) *CascadeWatcher {
+) *CascadePoller {
 	folderSearch := client.NewK8sHandler(
 		request.GetNamespaceMapper(cfg),
 		foldersv1.FolderResourceInfo.GroupVersionResource(),
@@ -104,36 +104,36 @@ func ProvideCascadeWatcher(
 	)
 
 	pollInterval := cfg.SectionWithEnvOverrides("unified_storage").
-		Key("folder_cascade_delete_poll_interval").MustDuration(defaultCascadeWatcherPollInterval)
+		Key("folder_cascade_delete_poll_interval").MustDuration(defaultCascadePollInterval)
 
-	return &CascadeWatcher{
+	return &CascadePoller{
 		restConfig:      restConfig,
 		orgs:            orgService,
 		namespaceMapper: request.GetNamespaceMapper(cfg),
 		folderSearch:    folderSearch,
 		serverLock:      serverLock,
 		flagEnabled:     cascadeDeleteFlagEnabled,
-		log:             slog.Default().With("logger", "folder-cascade-watcher"),
+		log:             slog.Default().With("logger", "folder-cascade-poller"),
 		pollInterval:    pollInterval,
 	}
 }
 
-// cascadeDeleteFlagEnabled reports whether the cascade-delete feature is on. The watcher reads
+// cascadeDeleteFlagEnabled reports whether the cascade-delete feature is on. The poller reads
 // it once, at startup, in Run.
 //
 // This is a second, independent boot-time read of the same flag that the folders API builder
 // captures in storageForVersion (FolderAPIBuilder.cascadeDeleteEnabled), which gates both the
 // finalizer storage wrapper and admission finalizer stamping. The two must agree: if admission
-// stamps the cascade finalizer but this watcher is not running, deleted folders would stay stuck
+// stamps the cascade finalizer but this poller is not running, deleted folders would stay stuck
 // terminating with nothing to remove their finalizer.
 //
-// When the folders API server runs in the same process as this watcher, they agree because both
+// When the folders API server runs in the same process as this poller, they agree because both
 // read the same flag at process startup; the flag is treated as static for the process lifetime,
 // so changing it (including per-tenant in a dynamic provider) requires a restart. But the API
 // server can also be deployed as a separate process from the Grafana process that runs this
-// watcher. In that split deployment the two reads happen in different processes, so agreement
+// poller. In that split deployment the two reads happen in different processes, so agreement
 // depends on both being configured with the same flag value and rolled out together; a mismatch
-// (flag on for the API server, off where the watcher runs) reintroduces the stuck-terminating risk.
+// (flag on for the API server, off where the poller runs) reintroduces the stuck-terminating risk.
 func cascadeDeleteFlagEnabled(ctx context.Context) bool {
 	return openfeature.NewDefaultClient().Boolean(
 		ctx,
@@ -144,9 +144,9 @@ func cascadeDeleteFlagEnabled(ctx context.Context) bool {
 }
 
 // Run implements registry.BackgroundService.
-func (w *CascadeWatcher) Run(ctx context.Context) error {
+func (w *CascadePoller) Run(ctx context.Context) error {
 	if w.flagEnabled == nil || !w.flagEnabled(ctx) {
-		w.log.Debug("folder cascade watcher disabled", "flag", featuremgmt.FlagKubernetesFolderCascadeDelete)
+		w.log.Debug("folder cascade poller disabled", "flag", featuremgmt.FlagKubernetesFolderCascadeDelete)
 		return nil
 	}
 
@@ -155,7 +155,7 @@ func (w *CascadeWatcher) Run(ctx context.Context) error {
 		if errors.Is(err, context.Canceled) {
 			return nil
 		}
-		w.log.Debug("folder cascade watcher not started", "reason", err)
+		w.log.Debug("folder cascade poller not started", "reason", err)
 		return nil
 	}
 
@@ -169,7 +169,7 @@ func (w *CascadeWatcher) Run(ctx context.Context) error {
 	ticker := time.NewTicker(w.pollInterval)
 	defer ticker.Stop()
 
-	w.log.Info("folder cascade watcher started", "pollInterval", w.pollInterval)
+	w.log.Info("folder cascade poller started", "pollInterval", w.pollInterval)
 	w.sweep(ctx)
 	for {
 		select {
@@ -182,7 +182,7 @@ func (w *CascadeWatcher) Run(ctx context.Context) error {
 }
 
 // sweep runs one poll, guarded by serverlock so only one Grafana instance does it per interval.
-func (w *CascadeWatcher) sweep(ctx context.Context) {
+func (w *CascadePoller) sweep(ctx context.Context) {
 	if w.serverLock == nil {
 		w.pollOnce(ctx)
 		return
@@ -193,7 +193,7 @@ func (w *CascadeWatcher) sweep(ctx context.Context) {
 }
 
 // pollOnce reconciles terminating folders across all orgs once.
-func (w *CascadeWatcher) pollOnce(ctx context.Context) {
+func (w *CascadePoller) pollOnce(ctx context.Context) {
 	orgs, err := w.orgs.Search(ctx, &org.SearchOrgsQuery{})
 	if err != nil {
 		w.log.Warn("folder cascade poll: list orgs failed", "error", err)
@@ -210,7 +210,7 @@ func (w *CascadeWatcher) pollOnce(ctx context.Context) {
 }
 
 // reconcileOrg searches one org for terminating folders and finalizes each.
-func (w *CascadeWatcher) reconcileOrg(ctx context.Context, orgID int64) {
+func (w *CascadePoller) reconcileOrg(ctx context.Context, orgID int64) {
 	svcCtx := identity.WithServiceIdentityContext(ctx, orgID)
 
 	names, err := searchTerminatingFolders(svcCtx, w.folderSearch, orgID)
@@ -229,7 +229,7 @@ func (w *CascadeWatcher) reconcileOrg(ctx context.Context, orgID int64) {
 // not-yet-terminating ones are marked terminating and the folder keeps its finalizer. Only once it
 // has no children left is the finalizer removed, so a folder is never garbage-collected before its
 // subtree -- the tree drains bottom-up over successive ticks.
-func (w *CascadeWatcher) finalizeTerminatingFolder(ctx context.Context, orgID int64, namespace, name string) {
+func (w *CascadePoller) finalizeTerminatingFolder(ctx context.Context, orgID int64, namespace, name string) {
 	if w.folderMutator == nil {
 		return
 	}
@@ -393,11 +393,11 @@ func (d *dynamicFolderMutator) RemoveCascadeFinalizer(ctx context.Context, names
 }
 
 // IsDisabled implements registry.CanBeDisabled.
-func (w *CascadeWatcher) IsDisabled() bool {
+func (w *CascadePoller) IsDisabled() bool {
 	return w.restConfig == nil
 }
 
 var (
-	_ registry.BackgroundService = (*CascadeWatcher)(nil)
-	_ registry.CanBeDisabled     = (*CascadeWatcher)(nil)
+	_ registry.BackgroundService = (*CascadePoller)(nil)
+	_ registry.CanBeDisabled     = (*CascadePoller)(nil)
 )

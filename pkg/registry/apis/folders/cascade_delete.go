@@ -9,7 +9,8 @@ import (
 
 // kubernetesFolderCascadeDeleteEnabled is the master switch for folder.grafana.app cascade
 // deletion: opt-in non-empty delete via DeleteOptions.gracePeriodSeconds=0, plus finalizer-backed
-// cascade of child folders driven by the cascade watcher.
+// cascade of child folders (the API server marks the subtree terminating; a poller drives it to
+// completion).
 //
 // The cascade currently covers child folders only. Dashboards, library elements, and alert rules
 // contained in the tree are not yet cascaded and remain as orphan resources (a follow-up).

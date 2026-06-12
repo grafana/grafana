@@ -8,8 +8,8 @@ import (
 const CascadeDeleteFinalizer = "folder.grafana.app/cascade-delete"
 
 // TerminatingLabel marks a folder whose deletion has begun and is awaiting cascade cleanup.
-// The cascade watcher selects on this label so it watches only terminating folders rather
-// than every folder in the cluster.
+// The cascade poller searches on this label to find terminating folders and drive them to
+// completion.
 const (
 	TerminatingLabel      = "folder.grafana.app/terminating"
 	TerminatingLabelValue = "true"
