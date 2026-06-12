@@ -13,7 +13,11 @@ export const getDashboardsTabID = (folderUID: string) => `folder-dashboards-${fo
 export const getLibraryPanelsTabID = (folderUID: string) => `folder-library-panels-${folderUID}`;
 export const getAlertingTabID = (folderUID: string) => `folder-alerting-${folderUID}`;
 
-export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: FolderParent[]): NavModelItem {
+export function buildNavModel(
+  folder: FolderDTO | FolderParent,
+  parentsArg?: FolderParent[],
+  counts?: { panels: number; rules: number }
+): NavModelItem {
   const parents = parentsArg ?? ('parents' in folder ? folder.parents : undefined);
   const isProvisioned = 'managedBy' in folder ? folder.managedBy === ManagerKind.Repo : false;
 
@@ -47,6 +51,7 @@ export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: Fol
       id: getLibraryPanelsTabID(folder.uid),
       text: t('browse-dashboards.manage-folder-nav.panels', 'Panels'),
       url: `${folder.url}/library-panels`,
+      tabCounter: counts ? counts.panels : undefined,
     });
   }
 
@@ -61,6 +66,7 @@ export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: Fol
       id: getAlertingTabID(folder.uid),
       text: t('browse-dashboards.manage-folder-nav.alert-rules', 'Alert rules'),
       url: `${folder.url}/alerting`,
+      tabCounter: counts ? counts.rules : undefined,
     });
   }
 
