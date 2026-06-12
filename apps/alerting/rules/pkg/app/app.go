@@ -11,11 +11,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/alertrule"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/recordingrule"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/rulesequence"
-	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/schemavalidation"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/validation"
 )
 
 func New(cfg app.Config) (app.App, error) {
@@ -25,19 +26,15 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, config.ErrInvalidRuntimeConfig
 	}
 
-	specValidators, err := schemavalidation.BuildAll(cfg.ManifestData, schema.GroupVersion{
-		Group: cfg.ManifestData.Group,
-		// TODO: handle multiple versions
-		Version: cfg.ManifestData.Versions[0].Name,
-	})
-	if err != nil {
-		return nil, err
-	}
 	for _, kinds := range apis.GetKinds() {
 		for _, kind := range kinds {
+			validator, err := buildKindValidator(kind, runtimeCfg, cfg.ManifestData)
+			if err != nil {
+				return nil, err
+			}
 			managedKind := simple.AppManagedKind{
 				Kind:      kind,
-				Validator: buildKindValidator(kind, runtimeCfg, specValidators[kind.Kind()]),
+				Validator: validator,
 				Mutator:   buildKindMutator(kind, runtimeCfg),
 				Watcher:   buildKindWatcher(kind, runtimeCfg),
 			}
@@ -76,16 +73,40 @@ func New(cfg app.Config) (app.App, error) {
 	return a, nil
 }
 
-func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig, sv *schemavalidation.SpecValidator) *simple.Validator {
+func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig, md app.ManifestData) (*simple.Validator, error) {
+	gk := schema.GroupKind{Group: kind.Group(), Kind: kind.Kind()}
 	switch kind.Kind() {
 	case "AlertRule":
-		return alertrule.NewValidator(cfg, sv)
+		schemaStep, err := validation.OpenAPISpec[*v0alpha1.AlertRule](md, gk)
+		if err != nil {
+			return nil, err
+		}
+		return validation.NewBuilder[*v0alpha1.AlertRule]().
+			OnWrite(schemaStep).
+			OnWrite(alertrule.ValidateWrite(cfg)).
+			OnDelete(alertrule.ValidateDelete(cfg)).
+			Build(), nil
 	case "RecordingRule":
-		return recordingrule.NewValidator(cfg, sv)
+		schemaStep, err := validation.OpenAPISpec[*v0alpha1.RecordingRule](md, gk)
+		if err != nil {
+			return nil, err
+		}
+		return validation.NewBuilder[*v0alpha1.RecordingRule]().
+			OnWrite(schemaStep).
+			OnWrite(recordingrule.ValidateWrite(cfg)).
+			OnDelete(recordingrule.ValidateDelete(cfg)).
+			Build(), nil
 	case "RuleSequence":
-		return rulesequence.NewValidator(cfg, sv)
+		schemaStep, err := validation.OpenAPISpec[*v0alpha1.RuleSequence](md, gk)
+		if err != nil {
+			return nil, err
+		}
+		return validation.NewBuilder[*v0alpha1.RuleSequence]().
+			OnWrite(schemaStep).
+			OnWrite(rulesequence.ValidateWrite(cfg)).
+			Build(), nil
 	}
-	return nil
+	return nil, nil
 }
 
 func buildKindMutator(kind resource.Kind, cfg config.RuntimeConfig) *simple.Mutator {

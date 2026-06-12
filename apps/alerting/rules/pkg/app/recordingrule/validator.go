@@ -5,44 +5,21 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
-	"github.com/grafana/grafana-app-sdk/simple"
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
-	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/schemavalidation"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/util"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/validation"
 	prom_model "github.com/prometheus/common/model"
 )
 
 // validateGroupLabels now delegates to util.ValidateGroupLabels for shared logic.
-func validateGroupLabels(r *model.RecordingRule, oldObject resource.Object, action resource.AdmissionAction) error {
+func validateGroupLabels(r, oldRule *model.RecordingRule, action resource.AdmissionAction) error {
 	var oldLabels map[string]string
-	if oldObject != nil {
-		if oldRule, ok := oldObject.(*model.RecordingRule); ok {
-			oldLabels = oldRule.Labels
-		} else {
-			return fmt.Errorf("old object is not of type *v0alpha1.RecordingRule")
-		}
+	if oldRule != nil {
+		oldLabels = oldRule.Labels
 	}
 	return util.ValidateGroupLabels(r.Labels, oldLabels, action)
-}
-
-func validateDelete(ctx context.Context, req *app.AdmissionRequest, cfg config.RuntimeConfig) error {
-	oldRule, ok := req.OldObject.(*model.RecordingRule)
-	if !ok {
-		return fmt.Errorf("old object is not of type *v0alpha1.RecordingRule")
-	}
-	if cfg.MembershipResolver != nil {
-		memberships, err := cfg.MembershipResolver.Resolve(ctx, []string{oldRule.Name})
-		if err != nil {
-			return fmt.Errorf("failed to resolve sequence membership for rule %q: %w", oldRule.Name, err)
-		}
-		if memberships[oldRule.Name].Found {
-			return fmt.Errorf("cannot delete rule %q because it belongs to rule sequence %q", oldRule.Name, memberships[oldRule.Name].SequenceUID)
-		}
-	}
-	return nil
 }
 
 func validateFolderAndSequenceMembership(ctx context.Context, r *model.RecordingRule, oldRule *model.RecordingRule, action resource.AdmissionAction, cfg config.RuntimeConfig) error {
@@ -95,69 +72,64 @@ func validateMetric(r *model.RecordingRule) error {
 	return nil
 }
 
-func NewValidator(cfg config.RuntimeConfig, sv *schemavalidation.SpecValidator) *simple.Validator {
-	return &simple.Validator{
-		ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
-			// req.Object will not cast to *RecordingRule for delete requests,
-			// so handle deletes before we attempt to cast it.
-			if req.Action == resource.AdmissionActionDelete {
-				return validateDelete(ctx, req, cfg)
+func ValidateDelete(cfg config.RuntimeConfig) validation.ValidateFunc[*model.RecordingRule] {
+	return func(ctx context.Context, req validation.Request[*model.RecordingRule]) error {
+		oldRule := req.OldObject
+		if cfg.MembershipResolver != nil {
+			memberships, err := cfg.MembershipResolver.Resolve(ctx, []string{oldRule.Name})
+			if err != nil {
+				return fmt.Errorf("failed to resolve sequence membership for rule %q: %w", oldRule.Name, err)
 			}
-
-			r, ok := req.Object.(*model.RecordingRule)
-			if !ok {
-				return fmt.Errorf("object is not of type *v0alpha1.RecordingRule")
+			if memberships[oldRule.Name].Found {
+				return fmt.Errorf("cannot delete rule %q because it belongs to rule sequence %q", oldRule.Name, memberships[oldRule.Name].SequenceUID)
 			}
+		}
+		return nil
+	}
+}
 
-			// Validate against the openAPI spec first
-			if sv != nil {
-				if err := sv.ValidateOpenAPISpec(r.Name, r.Spec); err != nil {
-					return err
+func ValidateWrite(cfg config.RuntimeConfig) validation.ValidateFunc[*model.RecordingRule] {
+	return func(ctx context.Context, req validation.Request[*model.RecordingRule]) error {
+		r := req.Object
+		oldRule := req.OldObject
+
+		sourceProv := r.GetProvenanceStatus()
+		if !slices.Contains(model.AcceptedProvenanceStatuses, sourceProv) {
+			return fmt.Errorf("invalid provenance status: %s", sourceProv)
+		}
+
+		if err := validateGroupLabels(r, oldRule, req.Action); err != nil {
+			return err
+		}
+
+		if err := validateFolderAndSequenceMembership(ctx, r, oldRule, req.Action, cfg); err != nil {
+			return err
+		}
+
+		if len(r.Spec.Title) > model.AlertRuleMaxTitleLength {
+			return fmt.Errorf("recording rule title is too long. Max length is %d", model.AlertRuleMaxTitleLength)
+		}
+
+		if err := util.ValidateInterval(cfg.BaseEvaluationInterval, &r.Spec.Trigger.Interval); err != nil {
+			return err
+		}
+
+		if r.Spec.Labels != nil {
+			for key := range r.Spec.Labels {
+				if _, bad := cfg.ReservedLabelKeys[key]; bad {
+					return fmt.Errorf("label key is reserved and cannot be specified: %s", key)
 				}
 			}
-			var oldRule *model.RecordingRule
-			if req.OldObject != nil {
-				oldRule, _ = req.OldObject.(*model.RecordingRule)
-			}
+		}
 
-			sourceProv := r.GetProvenanceStatus()
-			if !slices.Contains(model.AcceptedProvenanceStatuses, sourceProv) {
-				return fmt.Errorf("invalid provenance status: %s", sourceProv)
-			}
+		expressions := make([]util.Expression, 0, len(r.Spec.Expressions))
+		for _, expression := range r.Spec.Expressions {
+			expressions = append(expressions, &expression)
+		}
+		if err := util.ValidateExpressions(expressions); err != nil {
+			return err
+		}
 
-			if err := validateGroupLabels(r, req.OldObject, req.Action); err != nil {
-				return err
-			}
-
-			if err := validateFolderAndSequenceMembership(ctx, r, oldRule, req.Action, cfg); err != nil {
-				return err
-			}
-
-			if len(r.Spec.Title) > model.AlertRuleMaxTitleLength {
-				return fmt.Errorf("recording rule title is too long. Max length is %d", model.AlertRuleMaxTitleLength)
-			}
-
-			if err := util.ValidateInterval(cfg.BaseEvaluationInterval, &r.Spec.Trigger.Interval); err != nil {
-				return err
-			}
-
-			if r.Spec.Labels != nil {
-				for key := range r.Spec.Labels {
-					if _, bad := cfg.ReservedLabelKeys[key]; bad {
-						return fmt.Errorf("label key is reserved and cannot be specified: %s", key)
-					}
-				}
-			}
-
-			expressions := make([]util.Expression, 0, len(r.Spec.Expressions))
-			for _, expression := range r.Spec.Expressions {
-				expressions = append(expressions, &expression)
-			}
-			if err := util.ValidateExpressions(expressions); err != nil {
-				return err
-			}
-
-			return validateMetric(r)
-		},
+		return validateMetric(r)
 	}
 }

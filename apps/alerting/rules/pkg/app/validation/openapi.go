@@ -1,16 +1,15 @@
-// Package schemavalidation validates a kind's spec against the OpenAPI schema
-// embedded in the app manifest because we don't currently get this validation out of the box
-// from the k8s apiserver
-package schemavalidation
+package validation
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -87,22 +86,27 @@ func schemaErrorToField(se *openapi3.SchemaError) *field.Error {
 	return field.Invalid(path, se.Value, reason)
 }
 
-func BuildAll(md app.ManifestData, gv schema.GroupVersion) (map[string]*SpecValidator, error) {
-	validators := make(map[string]*SpecValidator)
+func OpenAPISpec[T resource.Object](md app.ManifestData, gk schema.GroupKind) (ValidateFunc[T], error) {
+	vs := schemaForKind(md, gk.Kind)
+	if vs == nil {
+		return func(context.Context, Request[T]) error { return nil }, nil
+	}
+	sv, err := NewSpecValidator(gk, vs, gk.Kind)
+	if err != nil {
+		return nil, err
+	}
+	return func(_ context.Context, req Request[T]) error {
+		return sv.ValidateOpenAPISpec(req.Object.GetName(), req.Object.GetSpec())
+	}, nil
+}
+
+func schemaForKind(md app.ManifestData, kind string) *app.VersionSchema {
 	for _, version := range md.Versions {
-		if version.Name != gv.Version {
-			continue
-		}
 		for _, k := range version.Kinds {
-			if k.Schema == nil {
-				continue
+			if k.Kind == kind {
+				return k.Schema
 			}
-			sv, err := NewSpecValidator(schema.GroupKind{Group: gv.Group, Kind: k.Kind}, k.Schema, k.Kind)
-			if err != nil {
-				return nil, err
-			}
-			validators[k.Kind] = sv
 		}
 	}
-	return validators, nil
+	return nil
 }

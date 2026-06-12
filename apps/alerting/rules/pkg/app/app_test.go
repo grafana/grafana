@@ -11,6 +11,7 @@ import (
 
 	appsdk "github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana-app-sdk/simple"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -20,8 +21,28 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/recordingrule"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/rulesequence"
-	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/schemavalidation"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/validation"
 )
+
+func alertRuleValidator(cfg config.RuntimeConfig) *simple.Validator {
+	return validation.NewBuilder[*v1.AlertRule]().
+		OnWrite(alertrule.ValidateWrite(cfg)).
+		OnDelete(alertrule.ValidateDelete(cfg)).
+		Build()
+}
+
+func recordingRuleValidator(cfg config.RuntimeConfig) *simple.Validator {
+	return validation.NewBuilder[*v1.RecordingRule]().
+		OnWrite(recordingrule.ValidateWrite(cfg)).
+		OnDelete(recordingrule.ValidateDelete(cfg)).
+		Build()
+}
+
+func ruleSequenceValidator(cfg config.RuntimeConfig) *simple.Validator {
+	return validation.NewBuilder[*v1.RuleSequence]().
+		OnWrite(rulesequence.ValidateWrite(cfg)).
+		Build()
+}
 
 // funcMembershipResolver adapts a function to the RuleSequenceMembershipResolver
 // interface for use in tests.
@@ -72,15 +93,19 @@ func TestAlertRuleValidation_Success(t *testing.T) {
 	}
 
 	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
-	validator := alertrule.NewValidator(makeDefaultRuntimeConfig(), nil)
+	validator := alertRuleValidator(makeDefaultRuntimeConfig())
 	require.NoError(t, validator.Validate(context.Background(), req))
 }
 
 func TestAlertRuleValidation_OpenAPISchemaValidation(t *testing.T) {
-	validators, err := schemavalidation.BuildAll(*manifestdata.LocalManifest().ManifestData,
-		schema.GroupVersion{Group: "rules.alerting.grafana.app", Version: "v0alpha1"})
+	schemaStep, err := validation.OpenAPISpec[*v1.AlertRule](*manifestdata.LocalManifest().ManifestData,
+		schema.GroupKind{Group: "rules.alerting.grafana.app", Kind: "AlertRule"})
 	require.NoError(t, err)
-	validator := alertrule.NewValidator(makeDefaultRuntimeConfig(), validators["AlertRule"])
+	validator := validation.NewBuilder[*v1.AlertRule]().
+		OnWrite(schemaStep).
+		OnWrite(alertrule.ValidateWrite(makeDefaultRuntimeConfig())).
+		OnDelete(alertrule.ValidateDelete(makeDefaultRuntimeConfig())).
+		Build()
 
 	t.Run("schema-invalid spec rejected", func(t *testing.T) {
 		r := baseAlertRule()
@@ -111,7 +136,7 @@ func TestAlertRuleValidation_SuccessWithNamedRoutingTree(t *testing.T) {
 	}
 
 	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
-	validator := alertrule.NewValidator(makeDefaultRuntimeConfig(), nil)
+	validator := alertRuleValidator(makeDefaultRuntimeConfig())
 	require.NoError(t, validator.Validate(context.Background(), req))
 }
 
@@ -142,7 +167,7 @@ func TestAlertRuleValidation_SuccessWithDatasourceQuery(t *testing.T) {
 	}
 
 	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
-	validator := alertrule.NewValidator(makeDefaultRuntimeConfig(), nil)
+	validator := alertRuleValidator(makeDefaultRuntimeConfig())
 	require.NoError(t, validator.Validate(context.Background(), req))
 }
 
@@ -169,7 +194,7 @@ func TestAlertRuleValidation_SuccessWithExpressionDatasourceWithoutRelativeTimeR
 	}
 
 	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
-	validator := alertrule.NewValidator(makeDefaultRuntimeConfig(), nil)
+	validator := alertRuleValidator(makeDefaultRuntimeConfig())
 	require.NoError(t, validator.Validate(context.Background(), req))
 }
 
@@ -194,7 +219,7 @@ func TestAlertRuleValidation_SuccessWithoutDatasourceUIDWithoutRelativeTimeRange
 	}
 
 	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
-	validator := alertrule.NewValidator(makeDefaultRuntimeConfig(), nil)
+	validator := alertRuleValidator(makeDefaultRuntimeConfig())
 	require.NoError(t, validator.Validate(context.Background(), req))
 }
 
@@ -202,7 +227,7 @@ func TestAlertRuleValidation_Errors(t *testing.T) {
 	mk := func(mut func(r *v1.AlertRule)) error {
 		r := baseAlertRule()
 		mut(r)
-		return alertrule.NewValidator(makeDefaultRuntimeConfig(), nil).Validate(context.Background(), &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r})
+		return alertRuleValidator(makeDefaultRuntimeConfig()).Validate(context.Background(), &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r})
 	}
 
 	assert.Error(t, mk(func(r *v1.AlertRule) { r.Annotations = nil }), "want folder required error")
@@ -295,7 +320,7 @@ func TestRecordingRuleValidation_Success(t *testing.T) {
 	}
 
 	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
-	validator := recordingrule.NewValidator(makeDefaultRuntimeConfig(), nil)
+	validator := recordingRuleValidator(makeDefaultRuntimeConfig())
 	require.NoError(t, validator.Validate(context.Background(), req))
 }
 
@@ -326,7 +351,7 @@ func TestRecordingRuleValidation_SuccessWithDatasourceQuery(t *testing.T) {
 	}
 
 	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
-	validator := recordingrule.NewValidator(makeDefaultRuntimeConfig(), nil)
+	validator := recordingRuleValidator(makeDefaultRuntimeConfig())
 	require.NoError(t, validator.Validate(context.Background(), req))
 }
 
@@ -353,7 +378,7 @@ func TestRecordingRuleValidation_SuccessWithExpressionDatasourceWithoutRelativeT
 	}
 
 	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
-	validator := recordingrule.NewValidator(makeDefaultRuntimeConfig(), nil)
+	validator := recordingRuleValidator(makeDefaultRuntimeConfig())
 	require.NoError(t, validator.Validate(context.Background(), req))
 }
 
@@ -378,7 +403,7 @@ func TestRecordingRuleValidation_SuccessWithoutDatasourceUIDWithoutRelativeTimeR
 	}
 
 	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
-	validator := recordingrule.NewValidator(makeDefaultRuntimeConfig(), nil)
+	validator := recordingRuleValidator(makeDefaultRuntimeConfig())
 	require.NoError(t, validator.Validate(context.Background(), req))
 }
 
@@ -386,7 +411,7 @@ func TestRecordingRuleValidation_Errors(t *testing.T) {
 	mk := func(mut func(r *v1.RecordingRule)) error {
 		r := baseRecordingRule()
 		mut(r)
-		return recordingrule.NewValidator(makeDefaultRuntimeConfig(), nil).Validate(context.Background(), &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r})
+		return recordingRuleValidator(makeDefaultRuntimeConfig()).Validate(context.Background(), &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r})
 	}
 
 	assert.Error(t, mk(func(r *v1.RecordingRule) { r.Annotations = nil }), "want folder required error")
@@ -439,7 +464,7 @@ func TestAlertRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {
 		return out, nil
 	})
 
-	v := alertrule.NewValidator(baseCfg, nil)
+	v := alertRuleValidator(baseCfg)
 
 	t.Run("delete blocked when rule is in sequence", func(t *testing.T) {
 		err := v.Validate(context.Background(), &appsdk.AdmissionRequest{
@@ -484,7 +509,7 @@ func TestRecordingRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {
 		return out, nil
 	})
 
-	v := recordingrule.NewValidator(baseCfg, nil)
+	v := recordingRuleValidator(baseCfg)
 
 	t.Run("delete blocked when rule is in sequence", func(t *testing.T) {
 		err := v.Validate(context.Background(), &appsdk.AdmissionRequest{
@@ -575,7 +600,7 @@ func ruleSequenceRuntimeConfig() config.RuntimeConfig {
 func TestRuleSequenceValidation_Success(t *testing.T) {
 	r := baseRuleSequence()
 	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
-	validator := rulesequence.NewValidator(ruleSequenceRuntimeConfig(), nil)
+	validator := ruleSequenceValidator(ruleSequenceRuntimeConfig())
 	require.NoError(t, validator.Validate(context.Background(), req))
 }
 
@@ -585,7 +610,7 @@ func TestRuleSequenceValidation_Errors(t *testing.T) {
 	mk := func(mut func(r *v1.RuleSequence)) error {
 		r := baseRuleSequence()
 		mut(r)
-		return rulesequence.NewValidator(cfg, nil).Validate(context.Background(), &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r})
+		return ruleSequenceValidator(cfg).Validate(context.Background(), &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r})
 	}
 
 	t.Run("missing folder", func(t *testing.T) {
@@ -675,7 +700,7 @@ func TestRuleSequenceValidation_MembershipGuardrails(t *testing.T) {
 
 	t.Run("create blocked when rule belongs to another sequence", func(t *testing.T) {
 		r := baseRuleSequence()
-		err := rulesequence.NewValidator(cfg, nil).Validate(context.Background(), &appsdk.AdmissionRequest{
+		err := ruleSequenceValidator(cfg).Validate(context.Background(), &appsdk.AdmissionRequest{
 			Action: resource.AdmissionActionCreate,
 			Object: r,
 		})
@@ -698,7 +723,7 @@ func TestRuleSequenceValidation_MembershipGuardrails(t *testing.T) {
 			return out, nil
 		})
 		r := baseRuleSequence()
-		err := rulesequence.NewValidator(cfg2, nil).Validate(context.Background(), &appsdk.AdmissionRequest{
+		err := ruleSequenceValidator(cfg2).Validate(context.Background(), &appsdk.AdmissionRequest{
 			Action: resource.AdmissionActionUpdate,
 			Object: r,
 		})
