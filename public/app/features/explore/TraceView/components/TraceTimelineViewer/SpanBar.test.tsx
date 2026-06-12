@@ -93,4 +93,15 @@ describe('<SpanBar>', () => {
     render(<SpanBar {...(props as unknown as Props)} />);
     expect(screen.getAllByTestId('SpanBar--logMarker')).toHaveLength(2);
   });
+
+  it('applies the summary bar styling to summary spans', () => {
+    const summarySpan = { ...props.span, aggregation: { isSummary: true } };
+    render(<SpanBar {...({ ...props, span: summarySpan } as unknown as Props)} />);
+    expect(screen.getByTestId('SpanBar--bar').className).toMatch(/barSummary/);
+  });
+
+  it('does not apply summary bar styling to normal spans', () => {
+    render(<SpanBar {...(props as unknown as Props)} />);
+    expect(screen.getByTestId('SpanBar--bar').className).not.toMatch(/barSummary/);
+  });
 });
