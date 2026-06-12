@@ -180,6 +180,41 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 		assert.Equal(t, "alice@example.com", doc.Fields["email"])
 	})
 
+	t.Run("EmitZeroIfAbsent emits the type's zero value when path is missing", func(t *testing.T) {
+		// Body has none of the declared fields populated. Each one is set
+		// to its zero value so sort and range queries treat every document
+		// as having the field present.
+		bodyEmpty := []byte(`{
+			"apiVersion": "example.grafana.app/v1",
+			"kind": "Thing",
+			"metadata": {"name": "thing-1", "namespace": "default"},
+			"spec": {}
+		}`)
+		provider := NewMapProvider(
+			map[schema.GroupVersionResource][]SearchFieldDefinition{
+				gvr: {
+					{Name: "flag", Path: "spec.flag", Type: SearchFieldTypeBoolean, EmitZeroIfAbsent: true},
+					{Name: "count", Path: "spec.count", Type: SearchFieldTypeInt64, EmitZeroIfAbsent: true},
+					{Name: "ratio", Path: "spec.ratio", Type: SearchFieldTypeDouble, EmitZeroIfAbsent: true},
+					{Name: "label", Path: "spec.label", Type: SearchFieldTypeString, EmitZeroIfAbsent: true},
+					{Name: "tags", Path: "spec.tags", Type: SearchFieldTypeString, Array: true, EmitZeroIfAbsent: true},
+					// Without the flag, an absent field stays absent.
+					{Name: "silent", Path: "spec.silent", Type: SearchFieldTypeString},
+				},
+			}, nil,
+		)
+		builder := StandardDocumentBuilderWithFields(nil, provider)
+		doc, err := builder.BuildDocument(ctx, key, 1, bodyEmpty)
+		require.NoError(t, err)
+		assert.Equal(t, false, doc.Fields["flag"])
+		assert.Equal(t, int64(0), doc.Fields["count"])
+		assert.Equal(t, float64(0), doc.Fields["ratio"])
+		assert.Equal(t, "", doc.Fields["label"])
+		assert.Equal(t, []any{}, doc.Fields["tags"])
+		_, hasSilent := doc.Fields["silent"]
+		assert.False(t, hasSilent, "field without EmitZeroIfAbsent must stay absent")
+	})
+
 	t.Run("missing apiVersion and no PreferredVersion: no extraction", func(t *testing.T) {
 		bodyNoVersion := []byte(`{
 			"kind": "Thing",
