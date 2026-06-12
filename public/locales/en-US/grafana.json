@@ -13056,7 +13056,14 @@
     "commit-options": {
       "description-enforce-template": "Pre-fill the commit message in save dialogs from the template above and make it read-only.",
       "label-commit-options": "Commit options (advanced)",
-      "label-enforce-template": "Enforce commit message template"
+      "label-enforce-template": "Enforce commit message template",
+      "signer-required": "Required when commit signing is enabled.",
+      "signing-key-required": "Signing key is required",
+      "smime-certificate-configured": "Configured",
+      "smime-certificate-required": "Certificate is required"
+    },
+    "commit-signing-info": {
+      "description": "To enable verified commits, <2>set up commit signing</2> for your account."
     },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
@@ -13669,11 +13676,24 @@
     "shared": {
       "branch-description": "The branch to use for provisioning",
       "branch-label": "Branch",
+      "commit-signer-email-description": "Must match the signing key identity.",
+      "commit-signer-email-label": "Signer email",
+      "commit-signer-email-placeholder": "noreply@grafana.com",
+      "commit-signer-name-description": "Name of the commit signer.",
+      "commit-signer-name-label": "Signer name",
+      "commit-signer-name-placeholder": "Grafana",
       "path-description": "Optional. Path to the subdirectory with the resources you want to sync.",
       "path-label": "Path",
       "progress-bar": {
         "aria-label": "Progress Bar"
       },
+      "signing-key-description": "Private key used to sign commits. No passphrase.",
+      "signing-key-label": "Signing key",
+      "signing-method-description": "Sign commits so their author can be cryptographically verified.",
+      "signing-method-label": "Commit signing",
+      "signing-method-none": "None",
+      "smime-certificate-description": "X.509 certificate paired with the signing key.",
+      "smime-certificate-label": "S/MIME certificate",
       "token-user-label": "Username",
       "url-label": "Repository URL",
       "url-pattern": "Must be a valid repository URL (https://hostname/owner/repo)"
