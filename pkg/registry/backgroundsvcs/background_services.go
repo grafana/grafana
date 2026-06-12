@@ -83,7 +83,7 @@ func ProvideBackgroundServiceRegistry(
 	installSync installsync.Syncer,
 	zanzanaService *authz.EmbeddedZanzanaService,
 	sqlStore *sqlstore.SQLStore,
-	folderCascadeWatcher *folderimpl.CascadeWatcher,
+	folderCascadePoller *folderimpl.CascadePoller,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
@@ -136,7 +136,7 @@ func ProvideBackgroundServiceRegistry(
 		installSync,
 		zanzanaService,
 		sqlStore,
-		folderCascadeWatcher,
+		folderCascadePoller,
 	)
 }
 

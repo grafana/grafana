@@ -92,15 +92,15 @@ func TestListDirectChildFolders_marksTerminatingFromLabel(t *testing.T) {
 	}, children)
 }
 
-func TestCascadeWatcher_Run_disabledByFeatureFlag(t *testing.T) {
-	w := ProvideCascadeWatcher(setting.NewCfg(), apiserver.WithoutRestConfig, nil, nil, nil, nil)
+func TestCascadePoller_Run_disabledByFeatureFlag(t *testing.T) {
+	w := ProvideCascadePoller(setting.NewCfg(), apiserver.WithoutRestConfig, nil, nil, nil, nil)
 	w.flagEnabled = func(context.Context) bool { return false }
 	err := w.Run(context.Background())
 	require.NoError(t, err)
 }
 
-func TestCascadeWatcher_Run_enabledFlagWithoutRestConfig(t *testing.T) {
-	w := ProvideCascadeWatcher(setting.NewCfg(), apiserver.WithoutRestConfig, nil, nil, nil, nil)
+func TestCascadePoller_Run_enabledFlagWithoutRestConfig(t *testing.T) {
+	w := ProvideCascadePoller(setting.NewCfg(), apiserver.WithoutRestConfig, nil, nil, nil, nil)
 	w.flagEnabled = func(context.Context) bool { return true }
 	err := w.Run(context.Background())
 	require.NoError(t, err)
@@ -167,10 +167,10 @@ func childSearch(children map[string]bool) *mockFolderSearcher {
 	}
 }
 
-func TestCascadeWatcher_finalizeTerminatingFolder_removesFinalizerWhenNoChildren(t *testing.T) {
+func TestCascadePoller_finalizeTerminatingFolder_removesFinalizerWhenNoChildren(t *testing.T) {
 	// A leaf (no children) gets its finalizer removed so it can be garbage-collected.
 	mut := &recordingFolderMutator{}
-	w := &CascadeWatcher{
+	w := &CascadePoller{
 		folderSearch:  childSearch(map[string]bool{}),
 		folderMutator: mut,
 		log:           slog.Default(),
@@ -182,11 +182,11 @@ func TestCascadeWatcher_finalizeTerminatingFolder_removesFinalizerWhenNoChildren
 	require.Equal(t, []string{"leaf"}, mut.finalizerRemove)
 }
 
-func TestCascadeWatcher_finalizeTerminatingFolder_marksChildrenAndKeepsFinalizer(t *testing.T) {
+func TestCascadePoller_finalizeTerminatingFolder_marksChildrenAndKeepsFinalizer(t *testing.T) {
 	// With children present, mark the not-yet-terminating ones (skip already-terminating) and keep
 	// this folder's finalizer until its subtree is gone.
 	mut := &recordingFolderMutator{}
-	w := &CascadeWatcher{
+	w := &CascadePoller{
 		folderSearch:  childSearch(map[string]bool{"unmarked": false, "marked": true}),
 		folderMutator: mut,
 		log:           slog.Default(),
@@ -240,7 +240,7 @@ func (f *fakeOrgLister) Search(context.Context, *org.SearchOrgsQuery) ([]*org.Or
 	return f.orgs, f.err
 }
 
-func TestCascadeWatcher_pollOnce(t *testing.T) {
+func TestCascadePoller_pollOnce(t *testing.T) {
 	// Discovery returns two terminating folders: "parent" (still has a terminating child) and
 	// "child" (a leaf). Bottom-up: only the leaf's finalizer is removed this tick; the parent keeps
 	// its finalizer until the child is gone.
@@ -272,7 +272,7 @@ func TestCascadeWatcher_pollOnce(t *testing.T) {
 		},
 	}
 	mut := &recordingFolderMutator{}
-	w := &CascadeWatcher{
+	w := &CascadePoller{
 		orgs:            &fakeOrgLister{orgs: []*org.OrgDTO{{ID: 12}}},
 		namespaceMapper: func(int64) string { return "org-12" },
 		folderSearch:    searcher,
