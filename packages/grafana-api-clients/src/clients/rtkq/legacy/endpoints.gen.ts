@@ -5249,6 +5249,9 @@ export type ChangeUserPasswordCommand = {
   oldPassword?: Password;
 };
 export type UserSearchHitDto = {
+  accessControl?: {
+    [key: string]: boolean;
+  };
   authLabels?: string[];
   avatarUrl?: string;
   created?: string;
@@ -5261,6 +5264,7 @@ export type UserSearchHitDto = {
   lastSeenAtAge?: string;
   login?: string;
   name?: string;
+  role?: string;
   uid?: string;
 };
 export type SearchUserQueryResult = {

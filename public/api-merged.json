@@ -22783,6 +22783,12 @@
     "UserSearchHitDTO": {
       "type": "object",
       "properties": {
+        "accessControl": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
         "authLabels": {
           "type": "array",
           "items": {
@@ -22823,6 +22829,9 @@
           "type": "string"
         },
         "name": {
+          "type": "string"
+        },
+        "role": {
           "type": "string"
         },
         "uid": {

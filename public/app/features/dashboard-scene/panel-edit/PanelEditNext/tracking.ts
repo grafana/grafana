@@ -28,7 +28,7 @@ export function trackTransformationFilterChanged(filter: string | null) {
   });
 }
 
-type AddCardSource = 'section_header' | 'inline';
+type AddCardSource = 'section_header' | 'inline' | 'empty_state';
 
 export function trackAddQuery(querySource: 'saved_query' | 'new_query', cardSource: AddCardSource) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
