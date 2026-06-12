@@ -29,6 +29,11 @@ const setup = () => {
       id: 'profile',
       url: 'profile',
     },
+    {
+      text: 'Home',
+      id: 'home',
+      url: '/',
+    },
   ];
 
   const store = configureStore({ navBarTree });
@@ -66,5 +71,11 @@ describe('MegaMenu', () => {
     setup();
 
     expect(screen.queryByLabelText('Profile')).not.toBeInTheDocument();
+  });
+
+  it('should filter out home', async () => {
+    setup();
+
+    expect(screen.queryByLabelText('Home')).not.toBeInTheDocument();
   });
 });
