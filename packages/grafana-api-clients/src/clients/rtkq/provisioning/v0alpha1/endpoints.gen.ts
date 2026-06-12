@@ -1463,6 +1463,8 @@ export type GitHubConnectionConfig = {
   appID: string;
   /** GitHub App installation ID */
   installationID: string;
+  /** WebhookDisabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet. */
+  webhookDisabled?: boolean;
 };
 export type GitHubEnterpriseConnectionConfig = {
   /** GitHub App ID */
@@ -1817,7 +1819,7 @@ export type BranchOptions = {
   nameTemplate?: string;
 };
 export type CommitOptions = {
-  /** When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. The Grafana-saved-by trailer is always appended regardless of this setting. */
+  /** When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. */
   enforceTemplate?: boolean;
   /** Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to "noreply@grafana.com". */
   signerEmail?: string;

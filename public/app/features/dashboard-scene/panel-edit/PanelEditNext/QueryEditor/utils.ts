@@ -42,7 +42,7 @@ export function getEditorType(
   return QueryEditorType.Query;
 }
 
-export function isDataTransformerConfig(
+function isDataTransformerConfig(
   transformation: DataTransformerConfig | DataQuery | CustomTransformerDefinition | null
 ): transformation is DataTransformerConfig {
   return transformation !== null && 'id' in transformation && !('refId' in transformation);

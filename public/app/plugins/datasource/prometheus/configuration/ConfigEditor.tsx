@@ -50,7 +50,7 @@ export const ConfigEditor = (props: Props) => {
   );
 };
 
-export function overhaulStyles(theme: GrafanaTheme2) {
+function overhaulStyles(theme: GrafanaTheme2) {
   return {
     additionalSettings: css({
       marginBottom: '25px',

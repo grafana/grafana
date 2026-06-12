@@ -1,13 +1,12 @@
 import { type DataTransformerConfig, type FieldConfigSource, getPanelOptionsWithDefaults } from '@grafana/data';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
-import { type LibraryElementDTO } from 'app/features/library-panels/types';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
-import { DashboardPanelsChangedEvent, PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
+import { DashboardPanelsChangedEvent } from 'app/types/events';
 import { type ThunkResult } from 'app/types/store';
 
-import { changePanelKey, panelModelAndPluginReady, removePanel } from './reducers';
+import { panelModelAndPluginReady, removePanel } from './reducers';
 
 export function initPanelState(panel: PanelModel): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
@@ -102,53 +101,7 @@ export function changePanelPlugin({
   };
 }
 
-export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryElementDTO): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    const newPluginId = libraryPanel.model.type;
-    const oldType = panel.type;
-
-    // Update model but preserve gridPos & id
-    panel.restoreModel({
-      ...libraryPanel.model,
-      gridPos: panel.gridPos,
-      id: panel.id,
-      libraryPanel: libraryPanel,
-    });
-
-    // a new library panel usually means new queries, clear any current result
-    panel.getQueryRunner().clearLastResult();
-
-    // Handle plugin change
-    if (oldType !== newPluginId) {
-      const store = getStore();
-      let plugin = store.plugins.panels[newPluginId];
-
-      if (!plugin) {
-        plugin = await dispatch(loadPanelPlugin(newPluginId));
-      }
-
-      await panel.pluginLoaded(plugin);
-      panel.generateNewKey();
-
-      await dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
-    } else {
-      // Even if the plugin is the same, we want to change the key
-      // to force a rerender
-      const oldKey = panel.key;
-      panel.generateNewKey();
-      dispatch(changePanelKey({ oldKey, newKey: panel.key }));
-    }
-
-    panel.configRev = 0;
-    panel.hasSavedPanelEditChange = true;
-    panel.refresh();
-
-    panel.events.publish(PanelQueriesChangedEvent);
-    panel.events.publish(PanelOptionsChangedEvent);
-  };
-}
-
-export function loadLibraryPanelAndUpdate(panel: PanelModel): ThunkResult<void> {
+function loadLibraryPanelAndUpdate(panel: PanelModel): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const uid = panel.libraryPanel!.uid!;
     try {

@@ -8,6 +8,7 @@
   "name": "with-login-only",
   "rv": 1234,
   "fields": {
+    "disabled": false,
     "lastSeenAt": 0,
     "login": "user.two",
     "role": "Viewer"

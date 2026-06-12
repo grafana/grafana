@@ -936,6 +936,29 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchUsersUserHit(ref common.ReferenceCall
 							Format:  "",
 						},
 					},
+					"disabled": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"internalId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deprecated internal (legacy SQL) id of the user.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"created": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Creation timestamp, in epoch milliseconds.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 					"score": {
 						SchemaProps: spec.SchemaProps{
 							Default: 0,
@@ -959,7 +982,7 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchUsersUserHit(ref common.ReferenceCall
 						},
 					},
 				},
-				Required: []string{"name", "title", "login", "email", "role", "lastSeenAt", "lastSeenAtAge", "provisioned", "score"},
+				Required: []string{"name", "title", "login", "email", "role", "lastSeenAt", "lastSeenAtAge", "provisioned", "disabled", "internalId", "created", "score"},
 			},
 		},
 	}

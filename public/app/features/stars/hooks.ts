@@ -105,7 +105,7 @@ export const useStarredItems = (group: string, kind: string) => {
 /**
  * Hook to update the nav menu with starred items
  */
-export const useUpdateNavStarredItems = () => {
+const useUpdateNavStarredItems = () => {
   return ({ id, title }: { id: string; title: string }, isStarred: boolean) => {
     const url = locationUtil.assureBaseUrl(`/d/${id}`);
     return dispatch(setStarred({ id, title, url, isStarred }));

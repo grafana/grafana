@@ -121,7 +121,7 @@ interface SoloPanelNotFoundProps {
   dashboard: DashboardScene;
 }
 
-export function SoloPanelNotFound({ singleMatch, dashboard }: SoloPanelNotFoundProps) {
+function SoloPanelNotFound({ singleMatch, dashboard }: SoloPanelNotFoundProps) {
   const context = useSoloPanelContext()!;
   const [state, setState] = useState({ matchFound: false, isLoading: true });
 
