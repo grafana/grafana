@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
-import { useEffect, useImperativeHandle, useRef } from 'react';
+import { useImperativeHandle, useRef } from 'react';
 
 import { type GrafanaTheme2, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -8,9 +8,15 @@ import { LoadingBar, useStyles2 } from '@grafana/ui';
 
 import { type DeepSearchDashboardResult } from './actions/deepSearchActions';
 
-/** Imperative handle so the palette can move keyboard focus into the column. */
+/**
+ * Imperative handle so the palette-wide keyboard navigation (RenderResults)
+ * can move focus between the cards in this column.
+ */
 export interface DeepSearchNavHandle {
-  focusFirst: () => void;
+  focusIndex: (index: number) => void;
+  /** Index of the card that currently holds DOM focus, -1 when none. */
+  getFocusedIndex: () => number;
+  getCount: () => number;
 }
 
 interface DeepSearchResultsProps {
@@ -18,11 +24,6 @@ interface DeepSearchResultsProps {
   isFetching: boolean;
   /** Called when a result navigation is triggered, so the palette can close itself. */
   onNavigate: () => void;
-  /**
-   * Called to leave keyboard navigation mode — Up on the first item (resetSelection
-   * false) or Escape (resetSelection true, highlight returns to the first item).
-   */
-  onReturnToInput: (resetSelection: boolean) => void;
   navRef?: React.Ref<DeepSearchNavHandle>;
 }
 
@@ -30,54 +31,16 @@ interface DeepSearchResultsProps {
  * The semantic search column of the command palette. Shows one card per
  * dashboard with the panel snippets that matched the query.
  */
-export function DeepSearchResults({ results, isFetching, onNavigate, onReturnToInput, navRef }: DeepSearchResultsProps) {
+export function DeepSearchResults({ results, isFetching, onNavigate, navRef }: DeepSearchResultsProps) {
   const styles = useStyles2(getStyles);
   const itemRefs = useRef<Array<HTMLAnchorElement | null>>([]);
 
   useImperativeHandle(navRef, () => ({
-    focusFirst: () => itemRefs.current[0]?.focus(),
+    focusIndex: (index: number) => itemRefs.current[index]?.focus(),
+    getFocusedIndex: () =>
+      itemRefs.current.findIndex((element) => element !== null && element === document.activeElement),
+    getCount: () => itemRefs.current.filter((element) => element !== null).length,
   }));
-
-  // Navigation-mode keys are handled with a window capture listener because
-  // several global handlers would otherwise act on them first: kbar refocuses
-  // its input on any keystroke outside it, Grafana's keybindingSrv binds a
-  // global Escape (mousetrap), and the overlay closes on Escape. Capture at
-  // the window runs before all of them; stopImmediatePropagation keeps the
-  // event to ourselves. Only active while focus is on one of the cards.
-  const onReturnToInputRef = useRef(onReturnToInput);
-  onReturnToInputRef.current = onReturnToInput;
-  useEffect(() => {
-    const handler = (event: KeyboardEvent) => {
-      const index = itemRefs.current.findIndex((element) => element !== null && element === document.activeElement);
-      if (index === -1) {
-        return;
-      }
-
-      if (event.key === 'ArrowDown') {
-        itemRefs.current[index + 1]?.focus();
-      } else if (event.key === 'ArrowUp') {
-        if (index === 0) {
-          onReturnToInputRef.current(false);
-        } else {
-          itemRefs.current[index - 1]?.focus();
-        }
-      } else if (event.key === 'Escape') {
-        onReturnToInputRef.current(true);
-      } else if (event.key === 'Enter') {
-        // Keep global handlers away but let the anchor's native activation run
-        event.stopImmediatePropagation();
-        return;
-      } else {
-        return;
-      }
-
-      event.preventDefault();
-      event.stopImmediatePropagation();
-    };
-
-    window.addEventListener('keydown', handler, { capture: true });
-    return () => window.removeEventListener('keydown', handler, { capture: true });
-  }, []);
 
   return (
     <div className={styles.container}>

@@ -136,11 +136,12 @@ describe('CommandPalette', () => {
       setup();
       const user = userEvent.setup();
       const input = screen.getByPlaceholderText('Search or jump to...');
+      // No keyword results match this query, so the deep column is the only pane
       await user.type(input, 'latency');
       await screen.findByText('API latency', {}, { timeout: 3000 });
 
-      // Right arrow at the end of the input enters navigation mode on the first card
-      await user.keyboard('{ArrowRight}');
+      // Arrow down from the input moves focus into the results
+      await user.keyboard('{ArrowDown}');
       expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
 
       // Down/Up move between cards
@@ -149,12 +150,51 @@ describe('CommandPalette', () => {
       await user.keyboard('{ArrowUp}');
       expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
 
-      // Up on the first card returns focus to the input
+      // Up past the first item returns focus to the input
       await user.keyboard('{ArrowUp}');
       expect(input).toHaveFocus();
     });
 
-    it('escape in navigation mode returns focus to the input without closing the palette', async () => {
+    it('moves focus between the keyword and deep search panes', async () => {
+      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
+      server.use(
+        getDashboardMemorySearchHandler([
+          { dashboardUid: 'dash-1', dashboardTitle: 'Dark dashboards', content: 'dark mode panels', score: 0.1 },
+        ])
+      );
+
+      setup();
+      const user = userEvent.setup();
+      const input = screen.getByPlaceholderText('Search or jump to...');
+      // "dark" matches the static change-theme action, so the keyword pane has results
+      await user.type(input, 'dark');
+      await screen.findByText('Dark dashboards', {}, { timeout: 3000 });
+
+      // Arrow down from the input lands on the keyword list
+      await user.keyboard('{ArrowDown}');
+      const keywordList = screen.getByTestId('command-palette-keyword-results');
+      expect(keywordList).toHaveFocus();
+
+      // Left from the leftmost pane is a no-op — focus must NOT fall back to
+      // the input (kbar's focus guard would otherwise steal it)
+      await user.keyboard('{ArrowLeft}');
+      expect(keywordList).toHaveFocus();
+
+      // Right moves to the deep search pane, left moves back
+      await user.keyboard('{ArrowRight}');
+      expect(screen.getByRole('link', { name: /Dark dashboards/ })).toHaveFocus();
+      // Right from the rightmost pane is a no-op as well
+      await user.keyboard('{ArrowRight}');
+      expect(screen.getByRole('link', { name: /Dark dashboards/ })).toHaveFocus();
+      await user.keyboard('{ArrowLeft}');
+      expect(keywordList).toHaveFocus();
+
+      // Up past the first keyword item returns focus to the input
+      await user.keyboard('{ArrowUp}');
+      expect(input).toHaveFocus();
+    });
+
+    it('escape in the results returns focus to the input without closing the palette', async () => {
       (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
       server.use(
         getDashboardMemorySearchHandler([
@@ -168,7 +208,7 @@ describe('CommandPalette', () => {
       await user.type(input, 'latency');
       await screen.findByText('API latency', {}, { timeout: 3000 });
 
-      await user.keyboard('{ArrowRight}');
+      await user.keyboard('{ArrowDown}');
       expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
 
       await user.keyboard('{Escape}');

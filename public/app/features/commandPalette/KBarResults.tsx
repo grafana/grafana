@@ -9,8 +9,6 @@ import { type URLCallback } from './types';
 // TODO: Go back to KBarResults from kbar when https://github.com/timc1/kbar/issues/281 is fixed
 // Remember to remove dependency on react-virtual when removing this file
 
-const START_INDEX = 0;
-
 interface RenderParams<T = ActionImpl | string> {
   item: T;
   active: boolean;
@@ -21,11 +19,12 @@ interface KBarResultsProps {
   items: any[];
   onRender: (params: RenderParams) => React.ReactElement<Record<string, unknown>>;
   maxHeight?: number;
+  /** The scroll container, focusable so keyboard navigation can target the list. */
+  scrollRef?: React.MutableRefObject<HTMLDivElement | null>;
 }
 
 export const KBarResults = (props: KBarResultsProps) => {
-  const activeRef = React.useRef<HTMLElement>(null);
-  const parentRef = React.useRef(null);
+  const parentRef = React.useRef<HTMLDivElement | null>(null);
 
   // store a ref to all items so we do not have to pass
   // them as a dependency when setting up event listeners.
@@ -58,51 +57,17 @@ export const KBarResults = (props: KBarResultsProps) => {
     activeIndex: state.activeIndex,
   }));
 
-  React.useEffect(() => {
-    const handler = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowUp' || (event.ctrlKey && event.key === 'p')) {
-        event.preventDefault();
-        query.setActiveIndex((index) => {
-          let nextIndex = index > START_INDEX ? index - 1 : index;
-          // avoid setting active index on a group
-          if (typeof itemsRef.current[nextIndex] === 'string') {
-            if (nextIndex === 0) {
-              return index;
-            }
-            nextIndex -= 1;
-          }
-          return nextIndex;
-        });
-      } else if (event.key === 'ArrowDown' || (event.ctrlKey && event.key === 'n')) {
-        event.preventDefault();
-        query.setActiveIndex((index) => {
-          let nextIndex = index < itemsRef.current.length - 1 ? index + 1 : index;
-          // avoid setting active index on a group
-          if (typeof itemsRef.current[nextIndex] === 'string') {
-            if (nextIndex === itemsRef.current.length - 1) {
-              return index;
-            }
-            nextIndex += 1;
-          }
-          return nextIndex;
-        });
-      } else if (event.key === 'Enter' && !event.metaKey) {
-        event.preventDefault();
-        // storing the active dom element in a ref prevents us from
-        // having to calculate the current action to perform based
-        // on the `activeIndex`, which we would have needed to add
-        // as part of the dependencies array.
-        activeRef.current?.click();
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [query]);
+  // Arrow/Enter/Escape key handling lives in the palette-wide navigation
+  // handler (RenderResults) — it owns moving the highlight between the search
+  // input, this list and the deep search column.
 
   // destructuring here to prevent linter warning to pass
   // entire rowVirtualizer in the dependencies array.
   const { scrollToIndex } = rowVirtualizer;
   React.useEffect(() => {
+    if (activeIndex < 0) {
+      return;
+    }
     scrollToIndex(activeIndex, {
       // ensure that if the first item in the list is a group
       // name and we are focused on the second item, to not
@@ -112,15 +77,9 @@ export const KBarResults = (props: KBarResultsProps) => {
   }, [activeIndex, scrollToIndex]);
 
   React.useEffect(() => {
-    // TODO(tim): fix scenario where async actions load in
-    // and active index is reset to the first item. i.e. when
-    // users register actions and bust the `useRegisterActions`
-    // cache, we won't want to reset their active index as they
-    // are navigating the list.
-    query.setActiveIndex(
-      // avoid setting active index on a group
-      typeof props.items[START_INDEX] === 'string' ? START_INDEX + 1 : START_INDEX
-    );
+    // Nothing is preselected — the highlight appears once keyboard navigation
+    // enters the list (or on pointer hover)
+    query.setActiveIndex(-1);
   }, [search, currentRootActionId, props.items, query]);
 
   const execute = React.useCallback(
@@ -163,11 +122,19 @@ export const KBarResults = (props: KBarResultsProps) => {
 
   return (
     <div
-      ref={parentRef}
+      ref={(element) => {
+        parentRef.current = element;
+        if (props.scrollRef) {
+          props.scrollRef.current = element;
+        }
+      }}
+      tabIndex={-1}
+      data-testid="command-palette-keyword-results"
       style={{
         maxHeight: props.maxHeight || 400,
         position: 'relative',
         overflow: 'auto',
+        outline: 'none',
       }}
     >
       <div
@@ -236,8 +203,6 @@ export const KBarResults = (props: KBarResultsProps) => {
                 key={virtualRow.index}
                 href={typeof url === 'function' ? url(search) : url}
                 target={target}
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                ref={active ? (activeRef as React.RefObject<HTMLAnchorElement>) : null}
                 {...childProps}
               >
                 {groupLabel ? <span className="sr-only">{groupLabel}: </span> : null}
@@ -247,12 +212,7 @@ export const KBarResults = (props: KBarResultsProps) => {
           }
 
           return (
-            <div
-              key={virtualRow.index}
-              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-              ref={active ? (activeRef as React.RefObject<HTMLDivElement>) : null}
-              {...childProps}
-            >
+            <div key={virtualRow.index} {...childProps}>
               {groupLabel ? <span className="sr-only">{groupLabel}: </span> : null}
               {renderedItem}
             </div>

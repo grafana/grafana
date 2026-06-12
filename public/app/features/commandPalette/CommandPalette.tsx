@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, ActionImpl } from 'kbar';
+import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, ActionImpl, getListboxItemId } from 'kbar';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
@@ -71,25 +71,6 @@ function CommandPaletteContents() {
   });
   const showDeepSearch = deepSearchEnabled && !currentRootActionId && searchQuery.length > 0;
 
-  const deepSearchNavRef = useRef<DeepSearchNavHandle>(null);
-  const onSearchKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLInputElement>) => {
-      // Right arrow with the caret at the end of the input moves keyboard
-      // focus into the deep search column ("navigation mode")
-      const input = event.currentTarget;
-      if (
-        event.key === 'ArrowRight' &&
-        deepSearchResults.length > 0 &&
-        input.selectionStart === input.value.length &&
-        input.selectionStart === input.selectionEnd
-      ) {
-        event.preventDefault();
-        deepSearchNavRef.current?.focusFirst();
-      }
-    },
-    [deepSearchResults]
-  );
-
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
     { isOpen: true, onClose: () => query.setVisualState(VisualState.animatingOut) },
@@ -114,7 +95,6 @@ function CommandPaletteContents() {
               <KBarSearch
                 defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                 className={styles.search}
-                onKeyDown={onSearchKeyDown}
               />
               <div className={styles.loadingBarContainer}>
                 {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
@@ -129,7 +109,6 @@ function CommandPaletteContents() {
               isFetchingDeepSearchResults={isFetchingDeepSearchResults}
               showDeepSearch={showDeepSearch}
               onNavigate={queryToggle}
-              deepSearchNavRef={deepSearchNavRef}
             />
           </div>
         </FocusScope>
@@ -177,7 +156,6 @@ interface RenderResultsProps {
   isFetchingDeepSearchResults: boolean;
   showDeepSearch: boolean;
   onNavigate: () => void;
-  deepSearchNavRef: React.Ref<DeepSearchNavHandle>;
 }
 
 const RenderResults = ({
@@ -188,10 +166,9 @@ const RenderResults = ({
   isFetchingDeepSearchResults,
   showDeepSearch,
   onNavigate,
-  deepSearchNavRef,
 }: RenderResultsProps) => {
   const { results: kbarResults, rootActionId } = useMatches();
-  const { query } = useKBar();
+  const { query, activeIndex } = useKBar((state) => ({ activeIndex: state.activeIndex }));
   const { isAvailable: isAssistantAvailable } = useAssistant();
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
@@ -228,16 +205,149 @@ const RenderResults = ({
     return results;
   }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
 
-  const returnToInput = useCallback(
-    (resetSelection: boolean) => {
-      query.getInput().focus();
-      if (resetSelection) {
-        // Highlight the first item again, as if the palette was just opened
-        query.setActiveIndex(typeof items[0] === 'string' ? 1 : 0);
+  const keywordListRef = useRef<HTMLDivElement | null>(null);
+  const deepSearchNavRef = useRef<DeepSearchNavHandle>(null);
+  // The handler reads items and the kbar highlight through refs so it can stay
+  // registered once instead of rebinding on every keystroke
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+  const activeIndexRef = useRef(activeIndex);
+  activeIndexRef.current = activeIndex;
+
+  // Palette-wide keyboard navigation. Focus is the source of truth and moves
+  // between three zones: the search input, the keyword list (focus sits on the
+  // list container, kbar's activeIndex is the highlight) and the deep search
+  // cards (each card holds real DOM focus).
+  //
+  // Implemented as a window capture listener because several global handlers
+  // would otherwise act first: kbar refocuses its input on any keystroke
+  // outside it, Grafana's keybindingSrv binds a global Escape (mousetrap), and
+  // the react-aria overlay closes on Escape. Capture at the window beats all
+  // of them; stopImmediatePropagation keeps handled keys to ourselves.
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      const input = query.getInput();
+      const keywordList = keywordListRef.current;
+      const deepNav = deepSearchNavRef.current;
+      const currentItems = itemsRef.current;
+      const deepCount = deepNav?.getCount() ?? 0;
+      const deepFocusedIndex = deepNav?.getFocusedIndex() ?? -1;
+
+      const focusInput = () => {
+        query.setActiveIndex(-1);
+        input.focus();
+      };
+      const focusKeywordList = () => {
+        const first = currentItems.findIndex((item) => typeof item !== 'string');
+        if (first === -1 || !keywordList) {
+          return false;
+        }
+        query.setActiveIndex(first);
+        keywordList.focus();
+        return true;
+      };
+      const focusDeepSearch = () => {
+        if (deepCount === 0) {
+          return false;
+        }
+        query.setActiveIndex(-1);
+        deepNav?.focusIndex(0);
+        return true;
+      };
+
+      let zone: 'input' | 'keyword' | 'deep';
+      if (document.activeElement === input) {
+        zone = 'input';
+      } else if (keywordList !== null && document.activeElement === keywordList) {
+        zone = 'keyword';
+      } else if (deepFocusedIndex !== -1) {
+        zone = 'deep';
+      } else {
+        return;
       }
-    },
-    [query, items]
-  );
+
+      let handled = false;
+      if (zone === 'input') {
+        if (event.key === 'ArrowDown') {
+          handled = focusKeywordList() || focusDeepSearch();
+        }
+      } else if (zone === 'keyword') {
+        const current = activeIndexRef.current;
+        if (event.key === 'ArrowDown') {
+          let next = current + 1;
+          while (next < currentItems.length && typeof currentItems[next] === 'string') {
+            next++;
+          }
+          if (next < currentItems.length) {
+            query.setActiveIndex(next);
+          }
+          handled = true;
+        } else if (event.key === 'ArrowUp') {
+          let previous = current - 1;
+          while (previous >= 0 && typeof currentItems[previous] === 'string') {
+            previous--;
+          }
+          if (previous >= 0) {
+            query.setActiveIndex(previous);
+          } else {
+            focusInput();
+          }
+          handled = true;
+        } else if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+          // Swallow horizontal arrows even when there is nowhere to go —
+          // letting them through would hit kbar's focus guard, which yanks
+          // focus back to the input while the list highlight remains
+          if (event.key === 'ArrowRight') {
+            focusDeepSearch();
+          }
+          handled = true;
+        } else if (event.key === 'Enter') {
+          // The active row is always scrolled into view, so its element exists
+          document.getElementById(getListboxItemId(current))?.click();
+          handled = true;
+        } else if (event.key === 'Escape') {
+          focusInput();
+          handled = true;
+        }
+      } else {
+        if (event.key === 'ArrowDown') {
+          if (deepFocusedIndex < deepCount - 1) {
+            deepNav?.focusIndex(deepFocusedIndex + 1);
+          }
+          handled = true;
+        } else if (event.key === 'ArrowUp') {
+          if (deepFocusedIndex === 0) {
+            focusInput();
+          } else {
+            deepNav?.focusIndex(deepFocusedIndex - 1);
+          }
+          handled = true;
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+          // Swallow horizontal arrows even when there is nowhere to go (see
+          // the keyword-zone comment)
+          if (event.key === 'ArrowLeft') {
+            focusKeywordList();
+          }
+          handled = true;
+        } else if (event.key === 'Enter') {
+          // Keep global handlers away but let the anchor's native activation run
+          event.stopImmediatePropagation();
+          return;
+        } else if (event.key === 'Escape') {
+          focusInput();
+          handled = true;
+        }
+      }
+
+      if (handled) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    };
+
+    window.addEventListener('keydown', handler, { capture: true });
+    return () => window.removeEventListener('keydown', handler, { capture: true });
+  }, [query]);
 
   const hasKeywordResults = items.length > 0;
   const hasDeepSearchResults = deepSearchResults.length > 0;
@@ -277,6 +387,7 @@ const RenderResults = ({
           <KBarResults
             items={items}
             maxHeight={650}
+            scrollRef={keywordListRef}
             onRender={({ item, active }) => {
               const isFirst = items[0] === item;
 
@@ -298,7 +409,6 @@ const RenderResults = ({
             results={deepSearchResults}
             isFetching={isFetchingDeepSearchResults}
             onNavigate={onNavigate}
-            onReturnToInput={returnToInput}
             navRef={deepSearchNavRef}
           />
         </div>
