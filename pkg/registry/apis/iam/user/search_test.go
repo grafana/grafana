@@ -2,10 +2,12 @@ package user
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
@@ -22,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 func TestSearchFallback(t *testing.T) {
@@ -50,7 +53,7 @@ func TestSearchFallback(t *testing.T) {
 			}
 			dual := dualwrite.ProvideServiceForTests(cfg)
 
-			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), mockClient, mockLegacyClient, featuremgmt.WithFeatures())
+			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), mockClient, mockLegacyClient)
 			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, featuremgmt.WithFeatures(), cfg, nil)
 
 			rr := httptest.NewRecorder()
@@ -389,4 +392,154 @@ func TestEscapeBleveQuery(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestParseResults(t *testing.T) {
+	i64 := func(v int64) []byte {
+		b := make([]byte, 8)
+		binary.BigEndian.PutUint64(b, uint64(v))
+		return b
+	}
+
+	// Columns in the order the search handler requests them.
+	allColumns := []*resourcepb.ResourceTableColumnDefinition{
+		{Name: resource.SEARCH_FIELD_TITLE},
+		{Name: builders.USER_EMAIL},
+		{Name: builders.USER_LOGIN},
+		{Name: builders.USER_LAST_SEEN_AT},
+		{Name: builders.USER_ROLE},
+		{Name: builders.USER_DISABLED},
+		{Name: resource.SEARCH_FIELD_CREATED},
+		{Name: resource.SEARCH_FIELD_LEGACY_ID},
+	}
+	created := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC).UnixMilli()
+	lastSeen := time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC).Unix()
+
+	t.Run("nil response returns empty result", func(t *testing.T) {
+		sr, err := ParseResults(nil)
+		require.NoError(t, err)
+		assert.Empty(t, sr.Hits)
+		assert.Zero(t, sr.TotalHits)
+	})
+
+	t.Run("error in response is propagated", func(t *testing.T) {
+		_, err := ParseResults(&resourcepb.ResourceSearchResponse{
+			Error: &resourcepb.ErrorResult{Code: 500, Message: "boom"},
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("nil results returns empty", func(t *testing.T) {
+		sr, err := ParseResults(&resourcepb.ResourceSearchResponse{TotalHits: 5})
+		require.NoError(t, err)
+		assert.Empty(t, sr.Hits)
+	})
+
+	t.Run("column/cell count mismatch errors", func(t *testing.T) {
+		_, err := ParseResults(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: allColumns,
+				Rows: []*resourcepb.ResourceTableRow{
+					{Key: &resourcepb.ResourceKey{Name: "uid-1"}, Cells: [][]byte{[]byte("only one cell")}},
+				},
+			},
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("maps all columns and carries totals/score", func(t *testing.T) {
+		resp := &resourcepb.ResourceSearchResponse{
+			TotalHits: 2,
+			QueryCost: 1.5,
+			MaxScore:  2.5,
+			Results: &resourcepb.ResourceTable{
+				Columns: allColumns,
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{Name: "uid-1"},
+						Cells: [][]byte{
+							[]byte("John Doe"),
+							[]byte("jdoe@example.com"),
+							[]byte("jdoe"),
+							i64(lastSeen),
+							[]byte("Admin"),
+							{1},
+							i64(created),
+							i64(42),
+						},
+					},
+					// Second row exercises zero/empty cells -> fields keep zero values.
+					{
+						Key:   &resourcepb.ResourceKey{Name: "uid-2"},
+						Cells: [][]byte{[]byte("Jane"), nil, []byte("jane"), nil, []byte("Viewer"), {0}, nil, nil},
+					},
+				},
+			},
+		}
+
+		sr, err := ParseResults(resp)
+		require.NoError(t, err)
+		require.Len(t, sr.Hits, 2)
+		assert.Equal(t, int64(2), sr.TotalHits)
+		assert.Equal(t, 1.5, sr.QueryCost)
+		assert.Equal(t, 2.5, sr.MaxScore)
+
+		full := sr.Hits[0]
+		assert.Equal(t, "uid-1", full.Name)
+		assert.Equal(t, "John Doe", full.Title)
+		assert.Equal(t, "jdoe@example.com", full.Email)
+		assert.Equal(t, "jdoe", full.Login)
+		assert.Equal(t, "Admin", full.Role)
+		assert.Equal(t, lastSeen, full.LastSeenAt)
+		assert.NotEmpty(t, full.LastSeenAtAge)
+		assert.True(t, full.Disabled)
+		assert.Equal(t, created, full.Created)
+		assert.Equal(t, int64(42), full.InternalId)
+
+		sparse := sr.Hits[1]
+		assert.Equal(t, "uid-2", sparse.Name)
+		assert.Equal(t, "Jane", sparse.Title)
+		assert.Equal(t, "jane", sparse.Login)
+		assert.Equal(t, "Viewer", sparse.Role)
+		assert.Empty(t, sparse.Email)
+		assert.Zero(t, sparse.LastSeenAt)
+		assert.Empty(t, sparse.LastSeenAtAge)
+		assert.False(t, sparse.Disabled)
+		assert.Zero(t, sparse.Created)
+		assert.Zero(t, sparse.InternalId)
+	})
+
+	t.Run("only requested columns are populated", func(t *testing.T) {
+		sr, err := ParseResults(&resourcepb.ResourceSearchResponse{
+			TotalHits: 1,
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: builders.USER_LOGIN}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{Key: &resourcepb.ResourceKey{Name: "uid-3"}, Cells: [][]byte{[]byte("viewer")}},
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, sr.Hits, 1)
+		assert.Equal(t, "uid-3", sr.Hits[0].Name)
+		assert.Equal(t, "viewer", sr.Hits[0].Login)
+		assert.Empty(t, sr.Hits[0].Role)
+		assert.Zero(t, sr.Hits[0].InternalId)
+	})
+
+	t.Run("ignores lastSeenAt cell with unexpected length", func(t *testing.T) {
+		sr, err := ParseResults(&resourcepb.ResourceSearchResponse{
+			TotalHits: 1,
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: builders.USER_LAST_SEEN_AT}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{Key: &resourcepb.ResourceKey{Name: "uid-4"}, Cells: [][]byte{[]byte("not-8-bytes")}},
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, sr.Hits, 1)
+		assert.Zero(t, sr.Hits[0].LastSeenAt)
+		assert.Empty(t, sr.Hits[0].LastSeenAtAge)
+	})
 }

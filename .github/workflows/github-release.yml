@@ -39,7 +39,7 @@ jobs:
       # contents: write allows the action(s) to create github releases
       contents: write
       id-token: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     steps:
       - name: Create GitHub release (manually invoked)
         uses: grafana/grafana-github-actions-go/github-release@main # zizmor: ignore[unpinned-uses]
@@ -51,6 +51,9 @@ jobs:
   deploy-storybook:
     needs: main
     if: ${{ !inputs.dry_run && inputs.latest == '1' }}
+    permissions:
+      contents: read
+      id-token: write
     uses: grafana/grafana/.github/workflows/deploy-storybook.yml@main
     with:
       version: ${{ inputs.version }}

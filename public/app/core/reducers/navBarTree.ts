@@ -5,8 +5,6 @@ import { config } from '@grafana/runtime';
 
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
-export const initialState: NavModelItem[] = config.bootData?.navTree ?? [];
-
 function translateNav(navTree: NavModelItem[]): NavModelItem[] {
   return navTree.map((navItem) => {
     const children = navItem.children && translateNav(navItem.children);
@@ -76,7 +74,7 @@ const navTreeSlice = createSlice({
       const { id, title, url } = action.payload;
       const starredItems = state.find((navItem) => navItem.id === 'starred');
       if (starredItems) {
-        const navItem = starredItems.children?.find((navItem) => navItem.id === id);
+        const navItem = starredItems.children?.find((navItem) => navItem.id === ID_PREFIX + id);
         if (navItem) {
           navItem.text = title;
           navItem.url = url;

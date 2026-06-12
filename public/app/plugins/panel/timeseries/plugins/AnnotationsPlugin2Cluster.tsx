@@ -81,6 +81,10 @@ export const AnnotationsPlugin2Cluster = ({
   options,
 }: AnnotationsPlugin2ClusterProps) => {
   const plotRef = useRef<uPlot | null>(null);
+  const plotRangeRef = useRef<TimeRange2>({
+    from: plotRef.current?.scales?.x?.min ?? -1,
+    to: plotRef.current?.scales?.x?.max ?? -1,
+  });
   const [portalRoot] = useState(() => getPortalContainer());
   const [pinnedAnnotationId, setPinnedAnnotationId] = useState<string | undefined>();
   const getColorByName = useTheme2().visualization.getColorByName;
@@ -99,7 +103,7 @@ export const AnnotationsPlugin2Cluster = ({
     clusteringMode,
     plotWidth: plotRef.current?.bbox.width,
     // if the plot hasn't defined the time range yet, we don't want to cluster until it does
-    timeRange: { from: plotRef.current?.scales?.x?.min ?? -1, to: plotRef.current?.scales?.x?.max ?? -1 },
+    timeRange: plotRangeRef.current,
   });
 
   const exitWipEdit = useCallback(() => {
@@ -124,6 +128,19 @@ export const AnnotationsPlugin2Cluster = ({
       // If annos were defined before uPlot ready is called, we need to force the component to re-render annos now that uplot is available
       if (annotations?.length) {
         forceUpdate();
+      }
+    });
+
+    config.addHook('drawAxes', (u) => {
+      const newFrom = u.scales?.x?.min ?? -1;
+      const newTo = u?.scales?.x?.max ?? -1;
+
+      // If time range changed after the annotations were already rendered (since the panel query updates plot time range unlike annotation queries), we need to force react update to render updated marker locations
+      if (plotRangeRef.current?.from !== newFrom || plotRangeRef.current?.to !== newTo) {
+        plotRangeRef.current = { from: newFrom, to: newTo };
+        if (annotations?.length) {
+          forceUpdate();
+        }
       }
     });
 
@@ -176,7 +193,14 @@ export const AnnotationsPlugin2Cluster = ({
                 renderLine(ctx, y0, y1, x1, color);
 
                 if (canvasRegionRendering) {
-                  ctx.fillStyle = colorManipulator.alpha(color, regionOpacity ?? 0.1);
+                  // stop invalid colors from breaking the panel
+                  try {
+                    ctx.fillStyle = colorManipulator.alpha(color, regionOpacity ?? 0.1);
+                  } catch (e) {
+                    console.error(`Invalid color: ${color}.`, e);
+                    ctx.fillStyle = colorManipulator.alpha(DEFAULT_ANNOTATION_COLOR_HEX8, regionOpacity ?? 0.1);
+                  }
+
                   ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
                 }
               }

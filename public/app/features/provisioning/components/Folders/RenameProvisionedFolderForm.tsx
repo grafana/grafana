@@ -15,6 +15,8 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type BaseProvisionedFormData } from '../../types/form';
+import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { getCurrentCommitUser } from '../../utils/currentUser';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
@@ -126,9 +128,16 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
       name: repoName,
       path: folderPath,
       ref: branchRef,
-      message: comment || t('browse-dashboards.rename-provisioned-folder-form.commit', 'Rename folder'),
+      message: getSingleResourceCommitMessage({
+        comment,
+        repository,
+        action: 'rename',
+        resourceKind: 'folder',
+        resourceID: folder.uid,
+        title,
+        ...getCurrentCommitUser(),
+      }),
       body: {
-        metadata: { name: folder.uid },
         spec: { title },
       },
     });

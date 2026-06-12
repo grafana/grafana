@@ -26,7 +26,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		})
 
 		// Initial full sync fills the quota (2/2).
-		common.SyncAndWaitWithSuccess(t, helper, repo)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		common.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
@@ -77,7 +77,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 			"dashboard1.json": common.DashboardJSON("incr-swap-dash-001", "Dashboard One", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repo)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		common.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
@@ -136,7 +136,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 			"dashboard2.json": common.DashboardJSON("incr-rel-dash-002", "Dashboard Two", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repo)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		common.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
@@ -150,7 +150,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		_, err = local.Git("push", "origin", "main")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repo)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Incremental, common.Succeeded())
 		common.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
@@ -165,7 +165,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		_, err = local.Git("push", "origin", "main")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repo)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Incremental, common.Succeeded())
 		common.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 	})
@@ -185,7 +185,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		})
 
 		// Initial full sync: 2 dashboards + 1 implicit folder = 3/3 resources.
-		common.SyncAndWaitWithSuccess(t, helper, repo)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		common.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
 		common.RequireRepoFolderCount(t, helper, ctx, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
@@ -239,7 +239,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		})
 
 		// Initial full sync: folder1 + dash1 + dash2 = 3/3 resources.
-		common.SyncAndWaitWithSuccess(t, helper, repo)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		common.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
 		common.RequireRepoFolderCount(t, helper, ctx, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
@@ -254,7 +254,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		require.NoError(t, err)
 
 		// Incremental sync processes the deletion; orphan cleanup removes folder1.
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repo)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Incremental, common.Succeeded())
 
 		// dashboard1 and folder1 are gone; only dashboard2 remains.
 		common.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
@@ -273,7 +273,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 			"dashboard1.json": common.DashboardJSON("incr-ulim-dash-001", "Dashboard One", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repo)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		common.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
 
 		// Add three more dashboards as separate git commits pushed to the remote.

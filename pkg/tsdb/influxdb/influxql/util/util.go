@@ -147,9 +147,9 @@ func ParseNumber(value any) *float64 {
 func ParseString(value any) *string {
 	switch val := value.(type) {
 	case string:
-		return ToPtr(val)
+		return new(val)
 	default:
-		return ToPtr(fmt.Sprintf("%v", value))
+		return new(fmt.Sprintf("%v", value))
 	}
 }
 
@@ -162,8 +162,4 @@ func GetVisType(resFormat string) data.VisType {
 	default:
 		return GraphVisType
 	}
-}
-
-func ToPtr[T any](v T) *T {
-	return &v
 }

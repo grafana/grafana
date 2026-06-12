@@ -295,10 +295,13 @@ func (m *managedRoutesPermissions) Exec(sess *xorm.Session, mg *migrator.Migrato
 		}
 	}
 
-	if len(toInsert) > 0 {
-		if _, err := sess.InsertMulti(&toInsert); err != nil {
+	if err := batch(len(toInsert), batchSize, func(start, end int) error {
+		if _, err := sess.InsertMulti(toInsert[start:end]); err != nil {
 			return fmt.Errorf("failed to insert permissions: %w", err)
 		}
+		return nil
+	}); err != nil {
+		return err
 	}
 	return nil
 }

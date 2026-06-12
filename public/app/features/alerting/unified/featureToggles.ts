@@ -5,6 +5,8 @@ import { isAdmin } from './utils/misc';
 
 export const shouldUsePrometheusRulesPrimary = () => config.featureToggles.alertingPrometheusRulesPrimary ?? false;
 
+export const shouldUseRulesAPIV2 = () => config.featureToggles['alerting.rulesAPIV2'] ?? false;
+
 export const shouldUseAlertingListViewV2 = () => {
   const previewToggleValue = getPreviewToggle('alertingListViewV2');
 

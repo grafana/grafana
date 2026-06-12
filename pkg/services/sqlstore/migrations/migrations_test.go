@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -102,7 +101,7 @@ func TestIntegrationMigrationLock(t *testing.T) {
 		sess.Close()
 	})
 
-	key, err := database.GenerateAdvisoryLockId("test")
+	key, err := GenerateAdvisoryLockID("test")
 	require.NoError(t, err)
 
 	cfg := LockCfg{

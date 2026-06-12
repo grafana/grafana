@@ -600,9 +600,12 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	// Get the URL
 	addr := c.env.Server.HTTPServer.Listener.Addr()
 	baseUrl := fmt.Sprintf("http://%s", addr)
-	login := params.User.Identity.GetLogin()
-	if login != "" && params.User.password != "" {
-		baseUrl = fmt.Sprintf("http://%s:%s@%s", login, params.User.password, addr)
+	// User may be zero when callers authenticate via params.Headers (bearer token).
+	if params.User.Identity != nil {
+		login := params.User.Identity.GetLogin()
+		if login != "" && params.User.password != "" {
+			baseUrl = fmt.Sprintf("http://%s:%s@%s", login, params.User.password, addr)
+		}
 	}
 
 	contentType := params.ContentType
@@ -764,6 +767,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 		OrgID:          orgId,
 		IsAdmin:        isGrafanaAdmin,
 		Name:           name,
+		Email:          fmt.Sprintf("%s@example.com", login),
 	})
 	require.NoError(c.t, err)
 
@@ -812,6 +816,19 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	}
 
 	return usr
+}
+
+func (c *K8sTestHelper) AddUserToOrg(u User, orgName string, role org.RoleType) {
+	c.t.Helper()
+	orgID := c.CreateOrg(orgName)
+	userID, err := identity.UserIdentifier(u.Identity.GetID())
+	require.NoError(c.t, err)
+	err = c.orgSvc.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
+		OrgID:  orgID,
+		UserID: userID,
+		Role:   role,
+	})
+	require.NoError(c.t, err)
 }
 
 func (c *K8sTestHelper) SetPermissions(user User, permissions []resourcepermissions.SetResourcePermissionCommand) {

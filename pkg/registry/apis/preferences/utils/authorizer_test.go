@@ -2,14 +2,13 @@ package utils
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/authlib/authn"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -30,6 +29,7 @@ type testCase struct {
 func TestAuthorizer_Authorize(t *testing.T) {
 	userABC := &identity.StaticRequester{
 		UserUID: "abc",
+		Groups:  []string{"XYZ"},
 		OrgRole: identity.RoleViewer,
 		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
 			Rest: authn.AccessTokenClaims{
@@ -40,7 +40,6 @@ func TestAuthorizer_Authorize(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		teams    func(t *testing.T) TeamService
 		resource map[string][]ResourceOwner
 		check    []testCase
 	}{
@@ -69,7 +68,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 					Verb:            "get",
 					APIGroup:        "group",
 					Resource:        "stars",
-					Name:            "user-xyz", // not abc
+					Name:            "user-XYZ", // not abc
 					ResourceRequest: true,
 				},
 				expect: expect{
@@ -168,7 +167,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 					decision: authorizer.DecisionAllow,
 				},
 			}, {
-				name: "teams request (but not configured)",
+				name: "teams request",
 				user: userABC,
 				attrs: authorizer.AttributesRecord{
 					APIGroup:        "group",
@@ -178,8 +177,21 @@ func TestAuthorizer_Authorize(t *testing.T) {
 					Name:            "team-XYZ",
 				},
 				expect: expect{
+					decision: authorizer.DecisionAllow,
+				},
+			}, {
+				name: "teams request (bad)",
+				user: userABC,
+				attrs: authorizer.AttributesRecord{
+					APIGroup:        "group",
+					Resource:        "preferences",
+					ResourceRequest: true,
+					Verb:            "get",
+					Name:            "team-zzz",
+				},
+				expect: expect{
 					decision: authorizer.DecisionDeny,
-					reason:   "team checker not configured",
+					reason:   "no edit permissions for the team",
 				},
 			}},
 		}, {
@@ -257,13 +269,6 @@ func TestAuthorizer_Authorize(t *testing.T) {
 			}},
 		}, {
 			name: "preferences teams",
-			teams: func(t *testing.T) TeamService {
-				teams := NewMockTeamService(t)
-				teams.On("InTeam", mock.Anything, userABC, "xyz", false).Return(true, nil)
-				teams.On("InTeam", mock.Anything, userABC, "456", false).Return(false, nil)
-				teams.On("InTeam", mock.Anything, userABC, "XXX", false).Return(true, fmt.Errorf("error from team"))
-				return teams
-			},
 			resource: map[string][]ResourceOwner{
 				"preferences": {
 					TeamResourceOwner,
@@ -276,7 +281,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 					Verb:            "get",
 					APIGroup:        "group",
 					Resource:        "preferences",
-					Name:            "team-xyz",
+					Name:            "team-XYZ",
 					ResourceRequest: true,
 				},
 				expect: expect{
@@ -294,22 +299,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 				},
 				expect: expect{
 					decision: authorizer.DecisionDeny,
-					reason:   "you are not a member of the referenced team",
-				},
-			}, {
-				name: "team error",
-				user: userABC,
-				attrs: authorizer.AttributesRecord{
-					Verb:            "get",
-					APIGroup:        "group",
-					Resource:        "preferences",
-					Name:            "team-XXX",
-					ResourceRequest: true,
-				},
-				expect: expect{
-					decision: authorizer.DecisionDeny,
-					reason:   "error fetching teams",
-					err:      "error from team",
+					reason:   "no edit permissions for the team",
 				},
 			}},
 		},
@@ -318,10 +308,8 @@ func TestAuthorizer_Authorize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			authz := &AuthorizeFromName{
-				Resource: tt.resource,
-			}
-			if tt.teams != nil {
-				authz.Teams = tt.teams(t)
+				Resource:     tt.resource,
+				AccessClient: authlib.FixedAccessClient(false),
 			}
 			for _, check := range tt.check {
 				t.Run(check.name, func(t *testing.T) {
@@ -347,4 +335,55 @@ func TestAuthorizer_Authorize(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAuthorizer_TeamAccessClient(t *testing.T) {
+	resource := map[string][]ResourceOwner{
+		"preferences": {TeamResourceOwner},
+	}
+	adminNotInTeam := &identity.StaticRequester{
+		UserUID: "admin-not-in-team",
+		Groups:  []string{}, // not a member of any team
+		OrgRole: identity.RoleAdmin,
+		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{
+				DelegatedPermissions: []string{"group/preferences:*"},
+			},
+		},
+	}
+
+	t.Run("admin without group membership can get via IAM", func(t *testing.T) {
+		authz := &AuthorizeFromName{
+			AccessClient: authlib.FixedAccessClient(true),
+			Resource:     resource,
+		}
+		ctx := identity.WithRequester(context.Background(), adminNotInTeam)
+		d, _, err := authz.Authorize(ctx, authorizer.AttributesRecord{
+			Verb:            "get",
+			APIGroup:        "group",
+			Resource:        "preferences",
+			Name:            "team-XYZ",
+			ResourceRequest: true,
+		})
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionAllow, d)
+	})
+
+	t.Run("admin without group membership and without IAM permission is denied", func(t *testing.T) {
+		authz := &AuthorizeFromName{
+			AccessClient: authlib.FixedAccessClient(false),
+			Resource:     resource,
+		}
+		ctx := identity.WithRequester(context.Background(), adminNotInTeam)
+		d, reason, err := authz.Authorize(ctx, authorizer.AttributesRecord{
+			Verb:            "get",
+			APIGroup:        "group",
+			Resource:        "preferences",
+			Name:            "team-XYZ",
+			ResourceRequest: true,
+		})
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, d)
+		require.NotEmpty(t, reason)
+	})
 }

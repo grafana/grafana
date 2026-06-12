@@ -4,9 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // Test-only wildcard pattern; not used in the real mapper.
@@ -23,8 +24,18 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 		require.True(t, ok, "Get(%q, \"datasources\") should find mapping", group)
 		require.NotNil(t, mapping)
 		assert.Equal(t, "datasources:uid:", mapping.Prefix())
+
+		// The datasources/query subresource is also mapped to a query action.
+		queryMapping, ok := reg.Get(group, "datasources", "query")
+		require.True(t, ok, "Get(%q, \"datasources\", \"query\") should find mapping", group)
+		require.NotNil(t, queryMapping)
+		action, ok := queryMapping.Action(utils.VerbCreate)
+		assert.True(t, ok)
+		assert.Equal(t, "datasources:query", action)
+
+		// The group exposes both the datasources resource and its query subresource.
 		all := reg.GetAll(group)
-		require.Len(t, all, 1)
+		require.Len(t, all, 2)
 	}
 
 	// Security: wildcard-matched group must not resolve to resources from other groups
@@ -184,6 +195,41 @@ func TestMapperRegistry_SubresourceLookup(t *testing.T) {
 		_, ok := reg.Get("example.grafana.app", "status", "")
 		assert.False(t, ok)
 	})
+}
+
+// TestMapper_ServiceAccountTranslation_ActionSets verifies that service account verbs map to the
+// correct action sets. There is no View level — Edit verbs map to both edit+admin, and admin-only
+// verbs (delete, permissions) map to admin only.
+func TestMapper_ServiceAccountTranslation_ActionSets(t *testing.T) {
+	reg := NewMapperRegistry()
+	mapping, ok := reg.Get("iam.grafana.app", "serviceaccounts", "")
+	require.True(t, ok)
+
+	editAndAdmin := []string{"serviceaccounts:edit", "serviceaccounts:admin"}
+	adminOnly := []string{"serviceaccounts:admin"}
+	empty := []string(nil)
+
+	tests := []struct {
+		verb     string
+		expected []string
+	}{
+		{utils.VerbGet, editAndAdmin},
+		{utils.VerbList, editAndAdmin},
+		{utils.VerbWatch, editAndAdmin},
+		{utils.VerbUpdate, editAndAdmin},
+		{utils.VerbPatch, editAndAdmin},
+		{utils.VerbDelete, adminOnly},
+		{utils.VerbDeleteCollection, adminOnly},
+		{utils.VerbGetPermissions, adminOnly},
+		{utils.VerbSetPermissions, adminOnly},
+		{utils.VerbCreate, empty},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.verb, func(t *testing.T) {
+			assert.Equal(t, tt.expected, mapping.ActionSets(tt.verb))
+		})
+	}
 }
 
 // TestMapper_AnnotationSubresource_ActionSets verifies that managed roles (dashboards:view etc.)

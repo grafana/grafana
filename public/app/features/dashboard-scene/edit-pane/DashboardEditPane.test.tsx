@@ -27,6 +27,7 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { type DashboardEditPane } from './DashboardEditPane';
+import { DashboardOutline } from './DashboardOutline';
 import { dashboardEditActions } from './shared';
 
 jest.mock('@grafana/runtime', () => ({
@@ -59,7 +60,7 @@ describe('DashboardEditPane', () => {
       // Selecting same object should clear selection
       editPane.selectObject(panel1);
 
-      expect(editPane.getSelectedObject()).toBeNull();
+      expect(editPane.getSelectedObject()).toBeUndefined();
 
       const panel2 = scene.onCreateNewPanel();
       editPane.state.selectionContext.onSelect({ id: panel1.state.key! }, { multi: true });
@@ -80,7 +81,7 @@ describe('DashboardEditPane', () => {
       const panel = scene.onCreateNewPanel();
       editPane.clearSelection();
 
-      expect(editPane.getSelectedObject()).toBeNull();
+      expect(editPane.getSelectedObject()).toBeUndefined();
 
       editPane.setState({ isDocked: true });
       editPane.selectObject(panel);
@@ -108,6 +109,59 @@ describe('DashboardEditPane', () => {
       // Still only 1 item selected
       expect(editPane.state.selectionContext.selected).toHaveLength(1);
     });
+
+    it('Selecting when none element pane is open should not toggle selection', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+
+      const panel = scene.onCreateNewPanel();
+
+      editPane.openPane(new DashboardOutline({}));
+
+      expect(editPane.getSelectedObject()).toBe(panel);
+
+      // Select panel again (when it is still selected)
+      editPane.state.selectionContext.onSelect({ id: panel.state.key! }, { force: false });
+
+      // Should still be selected
+      expect(editPane.getSelectedObject()).toBe(panel);
+    });
+
+    it('Selecting tab with closed edit pane should not select tab', () => {
+      const { editPane, tab1 } = setupWithTwoTabs();
+
+      // Selecting tab with closed edit pane should not select tab
+      editPane.selectObject(tab1);
+      expect(editPane.getSelectedObject()).toBeUndefined();
+    });
+
+    it('Selecting tab with open edit pane should select tab', () => {
+      const { editPane, tab1 } = setupWithTwoTabs();
+
+      // Selecting tab with closed edit pane should not select tab
+      editPane.openPane(new DashboardOutline({}));
+      editPane.selectObject(tab1);
+      expect(editPane.getSelectedObject()).toBe(tab1);
+    });
+
+    it('Removing a panel that is not selected', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+
+      const panel1 = scene.onCreateNewPanel();
+      const panel2 = scene.onCreateNewPanel();
+
+      scene.removePanel(panel1);
+
+      expect(editPane.getSelectedObject()).toBe(panel2);
+    });
+
+    it('Force selecting tab should always select it', () => {
+      const { editPane, tab1 } = setupWithTwoTabs();
+
+      editPane.selectObject(tab1, { force: true });
+      expect(editPane.getSelectedObject()).toBe(tab1);
+    });
   });
 
   it('Handles edit action events that adds objects', () => {
@@ -126,7 +180,7 @@ describe('DashboardEditPane', () => {
     expect(editPane.state.undoStack).toHaveLength(0);
 
     // should clear selection
-    expect(editPane.getSelectedObject()).toBeNull();
+    expect(editPane.getSelectedObject()).toBeUndefined();
   });
 
   it('when new action comes in clears redo stack', () => {
@@ -160,6 +214,24 @@ describe('DashboardEditPane', () => {
 
     expect(cloned.state.redoStack).toHaveLength(0);
     expect(cloned.state.undoStack).toHaveLength(0);
+  });
+
+  it('clone should preserve the outline collapsed state', () => {
+    const scene = buildTestScene();
+    const editPane = scene.state.editPane;
+    const outlinePane = editPane.state.outlinePane!;
+
+    outlinePane.setNodeCollapsed('some-key', false);
+    outlinePane.setNodeCollapsed('another-key', true);
+
+    const cloned = editPane.clone({});
+    const clonedOutline = cloned.state.outlinePane!;
+
+    expect(clonedOutline.isNodeCollapsed('some-key', true)).toBe(false);
+    expect(clonedOutline.isNodeCollapsed('another-key', false)).toBe(true);
+
+    clonedOutline.setNodeCollapsed('new-key', false);
+    expect(outlinePane.isNodeCollapsed('new-key', true)).toBe(false);
   });
 
   it('keeps the variable selected when undoing and redoing variable type changes', () => {
@@ -256,8 +328,9 @@ describe('DashboardEditPane', () => {
           }),
         ],
       });
-      const { editPane, variables } = buildTestSceneWithRepeat(layoutManager);
+      const { scene, editPane, variables } = buildTestSceneWithRepeat(layoutManager);
       editPane.enableSelection();
+      editPane.selectObject(scene);
 
       const [sourceRow] = layoutManager.state.rows;
       const [sourceTab] = (sourceRow.state.layout as TabsLayoutManager).state.tabs;
@@ -385,6 +458,36 @@ describe('DashboardEditPane', () => {
       expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
     });
 
+    it('preserves the source panel config when pasting with target undefined into a RowsLayout dashboard', () => {
+      const { dashboard, row1, row2, row1Viz, editPane } = setupWithTwoRows();
+      dashboard.copyPanel(row1Viz);
+
+      editPane.pastePanel(undefined);
+
+      const row1Panels = row1.getLayout().getVizPanels();
+      expect(row1Panels).toHaveLength(2);
+      expect(row2.getLayout().getVizPanels()).toHaveLength(0);
+
+      const pastedPanel = row1Panels[row1Panels.length - 1];
+      expect(pastedPanel.state.pluginId).toBe(row1Viz.state.pluginId);
+      expect(pastedPanel.state.title).toBe(row1Viz.state.title);
+    });
+
+    it('preserves the source panel config when pasting with target undefined into a TabsLayout dashboard', () => {
+      const { dashboard, tab1, tab2, tab1Viz, editPane } = setupWithTwoTabs();
+      dashboard.copyPanel(tab1Viz);
+
+      editPane.pastePanel(undefined);
+
+      const tab1Panels = tab1.getLayout().getVizPanels();
+      expect(tab1Panels).toHaveLength(2);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
+
+      const pastedPanel = tab1Panels[tab1Panels.length - 1];
+      expect(pastedPanel.state.pluginId).toBe(tab1Viz.state.pluginId);
+      expect(pastedPanel.state.title).toBe(tab1Viz.state.title);
+    });
+
     it('adds pasted panel to the dashboard when dashboard is empty', () => {
       const { dashboard, editPane } = setupEmptyDashboard();
       const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
@@ -465,6 +568,7 @@ function buildTestSceneWithRepeat(layoutManager: DashboardLayoutManager) {
   return {
     variables,
     editPane: scene.state.editPane,
+    scene,
   };
 }
 

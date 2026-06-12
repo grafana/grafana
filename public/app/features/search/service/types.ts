@@ -4,18 +4,7 @@ import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { type PermissionLevel } from 'app/types/acl';
 
 import { type ManagerKind } from '../../apiserver/types';
-
-export interface SortOption {
-  description: string;
-  displayName: string;
-  meta: string;
-  name: string;
-}
-export interface SortOptions {
-  sortOptions: SortOption[];
-}
-
-export interface FacetField {
+interface FacetField {
   field: string;
   count?: number;
 }
@@ -98,7 +87,7 @@ export interface QueryResponse {
   view: DataFrameView<DashboardQueryResult>;
 
   /** Supports lazy loading.  This will mutate the `view` object above, adding rows as needed */
-  loadMoreItems: (startIndex: number, stopIndex: number) => Promise<void>;
+  loadMoreItems: (stopIndex: number) => Promise<void>;
 
   /** Checks if a row in the view needs to be added */
   isItemLoaded: (index: number) => boolean;

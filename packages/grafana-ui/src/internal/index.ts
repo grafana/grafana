@@ -50,6 +50,7 @@ export { getAllFieldTypeIconOptions } from '../components/MatchersUI/FieldTypeMa
 export { getStyles as getSliderStyles } from '../components/Slider/styles';
 export { getSelectStyles } from '../components/Select/getSelectStyles';
 export type { Props as InputProps } from '../components/Input/Input';
+export { getLabelStyles } from '../components/Forms/Label';
 export type { ModalsContextState } from '../components/Modal/ModalsContext';
 export { ModalBase, type ModalBaseProps } from '../components/Modal/ModalBase';
 export { getModalStyles } from '../components/Modal/getModalStyles';
@@ -67,13 +68,13 @@ export {
 export { defaultSparklineCellConfig } from '../components/Table/Cells/SparklineCell';
 export { TableCell } from '../components/Table/Cells/TableCell';
 export { useTableStyles } from '../components/Table/TableRT/styles';
-export { migrateTableDisplayModeToCellOptions } from '../components/Table/utils';
+export { migrateTableDisplayModeToCellOptions } from '../components/Table/cellUtils';
 export { type DataLinksContextMenuApi } from '../components/DataLinks/DataLinksContextMenu';
 export { MenuDivider } from '../components/Menu/MenuDivider';
 export { AbstractList } from '../components/List/AbstractList';
 export type { HttpSettingsBaseProps, AzureAuthSettings } from '../components/DataSourceSettings/types';
 export { TimeZoneOffset, formatUtcOffset } from '../components/DateTimePickers/TimeZonePicker/TimeZoneOffset';
-export { TimeZoneTitle } from '../components/DateTimePickers/TimeZonePicker/TimeZoneTitle';
+export { TimeZoneTitle, getTimeZoneTitle } from '../components/DateTimePickers/TimeZonePicker/TimeZoneTitle';
 export type { CodeEditorProps } from '../components/Monaco/types';
 export { type Props as InlineFieldProps } from '../components/Forms/InlineField';
 export { DataLinkSuggestions } from '../components/DataLinks/DataLinkSuggestions';

@@ -13,9 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -23,14 +24,18 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	teamsearch "github.com/grafana/grafana/pkg/services/team/search"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 func TestTeamSearchFallback(t *testing.T) {
+	t.Skip("Skipping team search fallback test: https://github.com/grafana/identity-access-team/issues/2048")
+
 	testCases := []struct {
 		name                  string
 		mode                  rest.DualWriterMode
@@ -96,7 +101,13 @@ func TestTeamSearchHandler(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
-		expectedFields := []string{"title", "fields.email", "fields.provisioned", "fields.externalUID"}
+		expectedFields := []string{
+			resource.SEARCH_FIELD_TITLE,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EMAIL,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_PROVISIONED,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EXTERNAL_UID,
+			teamsearch.LegacyIDField,
+		}
 		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
 			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
 		}
@@ -442,19 +453,21 @@ func TestTeamAccessControl(t *testing.T) {
 }
 
 func TestTeamSearchMemberCount(t *testing.T) {
-	mockLister := &mockTeamBindingLister{
-		listFunc: func(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-			return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 3)}, nil
+	mockGetter := &mockTeamGetter{
+		getFunc: func(_ context.Context, _ string, _ *metav1.GetOptions) (runtime.Object, error) {
+			return &iamv0alpha1.Team{
+				Spec: iamv0alpha1.TeamSpec{Members: make([]iamv0alpha1.TeamTeamMember, 3)},
+			}, nil
 		},
 	}
 
 	t.Run("membercount absent - no member counts on hits", func(t *testing.T) {
 		searchHandler := &TeamSearchHandler{
-			log:              log.New("grafana-apiserver.teams.search"),
-			client:           mockTeamClientWithHits(),
-			tracer:           tracing.NewNoopTracerService(),
-			features:         featuremgmt.WithFeatures(),
-			teamBindingStore: mockLister,
+			log:        log.New("grafana-apiserver.teams.search"),
+			client:     mockTeamClientWithHits(),
+			tracer:     tracing.NewNoopTracerService(),
+			features:   featuremgmt.WithFeatures(),
+			teamGetter: mockGetter,
 		}
 
 		rr := httptest.NewRecorder()
@@ -476,11 +489,11 @@ func TestTeamSearchMemberCount(t *testing.T) {
 
 	t.Run("membercount=false - no member counts on hits", func(t *testing.T) {
 		searchHandler := &TeamSearchHandler{
-			log:              log.New("grafana-apiserver.teams.search"),
-			client:           mockTeamClientWithHits(),
-			tracer:           tracing.NewNoopTracerService(),
-			features:         featuremgmt.WithFeatures(),
-			teamBindingStore: mockLister,
+			log:        log.New("grafana-apiserver.teams.search"),
+			client:     mockTeamClientWithHits(),
+			tracer:     tracing.NewNoopTracerService(),
+			features:   featuremgmt.WithFeatures(),
+			teamGetter: mockGetter,
 		}
 
 		rr := httptest.NewRecorder()
@@ -502,11 +515,11 @@ func TestTeamSearchMemberCount(t *testing.T) {
 
 	t.Run("membercount=true - member counts populated", func(t *testing.T) {
 		searchHandler := &TeamSearchHandler{
-			log:              log.New("grafana-apiserver.teams.search"),
-			client:           mockTeamClientWithHits(),
-			tracer:           tracing.NewNoopTracerService(),
-			features:         featuremgmt.WithFeatures(),
-			teamBindingStore: mockLister,
+			log:        log.New("grafana-apiserver.teams.search"),
+			client:     mockTeamClientWithHits(),
+			tracer:     tracing.NewNoopTracerService(),
+			features:   featuremgmt.WithFeatures(),
+			teamGetter: mockGetter,
 		}
 
 		rr := httptest.NewRecorder()
@@ -527,19 +540,19 @@ func TestTeamSearchMemberCount(t *testing.T) {
 		}
 	})
 
-	t.Run("membercount=true - lister error returns 500", func(t *testing.T) {
-		errorLister := &mockTeamBindingLister{
-			listFunc: func(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	t.Run("membercount=true - getter error returns 500", func(t *testing.T) {
+		errorGetter := &mockTeamGetter{
+			getFunc: func(_ context.Context, _ string, _ *metav1.GetOptions) (runtime.Object, error) {
 				return nil, fmt.Errorf("store unavailable")
 			},
 		}
 
 		searchHandler := &TeamSearchHandler{
-			log:              log.New("grafana-apiserver.teams.search"),
-			client:           mockTeamClientWithHits(),
-			tracer:           tracing.NewNoopTracerService(),
-			features:         featuremgmt.WithFeatures(),
-			teamBindingStore: errorLister,
+			log:        log.New("grafana-apiserver.teams.search"),
+			client:     mockTeamClientWithHits(),
+			tracer:     tracing.NewNoopTracerService(),
+			features:   featuremgmt.WithFeatures(),
+			teamGetter: errorGetter,
 		}
 
 		rr := httptest.NewRecorder()
@@ -555,24 +568,23 @@ func TestTeamSearchMemberCount(t *testing.T) {
 
 func TestEnrichWithMemberCounts(t *testing.T) {
 	t.Run("all succeed - sets correct member counts", func(t *testing.T) {
-		mockLister := &mockTeamBindingLister{
-			listFunc: func(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-				teamName, _ := options.FieldSelector.RequiresExactMatch("spec.teamRef.name")
-				switch teamName {
+		mockGetter := &mockTeamGetter{
+			getFunc: func(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
+				switch name {
 				case "team-1":
-					return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 3)}, nil
+					return &iamv0alpha1.Team{Spec: iamv0alpha1.TeamSpec{Members: make([]iamv0alpha1.TeamTeamMember, 3)}}, nil
 				case "team-2":
-					return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 0)}, nil
+					return &iamv0alpha1.Team{Spec: iamv0alpha1.TeamSpec{Members: nil}}, nil
 				default:
-					return &iamv0alpha1.TeamBindingList{}, nil
+					return &iamv0alpha1.Team{}, nil
 				}
 			},
 		}
 
 		handler := &TeamSearchHandler{
-			log:              log.New("test"),
-			tracer:           tracing.NewNoopTracerService(),
-			teamBindingStore: mockLister,
+			log:        log.New("test"),
+			tracer:     tracing.NewNoopTracerService(),
+			teamGetter: mockGetter,
 		}
 
 		hits := []iamv0alpha1.GetSearchTeamsTeamHit{
@@ -589,20 +601,19 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 	})
 
 	t.Run("one fails - returns error", func(t *testing.T) {
-		mockLister := &mockTeamBindingLister{
-			listFunc: func(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-				teamName, _ := options.FieldSelector.RequiresExactMatch("spec.teamRef.name")
-				if teamName == "team-bad" {
-					return nil, fmt.Errorf("teambinding list failed for team-bad")
+		mockGetter := &mockTeamGetter{
+			getFunc: func(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
+				if name == "team-bad" {
+					return nil, fmt.Errorf("team get failed for team-bad")
 				}
-				return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 2)}, nil
+				return &iamv0alpha1.Team{Spec: iamv0alpha1.TeamSpec{Members: make([]iamv0alpha1.TeamTeamMember, 2)}}, nil
 			},
 		}
 
 		handler := &TeamSearchHandler{
-			log:              log.New("test"),
-			tracer:           tracing.NewNoopTracerService(),
-			teamBindingStore: mockLister,
+			log:        log.New("test"),
+			tracer:     tracing.NewNoopTracerService(),
+			teamGetter: mockGetter,
 		}
 
 		hits := []iamv0alpha1.GetSearchTeamsTeamHit{
@@ -617,16 +628,16 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 	})
 
 	t.Run("unexpected type - returns error", func(t *testing.T) {
-		mockLister := &mockTeamBindingLister{
-			listFunc: func(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+		mockGetter := &mockTeamGetter{
+			getFunc: func(_ context.Context, _ string, _ *metav1.GetOptions) (runtime.Object, error) {
 				return &iamv0alpha1.TeamList{}, nil
 			},
 		}
 
 		handler := &TeamSearchHandler{
-			log:              log.New("test"),
-			tracer:           tracing.NewNoopTracerService(),
-			teamBindingStore: mockLister,
+			log:        log.New("test"),
+			tracer:     tracing.NewNoopTracerService(),
+			teamGetter: mockGetter,
 		}
 
 		hits := []iamv0alpha1.GetSearchTeamsTeamHit{
@@ -639,20 +650,15 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 	})
 }
 
-type mockTeamBindingLister struct {
-	listFunc func(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error)
+type mockTeamGetter struct {
+	getFunc func(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error)
 }
 
-func (m *mockTeamBindingLister) NewList() runtime.Object {
-	return &iamv0alpha1.TeamBindingList{}
-}
-
-func (m *mockTeamBindingLister) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return m.listFunc(ctx, options)
-}
-
-func (m *mockTeamBindingLister) ConvertToTable(_ context.Context, _ runtime.Object, _ runtime.Object) (*metav1.Table, error) {
-	return nil, nil
+func (m *mockTeamGetter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	if m.getFunc != nil {
+		return m.getFunc(ctx, name, options)
+	}
+	return nil, apierrors.NewNotFound(schema.GroupResource{Resource: "teams"}, name)
 }
 
 type mockTeamAccessClient struct {

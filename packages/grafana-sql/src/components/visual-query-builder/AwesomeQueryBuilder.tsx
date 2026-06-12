@@ -35,7 +35,7 @@ const macros = [TIME_FILTER];
 
 // Widgets are the components rendered for each field type see the docs for more info
 // https://github.com/ukrbublik/react-awesome-query-builder/blob/master/CONFIG.adoc#configwidgets
-export const widgets: Widgets = {
+const widgets: Widgets = {
   ...BasicConfig.widgets,
   text: {
     ...BasicConfig.widgets.text,
@@ -112,7 +112,7 @@ export const widgets: Widgets = {
 
 // Settings are the configuration options for the query builder see the docs for more info
 // https://github.com/ukrbublik/react-awesome-query-builder/blob/master/CONFIG.adoc#configsettings
-export const settings: Settings = {
+const settings: Settings = {
   ...BasicConfig.settings,
   canRegroup: false,
   maxNesting: 1,
