@@ -75,6 +75,12 @@ func (a *api) getFallbackStatus(ctx context.Context) string {
 	return "success"
 }
 
+// unifiedStorageIsAuthoritative returns true when unified storage is the authoritative
+// backend (Mode4 or Mode5). In that case K8s redirect failures must not fall back to legacy.
+func (a *api) unifiedStorageIsAuthoritative(groupResource string) bool {
+	return a.cfg.UnifiedStorageConfig(groupResource).DualWriterMode > grafanarest.Mode3
+}
+
 func (a *api) registerEndpoints() {
 	auth := accesscontrol.Middleware(a.ac)
 	licenseMW := a.service.options.LicenseMW
@@ -225,6 +231,10 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 		teamPermissions, err := a.getTeamPermissionsFromMembers(c, c.Namespace, resourceID)
 		if err != nil {
 			span.RecordError(err)
+			if a.unifiedStorageIsAuthoritative(iamv0.TeamResourceInfo.GroupResource().String()) {
+				metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "get", a.service.options.Resource, "error").Inc()
+				return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get team permissions from k8s API", err)
+			}
 			if errors.Is(err, ErrRestConfigNotAvailable) {
 				a.logger.Debug("k8s API not available for team permissions via team members, falling back to legacy", "error", err, "resourceID", resourceID)
 			} else {
@@ -238,15 +248,20 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 
 	if a.service.options.Resource != "teams" && a.shouldUseK8sAPIs(ctx) {
 		k8sPermissions, err := a.getResourcePermissionsFromK8s(c, c.Namespace, resourceID)
-		if err == nil {
+		if err != nil {
+			span.RecordError(err)
+			if a.unifiedStorageIsAuthoritative(iamv0.ResourcePermissionInfo.GroupResource().String()) {
+				metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "get", a.service.options.Resource, "error").Inc()
+				return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get resource permissions from k8s API", err)
+			}
+			if errors.Is(err, ErrRestConfigNotAvailable) {
+				a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+			} else {
+				a.logger.Warn("Failed to get resource permissions from k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+			}
+		} else {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "get", a.service.options.Resource, "success").Inc()
 			return response.JSON(http.StatusOK, k8sPermissions)
-		}
-		span.RecordError(err)
-		if errors.Is(err, ErrRestConfigNotAvailable) {
-			a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
-		} else {
-			a.logger.Warn("Failed to get resource permissions from k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
 		}
 	}
 
@@ -384,8 +399,9 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		// In Mode4/5 unified storage is authoritative: return the K8s result and do not fall
 		// back to legacy (which would fail for identities that exist only in unified storage).
 		// In Mode0-3 we dual-write, so continue to the legacy path below.
-		if a.cfg.UnifiedStorageConfig(iamv0.TeamResourceInfo.GroupResource().String()).DualWriterMode > grafanarest.Mode3 {
+		if a.unifiedStorageIsAuthoritative(iamv0.TeamResourceInfo.GroupResource().String()) {
 			if err != nil {
+				metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "error").Inc()
 				return response.Err(err)
 			}
 			return permissionSetResponse(cmd)
@@ -394,15 +410,22 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 
 	if a.service.options.Resource != "teams" && a.shouldUseK8sAPIs(ctx) {
 		err := a.setUserPermissionToK8s(c, c.Namespace, resourceID, userID, cmd.Permission)
-		if err == nil {
-			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "success").Inc()
-			return permissionSetResponse(cmd)
-		}
-		span.RecordError(err)
-		if errors.Is(err, ErrRestConfigNotAvailable) {
-			a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		if err != nil {
+			span.RecordError(err)
+			if a.unifiedStorageIsAuthoritative(iamv0.ResourcePermissionInfo.GroupResource().String()) {
+				metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "error").Inc()
+				return response.ErrOrFallback(http.StatusInternalServerError, "Failed to set user permission in k8s API", err)
+			}
+			if errors.Is(err, ErrRestConfigNotAvailable) {
+				a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+			} else {
+				a.logger.Warn("Failed to set user permission in k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+			}
 		} else {
-			a.logger.Warn("Failed to set user permission in k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "success").Inc()
+			if a.unifiedStorageIsAuthoritative(iamv0.ResourcePermissionInfo.GroupResource().String()) {
+				return permissionSetResponse(cmd)
+			}
 		}
 	}
 
@@ -476,15 +499,22 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 
 	if a.shouldUseK8sAPIs(ctx) {
 		err := a.setTeamPermissionToK8s(c, c.Namespace, resourceID, teamID, cmd.Permission)
-		if err == nil {
-			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_team", a.service.options.Resource, "success").Inc()
-			return permissionSetResponse(cmd)
-		}
-		span.RecordError(err)
-		if errors.Is(err, ErrRestConfigNotAvailable) {
-			a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		if err != nil {
+			span.RecordError(err)
+			if a.unifiedStorageIsAuthoritative(iamv0.ResourcePermissionInfo.GroupResource().String()) {
+				metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_team", a.service.options.Resource, "error").Inc()
+				return response.ErrOrFallback(http.StatusInternalServerError, "Failed to set team permission in k8s API", err)
+			}
+			if errors.Is(err, ErrRestConfigNotAvailable) {
+				a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+			} else {
+				a.logger.Warn("Failed to set team permission in k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+			}
 		} else {
-			a.logger.Warn("Failed to set team permission in k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_team", a.service.options.Resource, "success").Inc()
+			if a.unifiedStorageIsAuthoritative(iamv0.ResourcePermissionInfo.GroupResource().String()) {
+				return permissionSetResponse(cmd)
+			}
 		}
 	}
 
@@ -555,13 +585,22 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 
 	if a.shouldUseK8sAPIs(ctx) {
 		err := a.setBuiltInRolePermissionToK8s(c, c.Namespace, resourceID, builtInRole, cmd.Permission)
-		if err == nil {
+		if err != nil {
+			span.RecordError(err)
+			if a.unifiedStorageIsAuthoritative(iamv0.ResourcePermissionInfo.GroupResource().String()) {
+				metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_builtin_role", a.service.options.Resource, "error").Inc()
+				return response.ErrOrFallback(http.StatusInternalServerError, "Failed to set built-in role permission in k8s API", err)
+			}
+			if errors.Is(err, ErrRestConfigNotAvailable) {
+				a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+			} else {
+				a.logger.Warn("Failed to set built-in role permission in k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+			}
+		} else {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_builtin_role", a.service.options.Resource, "success").Inc()
-			return permissionSetResponse(cmd)
-		}
-		span.RecordError(err)
-		if errors.Is(err, ErrRestConfigNotAvailable) {
-			a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+			if a.unifiedStorageIsAuthoritative(iamv0.ResourcePermissionInfo.GroupResource().String()) {
+				return permissionSetResponse(cmd)
+			}
 		}
 	}
 
@@ -627,13 +666,22 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 
 	if a.shouldUseK8sAPIs(ctx) {
 		err := a.setResourcePermissionsToK8s(c, c.Namespace, resourceID, cmd.Permissions)
-		if err == nil {
+		if err != nil {
+			span.RecordError(err)
+			if a.unifiedStorageIsAuthoritative(iamv0.ResourcePermissionInfo.GroupResource().String()) {
+				metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_bulk", a.service.options.Resource, "error").Inc()
+				return response.ErrOrFallback(http.StatusInternalServerError, "Failed to set resource permissions in k8s API", err)
+			}
+			if errors.Is(err, ErrRestConfigNotAvailable) {
+				a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+			} else {
+				a.logger.Warn("Failed to set resource permissions in k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+			}
+		} else {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_bulk", a.service.options.Resource, "success").Inc()
-			return response.Success("Permissions updated")
-		}
-		span.RecordError(err)
-		if errors.Is(err, ErrRestConfigNotAvailable) {
-			a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+			if a.unifiedStorageIsAuthoritative(iamv0.ResourcePermissionInfo.GroupResource().String()) {
+				return response.Success("Permissions updated")
+			}
 		}
 	}
 
