@@ -14,6 +14,7 @@ import {
   _resetForTests as resetInstanceSettings,
   initDataSourceInstanceSettings,
   reloadDataSourceInstanceSettings,
+  syncDataSourceInstanceSettings,
 } from './settings';
 
 class TestRuntime extends RuntimeDataSource {
@@ -213,6 +214,30 @@ describe('plugin', () => {
         }),
       });
       await reloadDataSourceInstanceSettings();
+
+      // The importer must be called again because the cache was cleared.
+      await getDataSourceInstance(settings.uid);
+      expect(mockImport).toHaveBeenCalledTimes(2);
+    });
+
+    it('clears non-runtime plugin instances on syncDataSourceInstanceSettings so they are rebuilt', async () => {
+      const settings = ds();
+      initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+
+      const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      const MockClass = jest.fn().mockReturnValue(instance);
+      const mockImport = jest.fn().mockResolvedValue({ DataSourceClass: MockClass, components: {} });
+      setDataSourcePluginImporter(mockImport);
+
+      // Prime the cache.
+      await getDataSourceInstance(settings.uid);
+      expect(mockImport).toHaveBeenCalledTimes(1);
+
+      // Sync from an already-fetched payload — no network round trip.
+      syncDataSourceInstanceSettings({
+        datasources: { [settings.name]: settings },
+        defaultDatasource: settings.name,
+      });
 
       // The importer must be called again because the cache was cleared.
       await getDataSourceInstance(settings.uid);
