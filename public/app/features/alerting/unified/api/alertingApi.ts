@@ -54,7 +54,7 @@ export type AlertingApiExtraOptions = {
   hideErrorMessage?: boolean;
 };
 
-export const backendSrvBaseQuery =
+const backendSrvBaseQuery =
   (): BaseQueryFn<BaseQueryFnArgs> =>
   async ({ body, notificationOptions = {}, ...requestOptions }, api, extraOptions?: AlertingApiExtraOptions) => {
     const { errorMessage, showErrorAlert, successMessage, showSuccessAlert } = notificationOptions;

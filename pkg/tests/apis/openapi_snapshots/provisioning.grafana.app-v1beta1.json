@@ -4081,7 +4081,7 @@
         "type": "object",
         "properties": {
           "enforceTemplate": {
-            "description": "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. The Grafana-saved-by trailer is always appended regardless of this setting.",
+            "description": "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only.",
             "type": "boolean"
           },
           "signerEmail": {

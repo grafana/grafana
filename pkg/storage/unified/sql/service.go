@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/scheduler"
@@ -70,6 +71,7 @@ type service struct {
 
 	// -- Search Services
 	docBuilders      resource.DocumentBuilderSupplier
+	dashboardStats   builders.DashboardStats
 	indexMetrics     *resource.BleveIndexMetrics
 	searchRing       *ring.Ring
 	ringLifecycler   *ring.BasicLifecycler // Ring state for sharding
@@ -90,6 +92,14 @@ type ServiceOption func(*service)
 func WithAuthenticator(authn func(ctx context.Context) (context.Context, error)) ServiceOption {
 	return func(s *service) {
 		s.authenticator = authn
+	}
+}
+
+// WithDashboardStats sets the dashboard stats used by the vector backfiller
+// views filter. Optional; nil disables the filter.
+func WithDashboardStats(stats builders.DashboardStats) ServiceOption {
+	return func(s *service) {
+		s.dashboardStats = stats
 	}
 }
 
@@ -403,6 +413,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 		Features:       s.features,
 		QOSQueue:       s.queue,
 		OwnsIndexFn:    s.OwnsIndex,
+		DashboardStats: s.dashboardStats,
 	}
 
 	if !s.searchStandalone && s.cfg.OverridesFilePath != "" {

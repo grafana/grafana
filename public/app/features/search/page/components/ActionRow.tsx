@@ -159,7 +159,7 @@ export const ActionRow = ({
 
 ActionRow.displayName = 'ActionRow';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     checkboxWrapper: css({
       label: {
