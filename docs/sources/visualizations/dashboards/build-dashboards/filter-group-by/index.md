@@ -103,9 +103,9 @@ You can remove and reset default filters and group by dimensions, and see your r
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-reset-default-v13.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" caption="_Reset default filters and group by selections_" >}}
 
-{{< figure src="/media/docs/grafana/screenshot-filters-group-recent-v13.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" caption="_Recent filters and group by dimensions" >}}
+{{< figure src="/media/docs/grafana/screenshot-filters-group-recent-v13.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" caption="_Recent filters and group by dimensions_" >}}
 
-To see all active filters and group by dimensions across the dashboard all at once, click the filter icon in the toolbar to open an overview.
+To see all active filters and group by dimensions across the dashboard all at once, click the **Filters overview** icon (filter) in the toolbar to open an overview.
 The overview lets you search for specific keys, and adjust them, without scrolling through the dashboard controls:
 
 {{< figure src="/media/docs/grafana/screenshot-filters-overview-v12.0.png" max-width="500px" alt="Dashboard with the filters and group by dimensions" >}}
@@ -133,7 +133,7 @@ In the following example, the override:
 - Adds a regular expression, so that all fields are filterable
 - Enables the **Filterable** switch
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filter-override-v13.0.png" max-width="400px" alt="Field override making all fields filterable" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filter-override-v13.1.png" max-width="400px" alt="Field override making all fields filterable" >}}
 
 However, you can create overrides to address specific fields.
 You can also do this programmatically by returning the data frame with the appropriate `filterable` property on the desired fields.
