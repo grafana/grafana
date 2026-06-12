@@ -626,9 +626,10 @@ func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, batch []*
 // pipeline. The status label tracked through the function powers the
 // reconciler_process_duration histogram observed in the deferred closure.
 //
-// TODO: only re-embed subresources whose content actually changed
-// since the last write. Today every dashboard write re-embeds every
-// panel, which is wasteful when only one panel changed.
+// On a write, only subresources whose extracted content differs from
+// what's already stored are re-embedded; unchanged panels are left in
+// place. Panels that disappeared are deleted. See the embed/diff block
+// below.
 func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev *pendingEvent) (retErr error) {
 	ctx, span := tracer.Start(ctx, "unified.reconciler.processEvent")
 	defer span.End()
@@ -684,37 +685,74 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		statusLabel = "extract_error"
 		return fmt.Errorf("extract: %w", err)
 	}
+	// Cap before the diff so the survivor set, the diff, and the embed
+	// all operate on the same truncated slice; otherwise `desired` would
+	// protect keys that were never stored and stale cleanup would leak.
 	if maxItems := builder.MaxItemsPerResource(); maxItems > 0 && len(items) > maxItems {
 		items = items[:maxItems]
 	}
 
+	model := s.batchEmbedder.Model()
+
 	// An empty extract means the dashboard has no embeddable content;
 	// drop everything stored under this UID rather than leaving orphans.
 	if len(items) == 0 {
-		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
+		if err := s.vectorBackend.Delete(ctx, ev.namespace, model, builder.Resource(), ev.name); err != nil {
 			statusLabel = "delete_error"
 			return err
 		}
 		return nil
 	}
 
-	vectors, err := s.batchEmbedder.Embed(ctx, ev.namespace, builder.Resource(), ev.rv, items)
+	// All items from one Extract share the dashboard UID; it's the key
+	// the vectors are stored under.
+	uid := items[0].UID
+
+	stored, err := s.vectorBackend.GetSubresourceContent(ctx, ev.namespace, model, builder.Resource(), uid)
 	if err != nil {
-		statusLabel = "embed_error"
-		return fmt.Errorf("embed: %w", err)
+		statusLabel = "get_content_error"
+		return fmt.Errorf("get stored content: %w", err)
 	}
-	if len(vectors) == 0 {
-		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
-			statusLabel = "delete_error"
-			return err
+
+	// Diff extracted content against what's stored. `desired` is every
+	// current subresource (the survivor set); `toEmbed` is just the new
+	// or content-changed panels — the only ones worth the embed call.
+	desired := make([]string, 0, len(items))
+	desiredSet := make(map[string]struct{}, len(items))
+	toEmbed := make([]embed.Item, 0, len(items))
+	for _, it := range items {
+		desired = append(desired, it.Subresource)
+		desiredSet[it.Subresource] = struct{}{}
+		if prev, ok := stored[it.Subresource]; !ok || prev != it.Content {
+			toEmbed = append(toEmbed, it)
 		}
+	}
+
+	// Skip the write entirely when nothing changed and nothing vanished.
+	staleExists := false
+	for sub := range stored {
+		if _, ok := desiredSet[sub]; !ok {
+			staleExists = true
+			break
+		}
+	}
+	if len(toEmbed) == 0 && !staleExists {
 		return nil
+	}
+
+	var changed []vector.Vector
+	if len(toEmbed) > 0 {
+		changed, err = s.batchEmbedder.Embed(ctx, ev.namespace, builder.Resource(), ev.rv, toEmbed)
+		if err != nil {
+			statusLabel = "embed_error"
+			return fmt.Errorf("embed: %w", err)
+		}
 	}
 
 	// UpsertReplaceSubresources commits the stale-delete and the new
 	// inserts atomically — a failure mid-way leaves the dashboard in
 	// its previous self-consistent state.
-	if err := s.vectorBackend.UpsertReplaceSubresources(ctx, vectors); err != nil {
+	if err := s.vectorBackend.UpsertReplaceSubresources(ctx, ev.namespace, model, builder.Resource(), uid, changed, desired); err != nil {
 		statusLabel = "upsert_error"
 		return fmt.Errorf("upsert: %w", err)
 	}

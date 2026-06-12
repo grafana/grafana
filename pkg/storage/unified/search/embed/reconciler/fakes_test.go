@@ -210,38 +210,34 @@ func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
 	return f.upsertLocked(vs)
 }
 
-func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, vs []vector.Vector) error {
+func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res, uid string, changed []vector.Vector, desired []string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	// Atomic stale-removal + upsert: stage the delete-stale step, then
-	// the upsert. Failure on either rolls back via the lock-protected
-	// snapshot.
-	type uidKey struct{ ns, model, res, uid string }
-	groups := map[uidKey]map[string]struct{}{}
-	for _, v := range vs {
-		k := uidKey{v.Namespace, v.Model, v.Resource, v.UID}
-		if groups[k] == nil {
-			groups[k] = map[string]struct{}{}
-		}
-		groups[k][v.Subresource] = struct{}{}
+	// Atomic stale-removal + upsert: delete any stored subresource not in
+	// `desired`, then upsert `changed`. Failure on either rolls back via
+	// the lock-protected snapshot.
+	keep := make(map[string]struct{}, len(desired))
+	for _, s := range desired {
+		keep[s] = struct{}{}
 	}
-	for k, keep := range groups {
-		key := subsKey(k.ns, k.model, k.res, k.uid)
-		stored := f.storedSubs[key]
-		var stale []string
-		for sub := range stored {
-			if _, ok := keep[sub]; !ok {
-				stale = append(stale, sub)
-			}
-		}
-		if len(stale) > 0 {
-			f.delsubs = append(f.delsubs, deleteSubsCall{k.ns, k.model, k.res, k.uid, stale})
-			for _, s := range stale {
-				delete(stored, s)
-			}
+	key := subsKey(ns, model, res, uid)
+	stored := f.storedSubs[key]
+	var stale []string
+	for sub := range stored {
+		if _, ok := keep[sub]; !ok {
+			stale = append(stale, sub)
 		}
 	}
-	return f.upsertLocked(vs)
+	if len(stale) > 0 {
+		f.delsubs = append(f.delsubs, deleteSubsCall{ns, model, res, uid, stale})
+		for _, s := range stale {
+			delete(stored, s)
+		}
+	}
+	if len(changed) == 0 {
+		return nil
+	}
+	return f.upsertLocked(changed)
 }
 
 func (f *fakeVector) upsertLocked(vs []vector.Vector) error {
