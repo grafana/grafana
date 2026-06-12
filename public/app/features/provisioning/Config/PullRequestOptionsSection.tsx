@@ -1,4 +1,5 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import { type FieldValues, type Path, type UseFormRegister } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
@@ -39,7 +40,8 @@ export function PullRequestOptionsSection<T extends FieldValues>({
   repoType,
 }: Props<T>) {
   const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
-  const settings = useGetFrontendSettingsQuery();
+  // Previews are GitHub-only, so skip the settings query for other providers.
+  const settings = useGetFrontendSettingsQuery(!dashboardPreviewName || repoType !== 'github' ? skipToken : undefined);
 
   // Dashboard previews currently apply only to GitHub and require image rendering to be allowed.
   const showDashboardPreviews = Boolean(
