@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Button, Combobox, type ComboboxOption, Drawer, Field, Stack, Text } from '@grafana/ui';
+import { Alert, Button, Combobox, type ComboboxOption, Drawer, Field, Stack, Text } from '@grafana/ui';
 import { type Job, type Repository, type ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
@@ -59,6 +59,13 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, resources, selecti
   const { createSyncJob, isLoading } = useCreateSyncJob({ repoName: selectedRepo ?? '' });
   const [job, setJob] = useState<Job>();
   const migratedRef = useRef(false);
+
+  // Migration writes directly to the repository's configured branch (the
+  // `write` workflow). A repository that only opens pull requests (`branch`
+  // workflow) can't run a migration, so block it and explain why.
+  const selectedRepoObj = repos.find((repo) => repo.metadata?.name === selectedRepo);
+  const canPushToConfiguredBranch = selectedRepoObj?.spec?.workflows?.includes('write') ?? false;
+  const blockedByWorkflow = Boolean(selectedRepo) && !canPushToConfiguredBranch;
 
   const startMigration = async () => {
     if (!selectedRepo) {
@@ -139,6 +146,19 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, resources, selecti
           </Stack>
         </Field>
 
+        {blockedByWorkflow && (
+          <Alert
+            severity="error"
+            title={t('provisioning.migrate.repo-no-push-title', 'This repository can’t be used for migration')}
+          >
+            <Trans i18nKey="provisioning.migrate.repo-no-push-body">
+              Migration pushes directly to the repository’s configured branch, but this repository is set up to open
+              pull requests instead. Choose a repository that allows pushing to its branch, or update this repository’s
+              workflow.
+            </Trans>
+          </Alert>
+        )}
+
         <GitSyncLimitationsAlert syncTarget="instance" />
 
         <Stack direction="row" gap={2}>
@@ -147,12 +167,17 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, resources, selecti
           </Button>
           <Button
             variant="primary"
-            disabled={!selectedRepo || isLoading}
+            disabled={!selectedRepo || isLoading || blockedByWorkflow}
             onClick={startMigration}
             tooltip={
               !selectedRepo
                 ? t('provisioning.migrate.migrate-button-disabled-tooltip', 'Select a target repository first')
-                : undefined
+                : blockedByWorkflow
+                  ? t(
+                      'provisioning.migrate.migrate-button-blocked-tooltip',
+                      'This repository can’t push to its configured branch'
+                    )
+                  : undefined
             }
           >
             {isSelective ? (

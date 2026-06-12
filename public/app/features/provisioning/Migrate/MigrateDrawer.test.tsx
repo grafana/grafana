@@ -12,8 +12,10 @@ import { MigrateDrawer } from './MigrateDrawer';
 
 setupProvisioningMswServer();
 
-function makeRepo(name: string, title: string): Repository {
-  return createRepository({ metadata: { name }, spec: { title } });
+// Migration needs the `write` workflow (push to the configured branch), so
+// repos default to it; pass other workflows to exercise the blocked path.
+function makeRepo(name: string, title: string, workflows: Array<'branch' | 'write'> = ['write']): Repository {
+  return createRepository({ metadata: { name }, spec: { title, workflows } });
 }
 
 function mockCreateJob(job = createJob()) {
@@ -50,6 +52,14 @@ describe('MigrateDrawer', () => {
     await user.click(await screen.findByRole('button', { name: /cancel/i }));
 
     expect(onDismiss).toHaveBeenCalled();
+  });
+
+  it('blocks migration and warns when the repository cannot push to its configured branch', async () => {
+    // A PR-only repository (no `write` workflow) can't run a migration.
+    render(<MigrateDrawer repos={[makeRepo('pr-only', 'PR only repo', ['branch'])]} onDismiss={jest.fn()} />);
+
+    expect(await screen.findByText(/be used for migration/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /migrate everything/i })).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('runs a migrate job and shows its progress', async () => {

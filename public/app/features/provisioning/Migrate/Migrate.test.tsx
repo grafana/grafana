@@ -32,8 +32,12 @@ function mockFolders(data: FolderRow[] = []) {
 
 beforeEach(() => {
   mockFolders();
-  // One connected repository by default so the migrate actions are enabled.
-  mockUseRepositoryList.mockReturnValue([[createRepository({ metadata: { name: 'repo-1' } })], false]);
+  // One connected repository (able to push to its configured branch) by default
+  // so the migrate actions are enabled.
+  mockUseRepositoryList.mockReturnValue([
+    [createRepository({ metadata: { name: 'repo-1' }, spec: { workflows: ['write'] } })],
+    false,
+  ]);
 });
 
 // 100 dashboards total, 40 managed by Git Sync, 10 by Terraform => 50 managed,
