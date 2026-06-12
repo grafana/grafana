@@ -268,20 +268,26 @@ func TestRunner_MT_ErrorIsolation(t *testing.T) {
 	assert.NotContains(t, created, "stacks-2")
 }
 
-// TestRunTickParallelMT_NoDataRaceOnLastCreatedMap exercises the parallel
-// tick fan-out with many namespaces and a low concurrency cap so that the
-// parent loop and worker goroutines are simultaneously touching the
-// timestamps map. With -race, this catches regressions of the runtime panic
-// caused by concurrent read/write on the caller's map.
-func TestRunTickParallelMT_NoDataRaceOnLastCreatedMap(t *testing.T) {
+// TestRunTickParallelMT_TicksAllStaleNamespaces exercises the parallel tick
+// fan-out with many namespaces and a low concurrency cap so that worker
+// goroutines run simultaneously (with -race, this also guards against
+// concurrent access to the shared maps). Every namespace starts stale, so we
+// assert that createChecks ran for each one — the observable effect of a tick,
+// rather than a mutation of the caller's read-only timestamps map.
+func TestRunTickParallelMT_TicksAllStaleNamespaces(t *testing.T) {
 	const namespaceCount = 200
 	stale := time.Now().Add(-30 * 24 * time.Hour)
 
+	var mu sync.Mutex
+	created := make(map[string]bool, namespaceCount)
 	mockClient := &MockClient{
 		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
 			return &advisorv0alpha1.CheckList{Items: []advisorv0alpha1.Check{}}, nil
 		},
 		createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+			mu.Lock()
+			created[obj.GetNamespace()] = true
+			mu.Unlock()
 			return obj, nil
 		},
 		deleteFunc: func(ctx context.Context, id resource.Identifier, opts resource.DeleteOptions) error {
@@ -306,8 +312,10 @@ func TestRunTickParallelMT_NoDataRaceOnLastCreatedMap(t *testing.T) {
 
 	runner.runTickParallelMT(context.Background(), &logging.NoOpLogger{}, namespaces, lastCreated)
 
+	mu.Lock()
+	defer mu.Unlock()
 	for _, ns := range namespaces {
-		assert.True(t, lastCreated[ns].After(stale), "expected updated timestamp for %s, got %v", ns, lastCreated[ns])
+		assert.True(t, created[ns], "expected createChecks to run for %s", ns)
 	}
 }
 
@@ -357,6 +365,79 @@ func TestTickNamespace_SkipsWhenNotStale(t *testing.T) {
 	assert.False(t, createCalled.Load(), "tickNamespace must not create checks when not stale")
 }
 
+// TestTickNamespace_SyncsCheckTypesBeforeCreatingChecks verifies that a stale
+// namespace gets its CheckTypes synced with the in-process registry before any
+// Check is created. In MT, CheckType registration is otherwise on-demand (the
+// "register" endpoint), so without this ordering a tick could create Checks
+// for types whose CheckType resource doesn't exist yet in the namespace.
+func TestTickNamespace_SyncsCheckTypesBeforeCreatingChecks(t *testing.T) {
+	var order []string
+	var mu sync.Mutex
+	mockClient := &MockClient{
+		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+			return &advisorv0alpha1.CheckList{Items: []advisorv0alpha1.Check{}}, nil
+		},
+		createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+			mu.Lock()
+			order = append(order, "create")
+			mu.Unlock()
+			return obj, nil
+		},
+	}
+	r := &Runner{
+		checkRegistry: &MockCheckService{checks: []checks.Check{&mockCheck{id: "test-check"}}},
+		checksClient:  mockClient,
+		checkTypeSyncer: &mockCheckTypeSyncer{
+			syncFunc: func(ctx context.Context, logger logging.Logger, namespace string) error {
+				mu.Lock()
+				order = append(order, "sync:"+namespace)
+				mu.Unlock()
+				return nil
+			},
+		},
+		defaultEvalInterval: 1 * time.Hour,
+		maxHistory:          defaultMaxHistory,
+		log:                 &logging.NoOpLogger{},
+	}
+	stale := time.Now().Add(-2 * time.Hour)
+	_, err := r.tickNamespace(context.Background(), &logging.NoOpLogger{}, "stacks-1", stale)
+	assert.NoError(t, err)
+	mu.Lock()
+	defer mu.Unlock()
+	assert.Equal(t, []string{"sync:stacks-1", "create"}, order)
+}
+
+// TestTickNamespace_SyncFailureAbortsCheckCreation verifies that a CheckType
+// sync failure aborts the tick before any Check is created, returning the
+// input lastCreated so the namespace is retried on the next tick.
+func TestTickNamespace_SyncFailureAbortsCheckCreation(t *testing.T) {
+	var createCalled atomic.Bool
+	mockClient := &MockClient{
+		createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+			createCalled.Store(true)
+			return obj, nil
+		},
+	}
+	syncErr := errors.New("sync failed")
+	r := &Runner{
+		checkRegistry: &MockCheckService{checks: []checks.Check{&mockCheck{id: "test-check"}}},
+		checksClient:  mockClient,
+		checkTypeSyncer: &mockCheckTypeSyncer{
+			syncFunc: func(ctx context.Context, logger logging.Logger, namespace string) error {
+				return syncErr
+			},
+		},
+		defaultEvalInterval: 1 * time.Hour,
+		maxHistory:          defaultMaxHistory,
+		log:                 &logging.NoOpLogger{},
+	}
+	stale := time.Now().Add(-2 * time.Hour)
+	newLast, err := r.tickNamespace(context.Background(), &logging.NoOpLogger{}, "stacks-1", stale)
+	assert.ErrorIs(t, err, syncErr)
+	assert.Equal(t, stale, newLast)
+	assert.False(t, createCalled.Load(), "tickNamespace must not create checks when CheckType sync fails")
+}
+
 // MT test helpers
 
 // createTestMTRunner returns a Runner with no stackID and no orgService,
@@ -396,10 +477,22 @@ func createTestMTRunnerWithConcurrency(checkClient, typesClient *MockClient, che
 		checksClient:        checkClient,
 		checksMetadata:      metadataGetterFromClient(checkClient),
 		typesClient:         typesClient,
+		checkTypeSyncer:     &mockCheckTypeSyncer{},
 		defaultEvalInterval: 5 * time.Millisecond,
 		maxHistory:          defaultMaxHistory,
 		log:                 &logging.NoOpLogger{},
 		orgService:          nil,
 		stackID:             "",
 	}
+}
+
+type mockCheckTypeSyncer struct {
+	syncFunc func(ctx context.Context, logger logging.Logger, namespace string) error
+}
+
+func (m *mockCheckTypeSyncer) RegisterCheckTypesInNamespace(ctx context.Context, logger logging.Logger, namespace string) error {
+	if m.syncFunc != nil {
+		return m.syncFunc(ctx, logger, namespace)
+	}
+	return nil
 }

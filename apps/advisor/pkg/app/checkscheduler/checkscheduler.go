@@ -17,6 +17,7 @@ import (
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
 	"github.com/grafana/grafana/pkg/services/org"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,6 +41,7 @@ type Runner struct {
 	checksClient        resource.Client
 	checksMetadata      metadata.Getter
 	typesClient         resource.Client
+	checkTypeSyncer     checktyperegisterer.CheckTypeSyncer
 	defaultEvalInterval time.Duration
 	maxHistory          int
 	log                 logging.Logger
@@ -48,7 +50,7 @@ type Runner struct {
 }
 
 // NewRunner creates a new Runner.
-func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
+func New(cfg app.Config, log logging.Logger, checkTypeSyncer checktyperegisterer.CheckTypeSyncer) (app.Runnable, error) {
 	// Read config
 	specificConfig, ok := cfg.SpecificConfig.(checkregistry.AdvisorAppConfig)
 	if !ok {
@@ -91,6 +93,7 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 		checksClient:        client,
 		typesClient:         typesClient,
 		checksMetadata:      checksMetadata,
+		checkTypeSyncer:     checkTypeSyncer,
 		defaultEvalInterval: evalInterval,
 		maxHistory:          maxHistory,
 		log:                 log.With("runner", "advisor.checkscheduler"),

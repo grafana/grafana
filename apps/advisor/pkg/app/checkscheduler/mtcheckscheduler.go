@@ -3,9 +3,8 @@ package checkscheduler
 import (
 	"context"
 	"fmt"
-	"maps"
 	"sort"
-	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/authlib/types"
@@ -17,10 +16,9 @@ import (
 
 const maxConcurrency = 10
 
-// runMT runs the multi-tenant scheduler loop. Namespaces are discovered
-// cluster-wide from existing Check resources, lastCreated state is tracked
-// in-memory between ticks, and per-namespace work is fanned out under
-// maxConcurrency.
+// runMT runs the multi-tenant scheduler loop. Namespaces and their lastCreated
+// timestamps are rediscovered cluster-wide from existing Check resources on
+// every tick, and per-namespace work is fanned out under maxConcurrency.
 func (r *Runner) runMT(ctx context.Context, logger logging.Logger) error {
 	logger = logger.With("mode", "mt")
 	ctxWithoutCancel := context.WithoutCancel(ctx)
@@ -170,17 +168,18 @@ func (r *Runner) runInitialCleanupParallelMT(ctx context.Context, logger logging
 }
 
 // runTickParallelMT processes a scheduler tick across all discovered
-// namespaces in parallel, updating lastCreatedMap with the new per-namespace
-// timestamps. Per-namespace errors are swallowed (and logged) so one bad
-// tenant can't stop the whole tick.
+// namespaces in parallel. Per-namespace errors are swallowed (and logged) so
+// one bad tenant can't stop the whole tick.
+//
+// lastCreatedMap is read-only here: it's rebuilt from a fresh cluster-wide
+// discovery on every tick (see runMT), so per-namespace updates don't need to
+// be persisted back into it. We only count them for the completion log.
 func (r *Runner) runTickParallelMT(ctx context.Context, logger logging.Logger, namespaces []string, lastCreatedMap map[string]time.Time) {
 	logger.Debug("checkscheduler MT tick start", "namespaces", len(namespaces), "max_concurrency", maxConcurrency)
-	var mu sync.Mutex
-	updates := make(map[string]time.Time, len(namespaces))
+	var updated atomic.Int64
 	var g errgroup.Group
 	g.SetLimit(maxConcurrency)
 	for _, namespace := range namespaces {
-		namespace := namespace
 		last := lastCreatedMap[namespace]
 		g.Go(func() error {
 			nsLogger := logger.With("namespace", namespace)
@@ -192,15 +191,12 @@ func (r *Runner) runTickParallelMT(ctx context.Context, logger logging.Logger, n
 			if newLast.Equal(last) {
 				return nil
 			}
-			mu.Lock()
-			updates[namespace] = newLast
-			mu.Unlock()
+			updated.Add(1)
 			return nil
 		})
 	}
 	_ = g.Wait()
-	maps.Copy(lastCreatedMap, updates)
-	logger.Debug("checkscheduler MT tick finished", "updated_namespaces", len(updates))
+	logger.Debug("checkscheduler MT tick finished", "updated_namespaces", updated.Load())
 }
 
 // tickNamespace creates new checks and cleans up when the last batch is older
@@ -230,6 +226,16 @@ func (r *Runner) tickNamespace(ctx context.Context, log logging.Logger, namespac
 		return lastCreated, nil
 	}
 	observeDuration = true
+	// In MT, CheckType registration is on-demand (the "/register" endpoint),
+	// so this namespace can hold a stale CheckType set if check types were
+	// added to or removed from the binary since the tenant last registered.
+	// Sync them first so every Check created below has a matching CheckType.
+	log.Debug("checkscheduler tickNamespace run", "step", "syncCheckTypes")
+	if err := r.checkTypeSyncer.RegisterCheckTypesInNamespace(ctx, log, namespace); err != nil {
+		log.Debug("checkscheduler tickNamespace failed", "step", "syncCheckTypes", "error", err)
+		tickResult = "error"
+		return lastCreated, err
+	}
 	log.Debug("checkscheduler tickNamespace run", "step", "createChecks", "last_created", lastCreated)
 	if err := r.createChecks(ctx, log, namespace); err != nil {
 		log.Debug("checkscheduler tickNamespace failed", "step", "createChecks", "error", err)
