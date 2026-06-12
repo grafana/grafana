@@ -309,8 +309,6 @@ For pipelines with many queries, expressions, or transformations, you can expand
 The new query editor experience...etc
 {{< /admonition >}}
 
-<!-- TODO: Update this section -->
-
 A query returns data that Grafana visualizes in dashboard panels.
 When you create a panel, Grafana automatically selects the default data source.
 
@@ -318,8 +316,7 @@ To add a query, follow these steps:
 
 1. Hover the cursor over any part of the panel to which you're adding a query to display the menu icon in the top-right corner.
 1. Click the menu and select **Edit**.
-1. In the panel editor, click the **Queries** tab.
-1. Click the **Data source** drop-down menu and select a data source.
+1. In the editor pane, click the **Data source** drop-down menu and select a data source.
 
    If you're creating a new dashboard, you'll be prompted to select a data source when you add the first panel.
 
@@ -329,7 +326,7 @@ To add a query, follow these steps:
 
 1. To create a query, do one of the following:
    - Write or construct a query in the query language of your data source.
-   - Open the **Saved queries** drop-down menu and click **Replace query** to reuse a saved query.
+   - Click **Replace** to reuse a saved query.
 
    {{< admonition type="note" >}}
    [Saved queries](#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
@@ -337,10 +334,10 @@ To add a query, follow these steps:
    This feature is only available on Grafana Enterprise and Grafana Cloud.
    {{< /admonition >}}
 
-1. (Optional) To [save the query](#save-a-query) for reuse, click the **Save query** option in the **Saved queries** drop-down menu.
-1. (Optional) Click **+ Add query** or **Add from saved queries** to add more queries as needed.
+1. (Optional) To [save the query](#save-a-query) for reuse, click the **Save** in the editor pane.
+1. (Optional) In the sidebar, click the blue plus icon net to **Queries & Expressions** and select **Add query** or **Add saved query** to add more queries as needed.
 
-1. Click **Run queries**.
+1. Click **Run queries** in the editor pane.
 
 Grafana queries the data source and visualizes the data.
 
