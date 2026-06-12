@@ -12141,8 +12141,10 @@
       "undock": "Undock menu"
     },
     "megamenu-item": {
+      "children-error": "Failed to load items",
       "collapse-aria-label": "Collapse section: {{sectionName}}",
-      "expand-aria-label": "Expand section: {{sectionName}}"
+      "expand-aria-label": "Expand section: {{sectionName}}",
+      "loading-aria-label": "Loading {{sectionName}}"
     },
     "org-switcher": {
       "aria-label": "Change organization"
