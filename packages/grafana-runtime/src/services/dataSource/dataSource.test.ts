@@ -8,8 +8,8 @@ import {
   getDataSourceInstance,
   registerRuntimeDataSourceInstance,
   setDataSourcePluginImporter,
-  setExpressionDataSourceInstance,
 } from './dataSource';
+import { _resetForTests as resetExpressionDs, setExpressionDataSourceInstance } from './expressionDs';
 import { _resetForTests as resetPluginCache } from './pluginCache';
 import {
   _resetForTests as resetInstanceSettings,
@@ -58,6 +58,7 @@ beforeEach(() => {
   resetInstanceSettings();
   resetPlugin();
   resetPluginCache();
+  resetExpressionDs();
 });
 
 describe('plugin', () => {
@@ -314,6 +315,13 @@ describe('plugin', () => {
       await reloadDataSourceInstanceSettings();
 
       expect(await getDataSourceInstance('__expr__')).toBe(expr);
+    });
+
+    it('throws if the singleton has not been registered', async () => {
+      initDataSourceInstanceSettings({}, '');
+      await expect(getDataSourceInstance('__expr__')).rejects.toThrow(
+        'Expression datasource has not been initialised'
+      );
     });
   });
 });

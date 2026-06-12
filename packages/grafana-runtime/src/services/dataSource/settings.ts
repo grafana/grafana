@@ -6,13 +6,14 @@ import {
   matchPluginId,
 } from '@grafana/data';
 
-import { ExpressionDatasourceRef, isExpressionReference } from '../../utils/DataSourceWithBackend';
+import { isExpressionReference } from '../../utils/DataSourceWithBackend';
 import { getCachedPromise, invalidateCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { getDataSourceSrv, type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
 
-import { clearPluginCache, getCachedPlugin } from './pluginCache';
+import { getExpressionDatasourceSettings } from './expressionDs';
+import { clearPluginCache } from './pluginCache';
 
 let byName: Record<string, DataSourceInstanceSettings> = {};
 let byUid: Record<string, DataSourceInstanceSettings> = {};
@@ -158,11 +159,7 @@ function lookupFromMaps(
   scopedVars: ScopedVars | undefined
 ): DataSourceInstanceSettings | undefined {
   if (isExpressionReference(ref)) {
-    const inst = getCachedPlugin(ExpressionDatasourceRef.uid);
-    // The expression singleton retains its full instance settings as a public
-    // field, which the base DataSourceApi type does not expose.
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return inst ? (inst as { instanceSettings?: DataSourceInstanceSettings }).instanceSettings : undefined;
+    return getExpressionDatasourceSettings();
   }
 
   const nameOrUid = getNameOrUid(ref);

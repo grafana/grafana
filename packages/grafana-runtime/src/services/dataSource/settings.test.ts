@@ -4,8 +4,7 @@ import { setBackendSrv } from '../backendSrv';
 import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
-import { setExpressionDataSourceInstance } from './dataSource';
-import { _resetForTests as resetPluginCache } from './pluginCache';
+import { _resetForTests as resetExpressionDs, setExpressionDataSourceInstance } from './expressionDs';
 import {
   _resetForTests,
   getDataSourceInstanceSettingsList,
@@ -126,7 +125,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   _resetForTests();
-  resetPluginCache();
+  resetExpressionDs();
   backendGet.mockReset();
   // No legacy srv by default — reloadDataSourceInstanceSettings() should use the fetch path.
   setDataSourceSrv(undefined as unknown as DataSourceSrv);
@@ -495,7 +494,7 @@ describe('instanceSettings', () => {
     });
 
     it('preserves a built-in datasource and keeps it out of the list', async () => {
-      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
       initDataSourceInstanceSettings(fixtures, 'Bravo');
 
       // Sync a payload that does not include the expression datasource.

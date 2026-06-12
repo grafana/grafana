@@ -77,7 +77,8 @@ export {
   syncDataSourceInstanceSettings,
   getDataSourceInstanceSettingsList,
 } from '../services/dataSource/settings';
-export { setDataSourcePluginImporter, setExpressionDataSourceInstance } from '../services/dataSource/dataSource';
+export { setDataSourcePluginImporter } from '../services/dataSource/dataSource';
+export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';
 export {
   useDataSourceInstanceSettingsList,
   type UseDataSourceInstanceSettingsListResult,
