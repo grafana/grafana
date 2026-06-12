@@ -48,10 +48,14 @@ func (e *extra) Build(ctx context.Context, conn *provisioning.Connection) (conne
 		return nil, err
 	}
 
-	c := NewConnection(conn, e.factory, ConnectionSecrets{
-		PrivateKey: pKey,
-		Token:      t,
-	})
+	c := NewConnection(
+		conn,
+		e.factory,
+		ConfigFromConnection(conn),
+		ConnectionSecrets{
+			PrivateKey: pKey,
+			Token:      t,
+		})
 	return &c, nil
 }
 

@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/google/go-github/v82/github"
@@ -22,18 +23,29 @@ func ProvideFactory() GithubFactory {
 	return &Factory{}
 }
 
-func (r *Factory) New(ctx context.Context, ghToken common.RawSecureValue) Client {
+func (r *Factory) New(ctx context.Context, ghToken common.RawSecureValue, serverURL string) (Client, error) {
 	if r.Client != nil {
-		return NewClient(github.NewClient(r.Client))
+		return NewClient(github.NewClient(r.Client)), nil
 	}
 
+	httpClient := &http.Client{}
 	if !ghToken.IsZero() {
 		tokenSrc := oauth2.StaticTokenSource(
 			&oauth2.Token{AccessToken: string(ghToken)},
 		)
-		tokenClient := oauth2.NewClient(ctx, tokenSrc)
-		return NewClient(github.NewClient(tokenClient))
+		httpClient = oauth2.NewClient(ctx, tokenSrc)
 	}
 
-	return NewClient(github.NewClient(&http.Client{}))
+	ghClient := github.NewClient(httpClient)
+	if serverURL != "" {
+		enterprise, err := ghClient.WithEnterpriseURLs(serverURL, serverURL)
+		if err != nil {
+			return nil, fmt.Errorf("configure GitHub Enterprise URLs for %q: %w", serverURL, err)
+		}
+		ghClient = enterprise
+	}
+
+	return NewClient(ghClient), nil
 }
+
+var _ GithubFactory = (*Factory)(nil)
