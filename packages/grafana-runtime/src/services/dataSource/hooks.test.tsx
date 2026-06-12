@@ -86,22 +86,11 @@ describe('useDataSourceInstanceSettings', () => {
 });
 
 describe('useDataSourceInstanceSettingsList', () => {
-  it('populates items and reports hasMore=false for the initial page', async () => {
+  it('populates items', async () => {
     const { result } = renderHook(() => useDataSourceInstanceSettingsList());
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.items.length).toBeGreaterThan(0);
-    expect(result.current.hasMore).toBe(false);
-  });
-
-  it('is safe to call fetchMore when there are no more pages', async () => {
-    const { result } = renderHook(() => useDataSourceInstanceSettingsList());
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    act(() => {
-      result.current.fetchMore();
-    });
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
 
   it('does not re-fetch when the same filter function reference is re-rendered', async () => {

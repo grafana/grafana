@@ -542,7 +542,7 @@ func NewResourceTuple(object string, resource *authzextv1.Resource, perm *authze
 	}
 
 	// For resources we add a condition to filter by apiGroup/resource
-	// e.g "group_filter": {"group_resource": "dashboards.grafana.app/dashboards"}
+	// e.g "group_filter": {"group_resource": "dashboard.grafana.app/dashboards"}
 	if typ == TypeResource {
 		key.Condition = &openfgav1.RelationshipCondition{
 			Name: "group_filter",
@@ -586,9 +586,9 @@ func toZanzanaSubject(kind string, name string) (string, error) {
 	return "", errUnknownKind
 }
 
-// GetTeamBindingTuple maps a team binding subject, team name, and permission to the corresponding
+// GetTeamMemberTuple maps a team binding subject, team name, and permission to the corresponding
 // Zanzana tuple. This is the canonical mapping used throughout the system.
-func GetTeamBindingTuple(subject string, team string, permission string) (*openfgav1.TupleKey, error) {
+func GetTeamMemberTuple(subject string, team string, permission string) (*openfgav1.TupleKey, error) {
 	if subject == "" {
 		return nil, errors.New("subject name cannot be empty")
 	}

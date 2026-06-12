@@ -296,6 +296,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
+	prometheus2 "github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -735,7 +736,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	ngAlert := metrics2.ProvideService(registerer)
 	tagimplService := tagimpl.ProvideService(sqlStore)
 	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, dBstore, dashboardService, registerer)
-	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service13, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, quotaService, secretsService, notificationService, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, httpclientProvider, plugincontextProvider, receiverPermissionsService, routePermissionsService, userimplService, orgService)
+	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
+	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service13, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, quotaService, secretsService, notificationService, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, httpclientProvider, plugincontextProvider, receiverPermissionsService, routePermissionsService, userimplService, orgService, clientGenerator)
 	if err != nil {
 		return nil, err
 	}
@@ -791,7 +793,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	apiAPI := api2.ProvideApi(cfg, featureToggles, starService, k8sClients)
 	anonUserLimitValidatorImpl := validator2.ProvideAnonUserLimitValidator()
 	anonDeviceService := anonimpl.ProvideAnonymousDeviceService(usageStats, authnService, sqlStore, cfg, orgService, serverLockService, accessControl, routeRegisterImpl, anonUserLimitValidatorImpl)
-	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
 	signingkeysimplService, err := signingkeysimpl.ProvideEmbeddedSigningKeysService(sqlStore, secretsService, remoteCache, routeRegisterImpl)
 	if err != nil {
 		return nil, err
@@ -847,7 +848,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	rulesAppInstaller, err := rules.RegisterAppInstaller(cfg, alertNG)
+	rulesAppInstaller, err := rules.RegisterAppInstaller(cfg, alertNG, clientGenerator)
 	if err != nil {
 		return nil, err
 	}
@@ -942,11 +943,12 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessClient, registerer, pluginsourcesService)
+	proxyDependencies := datasource.ProvideProxyDependencies(cfg, httpclientProvider, oauthtokenService, tracingService, featureToggles)
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessClient, registerer, pluginsourcesService, ossDataSourceRequestValidator, proxyDependencies)
 	if err != nil {
 		return nil, err
 	}
-	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderPermissionsService, accessClient, registerer, resourceClient, zanzanaClient)
+	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderPermissionsService, accessClient, registerer, resourceClient, zanzanaClient, eventualRestConfigProvider)
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
 	globalRoleApiInstaller := inmemory.ProvideInMemoryGlobalRoleApiInstaller(acimplService)
 	teamLBACApiInstaller := iam.ProvideNoopTeamLBACApiInstaller()
@@ -1467,7 +1469,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	ngAlert := metrics2.ProvideService(registerer)
 	tagimplService := tagimpl.ProvideService(sqlStore)
 	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, dBstore, dashboardService, registerer)
-	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service13, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, quotaService, secretsService, notificationServiceMock, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, httpclientProvider, plugincontextProvider, receiverPermissionsService, routePermissionsService, userimplService, orgService)
+	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
+	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service13, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, quotaService, secretsService, notificationServiceMock, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, httpclientProvider, plugincontextProvider, receiverPermissionsService, routePermissionsService, userimplService, orgService, clientGenerator)
 	if err != nil {
 		return nil, err
 	}
@@ -1523,7 +1526,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	apiAPI := api2.ProvideApi(cfg, featureToggles, starService, k8sClients)
 	anonUserLimitValidatorImpl := validator2.ProvideAnonUserLimitValidator()
 	anonDeviceService := anonimpl.ProvideAnonymousDeviceService(usageStats, authnService, sqlStore, cfg, orgService, serverLockService, accessControl, routeRegisterImpl, anonUserLimitValidatorImpl)
-	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
 	signingkeysimplService, err := signingkeysimpl.ProvideEmbeddedSigningKeysService(sqlStore, secretsService, remoteCache, routeRegisterImpl)
 	if err != nil {
 		return nil, err
@@ -1579,7 +1581,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	rulesAppInstaller, err := rules.RegisterAppInstaller(cfg, alertNG)
+	rulesAppInstaller, err := rules.RegisterAppInstaller(cfg, alertNG, clientGenerator)
 	if err != nil {
 		return nil, err
 	}
@@ -1674,11 +1676,12 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessClient, registerer, pluginsourcesService)
+	proxyDependencies := datasource.ProvideProxyDependencies(cfg, httpclientProvider, oauthtokenService, tracingService, featureToggles)
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessClient, registerer, pluginsourcesService, ossDataSourceRequestValidator, proxyDependencies)
 	if err != nil {
 		return nil, err
 	}
-	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderPermissionsService, accessClient, registerer, resourceClient, zanzanaClient)
+	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderPermissionsService, accessClient, registerer, resourceClient, zanzanaClient, eventualRestConfigProvider)
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
 	globalRoleApiInstaller := inmemory.ProvideInMemoryGlobalRoleApiInstaller(acimplService)
 	teamLBACApiInstaller := iam.ProvideNoopTeamLBACApiInstaller()
@@ -1948,33 +1951,34 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	return apiServerFactory, nil
 }
 
-func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSupplier, error) {
-	featureManager, err := featuremgmt.ProvideManagerService(cfg)
+// InitializeSearchSupport builds the document builders together with the
+// dashboard stats they use, so the storage-server target shares a single
+// stats instance (and a single metrics registration) between the search
+// document builders and the vector backfiller. It receives the dependencies
+// the module server has already constructed so they aren't recreated.
+func InitializeSearchSupport(cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg prometheus2.Registerer) (SearchSupport, error) {
+	ossMigrations := migrations.ProvideOSSMigrations(features)
+	inProcBus := bus.ProvideBus(tracer)
+	sqlStore, err := sqlstore.ProvideService(cfg, features, ossMigrations, inProcBus, tracer)
 	if err != nil {
-		return nil, err
-	}
-	featureToggles := featuremgmt.ProvideToggles(featureManager)
-	ossMigrations := migrations.ProvideOSSMigrations(featureToggles)
-	configProvider, err := configprovider.ProvideService(cfg)
-	if err != nil {
-		return nil, err
-	}
-	tracingConfig, err := tracing.ProvideTracingConfig(configProvider)
-	if err != nil {
-		return nil, err
-	}
-	tracingService, err := tracing.ProvideService(tracingConfig)
-	if err != nil {
-		return nil, err
-	}
-	inProcBus := bus.ProvideBus(tracingService)
-	sqlStore, err := sqlstore.ProvideService(cfg, featureToggles, ossMigrations, inProcBus, tracingService)
-	if err != nil {
-		return nil, err
+		return SearchSupport{}, err
 	}
 	ossDashboardStats := builders.ProvideDashboardStats()
 	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats)
-	return documentBuilderSupplier, nil
+	searchSupport := SearchSupport{
+		DocBuilders:    documentBuilderSupplier,
+		DashboardStats: ossDashboardStats,
+	}
+	return searchSupport, nil
+}
+
+// InitializeDashboardStats builds only the dashboard stats dependency used by
+// the vector backfiller views filter, for the storage-server target running
+// without enable_search. It receives the dependencies the module server has
+// already constructed so they aren't recreated.
+func InitializeDashboardStats(cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg prometheus2.Registerer) (builders.DashboardStats, error) {
+	ossDashboardStats := builders.ProvideDashboardStats()
+	return ossDashboardStats, nil
 }
 
 // wire.go:

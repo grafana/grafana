@@ -51,6 +51,7 @@ import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
+import { RuleEvaluationIntervalField } from './RuleEvaluationIntervalField';
 
 type EvaluationMode = 'rule-based' | 'group-based';
 
@@ -286,30 +287,7 @@ export function GrafanaEvaluationBehaviorStep({
             />
           </Field>
         )}
-        {!showGroupSelection && (
-          <Stack direction="column" gap={1.5}>
-            <Field
-              noMargin
-              label={t('alerting.rule-form.evaluation.interval-label', 'Evaluation interval')}
-              className={styles.inlineField}
-              error={errors.evaluateEvery?.message}
-              invalid={Boolean(errors.evaluateEvery?.message)}
-              htmlFor="evaluate-every-no-group"
-            >
-              <Input
-                id="evaluate-every-no-group"
-                width={8}
-                {...register('evaluateEvery', evaluateEveryValidationOptions<{ evaluateEvery: string }>([]))}
-              />
-            </Field>
-            <EvaluationGroupQuickPick
-              currentInterval={evaluateEvery}
-              onSelect={(interval) => setValue('evaluateEvery', interval)}
-            />
-          </Stack>
-        )}
-
-        {showGroupSelection && (
+        {showGroupSelection ? (
           <Stack alignItems="end" gap={1}>
             <div style={{ width: 420 }}>
               <Field
@@ -393,6 +371,8 @@ export function GrafanaEvaluationBehaviorStep({
               />
             )}
           </Stack>
+        ) : (
+          <RuleEvaluationIntervalField inputId="evaluate-every-no-group" />
         )}
 
         {folder?.title && group && !isUngroupedRuleGroup(group) && (
@@ -702,7 +682,7 @@ export function EvaluationGroupCreationModal({
   );
 }
 
-export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
+function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   const styles = useStyles2(getStyles);
   const {
     register,

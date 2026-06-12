@@ -5,8 +5,6 @@ import { config } from '@grafana/runtime';
 
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
-export const initialState: NavModelItem[] = config.bootData?.navTree ?? [];
-
 function translateNav(navTree: NavModelItem[]): NavModelItem[] {
   return navTree.map((navItem) => {
     const children = navItem.children && translateNav(navItem.children);

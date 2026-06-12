@@ -65,7 +65,7 @@ jobs:
       # see https://github.com/microsoft/playwright/issues/34046
       env:
         LANG: en_US
-      run: npx wait-on --timeout 120000 http://localhost:9001 && yarn test:storybook
+      run: yarn wait-on --timeout 120000 http://localhost:9001 && yarn test:storybook
 
   storybook-a11y-result:
     name: "Storybook a11y tests"

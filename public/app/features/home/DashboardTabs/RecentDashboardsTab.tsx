@@ -10,15 +10,18 @@ import { type DashboardQueryResult, type LocationInfo } from 'app/features/searc
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { clearHistoryClicked, emptyCtaClicked } from '../analytics/main';
+
 interface Props {
   dashboards: DashboardQueryResult[];
   loading: boolean;
   error: Error | undefined;
   retry: () => void;
   foldersByUid: Record<string, LocationInfo>;
+  onStarChange?: () => void;
 }
 
-export function RecentDashboardsTab({ dashboards, loading, error, retry, foldersByUid }: Props) {
+export function RecentDashboardsTab({ dashboards, loading, error, retry, foldersByUid, onStarChange }: Props) {
   const styles = useStyles2(getStyles);
 
   if (loading) {
@@ -55,11 +58,20 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
           message={t('home.recent-dashboards-tab.empty', "Dashboards you've recently viewed will appear here.")}
           button={
             canCreate ? (
-              <LinkButton icon="plus" href="/dashboard/new">
+              <LinkButton
+                icon="plus"
+                href="/dashboard/new"
+                onClick={() => emptyCtaClicked({ cta_type: 'create_dashboard' })}
+              >
                 <Trans i18nKey="home.recent-dashboards-tab.create">Create your first dashboard</Trans>
               </LinkButton>
             ) : (
-              <LinkButton icon="apps" href="/dashboards" variant="secondary">
+              <LinkButton
+                icon="apps"
+                href="/dashboards"
+                variant="secondary"
+                onClick={() => emptyCtaClicked({ cta_type: 'browse_dashboards' })}
+              >
                 <Trans i18nKey="home.recent-dashboards-tab.browse">Browse dashboards</Trans>
               </LinkButton>
             )
@@ -75,6 +87,7 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
   }
 
   const handleClearHistory = () => {
+    clearHistoryClicked({ dashboard_count: dashboards.length });
     impressionSrv.clearImpressions();
     retry();
   };
@@ -91,6 +104,7 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
               locationInfo={foldersByUid[dash.location]}
               layoutMode="list"
               source="homepage_recentTab"
+              onStarChange={onStarChange}
             />
           </li>
         ))}

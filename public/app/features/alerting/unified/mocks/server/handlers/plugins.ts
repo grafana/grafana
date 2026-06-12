@@ -10,7 +10,7 @@ const PLUGIN_NOT_FOUND_RESPONSE = { message: 'Plugin not found, no installed plu
  * Returns a handler that maps from plugin ID to PluginMeta, and additionally sets up necessary
  * config side effects that are expected to come along with this API behaviour
  */
-export const getPluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
+const getPluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
   const appPluginMetas = plugins.reduce((acc, { id, baseUrl, info, angular }) => {
     acc[id] = {
       id,
