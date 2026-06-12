@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -14,7 +14,6 @@ import {
   Sidebar,
   type SidebarContextValue,
 } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -70,6 +69,8 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
+
+  useUpdateAppChromeBreadcrumbActions(dashboard);
 
   const { selectionContext, openPane, previousState } = useSceneObjectState(editPane, {
     shouldActivateOrKeepAlive: true,
@@ -210,7 +211,6 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
 
   return (
     <AssistantPopoverContext.Provider value={popoverContextValue}>
-      <AppChromeUpdate breadcrumbActions={<BreadcrumbActions dashboard={dashboard} />} />
       <div className={styles.container}>
         <ElementSelectionContext.Provider value={selectionContext}>
           <div className={styles.controlsWrapperSticky} onPointerDown={onClearSelection}>
@@ -222,6 +222,32 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
       </div>
     </AssistantPopoverContext.Provider>
   );
+}
+
+function useUpdateAppChromeBreadcrumbActions(dashboard: DashboardScene) {
+  const { chrome } = useGrafana();
+  const { uid, isEditing, editview, editPanel, viewPanel, meta } = dashboard.useState();
+
+  useLayoutEffect(() => {
+    chrome.update({ breadcrumbActions: <BreadcrumbActions dashboard={dashboard} /> });
+
+    return () => {
+      chrome.update({ breadcrumbActions: undefined });
+    };
+  }, [
+    chrome,
+    dashboard,
+    uid,
+    isEditing,
+    editview,
+    editPanel,
+    viewPanel,
+    meta.canStar,
+    meta.canEdit,
+    meta.isSnapshot,
+    meta.isEmbedded,
+    meta.url,
+  ]);
 }
 
 function useSidebarPaneMinWidth(openPane: DashboardSidebarPane | undefined, sidebarContext: SidebarContextValue) {
