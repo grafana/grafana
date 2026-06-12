@@ -34,8 +34,8 @@ Grafana is migrating existing APIs to the new `/apis` model, a Kubernetes-style 
 
 The API migration process is underway and there may not be an exact `/apis` match to the legacy API you're using. Some legacy APIs may not be migrated at all. Refer to the table for details:
 
-| **Feature**        | **New API**                                                                                                                                             | **Legacy API**      |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| **Feature**        | **New API**                                                                                                                                              | **Legacy API**      |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
 | Dashboards         | [`/apis/dashboard.grafana.app/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard)               | `/api/dashboards/*` |
 | Folders            | [`/apis/folder.grafana.app/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/folder)                     | `/api/folders/*`    |
 | Playlists          | [`/apis/playlist.grafana.app/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/playlist)                 | Not available       |
