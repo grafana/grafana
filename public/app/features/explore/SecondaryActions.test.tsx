@@ -172,7 +172,8 @@ describe('SecondaryActions', () => {
     );
 
     expect(await screen.findByRole('button', { name: /Recent queries/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Query history/i })).not.toBeInTheDocument();
+    // Query history remains available as a separate entry point during the QH deprecation period.
+    expect(screen.getByRole('button', { name: /Query history/i })).toBeInTheDocument();
   });
 
   it('should not render Recent queries button when recentQueriesUI is enabled and queryLibrary is also enabled', async () => {
@@ -190,5 +191,7 @@ describe('SecondaryActions', () => {
 
     expect(await screen.findByRole('button', { name: /Add from saved queries/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Recent queries/i })).not.toBeInTheDocument();
+    // Query history remains available as a separate entry point during the QH deprecation period.
+    expect(screen.getByRole('button', { name: /Query history/i })).toBeInTheDocument();
   });
 });
