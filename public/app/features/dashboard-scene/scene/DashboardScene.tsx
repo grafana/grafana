@@ -156,6 +156,7 @@ export type DashboardSceneState = DashboardSceneStateBase;
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent, DashboardSceneLike {
   static Component = DashboardSceneRenderer;
+  public isDashboardScene = true;
 
   /**
    * Handles url sync

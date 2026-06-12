@@ -75,10 +75,12 @@ interface DashboardScenePreferences {
   defaultLayoutTemplate?: DashboardLayoutManager;
 }
 
-export interface DashboardSceneLike extends SceneObject<DashboardSceneState> {}
+export interface DashboardSceneLike extends SceneObject<DashboardSceneState> {
+  isDashboardScene: boolean;
+}
 
-export function isDashboardSceneLike(obj: SceneObject): obj is DashboardSceneLike {
-  return 'layoutOrchestrator' in obj;
+function isDashboardSceneLike(obj: SceneObject): obj is DashboardSceneLike {
+  return 'isDashboardScene' in obj;
 }
 
 export function getDashboardSceneLike(sceneObject: SceneObject): DashboardSceneLike {
