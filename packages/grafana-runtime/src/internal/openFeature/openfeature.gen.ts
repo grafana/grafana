@@ -383,10 +383,10 @@ export const useFlagManagedPluginsV2 = (options?: ReactFlagEvaluationOptions): b
  *
  * **Details:**
  * - flag key: `newLogContext`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagNewLogContext = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("newLogContext", false, options).value;
+  return useFlag("newLogContext", true, options).value;
 };
 
 /**
