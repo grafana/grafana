@@ -5444,11 +5444,6 @@
         "not-found": "Not found"
       }
     },
-    "dashboard-settings": {
-      "actions": {
-        "close": "Close"
-      }
-    },
     "dashboard-slice": {
       "title": {
         "dashboard-init-failed": "Dashboard init failed"
@@ -5737,21 +5732,6 @@
       "footer-text": "This content is AI-generated using the <2>Grafana LLM plugin</2>",
       "placeholder-tell-ai-what-to-do-next": "Tell AI what to do next..."
     },
-    "general-settings-unconnected": {
-      "editable-options": {
-        "label": {
-          "editable": "Editable",
-          "readonly": "Read-only"
-        }
-      },
-      "graph_tooltip_options": {
-        "label": {
-          "default": "Default",
-          "shared-crosshair": "Shared crosshair",
-          "shared-tooltip": "Shared tooltip"
-        }
-      }
-    },
     "get-debug-dashboard": {
       "title": {
         "annotations": "Annotations"
@@ -5938,10 +5918,6 @@
       "ungroup-nested-text": "This will ungroup all nested groups.",
       "ungroup-nested-title": "Ungroup nested groups?"
     },
-    "make-editable": {
-      "dashboard-not-editable": "Dashboard not editable",
-      "make-editable": "Make editable"
-    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} of {{numberOfPages}}",
       "tooltip-next": "Next",
@@ -6069,11 +6045,6 @@
           "no-template-variables-found": "No template variables found"
         }
       }
-    },
-    "revert-dashboard-modal": {
-      "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
-      "confirmText-restore-version": "Yes, restore to version {{version}}",
-      "title-restore-version": "Restore version"
     },
     "rows-layout": {
       "cancel": "Cancel",
@@ -6459,21 +6430,6 @@
       "type": {
         "action": "Change variable type"
       }
-    },
-    "version-history-comparison": {
-      "button-restore": "Restore to version {{version}}",
-      "label-view-json-diff": "View JSON diff",
-      "new-updated-by": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}",
-      "old-updated-by": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}"
-    },
-    "version-history-table": {
-      "aria-label-toggle-selection": "Toggle selection of version {{version}}",
-      "date": "Date",
-      "name-latest": "Latest",
-      "notes": "Notes",
-      "restore": "Restore",
-      "updated-by": "Updated by",
-      "version": "Version"
     },
     "view-json-modal": {
       "title-json": "JSON"
@@ -7762,17 +7718,6 @@
     },
     "permissions": {
       "title": "Permissions"
-    },
-    "provisioned-delete-modal": {
-      "confirm-button": "OK",
-      "text-1": "This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config file to delete it.",
-      "text-2": "See grafana documentation for more information about provisioning. ",
-      "text-3": "File path: {{provisionedId}}",
-      "text-link": "Go to docs page",
-      "title": "Cannot delete provisioned dashboard"
-    },
-    "settings": {
-      "title": "Settings"
     },
     "time-picker": {
       "hide-time-picker": "Hide time picker",
@@ -16501,11 +16446,6 @@
         "aria-label-add-filter": "Add Filter"
       }
     },
-    "confirm-delete-modal": {
-      "body-delete-variable": "Are you sure you want to delete variable \"{{variableToDelete}}\"?",
-      "confirmText-delete": "Delete",
-      "title-delete-variable": "Delete variable"
-    },
     "create-ad-hoc-variable-adapter": {
       "description": {
         "add-keyvalue-filters-on-the-fly": "Add key/value filters on the fly."
@@ -16602,42 +16542,8 @@
       "tooltip-renamed-or-missing-variables": "Click to expand a list with all variable references that have been renamed or are missing from the dashboard.",
       "variable": "Variable"
     },
-    "variable-check-indicator": {
-      "title-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
-      "title-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
-    },
-    "variable-editor-editor-un-connected": {
-      "apply": "Apply",
-      "aria-label-variable-editor-form": "Variable editor Form",
-      "delete": "Delete",
-      "description-optional-display-name": "Optional display name",
-      "description-template-variable-characters": "The name of the template variable. (Max. 50 characters)",
-      "general": "General",
-      "name-label": "Label",
-      "name-name": "Name",
-      "placeholder-descriptive-text": "Descriptive text",
-      "placeholder-label-name": "Label name",
-      "placeholder-variable-name": "Variable name",
-      "run-query": "Run query"
-    },
-    "variable-editor-list": {
-      "definition": "Definition",
-      "new-variable": "New variable",
-      "variable": "Variable"
-    },
-    "variable-editor-list-row": {
-      "drag-handle-label": "Reorder variable {{variableName}}",
-      "tooltip-duplicate-variable": "Duplicate variable",
-      "tooltip-remove-variable": "Remove variable"
-    },
-    "variable-editor-un-connected": {
-      "name-description": "Description"
-    },
     "variable-options": {
       "aria-label-toggle-all-values": "Toggle all values"
-    },
-    "variable-type-select": {
-      "name-select-variable-type": "Select variable type"
     },
     "variable-usages-button": {
       "tooltip-show-usages": "Show usages"
