@@ -12,6 +12,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { Indent } from '../../Indent/Indent';
 
 import { MegaMenuItemText } from './MegaMenuItemText';
+import { useEmptyDashboardNavItems } from './useEmptyDashboardNavItems';
 import { hasChildMatch } from './utils';
 
 interface Props {
@@ -37,6 +38,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
     Boolean(hasActiveChild)
   );
   const showExpandButton = level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage);
+  const hiddenChildIds = useEmptyDashboardNavItems(link, Boolean(sectionExpanded));
   const item = useRef<HTMLLIElement>(null);
 
   const styles = useStyles2(getStyles);
@@ -136,6 +138,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
           {linkHasChildren(link) ? (
             link.children
               .filter((childLink) => !childLink.isCreateAction)
+              .filter((childLink) => !hiddenChildIds.has(childLink.id ?? ''))
               .map((childLink) => (
                 <MegaMenuItem
                   key={`${link.text}-${childLink.text}`}
