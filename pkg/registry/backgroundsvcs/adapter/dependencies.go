@@ -74,7 +74,8 @@ func dependencyMap() map[string][]string {
 		FixedRolesLoader:   {PluginInstaller, IAMRolesSyncer},
 		Provisioning:       {PluginStore, PluginInstaller, FixedRolesLoader},
 		InstallSync:        {Provisioning},
-		Core:               {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync},
-		BackgroundServices: {Core, GlobalRoleSeeder},
+		GlobalRoleSeeder:   {GrafanaAPIServer},
+		Core:               {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync, GlobalRoleSeeder},
+		BackgroundServices: {Core},
 	}
 }
