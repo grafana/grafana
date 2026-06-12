@@ -89,20 +89,9 @@ var lokiTableHints = []schemas.TableHint{
 	{Name: "rate", Description: "Wrap the stream selector with rate() or bytes_rate() over this window, e.g. rate('5m'). Combines with aggregation when set.", HasValue: true},
 	{Name: "instant", Description: "Use Loki instant query API for metric expressions (requires aggregation or rate hint).", HasValue: false},
 	{
-		Name:          "parser",
-		Description:   "Log line parser: parser('json'), parser('logfmt'), parser('unpack'), parser('pattern'), or parser('regexp').",
-		HasValue:      true,
-		AffectsSchema: true,
-	},
-	{
-		Name:          "pattern",
-		Description:   "Pattern expression for parser('pattern'), e.g. pattern('<status>').",
-		HasValue:      true,
-		AffectsSchema: true,
-	},
-	{
-		Name:          "regexp_expr",
-		Description:   "Regexp expression for parser('regexp'), e.g. regexp_expr('(?P<ip>\\d+)').",
+		Name: "parser",
+		Description: "LogQL parser pipeline after the stream selector, passed through verbatim: " +
+			"parser('json'), parser('json | unpack'), parser('pattern \"<status>\"').",
 		HasValue:      true,
 		AffectsSchema: true,
 	},
