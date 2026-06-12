@@ -319,9 +319,7 @@ describe('plugin', () => {
 
     it('throws if the singleton has not been registered', async () => {
       initDataSourceInstanceSettings({}, '');
-      await expect(getDataSourceInstance('__expr__')).rejects.toThrow(
-        'Expression datasource has not been initialised'
-      );
+      await expect(getDataSourceInstance('__expr__')).rejects.toThrow('Expression datasource has not been initialised');
     });
   });
 });

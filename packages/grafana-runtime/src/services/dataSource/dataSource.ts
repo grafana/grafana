@@ -40,7 +40,9 @@ export async function getDataSourceInstance(
   if (isExpressionReference(ref)) {
     const expressionDs = getExpressionDatasourceInstance();
     if (!expressionDs) {
-      throw new Error('Expression datasource has not been initialised. Call setExpressionDataSourceInstance during application boot.');
+      throw new Error(
+        'Expression datasource has not been initialised. Call setExpressionDataSourceInstance during application boot.'
+      );
     }
     return expressionDs;
   }
