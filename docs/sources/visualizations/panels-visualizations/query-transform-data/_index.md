@@ -50,6 +50,10 @@ For more information, refer to [Data sources](https://grafana.com/docs/grafana/<
 
 ### Query editors
 
+{{< admonition type="note" >}}
+The new query editor experience...etc
+{{< /admonition >}}
+
 Each data source's query editor provides a customized user interface that helps you write queries that take advantage of its unique capabilities.
 
 Because of the differences between query languages, each data source query editor looks and functions differently.
@@ -141,6 +145,9 @@ To access your saved queries, click **+ Add from saved queries** or open the **S
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-add-save-reuse-query-v13.0.png" max-width="750px" alt="Access saved queries" >}}
 <!-- TODO: Update screenshot -->
+{{< admonition type="note" >}}
+The new query editor experience...etc
+{{< /admonition >}}
 
 Clicking **+ Add from saved queries** adds an additional query, while clicking **Replace query** in the **Saved queries** drop-down menu updates your existing query.
 
@@ -172,6 +179,9 @@ To save a query you've created:
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-save-query-v13.0.png" max-width="750px" alt="Save a query" >}}
    <!-- TODO: Update screenshot -->
+   {{< admonition type="note" >}}
+The new query editor experience...etc
+{{< /admonition >}}
 
 1. In the **Saved queries** dialog box, enter a title for the query that makes it easier to find later.
 1. (Optional) Enter a description and relevant tags.
@@ -204,22 +214,41 @@ In Explore, you can map variables to custom values.
 - If you have multiple queries open in Explore and you edit one of them by way of the **Edit in Explore** function in the **Saved queries** dialog box, the edited query replaces your open queries in Explore.
 
 ## Navigate the query editor
-<!-- TODO: Update this section -->
+
+{{< admonition type="note" >}}
+The new query editor experience...etc
+{{< /admonition >}}
 
 A panel's **Queries** tab consists of the following elements:
 
+<!-- TODO: Add an image map here -->
+
+Sidebar: The sidebar displays queries, expressions, and transformations as color-coded cards with visual indicators for state, like error, hidden, and disabled, while a footer tracks your total item count.
+Image map here
+- Data/Alerts toggle: Click the tabs to toggle between data piplene and related alerts. When you have the Alerts side open, you can start writing a new alert rule from there. Takes you to Alerting though.
+- **Stacked view icon** - The stacked view displays all of your queries, expressions, and transformations in a single scrollable list.
+- Something about bulk actions  
+- Queries & Expressions: The list of queries and expressions you've written. Click a card in the sidebar to display that query or expression editor on the right. Click the blue plus sign to add a new query, add a saved query, or an expression. For more information about expressions, refer to [Use expressions to manipulate data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/expression-queries/).
+- Trasnformations - The list of all the transformations you've added. Click the blue plus sign to add a new transformation.
+- Editor pane: Where you do all the work
 - **Data source selector** - Selects the data source to query.
   For more information about data sources, refer to [Data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/).
-- **Query options** - Sets maximum data retrieval parameters and query execution time intervals.
-- **Query inspector button** - Opens the query inspector panel, where you can view and optimize your query.
-- **Query editor list** - The list of queries you've written. Each query can be expanded or collapsed.
-- **Expressions** - Uses the expression builder to create alert expressions.
-  For more information about expressions, refer to [Use expressions to manipulate data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/expression-queries/).
+- Query name editor
+- **Query options** - Click it in the footer of the editing pane to access query options. Sets maximum data retrieval parameters and query execution time intervals.
+- Builder/Code options - 
+- **Query inspector button** - Click it in the footer of the editing pane. Opens the query inspector panel, where you can view and optimize your query.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-queries-tab2-v11.6.png" max-width="750px" alt="The Query tab of the panel editor" >}}
 <!-- TODO: Update screenshot -->
 
+For pipelines with many queries, expressions, or transformations, you can expand the sidebar to full height to see everything at once.
+
 ## Add a query
+
+{{< admonition type="note" >}}
+The new query editor experience...etc
+{{< /admonition >}}
+
 <!-- TODO: Update this section -->
 
 A query returns data that Grafana visualizes in dashboard panels.
