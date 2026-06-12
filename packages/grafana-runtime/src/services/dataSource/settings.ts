@@ -7,7 +7,7 @@ import {
 } from '@grafana/data';
 
 import { ExpressionDatasourceRef, isExpressionReference } from '../../utils/DataSourceWithBackend';
-import { getCachedPromise } from '../../utils/getCachedPromise';
+import { getCachedPromise, invalidateCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { getDataSourceSrv, type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
@@ -76,20 +76,6 @@ async function fetchAndPopulate(): Promise<void> {
   defaultName = settings.defaultDatasource;
 }
 
-let inFlightReload: Promise<void> | null = null;
-
-export function reloadDataSourceInstanceSettings(): Promise<void> {
-  // Coalesce concurrent reloads so a burst of mutations triggers a single refetch
-  // rather than one backend request per caller. Cleared once settled so later calls refetch.
-  if (inFlightReload) {
-    return inFlightReload;
-  }
-  inFlightReload = performReload().finally(() => {
-    inFlightReload = null;
-  });
-  return inFlightReload;
-}
-
 async function performReload(): Promise<void> {
   const srv = getDataSourceSrv();
   if (srv) {
@@ -97,10 +83,17 @@ async function performReload(): Promise<void> {
     return;
   }
   clearPluginCache();
-  await getCachedPromise(fetchAndPopulate, {
-    cacheKey: RELOAD_CACHE_KEY,
-    invalidate: true,
-  });
+  await fetchAndPopulate();
+}
+
+export async function reloadDataSourceInstanceSettings(): Promise<void> {
+  // Coalesce concurrent reloads into a single in-flight request via the shared promise
+  // cache, then invalidate so a later call refetches rather than returning a stale result.
+  try {
+    await getCachedPromise(performReload, { cacheKey: RELOAD_CACHE_KEY });
+  } finally {
+    invalidateCachedPromise(RELOAD_CACHE_KEY);
+  }
 }
 
 interface SyncDataSourceSettings {
@@ -371,5 +364,4 @@ export function _resetForTests(): void {
   runtimeByUid = {};
   expressionDsSettings = undefined;
   defaultName = '';
-  inFlightReload = null;
 }

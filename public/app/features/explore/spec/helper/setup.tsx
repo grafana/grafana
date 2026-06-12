@@ -161,9 +161,7 @@ export function setupExplore(options?: SetupOptions): {
 
       return Promise.reject();
     },
-    reload() {
-      return Promise.resolve();
-    },
+    reload: jest.fn().mockResolvedValue(undefined),
   });
 
   const previousEchoSrv = getEchoSrv();
