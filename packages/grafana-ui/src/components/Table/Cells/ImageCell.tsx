@@ -2,13 +2,13 @@ import { useState } from 'react';
 
 import { getCellLinks } from '../../../utils/table';
 import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
-import { TableCellDisplayMode, type TableCellProps } from '../types';
 import {
   tooltipOnClickHandler,
   type DataLinksActionsTooltipCoords,
   getCellOptions,
   getDataLinksActionsTooltipUtils,
-} from '../utils';
+} from '../cellUtils';
+import { TableCellDisplayMode, type TableCellProps } from '../types';
 
 const DATALINKS_HEIGHT_OFFSET = 10;
 

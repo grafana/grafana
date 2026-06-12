@@ -38,7 +38,7 @@ interface ParentlessItems {
   [panelId: string]: ContentOutlineItemContextProps[];
 }
 
-export const ContentOutlineContext = createContext<ContentOutlineContextProps | undefined>(undefined);
+const ContentOutlineContext = createContext<ContentOutlineContextProps | undefined>(undefined);
 
 export function ContentOutlineContextProvider({ children, refreshDependencies }: ContentOutlineContextProviderProps) {
   const [outlineItems, setOutlineItems] = useState<ContentOutlineItemContextProps[]>([]);

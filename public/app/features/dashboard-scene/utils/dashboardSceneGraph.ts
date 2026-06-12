@@ -58,7 +58,7 @@ export type PanelIdGenerator = () => number;
  * Returns a sequential ID generator seeded from the current max panel ID.
  * Shared across sibling layouts to prevent duplicate panel IDs during duplication.
  */
-export function getPanelIdGenerator(scene: SceneObject): PanelIdGenerator {
+function getPanelIdGenerator(scene: SceneObject): PanelIdGenerator {
   let id = getNextPanelId(scene);
   return () => id++;
 }
@@ -73,7 +73,7 @@ function getDataLayers(scene: DashboardScene): DashboardDataLayerSet {
   return data;
 }
 
-export function getCursorSync(scene: DashboardScene) {
+function getCursorSync(scene: DashboardScene) {
   const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
 
   if (cursorSync instanceof behaviors.CursorSync) {
@@ -83,7 +83,7 @@ export function getCursorSync(scene: DashboardScene) {
   return;
 }
 // Functions to manage the lookup table in dashboard scene that will hold element_identifer : panel_id
-export function getElementIdentifierForVizPanel(vizPanel: VizPanel): string {
+function getElementIdentifierForVizPanel(vizPanel: VizPanel): string {
   const scene = getDashboardSceneFor(vizPanel);
   const panelId = getPanelIdForVizPanel(vizPanel);
   let elementKey = scene.serializer.getElementIdForPanel(panelId);

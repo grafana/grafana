@@ -83,7 +83,7 @@ function getExportDatasourceName(labels?: { [ExportDatasourceName]?: string }): 
 /**
  * Extract library panel inputs from dashboard __elements
  */
-export async function getLibraryPanelInputs(dashboardJson?: {
+async function getLibraryPanelInputs(dashboardJson?: {
   __elements?: Record<string, unknown>;
 }): Promise<LibraryPanelInput[]> {
   if (!dashboardJson || !dashboardJson.__elements) {

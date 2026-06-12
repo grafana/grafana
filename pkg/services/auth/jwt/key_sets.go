@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
@@ -27,8 +28,9 @@ import (
 
 var ErrFailedToParsePemFile = errors.New("failed to parse pem-encoded file")
 var ErrKeySetIsNotConfigured = errors.New("key set for jwt verification is not configured")
-var ErrKeySetConfigurationAmbiguous = errors.New("key set configuration is ambiguous: you should set either key_file, jwk_set_file or jwk_set_url")
+var ErrKeySetConfigurationAmbiguous = errors.New("key set configuration is ambiguous: you should set only one of key_file, key_value, jwk_set_file, jwk_set_value or jwk_set_url")
 var ErrJWTSetURLMustHaveHTTPSScheme = errors.New("jwt_set_url must have https scheme")
+var ErrFailedToDecodeKeyValue = errors.New("failed to base64-decode inline key value")
 
 type keySet interface {
 	Key(ctx context.Context, kid string) ([]jose.JSONWebKey, error)
@@ -53,7 +55,13 @@ func (s *AuthService) checkKeySetConfiguration() error {
 	if s.Cfg.JWTAuth.KeyFile != "" {
 		count++
 	}
+	if s.Cfg.JWTAuth.KeyValue != "" {
+		count++
+	}
 	if s.Cfg.JWTAuth.JWKSetFile != "" {
+		count++
+	}
+	if s.Cfg.JWTAuth.JWKSetValue != "" {
 		count++
 	}
 	if s.Cfg.JWTAuth.JWKSetURL != "" {
@@ -79,77 +87,37 @@ func (s *AuthService) initKeySet() error {
 	}
 
 	if keyFilePath := s.Cfg.JWTAuth.KeyFile; keyFilePath != "" {
-		// nolint:gosec
-		// We can ignore the gosec G304 warning on this one because `fileName` comes from grafana configuration file
-		file, err := os.Open(keyFilePath)
+		data, err := s.readKeyFile(keyFilePath)
 		if err != nil {
 			return err
 		}
-		defer func() {
-			if err := file.Close(); err != nil {
-				s.log.Warn("Failed to close file", "path", keyFilePath, "err", err)
-			}
-		}()
-
-		data, err := io.ReadAll(file)
+		if s.keySet, err = parsePEMPublicKey(data, s.Cfg.JWTAuth.KeyID); err != nil {
+			return err
+		}
+	} else if keyValue := s.Cfg.JWTAuth.KeyValue; keyValue != "" {
+		data, err := decodeKeyValue(keyValue)
 		if err != nil {
 			return err
 		}
-		block, _ := pem.Decode(data)
-		if block == nil {
-			return ErrFailedToParsePemFile
-		}
-
-		var key any
-		switch block.Type {
-		case "PUBLIC KEY":
-			if key, err = x509.ParsePKIXPublicKey(block.Bytes); err != nil {
-				return err
-			}
-		case "PRIVATE KEY":
-			if key, err = x509.ParsePKCS8PrivateKey(block.Bytes); err != nil {
-				return err
-			}
-		case "RSA PUBLIC KEY":
-			if key, err = x509.ParsePKCS1PublicKey(block.Bytes); err != nil {
-				return err
-			}
-		case "RSA PRIVATE KEY":
-			if key, err = x509.ParsePKCS1PrivateKey(block.Bytes); err != nil {
-				return err
-			}
-		case "EC PRIVATE KEY":
-			if key, err = x509.ParseECPrivateKey(block.Bytes); err != nil {
-				return err
-			}
-		default:
-			return fmt.Errorf("unknown pem block type %q", block.Type)
-		}
-
-		s.keySet = &keySetJWKS{
-			jose.JSONWebKeySet{
-				Keys: []jose.JSONWebKey{{Key: key, KeyID: s.Cfg.JWTAuth.KeyID}},
-			},
+		if s.keySet, err = parsePEMPublicKey(data, s.Cfg.JWTAuth.KeyID); err != nil {
+			return err
 		}
 	} else if keyFilePath := s.Cfg.JWTAuth.JWKSetFile; keyFilePath != "" {
-		// nolint:gosec
-		// We can ignore the gosec G304 warning on this one because `fileName` comes from grafana configuration file
-		file, err := os.Open(keyFilePath)
+		data, err := s.readKeyFile(keyFilePath)
 		if err != nil {
 			return err
 		}
-		defer func() {
-			if err := file.Close(); err != nil {
-				s.log.Warn("Failed to close file", "path", keyFilePath, "err", err)
-			}
-		}()
-
-		var jwks jose.JSONWebKeySet
-		if err := json.NewDecoder(file).Decode(&jwks); err != nil {
+		if s.keySet, err = parseJWKS(data); err != nil {
 			return err
 		}
-
-		s.keySet = &keySetJWKS{jwks}
+	} else if jwkSetValue := s.Cfg.JWTAuth.JWKSetValue; jwkSetValue != "" {
+		data, err := decodeKeyValue(jwkSetValue)
+		if err != nil {
+			return err
+		}
+		if s.keySet, err = parseJWKS(data); err != nil {
+			return err
+		}
 	} else if urlStr := s.Cfg.JWTAuth.JWKSetURL; urlStr != "" {
 		urlParsed, err := url.Parse(urlStr)
 		if err != nil {
@@ -214,6 +182,82 @@ func (s *AuthService) initKeySet() error {
 	}
 
 	return nil
+}
+
+// readKeyFile reads the full contents of a key file referenced from the grafana configuration.
+func (s *AuthService) readKeyFile(path string) ([]byte, error) {
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `path` comes from grafana configuration file
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			s.log.Warn("Failed to close file", "path", path, "err", err)
+		}
+	}()
+
+	return io.ReadAll(file)
+}
+
+// decodeKeyValue base64-decodes an inline key value provided directly in the configuration.
+func decodeKeyValue(value string) ([]byte, error) {
+	data, err := base64.StdEncoding.DecodeString(strings.TrimSpace(value))
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrFailedToDecodeKeyValue, err)
+	}
+	return data, nil
+}
+
+// parsePEMPublicKey parses a single PEM-encoded key and wraps it in a JWKS using the given key ID.
+func parsePEMPublicKey(data []byte, keyID string) (*keySetJWKS, error) {
+	block, _ := pem.Decode(data)
+	if block == nil {
+		return nil, ErrFailedToParsePemFile
+	}
+
+	var key any
+	var err error
+	switch block.Type {
+	case "PUBLIC KEY":
+		if key, err = x509.ParsePKIXPublicKey(block.Bytes); err != nil {
+			return nil, err
+		}
+	case "PRIVATE KEY":
+		if key, err = x509.ParsePKCS8PrivateKey(block.Bytes); err != nil {
+			return nil, err
+		}
+	case "RSA PUBLIC KEY":
+		if key, err = x509.ParsePKCS1PublicKey(block.Bytes); err != nil {
+			return nil, err
+		}
+	case "RSA PRIVATE KEY":
+		if key, err = x509.ParsePKCS1PrivateKey(block.Bytes); err != nil {
+			return nil, err
+		}
+	case "EC PRIVATE KEY":
+		if key, err = x509.ParseECPrivateKey(block.Bytes); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unknown pem block type %q", block.Type)
+	}
+
+	return &keySetJWKS{
+		jose.JSONWebKeySet{
+			Keys: []jose.JSONWebKey{{Key: key, KeyID: keyID}},
+		},
+	}, nil
+}
+
+// parseJWKS parses a JWKS JSON document into a key set.
+func parseJWKS(data []byte) (*keySetJWKS, error) {
+	var jwks jose.JSONWebKeySet
+	if err := json.Unmarshal(data, &jwks); err != nil {
+		return nil, err
+	}
+	return &keySetJWKS{jwks}, nil
 }
 
 func (ks *keySetJWKS) Key(ctx context.Context, keyID string) ([]jose.JSONWebKey, error) {

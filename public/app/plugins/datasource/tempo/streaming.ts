@@ -27,10 +27,6 @@ import { formatTraceQLResponse } from './resultTransformer';
 import { type SearchMetrics, type TempoJsonData, type TempoQuery } from './types';
 import { stepToNanos } from './utils';
 
-/**
- * @TODO fix the import in public/app/features/explore/Table/TableContainer and remove the lintignore
- * @lintignore
- */
 export const TEMPO_STREAMING_PROGRESS_REF_ID = 'streaming-progress';
 
 function getLiveStreamKey(): string {

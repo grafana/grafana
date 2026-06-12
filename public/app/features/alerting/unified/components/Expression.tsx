@@ -18,7 +18,7 @@ interface Props {
   rulesSource: RulesSource;
 }
 
-export const HighlightedQuery: FC<{ language: 'promql' | 'logql'; expr: string }> = ({ language, expr }) => {
+const HighlightedQuery: FC<{ language: 'promql' | 'logql'; expr: string }> = ({ language, expr }) => {
   const plugins = useMemo(
     () => [
       SlatePrism(
@@ -52,7 +52,7 @@ export const Expression: FC<Props> = ({ expression: query, rulesSource }) => {
   );
 };
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   well: css({
     fontFamily: theme.typography.fontFamilyMonospace,
   }),
