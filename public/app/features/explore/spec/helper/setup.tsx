@@ -161,7 +161,9 @@ export function setupExplore(options?: SetupOptions): {
 
       return Promise.reject();
     },
-    reload() {},
+    reload() {
+      return Promise.resolve();
+    },
   });
 
   const previousEchoSrv = getEchoSrv();
