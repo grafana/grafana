@@ -338,8 +338,8 @@ describe('BulkActionsBar', () => {
           actionsOverrides: { bulkToggleTransformationsDisabled },
         });
 
-        // Transformations are enabled (no disabled flag), so button says "Disable all"
-        await user.click(screen.getByRole('button', { name: /disable all/i }));
+        // Transformations are enabled (no disabled flag), so button says "Disable"
+        await user.click(screen.getByRole('button', { name: /disable/i }));
         expect(bulkToggleTransformationsDisabled).toHaveBeenCalledWith(['tx-0', 'tx-1'], true);
         // Enable/Disable is an in-place toggle — the selection persists.
         expect(setMultiSelectMode).not.toHaveBeenCalled();
@@ -365,8 +365,8 @@ describe('BulkActionsBar', () => {
           actionsOverrides: { bulkToggleTransformationsDisabled },
         });
 
-        // All selected are disabled — button says "Enable all"
-        await user.click(screen.getByRole('button', { name: /enable all/i }));
+        // All selected are disabled — button says "Enable"
+        await user.click(screen.getByRole('button', { name: /enable/i }));
         expect(bulkToggleTransformationsDisabled).toHaveBeenCalledWith(['tx-0', 'tx-1'], false);
       });
     });
