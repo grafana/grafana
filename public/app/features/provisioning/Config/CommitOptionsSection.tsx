@@ -24,10 +24,7 @@ export function CommitOptionsSection<T extends FieldValues>({
   const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
 
   return (
-    <ControlledCollapse
-      label={t('provisioning.commit-options.label-commit-options', 'Commit options')}
-      isOpen={false}
-    >
+    <ControlledCollapse label={t('provisioning.commit-options.label-commit-options', 'Commit options')} isOpen={false}>
       <Stack direction="column" gap={2}>
         <Field
           noMargin
