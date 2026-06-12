@@ -22,6 +22,7 @@ func TestCrud(t *testing.T) {
 
 		sv1, err := sut.CreateSv(t.Context())
 		require.NoError(t, err)
+		require.NotZero(t, sv1.Status.Version)
 
 		// Create the same secure value twice
 		input := sv1.DeepCopy()
@@ -30,7 +31,8 @@ func TestCrud(t *testing.T) {
 
 		sv2, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(input))
 		require.NoError(t, err)
-		require.True(t, sv2.Status.Version > sv1.Status.Version)
+		require.NotZero(t, sv2.Status.Version)
+		require.NotEqual(t, sv2.Status.Version, sv1.Status.Version)
 
 		// Read the secure value
 		sv, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(sv2.Namespace), sv2.Name)
@@ -69,7 +71,7 @@ func TestCrud(t *testing.T) {
 		// Nothing has changed except for the updated field.
 		require.Equal(t, ns, sv2.Namespace)
 		require.Equal(t, name, sv2.Name)
-		require.True(t, sv2.Status.Version > sv1.Status.Version)
+		require.NotEqual(t, sv2.Status.Version, sv1.Status.Version)
 		require.Equal(t, "d2", sv2.Spec.Description)
 
 		require.Equal(t, ns, sv3.Namespace)

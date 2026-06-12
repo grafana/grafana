@@ -37,9 +37,9 @@ var (
 	sqlSecureValueAddGCRetryCount         = mustTemplate("secure_value_add_gc_retry_count.sql")
 	sqlSecureValueSetInactiveAllFromGroup = mustTemplate("secure_value_set_inactive_all_from_group.sql")
 
-	sqlGetLatestSecureValueVersionAndCreatedAt = mustTemplate("secure_value_get_latest_version_and_created_at.sql")
-	sqlSecureValueSetVersionToActive           = mustTemplate("secure_value_set_version_to_active.sql")
-	sqlSecureValueSetVersionToInactive         = mustTemplate("secure_value_set_version_to_inactive.sql")
+	sqlGetLatestSecureValueCreatedAtInfo = mustTemplate("secure_value_get_latest_created_at.sql")
+	sqlSecureValueSetVersionToActive     = mustTemplate("secure_value_set_version_to_active.sql")
+	sqlSecureValueSetVersionToInactive   = mustTemplate("secure_value_set_version_to_inactive.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -168,13 +168,13 @@ func (r readSecureValue) Validate() error {
 	return nil // TODO
 }
 
-type getLatestSecureValueVersionAndCreatedAt struct {
+type getLatestSecureValueCreatedAtInfo struct {
 	sqltemplate.SQLTemplate
 	Namespace string
 	Name      string
 }
 
-func (r getLatestSecureValueVersionAndCreatedAt) Validate() error {
+func (r getLatestSecureValueCreatedAtInfo) Validate() error {
 	return nil
 }
 

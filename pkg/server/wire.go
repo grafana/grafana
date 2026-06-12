@@ -58,6 +58,7 @@ import (
 	secretsgarbagecollectionworker "github.com/grafana/grafana/pkg/registry/apis/secret/garbagecollectionworker"
 	secretinline "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	secretmutator "github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
+	secretrand "github.com/grafana/grafana/pkg/registry/apis/secret/rand"
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
@@ -476,8 +477,10 @@ var wireBasicSet = wire.NewSet(
 	secretmigrator.NewWithEngine,
 	secretdatabase.ProvideDatabase,
 	secretclock.ProvideClock,
+	secretrand.ProvideRand,
 	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),
 	wire.Bind(new(secretcontracts.Clock), new(*secretclock.Clock)),
+	wire.Bind(new(secretcontracts.Rand), new(*secretrand.Rand)),
 	encryptionManager.ProvideEncryptionManager,
 	cipher.ProvideAESGCMCipherService,
 	// Unified storage

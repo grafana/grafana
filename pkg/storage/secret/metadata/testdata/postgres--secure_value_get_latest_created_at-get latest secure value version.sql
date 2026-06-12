@@ -1,7 +1,6 @@
 SELECT
   "created",
   "created_by",
-  "version",
   "active",
   "namespace",
   "name"
@@ -9,7 +8,7 @@ FROM
   "secret_secure_value"
 WHERE
   "namespace" = 'ns' AND
-  "name" = 'name'
-ORDER BY "version" DESC
+  "name" = 'name' AND
+  "active" = TRUE
 LIMIT 1
 ;
