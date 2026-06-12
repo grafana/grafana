@@ -37,9 +37,14 @@ export function AffectedFolderContents({ selectedItems, defaultMessage, emptyMes
     if (isLoading || isFetching) {
       contents = <Skeleton width={200} />;
     } else if (error) {
-      contents = t(
-        'browse-dashboards.affected-folder-contents-error',
-        "We couldn't get information about folder contents."
+      contents = (
+        <Alert
+          severity="warning"
+          title={t(
+            'browse-dashboards.affected-folder-contents-error',
+            "We couldn't get information about folder contents."
+          )}
+        />
       );
     } else if (data) {
       const folderIsEmpty = getFolderIsEmpty(data, selectedItems);

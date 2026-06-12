@@ -12,11 +12,13 @@ import type { FolderDTO } from 'app/types/folders';
 
 /**
  * Returns a memoized nav model while also resolving counts for the tabs.
- * @param folderDTO
- * @param activeTab
  */
 export function useNavModel(folderDTO: FolderDTO | undefined, activeTab: 'dashboards' | 'panels' | 'alerts') {
-  const folderCountsResult = useGetFolderCountsQuery(folderDTO?.uid ? { name: folderDTO.uid } : skipToken);
+  const folderCountsResult = useGetFolderCountsQuery(folderDTO?.uid ? { name: folderDTO.uid } : skipToken, {
+    // Always refetch the counts as we don't have a way to invalidate the cache when descendant resources are
+    // created or deleted because they are in separate RTK slices.
+    refetchOnMountOrArgChange: true,
+  });
   let panelsCount: number | undefined = undefined;
   let rulesCount: number | undefined = undefined;
 
