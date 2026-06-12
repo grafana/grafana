@@ -200,10 +200,12 @@ const getStyles = <T extends unknown>(
     sizes.unshift('0');
   }
 
+  const containerBorderRadius = 'lg';
+
   return (theme: GrafanaTheme2) => ({
     container: css({
       border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.lg,
+      borderRadius: theme.shape.radius[containerBorderRadius],
       color: theme.colors.text.secondary,
     }),
     row: css({
@@ -213,25 +215,21 @@ const getStyles = <T extends unknown>(
 
       '&:nth-child(2n + 1)': {
         backgroundColor: theme.colors.background.secondary,
-        // TODO improve getInternalRadius to allow specifying parent border tokens
         borderTopLeftRadius: getInternalRadius(theme, 0, {
-          parentBorderRadius: 10,
+          parentBorderRadius: containerBorderRadius,
         }),
-        // TODO improve getInternalRadius to allow specifying parent border tokens
         borderTopRightRadius: getInternalRadius(theme, 0, {
-          parentBorderRadius: 10,
+          parentBorderRadius: containerBorderRadius,
         }),
       },
 
       '&:nth-child(2n)': {
         backgroundColor: theme.colors.background.primary,
-        // TODO improve getInternalRadius to allow specifying parent border tokens
         borderBottomLeftRadius: getInternalRadius(theme, 0, {
-          parentBorderRadius: 10,
+          parentBorderRadius: containerBorderRadius,
         }),
-        // TODO improve getInternalRadius to allow specifying parent border tokens
         borderBottomRightRadius: getInternalRadius(theme, 0, {
-          parentBorderRadius: 10,
+          parentBorderRadius: containerBorderRadius,
         }),
       },
 

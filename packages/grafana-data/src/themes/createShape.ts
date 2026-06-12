@@ -29,7 +29,7 @@ export interface Radii {
    */
   sm: string;
   /**
-   * Use for large things, like modals
+   * Use for large things, like modals and containers
    */
   lg: string;
   /**
