@@ -214,7 +214,7 @@ A panel's **Queries** tab consists of the following elements:
 - **Query inspector button** - Opens the query inspector panel, where you can view and optimize your query.
 - **Query editor list** - The list of queries you've written. Each query can be expanded or collapsed.
 - **Expressions** - Uses the expression builder to create alert expressions.
-  For more information about expressions, refer to [Use expressions to manipulate data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/).
+  For more information about expressions, refer to [Use expressions to manipulate data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/expression-queries/).
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-queries-tab2-v11.6.png" max-width="750px" alt="The Query tab of the panel editor" >}}
 
@@ -325,7 +325,7 @@ Panel data source query options include:
   As the user zooms out on a visualization, the interval grows, resulting in a more coarse-grained aggregation.
   Likewise, if the user zooms in, the interval decreases, resulting in a more fine-grained aggregation.
 
-  For more information, refer to [Global variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables).
+  For more information, refer to [Global variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#global-variables).
 
 - **Relative time** - Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard.
   You can use this to show metrics from different time periods or days on the same dashboard.
