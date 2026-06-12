@@ -78,7 +78,7 @@ func (f SearchFieldDefinition) HasCapability(c SearchCapability) bool {
 	return slices.Contains(f.Capabilities, c)
 }
 
-// searchFieldsFromTableColumns translates the legacy
+// SearchFieldsFromTableColumns translates the legacy
 // *resourcepb.ResourceTableColumnDefinition column list into the new internal
 // SearchFieldDefinition representation. Bleve mapping code uses the new type
 // while the rest of the codebase continues to declare fields with the protobuf
@@ -90,7 +90,7 @@ func (f SearchFieldDefinition) HasCapability(c SearchCapability) bool {
 //
 // Nil entries are dropped. Protobuf types that have no corresponding
 // SearchFieldType (OBJECT, BINARY, UNKNOWN_TYPE) yield SearchFieldTypeUnknown.
-func searchFieldsFromTableColumns(cols []*resourcepb.ResourceTableColumnDefinition) []SearchFieldDefinition {
+func SearchFieldsFromTableColumns(cols []*resourcepb.ResourceTableColumnDefinition) []SearchFieldDefinition {
 	out := make([]SearchFieldDefinition, 0, len(cols))
 	for _, c := range cols {
 		if c == nil {
