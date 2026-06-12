@@ -101,6 +101,7 @@ export function PieChartPanel(props: Props) {
   const gradientFills = allGradientFills.size > 0 ? allGradientFills : undefined;
 
   return (
+      <div style={{outline: "none"}}>
     <VizLayout width={width} height={height} legend={getLegend(props, fieldDisplayValues, gradientFills)}>
       {(vizWidth: number, vizHeight: number) => {
         return (
@@ -234,6 +235,7 @@ function useSliceHighlightState() {
     return () => {
       subs.unsubscribe();
     };
+      </div>
   }, [setHighlightedTitle, eventBus]);
 
   return highlightedTitle;
