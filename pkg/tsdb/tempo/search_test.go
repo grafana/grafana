@@ -175,6 +175,72 @@ func TestTransformTraceSearchResponse_UsesSpanSetsWhenSpanSetMissing(t *testing.
 	assert.Len(t, nestedFrames, 2)
 }
 
+func TestTransformTraceSearchResponse_SingularSpanSet(t *testing.T) {
+	// A single (singular) trace.SpanSet must still drive the unified-schema path:
+	// it produces exactly one nested frame whose dynamic-attribute columns carry
+	// the span's values. The plural trace.SpanSets case is covered separately.
+	pCtx := backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{UID: "u", Name: "n"}}
+	resp := &tempopb.SearchResponse{Traces: []*tempopb.TraceSearchMetadata{{
+		TraceID:           "test-trace-id",
+		RootServiceName:   "test-service-name",
+		RootTraceName:     "test-root-trace-name",
+		StartTimeUnixNano: 1000000,
+		DurationMs:        10,
+		SpanSet: &tempopb.SpanSet{
+			Spans: []*tempopb.Span{{
+				SpanID:            "span1",
+				Name:              "op1",
+				StartTimeUnixNano: 1000000,
+				DurationNanos:     1000,
+				Attributes: []*v1.KeyValue{
+					{Key: "http.method", Value: &v1.AnyValue{Value: &v1.AnyValue_StringValue{StringValue: "GET"}}},
+				},
+			}},
+		},
+	}}}
+
+	frames, err := transformTraceSearchResponse(pCtx, resp)
+	require.NoError(t, err)
+	require.Len(t, frames, 1)
+	require.Equal(t, 1, frames[0].Rows())
+
+	var nestedFrames []json.RawMessage
+	require.NoError(t, json.Unmarshal(frames[0].Fields[5].At(0).(json.RawMessage), &nestedFrames))
+	require.Len(t, nestedFrames, 1)
+
+	type schemaField struct {
+		Name string `json:"name"`
+	}
+	type frameEnvelope struct {
+		Schema struct {
+			Fields []schemaField `json:"fields"`
+		} `json:"schema"`
+		Data struct {
+			Values [][]any `json:"values"`
+		} `json:"data"`
+	}
+
+	var env frameEnvelope
+	require.NoError(t, json.Unmarshal(nestedFrames[0], &env))
+
+	names := make([]string, 0, len(env.Schema.Fields))
+	for _, f := range env.Schema.Fields {
+		names = append(names, f.Name)
+	}
+	require.Contains(t, names, "http.method")
+
+	methodIdx := -1
+	for i, n := range names {
+		if n == "http.method" {
+			methodIdx = i
+			break
+		}
+	}
+	require.GreaterOrEqual(t, methodIdx, 0)
+	require.Len(t, env.Data.Values[methodIdx], 1)
+	assert.Equal(t, "GET", env.Data.Values[methodIdx][0])
+}
+
 func TestTransformTraceSearchResponseSubFrame_MissingDynamicAttributeUsesNil(t *testing.T) {
 	pCtx := backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{UID: "u", Name: "n"}}
 	trace := &tempopb.TraceSearchMetadata{
@@ -363,7 +429,7 @@ func TestTransformTraceSearchResponse_NestedFramesShareUnifiedSchema(t *testing.
 		Fields []schemaField `json:"fields"`
 	}
 	type frameData struct {
-		Values [][]interface{} `json:"values"`
+		Values [][]any `json:"values"`
 	}
 	type frameEnvelope struct {
 		Schema frameSchema `json:"schema"`
