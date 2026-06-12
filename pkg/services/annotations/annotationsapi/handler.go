@@ -1,13 +1,15 @@
 package annotationsapi
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	annotationpkg "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -22,10 +24,17 @@ var ErrNotFound = errors.New("annotation not found in new store")
 type MigrationProxy struct {
 	client *annotationAPIClient
 	phase  string
+	logger log.Logger
 }
 
 func ProvideMigrationProxy(cfg *setting.Cfg, userSvc user.Service) (*MigrationProxy, error) {
 	phase := cfg.AnnotationAppPlatform.APIMigrationPhase
+	switch phase {
+	case "off", "proxy-writes", "proxy-all":
+	default:
+		return nil, fmt.Errorf("annotation proxy: unknown api_migration_phase %q: must be one of off, proxy-writes, proxy-all", phase)
+	}
+
 	if phase != "off" && strings.TrimSpace(cfg.AnnotationAppPlatform.APIServerURL) == "" {
 		return nil, fmt.Errorf("annotation proxy: api_server_url must be set when api_migration_phase is %q", phase)
 	}
@@ -38,6 +47,7 @@ func ProvideMigrationProxy(cfg *setting.Cfg, userSvc user.Service) (*MigrationPr
 	return &MigrationProxy{
 		client: c,
 		phase:  phase,
+		logger: log.New("annotationsapi"),
 	}, nil
 }
 
@@ -68,7 +78,11 @@ func (h *MigrationProxy) List(ctx context.Context, orgID int64, query *annotatio
 	}
 	userMap := map[string]*user.User{}
 	if len(createdByMeta) > 0 {
-		userMap, _ = h.client.GetUsersFromMeta(ctx, createdByMeta)
+		var err error
+		userMap, err = h.client.GetUsersFromMeta(ctx, createdByMeta)
+		if err != nil {
+			h.logger.Warn("failed to hydrate annotation users", "err", err)
+		}
 	}
 
 	dtos := make([]*annotations.ItemDTO, 0, len(annos))
@@ -100,11 +114,11 @@ func Merge(newItems, legacyItems []*annotations.ItemDTO, limit int64) []*annotat
 		}
 	}
 
-	sort.Slice(merged, func(i, j int) bool {
-		if merged[i].TimeEnd != merged[j].TimeEnd {
-			return merged[i].TimeEnd > merged[j].TimeEnd
+	slices.SortFunc(merged, func(a, b *annotations.ItemDTO) int {
+		if n := cmp.Compare(b.TimeEnd, a.TimeEnd); n != 0 {
+			return n
 		}
-		return merged[i].Time > merged[j].Time
+		return cmp.Compare(b.Time, a.Time)
 	})
 
 	if limit > 0 && int64(len(merged)) > limit {
@@ -132,6 +146,13 @@ func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID i
 	anno.SetName(existing.GetName())
 	anno.SetResourceVersion(existing.GetResourceVersion())
 	annotationpkg.SetLegacyID(anno, annotationID)
+	// Preserve fields absent from the update command so the PUT doesn't clear them.
+	if anno.Spec.DashboardUID == nil {
+		anno.Spec.DashboardUID = existing.Spec.DashboardUID
+	}
+	if anno.Spec.PanelID == nil {
+		anno.Spec.PanelID = existing.Spec.PanelID
+	}
 	_, err = h.client.Update(ctx, orgID, anno)
 	return err
 }

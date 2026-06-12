@@ -379,8 +379,16 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		switch {
 		case err == nil:
 			existing := annotations.Item{
-				OrgID: c.GetOrgID(), UserID: userID,
-				Epoch: base.Time, EpochEnd: base.TimeEnd, Text: base.Text, Tags: base.Tags,
+				OrgID:    c.GetOrgID(),
+				UserID:   userID,
+				Epoch:    base.Time,
+				EpochEnd: base.TimeEnd,
+				Text:     base.Text,
+				Tags:     base.Tags,
+				PanelID:  base.PanelID,
+			}
+			if base.DashboardUID != nil {
+				existing.DashboardUID = *base.DashboardUID
 			}
 			if cmd.Tags != nil {
 				existing.Tags = cmd.Tags
