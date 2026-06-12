@@ -38,19 +38,16 @@ export const AnnotationListItem = ({ options, annotation, formatDate, onClick, o
       tabIndex={0}
       className={styles.row}
       onClick={(e) => {
-        // A link inside the annotation text handles its own navigation; clicking
-        // anywhere else on the row opens the annotation.
         if (e.target instanceof Element && e.target.closest('a')) {
           return;
         }
         onItemClick();
       }}
       onKeyDown={(e) => {
-        // A focused link inside the annotation text handles its own activation;
-        // bail so we don't cancel it and navigate the row instead.
         if (e.target instanceof Element && e.target.closest('a')) {
           return;
         }
+
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           onItemClick();
