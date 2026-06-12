@@ -14056,7 +14056,6 @@
     },
     "bulk-actions": {
       "change-datasource": "Change data source for selected queries",
-      "clear-selection": "Clear selection",
       "datasource": "Data source",
       "delete": "Delete",
       "delete-confirm-body": "This action cannot be undone.",
@@ -14069,6 +14068,7 @@
       "disable-all-tooltip": "Disable all selected",
       "enable-all": "Enable all",
       "enable-all-tooltip": "Enable all selected",
+      "exit-multi-select-mode": "Exit multi-select mode",
       "hide": "Hide",
       "hide-all-tooltip": "Hide all selected",
       "show": "Show",

@@ -272,8 +272,8 @@ export function BulkActionsBar() {
           fill="text"
           icon="times"
           onClick={handleClear}
-          tooltip={t('query-editor-next.bulk-actions.clear-selection', 'Clear selection')}
-          aria-label={t('query-editor-next.bulk-actions.clear-selection', 'Clear selection')}
+          tooltip={t('query-editor-next.bulk-actions.exit-multi-select-mode', 'Exit multi-select mode')}
+          aria-label={t('query-editor-next.bulk-actions.exit-multi-select-mode', 'Exit multi-select mode')}
         />
       </div>
     </div>
