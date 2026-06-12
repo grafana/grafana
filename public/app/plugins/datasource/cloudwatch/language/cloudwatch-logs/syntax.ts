@@ -25,9 +25,6 @@ export const QUERY_COMMANDS: CompletionItem[] = [
   },
 ];
 
-export const COMPARISON_OPERATORS = ['=', '!=', '<', '<=', '>', '>='];
-export const ARITHMETIC_OPERATORS = ['+', '-', '*', '/', '^', '%'];
-
 export const NUMERIC_OPERATORS = [
   {
     label: 'abs',
@@ -66,7 +63,7 @@ export const NUMERIC_OPERATORS = [
   },
 ];
 
-export const GENERAL_FUNCTIONS = [
+const GENERAL_FUNCTIONS = [
   {
     label: 'ispresent',
     detail: 'ispresent(fieldname)',
@@ -276,7 +273,7 @@ export const AGGREGATION_FUNCTIONS_STATS = [
   },
 ];
 
-export const NON_AGGREGATION_FUNCS_STATS = [
+const NON_AGGREGATION_FUNCS_STATS = [
   {
     label: 'earliest',
     detail: 'earliest(fieldname)',
@@ -301,7 +298,7 @@ export const NON_AGGREGATION_FUNCS_STATS = [
   },
 ];
 
-export const STATS_FUNCS = [...AGGREGATION_FUNCTIONS_STATS, ...NON_AGGREGATION_FUNCS_STATS];
+const STATS_FUNCS = [...AGGREGATION_FUNCTIONS_STATS, ...NON_AGGREGATION_FUNCS_STATS];
 
 export const KEYWORDS = ['as', 'like', 'by', 'in', 'desc', 'asc'];
 export const FIELD_AND_FILTER_FUNCTIONS = [

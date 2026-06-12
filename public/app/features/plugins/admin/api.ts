@@ -279,5 +279,3 @@ export async function getPluginEntitlement(id: string): Promise<boolean> {
     return false;
   }
 }
-
-export const api = { getRemotePlugins, getInstalledPlugins: getLocalPlugins, installPlugin, uninstallPlugin };

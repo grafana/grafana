@@ -1194,12 +1194,6 @@
       "label-metric": "Метрика",
       "label-pending-period": "Период ожидания"
     },
-    "evaluation-group": {
-      "label-delete": "Удалить",
-      "label-export": "Экспорт",
-      "label-reorder-rules": "Изменить порядок правил",
-      "text-provisioned": "Подготовлено"
-    },
     "evaluation-group-creation-modal": {
       "description-group-name": "Оценка всех правил группы осуществляется в одном и том же интервале оценки.",
       "description-often-rules-group-evaluated": "Частота оценки всех правил в группе.",
@@ -1208,9 +1202,6 @@
       },
       "placeholder-enter-a-name": "Введите название",
       "title-new-evaluation-group": "Новая группа оценки"
-    },
-    "evaluation-group-loader": {
-      "title-something-wrong-trying-fetch-group-details": "Ошибка при попытке получить данные группы"
     },
     "existing-rule-editor": {
       "sorry-permission": "Извините, у вас нет разрешения на редактирование этого правила.",
@@ -1989,9 +1980,7 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "Для этого источника данных не установлены правила",
         "new-alert-rule": "Новое правило оповещения",
-        "new-ds-managed-alerting-rule": "Новое правило оповещения, управляемое источником данных",
         "new-ds-managed-recording-rule": "Новое правило записи, управляемое источником данных",
         "new-grafana-alerting-rule": "Новое правило оповещения",
         "new-grafana-recording-rule": "Новое правило записи",
@@ -2576,22 +2565,9 @@
         "aria-label": "добавить политику",
         "text": "Новая политика уведомлений"
       },
-      "delete-reasons": {
-        "no-permissions": "У вас нет разрешения на удаление этой политики уведомлений",
-        "provisioned": "Политика уведомлений подготовлена и не может быть удалена через пользовательский интерфейс"
-      },
-      "delete-text": "Невозможно удалить политику уведомлений. Причины:",
-      "empty-state": {
-        "message": "Политики не найдены"
-      },
       "fetch": {
         "error": "Не удалось получить политики"
       },
-      "reset-reasons": {
-        "no-permissions": "У вас нет разрешения на сброс этой политики уведомлений",
-        "provisioned": "Политика уведомлений подготовлена и не может быть сброшена через пользовательский интерфейс"
-      },
-      "reset-text": "Невозможно сбросить политику уведомлений. Причины:",
       "text-loading": "Загрузка...."
     },
     "policies-tree-wrapper": {
@@ -2801,16 +2777,6 @@
       "label-override-timings": "Переопределить временные рамки",
       "repeat-interval": "Интервал повторения: <strong>{{repeatIntervalValue}}</strong>"
     },
-    "routing-tree-filter": {
-      "aria-label-clear": "очистить",
-      "aria-label-search-routing-trees": "поиск деревьев маршрутизации",
-      "clear": "Очистить",
-      "label-search-by-name-or-receiver": "Поиск по имени политики или точке контакта",
-      "placeholder-search": "Поиск"
-    },
-    "routing-tree-header": {
-      "reset": "Сброс"
-    },
     "rule-actions-buttons": {
       "title-edit": "Редактировать",
       "title-view": "Просмотр"
@@ -3016,7 +2982,6 @@
       "return-button": {
         "title": "Правила оповещения"
       },
-      "rulerrule-loading-error": "Не удалось загрузить правило",
       "toggle": {
         "use-new-experience": "Использовать новый интерфейс",
         "view-previous-experience": "К предыдущему интерфейсу"
@@ -3619,9 +3584,6 @@
       "collapse": "Свернуть",
       "collapse-all": "Свернуть все",
       "collapse-sidebar": "Свернуть боковую панель",
-      "compact-firing": "активно",
-      "compact-pending": "в ожидании",
-      "compact-rules": "правила",
       "error-loading-rule": "Ошибка при загрузке правила",
       "expand": "Развернуть",
       "expand-all": "Развернуть все",
@@ -5437,6 +5399,8 @@
     },
     "code-pane": {
       "collapse": "Свернуть редактор",
+      "copy-as-resource": "",
+      "copy-as-resource-tooltip": "",
       "expand": "Развернуть редактор",
       "header": "Отредактируйте как код",
       "modal-title": "Отредактируйте дашборд как код"
@@ -5736,8 +5700,7 @@
           "apply": "Применить",
           "change-value": "Изменить значение переменной",
           "discard": "Отменить",
-          "modal-title": "Пользовательские параметры",
-          "values": "Значения, разделенные запятыми"
+          "modal-title": "Пользовательские параметры"
         },
         "datasource-options": {
           "name-filter": "Фильтр по названию",
@@ -5962,7 +5925,6 @@
     },
     "inspect": {
       "data-tab": "Данные",
-      "error-tab": "Ошибка",
       "json-tab": "JSON",
       "meta-tab": "Метаданные",
       "query-tab": "Запрос",
@@ -6077,13 +6039,6 @@
       "new-row": {
         "title": {
           "row-title": "Заголовок строки"
-        }
-      }
-    },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "Название виджета"
         }
       }
     },
@@ -8881,19 +8836,6 @@
     "span-bar-row": {
       "tooltip-adaptive-traces-restored": ""
     },
-    "span-bar-section": {
-      "description-link": "Добавьте дополнительную информацию рядом со службой и операцией в строке панели диапазонов в представлении трассировки.",
-      "title-span-bar": "Панель диапазонов"
-    },
-    "span-bar-settings": {
-      "aria-label-selectlabelname": "Выберите имя метки",
-      "label-label": "Метка",
-      "label-tag-key": "Ключ тега",
-      "placeholder-duration": "Длительность",
-      "placeholder-enter-tag-key": "Ввести ключ тега",
-      "tooltip-default-duration": "По умолчанию: длительность",
-      "tooltip-tag-key": "Ключ тега, который будет использоваться для получения значения тега. Поиск атрибутов и ресурсов диапазона будет производиться по ключу тега"
-    },
     "span-detail": {
       "label": {
         "kind": "Вид:",
@@ -9130,13 +9072,6 @@
       "folder-deleted-success": "Папка удалена",
       "folder-move-error-provisioned": "Невозможно переместить подготовленную папку. Сначала перенесети ее в репозиторий и выполните синхронизацию, чтобы применить изменения.",
       "folder-moved-success": "Папка перемещена"
-    },
-    "get-loading-nav": {
-      "main": {
-        "title": {
-          "loading": "Загрузка"
-        }
-      }
     }
   },
   "forgot-password": {
@@ -11752,11 +11687,6 @@
     "noOptionsMessage-no-options-found": "Параметры не найдены"
   },
   "migrate-to-cloud": {
-    "build-snapshot": {
-      "description": "Инструмент может перенести некоторые ресурсы из этого экземпляра в облачный стек. Чтобы начать, вам нужно создать снимок этого экземпляра. Создание снимка обычно занимает менее двух минут. Снимок хранится вместе с этим экземпляром Grafana.",
-      "title": "Снимок отсутствует",
-      "when-complete": "После создания снимка вы сможете загрузить его в облачный стек."
-    },
     "building-snapshot": {
       "description": "Мы собираем ваши ресурсы для переноса в Grafana Cloud. Это займет всего несколько секунд.",
       "description-eta": "Создание снимка обычно занимает менее двух минут.",
@@ -12620,13 +12550,6 @@
       "search": "Поиск",
       "starred-dashboards": "Помеченные дашборды"
     },
-    "get-calculation-value-data-links-variable-suggestions": {
-      "value-calc-var": {
-        "label": {
-          "calculation-name": "Название расчета"
-        }
-      }
-    },
     "get-data-links-variable-suggestions": {
       "value-time-var": {
         "label": {
@@ -13277,6 +13200,14 @@
       "folders-count_many": "{{count}} папок",
       "folders-count_other": "{{count}} папки"
     },
+    "branch-options": {
+      "description-enforce-template": "",
+      "description-name-template": "",
+      "label-branch-options": "",
+      "label-enforce-template": "",
+      "label-name-template": "",
+      "placeholder-name-template": ""
+    },
     "cloud-info-box": {
       "body": "Не тратьте время на настройку и получите полностью управляемое и размещенное на платформе Grafana Cloud решение Git Sync с <2>бессрочным бесплатным планом Grafana Cloud</2>.",
       "title": "Вы также можете использовать Git Sync в Grafana Cloud"
@@ -13295,6 +13226,11 @@
       "folder-move-default": "",
       "folder-rename-default": "",
       "folder-update-default": ""
+    },
+    "commit-options": {
+      "description-enforce-template": "",
+      "label-commit-options": "",
+      "label-enforce-template": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Параметры репозитория сохранены",
@@ -13738,6 +13674,14 @@
           "repository-request-failed": "Не удалось выполнить запрос к репозиторию"
         }
       }
+    },
+    "pull-request-options": {
+      "description-enforce-template": "",
+      "description-title-template": "",
+      "label-enforce-template": "",
+      "label-pull-request-options": "",
+      "label-title-template": "",
+      "placeholder-title-template": ""
     },
     "quota-limit": {
       "note": "Примечание.",
@@ -14390,6 +14334,10 @@
       "query": "",
       "transformation": ""
     },
+    "queries-empty-state": {
+      "add-query": "",
+      "message": ""
+    },
     "sidebar": {
       "add-below": "Добавить под {{id}}",
       "add-expression": "Добавить выражение",
@@ -14408,9 +14356,11 @@
       "footer-select": "",
       "footer-select-label": "",
       "new-type": "Новый {{type}}",
+      "queries-empty": "",
       "queries-expressions": "Запросы и выражения",
       "toggle-size": "Переключить размер боковой панели",
       "transformations": "Преобразования",
+      "transformations-empty": "",
       "view-toggle": "Просмотр",
       "alerts_one": "Оповещения ({{count}})",
       "alerts_few": "Оповещения ({{count}})",

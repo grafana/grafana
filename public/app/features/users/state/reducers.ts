@@ -68,7 +68,7 @@ const usersSlice = createSlice({
 
 export const {
   searchQueryChanged,
-  setUsersSearchPage,
+
   usersLoaded,
   usersFetchBegin,
   usersFetchEnd,

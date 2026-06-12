@@ -1180,12 +1180,6 @@
       "label-metric": "Metrica",
       "label-pending-period": "Periodo di attesa"
     },
-    "evaluation-group": {
-      "label-delete": "Elimina",
-      "label-export": "Esporta",
-      "label-reorder-rules": "Riordina regole",
-      "text-provisioned": "Fornito"
-    },
     "evaluation-group-creation-modal": {
       "description-group-name": "Un gruppo valuta tutte le sue regole sullo stesso intervallo di valutazione.",
       "description-often-rules-group-evaluated": "Con quale frequenza vengono valutate tutte le regole del gruppo.",
@@ -1194,9 +1188,6 @@
       },
       "placeholder-enter-a-name": "Inserisci un nome",
       "title-new-evaluation-group": "Nuovo gruppo di valutazione"
-    },
-    "evaluation-group-loader": {
-      "title-something-wrong-trying-fetch-group-details": "Si è verificato un errore durante il recupero dei dettagli del gruppo"
     },
     "existing-rule-editor": {
       "sorry-permission": "Ci dispiace! Non hai l'autorizzazione per modificare questa regola.",
@@ -1967,9 +1958,7 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "Questa origine dei dati non ha regole configurate",
         "new-alert-rule": "Nuova regola di avviso",
-        "new-ds-managed-alerting-rule": "Nuova regola di avviso gestita dall'origine dei dati",
         "new-ds-managed-recording-rule": "Nuova regola di registrazione gestita dall'origine dati",
         "new-grafana-alerting-rule": "Nuova regola di avviso",
         "new-grafana-recording-rule": "Nuova regola di registrazione",
@@ -2540,22 +2529,9 @@
         "aria-label": "aggiungi criterio",
         "text": "Nuovo criterio di notifica"
       },
-      "delete-reasons": {
-        "no-permissions": "Non disponi dell'autorizzazione necessaria per eliminare questo criterio di notifica",
-        "provisioned": "Il criterio di notifica è stato sottoposto a provisioning e non può essere eliminato tramite l'interfaccia utente"
-      },
-      "delete-text": "Il criterio di notifica non può essere eliminato per i seguenti motivi:",
-      "empty-state": {
-        "message": "Nessun criterio trovato"
-      },
       "fetch": {
         "error": "Impossibile recuperare i criteri"
       },
-      "reset-reasons": {
-        "no-permissions": "Non disponi dell'autorizzazione necessaria per reimpostare questo criterio di notifica",
-        "provisioned": "Il criterio di notifica è stato sottoposto a provisioning e non può essere reimpostato tramite l'interfaccia utente"
-      },
-      "reset-text": "Il criterio di notifica non può essere reimpostato per i seguenti motivi:",
       "text-loading": "Caricamento in corso..."
     },
     "policies-tree-wrapper": {
@@ -2765,16 +2741,6 @@
       "label-override-timings": "Sovrascrivi orari",
       "repeat-interval": "Intervallo di ripetizione: <strong>{{repeatIntervalValue}}</strong>"
     },
-    "routing-tree-filter": {
-      "aria-label-clear": "cancella",
-      "aria-label-search-routing-trees": "ricerca struttura di instradamento",
-      "clear": "Cancella",
-      "label-search-by-name-or-receiver": "Cerca per nome del criterio o punto di contatto",
-      "placeholder-search": "Cerca"
-    },
-    "routing-tree-header": {
-      "reset": "Ripristina"
-    },
     "rule-actions-buttons": {
       "title-edit": "Modifica",
       "title-view": "Visualizza"
@@ -2980,7 +2946,6 @@
       "return-button": {
         "title": "Regole di avviso"
       },
-      "rulerrule-loading-error": "Impossibile caricare la regola",
       "toggle": {
         "use-new-experience": "Usa la nuova esperienza",
         "view-previous-experience": "Torna all'esperienza precedente"
@@ -3577,9 +3542,6 @@
       "collapse": "Comprimi",
       "collapse-all": "Comprimi tutto",
       "collapse-sidebar": "Comprimi barra laterale",
-      "compact-firing": "in attivazione",
-      "compact-pending": "in attesa",
-      "compact-rules": "regole",
       "error-loading-rule": "Errore durante il caricamento della regola",
       "expand": "Espandi",
       "expand-all": "Espandi tutto",
@@ -5373,6 +5335,8 @@
     },
     "code-pane": {
       "collapse": "Comprimi editor",
+      "copy-as-resource": "",
+      "copy-as-resource-tooltip": "",
       "expand": "Espandi editor",
       "header": "Modifica come codice",
       "modal-title": "Modifica la dashboard come codice"
@@ -5672,8 +5636,7 @@
           "apply": "Applica",
           "change-value": "Modifica il valore variabile",
           "discard": "Annulla",
-          "modal-title": "Opzioni personalizzate",
-          "values": "Valori separati da virgola"
+          "modal-title": "Opzioni personalizzate"
         },
         "datasource-options": {
           "name-filter": "Filtro nome",
@@ -5898,7 +5861,6 @@
     },
     "inspect": {
       "data-tab": "Data",
-      "error-tab": "Errore",
       "json-tab": "JSON",
       "meta-tab": "Meta dati",
       "query-tab": "Query",
@@ -6013,13 +5975,6 @@
       "new-row": {
         "title": {
           "row-title": "Titolo riga"
-        }
-      }
-    },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "Titolo del widget"
         }
       }
     },
@@ -8781,19 +8736,6 @@
     "span-bar-row": {
       "tooltip-adaptive-traces-restored": ""
     },
-    "span-bar-section": {
-      "description-link": "Aggiungi ulteriori informazioni accanto al servizio e all'operazione su una riga della barra di intervallo nella visualizzazione della traccia.",
-      "title-span-bar": "Barra di intervallo"
-    },
-    "span-bar-settings": {
-      "aria-label-selectlabelname": "Seleziona nome etichetta",
-      "label-label": "Etichetta",
-      "label-tag-key": "Chiave tag",
-      "placeholder-duration": "Durata",
-      "placeholder-enter-tag-key": "Inserisci la chiave del tag",
-      "tooltip-default-duration": "Impostazione predefinita: durata",
-      "tooltip-tag-key": "Chiave tag che verrà utilizzata per ottenere il valore del tag. Gli attributi e le risorse di un intervallo verranno cercati per la chiave del tag"
-    },
     "span-detail": {
       "label": {
         "kind": "Tipo:",
@@ -9030,13 +8972,6 @@
       "folder-deleted-success": "Cartella eliminata",
       "folder-move-error-provisioned": "Impossibile spostare la cartella configurata. Per spostarla, trasferiscila nel repository ed esegui la sincronizzazione per applicare le modifiche.",
       "folder-moved-success": "Cartella spostata"
-    },
-    "get-loading-nav": {
-      "main": {
-        "title": {
-          "loading": "Caricamento"
-        }
-      }
     }
   },
   "forgot-password": {
@@ -11616,11 +11551,6 @@
     "noOptionsMessage-no-options-found": "Nessuna opzione trovata"
   },
   "migrate-to-cloud": {
-    "build-snapshot": {
-      "description": "Questo strumento può migrare alcune risorse da questa installazione al tuo stack cloud. Per iniziare, è necessario creare un'istantanea di questa installazione. La creazione di un'istantanea richiede in genere meno di due minuti. L'istantanea viene archiviata insieme a questa installazione di Grafana.",
-      "title": "Non esiste alcuna istantanea",
-      "when-complete": "Una volta completata l'istantanea, potrai caricarla sul tuo stack cloud."
-    },
     "building-snapshot": {
       "description": "Stiamo raccogliendo le tue risorse per la migrazione a Grafana Cloud. L'operazione dovrebbe richiedere solo un attimo.",
       "description-eta": "La creazione di un'istantanea richiede in genere meno di due minuti. ",
@@ -12478,13 +12408,6 @@
       "search": "Cerca",
       "starred-dashboards": "Dashboard preferite"
     },
-    "get-calculation-value-data-links-variable-suggestions": {
-      "value-calc-var": {
-        "label": {
-          "calculation-name": "Nome calcolo"
-        }
-      }
-    },
     "get-data-links-variable-suggestions": {
       "value-time-var": {
         "label": {
@@ -13129,6 +13052,14 @@
       "folders-count_one": "{{count}} cartella",
       "folders-count_other": "{{count}} cartella"
     },
+    "branch-options": {
+      "description-enforce-template": "",
+      "description-name-template": "",
+      "label-branch-options": "",
+      "label-enforce-template": "",
+      "label-name-template": "",
+      "placeholder-name-template": ""
+    },
     "cloud-info-box": {
       "body": "Ignora la configurazione e utilizza Git Sync completamente gestito e ospitato su Grafana Cloud con il <2>piano Grafana Cloud gratuito per sempre</2>.",
       "title": "Puoi anche utilizzare la sincronizzazione Git su Grafana Cloud"
@@ -13147,6 +13078,11 @@
       "folder-move-default": "",
       "folder-rename-default": "",
       "folder-update-default": ""
+    },
+    "commit-options": {
+      "description-enforce-template": "",
+      "label-commit-options": "",
+      "label-enforce-template": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Impostazioni del repository salvate",
@@ -13584,6 +13520,14 @@
           "repository-request-failed": "Richiesta del repository non riuscita"
         }
       }
+    },
+    "pull-request-options": {
+      "description-enforce-template": "",
+      "description-title-template": "",
+      "label-enforce-template": "",
+      "label-pull-request-options": "",
+      "label-title-template": "",
+      "placeholder-title-template": ""
     },
     "quota-limit": {
       "note": "Nota:",
@@ -14214,6 +14158,10 @@
       "query": "",
       "transformation": ""
     },
+    "queries-empty-state": {
+      "add-query": "",
+      "message": ""
+    },
     "sidebar": {
       "add-below": "Aggiungi {{id}} sotto",
       "add-expression": "Aggiungi espressione",
@@ -14232,9 +14180,11 @@
       "footer-select": "",
       "footer-select-label": "",
       "new-type": "Nuovo {{type}}",
+      "queries-empty": "",
       "queries-expressions": "Query ed espressioni",
       "toggle-size": "Attiva/disattiva dimensione barra laterale",
       "transformations": "Trasformazioni",
+      "transformations-empty": "",
       "view-toggle": "Visualizza",
       "alerts_one": "Avviso ({{count}})",
       "alerts_other": "Avviso ({{count}})",
