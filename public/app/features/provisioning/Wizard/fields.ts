@@ -23,8 +23,8 @@ export interface FieldConfig {
 // Provider-specific field configurations for all providers
 // This needs to be a function for translations to work
 const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => {
-  // Shared field descriptions used across multiple providers
-  const shared = {
+  // Commit signing fields are identical across all git-based providers.
+  const signingFields = {
     signingMethod: {
       label: t('provisioning.shared.signing-method-label', 'Commit signing'),
       description: t(
@@ -55,6 +55,10 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       description: t('provisioning.shared.commit-signer-email-description', 'Must match the signing key identity.'),
       placeholder: t('provisioning.shared.commit-signer-email-placeholder', 'noreply@grafana.com'),
     },
+  };
+
+  // Shared field descriptions used across multiple providers
+  const shared = {
     branch: {
       label: t('provisioning.shared.branch-label', 'Branch'),
       description: t('provisioning.shared.branch-description', 'The branch to use for provisioning'),
@@ -130,11 +134,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
         ),
       },
-      signingMethod: shared.signingMethod,
-      commitSigningKey: shared.commitSigningKey,
-      smimeCertificate: shared.smimeCertificate,
-      commitSignerName: shared.commitSignerName,
-      commitSignerEmail: shared.commitSignerEmail,
+      ...signingFields,
     },
     gitlab: {
       token: {
@@ -186,11 +186,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a merge request when saving changes. If the repository does not allow direct changes to the main branch, a merge request may still be required.'
         ),
       },
-      signingMethod: shared.signingMethod,
-      commitSigningKey: shared.commitSigningKey,
-      smimeCertificate: shared.smimeCertificate,
-      commitSignerName: shared.commitSignerName,
-      commitSignerEmail: shared.commitSignerEmail,
+      ...signingFields,
     },
     bitbucket: {
       token: {
@@ -250,11 +246,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
         ),
       },
-      signingMethod: shared.signingMethod,
-      commitSigningKey: shared.commitSigningKey,
-      smimeCertificate: shared.smimeCertificate,
-      commitSignerName: shared.commitSignerName,
-      commitSignerEmail: shared.commitSignerEmail,
+      ...signingFields,
     },
     git: {
       token: {
@@ -311,11 +303,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
         ),
       },
-      signingMethod: shared.signingMethod,
-      commitSigningKey: shared.commitSigningKey,
-      smimeCertificate: shared.smimeCertificate,
-      commitSignerName: shared.commitSignerName,
-      commitSignerEmail: shared.commitSignerEmail,
+      ...signingFields,
     },
     local: {
       path: {
