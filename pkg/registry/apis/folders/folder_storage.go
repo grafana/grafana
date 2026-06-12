@@ -7,7 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/util/dryrun"
 
@@ -29,7 +28,6 @@ var (
 	_ rest.SingularNameProvider = (*folderStorage)(nil)
 	_ rest.Getter               = (*folderStorage)(nil)
 	_ rest.Lister               = (*folderStorage)(nil)
-	_ rest.Watcher              = (*folderStorage)(nil)
 	_ rest.Storage              = (*folderStorage)(nil)
 	_ rest.Creater              = (*folderStorage)(nil)
 	_ rest.Updater              = (*folderStorage)(nil)
@@ -71,14 +69,6 @@ func (s *folderStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 
 func (s *folderStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	return s.store.List(ctx, options)
-}
-
-func (s *folderStorage) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
-	watcher, ok := s.store.(rest.Watcher)
-	if !ok {
-		return nil, fmt.Errorf("watch not supported on inner folder storage")
-	}
-	return watcher.Watch(ctx, options)
 }
 
 func (s *folderStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
