@@ -88,9 +88,8 @@ func dsAbstractionEnabled(req *backend.QueryDataRequest) bool {
 //	STEP, RATE — Grafana duration strings; invalid values fail the rewrite.
 //	DIRECTION — forward/backward; applied on log queries only (QueryJSONModel.Direction).
 //	INSTANT — key presence selects instant API for metric queries only.
-//	PARSER — json, logfmt, unpack, pattern, or regexp; appends a LogQL parser stage and routes non-stream filters to pipeline label filters.
-//	PATTERN — pattern expression when PARSER=pattern.
-//	REGEXP_EXPR — regexp expression when PARSER=regexp.
+//	PARSER — LogQL parser pipeline fragment (e.g. json, json | unpack, pattern "<expr>");
+//	appended after the stream selector; routes non-stream filters to pipeline label filters.
 //
 // Positive schemas.Query.limit is mapped to Loki MaxLines on log queries only (buildLogPlan).
 //
@@ -176,9 +175,7 @@ func parseSQLHints(hints map[string]string) (sqlHints, error) {
 	}
 	h.direction = strings.ToLower(hintGet(hints, grafanaSQLHintDirection))
 	h.instant = instantHintEnabled(hints)
-	if hintGet(hints, grafanaSQLHintParser) != "" ||
-		hintGet(hints, grafanaSQLHintPattern) != "" ||
-		hintGet(hints, grafanaSQLHintRegexpExpr) != "" {
+	if hintGet(hints, grafanaSQLHintParser) != "" {
 		stage, err := buildParserStage(hints)
 		if err != nil {
 			return h, fmt.Errorf("loki grafana sql: %w", err)
@@ -545,7 +542,7 @@ func buildLogQLPipeline(ctx context.Context, tableLabel, tableValue string, filt
 					return "", err
 				}
 			}
-			return "", fmt.Errorf("column %q requires a parser FOR hint: parser('json'), parser('logfmt'), parser('unpack'), parser('pattern') with pattern('<expr>'), or parser('regexp') with regexp_expr('<re>')", f.Name)
+			return "", fmt.Errorf("column %q requires a parser FOR hint with a LogQL parser pipeline, e.g. parser('json'), parser('json | unpack'), or parser('pattern \"<field>\"')", f.Name)
 		}
 		streamFilters = append(streamFilters, f)
 	}

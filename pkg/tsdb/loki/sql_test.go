@@ -503,28 +503,15 @@ func TestNormalizeGrafanaSQLRequest_parser(t *testing.T) {
 		})
 	})
 
-	t.Run("parser only", func(t *testing.T) {
+	t.Run("json unpack chain", func(t *testing.T) {
 		raw := marshalGrafanaSQLPayload(t, map[string]any{
 			"refId": "A", "grafanaSql": true, "table": "carts",
-			"tableHintValues": map[string]string{"PARSER": "logfmt"},
+			"tableHintValues": map[string]string{"PARSER": "json | unpack"},
 		})
 		out, _, errs := normalizeGrafanaSQLRequest(context.Background(), queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}}), ds)
 		require.Empty(t, errs)
 		assertNormalizedQuery(t, out.Queries[0], normalizedQueryExpect{
-			expr:      `{service_name="carts"} | logfmt`,
-			queryType: lokiQueryTypeRange,
-		})
-	})
-
-	t.Run("unpack parser", func(t *testing.T) {
-		raw := marshalGrafanaSQLPayload(t, map[string]any{
-			"refId": "A", "grafanaSql": true, "table": "carts",
-			"tableHintValues": map[string]string{"PARSER": "unpack"},
-		})
-		out, _, errs := normalizeGrafanaSQLRequest(context.Background(), queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}}), ds)
-		require.Empty(t, errs)
-		assertNormalizedQuery(t, out.Queries[0], normalizedQueryExpect{
-			expr:      `{service_name="carts"} | unpack`,
+			expr:      `{service_name="carts"} | json | unpack`,
 			queryType: lokiQueryTypeRange,
 		})
 	})
@@ -533,8 +520,7 @@ func TestNormalizeGrafanaSQLRequest_parser(t *testing.T) {
 		raw := marshalGrafanaSQLPayload(t, map[string]any{
 			"refId": "A", "grafanaSql": true, "table": "carts",
 			"tableHintValues": map[string]string{
-				"PARSER":  "pattern",
-				"PATTERN": `<_> - - <_> "<method> <path> <_>" <status> <_>`,
+				"PARSER": `pattern "<_> - - <_> \"<method> <path> <_>\" <status> <_>"`,
 			},
 			"filters": []map[string]any{
 				{"name": "env", "conditions": []map[string]any{{"operator": string(schemas.OperatorEquals), "value": "prod"}}},
@@ -547,43 +533,6 @@ func TestNormalizeGrafanaSQLRequest_parser(t *testing.T) {
 			expr:      `{env="prod", service_name="carts"} | pattern "<_> - - <_> \"<method> <path> <_>\" <status> <_>" | status = "500"`,
 			queryType: lokiQueryTypeRange,
 		})
-	})
-
-	t.Run("regexp parser with parsed filter", func(t *testing.T) {
-		raw := marshalGrafanaSQLPayload(t, map[string]any{
-			"refId": "A", "grafanaSql": true, "table": "carts",
-			"tableHintValues": map[string]string{
-				"PARSER":      "regexp",
-				"REGEXP_EXPR": `(?P<ip>\d+)`,
-			},
-			"filters": []map[string]any{
-				{"name": "ip", "conditions": []map[string]any{{"operator": string(schemas.OperatorEquals), "value": "10.0.0.1"}}},
-			},
-		})
-		out, _, errs := normalizeGrafanaSQLRequest(context.Background(), queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}}), ds)
-		require.Empty(t, errs)
-		assertNormalizedQuery(t, out.Queries[0], normalizedQueryExpect{
-			expr:      "{service_name=\"carts\"} | regexp `(?P<ip>\\d+)` | ip = \"10.0.0.1\"",
-			queryType: lokiQueryTypeRange,
-		})
-	})
-
-	t.Run("pattern without companion hint rejected", func(t *testing.T) {
-		raw := marshalGrafanaSQLPayload(t, map[string]any{
-			"refId": "A", "grafanaSql": true, "table": "carts",
-			"tableHintValues": map[string]string{"PARSER": "pattern"},
-		})
-		_, _, errs := normalizeGrafanaSQLRequest(context.Background(), queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}}), ds)
-		require.ErrorContains(t, errs["A"], "pattern() hint required")
-	})
-
-	t.Run("invalid parser rejected", func(t *testing.T) {
-		raw := marshalGrafanaSQLPayload(t, map[string]any{
-			"refId": "A", "grafanaSql": true, "table": "carts",
-			"tableHintValues": map[string]string{"PARSER": "auto"},
-		})
-		_, _, errs := normalizeGrafanaSQLRequest(context.Background(), queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}}), ds)
-		require.ErrorContains(t, errs["A"], "unsupported parser")
 	})
 
 	t.Run("parsed filter without parser hint", func(t *testing.T) {
