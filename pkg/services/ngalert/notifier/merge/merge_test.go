@@ -783,4 +783,20 @@ func TestMergeInhibitionRules(t *testing.T) {
 		assert.True(t, hasSourceLabel)
 		assert.True(t, hasTargetLabel)
 	})
+
+	t.Run("deprecated match fields produce stable UID regardless of map iteration order", func(t *testing.T) {
+		// Build a rule with multiple deprecated match entries. Map iteration is non-deterministic,
+		// so the test validates that the UID is identical across repeated calls.
+		incoming := []config.InhibitRule{
+			{
+				SourceMatch: map[string]string{"alertname": "fire", "severity": "critical", "team": "ops"},
+				TargetMatch: map[string]string{"alertname": "warn", "region": "eu"},
+			},
+		}
+		_, added1, err := MergeInhibitionRules(nil, incoming, "id")
+		require.NoError(t, err)
+		_, added2, err := MergeInhibitionRules(nil, incoming, "id")
+		require.NoError(t, err)
+		assert.Equal(t, added1, added2)
+	})
 }

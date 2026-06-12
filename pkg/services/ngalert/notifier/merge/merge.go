@@ -14,6 +14,7 @@ import (
 	"hash/fnv"
 	"maps"
 	"math"
+	"slices"
 	"strings"
 
 	"github.com/grafana/alerting/utils/hash"
@@ -364,13 +365,11 @@ func MergeInhibitionRules(existing map[v1.ResourceUID]v1.InhibitionRule, incomin
 func foldMatchers(match map[string]string, matchRE config.MatchRegexps, matchers config.Matchers) []v1.Matcher {
 	out := make([]v1.Matcher, 0, len(match)+len(matchRE)+len(matchers))
 	out = append(out, v1.MatchersToModel(matchers)...)
-	for ln, lv := range match {
-		m := v1.NewMatcher(v1.MatcherEqual, ln, lv)
-		out = append(out, m)
+	for _, ln := range slices.Sorted(maps.Keys(match)) {
+		out = append(out, v1.NewMatcher(v1.MatcherEqual, ln, match[ln]))
 	}
-	for ln, lv := range matchRE {
-		m := v1.NewMatcher(v1.MatcherEqualRegex, ln, lv.String())
-		out = append(out, m)
+	for _, ln := range slices.Sorted(maps.Keys(matchRE)) {
+		out = append(out, v1.NewMatcher(v1.MatcherEqualRegex, ln, matchRE[ln].String()))
 	}
 	return out
 }
