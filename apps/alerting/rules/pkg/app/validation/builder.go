@@ -2,12 +2,14 @@ package validation
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type Request[T resource.Object] struct {
@@ -25,6 +27,7 @@ type validatorConfig[T resource.Object] struct {
 
 type Builder[T resource.Object] struct {
 	entries []validatorConfig[T]
+	errors  []error
 }
 
 func NewBuilder[T resource.Object]() *Builder[T] {
@@ -44,7 +47,21 @@ func (b *Builder[T]) OnDelete(fn ValidateFunc[T]) *Builder[T] {
 	return b.On([]resource.AdmissionAction{resource.AdmissionActionDelete}, fn)
 }
 
-func (b *Builder[T]) Build() *simple.Validator {
+func (b *Builder[T]) WithOpenAPIValidation(md app.ManifestData, gk schema.GroupKind) *Builder[T] {
+	validatorFn, err := OpenAPISpec[T](md, gk)
+	if err != nil {
+		b.errors = append(b.errors, err)
+		return b
+	}
+
+	return b.On([]resource.AdmissionAction{resource.AdmissionActionCreate, resource.AdmissionActionUpdate}, validatorFn)
+}
+
+func (b *Builder[T]) Build() (*simple.Validator, error) {
+	if len(b.errors) > 0 {
+		return nil, errors.Join(b.errors...)
+	}
+
 	return &simple.Validator{
 		ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
 			applicable := make([]ValidateFunc[T], 0, len(b.entries))
@@ -86,5 +103,5 @@ func (b *Builder[T]) Build() *simple.Validator {
 			}
 			return nil
 		},
-	}
+	}, nil
 }
