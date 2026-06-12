@@ -6,7 +6,7 @@ import { SceneContext, SceneContextObject } from '@grafana/scenes-react';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
 import { ToggleViewPanePaneEvent } from '../edit-pane/events';
-import { getDashboardSceneFor } from '../utils/utils';
+import { getDashboardSceneLike } from '../scene/types/dashboard';
 
 import { FanoutPanel } from './FanoutPanel';
 import { ViewPanelSidePane } from './ViewPanelSidePane';
@@ -25,7 +25,7 @@ export function ViewPanelWrapper({ panel }: ViewPanelProps) {
 }
 
 function ViewPanelWithPane({ panel }: ViewPanelProps) {
-  const dashboard = getDashboardSceneFor(panel);
+  const dashboard = getDashboardSceneLike(panel);
   const { editPane } = dashboard.useState();
   const { $data } = useSceneObjectState(panel, { shouldActivateOrKeepAlive: true });
   const { data } = $data!.useState();

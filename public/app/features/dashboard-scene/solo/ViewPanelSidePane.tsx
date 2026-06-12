@@ -15,7 +15,7 @@ import { Box, ScrollContainer, Sidebar, Text, RadioButtonDot, Button, Spinner } 
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
-import { getDashboardSceneFor } from '../utils/utils';
+import { getDashboardSceneLike } from '../scene/types/dashboard';
 
 import { ViewPanelQuickToggles } from './ViewPanelQuickToggles';
 
@@ -36,7 +36,7 @@ export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
 }
 
 function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSidePane>) {
-  const dashboard = getDashboardSceneFor(model);
+  const dashboard = getDashboardSceneLike(model);
   const { viewPanel } = dashboard.useState();
   const { panelRef } = model.useState();
   const panel = panelRef.resolve();
