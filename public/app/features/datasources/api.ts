@@ -55,7 +55,7 @@ export interface DataSourceSettingsK8s {
   secure?: Record<string, Record<string, string>>;
 }
 
-export const getDataSourceK8sGroup = (uid: string): string => {
+const getDataSourceK8sGroup = (uid: string): string => {
   for (const [key, ds] of Object.entries(config.datasources)) {
     if (key.startsWith('--')) {
       continue;
@@ -67,7 +67,7 @@ export const getDataSourceK8sGroup = (uid: string): string => {
   return '';
 };
 
-export const convertLegacyDatasourceSettingsPartialToK8sDatasourceSettings = (
+const convertLegacyDatasourceSettingsPartialToK8sDatasourceSettings = (
   dsSettings: Partial<DataSourceSettings>,
   version: string
 ): Partial<DataSourceSettingsK8s> => {
@@ -97,7 +97,7 @@ export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
   let k8sMetadata: K8sMetadata = {
     name: dsSettings.uid,
     namespace: namespace,
-    resourceVersion: '',
+    resourceVersion: dsSettings.version ? dsSettings.version.toString() : '',
     labels: { 'grafana.app/deprecatedInternalID': dsSettings.id.toString() },
     annotations: {},
   };
@@ -138,6 +138,10 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
   // TODO: remove this once we figure out what code is using the deprecated
   // id field.
   let id = parseInt(dsK8sSettings.metadata.labels?.[DeprecatedInternalId] || '', 10);
+  let version = 0;
+  if (dsK8sSettings.metadata.resourceVersion) {
+    version = parseInt(dsK8sSettings.metadata.resourceVersion, 10);
+  }
   let dsSettings: DataSourceSettings = {
     id: id,
     uid: dsK8sSettings.metadata.name!,
@@ -145,6 +149,7 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
     name: dsK8sSettings.spec.title,
     typeLogoUrl: '',
     type: dsK8sSettings.apiVersion.replace(/\.datasource\.grafana\.app\/[a-z0-9]+$/, ''),
+    version: version,
     typeName: '',
     access: dsK8sSettings.spec.access,
     url: dsK8sSettings.spec.url,
@@ -166,13 +171,13 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
   return dsSettings;
 };
 
-export const getSecretDigest = (fieldName: string): Promise<ArrayBuffer> => {
+const getSecretDigest = (fieldName: string): Promise<ArrayBuffer> => {
   return crypto.subtle.digest('SHA-256', new TextEncoder().encode(fieldName));
 };
 
 // This function produces the same is based on datasources.GetLegacySecureValueName in
 // grafana/pkg/registry/apis/datasource/converter.go
-export const getSecretName = async (datasourceUid: string, fieldName: string): Promise<string> => {
+const getSecretName = async (datasourceUid: string, fieldName: string): Promise<string> => {
   const fieldAndUid = datasourceUid + '|' + fieldName;
   const digestBuffer = await getSecretDigest(fieldAndUid).then((value) => {
     return value;
@@ -182,7 +187,7 @@ export const getSecretName = async (datasourceUid: string, fieldName: string): P
   return `${LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX}${hexString}`;
 };
 
-export const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
+const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
   // TODO: read this from backend.
   let k8sVersion = 'v0alpha1';
   let k8sGroup = getDataSourceK8sGroup(k8sName);

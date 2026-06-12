@@ -208,16 +208,6 @@ export function attachRulerRuleToCombinedRule(rule: CombinedRule, rulerGroup: Ru
   }
 }
 
-export function addCombinedPromAndRulerGroups(
-  ns: CombinedRuleNamespace,
-  promGroups: RuleGroup[],
-  rulerGroups: RulerRuleGroupDTO[]
-): CombinedRuleNamespace {
-  addRulerGroupsToCombinedNamespace(ns, rulerGroups);
-  addPromGroupsToCombinedNamespace(ns, promGroups);
-  return ns;
-}
-
 // Marker name for the virtual group built by mergeUngroupedGrafanaRules. Leading/trailing
 // double-underscores keep it from colliding with realistic user-supplied group names; the
 // value is purely UI-internal and never round-trips through any API.
@@ -282,10 +272,7 @@ export function sortRulesByName(rules: CombinedRule[]) {
   return rules.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function addRulerGroupsToCombinedNamespace(
-  namespace: CombinedRuleNamespace,
-  groups: RulerRuleGroupDTO[] = []
-): void {
+function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RulerRuleGroupDTO[] = []): void {
   namespace.groups = groups.map((group) => {
     const numRecordingRules = group.rules.filter((rule) => rulerRuleType.any.recordingRule(rule)).length;
     const numPaused = group.rules.filter((rule) => {
@@ -307,7 +294,7 @@ export function addRulerGroupsToCombinedNamespace(
   });
 }
 
-export function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RuleGroup[]): void {
+function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RuleGroup[]): void {
   const existingGroupsByName = new Map<string, CombinedRuleGroup>();
   namespace.groups.forEach((group) => existingGroupsByName.set(group.name, group));
 

@@ -267,7 +267,7 @@ export function getDetailsScrollPosition(log: LogListModel) {
   return detailsScrollMap.get(log.uid) ?? 0;
 }
 
-export function removeDetailsScrollPosition(log: LogListModel) {
+function removeDetailsScrollPosition(log: LogListModel) {
   detailsScrollMap.delete(log.uid);
 }
 
