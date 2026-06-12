@@ -21,7 +21,7 @@ In the **Dashboard controls** section of the sidebar, you can add variables, ann
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-controls-v13.0.png" max-width="400px" alt="Dashboard controls in the Dashboard options sidebar view" >}}
 
-## Add filter and group by controls
+## Add filters and group by controls
 
 <!-- vale Grafana.WordList = NO -->
 <!-- vale Grafana.Spelling = NO -->

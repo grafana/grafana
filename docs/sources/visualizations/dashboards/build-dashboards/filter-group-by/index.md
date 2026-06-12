@@ -51,13 +51,13 @@ Data sources with an asterisk also support the group by function:
 - OpenSearch.
 - Special Dashboard data source - Use this special data source to [apply filters to data from unsupported data sources](#filter-any-data-using-the-dashboard-data-source).
 
-## Add filter and group by controls
+## Add filters and group by controls
 
 {{< shared id="add-filter-group-by" >}}
 
 <!-- prettier-ignore-start -->
 
-To add filter and group by controls, follow these steps:
+To add filters and group by controls, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
