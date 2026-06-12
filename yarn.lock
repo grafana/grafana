@@ -27192,8 +27192,8 @@ __metadata:
   linkType: hard
 
 "react-calendar@npm:^6.0.0":
-  version: 6.0.0
-  resolution: "react-calendar@npm:6.0.0"
+  version: 6.0.1
+  resolution: "react-calendar@npm:6.0.1"
   dependencies:
     "@wojtekmaj/date-utils": "npm:^2.0.2"
     clsx: "npm:^2.0.0"
@@ -27206,7 +27206,7 @@ __metadata:
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10/ba555e280a829b84a9675636c3166ef728cb40f200cdf31696fe4f45e09a39fd73594b764e5b2793c35414e96101c472332507e5bb42e5e182d43a85b060de40
+  checksum: 10/c0beb9bc4d600641881b4989525e384ca74d04de879956f087aad1ae84fa6a3c7de52bc79e9f39a3c284a5cc6c3f917885d5760593c0b0aafdcc315a631faac3
   languageName: node
   linkType: hard
 
