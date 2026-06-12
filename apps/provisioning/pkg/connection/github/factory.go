@@ -23,7 +23,8 @@ func ProvideFactory() GithubFactory {
 	return &Factory{}
 }
 
-func (r *Factory) New(ctx context.Context, ghToken common.RawSecureValue, serverURL string) (Client, error) {
+// An empty customServerURL will default to creating a client pointing to the cloud github.com
+func (r *Factory) New(ctx context.Context, ghToken common.RawSecureValue, customServerURL string) (Client, error) {
 	if r.Client != nil {
 		return NewClient(github.NewClient(r.Client)), nil
 	}
@@ -37,10 +38,10 @@ func (r *Factory) New(ctx context.Context, ghToken common.RawSecureValue, server
 	}
 
 	ghClient := github.NewClient(httpClient)
-	if serverURL != "" {
-		enterprise, err := ghClient.WithEnterpriseURLs(serverURL, serverURL)
+	if customServerURL != "" {
+		enterprise, err := ghClient.WithEnterpriseURLs(customServerURL, customServerURL)
 		if err != nil {
-			return nil, fmt.Errorf("configure GitHub Enterprise URLs for %q: %w", serverURL, err)
+			return nil, fmt.Errorf("failed to configure GitHub Enterprise URLs for %q: %w", customServerURL, err)
 		}
 		ghClient = enterprise
 	}
