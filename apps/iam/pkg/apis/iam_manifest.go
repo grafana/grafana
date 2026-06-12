@@ -1183,6 +1183,11 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
+								"internalId": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
 								"memberCount": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"integer"},
