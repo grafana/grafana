@@ -29,7 +29,7 @@ If you're a Grafana Cloud user, follow [Install a plugin through the Grafana UI]
 
 ## Install a plugin through the Grafana UI
 
-The dafault way to install a plugin is through the Grafana UI.
+The default way to install a plugin is through the Grafana UI.
 
 1. In Grafana, go to **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
 1. Browse and find the plugin you want to install.
