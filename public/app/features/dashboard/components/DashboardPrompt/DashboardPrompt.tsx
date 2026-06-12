@@ -17,7 +17,7 @@ import { DashboardModel } from '../../state/DashboardModel';
 import { discardPanelChanges, exitPanelEditor } from '../PanelEditor/state/actions';
 import { UnsavedChangesModal } from '../SaveDashboard/UnsavedChangesModal';
 
-export interface Props {
+interface Props {
   dashboard: DashboardModel;
 }
 
@@ -26,7 +26,7 @@ interface State {
   originalPath?: string;
 }
 
-export const DashboardPrompt = memo(({ dashboard }: Props) => {
+const DashboardPrompt = memo(({ dashboard }: Props) => {
   const [state, setState] = useState<State>({ original: null });
   const dispatch = useDispatch();
   const { original, originalPath } = state;

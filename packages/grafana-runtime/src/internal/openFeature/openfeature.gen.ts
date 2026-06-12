@@ -55,6 +55,8 @@ export const FlagKeys = {
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
+  /** Enables the new visual design refresh for the Grafana UI */
+  GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Use stream shards to split queries into smaller subqueries */
@@ -83,8 +85,6 @@ export const FlagKeys = {
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
   QueryEditorNext: "queryEditorNext",
-  /** Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor */
-  QueryEditorNextMultiSelect: "queryEditorNextMultiSelect",
   /** Store query history in browser IndexedDB instead of server-side */
   QueryHistoryLocalOnly: "queryHistory.localOnly",
   /** Replace the Query History drawer with a new Recent Queries modal UI */
@@ -335,6 +335,17 @@ export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptio
 };
 
 /**
+ * Enables the new visual design refresh for the Grafana UI
+ *
+ * **Details:**
+ * - flag key: `grafana.visualDesignRefresh`
+ * - default value: `false`
+ */
+export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.visualDesignRefresh", false, options).value;
+};
+
+/**
  * Enables an inline version of Log Details that creates no new scrolls
  *
  * **Details:**
@@ -460,10 +471,10 @@ export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationO
  *
  * **Details:**
  * - flag key: `provisioning.readmes`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.readmes", false, options).value;
+  return useFlag("provisioning.readmes", true, options).value;
 };
 
 /**
@@ -486,17 +497,6 @@ export const useFlagProvisioningFolderMetadata = (options?: ReactFlagEvaluationO
  */
 export const useFlagQueryEditorNext = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("queryEditorNext", false, options).value;
-};
-
-/**
- * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
- *
- * **Details:**
- * - flag key: `queryEditorNextMultiSelect`
- * - default value: `false`
- */
-export const useFlagQueryEditorNextMultiSelect = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("queryEditorNextMultiSelect", false, options).value;
 };
 
 /**

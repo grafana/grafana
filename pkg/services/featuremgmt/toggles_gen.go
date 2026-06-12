@@ -239,6 +239,10 @@ const (
 	// Enables render binding support for report rendering
 	FlagReportRenderBinding = "reportRenderBinding"
 
+	// FlagCanvasExternalPlugin
+	// Load Canvas panel from an external plugin instead of the bundled core plugin
+	FlagCanvasExternalPlugin = "canvasExternalPlugin"
+
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
 	FlagCloudRBACRoles = "cloudRBACRoles"
@@ -535,10 +539,6 @@ const (
 	// Add compact=true when fetching rules
 	FlagFetchRulesInCompactMode = "fetchRulesInCompactMode"
 
-	// FlagGrafanaconThemes
-	// Enables the temporary themes for GrafanaCon
-	FlagGrafanaconThemes = "grafanaconThemes"
-
 	// FlagAlertingUseNewSimplifiedRoutingHashAlgorithm
 	FlagAlertingUseNewSimplifiedRoutingHashAlgorithm = "alertingUseNewSimplifiedRoutingHashAlgorithm"
 
@@ -811,7 +811,7 @@ const (
 	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
 
 	// FlagAlertingMultiplePolicies
-	// Enables the ability to create multiple alerting policies
+	// Enables the ability to create multiple notification policies in alerting
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 
 	// FlagApppluginsRegisterAPIServer
@@ -917,10 +917,6 @@ const (
 	// FlagQuerycachingUseInQueryService
 	// Enables the query service to do query caching
 	FlagQuerycachingUseInQueryService = "querycaching.useInQueryService"
-
-	// FlagCompiledBootScript
-	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script
-	FlagCompiledBootScript = "compiledBootScript"
 
 	// FlagInfluxDBConfigValidation
 	// Enables validation on the InfluxDB data source configuration page

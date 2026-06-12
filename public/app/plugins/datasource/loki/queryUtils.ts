@@ -375,10 +375,6 @@ function getNodeString(query: string, node: SyntaxNode) {
   return query.substring(node.from, node.to);
 }
 
-/**
- * @TODO fix the import in public/app/features/explore/Logs and remove the lintignore
- * @lintignore
- */
 export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
   if (!query) {
     return false;

@@ -250,7 +250,7 @@ function shouldDisableVersionInstallation({
  * @param versions - array containing multiple versions with the same major and multiple major
  * @returns set of latest versions
  */
-export function getLatestMajorVersions(versions: Version[]) {
+function getLatestMajorVersions(versions: Version[]) {
   if (versions.length === 0) {
     return new Set<string>();
   }
