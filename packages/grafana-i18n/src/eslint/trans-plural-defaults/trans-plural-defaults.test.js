@@ -1,6 +1,6 @@
 import { RuleTester } from 'eslint';
 
-import rule from '../rules/trans-plural-defaults.cjs';
+import rule from './trans-plural-defaults.cjs';
 
 RuleTester.setDefaultConfig({
   languageOptions: {
