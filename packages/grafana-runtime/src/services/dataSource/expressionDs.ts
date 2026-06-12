@@ -11,11 +11,11 @@ export function setExpressionDataSourceInstance<TQuery extends DataQuery>(ds: Da
   instanceSettings = (ds as unknown as { instanceSettings?: DataSourceInstanceSettings }).instanceSettings;
 }
 
-export function getExpressionDatasourceInstance(): DataSourceApi | undefined {
+export function getExpressionDataSourceInstance(): DataSourceApi | undefined {
   return instance;
 }
 
-export function getExpressionDatasourceSettings(): DataSourceInstanceSettings | undefined {
+export function getExpressionDataSourceSettings(): DataSourceInstanceSettings | undefined {
   return instanceSettings;
 }
 

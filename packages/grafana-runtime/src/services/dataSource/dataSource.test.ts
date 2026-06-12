@@ -9,7 +9,7 @@ import {
   registerRuntimeDataSourceInstance,
   setDataSourcePluginImporter,
 } from './dataSource';
-import { _resetForTests as resetExpressionDs, setExpressionDataSourceInstance } from './expressionDs';
+import { setExpressionDataSourceInstance } from './expressionDs';
 import { _resetForTests as resetPluginCache } from './pluginCache';
 import {
   _resetForTests as resetInstanceSettings,
@@ -58,7 +58,6 @@ beforeEach(() => {
   resetInstanceSettings();
   resetPlugin();
   resetPluginCache();
-  resetExpressionDs();
 });
 
 describe('plugin', () => {
@@ -305,7 +304,7 @@ describe('plugin', () => {
       expect(result).toBe(expr);
     });
 
-    it('survives a reload (stored as a runtime cache entry)', async () => {
+    it('survives a reload (state is in expressionDs module, independent of the plugin cache)', async () => {
       initDataSourceInstanceSettings({}, '');
       const expr = registerExpression();
 

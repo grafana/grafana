@@ -4,7 +4,7 @@ import { isExpressionReference } from '../../utils/DataSourceWithBackend';
 import { UserStorage } from '../../utils/userStorage';
 import { type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
-import { getExpressionDatasourceInstance } from './expressionDs';
+import { getExpressionDataSourceInstance } from './expressionDs';
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
 import { getDataSourceInstanceSettings, upsertRuntimeDataSourceInstanceSettings } from './settings';
 import { type ImportDataSourcePluginFn } from './types';
@@ -38,7 +38,7 @@ export async function getDataSourceInstance(
   // Expression references resolve to the preloaded singleton — its meta.module
   // is empty, so it must never go through the plugin importer.
   if (isExpressionReference(ref)) {
-    const expressionDs = getExpressionDatasourceInstance();
+    const expressionDs = getExpressionDataSourceInstance();
     if (!expressionDs) {
       throw new Error(
         'Expression datasource has not been initialised. Call setExpressionDataSourceInstance during application boot.'

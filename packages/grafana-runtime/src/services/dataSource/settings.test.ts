@@ -4,7 +4,7 @@ import { setBackendSrv } from '../backendSrv';
 import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
-import { _resetForTests as resetExpressionDs, setExpressionDataSourceInstance } from './expressionDs';
+import { setExpressionDataSourceInstance } from './expressionDs';
 import {
   _resetForTests,
   getDataSourceInstanceSettingsList,
@@ -125,7 +125,6 @@ beforeAll(() => {
 
 beforeEach(() => {
   _resetForTests();
-  resetExpressionDs();
   backendGet.mockReset();
   // No legacy srv by default — reloadDataSourceInstanceSettings() should use the fetch path.
   setDataSourceSrv(undefined as unknown as DataSourceSrv);

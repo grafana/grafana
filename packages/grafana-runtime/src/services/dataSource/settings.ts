@@ -12,7 +12,7 @@ import { getBackendSrv } from '../backendSrv';
 import { getDataSourceSrv, type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
 
-import { getExpressionDatasourceSettings } from './expressionDs';
+import { getExpressionDataSourceSettings, _resetForTests as resetExpressionDs } from './expressionDs';
 import { clearPluginCache } from './pluginCache';
 
 let byName: Record<string, DataSourceInstanceSettings> = {};
@@ -159,7 +159,7 @@ function lookupFromMaps(
   scopedVars: ScopedVars | undefined
 ): DataSourceInstanceSettings | undefined {
   if (isExpressionReference(ref)) {
-    return getExpressionDatasourceSettings();
+    return getExpressionDataSourceSettings();
   }
 
   const nameOrUid = getNameOrUid(ref);
@@ -337,4 +337,5 @@ export function _resetForTests(): void {
   byId = {};
   runtimeByUid = {};
   defaultName = '';
+  resetExpressionDs();
 }
