@@ -2614,6 +2614,80 @@ func NewManagedDashboard(apiVersion, name, repoName, sourcePath, message string)
 	}
 }
 
+// NewUnmanagedFolder builds an unstructured Folder with no manager annotations,
+// for tests that need a pre-existing folder the provisioning code has not
+// claimed. A generated name is used so multiple folders can coexist; pass a
+// non-empty parentUID to nest the folder beneath another.
+func NewUnmanagedFolder(title, parentUID string) *unstructured.Unstructured {
+	metadata := map[string]interface{}{
+		"generateName": "unmanaged-folder-",
+		"namespace":    "default",
+	}
+	if parentUID != "" {
+		metadata["annotations"] = map[string]interface{}{
+			utils.AnnoKeyFolder: parentUID,
+		}
+	}
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "folder.grafana.app/v1",
+			"kind":       "Folder",
+			"metadata":   metadata,
+			"spec": map[string]interface{}{
+				"title": title,
+			},
+		},
+	}
+}
+
+// NewUnmanagedDashboard builds an unstructured Dashboard with no manager
+// annotations. A generated name is used; pass a non-empty folderUID to place it
+// inside a folder.
+func NewUnmanagedDashboard(apiVersion, title, folderUID string) *unstructured.Unstructured {
+	metadata := map[string]interface{}{
+		"generateName": "unmanaged-dash-",
+		"namespace":    "default",
+	}
+	if folderUID != "" {
+		metadata["annotations"] = map[string]interface{}{
+			utils.AnnoKeyFolder: folderUID,
+		}
+	}
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": apiVersion,
+			"kind":       "Dashboard",
+			"metadata":   metadata,
+			"spec": map[string]interface{}{
+				"title":         title,
+				"schemaVersion": 41,
+			},
+		},
+	}
+}
+
+// CreateUnmanagedFolder creates a folder with no manager annotations under the
+// given parent (pass "" for a root folder) and returns its generated UID. It
+// asserts the folder starts unmanaged so callers can rely on that precondition.
+func (h *ProvisioningTestHelper) CreateUnmanagedFolder(t *testing.T, ctx context.Context, title, parentUID string) string {
+	t.Helper()
+	created, err := h.Folders.Resource.Create(ctx, NewUnmanagedFolder(title, parentUID), metav1.CreateOptions{})
+	require.NoError(t, err, "should create unmanaged folder %q", title)
+	require.Empty(t, created.GetAnnotations()[utils.AnnoKeyManagerIdentity], "folder %q should start unmanaged", title)
+	return created.GetName()
+}
+
+// CreateUnmanagedDashboard creates a v1 dashboard with no manager annotations in
+// the given folder (pass "" for a root dashboard) and returns its generated
+// name. It asserts the dashboard starts unmanaged.
+func (h *ProvisioningTestHelper) CreateUnmanagedDashboard(t *testing.T, ctx context.Context, title, folderUID string) string {
+	t.Helper()
+	created, err := h.DashboardsV1.Resource.Create(ctx, NewUnmanagedDashboard("dashboard.grafana.app/v1", title, folderUID), metav1.CreateOptions{})
+	require.NoError(t, err, "should create unmanaged dashboard %q", title)
+	require.Empty(t, created.GetAnnotations()[utils.AnnoKeyManagerIdentity], "dashboard %q should start unmanaged", title)
+	return created.GetName()
+}
+
 type exportRepoInfo struct {
 	user   *gittest.User
 	remote *gittest.RemoteRepository
