@@ -16,8 +16,6 @@ labels:
 menuTitle: Trace to profiles
 title: Configure trace to profiles correlation
 weight: 500
-aliases:
-  - /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#trace-to-profiles
 ---
 
 # Configure trace to profiles correlation

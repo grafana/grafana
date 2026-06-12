@@ -15,8 +15,6 @@ labels:
 menuTitle: Trace to metrics
 title: Configure trace to metrics correlation
 weight: 400
-aliases:
-  - /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#trace-to-metrics
 ---
 
 # Configure trace to metrics correlation
