@@ -35,8 +35,6 @@ export async function getDataSourceInstance(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceApi> {
-  // Expression references resolve to the preloaded singleton — its meta.module
-  // is empty, so it must never go through the plugin importer.
   if (isExpressionReference(ref)) {
     const expressionDs = getExpressionDataSourceInstance();
     if (!expressionDs) {
