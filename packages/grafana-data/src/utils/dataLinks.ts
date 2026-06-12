@@ -79,7 +79,10 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
     }
 
     try {
-      const interpolatedBaseTime = dateTime(baseTimeStr, 'x');
+      let interpolatedBaseTime = dateTime(baseTimeStr);
+      if (!interpolatedBaseTime.isValid()) {
+        interpolatedBaseTime = dateTime(baseTimeStr, 'x');
+      }
 
       // if we need a timerange but to and/or from are not defined, make it an hour (3600 seconds)
       exploreRange = rangeUtil.relativeToTimeRange(
