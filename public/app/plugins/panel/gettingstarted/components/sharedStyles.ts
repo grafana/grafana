@@ -13,8 +13,8 @@ export const cardStyle = (theme: GrafanaTheme2, complete: boolean) => {
     backgroundColor: theme.colors.background.secondary,
     marginRight: theme.spacing(4),
     border: `1px solid ${theme.colors.border.weak}`,
-    borderBottomLeftRadius: theme.shape.borderRadius(2),
-    borderBottomRightRadius: theme.shape.borderRadius(2),
+    borderBottomLeftRadius: theme.shape.radius.lg,
+    borderBottomRightRadius: theme.shape.radius.lg,
     position: 'relative',
     maxHeight: '230px',
 
