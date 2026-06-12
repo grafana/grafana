@@ -162,6 +162,49 @@ describe('useAssistantAutoReply', () => {
     expect(prompt).not.toContain('Old name');
   });
 
+  it('includes the prior thread discussion in the prompt', async () => {
+    const { result } = renderHook(() => useAssistantAutoReply());
+    await result.current(assistantBody, {
+      threadUID: 't1',
+      transcript: [
+        { author: 'Alice', text: 'Why did latency spike at 14:00?', isAssistant: false },
+        { author: 'Grafana Assistant', text: 'A deploy went out then.', isAssistant: true },
+      ],
+    });
+    const prompt = lastGenerateOptions?.prompt ?? '';
+    expect(prompt).toContain('Alice: Why did latency spike at 14:00?');
+    // The assistant's own prior turn is labelled as the assistant, not by author.
+    expect(prompt).toContain('Assistant: A deploy went out then.');
+    // The current question still lands, and isn't duplicated as history.
+    expect(prompt).toContain('explain');
+  });
+
+  it('truncates a long transcript to the most recent messages and notes the omission', async () => {
+    const { result } = renderHook(() => useAssistantAutoReply());
+    const transcript = Array.from({ length: 25 }, (_, i) => ({
+      author: `User${i}`,
+      text: `message ${i}`,
+      isAssistant: false,
+    }));
+    await result.current(assistantBody, { threadUID: 't1', transcript });
+    const prompt = lastGenerateOptions?.prompt ?? '';
+    // 25 messages, cap of 20 → 5 omitted, oldest dropped, newest kept.
+    expect(prompt).toContain('5 older message(s) omitted');
+    expect(prompt).not.toContain('message 4');
+    expect(prompt).toContain('message 5');
+    expect(prompt).toContain('message 24');
+  });
+
+  it('omits the history block when there is no usable transcript', async () => {
+    const { result } = renderHook(() => useAssistantAutoReply());
+    await result.current(assistantBody, {
+      threadUID: 't1',
+      transcript: [{ author: 'Alice', text: '   ', isAssistant: false }],
+    });
+    const prompt = lastGenerateOptions?.prompt ?? '';
+    expect(prompt).not.toContain('Earlier in this conversation');
+  });
+
   it('posts a fallback notice when the assistant is unavailable', async () => {
     jest.mocked(useAssistant).mockReturnValue({
       isLoading: false,

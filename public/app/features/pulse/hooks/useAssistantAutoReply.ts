@@ -48,6 +48,25 @@ export interface AssistantReplyContext {
    *  layer (which holds the live `VizPanel`); omitted on surfaces without
    *  scene access, where the prompt degrades to naming the panel only. */
   getPanelSnapshot?: (panelId: number) => PanelSnapshot | undefined;
+  /** Prior messages in the thread, oldest-first, with the tagging pulse
+   *  excluded (it becomes the question). The inline assistant has no
+   *  retrieval — it can't read the thread itself — so the discussion it
+   *  reasons over is only what we fold in here. Omit to send just the
+   *  question (the original behaviour). */
+  transcript?: TranscriptEntry[];
+}
+
+/** TranscriptEntry is one prior thread message flattened for the prompt.
+ *  The surface resolves the author label (it owns that logic and the live
+ *  user data) so the hook only has to render. */
+export interface TranscriptEntry {
+  /** Display label for the message author, e.g. "Alice" or a fallback id. */
+  author: string;
+  /** Plain-text message body. */
+  text: string;
+  /** True for the assistant's own earlier replies, so the prompt labels
+   *  them as the assistant's turns rather than a user named "Assistant". */
+  isAssistant: boolean;
 }
 
 /** PanelSnapshot is the slice of a panel's configuration worth handing to
@@ -137,9 +156,10 @@ export function useAssistantAutoReply(): (body: PulseBody, ctx: AssistantReplyCo
 }
 
 /** buildPrompt turns the tagging pulse into the assistant prompt: a context
- *  preamble that points the assistant at the dashboard/panel under
- *  discussion (so it can open and inspect it with its own tools), followed
- *  by the user's question with the `@assistant` chip text stripped out. */
+ *  preamble that names the dashboard/panel under discussion (and embeds the
+ *  panel's config, since the tool-less assistant can't fetch it), then the
+ *  thread's discussion so far, then the user's question with the
+ *  `@assistant` chip text stripped out. */
 function buildPrompt(body: PulseBody, ctx: AssistantReplyContext): string {
   let question = bodyToText(body);
   for (const m of collectMentions(body)) {
@@ -153,7 +173,39 @@ function buildPrompt(body: PulseBody, ctx: AssistantReplyContext): string {
   }
 
   const contextLine = buildContextLine(body, ctx);
-  return contextLine ? `${contextLine}\n\n${question}` : question;
+  const history = formatTranscript(ctx.transcript);
+  // Order: panel/dashboard context, the discussion so far, then the
+  // question — so the prompt's "answer from the panel details above and the
+  // discussion" instruction has a discussion to point at.
+  return [contextLine, history, question].filter(Boolean).join('\n\n');
+}
+
+/** Most recent prior messages to include in the prompt. Bounds prompt size
+ *  on long threads; the inline assistant has no retrieval to fetch the rest,
+ *  so we keep the freshest context and note what was dropped. */
+const MAX_HISTORY_MESSAGES = 20;
+
+/** formatTranscript renders prior thread messages as a plain-text block,
+ *  one "Author: text" line each, capped to the most recent messages. Returns
+ *  an empty string when there's nothing usable to include. */
+function formatTranscript(entries?: TranscriptEntry[]): string {
+  const usable = (entries ?? []).filter((e) => e.text.trim().length > 0);
+  if (usable.length === 0) {
+    return '';
+  }
+  const recent = usable.slice(-MAX_HISTORY_MESSAGES);
+  const omitted = usable.length - recent.length;
+  const header =
+    omitted > 0
+      ? t(
+          'pulse.assistant.history-truncated',
+          'Earlier in this conversation ({{omitted}} older message(s) omitted):',
+          { omitted }
+        )
+      : t('pulse.assistant.history', 'Earlier in this conversation:');
+  const selfLabel = t('pulse.assistant.history-self-label', 'Assistant');
+  const lines = recent.map((e) => `${e.isAssistant ? selfLabel : e.author}: ${e.text.trim()}`);
+  return `${header}\n${lines.join('\n')}`;
 }
 
 /** buildContextLine describes the dashboard (and panel, when known) the

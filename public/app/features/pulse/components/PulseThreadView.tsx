@@ -141,6 +141,18 @@ export function PulseThreadView({
       // Lets the prompt embed the panel's live config — the tool-less inline
       // assistant can't otherwise know what the panel shows.
       getPanelSnapshot,
+      // The thread so far. `pulses` is the pre-reply transcript — the new
+      // pulse isn't in the query cache yet — so it's exactly the prior
+      // context, with the tagging pulse naturally excluded. The tool-less
+      // assistant can't read the thread itself, so this is the only
+      // discussion it sees.
+      transcript: pulses
+        .filter((p) => !p.deleted)
+        .map((p) => ({
+          author: authorDisplayLabel(p),
+          text: p.bodyText,
+          isAssistant: p.authorKind === 'service_account',
+        })),
     });
   }
 
