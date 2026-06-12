@@ -5,7 +5,6 @@ import { Button, Combobox, type ComboboxOption, Drawer, Field, Stack, Text } fro
 import { type Job, type Repository, type ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
-import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
 import { GitSyncLimitationsAlert } from '../Shared/GitSyncLimitationsAlert';
 import { useCreateSyncJob } from '../Wizard/hooks/useCreateSyncJob';
 import { type StepStatusInfo } from '../Wizard/types';
@@ -137,7 +136,6 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, resources, selecti
                 onChange={(option) => setSelectedRepo(option.value)}
               />
             )}
-            <ConnectRepositoryButton items={repos} />
           </Stack>
         </Field>
 
