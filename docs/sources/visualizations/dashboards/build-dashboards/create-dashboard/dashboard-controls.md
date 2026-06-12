@@ -34,31 +34,7 @@ However, in the dashboard schema, it's still referred to as `"kind": "AdhocVaria
 <!-- vale Grafana.WordList = YES -->
 <!-- vale Grafana.Spelling = YES -->
 
-The **Filter and Group by** option is one of the most complex and flexible dashboard controls available.
-Instead of creating a variable for each dimension by which you want to filter, it automatically queries your data source for available dimensions and lets users add or remove filters and group by values on the dashboard dynamically.
-This allows you to quickly apply filters dashboard-wide.
-
-The group by function allows you to then group data by keys, letting you split it up.
-The Group by action is typically used with aggregation queries, such as `sum(your_metric_here)`, to split aggregated results by the selected dimensions.
-Then, you can use filters within panels to filter data in or out, drilling down further into the data.
-
-The filter and group by feature lets you add label/value filters that are automatically added to all queries that use the specified data source.
-Unlike variables, you don't use these filters in queries.
-Instead, you use them to write filters for existing queries.
-
-The following data sources support filters.
-Data sources with an asterisk also support the group by function:
-
-{{< column-list >}}
-
-- Prometheus\*
-- Loki\*
-- InfluxDB
-- Elasticsearch
-- OpenSearch.
-- Special Dashboard data source - Use this to [apply filters to data from unsupported data sources](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#filter-any-data-using-the-dashboard-data-source).
-
-{{< /column-list >}}
+{{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/index.md" id="add-filter-group-by" >}}
 
 ### Add a filter and group by
 

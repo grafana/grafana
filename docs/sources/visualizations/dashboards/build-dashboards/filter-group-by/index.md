@@ -53,6 +53,8 @@ Data sources with an asterisk also support the group by function:
 
 ## Add filter and group by controls
 
+{{< shared id="add-filter-group-by" >}}
+
 <!-- prettier-ignore-start -->
 
 To add filter and group by controls, follow these steps:
@@ -92,6 +94,7 @@ To add filter and group by controls, follow these steps:
 1. Click **Exit edit**.
 
 <!-- prettier-ignore-end -->
+{{< /shared >}}
 
 Now you can filter and group data on the dashboard.
 
