@@ -1,0 +1,76 @@
+{
+  "name": "Ocean blue",
+  "id": "oceanblue",
+  "colors": {
+    "mode": "dark",
+    "border": {
+      "weak": "#1e3a52",
+      "medium": "#2a4d6b",
+      "strong": "#3d6585"
+    },
+    "text": {
+      "primary": "#E8F4FC",
+      "secondary": "#A8C8DC",
+      "disabled": "#6B8FA3",
+      "link": "#5DD9F5",
+      "maxContrast": "#FFFFFF"
+    },
+    "primary": {
+      "main": "#2E9FD6",
+      "text": "#5DD9F5",
+      "border": "#2E9FD6",
+      "name": "primary",
+      "shade": "#2589BC",
+      "transparent": "#2E9FD629",
+      "contrastText": "#0A1628",
+      "borderTransparent": "#2E9FD640"
+    },
+    "secondary": {
+      "main": "#1A3347",
+      "shade": "#234459",
+      "transparent": "rgba(93, 217, 245, 0.08)",
+      "text": "#B8D9EC",
+      "contrastText": "#5DD9F5",
+      "border": "rgba(93, 217, 245, 0.12)",
+      "name": "secondary",
+      "borderTransparent": "rgba(93, 217, 245, 0.25)"
+    },
+    "info": {
+      "main": "#1B6B8A",
+      "text": "#5DD9F5",
+      "border": "#2589BC"
+    },
+    "error": {
+      "main": "#E05A6E"
+    },
+    "success": {
+      "main": "#2DB88A"
+    },
+    "warning": {
+      "main": "#E8A838"
+    },
+    "background": {
+      "canvas": "#0D2137",
+      "primary": "#0A1628",
+      "secondary": "#122A3F",
+      "elevated": "#152F45"
+    },
+    "action": {
+      "hover": "#1A3347",
+      "selected": "#1F3D54",
+      "selectedBorder": "#2E9FD6",
+      "focus": "#1A3347",
+      "hoverOpacity": 0.08,
+      "disabledText": "#6B8FA3",
+      "disabledBackground": "rgba(26, 51, 71, 0.2)",
+      "disabledOpacity": 0.38
+    },
+    "gradients": {
+      "brandHorizontal": "linear-gradient(270deg, #2E9FD6 0%, #1B6B8A 100%)",
+      "brandVertical": "linear-gradient(0deg, #2E9FD6 0%, #1B6B8A 100%)"
+    },
+    "contrastThreshold": 3,
+    "hoverFactor": 0.03,
+    "tonalOffset": 0.15
+  }
+}
