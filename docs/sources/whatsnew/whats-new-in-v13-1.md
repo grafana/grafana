@@ -19,7 +19,7 @@ posts:
       - whats-new/2026-04-30-flexible-grouping-rules-and-field-overrides-for-nested-tables.md
       - whats-new/2026-05-05-annotations-clustering-now-generally-available.md
       - whats-new/2026-05-08-faceted-filter-for-time-series-legends.md
-      -whats-new/2026-05-26-copy-and-paste-panel-styles-are-now-generally-available.md
+      - whats-new/2026-05-26-copy-and-paste-panel-styles-are-now-generally-available.md
       - whats-new/2026-05-26-panel-styles-are-now-generally-available.md
       - whats-new/2026-06-10-git-sync-ui-import-feature.md
       - whats-new/2026-06-11-add-variables-to-rows-and-tabs.md
