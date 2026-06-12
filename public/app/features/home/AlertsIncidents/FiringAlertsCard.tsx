@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { escapeRegExp } from 'lodash';
 import { useMemo, useState } from 'react';
@@ -85,12 +86,13 @@ function FiringAlertsCardInner() {
     error: alertsError,
     refetch,
   } = alertmanagerApi.useGetAlertmanagerAlertsQuery(
-    {
-      amSourceName: GRAFANA_RULES_SOURCE_NAME,
-      filter: { active: true, silenced: false, inhibited: false, matchers },
-      showErrorAlert: false,
-    },
-    { skip: teamsLoading }
+    teamsLoading
+      ? skipToken
+      : {
+          amSourceName: GRAFANA_RULES_SOURCE_NAME,
+          filter: { active: true, silenced: false, inhibited: false, matchers },
+          showErrorAlert: false,
+        }
   );
 
   const loading = teamsLoading || alertsLoading;
@@ -125,8 +127,6 @@ function FiringAlertsCardInner() {
     return [critical, high];
   }, [alerts]);
 
-  const viewAllHref = `/alerting/groups?${ALERTMANAGER_NAME_QUERY_KEY}=${GRAFANA_RULES_SOURCE_NAME}`;
-
   return (
     <HomeSection padding={3} flex={1} minWidth="320px">
       <Stack direction="column" gap={2}>
@@ -136,7 +136,7 @@ function FiringAlertsCardInner() {
             <Text variant="h5">
               <Trans i18nKey="home.firing-alerts-card.title">Firing alerts</Trans>
             </Text>
-            {!loading && alerts && alerts.length > 0 && <Badge text={String(alerts.length)} color="red" />}
+            {!loading && !!alerts?.length && <Badge text={String(alerts.length)} color="red" />}
           </Stack>
           {!loading && (
             <Stack direction="row" gap={1}>
@@ -164,7 +164,6 @@ function FiringAlertsCardInner() {
           )}
         </Stack>
 
-        {/* Body */}
         {loading && (
           <Stack direction="column" gap={1}>
             {Array.from({ length: 3 }, (_, i) => (
@@ -235,7 +234,12 @@ function FiringAlertsCardInner() {
         {/* Footer */}
         {!loading && !alertsError && (
           <Stack direction="row" justifyContent="flex-end">
-            <LinkButton variant="secondary" size="sm" fill="text" href={viewAllHref}>
+            <LinkButton
+              variant="secondary"
+              size="sm"
+              fill="text"
+              href={`/alerting/groups?${ALERTMANAGER_NAME_QUERY_KEY}=${GRAFANA_RULES_SOURCE_NAME}`}
+            >
               <Trans i18nKey="home.firing-alerts-card.view-all">View all firing alerts</Trans>
             </LinkButton>
           </Stack>
