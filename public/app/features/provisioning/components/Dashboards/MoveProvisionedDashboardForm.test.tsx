@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
@@ -11,8 +10,6 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-
-import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 
 import { MoveProvisionedDashboardForm, type Props } from './MoveProvisionedDashboardForm';
 
@@ -41,12 +38,10 @@ jest.mock('app/api/clients/folder/v1beta1', () => ({
   useGetFolderQuery: jest.fn(),
 }));
 
-jest.mock('../../hooks/useProvisionedRequestHandler', () => ({
-  useProvisionedRequestHandler: jest.fn(),
-}));
-
+const mockNavigate = jest.fn();
 jest.mock('react-router-dom-v5-compat', () => ({
-  useNavigate: () => jest.fn(),
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useNavigate: () => mockNavigate,
 }));
 
 jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
@@ -54,12 +49,11 @@ jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
 }));
 
 function setup(props: Partial<Props> = {}) {
-  const user = userEvent.setup();
-
   const mockDashboard = {
     useState: jest.fn().mockReturnValue({
       editPanel: null,
     }),
+    setState: jest.fn(),
     state: {
       title: 'Test Dashboard',
       meta: {
@@ -97,7 +91,6 @@ function setup(props: Partial<Props> = {}) {
   };
 
   return {
-    user,
     ...render(<MoveProvisionedDashboardForm {...defaultProps} />),
     props: defaultProps,
   };
@@ -108,6 +101,17 @@ const mockCreateRequest = {
   isError: false,
   isLoading: false,
   error: null,
+};
+
+const branchDefaultValues: Props['defaultValues'] = {
+  repo: 'test-repo',
+  path: 'folder1/dashboard.json',
+  ref: 'feature/move',
+  workflow: 'branch',
+  comment: '',
+  title: 'Test Dashboard',
+  description: '',
+  folder: { uid: '', title: '' },
 };
 
 describe('MoveProvisionedDashboardForm', () => {
@@ -150,8 +154,6 @@ describe('MoveProvisionedDashboardForm', () => {
 
     (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([jest.fn(), mockCreateRequest]);
     (useCreateRepositoryJobsMutation as jest.Mock).mockReturnValue([jest.fn(), mockCreateRequest]);
-
-    (useProvisionedRequestHandler as jest.Mock).mockReturnValue(undefined);
   });
 
   it('should render the form with correct title and subtitle', () => {
@@ -271,7 +273,7 @@ describe('MoveProvisionedDashboardForm', () => {
   });
 
   it('renders the message from the repo commit template when comment is empty', async () => {
-    const moveFile = jest.fn().mockReturnValue({ unwrap: jest.fn().mockResolvedValue({}) });
+    const moveFile = jest.fn().mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ resource: {} }) });
     (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([moveFile, mockCreateRequest]);
     // upstream isResourceAlreadyInTarget guard requires currentSourcePath !== targetFolderPath
     (useGetFolderQuery as jest.Mock).mockReturnValue({
@@ -280,16 +282,7 @@ describe('MoveProvisionedDashboardForm', () => {
     });
 
     const { user } = setup({
-      defaultValues: {
-        repo: 'test-repo',
-        path: 'folder1/dashboard.json',
-        ref: 'feature/move',
-        workflow: 'branch',
-        comment: '',
-        title: 'Test Dashboard',
-        description: '',
-        folder: { uid: '', title: '' },
-      },
+      defaultValues: branchDefaultValues,
       repository: {
         type: 'github',
         name: 'test-repo',
@@ -305,5 +298,58 @@ describe('MoveProvisionedDashboardForm', () => {
     expect(moveFile).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'chore(dashboards): move Test Dashboard' })
     );
+  });
+
+  it('navigates to the PR redirect URL and dismisses the drawer on branch workflow success', async () => {
+    const moveFile = jest.fn().mockReturnValue({
+      unwrap: jest.fn().mockResolvedValue({
+        ref: 'feature/move',
+        path: 'target-folder/dashboard.json',
+        urls: { newPullRequestURL: 'https://github.com/test/repo/compare/main...feature/move' },
+        resource: {
+          upsert: {
+            apiVersion: 'v1',
+            kind: 'Dashboard',
+            metadata: { name: 'dashboard-uid', uid: 'dashboard-uid' },
+            spec: { title: 'Test Dashboard' },
+          },
+        },
+      }),
+    });
+    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([moveFile, mockCreateRequest]);
+
+    const { user, props } = setup({ defaultValues: branchDefaultValues });
+
+    await user.click(screen.getByRole('button', { name: /move dashboard/i }));
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/dashboards?new_pull_request_url=https%3A%2F%2Fgithub.com%2Ftest%2Frepo%2Fcompare%2Fmain...feature%2Fmove&repo_type=github'
+      );
+    });
+    expect(props.dashboard.setState).toHaveBeenCalledWith({ isDirty: false });
+    expect(props.onDismiss).toHaveBeenCalled();
+  });
+
+  it('publishes a single error alert when the branch workflow move fails', async () => {
+    const moveFile = jest.fn().mockReturnValue({
+      unwrap: jest.fn().mockRejectedValue(new Error('merge conflict')),
+    });
+    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([moveFile, mockCreateRequest]);
+
+    const { user, props } = setup({ defaultValues: branchDefaultValues });
+
+    await user.click(screen.getByRole('button', { name: /move dashboard/i }));
+
+    await waitFor(() => {
+      expect(getAppEvents().publish).toHaveBeenCalledWith({
+        type: AppEvents.alertError.name,
+        payload: ['Failed to move dashboard', expect.any(Error)],
+      });
+    });
+    // The hook-level onError handler was removed — the form's own catch is the only error surface
+    expect(getAppEvents().publish).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(props.onDismiss).not.toHaveBeenCalled();
   });
 });
