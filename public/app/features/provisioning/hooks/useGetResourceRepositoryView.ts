@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { type Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
@@ -95,6 +95,22 @@ const useResourceRepositoryViewData = ({
   }
 
   if (settingsError || folderError) {
+    // 403 = caller lacks provisioning.settings:read (e.g. folder Admin with no basic
+    // role). If the target folder's own annotations show it is not repo-managed,
+    // provisioning is irrelevant to this user — treat as "not provisioned" instead of
+    // failing closed and blocking unrelated flows like dashboard import.
+    // Repo-annotated folders and name-based lookups stay fail-closed: git-sync flows
+    // cannot proceed without the settings data anyway.
+    const annotatedManagerKind = folder?.metadata?.annotations?.[AnnoKeyManagerKind];
+    if (
+      isFetchError(settingsError) &&
+      settingsError.status === 403 &&
+      !name &&
+      !folderError &&
+      annotatedManagerKind !== ManagerKind.Repo
+    ) {
+      return { folder, isInstanceManaged: false, isReadOnlyRepo: false, status: RepoViewStatus.Ready };
+    }
     return {
       isLoading: false,
       isInstanceManaged: false,

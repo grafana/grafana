@@ -5,11 +5,12 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
-import { Box, Button, Field, Stack } from '@grafana/ui';
+import { Button, Field, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, type Job } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
+import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
+import { getSelectedFolderUIDs } from 'app/features/browse-dashboards/components/BrowseActions/utils';
 import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import {
@@ -27,6 +28,7 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { type StepStatusInfo } from '../../Wizard/types';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 import { type StatusInfo } from '../../types';
+import { withSavedByTrailer } from '../../utils/currentUser';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { MoveActionAvailableTargetWarning } from '../Shared/MoveActionAvailableTargetWarning';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
@@ -122,13 +124,13 @@ function FormContent({
       resourceCount: resources.length,
     });
 
-    // Create the move job spec.
-    // TODO(grafana/git-ui-sync-project#1162): MoveJobOptions has no `message`
-    // field on the backend yet — once it gains one, pass
-    // `withSavedByTrailer(<default or data.comment>)` so the
-    // Grafana-saved-by trailer rides through to the resulting git commit.
+    // Create the move job spec. The Grafana-saved-by trailer rides through
+    // JobSpec.Message to the resulting git commit.
     const jobSpec: MoveJobSpec = {
       action: 'move',
+      message: withSavedByTrailer(
+        data.comment?.trim() || t('browse-dashboards.bulk-move-resources-form.default-commit-message', 'Move resources')
+      ),
       move: {
         ref: data.workflow === 'write' ? undefined : data.ref,
         targetPath: targetFolderPathInRepo,
@@ -170,12 +172,14 @@ function FormContent({
           ) : (
             <>
               <MoveActionAvailableTargetWarning />
-              <Box paddingBottom={2}>
-                <Trans i18nKey="browse-dashboards.bulk-move-resources-form.move-total">
-                  In total, this will affect:
-                </Trans>
-                <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
-              </Box>
+              <AffectedFolderContents
+                selectedItems={selectedItems}
+                nonEmptyMessage={t('browse-dashboards.bulk-move-resources-form.folder-not-empty', '', {
+                  count: getSelectedFolderUIDs(selectedItems).length,
+                  defaultValue_one: 'Selected folder contains other resources that will be moved with it',
+                  defaultValue_other: 'Selected folders contain other resources that will be moved with them',
+                })}
+              />
               {/* Target folder selection */}
               <Field
                 noMargin
@@ -192,7 +196,7 @@ function FormContent({
                   repositoryName={repository.name}
                   // selectedItems.folder contains false entries from deselect ancestor propagation
                   // in setItemSelectionState reducer - filter to only truly-selected UIDs
-                  excludeUIDs={Object.keys(selectedItems?.folder ?? {}).filter((uid) => selectedItems.folder[uid])}
+                  excludeUIDs={getSelectedFolderUIDs(selectedItems)}
                 />
               </Field>
               <ResourceEditFormSharedFields

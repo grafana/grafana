@@ -25,13 +25,6 @@ import {
 } from './QueryEditorContext';
 import { type Transformation } from './types';
 
-export function setup(jsx: React.ReactElement) {
-  return {
-    user: userEvent.setup(),
-    ...render(jsx),
-  };
-}
-
 export const ds1SettingsMock: DataSourceInstanceSettings = {
   id: 1,
   uid: 'test',

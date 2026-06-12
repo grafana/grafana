@@ -9,10 +9,11 @@ import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidati
 import { BulkMoveProvisionedResource } from './BulkMoveProvisionedResource';
 import { type ResponseType } from './useBulkActionJob';
 
-jest.mock('app/features/browse-dashboards/components/BrowseActions/DescendantCount', () => ({
-  DescendantCount: jest.fn(({ selectedItems }) => (
-    <div data-testid="descendant-count">
-      Mocked descendant count for {Object.keys(selectedItems.folder).length} folders and{' '}
+jest.mock('app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents', () => ({
+  AffectedFolderContents: jest.fn(({ selectedItems, defaultMessage }) => (
+    <div data-testid="affected-folder-contents">
+      {defaultMessage}
+      Mocked affected folder contents for {Object.keys(selectedItems.folder).length} folders and{' '}
       {Object.keys(selectedItems.dashboard).length} dashboards
     </div>
   )),
@@ -163,8 +164,7 @@ describe('BulkMoveProvisionedResource', () => {
     setup(null);
 
     expect(await screen.findByText(/This will move selected folders and their descendants/)).toBeInTheDocument();
-    expect(screen.getByText(/In total, this will affect:/)).toBeInTheDocument();
-    expect(screen.getByTestId('descendant-count')).toBeInTheDocument();
+    expect(screen.getByTestId('affected-folder-contents')).toBeInTheDocument();
     expect(screen.getByTestId('folder-picker')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Move/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument();
@@ -195,6 +195,7 @@ describe('BulkMoveProvisionedResource', () => {
       defaultRepository,
       expect.objectContaining({
         action: 'move',
+        message: expect.stringContaining('Move resources'),
         move: expect.objectContaining({
           targetPath: expect.any(String),
           resources: expect.arrayContaining([

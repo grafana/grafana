@@ -8,17 +8,24 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -600,6 +607,183 @@ func TestIntegrationApi_setUserPermissionForTeams(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Verifies the ResourcePermission redirect falls back to legacy only in Mode0-3. With no rest
+// config the K8s write fails, so Mode0-3 falls back (200) and Mode4/5 returns the error (500).
+func TestIntegrationApi_setUserPermission_dualWriterModeFallback(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	tests := []struct {
+		name           string
+		mode           grafanarest.DualWriterMode
+		expectedStatus int
+	}{
+		{name: "Mode3 falls back to legacy", mode: grafanarest.Mode3, expectedStatus: http.StatusOK},
+		{name: "Mode5 does not fall back", mode: grafanarest.Mode5, expectedStatus: http.StatusInternalServerError},
+	}
+
+	perms := []accesscontrol.Permission{
+		{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
+		{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+		{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setOpenFeatureFlags(t, map[string]bool{
+				featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect: true,
+				featuremgmt.FlagKubernetesAuthzResourcePermissionApis:      true,
+			})
+
+			service, usrSvc, _, cfg := setupTestEnvironmentWithCfg(t, testOptions, featuremgmt.WithFeatures())
+			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+				iamv0.ResourcePermissionInfo.GroupResource().String(): {DualWriterMode: tt.mode},
+			}
+
+			server := setupTestServer(t, &user.SignedInUser{
+				OrgID:       1,
+				Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), perms)},
+			}, service)
+
+			createdUser, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
+			require.NoError(t, err)
+
+			recorder := setPermission(t, server, testOptions.Resource, "1", "Edit", "users", strconv.Itoa(int(createdUser.ID)))
+			assert.Equal(t, tt.expectedStatus, recorder.Code)
+
+			if tt.expectedStatus == http.StatusOK {
+				permissions, _ := getPermission(t, server, testOptions.Resource, "1")
+				require.Len(t, permissions, 1)
+				assert.Equal(t, "Edit", permissions[0].Permission)
+				assert.Equal(t, createdUser.ID, permissions[0].UserID)
+			}
+		})
+	}
+}
+
+// Verifies the ResourcePermission redirect read falls back to legacy only in Mode0-3. With no rest
+// config the K8s read fails, so Mode0-3 falls back to seeded legacy permissions (200) and Mode4/5
+// returns the error (500).
+func TestIntegrationApi_getPermissions_dualWriterModeFallback(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	tests := []struct {
+		name           string
+		mode           grafanarest.DualWriterMode
+		expectedStatus int
+	}{
+		{name: "Mode3 falls back to legacy", mode: grafanarest.Mode3, expectedStatus: http.StatusOK},
+		{name: "Mode5 does not fall back", mode: grafanarest.Mode5, expectedStatus: http.StatusInternalServerError},
+	}
+
+	perms := []accesscontrol.Permission{
+		{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
+		{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+		{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setOpenFeatureFlags(t, map[string]bool{
+				featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect: true,
+				featuremgmt.FlagKubernetesAuthzResourcePermissionApis:      true,
+			})
+
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptions, featuremgmt.WithFeatures())
+			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+				iamv0.ResourcePermissionInfo.GroupResource().String(): {DualWriterMode: tt.mode},
+			}
+
+			server := setupTestServer(t, &user.SignedInUser{
+				OrgID:       1,
+				Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), perms)},
+			}, service)
+
+			seedPermissions(t, "1", usrSvc, teamSvc, service)
+
+			permissions, recorder := getPermission(t, server, testOptions.Resource, "1")
+			assert.Equal(t, tt.expectedStatus, recorder.Code)
+
+			if tt.expectedStatus == http.StatusOK {
+				checkSeededPermissions(t, permissions)
+			}
+		})
+	}
+}
+
+// Verifies the team-members write falls back to legacy only in Mode0-3. With no rest config
+// the K8s write fails, so Mode0-3 falls back (200) and Mode4/5 returns the error (500).
+func TestIntegrationApi_setUserPermissionForTeams_dualWriterModeFallback(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	tests := []struct {
+		name           string
+		mode           grafanarest.DualWriterMode
+		expectedStatus int
+	}{
+		{name: "Mode3 falls back to legacy", mode: grafanarest.Mode3, expectedStatus: http.StatusOK},
+		{name: "Mode5 does not fall back", mode: grafanarest.Mode5, expectedStatus: http.StatusInternalServerError},
+	}
+
+	perms := []accesscontrol.Permission{
+		{Action: "teams.permissions:read", Scope: accesscontrol.ScopeTeamsAll},
+		{Action: "teams.permissions:write", Scope: accesscontrol.ScopeTeamsAll},
+		{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// The teams redirect is gated on the kubernetesTeamsRedirect toggle.
+			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
+
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures())
+			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: tt.mode},
+			}
+
+			server := setupTestServer(t, &user.SignedInUser{
+				OrgID:       1,
+				Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), perms)},
+			}, service)
+
+			createdUser, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
+			require.NoError(t, err)
+			createdTeam, err := teamSvc.CreateTeam(context.Background(), &team.CreateTeamCommand{Name: "test", Email: "test@test.com", OrgID: 1})
+			require.NoError(t, err)
+
+			recorder := setPermission(t, server, testOptionsForTeams.Resource, strconv.Itoa(int(createdTeam.ID)), "Member", "users", strconv.Itoa(int(createdUser.ID)))
+			assert.Equal(t, tt.expectedStatus, recorder.Code)
+		})
+	}
+}
+
+var openFeatureTestMu sync.Mutex
+
+// setOpenFeatureFlag sets the global OpenFeature provider so flag resolves to value for the test.
+func setOpenFeatureFlag(t *testing.T, flag string, value bool) {
+	t.Helper()
+	setOpenFeatureFlags(t, map[string]bool{flag: value})
+}
+
+// setOpenFeatureFlags sets multiple flags on the global OpenFeature provider for the test.
+func setOpenFeatureFlags(t *testing.T, flags map[string]bool) {
+	t.Helper()
+	openFeatureTestMu.Lock()
+
+	flagMap := make(map[string]memprovider.InMemoryFlag, len(flags))
+	for flag, value := range flags {
+		flagMap[flag] = memprovider.InMemoryFlag{Key: flag, Variants: map[string]any{"": value}}
+	}
+
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(flagMap)
+	require.NoError(t, err)
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openFeatureTestMu.Unlock()
+	})
 }
 
 func setupTestServer(t *testing.T, user *user.SignedInUser, service *Service) *web.Mux {

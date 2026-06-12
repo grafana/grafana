@@ -46,7 +46,7 @@ import {
 import { getAlertGroupsKey } from './utils';
 
 /** Async function that computes route-to-alert-group mapping off the main thread. */
-export type GetRouteGroupsMapFn = (
+type GetRouteGroupsMapFn = (
   rootRoute: RouteWithID,
   alertGroups: AlertmanagerGroup[],
   options?: { unquoteMatchers?: boolean }
