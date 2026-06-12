@@ -268,9 +268,9 @@ Optional fields:
 
 ### Set field options
 
-The tables above reference `config.displayName`, `config.color.fixedColor`, and `field.config.color.mode`. Set these values in each field's `config` object in the data frame returned by your data source.
+The tables above reference `config.displayName`, `config.color.fixedColor`, and `field.config.color.mode`. Set these values in each field's `config` object when you build the data frame in your data source.
 
-If you are building a data source plugin or returning data frames from an API, define these field options in the field definition. For example, in a JSON data frame response:
+The following example shows the field definitions for a node graph data frame, with these options set on the `config` object of each field.
 
 ```json
 {
