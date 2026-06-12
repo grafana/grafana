@@ -26,6 +26,7 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
+import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
 import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
@@ -40,9 +41,10 @@ import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes
 
 import { BranchOptionsSection } from './BranchOptionsSection';
 import { CommitOptionsSection } from './CommitOptionsSection';
-import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
+import { GitHubDashboardPreviewField } from './GitHubDashboardPreviewField';
 import { PullRequestOptionsSection } from './PullRequestOptionsSection';
+import { WebhookSection } from './WebhookSection';
 import { getDefaultValues } from './defaults';
 
 // This needs to be a function for translations to work
@@ -88,6 +90,12 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const [type, readOnly] = watch(['type', 'readOnly']);
   const targetOptions = useMemo(() => getTargetOptions(settings.data?.allowedTargets || ['folder']), [settings.data]);
   const isGitBased = isGitProvider(type);
+
+  // Dashboard previews are a GitHub-only pull request feature and require image rendering.
+  const githubDashboardPreviewField =
+    type === 'github' && checkImageRenderingAllowed(settings.data) ? (
+      <GitHubDashboardPreviewField register={register} disabled={!checkImageRenderer() || !checkPublicAccess()} />
+    ) : null;
 
   // Detect if repository uses GitHub App authentication
   // Repositories using GitHub App have a connection reference in their spec,
@@ -399,11 +407,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 register={register}
                 titleTemplateName="pullRequest.titleTemplate"
                 enforceTemplateName="pullRequest.enforceTemplate"
-              />
+              >
+                {githubDashboardPreviewField}
+              </PullRequestOptionsSection>
             )}
           </>
         )}
-        {type === 'github' && <ConfigFormGithubCollapse register={register} />}
+        {type === 'github' && <WebhookSection register={register} />}
 
         {isGitBased && (
           <ControlledCollapse

@@ -13055,7 +13055,7 @@
     "branch-options": {
       "description-enforce-template": "Make the branch name read-only in save dialogs so users cannot override the generated name.",
       "description-name-template": "Template for the branch created by the branch (pull request) workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}, {{randomVar}} (a short random token to avoid collisions). The result is sanitised into a valid Git branch name. Leave empty to use the auto-generated name.",
-      "label-branch-options": "Branch options (advanced)",
+      "label-branch-options": "Branch options",
       "label-enforce-template": "Enforce branch name template",
       "label-name-template": "Branch name template",
       "placeholder-name-template": "grafana/{{actionVar}}-{{titleVar}}-{{randomVar}}"
@@ -13081,7 +13081,7 @@
     },
     "commit-options": {
       "description-enforce-template": "Pre-fill the commit message in save dialogs from the template above and make it read-only.",
-      "label-commit-options": "Commit options (advanced)",
+      "label-commit-options": "Commit options",
       "label-enforce-template": "Enforce commit message template"
     },
     "config-form": {
@@ -13113,13 +13113,6 @@
       "placeholder-commit-message-template": "feat(dashboards): {{actionVar}} {{titleVar}}",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "My config"
-    },
-    "config-form-github-collapse": {
-      "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
-      "description-webhook-url-learn-more": "Learn more",
-      "label-git-hub-features": "GitHub features",
-      "label-webhook-url": "Webhook URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "connect-page": {
       "subTitle": {
@@ -13525,7 +13518,7 @@
       "description-enforce-template": "Pre-fill the pull request title in save dialogs from the template above and make it read-only.",
       "description-title-template": "Template for the pull request title opened by the branch workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Leave empty to use the first line of the commit message.",
       "label-enforce-template": "Enforce pull request title template",
-      "label-pull-request-options": "Pull request options (advanced)",
+      "label-pull-request-options": "Pull request options",
       "label-title-template": "Pull request title template",
       "placeholder-title-template": "{{actionVar}}: {{titleVar}}"
     },
@@ -13767,6 +13760,13 @@
     "watch-stream": {
       "error-description": "Real-time updates could not be started. Refresh the page to see the latest data.",
       "error-title": "Live updates unavailable"
+    },
+    "webhook-section": {
+      "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
+      "description-webhook-url-learn-more": "Learn more",
+      "label-webhook": "Webhook",
+      "label-webhook-url": "Webhook URL",
+      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "wizard": {
       "alert-intro": "Please be aware of the following limitations. For more details, see the <2>Git Sync documentation</2>.",

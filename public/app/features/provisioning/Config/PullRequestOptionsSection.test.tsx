@@ -41,7 +41,7 @@ describe('PullRequestOptionsSection', () => {
   it('renders collapsed by default, hiding the inner fields', () => {
     render(<Wrapper />);
 
-    expect(screen.getByText('Pull request options (advanced)')).toBeInTheDocument();
+    expect(screen.getByText('Pull request options')).toBeInTheDocument();
     // Collapse renders its children only when open
     expect(screen.queryByText('Pull request title template')).not.toBeInTheDocument();
   });
@@ -49,7 +49,7 @@ describe('PullRequestOptionsSection', () => {
   it('reveals the title template and enforcement fields when expanded', async () => {
     const { user } = render(<Wrapper />);
 
-    await user.click(screen.getByText('Pull request options (advanced)'));
+    await user.click(screen.getByText('Pull request options'));
 
     expect(screen.getByText('Pull request title template')).toBeInTheDocument();
     expect(screen.getByText('Enforce pull request title template')).toBeInTheDocument();
@@ -58,7 +58,7 @@ describe('PullRequestOptionsSection', () => {
   it('registers the inputs under the provided spec paths', async () => {
     const { user } = render(<Wrapper />);
 
-    await user.click(screen.getByText('Pull request options (advanced)'));
+    await user.click(screen.getByText('Pull request options'));
 
     expect(screen.getByRole('textbox')).toHaveAttribute('name', 'pullRequest.titleTemplate');
     expect(screen.getByRole('checkbox')).toHaveAttribute('name', 'pullRequest.enforceTemplate');
