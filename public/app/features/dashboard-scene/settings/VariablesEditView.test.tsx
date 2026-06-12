@@ -1,3 +1,4 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render as RTLRender } from '@testing-library/react';
 import * as React from 'react';
 import { of } from 'rxjs';
@@ -24,7 +25,11 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { VariablesEditView } from './VariablesEditView';
 
 function render(component: React.ReactNode) {
-  return RTLRender(<TestProvider>{component}</TestProvider>);
+  return RTLRender(
+    <TestProvider>
+      <OpenFeatureProvider>{component}</OpenFeatureProvider>
+    </TestProvider>
+  );
 }
 
 setPluginImportUtils({
@@ -226,7 +231,8 @@ describe('VariablesEditView', () => {
       expect(queryByText('Provisioned by data source')).not.toBeInTheDocument();
     });
 
-    it('should show Provisioned by data source section when at least one variable has origin', async () => {
+    // remove test when we remove the variable tab in dashboard settings
+    it.skip('should show Provisioned by data source section when at least one variable has origin', async () => {
       const variables = variableView.getVariableSet().state.variables;
       const originVariable = new CustomVariable({
         name: 'dsVar',

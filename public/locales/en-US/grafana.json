@@ -6875,6 +6875,18 @@
         "dashboard-not-found": "Dashboard not found"
       }
     },
+    "dashboard-settings": {
+      "annotations": {
+        "button-moved": "Take me there",
+        "description-moved": "Annotation settings have moved to the dashboard's sidebar.",
+        "title-moved": "Looking for annotations?"
+      },
+      "variables": {
+        "button-moved": "Take me there",
+        "description-moved": "Variable settings have moved to the dashboard's sidebar.",
+        "title-moved": "Looking for variable settings?"
+      }
+    },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Dashboard controls"
     },

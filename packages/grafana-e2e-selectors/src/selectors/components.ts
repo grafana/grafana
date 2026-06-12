@@ -90,6 +90,9 @@ export const versionedComponents = {
     configurePanelButton: {
       '13.1.0': 'data-testid edit pane configure panel button',
     },
+    addNewVariableButton: {
+      '13.1.0': 'data-testid edit pane add new variable button',
+    },
   },
   EditPaneHeader: {
     deleteButton: {
@@ -759,6 +762,11 @@ export const versionedComponents = {
       },
       variableLabelInput: {
         '12.0.0': 'data-testid variable label input',
+      },
+      CustomVariable: {
+        customValueInput: {
+          [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-input',
+        },
       },
       AutoGridLayout: {
         minColumnWidth: {

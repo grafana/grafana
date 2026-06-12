@@ -81,6 +81,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                                                      | Yes                |
 | `alertingMultiplePolicies`                   | Enables the ability to create multiple notification policies in alerting                                                                                      | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                                            |                    |
+| `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings and gradually moves them to a modal                                                                  | Yes                |
 
 ## Public preview feature toggles
 
