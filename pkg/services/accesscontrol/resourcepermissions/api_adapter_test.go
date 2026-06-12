@@ -188,7 +188,7 @@ func TestGetAPIGroup(t *testing.T) {
 			service: &Service{
 				options: Options{
 					Resource: "dashboards",
-					APIGroup: "dashboard.grafana.app",
+					APIGroup: "",
 				},
 			},
 		}
